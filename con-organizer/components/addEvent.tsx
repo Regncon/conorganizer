@@ -15,7 +15,7 @@ const AddEvent = () => {
         }}
         open={open}
       >
-        <DialogTitle>Set backup account</DialogTitle>
+        <DialogTitle>Legg til nytt arangement</DialogTitle>
       </Dialog>
 
       <IconButton
