@@ -19,7 +19,7 @@ import {
   limit,
 } from "firebase/firestore";
 import db from "../lib/firebase";
-import { AuthContext } from "../components/auth";
+import { AuthContext } from "./auth";
 
 interface Props {}
 
@@ -148,16 +148,19 @@ const Experiment = (props: Props) => {
         <hr />
         {loading ? <h1>Loading...</h1> : null}
         {schools.map((school) => (
-          <Card className="school card p-1 m-1" key={school.id}>
-            <h2>{school.title}</h2>
-            <p>{school.desc}</p>
-            <p>{school.score}</p>
-            <p>{school.ownerEmail}</p>
-            <div>
-              <button onClick={() => deleteSchool(school)}>X</button>
-              <button onClick={() => editSchool(school)}>Edit Score</button>
-            </div>
-          </Card>
+          <>
+            {console.log(school)}
+            <Card className="school card p-1 m-1" key={school.id}>
+              <h2>{school.title}</h2>
+              <p>{school.desc}</p>
+              <p>{school.score}</p>
+              <p>{school.ownerEmail}</p>
+              <div>
+                <button onClick={() => deleteSchool(school)}>X</button>
+                <button onClick={() => editSchool(school)}>Edit Score</button>
+              </div>
+            </Card>
+          </>
         ))}
       </Fragment>
     </div>
