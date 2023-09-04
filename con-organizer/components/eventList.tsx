@@ -1,6 +1,6 @@
 "use client";
 
-import { Box } from "../lib/mui";
+import { Box, Button } from "../lib/mui";
 import React, { useEffect, useState } from "react";
 import {
   onSnapshot,
@@ -32,8 +32,24 @@ const EventList = () => {
     };
   }, []);
 
+    // EDIT FUNCTION
+    async function editEvent(school) {
+        const updatedSchool = {
+          score: +score,
+          lastUpdate: serverTimestamp(),
+        };
+    
+        try {
+          const schoolRef = doc(colletionRef, school.id);
+          updateDoc(schoolRef, updatedSchool);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+    
+
   return (
-      <Box>
+      <Box className="gap-4" >
         {loading ? <h1>Loading...</h1> : null}
         {schools.map((school) => (
             <EventUi title={school.title} image={school.image} description={school.description} />
