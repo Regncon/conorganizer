@@ -7,22 +7,29 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 ## Todo
 
 ### Must haves Mvp
-* Add favicon
-* Auth
+
+#### Display
+* Get event from database
 * Add new event
-* Autorization
-* Add keyboard navigation
 * Edit event
-* Unlist event
-* Add command palatte
-* Add search
 * Add days
 * Add timeslots
-* Add rooms
+* Unlist event
 * Add read more
 * Add event types
 * Add event images
 * Make it very clear what day is displayed
+* query string for event id
+* Add favicon
+
+#### Login
+* Auth
+* Autorization
+* Add keyboard navigation
+* Add command palatte
+* Add search
+* Add rooms
+
 
 ### Nice to haves
 * Tags
@@ -30,4 +37,6 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 * Add event to calendar
 
 
+
+## Done
 

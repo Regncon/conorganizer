@@ -10,6 +10,8 @@ import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormContro
 
 interface Props {
   title: string;
+  image: string;
+  description: string;
 }
 
 
@@ -46,7 +48,7 @@ const EventUi = (props: Props) => {
       <Card>
         <CardHeader
           title={props.title}
-          subheader="Søndag pulje 6 kl 12:00 til 16:00"
+          subheader="Rom 222, Søndag kl 12:00 til 16:00"
         />
         <CardMedia
           component="img"
@@ -55,14 +57,13 @@ const EventUi = (props: Props) => {
           alt={props.title}
         />
         <CardContent>
-          <p className="font-bold" >Rom 416</p>
           <Typography>
             Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse
             malesuada lacus ex, sit amet blandit leo lobortis eget.
           </Typography>
         </CardContent>
         <hr />
-        <FormControl>
+        <FormControl className="p-4">
           <FormLabel id="demo-row-radio-buttons-group-label">Puljepåmelding</FormLabel>
           <RadioGroup
             row

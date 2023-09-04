@@ -1,7 +1,7 @@
 "use client";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Button, Card } from "../lib/mui";
+import { Box, Button, Card } from "../lib/mui";
 import React, { Fragment, useContext, useEffect, useState } from "react";
 import { faCoffee } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -20,12 +20,11 @@ import {
 } from "firebase/firestore";
 import db from "../lib/firebase";
 import { AuthContext } from "./auth";
-import { Dialog, DialogTitle, IconButton } from "@mui/material";
-import AddCircleIcon from "@mui/icons-material/AddCircle";
+import EventUi from "./eventUi";
 
-const AddEvent = () => {
-  const [open, setOpen] = React.useState(false);
+interface Props {}
 
+const EventList = (props: Props) => {
   const colletionRef = collection(db, "schools");
   const [clicked, setClicked] = useState(false);
 
@@ -110,58 +109,14 @@ const AddEvent = () => {
     }
   }
 
-
   return (
-    <>
-      <Dialog
-        onClose={() => {
-          console.log("close");
-        }}
-        open={open}
-      >
-        <DialogTitle>Legg til nytt arangement</DialogTitle>
-
-        <h1>Schools (SNAPSHOT adv.)</h1>
-        <div className="inputBox">
-          <h3>Add New</h3>
-          <h6>Title</h6>
-          <input
-            className="text-black"
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
-          <h6>Score 0-10</h6>
-          <input
-            className="text-black"
-            type="number"
-            value={score}
-            onChange={(e) => setScore(e.target.value)}
-          />
-          <h6>Description</h6>
-          <textarea
-            className="text-black"
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-          />
-          <button onClick={() => addSchool()}>Submit</button>
-        </div>
-
-      </Dialog>
-
-      <IconButton
-        className="fixed right-0 bottom-0"
-        aria-label="add"
-        color="error"
-        size="large"
-        onClick={() => {
-          setOpen(true);
-        }}
-      >
-        <AddCircleIcon />
-      </IconButton>
-    </>
+      <Box>
+        {loading ? <h1>Loading...</h1> : null}
+        {schools.map((school) => (
+            <EventUi title={school.title} image={school.image} description={school.description} />
+        ))}
+      </Box>
   );
 };
 
-export default AddEvent;
+export default EventList;
