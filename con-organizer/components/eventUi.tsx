@@ -7,15 +7,19 @@ import AccordionDetails from "@mui/material/AccordionDetails";
 import Typography from "@mui/material/Typography";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormControlLabelProps, styled, useRadioGroup, Box, Card, CardHeader, CardContent, CardMedia, Button } from "@mui/material";
+import { Edit } from "@mui/icons-material";
+import EditDialog from "./editDialog";
+import { serverTimestamp, doc, updateDoc, CollectionReference, DocumentData } from "firebase/firestore";
+import { ConEvent } from "@/lib/types";
 
 interface Props {
-  title: string;
-  image: string;
-  description: string;
+  conEvent: ConEvent;
+  colletionRef: CollectionReference<DocumentData, DocumentData>
 }
 
 
 const EventUi = (props: Props) => {
+  const [open, setOpen] = React.useState(false);
 
   interface StyledFormControlLabelProps extends FormControlLabelProps {
     checked: boolean;
@@ -41,24 +45,28 @@ const EventUi = (props: Props) => {
     return <StyledFormControlLabel checked={checked} {...props} />;
   }
 
+  const handleClose = () => {
+    setOpen(false);
+  };
 
 
   return (
     <Box className="event-ui">
+      <EditDialog conEvent={props.conEvent} colletionRef={props.colletionRef} open={open} handleClose={handleClose} />
       <Card>
         <CardHeader
-          title={props.title}
+          title={props.conEvent?.title}
           subheader="Rom 222, Søndag kl 12:00 til 16:00"
         />
         <CardMedia
           component="img"
           height="194"
           image="/placeholder.jpg"
-          alt={props.title}
+          alt={props.conEvent?.title}
         />
         <CardContent>
           <Typography>
-            {props.description}
+            {props.conEvent?.description}
           </Typography>
         </CardContent>
         <hr />
@@ -76,6 +84,9 @@ const EventUi = (props: Props) => {
             <MyFormControlLabel value="RealyWantTo" control={<Radio size="small" />} label="Har veldig lyst" />
           </RadioGroup>
         </FormControl>
+        <Button onClick={() => {
+          setOpen(true);
+        }}>Endre</Button>
       </Card>
     </Box>
   );

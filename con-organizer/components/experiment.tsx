@@ -2,7 +2,7 @@
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Button, Card } from "../lib/mui";
-import React, { Fragment, useContext, useEffect, useState } from "react";
+import React, { Fragment, use, useContext, useEffect, useState } from "react";
 import { faCoffee } from "@fortawesome/free-solid-svg-icons";
 import {
   doc,
@@ -108,6 +108,12 @@ const Experiment = (props: Props) => {
     }
   }
 
+  useEffect(() => {
+    console.log("schools", schools);
+  }
+  , [schools]);
+  
+
   return (
     <div className="flex flex-col items-center justify-center h-screen">
       <Button
@@ -149,7 +155,6 @@ const Experiment = (props: Props) => {
         {loading ? <h1>Loading...</h1> : null}
         {schools.map((school) => (
           <>
-            {console.log(school)}
             <Card className="school card p-1 m-1" key={school.id}>
               <h2>{school.title}</h2>
               <p>{school.desc}</p>
