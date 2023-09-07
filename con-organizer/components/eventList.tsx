@@ -22,6 +22,7 @@ const EventList = () => {
     setLoading(true);
     const unsub = onSnapshot(colletionRef, (querySnapshot) => {
       const items = [] as ConEvent[];
+      console.log(items, "items");
       querySnapshot.forEach((doc) => {
         items.push(doc.data());
       });
@@ -34,7 +35,6 @@ const EventList = () => {
   }, []); 
 
   useEffect(() => {
-    console.log("conEvents", conEvents);
   } , [conEvents]);
 
   return (

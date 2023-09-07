@@ -15,7 +15,7 @@ import db from "../lib/firebase";
 import { AuthContext } from "./auth";
 import { Dialog, DialogTitle } from "@mui/material";
 import { ConEvent } from "@/lib/types";
-import { log } from "console";
+
 
 interface Props {
   open: boolean;
@@ -24,13 +24,10 @@ interface Props {
   handleClose: () => void;
 }
 
-const EditDialog = (props: Props) => {
-  console.log("EditDialog", props.conEvent);
+const EditDialog = ( { open, conEvent, colletionRef, handleClose }: Props) => {  
 
-  const colletionRef = collection(db, "schools");
-
-  const [title, setTitle] = useState(props.conEvent?.title || "");
-  const [description, setDescription] = useState(props.conEvent?.description || "");
+  const [title, setTitle] = useState(conEvent?.title || "");
+  const [description, setDescription] = useState(conEvent?.description || "");
 
   const addSchool = async () => {
 
@@ -59,7 +56,7 @@ const EditDialog = (props: Props) => {
     console.log("editEvent", conEvent.id, updatedSchool);
 
     try {
-      const schoolRef = doc(props.colletionRef, conEvent.id);
+      const schoolRef = doc(colletionRef, conEvent.id);
       updateDoc(schoolRef, updatedSchool);
     } catch (error) {
       console.error(error);
@@ -69,9 +66,9 @@ const EditDialog = (props: Props) => {
   return (
     <Dialog
       onClose={() => {
-        console.log("close");
+        handleClose();
       }}
-      open={props.open}
+      open={open}
     >
       <DialogTitle>Legg til nytt arangement</DialogTitle>
 
@@ -92,11 +89,11 @@ const EditDialog = (props: Props) => {
           onChange={(e) => setDescription(e.target.value)}
         />
       </div>
-      {props.conEvent?.id
-        ? <Button onClick={() => editEvent(props.conEvent)}>Edit</Button>
+      {conEvent?.id
+        ? <Button onClick={() => editEvent(conEvent)}>Edit</Button>
         : <Button onClick={() => addSchool()}>Submit</Button>
       }
-      <Button onClick={props.handleClose}>Cancel</Button>
+      <Button onClick={handleClose}>Cancel</Button>
     </Dialog>
   );
 };

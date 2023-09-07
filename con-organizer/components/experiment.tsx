@@ -109,13 +109,12 @@ const Experiment = (props: Props) => {
   }
 
   useEffect(() => {
-    console.log("schools", schools);
   }
   , [schools]);
   
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div>
       <Button
         variant="contained"
         onClick={() => setClicked(!clicked)}
@@ -127,7 +126,7 @@ const Experiment = (props: Props) => {
 
       <Fragment>
         <h1>Schools (SNAPSHOT adv.)</h1>
-        <div className="inputBox">
+{/*         <div className="inputBox">
           <h3>Add New</h3>
           <h6>Title</h6>
           <input
@@ -150,19 +149,20 @@ const Experiment = (props: Props) => {
             onChange={(e) => setDesc(e.target.value)}
           />
           <button onClick={() => addSchool()}>Submit</button>
-        </div>
+        </div> */}
         <hr />
         {loading ? <h1>Loading...</h1> : null}
         {schools.map((school) => (
           <>
+          {console.log(school)}
             <Card className="school card p-1 m-1" key={school.id}>
               <h2>{school.title}</h2>
               <p>{school.desc}</p>
               <p>{school.score}</p>
               <p>{school.ownerEmail}</p>
               <div>
-                <button onClick={() => deleteSchool(school)}>X</button>
-                <button onClick={() => editSchool(school)}>Edit Score</button>
+                <Button onClick={() => deleteSchool(school)}>X</Button>
+                <Button onClick={() => editSchool(school)}>Edit Score</Button>
               </div>
             </Card>
           </>
