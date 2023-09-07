@@ -1,25 +1,22 @@
 "use client";
 
 import { Button } from "../lib/mui";
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
 import {
   doc,
   setDoc,
-  collection,
   serverTimestamp,
   CollectionReference,
   DocumentData,
   updateDoc,
 } from "firebase/firestore";
-import db from "../lib/firebase";
-import { AuthContext } from "./auth";
-import { Dialog, DialogTitle } from "@mui/material";
+import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { ConEvent } from "@/lib/types";
 
 
 interface Props {
   open: boolean;
-  conEvent: ConEvent;
+  conEvent?: ConEvent;
   colletionRef: CollectionReference<DocumentData, DocumentData>;
   handleClose: () => void;
 }
@@ -53,8 +50,6 @@ const EditDialog = ( { open, conEvent, colletionRef, handleClose }: Props) => {
       lastUpdate: serverTimestamp(),
     };
 
-    console.log("editEvent", conEvent.id, updatedSchool);
-
     try {
       const schoolRef = doc(colletionRef, conEvent.id);
       updateDoc(schoolRef, updatedSchool);
@@ -70,30 +65,38 @@ const EditDialog = ( { open, conEvent, colletionRef, handleClose }: Props) => {
       }}
       open={open}
     >
-      <DialogTitle>Legg til nytt arangement</DialogTitle>
-
-      <h1>Schools (SNAPSHOT adv.)</h1>
-      <div className="inputBox">
-        <h3>Add New</h3>
-        <h6>Title</h6>
-        <input
-          className="text-black"
-          type="text"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
-        <h6>Description</h6>
-        <textarea
-          className="text-black"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
+      <DialogTitle>{conEvent?.id ? "Endre" : "Legg til"}</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            id="title"
+            label="Tittel"
+            type="text"
+            fullWidth
+            variant="standard"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <TextField
+            margin="dense"
+            id="description"
+            label="Beskrivelse"
+            type="text"
+            fullWidth
+            multiline
+            variant="standard"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </DialogContent>
+      <DialogActions>
       {conEvent?.id
-        ? <Button onClick={() => editEvent(conEvent)}>Edit</Button>
-        : <Button onClick={() => addSchool()}>Submit</Button>
+        ? <Button onClick={() => editEvent(conEvent)}>Endre</Button>
+        : <Button onClick={() => addSchool()}>Legg til</Button>
       }
-      <Button onClick={handleClose}>Cancel</Button>
+      <Button onClick={handleClose}>Lukk</Button>
+      </DialogActions>
     </Dialog>
   );
 };

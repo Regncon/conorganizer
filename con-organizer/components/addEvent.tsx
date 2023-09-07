@@ -13,8 +13,6 @@ const AddEvent = () => {
 
   return (
     <>
-      <EditDialog open={open} handleClose={handleClose} />
-
       <IconButton
         className="fixed right-0 bottom-0"
         aria-label="add"
@@ -26,6 +24,7 @@ const AddEvent = () => {
       >
         <AddCircleIcon />
       </IconButton>
+      <EditDialog open={open} handleClose={handleClose} />
     </>
   );
 };

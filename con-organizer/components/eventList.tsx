@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button } from "../lib/mui";
+import { Box } from "../lib/mui";
 import React, { useEffect, useState } from "react";
 import {
   onSnapshot,
@@ -38,7 +38,7 @@ const EventList = () => {
   } , [conEvents]);
 
   return (
-      <Box className="gap-4" >
+      <Box className="flex flex-row flex-wrap justify-center gap-4">
         {loading ? <h1>Loading...</h1> : null}
         {conEvents.map((conEvent) => (
             <EventUi key={conEvent.id} colletionRef={colletionRef} conEvent={conEvent} />
