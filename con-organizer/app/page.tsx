@@ -16,7 +16,7 @@ export default function Home() {
         <AuthProvider>
           <Login />
           <Welcome />
-          {/* <EventList /> */}
+          <EventList />
           <Experiment />
           <AddEvent />
         </AuthProvider>

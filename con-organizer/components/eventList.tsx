@@ -22,9 +22,9 @@ const EventList = () => {
     setLoading(true);
     const unsub = onSnapshot(colletionRef, (querySnapshot) => {
       const items = [] as ConEvent[];
-      console.log(items, "items");
-      querySnapshot.forEach((doc) => {
-        items.push(doc.data());
+      querySnapshot.forEach((doc) => {  
+        items.push(doc.data() as ConEvent);
+        items[items.length - 1].id = doc.id;
       });
       setconEvents(items);
       setLoading(false);
