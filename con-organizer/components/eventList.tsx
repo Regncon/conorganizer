@@ -42,6 +42,7 @@ const EventList = () => {
         {loading ? <h1>Loading...</h1> : null}
         {conEvents.map((conEvent) => (
             <EventUi key={conEvent.id} colletionRef={colletionRef} conEvent={conEvent} />
+            <h1>Hei Gerhard, dette er testen til Christer, du fant den!</h1>
         ))}
       </Box>
   );
