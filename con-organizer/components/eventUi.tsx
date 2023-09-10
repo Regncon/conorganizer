@@ -2,11 +2,13 @@
 
 import React from "react";
 import Typography from "@mui/material/Typography";
-import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormControlLabelProps, styled, useRadioGroup, Box, Card, CardHeader, CardContent, CardMedia, Button, CardActions } from "@mui/material";
-import EditDialog from "./editDialog";
+import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormControlLabelProps, styled, useRadioGroup, Box, Card, CardHeader, CardContent, CardMedia, Button, CardActions, Chip, Collapse, IconButton } from "@mui/material";
 import { CollectionReference, DocumentData } from "firebase/firestore";
 import { ConEvent } from "@/lib/types";
 import parse from 'html-react-parser';
+import { faDiceD20 } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import CloseIcon from '@mui/icons-material/Close';
 
 interface Props {
   conEvent: ConEvent;
@@ -14,8 +16,9 @@ interface Props {
 }
 
 
-const EventUi = (props: Props) => {
+const EventUi = ({ conEvent, colletionRef }: Props) => {
   const [open, setOpen] = React.useState(false);
+  const [expanded, setExpanded] = React.useState(false);
 
   interface StyledFormControlLabelProps extends FormControlLabelProps {
     checked: boolean;
@@ -47,24 +50,59 @@ const EventUi = (props: Props) => {
 
 
   return (
-    <Box className="event-ui">
-      <EditDialog conEvent={props.conEvent} colletionRef={props.colletionRef} open={open} handleClose={handleClose} />
-      <Card>
+    <Card>
+      <Box onClick={() => {
+        setExpanded(true);
+      }} >
+
         <CardHeader
-          title={props.conEvent?.title}
-          subheader="Rom 222, Søndag kl 12:00 til 16:00"
+          sx="padding-bottom: 0.5rem;"
+          title={conEvent?.title}
+          subheader="Kjempebra spennende event."
         />
-        <CardMedia
-          component="img"
-          height="194"
-          image="/placeholder.jpg"
-          alt={props.conEvent?.title}
-        />
-        <CardContent>
-          <Typography>
-            {parse(props.conEvent?.description || "")}
-          </Typography>
-        </CardContent>
+
+        <Box className="flex justify-start pb-4">
+          <CardMedia
+            className="ml-4"
+            sx="width: 40%; max-height: 130px"
+            component="img"
+            image="/placeholder.jpg"
+            alt={conEvent?.title}
+          />
+          <Box
+            className="flex flex-col pl-4 pr-4" >
+            <span>
+
+              <Chip icon={<FontAwesomeIcon icon={faDiceD20} />}
+                label="Rollespill"
+                size="small"
+                variant="outlined"
+              />
+            </span>
+            <span>DnD 5e </span>                <span>
+              Rom 222,
+            </span>
+            <span>
+              Søndag: 12:00 - 16:00
+            </span>
+          </Box>
+        </Box>
+      </Box>
+      <Collapse
+        in={expanded}
+      >
+        <hr />
+        <IconButton aria-label="lukk" 
+        sx="background-color: gray;"
+        onClick={() => {setExpanded(false)}}
+        >
+        <CloseIcon />
+      </IconButton>
+
+        <Typography>
+          {parse(conEvent?.description || "")}
+        </Typography>
+
         <hr />
         <CardContent>
           <FormControl className="p-4">
@@ -88,8 +126,8 @@ const EventUi = (props: Props) => {
             setOpen(true);
           }}>Endre</Button>
         </CardActions>
-      </Card>
-    </Box>
+      </Collapse>
+    </Card>
   );
 };
 

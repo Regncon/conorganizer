@@ -43,7 +43,8 @@ const Login = () => {
 
   return (
     <>
-      <h1>Login</h1>
+
+       <h1>Login</h1>
       <div className="inputBox">
         <h3>Login/Register</h3>
         <input
@@ -63,7 +64,7 @@ const Login = () => {
         <button onClick={register}>Register</button>
         <button onClick={login}>Login</button>
         <button onClick={logOut}>Log Out</button>
-      </div>
+      </div> 
     </>
   );
 };
