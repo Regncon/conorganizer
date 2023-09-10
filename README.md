@@ -9,9 +9,6 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 ### Must haves Mvp
 
 #### Display
-* Get event from database
-* Add new event
-* Edit event
 * Add days
 * Add timeslots
 * Unlist event
@@ -39,4 +36,7 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 
 
 ## Done
+* Get event from database
+* Add new event
+* Edit event
 
