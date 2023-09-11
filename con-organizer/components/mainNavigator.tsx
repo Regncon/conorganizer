@@ -31,7 +31,7 @@ const MainNavigator = () => {
         <BottomNavigationAction label="Glemt passord" icon={<PasswordIcon />} onClick={()=>setChoice("newpassword")} />
         {/* <BottomNavigationAction label="Kj&oslash;p billett" icon={<LocalActivity />} /> */}
         <Dialog open={!!choice}>
-          {choice === "login" ? <Login setChoice={setChoice} /> : <ForgotPassword /> }
+          {choice === "login" ? <Login setChoice={setChoice} /> : <ForgotPassword setChoice={setChoice} /> }
         </Dialog>
       </BottomNavigation>
     </Box>

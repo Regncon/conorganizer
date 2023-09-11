@@ -2,9 +2,7 @@
 
 import React, { useState } from "react";
 import {
-  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signOut,
 } from "firebase/auth";
 import { auth } from "../lib/firebase";
 import Box from "@mui/material/Box";
@@ -12,23 +10,12 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import { Alert } from "@mui/material";
 
-const Login = (props) => {
+const Login = (props: any) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
   const {setChoice} = props;
-
-  const register = () => {
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        resetInput();
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  };
-
   const login = () => {
     signInWithEmailAndPassword(auth, email, password)
       .then(() => {
@@ -40,18 +27,14 @@ const Login = (props) => {
         setError("Klarte ikke logge inn, ta kontakt hvis problemet vedvarer! Tekniske detaljer: " + err.message);
       });
   };
-
-  const logOut = () => {
-    signOut(auth);
-  };
-
   const resetInput = () => {
     setEmail("");
     setPassword("");
   };
   return (
-    <Box p={5} maxWidth={600} display={"grid"} justifyItems={"center"} gap={2}>
+    <Box p={5} maxWidth={600} display={"grid"} justifyItems={"center"} gap={1}>
       <img src="/img/regnconlogony.png" alt="årets regncondrage" width={200} />
+      <br />
       <TextField
         label="e-post"
         value={email}
@@ -64,8 +47,8 @@ const Login = (props) => {
         onChange={(e) => setPassword(e.target.value)}
         fullWidth
       />
-      <Button variant="contained" mt={2} size="large" fullWidth onClick={login}>Logg inn</Button>
-      <Button variant="outlined" mt={2} size="large" fullWidth onClick={()=>setChoice("")}>Avbryt</Button>
+      <Button variant="contained" size="large" fullWidth onClick={login}>Logg inn</Button>
+      <Button variant="outlined" size="large" fullWidth onClick={()=>setChoice("")}>Avbryt</Button>
       { !!success && <Alert severity="success">{success}</Alert> }
       { !!error && <Alert severity="error">{error}</Alert> }
 
