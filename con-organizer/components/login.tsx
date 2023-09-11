@@ -12,11 +12,12 @@ import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import { Alert } from "@mui/material";
 
-const Login = () => {
+const Login = (props) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const {setChoice} = props;
 
   const register = () => {
     createUserWithEmailAndPassword(auth, email, password)
@@ -64,6 +65,7 @@ const Login = () => {
         fullWidth
       />
       <Button variant="contained" mt={2} size="large" fullWidth onClick={login}>Logg inn</Button>
+      <Button variant="outlined" mt={2} size="large" fullWidth onClick={()=>setChoice("")}>Avbryt</Button>
       { !!success && <Alert severity="success">{success}</Alert> }
       { !!error && <Alert severity="error">{error}</Alert> }
 
