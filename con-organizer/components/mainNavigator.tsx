@@ -13,7 +13,7 @@ const MainNavigator = () => {
   const [value, setValue] = React.useState(0);
 
   return (
-    <Box>
+    <Box sx={{bottom:0, position:"fixed", width:"100%"}}>
       <BottomNavigation
         showLabels
         value={value}
@@ -21,7 +21,7 @@ const MainNavigator = () => {
           setValue(newValue);
         }}
       >
-        <BottomNavigationAction label="Profil" icon={<AccountCircleIcon />} />
+        <BottomNavigationAction label="Logg inn" icon={<AccountCircleIcon />} />
       </BottomNavigation>
     </Box>
   );

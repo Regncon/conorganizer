@@ -11,7 +11,7 @@ import EventUi from "./eventUi";
 import { ConEvent } from "@/lib/types";
 import { faDiceD20 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import parse from 'html-react-parser';
+// import parse from 'html-react-parser';
 
 
 interface Props { }
@@ -43,7 +43,7 @@ const EventList = () => {
   }, [conEvents]);
 
   return (
-    <Box className="flex flex-row flex-wrap justify-center gap-4">
+    <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20">
       {loading ? <h1>Loading...</h1> : null}
       {conEvents.map((conEvent) => (
         <>
