@@ -1,15 +1,33 @@
-"use client";
-
-import React from "react";
-import Typography from "@mui/material/Typography";
-import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormControlLabelProps, styled, useRadioGroup, Box, Card, CardHeader, CardContent, CardMedia, Button, CardActions, Chip, Collapse, IconButton } from "@mui/material";
-import { CollectionReference, DocumentData } from "firebase/firestore";
-import { ConEvent } from "@/lib/types";
-import parse from 'html-react-parser';
-import { faDiceD20 } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+'use client';
+import React from 'react';
+import { faDiceD20 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import CloseIcon from '@mui/icons-material/Close';
-
+import {
+    Box,
+    Button,
+    Card,
+    CardActions,
+    CardContent,
+    CardHeader,
+    CardMedia,
+    Chip,
+    Collapse,
+    FormControl,
+    FormControlLabel,
+    FormControlLabelProps,
+    FormLabel,
+    IconButton,
+    Radio,
+    RadioGroup,
+    styled,
+    useRadioGroup,
+} from '@mui/material';
+import Typography from '@mui/material/Typography';
+import { CollectionReference, DocumentData } from 'firebase/firestore';
+import parse from 'html-react-parser';
+import { useRouter } from 'next/navigation';
+import { ConEvent } from '@/lib/types';
 
 interface Props {
     conEvent: ConEvent;
@@ -22,6 +40,7 @@ const EventUi = ({ conEvent, colletionRef }: Props) => {
     interface StyledFormControlLabelProps extends FormControlLabelProps {
         checked: boolean;
     }
+    const { push } = useRouter();
 
     const StyledFormControlLabel = styled((props: StyledFormControlLabelProps) => <FormControlLabel {...props} />)(
         ({ theme, checked }) => ({
@@ -52,7 +71,7 @@ const EventUi = ({ conEvent, colletionRef }: Props) => {
             <Box
                 onClick={() => {
                     console.log('i clicked');
-                    window.location.assign(`/event/${conEvent.id}`);
+                    push(`/event/${conEvent.id}`);
                 }}
             >
                 <CardHeader
