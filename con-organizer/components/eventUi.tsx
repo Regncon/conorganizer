@@ -2,23 +2,21 @@
 
 import React from "react";
 import Typography from "@mui/material/Typography";
-import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormControlLabelProps, styled, useRadioGroup, Box, Card, CardHeader, CardContent, CardMedia, Button, CardActions, Chip, Collapse, IconButton } from "@mui/material";
-import { CollectionReference, DocumentData } from "firebase/firestore";
+import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormControlLabelProps, styled, useRadioGroup, Box, Card, CardHeader, CardContent, CardMedia, Button, CardActions, Chip, Collapse, IconButton, Divider } from "@mui/material";
 import { ConEvent } from "@/lib/types";
 import parse from 'html-react-parser';
 import { faDiceD20 } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import CloseIcon from '@mui/icons-material/Close';
+import EventHeader from "./eventHeader";
 
 
 interface Props {
     conEvent: ConEvent;
-    colletionRef: CollectionReference<DocumentData, DocumentData>;
 }
 
-const EventUi = ({ conEvent, colletionRef }: Props) => {
-    const [open, setOpen] = React.useState(false);
-    const [expanded, setExpanded] = React.useState(false);
+const EventUi = ({ conEvent }: Props) => {
+
     interface StyledFormControlLabelProps extends FormControlLabelProps {
         checked: boolean;
     }
@@ -43,101 +41,41 @@ const EventUi = ({ conEvent, colletionRef }: Props) => {
         return <StyledFormControlLabel checked={checked} {...props} />;
     }
 
-    const handleClose = () => {
-        setOpen(false);
-    };
-
     return (
-        <Card>
-            <Box
-                onClick={() => {
-                    console.log('i clicked');
-                    window.location.assign(`/event/${conEvent.id}`);
-                }}
-            >
-                <CardHeader
-                    sx={{ paddingBottom: '0.5rem' }}
-                    title={conEvent?.title}
-                    subheader="Kjempebra spennende event."
-                />
+        <Card
+        sx={{ minHeight: '900px', maxWidth: '440px' }}>
+        <EventHeader conEvent={conEvent} />
 
-                <Box className="flex justify-start pb-4">
-                    <CardMedia
-                        className="ml-4"
-                        sx={{ width: '40%', maxHeight: '130px' }}
-                        component="img"
-                        image="/placeholder.jpg"
-                        alt={conEvent?.title}
-                    />
-                    <Box className="flex flex-col pl-4 pr-4">
-                        <span>
-                            <Chip
-                                icon={<FontAwesomeIcon icon={faDiceD20} />}
-                                label="Rollespill"
-                                size="small"
-                                variant="outlined"
-                            />
-                        </span>
-                        <span>DnD 5e </span> <span>Rom 222,</span>
-                        <span>Søndag: 12:00 - 16:00</span>
-                    </Box>
-                </Box>
-            </Box>
-            <Collapse in={expanded}>
-                <hr />
-                <IconButton
-                    aria-label="lukk"
-                    sx={{ backgroundColor: 'gray' }}
-                    onClick={() => {
-                        setExpanded(false);
-                    }}
+        <Divider />
+        <Typography className='pl-4 pr-4'>{parse(conEvent?.description || '')}</Typography>
+
+        <Divider />
+        <CardContent>
+            <FormControl className="p-4">
+                <FormLabel id="demo-row-radio-buttons-group-label">Puljepåmelding</FormLabel>
+                <RadioGroup
+                    row
+                    aria-labelledby="demo-row-radio-buttons-group-label"
+                    name="row-radio-buttons-group"
+                    defaultValue="NotInterested"
                 >
-                    <CloseIcon />
-                </IconButton>
-
-                <Typography>{parse(conEvent?.description || '')}</Typography>
-
-                <hr />
-                <CardContent>
-                    <FormControl className="p-4">
-                        <FormLabel id="demo-row-radio-buttons-group-label">Puljepåmelding</FormLabel>
-                        <RadioGroup
-                            row
-                            aria-labelledby="demo-row-radio-buttons-group-label"
-                            name="row-radio-buttons-group"
-                            defaultValue="NotInterested"
-                        >
-                            <MyFormControlLabel
-                                value="NotInterested"
-                                control={<Radio size="small" />}
-                                label="Ikke intresert"
-                            />
-                            <MyFormControlLabel
-                                value="IfIHaveTo"
-                                control={<Radio size="small" />}
-                                label="Hvis jeg må"
-                            />
-                            <MyFormControlLabel value="IWantTo" control={<Radio size="small" />} label="Har lyst" />
-                            <MyFormControlLabel
-                                value="RealyWantTo"
-                                control={<Radio size="small" />}
-                                label="Har veldig lyst"
-                            />
-                        </RadioGroup>
-                    </FormControl>
-                </CardContent>
-                <hr />
-                <CardActions>
-                    <Button
-                        onClick={() => {
-                            setOpen(true);
-                        }}
-                    >
-                        Endre
-                    </Button>
-                </CardActions>
-            </Collapse>
-        </Card>
+                    <MyFormControlLabel
+                        value="NotInterested"
+                        control={<Radio size="small" />}
+                        label="Ikke intresert"
+                    />
+                    <MyFormControlLabel value="IfIHaveTo" control={<Radio size="small" />} label="Hvis jeg må" />
+                    <MyFormControlLabel value="IWantTo" control={<Radio size="small" />} label="Har lyst" />
+                    <MyFormControlLabel
+                        value="RealyWantTo"
+                        control={<Radio size="small" />}
+                        label="Har veldig lyst"
+                    />
+                </RadioGroup>
+            </FormControl>
+        </CardContent>
+        <Divider />
+    </Card>
     );
 };
 

@@ -1,21 +1,17 @@
 "use client";
 
-import { Box } from '../lib/mui';
+import { Box, Card } from '../lib/mui';
 import React, { useEffect, useState } from 'react';
 import { onSnapshot, collection } from 'firebase/firestore';
 import db from '../lib/firebase';
-import EventUi from './eventUi';
 import { ConEvent } from '@/lib/types';
+import EventHeader from './eventHeader';
 
-// import parse from 'html-react-parser';
-
-interface Props {}
 
 const EventList = () => {
     const colletionRef = collection(db, 'schools');
     const [conEvents, setconEvents] = useState([] as ConEvent[]);
     const [loading, setLoading] = useState(false);
-    const [expanded, setExpanded] = React.useState(false);
 
     useEffect(() => {
         setLoading(true);
@@ -33,14 +29,18 @@ const EventList = () => {
         };
     }, []);
 
-    // useEffect(() => {}, [conEvents]);
-
     return (
         <Box className='flex flex-row flex-wrap justify-center gap-4 mb-20'>
             {loading ? <h1>Loading...</h1> : null}
             {conEvents.map((conEvent) => (
 
-                    <EventUi key={conEvent.id} colletionRef={colletionRef} conEvent={conEvent}  />
+                <Card key={conEvent.id}
+                    onClick={() => {
+                        window.location.assign(`/event/${conEvent.id}`);
+                    }}
+                >
+                    <EventHeader conEvent={conEvent} />
+                </Card>
 
             ))}
         </Box>

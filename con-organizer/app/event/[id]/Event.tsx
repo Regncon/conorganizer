@@ -29,6 +29,9 @@ import { useState, useEffect } from 'react';
 import db from '../../../lib/firebase';
 import parse from 'html-react-parser';
 import CloseIcon from '@mui/icons-material/Close';
+import { Edit } from '@mui/icons-material';
+import EditDialog from '@/components/editDialog';
+import EventUi from '@/components/eventUi';
 
 type Props = { id: string };
 
@@ -36,6 +39,8 @@ const Event = ({ id }: Props) => {
     const colletionRef = collection(db, 'schools');
     const [conEvents, setconEvents] = useState([] as ConEvent[]);
     const [loading, setLoading] = useState(false);
+    const [openEdit, setOpenEdit] = useState(false);
+
     useEffect(() => {
         setLoading(true);
         const unsub = onSnapshot(colletionRef, (querySnapshot) => {
@@ -52,94 +57,28 @@ const Event = ({ id }: Props) => {
         };
     }, []);
 
-    interface StyledFormControlLabelProps extends FormControlLabelProps {
-        checked: boolean;
+    const handleCloseEdit = () => {
+        setOpenEdit(false);
     }
 
-    const StyledFormControlLabel = styled((props: StyledFormControlLabelProps) => <FormControlLabel {...props} />)(
-        ({ theme, checked }) => ({
-            '.MuiFormControlLabel-label': checked && {
-                color: theme.palette.primary.main,
-            },
-        })
-    );
-    function MyFormControlLabel(props: FormControlLabelProps) {
-        const radioGroup = useRadioGroup();
-
-        let checked = false;
-
-        if (radioGroup) {
-            checked = radioGroup.value === props.value;
-        }
-
-        return <StyledFormControlLabel checked={checked} {...props} />;
+    const handleOpenEdit = () => { 
+        setOpenEdit(true);
     }
+
     const conEvent = conEvents.find((conEvent) => conEvent.id === id);
     return (
+        <>
+        <EditDialog open={openEdit} handleClose={handleCloseEdit} colletionRef={colletionRef} conEvent={conEvent} /> 
+        
+        <EventUi conEvent={conEvent}/>
+
         <Card>
-            <Box>
-                <CardHeader
-                    sx={{ paddingBottom: '0.5rem' }}
-                    title={conEvent?.title}
-                    subheader="Kjempebra spennende event."
-                />
-
-                <Box className="flex justify-start pb-4">
-                    <CardMedia
-                        className="ml-4"
-                        sx={{ width: '40%', maxHeight: '130px' }}
-                        component="img"
-                        image="/placeholder.jpg"
-                        alt={conEvent?.title}
-                    />
-                    <Box className="flex flex-col pl-4 pr-4">
-                        <span>
-                            <Chip
-                                icon={<FontAwesomeIcon icon={faDiceD20} />}
-                                label="Rollespill"
-                                size="small"
-                                variant="outlined"
-                            />
-                        </span>
-                        <span>DnD 5e </span> <span>Rom 222,</span>
-                        <span>Søndag: 12:00 - 16:00</span>
-                    </Box>
-                </Box>
-            </Box>
-
-            <Divider />
-            <Typography>{parse(conEvent?.description || '')}</Typography>
-
-            <Divider />
-            <CardContent>
-                <FormControl className="p-4">
-                    <FormLabel id="demo-row-radio-buttons-group-label">Puljepåmelding</FormLabel>
-                    <RadioGroup
-                        row
-                        aria-labelledby="demo-row-radio-buttons-group-label"
-                        name="row-radio-buttons-group"
-                        defaultValue="NotInterested"
-                    >
-                        <MyFormControlLabel
-                            value="NotInterested"
-                            control={<Radio size="small" />}
-                            label="Ikke intresert"
-                        />
-                        <MyFormControlLabel value="IfIHaveTo" control={<Radio size="small" />} label="Hvis jeg må" />
-                        <MyFormControlLabel value="IWantTo" control={<Radio size="small" />} label="Har lyst" />
-                        <MyFormControlLabel
-                            value="RealyWantTo"
-                            control={<Radio size="small" />}
-                            label="Har veldig lyst"
-                        />
-                    </RadioGroup>
-                </FormControl>
-            </CardContent>
-            <Divider />
-            <CardActions>
-                <Button>Endre</Button>
-            </CardActions>
+        <CardActions>
+            <Button onClick={handleOpenEdit}
+            >Endre</Button>
+        </CardActions>
         </Card>
+    </>
     );
 };
 

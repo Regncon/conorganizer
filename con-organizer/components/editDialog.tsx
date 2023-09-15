@@ -10,7 +10,7 @@ import {
   DocumentData,
   updateDoc,
 } from "firebase/firestore";
-import { Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, TextField } from "@mui/material";
 import { ConEvent } from "@/lib/types";
 
 
@@ -21,7 +21,7 @@ interface Props {
   handleClose: () => void;
 }
 
-const EditDialog = ( { open, conEvent, colletionRef, handleClose }: Props) => {  
+const EditDialog = ({ open, conEvent, colletionRef, handleClose }: Props) => {
 
   const [title, setTitle] = useState(conEvent?.title || "");
   const [description, setDescription] = useState(conEvent?.description || "");
@@ -45,7 +45,7 @@ const EditDialog = ( { open, conEvent, colletionRef, handleClose }: Props) => {
 
   async function editEvent(conEvent: ConEvent) {
     const updatedSchool = {
-      title : title,
+      title: title,
       description: description,
       lastUpdate: serverTimestamp(),
     };
@@ -60,12 +60,12 @@ const EditDialog = ( { open, conEvent, colletionRef, handleClose }: Props) => {
 
   return (
     <Dialog
-      onClose={() => {
-        handleClose();
-      }}
       open={open}
     >
-      <DialogTitle>{conEvent?.id ? "Endre" : "Legg til"}</DialogTitle>
+      <Box
+        sx={{ width: "900px", height: "900px" }}
+      >
+        <DialogTitle>{conEvent?.id ? "Endre" : "Legg til"}</DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -90,13 +90,14 @@ const EditDialog = ( { open, conEvent, colletionRef, handleClose }: Props) => {
             onChange={(e) => setDescription(e.target.value)}
           />
         </DialogContent>
-      <DialogActions>
-      {conEvent?.id
-        ? <Button onClick={() => editEvent(conEvent)}>Endre</Button>
-        : <Button onClick={() => addSchool()}>Legg til</Button>
-      }
-      <Button onClick={handleClose}>Lukk</Button>
-      </DialogActions>
+        <DialogActions>
+          {conEvent?.id
+            ? <Button onClick={() => editEvent(conEvent)}>Endre</Button>
+            : <Button onClick={() => addSchool()}>Legg til</Button>
+          }
+          <Button onClick={handleClose}>Lukk</Button>
+        </DialogActions>
+      </Box>
     </Dialog>
   );
 };
