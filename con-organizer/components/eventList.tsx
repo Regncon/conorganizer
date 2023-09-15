@@ -1,14 +1,13 @@
 "use client";
 
 import { Box } from '../lib/mui';
-import React, { useEffect, useState } from 'react';
+import React, { use, useEffect, useState } from 'react';
 import { onSnapshot, collection } from 'firebase/firestore';
 import db from '../lib/firebase';
 import EventUi from './eventUi';
 import { ConEvent } from '@/lib/types';
 
 // import parse from 'html-react-parser';
-
 interface Props {}
 
 const EventList = () => {

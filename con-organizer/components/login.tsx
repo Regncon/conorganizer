@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { MouseEvent, useState } from 'react';
 import { Alert } from '@mui/material';
@@ -42,11 +42,18 @@ const Login = (props: any) => {
         setPassword('');
     };
     return (
-        <Box p={5} maxWidth={600} display={'grid'} justifyItems={'center'} gap={1}>
+        <Box p={5} maxWidth={600} display="flex" justifyItems="center">
             <img src="/img/regnconlogony.png" alt="årets regncondrage" width={200} />
             <form action={''}>
-                <TextField label="e-post" value={email} onChange={(e) => setEmail(e.target.value)} fullWidth />
                 <TextField
+                    label="e-post"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    fullWidth
+                    sx={{ margin: '.5rem 0' }}
+                />
+                <TextField
+                    sx={{ margin: '.5rem 0' }}
                     label="passord"
                     name="password"
                     value={password}
