@@ -4,7 +4,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 export const AuthContext = createContext<User | null>(null);
 type Props = {
-    children: JSX.Element;
+    children: JSX.Element[];
 };
 export function useAuth() {
     return useContext(AuthContext);
@@ -13,7 +13,6 @@ export function useAuth() {
 export const AuthProvider = ({ children }: Props) => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
-    console.log(currentUser, 'AuthProvider');
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {

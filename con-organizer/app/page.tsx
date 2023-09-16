@@ -10,13 +10,13 @@ export default function Home() {
     return (
         <main className="">
             <ThemeProvider theme={muiLight}>
-                <DayTab />
-                <Box className="flex flex-row flex-wrap justify-center gap-4">
-                    <AuthProvider>
+                <AuthProvider>
+                    <DayTab />
+                    <Box className="flex flex-row flex-wrap justify-center gap-4">
                         <EventList />
-                    </AuthProvider>
-                </Box>
-                <MainNavigator />
+                    </Box>
+                    <MainNavigator />
+                </AuthProvider>
             </ThemeProvider>
         </main>
     );
