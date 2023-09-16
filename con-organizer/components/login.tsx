@@ -53,7 +53,7 @@ const Login = (props: any) => {
     };
     return (
         <Card>
-            <Box p={5} maxWidth={400} display="grid" justifyItems="center" gap={2}>
+            <Box p={4} maxWidth={400} display="grid" justifyItems="center" gap={2}>
                 <CardMedia
                     component="img"
                     image="/img/regnconlogony.png"
