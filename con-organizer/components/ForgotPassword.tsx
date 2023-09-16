@@ -1,12 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { Alert, IconButton } from '@mui/material';
+import { Alert, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import InputAdornment from '@mui/material/InputAdornment';
 import TextField from '@mui/material/TextField';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../lib/firebase';
@@ -16,11 +13,6 @@ const ForgotPassword = (props: any) => {
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
     const { setChoice } = props;
-    const [showPassword, setShowPassword] = useState(false);
-    const handleClickShowPassword = () => setShowPassword((show) => !show);
-    const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
-        event.preventDefault();
-    };
     const resetPwd = () => {
         sendPasswordResetEmail(auth, email)
             .then(() => {
@@ -50,30 +42,17 @@ const ForgotPassword = (props: any) => {
     };
     return (
         <Box p={5} maxWidth={600} display={'grid'} justifyItems={'center'} gap={1}>
-            <h1>Glemt/endre passord</h1>
+            <Typography variant="h6">Send e-post for &aring; endre passord</Typography>
             <TextField
                 label="e-post"
                 id="outlined-adornment-password"
                 name="new-password"
                 value={email}
-                type={showPassword ? 'text' : 'password'}
-                endAdornment={
-                    <InputAdornment position="end">
-                        <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={handleClickShowPassword}
-                            onMouseDown={handleMouseDownPassword}
-                            edge="end"
-                        >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                        </IconButton>
-                    </InputAdornment>
-                }
                 onChange={(e) => setEmail(e.target.value)}
                 fullWidth
             />
             <Button variant="contained" size="large" fullWidth onClick={resetPwd}>
-                Send!
+                Send e-post!
             </Button>
             <Button variant="outlined" size="large" fullWidth onClick={() => setChoice('')}>
                 Avbryt
