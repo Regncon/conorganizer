@@ -29,7 +29,7 @@ const Event = ({ id }: Props) => {
         return () => {
             unSub();
         };
-    }, [collectionRef]);
+    }, []);
 
     const handleCloseEdit = () => {
         setOpenEdit(false);

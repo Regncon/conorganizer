@@ -7,7 +7,7 @@ import { ConEvent } from "@/lib/types";
 import EventHeader from "./eventHeader";
 
 
-interface Props {
+type Props = {
     conEvent: ConEvent;
     showSelect?: boolean;
 }

@@ -6,7 +6,7 @@ import { Card, IconButton } from '@mui/material';
 import { CollectionReference, DocumentData } from 'firebase/firestore';
 import EditDialog from './editDialog';
 
-interface Props {
+type Props = {
     collectionRef: CollectionReference<DocumentData, DocumentData>;
 }
 
