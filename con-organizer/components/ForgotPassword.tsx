@@ -51,7 +51,7 @@ const ForgotPassword = (props: any) => {
                 onChange={(e) => setEmail(e.target.value)}
                 fullWidth
             />
-            <Button variant="contained" size="large" fullWidth onClick={resetPwd}>
+            <Button variant="contained" color="primary" size="large" fullWidth onClick={resetPwd}>
                 Send e-post!
             </Button>
             <Button variant="outlined" size="large" fullWidth onClick={() => setChoice('')}>

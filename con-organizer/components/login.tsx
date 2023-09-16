@@ -93,6 +93,7 @@ const Login = (props: any) => {
                     />
                     <Button
                         variant="contained"
+                        color="primary"
                         size="large"
                         type="submit"
                         fullWidth
