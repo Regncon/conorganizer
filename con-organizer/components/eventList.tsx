@@ -7,6 +7,8 @@ import db from '../lib/firebase';
 import { ConEvent } from '@/lib/types';
 import EventHeader from './eventHeader';
 
+// import parse from 'html-react-parser';
+interface Props {}
 
 const EventList = () => {
     const colletionRef = collection(db, 'schools');

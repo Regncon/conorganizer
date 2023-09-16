@@ -2,12 +2,9 @@
 
 import React from "react";
 import Typography from "@mui/material/Typography";
-import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormControlLabelProps, styled, useRadioGroup, Box, Card, CardHeader, CardContent, CardMedia, Button, CardActions, Chip, Collapse, IconButton, Divider } from "@mui/material";
+import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormControlLabelProps, styled, useRadioGroup, Card, CardContent, Divider } from "@mui/material";
 import { ConEvent } from "@/lib/types";
 import parse from 'html-react-parser';
-import { faDiceD20 } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import CloseIcon from '@mui/icons-material/Close';
 import EventHeader from "./eventHeader";
 
 
