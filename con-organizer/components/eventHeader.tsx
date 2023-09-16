@@ -1,23 +1,17 @@
-import React from "react";
-import { Box, CardHeader, CardMedia, Chip } from "@mui/material";
-import { ConEvent } from "@/lib/types";
-import { faDiceD20 } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
+import React from 'react';
+import { Box, CardHeader, CardMedia, Chip } from '@mui/material';
+import { ConEvent } from '@/lib/types';
+import { faDiceD20 } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 interface Props {
     conEvent: ConEvent;
 }
 
 const EventHeader = ({ conEvent }: Props) => {
-
     return (
         <>
-            <CardHeader
-                sx={{ paddingBottom: '0.5rem' }}
-                title={conEvent?.title}
-                subheader="Kjempebra spennende event."
-            />
+            <CardHeader sx={{ paddingBottom: '0.5rem' }} title={conEvent?.title} subheader={conEvent?.subtitle} />
 
             <Box className="flex justify-start pb-4">
                 <CardMedia
