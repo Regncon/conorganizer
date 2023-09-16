@@ -1,12 +1,12 @@
 'use client';
 
-import { Button } from '../lib/mui';
-import React, { useEffect, useState } from 'react';
-import { doc, setDoc, serverTimestamp, CollectionReference, DocumentData, updateDoc } from 'firebase/firestore';
-import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, TextField } from '@mui/material';
-import { ConEvent } from '@/lib/types';
-import EventUi from './eventUi';
+import { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, TextField } from '@mui/material';
+import { CollectionReference, doc, DocumentData, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { ConEvent } from '@/lib/types';
+import { Button } from '../lib/mui';
+import EventUi from './eventUi';
 
 interface Props {
     open: boolean;

@@ -1,23 +1,20 @@
 "use client";
 
-import { Box, Card } from '../lib/mui';
-import React, { useEffect, useState } from 'react';
-import { onSnapshot, collection } from 'firebase/firestore';
-import db from '../lib/firebase';
+import { useEffect, useState } from 'react';
+import { collection,onSnapshot } from 'firebase/firestore';
 import { ConEvent } from '@/lib/types';
+import db from '../lib/firebase';
+import { Box, Card } from '../lib/mui';
 import EventHeader from './eventHeader';
 
-// import parse from 'html-react-parser';
-interface Props {}
-
 const EventList = () => {
-    const colletionRef = collection(db, 'schools');
+    const collectionRef = collection(db, 'schools');
     const [conEvents, setconEvents] = useState([] as ConEvent[]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setLoading(true);
-        const unsub = onSnapshot(colletionRef, (querySnapshot) => {
+        const unsub = onSnapshot(collectionRef, (querySnapshot) => {
             const items = [] as ConEvent[];
             querySnapshot.forEach((doc) => {
                 items.push(doc.data() as ConEvent);
@@ -29,7 +26,7 @@ const EventList = () => {
         return () => {
             unsub();
         };
-    }, []);
+    }, [collectionRef]);
 
     return (
         <Box className='flex flex-row flex-wrap justify-center gap-4 mb-20'>

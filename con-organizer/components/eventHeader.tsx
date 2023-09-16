@@ -1,8 +1,7 @@
-import React from 'react';
-import { Box, CardHeader, CardMedia, Chip } from '@mui/material';
-import { ConEvent } from '@/lib/types';
 import { faDiceD20 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Box, CardHeader, CardMedia, Chip } from '@mui/material';
+import { ConEvent } from '@/lib/types';
 
 interface Props {
     conEvent: ConEvent;

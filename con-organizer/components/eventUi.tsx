@@ -1,10 +1,9 @@
 "use client";
 
-import React from "react";
+import { Card, CardContent, Divider,FormControl, FormControlLabel, FormControlLabelProps, FormLabel, Radio, RadioGroup, styled, useRadioGroup } from "@mui/material";
 import Typography from "@mui/material/Typography";
-import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio, FormControlLabelProps, styled, useRadioGroup, Card, CardContent, Divider } from "@mui/material";
-import { ConEvent } from "@/lib/types";
 import parse from 'html-react-parser';
+import { ConEvent } from "@/lib/types";
 import EventHeader from "./eventHeader";
 
 

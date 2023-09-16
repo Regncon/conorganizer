@@ -1,11 +1,11 @@
 'use client';
-import { ConEvent } from '@/lib/types';
-import { Card, CardActions, Button } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Button, Card, CardActions } from '@mui/material';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { useState, useEffect } from 'react';
-import db from '../../../lib/firebase';
 import EditDialog from '@/components/editDialog';
 import EventUi from '@/components/eventUi';
+import { ConEvent } from '@/lib/types';
+import db from '../../../lib/firebase';
 
 type Props = { id: string };
 
@@ -17,7 +17,7 @@ const Event = ({ id }: Props) => {
 
     useEffect(() => {
         setLoading(true);
-        const unsub = onSnapshot(collectionRef, (querySnapshot) => {
+        const unSub = onSnapshot(collectionRef, (querySnapshot) => {
             const items = [] as ConEvent[];
             querySnapshot.forEach((doc) => {
                 items.push(doc.data() as ConEvent);
@@ -27,9 +27,9 @@ const Event = ({ id }: Props) => {
             setLoading(false);
         });
         return () => {
-            unsub();
+            unSub();
         };
-    }, []);
+    }, [collectionRef]);
 
     const handleCloseEdit = () => {
         setOpenEdit(false);
@@ -42,6 +42,7 @@ const Event = ({ id }: Props) => {
     const conEvent = conEvents.find((conEvent) => conEvent.id === id) || ({} as ConEvent);
     return (
         <>
+            {loading && <h1>Loading...</h1> }
             <EditDialog
                 open={openEdit}
                 handleClose={handleCloseEdit}

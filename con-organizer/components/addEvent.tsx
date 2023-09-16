@@ -1,10 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Card, IconButton } from '@mui/material';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import EditDialog from './editDialog';
+import { Card, IconButton } from '@mui/material';
 import { CollectionReference, DocumentData } from 'firebase/firestore';
+import EditDialog from './editDialog';
 
 interface Props {
     collectionRef: CollectionReference<DocumentData, DocumentData>;
