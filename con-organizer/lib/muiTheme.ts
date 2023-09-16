@@ -1,13 +1,8 @@
 'use client';
 
-import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { createTheme, ThemeOptions } from '@mui/material';
 
-interface ThemeProps {
-    children: React.ReactNode;
-}
-
-export const Theme: React.FC<ThemeProps> = ({ children }) => {
-    const tema = createTheme({
+const muiLightTheme: ThemeOptions = {
         palette: {
             primary: {
                 light: '#fff',
@@ -22,7 +17,7 @@ export const Theme: React.FC<ThemeProps> = ({ children }) => {
                 contrastText: '#000',
             },
         },
-    });
+    }
+;
 
-    return <ThemeProvider theme={tema}>{children}</ThemeProvider>;
-};
+export const muiLight = createTheme(muiLightTheme);

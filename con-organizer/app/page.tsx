@@ -3,12 +3,13 @@ import { AuthProvider } from '@/components/AuthProvider';
 import DayTab from '@/components/dayTab';
 import EventList from '@/components/eventList';
 import MainNavigator from '@/components/mainNavigator';
-import { Theme } from '@/components/ThemeProvider';
+import { ThemeProvider } from '@mui/material';
+import { muiLight } from '@/lib/muiTheme';
 
 export default function Home() {
     return (
         <main className="">
-            <Theme>
+            <ThemeProvider theme={muiLight}>
                 <DayTab />
                 <Box className="flex flex-row flex-wrap justify-center gap-4">
                     <AuthProvider>
@@ -16,7 +17,7 @@ export default function Home() {
                     </AuthProvider>
                 </Box>
                 <MainNavigator />
-            </Theme>
+            </ThemeProvider>
         </main>
     );
 }
