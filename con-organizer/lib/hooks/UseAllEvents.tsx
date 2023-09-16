@@ -13,14 +13,10 @@ export const useAllEvents = () => {
     useEffect(() => {
         console.log('in useeffect');
 
-        const conEvents = collectionData<ConEvent[]>(eventRef)
-            .pipe(tap((events) => console.log('This is just an observable!')))
-            .subscribe((events) => {
-                console.log(events);
-
-                setEvents(events);
-                setLoading(false);
-            });
+        const conEvents = collectionData<ConEvent[]>(eventRef).subscribe((events) => {
+            setEvents(events);
+            setLoading(false);
+        });
 
         console.log(conEvents);
 

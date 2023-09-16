@@ -11,12 +11,10 @@ export const useSingleEvents = (id: string) => {
     const eventRef = query(collection(db, 'events'), where('id', '==', id));
 
     useEffect(() => {
-        const conEvents = collectionData<ConEvent>(eventRef)
-            .pipe(tap((event) => console.log('This is just an observable!')))
-            .subscribe((event) => {
-                setEvent(event[0]);
-                setLoading(false);
-            });
+        const conEvents = collectionData<ConEvent>(eventRef).subscribe((event) => {
+            setEvent(event[0]);
+            setLoading(false);
+        });
 
         return () => {
             conEvents.unsubscribe();
