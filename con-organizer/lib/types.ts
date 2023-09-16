@@ -1,5 +1,5 @@
-import { Timestamp } from "firebase/firestore";
-
+import { Timestamp } from 'firebase/firestore';
+import { gameType, pool } from './enums';
 
 export type ConEvent = {
     id: string;
@@ -9,6 +9,8 @@ export type ConEvent = {
     published: boolean;
     createdAt: Timestamp;
     lastUpdated: Timestamp;
-    pool: string;
-    gameType: string;
-}
+    pool: pool;
+    gameType: gameType;
+    gameSystem: string;
+    room: string
+};

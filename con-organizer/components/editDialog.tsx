@@ -22,7 +22,6 @@ import { gameType, pool } from '@/lib/enums';
 import { ConEvent } from '@/lib/types';
 import { Button } from '../lib/mui';
 import EventUi from './eventUi';
-import { type } from 'os';
 
 type Props = {
     open: boolean;
@@ -37,14 +36,21 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
     const [description, setDescription] = useState(conEvent?.description || '');
     const [showSelect, setShowSelect] = useState(true);
     const [errorMessage, setErrorMessage] = useState<string>();
-    const [published, setPublished] = useState(false);
-    const [eventPool, setEventPool] = useState(pool.none);
-    const [eventType, setEventType] = useState(gameType.none);
+    const [published, setPublished] = useState(conEvent?.published || false);
+    const [eventPool, setEventPool] = useState(conEvent?.pool || pool.none);
+    const [eventType, setEventType] = useState(conEvent?.gameType || gameType.none);
+    const [gameSystem, setGameSystem] = useState<string>(conEvent?.gameSystem || '');
+    const [room, setRoom] = useState<string>(conEvent?.room || '');
 
     useEffect(() => {
         setTitle(conEvent?.title || '');
         setDescription(conEvent?.description || '');
         setSubtitle(conEvent?.subtitle || '');
+        setPublished(conEvent?.published || false);
+        setEventPool(conEvent?.pool || pool.none);
+        setEventType(conEvent?.gameType || gameType.none);
+        setGameSystem(conEvent?.gameSystem || '');
+        setRoom(conEvent?.room || '');
     }, [conEvent]);
 
     const addevent = async () => {
@@ -53,6 +59,10 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
             description,
             subtitle,
             published: published,
+            pool: eventPool,
+            gameType: eventType,
+            room: room,
+            gameSystem: gameSystem,
             createdAt: serverTimestamp(),
             lastUpdated: serverTimestamp(),
         };
@@ -68,10 +78,15 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
 
     async function editEvent(conEvent: ConEvent) {
         const updatedevent = {
-            title: title,
-            subtitle: subtitle,
+            title,
+            description,
+            subtitle,
             published: published,
-            description: description,
+            pool: eventPool,
+            gameType: eventType,
+            room: room,
+            gameSystem: gameSystem,
+            createdAt: serverTimestamp(),
             lastUpdated: serverTimestamp(),
         };
 
@@ -84,8 +99,8 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
             setErrorMessage(error.message);
         }
     }
- 
-    console.log(conEvent, "conEvent") 
+
+    console.log(conEvent, 'conEvent');
 
     return (
         <Dialog open={open} fullWidth={true} maxWidth="md">
@@ -100,10 +115,17 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                     <DialogTitle>{conEvent?.id ? 'Endre' : 'Legg til'}</DialogTitle>
                     <Divider />
                     <DialogContent
-                        sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem' }}
-                        >
-                        <span>Opprettet: {conEvent?.createdAt ? conEvent.createdAt.toDate().toString() : ""} </span>
-                        <span>Sist endret: {conEvent?.lastUpdated ? conEvent.lastUpdated.toDate().toString() : ""} </span>
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            gap: '1rem',
+                        }}
+                    >
+                        <span>Opprettet: {conEvent?.createdAt ? conEvent.createdAt.toDate().toString() : ''} </span>
+                        <span>
+                            Sist endret: {conEvent?.lastUpdated ? conEvent.lastUpdated.toDate().toString() : ''}{' '}
+                        </span>
                         <div>
                             <Switch checked={published} onChange={() => setPublished(!published)} />
                             <span>Publisert</span>
@@ -123,6 +145,21 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                                 <MenuItem value={pool.SaturdayMorning}>{pool.SaturdayMorning}</MenuItem>
                                 <MenuItem value={pool.SaturdayAfternoon}>{pool.SaturdayAfternoon}</MenuItem>
                                 <MenuItem value={pool.SundayMorning}>{pool.SundayMorning}</MenuItem>
+                            </Select>
+                        </div>
+
+                        <div>
+                            <InputLabel id="type-select-label">Type</InputLabel>
+                            <Select
+                                labelId="type-select-label"
+                                id="type-select"
+                                value={eventType}
+                                label="Type"
+                                onChange={(e) => setEventType(e.target.value as gameType)}
+                            >
+                                <MenuItem value={gameType.none}>{gameType.none}</MenuItem>
+                                <MenuItem value={gameType.boardgame}>{gameType.boardgame}</MenuItem>
+                                <MenuItem value={gameType.roleplaying}>{gameType.roleplaying}</MenuItem>
                             </Select>
                         </div>
                     </DialogContent>
@@ -151,6 +188,28 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                             onChange={(e) => setSubtitle(e.target.value)}
                         />
                         <TextField
+                            autoFocus
+                            margin="dense"
+                            id="gameSystem"
+                            label="Spillsystem"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            value={gameSystem}
+                            onChange={(e) => setGameSystem(e.target.value)}
+                        />
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            id="room"
+                            label="Rom"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            value={room}
+                            onChange={(e) => setRoom(e.target.value)}
+                        />
+                        <TextField
                             margin="dense"
                             id="description"
                             label="Beskrivelse"
@@ -165,9 +224,13 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                     </DialogContent>
                     <DialogActions>
                         {conEvent?.id ? (
-                            <Button onClick={() => editEvent(conEvent)}>Save</Button>
+                            <Button onClick={() => editEvent(conEvent)} type="submit">
+                                Save
+                            </Button>
                         ) : (
-                            <Button onClick={() => addevent()}>Add</Button>
+                            <Button onClick={() => addevent()} type="submit">
+                                Add
+                            </Button>
                         )}
                     </DialogActions>
                     {!!errorMessage && <Alert severity="error">{errorMessage}</Alert>}

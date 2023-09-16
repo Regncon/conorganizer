@@ -1,11 +1,12 @@
-import { faDiceD20 } from '@fortawesome/free-solid-svg-icons';
+import { faChessKing, faDiceD20, faHatWizard } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, CardHeader, CardMedia, Chip } from '@mui/material';
+import { gameType } from '@/lib/enums';
 import { ConEvent } from '@/lib/types';
 
 type Props = {
     conEvent: ConEvent;
-}
+};
 
 const EventHeader = ({ conEvent }: Props) => {
     return (
@@ -22,15 +23,34 @@ const EventHeader = ({ conEvent }: Props) => {
                 />
                 <Box className="flex flex-col pl-4 pr-4">
                     <span>
-                        <Chip
-                            icon={<FontAwesomeIcon icon={faDiceD20} />}
-                            label="Rollespill"
-                            size="small"
-                            variant="outlined"
-                        />
+                        {conEvent?.gameType === gameType.roleplaying ? (
+                            <Chip
+                                icon={<FontAwesomeIcon icon={faDiceD20} />}
+                                label="Rollespill"
+                                size="small"
+                                variant="outlined"
+                            />
+                        ) : null}
+                        {conEvent?.gameType === gameType.boardgame ? (
+                            <Chip
+                                icon={<FontAwesomeIcon icon={faChessKing} />}
+                                label="Brettspill"
+                                size="small"
+                                variant="outlined"
+                            />
+                        ) : null}
+                        {conEvent?.gameType === gameType.other ? (
+                            <Chip
+                                icon={<FontAwesomeIcon icon={faHatWizard} />}
+                                label="Annet"
+                                size="small"
+                                variant="outlined"
+                            />
+                        ) : null}
                     </span>
-                    <span>DnD 5e </span> <span>Rom 222,</span>
-                    <span>Søndag: 12:00 - 16:00</span>
+                    <span>{conEvent.gameSystem} </span>
+                    <span>{conEvent.room} </span>
+                    <span>{conEvent.pool} </span>
                 </Box>
             </Box>
         </>

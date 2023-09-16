@@ -7,9 +7,9 @@ export enum pool {
     "SundayMorning" = "Søndag Morgen",
 }
 
-export enum type {
+export enum gameType {
     "none" = "Ingen",
-    "ttrpg" = "Rollespill",
+    "roleplaying" = "Rollespill",
     "boardgame" = "Brettspill",
     "other" = "Annet",
 }
