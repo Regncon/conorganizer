@@ -42,7 +42,7 @@ const Login = (props: any) => {
         setPassword('');
     };
     return (
-        <Box p={5} maxWidth={600} display="flex" justifyItems="center">
+        <Box p={5} maxWidth={600} display="grid" justifyItems="center" gap={2}>
             <img src="/img/regnconlogony.png" alt="årets regncondrage" width={200} />
             <form action={''}>
                 <TextField
@@ -50,10 +50,10 @@ const Login = (props: any) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     fullWidth
-                    sx={{ margin: '.5rem 0' }}
+                    sx={{ margin: '.3rem 0' }}
                 />
                 <TextField
-                    sx={{ margin: '.5rem 0' }}
+                    sx={{ margin: '.3rem 0' }}
                     label="passord"
                     name="password"
                     value={password}
@@ -61,10 +61,23 @@ const Login = (props: any) => {
                     onChange={(e) => setPassword(e.target.value)}
                     fullWidth
                 />
-                <Button variant="contained" size="large" type="submit" fullWidth onClick={login}>
+                <Button
+                    variant="contained"
+                    size="large"
+                    type="submit"
+                    fullWidth
+                    onClick={login}
+                    sx={{ margin: '.3rem 0' }}
+                >
                     Logg inn
                 </Button>
-                <Button variant="outlined" size="large" fullWidth onClick={() => setChoice('')}>
+                <Button
+                    variant="outlined"
+                    size="large"
+                    fullWidth
+                    onClick={() => setChoice('')}
+                    sx={{ margin: '.3rem 0' }}
+                >
                     Avbryt
                 </Button>
             </form>
