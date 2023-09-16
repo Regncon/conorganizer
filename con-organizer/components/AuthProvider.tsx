@@ -1,22 +1,27 @@
 'use client';
-import { createContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '../lib/firebase';
-export const AuthContext = createContext<Partial<User | null>>({});
+export const AuthContext = createContext<User | null>(null);
 type Props = {
     children: JSX.Element;
 };
+export function useAuth() {
+    return useContext(AuthContext);
+}
 
 export const AuthProvider = ({ children }: Props) => {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
+    console.log(currentUser, 'AuthProvider');
 
     useEffect(() => {
-        onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
             setCurrentUser(user);
             setLoading(false);
             console.log('user', user);
         });
+        return unsubscribe;
     }, []);
 
     if (loading) {
@@ -33,6 +38,5 @@ export const AuthProvider = ({ children }: Props) => {
             </div>
         );
     }
-
     return <AuthContext.Provider value={currentUser}>{children}</AuthContext.Provider>;
 };
