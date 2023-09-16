@@ -4,6 +4,7 @@ import { MouseEvent, useState } from 'react';
 import { Alert } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import { Card, CardMedia } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
@@ -42,48 +43,50 @@ const Login = (props: any) => {
         setPassword('');
     };
     return (
-        <Box p={5} maxWidth={600} display="grid" justifyItems="center" gap={2}>
-            <img src="/img/regnconlogony.png" alt="årets regncondrage" width={200} />
-            <form action={''}>
-                <TextField
-                    label="e-post"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    fullWidth
-                    sx={{ margin: '.3rem 0' }}
-                />
-                <TextField
-                    sx={{ margin: '.3rem 0' }}
-                    label="passord"
-                    name="password"
-                    value={password}
-                    type="password"
-                    onChange={(e) => setPassword(e.target.value)}
-                    fullWidth
-                />
-                <Button
-                    variant="contained"
-                    size="large"
-                    type="submit"
-                    fullWidth
-                    onClick={login}
-                    sx={{ margin: '.3rem 0' }}
-                >
-                    Logg inn
-                </Button>
-                <Button
-                    variant="outlined"
-                    size="large"
-                    fullWidth
-                    onClick={() => setChoice('')}
-                    sx={{ margin: '.3rem 0' }}
-                >
-                    Avbryt
-                </Button>
-            </form>
-            {!!success && <Alert severity="success">{success}</Alert>}
-            {!!error && <Alert severity="error">{error}</Alert>}
-        </Box>
+        <Card>
+            <Box p={5} maxWidth={600} display="grid" justifyItems="center" gap={2}>
+                <CardMedia component="img" image="/img/regnconlogony.png" title="årets regncondrage" />
+                <form action={''}>
+                    <TextField
+                        label="e-post"
+                        value={email}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
+                        fullWidth
+                        sx={{ margin: '.3rem 0' }}
+                    />
+                    <TextField
+                        sx={{ margin: '.3rem 0' }}
+                        label="passord"
+                        name="password"
+                        value={password}
+                        type="password"
+                        onChange={(e) => setPassword(e.target.value)}
+                        fullWidth
+                    />
+                    <Button
+                        variant="contained"
+                        size="large"
+                        type="submit"
+                        fullWidth
+                        onClick={login}
+                        sx={{ margin: '.3rem 0' }}
+                    >
+                        Logg inn
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        size="large"
+                        fullWidth
+                        onClick={() => setChoice('')}
+                        sx={{ margin: '.3rem 0' }}
+                    >
+                        Avbryt
+                    </Button>
+                </form>
+                {!!success && <Alert severity="success">{success}</Alert>}
+                {!!error && <Alert severity="error">{error}</Alert>}
+            </Box>
+        </Card>
     );
 };
 
