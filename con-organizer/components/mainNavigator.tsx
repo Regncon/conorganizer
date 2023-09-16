@@ -2,8 +2,9 @@
 
 import { useContext, useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import MenuIcon from '@mui/icons-material/Menu';
 import PasswordIcon from '@mui/icons-material/Password';
-import { Dialog } from '@mui/material';
+import { Dialog, SpeedDial, SpeedDialAction } from '@mui/material';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Box from '@mui/material/Box';
@@ -16,8 +17,7 @@ const MainNavigator = () => {
     const [value, setValue] = useState(0);
     const [choice, setChoice] = useState('');
     const user = useAuth();
-    console.log('useAuth', useAuth());
-    console.log(user);
+    // console.log('useAuth', useAuth());
 
     function logout() {
         return auth.signOut();
@@ -26,24 +26,36 @@ const MainNavigator = () => {
     return (
         <Box sx={{ bottom: 0, position: 'fixed', width: '100%' }}>
             {user ? (
-                <BottomNavigation
-                    showLabels
-                    value={value}
-                    onChange={(event, newValue) => {
-                        setValue(newValue);
-                    }}
+                <SpeedDial
+                    ariaLabel="Alternativer"
+                    sx={{ position: 'absolute', bottom: 16, right: 16 }}
+                    icon={<MenuIcon />}
                 >
-                    <BottomNavigationAction label="Logg ut" icon={<AccountCircleIcon />} onClick={logout} />
-                    <BottomNavigationAction
-                        label="Endre passord"
-                        icon={<PasswordIcon />}
-                        onClick={() => setChoice('newpassword')}
+                    <SpeedDialAction
+                        key="logout"
+                        icon={<AccountCircleIcon />}
+                        tooltipTitle="logg ut"
+                        sx={{
+                            '& .MuiSpeedDialAction-staticTooltipLabel': {
+                                width: '10ch',
+                            },
+                        }}
+                        onClick={logout}
+                        tooltipOpen
                     />
-                    {/* <BottomNavigationAction label="Kj&oslash;p billett" icon={<LocalActivity />} /> */}
-                    <Dialog open={!!choice}>
-                        <ForgotPassword setChoice={setChoice} />
-                    </Dialog>
-                </BottomNavigation>
+                    <SpeedDialAction
+                        sx={{
+                            '& .MuiSpeedDialAction-staticTooltipLabel': {
+                                width: '16ch',
+                            },
+                        }}
+                        key="changePwd"
+                        icon={<PasswordIcon />}
+                        tooltipTitle="endre passord"
+                        onClick={() => setChoice('newpassword')}
+                        tooltipOpen
+                    />
+                </SpeedDial>
             ) : (
                 <BottomNavigation
                     showLabels

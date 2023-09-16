@@ -4,9 +4,10 @@ import { createTheme, ThemeOptions } from '@mui/material';
 
 const muiLightTheme: ThemeOptions = {
     palette: {
+        mode: "dark",
         primary: {
-            light: '#a1887f',
-            main: '#3e2723',
+            light: '#e0cfc9',
+            main: '#a1887f',
             dark: '#000',
             contrastText: '#fff',
         },
