@@ -2,9 +2,9 @@
 
 import { MouseEvent, useState } from 'react';
 import { Alert } from '@mui/material';
+import { Card, CardMedia } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import { Card, CardMedia } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
@@ -60,7 +60,7 @@ const Login = (props: any) => {
                         name="password"
                         value={password}
                         type="password"
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                         fullWidth
                     />
                     <Button
