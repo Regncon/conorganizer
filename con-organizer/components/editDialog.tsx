@@ -11,11 +11,11 @@ import CloseIcon from '@mui/icons-material/Close';
 interface Props {
     open: boolean;
     conEvent?: ConEvent;
-    colletionRef: CollectionReference<DocumentData, DocumentData>;
+    collectionRef: CollectionReference<DocumentData, DocumentData>;
     handleClose: () => void;
 }
 
-const EditDialog = ({ open, conEvent, colletionRef, handleClose }: Props) => {
+const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose }: Props) => {
     const [title, setTitle] = useState(conEvent?.title || '');
     const [subtitle, setSubtitle] = useState(conEvent?.subtitle || '');
     const [description, setDescription] = useState(conEvent?.description || '');
@@ -36,7 +36,7 @@ const EditDialog = ({ open, conEvent, colletionRef, handleClose }: Props) => {
         };
 
         try {
-            const schoolRef = doc(colletionRef);
+            const schoolRef = doc(collectionRef);
             await setDoc(schoolRef, newSchool);
         } catch (error) {
             console.error(error);
@@ -52,7 +52,7 @@ const EditDialog = ({ open, conEvent, colletionRef, handleClose }: Props) => {
         };
 
         try {
-            const schoolRef = doc(colletionRef, conEvent.id);
+            const schoolRef = doc(collectionRef, conEvent.id);
             updateDoc(schoolRef, updatedSchool);
         } catch (error) {
             console.error(error);
@@ -63,7 +63,7 @@ const EditDialog = ({ open, conEvent, colletionRef, handleClose }: Props) => {
         <Dialog open={open} fullWidth={true} maxWidth="md">
             <Box sx={{ height: '900px' }} display="flex" flexDirection="row">
                 <Box className="p-4" sx={{ width: '375px', height: '667px' }}>
-                    <EventUi conEvent={conEvent} showSelect={showSelect} />
+                    <EventUi conEvent={conEvent || ({} as ConEvent) } showSelect={showSelect} />
                 </Box>
 
                 <Divider orientation="vertical" variant="middle" flexItem />
