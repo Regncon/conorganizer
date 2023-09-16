@@ -41,7 +41,7 @@ const ForgotPassword = (props: any) => {
         setEmail('');
     };
     return (
-        <Box p={5} maxWidth={600} display={'grid'} justifyItems={'center'} gap={1}>
+        <Box p={4} maxWidth={600} display={'grid'} justifyItems={'center'} gap={1}>
             <Typography variant="h6">Send e-post for &aring; endre passord</Typography>
             <TextField
                 label="e-post"
