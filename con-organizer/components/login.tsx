@@ -54,7 +54,12 @@ const Login = (props: any) => {
     return (
         <Card>
             <Box p={5} maxWidth={400} display="grid" justifyItems="center" gap={2}>
-                <CardMedia component="img" image="/img/regnconlogony.png" title="årets regncondrage" />
+                <CardMedia
+                    component="img"
+                    image="/img/regnconlogony.png"
+                    title="årets regncondrage"
+                    sx={{ p: '1rem' }}
+                />
                 <form action={''}>
                     <TextField
                         label="e-post"
