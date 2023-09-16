@@ -69,7 +69,7 @@ const Login = (props: any) => {
                         name="password"
                         value={password}
                         type={showPassword ? 'text' : 'password'}
-                        inputProps={{
+                        InputProps={{
                             endAdornment: (
                                 <InputAdornment position="end">
                                     <IconButton
