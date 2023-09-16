@@ -9,4 +9,6 @@ export type ConEvent = {
     published: boolean;
     createdAt: Timestamp;
     lastUpdated: Timestamp;
+    pool: string;
+    gameType: string;
 }

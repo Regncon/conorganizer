@@ -6,3 +6,10 @@ export enum pool {
     "SaturdayAfternoon" = "Lørdag Ettermiddag",
     "SundayMorning" = "Søndag Morgen",
 }
+
+export enum type {
+    "none" = "Ingen",
+    "ttrpg" = "Rollespill",
+    "boardgame" = "Brettspill",
+    "other" = "Annet",
+}

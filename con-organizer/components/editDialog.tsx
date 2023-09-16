@@ -18,10 +18,11 @@ import {
     TextField,
 } from '@mui/material';
 import { CollectionReference, doc, DocumentData, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
-import { pool } from '@/lib/enums';
+import { gameType, pool } from '@/lib/enums';
 import { ConEvent } from '@/lib/types';
 import { Button } from '../lib/mui';
 import EventUi from './eventUi';
+import { type } from 'os';
 
 type Props = {
     open: boolean;
@@ -38,6 +39,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
     const [errorMessage, setErrorMessage] = useState<string>();
     const [published, setPublished] = useState(false);
     const [eventPool, setEventPool] = useState(pool.none);
+    const [eventType, setEventType] = useState(gameType.none);
 
     useEffect(() => {
         setTitle(conEvent?.title || '');
