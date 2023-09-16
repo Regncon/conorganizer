@@ -10,7 +10,7 @@ import db from '../../../lib/firebase';
 type Props = { id: string };
 
 const Event = ({ id }: Props) => {
-    const collectionRef = collection(db, 'schools');
+    const collectionRef = collection(db, 'events');
     const [conEvents, setconEvents] = useState([] as ConEvent[]);
     const [openEdit, setOpenEdit] = useState(false);
     const [loading, setLoading] = useState(false);

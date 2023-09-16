@@ -1,3 +1,4 @@
+import { Timestamp } from "firebase/firestore";
 
 
 export type ConEvent = {
@@ -5,4 +6,7 @@ export type ConEvent = {
     title: string;
     subtitle: string;
     description: string;
+    published: boolean;
+    createdAt: Timestamp;
+    lastUpdated: Timestamp;
 }

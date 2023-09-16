@@ -2,8 +2,23 @@
 
 import { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
-import { Alert, Box, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, TextField } from '@mui/material';
+import {
+    Alert,
+    Box,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    IconButton,
+    InputLabel,
+    MenuItem,
+    Select,
+    Switch,
+    TextField,
+} from '@mui/material';
 import { CollectionReference, doc, DocumentData, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { pool } from '@/lib/enums';
 import { ConEvent } from '@/lib/types';
 import { Button } from '../lib/mui';
 import EventUi from './eventUi';
@@ -13,7 +28,7 @@ type Props = {
     conEvent?: ConEvent;
     collectionRef: CollectionReference<DocumentData, DocumentData>;
     handleClose: () => void;
-}
+};
 
 const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose }: Props) => {
     const [title, setTitle] = useState(conEvent?.title || '');
@@ -21,6 +36,8 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
     const [description, setDescription] = useState(conEvent?.description || '');
     const [showSelect, setShowSelect] = useState(true);
     const [errorMessage, setErrorMessage] = useState<string>();
+    const [published, setPublished] = useState(false);
+    const [eventPool, setEventPool] = useState(pool.none);
 
     useEffect(() => {
         setTitle(conEvent?.title || '');
@@ -28,50 +45,86 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         setSubtitle(conEvent?.subtitle || '');
     }, [conEvent]);
 
-    const addSchool = async () => {
-        const newSchool = {
+    const addevent = async () => {
+        const newevent = {
             title,
             description,
+            subtitle,
+            published: published,
             createdAt: serverTimestamp(),
-            lastUpdate: serverTimestamp(),
+            lastUpdated: serverTimestamp(),
         };
 
         try {
-            const schoolRef = doc(collectionRef);
-            await setDoc(schoolRef, newSchool);
+            const eventRef = doc(collectionRef);
+            await setDoc(eventRef, newevent);
         } catch (e) {
             const error = e as Error;
-            setErrorMessage(error.message);        }
+            setErrorMessage(error.message);
+        }
     };
 
     async function editEvent(conEvent: ConEvent) {
-        const updatedSchool = {
+        const updatedevent = {
             title: title,
             subtitle: subtitle,
+            published: published,
             description: description,
-            lastUpdate: serverTimestamp(),
+            lastUpdated: serverTimestamp(),
         };
 
         try {
-            const schoolRef = doc(collectionRef, conEvent.id);
-            updateDoc(schoolRef, updatedSchool);
+            const eventRef = doc(collectionRef, conEvent.id);
+            updateDoc(eventRef, updatedevent);
         } catch (e) {
+            console.error(e);
             const error = e as Error;
-            setErrorMessage(error.message);   
+            setErrorMessage(error.message);
         }
     }
+ 
+    console.log(conEvent, "conEvent") 
 
     return (
         <Dialog open={open} fullWidth={true} maxWidth="md">
             <Box sx={{ height: '900px' }} display="flex" flexDirection="row">
                 <Box className="p-4" sx={{ width: '375px', height: '667px' }}>
-                    <EventUi conEvent={conEvent || ({} as ConEvent) } showSelect={showSelect} />
+                    <EventUi conEvent={conEvent || ({} as ConEvent)} showSelect={showSelect} />
                 </Box>
 
                 <Divider orientation="vertical" variant="middle" flexItem />
 
                 <Box className="p-4">
                     <DialogTitle>{conEvent?.id ? 'Endre' : 'Legg til'}</DialogTitle>
+                    <Divider />
+                    <DialogContent
+                        sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '1rem' }}
+                        >
+                        <span>Opprettet: {conEvent?.createdAt ? conEvent.createdAt.toDate().toString() : ""} </span>
+                        <span>Sist endret: {conEvent?.lastUpdated ? conEvent.lastUpdated.toDate().toString() : ""} </span>
+                        <div>
+                            <Switch checked={published} onChange={() => setPublished(!published)} />
+                            <span>Publisert</span>
+                        </div>
+
+                        <div>
+                            <InputLabel id="pool-select-label">Pulje</InputLabel>
+                            <Select
+                                labelId="pool-select-label"
+                                id="pool-select"
+                                value={eventPool}
+                                label="Pulje"
+                                onChange={(e) => setEventPool(e.target.value as pool)}
+                            >
+                                <MenuItem value={pool.none}>{pool.none}</MenuItem>
+                                <MenuItem value={pool.FirdayEvening}>{pool.FirdayEvening}</MenuItem>
+                                <MenuItem value={pool.SaturdayMorning}>{pool.SaturdayMorning}</MenuItem>
+                                <MenuItem value={pool.SaturdayAfternoon}>{pool.SaturdayAfternoon}</MenuItem>
+                                <MenuItem value={pool.SundayMorning}>{pool.SundayMorning}</MenuItem>
+                            </Select>
+                        </div>
+                    </DialogContent>
+
                     <DialogContent sx={{ width: '375px' }}>
                         <TextField
                             autoFocus
@@ -112,7 +165,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                         {conEvent?.id ? (
                             <Button onClick={() => editEvent(conEvent)}>Save</Button>
                         ) : (
-                            <Button onClick={() => addSchool()}>Add</Button>
+                            <Button onClick={() => addevent()}>Add</Button>
                         )}
                     </DialogActions>
                     {!!errorMessage && <Alert severity="error">{errorMessage}</Alert>}
