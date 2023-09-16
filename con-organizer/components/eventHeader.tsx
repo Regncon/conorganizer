@@ -5,7 +5,7 @@ import { ConEvent } from '@/lib/types';
 
 type Props = {
     conEvent: ConEvent;
-}
+};
 
 const EventHeader = ({ conEvent }: Props) => {
     return (

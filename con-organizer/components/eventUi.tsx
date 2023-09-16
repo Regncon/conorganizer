@@ -1,19 +1,29 @@
-"use client";
+'use client';
 
-import { Card, CardContent, Divider,FormControl, FormControlLabel, FormControlLabelProps, FormLabel, Radio, RadioGroup, styled, useRadioGroup } from "@mui/material";
-import Typography from "@mui/material/Typography";
+import {
+    Card,
+    CardContent,
+    Divider,
+    FormControl,
+    FormControlLabel,
+    FormControlLabelProps,
+    FormLabel,
+    Radio,
+    RadioGroup,
+    styled,
+    useRadioGroup,
+} from '@mui/material';
+import Typography from '@mui/material/Typography';
 import parse from 'html-react-parser';
-import { ConEvent } from "@/lib/types";
-import EventHeader from "./eventHeader";
-
+import { ConEvent } from '@/lib/types';
+import EventHeader from './eventHeader';
 
 type Props = {
     conEvent: ConEvent;
     showSelect?: boolean;
-}
+};
 
 const EventUi = ({ conEvent, showSelect }: Props) => {
-
     interface StyledFormControlLabelProps extends FormControlLabelProps {
         checked: boolean;
     }
@@ -39,46 +49,41 @@ const EventUi = ({ conEvent, showSelect }: Props) => {
     }
 
     return (
-        <Card
-        sx={{ maxWidth: '440px' }}>
-        <EventHeader conEvent={conEvent} />
+        <Card sx={{ maxWidth: '440px' }}>
+            <EventHeader conEvent={conEvent} />
 
-        <Divider />
-        <Typography className='pl-4 pr-4'
-            sx={{minHeight: '7rem' }}        
-        >
-            {parse(conEvent?.description || '')}
+            <Divider />
+            <Typography className="pl-4 pr-4" sx={{ minHeight: '7rem' }}>
+                {parse(conEvent?.description || '')}
             </Typography>
 
-        <Divider />
-        <CardContent
-        sx={showSelect ?  { display: 'block' } : { display: 'none' }} 
-        >
-            <FormControl className="p-4">
-                <FormLabel id="demo-row-radio-buttons-group-label">Puljepåmelding</FormLabel>
-                <RadioGroup
-                    row
-                    aria-labelledby="demo-row-radio-buttons-group-label"
-                    name="row-radio-buttons-group"
-                    defaultValue="NotInterested"
-                >
-                    <MyFormControlLabel
-                        value="NotInterested"
-                        control={<Radio size="small" />}
-                        label="Ikke intresert"
-                    />
-                    <MyFormControlLabel value="IfIHaveTo" control={<Radio size="small" />} label="Hvis jeg må" />
-                    <MyFormControlLabel value="IWantTo" control={<Radio size="small" />} label="Har lyst" />
-                    <MyFormControlLabel
-                        value="RealyWantTo"
-                        control={<Radio size="small" />}
-                        label="Har veldig lyst"
-                    />
-                </RadioGroup>
-            </FormControl>
-        </CardContent>
-        <Divider />
-    </Card>
+            <Divider />
+            <CardContent sx={showSelect ? { display: 'block' } : { display: 'none' }}>
+                <FormControl className="p-4">
+                    <FormLabel id="demo-row-radio-buttons-group-label">Puljepåmelding</FormLabel>
+                    <RadioGroup
+                        row
+                        aria-labelledby="demo-row-radio-buttons-group-label"
+                        name="row-radio-buttons-group"
+                        defaultValue="NotInterested"
+                    >
+                        <MyFormControlLabel
+                            value="NotInterested"
+                            control={<Radio size="small" />}
+                            label="Ikke intresert"
+                        />
+                        <MyFormControlLabel value="IfIHaveTo" control={<Radio size="small" />} label="Hvis jeg må" />
+                        <MyFormControlLabel value="IWantTo" control={<Radio size="small" />} label="Har lyst" />
+                        <MyFormControlLabel
+                            value="RealyWantTo"
+                            control={<Radio size="small" />}
+                            label="Har veldig lyst"
+                        />
+                    </RadioGroup>
+                </FormControl>
+            </CardContent>
+            <Divider />
+        </Card>
     );
 };
 

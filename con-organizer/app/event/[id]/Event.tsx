@@ -1,36 +1,19 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Button, Card, CardActions } from '@mui/material';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { collection } from 'firebase/firestore';
 import EditDialog from '@/components/editDialog';
 import EventUi from '@/components/eventUi';
-import { ConEvent } from '@/lib/types';
+import { useSingleEvents } from '@/lib/hooks/UseSingleEvent';
 import db from '../../../lib/firebase';
 
 type Props = { id: string };
 
 const Event = ({ id }: Props) => {
     const collectionRef = collection(db, 'schools');
-    const [conEvents, setconEvents] = useState([] as ConEvent[]);
     const [openEdit, setOpenEdit] = useState(false);
-    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        setLoading(true);
-        const unSub = onSnapshot(collectionRef, (querySnapshot) => {
-            const items = [] as ConEvent[];
-            querySnapshot.forEach((doc) => {
-                items.push(doc.data() as ConEvent);
-                items[items.length - 1].id = doc.id;
-            });
-            setconEvents(items);
-            setLoading(false);
-        });
-        return () => {
-            unSub();
-        };
-    }, []);
-
+    const { event, loading } = useSingleEvents(id);
     const handleCloseEdit = () => {
         setOpenEdit(false);
     };
@@ -39,24 +22,28 @@ const Event = ({ id }: Props) => {
         setOpenEdit(true);
     };
 
-    const conEvent = conEvents.find((conEvent) => conEvent.id === id) || ({} as ConEvent);
     return (
         <>
-            {loading && <h1>Loading...</h1> }
-            <EditDialog
-                open={openEdit}
-                handleClose={handleCloseEdit}
-                collectionRef={collectionRef}
-                conEvent={conEvent}
-            />
+            {loading ? (
+                <h1>Loading...</h1>
+            ) : (
+                <>
+                    <EditDialog
+                        open={openEdit}
+                        handleClose={handleCloseEdit}
+                        collectionRef={collectionRef}
+                        conEvent={event}
+                    />
 
-            <EventUi conEvent={conEvent} showSelect={true} />
+                    <EventUi conEvent={event} showSelect={true} />
 
-            <Card sx={{ maxWidth: '440px' }}>
-                <CardActions>
-                    <Button onClick={handleOpenEdit}>Endre</Button>
-                </CardActions>
-            </Card>
+                    <Card sx={{ maxWidth: '440px' }}>
+                        <CardActions>
+                            <Button onClick={handleOpenEdit}>Endre</Button>
+                        </CardActions>
+                    </Card>
+                </>
+            )}
         </>
     );
 };

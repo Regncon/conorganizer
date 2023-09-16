@@ -19,6 +19,8 @@
     "root": true,
     "plugins": ["react", "@typescript-eslint", "simple-import-sort", "unused-imports"],
     "rules": {
+        "@typescript-eslint/ban-types": "off",
+        "no-empty-pattern": "off",
         "simple-import-sort/imports": "error",
         "simple-import-sort/exports": "error",
         "unused-imports/no-unused-imports": "warn",
