@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState } from 'react';
 import Visibility from '@mui/icons-material/Visibility';
@@ -21,7 +21,6 @@ const ForgotPassword = (props: any) => {
     const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
         event.preventDefault();
     };
-
     const resetPwd = () => {
         sendPasswordResetEmail(auth, email)
             .then(() => {
@@ -30,21 +29,22 @@ const ForgotPassword = (props: any) => {
             })
             .catch((err) => {
                 console.error(err);
-        if (err.code === 'auth/invalid-email') {
-            setError('Det ser ut som du skrev noe feil i epostadressen din, vennligst prøv igjen.');
-        } else if (err.code === 'auth/too-many-requests') {
-            setError(
-                'Vi har midlertidig suspendert kontoen din på grunn av for mange påloggingsforsøk. Dette er for at hackere og botter ikke skal kunne gjette seg til passordet ditt. Vennligst vent litt før du prøver igjen.'
-            );
-        } else if (err.code === 'auth/wrong-password') {
-            setError('Ser ut som du har skrevet noe feil i passordet ditt, vennligst prøv igjen.');
-        } else {
-            setError('Kunne ikke sende epost, fordi det skjedde en feil. Tekniske detaljer: ' + err.message);
-        }
-        setError('Klarte ikke sende epost, ta kontakt hvis problemet vedvarer! Tekniske detaljer: ' + err.message);
+                if (err.code === 'auth/invalid-email') {
+                    setError('Det ser ut som du skrev noe feil i epostadressen din, vennligst prøv igjen.');
+                } else if (err.code === 'auth/too-many-requests') {
+                    setError(
+                        'Vi har midlertidig suspendert kontoen din på grunn av for mange påloggingsforsøk. Dette er for at hackere og botter ikke skal kunne gjette seg til passordet ditt. Vennligst vent litt før du prøver igjen.'
+                    );
+                } else if (err.code === 'auth/wrong-password') {
+                    setError('Ser ut som du har skrevet noe feil i passordet ditt, vennligst prøv igjen.');
+                } else {
+                    setError('Kunne ikke sende epost, fordi det skjedde en feil. Tekniske detaljer: ' + err.message);
+                }
+                setError(
+                    'Klarte ikke sende epost, ta kontakt hvis problemet vedvarer! Tekniske detaljer: ' + err.message
+                );
             });
     };
-
     const resetInput = () => {
         setEmail('');
     };

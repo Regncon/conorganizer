@@ -1,10 +1,14 @@
 'use client';
 
 import { MouseEvent, useState } from 'react';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import { Alert } from '@mui/material';
 import { Card, CardMedia } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
 import TextField from '@mui/material/TextField';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
@@ -15,6 +19,11 @@ const Login = (props: any) => {
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
     const { setChoice } = props;
+    const [showPassword, setShowPassword] = useState(false);
+    const handleClickShowPassword = () => setShowPassword((show) => !show);
+    const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+        event.preventDefault();
+    };
     const login = (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
         signInWithEmailAndPassword(auth, email, password)
@@ -44,7 +53,7 @@ const Login = (props: any) => {
     };
     return (
         <Card>
-            <Box p={5} maxWidth={600} display="grid" justifyItems="center" gap={2}>
+            <Box p={5} maxWidth={400} display="grid" justifyItems="center" gap={2}>
                 <CardMedia component="img" image="/img/regnconlogony.png" title="årets regncondrage" />
                 <form action={''}>
                     <TextField
@@ -59,7 +68,21 @@ const Login = (props: any) => {
                         label="passord"
                         name="password"
                         value={password}
-                        type="password"
+                        type={showPassword ? 'text' : 'password'}
+                        inputProps={{
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    <IconButton
+                                        aria-label="veksle mellom synlig og skjult passord"
+                                        onClick={handleClickShowPassword}
+                                        onMouseDown={handleMouseDownPassword}
+                                        edge="end"
+                                    >
+                                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                                    </IconButton>
+                                </InputAdornment>
+                            ),
+                        }}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                         fullWidth
                     />
