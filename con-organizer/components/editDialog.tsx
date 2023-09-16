@@ -1,21 +1,21 @@
 'use client';
 
-import { Button } from '../lib/mui';
-import React, { useEffect, useState } from 'react';
-import { doc, setDoc, serverTimestamp, CollectionReference, DocumentData, updateDoc } from 'firebase/firestore';
-import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, TextField } from '@mui/material';
-import { ConEvent } from '@/lib/types';
-import EventUi from './eventUi';
+import { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, TextField } from '@mui/material';
+import { CollectionReference, doc, DocumentData, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { ConEvent } from '@/lib/types';
+import { Button } from '../lib/mui';
+import EventUi from './eventUi';
 
 interface Props {
     open: boolean;
     conEvent?: ConEvent;
-    colletionRef: CollectionReference<DocumentData, DocumentData>;
+    collectionRef: CollectionReference<DocumentData, DocumentData>;
     handleClose: () => void;
 }
 
-const EditDialog = ({ open, conEvent, colletionRef, handleClose }: Props) => {
+const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose }: Props) => {
     const [title, setTitle] = useState(conEvent?.title || '');
     const [subtitle, setSubtitle] = useState(conEvent?.subtitle || '');
     const [description, setDescription] = useState(conEvent?.description || '');
@@ -36,7 +36,7 @@ const EditDialog = ({ open, conEvent, colletionRef, handleClose }: Props) => {
         };
 
         try {
-            const schoolRef = doc(colletionRef);
+            const schoolRef = doc(collectionRef);
             await setDoc(schoolRef, newSchool);
         } catch (error) {
             console.error(error);
@@ -52,7 +52,7 @@ const EditDialog = ({ open, conEvent, colletionRef, handleClose }: Props) => {
         };
 
         try {
-            const schoolRef = doc(colletionRef, conEvent.id);
+            const schoolRef = doc(collectionRef, conEvent.id);
             updateDoc(schoolRef, updatedSchool);
         } catch (error) {
             console.error(error);
@@ -63,7 +63,7 @@ const EditDialog = ({ open, conEvent, colletionRef, handleClose }: Props) => {
         <Dialog open={open} fullWidth={true} maxWidth="md">
             <Box sx={{ height: '900px' }} display="flex" flexDirection="row">
                 <Box className="p-4" sx={{ width: '375px', height: '667px' }}>
-                    <EventUi conEvent={conEvent} showSelect={showSelect} />
+                    <EventUi conEvent={conEvent || ({} as ConEvent) } showSelect={showSelect} />
                 </Box>
 
                 <Divider orientation="vertical" variant="middle" flexItem />

@@ -1,23 +1,23 @@
 'use client';
-import { ConEvent } from '@/lib/types';
-import { Card, CardActions, Button } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Button, Card, CardActions } from '@mui/material';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { useState, useEffect } from 'react';
-import db from '../../../lib/firebase';
 import EditDialog from '@/components/editDialog';
 import EventUi from '@/components/eventUi';
+import { ConEvent } from '@/lib/types';
+import db from '../../../lib/firebase';
 
 type Props = { id: string };
 
 const Event = ({ id }: Props) => {
-    const colletionRef = collection(db, 'schools');
+    const collectionRef = collection(db, 'schools');
     const [conEvents, setconEvents] = useState([] as ConEvent[]);
     const [openEdit, setOpenEdit] = useState(false);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         setLoading(true);
-        const unsub = onSnapshot(colletionRef, (querySnapshot) => {
+        const unSub = onSnapshot(collectionRef, (querySnapshot) => {
             const items = [] as ConEvent[];
             querySnapshot.forEach((doc) => {
                 items.push(doc.data() as ConEvent);
@@ -27,9 +27,9 @@ const Event = ({ id }: Props) => {
             setLoading(false);
         });
         return () => {
-            unsub();
+            unSub();
         };
-    }, []);
+    }, [collectionRef]);
 
     const handleCloseEdit = () => {
         setOpenEdit(false);
@@ -39,10 +39,16 @@ const Event = ({ id }: Props) => {
         setOpenEdit(true);
     };
 
-    const conEvent = conEvents.find((conEvent) => conEvent.id === id);
+    const conEvent = conEvents.find((conEvent) => conEvent.id === id) || ({} as ConEvent);
     return (
         <>
-            <EditDialog open={openEdit} handleClose={handleCloseEdit} colletionRef={colletionRef} conEvent={conEvent} />
+            {loading && <h1>Loading...</h1> }
+            <EditDialog
+                open={openEdit}
+                handleClose={handleCloseEdit}
+                collectionRef={collectionRef}
+                conEvent={conEvent}
+            />
 
             <EventUi conEvent={conEvent} showSelect={true} />
 
