@@ -26,7 +26,7 @@ const EventList = () => {
         return () => {
             unsub();
         };
-    }, [collectionRef]);
+    }, []);
 
     return (
         <Box className='flex flex-row flex-wrap justify-center gap-4 mb-20'>

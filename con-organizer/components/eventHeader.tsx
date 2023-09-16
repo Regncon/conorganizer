@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, CardHeader, CardMedia, Chip } from '@mui/material';
 import { ConEvent } from '@/lib/types';
 
-interface Props {
+type Props = {
     conEvent: ConEvent;
 }
 

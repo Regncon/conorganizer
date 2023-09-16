@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
-import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, TextField } from '@mui/material';
+import { Alert, Box, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, TextField } from '@mui/material';
 import { CollectionReference, doc, DocumentData, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { ConEvent } from '@/lib/types';
 import { Button } from '../lib/mui';
 import EventUi from './eventUi';
 
-interface Props {
+type Props = {
     open: boolean;
     conEvent?: ConEvent;
     collectionRef: CollectionReference<DocumentData, DocumentData>;
@@ -20,6 +20,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
     const [subtitle, setSubtitle] = useState(conEvent?.subtitle || '');
     const [description, setDescription] = useState(conEvent?.description || '');
     const [showSelect, setShowSelect] = useState(true);
+    const [errorMessage, setErrorMessage] = useState<string>();
 
     useEffect(() => {
         setTitle(conEvent?.title || '');
@@ -38,9 +39,9 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         try {
             const schoolRef = doc(collectionRef);
             await setDoc(schoolRef, newSchool);
-        } catch (error) {
-            console.error(error);
-        }
+        } catch (e) {
+            const error = e as Error;
+            setErrorMessage(error.message);        }
     };
 
     async function editEvent(conEvent: ConEvent) {
@@ -54,8 +55,9 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         try {
             const schoolRef = doc(collectionRef, conEvent.id);
             updateDoc(schoolRef, updatedSchool);
-        } catch (error) {
-            console.error(error);
+        } catch (e) {
+            const error = e as Error;
+            setErrorMessage(error.message);   
         }
     }
 
@@ -113,6 +115,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                             <Button onClick={() => addSchool()}>Add</Button>
                         )}
                     </DialogActions>
+                    {!!errorMessage && <Alert severity="error">{errorMessage}</Alert>}
                 </Box>
 
                 <Box sx={{ position: 'absolute', top: 0, right: 0 }}>
