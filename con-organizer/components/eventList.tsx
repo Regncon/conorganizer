@@ -5,7 +5,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { pool } from '@/lib/enums';
 import { ConEvent } from '@/lib/types';
 import db from '../lib/firebase';
-import { Box, Card, CardContent, CardHeader } from '../lib/mui';
+import { Box, Card } from '../lib/mui';
 import AddEvent from './addEvent';
 import EventHeader from './eventHeader';
 
@@ -39,14 +39,6 @@ const EventList = ({ activePool }: Props) => {
             <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20">
                 {loading ? <h1>Loading...</h1> : null}
             <AddEvent collectionRef={collectionRef} />
-            <Card sx={{ width: '100%' }}>
-                <CardHeader sx={{ paddingBottom: '0.5rem' }} title="Registrering Fredag" />
-                <CardContent
-                    sx={{ paddingTop: '0' }}
-                >
-                    <p>Kl 16:00 - 17:00 </p>
-                </CardContent>
-            </Card>
                 {conEvents.map(
                     (
                         conEvent //filter((conEvent) => conEvent.published === true)
