@@ -1,27 +1,26 @@
 'use client';
 
-import { Box, Card, CardContent, CardHeader } from '@mui/material';
+import { Box, Card, CardContent, CardHeader, Divider } from '@mui/material';
 import EventHeader from '@/components/eventHeader';
 import { Pool } from '@/lib/enums';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 
 const BigScreen = () => {
     const { events, loading } = useAllEvents();
-    console.log(events);
-
     if (loading) {
         return <h1>Loading...</h1>;
     }
 
     return (
         <Box className="flex flex-row flex-wrap justify-center gap-4">
-            <Box className="flex flex-col gap-4">
-                <h1>Fredag Kveld </h1>
+            <Box className="flex flex-col gap-4 bg-slate-800 p-4" sx={{ maxWidth: '440px' }}>
+                <h1>Fredag Kveld</h1>
+                <p>18:00 - 23:00</p>
 
                 <Card sx={{ width: '100%' }}>
-                    <CardHeader sx={{ paddingBottom: '0.5rem' }} title="Registrering Fredag" />
+                    <CardHeader sx={{ paddingBottom: '0.5rem' }} title="Innsjekk Fredag" />
                     <CardContent sx={{ paddingTop: '0' }}>
-                        <p>Kl 16:00 - 17:00 </p>
+                        <p>Kl 16:30 - 18:00 </p>
                     </CardContent>
                 </Card>
                 {events
@@ -39,13 +38,14 @@ const BigScreen = () => {
                     ))}
             </Box>
 
-            <Box className="flex flex-col gap-4">
+            <Box className="flex flex-col gap-4 bg-slate-900 p-4" sx={{ maxWidth: '440px' }}>
                 <h1>Lørdag Morgen </h1>
+                <p>10:00 - 15:00</p>
 
                 <Card sx={{ width: '100%' }}>
-                    <CardHeader sx={{ paddingBottom: '0.5rem' }} title="Registrering Lørdag" />
+                    <CardHeader sx={{ paddingBottom: '0.5rem' }} title="Innsjekk Lørdag" />
                     <CardContent sx={{ paddingTop: '0' }}>
-                        <p>Kl 10:00 - 11:00 </p>
+                        <p>Kl 09:00 - 10:00 </p>
                     </CardContent>
                 </Card>
                 {events
@@ -63,8 +63,9 @@ const BigScreen = () => {
                     ))}
             </Box>
 
-            <Box className="flex flex-col gap-4">
+            <Box className="flex flex-col gap-4 bg-slate-800 p-4" sx={{ maxWidth: '440px' }}>
                 <h1>Lørdag Kveld </h1>
+                <p>18:00 - 23:00</p>
 
                 <Card sx={{ width: '100%' }}>
                     <CardHeader sx={{ paddingBottom: '0.5rem' }} title="Middag Lørdag" />
@@ -89,13 +90,14 @@ const BigScreen = () => {
                     ))}
             </Box>
 
-            <Box className="flex flex-col gap-4">
+            <Box className="flex flex-col gap-4 bg-slate-900 p-4" sx={{ maxWidth: '440px' }}>
                 <h1>Søndag Morgen </h1>
+                <p>10:00 - 15:00</p>
 
                 <Card sx={{ width: '100%' }}>
-                    <CardHeader sx={{ paddingBottom: '0.5rem' }} title="Registrering Søndag" />
+                    <CardHeader sx={{ paddingBottom: '0.5rem' }} title="Innsjekk Søndag" />
                     <CardContent sx={{ paddingTop: '0' }}>
-                        <p>Kl 10:00 - 11:00 </p>
+                        <p>Kl 09:00 - 10:00 </p>
                     </CardContent>
                 </Card>
                 {events
@@ -111,6 +113,13 @@ const BigScreen = () => {
                             <EventHeader conEvent={conEvent} />
                         </Card>
                     ))}
+
+                <Card sx={{ width: '100%' }}>
+                    <CardHeader sx={{ paddingBottom: '0.5rem' }} title="Prisutdeling" />
+                    <CardContent sx={{ paddingTop: '0' }}>
+                        <p>Kl 16:00 - 17:00 </p>
+                    </CardContent>
+                </Card>
             </Box>
         </Box>
     );

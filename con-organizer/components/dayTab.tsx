@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
@@ -48,7 +49,7 @@ type Props = {
 
 export default function FullWidthTabs({ handlePoolChange }: Props) {
     const theme = useTheme();
-    const [value, setValue] = React.useState<Pool>(Pool.FridayEvening);
+    const [value, setValue] = useState<Pool>(Pool.FridayEvening);
 
     const handleChange = (event: React.SyntheticEvent, newValue: number) => {
         if (newValue === 0) {
