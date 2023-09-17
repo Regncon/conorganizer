@@ -158,8 +158,9 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                                 onChange={(e) => setEventType(e.target.value as gameType)}
                             >
                                 <MenuItem value={gameType.none}>{gameType.none}</MenuItem>
-                                <MenuItem value={gameType.boardgame}>{gameType.boardgame}</MenuItem>
                                 <MenuItem value={gameType.roleplaying}>{gameType.roleplaying}</MenuItem>
+                                <MenuItem value={gameType.boardgame}>{gameType.boardgame}</MenuItem>
+                                <MenuItem value={gameType.other}>{gameType.other}</MenuItem>
                             </Select>
                         </div>
                     </DialogContent>

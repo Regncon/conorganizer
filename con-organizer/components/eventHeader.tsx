@@ -1,6 +1,6 @@
-import { faChessKing, faDiceD20, faHatWizard } from '@fortawesome/free-solid-svg-icons';
+import { faChessKing, faDiceD20, faHatWizard, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Box, CardHeader, CardMedia, Chip } from '@mui/material';
+import { Alert, Box, CardHeader, CardMedia, Chip } from '@mui/material';
 import { gameType } from '@/lib/enums';
 import { ConEvent } from '@/lib/types';
 
@@ -11,6 +11,11 @@ type Props = {
 const EventHeader = ({ conEvent }: Props) => {
     return (
         <>
+            {conEvent?.published === false ? (
+                <Alert severity="warning" sx={{ marginBottom: '1rem' }}>
+                    Dette arrangementet er ikke publisert enda.
+                </Alert>
+            ) : null}
             <CardHeader sx={{ paddingBottom: '0.5rem' }} title={conEvent?.title} subheader={conEvent?.subtitle} />
 
             <Box className="flex justify-start pb-4">
@@ -41,7 +46,7 @@ const EventHeader = ({ conEvent }: Props) => {
                         ) : null}
                         {conEvent?.gameType === gameType.other ? (
                             <Chip
-                                icon={<FontAwesomeIcon icon={faHatWizard} />}
+                                icon={<FontAwesomeIcon icon={faPalette} />}
                                 label="Annet"
                                 size="small"
                                 variant="outlined"

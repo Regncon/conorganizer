@@ -33,12 +33,13 @@ const EventList = () => {
         <Box className='flex flex-row flex-wrap justify-center gap-4 mb-20'>
             <AddEvent collectionRef={collectionRef} />
             {loading ? <h1>Loading...</h1> : null}
-            {conEvents.filter((conEvent) => conEvent.published === true).map((conEvent) => (
+            {conEvents.map((conEvent) => ( //filter((conEvent) => conEvent.published === true)
 
                 <Card key={conEvent.id}
                     onClick={() => {
                         window.location.assign(`/event/${conEvent.id}`);
                     }}
+                    sx={conEvent?.published === false ? ({ opacity: "50%" }) : null }
                 >
                     <EventHeader conEvent={conEvent} />
                 </Card>
