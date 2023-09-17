@@ -16,7 +16,20 @@ const EventHeader = ({ conEvent }: Props) => {
                     Dette arrangementet er ikke publisert enda.
                 </Alert>
             ) : null}
-            <CardHeader sx={{ paddingBottom: '0.5rem' }} title={conEvent?.title} subheader={conEvent?.subtitle} />
+            <CardHeader
+                title={conEvent?.title}
+                subheader={conEvent?.subtitle}
+                sx={{
+                    backgroundImage: 'url(/placeholder.jpg)',
+                    pb: '.5rem',
+                    height: '50vh',
+                    minHeight: '300px',
+                    maxHeight: '500px',
+                    backgroundSize: 'cover',
+                    color: 'white',
+                    alignItems: 'end',
+                }}
+            />
 
             <Box className="flex justify-start pb-4">
                 <CardMedia
