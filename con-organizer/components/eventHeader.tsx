@@ -30,21 +30,22 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                         height: listView ? '10em' : '25em',
                         // minHeight: '300px',
                         // maxHeight: '500px',
+                        display: 'flex',
+                        alignItems: 'end',
                     }}
                 >
-                    <CardHeader
-                        title={conEvent?.title}
-                        subheader={conEvent?.subtitle}
+                    <Box
                         sx={{
-                            // height: '50vh',
-                            height: '15em',
-                            // minHeight: '300px',
-                            // maxHeight: '500px',
                             color: 'white',
-                            alignItems: 'end',
                             maxWidth: { xs: '95vw', md: '30em' },
+                            padding: '.7em',
                         }}
-                    />
+                    >
+                        <Typography variant="h3">{conEvent?.title}</Typography>
+                        <Typography variant="h4" sx={{ color: 'lightgrey' }}>
+                            {conEvent?.subtitle}
+                        </Typography>
+                    </Box>
                 </Box>
             </Box>
 

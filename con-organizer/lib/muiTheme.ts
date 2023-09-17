@@ -22,6 +22,11 @@ const muiDarkTheme: ThemeOptions = {
         h6: {
             fontWeight: 'bold',
         },
+        h3: {
+            fontWeight: 'bold',
+            lineHeight: "1", // FUNKER FAEN IKKJE!
+            fontFamily: "Garamond, serif", // IKKJE DETTE HELLER!
+        },
     },
     components: {
         MuiButton: {
