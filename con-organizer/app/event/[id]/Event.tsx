@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Button, Card, CardActions } from '@mui/material';
+import { Box, Button, Card, CardActions } from '@mui/material';
 import { collection, onSnapshot } from 'firebase/firestore';
 import EditDialog from '@/components/editDialog';
 import EventUi from '@/components/eventUi';
@@ -41,14 +41,20 @@ const Event = ({ id }: Props) => {
 
     const conEvent = conEvents.find((conEvent) => conEvent.id === id) || ({} as ConEvent);
     return (
-        <>
-            {loading && <h1>Loading...</h1> }
+        <Box className="flex flex-col gap-4" pt={'1rem'}>
+            {loading && <h1>Loading...</h1>}
             <EditDialog
                 open={openEdit}
                 handleClose={handleCloseEdit}
                 collectionRef={collectionRef}
                 conEvent={conEvent}
             />
+
+            <Card sx={{ maxWidth: '440px' }}>
+                <Button onClick={() => window.history.go(-1)}>
+                    Tilbake
+                </Button>
+            </Card>
 
             <EventUi conEvent={conEvent} showSelect={true} />
 
@@ -57,7 +63,7 @@ const Event = ({ id }: Props) => {
                     <Button onClick={handleOpenEdit}>Endre</Button>
                 </CardActions>
             </Card>
-        </>
+        </Box>
     );
 };
 

@@ -3,7 +3,7 @@ export enum pool {
     "none" = "Ingen",
     "FirdayEvening" = "Fredag Kveld",
     "SaturdayMorning" = "Lørdag Morgen",
-    "SaturdayAfternoon" = "Lørdag Ettermiddag",
+    "SaturdayEvening" = "Lørdag Kveld",
     "SundayMorning" = "Søndag Morgen",
 }
 

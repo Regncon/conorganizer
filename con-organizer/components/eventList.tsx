@@ -2,13 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { collection, onSnapshot } from 'firebase/firestore';
+import { pool } from '@/lib/enums';
 import { ConEvent } from '@/lib/types';
 import db from '../lib/firebase';
 import { Box, Card, CardContent, CardHeader } from '../lib/mui';
 import AddEvent from './addEvent';
 import EventHeader from './eventHeader';
 
-const EventList = () => {
+type Props = {
+   activePool?: pool;
+}; 
+
+const EventList = ({ activePool }: Props) => {
     const collectionRef = collection(db, 'events');
     const [conEvents, setconEvents] = useState([] as ConEvent[]);
     const [loading, setLoading] = useState(false);

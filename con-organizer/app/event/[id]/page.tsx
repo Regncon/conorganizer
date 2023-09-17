@@ -5,7 +5,6 @@ type Props = {
 
 const page = ({ params }: Props) => {
     const { id } = params;
-    console.log(id);
 
     return <Event id={id} />;
 };

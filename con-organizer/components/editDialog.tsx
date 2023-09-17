@@ -99,8 +99,6 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         }
     }
 
-    console.log(conEvent, 'conEvent');
-
     return (
         <Dialog open={open} fullWidth={true} maxWidth="md">
             <Box sx={{ minHeight: '900px' }} display="flex" flexDirection="row">
@@ -149,7 +147,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                                     <MenuItem value={pool.none}>{pool.none}</MenuItem>
                                     <MenuItem value={pool.FirdayEvening}>{pool.FirdayEvening}</MenuItem>
                                     <MenuItem value={pool.SaturdayMorning}>{pool.SaturdayMorning}</MenuItem>
-                                    <MenuItem value={pool.SaturdayAfternoon}>{pool.SaturdayAfternoon}</MenuItem>
+                                    <MenuItem value={pool.SaturdayEvening}>{pool.SaturdayEvening}</MenuItem>
                                     <MenuItem value={pool.SundayMorning}>{pool.SundayMorning}</MenuItem>
                                 </Select>
                             </div>
