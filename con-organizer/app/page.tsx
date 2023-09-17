@@ -9,7 +9,7 @@ import { pool } from '@/lib/enums';
 import { muiDark } from '@/lib/muiTheme';
 
 export default function Home() {
-/*     const [activePool, setActivePool] = useState<pool>(pool.FirdayEvening);
+    /*     const [activePool, setActivePool] = useState<pool>(pool.FirdayEvening);
 
     const handlePoolChange = (pool: pool) => {
         setActivePool(pool);

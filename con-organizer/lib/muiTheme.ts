@@ -24,8 +24,14 @@ const muiDarkTheme: ThemeOptions = {
         },
         h3: {
             fontWeight: 'bold',
-            lineHeight: "1", // FUNKER FAEN IKKJE!
-            fontFamily: "Garamond, serif", // IKKJE DETTE HELLER!
+            lineHeight: "1",
+            fontFamily: "Garamond, serif",
+        },
+        h4: {
+            color: "lightgrey",
+            fontFamily: "Garamond, serif",
+            fontStyle: "italic",
+            fontSize: "1.5rem",
         },
     },
     components: {

@@ -37,14 +37,12 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     <Box
                         sx={{
                             color: 'white',
-                            maxWidth: { xs: '95vw', md: '30em' },
+                            maxWidth: { xs: '95vw', md: '1080px' },
                             padding: '.7em',
                         }}
                     >
                         <Typography variant="h3">{conEvent?.title}</Typography>
-                        <Typography variant="h4" sx={{ color: 'lightgrey' }}>
-                            {conEvent?.subtitle}
-                        </Typography>
+                        <Typography variant="h4">{conEvent?.subtitle}</Typography>
                     </Box>
                 </Box>
             </Box>
@@ -58,7 +56,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     gap: '1em',
                     backgroundColor: 'white',
                     color: 'black',
-                    width: { xs: '95vw', md: '30em' },
+                    width: { xs: '95vw', md: '1080px' },
                 }}
             >
                 <span>
@@ -87,7 +85,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                         </Box>
                     ) : null}
                 </span>
-                <Box sx={{ display: 'grid' }}>
+                <Box sx={{ display: 'grid', width: '100vw', maxWidth: '1080px' }}>
                     <span>{conEvent.gameSystem} </span>
                     <span>{conEvent.room} </span>
                     <span>{conEvent.pool} </span>

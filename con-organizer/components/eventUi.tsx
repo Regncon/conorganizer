@@ -86,13 +86,13 @@ const EventUi = ({ conEvent, showSelect }: Props) => {
                         />
                         <MyFormControlLabel
                             value="IfIHaveTo"
-                            sx={{ display: 'grid', backgroundColor: '#fba', textAlign: 'center', p: '.4em' }}
+                            sx={{ display: 'grid', backgroundColor: '#00000055', textAlign: 'center', p: '.4em' }}
                             control={<Radio size="small" />}
                             label="Hvis jeg må"
                         />
                         <MyFormControlLabel
                             value="IWantTo"
-                            sx={{ display: 'grid', backgroundColor: '#f76', textAlign: 'center', p: '.4em' }}
+                            sx={{ display: 'grid', backgroundColor: '#000000aa', textAlign: 'center', p: '.4em' }}
                             control={<Radio size="small" />}
                             label="Har lyst"
                         />
@@ -100,7 +100,7 @@ const EventUi = ({ conEvent, showSelect }: Props) => {
                             value="RealyWantTo"
                             control={<Radio size="small" />}
                             label="Har veldig lyst"
-                            sx={{ display: 'grid', backgroundColor: '#f54', textAlign: 'center', p: '.4em' }}
+                            sx={{ display: 'grid', backgroundColor: '#000000ff', textAlign: 'center', p: '.4em' }}
                         />
                     </RadioGroup>
                 </FormControl>
