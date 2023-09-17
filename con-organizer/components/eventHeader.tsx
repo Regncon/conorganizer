@@ -23,7 +23,7 @@ const EventHeader = ({ conEvent }: Props) => {
                     sx={{
                         background: 'linear-gradient(transparent, transparent, black)',
                         // height: '50vh',
-                        height: '10em',
+                        height: '15em',
                         // minHeight: '300px',
                         // maxHeight: '500px',
                         color: 'white',
@@ -39,6 +39,9 @@ const EventHeader = ({ conEvent }: Props) => {
                     alignItems: 'center',
                     gridTemplateColumns: 'auto 1fr',
                     gap: '1em',
+                    backgroundColor: 'white',
+                    color: 'black',
+                    width: { xs: '95vw', md: '30em' },
                 }}
             >
                 <span>
