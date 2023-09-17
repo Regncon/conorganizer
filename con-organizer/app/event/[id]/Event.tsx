@@ -10,7 +10,6 @@ type Props = { id: string };
 const Event = ({ id }: Props) => {
     const { event, loading } = useSingleEvents(id);
     const [openEdit, setOpenEdit] = useState(false);
-    console.log(event);
 
     const handleCloseEdit = () => {
         setOpenEdit(false);
