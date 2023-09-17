@@ -31,6 +31,7 @@ const Login = (props: any) => {
                 resetInput();
                 setSuccess('Logget inn! Ett øyeblikk...');
                 setError('');
+                setChoice('');
             })
             .catch((err) => {
                 console.error(err);
