@@ -1,10 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { Button, Card, CardActions } from '@mui/material';
-import { collection } from 'firebase/firestore';
 import EditDialog from '@/components/editDialog';
 import EventUi from '@/components/eventUi';
-import { db } from '@/lib/firebase';
 import { useSingleEvents } from '@/lib/hooks/UseSingleEvent';
 
 type Props = { id: string };
@@ -29,7 +27,9 @@ const Event = ({ id }: Props) => {
             ) : (
                 <>
                     <EditDialog open={openEdit} handleClose={handleCloseEdit} conEvent={event} />
-
+                    <Card sx={{ maxWidth: '440px' }}>
+                        <Button onClick={() => window.history.go(-1)}>Tilbake</Button>
+                    </Card>
                     <EventUi conEvent={event} showSelect={true} />
 
                     <Card sx={{ maxWidth: '440px' }}>

@@ -17,7 +17,6 @@ const MainNavigator = () => {
     const [value, setValue] = useState(0);
     const [choice, setChoice] = useState('');
     const user = useAuth();
-    // console.log('useAuth', useAuth());
 
     function logout() {
         return auth.signOut();
@@ -75,15 +74,11 @@ const MainNavigator = () => {
                         onClick={() => setChoice('newpassword')}
                     />
                     {/* <BottomNavigationAction label="Kj&oslash;p billett" icon={<LocalActivity />} /> */}
-                    <Dialog open={!!choice}>
-                        {choice === 'login' ? (
-                            <Login setChoice={setChoice} />
-                        ) : (
-                            <ForgotPassword setChoice={setChoice} />
-                        )}
-                    </Dialog>
                 </BottomNavigation>
             )}
+            <Dialog open={!!choice}>
+                {choice === 'login' ? <Login setChoice={setChoice} /> : <ForgotPassword setChoice={setChoice} />}
+            </Dialog>
         </Box>
     );
 };

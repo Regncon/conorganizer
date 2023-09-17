@@ -1,6 +1,7 @@
-import { faDiceD20 } from '@fortawesome/free-solid-svg-icons';
+import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Box, CardHeader, CardMedia, Chip } from '@mui/material';
+import { Alert, Box, CardHeader, CardMedia, Chip } from '@mui/material';
+import { GameType } from '@/lib/enums';
 import { ConEvent } from '@/models/types';
 
 type Props = {
@@ -10,7 +11,25 @@ type Props = {
 const EventHeader = ({ conEvent }: Props) => {
     return (
         <>
-            <CardHeader sx={{ paddingBottom: '0.5rem' }} title={conEvent?.title} subheader={conEvent?.subtitle} />
+            {conEvent?.published === false ? (
+                <Alert severity="warning" sx={{ marginBottom: '1rem' }}>
+                    Dette arrangementet er ikke publisert enda.
+                </Alert>
+            ) : null}
+            <CardHeader
+                title={conEvent?.title}
+                subheader={conEvent?.subtitle}
+                sx={{
+                    backgroundImage: 'url(/placeholder.jpg)',
+                    pb: '.5rem',
+                    height: '50vh',
+                    minHeight: '300px',
+                    maxHeight: '500px',
+                    backgroundSize: 'cover',
+                    color: 'white',
+                    alignItems: 'end',
+                }}
+            />
 
             <Box className="flex justify-start pb-4">
                 <CardMedia
@@ -22,15 +41,34 @@ const EventHeader = ({ conEvent }: Props) => {
                 />
                 <Box className="flex flex-col pl-4 pr-4">
                     <span>
-                        <Chip
-                            icon={<FontAwesomeIcon icon={faDiceD20} />}
-                            label="Rollespill"
-                            size="small"
-                            variant="outlined"
-                        />
+                        {conEvent?.gameType === GameType.roleplaying ? (
+                            <Chip
+                                icon={<FontAwesomeIcon icon={faDiceD20} />}
+                                label="Rollespill"
+                                size="small"
+                                variant="outlined"
+                            />
+                        ) : null}
+                        {conEvent?.gameType === GameType.boardgame ? (
+                            <Chip
+                                icon={<FontAwesomeIcon icon={faChessKing} />}
+                                label="Brettspill"
+                                size="small"
+                                variant="outlined"
+                            />
+                        ) : null}
+                        {conEvent?.gameType === GameType.other ? (
+                            <Chip
+                                icon={<FontAwesomeIcon icon={faPalette} />}
+                                label="Annet"
+                                size="small"
+                                variant="outlined"
+                            />
+                        ) : null}
                     </span>
-                    <span>DnD 5e </span> <span>Rom 222,</span>
-                    <span>Søndag: 12:00 - 16:00</span>
+                    <span>{conEvent?.gameSystem} </span>
+                    <span>{conEvent?.room} </span>
+                    <span>{conEvent?.pool} </span>
                 </Box>
             </Box>
         </>

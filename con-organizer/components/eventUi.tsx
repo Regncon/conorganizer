@@ -53,7 +53,7 @@ const EventUi = ({ conEvent, showSelect }: Props) => {
             <EventHeader conEvent={conEvent} />
 
             <Divider />
-            <Typography className="pl-4 pr-4" sx={{ minHeight: '7rem' }}>
+            <Typography variant="body1" className="pl-4 pr-4" sx={{ minHeight: '7rem' }}>
                 {parse(conEvent?.description || '')}
             </Typography>
 
@@ -70,7 +70,7 @@ const EventUi = ({ conEvent, showSelect }: Props) => {
                         <MyFormControlLabel
                             value="NotInterested"
                             control={<Radio size="small" />}
-                            label="Ikke intresert"
+                            label="Ikke interessert"
                         />
                         <MyFormControlLabel value="IfIHaveTo" control={<Radio size="small" />} label="Hvis jeg må" />
                         <MyFormControlLabel value="IWantTo" control={<Radio size="small" />} label="Har lyst" />
