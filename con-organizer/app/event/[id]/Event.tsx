@@ -6,6 +6,7 @@ import EditDialog from '@/components/editDialog';
 import EventUi from '@/components/eventUi';
 import { ConEvent } from '@/lib/types';
 import db from '../../../lib/firebase';
+import MainNavigator from '@/components/mainNavigator';
 
 type Props = { id: string };
 
@@ -61,6 +62,7 @@ const Event = ({ id }: Props) => {
                     <Button onClick={handleOpenEdit}>Endre</Button>
                 </CardActions>
             </Card>
+            <MainNavigator />
         </Box>
     );
 };
