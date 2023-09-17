@@ -38,7 +38,7 @@ const EventList = ({ activePool }: Props) => {
         <>
             <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20 mt-20">
                 {loading ? <h1>Loading...</h1> : null}
-            <AddEvent collectionRef={collectionRef} />
+                <AddEvent collectionRef={collectionRef} />
                 {conEvents.map(
                     (
                         conEvent //filter((conEvent) => conEvent.published === true)
@@ -50,7 +50,7 @@ const EventList = ({ activePool }: Props) => {
                             }}
                             sx={{ cursor: 'pointer', opacity: conEvent?.published === false ? '50%' : '' }}
                         >
-                            <EventHeader conEvent={conEvent} />
+                            <EventHeader conEvent={conEvent} listView={true} />
                         </Card>
                     )
                 )}

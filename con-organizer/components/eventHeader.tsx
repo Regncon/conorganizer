@@ -6,9 +6,10 @@ import { ConEvent } from '@/lib/types';
 
 type Props = {
     conEvent: ConEvent;
+    listView?: boolean;
 };
 
-const EventHeader = ({ conEvent }: Props) => {
+const EventHeader = ({ conEvent, listView = false }: Props) => {
     return (
         <>
             {conEvent?.published === false ? (
@@ -26,7 +27,7 @@ const EventHeader = ({ conEvent }: Props) => {
                     sx={{
                         background: 'linear-gradient(transparent, transparent, black)',
                         // height: '50vh',
-                        height: '15em',
+                        height: listView ? '10em' : '25em',
                         // minHeight: '300px',
                         // maxHeight: '500px',
                     }}
