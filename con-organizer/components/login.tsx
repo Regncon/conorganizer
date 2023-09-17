@@ -19,6 +19,7 @@ const Login = (props: any) => {
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
     const { setChoice } = props;
+    const [hiddenDragon, setHiddenDragon] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -59,7 +60,7 @@ const Login = (props: any) => {
                     component="img"
                     image="/img/regnconlogony.png"
                     title="årets regncondrage"
-                    sx={{ p: '1rem' }}
+                    sx={{ p: '1rem', display: hiddenDragon ? 'none' : 'block' }}
                 />
                 <form action={''}>
                     <TextField
@@ -68,6 +69,8 @@ const Login = (props: any) => {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                         fullWidth
                         sx={{ margin: '.3rem 0' }}
+                        onFocus={() => setHiddenDragon(true)}
+                        onBlur={() => setHiddenDragon(false)}
                     />
                     <TextField
                         sx={{ margin: '.3rem 0' }}
@@ -75,6 +78,8 @@ const Login = (props: any) => {
                         name="password"
                         value={password}
                         type={showPassword ? 'text' : 'password'}
+                        onFocus={() => setHiddenDragon(true)}
+                        onBlur={() => setHiddenDragon(false)}
                         InputProps={{
                             endAdornment: (
                                 <InputAdornment position="end">
