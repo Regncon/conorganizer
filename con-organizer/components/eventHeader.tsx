@@ -1,6 +1,6 @@
 import { faChessKing, faDiceD20, faHatWizard, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Box, CardHeader, CardMedia, Chip } from '@mui/material';
+import { Alert, Box, CardHeader, CardMedia, Chip, Typography } from '@mui/material';
 import { gameType } from '@/lib/enums';
 import { ConEvent } from '@/lib/types';
 
@@ -16,43 +16,61 @@ const EventHeader = ({ conEvent }: Props) => {
                     Dette arrangementet er ikke publisert enda.
                 </Alert>
             ) : null}
-            <CardHeader sx={{ paddingBottom: '0.5rem' }} title={conEvent?.title} subheader={conEvent?.subtitle} />
-
-            <Box className="flex justify-start pb-4">
-                <CardMedia
-                    className="ml-4"
-                    sx={{ width: '40%', maxHeight: '130px' }}
-                    component="img"
-                    image="/placeholder.jpg"
-                    alt={conEvent?.title}
+            <Box sx={{ backgroundImage: 'url(/placeholder.jpg)', backgroundSize: 'cover' }}>
+                <CardHeader
+                    title={conEvent?.title}
+                    subheader={conEvent?.subtitle}
+                    sx={{
+                        background: 'linear-gradient(transparent, transparent, black)',
+                        height: '50vh',
+                        minHeight: '300px',
+                        maxHeight: '500px',
+                        color: 'white',
+                        alignItems: 'end',
+                    }}
                 />
-                <Box className="flex flex-col pl-4 pr-4">
-                    <span>
-                        {conEvent?.gameType === gameType.roleplaying ? (
-                            <Chip
-                                icon={<FontAwesomeIcon icon={faDiceD20} />}
-                                label="Rollespill"
-                                size="small"
-                                variant="outlined"
-                            />
-                        ) : null}
-                        {conEvent?.gameType === gameType.boardgame ? (
-                            <Chip
-                                icon={<FontAwesomeIcon icon={faChessKing} />}
-                                label="Brettspill"
-                                size="small"
-                                variant="outlined"
-                            />
-                        ) : null}
-                        {conEvent?.gameType === gameType.other ? (
-                            <Chip
-                                icon={<FontAwesomeIcon icon={faPalette} />}
-                                label="Annet"
-                                size="small"
-                                variant="outlined"
-                            />
-                        ) : null}
-                    </span>
+            </Box>
+
+            <Box
+                sx={{
+                    display: 'grid',
+                    justifyItems: 'start',
+                    alignItems: 'center',
+                    gridTemplateColumns: 'auto 1fr',
+                    gap: '1em',
+                }}
+            >
+                <span>
+                    {conEvent?.gameType === gameType.roleplaying ? (
+                        <Box sx={{ p: '1em', placeItems: 'center', display: 'grid', gap: '.5em' }}>
+                            <FontAwesomeIcon icon={faDiceD20} fontSize="2em" color="red" />
+                            <Typography variant="caption">Rollespill</Typography>
+                        </Box>
+                    ) : // <Chip
+                    //     icon={<FontAwesomeIcon icon={faDiceD20} />}
+                    //     label="Rollespill"
+                    //     size="small"
+                    //     variant="outlined"
+                    // />
+                    null}
+                    {conEvent?.gameType === gameType.boardgame ? (
+                        <Chip
+                            icon={<FontAwesomeIcon icon={faChessKing} />}
+                            label="Brettspill"
+                            size="small"
+                            variant="outlined"
+                        />
+                    ) : null}
+                    {conEvent?.gameType === gameType.other ? (
+                        <Chip
+                            icon={<FontAwesomeIcon icon={faPalette} />}
+                            label="Annet"
+                            size="small"
+                            variant="outlined"
+                        />
+                    ) : null}
+                </span>
+                <Box sx={{ display: 'grid' }}>
                     <span>{conEvent.gameSystem} </span>
                     <span>{conEvent.room} </span>
                     <span>{conEvent.pool} </span>

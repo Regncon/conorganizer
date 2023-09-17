@@ -10,8 +10,8 @@ import AddEvent from './addEvent';
 import EventHeader from './eventHeader';
 
 type Props = {
-   activePool?: pool;
-}; 
+    activePool?: pool;
+};
 
 const EventList = ({ activePool }: Props) => {
     const collectionRef = collection(db, 'events');
@@ -36,7 +36,7 @@ const EventList = ({ activePool }: Props) => {
 
     return (
         <>
-            <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20">
+            <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20 mt-20">
                 {loading ? <h1>Loading...</h1> : null}
             <AddEvent collectionRef={collectionRef} />
                 {conEvents.map(
@@ -48,7 +48,7 @@ const EventList = ({ activePool }: Props) => {
                             onClick={() => {
                                 window.location.assign(`/event/${conEvent.id}`);
                             }}
-                            sx={{cursor: 'pointer', opacity: conEvent?.published === false ? '50%'  : '' }}
+                            sx={{ cursor: 'pointer', opacity: conEvent?.published === false ? '50%' : '' }}
                         >
                             <EventHeader conEvent={conEvent} />
                         </Card>
