@@ -75,6 +75,7 @@ const EventHeader = ({ conEvent }: Props) => {
                     <span>{conEvent.gameSystem} </span>
                     <span>{conEvent.room} </span>
                     <span>{conEvent.pool} </span>
+                    <span>{conEvent.host} </span>
                 </Box>
             </Box>
         </>
