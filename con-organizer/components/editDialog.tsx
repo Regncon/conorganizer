@@ -2,20 +2,32 @@
 
 import { useEffect, useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
-import { Alert, Box, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, TextField } from '@mui/material';
+import {
+    Alert,
+    Box,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Divider,
+    IconButton,
+    TextField,
+} from '@mui/material';
 import { CollectionReference, doc, DocumentData, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
-import { ConEvent } from '@/lib/types';
+import { ConEvent } from '@/models/types';
 import { Button } from '../lib/mui';
 import EventUi from './eventUi';
+import { eventRef } from '@/lib/observables/SingleEvent';
+import { eventsRef } from '@/lib/observables/AllEvents';
+import { db } from '@/lib/firebase';
 
 type Props = {
     open: boolean;
     conEvent?: ConEvent;
-    collectionRef: CollectionReference<DocumentData, DocumentData>;
     handleClose: () => void;
-}
+};
 
-const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose }: Props) => {
+const EditDialog = ({ open, conEvent, handleClose }: Props) => {
     const [title, setTitle] = useState(conEvent?.title || '');
     const [subtitle, setSubtitle] = useState(conEvent?.subtitle || '');
     const [description, setDescription] = useState(conEvent?.description || '');
@@ -28,7 +40,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         setSubtitle(conEvent?.subtitle || '');
     }, [conEvent]);
 
-    const addSchool = async () => {
+    const addEvent = async () => {
         const newSchool = {
             title,
             description,
@@ -37,11 +49,12 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         };
 
         try {
-            const schoolRef = doc(collectionRef);
+            const schoolRef = doc(eventsRef);
             await setDoc(schoolRef, newSchool);
         } catch (e) {
             const error = e as Error;
-            setErrorMessage(error.message);        }
+            setErrorMessage(error.message);
+        }
     };
 
     async function editEvent(conEvent: ConEvent) {
@@ -53,11 +66,11 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         };
 
         try {
-            const schoolRef = doc(collectionRef, conEvent.id);
+            const schoolRef = doc(eventsRef, conEvent.id);
             updateDoc(schoolRef, updatedSchool);
         } catch (e) {
             const error = e as Error;
-            setErrorMessage(error.message);   
+            setErrorMessage(error.message);
         }
     }
 
@@ -65,7 +78,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         <Dialog open={open} fullWidth={true} maxWidth="md">
             <Box sx={{ height: '900px' }} display="flex" flexDirection="row">
                 <Box className="p-4" sx={{ width: '375px', height: '667px' }}>
-                    <EventUi conEvent={conEvent || ({} as ConEvent) } showSelect={showSelect} />
+                    <EventUi conEvent={conEvent || ({} as ConEvent)} showSelect={showSelect} />
                 </Box>
 
                 <Divider orientation="vertical" variant="middle" flexItem />
@@ -112,7 +125,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                         {conEvent?.id ? (
                             <Button onClick={() => editEvent(conEvent)}>Save</Button>
                         ) : (
-                            <Button onClick={() => addSchool()}>Add</Button>
+                            <Button onClick={() => addEvent()}>Add</Button>
                         )}
                     </DialogActions>
                     {!!errorMessage && <Alert severity="error">{errorMessage}</Alert>}

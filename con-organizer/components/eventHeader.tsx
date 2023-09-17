@@ -1,10 +1,10 @@
 import { faDiceD20 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, CardHeader, CardMedia, Chip } from '@mui/material';
-import { ConEvent } from '@/lib/types';
+import { ConEvent } from '@/models/types';
 
 type Props = {
-    conEvent: ConEvent;
+    conEvent: ConEvent | undefined;
 };
 
 const EventHeader = ({ conEvent }: Props) => {

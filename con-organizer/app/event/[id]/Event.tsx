@@ -4,16 +4,16 @@ import { Button, Card, CardActions } from '@mui/material';
 import { collection } from 'firebase/firestore';
 import EditDialog from '@/components/editDialog';
 import EventUi from '@/components/eventUi';
+import { db } from '@/lib/firebase';
 import { useSingleEvents } from '@/lib/hooks/UseSingleEvent';
-import db from '../../../lib/firebase';
 
 type Props = { id: string };
 
 const Event = ({ id }: Props) => {
-    const collectionRef = collection(db, 'schools');
-    const [openEdit, setOpenEdit] = useState(false);
-
     const { event, loading } = useSingleEvents(id);
+    const [openEdit, setOpenEdit] = useState(false);
+    console.log(event);
+
     const handleCloseEdit = () => {
         setOpenEdit(false);
     };
@@ -28,12 +28,7 @@ const Event = ({ id }: Props) => {
                 <h1>Loading...</h1>
             ) : (
                 <>
-                    <EditDialog
-                        open={openEdit}
-                        handleClose={handleCloseEdit}
-                        collectionRef={collectionRef}
-                        conEvent={event}
-                    />
+                    <EditDialog open={openEdit} handleClose={handleCloseEdit} conEvent={event} />
 
                     <EventUi conEvent={event} showSelect={true} />
 

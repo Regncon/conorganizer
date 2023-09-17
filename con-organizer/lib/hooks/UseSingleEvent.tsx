@@ -1,23 +1,22 @@
 import { useEffect, useState } from 'react';
-import { collection, query, where } from 'firebase/firestore';
-import { collectionData } from 'rxfire/firestore';
-import { tap } from 'rxjs';
-import db from '@/lib/firebase';
-import { ConEvent } from '../types';
+import { ConEvent } from '../../models/types';
+import { singleEvent$ } from '../observables/SingleEvent';
 
 export const useSingleEvents = (id: string) => {
     const [event, setEvent] = useState<ConEvent>();
     const [loading, setLoading] = useState<boolean>(true);
-    const eventRef = query(collection(db, 'events'), where('id', '==', id));
 
     useEffect(() => {
-        const conEvents = collectionData<ConEvent>(eventRef).subscribe((event) => {
-            setEvent(event[0]);
+        const eventObservable = singleEvent$(id).subscribe((snapshot) => {
+            if (snapshot.data()) {
+                setEvent({ ...(snapshot.data() as ConEvent), id: snapshot.id });
+                setLoading(false);
+            }
             setLoading(false);
         });
 
         return () => {
-            conEvents.unsubscribe();
+            eventObservable.unsubscribe();
         };
     }, []);
 

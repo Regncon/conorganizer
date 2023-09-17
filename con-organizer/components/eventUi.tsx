@@ -15,11 +15,11 @@ import {
 } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import parse from 'html-react-parser';
-import { ConEvent } from '@/lib/types';
+import { ConEvent } from '@/models/types';
 import EventHeader from './eventHeader';
 
 type Props = {
-    conEvent: ConEvent;
+    conEvent: ConEvent | undefined;
     showSelect?: boolean;
 };
 
