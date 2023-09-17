@@ -17,7 +17,6 @@ const MainNavigator = () => {
     const [value, setValue] = useState(0);
     const [choice, setChoice] = useState('');
     const user = useAuth();
-    // console.log('useAuth', useAuth());
 
     function logout() {
         return auth.signOut();

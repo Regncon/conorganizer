@@ -34,7 +34,6 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
     const [title, setTitle] = useState(conEvent?.title || '');
     const [subtitle, setSubtitle] = useState(conEvent?.subtitle || '');
     const [description, setDescription] = useState(conEvent?.description || '');
-    const [showSelect, setShowSelect] = useState(true);
     const [errorMessage, setErrorMessage] = useState<string>();
     const [published, setPublished] = useState(conEvent?.published || false);
     const [eventPool, setEventPool] = useState(conEvent?.pool || pool.none);
@@ -100,13 +99,11 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         }
     }
 
-    console.log(conEvent, 'conEvent');
-
     return (
         <Dialog open={open} fullWidth={true} maxWidth="md">
             <Box sx={{ minHeight: '900px' }} display="flex" flexDirection="row">
                 <Box className="p-4" sx={{ width: '375px', height: '667px' }}>
-                    <EventUi conEvent={conEvent || ({} as ConEvent)} showSelect={showSelect} />
+                    <EventUi conEvent={conEvent || ({} as ConEvent)} showSelect={true} />
                 </Box>
 
                 <Divider orientation="vertical" variant="middle" flexItem />
@@ -150,7 +147,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                                     <MenuItem value={pool.none}>{pool.none}</MenuItem>
                                     <MenuItem value={pool.FirdayEvening}>{pool.FirdayEvening}</MenuItem>
                                     <MenuItem value={pool.SaturdayMorning}>{pool.SaturdayMorning}</MenuItem>
-                                    <MenuItem value={pool.SaturdayAfternoon}>{pool.SaturdayAfternoon}</MenuItem>
+                                    <MenuItem value={pool.SaturdayEvening}>{pool.SaturdayEvening}</MenuItem>
                                     <MenuItem value={pool.SundayMorning}>{pool.SundayMorning}</MenuItem>
                                 </Select>
                             </div>

@@ -2,7 +2,7 @@
 
 import { createTheme, ThemeOptions } from '@mui/material';
 
-const muiLightTheme: ThemeOptions = {
+const muiDarkTheme: ThemeOptions = {
     palette: {
         mode: "dark",
         primary: {
@@ -37,4 +37,5 @@ const muiLightTheme: ThemeOptions = {
         },
     },
 };
-export const muiLight = createTheme(muiLightTheme);
+
+export const muiDark = createTheme(muiDarkTheme);

@@ -7,6 +7,7 @@ import { useTheme } from '@mui/material/styles';
 import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
+import { pool } from '@/lib/enums';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -42,16 +43,27 @@ function a11yProps(index: number) {
   };
 }
 
-export default function FullWidthTabs() {
+type Props = {
+  handlePoolChange?: (pool: pool) => void;
+};
+
+export default function FullWidthTabs({ handlePoolChange }: Props) {
   const theme = useTheme();
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = React.useState<pool>(pool.FirdayEvening);
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    setValue(newValue);
-  };
-
-  const handleChangeIndex = (index: number) => {
-    setValue(index);
+    if (newValue === 0) {
+      setValue(pool.FirdayEvening);
+    }
+    if (newValue === 1) {
+      setValue(pool.SaturdayMorning);
+    }
+    if (newValue === 2) {
+      setValue(pool.SaturdayEvening);
+    }
+    if (newValue === 3) {
+      setValue(pool.SundayMorning);
+    }
   };
 
   return (
