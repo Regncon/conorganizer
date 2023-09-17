@@ -22,9 +22,10 @@ const EventHeader = ({ conEvent }: Props) => {
                     subheader={conEvent?.subtitle}
                     sx={{
                         background: 'linear-gradient(transparent, transparent, black)',
-                        height: '50vh',
-                        minHeight: '300px',
-                        maxHeight: '500px',
+                        // height: '50vh',
+                        height: '10em',
+                        // minHeight: '300px',
+                        // maxHeight: '500px',
                         color: 'white',
                         alignItems: 'end',
                     }}
