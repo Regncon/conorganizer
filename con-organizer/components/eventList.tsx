@@ -5,10 +5,11 @@ import { collection,onSnapshot } from 'firebase/firestore';
 import { ConEvent } from '@/lib/types';
 import db from '../lib/firebase';
 import { Box, Card } from '../lib/mui';
+import AddEvent from './addEvent';
 import EventHeader from './eventHeader';
 
 const EventList = () => {
-    const collectionRef = collection(db, 'schools');
+    const collectionRef = collection(db, 'events');
     const [conEvents, setconEvents] = useState([] as ConEvent[]);
     const [loading, setLoading] = useState(false);
 
@@ -30,13 +31,15 @@ const EventList = () => {
 
     return (
         <Box className='flex flex-row flex-wrap justify-center gap-4 mb-20'>
+            <AddEvent collectionRef={collectionRef} />
             {loading ? <h1>Loading...</h1> : null}
-            {conEvents.map((conEvent) => (
+            {conEvents.map((conEvent) => ( //filter((conEvent) => conEvent.published === true)
 
                 <Card key={conEvent.id}
                     onClick={() => {
                         window.location.assign(`/event/${conEvent.id}`);
                     }}
+                    sx={conEvent?.published === false ? ({ opacity: "50%" }) : null }
                 >
                     <EventHeader conEvent={conEvent} />
                 </Card>

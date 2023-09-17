@@ -2,7 +2,7 @@
 
 import React from 'react';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import { Card, IconButton } from '@mui/material';
+import { IconButton } from '@mui/material';
 import { CollectionReference, DocumentData } from 'firebase/firestore';
 import EditDialog from './editDialog';
 
@@ -18,11 +18,7 @@ const AddEvent = ({ collectionRef }: Props) => {
 
     return (
         <>
-            <Card>
-                <h1 className="text-4xl">Con Organizer</h1>
-            </Card>
             <IconButton
-                className="fixed right-0 bottom-0 z-50"
                 aria-label="add"
                 color="error"
                 size="large"
