@@ -40,6 +40,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
     const [eventType, setEventType] = useState(conEvent?.gameType || gameType.none);
     const [gameSystem, setGameSystem] = useState<string>(conEvent?.gameSystem || '');
     const [room, setRoom] = useState<string>(conEvent?.room || '');
+    const [host, setHost] = useState<string>(conEvent?.host || '');
 
     useEffect(() => {
         setTitle(conEvent?.title || '');
@@ -50,6 +51,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         setEventType(conEvent?.gameType || gameType.none);
         setGameSystem(conEvent?.gameSystem || '');
         setRoom(conEvent?.room || '');
+        setHost(conEvent?.host || '');
     }, [conEvent]);
 
     const addevent = async () => {
@@ -61,6 +63,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
             pool: eventPool,
             gameType: eventType,
             room: room,
+            host: host,
             gameSystem: gameSystem,
             createdAt: serverTimestamp(),
             lastUpdated: serverTimestamp(),
@@ -84,6 +87,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
             pool: eventPool,
             gameType: eventType,
             room: room,
+            host: host,
             gameSystem: gameSystem,
             createdAt: serverTimestamp(),
             lastUpdated: serverTimestamp(),
@@ -192,6 +196,17 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                             variant="standard"
                             value={subtitle}
                             onChange={(e) => setSubtitle(e.target.value)}
+                        />
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            id="host"
+                            label="Arrangør"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            value={host}
+                            onChange={(e) => setHost(e.target.value)}
                         />
 
                         <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
