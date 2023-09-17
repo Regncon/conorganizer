@@ -104,7 +104,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
 
     return (
         <Dialog open={open} fullWidth={true} maxWidth="md">
-            <Box sx={{ height: '900px' }} display="flex" flexDirection="row">
+            <Box sx={{ minHeight: '900px' }} display="flex" flexDirection="row">
                 <Box className="p-4" sx={{ width: '375px', height: '667px' }}>
                     <EventUi conEvent={conEvent || ({} as ConEvent)} showSelect={showSelect} />
                 </Box>
@@ -112,8 +112,19 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                 <Divider orientation="vertical" variant="middle" flexItem />
 
                 <Box className="p-4">
-                    <DialogTitle>{conEvent?.id ? 'Endre' : 'Legg til'}</DialogTitle>
+
+                    <DialogTitle sx={{ paddingBottom: '0px', paddingLeft: '0px', paddingRight: '0px' }}>
+                        {conEvent?.id ? 'Endre arangement' : 'Legg til nytt arangement'}
+                    </DialogTitle>
+                    <Box sx={{ fontSize: '0.8rem' }}>
+                        <div>Opprettet: {conEvent?.createdAt ? conEvent.createdAt.toDate().toLocaleString() : ''} </div>
+                        <div>
+                            Sist endret: {conEvent?.lastUpdated ? conEvent.lastUpdated.toDate().toLocaleString() : ''}{' '}
+                        </div>
+                    </Box>
+
                     <Divider />
+
                     <DialogContent
                         sx={{
                             display: 'flex',
@@ -122,50 +133,47 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                             gap: '1rem',
                         }}
                     >
-                        <span>Opprettet: {conEvent?.createdAt ? conEvent.createdAt.toDate().toString() : ''} </span>
-                        <span>
-                            Sist endret: {conEvent?.lastUpdated ? conEvent.lastUpdated.toDate().toString() : ''}{' '}
-                        </span>
                         <div>
                             <Switch checked={published} onChange={() => setPublished(!published)} />
                             <span>Publisert</span>
                         </div>
+                        <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <div>
+                                <InputLabel id="pool-select-label">Pulje</InputLabel>
+                                <Select
+                                    labelId="pool-select-label"
+                                    id="pool-select"
+                                    value={eventPool}
+                                    label="Pulje"
+                                    onChange={(e) => setEventPool(e.target.value as pool)}
+                                >
+                                    <MenuItem value={pool.none}>{pool.none}</MenuItem>
+                                    <MenuItem value={pool.FirdayEvening}>{pool.FirdayEvening}</MenuItem>
+                                    <MenuItem value={pool.SaturdayMorning}>{pool.SaturdayMorning}</MenuItem>
+                                    <MenuItem value={pool.SaturdayAfternoon}>{pool.SaturdayAfternoon}</MenuItem>
+                                    <MenuItem value={pool.SundayMorning}>{pool.SundayMorning}</MenuItem>
+                                </Select>
+                            </div>
 
-                        <div>
-                            <InputLabel id="pool-select-label">Pulje</InputLabel>
-                            <Select
-                                labelId="pool-select-label"
-                                id="pool-select"
-                                value={eventPool}
-                                label="Pulje"
-                                onChange={(e) => setEventPool(e.target.value as pool)}
-                            >
-                                <MenuItem value={pool.none}>{pool.none}</MenuItem>
-                                <MenuItem value={pool.FirdayEvening}>{pool.FirdayEvening}</MenuItem>
-                                <MenuItem value={pool.SaturdayMorning}>{pool.SaturdayMorning}</MenuItem>
-                                <MenuItem value={pool.SaturdayAfternoon}>{pool.SaturdayAfternoon}</MenuItem>
-                                <MenuItem value={pool.SundayMorning}>{pool.SundayMorning}</MenuItem>
-                            </Select>
-                        </div>
-
-                        <div>
-                            <InputLabel id="type-select-label">Type</InputLabel>
-                            <Select
-                                labelId="type-select-label"
-                                id="type-select"
-                                value={eventType}
-                                label="Type"
-                                onChange={(e) => setEventType(e.target.value as gameType)}
-                            >
-                                <MenuItem value={gameType.none}>{gameType.none}</MenuItem>
-                                <MenuItem value={gameType.roleplaying}>{gameType.roleplaying}</MenuItem>
-                                <MenuItem value={gameType.boardgame}>{gameType.boardgame}</MenuItem>
-                                <MenuItem value={gameType.other}>{gameType.other}</MenuItem>
-                            </Select>
-                        </div>
+                            <div>
+                                <InputLabel id="type-select-label">Type</InputLabel>
+                                <Select
+                                    labelId="type-select-label"
+                                    id="type-select"
+                                    value={eventType}
+                                    label="Type"
+                                    onChange={(e) => setEventType(e.target.value as gameType)}
+                                >
+                                    <MenuItem value={gameType.none}>{gameType.none}</MenuItem>
+                                    <MenuItem value={gameType.roleplaying}>{gameType.roleplaying}</MenuItem>
+                                    <MenuItem value={gameType.boardgame}>{gameType.boardgame}</MenuItem>
+                                    <MenuItem value={gameType.other}>{gameType.other}</MenuItem>
+                                </Select>
+                            </div>
+                        </Box>
                     </DialogContent>
 
-                    <DialogContent sx={{ width: '375px' }}>
+                    <DialogContent sx={{ width: '375px', paddingTop: '0' }}>
                         <TextField
                             autoFocus
                             margin="dense"
@@ -188,28 +196,33 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                             value={subtitle}
                             onChange={(e) => setSubtitle(e.target.value)}
                         />
-                        <TextField
-                            autoFocus
-                            margin="dense"
-                            id="gameSystem"
-                            label="Spillsystem"
-                            type="text"
-                            fullWidth
-                            variant="standard"
-                            value={gameSystem}
-                            onChange={(e) => setGameSystem(e.target.value)}
-                        />
-                        <TextField
-                            autoFocus
-                            margin="dense"
-                            id="room"
-                            label="Rom"
-                            type="text"
-                            fullWidth
-                            variant="standard"
-                            value={room}
-                            onChange={(e) => setRoom(e.target.value)}
-                        />
+
+                        <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                            <TextField
+                                autoFocus
+                                margin="dense"
+                                id="gameSystem"
+                                label="Spillsystem"
+                                type="text"
+                                fullWidth
+                                variant="standard"
+                                value={gameSystem}
+                                onChange={(e) => setGameSystem(e.target.value)}
+                            />
+                            <Divider orientation="vertical" variant="middle" flexItem />
+                            <TextField
+                                autoFocus
+                                margin="dense"
+                                id="room"
+                                label="Rom"
+                                type="text"
+                                fullWidth
+                                variant="standard"
+                                value={room}
+                                onChange={(e) => setRoom(e.target.value)}
+                            />
+                        </Box>
+
                         <TextField
                             margin="dense"
                             id="description"
@@ -223,6 +236,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                             onChange={(e) => setDescription(e.target.value)}
                         />
                     </DialogContent>
+
                     <DialogActions>
                         {conEvent?.id ? (
                             <Button onClick={() => editEvent(conEvent)} type="submit">
