@@ -8,10 +8,8 @@ export const useAllEvents = () => {
 
     useEffect(() => {
         const eventsObservable = allEvents$.subscribe((events) => {
-            if (events) {
-                setEvents(events as ConEvent[]);
-                setLoading(false);
-            }
+            setEvents(events as ConEvent[] | undefined);
+            setLoading(false);
         });
 
         return () => {
