@@ -1,6 +1,6 @@
 import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Box, CardHeader, CardMedia, Chip, Typography } from '@mui/material';
+import { Alert, Box, CardHeader, Typography } from '@mui/material';
 import { GameType } from '@/lib/enums';
 import { ConEvent } from '@/models/types';
 
@@ -16,20 +16,35 @@ const EventHeader = ({ conEvent }: Props) => {
                     Dette arrangementet er ikke publisert enda.
                 </Alert>
             ) : null}
-            <Box sx={{ backgroundImage: 'url(/placeholder.jpg)', backgroundSize: 'cover' }}>
-                <CardHeader
-                    title={conEvent?.title}
-                    subheader={conEvent?.subtitle}
+            <Box
+                sx={{
+                    backgroundImage: 'url(/placeholder.jpg)',
+                    backgroundSize: 'cover',
+                }}
+            >
+                <Box
                     sx={{
                         background: 'linear-gradient(transparent, transparent, black)',
                         // height: '50vh',
                         height: '15em',
                         // minHeight: '300px',
                         // maxHeight: '500px',
-                        color: 'white',
-                        alignItems: 'end',
                     }}
-                />
+                >
+                    <CardHeader
+                        title={conEvent?.title}
+                        subheader={conEvent?.subtitle}
+                        sx={{
+                            // height: '50vh',
+                            height: '15em',
+                            // minHeight: '300px',
+                            // maxHeight: '500px',
+                            color: 'white',
+                            alignItems: 'end',
+                            maxWidth: { xs: '95vw', md: '30em' },
+                        }}
+                    />
+                </Box>
             </Box>
 
             <Box
@@ -47,7 +62,7 @@ const EventHeader = ({ conEvent }: Props) => {
                 <span>
                     {conEvent?.gameType === GameType.roleplaying ? (
                         <Box sx={{ p: '1em', placeItems: 'center', display: 'grid', gap: '.5em' }}>
-                            <FontAwesomeIcon icon={faDiceD20} fontSize="2em" color="red" />
+                            <FontAwesomeIcon icon={faDiceD20} fontSize="2em" color="orangered" />
                             <Typography variant="caption">Rollespill</Typography>
                         </Box>
                     ) : // <Chip
@@ -58,20 +73,16 @@ const EventHeader = ({ conEvent }: Props) => {
                     // />
                     null}
                     {conEvent?.gameType === GameType.boardgame ? (
-                        <Chip
-                            icon={<FontAwesomeIcon icon={faChessKing} />}
-                            label="Brettspill"
-                            size="small"
-                            variant="outlined"
-                        />
+                        <Box sx={{ p: '1em', placeItems: 'center', display: 'grid', gap: '.5em' }}>
+                            <FontAwesomeIcon icon={faChessKing} fontSize="2em" color="orangered" />
+                            <Typography variant="caption">Brettspill</Typography>
+                        </Box>
                     ) : null}
                     {conEvent?.gameType === GameType.other ? (
-                        <Chip
-                            icon={<FontAwesomeIcon icon={faPalette} />}
-                            label="Annet"
-                            size="small"
-                            variant="outlined"
-                        />
+                        <Box sx={{ p: '1em', placeItems: 'center', display: 'grid', gap: '.5em' }}>
+                            <FontAwesomeIcon icon={faPalette} fontSize="2em" color="orangered" />
+                            <Typography variant="caption">Annet</Typography>
+                        </Box>
                     ) : null}
                 </span>
                 <Box sx={{ display: 'grid' }}>
