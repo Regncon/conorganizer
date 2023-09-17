@@ -49,7 +49,7 @@ const EventUi = ({ conEvent, showSelect }: Props) => {
     }
 
     return (
-        <Card sx={{ maxWidth: '440px' }}>
+        <Card>
             <EventHeader conEvent={conEvent} />
 
             <Divider />
@@ -71,6 +71,7 @@ const EventUi = ({ conEvent, showSelect }: Props) => {
                         sx={{
                             display: 'grid',
                             width: '100vw',
+                            maxWidth: '1080px',
                             padding: '.2em',
                             gridAutoFlow: 'column',
                             gridAutoColumns: '1fr',

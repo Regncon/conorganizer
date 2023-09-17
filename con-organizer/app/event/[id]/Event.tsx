@@ -41,7 +41,7 @@ const Event = ({ id }: Props) => {
 
     const conEvent = conEvents.find((conEvent) => conEvent.id === id) || ({} as ConEvent);
     return (
-        <Box className="flex flex-col gap-4" pt={'1rem'}>
+        <Box sx={{ maxWidth: '1080px', margin: '0 auto' }}>
             {loading && <h1>Loading...</h1>}
             <EditDialog
                 open={openEdit}
@@ -50,15 +50,13 @@ const Event = ({ id }: Props) => {
                 conEvent={conEvent}
             />
 
-            <Card sx={{ maxWidth: '440px' }}>
-                <Button onClick={() => window.history.go(-1)}>
-                    Tilbake
-                </Button>
+            <Card>
+                <Button onClick={() => window.history.go(-1)}>Tilbake</Button>
             </Card>
 
             <EventUi conEvent={conEvent} showSelect={true} />
 
-            <Card sx={{ maxWidth: '440px' }}>
+            <Card>
                 <CardActions>
                     <Button onClick={handleOpenEdit}>Endre</Button>
                 </CardActions>
