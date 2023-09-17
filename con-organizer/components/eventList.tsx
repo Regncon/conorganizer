@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
-import { collection,onSnapshot } from 'firebase/firestore';
+import { collection, onSnapshot } from 'firebase/firestore';
 import { ConEvent } from '@/lib/types';
 import db from '../lib/firebase';
-import { Box, Card } from '../lib/mui';
+import { Box, Card, CardContent, CardHeader } from '../lib/mui';
 import AddEvent from './addEvent';
 import EventHeader from './eventHeader';
 
@@ -30,22 +30,35 @@ const EventList = () => {
     }, []);
 
     return (
-        <Box className='flex flex-row flex-wrap justify-center gap-4 mb-20'>
+        <>
+            <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20">
+                {loading ? <h1>Loading...</h1> : null}
             <AddEvent collectionRef={collectionRef} />
-            {loading ? <h1>Loading...</h1> : null}
-            {conEvents.map((conEvent) => ( //filter((conEvent) => conEvent.published === true)
-
-                <Card key={conEvent.id}
-                    onClick={() => {
-                        window.location.assign(`/event/${conEvent.id}`);
-                    }}
-                    sx={conEvent?.published === false ? ({ opacity: "50%" }) : null }
+            <Card sx={{ width: '100%' }}>
+                <CardHeader sx={{ paddingBottom: '0.5rem' }} title="Registrering Fredag" />
+                <CardContent
+                    sx={{ paddingTop: '0' }}
                 >
-                    <EventHeader conEvent={conEvent} />
-                </Card>
-
-            ))}
-        </Box>
+                    <p>Kl 16:00 - 17:00 </p>
+                </CardContent>
+            </Card>
+                {conEvents.map(
+                    (
+                        conEvent //filter((conEvent) => conEvent.published === true)
+                    ) => (
+                        <Card
+                            key={conEvent.id}
+                            onClick={() => {
+                                window.location.assign(`/event/${conEvent.id}`);
+                            }}
+                            sx={{cursor: 'pointer', opacity: conEvent?.published === false ? '50%'  : '' }}
+                        >
+                            <EventHeader conEvent={conEvent} />
+                        </Card>
+                    )
+                )}
+            </Box>
+        </>
     );
 };
 
