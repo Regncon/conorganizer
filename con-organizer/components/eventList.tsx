@@ -1,5 +1,6 @@
 'use client';
 
+import { Route } from 'next';
 import Link from 'next/link';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 import { Box, Card } from '../lib/mui';
@@ -21,7 +22,7 @@ const EventList = () => {
                         <Card
                             key={conEvent.id}
                             component={Link}
-                            href={`/event/${conEvent.id}`}
+                            href={`/event/${conEvent.id}` as Route}
                             sx={{
                                 maxWidth: '500px',
                                 cursor: 'pointer',
