@@ -1,11 +1,11 @@
-import { faChess, faChessKing, faDiceD20, faHatWizard, faPalette } from '@fortawesome/free-solid-svg-icons';
+import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Box, CardHeader, CardMedia, Chip, Typography } from '@mui/material';
-import { gameType } from '@/lib/enums';
-import { ConEvent } from '@/lib/types';
+import { Alert, Box, CardHeader, Typography } from '@mui/material';
+import { GameType } from '@/lib/enums';
+import { ConEvent } from '@/models/types';
 
 type Props = {
-    conEvent: ConEvent;
+    conEvent: ConEvent | undefined;
     listView?: boolean;
 };
 
@@ -63,7 +63,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                 }}
             >
                 <span>
-                    {conEvent?.gameType === gameType.roleplaying ? (
+                    {conEvent?.gameType === GameType.roleplaying ? (
                         <Box sx={{ p: '1em', placeItems: 'center', display: 'grid', gap: '.5em' }}>
                             <FontAwesomeIcon icon={faDiceD20} fontSize="2em" color="orangered" />
                             <Typography variant="caption">Rollespill</Typography>
@@ -75,13 +75,13 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     //     variant="outlined"
                     // />
                     null}
-                    {conEvent?.gameType === gameType.boardgame ? (
+                    {conEvent?.gameType === GameType.boardgame ? (
                         <Box sx={{ p: '1em', placeItems: 'center', display: 'grid', gap: '.5em' }}>
                             <FontAwesomeIcon icon={faChessKing} fontSize="2em" color="orangered" />
                             <Typography variant="caption">Brettspill</Typography>
                         </Box>
                     ) : null}
-                    {conEvent?.gameType === gameType.other ? (
+                    {conEvent?.gameType === GameType.other ? (
                         <Box sx={{ p: '1em', placeItems: 'center', display: 'grid', gap: '.5em' }}>
                             <FontAwesomeIcon icon={faPalette} fontSize="2em" color="orangered" />
                             <Typography variant="caption">Annet</Typography>
@@ -89,10 +89,10 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     ) : null}
                 </span>
                 <Box sx={{ display: 'grid', width: '100vw', maxWidth: '1080px' }}>
-                    <span>{conEvent.gameSystem} </span>
-                    <span>{conEvent.room} </span>
-                    <span>{conEvent.pool} </span>
-                    <span>{conEvent.host} </span>
+                    <span>{conEvent?.gameSystem} </span>
+                    <span>{conEvent?.room} </span>
+                    <span>{conEvent?.pool} </span>
+                    <span>{conEvent?.host} </span>
                 </Box>
             </Box>
         </>

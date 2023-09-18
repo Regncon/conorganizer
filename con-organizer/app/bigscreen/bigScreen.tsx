@@ -1,38 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Box, Card, CardContent, CardHeader, Divider } from '@mui/material';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { Box, Card, CardContent, CardHeader } from '@mui/material';
 import EventHeader from '@/components/eventHeader';
-import { pool } from '@/lib/enums';
-import { ConEvent } from '@/lib/types';
-import db from '../../lib/firebase';
+import { Pool } from '@/lib/enums';
+import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 
 const BigScreen = () => {
-    const collectionRef = collection(db, 'events');
-    const [conEvents, setconEvents] = useState([] as ConEvent[]);
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        setLoading(true);
-        const unsub = onSnapshot(collectionRef, (querySnapshot) => {
-            const items = [] as ConEvent[];
-            querySnapshot.forEach((doc) => {
-                items.push(doc.data() as ConEvent);
-                items[items.length - 1].id = doc.id;
-            });
-            setconEvents(items);
-            setLoading(false);
-        });
-        return () => {
-            unsub();
-        };
-    }, []);
+    const { events, loading } = useAllEvents();
+    if (loading) {
+        return <h1>Loading...</h1>;
+    }
 
     return (
         <Box className="flex flex-row flex-wrap justify-center gap-4">
-            <Box className="flex flex-col gap-4 bg-slate-800 p-4"
-            sx={{ maxWidth: '440px' }}>
+            <Box className="flex flex-col gap-4 bg-slate-800 p-4" sx={{ maxWidth: '440px' }}>
                 <h1>Fredag Kveld</h1>
                 <p>18:00 - 23:00</p>
 
@@ -42,8 +23,8 @@ const BigScreen = () => {
                         <p>Kl 16:30 - 18:00 </p>
                     </CardContent>
                 </Card>
-                {conEvents
-                    .filter((conEvent) => conEvent.pool === pool.FirdayEvening)
+                {events
+                    ?.filter((conEvent) => conEvent.pool === Pool.FridayEvening)
                     .map((conEvent) => (
                         <Card
                             key={conEvent.id}
@@ -57,8 +38,7 @@ const BigScreen = () => {
                     ))}
             </Box>
 
-            <Box className="flex flex-col gap-4 bg-slate-900 p-4"
-            sx={{ maxWidth: '440px' }}>
+            <Box className="flex flex-col gap-4 bg-slate-900 p-4" sx={{ maxWidth: '440px' }}>
                 <h1>Lørdag Morgen </h1>
                 <p>10:00 - 15:00</p>
 
@@ -68,8 +48,8 @@ const BigScreen = () => {
                         <p>Kl 09:00 - 10:00 </p>
                     </CardContent>
                 </Card>
-                {conEvents
-                    .filter((conEvent) => conEvent.pool === pool.SaturdayMorning)
+                {events
+                    ?.filter((conEvent) => conEvent.pool === Pool.SaturdayMorning)
                     .map((conEvent) => (
                         <Card
                             key={conEvent.id}
@@ -83,8 +63,7 @@ const BigScreen = () => {
                     ))}
             </Box>
 
-            <Box className="flex flex-col gap-4 bg-slate-800 p-4"
-            sx={{ maxWidth: '440px' }}>
+            <Box className="flex flex-col gap-4 bg-slate-800 p-4" sx={{ maxWidth: '440px' }}>
                 <h1>Lørdag Kveld </h1>
                 <p>18:00 - 23:00</p>
 
@@ -96,8 +75,8 @@ const BigScreen = () => {
                         <p>Påmeling til middag er frem til 4. oktober for eksempel?</p>
                     </CardContent>
                 </Card>
-                {conEvents
-                    .filter((conEvent) => conEvent.pool === pool.SaturdayEvening)
+                {events
+                    ?.filter((conEvent) => conEvent.pool === Pool.SaturdayEvening)
                     .map((conEvent) => (
                         <Card
                             key={conEvent.id}
@@ -111,8 +90,7 @@ const BigScreen = () => {
                     ))}
             </Box>
 
-            <Box className="flex flex-col gap-4 bg-slate-900 p-4"
-            sx={{ maxWidth: '440px' }}>
+            <Box className="flex flex-col gap-4 bg-slate-900 p-4" sx={{ maxWidth: '440px' }}>
                 <h1>Søndag Morgen </h1>
                 <p>10:00 - 15:00</p>
 
@@ -122,8 +100,8 @@ const BigScreen = () => {
                         <p>Kl 09:00 - 10:00 </p>
                     </CardContent>
                 </Card>
-                {conEvents
-                    .filter((conEvent) => conEvent.pool === pool.SundayMorning)
+                {events
+                    ?.filter((conEvent) => conEvent.pool === Pool.SundayMorning)
                     .map((conEvent) => (
                         <Card
                             key={conEvent.id}

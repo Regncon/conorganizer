@@ -1,53 +1,27 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { pool } from '@/lib/enums';
-import { ConEvent } from '@/lib/types';
-import db from '../lib/firebase';
+import Link from 'next/link';
+import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 import { Box, Card } from '../lib/mui';
 import AddEvent from './addEvent';
 import EventHeader from './eventHeader';
 
-type Props = {
-    activePool?: pool;
-};
-
-const EventList = ({ activePool }: Props) => {
-    const collectionRef = collection(db, 'events');
-    const [conEvents, setconEvents] = useState([] as ConEvent[]);
-    const [loading, setLoading] = useState(false);
-
-    useEffect(() => {
-        setLoading(true);
-        const unsub = onSnapshot(collectionRef, (querySnapshot) => {
-            const items = [] as ConEvent[];
-            querySnapshot.forEach((doc) => {
-                items.push(doc.data() as ConEvent);
-                items[items.length - 1].id = doc.id;
-            });
-            setconEvents(items);
-            setLoading(false);
-        });
-        return () => {
-            unsub();
-        };
-    }, []);
+const EventList = () => {
+    const { events, loading } = useAllEvents();
 
     return (
         <>
             <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20 mt-20">
                 {loading ? <h1>Loading...</h1> : null}
-                <AddEvent collectionRef={collectionRef} />
-                {conEvents.map(
+                <AddEvent />
+                {events?.map(
                     (
                         conEvent //filter((conEvent) => conEvent.published === true)
                     ) => (
                         <Card
                             key={conEvent.id}
-                            onClick={() => {
-                                window.location.assign(`/event/${conEvent.id}`);
-                            }}
+                            component={Link}
+                            href={`/event/${conEvent.id}`}
                             sx={{
                                 maxWidth: '500px',
                                 cursor: 'pointer',

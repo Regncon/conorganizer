@@ -17,27 +17,27 @@ import {
     Switch,
     TextField,
 } from '@mui/material';
-import { CollectionReference, doc, DocumentData, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
-import { gameType, pool } from '@/lib/enums';
-import { ConEvent } from '@/lib/types';
+import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { GameType, Pool } from '@/lib/enums';
+import { eventsRef } from '@/lib/firebase';
+import { ConEvent } from '@/models/types';
 import { Button } from '../lib/mui';
 import EventUi from './eventUi';
 
 type Props = {
     open: boolean;
     conEvent?: ConEvent;
-    collectionRef: CollectionReference<DocumentData, DocumentData>;
     handleClose: () => void;
 };
 
-const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose }: Props) => {
+const EditDialog = ({ open, conEvent, handleClose }: Props) => {
     const [title, setTitle] = useState(conEvent?.title || '');
     const [subtitle, setSubtitle] = useState(conEvent?.subtitle || '');
     const [description, setDescription] = useState(conEvent?.description || '');
     const [errorMessage, setErrorMessage] = useState<string>();
     const [published, setPublished] = useState(conEvent?.published || false);
-    const [eventPool, setEventPool] = useState(conEvent?.pool || pool.none);
-    const [eventType, setEventType] = useState(conEvent?.gameType || gameType.none);
+    const [eventPool, setEventPool] = useState(conEvent?.pool || Pool.none);
+    const [eventType, setEventType] = useState(conEvent?.gameType || GameType.none);
     const [gameSystem, setGameSystem] = useState<string>(conEvent?.gameSystem || '');
     const [room, setRoom] = useState<string>(conEvent?.room || '');
     const [host, setHost] = useState<string>(conEvent?.host || '');
@@ -47,15 +47,15 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         setDescription(conEvent?.description || '');
         setSubtitle(conEvent?.subtitle || '');
         setPublished(conEvent?.published || false);
-        setEventPool(conEvent?.pool || pool.none);
-        setEventType(conEvent?.gameType || gameType.none);
+        setEventPool(conEvent?.pool || Pool.none);
+        setEventType(conEvent?.gameType || GameType.none);
         setGameSystem(conEvent?.gameSystem || '');
         setRoom(conEvent?.room || '');
         setHost(conEvent?.host || '');
     }, [conEvent]);
 
-    const addevent = async () => {
-        const newevent = {
+    const addEvent = async () => {
+        const newEvent = {
             title,
             description,
             subtitle,
@@ -70,8 +70,8 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         };
 
         try {
-            const eventRef = doc(collectionRef);
-            await setDoc(eventRef, newevent);
+            const eventRef = doc(eventsRef);
+            await setDoc(eventRef, newEvent);
         } catch (e) {
             const error = e as Error;
             setErrorMessage(error.message);
@@ -79,7 +79,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
     };
 
     async function editEvent(conEvent: ConEvent) {
-        const updatedevent = {
+        const updatedEvent = {
             title,
             description,
             subtitle,
@@ -94,8 +94,8 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         };
 
         try {
-            const eventRef = doc(collectionRef, conEvent.id);
-            updateDoc(eventRef, updatedevent);
+            const eventRef = doc(eventsRef, conEvent.id);
+            updateDoc(eventRef, updatedEvent);
         } catch (e) {
             console.error(e);
             const error = e as Error;
@@ -107,13 +107,12 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
         <Dialog open={open} fullWidth={true} maxWidth="md">
             <Box sx={{ minHeight: '900px' }} display="flex" flexDirection="row">
                 <Box className="p-4" sx={{ width: '375px', height: '667px' }}>
-                    <EventUi conEvent={conEvent || ({} as ConEvent)} showSelect={true} />
+                    <EventUi conEvent={conEvent || ({} as ConEvent)} />
                 </Box>
 
                 <Divider orientation="vertical" variant="middle" flexItem />
 
                 <Box className="p-4">
-
                     <DialogTitle sx={{ paddingBottom: '0px', paddingLeft: '0px', paddingRight: '0px' }}>
                         {conEvent?.id ? 'Endre arangement' : 'Legg til nytt arangement'}
                     </DialogTitle>
@@ -146,13 +145,13 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                                     id="pool-select"
                                     value={eventPool}
                                     label="Pulje"
-                                    onChange={(e) => setEventPool(e.target.value as pool)}
+                                    onChange={(e) => setEventPool(e.target.value as Pool)}
                                 >
-                                    <MenuItem value={pool.none}>{pool.none}</MenuItem>
-                                    <MenuItem value={pool.FirdayEvening}>{pool.FirdayEvening}</MenuItem>
-                                    <MenuItem value={pool.SaturdayMorning}>{pool.SaturdayMorning}</MenuItem>
-                                    <MenuItem value={pool.SaturdayEvening}>{pool.SaturdayEvening}</MenuItem>
-                                    <MenuItem value={pool.SundayMorning}>{pool.SundayMorning}</MenuItem>
+                                    <MenuItem value={Pool.none}>{Pool.none}</MenuItem>
+                                    <MenuItem value={Pool.FridayEvening}>{Pool.FridayEvening}</MenuItem>
+                                    <MenuItem value={Pool.SaturdayMorning}>{Pool.SaturdayMorning}</MenuItem>
+                                    <MenuItem value={Pool.SaturdayEvening}>{Pool.SaturdayEvening}</MenuItem>
+                                    <MenuItem value={Pool.SundayMorning}>{Pool.SundayMorning}</MenuItem>
                                 </Select>
                             </div>
 
@@ -163,12 +162,12 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                                     id="type-select"
                                     value={eventType}
                                     label="Type"
-                                    onChange={(e) => setEventType(e.target.value as gameType)}
+                                    onChange={(e) => setEventType(e.target.value as GameType)}
                                 >
-                                    <MenuItem value={gameType.none}>{gameType.none}</MenuItem>
-                                    <MenuItem value={gameType.roleplaying}>{gameType.roleplaying}</MenuItem>
-                                    <MenuItem value={gameType.boardgame}>{gameType.boardgame}</MenuItem>
-                                    <MenuItem value={gameType.other}>{gameType.other}</MenuItem>
+                                    <MenuItem value={GameType.none}>{GameType.none}</MenuItem>
+                                    <MenuItem value={GameType.roleplaying}>{GameType.roleplaying}</MenuItem>
+                                    <MenuItem value={GameType.boardgame}>{GameType.boardgame}</MenuItem>
+                                    <MenuItem value={GameType.other}>{GameType.other}</MenuItem>
                                 </Select>
                             </div>
                         </Box>
@@ -255,9 +254,7 @@ const EditDialog = ({ open, conEvent, collectionRef: collectionRef, handleClose 
                                 Save
                             </Button>
                         ) : (
-                            <Button onClick={() => addevent()} type="submit">
-                                Add
-                            </Button>
+                            <Button onClick={() => addEvent()}>Add</Button>
                         )}
                     </DialogActions>
                     {!!errorMessage && <Alert severity="error">{errorMessage}</Alert>}

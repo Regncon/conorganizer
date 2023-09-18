@@ -18,8 +18,8 @@ const Login = (props: any) => {
     const [password, setPassword] = useState('');
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
+    const [hiddenDragon, setHiddenDragon] = useState(true);
     const { setChoice } = props;
-    const [hiddenDragon, setHiddenDragon] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -60,7 +60,7 @@ const Login = (props: any) => {
                     component="img"
                     image="/img/regnconlogony.png"
                     title="årets regncondrage"
-                    sx={{ p: '1rem', display: hiddenDragon ? 'none' : 'block' }}
+                    sx={{ p: '1rem', display: { xs: hiddenDragon ? 'none' : 'block', sm: 'block' } }}
                 />
                 <form action={''}>
                     <TextField

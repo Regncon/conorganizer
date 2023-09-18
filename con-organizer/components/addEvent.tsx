@@ -6,11 +6,9 @@ import { Box, IconButton } from '@mui/material';
 import { CollectionReference, DocumentData } from 'firebase/firestore';
 import EditDialog from './editDialog';
 
-type Props = {
-    collectionRef: CollectionReference<DocumentData, DocumentData>;
-};
+type Props = {};
 
-const AddEvent = ({ collectionRef }: Props) => {
+const AddEvent = ({}: Props) => {
     const [open, setOpen] = React.useState(false);
     const handleClose = () => {
         setOpen(false);
@@ -28,7 +26,7 @@ const AddEvent = ({ collectionRef }: Props) => {
             >
                 <AddCircleIcon />
             </IconButton>
-            <EditDialog open={open} collectionRef={collectionRef} handleClose={handleClose} />
+            <EditDialog open={open} handleClose={handleClose} />
         </Box>
     );
 };

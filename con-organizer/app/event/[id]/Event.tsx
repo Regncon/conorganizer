@@ -1,36 +1,25 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Box, Button, Card, CardActions } from '@mui/material';
-import { collection, onSnapshot } from 'firebase/firestore';
+import { useAuth } from '@/components/AuthProvider';
 import EditDialog from '@/components/editDialog';
 import EventUi from '@/components/eventUi';
-import { ConEvent } from '@/lib/types';
-import db from '../../../lib/firebase';
 import MainNavigator from '@/components/mainNavigator';
+import { useAuthorizationHook } from '@/lib/hooks/authorizationHook';
+import { useSingleEvents } from '@/lib/hooks/UseSingleEvent';
 
 type Props = { id: string };
 
 const Event = ({ id }: Props) => {
-    const collectionRef = collection(db, 'events');
-    const [conEvents, setconEvents] = useState([] as ConEvent[]);
+    const { event, loading } = useSingleEvents(id);
+    const user = useAuth();
+    const { conAuthorization } = useAuthorizationHook(user?.uid);
+    const [showEditButton, setShowEditButton] = useState<boolean>(false);
     const [openEdit, setOpenEdit] = useState(false);
-    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        setLoading(true);
-        const unSub = onSnapshot(collectionRef, (querySnapshot) => {
-            const items = [] as ConEvent[];
-            querySnapshot.forEach((doc) => {
-                items.push(doc.data() as ConEvent);
-                items[items.length - 1].id = doc.id;
-            });
-            setconEvents(items);
-            setLoading(false);
-        });
-        return () => {
-            unSub();
-        };
-    }, []);
+        setShowEditButton(conAuthorization?.admin || false);
+    }, [conAuthorization]);
 
     const handleCloseEdit = () => {
         setOpenEdit(false);
@@ -40,24 +29,18 @@ const Event = ({ id }: Props) => {
         setOpenEdit(true);
     };
 
-    const conEvent = conEvents.find((conEvent) => conEvent.id === id) || ({} as ConEvent);
     return (
         <Box sx={{ maxWidth: '1080px', margin: '0 auto' }}>
             {loading && <h1>Loading...</h1>}
-            <EditDialog
-                open={openEdit}
-                handleClose={handleCloseEdit}
-                collectionRef={collectionRef}
-                conEvent={conEvent}
-            />
+            <EditDialog open={openEdit} handleClose={handleCloseEdit} conEvent={event} />
 
             <Card>
                 <Button onClick={() => window.history.go(-1)}>Tilbake</Button>
             </Card>
 
-            <EventUi conEvent={conEvent} showSelect={true} />
+            <EventUi conEvent={event} />
 
-            <Card>
+            <Card sx={conAuthorization?.admin ? { display: 'block' } : { display: 'none' }}>
                 <CardActions>
                     <Button onClick={handleOpenEdit}>Endre</Button>
                 </CardActions>
