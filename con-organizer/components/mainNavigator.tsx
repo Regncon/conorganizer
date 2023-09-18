@@ -2,6 +2,8 @@
 
 import { useContext, useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import CheckList from '@mui/icons-material/CheckList';
+import MailOutline from '@mui/icons-material/MailOutline';
 import MenuIcon from '@mui/icons-material/Menu';
 import PasswordIcon from '@mui/icons-material/Password';
 import { Dialog, SpeedDial, SpeedDialAction } from '@mui/material';
@@ -31,15 +33,26 @@ const MainNavigator = () => {
                     icon={<MenuIcon />}
                 >
                     <SpeedDialAction
-                        key="logout"
-                        icon={<AccountCircleIcon />}
-                        tooltipTitle="logg ut"
                         sx={{
                             '& .MuiSpeedDialAction-staticTooltipLabel': {
-                                width: '10ch',
+                                width: '19ch',
                             },
                         }}
-                        onClick={logout}
+                        key="mySignups"
+                        icon={<CheckList />}
+                        tooltipTitle="mine p&aring;meldinger"
+                        tooltipOpen
+                    />
+
+                    <SpeedDialAction
+                        sx={{
+                            '& .MuiSpeedDialAction-staticTooltipLabel': {
+                                width: '23ch',
+                            },
+                        }}
+                        key="contactUs"
+                        icon={<MailOutline />}
+                        tooltipTitle="send tilbakemeldinger"
                         tooltipOpen
                     />
                     <SpeedDialAction
@@ -52,6 +65,18 @@ const MainNavigator = () => {
                         icon={<PasswordIcon />}
                         tooltipTitle="endre passord"
                         onClick={() => setChoice('newpassword')}
+                        tooltipOpen
+                    />
+                    <SpeedDialAction
+                        key="logout"
+                        icon={<AccountCircleIcon />}
+                        tooltipTitle="logg ut"
+                        sx={{
+                            '& .MuiSpeedDialAction-staticTooltipLabel': {
+                                width: '10ch',
+                            },
+                        }}
+                        onClick={logout}
                         tooltipOpen
                     />
                 </SpeedDial>

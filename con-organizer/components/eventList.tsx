@@ -22,7 +22,11 @@ const EventList = () => {
                             key={conEvent.id}
                             component={Link}
                             href={`/event/${conEvent.id}`}
-                            sx={{ cursor: 'pointer', opacity: conEvent?.published === false ? '50%' : '' }}
+                            sx={{
+                                maxWidth: '500px',
+                                cursor: 'pointer',
+                                opacity: conEvent?.published === false ? '50%' : '',
+                            }}
                         >
                             <EventHeader conEvent={conEvent} listView={true} />
                         </Card>
