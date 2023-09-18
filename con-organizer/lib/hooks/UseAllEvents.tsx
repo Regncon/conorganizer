@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ConEvent } from '../../models/types';
-import { allEvents$ } from '../observables/AllEvents';
+import { allEvents$ } from '../observable';
 
 export const useAllEvents = () => {
     const [events, setEvents] = useState<ConEvent[]>();

@@ -1,9 +1,7 @@
-
 import BigScreen from './bigScreen';
 
-
 const page = () => {
-    return <BigScreen/>;
+    return <BigScreen />;
 };
 
 export default page;

@@ -13,9 +13,7 @@ type Props = { id: string };
 const Event = ({ id }: Props) => {
     const { event, loading } = useSingleEvents(id);
     const user = useAuth();
-    // ToDo: ikke prøv å hent authorization før bruker er logget inn
-
-    const { conAuthorization } = useAuthorizationHook(user?.uid || '');
+    const { conAuthorization } = useAuthorizationHook(user?.uid);
     const [showEditButton, setShowEditButton] = useState<boolean>(false);
     const [openEdit, setOpenEdit] = useState(false);
 
@@ -30,8 +28,6 @@ const Event = ({ id }: Props) => {
     const handleOpenEdit = () => {
         setOpenEdit(true);
     };
-
-    console.log(user, 'user');
 
     return (
         <Box sx={{ maxWidth: '1080px', margin: '0 auto' }}>

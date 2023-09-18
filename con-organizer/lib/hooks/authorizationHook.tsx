@@ -1,24 +1,25 @@
 import { useEffect, useState } from 'react';
+import { Subscription } from 'rxjs';
 import { ConAuthorization } from '../../models/types';
-import { conAuthorizationRef$ } from '../observables/authorization';
+import { conAuthorizationRef$ } from '../observable';
 
-export const useAuthorizationHook = (id: string) => {
+export const useAuthorizationHook = (id?: string) => {
     const [conAuthorization, setConAuthorization] = useState<ConAuthorization>();
     const [loading, setLoading] = useState<boolean>(true);
-
     useEffect(() => {
-        const conAuthorizationObservable = conAuthorizationRef$(id).subscribe((snapshot) => {
-            if (snapshot.data()) {
-                setConAuthorization({ ...(snapshot.data() as ConAuthorization), id: snapshot.id });
+        let conAuthorizationObservable: Subscription;
+        if (id) {
+            conAuthorizationObservable = conAuthorizationRef$(id).subscribe((userSetting) => {
+                setConAuthorization(userSetting as ConAuthorization);
                 setLoading(false);
-            }
-            setLoading(false);
-        });
-
+            });
+        }
         return () => {
-            conAuthorizationObservable.unsubscribe();
+            if (conAuthorization) {
+                conAuthorizationObservable.unsubscribe();
+            }
         };
-    }, []);
+    }, [id]);
 
     return { conAuthorization, loading };
 };

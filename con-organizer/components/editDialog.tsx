@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
 import { GameType, Pool } from '@/lib/enums';
-import { eventsRef } from '@/lib/observables/AllEvents';
+import { eventsRef } from '@/lib/firebase';
 import { ConEvent } from '@/models/types';
 import { Button } from '../lib/mui';
 import EventUi from './eventUi';
@@ -107,7 +107,7 @@ const EditDialog = ({ open, conEvent, handleClose }: Props) => {
         <Dialog open={open} fullWidth={true} maxWidth="md">
             <Box sx={{ minHeight: '900px' }} display="flex" flexDirection="row">
                 <Box className="p-4" sx={{ width: '375px', height: '667px' }}>
-                    <EventUi conEvent={conEvent || ({} as ConEvent)} showSelect={true} />
+                    <EventUi conEvent={conEvent || ({} as ConEvent)} />
                 </Box>
 
                 <Divider orientation="vertical" variant="middle" flexItem />
