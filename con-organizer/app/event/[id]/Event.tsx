@@ -5,7 +5,7 @@ import { useAuth } from '@/components/AuthProvider';
 import EditDialog from '@/components/editDialog';
 import EventUi from '@/components/eventUi';
 import MainNavigator from '@/components/mainNavigator';
-import { useAuthorizationHook } from '@/lib/hooks/authorizationHook';
+import { useUserSettings } from '@/lib/hooks/useUserSettings';
 import { useSingleEvents } from '@/lib/hooks/UseSingleEvent';
 
 type Props = { id: string };
@@ -13,7 +13,7 @@ type Props = { id: string };
 const Event = ({ id }: Props) => {
     const { event, loading } = useSingleEvents(id);
     const user = useAuth();
-    const { conAuthorization } = useAuthorizationHook(user?.uid);
+    const { conAuthorization } = useUserSettings(user?.uid);
     const [showEditButton, setShowEditButton] = useState<boolean>(false);
     const [openEdit, setOpenEdit] = useState(false);
 
