@@ -51,18 +51,23 @@ export default function FullWidthTabs({ handlePoolChange }: Props) {
     const theme = useTheme();
     const [value, setValue] = useState<Pool>(Pool.FridayEvening);
 
-    const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-        if (newValue === 0) {
-            setValue(Pool.FridayEvening);
-        }
-        if (newValue === 1) {
-            setValue(Pool.SaturdayMorning);
-        }
-        if (newValue === 2) {
-            setValue(Pool.SaturdayEvening);
-        }
-        if (newValue === 3) {
-            setValue(Pool.SundayMorning);
+    const handleChange = (event: React.SyntheticEvent, newValue: Pool) => {
+        switch (newValue) {
+            case Pool.FridayEvening:
+                setValue(Pool.FridayEvening);
+                break;
+            case Pool.SaturdayMorning:
+                setValue(Pool.SaturdayMorning);
+                break;
+            case Pool.SaturdayEvening:
+                setValue(Pool.SaturdayEvening);
+                break;
+            case Pool.SundayMorning:
+                setValue(Pool.SundayMorning);
+                break;
+            default:
+                setValue(Pool.none);
+                break;
         }
     };
 
@@ -77,10 +82,10 @@ export default function FullWidthTabs({ handlePoolChange }: Props) {
                     variant="fullWidth"
                     aria-label="full width tabs example"
                 >
-                    <Tab label="Fredag kveld" {...a11yProps(0)} />
-                    <Tab label="Lørdag morgen" {...a11yProps(1)} />
-                    <Tab label="Lørdag kveld" {...a11yProps(2)} />
-                    <Tab label="Søndag morgen" {...a11yProps(2)} />
+                    <Tab value={Pool.FridayEvening} label={Pool.FridayEvening} {...a11yProps(0)} />
+                    <Tab value={Pool.SaturdayMorning} label={Pool.SaturdayMorning} {...a11yProps(1)} />
+                    <Tab value={Pool.SaturdayEvening} label={Pool.SaturdayEvening} {...a11yProps(2)} />
+                    <Tab value={Pool.SundayMorning} label={Pool.SundayMorning} {...a11yProps(2)} />
                 </Tabs>
             </AppBar>
         </Box>

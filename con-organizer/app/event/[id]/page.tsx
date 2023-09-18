@@ -11,12 +11,10 @@ const page = ({ params }: Props) => {
     const { id } = params;
 
     return (
-        <ThemeProvider theme={muiDark}>
-            <AuthProvider>
-                <Event id={id} />
-                <MainNavigator />
-            </AuthProvider>
-        </ThemeProvider>
+        <>
+            <Event id={id} />
+            <MainNavigator />
+        </>
     );
 };
 
