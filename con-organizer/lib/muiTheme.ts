@@ -4,7 +4,7 @@ import { createTheme, ThemeOptions } from '@mui/material';
 
 const muiDarkTheme: ThemeOptions = {
     palette: {
-        mode: "dark",
+        mode: 'dark',
         primary: {
             light: '#e0cfc9',
             main: '#a1887f',
@@ -24,14 +24,14 @@ const muiDarkTheme: ThemeOptions = {
         },
         h3: {
             fontWeight: 'bold',
-            lineHeight: "1",
-            fontFamily: "Garamond, serif",
+            lineHeight: '1',
+            fontFamily: 'Garamond, serif',
         },
         h4: {
-            color: "lightgrey",
-            fontFamily: "Garamond, serif",
-            fontStyle: "italic",
-            fontSize: "1.5rem",
+            color: 'lightgrey',
+            fontFamily: 'Garamond, serif',
+            fontStyle: 'italic',
+            fontSize: '1.5rem',
         },
     },
     components: {
@@ -40,7 +40,7 @@ const muiDarkTheme: ThemeOptions = {
                 root: ({ ownerState }) => ({
                     ...(ownerState.variant === 'contained' &&
                         ownerState.color === 'primary' && {
-                           backgroundColor: 'primary.dark',
+                            backgroundColor: 'primary.dark',
                             color: '#fff',
                         }),
                 }),
