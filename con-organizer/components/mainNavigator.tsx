@@ -2,7 +2,7 @@
 
 import { useContext, useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import CheckList from '@mui/icons-material/CheckList';
+import ChecklistIcon from '@mui/icons-material/Checklist';
 import MailOutline from '@mui/icons-material/MailOutline';
 import MenuIcon from '@mui/icons-material/Menu';
 import PasswordIcon from '@mui/icons-material/Password';
@@ -39,7 +39,7 @@ const MainNavigator = () => {
                             },
                         }}
                         key="mySignups"
-                        icon={<CheckList />}
+                        icon={<ChecklistIcon />}
                         tooltipTitle="mine p&aring;meldinger"
                         tooltipOpen
                     />
