@@ -14,8 +14,9 @@ export const useAuthorizationHook = (id?: string) => {
                 setLoading(false);
             });
         }
+        console.log(conAuthorization);
         return () => {
-            if (conAuthorization) {
+            if (conAuthorizationObservable?.unsubscribe) {
                 conAuthorizationObservable.unsubscribe();
             }
         };
