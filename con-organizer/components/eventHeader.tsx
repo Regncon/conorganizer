@@ -6,9 +6,10 @@ import { ConEvent } from '@/models/types';
 
 type Props = {
     conEvent: ConEvent | undefined;
+    listView?: boolean;
 };
 
-const EventHeader = ({ conEvent }: Props) => {
+const EventHeader = ({ conEvent, listView = false }: Props) => {
     return (
         <>
             {conEvent?.published === false ? (
@@ -26,24 +27,23 @@ const EventHeader = ({ conEvent }: Props) => {
                     sx={{
                         background: 'linear-gradient(transparent, transparent, black)',
                         // height: '50vh',
-                        height: '15em',
+                        height: listView ? '10em' : '25em',
                         // minHeight: '300px',
                         // maxHeight: '500px',
+                        display: 'flex',
+                        alignItems: 'end',
                     }}
                 >
-                    <CardHeader
-                        title={conEvent?.title}
-                        subheader={conEvent?.subtitle}
+                    <Box
                         sx={{
-                            // height: '50vh',
-                            height: '15em',
-                            // minHeight: '300px',
-                            // maxHeight: '500px',
                             color: 'white',
-                            alignItems: 'end',
-                            maxWidth: { xs: '95vw', md: '30em' },
+                            maxWidth: { xs: '95vw', md: '1080px' },
+                            padding: '.7em',
                         }}
-                    />
+                    >
+                        <Typography variant="h3">{conEvent?.title}</Typography>
+                        <Typography variant="h4">{conEvent?.subtitle}</Typography>
+                    </Box>
                 </Box>
             </Box>
 
@@ -56,7 +56,7 @@ const EventHeader = ({ conEvent }: Props) => {
                     gap: '1em',
                     backgroundColor: 'white',
                     color: 'black',
-                    width: { xs: '95vw', md: '30em' },
+                    width: { xs: '95vw', md: '1080px' },
                 }}
             >
                 <span>
@@ -85,10 +85,11 @@ const EventHeader = ({ conEvent }: Props) => {
                         </Box>
                     ) : null}
                 </span>
-                <Box sx={{ display: 'grid' }}>
+                <Box sx={{ display: 'grid', width: '100vw', maxWidth: '1080px' }}>
                     <span>{conEvent?.gameSystem} </span>
                     <span>{conEvent?.room} </span>
                     <span>{conEvent?.pool} </span>
+                    <span>{conEvent?.host} </span>
                 </Box>
             </Box>
         </>

@@ -13,4 +13,5 @@ export type ConEvent = {
     gameType: GameType;
     gameSystem: string;
     room: string;
+    host: string;
 };

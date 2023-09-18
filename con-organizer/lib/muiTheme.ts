@@ -22,6 +22,17 @@ const muiDarkTheme: ThemeOptions = {
         h6: {
             fontWeight: 'bold',
         },
+        h3: {
+            fontWeight: 'bold',
+            lineHeight: "1",
+            fontFamily: "Garamond, serif",
+        },
+        h4: {
+            color: "lightgrey",
+            fontFamily: "Garamond, serif",
+            fontStyle: "italic",
+            fontSize: "1.5rem",
+        },
     },
     components: {
         MuiButton: {

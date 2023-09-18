@@ -78,6 +78,8 @@ const Login = (props: any) => {
                         name="password"
                         value={password}
                         type={showPassword ? 'text' : 'password'}
+                        onFocus={() => setHiddenDragon(true)}
+                        onBlur={() => setHiddenDragon(false)}
                         InputProps={{
                             endAdornment: (
                                 <InputAdornment position="end">
@@ -94,8 +96,6 @@ const Login = (props: any) => {
                         }}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                         fullWidth
-                        onFocus={() => setHiddenDragon(true)}
-                        onBlur={() => setHiddenDragon(false)}
                     />
                     <Button
                         variant="contained"

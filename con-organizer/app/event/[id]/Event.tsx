@@ -1,8 +1,9 @@
 'use client';
 import { useState } from 'react';
-import { Button, Card, CardActions } from '@mui/material';
+import { Box, Button, Card, CardActions } from '@mui/material';
 import EditDialog from '@/components/editDialog';
 import EventUi from '@/components/eventUi';
+import MainNavigator from '@/components/mainNavigator';
 import { useSingleEvents } from '@/lib/hooks/UseSingleEvent';
 
 type Props = { id: string };
@@ -20,25 +21,23 @@ const Event = ({ id }: Props) => {
     };
 
     return (
-        <>
-            {loading ? (
-                <h1>Loading...</h1>
-            ) : (
-                <>
-                    <EditDialog open={openEdit} handleClose={handleCloseEdit} conEvent={event} />
-                    <Card sx={{ maxWidth: '440px' }}>
-                        <Button onClick={() => window.history.go(-1)}>Tilbake</Button>
-                    </Card>
-                    <EventUi conEvent={event} showSelect={true} />
+        <Box sx={{ maxWidth: '1080px', margin: '0 auto' }}>
+            {loading && <h1>Loading...</h1>}
+            <EditDialog open={openEdit} handleClose={handleCloseEdit} conEvent={event} />
 
-                    <Card sx={{ maxWidth: '440px' }}>
-                        <CardActions>
-                            <Button onClick={handleOpenEdit}>Endre</Button>
-                        </CardActions>
-                    </Card>
-                </>
-            )}
-        </>
+            <Card>
+                <Button onClick={() => window.history.go(-1)}>Tilbake</Button>
+            </Card>
+
+            <EventUi conEvent={event} showSelect={true} />
+
+            <Card>
+                <CardActions>
+                    <Button onClick={handleOpenEdit}>Endre</Button>
+                </CardActions>
+            </Card>
+            <MainNavigator />
+        </Box>
     );
 };
 
