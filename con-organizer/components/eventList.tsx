@@ -48,7 +48,11 @@ const EventList = ({ activePool }: Props) => {
                             onClick={() => {
                                 window.location.assign(`/event/${conEvent.id}`);
                             }}
-                            sx={{ cursor: 'pointer', opacity: conEvent?.published === false ? '50%' : '' }}
+                            sx={{
+                                maxWidth: '500px',
+                                cursor: 'pointer',
+                                opacity: conEvent?.published === false ? '50%' : '',
+                            }}
                         >
                             <EventHeader conEvent={conEvent} listView={true} />
                         </Card>

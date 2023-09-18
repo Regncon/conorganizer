@@ -13,7 +13,10 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
     return (
         <>
             {conEvent?.published === false ? (
-                <Alert severity="warning" sx={{ marginBottom: '1rem' }}>
+                <Alert
+                    severity="warning"
+                    sx={{ marginBottom: '1rem', position: 'absolute', width: '500px', margin: '.2em' }}
+                >
                     Dette arrangementet er ikke publisert enda.
                 </Alert>
             ) : null}
