@@ -20,10 +20,9 @@ import EventHeader from './eventHeader';
 
 type Props = {
     conEvent: ConEvent | undefined;
-    showSelect?: boolean;
 };
 
-const EventUi = ({ conEvent, showSelect }: Props) => {
+const EventUi = ({ conEvent }: Props) => {
     interface StyledFormControlLabelProps extends FormControlLabelProps {
         checked: boolean;
     }
@@ -58,7 +57,7 @@ const EventUi = ({ conEvent, showSelect }: Props) => {
             </Typography>
 
             <Divider />
-            <CardContent sx={showSelect ? { display: 'block' } : { display: 'none' }}>
+            <CardContent>
                 <FormControl>
                     <FormLabel id="demo-row-radio-buttons-group-label">
                         <Typography variant="h6">Påmelding</Typography>

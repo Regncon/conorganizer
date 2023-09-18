@@ -15,3 +15,9 @@ export type ConEvent = {
     room: string;
     host: string;
 };
+
+
+export type ConAuthorization = {
+    id: string;
+    admin: boolean;
+};

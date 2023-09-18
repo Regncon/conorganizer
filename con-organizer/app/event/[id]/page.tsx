@@ -1,3 +1,5 @@
+import { AuthProvider } from '@/components/AuthProvider';
+import MainNavigator from '@/components/mainNavigator';
 import { ThemeProvider } from '@/lib/mui';
 import { muiDark } from '@/lib/muiTheme';
 import Event from './Event';
@@ -10,7 +12,10 @@ const page = ({ params }: Props) => {
 
     return (
         <ThemeProvider theme={muiDark}>
-            <Event id={id} />
+            <AuthProvider>
+                <Event id={id} />
+                <MainNavigator />
+            </AuthProvider>
         </ThemeProvider>
     );
 };
