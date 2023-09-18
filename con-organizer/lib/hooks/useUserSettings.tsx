@@ -14,7 +14,6 @@ export const useUserSettings = (id?: string) => {
                 setLoading(false);
             });
         }
-        console.log(conAuthorization);
         return () => {
             if (conAuthorizationObservable?.unsubscribe) {
                 conAuthorizationObservable.unsubscribe();
