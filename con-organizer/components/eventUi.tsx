@@ -32,7 +32,7 @@ const EventUi = ({ conEvent }: Props) => {
     useEffect(() => {
         if (conEvent) {
             let tmp: string = conEvent?.description;
-            tmp = tmp.replace(/\n/g, '</p><p>');
+            // tmp = tmp.replace(/\n/g, '</p><p>');
             setDescription(tmp);
         }
     }, [conEvent]);
