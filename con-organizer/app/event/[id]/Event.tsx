@@ -45,7 +45,6 @@ const Event = ({ id }: Props) => {
                     <Button onClick={handleOpenEdit}>Endre</Button>
                 </CardActions>
             </Card>
-            <MainNavigator />
         </Box>
     );
 };
