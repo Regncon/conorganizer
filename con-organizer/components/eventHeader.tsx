@@ -40,7 +40,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     <Box
                         sx={{
                             color: 'white',
-                            maxWidth: { xs: '95vw', md: '1080px' },
+                            maxWidth: { xs: '100vw', md: '1080px' },
                             padding: '.7em',
                         }}
                     >
@@ -59,7 +59,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     gap: '1em',
                     backgroundColor: 'white',
                     color: 'black',
-                    width: { xs: '95vw', md: '1080px' },
+                    width: { xs: '100vw', md: '1080px' },
                 }}
             >
                 <span>

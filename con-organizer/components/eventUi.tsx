@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import {
     Card,
     CardContent,
@@ -27,6 +28,14 @@ const EventUi = ({ conEvent }: Props) => {
         checked: boolean;
     }
 
+    const [description, setDescription] = useState('');
+    useEffect(() => {
+        if (conEvent) {
+            let tmp: string = conEvent?.description;
+            tmp = tmp.replace(/\n/g, '</p><p>');
+            setDescription(tmp);
+        }
+    }, [conEvent]);
     const StyledFormControlLabel = styled((props: StyledFormControlLabelProps) => <FormControlLabel {...props} />)(
         ({ theme, checked }) => ({
             '.MuiFormControlLabel-label': checked && {
@@ -34,7 +43,6 @@ const EventUi = ({ conEvent }: Props) => {
             },
         })
     );
-
     function MyFormControlLabel(props: FormControlLabelProps) {
         const radioGroup = useRadioGroup();
 
@@ -52,8 +60,8 @@ const EventUi = ({ conEvent }: Props) => {
             <EventHeader conEvent={conEvent} />
 
             <Divider />
-            <Typography variant="body1" className="p-4" sx={{ minHeight: '7rem' }}>
-                {parse(conEvent?.description || '')}
+            <Typography variant="body1" className="p-4" sx={{ minHeight: '7rem', display: 'grid', gap: '.5rem' }}>
+                {parse(description || '')}
             </Typography>
 
             <Divider />
