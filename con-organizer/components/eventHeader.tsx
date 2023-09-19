@@ -15,7 +15,13 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
             {conEvent?.published === false ? (
                 <Alert
                     severity="warning"
-                    sx={{ marginBottom: '1rem', position: 'absolute', width: '500px', margin: '.2em' }}
+                    sx={{
+                        marginBottom: '1rem',
+                        position: 'absolute',
+                        width: '500px',
+                        margin: '.2em',
+                        background: 'linear-gradient(to right, black, transparent)',
+                    }}
                 >
                     Dette arrangementet er ikke publisert enda.
                 </Alert>
@@ -30,7 +36,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     sx={{
                         background: 'linear-gradient(transparent, transparent, black)',
                         // height: '50vh',
-                        height: listView ? '10em' : '25em',
+                        minHeight: listView ? '10em' : '25em',
                         // minHeight: '300px',
                         // maxHeight: '500px',
                         display: 'flex',

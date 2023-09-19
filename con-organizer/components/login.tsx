@@ -60,7 +60,7 @@ const Login = (props: any) => {
                     component="img"
                     image="/img/regnconlogony.png"
                     title="årets regncondrage"
-                    sx={{ p: '1rem', display: { xs: hiddenDragon ? 'none' : 'block', sm: 'block' } }}
+                    sx={{ p: '1rem', display: { xs: hiddenDragon ? 'none' : 'block', md: 'block' } }}
                 />
                 <form action={''}>
                     <TextField
