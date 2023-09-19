@@ -23,7 +23,7 @@ const Event = ({ id }: Props) => {
         setOpenEdit(true);
     };
     return (
-        <Box sx={{ maxWidth: '1080px', margin: { xs: '0 auto', md: '5rem auto' }, marginBottom: '5rem' }}>
+        <Box sx={{ maxWidth: '1080px', margin: { xs: '0 auto 5rem auto', md: '5rem auto' }, marginBottom: '5rem' }}>
             {loading && <h1>Loading...</h1>}
             <EditDialog open={openEdit} handleClose={handleCloseEdit} conEvent={event} />
             <Card>
