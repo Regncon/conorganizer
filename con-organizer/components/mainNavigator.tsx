@@ -35,18 +35,6 @@ const MainNavigator = () => {
                     <SpeedDialAction
                         sx={{
                             '& .MuiSpeedDialAction-staticTooltipLabel': {
-                                width: '19ch',
-                            },
-                        }}
-                        key="mySignups"
-                        icon={<ChecklistIcon />}
-                        tooltipTitle="mine p&aring;meldinger"
-                        tooltipOpen
-                    />
-
-                    <SpeedDialAction
-                        sx={{
-                            '& .MuiSpeedDialAction-staticTooltipLabel': {
                                 width: '23ch',
                             },
                         }}
