@@ -9,11 +9,10 @@ export const metadata = {
     title: 'Regncon program 2023',
     description: 'Regncon program og puljepåmelding 2023',
 };
-
 export default function RootLayout({ children }: { children: ReactNode }) {
     return (
         <html lang="en">
-            <body className={inter.className}>{<Index>{children}</Index>}</body>
+            <body className={[inter.className].join(' ').trim()}>{<Index>{children}</Index>}</body>
         </html>
     );
 }
