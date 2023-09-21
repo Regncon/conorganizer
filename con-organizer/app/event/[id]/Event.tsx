@@ -13,9 +13,11 @@ const Event = ({ id }: Props) => {
     const { conAuthorization } = useUserSettings(user?.uid);
     const [showEditButton, setShowEditButton] = useState<boolean>(false);
     const [openEdit, setOpenEdit] = useState(false);
+
     useEffect(() => {
-        setShowEditButton(conAuthorization?.admin || false);
-    }, [conAuthorization]);
+        setShowEditButton(conAuthorization?.admin && user ? true : false);
+    }, [user, conAuthorization]);
+    
     const handleCloseEdit = () => {
         setOpenEdit(false);
     };
@@ -30,7 +32,8 @@ const Event = ({ id }: Props) => {
                 <Button onClick={() => window.history.go(-1)}>Tilbake</Button>
             </Card>
             <EventUi conEvent={event} />
-            <Card sx={conAuthorization?.admin ? { display: 'block' } : { display: 'none' }}>
+            {/* <Card sx={conAuthorization?.admin ? { display: 'block' } : { display: 'none' }}> */}
+            <Card sx={showEditButton ? { display: 'block' } : { display: 'none' }}>
                 <CardActions>
                     <Button onClick={handleOpenEdit}>Endre</Button>
                 </CardActions>
