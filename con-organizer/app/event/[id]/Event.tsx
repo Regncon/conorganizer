@@ -32,7 +32,6 @@ const Event = ({ id }: Props) => {
                 <Button onClick={() => window.history.go(-1)}>Tilbake</Button>
             </Card>
             <EventUi conEvent={event} />
-            {/* <Card sx={conAuthorization?.admin ? { display: 'block' } : { display: 'none' }}> */}
             <Card sx={showEditButton ? { display: 'block' } : { display: 'none' }}>
                 <CardActions>
                     <Button onClick={handleOpenEdit}>Endre</Button>

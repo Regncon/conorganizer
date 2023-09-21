@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AddIcon from '@mui/icons-material/Add';
 import MailOutline from '@mui/icons-material/MailOutline';
@@ -11,6 +11,7 @@ import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Box from '@mui/material/Box';
 import { auth } from '@/lib/firebase';
+import { useUserSettings } from '@/lib/hooks/useUserSettings';
 import { useAuth } from './AuthProvider';
 import EditDialog from './editDialog';
 import ForgotPassword from './ForgotPassword';
@@ -21,6 +22,13 @@ const MainNavigator = () => {
     const [choice, setChoice] = useState('');
     const user = useAuth();
     const [openAdd, setOpenAdd] = useState(false);
+
+    const { conAuthorization } = useUserSettings(user?.uid);
+    const [showAddButton, setShowAddButton] = useState<boolean>(false);
+
+    useEffect(() => {
+        setShowAddButton(conAuthorization?.admin && user ? true : false);
+    }, [user, conAuthorization]);
 
     function logout() {
         return auth.signOut();
@@ -35,11 +43,16 @@ const MainNavigator = () => {
                     icon={<MenuIcon />}
                 >
                     <SpeedDialAction
-                        sx={{
-                            '& .MuiSpeedDialAction-staticTooltipLabel': {
-                                width: '23ch',
-                            },
-                        }}
+                        sx={
+                            showAddButton
+                                ? {
+                                      display: 'block',
+                                      '& .MuiSpeedDialAction-staticTooltipLabel': {
+                                          width: '23ch',
+                                      },
+                                  }
+                                : { display: 'none' }
+                        }
                         key="AddEvent"
                         icon={<AddIcon />}
                         tooltipTitle="legg til arrangement"
