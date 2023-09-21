@@ -4,3 +4,13 @@
 body {
     background-color: black;
 }
+.regnconLogo {
+    height: 5em;
+}
+.AppHeader {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    justify-items: start;
+    gap: 1em;
+}

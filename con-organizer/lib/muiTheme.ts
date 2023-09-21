@@ -4,7 +4,7 @@ import { createTheme, ThemeOptions } from '@mui/material';
 import { EB_Garamond } from 'next/font/google';
 
 const Garamond = EB_Garamond({
-    weight: ['400', '800'],
+    weight: ['400', '700'],
     subsets: ['latin'],
     style: ['normal', 'italic'],
     display: 'swap',
@@ -30,9 +30,15 @@ const muiDarkTheme: ThemeOptions = {
         h6: {
             fontWeight: 'bold',
         },
+        h1: {
+            fontWeight:"700",
+            fontFamily: Garamond.style.fontFamily,
+            fontSize: "2rem",
+        },
         h3: {
-            fontWeight: '800',
+            fontWeight: '700',
             lineHeight: '1',
+            fontSize: "2.5rem",
             fontFamily: Garamond.style.fontFamily,
         },
         h4: {
