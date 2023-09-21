@@ -1,21 +1,32 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import FilterAlt from '@mui/icons-material/FilterAlt';
 import { Route } from 'next';
 import Link from 'next/link';
 import { Pool } from '@/lib/enums';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
+import { useUserSettings } from '@/lib/hooks/useUserSettings';
 import { Box, Card, Chip } from '../lib/mui';
-import DayTab from './dayTab';
+import { useAuth } from './AuthProvider';
 import EventHeader from './eventHeader';
+import DayTab from './poolSelector';
 
 const EventList = () => {
     const { events, loading } = useAllEvents();
     const [displayPool, setDisplayPool] = useState<Pool>(Pool.FridayEvening);
     console.log('displayPool', displayPool)
     const [showFilters, setShowFilters] = useState(false);
+    const [showUnpublished, setShowUnpublished] = useState(false);
+
+    const user = useAuth();
+    const { conAuthorization } = useUserSettings(user?.uid);
+
+    useEffect(() => {
+        setShowUnpublished(conAuthorization?.admin && user ? true : false);
+    }, [user, conAuthorization]);
+
 
     return (
         <>
@@ -41,9 +52,11 @@ const EventList = () => {
                     <Chip label="Brettspill" variant="outlined" />
                     <Chip label="Annet" variant="outlined" />
                 </Box>
-                {events?.filter((conEvent) => conEvent.pool === displayPool).map(
+                {events?.filter((conEvent) => conEvent.pool === displayPool)
+                .filter((conEvent) => showUnpublished || conEvent.published)
+                .map(
                     (
-                        conEvent //filter((conEvent) => conEvent.published === true)
+                        conEvent 
                     ) => (
                         <Card
                             key={conEvent.id}
