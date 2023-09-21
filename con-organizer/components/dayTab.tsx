@@ -44,7 +44,7 @@ function a11yProps(index: number) {
 }
 
 type Props = {
-    handlePoolChange?: (pool: Pool) => void;
+    handlePoolChange: (pool: Pool) => void;
 };
 
 export default function FullWidthTabs({ handlePoolChange }: Props) {
@@ -55,15 +55,19 @@ export default function FullWidthTabs({ handlePoolChange }: Props) {
         switch (newValue) {
             case Pool.FridayEvening:
                 setValue(Pool.FridayEvening);
+                handlePoolChange(Pool.FridayEvening);
                 break;
             case Pool.SaturdayMorning:
                 setValue(Pool.SaturdayMorning);
+                handlePoolChange(Pool.SaturdayMorning);
                 break;
             case Pool.SaturdayEvening:
                 setValue(Pool.SaturdayEvening);
+                handlePoolChange(Pool.SaturdayEvening);
                 break;
             case Pool.SundayMorning:
                 setValue(Pool.SundayMorning);
+                handlePoolChange(Pool.SundayMorning);
                 break;
             default:
                 setValue(Pool.none);
