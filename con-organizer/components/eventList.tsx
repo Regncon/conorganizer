@@ -7,7 +7,6 @@ import { Route } from 'next';
 import Link from 'next/link';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 import { Box, Card, Chip } from '../lib/mui';
-import AddEvent from './addEvent';
 import EventHeader from './eventHeader';
 
 const EventList = () => {
@@ -18,7 +17,6 @@ const EventList = () => {
         <>
             <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20 mt-20">
                 {loading ? <h1>Loading...</h1> : null}
-                <AddEvent />
                 <Box sx={{ display: 'flex', gap: '.5em', flexGrow: '1', justifyContent: 'center', width: '100%' }}>
                     <Chip label="Alle" />
                     <Chip label="Mine p&aring;meldinger" variant="outlined" icon={<AccountCircle />} />

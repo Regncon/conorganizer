@@ -1,8 +1,8 @@
 'use client';
 
-import { useContext, useState } from 'react';
+import { useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import ChecklistIcon from '@mui/icons-material/Checklist';
+import AddIcon from '@mui/icons-material/Add';
 import MailOutline from '@mui/icons-material/MailOutline';
 import MenuIcon from '@mui/icons-material/Menu';
 import PasswordIcon from '@mui/icons-material/Password';
@@ -11,7 +11,8 @@ import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Box from '@mui/material/Box';
 import { auth } from '@/lib/firebase';
-import { AuthContext, useAuth } from './AuthProvider';
+import { useAuth } from './AuthProvider';
+import EditDialog from './editDialog';
 import ForgotPassword from './ForgotPassword';
 import Login from './login';
 
@@ -19,6 +20,7 @@ const MainNavigator = () => {
     const [value, setValue] = useState(0);
     const [choice, setChoice] = useState('');
     const user = useAuth();
+    const [openAdd, setOpenAdd] = useState(false);
 
     function logout() {
         return auth.signOut();
@@ -32,6 +34,18 @@ const MainNavigator = () => {
                     sx={{ position: 'absolute', bottom: 16, right: 16 }}
                     icon={<MenuIcon />}
                 >
+                    <SpeedDialAction
+                        sx={{
+                            '& .MuiSpeedDialAction-staticTooltipLabel': {
+                                width: '23ch',
+                            },
+                        }}
+                        key="AddEvent"
+                        icon={<AddIcon />}
+                        tooltipTitle="legg til arrangement"
+                        tooltipOpen
+                        onClick={() => setOpenAdd(true)}
+                    />
                     <SpeedDialAction
                         sx={{
                             '& .MuiSpeedDialAction-staticTooltipLabel': {
@@ -92,6 +106,7 @@ const MainNavigator = () => {
             <Dialog open={!!choice}>
                 {choice === 'login' ? <Login setChoice={setChoice} /> : <ForgotPassword setChoice={setChoice} />}
             </Dialog>
+            <EditDialog open={openAdd} handleClose={() => setOpenAdd(false)} />
         </Box>
     );
 };

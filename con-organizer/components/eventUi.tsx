@@ -58,7 +58,6 @@ const EventUi = ({ conEvent }: Props) => {
     return (
         <Card>
             <EventHeader conEvent={conEvent} />
-
             <Divider />
             <Typography variant="body1" className="p-4" sx={{ minHeight: '7rem', display: 'grid', gap: '.5rem' }}>
                 {parse(description || '')}
