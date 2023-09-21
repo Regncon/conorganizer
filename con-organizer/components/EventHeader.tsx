@@ -18,7 +18,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     sx={{
                         marginBottom: '1rem',
                         position: 'absolute',
-                        width: '500px',
+                        maxWidth: '500px',
                         margin: '.2em',
                         background: 'linear-gradient(to right, black, transparent)',
                     }}
