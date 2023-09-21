@@ -17,7 +17,7 @@ import {
 import Typography from '@mui/material/Typography';
 import parse from 'html-react-parser';
 import { ConEvent } from '@/models/types';
-import EventHeader from './eventHeader';
+import EventHeader from './EventHeader';
 
 type Props = {
     conEvent: ConEvent | undefined;
@@ -31,7 +31,7 @@ const EventUi = ({ conEvent }: Props) => {
     const [description, setDescription] = useState('');
     useEffect(() => {
         if (conEvent) {
-            let tmp: string = conEvent?.description;
+            const tmp: string = conEvent?.description;
             // tmp = tmp.replace(/\n/g, '</p><p>');
             setDescription(tmp);
         }

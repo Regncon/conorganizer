@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Card, CardContent, CardHeader } from '@mui/material';
-import EventHeader from '@/components/eventHeader';
+import EventHeader from '@/components/EventHeader';
 import { Pool } from '@/lib/enums';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 

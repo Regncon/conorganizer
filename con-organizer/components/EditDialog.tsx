@@ -22,7 +22,7 @@ import { GameType, Pool } from '@/lib/enums';
 import { eventsRef } from '@/lib/firebase';
 import { ConEvent } from '@/models/types';
 import { Button } from '../lib/mui';
-import EventUi from './eventUi';
+import EventUi from './EventUi';
 
 type Props = {
     open: boolean;

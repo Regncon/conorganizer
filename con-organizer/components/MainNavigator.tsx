@@ -11,11 +11,11 @@ import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Box from '@mui/material/Box';
 import { auth } from '@/lib/firebase';
-import { useUserSettings } from '@/lib/hooks/useUserSettings';
+import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 import { useAuth } from './AuthProvider';
-import EditDialog from './editDialog';
+import EditDialog from './EditDialog';
 import ForgotPassword from './ForgotPassword';
-import Login from './login';
+import Login from './Login';
 
 const MainNavigator = () => {
     const [value, setValue] = useState(0);

@@ -7,11 +7,11 @@ import { Route } from 'next';
 import Link from 'next/link';
 import { Pool } from '@/lib/enums';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
-import { useUserSettings } from '@/lib/hooks/useUserSettings';
+import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 import { Box, Card, Chip } from '../lib/mui';
 import { useAuth } from './AuthProvider';
-import EventHeader from './eventHeader';
-import DayTab from './poolSelector';
+import EventHeader from './EventHeader';
+import PoolSelector from './PoolSelector';
 
 const EventList = () => {
     const { events, loading } = useAllEvents();
@@ -30,7 +30,7 @@ const EventList = () => {
 
     return (
         <>
-            <DayTab handlePoolChange={(pool) => setDisplayPool(pool)} />
+            <PoolSelector handlePoolChange={(pool) => setDisplayPool(pool)} />
             <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20 mt-20">
                 {loading ? <h1>Loading...</h1> : null}
                 <Box sx={{ display: 'flex', gap: '.5em', flexGrow: '1', justifyContent: 'center', width: '100%' }}>

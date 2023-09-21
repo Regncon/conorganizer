@@ -1,5 +1,5 @@
 import { AuthProvider } from '@/components/AuthProvider';
-import MainNavigator from '@/components/mainNavigator';
+import MainNavigator from '@/components/MainNavigator';
 import { ThemeProvider } from '@/lib/mui';
 import { muiDark } from '@/lib/muiTheme';
 import Event from './Event';

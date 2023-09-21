@@ -2,10 +2,10 @@
 import { useEffect, useState } from 'react';
 import { Box, Button, Card, CardActions } from '@mui/material';
 import { useAuth } from '@/components/AuthProvider';
-import EditDialog from '@/components/editDialog';
-import EventUi from '@/components/eventUi';
+import EditDialog from '@/components/EditDialog';
+import EventUi from '@/components/EventUi';
 import { useSingleEvents } from '@/lib/hooks/UseSingleEvent';
-import { useUserSettings } from '@/lib/hooks/useUserSettings';
+import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 type Props = { id: string };
 const Event = ({ id }: Props) => {
     const { event, loading } = useSingleEvents(id);
