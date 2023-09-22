@@ -9,7 +9,7 @@ type Props = {
 };
 const EventHeader = ({ conEvent, listView = false }: Props) => {
     return (
-        <CardContent>
+        <>
             {conEvent?.published === false ? (
                 <Alert
                     severity="warning"
@@ -99,7 +99,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     <span>{conEvent?.host} </span>
                 </Box>
             </Box>
-        </CardContent>
+        </>
     );
 };
 
