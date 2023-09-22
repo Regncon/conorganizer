@@ -18,6 +18,7 @@ const EventCard = ({ conEvent }: Props) => {
                 maxWidth: '500px',
                 cursor: 'pointer',
                 opacity: conEvent?.published === false ? '50%' : '',
+                textDecoration: 'none',
             }}
         >
             <EventHeader conEvent={conEvent} listView={true} />

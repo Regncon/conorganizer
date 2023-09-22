@@ -31,35 +31,22 @@ const muiDarkTheme: ThemeOptions = {
             fontWeight: 'bold',
         },
         h1: {
-            fontWeight:"700",
+            fontWeight: '700',
             fontFamily: Garamond.style.fontFamily,
-            fontSize: "2rem",
+            fontSize: '2rem',
         },
         h3: {
             fontWeight: '700',
             lineHeight: '1',
-            fontSize: "2.5rem",
+            fontSize: '2.5rem',
             fontFamily: Garamond.style.fontFamily,
         },
         h4: {
             color: 'lightgrey',
-            fontWeight: "400",
+            fontWeight: '400',
             fontStyle: 'italic',
             fontSize: '1.5rem',
             fontFamily: Garamond.style.fontFamily,
-        },
-    },
-    components: {
-        MuiButton: {
-            styleOverrides: {
-                root: ({ ownerState }) => ({
-                    ...(ownerState.variant === 'contained' &&
-                        ownerState.color === 'primary' && {
-                            backgroundColor: 'primary.dark',
-                            color: '#fff',
-                        }),
-                }),
-            },
         },
     },
 };

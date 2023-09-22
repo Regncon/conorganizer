@@ -1,12 +1,15 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-body {
-    background-color: black;
+
+html {
+    color-scheme: dark;
 }
+
 .regnconLogo {
     height: 5em;
 }
+
 .AppHeader {
     display: grid;
     grid-template-columns: auto 1fr auto;

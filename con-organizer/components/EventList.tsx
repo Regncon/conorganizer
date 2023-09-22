@@ -16,7 +16,6 @@ import PoolSelector from './PoolSelector';
 const EventList = () => {
     const { events, loading } = useAllEvents();
     const [displayPool, setDisplayPool] = useState<Pool>(Pool.FridayEvening);
-    console.log('displayPool', displayPool);
     const [showFilters, setShowFilters] = useState(false);
     const [showUnpublished, setShowUnpublished] = useState(false);
 
