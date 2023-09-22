@@ -48,8 +48,12 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                             padding: '.7em',
                         }}
                     >
-                        <Typography variant="h3">{conEvent?.title}</Typography>
-                        <Typography variant="h4">{conEvent?.subtitle}</Typography>
+                        <Typography variant="h3" sx={{ textWrap: 'balance' }}>
+                            {conEvent?.title}
+                        </Typography>
+                        <Typography variant="h4" sx={{ textWrap: 'balance' }}>
+                            {conEvent?.subtitle}
+                        </Typography>
                     </Box>
                 </Box>
             </Box>

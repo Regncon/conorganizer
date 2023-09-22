@@ -1,20 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import FilterAlt from '@mui/icons-material/FilterAlt';
-import { Route } from 'next';
-import Link from 'next/link';
 import { Pool } from '@/lib/enums';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
-import { Box, Card, Chip } from '../lib/mui';
-import { useAuth } from './AuthProvider';
-import EventHeader from './EventHeader';
-import PoolSelector from './PoolSelector';
-import { ErrorBoundary } from 'react-error-boundary';
+import { Box, Chip, Typography } from '../lib/mui';
 import EventCardBoundary from './ErrorBoundaries/EventCardBoundary';
+import { useAuth } from './AuthProvider';
 import EventCard from './EventCard';
+import PoolSelector from './PoolSelector';
 
 const EventList = () => {
     const { events, loading } = useAllEvents();
@@ -34,7 +31,7 @@ const EventList = () => {
         <>
             <PoolSelector handlePoolChange={(pool) => setDisplayPool(pool)} />
             <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20 mt-20">
-                {loading ? <h1>Loading...</h1> : null}
+                {loading ? <Typography variant="body1">Loading...</Typography> : null}
                 <Box sx={{ display: 'flex', gap: '.5em', flexGrow: '1', justifyContent: 'center', width: '100%' }}>
                     <Chip label="Alle" />
                     <Chip label="Mine p&aring;meldinger" variant="outlined" icon={<AccountCircle />} />
