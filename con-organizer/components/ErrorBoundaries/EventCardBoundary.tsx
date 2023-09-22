@@ -1,15 +1,11 @@
-'use client';
-
-import { Button, Box, Typography } from '@mui/material';
-
+import { Box, Button, Typography } from '@mui/material';
 type Props = {
     error: Error;
     resetErrorBoundary: () => void;
 };
-
-const error = ({ error, resetErrorBoundary }: Props) => {
+const EventCardBoundary = ({ error, resetErrorBoundary }: Props) => {
     return (
-        <Box sx={{ maxWidth: '1080px', margin: '0 auto', backgroundColor: 'primary.light' }}>
+        <Box sx={{ margin: '0 auto', backgroundColor: 'primary.light' }}>
             <Typography variant="h6">Det har skjedd en feil: {error.message}</Typography>
             <Button variant="contained" sx={{ backgroundColor: 'primary.main' }} onClick={resetErrorBoundary}>
                 Pr&oslash;v igjen
@@ -18,4 +14,4 @@ const error = ({ error, resetErrorBoundary }: Props) => {
     );
 };
 
-export default error;
+export default EventCardBoundary;

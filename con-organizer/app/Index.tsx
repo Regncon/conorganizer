@@ -1,6 +1,6 @@
 'use client';
 import { ReactNode } from 'react';
-import { ThemeProvider } from '@mui/material';
+import { CssBaseline, ThemeProvider } from '@mui/material';
 import AppHeader from '@/components/AppHeader';
 import { AuthProvider } from '@/components/AuthProvider';
 import { muiDark } from '@/lib/muiTheme';

@@ -1,14 +1,12 @@
 import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Box, CardHeader, Typography } from '@mui/material';
+import { Alert, Box, Typography } from '@mui/material';
 import { GameType } from '@/lib/enums';
 import { ConEvent } from '@/models/types';
-
 type Props = {
     conEvent: ConEvent | undefined;
     listView?: boolean;
 };
-
 const EventHeader = ({ conEvent, listView = false }: Props) => {
     return (
         <>

@@ -12,11 +12,14 @@ import { Box, Card, Chip } from '../lib/mui';
 import { useAuth } from './AuthProvider';
 import EventHeader from './EventHeader';
 import PoolSelector from './PoolSelector';
+import { ErrorBoundary } from 'react-error-boundary';
+import EventCardBoundary from './ErrorBoundaries/EventCardBoundary';
+import EventCard from './EventCard';
 
 const EventList = () => {
     const { events, loading } = useAllEvents();
     const [displayPool, setDisplayPool] = useState<Pool>(Pool.FridayEvening);
-    console.log('displayPool', displayPool)
+    console.log('displayPool', displayPool);
     const [showFilters, setShowFilters] = useState(false);
     const [showUnpublished, setShowUnpublished] = useState(false);
 
@@ -26,7 +29,6 @@ const EventList = () => {
     useEffect(() => {
         setShowUnpublished(conAuthorization?.admin && user ? true : false);
     }, [user, conAuthorization]);
-
 
     return (
         <>
@@ -52,26 +54,14 @@ const EventList = () => {
                     <Chip label="Brettspill" variant="outlined" />
                     <Chip label="Annet" variant="outlined" />
                 </Box>
-                {events?.filter((conEvent) => conEvent.pool === displayPool)
-                .filter((conEvent) => showUnpublished || conEvent.published)
-                .map(
-                    (
-                        conEvent 
-                    ) => (
-                        <Card
-                            key={conEvent.id}
-                            component={Link}
-                            href={`/event/${conEvent.id}` as Route}
-                            sx={{
-                                maxWidth: '500px',
-                                cursor: 'pointer',
-                                opacity: conEvent?.published === false ? '50%' : '',
-                            }}
-                        >
-                            <EventHeader conEvent={conEvent} listView={true} />
-                        </Card>
-                    )
-                )}
+                {events
+                    ?.filter((conEvent) => conEvent.pool === displayPool)
+                    .filter((conEvent) => showUnpublished || conEvent.published)
+                    .map((conEvent) => (
+                        <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
+                            <EventCard conEvent={conEvent} />
+                        </ErrorBoundary>
+                    ))}
             </Box>
         </>
     );
