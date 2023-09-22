@@ -15,6 +15,7 @@ const EventCard = ({ conEvent }: Props) => {
             component={Link}
             href={`/event/${conEvent.id}` as Route}
             sx={{
+                width: { xs: '100vw', md: '1080px' },
                 maxWidth: '500px',
                 cursor: 'pointer',
                 opacity: conEvent?.published === false ? '50%' : '',

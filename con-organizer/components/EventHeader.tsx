@@ -1,6 +1,6 @@
 import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Box, Typography } from '@mui/material';
+import { Alert, Box, CardContent, Typography } from '@mui/material';
 import { GameType } from '@/lib/enums';
 import { ConEvent } from '@/models/types';
 type Props = {
@@ -9,7 +9,7 @@ type Props = {
 };
 const EventHeader = ({ conEvent, listView = false }: Props) => {
     return (
-        <>
+        <CardContent>
             {conEvent?.published === false ? (
                 <Alert
                     severity="warning"
@@ -33,10 +33,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                 <Box
                     sx={{
                         background: 'linear-gradient(transparent, transparent, black)',
-                        // height: '50vh',
                         minHeight: listView ? '10em' : '25em',
-                        // minHeight: '300px',
-                        // maxHeight: '500px',
                         display: 'flex',
                         alignItems: 'end',
                     }}
@@ -67,7 +64,6 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     gap: '1em',
                     backgroundColor: 'white',
                     color: 'black',
-                    width: { xs: '100vw', md: '1080px' },
                 }}
             >
                 <span>
@@ -96,14 +92,14 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                         </Box>
                     ) : null}
                 </span>
-                <Box sx={{ display: 'grid', width: '100vw', maxWidth: '1080px' }}>
+                <Box sx={{ display: 'grid' }}>
                     <span>{conEvent?.gameSystem} </span>
                     <span>{conEvent?.room} </span>
                     <span>{conEvent?.pool} </span>
                     <span>{conEvent?.host} </span>
                 </Box>
             </Box>
-        </>
+        </CardContent>
     );
 };
 
