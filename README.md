@@ -30,7 +30,7 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 * Add rooms
 * Add favicon
 * Set page title
-* Autorization
+* Authorization
 * Auth
 * query string for event id
 * Add event types

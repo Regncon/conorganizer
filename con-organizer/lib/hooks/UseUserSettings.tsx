@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Subscription } from 'rxjs';
-import { ConAuthorization } from '../../models/types';
+import { UserSettings } from '../../models/types';
 import { userSettings$ } from '../observable';
 
 export const useUserSettings = (id?: string) => {
-    const [conAuthorization, setConAuthorization] = useState<ConAuthorization>();
+    const [userSetting, setUserSetting] = useState<UserSettings>();
     const [loading, setLoading] = useState<boolean>(true);
     useEffect(() => {
-        let conAuthorizationObservable: Subscription;
+        let userSettingsObservable: Subscription;
         if (id) {
-            conAuthorizationObservable = userSettings$(id).subscribe((userSetting) => {
-                setConAuthorization(userSetting as ConAuthorization);
+            userSettingsObservable = userSettings$(id).subscribe((userSetting) => {
+                setUserSetting(userSetting as UserSettings);
                 setLoading(false);
             });
         }
         return () => {
-            if (conAuthorizationObservable?.unsubscribe) {
-                conAuthorizationObservable.unsubscribe();
+            if (userSettingsObservable?.unsubscribe) {
+                userSettingsObservable.unsubscribe();
             }
         };
     }, [id]);
 
-    return { conAuthorization, loading };
+    return { userSettings: userSetting, loading };
 };

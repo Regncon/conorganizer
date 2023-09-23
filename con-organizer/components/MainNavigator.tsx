@@ -23,12 +23,12 @@ const MainNavigator = () => {
     const user = useAuth();
     const [openAdd, setOpenAdd] = useState(false);
 
-    const { conAuthorization } = useUserSettings(user?.uid);
+    const { userSettings } = useUserSettings(user?.uid);
     const [showAddButton, setShowAddButton] = useState<boolean>(false);
 
     useEffect(() => {
-        setShowAddButton(conAuthorization?.admin && user ? true : false);
-    }, [user, conAuthorization]);
+        setShowAddButton(userSettings?.admin && user ? true : false);
+    }, [user, userSettings]);
 
     function logout() {
         return auth.signOut();

@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
-import { GameType, Pool } from '@/lib/enums';
+import { EnrollmentChoice, GameType, Pool } from '@/lib/enums';
 
 export type ConEvent = {
     id: string;
@@ -18,7 +18,24 @@ export type ConEvent = {
 };
 
 
-export type ConAuthorization = {
+export type UserSettings = {
     id: string;
     admin: boolean;
+    name: string;
+};
+
+export type UserData = {
+    id: string;
+    enrollments: Enrollment[];
+    createdAt: Timestamp;
+    lastUpdated: Timestamp;
+};
+
+export type Enrollment = {
+    id: string;
+    userId: string;
+    eventId: string;
+    choice: EnrollmentChoice;  
+    createdAt: Timestamp;
+    lastUpdated: Timestamp;
 };

@@ -29,4 +29,5 @@ export const auth = getAuth();
 export const db = getFirestore(app);
 export const eventsRef = collection(db, 'events');
 export const eventRef = (id: string) => doc(db, `events/${id}`);
-export const authorizationRef = (userId: string) => doc(db, `usersettings/${userId}`);
+export const userSettingsRef = (userId: string) => doc(db, `usersettings/${userId}`);
+export const userEnrollmentsRef = (eventId: string, userId: string) => doc(db, `events/${eventId}`, `/enrollments/${userId}`);

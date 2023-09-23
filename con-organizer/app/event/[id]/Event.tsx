@@ -10,13 +10,13 @@ type Props = { id: string };
 const Event = ({ id }: Props) => {
     const { event, loading } = useSingleEvents(id);
     const user = useAuth();
-    const { conAuthorization } = useUserSettings(user?.uid);
+    const { userSettings } = useUserSettings(user?.uid);
     const [showEditButton, setShowEditButton] = useState<boolean>(false);
     const [openEdit, setOpenEdit] = useState(false);
 
     useEffect(() => {
-        setShowEditButton(conAuthorization?.admin && user ? true : false);
-    }, [user, conAuthorization]);
+        setShowEditButton(userSettings?.admin && user ? true : false);
+    }, [user, userSettings]);
     
     const handleCloseEdit = () => {
         setOpenEdit(false);

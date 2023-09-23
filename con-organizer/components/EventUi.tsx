@@ -6,15 +6,18 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
-import FormControlLabel, { FormControlLabelProps } from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
 import Radio from '@mui/material/Radio';
-import RadioGroup, { useRadioGroup } from '@mui/material/RadioGroup';
-import { styled } from '@mui/material/styles';
+import RadioGroup from '@mui/material/RadioGroup';
 import Typography from '@mui/material/Typography';
+import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import parse from 'html-react-parser';
+import { EnrollmentChoice } from '@/lib/enums';
+import { db } from '@/lib/firebase';
+import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
 import { ConEvent } from '@/models/types';
 import { useAuth } from './AuthProvider';
+import EnrollmentSelector from './EnrollmentSelector';
 import EventHeader from './EventHeader';
 
 type Props = {
@@ -23,10 +26,9 @@ type Props = {
 
 const EventUi = ({ conEvent }: Props) => {
     const user = useAuth();
-    
-    interface StyledFormControlLabelProps extends FormControlLabelProps {
-        checked: boolean;
-    }
+    const { enrollments: enrollment } = useSingleEnrollment(conEvent?.id || '', user?.uid || '');
+    const [errorMessage, setErrorMessage] = useState<string>();
+    const [enrollmentChoice, setEnrollmentChoice] = useState<EnrollmentChoice>(EnrollmentChoice.NotInterested);
 
     const [description, setDescription] = useState('');
     useEffect(() => {
@@ -36,26 +38,46 @@ const EventUi = ({ conEvent }: Props) => {
             setDescription(tmp);
         }
     }, [conEvent]);
-    const StyledFormControlLabel = styled((props: StyledFormControlLabelProps) => <FormControlLabel {...props} />)(
-        ({ theme, checked }) => ({
-            '.MuiFormControlLabel-label': checked && {
-                color: theme.palette.primary.main,
-            },
-        })
-    );
-    function MyFormControlLabel(props: FormControlLabelProps) {
-        const radioGroup = useRadioGroup();
 
-        let checked = false;
+    useEffect(() => {
+         if (user && conEvent?.id, enrollment) {
+            setEnrollmentChoice(enrollment?.choice || EnrollmentChoice.NotInterested);
+        } 
+    }, [user, conEvent, enrollment]);
 
-        if (radioGroup) {
-            checked = radioGroup.value === props.value;
+    const handleEnrollmentChoiceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const choice = Number(event.target.value) as EnrollmentChoice;
+        setEnrollmentChoice(choice);
+    };
+
+    useEffect(() => {
+        if (user && conEvent?.id) {
+            setEnrollment();
         }
-
-        return <StyledFormControlLabel checked={checked} {...props} />;
     }
+    , [enrollmentChoice]);
 
-    console.log('user', user ? true : false);
+    async function setEnrollment() {
+        try {
+            if (!user || !conEvent?.id) {
+                return;
+            }
+            const setEnrollmentRef = doc(db, `events/${conEvent.id}`, `/enrollments/${user.uid}`);
+            if (enrollment) {
+                await updateDoc(setEnrollmentRef, {
+                    choice: enrollmentChoice,
+                });
+            } else {
+                await setDoc(setEnrollmentRef, {
+                    choice: enrollmentChoice,
+                });
+            }
+        } catch (e) {
+            console.error(e);
+            const error = e as Error;
+            setErrorMessage(error.message);
+        }
+    }
 
     return (
         <Card>
@@ -69,15 +91,17 @@ const EventUi = ({ conEvent }: Props) => {
             <CardContent>
                 <FormControl>
                     <FormLabel id="demo-row-radio-buttons-group-label">
-                        <Typography variant="h6">Påmelding
-                        {user ? '' : ' (Kjøp bilett og logg inn for å melde deg på)'}
+                        <Typography variant="h6">
+                            Påmelding
+                            {user ? '' : ' (Kjøp bilett og logg inn for å melde deg på)'}
                         </Typography>
                     </FormLabel>
                     <RadioGroup
                         row
                         aria-labelledby="demo-row-radio-buttons-group-label"
                         name="row-radio-buttons-group"
-                        defaultValue="NotInterested"
+                        defaultValue={EnrollmentChoice.NotInterested}
+                        value={enrollmentChoice}
                         sx={{
                             display: 'grid',
                             width: '100vw',
@@ -87,30 +111,33 @@ const EventUi = ({ conEvent }: Props) => {
                             gridAutoColumns: '1fr',
                             placeContent: 'center',
                         }}
+                        onChange={(e) => {
+                            handleEnrollmentChoiceChange(e);
+                        }}
                     >
-                        <MyFormControlLabel
+                        <EnrollmentSelector
                             sx={{ display: 'grid', textAlign: 'center', p: '.4em' }}
-                            value="NotInterested"
+                            value={EnrollmentChoice.NotInterested}
                             disabled={!user}
                             control={<Radio size="small" />}
                             label="Ikke interessert"
                         />
-                        <MyFormControlLabel
-                            value="IfIHaveTo"
+                        <EnrollmentSelector
+                            value={EnrollmentChoice.IfIHaveTo}
                             disabled={!user}
                             sx={{ display: 'grid', backgroundColor: '#00000055', textAlign: 'center', p: '.4em' }}
                             control={<Radio size="small" />}
                             label="Hvis jeg må"
                         />
-                        <MyFormControlLabel
-                            value="IWantTo"
+                        <EnrollmentSelector
+                            value={EnrollmentChoice.Interested}
                             disabled={!user}
                             sx={{ display: 'grid', backgroundColor: '#000000aa', textAlign: 'center', p: '.4em' }}
                             control={<Radio size="small" />}
                             label="Har lyst"
                         />
-                        <MyFormControlLabel
-                            value="RealyWantTo"
+                        <EnrollmentSelector
+                            value={EnrollmentChoice.VeryInterested}
                             disabled={!user}
                             control={<Radio size="small" />}
                             label="Har veldig lyst"

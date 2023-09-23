@@ -20,11 +20,11 @@ const EventList = () => {
     const [showUnpublished, setShowUnpublished] = useState(false);
 
     const user = useAuth();
-    const { conAuthorization } = useUserSettings(user?.uid);
+    const { userSettings } = useUserSettings(user?.uid);
 
     useEffect(() => {
-        setShowUnpublished(conAuthorization?.admin && user ? true : false);
-    }, [user, conAuthorization]);
+        setShowUnpublished(userSettings?.admin && user ? true : false);
+    }, [user, userSettings]);
 
     return (
         <>

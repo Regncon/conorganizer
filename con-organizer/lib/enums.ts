@@ -12,3 +12,10 @@ export enum GameType {
     'boardgame' = 'Brettspill',
     'other' = 'Annet',
 }
+
+export enum EnrollmentChoice {
+    "NotInterested",
+    "IfIHaveTo",
+    "Interested",
+    "VeryInterested"
+}
