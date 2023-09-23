@@ -14,6 +14,7 @@ import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import parse from 'html-react-parser';
 import { ConEvent } from '@/models/types';
+import { useAuth } from './AuthProvider';
 import EventHeader from './EventHeader';
 
 type Props = {
@@ -21,6 +22,8 @@ type Props = {
 };
 
 const EventUi = ({ conEvent }: Props) => {
+    const user = useAuth();
+    
     interface StyledFormControlLabelProps extends FormControlLabelProps {
         checked: boolean;
     }
@@ -52,6 +55,8 @@ const EventUi = ({ conEvent }: Props) => {
         return <StyledFormControlLabel checked={checked} {...props} />;
     }
 
+    console.log('user', user ? true : false);
+
     return (
         <Card>
             <EventHeader conEvent={conEvent} />
@@ -64,7 +69,9 @@ const EventUi = ({ conEvent }: Props) => {
             <CardContent>
                 <FormControl>
                     <FormLabel id="demo-row-radio-buttons-group-label">
-                        <Typography variant="h6">Påmelding</Typography>
+                        <Typography variant="h6">Påmelding
+                        {user ? '' : ' (Kjøp bilett og logg inn for å melde deg på)'}
+                        </Typography>
                     </FormLabel>
                     <RadioGroup
                         row
@@ -84,23 +91,27 @@ const EventUi = ({ conEvent }: Props) => {
                         <MyFormControlLabel
                             sx={{ display: 'grid', textAlign: 'center', p: '.4em' }}
                             value="NotInterested"
+                            disabled={!user}
                             control={<Radio size="small" />}
                             label="Ikke interessert"
                         />
                         <MyFormControlLabel
                             value="IfIHaveTo"
+                            disabled={!user}
                             sx={{ display: 'grid', backgroundColor: '#00000055', textAlign: 'center', p: '.4em' }}
                             control={<Radio size="small" />}
                             label="Hvis jeg må"
                         />
                         <MyFormControlLabel
                             value="IWantTo"
+                            disabled={!user}
                             sx={{ display: 'grid', backgroundColor: '#000000aa', textAlign: 'center', p: '.4em' }}
                             control={<Radio size="small" />}
                             label="Har lyst"
                         />
                         <MyFormControlLabel
                             value="RealyWantTo"
+                            disabled={!user}
                             control={<Radio size="small" />}
                             label="Har veldig lyst"
                             sx={{ display: 'grid', backgroundColor: '#000000ff', textAlign: 'center', p: '.4em' }}
