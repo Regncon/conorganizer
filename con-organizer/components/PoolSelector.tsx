@@ -35,7 +35,7 @@ const PoolSelector = ({ handlePoolChange }: Props) => {
     const search = searchParams.get('pool') as keyof typeof Pool;
     useEffect(() => {
         if (search) {
-            setValue(Pool[search ]);
+            setValue(Pool[search]);
         }
     }
     , [search]);
