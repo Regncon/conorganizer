@@ -1,13 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { Box, Button, Card, CardActions } from '@mui/material';
 import { useAuth } from '@/components/AuthProvider';
 import EditDialog from '@/components/EditDialog';
+import EventBoundary from '@/components/ErrorBoundaries/EventBoundary';
 import EventUi from '@/components/EventUi';
 import { useSingleEvents } from '@/lib/hooks/UseSingleEvent';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
-import { ErrorBoundary } from 'react-error-boundary';
-import EventBoundary from '@/components/ErrorBoundaries/EventBoundary';
 type Props = { id: string };
 const Event = ({ id }: Props) => {
     const { event, loading } = useSingleEvents(id);
