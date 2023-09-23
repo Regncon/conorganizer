@@ -33,6 +33,7 @@ type Props = {
 const EditDialog = ({ open, conEvent, handleClose }: Props) => {
     const [title, setTitle] = useState(conEvent?.title || '');
     const [subtitle, setSubtitle] = useState(conEvent?.subtitle || '');
+    const [imageUrl, setImageUrl] = useState(conEvent?.imageUrl || '');
     const [description, setDescription] = useState(conEvent?.description || '');
     const [errorMessage, setErrorMessage] = useState<string>();
     const [published, setPublished] = useState(conEvent?.published || false);
@@ -46,6 +47,7 @@ const EditDialog = ({ open, conEvent, handleClose }: Props) => {
         setTitle(conEvent?.title || '');
         setDescription(conEvent?.description || '');
         setSubtitle(conEvent?.subtitle || '');
+        setImageUrl(conEvent?.imageUrl || '');
         setPublished(conEvent?.published || false);
         setEventPool(conEvent?.pool || Pool.none);
         setEventType(conEvent?.gameType || GameType.none);
@@ -59,6 +61,7 @@ const EditDialog = ({ open, conEvent, handleClose }: Props) => {
             title,
             description,
             subtitle,
+            imageUrl,
             published: published,
             pool: eventPool,
             gameType: eventType,
@@ -83,6 +86,7 @@ const EditDialog = ({ open, conEvent, handleClose }: Props) => {
             title,
             description,
             subtitle,
+            imageUrl,
             published: published,
             pool: eventPool,
             gameType: eventType,
@@ -195,6 +199,17 @@ const EditDialog = ({ open, conEvent, handleClose }: Props) => {
                             variant="standard"
                             value={subtitle}
                             onChange={(e) => setSubtitle(e.target.value)}
+                        />
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            id="imageUrl"
+                            label="Bilde URL"
+                            type="text"
+                            fullWidth
+                            variant="standard"
+                            value={imageUrl}
+                            onChange={(e) => setImageUrl(e.target.value)}
                         />
                         <TextField
                             autoFocus

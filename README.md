@@ -12,14 +12,18 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 * Add error boundary
 * Add media queries
 * Save user choices for events
+* Check if firebase token should be private
+* Filter by tags
+* Match header and footer to design
+
 
 ## Nice to haves
 * Add keyboard navigation
 * Add command palatte
 * Add search
 * Tags
-* Filter by tags
 * Add event to calendar
+* Add none events to list
 
 ## Done
 * Add timeslots

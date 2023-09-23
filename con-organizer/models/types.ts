@@ -7,6 +7,7 @@ export type ConEvent = {
     subtitle: string;
     description: string;
     published: boolean;
+    imageUrl: string;
     createdAt: Timestamp;
     lastUpdated: Timestamp;
     pool: Pool;
