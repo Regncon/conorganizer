@@ -32,17 +32,15 @@ const EventList = () => {
         if (search) {
             setDisplayPool(Pool[search]);
         }
-    }
-    , [search]);
-
+    }, [search]);
 
     return (
         <>
             <PoolSelector handlePoolChange={(pool) => setDisplayPool(pool)} />
-            {displayPool === 'Fredag Kveld' ? <Typography variant="h2">Fredag 17-22</Typography> : null}
+            {/* {displayPool === 'Fredag Kveld' ? <Typography variant="h2">Fredag 17-22</Typography> : null}
             {displayPool === 'Lørdag Morgen' ? <Typography variant="h2">Lørdag 10-16</Typography> : null}
             {displayPool === 'Lørdag Kveld' ? <Typography variant="h2">Lørdag 17-22</Typography> : null}
-            {displayPool === 'Søndag Morgen' ? <Typography variant="h2">Søndag 10-16</Typography> : null}
+            {displayPool === 'Søndag Morgen' ? <Typography variant="h2">Søndag 10-16</Typography> : null} */}
 
             <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20">
                 {loading ? <Typography variant="body1">Loading...</Typography> : null}

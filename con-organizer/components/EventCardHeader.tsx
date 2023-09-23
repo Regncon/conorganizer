@@ -9,7 +9,7 @@ type Props = {
     conEvent: ConEvent | undefined;
     listView?: boolean;
 };
-const EventHeader = ({ conEvent, listView = false }: Props) => {
+const EventCardHeader = ({ conEvent, listView = false }: Props) => {
     const user = useAuth();
     const { enrollments: enrollment } = useSingleEnrollment(conEvent?.id || '', user?.uid || '');
 
@@ -37,10 +37,10 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
             >
                 <Box
                     sx={{
-                        background: 'linear-gradient(transparent, transparent, black)',
-                        minHeight: listView ? '10em' : '25em',
+                        background: 'linear-gradient(#00000099, #00000066, transparent)',
+                        minHeight: '5em',
                         display: 'flex',
-                        alignItems: 'end',
+                        alignItems: 'start',
                     }}
                 >
                     <Box
@@ -59,53 +59,47 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     </Box>
                 </Box>
             </Box>
-
             <Box
                 sx={{
                     display: 'grid',
+                    gridAutoFlow: 'column',
                     justifyItems: 'start',
                     alignItems: 'center',
-                    gridTemplateColumns: 'auto 1fr',
-                    gap: '1em',
-                    backgroundColor: listView ? 'transparent' : 'white',
+                    gridTemplateColumns: 'auto auto 1fr',
+                    gap: '.5em',
                     color: 'black',
+                    backgroundColor: 'white',
+                    padding: '.5em',
                 }}
             >
                 <span>
                     {conEvent?.gameType === GameType.roleplaying ? (
-                        <Box sx={{ p: '1em', placeItems: 'center', display: 'grid', gap: '.5em' }}>
-                            <FontAwesomeIcon icon={faDiceD20} fontSize="2em" color="orangered" />
-                            <Typography variant="caption">Rollespill</Typography>
+                        <Box sx={{ display: 'flex', gap: '.3em', placeItems: 'center' }}>
+                            <FontAwesomeIcon icon={faDiceD20} fontSize="1em" color="orangered" />
+                            <Typography variant="body1">Rollespill</Typography>
                         </Box>
-                    ) : // <Chip
-                    //     icon={<FontAwesomeIcon icon={faDiceD20} />}
-                    //     label="Rollespill"
-                    //     size="small"
-                    //     variant="outlined"
-                    // />
-                    null}
+                    ) : null}
                     {conEvent?.gameType === GameType.boardgame ? (
-                        <Box sx={{ p: '1em', placeItems: 'center', display: 'grid', gap: '.5em' }}>
-                            <FontAwesomeIcon icon={faChessKing} fontSize="2em" color="orangered" />
-                            <Typography variant="caption">Brettspill</Typography>
+                        <Box sx={{ display: 'flex', gap: '.3em', placeItems: 'center' }}>
+                            <FontAwesomeIcon icon={faChessKing} fontSize="1em" color="orangered" />
+                            <Typography variant="body1">Brettspill</Typography>
                         </Box>
                     ) : null}
                     {conEvent?.gameType === GameType.other ? (
-                        <Box sx={{ p: '1em', placeItems: 'center', display: 'grid', gap: '.5em' }}>
-                            <FontAwesomeIcon icon={faPalette} fontSize="2em" color="orangered" />
-                            <Typography variant="caption">Annet</Typography>
+                        <Box sx={{ display: 'flex', gap: '.3em', placeItems: 'center' }}>
+                            <FontAwesomeIcon icon={faPalette} fontSize="1em" color="orangered" />
+                            <Typography variant="body1">Annet</Typography>
                         </Box>
                     ) : null}
                 </span>
-                <Box sx={{ display: 'grid' }}>
-                    <span>{conEvent?.gameSystem} </span>
-                    <span>{conEvent?.room} </span>
-                    <span>{conEvent?.host} </span>
-                    <span>{EnrollmentChoice[enrollment?.choice ?? 0]} </span>
-                </Box>
+                {/* <span>{conEvent?.gameSystem} </span> */}
+                <span>{conEvent?.room} </span>
+                <span>{conEvent?.host} </span>
+                <div></div>
+                <span>{EnrollmentChoice[enrollment?.choice ?? 0]} </span>
             </Box>
         </>
     );
 };
 
-export default EventHeader;
+export default EventCardHeader;

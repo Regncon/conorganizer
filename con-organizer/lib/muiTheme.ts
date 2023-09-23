@@ -40,7 +40,7 @@ const muiDarkTheme: ThemeOptions = {
             fontFamily: Garamond.style.fontFamily,
             color: "grey",
             fontStyle: "italic",
-            margin: "1em",
+            fontSize: "2.5em",
             textShadow: "0 0 1em black",
         },
         h3: {
@@ -51,10 +51,11 @@ const muiDarkTheme: ThemeOptions = {
             fontFamily: Garamond.style.fontFamily,
         },
         h4: {
-            color: 'lightgrey',
+            color: '#eee',
             fontWeight: '400',
             fontStyle: 'italic',
             fontSize: '1.5rem',
+            textShadow: "0 0 .7em black",
             fontFamily: Garamond.style.fontFamily,
         },
     },
