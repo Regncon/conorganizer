@@ -35,10 +35,19 @@ const muiDarkTheme: ThemeOptions = {
             fontFamily: Garamond.style.fontFamily,
             fontSize: '2rem',
         },
+        h2: {
+            fontWeight: '700',
+            fontFamily: Garamond.style.fontFamily,
+            color: "grey",
+            fontStyle: "italic",
+            margin: "1em",
+            textShadow: "0 0 1em black",
+        },
         h3: {
             fontWeight: '700',
             lineHeight: '1',
             fontSize: '2.5rem',
+            textShadow: "0 0 1em black",
             fontFamily: Garamond.style.fontFamily,
         },
         h4: {
