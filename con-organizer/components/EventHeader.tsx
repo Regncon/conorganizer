@@ -1,6 +1,6 @@
 import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Box, CardContent, Typography } from '@mui/material';
+import { Alert, Box, Typography } from '@mui/material';
 import { GameType } from '@/lib/enums';
 import { ConEvent } from '@/models/types';
 type Props = {
