@@ -1,7 +1,9 @@
 'use client';
 
+import { ErrorBoundary } from 'react-error-boundary';
 import { Box, Card, CardContent, CardHeader } from '@mui/material';
-import EventHeader from '@/components/EventHeader';
+import EventCardBoundary from '@/components/ErrorBoundaries/EventCardBoundary';
+import EventCard from '@/components/EventCard';
 import { Pool } from '@/lib/enums';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 
@@ -10,6 +12,7 @@ const BigScreen = () => {
     if (loading) {
         return <h1>Loading...</h1>;
     }
+    // throw new Error('test');
 
     return (
         <Box className="flex flex-row flex-wrap justify-center gap-4">
@@ -26,15 +29,9 @@ const BigScreen = () => {
                 {events
                     ?.filter((conEvent) => conEvent.pool === Pool.FridayEvening)
                     .map((conEvent) => (
-                        <Card
-                            key={conEvent.id}
-                            onClick={() => {
-                                window.location.assign(`/event/${conEvent.id}`);
-                            }}
-                            sx={{ cursor: 'pointer', opacity: conEvent?.published === false ? '50%' : '' }}
-                        >
-                            <EventHeader conEvent={conEvent} />
-                        </Card>
+                        <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
+                            <EventCard conEvent={conEvent} />
+                        </ErrorBoundary>
                     ))}
             </Box>
 
@@ -51,15 +48,9 @@ const BigScreen = () => {
                 {events
                     ?.filter((conEvent) => conEvent.pool === Pool.SaturdayMorning)
                     .map((conEvent) => (
-                        <Card
-                            key={conEvent.id}
-                            onClick={() => {
-                                window.location.assign(`/event/${conEvent.id}`);
-                            }}
-                            sx={{ cursor: 'pointer', opacity: conEvent?.published === false ? '50%' : '' }}
-                        >
-                            <EventHeader conEvent={conEvent} />
-                        </Card>
+                        <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
+                            <EventCard conEvent={conEvent} />
+                        </ErrorBoundary>
                     ))}
             </Box>
 
@@ -78,15 +69,9 @@ const BigScreen = () => {
                 {events
                     ?.filter((conEvent) => conEvent.pool === Pool.SaturdayEvening)
                     .map((conEvent) => (
-                        <Card
-                            key={conEvent.id}
-                            onClick={() => {
-                                window.location.assign(`/event/${conEvent.id}`);
-                            }}
-                            sx={{ cursor: 'pointer', opacity: conEvent?.published === false ? '50%' : '' }}
-                        >
-                            <EventHeader conEvent={conEvent} />
-                        </Card>
+                        <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
+                            <EventCard conEvent={conEvent} />
+                        </ErrorBoundary>
                     ))}
             </Box>
 
@@ -103,15 +88,9 @@ const BigScreen = () => {
                 {events
                     ?.filter((conEvent) => conEvent.pool === Pool.SundayMorning)
                     .map((conEvent) => (
-                        <Card
-                            key={conEvent.id}
-                            onClick={() => {
-                                window.location.assign(`/event/${conEvent.id}`);
-                            }}
-                            sx={{ cursor: 'pointer', opacity: conEvent?.published === false ? '50%' : '' }}
-                        >
-                            <EventHeader conEvent={conEvent} />
-                        </Card>
+                        <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
+                            <EventCard conEvent={conEvent} />
+                        </ErrorBoundary>
                     ))}
 
                 <Card sx={{ width: '100%' }}>

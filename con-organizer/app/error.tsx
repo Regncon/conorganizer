@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Box, Typography } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 
 type Props = {
     error: Error;

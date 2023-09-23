@@ -78,7 +78,9 @@ const EventUi = ({ conEvent }: Props) => {
             setErrorMessage(error.message);
         }
     }
-
+    // throw new Error(
+    //     'lorem Ipsum error in conAuthor authorization dialog box - invalid Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea quia in blanditiis mollitia exercitationem, asperiores nam quidem commodi nulla illum laborum, distinctio magnam debitis vitae rerum, maiores maxime sapiente! Quia! Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea quia in blanditiis mollitia exercitationem, asperiores nam quidem commodi nulla illum laborum, distinctio magnam debitis vitae rerum, maiores maxime sapiente! Quia!'
+    // );
     return (
         <Card>
             <EventHeader conEvent={conEvent} />
