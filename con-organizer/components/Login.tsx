@@ -61,7 +61,7 @@ const Login = ({ setChoice }: Props) => {
             <Box p={4} maxWidth={400} display="grid" justifyItems="center" gap={2}>
                 <CardMedia
                     component="img"
-                    image="/img/regnconlogony.png"
+                    image="/image/regnconlogony.png"
                     title="årets regncondrage"
                     sx={{ p: '1rem', display: { xs: hiddenDragon ? 'none' : 'block', md: 'block' } }}
                 />

@@ -33,8 +33,6 @@ export type UserData = {
 
 export type Enrollment = {
     id: string;
-    userId: string;
-    eventId: string;
     choice: EnrollmentChoice;  
     createdAt: Timestamp;
     lastUpdated: Timestamp;

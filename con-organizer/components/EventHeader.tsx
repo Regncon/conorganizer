@@ -1,13 +1,18 @@
 import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Box, Typography } from '@mui/material';
-import { GameType } from '@/lib/enums';
+import { EnrollmentChoice, GameType } from '@/lib/enums';
+import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
 import { ConEvent } from '@/models/types';
+import { useAuth } from './AuthProvider';
 type Props = {
     conEvent: ConEvent | undefined;
     listView?: boolean;
 };
 const EventHeader = ({ conEvent, listView = false }: Props) => {
+    const user = useAuth();
+    const { enrollments: enrollment } = useSingleEnrollment(conEvent?.id || '', user?.uid || '');
+    
     return (
         <>
             {conEvent?.published === false ? (
@@ -26,7 +31,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
             ) : null}
             <Box
                 sx={{
-                    backgroundImage: `url(${conEvent?.imageUrl || "/img/placeholder.jpg"})`,
+                    backgroundImage: `url(${conEvent?.imageUrl || "/image/placeholder.jpg"})`,
                     backgroundSize: 'cover',
                 }}
             >
@@ -97,6 +102,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     <span>{conEvent?.room} </span>
                     <span>{conEvent?.pool} </span>
                     <span>{conEvent?.host} </span>
+                    <span>{EnrollmentChoice[enrollment?.choice ?? 0]} </span>
                 </Box>
             </Box>
         </>
