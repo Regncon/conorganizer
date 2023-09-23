@@ -25,9 +25,10 @@ const EventCard = ({ conEvent }: Props) => {
                 opacity: conEvent?.published === false ? '50%' : '',
                 textDecoration: 'none',
                 display: 'grid',
+                gridTemplateRows: '1fr auto',
             }}
         >
-            <EventCardHeader conEvent={conEvent} listView={true} />
+            <EventCardHeader conEvent={conEvent} />
         </Card>
     );
 };

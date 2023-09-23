@@ -1,6 +1,6 @@
 import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Box, Typography } from '@mui/material';
+import { Alert, Box, Tooltip, Typography } from '@mui/material';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
 import { EnrollmentChoice, GameType } from '@/models/enums';
 import { ConEvent } from '@/models/types';
@@ -9,10 +9,9 @@ type Props = {
     conEvent: ConEvent | undefined;
     listView?: boolean;
 };
-const EventCardHeader = ({ conEvent, listView = false }: Props) => {
+const EventCardHeader = ({ conEvent }: Props) => {
     const user = useAuth();
     const { enrollments: enrollment } = useSingleEnrollment(conEvent?.id || '', user?.uid || '');
-
     return (
         <>
             {conEvent?.published === false ? (
@@ -33,6 +32,8 @@ const EventCardHeader = ({ conEvent, listView = false }: Props) => {
                 sx={{
                     backgroundImage: `url(${conEvent?.imageUrl || '/image/placeholder.jpg'})`,
                     backgroundSize: 'cover',
+                    backgroundBlendMode: 'multiply',
+                    backgroundColor: '#999',
                 }}
             >
                 <Box
@@ -69,7 +70,7 @@ const EventCardHeader = ({ conEvent, listView = false }: Props) => {
                     gap: '.5em',
                     color: 'black',
                     backgroundColor: 'white',
-                    padding: '.5em',
+                    padding: '.3em .5em',
                 }}
             >
                 <span>
@@ -96,7 +97,26 @@ const EventCardHeader = ({ conEvent, listView = false }: Props) => {
                 <span>{conEvent?.room} </span>
                 <span>{conEvent?.host} </span>
                 <div></div>
-                <span>{EnrollmentChoice[enrollment?.choice ?? 0]} </span>
+                {!enrollment?.choice ? (
+                    <Typography variant="caption" color="lightgray">
+                        ⬤ Ikke p&aring;meldt
+                    </Typography>
+                ) : null}
+                {enrollment?.choice === 1 ? (
+                    <Typography variant="caption" color="gray">
+                        ⬤ Litt interessert
+                    </Typography>
+                ) : null}
+                {enrollment?.choice === 2 ? (
+                    <Typography variant="caption" color="darkgray">
+                        ⬤ Ganske interessert
+                    </Typography>
+                ) : null}
+                {enrollment?.choice === 3 ? (
+                    <Typography variant="caption" color="black">
+                        ⬤ Veldig interessert
+                    </Typography>
+                ) : null}
             </Box>
         </>
     );
