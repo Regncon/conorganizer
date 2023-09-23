@@ -106,7 +106,7 @@ const EditDialog = ({ open, conEvent, handleClose }: Props) => {
             setErrorMessage(error.message);
         }
     }
-
+    // throw new Error('test');
     return (
         <Dialog open={open} fullWidth={true} maxWidth="md">
             <Box sx={{ minHeight: '900px' }} display="flex" flexDirection="row">

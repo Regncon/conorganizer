@@ -2,7 +2,7 @@ import { Card } from '@mui/material';
 import { Route } from 'next';
 import Link from 'next/link';
 import { ConEvent } from '@/models/types';
-import EventHeader from './EventHeader';
+import EventCardHeader from './EventCardHeader';
 
 type Props = {
     conEvent: ConEvent;
@@ -24,9 +24,11 @@ const EventCard = ({ conEvent }: Props) => {
                 cursor: 'pointer',
                 opacity: conEvent?.published === false ? '50%' : '',
                 textDecoration: 'none',
+                display: 'grid',
+                gridTemplateRows: '1fr auto',
             }}
         >
-            <EventHeader conEvent={conEvent} listView={true} />
+            <EventCardHeader conEvent={conEvent} />
         </Card>
     );
 };
