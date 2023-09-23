@@ -8,7 +8,6 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 
 ### Must haves Mvp
 * Add event images
-
 * Make it very clear what day is displayed
 * Add media queries
 * Check if firebase token should be private
