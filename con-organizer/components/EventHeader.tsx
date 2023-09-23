@@ -1,8 +1,8 @@
 import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Box, Typography } from '@mui/material';
-import { EnrollmentChoice, GameType } from '@/lib/enums';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
+import { EnrollmentChoice, GameType } from '@/models/enums';
 import { ConEvent } from '@/models/types';
 import { useAuth } from './AuthProvider';
 type Props = {

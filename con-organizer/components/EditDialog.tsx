@@ -18,8 +18,8 @@ import {
     TextField,
 } from '@mui/material';
 import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
-import { GameType, Pool } from '@/lib/enums';
 import { eventsRef } from '@/lib/firebase';
+import { GameType, Pool } from '@/models/enums';
 import { ConEvent } from '@/models/types';
 import { Button } from '../lib/mui';
 import EventUi from './EventUi';

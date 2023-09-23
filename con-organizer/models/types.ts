@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
-import { EnrollmentChoice, GameType, Pool } from '@/lib/enums';
+import { EnrollmentChoice, GameType, Pool } from '@/models/enums';
 
 export type ConEvent = {
     id: string;
@@ -16,7 +16,6 @@ export type ConEvent = {
     room: string;
     host: string;
 };
-
 
 export type UserSettings = {
     id: string;

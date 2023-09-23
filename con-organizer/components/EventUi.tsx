@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -12,9 +12,9 @@ import RadioGroup from '@mui/material/RadioGroup';
 import Typography from '@mui/material/Typography';
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import parse from 'html-react-parser';
-import { EnrollmentChoice } from '@/lib/enums';
 import { db } from '@/lib/firebase';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
+import { EnrollmentChoice } from '@/models/enums';
 import { ConEvent } from '@/models/types';
 import { useAuth } from './AuthProvider';
 import EnrollmentSelector from './EnrollmentSelector';

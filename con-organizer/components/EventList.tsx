@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import FilterAlt from '@mui/icons-material/FilterAlt';
-import { Pool } from '@/lib/enums';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
+import { Pool } from '@/models/enums';
 import { Box, Chip, Typography } from '../lib/mui';
 import EventCardBoundary from './ErrorBoundaries/EventCardBoundary';
 import { useAuth } from './AuthProvider';
@@ -14,13 +14,13 @@ import EventCard from './EventCard';
 import PoolSelector from './PoolSelector';
 
 const EventList = () => {
+    const user = useAuth();
     const { events, loading } = useAllEvents();
     const [displayPool, setDisplayPool] = useState<Pool>(Pool.FridayEvening);
     const [showFilters, setShowFilters] = useState(false);
     const [showUnpublished, setShowUnpublished] = useState(false);
-
-    const user = useAuth();
     const { userSettings } = useUserSettings(user?.uid);
+
 
     useEffect(() => {
         setShowUnpublished(userSettings?.admin && user ? true : false);

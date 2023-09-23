@@ -4,8 +4,8 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { Box, Card, CardContent, CardHeader } from '@mui/material';
 import EventCardBoundary from '@/components/ErrorBoundaries/EventCardBoundary';
 import EventCard from '@/components/EventCard';
-import { Pool } from '@/lib/enums';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
+import { Pool } from '@/models/enums';
 
 const BigScreen = () => {
     const { events, loading } = useAllEvents();
