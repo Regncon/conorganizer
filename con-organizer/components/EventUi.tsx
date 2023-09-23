@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { Box } from '@mui/material';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -40,24 +40,19 @@ const EventUi = ({ conEvent }: Props) => {
     }, [conEvent]);
 
     useEffect(() => {
-         if (user && conEvent?.id, enrollment) {
-            setEnrollmentChoice(enrollment?.choice || EnrollmentChoice.NotInterested);
-        } 
+        setEnrollmentChoice(user && conEvent?.id && enrollment ? enrollment.choice : EnrollmentChoice.NotInterested);
     }, [user, conEvent, enrollment]);
 
     const handleEnrollmentChoiceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const choice = Number(event.target.value) as EnrollmentChoice;
-        setEnrollmentChoice(choice);
+
+        if (user && conEvent?.id) {
+            setEnrollmentChoice(choice);
+            updateEnrollmentInDb(choice);
+        }
     };
 
-    useEffect(() => {
-        if (user && conEvent?.id) {
-            setEnrollment();
-        }
-    }
-    , [enrollmentChoice]);
-
-    async function setEnrollment() {
+    async function updateEnrollmentInDb(choice: EnrollmentChoice) {
         try {
             if (!user || !conEvent?.id) {
                 return;
@@ -65,11 +60,11 @@ const EventUi = ({ conEvent }: Props) => {
             const setEnrollmentRef = doc(db, `events/${conEvent.id}`, `/enrollments/${user.uid}`);
             if (enrollment) {
                 await updateDoc(setEnrollmentRef, {
-                    choice: enrollmentChoice,
+                    choice: choice,
                 });
             } else {
                 await setDoc(setEnrollmentRef, {
-                    choice: enrollmentChoice,
+                    choice: choice,
                 });
             }
         } catch (e) {
