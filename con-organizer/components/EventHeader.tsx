@@ -100,7 +100,6 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                 <Box sx={{ display: 'grid' }}>
                     <span>{conEvent?.gameSystem} </span>
                     <span>{conEvent?.room} </span>
-                    <span>{conEvent?.pool} </span>
                     <span>{conEvent?.host} </span>
                     <span>{EnrollmentChoice[enrollment?.choice ?? 0]} </span>
                 </Box>
