@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import AccountCircle from '@mui/icons-material/AccountCircle';
 import FilterAlt from '@mui/icons-material/FilterAlt';
+import { useSearchParams } from 'next/navigation';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 import { Pool } from '@/models/enums';
@@ -20,15 +21,24 @@ const EventList = () => {
     const [showFilters, setShowFilters] = useState(false);
     const [showUnpublished, setShowUnpublished] = useState(false);
     const { userSettings } = useUserSettings(user?.uid);
-
+    const searchParams = useSearchParams();
 
     useEffect(() => {
         setShowUnpublished(userSettings?.admin && user ? true : false);
     }, [user, userSettings]);
 
+    const search = searchParams.get('pool') as keyof typeof Pool;
+    useEffect(() => {
+        if (search) {
+            setDisplayPool(Pool[search]);
+        }
+    }
+    , [search]);
+
+
     return (
         <>
-            <PoolSelector handlePoolChange={(pool) => setDisplayPool(pool)} />
+            <PoolSelector handlePoolChange={(pool) => /* setDisplayPool(pool) */ null } />
             <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20 mt-20">
                 {loading ? <Typography variant="body1">Loading...</Typography> : null}
                 <Box sx={{ display: 'flex', gap: '.5em', flexGrow: '1', justifyContent: 'center', width: '100%' }}>

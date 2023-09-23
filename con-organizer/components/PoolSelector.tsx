@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Tab from '@mui/material/Tab';
@@ -22,8 +22,6 @@ const PoolSelector = ({ handlePoolChange }: Props) => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    // Get a new searchParams string by merging the current
-    // searchParams with a provided key/value pair
     const createQueryString = useCallback(
         (name: string, value: string) => {
             const params = new URLSearchParams(searchParams);
@@ -34,11 +32,13 @@ const PoolSelector = ({ handlePoolChange }: Props) => {
         [searchParams]
     );
 
-    const pathName = usePathname();
-    console.log(pathName);
-
-    const search = searchParams.get('pool');
-    console.log(search);
+    const search = searchParams.get('pool') as keyof typeof Pool;
+    useEffect(() => {
+        if (search) {
+            setValue(Pool[search ]);
+        }
+    }
+    , [search]);
 
 
     const handleChange = (event: React.SyntheticEvent, newValue: Pool) => {
@@ -72,14 +72,6 @@ const PoolSelector = ({ handlePoolChange }: Props) => {
 
     return (
         <Box sx={{ bgcolor: 'background.paper' }}>
-            <button
-                onClick={() => {
-                    // <pathname>?sort=asc
-                    router.push(`${pathname}?${createQueryString('pool', value)}` as Route);
-                }}
-            >
-                test
-            </button>
             <AppBar position="sticky" sx={{ width: '100vw' }}>
                 <Tabs
                     value={value}
