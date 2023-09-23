@@ -3,7 +3,6 @@ import EventList from '@/components/EventList';
 import MainNavigator from '@/components/MainNavigator';
 
 export default function Home() {
-
     return (
         <main className="">
             <Box className="flex flex-row flex-wrap justify-center gap-4">

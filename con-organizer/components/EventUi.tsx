@@ -1,19 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-    Card,
-    CardContent,
-    Divider,
-    FormControl,
-    FormControlLabel,
-    FormControlLabelProps,
-    FormLabel,
-    Radio,
-    RadioGroup,
-    styled,
-    useRadioGroup,
-} from '@mui/material';
+import { Box } from '@mui/material';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Divider from '@mui/material/Divider';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel, { FormControlLabelProps } from '@mui/material/FormControlLabel';
+import FormLabel from '@mui/material/FormLabel';
+import Radio from '@mui/material/Radio';
+import RadioGroup, { useRadioGroup } from '@mui/material/RadioGroup';
+import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import parse from 'html-react-parser';
 import { ConEvent } from '@/models/types';
@@ -59,9 +56,9 @@ const EventUi = ({ conEvent }: Props) => {
         <Card>
             <EventHeader conEvent={conEvent} />
             <Divider />
-            <Typography variant="body1" className="p-4" sx={{ minHeight: '7rem', display: 'grid', gap: '.5rem' }}>
+            <Box className="p-4" sx={{ minHeight: '7rem', display: 'grid', gap: '.5rem' }}>
                 {parse(description || '')}
-            </Typography>
+            </Box>
 
             <Divider />
             <CardContent>

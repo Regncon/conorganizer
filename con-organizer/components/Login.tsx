@@ -13,13 +13,16 @@ import TextField from '@mui/material/TextField';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 
-const Login = (props: any) => {
+type Props = {
+    setChoice: (choice: string) => void;
+};
+
+const Login = ({ setChoice }: Props) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
     const [hiddenDragon, setHiddenDragon] = useState(true);
-    const { setChoice } = props;
     const [showPassword, setShowPassword] = useState(false);
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -43,7 +46,7 @@ const Login = (props: any) => {
                         'Vi har midlertidig suspendert kontoen din på grunn av for mange påloggingsforsøk. Dette er for at hackere og botter ikke skal kunne gjette seg til passordet ditt. Vennligst vent litt før du prøver igjen.'
                     );
                 } else if (err.code === 'auth/wrong-password') {
-                    setError('Ser ut som du har skrevet noe feil i passordet ditt, vennligst prøv igjen.');
+                    setError('Det ser ut som du har skrevet noe feil i passordet ditt, vennligst prøv igjen.');
                 } else {
                     setError('Kunne ikke logge deg inn, fordi det skjedde en feil. Tekniske detaljer: ' + err.message);
                 }

@@ -41,7 +41,7 @@ const PoolSelector = ({ handlePoolChange }: Props) => {
 
     return (
         <Box sx={{ bgcolor: 'background.paper' }}>
-            <AppBar position="fixed">
+            <AppBar position="sticky" sx={{ width: '100vw' }}>
                 <Tabs
                     value={value}
                     onChange={handleChange}
@@ -58,6 +58,6 @@ const PoolSelector = ({ handlePoolChange }: Props) => {
             </AppBar>
         </Box>
     );
-}
+};
 
 export default PoolSelector;

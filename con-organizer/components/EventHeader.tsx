@@ -1,14 +1,12 @@
 import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Box, CardHeader, Typography } from '@mui/material';
+import { Alert, Box, CardContent, Typography } from '@mui/material';
 import { GameType } from '@/lib/enums';
 import { ConEvent } from '@/models/types';
-
 type Props = {
     conEvent: ConEvent | undefined;
     listView?: boolean;
 };
-
 const EventHeader = ({ conEvent, listView = false }: Props) => {
     return (
         <>
@@ -35,10 +33,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                 <Box
                     sx={{
                         background: 'linear-gradient(transparent, transparent, black)',
-                        // height: '50vh',
                         minHeight: listView ? '10em' : '25em',
-                        // minHeight: '300px',
-                        // maxHeight: '500px',
                         display: 'flex',
                         alignItems: 'end',
                     }}
@@ -50,8 +45,12 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                             padding: '.7em',
                         }}
                     >
-                        <Typography variant="h3">{conEvent?.title}</Typography>
-                        <Typography variant="h4">{conEvent?.subtitle}</Typography>
+                        <Typography variant="h3" sx={{ textWrap: 'balance' }}>
+                            {conEvent?.title}
+                        </Typography>
+                        <Typography variant="h4" sx={{ textWrap: 'balance' }}>
+                            {conEvent?.subtitle}
+                        </Typography>
                     </Box>
                 </Box>
             </Box>
@@ -65,7 +64,6 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                     gap: '1em',
                     backgroundColor: 'white',
                     color: 'black',
-                    width: { xs: '100vw', md: '1080px' },
                 }}
             >
                 <span>
@@ -94,7 +92,7 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
                         </Box>
                     ) : null}
                 </span>
-                <Box sx={{ display: 'grid', width: '100vw', maxWidth: '1080px' }}>
+                <Box sx={{ display: 'grid' }}>
                     <span>{conEvent?.gameSystem} </span>
                     <span>{conEvent?.room} </span>
                     <span>{conEvent?.pool} </span>
