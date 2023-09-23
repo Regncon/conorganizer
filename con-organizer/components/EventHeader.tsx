@@ -31,8 +31,9 @@ const EventHeader = ({ conEvent, listView = false }: Props) => {
             ) : null}
             <Box
                 sx={{
-                    backgroundImage: `url(${conEvent?.imageUrl || "/image/placeholder.jpg"})`,
+                    backgroundImage: `url(${conEvent?.imageUrl})`,
                     backgroundSize: 'cover',
+                    minHeight: '80px',
                 }}
             >
                 <Box
