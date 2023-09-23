@@ -2,7 +2,7 @@ import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-i
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Box, CardMedia, Typography } from '@mui/material';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
-import { EnrollmentChoice, GameType } from '@/models/enums';
+import { GameType } from '@/models/enums';
 import { ConEvent } from '@/models/types';
 import { useAuth } from './AuthProvider';
 type Props = {

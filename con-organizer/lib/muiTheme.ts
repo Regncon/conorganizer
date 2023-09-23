@@ -51,7 +51,7 @@ const muiDarkTheme: ThemeOptions = {
             fontFamily: Garamond.style.fontFamily,
         },
         h4: {
-            color: '#eee',
+            color: '#ddd',
             fontWeight: '400',
             fontStyle: 'italic',
             fontSize: '1.5rem',
