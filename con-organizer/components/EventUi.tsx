@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Dialog, Link } from '@mui/material';
+import { Alert, Box, Dialog, Link } from '@mui/material';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
@@ -100,29 +100,25 @@ const EventUi = ({ conEvent }: Props) => {
                 <CardContent sx={{ backgroundColor: '#181818', borderRadius: '0', width: '100%' }}>
                     <FormControl>
                         <FormLabel id="demo-row-radio-buttons-group-label">
-                            <Typography variant="h6">
-                                Påmelding
-                                {user ? (
-                                    ''
-                                ) : (
-                                    <>
-                                        :{''}
-                                        <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
-                                            Kjøp billett
-                                        </Link>
-                                        <span> og </span>
-                                        <Link
-                                            component="button"
-                                            onClick={() => {
-                                                setOpenLogin(true);
-                                            }}
-                                        >
-                                            logg inn
-                                        </Link>
-                                        <span> for å melde deg på.</span>
-                                    </>
-                                )}
-                            </Typography>
+                            {user ? (
+                                <Typography variant="h6">Påmelding</Typography>
+                            ) : (
+                                <Alert severity="info">
+                                    <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
+                                        Kjøp billett
+                                    </Link>
+                                    <span> og </span>
+                                    <Link
+                                        component="button"
+                                        onClick={() => {
+                                            setOpenLogin(true);
+                                        }}
+                                    >
+                                        logg inn
+                                    </Link>
+                                    <span> for å melde deg på.</span>
+                                </Alert>
+                            )}
                         </FormLabel>
                         <RadioGroup
                             row

@@ -70,7 +70,7 @@ const Login = ({ setChoice }: Props) => {
                         onBlur={() => setHiddenDragon(false)}
                     />
                     <TextField
-                        sx={{ margin: '.3rem 0' }}
+                        sx={{ margin: '-1px 0 .3rem 0' }}
                         label="passord"
                         name="password"
                         value={password}
@@ -110,19 +110,19 @@ const Login = ({ setChoice }: Props) => {
                         size="large"
                         fullWidth
                         onClick={() => setChoice('')}
-                        sx={{ margin: '.3rem 0' }}
+                        sx={{ margin: '-1px 0' }}
                     >
                         Avbryt
                     </Button>
+                    {!success && !error ? (
+                        <Alert severity="info">
+                            OBS: Du kan ikke logge inn uten &aring; ha kj&oslash;pt billett.&nbsp;
+                            <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">Kjøp billett her!</Link>
+                        </Alert>
+                    ) : null}
+                    {!!success && <Alert severity="success">{success}</Alert>}
+                    {!!error && <Alert severity="error">{error}</Alert>}
                 </form>
-                {!success && !error ? (
-                    <Alert severity="info">
-                        OBS: Du kan ikke logge inn uten &aring; ha kj&oslash;pt billett. &nbsp;
-                        <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">Kjøp billett her</Link>
-                    </Alert>
-                ) : null}
-                {!!success && <Alert severity="success">{success}</Alert>}
-                {!!error && <Alert severity="error">{error}</Alert>}
             </Box>
         </Card>
     );
