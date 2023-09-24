@@ -108,9 +108,15 @@ const EditDialog = ({ open, conEvent, handleClose }: Props) => {
     }
     // throw new Error('test');
     return (
-        <Dialog open={open} fullWidth={true} maxWidth="md">
-            <Box sx={{ minHeight: '900px' }} display="flex" flexDirection="row">
-                <Box className="p-4" sx={{ width: '375px', height: '667px' }}>
+        <Dialog open={open} fullWidth={true} maxWidth="lg">
+            <Box sx={{ minHeight: '900px', display: 'flex' }} flexDirection="row">
+                <Box
+                    className="p-4"
+                    sx={{
+                        width: '50%',
+                        display: { xs: 'none', md: 'block' },
+                    }}
+                >
                     <EventUi conEvent={conEvent || ({} as ConEvent)} />
                 </Box>
 
@@ -177,7 +183,7 @@ const EditDialog = ({ open, conEvent, handleClose }: Props) => {
                         </Box>
                     </DialogContent>
 
-                    <DialogContent sx={{ width: '375px', paddingTop: '0' }}>
+                    <DialogContent sx={{ width: 'auto', paddingTop: '0' }}>
                         <TextField
                             autoFocus
                             margin="dense"

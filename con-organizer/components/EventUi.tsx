@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Dialog, Link } from '@mui/material';
+import { Alert, Box, Dialog, Link } from '@mui/material';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
@@ -34,8 +34,8 @@ const EventUi = ({ conEvent }: Props) => {
 
     const [description, setDescription] = useState('');
     useEffect(() => {
-        if (conEvent) {
-            const tmp: string = conEvent?.description.replaceAll('<p>&nbsp;', '');
+        if (conEvent && conEvent.description) {
+            const tmp: string = conEvent.description.replaceAll('<p>&nbsp;', '');
             setDescription(tmp);
         }
     }, [conEvent]);
@@ -77,7 +77,7 @@ const EventUi = ({ conEvent }: Props) => {
 
     return (
         <>
-            <Card sx={{ background: 'linear-gradient(to left, black, transparent, transparent, black)' }}>
+            <Card sx={{ background: 'linear-gradient(to left, black, #222, #222, black)', width: '100%' }}>
                 <EventHeader conEvent={conEvent} />
                 <Divider />
                 <Box
@@ -97,32 +97,32 @@ const EventUi = ({ conEvent }: Props) => {
                 </Box>
 
                 <Divider />
-                <CardContent sx={{ backgroundColor: '#181818', borderRadius: '0' }}>
+                <CardContent sx={{ backgroundColor: '#181818', borderRadius: '0', width: '100%' }}>
                     <FormControl>
                         <FormLabel id="demo-row-radio-buttons-group-label">
-                            <Typography variant="h6">
-                                Påmelding
-                                {user ? (
-                                    ''
-                                ) : (
-                                    <>
-                                        :{''}
-                                        <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
-                                            Kjøp billett
-                                        </Link>
-                                        <span> og </span>
-                                        <Link
-                                            component="button"
-                                            onClick={() => {
-                                                setOpenLogin(true);
-                                            }}
-                                        >
-                                            logg inn
-                                        </Link>
-                                        <span> for å melde deg på.</span>
-                                    </>
-                                )}
-                            </Typography>
+                            {user ? (
+                                <Typography variant="h6">Påmelding</Typography>
+                            ) : (
+                                <Alert severity="info">
+                                    <Link
+                                        href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/"
+                                        color="secondary"
+                                    >
+                                        Kjøp billett
+                                    </Link>
+                                    <span> og </span>
+                                    <Link
+                                        component="button"
+                                        onClick={() => {
+                                            setOpenLogin(true);
+                                        }}
+                                        color="secondary"
+                                    >
+                                        logg inn
+                                    </Link>
+                                    <span> for å melde deg på.</span>
+                                </Alert>
+                            )}
                         </FormLabel>
                         <RadioGroup
                             row
@@ -132,7 +132,7 @@ const EventUi = ({ conEvent }: Props) => {
                             value={enrollmentChoice}
                             sx={{
                                 display: 'grid',
-                                width: '100vw',
+                                width: '100%',
                                 maxWidth: '1080px',
                                 padding: '.2em',
                                 gridAutoFlow: 'column',
@@ -144,32 +144,50 @@ const EventUi = ({ conEvent }: Props) => {
                             }}
                         >
                             <EnrollmentSelector
-                                sx={{ display: 'grid', textAlign: 'center', p: '.4em' }}
+                                sx={{ display: 'grid', textAlign: 'center', p: '.4em', m: '0' }}
                                 value={EnrollmentChoice.NotInterested}
                                 disabled={!user}
                                 control={<Radio size="small" />}
-                                label="Ikke interessert"
+                                label="Ikke p&aring;meldt"
                             />
                             <EnrollmentSelector
                                 value={EnrollmentChoice.IfIHaveTo}
                                 disabled={!user}
                                 control={<Radio size="small" />}
-                                sx={{ display: 'grid', backgroundColor: '#00000055', textAlign: 'center', p: '.4em' }}
-                                label="Hvis jeg må"
+                                sx={{
+                                    display: 'grid',
+                                    backgroundColor: '#00000055',
+                                    textAlign: 'center',
+                                    p: '.4em',
+                                    m: '0',
+                                }}
+                                label="Litt interessert"
                             />
                             <EnrollmentSelector
                                 value={EnrollmentChoice.Interested}
                                 disabled={!user}
-                                sx={{ display: 'grid', backgroundColor: '#000000aa', textAlign: 'center', p: '.4em' }}
+                                sx={{
+                                    display: 'grid',
+                                    backgroundColor: '#00000088',
+                                    textAlign: 'center',
+                                    p: '.4em',
+                                    m: '0',
+                                }}
                                 control={<Radio size="small" />}
-                                label="Har lyst"
+                                label="Ganske interessert"
                             />
                             <EnrollmentSelector
                                 value={EnrollmentChoice.VeryInterested}
                                 disabled={!user}
                                 control={<Radio size="small" />}
-                                label="Har veldig lyst"
-                                sx={{ display: 'grid', backgroundColor: '#000000ff', textAlign: 'center', p: '.4em' }}
+                                label="Veldig interessert"
+                                sx={{
+                                    display: 'grid',
+                                    backgroundColor: '#000000ff',
+                                    textAlign: 'center',
+                                    p: '.4em',
+                                    m: '0',
+                                }}
                             />
                         </RadioGroup>
                     </FormControl>
