@@ -44,7 +44,7 @@ const EventList = () => {
 
             <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20">
                 {loading ? <Typography variant="body1">Loading...</Typography> : null}
-                <Box sx={{ display: 'flex', gap: '.5em', flexGrow: '1', justifyContent: 'center', width: '100%' }}>
+       {/*          <Box sx={{ display: 'flex', gap: '.5em', flexGrow: '1', justifyContent: 'center', width: '100%' }}>
                     <Chip label="Alle" />
                     <Chip label="Mine p&aring;meldinger" variant="outlined" icon={<AccountCircle />} />
                     <Chip
@@ -62,7 +62,7 @@ const EventList = () => {
                     <Chip label="Rollespill" variant="outlined" />
                     <Chip label="Brettspill" variant="outlined" />
                     <Chip label="Annet" variant="outlined" />
-                </Box>
+                </Box> */}
                 {events
                     ?.filter((conEvent) => conEvent.pool === displayPool)
                     .filter((conEvent) => showUnpublished || conEvent.published)
