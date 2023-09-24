@@ -76,39 +76,48 @@ const EventUi = ({ conEvent }: Props) => {
     }
 
     return (
+        <Card sx={{ background: 'linear-gradient(to left, black, transparent, transparent, black)' }}>
         <>
-        <Card>
             <EventHeader conEvent={conEvent} />
             <Divider />
-            <Box className="p-4" sx={{ minHeight: '7rem', display: 'grid', gap: '.5rem' }}>
+            <Box
+                className="p-4"
+                sx={{
+                    minHeight: '7rem',
+                    display: 'grid',
+                    gap: '.5rem',
+                    maxWidth: '45em',
+                    margin: { xs: '0 auto 1em auto', md: '2em auto 3em auto' },
+                }}
+            >
                 <Typography variant="body1">{parse(description || '')}</Typography>
                 <span>
                     <em>Tidspunkt: {conEvent?.pool}</em>
                 </span>
             </Box>
 
-                <Divider />
-                <CardContent>
-                    <FormControl>
-                        <FormLabel id="demo-row-radio-buttons-group-label">
+            <Divider />
+            <CardContent sx={{ backgroundColor: '#181818', borderRadius: '0' }}>
+                <FormControl>
+                    <FormLabel id="demo-row-radio-buttons-group-label">
                             <Typography variant="h6">
                                 Påmelding
                                 {user ? (
-                                    ''
                                 ) : (
+                                    ''
                                     <>
                                         :{' '}
-                                        <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
                                             Kjøp bilett
+                                        <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
                                         </Link>
                                         <span> og </span>
                                         <Link
                                             component="button"
-                                            onClick={() => {
                                                 setOpenLogin(true);
+                                            onClick={() => {
                                             }}
-                                        >
                                             logg inn
+                                        >
                                         </Link>
                                         <span> for å melde deg på.</span>
                                     </>
@@ -121,31 +130,31 @@ const EventUi = ({ conEvent }: Props) => {
                             name="row-radio-buttons-group"
                             defaultValue={EnrollmentChoice.NotInterested}
                             value={enrollmentChoice}
-                            sx={{
                                 display: 'grid',
+                            sx={{
                                 width: '100vw',
                                 maxWidth: '1080px',
                                 padding: '.2em',
                                 gridAutoFlow: 'column',
                                 gridAutoColumns: '1fr',
-                                placeContent: 'center',
                             }}
+                                placeContent: 'center',
                             onChange={(e) => {
                                 handleEnrollmentChoiceChange(e);
                             }}
                         >
-                            <EnrollmentSelector
                                 sx={{ display: 'grid', textAlign: 'center', p: '.4em' }}
+                            <EnrollmentSelector
                                 value={EnrollmentChoice.NotInterested}
                                 disabled={!user}
                                 control={<Radio size="small" />}
-                                label="Ikke interessert"
                             />
+                                label="Ikke interessert"
                             <EnrollmentSelector
                                 value={EnrollmentChoice.IfIHaveTo}
                                 disabled={!user}
-                                sx={{ display: 'grid', backgroundColor: '#00000055', textAlign: 'center', p: '.4em' }}
                                 control={<Radio size="small" />}
+                                sx={{ display: 'grid', backgroundColor: '#00000055', textAlign: 'center', p: '.4em' }}
                                 label="Hvis jeg må"
                             />
                             <EnrollmentSelector
@@ -166,8 +175,8 @@ const EventUi = ({ conEvent }: Props) => {
                     </FormControl>
                 </CardContent>
                 <Divider />
-            </Card>
             <Dialog open={openLogin}>
+            </Card>
                 <Login setChoice={ () => setOpenLogin(false) } />
             </Dialog>
         </>

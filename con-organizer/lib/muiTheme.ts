@@ -1,7 +1,7 @@
 'use client';
 
 import { createTheme, ThemeOptions } from '@mui/material';
-import { EB_Garamond } from 'next/font/google';
+import { EB_Garamond, Inter} from 'next/font/google';
 
 const Garamond = EB_Garamond({
     weight: ['400', '700'],
@@ -9,6 +9,13 @@ const Garamond = EB_Garamond({
     style: ['normal', 'italic'],
     display: 'swap',
 });
+const inter = Inter({
+    weight: ['400', '700'],
+    subsets: ['latin'],
+    style: ['normal'],
+    display: 'swap',
+});
+
 
 const muiDarkTheme: ThemeOptions = {
     palette: {
@@ -57,6 +64,10 @@ const muiDarkTheme: ThemeOptions = {
             fontSize: '1.5rem',
             textShadow: "0 0 .7em black",
             fontFamily: Garamond.style.fontFamily,
+        },
+        body1: {
+            fontFamily: inter.style.fontFamily,
+            fontSize: "1rem",
         },
     },
 };
