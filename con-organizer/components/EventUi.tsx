@@ -33,8 +33,7 @@ const EventUi = ({ conEvent }: Props) => {
     const [description, setDescription] = useState('');
     useEffect(() => {
         if (conEvent) {
-            const tmp: string = conEvent?.description;
-            // tmp = tmp.replace(/\n/g, '</p><p>');
+            const tmp: string = conEvent?.description.replaceAll('<p>&nbsp;', '');
             setDescription(tmp);
         }
     }, [conEvent]);
@@ -81,7 +80,7 @@ const EventUi = ({ conEvent }: Props) => {
             <EventHeader conEvent={conEvent} />
             <Divider />
             <Box className="p-4" sx={{ minHeight: '7rem', display: 'grid', gap: '.5rem' }}>
-                {parse(description || '')}
+                <Typography variant="body1">{parse(description || '')}</Typography>
                 <span>
                     <em>Tidspunkt: {conEvent?.pool}</em>
                 </span>
