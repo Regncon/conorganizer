@@ -34,8 +34,8 @@ const EventUi = ({ conEvent }: Props) => {
 
     const [description, setDescription] = useState('');
     useEffect(() => {
-        if (conEvent) {
-            const tmp: string = conEvent?.description.replaceAll('<p>&nbsp;', '');
+        if (conEvent && conEvent.description) {
+            const tmp: string = conEvent.description.replaceAll('<p>&nbsp;', '');
             setDescription(tmp);
         }
     }, [conEvent]);
@@ -104,7 +104,10 @@ const EventUi = ({ conEvent }: Props) => {
                                 <Typography variant="h6">Påmelding</Typography>
                             ) : (
                                 <Alert severity="info">
-                                    <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
+                                    <Link
+                                        href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/"
+                                        color="secondary"
+                                    >
                                         Kjøp billett
                                     </Link>
                                     <span> og </span>
@@ -113,6 +116,7 @@ const EventUi = ({ conEvent }: Props) => {
                                         onClick={() => {
                                             setOpenLogin(true);
                                         }}
+                                        color="secondary"
                                     >
                                         logg inn
                                     </Link>
