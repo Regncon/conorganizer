@@ -59,19 +59,6 @@ const Login = ({ setChoice }: Props) => {
     return (
         <Card>
             <Box p={4} maxWidth={400} display="grid" justifyItems="center" gap={2}>
-                <CardMedia
-                    component="img"
-                    image="/image/regnconlogony.png"
-                    title="årets regncondrage"
-                    sx={{ p: '1rem', display: { xs: hiddenDragon ? 'none' : 'block', md: 'block' } }}
-                />
-                <CardContent>
-                    <Typography variant="h6">
-                        <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
-                            Kjøp bilett for å melde deg på.
-                        </Link>
-                    </Typography>
-                </CardContent>
                 <form action={''}>
                     <TextField
                         label="e-post"
@@ -128,6 +115,12 @@ const Login = ({ setChoice }: Props) => {
                         Avbryt
                     </Button>
                 </form>
+                {!success && !error ? (
+                    <Alert severity="info">
+                        OBS: Du kan ikke logge inn uten &aring; ha kj&oslash;pt billett. &nbsp;
+                        <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">Kjøp billett her</Link>
+                    </Alert>
+                ) : null}
                 {!!success && <Alert severity="success">{success}</Alert>}
                 {!!error && <Alert severity="error">{error}</Alert>}
             </Box>
