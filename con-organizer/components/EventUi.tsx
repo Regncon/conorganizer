@@ -77,9 +77,7 @@ const EventUi = ({ conEvent }: Props) => {
 
     return (
         <>
-            <Card
-                sx={{ background: 'linear-gradient(to left, black, transparent, transparent, black)', width: '100%' }}
-            >
+            <Card sx={{ background: 'linear-gradient(to left, black, #222, #222, black)', width: '100%' }}>
                 <EventHeader conEvent={conEvent} />
                 <Divider />
                 <Box
