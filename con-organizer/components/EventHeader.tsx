@@ -40,7 +40,7 @@ const EventHeader = ({ conEvent }: Props) => {
                     <CardMedia
                         component="img"
                         image={image}
-                        sx={{ maxHeight: '60vh', width: '100%', mixBlendMode: 'multiply' }}
+                        sx={{ maxHeight: '50vh', width: '100%', mixBlendMode: 'multiply' }}
                     />
                     <Box
                         sx={{
@@ -104,12 +104,12 @@ const EventHeader = ({ conEvent }: Props) => {
                             </Typography>
                         ) : null}
                         {enrollment?.choice === 1 ? (
-                            <Typography variant="caption" color="gray">
+                            <Typography variant="caption" color="darkgray">
                                 ⬤ Litt interessert
                             </Typography>
                         ) : null}
                         {enrollment?.choice === 2 ? (
-                            <Typography variant="caption" color="darkgray">
+                            <Typography variant="caption" color="gray">
                                 ⬤ Ganske interessert
                             </Typography>
                         ) : null}

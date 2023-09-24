@@ -30,7 +30,7 @@ const Event = ({ id }: Props) => {
     //     'lorem Ipsum error in conAuthor authorization dialog box - invalid Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea quia in blanditiis mollitia exercitationem, asperiores nam quidem commodi nulla illum laborum, distinctio magnam debitis vitae rerum, maiores maxime sapiente! Quia! Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea quia in blanditiis mollitia exercitationem, asperiores nam quidem commodi nulla illum laborum, distinctio magnam debitis vitae rerum, maiores maxime sapiente! Quia!'
     // );
     return (
-        <Box sx={{ maxWidth: '1080px', margin: { xs: '0', md: '0 auto' }, paddingBottom: '4rem' }}>
+        <Box sx={{ maxWidth: '900px', margin: { xs: '0', md: '0 auto' }, paddingBottom: '4rem' }}>
             {loading && <h1>Loading...</h1>}
             <EditDialog open={openEdit} handleClose={handleCloseEdit} conEvent={event} />
             <Card>

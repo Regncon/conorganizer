@@ -1,31 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import CloseIcon from '@mui/icons-material/Close';
-import {
-    Alert,
-    Box,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Divider,
-    IconButton,
-    InputLabel,
-    MenuItem,
-    Select,
-    Switch,
-    TextField,
-} from '@mui/material';
-import { doc, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
-import { eventsRef } from '@/lib/firebase';
-import { GameType, Pool } from '@/models/enums';
+import { Box, Dialog, Divider, IconButton } from '@mui/material';
 import { ConEvent } from '@/models/types';
-import { Button } from '../lib/mui';
 import EventBoundary from './ErrorBoundaries/EventBoundary';
-import EventUi from './EventUi';
 import EditUi from './EditUi';
+import EventUi from './EventUi';
 
 type Props = {
     open: boolean;
