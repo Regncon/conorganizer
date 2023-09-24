@@ -3,7 +3,7 @@
 import { MouseEvent, useState } from 'react';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import { Alert } from '@mui/material';
+import { Alert, CardContent, Link, Typography } from '@mui/material';
 import { Card, CardMedia } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -65,6 +65,13 @@ const Login = ({ setChoice }: Props) => {
                     title="årets regncondrage"
                     sx={{ p: '1rem', display: { xs: hiddenDragon ? 'none' : 'block', md: 'block' } }}
                 />
+                <CardContent>
+                    <Typography variant="h6">
+                        <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
+                            Kjøp bilett for å melde deg på.
+                        </Link>
+                    </Typography>
+                </CardContent>
                 <form action={''}>
                     <TextField
                         label="e-post"

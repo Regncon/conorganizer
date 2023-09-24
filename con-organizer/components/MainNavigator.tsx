@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AddIcon from '@mui/icons-material/Add';
-import MailOutline from '@mui/icons-material/MailOutline';
 import MenuIcon from '@mui/icons-material/Menu';
 import PasswordIcon from '@mui/icons-material/Password';
 import { Dialog, SpeedDial, SpeedDialAction } from '@mui/material';
@@ -58,17 +57,6 @@ const MainNavigator = () => {
                         tooltipTitle="legg til arrangement"
                         tooltipOpen
                         onClick={() => setOpenAdd(true)}
-                    />
-                    <SpeedDialAction
-                        sx={{
-                            '& .MuiSpeedDialAction-staticTooltipLabel': {
-                                width: '23ch',
-                            },
-                        }}
-                        key="contactUs"
-                        icon={<MailOutline />}
-                        tooltipTitle="send tilbakemeldinger"
-                        tooltipOpen
                     />
                     <SpeedDialAction
                         sx={{
