@@ -35,8 +35,7 @@ const EventUi = ({ conEvent }: Props) => {
     const [description, setDescription] = useState('');
     useEffect(() => {
         if (conEvent) {
-            const tmp: string = conEvent?.description;
-            // tmp = tmp.replace(/\n/g, '</p><p>');
+            const tmp: string = conEvent?.description.replaceAll('<p>&nbsp;', '');
             setDescription(tmp);
         }
     }, [conEvent]);
@@ -78,15 +77,15 @@ const EventUi = ({ conEvent }: Props) => {
 
     return (
         <>
-            <Card>
-                <EventHeader conEvent={conEvent} />
-                <Divider />
-                <Box className="p-4" sx={{ minHeight: '7rem', display: 'grid', gap: '.5rem' }}>
-                    {parse(description || '')}
-                    <span>
-                        <em>Tidspunkt: {conEvent?.pool}</em>
-                    </span>
-                </Box>
+        <Card>
+            <EventHeader conEvent={conEvent} />
+            <Divider />
+            <Box className="p-4" sx={{ minHeight: '7rem', display: 'grid', gap: '.5rem' }}>
+                <Typography variant="body1">{parse(description || '')}</Typography>
+                <span>
+                    <em>Tidspunkt: {conEvent?.pool}</em>
+                </span>
+            </Box>
 
                 <Divider />
                 <CardContent>
