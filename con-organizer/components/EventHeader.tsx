@@ -40,7 +40,7 @@ const EventHeader = ({ conEvent }: Props) => {
                     <CardMedia
                         component="img"
                         image={image}
-                        sx={{ maxHeight: '50vh', width: '100%', mixBlendMode: 'multiply' }}
+                        sx={{ maxHeight: '60vh', width: '100%', mixBlendMode: 'multiply' }}
                     />
                     <Box
                         sx={{

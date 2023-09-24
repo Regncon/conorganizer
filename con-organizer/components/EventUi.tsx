@@ -76,10 +76,19 @@ const EventUi = ({ conEvent }: Props) => {
     //     'lorem Ipsum error in conAuthor authorization dialog box - invalid Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea quia in blanditiis mollitia exercitationem, asperiores nam quidem commodi nulla illum laborum, distinctio magnam debitis vitae rerum, maiores maxime sapiente! Quia! Lorem, ipsum dolor sit amet consectetur adipisicing elit. Ea quia in blanditiis mollitia exercitationem, asperiores nam quidem commodi nulla illum laborum, distinctio magnam debitis vitae rerum, maiores maxime sapiente! Quia!'
     // );
     return (
-        <Card>
+        <Card sx={{ background: 'linear-gradient(to left, black, transparent, transparent, black)' }}>
             <EventHeader conEvent={conEvent} />
             <Divider />
-            <Box className="p-4" sx={{ minHeight: '7rem', display: 'grid', gap: '.5rem' }}>
+            <Box
+                className="p-4"
+                sx={{
+                    minHeight: '7rem',
+                    display: 'grid',
+                    gap: '.5rem',
+                    maxWidth: '45em',
+                    margin: { xs: '0 auto 1em auto', md: '2em auto 3em auto' },
+                }}
+            >
                 <Typography variant="body1">{parse(description || '')}</Typography>
                 <span>
                     <em>Tidspunkt: {conEvent?.pool}</em>
@@ -87,7 +96,7 @@ const EventUi = ({ conEvent }: Props) => {
             </Box>
 
             <Divider />
-            <CardContent>
+            <CardContent sx={{ backgroundColor: '#181818', borderRadius: '0' }}>
                 <FormControl>
                     <FormLabel id="demo-row-radio-buttons-group-label">
                         <Typography variant="h6">
