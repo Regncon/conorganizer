@@ -7,9 +7,7 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 ## Todo
 
 ### Must haves Mvp
-* Add event images
 * Make it very clear what day is displayed
-* Add media queries
 * Check if firebase token should be private
 * Filter by tags
 * Match header and footer to design
@@ -24,6 +22,8 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 * Add none events to list
 
 ## Done
+* Add media queries mobile first
+* Add event images
 * Add error boundary
 * Save user choices for events
 * Add timeslots
