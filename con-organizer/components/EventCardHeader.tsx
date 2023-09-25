@@ -1,4 +1,4 @@
-import { faChessKing, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
+import { faChessKing, faChild, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Box, Typography } from '@mui/material';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
@@ -34,6 +34,9 @@ const EventCardHeader = ({ conEvent }: Props) => {
                     backgroundSize: 'cover',
                     backgroundBlendMode: 'multiply',
                     backgroundColor: '#999',
+                    display: 'flex',
+                    alignItems: 'space-between',
+                    flexDirection: 'column',
                 }}
             >
                 <Box
@@ -59,6 +62,13 @@ const EventCardHeader = ({ conEvent }: Props) => {
                         </Typography>
                     </Box>
                 </Box>
+                <Typography
+                    variant="caption"
+                    sx={{ textAlign: 'right', marginTop: 'auto', padding: '.5em', display: 'none' }}
+                >
+                    <FontAwesomeIcon icon={faChild} fontSize="1em" color="#aaffff" />
+                    &nbsp;barnevennlig!
+                </Typography>
             </Box>
             <Box
                 sx={{
@@ -103,12 +113,12 @@ const EventCardHeader = ({ conEvent }: Props) => {
                     </Typography>
                 ) : null}
                 {enrollment?.choice === 1 ? (
-                    <Typography variant="caption" color="gray">
+                    <Typography variant="caption" color="darkgray">
                         ⬤ Litt interessert
                     </Typography>
                 ) : null}
                 {enrollment?.choice === 2 ? (
-                    <Typography variant="caption" color="darkgray">
+                    <Typography variant="caption" color="gray">
                         ⬤ Ganske interessert
                     </Typography>
                 ) : null}
