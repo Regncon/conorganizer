@@ -184,7 +184,7 @@ const EventUi = ({ conEvent }: Props) => {
                 </Box>
 
                 <Divider />
-                <CardContent sx={{ backgroundColor: '#181818', borderRadius: '0', width: '100%' }}>
+                <CardContent sx={ conEvent?.hideEnrollment ? { display: 'none' } : { backgroundColor: '#181818', borderRadius: '0', width: '100%' }}>
                     <FormControl>
                         <FormLabel id="demo-row-radio-buttons-group-label">
                             {user ? (

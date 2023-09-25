@@ -11,7 +11,7 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 * Check if firebase token should be private
 * Filter by tags
 * Match header and footer to design
-
+* Add is gm to event
 
 ## Nice to haves
 * Add keyboard navigation

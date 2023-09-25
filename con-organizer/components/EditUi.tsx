@@ -160,10 +160,16 @@ const EditUi = ({ conEvent }: Props) => {
                         gap: '1rem',
                     }}
                 >
-                    <div>
-                        <Switch checked={published} onChange={() => setPublished(!published)} />
-                        <span>Publisert</span>
-                    </div>
+                    <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <div>
+                            <Switch checked={published} onChange={() => setPublished(!published)} />
+                            <span>Publisert</span>
+                        </div>
+                        <div>
+                            <Switch checked={hideEnrollment} onChange={() => setHideEnrollment(!hideEnrollment)} />
+                            <span>Skjul påmelding</span>
+                        </div>
+                    </Box>
                     <Box sx={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between' }}>
                         <div>
                             <InputLabel id="pool-select-label">Pulje</InputLabel>
@@ -182,17 +188,19 @@ const EditUi = ({ conEvent }: Props) => {
                             </Select>
                         </div>
 
-                        <TextField
-                            autoFocus
-                            margin="dense"
-                            id="sortingIndex"
-                            label="Sortering"
-                            type="number"
-                            fullWidth
-                            variant="standard"
-                            value={sortingIndex}
-                            onChange={(e) => setSortingIndex(Number(e.target.value))}
-                        />
+                        <div>
+                            <TextField
+                                autoFocus
+                                margin="dense"
+                                id="sortingIndex"
+                                label="Sortering"
+                                type="number"
+                                fullWidth
+                                variant="standard"
+                                value={sortingIndex}
+                                onChange={(e) => setSortingIndex(Number(e.target.value))}
+                            />
+                        </div>
 
                         <div>
                             <InputLabel id="type-select-label">Type</InputLabel>

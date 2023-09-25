@@ -66,6 +66,7 @@ const EventList = () => {
                 {events
                     ?.filter((conEvent) => conEvent.pool === displayPool)
                     .filter((conEvent) => showUnpublished || conEvent.published)
+                    .toSorted((a, b) => a.sortingIndex - b.sortingIndex)
                     .map((conEvent) => (
                         <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
                             <EventCard conEvent={conEvent} />

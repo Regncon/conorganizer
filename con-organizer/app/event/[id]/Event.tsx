@@ -5,9 +5,11 @@ import { Box, Button, Card, CardActions } from '@mui/material';
 import { useAuth } from '@/components/AuthProvider';
 import EditDialog from '@/components/EditDialog';
 import EventBoundary from '@/components/ErrorBoundaries/EventBoundary';
+import EventEnrolementList from '@/components/EventEnrolementList';
 import EventUi from '@/components/EventUi';
 import { useSingleEvents } from '@/lib/hooks/UseSingleEvent';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
+
 type Props = { id: string };
 const Event = ({ id }: Props) => {
     const { event, loading } = useSingleEvents(id);
@@ -41,11 +43,14 @@ const Event = ({ id }: Props) => {
             <ErrorBoundary FallbackComponent={EventBoundary}>
                 <EventUi conEvent={event} />
             </ErrorBoundary>
-            <Card sx={showEditButton ? { display: 'block' } : { display: 'none' }}>
+            <Box sx={showEditButton ? { display: 'block' } : { display: 'none' }}>
+            <Card>
                 <CardActions>
                     <Button onClick={handleOpenEdit}>Endre</Button>
                 </CardActions>
             </Card>
+            <EventEnrolementList id={id} />
+            </Box>
         </Box>
     );
 };
