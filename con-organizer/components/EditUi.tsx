@@ -34,6 +34,8 @@ const EditUi = ({ conEvent }: Props) => {
     const [gameSystem, setGameSystem] = useState<string>(conEvent?.gameSystem || '');
     const [room, setRoom] = useState<string>(conEvent?.room || '');
     const [host, setHost] = useState<string>(conEvent?.host || '');
+    const [hideEnrollment, setHideEnrollment] = useState<boolean>(conEvent?.hideEnrollment || false);
+    const [sortingIndex, setSortingIndex] = useState<number>(conEvent?.sortingIndex || 0);
 
     useEffect(() => {
         setTitle(conEvent?.title || '');
@@ -46,6 +48,8 @@ const EditUi = ({ conEvent }: Props) => {
         setGameSystem(conEvent?.gameSystem || '');
         setRoom(conEvent?.room || '');
         setHost(conEvent?.host || '');
+        setHideEnrollment(conEvent?.hideEnrollment || false);
+        setSortingIndex(conEvent?.sortingIndex || 0);
     }, [conEvent]);
 
     const addEvent = async () => {
@@ -59,6 +63,8 @@ const EditUi = ({ conEvent }: Props) => {
             gameType: eventType,
             room: room,
             host: host,
+            hideEnrollment: hideEnrollment,
+            sortingIndex: sortingIndex,
             gameSystem: gameSystem,
             createdAt: serverTimestamp(),
             lastUpdated: serverTimestamp(),
@@ -83,6 +89,8 @@ const EditUi = ({ conEvent }: Props) => {
             gameType: eventType,
             room: room,
             host: host,
+            sortingIndex: sortingIndex,
+            hideEnrollment: hideEnrollment,
             gameSystem: gameSystem,
             createdAt: serverTimestamp(),
             lastUpdated: serverTimestamp(),
@@ -142,6 +150,18 @@ const EditUi = ({ conEvent }: Props) => {
                                 <MenuItem value={Pool.SundayMorning}>{Pool.SundayMorning}</MenuItem>
                             </Select>
                         </div>
+
+                        <TextField
+                            autoFocus
+                            margin="dense"
+                            id="sortingIndex"
+                            label="Sortering"
+                            type="number"
+                            fullWidth
+                            variant="standard"
+                            value={sortingIndex}
+                            onChange={(e) => setSortingIndex(Number(e.target.value))}
+                        />
 
                         <div>
                             <InputLabel id="type-select-label">Type</InputLabel>

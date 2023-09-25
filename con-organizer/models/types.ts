@@ -15,6 +15,8 @@ export type ConEvent = {
     gameSystem: string;
     room: string;
     host: string;
+    hideEnrollment: boolean;
+    sortingIndex: number;
 };
 
 export type UserSettings = {
