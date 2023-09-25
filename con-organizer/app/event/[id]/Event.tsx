@@ -34,7 +34,9 @@ const Event = ({ id }: Props) => {
             {loading && <h1>Loading...</h1>}
             <EditDialog open={openEdit} handleClose={handleCloseEdit} conEvent={event} />
             <Card>
-                <Button onClick={() => window.history.go(-1)}>← Tilbake</Button>
+                <Button onClick={() => window.history.go(-1)} sx={{ zIndex: '9999' }}>
+                    ← Tilbake
+                </Button>
             </Card>
             <ErrorBoundary FallbackComponent={EventBoundary}>
                 <EventUi conEvent={event} />
