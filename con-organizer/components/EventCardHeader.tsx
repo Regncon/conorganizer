@@ -1,6 +1,16 @@
-import { faChessKing, faChild, faDiceD20, faPalette } from '@fortawesome/free-solid-svg-icons';
+import { useEffect, useState } from 'react';
+import {
+    faAppleWhole,
+    faChessKing,
+    faChild,
+    faClock,
+    faDiceD20,
+    faPalette,
+    faUserGraduate,
+    faUserPlus,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Box, Typography } from '@mui/material';
+import { Alert, Box, Tooltip, Typography } from '@mui/material';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
 import { GameType } from '@/models/enums';
 import { ConEvent } from '@/models/types';
@@ -12,6 +22,23 @@ type Props = {
 const EventCardHeader = ({ conEvent }: Props) => {
     const user = useAuth();
     const { enrollments: enrollment } = useSingleEnrollment(conEvent?.id || '', user?.uid || '');
+    const [childFriendly, setChildFriendly] = useState<boolean>(conEvent?.childFriendly || false);
+    const [possiblyEnglish, setPossiblyEnglish] = useState(conEvent?.possiblyEnglish || false);
+    const [adultsOnly, setAdultsOnly] = useState(conEvent?.adultsOnly || false);
+    const [volunteersPossible, setVolunteersPossible] = useState(conEvent?.volunteersPossible || false);
+    const [lessThanThreeHours, setLessThanThreeHours] = useState(conEvent?.lessThanThreeHours || false);
+    const [moreThanSixHours, setMoreThanSixHours] = useState(conEvent?.moreThanSixHours || false);
+    const [beginnerFriendly, setBeginnerFriendly] = useState(conEvent?.beginnerFriendly || false);
+
+    useEffect(() => {
+        setChildFriendly(conEvent?.childFriendly || false);
+        setPossiblyEnglish(conEvent?.possiblyEnglish || false);
+        setAdultsOnly(conEvent?.adultsOnly || false);
+        setVolunteersPossible(conEvent?.volunteersPossible || false);
+        setLessThanThreeHours(conEvent?.lessThanThreeHours || false);
+        setMoreThanSixHours(conEvent?.moreThanSixHours || false);
+        setBeginnerFriendly(conEvent?.beginnerFriendly || false);
+    }, [conEvent]);
     return (
         <>
             {conEvent?.published === false ? (
@@ -62,13 +89,6 @@ const EventCardHeader = ({ conEvent }: Props) => {
                         </Typography>
                     </Box>
                 </Box>
-                <Typography
-                    variant="caption"
-                    sx={{ textAlign: 'right', marginTop: 'auto', padding: '.5em', display: 'none' }}
-                >
-                    <FontAwesomeIcon icon={faChild} fontSize="1em" color="#aaffff" />
-                    &nbsp;barnevennlig!
-                </Typography>
             </Box>
             <Box
                 sx={{
@@ -84,27 +104,101 @@ const EventCardHeader = ({ conEvent }: Props) => {
                 }}
             >
                 <span>
-                    {conEvent?.gameType === GameType.roleplaying ? (
-                        <Box sx={{ display: 'flex', gap: '.3em', placeItems: 'center' }}>
-                            <FontAwesomeIcon icon={faDiceD20} fontSize="1em" color="orangered" />
-                            <Typography variant="body1">Rollespill</Typography>
-                        </Box>
-                    ) : null}
-                    {conEvent?.gameType === GameType.boardgame ? (
-                        <Box sx={{ display: 'flex', gap: '.3em', placeItems: 'center' }}>
-                            <FontAwesomeIcon icon={faChessKing} fontSize="1em" color="orangered" />
-                            <Typography variant="body1">Brettspill</Typography>
-                        </Box>
-                    ) : null}
-                    {conEvent?.gameType === GameType.other ? (
-                        <Box sx={{ display: 'flex', gap: '.3em', placeItems: 'center' }}>
-                            <FontAwesomeIcon icon={faPalette} fontSize="1em" color="orangered" />
-                            <Typography variant="body1">Annet</Typography>
-                        </Box>
-                    ) : null}
+                    <Box sx={{ display: 'flex', gap: '.3em', placeItems: 'center' }}>
+                        <Tooltip
+                            arrow
+                            sx={{ padding: '2em', backgroundColor: 'black' }}
+                            title={
+                                <Box
+                                    sx={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'auto',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '.3em',
+                                    }}
+                                >
+                                    {conEvent?.gameType === GameType.roleplaying ? (
+                                        <Typography>
+                                            <FontAwesomeIcon icon={faDiceD20} fontSize="1em" color="orangered" /> :
+                                            Rollespill
+                                        </Typography>
+                                    ) : null}
+                                    {conEvent?.gameType === GameType.boardgame ? (
+                                        <Typography>
+                                            <FontAwesomeIcon icon={faChessKing} fontSize="1em" color="orangered" /> :
+                                            Brettspill
+                                        </Typography>
+                                    ) : null}
+                                    {conEvent?.gameType === GameType.other ? (
+                                        <Typography>
+                                            <FontAwesomeIcon icon={faPalette} fontSize="1em" color="orangered" /> :
+                                            Annet
+                                        </Typography>
+                                    ) : null}
+                                    {childFriendly && (
+                                        <Typography>
+                                            <FontAwesomeIcon icon={faChild} fontSize="1em" color="#00aaff" /> :
+                                            Barnevennlig
+                                        </Typography>
+                                    )}
+                                    {possiblyEnglish && <Typography>🇬🇧 : Can be run in English</Typography>}
+                                    {adultsOnly && <Typography fontSize=".9rem">🔞 : Kun for voksne</Typography>}
+                                    {volunteersPossible && (
+                                        <Typography>
+                                            <FontAwesomeIcon icon={faUserPlus} fontSize=".8em" color="#55cc99" /> : Kan
+                                            kjøres av frivillige
+                                        </Typography>
+                                    )}
+                                    {moreThanSixHours && (
+                                        <Typography color="red">
+                                            <FontAwesomeIcon icon={faClock} fontSize=".8em" />+ : Kan vare lengre enn
+                                            seks timer
+                                        </Typography>
+                                    )}
+                                    {lessThanThreeHours && (
+                                        <Typography color="green">
+                                            <FontAwesomeIcon icon={faClock} fontSize=".8em" />÷ : Kan vare midre enn tre
+                                            timer
+                                        </Typography>
+                                    )}
+                                    {beginnerFriendly && <Typography>😅 : Nybegynnervennlig</Typography>}
+                                </Box>
+                            }
+                        >
+                            <Box display="flex" gap=".4em" sx={{ placeItems: 'center' }}>
+                                {conEvent?.gameType === GameType.roleplaying ? (
+                                    <FontAwesomeIcon icon={faDiceD20} fontSize="1em" color="orangered" />
+                                ) : null}
+                                {conEvent?.gameType === GameType.boardgame ? (
+                                    <FontAwesomeIcon icon={faChessKing} fontSize="1em" color="orangered" />
+                                ) : null}
+                                {conEvent?.gameType === GameType.other ? (
+                                    <FontAwesomeIcon icon={faPalette} fontSize="1em" color="orangered" />
+                                ) : null}
+                                {childFriendly && <FontAwesomeIcon icon={faChild} fontSize="1em" color="#00aaff" />}
+                                {possiblyEnglish && <Typography>🇬🇧</Typography>}
+                                {adultsOnly && <Typography fontSize=".9rem">🔞</Typography>}
+                                {volunteersPossible && (
+                                    <FontAwesomeIcon icon={faUserPlus} fontSize=".8em" color="#55cc99" />
+                                )}
+                                {moreThanSixHours && (
+                                    <Typography color="red">
+                                        <FontAwesomeIcon icon={faClock} fontSize=".8em" />+
+                                    </Typography>
+                                )}
+                                {lessThanThreeHours && (
+                                    <Typography color="green">
+                                        <FontAwesomeIcon icon={faClock} fontSize=".8em" />÷
+                                    </Typography>
+                                )}
+                                {beginnerFriendly && <Typography fontSize=".8em">😅</Typography>}
+                            </Box>
+                        </Tooltip>
+                        {/* <Typography variant="body1">Rollespill</Typography> */}
+                    </Box>
                 </span>
-                {/* <span>{conEvent?.gameSystem} </span> */}
-                <span>{conEvent?.room} </span>
+                <span>{conEvent?.room}</span>
                 <span>{conEvent?.host} </span>
                 <div></div>
                 {!enrollment?.choice ? (

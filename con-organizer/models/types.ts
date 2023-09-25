@@ -17,6 +17,13 @@ export type ConEvent = {
     host: string;
     hideEnrollment: boolean;
     sortingIndex: number;
+    childFriendly: boolean;
+    possiblyEnglish: boolean;
+    adultsOnly: boolean;
+    volunteersPossible: boolean;
+    lessThanThreeHours: boolean;
+    moreThanSixHours: boolean;
+    beginnerFriendly: boolean;
 };
 
 export type UserSettings = {
@@ -34,7 +41,7 @@ export type UserData = {
 
 export type Enrollment = {
     id: string;
-    choice: EnrollmentChoice;  
+    choice: EnrollmentChoice;
     createdAt: Timestamp;
     lastUpdated: Timestamp;
 };
