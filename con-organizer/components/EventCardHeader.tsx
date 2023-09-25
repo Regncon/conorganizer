@@ -144,6 +144,7 @@ const EventCardHeader = ({ conEvent }: Props) => {
                                     )}
                                     {possiblyEnglish && <Typography>🇬🇧 : Can be run in English</Typography>}
                                     {adultsOnly && <Typography fontSize=".9rem">🔞 : Kun for voksne</Typography>}
+                                    {beginnerFriendly && <Typography>😅 : Nybegynnervennlig</Typography>}
                                     {volunteersPossible && (
                                         <Typography>
                                             <FontAwesomeIcon icon={faUserPlus} fontSize=".8em" color="#55cc99" /> : Kan
@@ -151,18 +152,17 @@ const EventCardHeader = ({ conEvent }: Props) => {
                                         </Typography>
                                     )}
                                     {moreThanSixHours && (
-                                        <Typography color="red">
-                                            <FontAwesomeIcon icon={faClock} fontSize=".8em" />+ : Kan vare lengre enn
-                                            seks timer
+                                        <Typography color="white">
+                                            <FontAwesomeIcon icon={faClock} fontSize=".8em" color="red" /> : Kan vare
+                                            lengre enn seks timer
                                         </Typography>
                                     )}
                                     {lessThanThreeHours && (
-                                        <Typography color="green">
-                                            <FontAwesomeIcon icon={faClock} fontSize=".8em" />÷ : Kan vare midre enn tre
-                                            timer
+                                        <Typography color="white">
+                                            <FontAwesomeIcon icon={faClock} fontSize=".8em" color="lightgreen" /> : Kan
+                                            vare mindre enn tre timer
                                         </Typography>
                                     )}
-                                    {beginnerFriendly && <Typography>😅 : Nybegynnervennlig</Typography>}
                                 </Box>
                             }
                         >
@@ -179,6 +179,7 @@ const EventCardHeader = ({ conEvent }: Props) => {
                                 {childFriendly && <FontAwesomeIcon icon={faChild} fontSize="1em" color="#00aaff" />}
                                 {possiblyEnglish && <Typography>🇬🇧</Typography>}
                                 {adultsOnly && <Typography fontSize=".9rem">🔞</Typography>}
+                                {beginnerFriendly && <Typography fontSize=".8em">😅</Typography>}
                                 {volunteersPossible && (
                                     <FontAwesomeIcon icon={faUserPlus} fontSize=".8em" color="#55cc99" />
                                 )}
@@ -188,18 +189,17 @@ const EventCardHeader = ({ conEvent }: Props) => {
                                     </Typography>
                                 )}
                                 {lessThanThreeHours && (
-                                    <Typography color="green">
+                                    <Typography color="lightgreen">
                                         <FontAwesomeIcon icon={faClock} fontSize=".8em" />÷
                                     </Typography>
                                 )}
-                                {beginnerFriendly && <Typography fontSize=".8em">😅</Typography>}
                             </Box>
                         </Tooltip>
                         {/* <Typography variant="body1">Rollespill</Typography> */}
                     </Box>
                 </span>
-                <span>{conEvent?.room}</span>
-                <span>{conEvent?.host} </span>
+                <Typography>{conEvent?.room}</Typography>
+                <Typography sx={{ fontStyle: 'italic' }}>{conEvent?.host}</Typography>
                 <div></div>
                 {!enrollment?.choice ? (
                     <Typography variant="caption" color="lightgray">

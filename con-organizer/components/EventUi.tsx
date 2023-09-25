@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Alert, Box, Dialog, Link } from '@mui/material';
+import { Alert, Box, Chip, Dialog, Link } from '@mui/material';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
@@ -20,6 +20,8 @@ import { useAuth } from './AuthProvider';
 import EnrollmentSelector from './EnrollmentSelector';
 import EventHeader from './EventHeader';
 import Login from './Login';
+import { faChild, faUserPlus, faClock } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 type Props = {
     conEvent: ConEvent | undefined;
@@ -31,13 +33,26 @@ const EventUi = ({ conEvent }: Props) => {
     const [errorMessage, setErrorMessage] = useState<string>();
     const [enrollmentChoice, setEnrollmentChoice] = useState<EnrollmentChoice>(EnrollmentChoice.NotInterested);
     const [openLogin, setOpenLogin] = useState(false);
-
+    const [childFriendly, setChildFriendly] = useState<boolean>(conEvent?.childFriendly || false);
+    const [possiblyEnglish, setPossiblyEnglish] = useState(conEvent?.possiblyEnglish || false);
+    const [adultsOnly, setAdultsOnly] = useState(conEvent?.adultsOnly || false);
+    const [volunteersPossible, setVolunteersPossible] = useState(conEvent?.volunteersPossible || false);
+    const [lessThanThreeHours, setLessThanThreeHours] = useState(conEvent?.lessThanThreeHours || false);
+    const [moreThanSixHours, setMoreThanSixHours] = useState(conEvent?.moreThanSixHours || false);
+    const [beginnerFriendly, setBeginnerFriendly] = useState(conEvent?.beginnerFriendly || false);
     const [description, setDescription] = useState('');
     useEffect(() => {
         if (conEvent && conEvent.description) {
             const tmp: string = conEvent.description.replaceAll('<p>&nbsp;', '');
             setDescription(tmp);
         }
+        setChildFriendly(conEvent?.childFriendly || false);
+        setPossiblyEnglish(conEvent?.possiblyEnglish || false);
+        setAdultsOnly(conEvent?.adultsOnly || false);
+        setVolunteersPossible(conEvent?.volunteersPossible || false);
+        setLessThanThreeHours(conEvent?.lessThanThreeHours || false);
+        setMoreThanSixHours(conEvent?.moreThanSixHours || false);
+        setBeginnerFriendly(conEvent?.beginnerFriendly || false);
     }, [conEvent]);
 
     useEffect(() => {
@@ -94,6 +109,78 @@ const EventUi = ({ conEvent }: Props) => {
                     <span>
                         <em>Tidspunkt: {conEvent?.pool}</em>
                     </span>
+                    <Box display="flex" gap=".5em" mt="1em" flexWrap="wrap">
+                        {childFriendly && (
+                            <Chip
+                                icon={
+                                    <p>
+                                        &nbsp;
+                                        <FontAwesomeIcon icon={faChild} fontSize="1em" color="#00aaff" />
+                                    </p>
+                                }
+                                label="Barnevennlig"
+                                variant="outlined"
+                            />
+                        )}
+                        {possiblyEnglish && (
+                            <Chip
+                                icon={<Typography>&nbsp;🇬🇧</Typography>}
+                                label="Can be run in English"
+                                variant="outlined"
+                            />
+                        )}
+                        {adultsOnly && (
+                            <Chip
+                                icon={<Typography fontSize=".9rem">&nbsp;🔞</Typography>}
+                                label="Kun for voksne"
+                                variant="outlined"
+                            />
+                        )}
+                        {beginnerFriendly && (
+                            <Chip
+                                icon={<Typography>&nbsp;😅</Typography>}
+                                label="Nybegynnervennlig"
+                                variant="outlined"
+                            />
+                        )}
+                        {volunteersPossible && (
+                            <Chip
+                                icon={
+                                    <p>
+                                        &nbsp;
+                                        <FontAwesomeIcon icon={faUserPlus} fontSize=".8em" color="#55cc99" />
+                                    </p>
+                                }
+                                label="Kan kjøres av
+                                frivillige"
+                                variant="outlined"
+                            />
+                        )}
+                        {moreThanSixHours && (
+                            <Chip
+                                icon={
+                                    <Typography color="red">
+                                        &nbsp;
+                                        <FontAwesomeIcon icon={faClock} fontSize=".8em" />+
+                                    </Typography>
+                                }
+                                label="Kan vare lengre enn seks timer"
+                                variant="outlined"
+                            />
+                        )}
+                        {lessThanThreeHours && (
+                            <Chip
+                                icon={
+                                    <Typography color="lightgreen">
+                                        &nbsp;
+                                        <FontAwesomeIcon icon={faClock} fontSize=".8em" />÷
+                                    </Typography>
+                                }
+                                label="Kan vare mindre enn tre timer"
+                                variant="outlined"
+                            />
+                        )}
+                    </Box>
                 </Box>
 
                 <Divider />
