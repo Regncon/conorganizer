@@ -3,10 +3,13 @@ import {
     Alert,
     Box,
     Button,
+    Checkbox,
     DialogActions,
     DialogContent,
     DialogTitle,
     Divider,
+    FormControlLabel,
+    FormGroup,
     InputLabel,
     MenuItem,
     Select,
@@ -36,6 +39,13 @@ const EditUi = ({ conEvent }: Props) => {
     const [host, setHost] = useState<string>(conEvent?.host || '');
     const [hideEnrollment, setHideEnrollment] = useState<boolean>(conEvent?.hideEnrollment || false);
     const [sortingIndex, setSortingIndex] = useState<number>(conEvent?.sortingIndex || 0);
+    const [childFriendly, setChildFriendly] = useState<boolean>(conEvent?.childFriendly || false);
+    const [possiblyEnglish, setPossiblyEnglish] = useState<boolean>(conEvent?.possiblyEnglish || false);
+    const [adultsOnly, setAdultsOnly] = useState<boolean>(conEvent?.adultsOnly || false);
+    const [volunteersPossible, setVolunteersPossible] = useState<boolean>(conEvent?.volunteersPossible || false);
+    const [lessThanThreeHours, setLessThanThreeHours] = useState<boolean>(conEvent?.lessThanThreeHours || false);
+    const [moreThanSixHours, setMoreThanSixHours] = useState<boolean>(conEvent?.moreThanSixHours || false);
+    const [beginnerFriendly, setBeginnerFriendly] = useState<boolean>(conEvent?.beginnerFriendly || false);
 
     useEffect(() => {
         setTitle(conEvent?.title || '');
@@ -46,6 +56,13 @@ const EditUi = ({ conEvent }: Props) => {
         setEventPool(conEvent?.pool || Pool.none);
         setEventType(conEvent?.gameType || GameType.none);
         setGameSystem(conEvent?.gameSystem || '');
+        setChildFriendly(conEvent?.childFriendly || false);
+        setPossiblyEnglish(conEvent?.possiblyEnglish || false);
+        setAdultsOnly(conEvent?.adultsOnly || false);
+        setVolunteersPossible(conEvent?.volunteersPossible || false);
+        setLessThanThreeHours(conEvent?.lessThanThreeHours || false);
+        setMoreThanSixHours(conEvent?.moreThanSixHours || false);
+        setBeginnerFriendly(conEvent?.beginnerFriendly || false);
         setRoom(conEvent?.room || '');
         setHost(conEvent?.host || '');
         setHideEnrollment(conEvent?.hideEnrollment || false);
@@ -66,6 +83,13 @@ const EditUi = ({ conEvent }: Props) => {
             hideEnrollment: hideEnrollment,
             sortingIndex: sortingIndex,
             gameSystem: gameSystem,
+            childFriendly,
+            possiblyEnglish,
+            adultsOnly,
+            volunteersPossible,
+            lessThanThreeHours,
+            moreThanSixHours,
+            beginnerFriendly,
             createdAt: serverTimestamp(),
             lastUpdated: serverTimestamp(),
         };
@@ -92,6 +116,13 @@ const EditUi = ({ conEvent }: Props) => {
             sortingIndex: sortingIndex,
             hideEnrollment: hideEnrollment,
             gameSystem: gameSystem,
+            childFriendly: childFriendly,
+            possiblyEnglish: possiblyEnglish,
+            adultsOnly: adultsOnly,
+            volunteersPossible: volunteersPossible,
+            lessThanThreeHours: lessThanThreeHours,
+            moreThanSixHours: moreThanSixHours,
+            beginnerFriendly: beginnerFriendly,
             createdAt: serverTimestamp(),
             lastUpdated: serverTimestamp(),
         };
@@ -180,7 +211,68 @@ const EditUi = ({ conEvent }: Props) => {
                         </div>
                     </Box>
                 </DialogContent>
-
+                <FormGroup>
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                onChange={(e) => setChildFriendly(Boolean(e.target.checked))}
+                                checked={childFriendly}
+                            />
+                        }
+                        label="Barnevennlig"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                onChange={(e) => setPossiblyEnglish(Boolean(e.target.checked))}
+                                checked={possiblyEnglish}
+                            />
+                        }
+                        label="Kan kjøres på engelsk"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox onChange={(e) => setAdultsOnly(Boolean(e.target.checked))} checked={adultsOnly} />
+                        }
+                        label="Kun for voksne (18+)"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                onChange={(e) => setVolunteersPossible(Boolean(e.target.checked))}
+                                checked={volunteersPossible}
+                            />
+                        }
+                        label="Kan arrangeres av andre frivillige"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                onChange={(e) => setLessThanThreeHours(Boolean(e.target.checked))}
+                                checked={lessThanThreeHours}
+                            />
+                        }
+                        label="Mindre enn tre timer"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                onChange={(e) => setMoreThanSixHours(Boolean(e.target.checked))}
+                                checked={moreThanSixHours}
+                            />
+                        }
+                        label="Lengre enn seks timer"
+                    />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                onChange={(e) => setBeginnerFriendly(Boolean(e.target.checked))}
+                                checked={beginnerFriendly}
+                            />
+                        }
+                        label="Nybegynnervennlig"
+                    />
+                </FormGroup>
                 <DialogContent sx={{ width: 'auto', paddingTop: '0' }}>
                     <TextField
                         autoFocus
