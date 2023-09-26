@@ -9,4 +9,3 @@ if (!getApps().length) {
 }
 
 export const adminDb = firestore();
-export const adminDoc = adminDb.collection('usersettings').get();
