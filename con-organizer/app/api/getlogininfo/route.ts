@@ -5,6 +5,6 @@ type Test = {
     error: Error;
 };
 
-export async function GET(req: NextRequest) {
+export const GET = async (req: NextRequest) => {
     return NextResponse.json({ message: 'test' }, { status: 200 });
-}
+};
