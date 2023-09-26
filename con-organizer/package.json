@@ -17,6 +17,7 @@
     "@mui/icons-material": "^5.14.9",
     "@mui/material": "^5.14.10",
     "firebase": "^10.4.0",
+    "firebase-admin": "^11.10.1",
     "html-react-parser": "^4.2.2",
     "next": "13.5.2",
     "postcss": "8.4.30",
