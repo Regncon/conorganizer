@@ -1,4 +1,5 @@
-import { Box } from '@mui/material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Accordion, AccordionDetails, AccordionSummary, Box, Link } from '@mui/material';
 import { Typography } from '@/lib/mui';
 
 const AppHeader = () => {
@@ -16,6 +17,27 @@ const AppHeader = () => {
                         Regncon XXXI
                     </Typography>
                     <Typography variant="h4">Program</Typography>
+                    <Accordion>
+                        <AccordionSummary
+                            expandIcon={<ExpandMoreIcon />}
+                            aria-controls="panel1a-content"
+                            id="panel1a-header"
+                        >
+                            <Typography>Kan du hjelpe oss?</Typography>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <Typography>
+                                <span>
+                                    Vi ha rekordstor påmelding i år og trenger flere spillledere.
+                                </span>
+                                <Link href="https://www.regncon.no/pamelding-av-arrangement/">Meld deg på her.</Link>
+                            </Typography>
+                        </AccordionDetails>
+                    </Accordion>
+                    {/*                     <Typography>
+                        <span>Kan du hjelpe oss? Vi ha rekordstor påmelding i år og trenger flere spillledere.</span>
+                        <Link href="https://www.regncon.no/pamelding-av-arrangement/">Meld deg på her.</Link>
+                    </Typography> */}
                 </div>
             </header>
         </Box>
