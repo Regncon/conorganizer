@@ -2,13 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
-import AccountCircle from '@mui/icons-material/AccountCircle';
-import FilterAlt from '@mui/icons-material/FilterAlt';
 import { useSearchParams } from 'next/navigation';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 import { Pool } from '@/models/enums';
-import { Box, Chip, Typography } from '../lib/mui';
+import { Box, Typography } from '../lib/mui';
 import EventCardBoundary from './ErrorBoundaries/EventCardBoundary';
 import { useAuth } from './AuthProvider';
 import EventCard from './EventCard';
