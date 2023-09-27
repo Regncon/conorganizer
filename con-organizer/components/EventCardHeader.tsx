@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import {
-    faAppleWhole,
     faChessKing,
     faChild,
     faClock,
     faDiceD20,
     faPalette,
-    faUserGraduate,
     faUserPlus,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

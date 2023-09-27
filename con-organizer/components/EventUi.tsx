@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { faChild, faClock,faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Box, Chip, Dialog, Link } from '@mui/material';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -20,8 +22,6 @@ import { useAuth } from './AuthProvider';
 import EnrollmentSelector from './EnrollmentSelector';
 import EventHeader from './EventHeader';
 import Login from './Login';
-import { faChild, faUserPlus, faClock } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 type Props = {
     conEvent: ConEvent | undefined;

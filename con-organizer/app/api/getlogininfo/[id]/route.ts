@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { adminDb, adminDoc } from '@/lib/firebaseAdmin';
+import { adminDb } from '@/lib/firebaseAdmin';
 import { FirebaseCollections } from '@/models/enums';
 
 type Test = {
