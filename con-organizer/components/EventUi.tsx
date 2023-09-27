@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { faChild, faClock,faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChild, faClock, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Box, Chip, Dialog, Link } from '@mui/material';
 import Card from '@mui/material/Card';
@@ -151,8 +151,14 @@ const EventUi = ({ conEvent }: Props) => {
                                         <FontAwesomeIcon icon={faUserPlus} fontSize=".8em" color="#55cc99" />
                                     </p>
                                 }
-                                label="Kan kjøres av
-                                frivillige"
+                                label={
+                                    <Typography variant="caption">
+                                        Kan kjøres av frivillige.{' '}
+                                        <Link href="mailto:arrangere@regncon.no" color="secondary">
+                                            Kontakt styret for å melde deg!
+                                        </Link>
+                                    </Typography>
+                                }
                                 variant="outlined"
                             />
                         )}
@@ -184,7 +190,13 @@ const EventUi = ({ conEvent }: Props) => {
                 </Box>
 
                 <Divider />
-                <CardContent sx={ conEvent?.hideEnrollment ? { display: 'none' } : { backgroundColor: '#181818', borderRadius: '0', width: '100%' }}>
+                <CardContent
+                    sx={
+                        conEvent?.hideEnrollment
+                            ? { display: 'none' }
+                            : { backgroundColor: '#181818', borderRadius: '0', width: '100%' }
+                    }
+                >
                     <FormControl>
                         <FormLabel id="demo-row-radio-buttons-group-label">
                             {user ? (
@@ -199,7 +211,7 @@ const EventUi = ({ conEvent }: Props) => {
                                     </Link>
                                     <span> og </span>
                                     <Link
-                                        component="button"
+                                        sx={{ cursor: 'pointer' }}
                                         onClick={() => {
                                             setOpenLogin(true);
                                         }}
