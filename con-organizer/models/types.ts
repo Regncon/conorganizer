@@ -45,3 +45,26 @@ export type Enrollment = {
     createdAt: Timestamp;
     lastUpdated: Timestamp;
 };
+
+export type CrmRecord = {
+    id: number;
+    firstName: string;
+    lastName: string;
+    hash: string;
+    email: {
+        email: string;
+        id: number;
+    };
+};
+
+export type CrmData = {
+    records: number;
+    data: CrmRecord[];
+};
+
+export type CrmJson = {
+    data: {
+        allCrms: CrmData;
+    };
+    errors: Error;
+};

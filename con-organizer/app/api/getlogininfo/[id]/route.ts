@@ -1,39 +1,65 @@
+import { sendEmailVerification } from 'firebase/auth';
+import { buildSchema, graphql } from 'graphql';
 import { type NextRequest, NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebaseAdmin';
+import { adminDb, adminUser } from '@/lib/firebaseAdmin';
 import { FirebaseCollections } from '@/models/enums';
+import { CrmJson } from '@/models/types';
 
-type Test = {
-    message: string;
-    error: Error;
-};
-
-export const GET = async (request: NextRequest, { params: { id } }: { params: { id: string } }) => {
-    // her må vi få en array og loope igjennom for og oppdatere dokumenter
-    // for eksempel bruke adminDb.batch
-    // const batch = adminDb.batch();
-    // const ids = ['123345123', '12312312345']
-    // ids.forEach((id) => {
-    //     batch.set(adminDb.doc(`${FirebaseCollections.Test}/${id}`), { test: 'abc123' });
-    // })
-    // try {
-    //     dbData = await batch.commit();
-    // } catch (error) {
-    //     NextResponse.json({ Error: `Failed to set data in id: ${id}` }, { status: 403 });
-    // }
-    let dbData;
-    try {
-        dbData = await adminDb
-            .collection(FirebaseCollections.Test)
-            .doc(id + Math.floor(Math.random() * 999))
-            .get();
-    } catch (error) {
-        NextResponse.json({ Error: `Failed to set data in id: ${id}` }, { status: 403 });
+// const url = https://app.checkin.no/graphql?client_id=API_KEY&client_secret=API_SECRET
+const query = `{
+  allCrms(customerId: 13446) {
+    records
+    data {
+      id
+      firstName
+      lastName
+      hash
+      email {
+        email
+        id
+      }
     }
-    console.log(dbData);
+  }
+}`;
+export const GET = async (request: NextRequest, { params: { id } }: { params: { id: string } }) => {
+    try {
+        await adminUser.getUserByEmail('post:email');
+    } catch (error) {
+        const res = await fetch(
+            `https://app.checkin.no/graphql?client_id=${process.env.CHECKIN_KEY}&client_secret=${process.env.CHECKIN_SECRET}`,
+            {
+                method: 'POST',
+                body: JSON.stringify({ query }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        const queryResult: CrmJson | undefined = await res.json();
+        if (queryResult?.errors) {
+            return NextResponse.json({ errors: queryResult?.errors }, { status: 403 });
+        }
+        const paidUser = queryResult?.data.allCrms.data.find((crm) => crm?.email?.email === 'regncon@gmail.com');
+        console.log(paidUser);
 
-    console.log(dbData);
+        if (paidUser) {
+            const userRecord = await adminUser.createUser({
+                email: 'regncon@gmail.com',
+                password: 'regncon@gmail.com',
+                displayName: `${paidUser.firstName} ${paidUser.lastName}`,
+            });
+            sendEmailVerification(userRecord);
+            console.log(userRecord);
 
-    return NextResponse.json({ message: dbData }, { status: 200 });
+            await adminDb
+                .collection(FirebaseCollections.userSetting)
+                .doc(userRecord.uid)
+                .set({ name: `${paidUser.firstName} ${paidUser.lastName}`.trim() });
+            return NextResponse.json({ user: 'Created' }, { status: 200 });
+        }
+        return NextResponse.json({ user: `Don't exist` }, { status: 200 });
+    }
+    return NextResponse.json({ user: 'Exists' }, { status: 200 });
 };
 
 export const POST = async (request: Request) => {

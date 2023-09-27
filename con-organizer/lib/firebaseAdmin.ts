@@ -1,4 +1,4 @@
-import { credential, firestore } from 'firebase-admin';
+import { credential, firestore, auth } from 'firebase-admin';
 import { getApps, initializeApp, ServiceAccount } from 'firebase-admin/app';
 
 console.log(process.env.FIREBASE_CLIENT_ID);
@@ -25,3 +25,4 @@ if (!getApps().length) {
 }
 
 export const adminDb = firestore();
+export const adminUser = auth();
