@@ -12,10 +12,15 @@ export enum GameType {
     'boardgame' = 'Brettspill',
     'other' = 'Annet',
 }
+export enum FirebaseCollections {
+    userSetting = 'usersettings',
+    events = 'events',
+    Test = 'Test',
+}
 
 export enum EnrollmentChoice {
-    "NotInterested",
-    "IfIHaveTo",
-    "Interested",
-    "VeryInterested"
+    'NotInterested',
+    'IfIHaveTo',
+    'Interested',
+    'VeryInterested',
 }
