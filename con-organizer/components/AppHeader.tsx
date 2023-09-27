@@ -32,7 +32,7 @@ const AppHeader = () => {
                         </Typography>
                     </AccordionSummary>
                     <AccordionDetails>
-                        <Typography>
+                        <Typography variant="caption">
                             Vi har rekordstor påmelding i år og trenger flere arrang&oslash;rer. Hvis du har noe du kan
                             arrangere selv,&nbsp;
                             <Link href="https://www.regncon.no/pamelding-av-arrangement/">meld det på her</Link>.
