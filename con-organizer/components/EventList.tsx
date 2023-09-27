@@ -25,7 +25,7 @@ const EventList = () => {
     const { userSettings } = useUserSettings(user?.uid);
     const searchParams = useSearchParams();
 
-    const [mySignups, setMySignups] = useState<boolean>(false);
+    // const [mySignups, setMySignups] = useState<boolean>(false);
     const [childFriendly, setChildFriendly] = useState<boolean>(false);
     const [possiblyEnglish, setPossiblyEnglish] = useState<boolean>(false);
     // const [adultsOnly, setAdultsOnly] = useState<boolean>(false);
@@ -52,8 +52,17 @@ const EventList = () => {
 
             <Box className="flex flex-row flex-wrap justify-center gap-4 mb-20">
                 {loading ? <Typography variant="body1">Loading...</Typography> : null}
-                <Box sx={{ display: 'flex', gap: '.5em', flexGrow: '1', justifyContent: 'center', width: '100%' }}>
-                    <Chip
+                <Box
+                    sx={{
+                        display: 'flex',
+                        gap: '.5em',
+                        flexGrow: '1',
+                        justifyContent: 'center',
+                        width: '100%',
+                        flexWrap: 'wrap',
+                    }}
+                >
+                    {/* <Chip
                         label="Alle"
                         variant={
                             !(
@@ -69,19 +78,8 @@ const EventList = () => {
                                 ? 'filled'
                                 : 'outlined'
                         }
-                    />
-                    <Chip label="Mine p&aring;meldinger" variant="outlined" icon={<AccountCircle />} />
-                    <Chip
-                        icon={<FilterAlt />}
-                        label="Andre filtre"
-                        variant={showFilters ? 'filled' : 'outlined'}
-                        onClick={() => setShowFilters(!showFilters)}
-                    />
-                </Box>
-                <Box
-                    display={showFilters ? 'flex' : 'none'}
-                    sx={{ gap: '.5em', flexGrow: '1', justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}
-                >
+                    /> */}
+                    {/* <Chip label="Mine p&aring;meldinger" variant="outlined" icon={<AccountCircle />} /> */}
                     <Chip
                         icon={<FontAwesomeIcon icon={faDiceD20} color="orangered" />}
                         label="Rollespill"
@@ -100,6 +98,17 @@ const EventList = () => {
                         variant={other ? 'filled' : 'outlined'}
                         onClick={() => setOther(!other)}
                     />
+                    <Chip
+                        icon={<FilterAlt />}
+                        label="Andre filtre"
+                        variant={showFilters ? 'filled' : 'outlined'}
+                        onClick={() => setShowFilters(!showFilters)}
+                    />
+                </Box>
+                <Box
+                    display={showFilters ? 'flex' : 'none'}
+                    sx={{ gap: '.5em', flexGrow: '1', justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}
+                >
                     <Chip
                         icon={
                             <p>
