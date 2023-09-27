@@ -1,3 +1,5 @@
+import { faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { Accordion, AccordionDetails, AccordionSummary, Box, Link } from '@mui/material';
 import { Typography } from '@/lib/mui';
@@ -17,28 +19,29 @@ const AppHeader = () => {
                         Regncon XXXI
                     </Typography>
                     <Typography variant="h4">Program</Typography>
-                    <Accordion>
-                        <AccordionSummary
-                            expandIcon={<ExpandMoreIcon />}
-                            aria-controls="panel1a-content"
-                            id="panel1a-header"
-                        >
-                            <Typography>Kan du hjelpe oss?</Typography>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <Typography>
-                                <span>
-                                    Vi ha rekordstor påmelding i år og trenger flere spillledere.
-                                </span>
-                                <Link href="https://www.regncon.no/pamelding-av-arrangement/">Meld deg på her.</Link>
-                            </Typography>
-                        </AccordionDetails>
-                    </Accordion>
-                    {/*                     <Typography>
-                        <span>Kan du hjelpe oss? Vi ha rekordstor påmelding i år og trenger flere spillledere.</span>
-                        <Link href="https://www.regncon.no/pamelding-av-arrangement/">Meld deg på her.</Link>
-                    </Typography> */}
                 </div>
+                <Accordion sx={{ maxWidth: '20em', position: 'absolute', top: '0', right: '0', zIndex: '9000' }}>
+                    <AccordionSummary
+                        expandIcon={<ExpandMoreIcon />}
+                        aria-controls="panel1a-content"
+                        id="panel1a-header"
+                    >
+                        <Typography variant="caption">
+                            <FontAwesomeIcon icon={faUserPlus} color="#55cc99" />
+                            &nbsp; Regncon trenger deg!
+                        </Typography>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                        <Typography>
+                            Vi har rekordstor påmelding i år og trenger flere arrang&oslash;rer. Hvis du har noe du kan
+                            arrangere selv,&nbsp;
+                            <Link href="https://www.regncon.no/pamelding-av-arrangement/">meld det på her</Link>.
+                            &nbsp;Hvis ikke, kan du se etter arrangementer med dette symbolet:&nbsp;
+                            <FontAwesomeIcon icon={faUserPlus} color="#55cc99" /> og sende styret en epost hvis du vil
+                            hjelpe med å arrangere: <Link href="mailto:arrangere@regncon.no">arrangere@regncon.no</Link>
+                        </Typography>
+                    </AccordionDetails>
+                </Accordion>
             </header>
         </Box>
     );
