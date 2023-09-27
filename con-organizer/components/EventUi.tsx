@@ -211,7 +211,7 @@ const EventUi = ({ conEvent }: Props) => {
                                     </Link>
                                     <span> og </span>
                                     <Link
-                                        component="button"
+                                        sx={{ cursor: 'pointer' }}
                                         onClick={() => {
                                             setOpenLogin(true);
                                         }}
