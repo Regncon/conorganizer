@@ -1,4 +1,3 @@
-import { sendEmailVerification } from 'firebase/auth';
 import { buildSchema, graphql } from 'graphql';
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminUser } from '@/lib/firebaseAdmin';
@@ -48,18 +47,18 @@ export const GET = async (request: NextRequest, { params: { id } }: { params: { 
                 password: 'regncon@gmail.com',
                 displayName: `${paidUser.firstName} ${paidUser.lastName}`,
             });
-            sendEmailVerification(userRecord);
-            console.log(userRecord);
+            const customToken = await adminUser.createCustomToken(userRecord.uid);
+            console.log(customToken);
 
             await adminDb
                 .collection(FirebaseCollections.userSetting)
                 .doc(userRecord.uid)
                 .set({ name: `${paidUser.firstName} ${paidUser.lastName}`.trim() });
-            return NextResponse.json({ user: 'Created' }, { status: 200 });
+            return NextResponse.json({ user: userRecord, status: 'created', customToken }, { status: 200 });
         }
-        return NextResponse.json({ user: `Don't exist` }, { status: 200 });
+        return NextResponse.json({ user: '', status: `Don't exist`, customToken: '' }, { status: 200 });
     }
-    return NextResponse.json({ user: 'Exists' }, { status: 200 });
+    return NextResponse.json({ user: '', status: 'Exists', customToken: '' }, { status: 200 });
 };
 
 export const POST = async (request: Request) => {
