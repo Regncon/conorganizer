@@ -109,17 +109,19 @@ const EventList = () => {
                     display={showFilters ? 'flex' : 'none'}
                     sx={{ gap: '.5em', flexGrow: '1', justifyContent: 'center', width: '100%', flexWrap: 'wrap' }}
                 >
-                    <Chip
-                        icon={
-                            <p>
-                                &nbsp;
-                                <FontAwesomeIcon icon={faChild} fontSize="1em" color="#00aaff" />
-                            </p>
-                        }
-                        label="Barnevennlig"
-                        variant={childFriendly ? 'filled' : 'outlined'}
-                        onClick={() => setChildFriendly(!childFriendly)}
-                    />
+                    {displayPool === 'Søndag Morgen' && (
+                        <Chip
+                            icon={
+                                <p>
+                                    &nbsp;
+                                    <FontAwesomeIcon icon={faChild} fontSize="1em" color="#00aaff" />
+                                </p>
+                            }
+                            label="Barnevennlig"
+                            variant={childFriendly ? 'filled' : 'outlined'}
+                            onClick={() => setChildFriendly(!childFriendly)}
+                        />
+                    )}
                     <Chip
                         icon={<Typography>&nbsp;🇬🇧</Typography>}
                         label="Can be run in English"
