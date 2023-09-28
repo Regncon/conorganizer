@@ -2,9 +2,10 @@
 
 import { MouseEvent, useState } from 'react';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { Alert, Box, Button, Card, IconButton, InputAdornment, Link, TextField } from '@mui/material';
+import { Alert, Box, Button, Card, IconButton, InputAdornment, TextField } from '@mui/material';
+import { createDecipheriv } from 'crypto';
 import { FirebaseError } from 'firebase/app';
-import { sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 type Props = {
@@ -29,25 +30,31 @@ const Signup = ({ setChoice }: Props) => {
             setError('Passordene matsjer isje, prøv igjen');
             return;
         }
-
-        try {
-            const signedInUser = await signInWithEmailAndPassword(auth, email, password);
-            await sendEmailVerification(signedInUser.user);
-            setSuccess('Suksess! Ett øyeblikk...');
-            setError('');
-            console.log(signedInUser);
-            auth.signOut();
-        } catch (e) {
-            const err = e as FirebaseError;
-            console.error(e);
-            if (err.code === 'auth/invalid-email') {
-                setError('Det ser ut som du skrev noe feil i epostadressen din, vennligst prøv igjen.');
-            } else if (err.code === 'auth/too-many-requests') {
-                setError(
-                    'Vi har midlertidig suspendert kontoen din på grunn av for mange påloggingsforsøk. Dette er for at hackere og botter ikke skal kunne gjette seg til passordet ditt. Vennligst vent litt før du prøver igjen.'
-                );
-            } else {
-                setError('Kunne ikke registrere deg fordi det skjedde en feil. Tekniske detaljer: ' + err.message);
+        const result = await fetch('/api/getlogininfo');
+        const res = await result.json();
+        console.log(res);
+        if (res.status === 'created') {
+            try {
+                const signedInUser = await signInWithEmailAndPassword(auth, email, password);
+                await sendEmailVerification(signedInUser.user);
+                setSuccess('Suksess! Ett øyeblikk...');
+                setError('');
+                console.log(signedInUser);
+                auth.signOut();
+            } catch (e) {
+                const err = e as FirebaseError;
+                console.error(e);
+                if (err.code === 'auth/invalid-email') {
+                    setError('Det ser ut som du skrev noe feil i epostadressen din, vennligst prøv igjen.');
+                } else if (err.code === 'auth/too-many-requests') {
+                    setError(
+                        'Vi har midlertidig suspendert kontoen din på grunn av for mange påloggingsforsøk. Dette er for at hackere og botter ikke skal kunne gjette seg til passordet ditt. Vennligst vent litt før du prøver igjen.'
+                    );
+                } else if (err.code === 'auth/weak-password') {
+                    setError('Passordet må være minst seks tegn langt');
+                } else {
+                    setError('Kunne ikke registrere deg fordi det skjedde en feil. Tekniske detaljer: ' + err.message);
+                }
             }
         }
         return;
