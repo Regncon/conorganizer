@@ -1,4 +1,3 @@
-import { buildSchema, graphql } from 'graphql';
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb, adminUser } from '@/lib/firebaseAdmin';
 import { FirebaseCollections } from '@/models/enums';
@@ -20,7 +19,7 @@ const query = `{
     }
   }
 }`;
-export const GET = async (request: NextRequest, { params: { id } }: { params: { id: string } }) => {
+export const GET = async (request: NextRequest) => {
     try {
         await adminUser.getUserByEmail('post:email');
     } catch (error) {
