@@ -15,6 +15,7 @@ import { useAuth } from './AuthProvider';
 import EditDialog from './EditDialog';
 import ForgotPassword from './ForgotPassword';
 import Login from './Login';
+import Signup from './Signup';
 
 const MainNavigator = () => {
     const [value, setValue] = useState(0);
@@ -92,6 +93,11 @@ const MainNavigator = () => {
                     }}
                 >
                     <BottomNavigationAction
+                        label="Lag konto"
+                        icon={<AccountCircleIcon />}
+                        onClick={() => setChoice('signup')}
+                    />
+                    <BottomNavigationAction
                         label="Logg inn"
                         icon={<AccountCircleIcon />}
                         onClick={() => setChoice('login')}
@@ -105,7 +111,13 @@ const MainNavigator = () => {
                 </BottomNavigation>
             )}
             <Dialog open={!!choice}>
-                {choice === 'login' ? <Login setChoice={setChoice} /> : <ForgotPassword setChoice={setChoice} />}
+                {choice === 'login' ? (
+                    <Login setChoice={setChoice} />
+                ) : choice === 'signup' ? (
+                    <Signup setChoice={setChoice} />
+                ) : (
+                    <ForgotPassword setChoice={setChoice} />
+                )}
             </Dialog>
             <EditDialog open={openAdd} handleClose={() => setOpenAdd(false)} />
         </Box>
