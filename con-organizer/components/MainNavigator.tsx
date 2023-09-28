@@ -5,6 +5,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AddIcon from '@mui/icons-material/Add';
 import MenuIcon from '@mui/icons-material/Menu';
 import PasswordIcon from '@mui/icons-material/Password';
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import { Dialog, SpeedDial, SpeedDialAction } from '@mui/material';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
@@ -94,7 +95,7 @@ const MainNavigator = () => {
                 >
                     <BottomNavigationAction
                         label="Lag konto"
-                        icon={<AccountCircleIcon />}
+                        icon={<PersonAddIcon />}
                         onClick={() => setChoice('signup')}
                     />
                     <BottomNavigationAction
