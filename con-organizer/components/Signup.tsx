@@ -147,7 +147,7 @@ const Signup = ({ setChoice }: Props) => {
                             onClick={(e) => signUp(e)}
                             sx={{ margin: '.3rem 0' }}
                         >
-                            Lag konto
+                            <span>Lag konto</span>
                         </LoadingButton>
                         <Button
                             variant="outlined"
