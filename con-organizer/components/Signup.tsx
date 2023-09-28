@@ -39,7 +39,9 @@ const Signup = ({ setChoice }: Props) => {
             try {
                 const signedInUser = await signInWithEmailAndPassword(auth, email, password);
                 await sendEmailVerification(signedInUser.user);
-                setSuccess('Suksess! Ett øyeblikk...');
+                setSuccess(
+                    'Du skal ha fått en verifiserings e-post, sjekk søppelpost vist du ikkje ser den i innboksen'
+                );
                 setError('');
                 console.log(signedInUser);
                 auth.signOut();
