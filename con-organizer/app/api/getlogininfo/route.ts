@@ -19,7 +19,14 @@ const query = `{
     }
   }
 }`;
-export const GET = async (request: NextRequest) => {
+
+type Payload = {
+    email: string;
+    password: string;
+};
+export const POST = async (request: NextRequest) => {
+    const data: Payload = await request.json();
+
     try {
         await adminUser.getUserByEmail('post:email');
     } catch (error) {
@@ -38,12 +45,12 @@ export const GET = async (request: NextRequest) => {
             return NextResponse.json({ errors: queryResult?.errors }, { status: 403 });
         }
         const paidUser = queryResult?.data.allCrms.data.find((crm) => crm?.email?.email === 'regncon@gmail.com');
-        console.log(paidUser);
+        console.log(data, 'data');
 
         if (paidUser) {
             const userRecord = await adminUser.createUser({
                 email: 'regncon@gmail.com',
-                password: 'regncon@gmail.com',
+                password: data.password,
                 displayName: `${paidUser.firstName} ${paidUser.lastName}`,
             });
             const customToken = await adminUser.createCustomToken(userRecord.uid);
@@ -53,14 +60,9 @@ export const GET = async (request: NextRequest) => {
                 .collection(FirebaseCollections.userSetting)
                 .doc(userRecord.uid)
                 .set({ name: `${paidUser.firstName} ${paidUser.lastName}`.trim() });
-            return NextResponse.json({ user: userRecord, status: 'created', customToken }, { status: 200 });
+            return NextResponse.json({ user: 'created' }, { status: 200 });
         }
-        return NextResponse.json({ user: '', status: `Don't exist`, customToken: '' }, { status: 200 });
+        return NextResponse.json({ user: `Don't exist` }, { status: 200 });
     }
-    return NextResponse.json({ user: '', status: 'Exists', customToken: '' }, { status: 200 });
-};
-
-export const POST = async (request: Request) => {
-    const res = await request.json();
-    return NextResponse.json({ res });
+    return NextResponse.json({ user: 'Exists' }, { status: 200 });
 };
