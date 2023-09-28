@@ -2,6 +2,7 @@
 
 import { MouseEvent, useState } from 'react';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import LoadingButton from '@mui/lab/LoadingButton';
 import { Alert, Box, Button, Card, IconButton, InputAdornment, Link, TextField } from '@mui/material';
 import { FirebaseError } from 'firebase/app';
 import { sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
@@ -20,6 +21,7 @@ const Signup = ({ setChoice }: Props) => {
     const [success, setSuccess] = useState<string>('');
     const [error, setError] = useState<string>('');
     const [showAlert, setShowAlert] = useState<boolean>(false);
+    const [loading, setLoading] = useState<boolean>(false);
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event: MouseEvent<HTMLButtonElement>) => {
@@ -27,13 +29,13 @@ const Signup = ({ setChoice }: Props) => {
     };
     const signUp = async (e: MouseEvent<HTMLButtonElement>) => {
         e.preventDefault();
+        setLoading(true);
         if (password !== passwordConfirmation) {
             setError('Passordene matsjer isje, prøv igjen');
             return;
         }
         const result = await fetch('/api/getlogininfo', { method: 'POST', body: JSON.stringify({ email, password }) });
         const res = await result.json();
-        console.log(res);
         if (res.user === GetLoginInfoResponse.Created) {
             setShowAlert(false);
             try {
@@ -43,8 +45,8 @@ const Signup = ({ setChoice }: Props) => {
                     'Du skal ha fått en verifiserings e-post, sjekk søppelpost vist du ikkje ser den i innboksen'
                 );
                 setError('');
-                console.log(signedInUser);
                 auth.signOut();
+                setLoading(false);
             } catch (e) {
                 const err = e as FirebaseError;
                 console.error(e);
@@ -59,15 +61,18 @@ const Signup = ({ setChoice }: Props) => {
                 } else {
                     setError('Kunne ikke registrere deg fordi det skjedde en feil. Tekniske detaljer: ' + err.message);
                 }
+                setLoading(false);
             }
         }
         if (res.user === GetLoginInfoResponse.Exists) {
             setError('Du har allerede laget en bruker gå til login');
             setShowAlert(false);
+            setLoading(false);
         }
         if (res.user === GetLoginInfoResponse.DontExist) {
             setError('Du må bruke samme epost som du brukte til og kjøpe billett/ eller du må kjøpe billet');
             setShowAlert(true);
+            setLoading(false);
         }
         return;
     };
@@ -86,7 +91,7 @@ const Signup = ({ setChoice }: Props) => {
                         <TextField
                             sx={{ margin: '-1px 0 .3rem 0' }}
                             label="passord"
-                            name="password"
+                            name="new-password"
                             value={password}
                             type={showPassword ? 'text' : 'password'}
                             InputProps={{
@@ -109,7 +114,7 @@ const Signup = ({ setChoice }: Props) => {
                         <TextField
                             sx={{ margin: '-1px 0 .3rem 0' }}
                             label="passord (igjen)"
-                            name="password"
+                            name="new-password"
                             value={passwordConfirmation}
                             type={showPassword ? 'text' : 'password'}
                             InputProps={{
@@ -131,7 +136,9 @@ const Signup = ({ setChoice }: Props) => {
                             }
                             fullWidth
                         />
-                        <Button
+
+                        <LoadingButton
+                            loading={loading}
                             variant="contained"
                             color="primary"
                             size="large"
@@ -141,7 +148,7 @@ const Signup = ({ setChoice }: Props) => {
                             sx={{ margin: '.3rem 0' }}
                         >
                             Lag konto
-                        </Button>
+                        </LoadingButton>
                         <Button
                             variant="outlined"
                             size="large"
