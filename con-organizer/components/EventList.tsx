@@ -163,7 +163,7 @@ const EventList = () => {
                     .filter((conEvent) => !volunteersPossible || conEvent.volunteersPossible)
                     .filter((conEvent) => !beginnerFriendly || conEvent.beginnerFriendly)
                     .filter((conEvent) => showUnpublished || conEvent.published)
-                    .toSorted((a, b) => a.sortingIndex - b.sortingIndex)
+                    .sort((a, b) => a.sortingIndex - b.sortingIndex)
                     .map((conEvent) => (
                         <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
                             <EventCard conEvent={conEvent} />

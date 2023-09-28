@@ -32,6 +32,7 @@ const Signup = ({ setChoice }: Props) => {
         setLoading(true);
         if (password !== passwordConfirmation) {
             setError('Passordene matsjer isje, prøv igjen');
+            setLoading(false);
             return;
         }
         const result = await fetch('/api/getlogininfo', { method: 'POST', body: JSON.stringify({ email, password }) });
@@ -74,7 +75,6 @@ const Signup = ({ setChoice }: Props) => {
             setShowAlert(true);
             setLoading(false);
         }
-        return;
     };
     return (
         <Box>
