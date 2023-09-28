@@ -25,10 +25,10 @@ type Payload = {
     password: string;
 };
 export const POST = async (request: NextRequest) => {
-    const data: Payload = await request.json();
+    const payload: Payload = await request.json();
 
     try {
-        await adminUser.getUserByEmail('post:email');
+        await adminUser.getUserByEmail(payload.email);
     } catch (error) {
         const res = await fetch(
             `https://app.checkin.no/graphql?client_id=${process.env.CHECKIN_KEY}&client_secret=${process.env.CHECKIN_SECRET}`,
@@ -44,13 +44,13 @@ export const POST = async (request: NextRequest) => {
         if (queryResult?.errors) {
             return NextResponse.json({ errors: queryResult?.errors }, { status: 403 });
         }
-        const paidUser = queryResult?.data.allCrms.data.find((crm) => crm?.email?.email === 'regncon@gmail.com');
-        console.log(data, 'data');
+        const paidUser = queryResult?.data.allCrms.data.find((crm) => crm?.email?.email === payload.email);
+        console.log(payload, 'userInput');
 
         if (paidUser) {
             const userRecord = await adminUser.createUser({
-                email: 'regncon@gmail.com',
-                password: data.password,
+                email: payload.email,
+                password: payload.password,
                 displayName: `${paidUser.firstName} ${paidUser.lastName}`,
             });
             const customToken = await adminUser.createCustomToken(userRecord.uid);

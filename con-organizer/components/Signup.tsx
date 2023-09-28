@@ -2,11 +2,11 @@
 
 import { MouseEvent, useState } from 'react';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { Alert, Box, Button, Card, IconButton, InputAdornment, TextField } from '@mui/material';
-import { createDecipheriv } from 'crypto';
+import { Alert, Box, Button, Card, IconButton, InputAdornment, Link, TextField } from '@mui/material';
 import { FirebaseError } from 'firebase/app';
-import { createUserWithEmailAndPassword, sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
+import { sendEmailVerification, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { GetLoginInfoResponse } from '@/models/enums';
 
 type Props = {
     setChoice: (choice: string) => void;
@@ -19,6 +19,7 @@ const Signup = ({ setChoice }: Props) => {
     const [showPassword, setShowPassword] = useState<boolean>(false);
     const [success, setSuccess] = useState<string>('');
     const [error, setError] = useState<string>('');
+    const [showAlert, setShowAlert] = useState<boolean>(false);
 
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event: MouseEvent<HTMLButtonElement>) => {
@@ -30,10 +31,11 @@ const Signup = ({ setChoice }: Props) => {
             setError('Passordene matsjer isje, prøv igjen');
             return;
         }
-        const result = await fetch('/api/getlogininfo');
+        const result = await fetch('/api/getlogininfo', { method: 'POST', body: JSON.stringify({ email, password }) });
         const res = await result.json();
         console.log(res);
-        if (res.status === 'created') {
+        if (res.user === GetLoginInfoResponse.Created) {
+            setShowAlert(false);
             try {
                 const signedInUser = await signInWithEmailAndPassword(auth, email, password);
                 await sendEmailVerification(signedInUser.user);
@@ -56,6 +58,14 @@ const Signup = ({ setChoice }: Props) => {
                     setError('Kunne ikke registrere deg fordi det skjedde en feil. Tekniske detaljer: ' + err.message);
                 }
             }
+        }
+        if (res.user === GetLoginInfoResponse.Exists) {
+            setError('Du har allerede laget en bruker gå til login');
+            setShowAlert(false);
+        }
+        if (res.user === GetLoginInfoResponse.DontExist) {
+            setError('Du må bruke samme epost som du brukte til og kjøpe billett/ eller du må kjøpe billet');
+            setShowAlert(true);
         }
         return;
     };
@@ -139,17 +149,17 @@ const Signup = ({ setChoice }: Props) => {
                         >
                             Avbryt
                         </Button>
-                        {!success && !error
-                            ? ''
-                            : // <Alert severity="info">
-                              //     OBS: Du kan ikke lage bruker uten &aring; ha kj&oslash;pt billett.&nbsp;
-                              //     <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
-                              //         Kjøp billett her!
-                              //     </Link>
-                              // </Alert>
-                              null}
+
                         {!!success && <Alert severity="success">{success}</Alert>}
                         {!!error && <Alert severity="error">{error}</Alert>}
+                        {showAlert && (
+                            <Alert severity="info">
+                                OBS: Du kan ikke lage bruker uten &aring; ha kj&oslash;pt billett.&nbsp;
+                                <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
+                                    Kjøp billett her!
+                                </Link>
+                            </Alert>
+                        )}
                     </form>
                 </Box>
             </Card>

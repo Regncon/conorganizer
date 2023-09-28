@@ -24,3 +24,8 @@ export enum EnrollmentChoice {
     'Interested',
     'VeryInterested',
 }
+export enum GetLoginInfoResponse {
+    Exists = 'Exists',
+    Created = 'created',
+    DontExist = "Don't exist",
+}
