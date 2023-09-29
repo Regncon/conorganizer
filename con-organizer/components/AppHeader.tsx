@@ -6,7 +6,7 @@ import { Typography } from '@/lib/mui';
 
 const AppHeader = () => {
     return (
-        <Box sx={{ p: '2em', margin: '0 auto', maxWidth: '900px' }}>
+        <Box sx={{ p: '5em 0 4em 1em', margin: '0 auto', maxWidth: '900px' }}>
             <header className="AppHeader">
                 <img
                     src="/image/regnconlogony.png"

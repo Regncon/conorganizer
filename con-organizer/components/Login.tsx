@@ -22,7 +22,7 @@ const Login = ({ setChoice }: Props) => {
     const [password, setPassword] = useState('');
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
-    const [hiddenDragon, setHiddenDragon] = useState(true);
+    // const [hiddenDragon, setHiddenDragon] = useState(true);
     const [showPassword, setShowPassword] = useState(false);
     const handleClickShowPassword = () => setShowPassword((show) => !show);
     const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -66,8 +66,8 @@ const Login = ({ setChoice }: Props) => {
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                         fullWidth
                         sx={{ margin: '.3rem 0' }}
-                        onFocus={() => setHiddenDragon(true)}
-                        onBlur={() => setHiddenDragon(false)}
+                        // onFocus={() => setHiddenDragon(true)}
+                        // onBlur={() => setHiddenDragon(false)}
                     />
                     <TextField
                         sx={{ margin: '-1px 0 .3rem 0' }}
@@ -75,8 +75,8 @@ const Login = ({ setChoice }: Props) => {
                         name="password"
                         value={password}
                         type={showPassword ? 'text' : 'password'}
-                        onFocus={() => setHiddenDragon(true)}
-                        onBlur={() => setHiddenDragon(false)}
+                        // onFocus={() => setHiddenDragon(true)}
+                        // onBlur={() => setHiddenDragon(false)}
                         InputProps={{
                             endAdornment: (
                                 <InputAdornment position="end">
