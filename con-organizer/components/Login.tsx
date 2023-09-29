@@ -116,8 +116,15 @@ const Login = ({ setChoice }: Props) => {
                     </Button>
                     {!success && !error ? (
                         <Alert severity="info">
-                            OBS: Du kan ikke logge inn uten &aring; ha kj&oslash;pt billett.&nbsp;
-                            <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">Kjøp billett her!</Link>
+                            OBS: Du kan ikke logge inn uten &aring; ha&nbsp;
+                            <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
+                                kj&oslash;pt billett
+                            </Link>
+                            &nbsp;og{' '}
+                            <Link onClick={() => setChoice('signup')} sx={{ cursor: 'pointer' }}>
+                                laget konto
+                            </Link>
+                            .
                         </Alert>
                     ) : null}
                     {!!success && <Alert severity="success">{success}</Alert>}
