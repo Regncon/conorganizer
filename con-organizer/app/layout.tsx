@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { Analytics } from '@vercel/analytics/react';
 import { Inter } from 'next/font/google';
 import Index from './Index';
 import './globals.css';
@@ -12,7 +13,10 @@ export const metadata = {
 export default function RootLayout({ children }: { children: ReactNode }) {
     return (
         <html lang="en">
-            <body className={[inter.className].join(' ').trim()}>{<Index>{children}</Index>}</body>
+            <body className={[inter.className].join(' ').trim()}>
+                {<Index>{children}</Index>}
+                <Analytics />
+            </body>
         </html>
     );
 }
