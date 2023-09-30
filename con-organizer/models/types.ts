@@ -26,6 +26,15 @@ export type ConEvent = {
     beginnerFriendly: boolean;
 };
 
+export type Participant = {
+    id: number;
+    name: string;
+    email: string;
+    isChild: boolean;
+    type: string;
+    connectedUser: string;
+};
+
 export type UserSettings = {
     id: string;
     admin: boolean;
