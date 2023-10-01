@@ -6,14 +6,12 @@ import { useAllUserSettings } from '@/lib/hooks/UseAllUserSettings';
 import { Participant } from '@/models/types';
 
 const Participants = () => {
-
-    const {userSettings, loadingUserSettings} = useAllUserSettings();
+    const { userSettings, loadingUserSettings } = useAllUserSettings();
 
     console.log(userSettings);
 
-    const {participants, loadingParticipants} = useAllParticipants();
+    const { participants, loadingParticipants } = useAllParticipants();
     console.log(participants);
-
 
     const columns: GridColDef[] = [
         { field: 'id', headerName: 'ID', width: 90 },
@@ -21,7 +19,7 @@ const Participants = () => {
             field: 'name',
             headerName: 'Navn',
             width: 150,
-            editable: true, 
+            editable: true,
         },
         {
             field: 'email',
@@ -54,12 +52,63 @@ const Participants = () => {
             width: 110,
             editable: false,
         },
+        {
+            field: 'friday',
+            headerName: 'Fredag',
+            type: 'boolean',
+            width: 110,
+            editable: true,
+        },
+        {
+            field: 'saturday',
+            headerName: 'Lørdag',
+            type: 'boolean',
+            width: 110,
+            editable: true,
+        },
+        {
+            field: 'sunday',
+            headerName: 'Søndag',
+            type: 'boolean',
+            width: 110,
+            editable: true,
+        },
     ];
 
     const rows = [
-        { id: 1, name: 'Ola Norman', email: 'ola@test.com', isChild: false, type: 'Bruker', connectedUser: '' },
-        { id: 2, name: 'Kari Norman', email: 'kari@test.com', isChild: false, type: 'Bruker', connectedUser: '' },
-        { id: 3, name: 'Truls Norman', email: 'ola@test.com', isChild: true, type: 'Deltaker', connectedUser: 'Ola Norman' },
+        {
+            id: 1,
+            name: 'Ola Norman',
+            email: 'ola@test.com',
+            isChild: false,
+            type: 'Bruker',
+            connectedUser: '',
+            friday: true,
+            saturday: false,
+            sunday: true,
+        },
+        {
+            id: 2,
+            name: 'Kari Norman',
+            email: 'kari@test.com',
+            isChild: false,
+            type: 'Bruker',
+            connectedUser: '',
+            friday: false,
+            saturday: true,
+            sunday: true,
+        },
+        {
+            id: 3,
+            name: 'Truls Norman',
+            email: 'ola@test.com',
+            isChild: true,
+            type: 'Deltaker',
+            connectedUser: 'Ola Norman',
+            friday: true,
+            saturday: true,
+            sunday: false,
+        },
     ];
 
     return (
@@ -76,7 +125,6 @@ const Participants = () => {
                 }}
                 pageSizeOptions={[5]}
                 disableRowSelectionOnClick
-                
             />
         </Box>
     );
