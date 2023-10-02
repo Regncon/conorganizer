@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { skip } from 'node:test';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { FirebaseCollections } from '@/models/enums';
-import { Participant } from '@/models/types';
+import { EventTicket, Participant } from '@/models/types';
 
 // const url = https://app.checkin.no/graphql?client_id=API_KEY&client_secret=API_SECRET
 const query = `{
@@ -36,7 +35,6 @@ export const GET = async () => {
     }
 
     const participantInFirebase = await GetParticipantFromFirebase();
-    console.log(participantInFirebase, 'participantInFirebase');
 
     const newParticipants: Participant[] = [];
 
