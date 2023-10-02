@@ -1,12 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-    faChessKing,
-    faChild,
-    faClock,
-    faDiceD20,
-    faPalette,
-    faUserPlus,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChessKing, faChild, faClock, faDiceD20, faPalette, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Box, Tooltip, Typography } from '@mui/material';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
@@ -66,7 +59,6 @@ const EventCardHeader = ({ conEvent }: Props) => {
             >
                 <Box
                     sx={{
-                        background: 'linear-gradient(#00000099, #00000066, transparent)',
                         minHeight: '5em',
                         display: 'flex',
                         alignItems: 'start',

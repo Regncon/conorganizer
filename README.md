@@ -9,9 +9,7 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 ### Must haves Mvp
 
 - Make it very clear what day is displayed
-- Check if firebase token should be private
 - Filter out my signups
-- Match header and footer to design
 - Add is gm to event
 
 ## Nice to haves
@@ -21,10 +19,12 @@ This is the source code for the Regncon 2023 app. It's a work in progress, but t
 - Add search
 - Tags
 - Add event to calendar
-- Add none events to list
 
 ## Done
 
+- Add none events to list
+- Match header and footer to design
+- Check if firebase token should be private
 - Add media queries mobile first
 - Add event images
 - Add error boundary
