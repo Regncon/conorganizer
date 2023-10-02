@@ -3,7 +3,7 @@ import { UserSettings } from '../../models/types';
 import { allUserSettings$ } from '../observable';
 
 export const useAllUserSettings = () => {
-    const [userSettings, setUserSettings] = useState<UserSettings[]>();
+    const [allUserSettings, setUserSettings] = useState<UserSettings[]>();
     const [loadingUserSettings, setLoadingUserSettings] = useState<boolean>(true);
 
     useEffect(() => {
@@ -16,5 +16,5 @@ export const useAllUserSettings = () => {
             userSettingsObservable.unsubscribe();
         };
     }, []);
-    return { userSettings, loadingUserSettings };
+    return { allUserSettings, loadingUserSettings };
 };

@@ -28,10 +28,9 @@ export type ConEvent = {
 
 export type Participant = {
     id: number;
+    externalId: string;
     name: string;
     email: string;
-    isChild: boolean;
-    type: string;
     connectedUser: string;
 };
 

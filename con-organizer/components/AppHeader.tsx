@@ -7,8 +7,7 @@ import { Typography } from '@/lib/mui';
 const AppHeader = () => {
     const theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-    console.log(isSmallScreen);
-
+    
     return (
         <Box
             sx={

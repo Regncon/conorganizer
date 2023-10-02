@@ -1,20 +1,34 @@
-import * as React from 'react';
+import { MouseEvent, useEffect, useState } from 'react';
+import { LoadingButton } from '@mui/lab';
 import Box from '@mui/material/Box';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { useAuth } from '@/components/AuthProvider';
 import { useAllParticipants } from '@/lib/hooks/UseAllParticipants';
 import { useAllUserSettings } from '@/lib/hooks/UseAllUserSettings';
+import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 import { Participant } from '@/models/types';
 
-const Participants = () => {
-    const { userSettings, loadingUserSettings } = useAllUserSettings();
+type NewParticipants = {
+    newParticipants: Participant[];
+};
 
-    console.log(userSettings);
+const Participants = () => {
+    const user = useAuth();
+    const { allUserSettings, loadingUserSettings } = useAllUserSettings();
 
     const { participants, loadingParticipants } = useAllParticipants();
-    console.log(participants);
+
+    const [rows, setRows] = useState<Participant[]>([]);
+
+    const { userSettings } = useUserSettings(user?.uid);
+    const [isAdmin, setIsAdmin] = useState<boolean>(false);
+
+    useEffect(() => {
+        setIsAdmin(userSettings?.admin && user ? true : false);
+    }, [user, userSettings]);
 
     const columns: GridColDef[] = [
-        { field: 'id', headerName: 'ID', width: 90 },
+        /*         { field: 'id', headerName: 'ID', width: 90 }, */
         {
             field: 'name',
             headerName: 'Navn',
@@ -27,92 +41,64 @@ const Participants = () => {
             width: 150,
             editable: false,
         },
-        {
-            field: 'isChild',
-            headerName: 'Barn',
-            type: 'boolean',
-            width: 110,
-            editable: false,
-        },
-        {
-            field: 'type',
-            headerName: 'Type',
-            width: 110,
-            editable: false,
-        },
-        {
-            field: 'connectedUser',
-            headerName: 'Koblet til',
-            width: 110,
-            editable: false,
-        },
-        {
-            field: 'ticketType',
-            headerName: 'Billettype',
-            width: 110,
-            editable: false,
-        },
-        {
-            field: 'friday',
-            headerName: 'Fredag',
-            type: 'boolean',
-            width: 110,
-            editable: true,
-        },
-        {
-            field: 'saturday',
-            headerName: 'Lørdag',
-            type: 'boolean',
-            width: 110,
-            editable: true,
-        },
-        {
-            field: 'sunday',
-            headerName: 'Søndag',
-            type: 'boolean',
-            width: 110,
-            editable: true,
-        },
     ];
 
-    const rows = [
-        {
-            id: 1,
-            name: 'Ola Norman',
-            email: 'ola@test.com',
-            isChild: false,
-            type: 'Bruker',
-            connectedUser: '',
-            friday: true,
-            saturday: false,
-            sunday: true,
-        },
-        {
-            id: 2,
-            name: 'Kari Norman',
-            email: 'kari@test.com',
-            isChild: false,
-            type: 'Bruker',
-            connectedUser: '',
-            friday: false,
-            saturday: true,
-            sunday: true,
-        },
-        {
-            id: 3,
-            name: 'Truls Norman',
-            email: 'ola@test.com',
-            isChild: true,
-            type: 'Deltaker',
-            connectedUser: 'Ola Norman',
-            friday: true,
-            saturday: true,
-            sunday: false,
-        },
-    ];
+    useEffect(() => {
+        if (participants) {
+            setRows(participants);
+        }
+    }, [participants, setRows]);
+
+    const [newParticipants, setNewParticipants] = useState<Participant[]>([]);
+
+    const [loadingParticipantsFromCheckIn, setLoadingParticipantsFromCheckIn] = useState<boolean>(false);
+    const getParticipantsFromCheckIn = async (e: MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        setLoadingParticipantsFromCheckIn(true);
+
+        try {
+            const result = await fetch('/api/getParticipants', { method: 'GET' });
+            const res = (await result.json()) as NewParticipants;
+            console.log(res.newParticipants, 'res newParticipants');
+            setNewParticipants(res.newParticipants);
+        } catch (error) {
+            console.log(error);
+        }
+
+        setLoadingParticipantsFromCheckIn(false);
+    };
+
+    useEffect(() => {
+        console.log(newParticipants, 'newParticipants array');
+    }, [newParticipants]);
 
     return (
-        <Box sx={{ maxWidth: 1000, margin: 'auto' }}>
+        <Box sx={isAdmin ? { maxWidth: 1000, margin: 'auto' } : { display: 'none' }}>
+            <h1>Deltakere</h1>
+
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '1em',
+                }}
+            >
+                <LoadingButton
+                    loading={loadingParticipantsFromCheckIn}
+                    variant="contained"
+                    onClick={(e) => getParticipantsFromCheckIn(e)}
+                >
+                    Hent deltakere fra CheckIn
+                </LoadingButton>
+            </Box>
+            <Box sx={newParticipants.length > 0 ? { display: 'block' } : { display: 'none' }}>
+                <h2>{newParticipants.length} Nye deltagere lagt til i basen</h2>
+                {newParticipants.map((participant) => (
+                    <p key={participant.externalId}>{participant.name}</p>
+                ))}
+            </Box>
+
             <DataGrid
                 rows={rows}
                 columns={columns}
