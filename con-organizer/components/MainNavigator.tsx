@@ -10,6 +10,7 @@ import { Dialog, SpeedDial, SpeedDialAction } from '@mui/material';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Box from '@mui/material/Box';
+import { styled } from '@mui/material/styles';
 import { auth } from '@/lib/firebase';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 import { useAuth } from './AuthProvider';
@@ -34,6 +35,14 @@ const MainNavigator = () => {
     function logout() {
         return auth.signOut();
     }
+
+    
+
+
+    const StyledBottomNavigationAction = styled(BottomNavigationAction)({
+        color: 'white',
+        border: '1px solid white',
+    });
 
     return (
         <Box sx={{ bottom: 0, position: 'fixed', width: '100%' }}>
@@ -86,24 +95,23 @@ const MainNavigator = () => {
                     />
                 </SpeedDial>
             ) : (
-                <BottomNavigation
+                <BottomNavigation        
                     showLabels
-                    value={value}
                     onChange={(event, newValue) => {
                         setValue(newValue);
                     }}
                 >
-                    <BottomNavigationAction
+                    <StyledBottomNavigationAction
                         label="Lag konto"
                         icon={<PersonAddIcon />}
                         onClick={() => setChoice('signup')}
                     />
-                    <BottomNavigationAction
+                    <StyledBottomNavigationAction
                         label="Logg inn"
                         icon={<AccountCircleIcon />}
                         onClick={() => setChoice('login')}
                     />
-                    <BottomNavigationAction
+                    <StyledBottomNavigationAction
                         label="Glemt passord"
                         icon={<PasswordIcon />}
                         onClick={() => setChoice('newpassword')}
