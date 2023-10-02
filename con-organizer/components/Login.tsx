@@ -59,6 +59,12 @@ const Login = ({ setChoice }: Props) => {
     return (
         <Card>
             <Box p={4} maxWidth={400} display="grid" justifyItems="center" gap={2}>
+                <div>
+                    <span>Har du kjøpt billett?</span>
+                    <Button variant="contained" size="small" sx={{ margin: '0 .3rem' }} onClick={() => setChoice('signup')}>
+                        Lag konto
+                    </Button>
+                </div>
                 <form action={''}>
                     <TextField
                         label="e-post"
