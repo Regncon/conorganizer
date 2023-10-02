@@ -37,11 +37,7 @@ const EventHeader = ({ conEvent }: Props) => {
                         alignItems: 'end',
                     }}
                 >
-                    <CardMedia
-                        component="img"
-                        image={image}
-                        sx={{ maxHeight: '50vh', width: '100%', mixBlendMode: 'multiply' }}
-                    />
+                    <CardMedia component="img" image={image} sx={{ maxHeight: '50vh', width: '100%' }} />
                     <Box
                         sx={{
                             color: 'white',
