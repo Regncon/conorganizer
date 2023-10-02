@@ -36,12 +36,8 @@ const MainNavigator = () => {
         return auth.signOut();
     }
 
-    
-
-
     const StyledBottomNavigationAction = styled(BottomNavigationAction)({
         color: 'white',
-        border: '1px solid white',
     });
 
     return (
@@ -95,7 +91,8 @@ const MainNavigator = () => {
                     />
                 </SpeedDial>
             ) : (
-                <BottomNavigation        
+                <BottomNavigation
+                    sx={{ backgroundImage: 'linear-gradient(#ff8f00, #dd5f00)' }}
                     showLabels
                     onChange={(event, newValue) => {
                         setValue(newValue);
