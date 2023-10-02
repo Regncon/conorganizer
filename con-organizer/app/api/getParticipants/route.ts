@@ -2,30 +2,36 @@ import { NextResponse } from 'next/server';
 import { skip } from 'node:test';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { FirebaseCollections } from '@/models/enums';
-import { CrmJson, Participant } from '@/models/types';
+import { Participant } from '@/models/types';
 
 // const url = https://app.checkin.no/graphql?client_id=API_KEY&client_secret=API_SECRET
 const query = `{
-  allCrms(customerId: 13446) {
-    records
-    data {
+    eventTickets(customer_id: 13446, id: 58182) {
       id
-      firstName
-      lastName
-      email {
-        email
+      category
+      category_id
+      crm {
+        first_name
+        last_name
         id
+        email
       }
     }
-  }
-}`;
+  }`;
 
+
+type CrmJson = {
+    data: {
+        eventTickets: EventTicket[];
+    };
+    errors: Error;
+};
 export const GET = async () => {
     //ToDo: authenticate request
 
     const queryResult: CrmJson | undefined = await GetParticipantsFromCheckIn();
 
-    if (queryResult?.errors || !queryResult?.data?.allCrms) {
+    if (queryResult?.errors || !queryResult?.data?.eventTickets) {
         return NextResponse.json({ errors: queryResult?.errors }, { status: 403 });
     }
 
@@ -34,23 +40,26 @@ export const GET = async () => {
 
     const newParticipants: Participant[] = [];
 
-    queryResult.data.allCrms.data.forEach((crm) => {
+    queryResult.data.eventTickets
+    .filter((crm) => crm.category_id !== 116907)
+    .forEach((crm) => {
         if (participantInFirebase.find((p) => p.externalId === crm.id.toString())) {
             console.log('already exists');
         }
         else {
             const newParticipant: Participant = {
                 externalId: crm.id.toString(),
-                name: `${crm.firstName} ${crm.lastName}` || '',
-                email: crm.email?.email || '',
+                name: `${crm.crm.first_name} ${crm.crm.last_name}` || '',
+                email: crm.crm.email || '',
                 connectedUser: '',
+                eventTicket: crm,
             };
             newParticipants.push(newParticipant);
             console.log(newParticipant, 'newParticipant');
         }
     });
 
-    //await adminDb.collection(FirebaseCollections.Participants).doc().set(newParticipants[0]);
+    await adminDb.collection(FirebaseCollections.Participants).doc().set(newParticipants[0]);
 
     return NextResponse.json({ newParticipants }, { status: 200 });
 };
