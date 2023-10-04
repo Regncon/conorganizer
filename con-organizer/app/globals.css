@@ -4,6 +4,12 @@
 
 html {
     color-scheme: dark;
+    font-size: 0.8em;
+}
+@media (min-width: 768px) {
+    html {
+        font-size: 1.2em;
+    }
 }
 
 .regnconLogo {
@@ -13,7 +19,6 @@ html {
 .AppHeader {
     display: grid;
     grid-template-columns: auto 1fr auto;
-    align-items: center;
     justify-items: start;
     gap: 1em;
 }

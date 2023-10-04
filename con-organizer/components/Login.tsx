@@ -59,13 +59,22 @@ const Login = ({ setChoice }: Props) => {
     return (
         <Card>
             <Box p={4} maxWidth={400} display="grid" justifyItems="center" gap={2}>
-                <div>
-                    <span>Har du kjøpt billett?</span>
-                    <Button variant="contained" size="small" sx={{ margin: '0 .3rem' }} onClick={() => setChoice('signup')}>
-                        Lag konto
-                    </Button>
-                </div>
                 <form action={''}>
+                    {!success && !error ? (
+                        <Alert severity="warning">
+                            OBS: Du kan ikke logge inn uten &aring; ha&nbsp;
+                            <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
+                                kj&oslash;pt billett
+                            </Link>
+                            &nbsp;og{' '}
+                            <Link onClick={() => setChoice('signup')} sx={{ cursor: 'pointer' }}>
+                                laget konto
+                            </Link>
+                            .
+                        </Alert>
+                    ) : null}
+                    {!!success && <Alert severity="success">{success}</Alert>}
+                    {!!error && <Alert severity="error">{error}</Alert>}
                     <TextField
                         label="e-post"
                         value={email}
@@ -120,21 +129,6 @@ const Login = ({ setChoice }: Props) => {
                     >
                         Avbryt
                     </Button>
-                    {!success && !error ? (
-                        <Alert severity="info">
-                            OBS: Du kan ikke logge inn uten &aring; ha&nbsp;
-                            <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/">
-                                kj&oslash;pt billett
-                            </Link>
-                            &nbsp;og{' '}
-                            <Link onClick={() => setChoice('signup')} sx={{ cursor: 'pointer' }}>
-                                laget konto
-                            </Link>
-                            .
-                        </Alert>
-                    ) : null}
-                    {!!success && <Alert severity="success">{success}</Alert>}
-                    {!!error && <Alert severity="error">{error}</Alert>}
                 </form>
             </Box>
         </Card>

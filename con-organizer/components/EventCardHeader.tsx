@@ -50,8 +50,9 @@ const EventCardHeader = ({ conEvent }: Props) => {
                 sx={{
                     backgroundImage: `url(${conEvent?.imageUrl || '/image/placeholder.jpg'})`,
                     backgroundSize: 'cover',
-                    backgroundBlendMode: 'multiply',
-                    backgroundColor: '#999',
+                    // backgroundBlendMode: 'multiply',
+                    backgroundPositionY: 'bottom',
+                    backgroundColor: '#888',
                     display: 'flex',
                     alignItems: 'space-between',
                     flexDirection: 'column',

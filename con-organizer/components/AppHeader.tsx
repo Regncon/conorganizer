@@ -9,13 +9,7 @@ const AppHeader = () => {
     const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
     
     return (
-        <Box
-            sx={
-                isSmallScreen
-                    ? { p: '1em 0 1em 1em', margin: '0 auto', maxWidth: '900px' }
-                    : { p: '5em 0 4em 1em', margin: '0 auto', maxWidth: '600px' }
-            }
-        >
+        <Box sx={{ p: '4em 0 4em 2em', margin: '0 auto', maxWidth: '900px' }}>
             <header className="AppHeader">
                 <img
                     src="/image/regnconlogony.png"
@@ -24,7 +18,7 @@ const AppHeader = () => {
                     onClick={() => (window.location.href = `/`)}
                 />
                 <div>
-                    <Typography variant={isSmallScreen ? 'h5' : 'h1'} color="white">
+                    <Typography variant="h1" color="white">
                         Regncon XXXI
                     </Typography>
                     <Typography variant="h4">Program</Typography>
