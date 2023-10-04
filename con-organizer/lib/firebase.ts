@@ -34,5 +34,5 @@ export const allUserSettingsRef = collection(db, 'usersettings');
 export const userSettingsRef = (userId: string) => doc(db, `usersettings/${userId}`);
 export const userEnrollmentsRef = (eventId: string, userId: string) =>
     doc(db, `events/${eventId}`, `/enrollments/${userId}`);
-export const participantsRef = collection(db, 'participants');
-export const participantRef = (id: string) => doc(db, `participants/${id}`);
+export const participantsRef = (userId: string ) =>  collection(db, `usersettings/${userId}/participants/`);
+export const participantRef = (userId: string, participantId: string ) => doc(db, `usersettings/${userId}/participants/${participantId}`);

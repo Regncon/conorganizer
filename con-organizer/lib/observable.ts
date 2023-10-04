@@ -1,5 +1,13 @@
 import { collectionData, docData } from 'rxfire/firestore';
-import { allUserSettingsRef, eventRef, eventsRef, participantRef, participantsRef, userEnrollmentsRef,userSettingsRef as userSettingsRef } from './firebase';
+import {
+    allUserSettingsRef,
+    eventRef,
+    eventsRef,
+    participantRef,
+    participantsRef,
+    userEnrollmentsRef,
+    userSettingsRef as userSettingsRef,
+} from './firebase';
 
 export const allEvents$ = collectionData(eventsRef, { idField: 'id' });
 export function singleEvent$(id: string) {
@@ -15,8 +23,10 @@ export function userEnrollments$(eventId: string, userId: string) {
     return docData(userEnrollmentsRef(eventId, userId), { idField: 'id' });
 }
 
-export const allParticipants$ = collectionData(participantsRef, { idField: 'id' });
+export function allParticipants$(userId: string) {
+    return collectionData(participantsRef(userId), { idField: 'id' });
+}
 
-export function singleParticipant$(id: string) {
-    return docData(participantRef(id), { idField: 'id' });
+export function singleParticipant$(userId: string, participantId: string) {
+    return docData(participantRef(userId, participantId), { idField: 'id' });
 }

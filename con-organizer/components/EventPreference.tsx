@@ -37,11 +37,13 @@ const EventPreference = ({ conEvent, participant }: Props) => {
     };
 
     async function updateEnrollmentInDb(choice: EnrollmentChoice) {
+        console.log('updateEnrollmentInDb', choice);
+        console.log('updateEnrollmentInDb', participant);
         try {
             if (!user || !conEvent?.id) {
                 return;
             }
-            const setEnrollmentRef = doc(db, `events/${conEvent.id}`, `/preferences/${participant?.id}`);
+            const setEnrollmentRef = doc(db, `events/${conEvent.id}`, `/enrollments/${user.uid}/participants/${participant?.id}`);
             if (enrollment) {
                 await updateDoc(setEnrollmentRef, {
                     choice: choice,

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { faChild, faClock, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Chip, Link } from '@mui/material';
@@ -9,10 +9,12 @@ import CardContent from '@mui/material/CardContent';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import parse from 'html-react-parser';
+import { useAllParticipants } from '@/lib/hooks/UseAllParticipants';
+import { useSingleParticipants } from '@/lib/hooks/UseSingleParticipant';
 import { ConEvent } from '@/models/types';
+import { useAuth } from './AuthProvider';
 import EventHeader from './EventHeader';
 import EventPreference from './EventPreference';
-import { useAllParticipants } from '@/lib/hooks/UseAllParticipants';
 
 type Props = {
     conEvent: ConEvent | undefined;
@@ -43,8 +45,9 @@ const EventUi = ({ conEvent }: Props) => {
     }, [conEvent]);
 
     //ToDo: check that all emails are not available to all users
-
-    const { participants, loadingParticipants } = useAllParticipants();
+    
+    const user = useAuth();
+    const { participants, loadingParticipants } = useAllParticipants(user?.uid);
     console.log(participants, 'participants');
 
     return (
