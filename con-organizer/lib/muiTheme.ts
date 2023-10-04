@@ -52,7 +52,7 @@ const muiDarkTheme: ThemeOptions = {
         h3: {
             fontWeight: '700',
             lineHeight: '1',
-            fontSize: '2.5rem',
+            fontSize: '2.2rem',
             // textShadow: "0 0 1em black",
             fontFamily: Garamond.style.fontFamily,
         },
@@ -60,7 +60,7 @@ const muiDarkTheme: ThemeOptions = {
             color: '#ddd',
             fontWeight: '400',
             fontStyle: 'italic',
-            fontSize: '1.5rem',
+            fontSize: '1.3rem',
             // textShadow: "0 0 .7em black",
             fontFamily: Garamond.style.fontFamily,
         },

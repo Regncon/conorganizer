@@ -189,8 +189,12 @@ const EventCardHeader = ({ conEvent }: Props) => {
                         {/* <Typography variant="body1">Rollespill</Typography> */}
                     </Box>
                 </span>
-                <Typography>{conEvent?.room}</Typography>
-                <Typography sx={{ fontStyle: 'italic' }}>{conEvent?.host}</Typography>
+                <Typography variant="caption" fontWeight="700">
+                    {conEvent?.room}
+                </Typography>
+                <Typography variant="caption" sx={{ fontStyle: 'italic' }}>
+                    {conEvent?.host}
+                </Typography>
                 <div></div>
                 {!enrollment?.choice ? (
                     <Typography variant="caption" color="lightgray">
