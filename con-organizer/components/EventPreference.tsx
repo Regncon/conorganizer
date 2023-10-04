@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Alert, Button, Dialog, FormControl, FormLabel, Radio, RadioGroup, Typography } from '@mui/material';
+import { Alert, Dialog, FormControl, FormLabel, Link, Radio, RadioGroup, Typography } from '@mui/material';
 import { doc, setDoc,updateDoc } from 'firebase/firestore';
-import Link from 'next/link';
 import { db } from '@/lib/firebase';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
 import { EnrollmentChoice } from '@/models/enums';
@@ -42,7 +41,7 @@ const EventPreference = ({ conEvent, participant }: Props) => {
             if (!user || !conEvent?.id) {
                 return;
             }
-            const setEnrollmentRef = doc(db, `events/${conEvent.id}`, `/enrollments/${user.uid}`);
+            const setEnrollmentRef = doc(db, `events/${conEvent.id}`, `/preferences/${participant?.id}`);
             if (enrollment) {
                 await updateDoc(setEnrollmentRef, {
                     choice: choice,
@@ -64,21 +63,22 @@ const EventPreference = ({ conEvent, participant }: Props) => {
             <FormControl>
                 <FormLabel id="demo-row-radio-buttons-group-label">
                     {user ? (
-                        <Typography variant="h6">Påmelding</Typography>
+                        <Typography variant="h6">Påmelding: {participant?.name}</Typography>
                     ) : (
                         <Alert severity="info">
                             <Link href="https://www.regncon.no/kjop-billett-til-regncon-xxxi/" color="secondary">
                                 Kjøp billett
                             </Link>
                             <span> og </span>
-                            <Button
+                            <Link
+                                sx={{ cursor: 'pointer' }}
                                 onClick={() => {
                                     setOpenLogin(true);
                                 }}
                                 color="secondary"
                             >
                                 logg inn
-                            </Button>
+                            </Link>
                             <span> for å melde deg på.</span>
                         </Alert>
                     )}

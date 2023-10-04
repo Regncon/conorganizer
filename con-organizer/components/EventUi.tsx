@@ -12,6 +12,7 @@ import parse from 'html-react-parser';
 import { ConEvent } from '@/models/types';
 import EventHeader from './EventHeader';
 import EventPreference from './EventPreference';
+import { useAllParticipants } from '@/lib/hooks/UseAllParticipants';
 
 type Props = {
     conEvent: ConEvent | undefined;
@@ -26,6 +27,7 @@ const EventUi = ({ conEvent }: Props) => {
     const [moreThanSixHours, setMoreThanSixHours] = useState(conEvent?.moreThanSixHours || false);
     const [beginnerFriendly, setBeginnerFriendly] = useState(conEvent?.beginnerFriendly || false);
     const [description, setDescription] = useState('');
+
     useEffect(() => {
         if (conEvent && conEvent.description) {
             const tmp: string = conEvent.description.replaceAll('<p>&nbsp;', '');
@@ -39,6 +41,11 @@ const EventUi = ({ conEvent }: Props) => {
         setMoreThanSixHours(conEvent?.moreThanSixHours || false);
         setBeginnerFriendly(conEvent?.beginnerFriendly || false);
     }, [conEvent]);
+
+    //ToDo: check that all emails are not available to all users
+
+    const { participants, loadingParticipants } = useAllParticipants();
+    console.log(participants, 'participants');
 
     return (
         <>
@@ -147,7 +154,9 @@ const EventUi = ({ conEvent }: Props) => {
                             : { backgroundColor: '#181818', borderRadius: '0', width: '100%' }
                     }
                 >
-                    <EventPreference conEvent={conEvent} participant={undefined} />
+                    {participants?.map((participant) => (
+                        <EventPreference conEvent={conEvent} participant={participant} key={participant.id} />
+                    ))}
                 </CardContent>
                 <Divider />
             </Card>

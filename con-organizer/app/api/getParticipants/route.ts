@@ -45,13 +45,21 @@ export const GET = async () => {
             console.log('already exists');
         }
         else {
-            const newParticipant: Participant = {
+/*             const newParticipant: Participant = {
                 externalId: crm.id.toString(),
                 name: `${crm.crm.first_name} ${crm.crm.last_name}` || '',
                 email: crm.crm.email || '',
                 connectedUser: '',
                 eventTicket: crm,
+            }; */
+            const newParticipant: Participant = {
+                externalId: "3220689",
+                name: 'Truls Nordmann',
+                email:  'cinmay05@gmail.com',
+                connectedUser: '',
+                eventTicket: crm,
             };
+            
             newParticipants.push(newParticipant);
             console.log(newParticipant, 'newParticipant');
         }
