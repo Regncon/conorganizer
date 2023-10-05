@@ -8,15 +8,19 @@ export const useAllParticipants = (userId?: string) => {
     const [loadingParticipants, setLoadingParticipants] = useState<boolean>(true);
 
     useEffect(() => {
-        let eventsObservable: Subscription;
+        let allParticipantsObservable: Subscription;
+        console.log(userId, 'userId');
         if (userId)
-            eventsObservable = allParticipants$(userId).subscribe((participants) => {
+            allParticipantsObservable = allParticipants$(userId).subscribe((participants) => {
                 setParticipants(participants as Participant[] | undefined);
                 setLoadingParticipants(false);
-            });
 
+                return () => {
+                    allParticipantsObservable.unsubscribe();
+                };
+            });
         return () => {
-            eventsObservable.unsubscribe();
+            null;
         };
     }, []);
     return { participants, loadingParticipants };

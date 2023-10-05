@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Alert, Dialog, FormControl, FormLabel, Link, Radio, RadioGroup, Typography } from '@mui/material';
-import { doc, setDoc,updateDoc } from 'firebase/firestore';
+import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
 import { EnrollmentChoice } from '@/models/enums';
@@ -24,7 +24,7 @@ const EventPreference = ({ conEvent, participant }: Props) => {
     const { enrollments: enrollment } = useSingleEnrollment(conEvent?.id || '', user?.uid || '', participant?.id || '');
 
     useEffect(() => {
-        console.log(enrollment, 'enrollment');
+        //console.log(enrollment, 'enrollment');
         setEnrollmentChoice(user && conEvent?.id && enrollment ? enrollment.choice : EnrollmentChoice.NotInterested);
     }, [user, conEvent, enrollment]);
 
@@ -38,13 +38,17 @@ const EventPreference = ({ conEvent, participant }: Props) => {
     };
 
     async function updateEnrollmentInDb(choice: EnrollmentChoice) {
-        console.log('updateEnrollmentInDb', choice);
-        console.log('updateEnrollmentInDb', participant);
+        //console.log('updateEnrollmentInDb', choice);
+        //console.log('updateEnrollmentInDb', participant);
         try {
             if (!user || !conEvent?.id) {
                 return;
             }
-            const setEnrollmentRef = doc(db, `events/${conEvent.id}`, `/enrollments/${user.uid}/participants/${participant?.id}`);
+            const setEnrollmentRef = doc(
+                db,
+                `events/${conEvent.id}`,
+                `/enrollments/${user.uid}/participants/${participant?.id}`
+            );
             if (enrollment) {
                 await updateDoc(setEnrollmentRef, {
                     choice: choice,
@@ -63,7 +67,7 @@ const EventPreference = ({ conEvent, participant }: Props) => {
 
     return (
         <>
-            <FormControl>
+            <FormControl className="pb-4">
                 <FormLabel id="demo-row-radio-buttons-group-label">
                     {user ? (
                         <Typography variant="h6">Påmelding: {participant?.name}</Typography>
