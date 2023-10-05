@@ -27,7 +27,7 @@ export type ConEvent = {
 };
 
 export type Participant = {
-    id: number;
+    id: string;
     externalId: string;
     name: string;
     email: string;

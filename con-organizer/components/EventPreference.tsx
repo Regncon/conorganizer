@@ -21,9 +21,10 @@ const EventPreference = ({ conEvent, participant }: Props) => {
     const [errorMessage, setErrorMessage] = useState<string>();
     const [enrollmentChoice, setEnrollmentChoice] = useState<EnrollmentChoice>(EnrollmentChoice.NotInterested);
     const [openLogin, setOpenLogin] = useState(false);
-    const { enrollments: enrollment } = useSingleEnrollment(conEvent?.id || '', user?.uid || '');
+    const { enrollments: enrollment } = useSingleEnrollment(conEvent?.id || '', user?.uid || '', participant?.id || '');
 
     useEffect(() => {
+        console.log(enrollment, 'enrollment');
         setEnrollmentChoice(user && conEvent?.id && enrollment ? enrollment.choice : EnrollmentChoice.NotInterested);
     }, [user, conEvent, enrollment]);
 
