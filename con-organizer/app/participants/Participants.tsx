@@ -68,6 +68,26 @@ const Participants = () => {
         setLoadingParticipantsFromCheckIn(false);
     };
 
+    const [migrateParticipants, setMigrateParticipants] = useState<boolean>(false);
+
+    const [migratedParticipantsList, setMigratedParticipantsList] = useState<Participant[]>([]);
+
+    const callMigrateParticipants = async (e: MouseEvent<HTMLButtonElement>) => {
+        e.preventDefault();
+        setMigrateParticipants(true);
+
+        try {
+            const result = await fetch('/api/migrateParticipants', { method: 'GET' });
+            const res = (await result.json()) as NewParticipants;
+            console.log(res.newParticipants, 'res newParticipants');
+            setMigratedParticipantsList(res.newParticipants);
+        } catch (error) {
+            console.log(error);
+        }
+
+        setMigrateParticipants(false);
+    };
+
     useEffect(() => {
         console.log(newParticipants, 'newParticipants array');
     }, [newParticipants]);
@@ -91,10 +111,24 @@ const Participants = () => {
                 >
                     Hent deltakere fra CheckIn
                 </LoadingButton>
+                <LoadingButton
+                    loading={migrateParticipants}
+                    variant="contained"
+                    onClick={(e) => callMigrateParticipants(e)}
+                >
+                    Migrer deltakere til nytt format
+                </LoadingButton>
             </Box>
-            <Box sx={newParticipants.length > 0 ? { display: 'block' } : { display: 'none' }}>
-                <h2>{newParticipants.length} Nye deltagere lagt til i basen</h2>
-                {newParticipants.map((participant) => (
+            <Box sx={newParticipants?.length > 0 ? { display: 'block' } : { display: 'none' }}>
+                <h2>{newParticipants?.length} Nye deltagere lagt til i basen</h2>
+                {newParticipants?.map((participant) => (
+                    <p key={participant.externalId}>{participant.name}</p>
+                ))}
+            </Box>
+
+            <Box sx={migratedParticipantsList?.length > 0 ? { display: 'block' } : { display: 'none' }}>
+                <h2>{migratedParticipantsList?.length} Deltagere migrert til nytt format</h2>
+                {migratedParticipantsList?.map((participant) => (
                     <p key={participant.externalId}>{participant.name}</p>
                 ))}
             </Box>

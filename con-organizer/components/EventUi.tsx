@@ -10,8 +10,7 @@ import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import parse from 'html-react-parser';
 import { useAllParticipants } from '@/lib/hooks/UseAllParticipants';
-import { useSingleParticipants } from '@/lib/hooks/UseSingleParticipant';
-import { ConEvent } from '@/models/types';
+import { ConEvent, Participant } from '@/models/types';
 import { useAuth } from './AuthProvider';
 import EventHeader from './EventHeader';
 import EventPreference from './EventPreference';
@@ -44,11 +43,19 @@ const EventUi = ({ conEvent }: Props) => {
         setBeginnerFriendly(conEvent?.beginnerFriendly || false);
     }, [conEvent]);
 
-    //ToDo: check that all emails are not available to all users
-    
+    const [participantList, setParticipantList] = useState<Participant[] | undefined>([]);
+
     const user = useAuth();
-    const { participants, loadingParticipants } = useAllParticipants(user?.uid);
+    const { participants, loadingParticipants } = useAllParticipants(user?.uid || '');
+
     console.log(participants, 'participants');
+    useEffect(() => {
+        if (participants) {
+            setParticipantList(participants);
+            console.log(participants, 'participants');
+        }
+        console.log(user, 'user');
+    }, [user]);
 
     return (
         <>
@@ -157,9 +164,16 @@ const EventUi = ({ conEvent }: Props) => {
                             : { backgroundColor: '#181818', borderRadius: '0', width: '100%' }
                     }
                 >
-                    {participants?.map((participant) => (
-                        <EventPreference conEvent={conEvent} participant={participant} key={participant.id} />
-                    ))}
+                    {participantList ? (
+                        participantList.map((participant) => (
+                            <>
+                                <EventPreference conEvent={conEvent} participant={participant} key={participant.id} />
+                                <Divider />
+                            </>
+                        ))
+                    ) : (
+                        <EventPreference conEvent={conEvent} participant={undefined} />
+                    )}
                 </CardContent>
                 <Divider />
             </Card>
