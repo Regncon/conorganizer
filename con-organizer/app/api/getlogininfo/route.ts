@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { GetParticipantsFromCheckIn } from '@/lib/apiHelpers';
 import { adminDb, adminUser } from '@/lib/firebaseAdmin';
 import { GetParticipantsFromCheckIn } from '@/lib/helpers';
 import { FirebaseCollections } from '@/models/enums';

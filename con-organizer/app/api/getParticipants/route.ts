@@ -1,7 +1,12 @@
 import { NextResponse } from 'next/server';
-import { addPrimaryParticipant, addSecondaryParticipants,GetParticipantsFromCheckIn, GetParticipantsFromFirebaseUserSettings, GetUserSettingsFromFirebase } from '@/lib/helpers';
+import {
+    addPrimaryParticipant,
+    addSecondaryParticipants,
+    GetParticipantsFromCheckIn,
+    GetParticipantsFromFirebaseUserSettings,
+    GetUserSettingsFromFirebase,
+} from '@/lib/apiHelpers';
 import { CrmJson, Participant, UserSettings } from '@/models/types';
-
 
 export const GET = async () => {
     console.log('getParticipants staring');
@@ -42,7 +47,6 @@ export const GET = async () => {
 
             if (participants.find((p) => p.externalId.toString() === user.checkInId) === undefined) {
                 primaryParticipantDocument = await addPrimaryParticipant(queryResult, user);
-                
             }
 
             //if (participants) {
@@ -136,7 +140,3 @@ export const GET = async () => {
     //console.log(migratedParticipants, 'migratedParticipants');
     return NextResponse.json({ migratedParticipants }, { status: 200 });
 };
-
-
-
-
