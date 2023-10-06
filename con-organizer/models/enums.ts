@@ -19,6 +19,7 @@ export enum FirebaseCollections {
     Participants = 'participants',
     Enrollments = 'enrollments',
     EventParticipants = 'eventParticipants',
+    EnrollmentChoices = 'enrollmentChoices',
 }
 
 export enum EnrollmentChoice {

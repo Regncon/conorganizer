@@ -7,6 +7,7 @@ import { useAllParticipants } from '@/lib/hooks/UseAllParticipants';
 import { useAllUserSettings } from '@/lib/hooks/UseAllUserSettings';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 import { Participant } from '@/models/types';
+import { Pool } from '@/models/enums';
 
 type NewParticipants = {
     newParticipants: Participant[];
@@ -88,6 +89,22 @@ const Participants = () => {
         setMigrateParticipants(false);
     };
 
+    const [loadingGenerateEnrollmentList, setLoadingGenerateEnrollmentList] = useState<boolean>(false);
+    const generateEnrollmentList = async (e: MouseEvent<HTMLButtonElement>, pool: Pool ) => {
+        e.preventDefault();
+        setLoadingGenerateEnrollmentList(true);
+
+        try {
+            const result = await fetch('/api/generateEnrollmentList', { method: 'POST', body: JSON.stringify({ pool }) });
+            //const res = (await result.json());
+        } catch (error) {
+            console.log(error);
+        }
+
+        setLoadingGenerateEnrollmentList(false);
+    };
+
+
     useEffect(() => {
         console.log(newParticipants, 'newParticipants array');
     }, [newParticipants]);
@@ -117,6 +134,23 @@ const Participants = () => {
                     onClick={(e) => callMigrateParticipants(e)}
                 >
                     Migrer deltakere til nytt format
+                </LoadingButton>
+            </Box>
+
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '1em',
+                }}
+            >
+                <LoadingButton
+                    loading={loadingGenerateEnrollmentList}
+                    variant="outlined"
+                    onClick={(e) => generateEnrollmentList(e, Pool.FridayEvening)}
+                >
+                    Hent Puljedata for fredag kveld
                 </LoadingButton>
             </Box>
             <Box sx={newParticipants?.length > 0 ? { display: 'block' } : { display: 'none' }}>

@@ -36,6 +36,9 @@ export type Participant = {
     isPrimary: boolean;
     primaryParticipantId: string;
     eventTicket: EventTicket;
+    hasGotFirstChoice: boolean;
+    firstChoiceEventId: string;
+    firstChoiceEventTitle: string;
 };
 
 export type EventTicket = {
