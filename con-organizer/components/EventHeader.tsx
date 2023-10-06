@@ -94,7 +94,7 @@ const EventHeader = ({ conEvent }: Props) => {
                         {/* <span>{EnrollmentChoice[enrollment?.choice ?? 0]} </span> */}
                     </Box>
                     <Box marginLeft="auto">
-                        {!enrollment?.choice ? (
+ {/*                        {!enrollment?.choice ? (
                             <Typography variant="caption" color="lightgray">
                                 ⬤ Ikke p&aring;meldt
                             </Typography>
@@ -113,7 +113,7 @@ const EventHeader = ({ conEvent }: Props) => {
                             <Typography variant="caption" color="black">
                                 ⬤ Veldig interessert
                             </Typography>
-                        ) : null}
+                        ) : null} */}
                     </Box>
                 </Box>
             </Box>

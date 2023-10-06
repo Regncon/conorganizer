@@ -198,7 +198,7 @@ const EventCardHeader = ({ conEvent }: Props) => {
                     {conEvent?.host}
                 </Typography>
                 <div></div>
-                {!enrollment?.choice ? (
+                {/* {!enrollment?.choice ? (
                     <Typography variant="caption" color="lightgray">
                         ⬤ Ikke p&aring;meldt
                     </Typography>
@@ -218,7 +218,7 @@ const EventCardHeader = ({ conEvent }: Props) => {
                         ⬤ Veldig interessert
                     </Typography>
                 ) : null}
-            </Box>
+ */}            </Box>
         </>
     );
 };
