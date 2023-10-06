@@ -17,7 +17,7 @@ type Props = {
 };
 
 const EventPreference = ({ conEvent, participant }: Props) => {
-    console.log(participant, 'participant');
+    //console.log(participant, 'participant');
     const user = useAuth();
     const [errorMessage, setErrorMessage] = useState<string>();
     const [enrollmentChoice, setEnrollmentChoice] = useState<EnrollmentChoice>(EnrollmentChoice.NotInterested);

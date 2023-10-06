@@ -9,7 +9,7 @@ export const useAllParticipants = (userId?: string) => {
 
     useEffect(() => {
         let allParticipantsObservable: Subscription;
-        console.log(userId, 'userId');
+        //console.log(userId, 'userId');
         if (userId)
             allParticipantsObservable = allParticipants$(userId).subscribe((participants) => {
                 setParticipants(participants as Participant[] | undefined);

@@ -48,13 +48,13 @@ const EventUi = ({ conEvent }: Props) => {
     const user = useAuth();
     const { participants, loadingParticipants } = useAllParticipants(user?.uid || '');
 
-    console.log(participants, 'participants');
+    //console.log(participants, 'participants');
     useEffect(() => {
         if (participants) {
             setParticipantList(participants);
-            console.log(participants, 'participants');
+            //console.log(participants, 'participants');
         }
-        console.log(user, 'user');
+        //console.log(user, 'user');
     }, [user, participants]);
 
     return (
