@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
 import { Subscription } from "rxjs";
 import { Enrollment } from "@/models/types";
-import { userEnrollments$ } from "../observable";
+import { participantEnrollments$ } from "../observable";
 
 
-export const useSingleEnrollment = (eventId: string, userId?: string) => {
+export const useSingleEnrollment = (eventId: string, userId?: string, participantId?: string ) => {
     const [enrollments, setEnrollments] = useState<Enrollment>();
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
         let enrollmentsObservable: Subscription;
-        if (eventId && userId) {
-            enrollmentsObservable = userEnrollments$(eventId, userId).subscribe((enrollments) => {
+        if (eventId && userId && participantId) {
+            enrollmentsObservable = participantEnrollments$(eventId, userId, participantId).subscribe((enrollments) => {
                 setEnrollments(enrollments as Enrollment);
                 setLoading(false);
             });
