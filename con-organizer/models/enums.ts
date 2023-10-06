@@ -22,7 +22,7 @@ export enum FirebaseCollections {
     EnrollmentChoices = 'enrollmentChoices',
 }
 
-export enum EnrollmentChoice {
+export enum EnrollmentOptions {
     'NotInterested',
     'IfIHaveTo',
     'Interested',

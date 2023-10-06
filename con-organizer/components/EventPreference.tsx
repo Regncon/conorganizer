@@ -5,7 +5,7 @@ import { Alert, Dialog, FormControl, FormLabel, Link, Radio, RadioGroup, Typogra
 import { doc, setDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
-import { EnrollmentChoice } from '@/models/enums';
+import { EnrollmentOptions } from '@/models/enums';
 import { ConEvent, Participant } from '@/models/types';
 import { useAuth } from './AuthProvider';
 import EnrollmentSelector from './EnrollmentSelector';
@@ -20,17 +20,17 @@ const EventPreference = ({ conEvent, participant }: Props) => {
     //console.log(participant, 'participant');
     const user = useAuth();
     const [errorMessage, setErrorMessage] = useState<string>();
-    const [enrollmentChoice, setEnrollmentChoice] = useState<EnrollmentChoice>(EnrollmentChoice.NotInterested);
+    const [enrollmentChoice, setEnrollmentChoice] = useState<EnrollmentOptions>(EnrollmentOptions.NotInterested);
     const [openLogin, setOpenLogin] = useState(false);
     const { enrollments: enrollment } = useSingleEnrollment(conEvent?.id || '', user?.uid || '', participant?.id || '');
 
     useEffect(() => {
         //console.log(enrollment, 'enrollment');
-        setEnrollmentChoice(user && conEvent?.id && enrollment ? enrollment.choice : EnrollmentChoice.NotInterested);
+        setEnrollmentChoice(user && conEvent?.id && enrollment ? enrollment.choice : EnrollmentOptions.NotInterested);
     }, [user, conEvent, enrollment]);
 
     const handleEnrollmentChoiceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const choice = Number(event.target.value) as EnrollmentChoice;
+        const choice = Number(event.target.value) as EnrollmentOptions;
 
         if (user && conEvent?.id) {
             setEnrollmentChoice(choice);
@@ -38,7 +38,7 @@ const EventPreference = ({ conEvent, participant }: Props) => {
         }
     };
 
-    async function updateEnrollmentInDb(choice: EnrollmentChoice) {
+    async function updateEnrollmentInDb(choice: EnrollmentOptions) {
         //console.log('updateEnrollmentInDb', choice);
         //console.log('updateEnrollmentInDb', participant);
         try {
@@ -99,7 +99,7 @@ const EventPreference = ({ conEvent, participant }: Props) => {
                     row
                     aria-labelledby="demo-row-radio-buttons-group-label"
                     name="row-radio-buttons-group"
-                    defaultValue={EnrollmentChoice.NotInterested}
+                    defaultValue={EnrollmentOptions.NotInterested}
                     value={enrollmentChoice}
                     sx={{
                         display: 'grid',
@@ -116,13 +116,13 @@ const EventPreference = ({ conEvent, participant }: Props) => {
                 >
                     <EnrollmentSelector
                         sx={{ display: 'grid', textAlign: 'center', p: '.4em', m: '0' }}
-                        value={EnrollmentChoice.NotInterested}
+                        value={EnrollmentOptions.NotInterested}
                         disabled={!user}
                         control={<Radio size="small" />}
                         label="Ikke p&aring;meldt"
                     />
                     <EnrollmentSelector
-                        value={EnrollmentChoice.IfIHaveTo}
+                        value={EnrollmentOptions.IfIHaveTo}
                         disabled={!user}
                         control={<Radio size="small" />}
                         sx={{
@@ -135,7 +135,7 @@ const EventPreference = ({ conEvent, participant }: Props) => {
                         label="Litt interessert"
                     />
                     <EnrollmentSelector
-                        value={EnrollmentChoice.Interested}
+                        value={EnrollmentOptions.Interested}
                         disabled={!user}
                         sx={{
                             display: 'grid',
@@ -148,7 +148,7 @@ const EventPreference = ({ conEvent, participant }: Props) => {
                         label="Ganske interessert"
                     />
                     <EnrollmentSelector
-                        value={EnrollmentChoice.VeryInterested}
+                        value={EnrollmentOptions.VeryInterested}
                         disabled={!user}
                         control={<Radio size="small" />}
                         label="Veldig interessert"

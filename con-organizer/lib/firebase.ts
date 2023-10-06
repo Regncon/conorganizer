@@ -36,3 +36,4 @@ export const participantEnrollmentsRef = (eventId: string, userId: string, parti
     doc(db, `events/${eventId}`, `/enrollments/${userId}`,`/eventParticipants/${participantId}`);
 export const participantsRef = (userId: string ) =>  collection(db, `usersettings/${userId}/participants/`);
 export const participantRef = (userId: string, participantId: string ) => doc(db, `usersettings/${userId}/participants/${participantId}`);
+export const enrollmentChoicesRef = (eventId: string ) => collection(db, `events/${eventId}/enrollmentChoices/`);

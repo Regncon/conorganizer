@@ -1,6 +1,7 @@
 import { collectionData, docData } from 'rxfire/firestore';
 import {
     allUserSettingsRef,
+    enrollmentChoicesRef,
     eventRef,
     eventsRef,
     participantEnrollmentsRef,
@@ -29,4 +30,8 @@ export function allParticipants$(userId: string) {
 
 export function singleParticipant$(userId: string, participantId: string) {
     return docData(participantRef(userId, participantId), { idField: 'id' });
+}
+
+export function allEnrollmentChoices$(eventId: string) {
+    return collectionData(enrollmentChoicesRef(eventId), { idField: 'id' });
 }

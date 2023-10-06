@@ -1,24 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { GetParticipantsFromCheckIn } from '@/lib/apiHelpers';
-import { adminDb, adminUser } from '@/lib/firebaseAdmin';
+import { adminDb } from '@/lib/firebaseAdmin';
 import { FirebaseCollections, Pool } from '@/models/enums';
-import { CrmJson, Participant } from '@/models/types';
+import { EnrollmentChoice } from '@/models/types';
+
 
 type Payload = {
     pool: Pool;
-};
-
-type EnrollmentChoice = {
-    id: string;
-    participantId: string;
-    choice: number;
-    eventId: string;
-    userId: string;
-    name: string;
-    isEnrolled: boolean;
-    hasGotFirstChoice: boolean;
-    firstChoiceEventId: string;
-    firstChoiceEventTitle: string;
 };
 
 export const POST = async (request: NextRequest) => {

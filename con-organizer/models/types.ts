@@ -1,5 +1,5 @@
 import { Timestamp } from 'firebase/firestore';
-import { EnrollmentChoice, GameType, Pool } from '@/models/enums';
+import { EnrollmentOptions, GameType, Pool } from '@/models/enums';
 
 export type ConEvent = {
     id: string;
@@ -70,10 +70,23 @@ export type UserData = {
 
 export type Enrollment = {
     id: string;
-    choice: EnrollmentChoice;
+    choice: EnrollmentOptions;
     name: string;
     createdAt: Timestamp;
     lastUpdated: Timestamp;
+};
+
+export type EnrollmentChoice = {
+    id: string;
+    participantId: string;
+    choice: number;
+    eventId: string;
+    userId: string;
+    name: string;
+    isEnrolled: boolean;
+    hasGotFirstChoice: boolean;
+    firstChoiceEventId: string;
+    firstChoiceEventTitle: string;
 };
 
 export type CrmRecord = {
