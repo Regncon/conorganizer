@@ -26,10 +26,36 @@ export type ConEvent = {
     beginnerFriendly: boolean;
 };
 
+export type Participant = {
+    id?: string;
+    externalId: number;
+    orderId: number;
+    name: string;
+    email: string;
+    connectedUser: string;
+    isPrimary: boolean;
+    primaryParticipantId: string;
+    eventTicket: EventTicket;
+};
+
+export type EventTicket = {
+    id: number;
+    category: string;
+    category_id: number;
+    order_id: number;
+    crm: {
+        first_name: string;
+        last_name: string;
+        id: number;
+        email: string;
+    };
+};
+
 export type UserSettings = {
     id: string;
     admin: boolean;
     name: string;
+    checkInId: string;
 };
 
 export type UserData = {
@@ -64,7 +90,7 @@ export type CrmData = {
 
 export type CrmJson = {
     data: {
-        allCrms: CrmData;
+        eventTickets: EventTicket[];
     };
     errors: Error;
 };

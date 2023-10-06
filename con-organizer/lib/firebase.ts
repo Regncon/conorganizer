@@ -30,6 +30,9 @@ export const auth = getAuth();
 export const db = getFirestore(app);
 export const eventsRef = collection(db, 'events');
 export const eventRef = (id: string) => doc(db, `events/${id}`);
+export const allUserSettingsRef = collection(db, 'usersettings');
 export const userSettingsRef = (userId: string) => doc(db, `usersettings/${userId}`);
-export const userEnrollmentsRef = (eventId: string, userId: string) =>
-    doc(db, `events/${eventId}`, `/enrollments/${userId}`);
+export const participantEnrollmentsRef = (eventId: string, userId: string, participantId: string ) =>
+    doc(db, `events/${eventId}`, `/enrollments/${userId}/participants/${participantId}`);
+export const participantsRef = (userId: string ) =>  collection(db, `usersettings/${userId}/participants/`);
+export const participantRef = (userId: string, participantId: string ) => doc(db, `usersettings/${userId}/participants/${participantId}`);

@@ -16,6 +16,7 @@ export enum FirebaseCollections {
     userSetting = 'usersettings',
     events = 'events',
     Test = 'Test',
+    Participants = 'participants',
 }
 
 export enum EnrollmentChoice {
