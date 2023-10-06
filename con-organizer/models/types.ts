@@ -27,7 +27,7 @@ export type ConEvent = {
 };
 
 export type Participant = {
-    id: string;
+    id?: string;
     externalId: number;
     orderId: number;
     name: string;
@@ -90,7 +90,7 @@ export type CrmData = {
 
 export type CrmJson = {
     data: {
-        allCrms: CrmData;
+        eventTickets: EventTicket[];
     };
     errors: Error;
 };
