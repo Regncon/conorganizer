@@ -42,10 +42,20 @@ export const GET = async () => {
 
     eventEnrollments.forEach(async (enrollmentItem) => {
         //console.log('enrollment', enrollment);
-        const participant = await GetParticipantsFromFirebaseUserSettings(enrollmentItem.id).then((participants) => {
+        if (!enrollmentItem || enrollmentItem?.id === undefined) {
+            console.error(enrollmentItem, ' has no id');
+            return;
+        }
+        const participant = await GetParticipantsFromFirebaseUserSettings(enrollmentItem?.id).then((participants) => {
             return participants.find((p) => p.isPrimary);
         });
         //console.log('participants', participant);
+
+        if (!participant || participant?.id === undefined)
+        {
+            console.error(participant, ' has no primary participant');
+            return;
+        }
 
         const eventParticipantRef = `${FirebaseCollections.events}/${enrollmentItem.eventId}/${FirebaseCollections.Enrollments}/${enrollmentItem.userId}/${FirebaseCollections.EventParticipants}/`;
         //console.log(eventParticipantRef, 'eventParticipantRef');
@@ -58,9 +68,17 @@ export const GET = async () => {
 
         //console.log(eventEnrollment, 'eventEnrollment');
 
-        console.log('adding event enrollment', eventParticipantRef, 'and id', enrollmentItem.userId, 'setting with', eventEnrollment);
 
-        await adminDb.collection(eventParticipantRef).doc(enrollmentItem.userId).set(eventEnrollment);
+        console.log(
+            'adding event enrollment',
+            eventParticipantRef,
+            'and id',
+            enrollmentItem.eventId,
+            'setting with',
+            eventEnrollment
+        );
+
+        await adminDb.collection(eventParticipantRef).doc(participant.id).set(eventEnrollment);
     });
 
     /*         await adminDb
@@ -136,7 +154,11 @@ async function GetParticipantsFromFirebaseUserSettings(userId: string) {
         .collection(`${FirebaseCollections.userSetting}/${userId}/${FirebaseCollections.Participants}`)
         .get();
 
-    return participantsFirebaseRef.docs.map((doc) => doc.data()) as Participant[];
+    return participantsFirebaseRef.docs.map((doc) => {
+        const data = doc.data();
+        data.id = doc.id;
+        return data;
+    });
 }
 
 async function getEventEnrollments() {

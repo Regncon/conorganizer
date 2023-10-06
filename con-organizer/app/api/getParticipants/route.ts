@@ -7,6 +7,8 @@ import {
     GetUserSettingsFromFirebase,
 } from '@/lib/apiHelpers';
 import { CrmJson, Participant, UserSettings } from '@/models/types';
+import { adminDb } from '@/lib/firebaseAdmin';
+import { FirebaseCollections } from '@/models/enums';
 
 export const GET = async () => {
     console.log('getParticipants staring');

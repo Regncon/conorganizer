@@ -27,6 +27,7 @@ const EventPreference = ({ conEvent, participant }: Props) => {
     useEffect(() => {
         //console.log(enrollment, 'enrollment');
         setEnrollmentChoice(user && conEvent?.id && enrollment ? enrollment.choice : EnrollmentChoice.NotInterested);
+        console.log(enrollment, 'enrollment');
     }, [user, conEvent, enrollment]);
 
     const handleEnrollmentChoiceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,8 +40,8 @@ const EventPreference = ({ conEvent, participant }: Props) => {
     };
 
     async function updateEnrollmentInDb(choice: EnrollmentChoice) {
-        console.log('updateEnrollmentInDb', choice);
-        console.log('updateEnrollmentInDb', participant);
+        //console.log('updateEnrollmentInDb', choice);
+        //console.log('updateEnrollmentInDb', participant);
         try {
             if (!user || !conEvent?.id) {
                 return;
