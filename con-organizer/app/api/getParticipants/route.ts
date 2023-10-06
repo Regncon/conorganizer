@@ -60,45 +60,47 @@ export const GET = async () => {
         if (user.checkInId) {
             //console.log(user.name, user.id, ' already has checkIn id', user.checkInId);
             const participants = await GetParticipantsFromFirebaseUserSettings(user.id);
+            let primaryParticipantDocument: Participant | undefined;
 
             if (participants.find((p) => p.externalId.toString() === user.checkInId) === undefined) {
-                await addPrimaryParticipant(queryResult, user);
-            }
-
-            if (participants) {
-                const secondaryParticipants = queryResult.data.eventTickets
-                    .filter((crm) => crm.category_id !== 116907)
-                    .filter((q) => q.crm.email === participants.find((p) => p.isPrimary)?.email)
-                    .filter((crm) => crm.id.toString() !== user.checkInId.toString())
-                    .filter((p) => !participants.find((p2) => p2.externalId.toString() === p.id.toString()));
-
-                //console.log(secondaryParticipants, 'secondaryParticipants');
-
-                //make sure there are no duplicates in secondaryParticipants where id is the same as externalId in participants
+                primaryParticipantDocument = await addPrimaryParticipant(queryResult, user);
                 
-
-                if (secondaryParticipants.length > 0) {
-                    console.log(secondaryParticipants, 'secondaryParticipants');
-                    secondaryParticipants.forEach(async (secondaryParticipant) => {
-                        const secondaryParticipantDocument: Participant = {
-                            externalId: secondaryParticipant.id || 0,
-                            connectedUser: user.id,
-                            isPrimary: false,
-                            primaryParticipantId: user.checkInId,
-                            name: `${secondaryParticipant.crm.first_name} ${secondaryParticipant.crm.last_name}` || '',
-                            email: secondaryParticipant.crm.email || '',
-                            eventTicket: secondaryParticipant,
-                            orderId: secondaryParticipant.order_id || 0,
-                        };
-                        console.log('updating', user.id, 'setting with', secondaryParticipantDocument);
-                                                                         await adminDb
-                             .collection(
-                                `${FirebaseCollections.userSetting}/${user.id}/${FirebaseCollections.Participants}/`
-                            )
-                            .add(secondaryParticipantDocument);  
-                    });
-                }
             }
+
+            //if (participants) {
+            const secondaryParticipants = queryResult.data.eventTickets
+                .filter((crm) => crm.category_id !== 116907)
+                .filter((q) => q.crm.email === primaryParticipantDocument?.email)
+                .filter((crm) => crm.id !==primaryParticipantDocument?.externalId)
+                //.filter((q) => q.crm.email === participants.find((p) => p.isPrimary)?.email)
+                .filter((crm) => crm.id.toString() !== user.checkInId.toString())
+                .filter((p) => !participants.find((p2) => p2.externalId.toString() === p.id.toString()));
+
+            //console.log(secondaryParticipants, 'secondaryParticipants');
+
+            //make sure there are no duplicates in secondaryParticipants where id is the same as externalId in participants
+
+            if (secondaryParticipants.length > 0) {
+                secondaryParticipants.forEach(async (secondaryParticipant) => {
+                    const secondaryParticipantDocument: Participant = {
+                        externalId: secondaryParticipant.id || 0,
+                        connectedUser: user.id,
+                        isPrimary: false,
+                        primaryParticipantId: user.checkInId,
+                        name: `${secondaryParticipant.crm.first_name} ${secondaryParticipant.crm.last_name}` || '',
+                        email: secondaryParticipant.crm.email || '',
+                        eventTicket: secondaryParticipant,
+                        orderId: secondaryParticipant.order_id || 0,
+                    };
+                    console.log('adding secondary participant', user.id, 'setting with', secondaryParticipantDocument);
+                    await adminDb
+                        .collection(
+                            `${FirebaseCollections.userSetting}/${user.id}/${FirebaseCollections.Participants}/`
+                        )
+                        .add(secondaryParticipantDocument); 
+                });
+            }
+            //}
 
             return;
         }
@@ -203,10 +205,10 @@ async function addPrimaryParticipant(queryResult: CrmJson, user: UserSettings) {
         orderId: primaryParticipant?.order_id || 0,
     };
 
-    console.log('updating', user.id, 'setting with', primaryParticipantDocument);
-         await adminDb
+    console.log('adding primary participant', user.id, 'setting with', primaryParticipantDocument);
+     await adminDb
         .collection(`${FirebaseCollections.userSetting}/${user.id}/${FirebaseCollections.Participants}/`)
-        .add(primaryParticipantDocument);
+        .add(primaryParticipantDocument); 
     return primaryParticipantDocument; 
 }
 

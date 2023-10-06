@@ -31,8 +31,6 @@ export const GET = async () => {
 
     const queryResult: CrmJson | undefined = await GetParticipantsFromCheckIn();
 
-
-
     if (queryResult?.errors || !queryResult?.data?.eventTickets) {
         return NextResponse.json({ errors: queryResult?.errors }, { status: 403 });
     }
@@ -45,16 +43,17 @@ export const GET = async () => {
         if (!participants || participants.length === 0) {
             return;
         }
-
-        const participantWithDinner = participants.filter((p) => p.eventTicket?.category_id === 116907);
-        if (participantWithDinner)
-            console.log(participantWithDinner);
-            return;
+        // find duplicate participants that have the same externalId
+        const duplicateParticipants = participants.filter(
+            (p) => participants.filter((p2) => p2.externalId === p.externalId).length > 1
+        );
+        if (duplicateParticipants.length > 0) {
+            console.error(user.name, user.id, ' has duplicate participants');
+            console.error(duplicateParticipants);
         }
-    );
+    });
 
-    
-    return NextResponse.json({  }, { status: 200 });
+    return NextResponse.json({}, { status: 200 });
 };
 
 async function GetParticipantsFromCheckIn() {
