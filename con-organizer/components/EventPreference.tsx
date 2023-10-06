@@ -27,7 +27,6 @@ const EventPreference = ({ conEvent, participant }: Props) => {
     useEffect(() => {
         //console.log(enrollment, 'enrollment');
         setEnrollmentChoice(user && conEvent?.id && enrollment ? enrollment.choice : EnrollmentChoice.NotInterested);
-        console.log(enrollment, 'enrollment');
     }, [user, conEvent, enrollment]);
 
     const handleEnrollmentChoiceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
