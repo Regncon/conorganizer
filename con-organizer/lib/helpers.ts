@@ -1,4 +1,3 @@
-import { query } from 'firebase/firestore';
 import { FirebaseCollections } from '@/models/enums';
 import { CrmJson, EventTicket, Participant, UserSettings } from '@/models/types';
 import { adminDb } from './firebaseAdmin';
