@@ -6,7 +6,7 @@ import { use } from 'react';
 
 // const url = https://app.checkin.no/graphql?client_id=API_KEY&client_secret=API_SECRET
 const query = `{
-    eventTickets(customer_id: 13446, id: 58182) {
+    eventTickets(customer_id: 13446, id: 58182, onlyCompleted: true) {
       id
       category
       category_id
@@ -16,6 +16,7 @@ const query = `{
         id
         email
       }
+      order_id
     }
   }`;
 
@@ -26,51 +27,35 @@ type CrmJson = {
     errors: Error;
 };
 export const GET = async () => {
-    //ToDo: authenticate request
-    /* 
+    console.log('getParticipants staring');
+
     const queryResult: CrmJson | undefined = await GetParticipantsFromCheckIn();
+
+
 
     if (queryResult?.errors || !queryResult?.data?.eventTickets) {
         return NextResponse.json({ errors: queryResult?.errors }, { status: 403 });
-    } */
+    }
 
-    const userSettingsInFirebase = await GetUserSettingsFromFirebase();
+    const userSettingsInFirebase = ((await GetUserSettingsFromFirebase()) as UserSettings[]) || [];
 
-    const migratedParticipants: Participant[] = [];
+    userSettingsInFirebase.forEach(async (user) => {
+        const participants = await GetParticipantsFromFirebaseUserSettings(user.id);
 
-    userSettingsInFirebase.forEach((user) => {
-        console.log(user.name);
-    });
-
-     /*     queryResult.data.eventTickets
-    .filter((crm) => crm.category_id !== 116907)
-    .forEach((crm) => {
-        if (userSettingsInFirebase.find((p) => p.name === `${crm.crm.first_name} ${crm.crm.last_name}`.trim() )) {
-            console.log('already exists');
-
-            const newParticipant: Participant = {
-                externalId: crm.id.toString(),
-                name: `${crm.crm.first_name} ${crm.crm.last_name}` || '',
-                email: crm.crm.email || '',
-                connectedUser: '',
-                eventTicket: crm,
-            }; 
-            
-            migratedParticipants.push(newParticipant);
-            console.log(newParticipant, 'newParticipant');
+        if (!participants || participants.length === 0) {
+            return;
         }
-    }); */
 
-    //await adminDb.collection(FirebaseCollections.Participants).doc().set(newParticipants[0]);
+        const participantWithDinner = participants.filter((p) => p.eventTicket?.category_id === 116907);
+        if (participantWithDinner)
+            console.log(participantWithDinner);
+            return;
+        }
+    );
 
-    return NextResponse.json({ migratedParticipants }, { status: 200 });
+    
+    return NextResponse.json({  }, { status: 200 });
 };
-
-async function GetUserSettingsFromFirebase() {
-    const userSettingsFirebaseRef = await adminDb.collection(FirebaseCollections.userSetting).get();
-
-    return userSettingsFirebaseRef.docs.map((doc) => doc.data()) as UserSettings[];
-}
 
 async function GetParticipantsFromCheckIn() {
     const res = await fetch(
@@ -87,4 +72,22 @@ async function GetParticipantsFromCheckIn() {
     const queryResult: CrmJson | undefined = await res.json();
 
     return queryResult;
+}
+
+async function GetUserSettingsFromFirebase() {
+    const userSettingsFirebaseRef = await adminDb.collection(FirebaseCollections.userSetting).get();
+
+    return userSettingsFirebaseRef.docs.map((doc) => {
+        const data = doc.data();
+        data.id = doc.id;
+        return data;
+    });
+}
+
+async function GetParticipantsFromFirebaseUserSettings(userId: string) {
+    const participantsFirebaseRef = await adminDb
+        .collection(`${FirebaseCollections.userSetting}/${userId}/${FirebaseCollections.Participants}`)
+        .get();
+
+    return participantsFirebaseRef.docs.map((doc) => doc.data()) as Participant[];
 }

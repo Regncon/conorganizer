@@ -34,6 +34,7 @@ export type Participant = {
     email: string;
     connectedUser: string;
     isPrimary: boolean;
+    primaryParticipantId: string;
     eventTicket: EventTicket;
 };
 

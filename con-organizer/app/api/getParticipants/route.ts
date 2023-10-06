@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { FirebaseCollections } from '@/models/enums';
 import { EventTicket, Participant, UserSettings } from '@/models/types';
-import { use } from 'react';
 
 // const url = https://app.checkin.no/graphql?client_id=API_KEY&client_secret=API_SECRET
 const query = `{
@@ -60,26 +59,46 @@ export const GET = async () => {
 
         if (user.checkInId) {
             //console.log(user.name, user.id, ' already has checkIn id', user.checkInId);
+            const participants = await GetParticipantsFromFirebaseUserSettings(user.id);
 
-            const primaryParticipant = queryResult.data.eventTickets.find(
-                (crm) => crm.id.toString() === user.checkInId
-            ) as EventTicket;
+            if (participants.find((p) => p.externalId.toString() === user.checkInId) === undefined) {
+                await addPrimaryParticipant(queryResult, user);
+            }
 
-            const newParticipant: Participant = {
-                externalId: primaryParticipant?.id || 0,
-                connectedUser: user.id,
-                isPrimary: true,
-                name: `${primaryParticipant?.crm.first_name} ${primaryParticipant?.crm.last_name}` || '',
-                email: primaryParticipant?.crm.email || '',
-                connectedUser: '',
-                eventTicket: primaryParticipant,
-                orderId: primaryParticipant?.order_id || 0,
-            };
+            if (participants) {
+                const secondaryParticipants = queryResult.data.eventTickets
+                    .filter((crm) => crm.category_id !== 116907)
+                    .filter((q) => q.crm.email === participants.find((p) => p.isPrimary)?.email)
+                    .filter((crm) => crm.id.toString() !== user.checkInId.toString())
+                    .filter((p) => !participants.find((p2) => p2.externalId.toString() === p.id.toString()));
 
-            console.log('updating', user.id, 'setting with', newParticipant);
-            await adminDb
-                .collection(`${FirebaseCollections.userSetting}/${user.id}/${FirebaseCollections.Participants}/`)
-                .add(newParticipant);
+                //console.log(secondaryParticipants, 'secondaryParticipants');
+
+                //make sure there are no duplicates in secondaryParticipants where id is the same as externalId in participants
+                
+
+                if (secondaryParticipants.length > 0) {
+                    console.log(secondaryParticipants, 'secondaryParticipants');
+                    secondaryParticipants.forEach(async (secondaryParticipant) => {
+                        const secondaryParticipantDocument: Participant = {
+                            externalId: secondaryParticipant.id || 0,
+                            connectedUser: user.id,
+                            isPrimary: false,
+                            primaryParticipantId: user.checkInId,
+                            name: `${secondaryParticipant.crm.first_name} ${secondaryParticipant.crm.last_name}` || '',
+                            email: secondaryParticipant.crm.email || '',
+                            eventTicket: secondaryParticipant,
+                            orderId: secondaryParticipant.order_id || 0,
+                        };
+                        console.log('updating', user.id, 'setting with', secondaryParticipantDocument);
+                                                                         await adminDb
+                             .collection(
+                                `${FirebaseCollections.userSetting}/${user.id}/${FirebaseCollections.Participants}/`
+                            )
+                            .add(secondaryParticipantDocument);  
+                    });
+                }
+            }
 
             return;
         }
@@ -89,10 +108,10 @@ export const GET = async () => {
         );
         if (checkInTicket) {
             console.log(user.name, ' updating setting with checking id', checkInTicket.id.toString());
-            await adminDb.doc(`${FirebaseCollections.userSetting}/${user.id}`).update({
+            /*             await adminDb.doc(`${FirebaseCollections.userSetting}/${user.id}`).update({
                 checkInId: checkInTicket.id.toString(),
             });
-            return;
+            return; */
         }
 
         console.error(user.name, user.id, ' not found in checkin');
@@ -168,6 +187,28 @@ export const GET = async () => {
     //console.log(migratedParticipants, 'migratedParticipants');
     return NextResponse.json({ migratedParticipants }, { status: 200 });
 };
+
+async function addPrimaryParticipant(queryResult: CrmJson, user: UserSettings) {
+    const primaryParticipant = queryResult.data.eventTickets
+        .filter((crm) => crm.category_id !== 116907)
+        .find((crm) => crm.id.toString() === user.checkInId) as EventTicket;
+
+    const primaryParticipantDocument: Participant = {
+        externalId: primaryParticipant?.id || 0,
+        connectedUser: user.id,
+        isPrimary: true,
+        name: `${primaryParticipant?.crm.first_name} ${primaryParticipant?.crm.last_name}` || '',
+        email: primaryParticipant?.crm.email || '',
+        eventTicket: primaryParticipant,
+        orderId: primaryParticipant?.order_id || 0,
+    };
+
+    console.log('updating', user.id, 'setting with', primaryParticipantDocument);
+         await adminDb
+        .collection(`${FirebaseCollections.userSetting}/${user.id}/${FirebaseCollections.Participants}/`)
+        .add(primaryParticipantDocument);
+    return primaryParticipantDocument; 
+}
 
 async function GetUserSettingsFromFirebase() {
     const userSettingsFirebaseRef = await adminDb.collection(FirebaseCollections.userSetting).get();
