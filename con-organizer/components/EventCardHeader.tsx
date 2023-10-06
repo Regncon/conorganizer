@@ -48,11 +48,13 @@ const EventCardHeader = ({ conEvent }: Props) => {
             ) : null}
             <Box
                 sx={{
-                    backgroundImage: `url(${conEvent?.imageUrl || '/image/placeholder.jpg'})`,
+                    backgroundImage: `url(${
+                        'image/programm/listview' + conEvent?.imageUrl || '/image/placeholder.jpg'
+                    })`,
                     backgroundSize: 'cover',
-                    // backgroundBlendMode: 'multiply',
+                    backgroundBlendMode: 'multiply',
                     backgroundPositionY: 'bottom',
-                    backgroundColor: '#888',
+                    backgroundColor: '#ccc',
                     display: 'flex',
                     alignItems: 'space-between',
                     flexDirection: 'column',
