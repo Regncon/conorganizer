@@ -17,6 +17,7 @@ type Props = {
 };
 
 const EventPreference = ({ conEvent, participant }: Props) => {
+    console.log(participant, 'participant');
     const user = useAuth();
     const [errorMessage, setErrorMessage] = useState<string>();
     const [enrollmentChoice, setEnrollmentChoice] = useState<EnrollmentChoice>(EnrollmentChoice.NotInterested);
@@ -38,8 +39,8 @@ const EventPreference = ({ conEvent, participant }: Props) => {
     };
 
     async function updateEnrollmentInDb(choice: EnrollmentChoice) {
-        //console.log('updateEnrollmentInDb', choice);
-        //console.log('updateEnrollmentInDb', participant);
+        console.log('updateEnrollmentInDb', choice);
+        console.log('updateEnrollmentInDb', participant);
         try {
             if (!user || !conEvent?.id) {
                 return;
@@ -47,15 +48,19 @@ const EventPreference = ({ conEvent, participant }: Props) => {
             const setEnrollmentRef = doc(
                 db,
                 `events/${conEvent.id}`,
-                `/enrollments/${user.uid}/participants/${participant?.id}`
+                `/enrollments/${user.uid}/eventParticipants/${participant?.id}`
             );
             if (enrollment) {
                 await updateDoc(setEnrollmentRef, {
                     choice: choice,
+                    name: participant?.name,
+                    isPrimary: participant?.isPrimary,
                 });
             } else {
                 await setDoc(setEnrollmentRef, {
                     choice: choice,
+                    name: participant?.name,
+                    isPrimary: participant?.isPrimary,
                 });
             }
         } catch (e) {

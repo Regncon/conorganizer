@@ -68,6 +68,7 @@ export type UserData = {
 export type Enrollment = {
     id: string;
     choice: EnrollmentChoice;
+    name: string;
     createdAt: Timestamp;
     lastUpdated: Timestamp;
 };

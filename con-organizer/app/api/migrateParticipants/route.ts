@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
 import { FirebaseCollections } from '@/models/enums';
-import { EventTicket, Participant, UserSettings } from '@/models/types';
-import { use } from 'react';
+import { Enrollment, EventTicket, Participant, UserSettings } from '@/models/types';
 
 // const url = https://app.checkin.no/graphql?client_id=API_KEY&client_secret=API_SECRET
 const query = `{
@@ -37,21 +36,70 @@ export const GET = async () => {
 
     const userSettingsInFirebase = ((await GetUserSettingsFromFirebase()) as UserSettings[]) || [];
 
-    userSettingsInFirebase.forEach(async (user) => {
-        const participants = await GetParticipantsFromFirebaseUserSettings(user.id);
+    const eventEnrollments = await getEventEnrollments();
 
-        if (!participants || participants.length === 0) {
-            return;
-        }
-        // find duplicate participants that have the same externalId
-        const duplicateParticipants = participants.filter(
-            (p) => participants.filter((p2) => p2.externalId === p.externalId).length > 1
-        );
-        if (duplicateParticipants.length > 0) {
-            console.error(user.name, user.id, ' has duplicate participants');
-            console.error(duplicateParticipants);
-        }
+    //console.log('eventEnrollments', eventEnrollments);
+
+    eventEnrollments.forEach(async (enrollmentItem) => {
+        //console.log('enrollment', enrollment);
+        const participant = await GetParticipantsFromFirebaseUserSettings(enrollmentItem.id).then((participants) => {
+            return participants.find((p) => p.isPrimary);
+        });
+        //console.log('participants', participant);
+
+        const eventParticipantRef = `${FirebaseCollections.events}/${enrollmentItem.eventId}/${FirebaseCollections.Enrollments}/${enrollmentItem.userId}/${FirebaseCollections.EventParticipants}/`;
+        //console.log(eventParticipantRef, 'eventParticipantRef');
+
+        const eventEnrollment: Enrollment = {
+            choice: enrollmentItem.choice,
+            name: participant?.name || '',
+            isPrimary: participant?.isPrimary || false,
+        };
+
+        //console.log(eventEnrollment, 'eventEnrollment');
+
+        console.log('adding event enrollment', eventParticipantRef, 'and id', enrollmentItem.userId, 'setting with', eventEnrollment);
+
+        await adminDb.collection(eventParticipantRef).doc(enrollmentItem.userId).set(eventEnrollment);
     });
+
+    /*         await adminDb
+            .collection(
+                `${FirebaseCollections.events}/${enrollment.eventId}/${FirebaseCollections.Enrollments}/${enrollment.userId}/${FirebaseCollections.EventParticipants}/`
+            )
+            .doc(participant.userId)
+            .set(
+                choice: enrollment,
+                name: participant?.name,
+                isPrimary: participant?.isPrimary,
+            );
+
+            await adminDb
+            .collection(FirebaseCollections.userSetting)
+            .doc(userRecord.uid)
+            .set({
+                name: `${paidUser.crm.first_name} ${paidUser.crm.last_name}`.trim(),
+                checkInId: paidUser.id.toString(),
+                */
+    /*         export const participantEnrollmentsRef = (eventId: string, userId: string, participantId: string) =>
+               doc(db, `events/${eventId}`, `/enrollments/${userId}/eventParticipants/${participantId}`);
+            }); */
+
+    /*     userSettingsInFirebase.forEach(async (user) => {
+                const participants = await GetParticipantsFromFirebaseUserSettings(user.id);
+                
+                if (!participants || participants.length === 0) {
+                    return;
+                }
+                // find duplicate participants that have the same externalId
+                const duplicateParticipants = participants.filter(
+                    (p) => participants.filter((p2) => p2.externalId === p.externalId).length > 1
+                    );
+                    if (duplicateParticipants.length > 0) {
+                        console.error(user.name, user.id, ' has duplicate participants');
+                        console.error(duplicateParticipants);
+                    }
+                }); */
 
     return NextResponse.json({}, { status: 200 });
 };
@@ -89,4 +137,25 @@ async function GetParticipantsFromFirebaseUserSettings(userId: string) {
         .get();
 
     return participantsFirebaseRef.docs.map((doc) => doc.data()) as Participant[];
+}
+
+async function getEventEnrollments() {
+    const eventEnrollmentsRef = await adminDb
+        //.collectionGroup(`${FirebaseCollections.events}/${eventId}/${FirebaseCollections.Enrollments}`)
+        .collectionGroup(FirebaseCollections.Enrollments)
+        .get();
+
+    return eventEnrollmentsRef.docs.map((doc) => {
+        //console.log(doc.ref.path, 'doc');
+        // events/ydfeJ8VIuQ4tIyKVjuCo/enrollments/t6Y0JPt9kmMUDxxxS1vDFAhHkbJ3
+        // split on / and get the 2rd element
+        const eventId = doc.ref.path.split('/')[1];
+        const userId = doc.ref.path.split('/')[3];
+
+        const data = doc.data();
+        data.id = doc.id;
+        data.eventId = eventId;
+        data.userId = userId;
+        return data as Enrollment[];
+    });
 }

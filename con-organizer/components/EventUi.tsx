@@ -55,7 +55,7 @@ const EventUi = ({ conEvent }: Props) => {
             console.log(participants, 'participants');
         }
         console.log(user, 'user');
-    }, [user]);
+    }, [user, participants]);
 
     return (
         <>
