@@ -26,7 +26,7 @@ type CrmJson = {
     errors: Error;
 };
 export const GET = async () => {
-    console.log('getParticipants staring');
+ /*    console.log('getParticipants staring');
 
     const queryResult: CrmJson | undefined = await GetParticipantsFromCheckIn();
 
@@ -79,7 +79,7 @@ export const GET = async () => {
         );
 
         await adminDb.collection(eventParticipantRef).doc(participant.id).set(eventEnrollment);
-    });
+    }); */
 
     /*         await adminDb
             .collection(
