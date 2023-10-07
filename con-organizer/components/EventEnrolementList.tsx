@@ -38,6 +38,7 @@ const EventEnrolementList = ({ id }: Props) => {
     }
 
     return (
+        <>
         <Card>
             <CardHeader title='Veldig interessert' />
             <CardContent>
@@ -46,13 +47,56 @@ const EventEnrolementList = ({ id }: Props) => {
                     .filter((enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.VeryInterested)
                     .map((enrollmentChoice) => (
                         <EventEnrollment
-                            key={enrollmentChoice.id}
-                            enrollmentChoice={enrollmentChoice}
-                            handleChoiceChange={handleChoiceChange}
+                        key={enrollmentChoice.id}
+                        enrollmentChoice={enrollmentChoice}
+                        handleChoiceChange={handleChoiceChange}
                         />
-                    ))}
+                        ))}
+            </CardContent>
+        </Card><Card>
+            <CardHeader title='Ganske interessert' />
+            <CardContent>
+                {enrollmentChoices
+                    ?.toSorted((a, b) => a.choice - b.choice)
+                    .filter((enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.Interested)
+                    .map((enrollmentChoice) => (
+                        <EventEnrollment
+                        key={enrollmentChoice.id}
+                        enrollmentChoice={enrollmentChoice}
+                        handleChoiceChange={handleChoiceChange}
+                        />
+                        ))}
+            </CardContent>
+        </Card><Card>
+            <CardHeader title='Litt interessert' />
+            <CardContent>
+                {enrollmentChoices
+                    ?.toSorted((a, b) => a.choice - b.choice)
+                    .filter((enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.IfIHaveTo)
+                    .map((enrollmentChoice) => (
+                        <EventEnrollment
+                        key={enrollmentChoice.id}
+                        enrollmentChoice={enrollmentChoice}
+                        handleChoiceChange={handleChoiceChange}
+                        />
+                        ))}
+            </CardContent>
+        </Card><Card>
+            <CardHeader title='Ikke interessert' />
+            <CardContent>
+                {enrollmentChoices
+                    ?.toSorted((a, b) => a.choice - b.choice)
+                    .filter((enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.NotInterested)
+                    .map((enrollmentChoice) => (
+                        <EventEnrollment
+                        key={enrollmentChoice.id}
+                        enrollmentChoice={enrollmentChoice}
+                        handleChoiceChange={handleChoiceChange}
+                        />
+                        ))}
             </CardContent>
         </Card>
+                        </>
     );
 };
 
