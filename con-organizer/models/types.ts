@@ -84,6 +84,7 @@ export type EnrollmentChoice = {
     eventTitle: string;
     userId: string;
     name: string;
+    ticketType: string;
     isEnrolled: boolean;
     enrolledEventId: string;
     enrolledEventTitle: string;

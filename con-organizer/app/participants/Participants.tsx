@@ -148,9 +148,9 @@ const Participants = () => {
                 <LoadingButton
                     loading={loadingGenerateEnrollmentList}
                     variant="outlined"
-                    onClick={(e) => generateEnrollmentList(e, Pool.SaturdayMorning)}
+                    onClick={(e) => generateEnrollmentList(e, Pool.SaturdayEvening)}
                 >
-                    Hent Puljedata for lørdag morgen
+                    Hent Puljedata for lørdag kveld
                 </LoadingButton>
             </Box>
             <Box sx={newParticipants?.length > 0 ? { display: 'block' } : { display: 'none' }}>

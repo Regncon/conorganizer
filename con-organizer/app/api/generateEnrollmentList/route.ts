@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
-import { FirebaseCollections, Pool } from '@/models/enums';
+import { EnrollmentOptions, FirebaseCollections, Pool } from '@/models/enums';
 import { EnrollmentChoice } from '@/models/types';
 
 type Payload = {
@@ -41,36 +41,37 @@ export const POST = async (request: NextRequest) => {
                 .forEach(async (enrollmentChoice) => {
                     console.log('adding enrollmentChoice to event ', event.id, enrollmentChoice.participantId);
 
-                    enrollmentChoice.hasGotFirstChoice =
-                        participants?.find((participant) => participant?.id === enrollmentChoice?.participantId)
-                            ?.hasGotFirstChoice ?? false;
+                    const participant = participants.find(
+                        (participant) => participant.id === enrollmentChoice.participantId
+                    );
 
-                    enrollmentChoice.firstChoiceEventId =
-                        participants?.find((participant) => participant?.id === enrollmentChoice?.participantId)
-                            ?.firstChoiceEventId ?? '';
+                    enrollmentChoice.ticketType = participant?.eventTicket?.category ?? '';
 
                     enrollmentChoice.firstChoiceEventTitle =
                         events?.find((event) => event?.id === enrollmentChoice?.firstChoiceEventId)?.title ?? '';
 
                     enrollmentChoice.eventTitle = event.title;
 
-                    enrollmentChoice.hasGotFirstChoice =
+                    const firstChoiceEvent =
                         previousEnrollmentChoices.find(
                             (previousEnrollmentChoice) =>
                                 previousEnrollmentChoice.participantId === enrollmentChoice.participantId &&
+                                previousEnrollmentChoice.choice === EnrollmentOptions.VeryInterested &&
                                 previousEnrollmentChoice.isEnrolled === true
-                        ) ? true : false;
+                        ) ?? null;
 
-                    enrollmentChoice.firstChoiceEventTitle =
-                        previousEnrollmentChoices.find(
-                            (previousEnrollmentChoice) =>
-                                previousEnrollmentChoice.participantId === enrollmentChoice.participantId &&
-                                previousEnrollmentChoice.isEnrolled === true
-                        )?.firstChoiceEventTitle;
+                    if (firstChoiceEvent) {
+                        enrollmentChoice.hasGotFirstChoice = true;
+                        enrollmentChoice.firstChoiceEventId = firstChoiceEvent.eventId;
+                        enrollmentChoice.firstChoiceEventTitle = firstChoiceEvent.eventTitle;
+                    }
+                    else {
+                        enrollmentChoice.hasGotFirstChoice = false;
+                        enrollmentChoice.firstChoiceEventId = '';
+                        enrollmentChoice.firstChoiceEventTitle = '';
+                    }
 
-                    if (enrollmentChoice.hasGotFirstChoice)
-                        console.log('hasGotFirstChoice', enrollmentChoice);
-
+                    console.log(enrollmentChoice);
                     await adminDb
                         .collection(
                             `${FirebaseCollections.events}/${event.id}/${FirebaseCollections.EnrollmentChoices}`
