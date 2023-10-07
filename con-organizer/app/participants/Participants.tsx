@@ -140,8 +140,7 @@ const Participants = () => {
             <Box
                 sx={{
                     display: 'flex',
-                    justifyCo                    justifyContent: 'center',
-                    alignItems: 'center',ntent: 'space-between',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     marginBottom: '1em',
                 }}
@@ -149,9 +148,9 @@ const Participants = () => {
                 <LoadingButton
                     loading={loadingGenerateEnrollmentList}
                     variant="outlined"
-                    onClick={(e) => generateEnrollmentList(e, Pool.SaturdayEvening)}
+                    onClick={(e) => generateEnrollmentList(e, Pool.SundayMorning)}
                 >
-                    Hent Puljedata for lørdag kveld
+                    Hent Puljedata for søndag morgen kveld
                 </LoadingButton>
             </Box>
             <Box sx={newParticipants?.length > 0 ? { display: 'block' } : { display: 'none' }}>

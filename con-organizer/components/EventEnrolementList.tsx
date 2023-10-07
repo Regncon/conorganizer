@@ -63,7 +63,7 @@ const EventEnrolementList = ({ id }: Props) => {
             display: 'flex',
             flexDirection: 'column',
             gap: '1rem',
-            
+
             
         }}
         >
@@ -84,6 +84,7 @@ const EventEnrolementList = ({ id }: Props) => {
                                             key={enrollmentChoice.id}
                                             enrollmentChoice={enrollmentChoice}
                                             handleChoiceChange={handleChoiceChange}
+                                            enrollmentState={enrollmentChoicesState}
                                         />
                                     ))}
                             </TableBody>
@@ -107,6 +108,7 @@ const EventEnrolementList = ({ id }: Props) => {
                                             key={enrollmentChoice.id}
                                             enrollmentChoice={enrollmentChoice}
                                             handleChoiceChange={handleChoiceChange}
+                                            enrollmentState={enrollmentChoicesState}
                                         />
                                     ))}
                             </TableBody>
@@ -130,6 +132,7 @@ const EventEnrolementList = ({ id }: Props) => {
                                             key={enrollmentChoice.id}
                                             enrollmentChoice={enrollmentChoice}
                                             handleChoiceChange={handleChoiceChange}
+                                            enrollmentState={enrollmentChoicesState}
                                         />
                                     ))}
                             </TableBody>
@@ -154,6 +157,7 @@ const EventEnrolementList = ({ id }: Props) => {
                                             key={enrollmentChoice.id}
                                             enrollmentChoice={enrollmentChoice}
                                             handleChoiceChange={handleChoiceChange}
+                                            enrollmentState={enrollmentChoicesState}
                                         />
                                     ))}
                             </TableBody>
