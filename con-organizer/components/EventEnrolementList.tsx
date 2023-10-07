@@ -1,11 +1,12 @@
 'use client';
 
-import { Box, Card, CardContent, Checkbox, Divider } from '@mui/material';
+import { Box, Card, CardContent, CardHeader, Checkbox, Divider } from '@mui/material';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAllEnrollmentChoices } from '@/lib/hooks/UseAllEnrollmentChoices';
 import { EnrollmentOptions, FirebaseCollections } from '@/models/enums';
 import { EnrollmentChoice } from '@/models/types';
+import EventEnrollment from './EventEnrollment';
 
 type Props = { id: string };
 
@@ -38,29 +39,17 @@ const EventEnrolementList = ({ id }: Props) => {
 
     return (
         <Card>
+            <CardHeader title='Veldig interessert' />
             <CardContent>
                 {enrollmentChoices
                     ?.toSorted((a, b) => a.choice - b.choice)
+                    .filter((enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.VeryInterested)
                     .map((enrollmentChoice) => (
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                p: 2,
-                                m: 1,
-                                borderRadius: 1,
-                                border: '1px solid #ccc',
-                                width: '100%',
-                            }}
+                        <EventEnrollment
                             key={enrollmentChoice.id}
-                        >
-                            <span>{EnrollmentOptions[enrollmentChoice.choice]}</span>
-                            <span>{enrollmentChoice.name}</span>
-                            <Checkbox
-                                checked={enrollmentChoice.isEnrolled}
-                                onChange={(event) => handleChoiceChange(event, enrollmentChoice)}
-                            />
-                        </Box>
+                            enrollmentChoice={enrollmentChoice}
+                            handleChoiceChange={handleChoiceChange}
+                        />
                     ))}
             </CardContent>
         </Card>
