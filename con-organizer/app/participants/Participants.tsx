@@ -140,7 +140,8 @@ const Participants = () => {
             <Box
                 sx={{
                     display: 'flex',
-                    justifyContent: 'space-between',
+                    justifyCo                    justifyContent: 'center',
+                    alignItems: 'center',ntent: 'space-between',
                     alignItems: 'center',
                     marginBottom: '1em',
                 }}

@@ -1,6 +1,19 @@
 'use client';
 
-import { Box, Card, CardContent, CardHeader, Checkbox, Divider } from '@mui/material';
+import { useEffect, useState } from 'react';
+import {
+    Box,
+    Card,
+    CardContent,
+    CardHeader,
+    Divider,
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableRow,
+} from '@mui/material';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAllEnrollmentChoices } from '@/lib/hooks/UseAllEnrollmentChoices';
@@ -13,7 +26,14 @@ type Props = { id: string };
 const EventEnrolementList = ({ id }: Props) => {
     const { enrollmentChoices, loadingEnrollmentChoices } = useAllEnrollmentChoices(id || '');
 
-    console.log(enrollmentChoices);
+    const [enrollmentChoicesState, setEnrollmentChoicesState] = useState<EnrollmentChoice[]>([]);
+
+    useEffect(() => {
+        if (enrollmentChoices) {
+            setEnrollmentChoicesState(enrollmentChoices);
+            console.log(enrollmentChoices);
+        }
+    }, [enrollmentChoices]);
 
     const handleChoiceChange = (event: React.ChangeEvent<HTMLInputElement>, enrollmentChoice: EnrollmentChoice) => {
         console.log(event.target.checked, enrollmentChoice);
@@ -38,65 +58,110 @@ const EventEnrolementList = ({ id }: Props) => {
     }
 
     return (
-        <>
-        <Card>
-            <CardHeader title='Veldig interessert' />
-            <CardContent>
-                {enrollmentChoices
-                    ?.toSorted((a, b) => a.choice - b.choice)
-                    .filter((enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.VeryInterested)
-                    .map((enrollmentChoice) => (
-                        <EventEnrollment
-                        key={enrollmentChoice.id}
-                        enrollmentChoice={enrollmentChoice}
-                        handleChoiceChange={handleChoiceChange}
-                        />
-                        ))}
-            </CardContent>
-        </Card><Card>
-            <CardHeader title='Ganske interessert' />
-            <CardContent>
-                {enrollmentChoices
-                    ?.toSorted((a, b) => a.choice - b.choice)
-                    .filter((enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.Interested)
-                    .map((enrollmentChoice) => (
-                        <EventEnrollment
-                        key={enrollmentChoice.id}
-                        enrollmentChoice={enrollmentChoice}
-                        handleChoiceChange={handleChoiceChange}
-                        />
-                        ))}
-            </CardContent>
-        </Card><Card>
-            <CardHeader title='Litt interessert' />
-            <CardContent>
-                {enrollmentChoices
-                    ?.toSorted((a, b) => a.choice - b.choice)
-                    .filter((enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.IfIHaveTo)
-                    .map((enrollmentChoice) => (
-                        <EventEnrollment
-                        key={enrollmentChoice.id}
-                        enrollmentChoice={enrollmentChoice}
-                        handleChoiceChange={handleChoiceChange}
-                        />
-                        ))}
-            </CardContent>
-        </Card><Card>
-            <CardHeader title='Ikke interessert' />
-            <CardContent>
-                {enrollmentChoices
-                    ?.toSorted((a, b) => a.choice - b.choice)
-                    .filter((enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.NotInterested)
-                    .map((enrollmentChoice) => (
-                        <EventEnrollment
-                        key={enrollmentChoice.id}
-                        enrollmentChoice={enrollmentChoice}
-                        handleChoiceChange={handleChoiceChange}
-                        />
-                        ))}
-            </CardContent>
-        </Card>
-                        </>
+        <Box
+        sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '1rem',
+            
+            
+        }}
+        >
+            <Card>
+                <CardHeader title="Veldig interessert" />
+                <CardContent>
+                    <TableContainer component={Paper}>
+                        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                            <TableBody>
+                                {enrollmentChoicesState
+                                    ?.toSorted((a, b) => a.choice - b.choice)
+                                    .filter(
+                                        (enrollmentChoice) =>
+                                            enrollmentChoice.choice === EnrollmentOptions.VeryInterested
+                                    )
+                                    .map((enrollmentChoice) => (
+                                        <EventEnrollment
+                                            key={enrollmentChoice.id}
+                                            enrollmentChoice={enrollmentChoice}
+                                            handleChoiceChange={handleChoiceChange}
+                                        />
+                                    ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader title="Ganske interessert" />
+                <CardContent>
+                    <TableContainer component={Paper}>
+                        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                            <TableBody>
+                                {enrollmentChoicesState
+                                    ?.toSorted((a, b) => a.choice - b.choice)
+                                    .filter(
+                                        (enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.Interested
+                                    )
+                                    .map((enrollmentChoice) => (
+                                        <EventEnrollment
+                                            key={enrollmentChoice.id}
+                                            enrollmentChoice={enrollmentChoice}
+                                            handleChoiceChange={handleChoiceChange}
+                                        />
+                                    ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader title="Litt interessert" />
+                <CardContent>
+                    <TableContainer component={Paper}>
+                        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                            <TableBody>
+                                {enrollmentChoicesState
+                                    ?.toSorted((a, b) => a.choice - b.choice)
+                                    .filter(
+                                        (enrollmentChoice) => enrollmentChoice.choice === EnrollmentOptions.IfIHaveTo
+                                    )
+                                    .map((enrollmentChoice) => (
+                                        <EventEnrollment
+                                            key={enrollmentChoice.id}
+                                            enrollmentChoice={enrollmentChoice}
+                                            handleChoiceChange={handleChoiceChange}
+                                        />
+                                    ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </CardContent>
+            </Card>
+            <Card>
+                <CardHeader title="Ikke interessert" />
+                <CardContent>
+                    <TableContainer component={Paper}>
+                        <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                            <TableBody>
+                                {enrollmentChoicesState
+                                    ?.toSorted((a, b) => a.choice - b.choice)
+                                    .filter(
+                                        (enrollmentChoice) =>
+                                            enrollmentChoice.choice === EnrollmentOptions.NotInterested
+                                    )
+                                    .map((enrollmentChoice) => (
+                                        <EventEnrollment
+                                            key={enrollmentChoice.id}
+                                            enrollmentChoice={enrollmentChoice}
+                                            handleChoiceChange={handleChoiceChange}
+                                        />
+                                    ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                </CardContent>
+            </Card>
+        </Box>
     );
 };
 

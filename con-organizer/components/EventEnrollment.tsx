@@ -1,8 +1,6 @@
-import { Box, Checkbox } from "@mui/material";
-import { EnrollmentOptions } from "@/models/enums";
-import { EnrollmentChoice } from "@/models/types";
-
-
+import WarningIcon from '@mui/icons-material/Warning';
+import { Box, Checkbox, TableCell, TableRow, Tooltip } from '@mui/material';
+import { EnrollmentChoice } from '@/models/types';
 
 type Props = {
     enrollmentChoice: EnrollmentChoice;
@@ -11,25 +9,36 @@ type Props = {
 
 const EventEnrollment = ({ enrollmentChoice, handleChoiceChange }: Props) => {
     return (
-        <Box
-            sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                p: 2,
-                m: 1,
-                borderRadius: 1,
-                border: '1px solid #ccc',
-                width: '100%',
-            }}
-            key={enrollmentChoice.id}
-        >
-            <span>{enrollmentChoice.name}</span>
-            <Checkbox
-                checked={enrollmentChoice.isEnrolled}
-                onChange={(event) => handleChoiceChange(event, enrollmentChoice)}
-            />
-            {enrollmentChoice.hasGotFirstChoice && <span>Har fått førstevalg</span>}
-        </Box>
+        <TableRow key={enrollmentChoice.id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+            <TableCell align="right">{enrollmentChoice.name}</TableCell>
+            <TableCell align="right"
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    minWidth: '200px',
+                }}
+            >
+                <span>Fått plass:</span>
+                
+                <Checkbox
+                    checked={enrollmentChoice.isEnrolled}
+                    onChange={(event) => handleChoiceChange(event, enrollmentChoice)}
+                />
+            </TableCell>
+            <TableCell align="right">
+                {enrollmentChoice.ticketType && <span>{enrollmentChoice.ticketType}</span>}
+            </TableCell>
+            <TableCell align="right">
+                {enrollmentChoice.hasGotFirstChoice && (
+                    <Tooltip title="Har fått førstevalg">
+                        <WarningIcon sx={{ color: 'warning.main', mr: 1 }} />
+                    </Tooltip>
+                )}
+            </TableCell>
+
+            <span></span>
+        </TableRow>
     );
 };
 
