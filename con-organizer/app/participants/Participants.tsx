@@ -150,7 +150,7 @@ const Participants = () => {
                     variant="outlined"
                     onClick={(e) => generateEnrollmentList(e, Pool.SaturdayMorning)}
                 >
-                    Hent Puljedata for fredag kveld
+                    Hent Puljedata for lørdag morgen
                 </LoadingButton>
             </Box>
             <Box sx={newParticipants?.length > 0 ? { display: 'block' } : { display: 'none' }}>

@@ -28,6 +28,7 @@ const EventEnrollment = ({ enrollmentChoice, handleChoiceChange }: Props) => {
                 checked={enrollmentChoice.isEnrolled}
                 onChange={(event) => handleChoiceChange(event, enrollmentChoice)}
             />
+            {enrollmentChoice.hasGotFirstChoice && <span>Har fått førstevalg</span>}
         </Box>
     );
 };

@@ -3,7 +3,6 @@ import { adminDb } from '@/lib/firebaseAdmin';
 import { FirebaseCollections, Pool } from '@/models/enums';
 import { EnrollmentChoice } from '@/models/types';
 
-
 type Payload = {
     pool: Pool;
 };
@@ -13,7 +12,11 @@ export const POST = async (request: NextRequest) => {
 
     console.log(payload, 'payload');
 
-    const EnrollmentChoices: EnrollmentChoice[] = await getEnrollmentChoices();
+    const EnrollmentChoices: EnrollmentChoice[] = await getAllEventParticipants();
+
+    const previousEnrollmentChoices = await getAllEnrollmentChoices();
+
+    console.log(previousEnrollmentChoices);
 
     //console.log(EnrollmentChoices, 'EnrollmentChoices');
 
@@ -30,9 +33,7 @@ export const POST = async (request: NextRequest) => {
     events
         .filter((event) => event.pool === payload.pool)
         .map(async (event) => {
-            EnrollmentChoices.filter(
-                (enrollmentChoice) => enrollmentChoice.eventId === event.id
-            )
+            EnrollmentChoices.filter((enrollmentChoice) => enrollmentChoice.eventId === event.id)
                 .filter((enrollmentChoice) =>
                     userSettings.find((userSetting) => userSetting.id === enrollmentChoice.userId)
                 )
@@ -53,7 +54,22 @@ export const POST = async (request: NextRequest) => {
 
                     enrollmentChoice.eventTitle = event.title;
 
-                    console.log(enrollmentChoice, 'enrollmentChoice');
+                    enrollmentChoice.hasGotFirstChoice =
+                        previousEnrollmentChoices.find(
+                            (previousEnrollmentChoice) =>
+                                previousEnrollmentChoice.participantId === enrollmentChoice.participantId &&
+                                previousEnrollmentChoice.isEnrolled === true
+                        ) ? true : false;
+
+                    enrollmentChoice.firstChoiceEventTitle =
+                        previousEnrollmentChoices.find(
+                            (previousEnrollmentChoice) =>
+                                previousEnrollmentChoice.participantId === enrollmentChoice.participantId &&
+                                previousEnrollmentChoice.isEnrolled === true
+                        )?.firstChoiceEventTitle;
+
+                    if (enrollmentChoice.hasGotFirstChoice)
+                        console.log('hasGotFirstChoice', enrollmentChoice);
 
                     await adminDb
                         .collection(
@@ -67,7 +83,7 @@ export const POST = async (request: NextRequest) => {
     return NextResponse.json({}, { status: 200 });
 };
 
-async function getEnrollmentChoices() {
+async function getAllEventParticipants() {
     const EnrollmentChoices: EnrollmentChoice[] = [];
 
     const eventEnrollmentsRef = await adminDb.collectionGroup(FirebaseCollections.EventParticipants).get();
@@ -84,6 +100,18 @@ async function getEnrollmentChoices() {
         EnrollmentChoices.push(data as EnrollmentChoice);
     });
     return EnrollmentChoices;
+}
+
+async function getAllEnrollmentChoices() {
+    const EnrollmentChoices: EnrollmentChoice[] = [];
+
+    const eventEnrollmentsRef = await adminDb.collectionGroup(FirebaseCollections.EnrollmentChoices).get();
+
+    return eventEnrollmentsRef.docs.map((doc) => {
+        const data = doc.data();
+        data.id = doc.id;
+        return data;
+    });
 }
 
 async function getParticipants() {
