@@ -30,7 +30,7 @@ export const POST = async (request: NextRequest) => {
     events
         .filter((event) => event.pool === payload.pool)
         .map(async (event) => {
-            const enrollmentChoicesInEvent = EnrollmentChoices.filter(
+            EnrollmentChoices.filter(
                 (enrollmentChoice) => enrollmentChoice.eventId === event.id
             )
                 .filter((enrollmentChoice) =>
@@ -50,6 +50,8 @@ export const POST = async (request: NextRequest) => {
 
                     enrollmentChoice.firstChoiceEventTitle =
                         events?.find((event) => event?.id === enrollmentChoice?.firstChoiceEventId)?.title ?? '';
+
+                    enrollmentChoice.eventTitle = event.title;
 
                     console.log(enrollmentChoice, 'enrollmentChoice');
 

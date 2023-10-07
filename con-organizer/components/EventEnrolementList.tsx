@@ -1,8 +1,11 @@
 'use client';
 
 import { Box, Card, CardContent, Checkbox, Divider } from '@mui/material';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 import { useAllEnrollmentChoices } from '@/lib/hooks/UseAllEnrollmentChoices';
-import { EnrollmentOptions } from '@/models/enums';
+import { EnrollmentOptions, FirebaseCollections } from '@/models/enums';
+import { EnrollmentChoice } from '@/models/types';
 
 type Props = { id: string };
 
@@ -10,6 +13,28 @@ const EventEnrolementList = ({ id }: Props) => {
     const { enrollmentChoices, loadingEnrollmentChoices } = useAllEnrollmentChoices(id || '');
 
     console.log(enrollmentChoices);
+
+    const handleChoiceChange = (event: React.ChangeEvent<HTMLInputElement>, enrollmentChoice: EnrollmentChoice) => {
+        console.log(event.target.checked, enrollmentChoice);
+        updateEnrollmentChoiceOnUser(enrollmentChoice, event.target.checked);
+    };
+
+    async function updateEnrollmentChoiceOnUser(enrollmentChoice: EnrollmentChoice, enroll: boolean) {
+        const setEnrollmentRef = doc(
+            db,
+            `${FirebaseCollections.events}/${enrollmentChoice.eventId}`,
+            `/${FirebaseCollections.EnrollmentChoices}/${enrollmentChoice.participantId}`
+        );
+        try {
+            await updateDoc(setEnrollmentRef, {
+                isEnrolled: enroll,
+                enrolledEventId: enroll ? enrollmentChoice.eventId : '',
+                enrolledEventTitle: enroll ? enrollmentChoice.eventTitle : '',
+            });
+        } catch (e) {
+            console.error(e);
+        }
+    }
 
     return (
         <Card>
@@ -31,7 +56,10 @@ const EventEnrolementList = ({ id }: Props) => {
                         >
                             <span>{EnrollmentOptions[enrollmentChoice.choice]}</span>
                             <span>{enrollmentChoice.name}</span>
-                            <Checkbox value={enrollmentChoice.isEnrolled} />
+                            <Checkbox
+                                checked={enrollmentChoice.isEnrolled}
+                                onChange={(event) => handleChoiceChange(event, enrollmentChoice)}
+                            />
                         </Box>
                     ))}
             </CardContent>

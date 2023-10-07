@@ -81,9 +81,12 @@ export type EnrollmentChoice = {
     participantId: string;
     choice: number;
     eventId: string;
+    eventTitle: string;
     userId: string;
     name: string;
     isEnrolled: boolean;
+    enrolledEventId: string;
+    enrolledEventTitle: string;
     hasGotFirstChoice: boolean;
     firstChoiceEventId: string;
     firstChoiceEventTitle: string;

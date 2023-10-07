@@ -148,7 +148,7 @@ const Participants = () => {
                 <LoadingButton
                     loading={loadingGenerateEnrollmentList}
                     variant="outlined"
-                    onClick={(e) => generateEnrollmentList(e, Pool.FridayEvening)}
+                    onClick={(e) => generateEnrollmentList(e, Pool.SaturdayMorning)}
                 >
                     Hent Puljedata for fredag kveld
                 </LoadingButton>
