@@ -42,6 +42,9 @@ export const POST = async (request: NextRequest) => {
                 email: paidUser?.crm.email || '',
                 eventTicket: paidUser,
                 orderId: paidUser?.order_id || 0,
+                hasGotFirstChoice: false,
+                firstChoiceEventId: '',
+                firstChoiceEventTitle: '',
             };
 
             console.log('adding user settings to ', userRecord.uid);
@@ -77,6 +80,9 @@ export const POST = async (request: NextRequest) => {
                         email: secondaryParticipant.crm.email || '',
                         eventTicket: secondaryParticipant,
                         orderId: secondaryParticipant.order_id || 0,
+                        hasGotFirstChoice: false,
+                        firstChoiceEventId: '',
+                        firstChoiceEventTitle: '',
                     };
                     console.log('adding secondary participant', userRecord.uid, 'setting with', secondaryParticipantDocument);
                     await adminDb
