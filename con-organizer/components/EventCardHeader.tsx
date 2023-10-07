@@ -53,8 +53,7 @@ const EventCardHeader = ({ conEvent }: Props) => {
                     })`,
                     backgroundSize: 'cover',
                     backgroundBlendMode: 'multiply',
-                    backgroundPositionY: 'bottom',
-                    backgroundColor: '#ccc',
+                    backgroundColor: '#999',
                     display: 'flex',
                     alignItems: 'space-between',
                     flexDirection: 'column',
@@ -218,7 +217,8 @@ const EventCardHeader = ({ conEvent }: Props) => {
                         ⬤ Veldig interessert
                     </Typography>
                 ) : null}
- */}            </Box>
+ */}{' '}
+            </Box>
         </>
     );
 };
