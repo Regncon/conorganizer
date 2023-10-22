@@ -4,7 +4,7 @@ import { Alert, Box, CardMedia, Typography } from '@mui/material';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
 import { GameType } from '@/models/enums';
 import { ConEvent } from '@/models/types';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '../AuthProvider/AuthProvider';
 type Props = {
     conEvent: ConEvent | undefined;
 };
@@ -94,7 +94,7 @@ const EventHeader = ({ conEvent }: Props) => {
                         {/* <span>{EnrollmentChoice[enrollment?.choice ?? 0]} </span> */}
                     </Box>
                     <Box marginLeft="auto">
- {/*                        {!enrollment?.choice ? (
+                        {/*                        {!enrollment?.choice ? (
                             <Typography variant="caption" color="lightgray">
                                 ⬤ Ikke p&aring;meldt
                             </Typography>

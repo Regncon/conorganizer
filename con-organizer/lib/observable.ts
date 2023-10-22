@@ -1,34 +1,11 @@
-import { collectionData, docData } from 'rxfire/firestore';
-import {
-    allUserSettingsRef,
-    enrollmentChoicesRef,
-    eventRef,
-    eventsRef,
-    participantEnrollmentsRef,
-    participantRef,
-    participantsRef,
-    userSettingsRef,
-} from './firebase';
+import { BehaviorSubject } from 'rxjs';
 
-export const allEvents$ = collectionData(eventsRef, { idField: 'id' });
-
-export const allUserSettings$ = collectionData(allUserSettingsRef, { idField: 'id' });
-export function userSettings$(userId: string) {
-    return docData(userSettingsRef(userId), { idField: 'id' });
-}
-
-export function participantEnrollments$(eventId: string, userId: string, participantId: string) {
-    return docData(participantEnrollmentsRef(eventId, userId, participantId), { idField: 'id' });
-}
-
-export function allParticipants$(userId: string) {
-    return collectionData(participantsRef(userId), { idField: 'id' });
-}
-
-export function singleParticipant$(userId: string, participantId: string) {
-    return docData(participantRef(userId, participantId), { idField: 'id' });
-}
-
-export function allEnrollmentChoices$(eventId: string) {
-    return collectionData(enrollmentChoicesRef(eventId), { idField: 'id' });
-}
+const displayPool$ = new BehaviorSubject(false);
+const childFriendly$ = new BehaviorSubject(false);
+const possiblyEnglish$ = new BehaviorSubject(false);
+const volunteersPossible$ = new BehaviorSubject(false);
+const beginnerFriendly$ = new BehaviorSubject(false);
+// Game types
+const roleplaying$ = new BehaviorSubject(false);
+const boardgame$ = new BehaviorSubject(false);
+const other$ = new BehaviorSubject(false);

@@ -1,7 +1,7 @@
 'use client';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth } from '../../lib/firebase';
 
 export const AuthContext = createContext<User | null>(null);
 type Props = {

@@ -4,7 +4,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import CloseIcon from '@mui/icons-material/Close';
 import { Box, Dialog, Divider, IconButton } from '@mui/material';
 import { ConEvent } from '@/models/types';
-import EventBoundary from './ErrorBoundaries/EventBoundary';
+import EventBoundary from '../ErrorBoundaries/EventBoundary';
 import EditUi from './EditUi';
 import EventUi from './EventUi';
 

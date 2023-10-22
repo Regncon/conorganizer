@@ -13,11 +13,11 @@ import Box from '@mui/material/Box';
 import { styled } from '@mui/material/styles';
 import { auth } from '@/lib/firebase';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
-import { useAuth } from './AuthProvider';
-import EditDialog from './EditDialog';
-import ForgotPassword from './ForgotPassword';
-import Login from './Login';
-import Signup from './Signup';
+import { useAuth } from '../AuthProvider/AuthProvider';
+import EditDialog from '../Event/EditDialog';
+import ForgotPassword from '../Login/ForgotPassword';
+import Login from '../Login/Login';
+import Signup from '../Login/Signup';
 
 const MainNavigator = () => {
     const [value, setValue] = useState(0);

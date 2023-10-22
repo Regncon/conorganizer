@@ -1,6 +1,6 @@
 'use client';
 
-import MainNavigator from '@/components/MainNavigator';
+import MainNavigator from '@/components/Navigation/MainNavigator';
 import Participants from './Participants';
 
 type Props = {

@@ -1,19 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-    Box,
-    Card,
-    CardContent,
-    CardHeader,
-    Divider,
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableRow,
-} from '@mui/material';
+import { Box, Card, CardContent, CardHeader, Paper, Table, TableBody, TableContainer } from '@mui/material';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAllEnrollmentChoices } from '@/lib/hooks/UseAllEnrollmentChoices';
@@ -59,13 +47,11 @@ const EventEnrolementList = ({ id }: Props) => {
 
     return (
         <Box
-        sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '1rem',
-
-            
-        }}
+            sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+            }}
         >
             <Card>
                 <CardHeader title="Veldig interessert" />

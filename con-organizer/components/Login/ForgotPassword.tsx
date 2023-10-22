@@ -6,13 +6,16 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth } from '../../lib/firebase';
 
-const ForgotPassword = (props: any) => {
+type Props = {
+    setChoice: (choice: string) => void;
+};
+
+const ForgotPassword = ({ setChoice }: Props) => {
     const [email, setEmail] = useState('');
     const [success, setSuccess] = useState('');
     const [error, setError] = useState('');
-    const { setChoice } = props;
     const resetPwd = () => {
         sendPasswordResetEmail(auth, email)
             .then(() => {

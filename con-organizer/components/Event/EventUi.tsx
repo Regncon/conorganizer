@@ -11,7 +11,7 @@ import Typography from '@mui/material/Typography';
 import parse from 'html-react-parser';
 import { useAllParticipants } from '@/lib/hooks/UseAllParticipants';
 import { ConEvent, Participant } from '@/models/types';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '../AuthProvider/AuthProvider';
 import EventHeader from './EventHeader';
 import EventPreference from './EventPreference';
 

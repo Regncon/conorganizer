@@ -2,11 +2,11 @@
 import { useEffect, useState } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { Box, Button, Card, CardActions } from '@mui/material';
-import { useAuth } from '@/components/AuthProvider';
-import EditDialog from '@/components/EditDialog';
+import { useAuth } from '@/components/AuthProvider/AuthProvider';
 import EventBoundary from '@/components/ErrorBoundaries/EventBoundary';
-import EventEnrolementList from '@/components/EventEnrolementList';
-import EventUi from '@/components/EventUi';
+import EditDialog from '@/components/Event/EditDialog';
+import EventEnrolementList from '@/components/Event/EventEnrolementList';
+import EventUi from '@/components/Event/EventUi';
 import { useSingleEvents } from '@/lib/hooks/UseSingleEvent';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 

@@ -1,13 +1,7 @@
-import * as React from 'react';
 import { Box } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import { Typography } from '@/lib/mui';
 
 const AppHeader = () => {
-    const theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
-    
     return (
         <Box sx={{ p: '4em 0 4em 2em', margin: '0 auto', maxWidth: '900px' }}>
             <header className="AppHeader">

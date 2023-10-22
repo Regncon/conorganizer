@@ -9,11 +9,11 @@ import { useSearchParams } from 'next/navigation';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 import { GameType, Pool } from '@/models/enums';
-import { Box, Chip, Typography } from '../lib/mui';
-import EventCardBoundary from './ErrorBoundaries/EventCardBoundary';
-import EventCard from './UI/Event/EventCard';
-import { useAuth } from './AuthProvider';
-import PoolSelector from './PoolSelector';
+import { Box, Chip, Typography } from '../../lib/mui';
+import { useAuth } from '../AuthProvider/AuthProvider';
+import EventCardBoundary from '../ErrorBoundaries/EventCardBoundary';
+import EventCard from '../Event/EventCard';
+import PoolSelector from '../Navigation/PoolSelector';
 
 const EventList = () => {
     const user = useAuth();

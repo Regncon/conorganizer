@@ -2,7 +2,7 @@ import { MouseEvent, useEffect, useState } from 'react';
 import { LoadingButton } from '@mui/lab';
 import Box from '@mui/material/Box';
 import { DataGrid, GridColDef } from '@mui/x-data-grid';
-import { useAuth } from '@/components/AuthProvider';
+import { useAuth } from '@/components/AuthProvider/AuthProvider';
 import { useAllParticipants } from '@/lib/hooks/UseAllParticipants';
 import { useAllUserSettings } from '@/lib/hooks/UseAllUserSettings';
 import { useUserSettings } from '@/lib/hooks/UseUserSettings';
@@ -90,12 +90,15 @@ const Participants = () => {
     };
 
     const [loadingGenerateEnrollmentList, setLoadingGenerateEnrollmentList] = useState<boolean>(false);
-    const generateEnrollmentList = async (e: MouseEvent<HTMLButtonElement>, pool: Pool ) => {
+    const generateEnrollmentList = async (e: MouseEvent<HTMLButtonElement>, pool: Pool) => {
         e.preventDefault();
         setLoadingGenerateEnrollmentList(true);
 
         try {
-            const result = await fetch('/api/generateEnrollmentList', { method: 'POST', body: JSON.stringify({ pool }) });
+            const result = await fetch('/api/generateEnrollmentList', {
+                method: 'POST',
+                body: JSON.stringify({ pool }),
+            });
             //const res = (await result.json());
         } catch (error) {
             console.log(error);
@@ -103,7 +106,6 @@ const Participants = () => {
 
         setLoadingGenerateEnrollmentList(false);
     };
-
 
     useEffect(() => {
         console.log(newParticipants, 'newParticipants array');

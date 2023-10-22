@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
-import EventList from '@/components/EventList';
-import MainNavigator from '@/components/MainNavigator';
+import EventList from '@/components/EventList/EventList';
+import MainNavigator from '@/components/Navigation/MainNavigator';
 
 export default function Home() {
     return (

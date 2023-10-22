@@ -7,9 +7,9 @@ import { db } from '@/lib/firebase';
 import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
 import { EnrollmentOptions } from '@/models/enums';
 import { ConEvent, Participant } from '@/models/types';
-import { useAuth } from './AuthProvider';
+import { useAuth } from '../AuthProvider/AuthProvider';
+import Login from '../Login/Login';
 import EnrollmentSelector from './EnrollmentSelector';
-import Login from './Login';
 
 type Props = {
     conEvent: ConEvent | undefined;

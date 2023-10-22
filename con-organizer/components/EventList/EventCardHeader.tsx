@@ -2,17 +2,13 @@ import { useEffect, useState } from 'react';
 import { faChessKing, faChild, faClock, faDiceD20, faPalette, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Box, Tooltip, Typography } from '@mui/material';
-import { useSingleEnrollment } from '@/lib/hooks/UseEnrollments';
 import { GameType } from '@/models/enums';
 import { ConEvent } from '@/models/types';
-import { useAuth } from './AuthProvider';
 type Props = {
     conEvent: ConEvent | undefined;
     listView?: boolean;
 };
 const EventCardHeader = ({ conEvent }: Props) => {
-    const user = useAuth();
-    const { enrollments: enrollment } = useSingleEnrollment(conEvent?.id || '', user?.uid || '');
     const [childFriendly, setChildFriendly] = useState<boolean>(conEvent?.childFriendly || false);
     const [possiblyEnglish, setPossiblyEnglish] = useState(conEvent?.possiblyEnglish || false);
     const [adultsOnly, setAdultsOnly] = useState(conEvent?.adultsOnly || false);
