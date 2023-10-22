@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react';
+import { collection } from 'firebase/firestore';
+import { collectionData } from 'rxfire/firestore';
 import { Subscription } from 'rxjs';
 import { Participant } from '../../models/types';
-import { allParticipants$ } from '../observable';
-
+import { db } from '../firebase';
+export function allParticipants$(userId: string) {
+    return collectionData(participantsRef(userId), { idField: 'id' });
+}
+export const participantsRef = (userId: string) => collection(db, `usersettings/${userId}/participants/`);
 export const useAllParticipants = (userId?: string) => {
     const [participants, setParticipants] = useState<Participant[]>();
     const [loadingParticipants, setLoadingParticipants] = useState<boolean>(true);

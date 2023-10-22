@@ -3,7 +3,7 @@
 import { ErrorBoundary } from 'react-error-boundary';
 import { Box, Card, CardContent, CardHeader } from '@mui/material';
 import EventCardBoundary from '@/components/ErrorBoundaries/EventCardBoundary';
-import EventCard from '@/components/EventCard';
+import Card from '@/components/UI/Event/Card';
 import { useAllEvents } from '@/lib/hooks/UseAllEvents';
 import { Pool } from '@/models/enums';
 
@@ -30,7 +30,7 @@ const BigScreen = () => {
                     ?.filter((conEvent) => conEvent.pool === Pool.FridayEvening)
                     .map((conEvent) => (
                         <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
-                            <EventCard conEvent={conEvent} />
+                            <Card conEvent={conEvent} />
                         </ErrorBoundary>
                     ))}
             </Box>
@@ -49,7 +49,7 @@ const BigScreen = () => {
                     ?.filter((conEvent) => conEvent.pool === Pool.SaturdayMorning)
                     .map((conEvent) => (
                         <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
-                            <EventCard conEvent={conEvent} />
+                            <Card conEvent={conEvent} />
                         </ErrorBoundary>
                     ))}
             </Box>
@@ -70,7 +70,7 @@ const BigScreen = () => {
                     ?.filter((conEvent) => conEvent.pool === Pool.SaturdayEvening)
                     .map((conEvent) => (
                         <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
-                            <EventCard conEvent={conEvent} />
+                            <Card conEvent={conEvent} />
                         </ErrorBoundary>
                     ))}
             </Box>
@@ -89,7 +89,7 @@ const BigScreen = () => {
                     ?.filter((conEvent) => conEvent.pool === Pool.SundayMorning)
                     .map((conEvent) => (
                         <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
-                            <EventCard conEvent={conEvent} />
+                            <Card conEvent={conEvent} />
                         </ErrorBoundary>
                     ))}
 

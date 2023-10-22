@@ -1,21 +1,21 @@
-import { Card } from '@mui/material';
+import { Card as MUICard } from '@mui/material';
 import { Route } from 'next';
 import Link from 'next/link';
 import { ConEvent } from '@/models/types';
-import EventCardHeader from './EventCardHeader';
+import EventCardHeader from '../../EventCardHeader';
 
 type Props = {
     conEvent: ConEvent;
 };
 
-const EventCard = ({ conEvent }: Props) => {
+const Card = ({ conEvent }: Props) => {
     // if (conEvent.id === '16ezgmkATFy0afYRw4d7') {
     //     throw new Error(
     //         'lorem ipsum dolor sit amet, consectetur adip lorem ipsum dolor sit amet. lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet. lorem dolor sit am et. Lorem ipsum dolor sit am et. lorem dolor sit am et. Lorem ipsum dolor, lorem ipsum dolor sit am et. Lorem ipsum'
     //     );
     // }
     return (
-        <Card
+        <MUICard
             key={conEvent.id}
             component={Link}
             href={`/event/${conEvent.id}` as Route}
@@ -29,8 +29,8 @@ const EventCard = ({ conEvent }: Props) => {
             }}
         >
             <EventCardHeader conEvent={conEvent} />
-        </Card>
+        </MUICard>
     );
 };
 
-export default EventCard;
+export default Card;

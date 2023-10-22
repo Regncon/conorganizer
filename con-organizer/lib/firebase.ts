@@ -32,8 +32,9 @@ export const eventsRef = collection(db, 'events');
 export const eventRef = (id: string) => doc(db, `events/${id}`);
 export const allUserSettingsRef = collection(db, 'usersettings');
 export const userSettingsRef = (userId: string) => doc(db, `usersettings/${userId}`);
-export const participantEnrollmentsRef = (eventId: string, userId: string, participantId: string ) =>
-    doc(db, `events/${eventId}`, `/enrollments/${userId}`,`/eventParticipants/${participantId}`);
-export const participantsRef = (userId: string ) =>  collection(db, `usersettings/${userId}/participants/`);
-export const participantRef = (userId: string, participantId: string ) => doc(db, `usersettings/${userId}/participants/${participantId}`);
-export const enrollmentChoicesRef = (eventId: string ) => collection(db, `events/${eventId}/enrollmentChoices/`);
+export const participantEnrollmentsRef = (eventId: string, userId: string, participantId: string) =>
+    doc(db, `events/${eventId}`, `/enrollments/${userId}`, `/eventParticipants/${participantId}`);
+export const participantsRef = (userId: string) => collection(db, `usersettings/${userId}/participants/`);
+export const participantRef = (userId: string, participantId: string) =>
+    doc(db, `usersettings/${userId}/participants/${participantId}`);
+export const enrollmentChoicesRef = (eventId: string) => collection(db, `events/${eventId}/enrollmentChoices/`);

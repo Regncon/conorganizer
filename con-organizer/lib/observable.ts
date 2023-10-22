@@ -11,9 +11,6 @@ import {
 } from './firebase';
 
 export const allEvents$ = collectionData(eventsRef, { idField: 'id' });
-export function singleEvent$(id: string) {
-    return docData(eventRef(id), { idField: 'id' });
-}
 
 export const allUserSettings$ = collectionData(allUserSettingsRef, { idField: 'id' });
 export function userSettings$(userId: string) {
