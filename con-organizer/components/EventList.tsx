@@ -11,7 +11,7 @@ import { useUserSettings } from '@/lib/hooks/UseUserSettings';
 import { GameType, Pool } from '@/models/enums';
 import { Box, Chip, Typography } from '../lib/mui';
 import EventCardBoundary from './ErrorBoundaries/EventCardBoundary';
-import Card from './UI/Event/Card';
+import EventCard from './UI/Event/EventCard';
 import { useAuth } from './AuthProvider';
 import PoolSelector from './PoolSelector';
 
@@ -166,7 +166,7 @@ const EventList = () => {
                     .sort((a, b) => a.sortingIndex - b.sortingIndex)
                     .map((conEvent) => (
                         <ErrorBoundary FallbackComponent={EventCardBoundary} key={conEvent.id}>
-                            <Card conEvent={conEvent} />
+                            <EventCard conEvent={conEvent} />
                         </ErrorBoundary>
                     ))}
             </Box>
