@@ -14,7 +14,6 @@ type Props = {
 
 const Filters = ({ displayPool }: Props) => {
     const { events } = useAllEvents();
-    console.log(displayPool);
     const [showFilters, setShowFilters] = useState(false);
 
     const [childFriendly, setChildFriendly] = useState<boolean>(false);
