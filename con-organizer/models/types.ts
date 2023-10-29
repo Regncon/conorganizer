@@ -115,3 +115,5 @@ export type CrmJson = {
     };
     errors: Error;
 };
+
+export type CustomEventTypeFilteredEvent = { filteredEvents: ConEvent[] };

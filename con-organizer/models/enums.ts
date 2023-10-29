@@ -33,3 +33,7 @@ export enum GetLoginInfoResponse {
     Created = 'created',
     DontExist = "Don't exist",
 }
+
+export enum CustomEventTypeNames {
+    FilterChanges = 'filterChanges',
+}
