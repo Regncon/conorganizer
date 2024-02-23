@@ -9,5 +9,9 @@
 	"endOfLine": "lf",
 	"experimentalTernaries": true,
 	"semi": true,
-	"singleQuote": true
+	"singleQuote": true,
+	"proseWrap": "always",
+	"htmlWhitespaceSensitivity": "css",
+	"jsxSingleQuote": false,
+	"bracketSameLine": false
 }
