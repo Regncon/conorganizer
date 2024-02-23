@@ -1,8 +1,8 @@
-import Container from '@mui/material/Container';
-import styles from './page.module.scss';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
 import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import styles from './page.module.scss';
 
 export default function Home() {
 	return (
