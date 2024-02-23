@@ -1,9 +1,13 @@
 {
+	"$schema": "https://json.schemastore.org/prettierrc.json",
 	"printWidth": 120,
 	"tabWidth": 4,
 	"useTabs": true,
-	"trailingComma": "all",
+	"trailingComma": "es5",
 	"bracketSpacing": true,
 	"arrowParens": "always",
-	"endOfLine": "lf"
+	"endOfLine": "lf",
+	"experimentalTernaries": true,
+	"semi": true,
+	"singleQuote": true
 }
