@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
-import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
-import { Inter } from 'next/font/google';
 import { CssBaseline, ThemeProvider } from '@mui/material';
-import { muiDark } from '@/lib/muiTheme';
+import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import { muiDark } from '$lib/muiTheme';
 
 const inter = Inter({ subsets: ['latin'] });
 
