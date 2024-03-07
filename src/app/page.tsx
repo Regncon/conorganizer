@@ -20,8 +20,6 @@ export default function Home() {
 				sx={{ display: 'grid', placeContent: 'center' }}
 				className={styles['main-test']}
 				elevation={1}
-				height={'20rem'}
-				width={'50rem'}
 			>
 			<img src="/placeholderlogo.png" alt="logo" />
 			<EventCardBig/>
