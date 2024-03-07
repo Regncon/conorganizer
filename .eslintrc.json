@@ -11,97 +11,27 @@
 		"browser": true,
 		"node": true
 	},
+	"extends": [
+		"eslint:recommended",
+		"plugin:@typescript-eslint/recommended",
+		"plugin:@typescript-eslint/recommended-requiring-type-checking",
+		"prettier",
+		"plugin:prettier/recommended"
+	],
+	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
 		"ecmaVersion": 2023,
 		"sourceType": "module",
 		"project": ["./tsconfig.json"]
 	},
-	"parser": "@typescript-eslint/parser",
-	"extends": [
-		"eslint:recommended",
-		"plugin:@typescript-eslint/recommended",
-		"plugin:@typescript-eslint/recommended-requiring-type-checking",
-		"plugin:react/recommended",
-		"plugin:react-hooks/recommended",
-		"plugin:react/jsx-runtime",
-		"prettier",
-		"plugin:prettier/recommended",
-		"next/core-web-vitals",
-		"plugin:next-recommended/recommended"
-	],
-	"plugins": ["@typescript-eslint", "prettier", "next-recommended", "react", "simple-import-sort", "unused-imports"],
+	"plugins": ["@typescript-eslint", "prettier"],
 	"rules": {
-		"simple-import-sort/imports": "warn",
-		"simple-import-sort/exports": "warn",
-		"unused-imports/no-unused-imports": "warn",
-		"@typescript-eslint/no-explicit-any": "warn",
-		"@typescript-eslint/no-unused-vars": "warn",
-		"max-len": [
-			"error",
-			{
-				"code": 120,
-				"ignoreStrings": true,
-				"ignoreComments": true,
-				"ignoreTrailingComments": true,
-				"ignoreUrls": true,
-				"ignoreTemplateLiterals": true,
-				"ignoreRegExpLiterals": true,
-				"tabWidth": 8
-			}
-		],
-		"eqeqeq": ["error", "always"],
-		"complexity": [
-			"error",
-			{
-				"max": 100
-			}
-		],
 		"no-var": "error",
-		"no-unused-vars": "off",
 		"prefer-const": "warn",
+		"eqeqeq": "error",
 		"class-methods-use-this": "warn",
 		"prettier/prettier": "error",
 		"no-eval": "error",
-		"no-multi-spaces": "error",
-		"next-recommended/require-use-client": "warn",
-		"next-recommended/unnecessarily-client-declaration": ["warn", { "autoFix": true }],
-		"next-recommended/async-component-no-hooks": "error",
-		"next-recommended/async-server-actions": "error",
-		"next-recommended/async-exported-server-actions": "error",
-		"next-recommended/export-server-actions-only": "warn"
-	},
-	"overrides": [
-		{
-			"files": ["*.js", "*.jsx", "*.ts", "*.tsx"],
-			"rules": {
-				"simple-import-sort/imports": [
-					"warn",
-					{
-						"groups": [
-							[
-								// Packages. `react` related packages come first.
-								"^react",
-								"^@?\\w",
-								// Internal packages.
-								"^(components|modules|utils)(/.*|$)",
-								// Side effect imports.
-								"^\\u0000",
-								// Parent imports. Put `..` last.
-								"^\\$?\\w",
-								"^\\.\\.(?!/?$)",
-								"^\\.\\./?$",
-								// Other relative imports. Put same-folder imports and `.` last.
-								"^\\./(?=.*/)(?!/?$)",
-								"^\\.(?!/?$)",
-								"^\\./?$",
-								// Style imports.
-								"^.+\\.s?css$",
-								"^.+\\.s?less$"
-							]
-						]
-					}
-				]
-			}
-		}
-	]
+		"no-multi-spaces": "error"
+	}
 }
