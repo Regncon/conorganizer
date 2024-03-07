@@ -1,3 +1,4 @@
+"use client"
 import { createTheme, ThemeOptions } from '@mui/material';
 import { EB_Garamond, Inter } from 'next/font/google';
 
