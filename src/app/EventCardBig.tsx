@@ -8,9 +8,16 @@ import { Card, CardContent, CardHeader } from '@mui/material';
 export default function EventCardBig() {
 	return (
 		<Card
-			sx={{ backgroundImage: 'url(/blekksprut.jpg)', height: '267px', width: '306px', backgroundSize: 'cover' }}
+			sx={{
+				backgroundImage: 'url(/blekksprut.jpg)',
+				maxHeight: '267px',
+				maxWidth: '306px',
+				height: '100%',
+				width: '100%',
+				backgroundSize: 'cover',
+			}}
 		>
-			<CardHeader title="Tentakkel" sx={{ height: '141px',alignItems:"flex-end" }} />
+			<CardHeader title="Tentakkel" sx={{ height: '141px', alignItems: 'flex-end' }} />
 			<CardContent
 				sx={{ height: '126px', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', padding: '0' }}
 			>
