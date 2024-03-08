@@ -5,6 +5,7 @@
 		"allowJs": true,
 		"skipLibCheck": true,
 		"noImplicitReturns": true,
+		"noUnusedLocals": false,
 		"noImplicitAny": true,
 		"strict": true,
 		"noEmit": true,
@@ -28,6 +29,6 @@
 			"$*": ["./src/*"]
 		}
 	},
-	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".eslintrc.cjs", ".next.config.mjs"],
+	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".eslintrc.json"],
 	"exclude": ["node_modules"]
 }
