@@ -14,9 +14,7 @@
 	"extends": [
 		"eslint:recommended",
 		"plugin:@typescript-eslint/recommended",
-		"plugin:@typescript-eslint/recommended-requiring-type-checking",
-		"prettier",
-		"plugin:prettier/recommended"
+		"plugin:@typescript-eslint/recommended-requiring-type-checking"
 	],
 	"parser": "@typescript-eslint/parser",
 	"parserOptions": {
@@ -24,7 +22,7 @@
 		"sourceType": "module",
 		"project": ["./tsconfig.json"]
 	},
-	"plugins": ["@typescript-eslint", "prettier", "unused-imports"],
+	"plugins": ["@typescript-eslint", "unused-imports"],
 	"rules": {
 		"no-var": "off",
 		"prefer-const": "warn",
