@@ -9,7 +9,7 @@ export default function EventCardBig() {
 	return (
 		<Card
 			sx={{
-				backgroundImage: 'url(/blekksprut.jpg)',
+				backgroundImage: 'url(/blekksprut2.jpg)',
 				maxHeight: '267px',
 				maxWidth: '306px',
 				height: '100%',
