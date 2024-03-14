@@ -1,8 +1,5 @@
 import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import styles from './page.module.scss';
 import { Card, CardContent, CardHeader } from '@mui/material';
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
@@ -17,16 +14,33 @@ export default function EventCardBig() {
 				height: '100%',
 				width: '100%',
 				backgroundSize: 'cover',
+				borderRadius: '1.75rem',
 			}}
 		>
-			<CardHeader title="Tentakkel" sx={{ height: '141px', alignItems: 'flex-end' }} />
+			<CardHeader
+				title="Tentakkel"
+				titleTypographyProps={{ fontSize: '1.8rem' }}
+				sx={{ height: '141px', alignItems: 'flex-end', padding: '1rem' }}
+			/>
 			<CardContent
-				sx={{ height: '126px', backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', padding: '0' }}
+				sx={{
+					height: '126px',
+					backgroundColor: 'rgba(0,0,0,0.5)',
+					backdropFilter: 'blur(4px)',
+					padding: '1rem',
+				}}
 			>
-				<Typography> Gerhard Fajita </Typography>
-				<Box sx={{ display: 'flex', justifyContent: 'space-between', color: 'secondary.contrastText' }}>
+				<Typography sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}> Gerhard Fajita </Typography>
+				<Box
+					sx={{
+						display: 'flex',
+						justifyContent: 'space-between',
+						color: 'secondary.contrastText',
+						paddingBottom: '0.5rem',
+					}}
+				>
 					<Typography> Call of Cthulhu </Typography>
-					<Box sx={{ display: 'flex', gap: '0.5rem' }}>
+					<Box sx={{ display: 'flex', gap: '1rem' }}>
 						<Box component={Image} priority src={rook} alt="rook icon" />
 						<Box component={Image} priority src={rook} alt="rook icon" />
 						<Box component={Image} priority src={rook} alt="rook icon" />
