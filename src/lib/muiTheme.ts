@@ -28,8 +28,9 @@ const muiDarkTheme: ThemeOptions = {
 			light: '#ffd54f',
 			main: '#ff8f00',
 			dark: '#000',
-			contrastText: '#000',
+			contrastText: '#FF7979',
 		},
+		
 	},
 	typography: {
 		h6: {
