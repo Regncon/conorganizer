@@ -4,6 +4,7 @@ import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import styles from './page.module.scss';
 import EventCardBig from './EventCardBig';
+import EventCardSmall from './EventCardSmall';
 
 export default function Home() {
 	return (
@@ -21,8 +22,12 @@ export default function Home() {
 				className={styles['main-test']}
 				elevation={1}
 			>
-			<img src="/placeholderlogo.png" alt="logo" />
-			<EventCardBig/>
+				<img src="/placeholderlogo.png" alt="logo" />
+				<EventCardBig />
+				<Box sx={{ display: 'flex' }}>
+					<EventCardSmall />
+					<EventCardSmall />
+				</Box>
 			</Box>
 		</Container>
 	);
