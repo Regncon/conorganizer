@@ -12,6 +12,8 @@ export default function Home() {
 				display: 'grid',
 				placeContent: 'center',
 			}}
-		></Container>
+		>
+			<navbar />
+		</Container>
 	);
 }

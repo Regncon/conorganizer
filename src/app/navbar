@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import styles from './page.module.scss';
 import AppBar from '@mui/material/AppBar';
 
-
+export default function ButtonAppBar() {
+  return <Appbar variant="App bar with responsive menu"></Appbar>;
 	);
 }
