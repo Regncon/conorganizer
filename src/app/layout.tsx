@@ -3,6 +3,7 @@ import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { muiDark } from '$lib/muiTheme';
+import Navbar from './Navbar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
 				<AppRouterCacheProvider options={{ key: 'mui-theme' }}>
 					<ThemeProvider theme={muiDark}>
 						<CssBaseline />
+						<Navbar />
 						{children}
 					</ThemeProvider>
 				</AppRouterCacheProvider>

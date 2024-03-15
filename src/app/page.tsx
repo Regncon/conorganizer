@@ -5,7 +5,6 @@ import Navbar from './Navbar';
 export default function Home() {
 	return (
 		<>
-			<Navbar />
 			<Container
 				component={'main'}
 				maxWidth="xl"

@@ -24,6 +24,7 @@
 	},
 	"plugins": ["@typescript-eslint", "unused-imports"],
 	"rules": {
+		"@typescript-eslint/no-unsafe-assignment": "off",
 		"no-var": "off",
 		"prefer-const": "warn",
 		"eqeqeq": "error",
