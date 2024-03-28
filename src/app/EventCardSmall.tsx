@@ -3,8 +3,9 @@ import Typography from '@mui/material/Typography';
 import { Card, CardContent, CardHeader } from '@mui/material';
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
+import { EventCardProps } from './EventCardProps';
 
-export default function EventCardBig() {
+export default function EventCardBig({title, gameMaster, system, icons}:Omit<EventCardProps, 'shortDescription'>) {
 	return (
 		<Card
 			sx={{
@@ -28,9 +29,9 @@ export default function EventCardBig() {
 					placeContent: 'center',
 				}}
 			>
-				<Typography sx={{ fontSize: '15px', }}> Gerhard Fajita </Typography>
+				<Typography sx={{ fontSize: '15px', }}> {gameMaster} </Typography>
 				<Typography sx={{ fontSize: '17px', fontWeight: 'bold', paddingBottom: '0.25rem' }}>
-					Tentakkel 2
+					{title}
 				</Typography>
 				<Typography
 					sx={{
@@ -38,7 +39,7 @@ export default function EventCardBig() {
 						paddingBottom: '0.15rem',
 					}}
 				>
-					Call of Cthulhu
+					{system}
 				</Typography>
 				<Box sx={{ display: 'flex', gap: '1rem' }}>
 					<Box component={Image} priority src={rook} alt="rook icon" />

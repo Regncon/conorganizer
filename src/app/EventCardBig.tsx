@@ -3,8 +3,10 @@ import Typography from '@mui/material/Typography';
 import { Card, CardContent, CardHeader } from '@mui/material';
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
+import { EventCardProps } from './EventCardProps';
 
-export default function EventCardBig() {
+
+export default function EventCardBig({title, gameMaster, shortDescription, system, icons}: EventCardProps) {
 	return (
 		<Card
 			sx={{
@@ -18,7 +20,7 @@ export default function EventCardBig() {
 			}}
 		>
 			<CardHeader
-				title="Tentakkel"
+				title={title}
 				titleTypographyProps={{ fontSize: '1.8rem' }}
 				sx={{ height: '141px', alignItems: 'flex-end', padding: '1rem' }}
 			/>
@@ -30,7 +32,7 @@ export default function EventCardBig() {
 					padding: '1rem',
 				}}
 			>
-				<Typography sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}> Gerhard Fajita </Typography>
+				<Typography sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}> {gameMaster} </Typography>
 				<Box
 					sx={{
 						display: 'flex',
@@ -39,7 +41,7 @@ export default function EventCardBig() {
 						paddingBottom: '0.5rem',
 					}}
 				>
-					<Typography> Call of Cthulhu </Typography>
+					<Typography> {system} </Typography>
 					<Box sx={{ display: 'flex', gap: '1rem' }}>
 						<Box component={Image} priority src={rook} alt="rook icon" />
 						<Box component={Image} priority src={rook} alt="rook icon" />
@@ -48,7 +50,7 @@ export default function EventCardBig() {
 					</Box>
 				</Box>
 				<Typography sx={{ color: 'white' }}>
-					Klarer du å overleve landets farligste fjell? Pass på at du ikke brenner deg!
+					{shortDescription}
 				</Typography>
 			</CardContent>
 		</Card>

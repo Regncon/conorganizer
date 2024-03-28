@@ -23,10 +23,10 @@ export default function Home() {
 				elevation={1}
 			>
 				<img src="/placeholderlogo.png" alt="logo" />
-				<EventCardBig />
+				<EventCardBig title='Hello world' gameMaster='Gerhard Fajita' shortDescription='Mord overalt! Kos! Gøy!' system='Call of Chthuhlth'/>
 				<Box sx={{ display: 'flex' }}>
-					<EventCardSmall />
-					<EventCardSmall />
+					<EventCardSmall title='Hi' gameMaster='Gardh Fajita2' system='Dungeons 2'/>
+					<EventCardSmall title='Any% speedrun' gameMaster='Gorde Fajita3' system='Terraria'/>
 				</Box>
 			</Box>
 		</Container>
