@@ -5,8 +5,10 @@ import Typography from '@mui/material/Typography';
 import styles from './page.module.scss';
 import EventCardBig from './EventCardBig';
 import EventCardSmall from './EventCardSmall';
+import { getAll } from './serverAction';
 
-export default function Home() {
+export default async function Home() {
+	const events = await getAll();
 	return (
 		<Container
 			component={'main'}
@@ -23,11 +25,37 @@ export default function Home() {
 				elevation={1}
 			>
 				<img src="/placeholderlogo.png" alt="logo" />
-				<EventCardBig title='Hello world' gameMaster='Gerhard Fajita' shortDescription='Mord overalt! Kos! Gøy!' system='Call of Chthuhlth'/>
+				{events.map((event,i) => {
+					if (i === 0) {
+						return (
+							<EventCardBig
+								key={i}
+								title={event.title}
+								gameMaster={event.gameMaster}
+								shortDescription={event.shortDescription}
+								system={event.system}
+							/>
+						);
+					}
+					return (
+						<EventCardSmall
+							key={i}
+							title={event.title}
+							gameMaster={event.gameMaster}
+							system={event.system}
+						/>
+					);
+				})}
+				{/* <EventCardBig
+					title="Hello world"
+					gameMaster="Gerhard Fajita"
+					shortDescription="Mord overalt! Kos! Gøy!"
+					system="Call of Chthuhlth"
+				/>
 				<Box sx={{ display: 'flex' }}>
-					<EventCardSmall title='Hi' gameMaster='Gardh Fajita2' system='Dungeons 2'/>
-					<EventCardSmall title='Any% speedrun' gameMaster='Gorde Fajita3' system='Terraria'/>
-				</Box>
+					<EventCardSmall title="Hi" gameMaster="Gardh Fajita2" system="Dungeons 2" />
+					<EventCardSmall title="Any% speedrun" gameMaster="Gorde Fajita3" system="Terraria" />
+				</Box> */}
 			</Box>
 		</Container>
 	);
