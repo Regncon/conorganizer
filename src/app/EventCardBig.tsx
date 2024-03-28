@@ -3,10 +3,9 @@ import Typography from '@mui/material/Typography';
 import { Card, CardContent, CardHeader } from '@mui/material';
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
-import { EventCardProps } from './EventCardProps';
+import type { EventCardProps } from './types';
 
-
-export default function EventCardBig({title, gameMaster, shortDescription, system, icons}: EventCardProps) {
+export default function EventCardBig({ title, gameMaster, shortDescription, system, icons }: EventCardProps) {
 	return (
 		<Card
 			sx={{
@@ -49,9 +48,7 @@ export default function EventCardBig({title, gameMaster, shortDescription, syste
 						<Box component={Image} priority src={rook} alt="rook icon" />
 					</Box>
 				</Box>
-				<Typography sx={{ color: 'white' }}>
-					{shortDescription}
-				</Typography>
+				<Typography sx={{ color: 'white' }}>{shortDescription}</Typography>
 			</CardContent>
 		</Card>
 	);

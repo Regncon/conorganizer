@@ -3,9 +3,9 @@ import Typography from '@mui/material/Typography';
 import { Card, CardContent, CardHeader } from '@mui/material';
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
-import { EventCardProps } from './EventCardProps';
+import type { EventCardProps } from './types';
 
-export default function EventCardBig({title, gameMaster, system, icons}:Omit<EventCardProps, 'shortDescription'>) {
+export default function EventCardBig({ title, gameMaster, system, icons }: Omit<EventCardProps, 'shortDescription'>) {
 	return (
 		<Card
 			sx={{
@@ -29,10 +29,8 @@ export default function EventCardBig({title, gameMaster, system, icons}:Omit<Eve
 					placeContent: 'center',
 				}}
 			>
-				<Typography sx={{ fontSize: '15px', }}> {gameMaster} </Typography>
-				<Typography sx={{ fontSize: '17px', fontWeight: 'bold', paddingBottom: '0.25rem' }}>
-					{title}
-				</Typography>
+				<Typography sx={{ fontSize: '15px' }}> {gameMaster} </Typography>
+				<Typography sx={{ fontSize: '17px', fontWeight: 'bold', paddingBottom: '0.25rem' }}>{title}</Typography>
 				<Typography
 					sx={{
 						color: 'secondary.contrastText',

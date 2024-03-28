@@ -9,6 +9,8 @@ import { getAll } from './serverAction';
 
 export default async function Home() {
 	const events = await getAll();
+	console.log(events);
+
 	return (
 		<Container
 			component={'main'}
@@ -25,7 +27,7 @@ export default async function Home() {
 				elevation={1}
 			>
 				<img src="/placeholderlogo.png" alt="logo" />
-				{events.map((event,i) => {
+				{events.map((event, i) => {
 					if (i === 0) {
 						return (
 							<EventCardBig
