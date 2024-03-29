@@ -28,27 +28,37 @@ export default async function Home() {
 				elevation={1}
 			>
 				<img src="/placeholderlogo.png" alt="logo" />
-				{events.map((event, i) => {
-					if (i === 0) {
+				<Box
+					sx={{
+						display: 'flex',
+						flexWrap: 'wrap',
+						maxWidth: '320px',
+						gap: '0.5rem',
+						placeContent: 'center',
+					}}
+				>
+					{events.map((event, i) => {
+						if (i === 0) {
+							return (
+								<EventCardBig
+									key={i}
+									title={event.title}
+									gameMaster={event.gameMaster}
+									shortDescription={event.shortDescription}
+									system={event.system}
+								/>
+							);
+						}
 						return (
-							<EventCardBig
+							<EventCardSmall
 								key={i}
 								title={event.title}
 								gameMaster={event.gameMaster}
-								shortDescription={event.shortDescription}
 								system={event.system}
 							/>
 						);
-					}
-					return (
-						<EventCardSmall
-							key={i}
-							title={event.title}
-							gameMaster={event.gameMaster}
-							system={event.system}
-						/>
-					);
-				})}
+					})}
+				</Box>
 				{/* <EventCardBig
 					title="Hello world"
 					gameMaster="Gerhard Fajita"
