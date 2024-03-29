@@ -6,6 +6,7 @@ import styles from './page.module.scss';
 import EventCardBig from './EventCardBig';
 import EventCardSmall from './EventCardSmall';
 import { getAll } from './serverAction';
+import UpdateEvents from './UpdateEvents';
 
 export default async function Home() {
 	const events = await getAll();
@@ -59,6 +60,7 @@ export default async function Home() {
 					<EventCardSmall title="Any% speedrun" gameMaster="Gorde Fajita3" system="Terraria" />
 				</Box> */}
 			</Box>
+			<UpdateEvents />
 		</Container>
 	);
 }
