@@ -4,7 +4,7 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { useEffect } from 'react';
 import { updateEvents } from './serverAction';
 
-const UpdateEvents = () => {
+const RealtimeEvents = () => {
 	useEffect(() => {
 		const eventsRef = collection(db, 'event');
 		const unsubscribe = onSnapshot(eventsRef, (snapshot) => {
@@ -18,4 +18,4 @@ const UpdateEvents = () => {
 	return null;
 };
 
-export default UpdateEvents;
+export default RealtimeEvents;
