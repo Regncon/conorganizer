@@ -27,6 +27,7 @@ const Event = () => {
 						maxWidth: '100%',
 						aspectRatio: '3.3 / 2',
 					}}
+					placeholder="blur"
 				/>
 				<Box
 					sx={{
