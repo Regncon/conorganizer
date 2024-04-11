@@ -28,6 +28,7 @@ const Event = () => {
 						aspectRatio: '3.3 / 2',
 					}}
 					placeholder="blur"
+					loading="lazy"
 				/>
 				<Box
 					sx={{
