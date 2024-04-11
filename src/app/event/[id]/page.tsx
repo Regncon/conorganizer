@@ -2,6 +2,7 @@ import { Box, Chip, Paper, Typography } from '@mui/material';
 import Image from 'next/image';
 import NavigateBefore from '@mui/icons-material/NavigateBefore';
 import IconButton from '@mui/material/IconButton';
+import blekksprut2 from '$public/blekksprut2.jpg';
 
 const Event = () => {
 	const arrayet = ['katt', 'hund', 'fugl', 'hatt', 'nisse'];
@@ -17,12 +18,10 @@ const Event = () => {
 					},
 				}}
 			>
-				<Paper
+				<Box
 					component={Image}
-					src="/blekksprut2.jpg"
+					src={blekksprut2}
 					alt="noe alt-tekst"
-					width={375}
-					height={230}
 					sx={{
 						width: '100%',
 						maxWidth: '100%',

@@ -10,7 +10,7 @@
 		"strict": true,
 		"noEmit": true,
 		"esModuleInterop": true,
-		"module": "ES2022",
+		"module": "esnext",
 		"moduleResolution": "bundler",
 		"downlevelIteration": true,
 		"target": "ES2022",
@@ -26,7 +26,8 @@
 		],
 		"baseUrl": ".",
 		"paths": {
-			"$*": ["./src/*"]
+			"$*": ["./src/*"],
+			"$public/*": ["./public/*"]
 		}
 	},
 	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".eslintrc.json"],
