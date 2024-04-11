@@ -1,8 +1,9 @@
-import { CssBaseline, ThemeProvider } from '@mui/material';
+import { Box, Container, CssBaseline, Paper, ThemeProvider } from '@mui/material';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { muiDark } from '$lib/muiTheme';
+import styles from './page.module.scss';
 import './global.scss';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -23,7 +24,23 @@ export default function RootLayout({
 				<AppRouterCacheProvider options={{ key: 'mui-theme' }}>
 					<ThemeProvider theme={muiDark}>
 						<CssBaseline />
-						{children}
+						<Container
+							component={'main'}
+							maxWidth="xl"
+							sx={{
+								display: 'grid',
+								placeContent: 'center',
+							}}
+						>
+							<Box
+								component={Paper}
+								sx={{ display: 'grid', placeContent: 'center' }}
+								className={styles['main-test']}
+								elevation={1}
+							>
+								{children}
+							</Box>
+						</Container>
 					</ThemeProvider>
 				</AppRouterCacheProvider>
 			</body>

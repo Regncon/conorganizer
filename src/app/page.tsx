@@ -13,64 +13,51 @@ export default async function Home() {
 	console.log(events);
 
 	return (
-		<Container
-			component={'main'}
-			maxWidth="xl"
-			sx={{
-				display: 'grid',
-				placeContent: 'center',
-			}}
-		>
+		<>
+			<img src="/placeholderlogo.png" alt="logo" />
 			<Box
-				component={Paper}
-				sx={{ display: 'grid', placeContent: 'center' }}
-				className={styles['main-test']}
-				elevation={1}
+				sx={{
+					display: 'flex',
+					flexWrap: 'wrap',
+					maxWidth: '320px',
+					gap: '0.5rem',
+					placeContent: 'center',
+				}}
 			>
-				<img src="/placeholderlogo.png" alt="logo" />
-				<Box
-					sx={{
-						display: 'flex',
-						flexWrap: 'wrap',
-						maxWidth: '320px',
-						gap: '0.5rem',
-						placeContent: 'center',
-					}}
-				>
-					{events.map((event, i) => {
-						if (i === 0) {
-							return (
-								<EventCardBig
-									key={i}
-									title={event.title}
-									gameMaster={event.gameMaster}
-									shortDescription={event.shortDescription}
-									system={event.system}
-								/>
-							);
-						}
+				{events.map((event, i) => {
+					if (i === 0) {
 						return (
-							<EventCardSmall
+							<EventCardBig
 								key={i}
 								title={event.title}
 								gameMaster={event.gameMaster}
+								shortDescription={event.shortDescription}
 								system={event.system}
 							/>
 						);
-					})}
-				</Box>
-				{/* <EventCardBig
-					title="Hello world"
-					gameMaster="Gerhard Fajita"
-					shortDescription="Mord overalt! Kos! Gøy!"
-					system="Call of Chthuhlth"
-				/>
-				<Box sx={{ display: 'flex' }}>
-					<EventCardSmall title="Hi" gameMaster="Gardh Fajita2" system="Dungeons 2" />
-					<EventCardSmall title="Any% speedrun" gameMaster="Gorde Fajita3" system="Terraria" />
-				</Box> */}
+					}
+					return (
+						<EventCardSmall
+							key={i}
+							title={event.title}
+							gameMaster={event.gameMaster}
+							system={event.system}
+						/>
+					);
+				})}
 			</Box>
+			{/* <EventCardBig
+    					title="Hello world"
+    					gameMaster="Gerhard Fajita"
+    					shortDescription="Mord overalt! Kos! Gøy!"
+    					system="Call of Chthuhlth"
+    				/>
+    				<Box sx={{ display: 'flex' }}>
+    					<EventCardSmall title="Hi" gameMaster="Gardh Fajita2" system="Dungeons 2" />
+    					<EventCardSmall title="Any% speedrun" gameMaster="Gorde Fajita3" system="Terraria" />
+    				</Box> */}
+
 			<RealtimeEvents />
-		</Container>
+		</>
 	);
 }

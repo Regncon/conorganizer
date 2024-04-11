@@ -1,4 +1,4 @@
-import { Box, Chip, Typography } from '@mui/material';
+import { Box, Chip, Paper, Typography } from '@mui/material';
 import Image from 'next/image';
 import NavigateBefore from '@mui/icons-material/NavigateBefore';
 import IconButton from '@mui/material/IconButton';
@@ -17,7 +17,18 @@ const Event = () => {
 					},
 				}}
 			>
-				<Image src="/blekksprut2.jpg" alt="noe alt-tekst" width={375} height={230} />
+				<Paper
+					component={Image}
+					src="/blekksprut2.jpg"
+					alt="noe alt-tekst"
+					width={375}
+					height={230}
+					sx={{
+						width: '100%',
+						maxWidth: '100%',
+						aspectRatio: '3.3 / 2',
+					}}
+				/>
 				<Box
 					sx={{
 						background: 'linear-gradient(0deg, black, transparent)',
@@ -41,11 +52,10 @@ const Event = () => {
 						<Chip variant="outlined" label={vesen} key={vesen} icon={<NavigateBefore />} />
 					))}
 				</Box>
-				<Typography component="p">
-					Lorem ipsum dolor, sit amet consectetur adipisicing elit. Nemo, illo quisquam. Quae odit impedit
-					est, odio nisi doloremque ullam alias magnam aspernatur error labore eligendi aliquid magni culpa
-					neque ad.
-				</Typography>
+				<Typography component="p">Lorem ipsum dolor, sit amet consectetur</Typography>
+				<Typography component="p">adipisicing elit. Nemo, illo quisquam. Quae odit impedit </Typography>
+				<Typography component="p">est, odio nisi doloremque ullam alias magnam aspernatur e</Typography>
+				<Typography component="p">rror labore eligendi aliquid magni culpa neque ad.</Typography>
 			</Box>
 		</Box>
 	);
