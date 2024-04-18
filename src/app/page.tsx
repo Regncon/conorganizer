@@ -7,6 +7,7 @@ import EventCardBig from './EventCardBig';
 import EventCardSmall from './EventCardSmall';
 import { getAll } from './serverAction';
 import RealtimeEvents from './RealtimeEvents';
+import Grid from '@mui/material/Unstable_Grid2';
 
 export default async function Home() {
 	const events = await getAll();
@@ -15,37 +16,31 @@ export default async function Home() {
 	return (
 		<>
 			<img src="/placeholderlogo.png" alt="logo" />
-			<Box
-				sx={{
-					display: 'flex',
-					flexWrap: 'wrap',
-					maxWidth: '320px',
-					gap: '0.5rem',
-					placeContent: 'center',
-				}}
-			>
+			<Grid container spacing={2}>
 				{events.map((event, i) => {
-					if (i === 0) {
-						return (
-							<EventCardBig
-								key={i}
-								title={event.title}
-								gameMaster={event.gameMaster}
-								shortDescription={event.shortDescription}
-								system={event.system}
-							/>
-						);
-					}
 					return (
-						<EventCardSmall
-							key={i}
-							title={event.title}
-							gameMaster={event.gameMaster}
-							system={event.system}
-						/>
+						<Grid xs={i === 0 ? 12 : 6}>
+							{i === 0 ?
+								<Grid xs={12}>
+									<EventCardBig
+										key={i}
+										title={event.title}
+										gameMaster={event.gameMaster}
+										shortDescription={event.shortDescription}
+										system={event.system}
+									/>
+								</Grid>
+							:	<EventCardSmall
+									key={i}
+									title={event.title}
+									gameMaster={event.gameMaster}
+									system={event.system}
+								/>
+							}
+						</Grid>
 					);
 				})}
-			</Box>
+			</Grid>
 			{/* <EventCardBig
     					title="Hello world"
     					gameMaster="Gerhard Fajita"
