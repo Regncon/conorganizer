@@ -10,19 +10,19 @@ import { useState } from 'react';
 const marks = [
 	{
 		value: 1,
-		label: 'Ikke interessert',
+		label: '😡 Ikke interessert',
 	},
 	{
 		value: 2,
-		label: 'Litt interessert',
+		label: '😑 Litt interessert',
 	},
 	{
 		value: 3,
-		label: 'Interessert',
+		label: '😊 Interessert',
 	},
 	{
 		value: 4,
-		label: 'Veldig interessert',
+		label: '🤩 Veldig interessert',
 	},
 ];
 
@@ -98,6 +98,7 @@ const Event = () => {
 						setInterest(Number(target.value));
 					}}
 					aria-label="Temperature"
+					marks
 					defaultValue={0}
 					valueLabelDisplay="off"
 					shiftStep={1}
