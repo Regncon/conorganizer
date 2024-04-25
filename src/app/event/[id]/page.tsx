@@ -27,7 +27,7 @@ const marks = [
 ];
 
 const Event = () => {
-	const arrayet = ['katt', 'hund', 'fugl', 'hatt', 'nisse'];
+	const arrayet = ['katt', 'hund', 'fugl', 'rollespill', 'nisse'];
 	const [interest, setInterest] = useState<Number>(0);
 	return (
 		<Box sx={{ display: 'grid', gridTemplateAreas: '"header""content"' }}>
@@ -66,9 +66,15 @@ const Event = () => {
 			</Box>
 			<Box sx={{ gridArea: 'content' }}>
 				<Box>
-					<Typography component="h2">GM: Fransibald von Fokkoff</Typography>
-					<Typography component="em" sx={{ color: 'orangered' }}>
-						System: Mage - the ascension
+					<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
+						{arrayet.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
+					</Typography>
+					<Typography component="h2">Fransibald von Fokkoff</Typography>
+					<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
+						System
+					</Typography>
+					<Typography component="h2" sx={{ color: 'orangered' }}>
+						Mage - the ascension
 					</Typography>
 				</Box>
 				<Box sx={{ display: 'flex', gap: '.5em' }}>
@@ -76,10 +82,6 @@ const Event = () => {
 						<Chip variant="outlined" label={vesen} key={vesen} icon={<NavigateBefore />} />
 					))}
 				</Box>
-				<Typography component="p">Lorem ipsum dolor, sit amet consectetur</Typography>
-				<Typography component="p">adipisicing elit. Nemo, illo quisquam. Quae odit impedit </Typography>
-				<Typography component="p">est, odio nisi doloremque ullam alias magnam aspernatur e</Typography>
-				<Typography component="p">rror labore eligendi aliquid magni culpa neque ad.</Typography>
 				<Box
 					sx={{
 						backgroundColor: 'secondary.main',
@@ -111,7 +113,8 @@ const Event = () => {
 				<HelpIcon sx={{ scale: '1.5' }} />
 				<Typography component="p">Forvirret? Les mer om påmeldingssystemet</Typography>
 			</Box>
-
+			<Typography component="strong">Lorem ipsum dolor, sit amet consectetur</Typography>
+			<Typography component="strong">adipisicing elit. Nemo, illo quisquam. Quae odit impedit </Typography>
 			<Typography component="p">
 				Lorem ipsum dolor sit amet, consectetur adipisicing elit. Natus distinctio quia odit recusandae nobis
 				autem, odio id pariatur magnam illo saepe laborum nesciunt quasi doloremque provident neque eligendi,
