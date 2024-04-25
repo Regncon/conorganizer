@@ -27,7 +27,7 @@ const marks = [
 ];
 
 const Event = () => {
-	const arrayet = ['katt', 'hund', 'fugl', 'rollespill', 'nisse'];
+	const arrayet = ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'nisse', 'nisse', 'nisse', 'nisse'];
 	const [interest, setInterest] = useState<Number>(0);
 	return (
 		<Box sx={{ display: 'grid', gridTemplateAreas: '"header""content"' }}>
@@ -56,28 +56,37 @@ const Event = () => {
 				<Box
 					sx={{
 						background: 'linear-gradient(0deg, black, transparent)',
+						display: 'flex',
+						flexDirection: 'column',
+						placeItems: 'start',
 					}}
 				>
 					<IconButton>
 						<NavigateBefore />
 					</IconButton>
-					<Typography component="h1">Nei, du er en n00b!</Typography>
+					<Typography variant="h1" sx={{ placeSelf: 'center' }}>
+						Nei, du er en n00b!
+					</Typography>
 				</Box>
 			</Box>
 			<Box sx={{ gridArea: 'content' }}>
-				<Box>
-					<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
-						{arrayet.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
-					</Typography>
-					<Typography component="h2">Fransibald von Fokkoff</Typography>
-					<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
-						System
-					</Typography>
-					<Typography component="h2" sx={{ color: 'orangered' }}>
-						Mage - the ascension
-					</Typography>
+				<Box sx={{ display: 'flex',gap:'1rem', placeContent:'center'}}>
+					<Box>
+						<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
+							{arrayet.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
+						</Typography>
+						<Typography variant="h2">Fransibald von Fokkoff</Typography>
+					</Box>
+					<Box>
+						<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
+							System
+						</Typography>
+						<Typography variant="h2">
+							Mage - the ascension
+						</Typography>
+					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', gap: '.5em' }}>
+				<Box sx={{ display: 'flex', gap: '.5em',overflowX:'scroll', maxWidth:'320px' }}>
 					{arrayet.map((vesen) => (
 						<Chip variant="outlined" label={vesen} key={vesen} icon={<NavigateBefore />} />
 					))}
