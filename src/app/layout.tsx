@@ -23,7 +23,7 @@ export default function RootLayout({
 			<body className={inter.className}>
 				<AppRouterCacheProvider options={{ key: 'mui-theme' }}>
 					<ThemeProvider theme={muiDark}>
-						<CssBaseline />
+						<CssBaseline enableColorScheme />
 						<Container component={'main'} maxWidth="xl">
 							<Box component={Paper} className={styles['main-test']} elevation={1}>
 								{children}
