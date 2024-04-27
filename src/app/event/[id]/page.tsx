@@ -1,5 +1,5 @@
 'use client';
-import { Box, Button, Chip, Icon, Paper, Slider, Typography } from '@mui/material';
+import { Box, Chip, Slider, Typography } from '@mui/material';
 import Image from 'next/image';
 import NavigateBefore from '@mui/icons-material/NavigateBefore';
 import IconButton from '@mui/material/IconButton';
@@ -28,12 +28,11 @@ const marks = [
 
 const Event = () => {
 	const arrayet = ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'nisse', 'nisse', 'nisse', 'nisse'];
-	const [interest, setInterest] = useState<Number>(0);
+	const [interest, setInterest] = useState<number>(0);
 	return (
-		<Box sx={{ display: 'grid', gridTemplateAreas: '"header""content"' }}>
+		<Box>
 			<Box
 				sx={{
-					gridArea: 'header',
 					display: 'grid',
 					'& > *': {
 						gridColumn: ' 1 / 2',
@@ -56,21 +55,31 @@ const Event = () => {
 				<Box
 					sx={{
 						background: 'linear-gradient(0deg, black, transparent)',
-						display: 'flex',
-						flexDirection: 'column',
-						placeItems: 'start',
 					}}
 				>
-					<IconButton>
-						<NavigateBefore />
-					</IconButton>
-					<Typography variant="h1" sx={{ placeSelf: 'center' }}>
-						Nei, du er en n00b!
-					</Typography>
+					<Box
+						sx={{
+							display: 'grid',
+							gridTemplateRows: '2rem 1fr',
+							height: '100%',
+							wordBreak: 'break-word',
+						}}
+					>
+						<IconButton sx={{ placeSelf: 'start' }}>
+							<NavigateBefore />
+						</IconButton>
+						<Typography
+							variant="h1"
+							align="center"
+							sx={{ placeSelf: 'end center', paddingBottom: '2.5rem' }}
+						>
+							Nei, du er en n00b!
+						</Typography>
+					</Box>
 				</Box>
 			</Box>
-			<Box sx={{ gridArea: 'content' }}>
-				<Box sx={{ display: 'flex',gap:'1rem', placeContent:'center'}}>
+			<Box>
+				<Box sx={{ display: 'flex', gap: '1rem', placeContent: 'center' }}>
 					<Box>
 						<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
 							{arrayet.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
@@ -81,19 +90,17 @@ const Event = () => {
 						<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
 							System
 						</Typography>
-						<Typography variant="h2">
-							Mage - the ascension
-						</Typography>
+						<Typography variant="h2">Mage - the ascension</Typography>
 					</Box>
 				</Box>
-				<Box sx={{ display: 'flex', gap: '.5em',overflowX:'scroll', maxWidth:'320px' }}>
+				<Box sx={{ display: 'flex', gap: '.5em', overflowX: 'auto' }}>
 					{arrayet.map((vesen) => (
 						<Chip variant="outlined" label={vesen} key={vesen} icon={<NavigateBefore />} />
 					))}
 				</Box>
 				<Box
 					sx={{
-						backgroundColor: 'secondary.main',
+						backgroundColor: 'secondary.contrastText',
 						minHeight: '62px',
 						textAlign: 'center',
 						display: 'grid',
@@ -103,20 +110,22 @@ const Event = () => {
 				>
 					<Typography component="p">{marks[interest].label}</Typography>
 				</Box>
-				<Slider
-					onChange={(e) => {
-						const target = e.target as HTMLInputElement;
-						setInterest(Number(target.value));
-					}}
-					aria-label="Temperature"
-					marks
-					defaultValue={0}
-					valueLabelDisplay="off"
-					shiftStep={1}
-					step={1}
-					min={0}
-					max={3}
-				/>
+				<Box sx={{ padding: '0 0.35rem' }}>
+					<Slider
+						onChange={(e) => {
+							const target = e.target as HTMLInputElement;
+							setInterest(Number(target.value));
+						}}
+						aria-label="Temperature"
+						marks
+						defaultValue={0}
+						valueLabelDisplay="off"
+						shiftStep={1}
+						step={1}
+						min={0}
+						max={3}
+					/>
+				</Box>
 			</Box>
 			<Box display="inline-flex" gap="0.4rem">
 				<HelpIcon sx={{ scale: '1.5' }} />

@@ -1,4 +1,4 @@
-"use client"
+'use client';
 import { createTheme, ThemeOptions } from '@mui/material';
 import { EB_Garamond, Inter } from 'next/font/google';
 
@@ -30,7 +30,6 @@ const muiDarkTheme: ThemeOptions = {
 			dark: '#000',
 			contrastText: '#FF7979',
 		},
-		
 	},
 	typography: {
 		h6: {

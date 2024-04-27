@@ -24,20 +24,8 @@ export default function RootLayout({
 				<AppRouterCacheProvider options={{ key: 'mui-theme' }}>
 					<ThemeProvider theme={muiDark}>
 						<CssBaseline />
-						<Container
-							component={'main'}
-							maxWidth="xl"
-							sx={{
-								display: 'grid',
-								placeContent: 'center',
-							}}
-						>
-							<Box
-								component={Paper}
-								sx={{ display: 'grid', placeContent: 'center' }}
-								className={styles['main-test']}
-								elevation={1}
-							>
+						<Container component={'main'} maxWidth="xl">
+							<Box component={Paper} className={styles['main-test']} elevation={1}>
 								{children}
 							</Box>
 						</Container>
