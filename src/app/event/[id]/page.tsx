@@ -7,6 +7,9 @@ import blekksprut2 from '$public/blekksprut2.jpg';
 import HelpIcon from '@mui/icons-material/Help';
 import { useState } from 'react';
 import Link from 'next/link';
+import { faChevronLeft, faUserSecret } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
 
 const marks = [
 	{
@@ -58,7 +61,7 @@ const Event = () => {
 				/>
 				<Box
 					sx={{
-						background: 'linear-gradient(0deg, black, transparent)',
+						background: 'linear-gradient(0deg, #121212, transparent)',
 					}}
 				>
 					<Box
@@ -70,7 +73,7 @@ const Event = () => {
 						}}
 					>
 						<IconButton sx={{ placeSelf: 'start' }}>
-							<NavigateBefore />
+							<FontAwesomeIcon icon={faChevronLeft}/>
 						</IconButton>
 						<Typography
 							variant="h1"
@@ -83,18 +86,34 @@ const Event = () => {
 				</Box>
 			</Box>
 
-			<Box sx={{ display: 'flex', gap: '1rem', placeContent: 'center', marginBottom: 1 }}>
-				<Box>
-					<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
-						{arrayet.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
-					</Typography>
-					<Typography variant="h2">Fransibald von Fokkoff</Typography>
+			<Box sx={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+				<Box sx={{ display: 'flex', gap: '0.8rem', placeItems: 'center' }}>
+					<Box
+						component={FontAwesomeIcon}
+						icon={faUserSecret}
+						size="2x"
+						sx={{ color: 'secondary.contrastText' }}
+					/>
+					<Box>
+						<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
+							{arrayet.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
+						</Typography>
+						<Typography variant="h2">Fransibald von Fokkoff</Typography>
+					</Box>
 				</Box>
-				<Box>
-					<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
-						System
-					</Typography>
-					<Typography variant="h2">Mage - the ascension</Typography>
+				<Box sx={{ display: 'flex', gap: '0.8rem', placeItems: 'center' }}>
+					<Box
+						component={FontAwesomeIcon}
+						icon={faScroll}
+						size="2x"
+						sx={{ color: 'secondary.contrastText' }}
+					/>
+					<Box>
+						<Typography component="span" sx={{ color: 'secondary.contrastText' }}>
+							System
+						</Typography>
+						<Typography variant="h2">Mage - the ascension</Typography>
+					</Box>
 				</Box>
 			</Box>
 			<Box
@@ -102,7 +121,8 @@ const Event = () => {
 					display: 'flex',
 					gap: '.5em',
 					overflowX: 'auto',
-					paddingBottom: 1,
+					marginBottom: '4rem',
+					paddingBottom: '0.35rem',
 				}}
 			>
 				{arrayet.map((vesen) => (
@@ -128,13 +148,14 @@ const Event = () => {
 					display: 'grid',
 					placeContent: 'center',
 					borderRadius: '0.2rem',
+					marginBottom:'1rem',
 				}}
 			>
 				<Typography sx={paragraphStyle} component="p">
 					{marks[interest].label}
 				</Typography>
 			</Box>
-			<Box sx={{ padding: '0 0.35rem' }}>
+			<Box sx={{ padding: '0 0.35rem', marginBottom: '0.1rem' }}>
 				<Slider
 					onChange={(e) => {
 						const target = e.target as HTMLInputElement;
@@ -150,9 +171,10 @@ const Event = () => {
 							height: '1rem',
 						},
 						[`.${sliderClasses.mark}`]: {
-							height: '0.8rem',
-							width: '0.8rem',
 							borderRadius: '50%',
+							outlineColor: 'secondary.contrastText',
+							outlineWidth: '0.8rem',
+							outlineStyle: 'solid',
 						},
 						[`.${sliderClasses.markActive}`]: {
 							backgroundColor: 'secondary.contrastText',
@@ -166,14 +188,16 @@ const Event = () => {
 				/>
 			</Box>
 
+			<Typography sx={{marginBottom:'0.8rem', textAlign:'center'}}> Dra baren over for å melde din interesse! </Typography>
+
 			<Box
 				component={Link}
 				href="#"
 				sx={{
 					display: 'inline-flex',
 					gap: '0.4rem',
-					marginBottom: 2,
-					paddingLeft: 1,
+					marginBottom: '3rem',
+					paddingLeft: '0.5rem',
 					color: 'secondary.contrastText',
 				}}
 			>

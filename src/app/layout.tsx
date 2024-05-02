@@ -25,7 +25,7 @@ export default function RootLayout({
 					<ThemeProvider theme={muiDark}>
 						<CssBaseline enableColorScheme />
 						<Container component={'main'} maxWidth="xl">
-							<Box component={Paper} className={styles['main-test']} elevation={1}>
+							<Box className={styles['main-test']}>
 								{children}
 							</Box>
 						</Container>
