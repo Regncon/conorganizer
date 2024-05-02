@@ -31,7 +31,7 @@ const marks = [
 ];
 
 const Event = () => {
-	const arrayet = ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'nisse', 'nisse', 'nisse', 'nisse'];
+	const arrayet = ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse', 'nisse', 'nisse'];
 	const [interest, setInterest] = useState<number>(0);
 
 	const paragraphStyle: SxProps<Theme> = { margin: '1rem 0' };
@@ -73,7 +73,7 @@ const Event = () => {
 						}}
 					>
 						<IconButton sx={{ placeSelf: 'start' }}>
-							<FontAwesomeIcon icon={faChevronLeft}/>
+							<FontAwesomeIcon icon={faChevronLeft} />
 						</IconButton>
 						<Typography
 							variant="h1"
@@ -148,14 +148,14 @@ const Event = () => {
 					display: 'grid',
 					placeContent: 'center',
 					borderRadius: '0.2rem',
-					marginBottom:'1rem',
+					marginBottom: '1rem',
 				}}
 			>
 				<Typography sx={paragraphStyle} component="p">
 					{marks[interest].label}
 				</Typography>
 			</Box>
-			<Box sx={{ padding: '0 0.35rem', marginBottom: '0.1rem' }}>
+			<Box sx={{ padding: '0.35rem', marginBottom: '0.1rem' }}>
 				<Slider
 					onChange={(e) => {
 						const target = e.target as HTMLInputElement;
@@ -175,20 +175,29 @@ const Event = () => {
 							outlineColor: 'secondary.contrastText',
 							outlineWidth: '0.8rem',
 							outlineStyle: 'solid',
+							outlineOffset: '-1px',
+							opacity: '1',
 						},
 						[`.${sliderClasses.markActive}`]: {
 							backgroundColor: 'secondary.contrastText',
 						},
+						[`.${sliderClasses.thumb}:before`]: {
+							boxShadow: 'unset',
+						},
+						[`.${sliderClasses.valueLabelCircle}`]: {
+							display: 'none',
+						},
 					}}
 					marks
 					defaultValue={0}
-					valueLabelDisplay="off"
 					min={0}
 					max={3}
 				/>
 			</Box>
 
-			<Typography sx={{marginBottom:'0.8rem', textAlign:'center'}}> Dra baren over for å melde din interesse! </Typography>
+			<Typography sx={{ marginBottom: '0.8rem', textAlign: 'center' }}>
+				Dra baren over for å melde din interesse!
+			</Typography>
 
 			<Box
 				component={Link}
@@ -208,7 +217,7 @@ const Event = () => {
 				Lorem ipsum dolor, sit amet consectetur
 			</Typography>
 			<Typography sx={strongStyle} component="strong">
-				adipisicing elit. Nemo, illo quisquam. Quae odit impedit{' '}
+				adipisicing elit. Nemo, illo quisquam. Quae odit impedit
 			</Typography>
 			<Typography sx={{ ...paragraphStyle, marginBottom: 0, paddingBlockEnd: '1rem' }} component="p">
 				Lorem ipsum dolor sit amet, consectetur adipisicing elit. Natus distinctio quia odit recusandae nobis
