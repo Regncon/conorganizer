@@ -23,10 +23,10 @@ import ConfettiExplosion from 'react-confetti-explosion';
 import { useState } from 'react';
 
 const Create = () => {
-	const [isExploding,setIsExploding] = useState(false);
+	const [isExploding, setIsExploding] = useState(false);
 	return (
 		<form>
-			{isExploding && <ConfettiExplosion force={0.8} duration={3000} particleCount={1000} width={1000} />}
+			{isExploding && <ConfettiExplosion force={0.8} duration={3000} particleCount={250} width={1000} />}
 			<Paper>
 				<Typography variant="h1">Meld på arrangement til Regncon XXXII 2024</Typography>
 				<Typography>
