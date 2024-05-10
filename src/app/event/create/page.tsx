@@ -42,7 +42,6 @@ const Create = () => {
 				container
 				component="form"
                 spacing='2rem'
-                paddingTop='1rem'
 				onChange={(e) => {
 					const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
 
@@ -72,7 +71,7 @@ const Create = () => {
 						width={document.body.scrollWidth}
 					/>
 				)}
-				<Paper sx={{marginInline: 2}}>
+				<Paper sx={{marginInline: 2, padding:'1rem', marginBottom:'2rem'}}>
 					<Grid2 container gap="3rem">
 						<Typography variant="h1">Meld på arrangement til Regncon XXXII 2024</Typography>
 						<Typography>
@@ -143,15 +142,15 @@ const Create = () => {
 				</Paper>
 				</Grid2>
 								<Grid2 xs={12}>
-				<Paper>
+				<Paper sx={{padding:'1rem'}}>
 					<FormControl fullWidth>
 						<FormLabel>Skildring av modulen (tekst til programmet):</FormLabel>
-						<TextareaAutosize minRows={3} name="description" value={newEvent.description} fullWidth />
+						<TextareaAutosize minRows={3} name="description" value={newEvent.description} />
 					</FormControl>
 				</Paper>
 				</Grid2>
 				<Grid2 xs={12} sm={4}>
-				<Paper>
+				<Paper sx={{padding:'1rem'}}>
 					<FormControl fullWidth>
 						<FormLabel>Kva type spel er det?</FormLabel>
 						<RadioGroup
@@ -176,7 +175,7 @@ const Create = () => {
 				</Paper>
 				</Grid2>
                 <Grid2 xs={12} sm={4}>
-				<Paper>
+				<Paper sx={{padding:'1rem'}}>
 				<Typography>Maks antall deltakere</Typography>
 					<NumberInput
 						value={newEvent.participants}
@@ -189,7 +188,7 @@ const Create = () => {
 				</Paper>
 				</Grid2>
                 <Grid2 xs={12} sm={4}>
-				<Paper>
+				<Paper sx={{padding:'1rem'}}>
 					<FormGroup>
 						<FormLabel>Kva for pulje kan du arrangere i?</FormLabel>
 						<FormControlLabel
@@ -216,8 +215,8 @@ const Create = () => {
 				</Paper>
 				</Grid2>
 				<Grid2 xs={12}>
-				<Paper>
-					<FormGroup fullWidth>
+				<Paper sx={{padding:'1rem'}}>
+					<FormGroup>
 						<FormLabel>Kryss av for det som gjeld</FormLabel>
 						<FormControlLabel
 							control={<Checkbox name="moduleCompetition" checked={newEvent.moduleCompetition} />}
@@ -255,7 +254,7 @@ const Create = () => {
 				</Paper>
 				</Grid2>
 				<Grid2 xs={12}>
-				<Paper>
+				<Paper sx={{padding:'1rem'}}>
 					<FormControl fullWidth>
 						<FormLabel>Merknader: Er det noko anna du vil vi skal vite?</FormLabel>
 						<TextareaAutosize minRows={3} name="additionalComments" value={newEvent.additionalComments} />
@@ -263,7 +262,7 @@ const Create = () => {
 				</Paper>
 				</Grid2>
 				<Grid2 xs={12}>
-				<Paper>
+				<Paper sx={{padding:'1rem'}}>
 					<Typography>
 						Skjemaet vert lagra automatisk, men om du likevel vil trykke på ein knapp, så er det ein her. :)
 					</Typography>
