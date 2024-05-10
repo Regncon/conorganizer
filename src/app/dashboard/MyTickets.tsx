@@ -1,8 +1,6 @@
 import CardBase from './CardBase';
 
-type Props = {};
-
-const MyTickets = ({}: Props) => {
+const MyTickets = () => {
 	return (
 		<CardBase
 			description="Trykk for og gå til mine billetter"

@@ -3,9 +3,7 @@ import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import MyTickets from './MyTickets';
 import MyEvents from './MyEvents';
 
-type Props = {};
-
-const Dashboard = ({}: Props) => {
+const Dashboard = () => {
 	return (
 		<Paper sx={{ marginBlock: 2 }}>
 			<Grid2 container justifyContent="space-between">
