@@ -38,9 +38,11 @@ const Create = () => {
 
 	return newEvent ?
 			<Grid2
+                sx={{ marginBlock: '1rem' }}
 				container
 				component="form"
                 spacing='2rem'
+                paddingTop='1rem'
 				onChange={(e) => {
 					const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
 
@@ -70,7 +72,7 @@ const Create = () => {
 						width={document.body.scrollWidth}
 					/>
 				)}
-				<Paper>
+				<Paper sx={{marginInline: 2}}>
 					<Grid2 container gap="3rem">
 						<Typography variant="h1">Meld på arrangement til Regncon XXXII 2024</Typography>
 						<Typography>
@@ -96,7 +98,7 @@ const Create = () => {
                     </Paper>
 				</Grid2>
 
-				<Grid2 xs={12} md={6} lg={3}>
+				<Grid2 xs={12} sm={6} md={3}>
 					<Paper>
 						<TextField
 							type="email"
@@ -109,7 +111,7 @@ const Create = () => {
 						/>
 					</Paper>
 				</Grid2>
-				<Grid2 xs={12} md={6} lg={3}>
+				<Grid2 xs={12} sm={6} md={3}>
 				<Paper>
 					<TextField
 						name="name"
@@ -121,7 +123,7 @@ const Create = () => {
 					/>
 				</Paper>
 				</Grid2>
-				<Grid2 xs={12} md={6} lg={3}>
+				<Grid2 xs={12} sm={6} md={3}>
 				<Paper>
 					<TextField
 						type="phone"
@@ -135,7 +137,7 @@ const Create = () => {
 				</Paper>
 
 				</Grid2>
-				<Grid2 xs={12} md={6} lg={3}>
+				<Grid2 xs={12} sm={6} md={3}>
 				<Paper>
 					<TextField name="system" label="Spillsystem" value={newEvent.system} variant="outlined" fullWidth />
 				</Paper>
@@ -148,7 +150,7 @@ const Create = () => {
 					</FormControl>
 				</Paper>
 				</Grid2>
-				<Grid2 xs={12} md={4}>
+				<Grid2 xs={12} sm={4}>
 				<Paper>
 					<FormControl fullWidth>
 						<FormLabel>Kva type spel er det?</FormLabel>
@@ -173,7 +175,7 @@ const Create = () => {
 					</FormControl>
 				</Paper>
 				</Grid2>
-                <Grid2>
+                <Grid2 xs={12} sm={4}>
 				<Paper>
 				<Typography>Maks antall deltakere</Typography>
 					<NumberInput
@@ -186,7 +188,7 @@ const Create = () => {
 					/>
 				</Paper>
 				</Grid2>
-
+                <Grid2 xs={12} sm={4}>
 				<Paper>
 					<FormGroup>
 						<FormLabel>Kva for pulje kan du arrangere i?</FormLabel>
@@ -212,8 +214,10 @@ const Create = () => {
 						/>
 					</FormGroup>
 				</Paper>
+				</Grid2>
+				<Grid2 xs={12}>
 				<Paper>
-					<FormGroup>
+					<FormGroup fullWidth>
 						<FormLabel>Kryss av for det som gjeld</FormLabel>
 						<FormControlLabel
 							control={<Checkbox name="moduleCompetition" checked={newEvent.moduleCompetition} />}
@@ -249,18 +253,23 @@ const Create = () => {
 						/>
 					</FormGroup>
 				</Paper>
+				</Grid2>
+				<Grid2 xs={12}>
 				<Paper>
-					<FormControl>
+					<FormControl fullWidth>
 						<FormLabel>Merknader: Er det noko anna du vil vi skal vite?</FormLabel>
 						<TextareaAutosize minRows={3} name="additionalComments" value={newEvent.additionalComments} />
 					</FormControl>
 				</Paper>
+				</Grid2>
+				<Grid2 xs={12}>
 				<Paper>
 					<Typography>
 						Skjemaet vert lagra automatisk, men om du likevel vil trykke på ein knapp, så er det ein her. :)
 					</Typography>
 					<Button onClick={() => setIsExploding(!isExploding)}>Send inn</Button>
 				</Paper>
+				</Grid2>
 			</Grid2>
 		:	null;
 };
