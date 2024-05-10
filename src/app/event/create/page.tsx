@@ -12,11 +12,12 @@ import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import { Unstable_NumberInput as NumberInput } from '@mui/base/Unstable_NumberInput';
-import Confetti from 'react-confetti'
+import Confetti from 'react-confetti';
 import { useEffect, useState } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '$lib/firebase/firebase';
 import type { NewEvent } from '$app/types';
+import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 
 const Create = () => {
 	const [isExploding, setIsExploding] = useState(false);
@@ -36,7 +37,10 @@ const Create = () => {
 	}, []);
 
 	return newEvent ?
-			<form
+			<Grid2
+				container
+				component="form"
+                spacing='2rem'
 				onChange={(e) => {
 					const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
 
@@ -67,25 +71,45 @@ const Create = () => {
 					/>
 				)}
 				<Paper>
-					<Typography variant="h1">Meld på arrangement til Regncon XXXII 2024</Typography>
-					<Typography>
-						Takk for at du vil arrangere eit spel på Regncon, anten det er brettspel, kortspel, rollespel
-						eller anna, så sett vi enormt pris på ditt bidrag. Fyll inn skjemaet så godt du kan, og ikkje
-						vere redd for å ta kontakt med Regnconstyret på{' '}
-						<a href="mailto:regncon@gmail.com">regncon@gmail.com</a>
-						om du skulle lure på noko!
-					</Typography>
+					<Grid2 container gap="3rem">
+						<Typography variant="h1">Meld på arrangement til Regncon XXXII 2024</Typography>
+						<Typography>
+							Takk for at du vil arrangere eit spel på Regncon, anten det er brettspel, kortspel,
+							rollespel eller anna, så sett vi enormt pris på ditt bidrag. Fyll inn skjemaet så godt du
+							kan, og ikkje vere redd for å ta kontakt med Regnconstyret på{' '}
+							<a href="mailto:regncon@gmail.com">regncon@gmail.com</a>
+							om du skulle lure på noko!
+						</Typography>
+					</Grid2>
 				</Paper>
-				<Paper>
-					<TextField
-						type="email"
-						name="email"
-						value={newEvent.email}
-						label="E-postadresse"
-						variant="outlined"
-						required
-					/>
-				</Paper>
+
+				<Grid2 xs={12}>
+                    <Paper>
+                        <TextField
+                            name="title"
+                            label="Tittel på spelmodul / arrangement"
+                            value={newEvent.title}
+                            variant="outlined"
+                            required
+                            fullWidth
+                        />
+                    </Paper>
+				</Grid2>
+
+				<Grid2 xs={12} md={6} lg={3}>
+					<Paper>
+						<TextField
+							type="email"
+							name="email"
+							value={newEvent.email}
+							label="E-postadresse"
+							variant="outlined"
+							required
+							fullWidth
+						/>
+					</Paper>
+				</Grid2>
+				<Grid2 xs={12} md={6} lg={3}>
 				<Paper>
 					<TextField
 						name="name"
@@ -93,8 +117,11 @@ const Create = () => {
 						label="Arrangørens namn (Ditt namn)"
 						variant="outlined"
 						required
+						fullWidth
 					/>
 				</Paper>
+				</Grid2>
+				<Grid2 xs={12} md={6} lg={3}>
 				<Paper>
 					<TextField
 						type="phone"
@@ -103,22 +130,27 @@ const Create = () => {
 						label="Kva telefonnummer kan vi nå deg på?"
 						variant="outlined"
 						required
+						fullWidth
 					/>
 				</Paper>
+
+				</Grid2>
+				<Grid2 xs={12} md={6} lg={3}>
 				<Paper>
-					<TextField
-						name="title"
-						label="Tittel på spelmodul / arrangement"
-						value={newEvent.title}
-						variant="outlined"
-						required
-					/>
+					<TextField name="system" label="Spillsystem" value={newEvent.system} variant="outlined" fullWidth />
 				</Paper>
+				</Grid2>
+								<Grid2 xs={12}>
 				<Paper>
-					<TextField name="system" label="Spillsystem" value={newEvent.system} variant="outlined" />
+					<FormControl fullWidth>
+						<FormLabel>Skildring av modulen (tekst til programmet):</FormLabel>
+						<TextareaAutosize minRows={3} name="description" value={newEvent.description} fullWidth />
+					</FormControl>
 				</Paper>
+				</Grid2>
+				<Grid2 xs={12} md={4}>
 				<Paper>
-					<FormControl>
+					<FormControl fullWidth>
 						<FormLabel>Kva type spel er det?</FormLabel>
 						<RadioGroup
 							value={newEvent.gameType}
@@ -140,8 +172,10 @@ const Create = () => {
 						</RadioGroup>
 					</FormControl>
 				</Paper>
-
+				</Grid2>
+                <Grid2>
 				<Paper>
+				<Typography>Maks antall deltakere</Typography>
 					<NumberInput
 						value={newEvent.participants}
 						slotProps={{
@@ -151,12 +185,8 @@ const Create = () => {
 						}}
 					/>
 				</Paper>
-				<Paper>
-					<FormControl>
-						<FormLabel>Skildring av modulen (tekst til programmet):</FormLabel>
-						<TextareaAutosize minRows={3} name="description" value={newEvent.description} />
-					</FormControl>
-				</Paper>
+				</Grid2>
+
 				<Paper>
 					<FormGroup>
 						<FormLabel>Kva for pulje kan du arrangere i?</FormLabel>
@@ -231,7 +261,8 @@ const Create = () => {
 					</Typography>
 					<Button onClick={() => setIsExploding(!isExploding)}>Send inn</Button>
 				</Paper>
-			</form>
+			</Grid2>
 		:	null;
 };
 export default Create;
+
