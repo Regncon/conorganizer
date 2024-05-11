@@ -1,32 +1,49 @@
 'use client';
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-//import { getAnalytics } from "firebase/analytics";
+import { login, logout } from '$app/(auth)/login/action';
+
+import { initializeApp, type FirebaseOptions } from 'firebase/app';
+import {
+	browserLocalPersistence,
+	getAuth,
+	setPersistence,
+	signInWithEmailAndPassword,
+	signOut,
+	type Config,
+} from 'firebase/auth';
+
 import { collection, doc, getFirestore } from 'firebase/firestore';
+import type { FormEvent } from 'react';
+import { firebaseConfig } from './config';
 
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+const app = initializeApp(firebaseConfig, 'client');
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+export const db = getFirestore(app);
+export const firebaseAuth = getAuth(app);
+setPersistence(firebaseAuth, browserLocalPersistence);
 
-const firebaseConfig = {
-	apiKey: process.env.NEXT_PUBLIC_FIREBASE_DB_API_KEY,
-	authDomain: 'regncon2024.firebaseapp.com',
-	projectId: 'regncon2024',
-	storageBucket: 'regncon2024.appspot.com',
-	messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_DB_MESSAGING_SENDER_ID,
-	appId: process.env.NEXT_PUBLIC_FIREBASE_DB_APP_ID,
+type LoginDetails = {
+	email: string;
+	password: string;
+};
+export const signInAndCreateCookie = async (e: FormEvent<HTMLFormElement>) => {
+	e.preventDefault();
+	const target = e.target as HTMLFormElement;
+	const { email, password } = Object.fromEntries(new FormData(target)) as LoginDetails;
+	console.log();
+	if (!!!email && !!!password) {
+		return;
+	}
+	const userCredentials = await signInWithEmailAndPassword(firebaseAuth, email, password);
+	const idToken = await userCredentials.user.getIdToken(true);
+
+	login(idToken);
+};
+export const signOutAndDeleteCookie = () => {
+	signOut(firebaseAuth);
+	logout();
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-//const analytics = getAnalytics(app);
-
-// export const auth = getAuth();
-export const db = getFirestore(app);
 // export const eventsRef = collection(db, 'events');
 // export const eventRef = (id: string) => doc(db, `events/${id}`);
 // // export const allUserSettingsRef = collection(db, 'usersettings');

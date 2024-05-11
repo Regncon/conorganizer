@@ -2,6 +2,9 @@
 import { adminDb } from '$lib/firebase/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
 import type { Event } from './types';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { firebaseAuth } from '$lib/firebase/firebase';
+
 export async function getByID(id: string) {
 	const eventRef = adminDb.collection('event').doc(id);
 	const doc = await eventRef.get();

@@ -36,6 +36,7 @@ export type NewEvent = {
 	lessThanThreeHours: boolean;
 	moreThanSixHours: boolean;
 	beginnerFriendly: boolean;
-	description: string[];
+	description: string;
 	additionalComments: string;
+	unpublished: boolean;
 };

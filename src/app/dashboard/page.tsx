@@ -5,16 +5,14 @@ import MyEvents from './MyEvents';
 
 const Dashboard = () => {
 	return (
-		<Paper sx={{ marginBlock: '1rem', paddingBlock: '1rem' }}>
-			<Grid2 container spacing="2rem">
-				<Grid2 xs={6}>
-					<MyTickets />
-				</Grid2>
-				<Grid2 xs={6}>
-					<MyEvents />
-				</Grid2>
+		<Grid2 container spacing="2rem" sx={{ marginTop: '0.5rem' }}>
+			<Grid2 xs={6}>
+				<MyTickets />
 			</Grid2>
-		</Paper>
+			<Grid2 xs={6}>
+				<MyEvents />
+			</Grid2>
+		</Grid2>
 	);
 };
 

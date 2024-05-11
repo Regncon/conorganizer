@@ -1,6 +1,6 @@
 import CardBase from './CardBase';
 
-const MyEvents = () => {
+const MyEvents = async () => {
 	return (
 		<CardBase
 			href="/my-events"

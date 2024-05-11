@@ -1,10 +1,12 @@
-import { Box, Container, CssBaseline, Paper, ThemeProvider } from '@mui/material';
+import { Box, Container, CssBaseline, Paper, ThemeProvider, Typography } from '@mui/material';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { muiDark } from '$lib/muiTheme';
 import styles from './page.module.scss';
 import './global.scss';
+import Link from 'next/link';
+import { headers } from 'next/headers';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -13,7 +15,7 @@ export const metadata: Metadata = {
 	description: 'Regncon program og puljepåmelding 2024',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
 	children,
 }: Readonly<{
 	children: React.ReactNode;
@@ -26,6 +28,11 @@ export default function RootLayout({
 						<CssBaseline enableColorScheme />
 						<Container component={'main'} maxWidth="xl">
 							<Box className={styles['main-test']}>
+								<Link href="/login">
+									<Typography variant="h1">
+										For og lage arrangementer må du være logget inn
+									</Typography>
+								</Link>
 								{children}
 							</Box>
 						</Container>

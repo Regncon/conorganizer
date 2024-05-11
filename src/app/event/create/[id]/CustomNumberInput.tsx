@@ -31,9 +31,11 @@ const CustomNumberInput = React.forwardRef(function CustomNumberInput(
 	);
 });
 
-export default function QuantityInput() {
-	return <CustomNumberInput aria-label="Quantity Input" min={1} max={99} />;
-}
+type Props = Omit<NumberInputProps, 'min' | 'max' | 'aria-label'>;
+const QuantityInput = (attr: Props) => {
+	return <CustomNumberInput aria-label="Quantity Input" min={1} max={99} {...attr} />;
+};
+export default QuantityInput;
 
 const blue = {
 	100: '#daecff',
@@ -104,7 +106,7 @@ const StyledInput = styled('input')(
 `
 );
 
-const StyledButton = styled('button')(
+const StyledButton = styled('div')(
 	({ theme }) => `
   font-family: 'IBM Plex Sans', sans-serif;
   font-size: 0.875rem;
