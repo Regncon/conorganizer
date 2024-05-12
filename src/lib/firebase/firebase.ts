@@ -45,7 +45,7 @@ export const signInAndCreateCookie = async (e: FormEvent<HTMLFormElement>) => {
 	const userCredentials = await signInWithEmailAndPassword(firebaseAuth, email, password);
 	const idToken = await userCredentials.user.getIdToken();
 
-	setSessionCookie(idToken);
+	await setSessionCookie(idToken);
 };
 export const signOutAndDeleteCookie = () => {
 	signOut(firebaseAuth);
@@ -57,7 +57,7 @@ export const singUpAndCreateCookie = async (e: FormEvent<HTMLFormElement>) => {
 	const userCredentials = await createUserWithEmailAndPassword(firebaseAuth, email, password);
 	const idToken = await userCredentials.user.getIdToken();
 
-	setSessionCookie(idToken);
+	await setSessionCookie(idToken);
 };
 
 // export const eventsRef = collection(db, 'events');
