@@ -3,10 +3,9 @@ import { Button, Container, Paper } from '@mui/material';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import PasswordTextField from './PasswordTextField';
 import { signInAndCreateCookie, signOutAndDeleteCookie } from '$lib/firebase/firebase';
-
-import { useRouter } from 'next/router';
 import type { FormEvent } from 'react';
 import EmailField from '../shared/ui/EmailField';
+import { useRouter } from 'next/navigation';
 
 const Login = () => {
     const router = useRouter();
