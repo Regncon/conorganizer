@@ -47,7 +47,6 @@ export const getAuthorizedAuth = async () => {
 
 	const isRevoked = !(await adminAuth.verifySessionCookie(session, true).catch((e) => console.error(e.message)));
 	if (isRevoked) return noSessionReturn;
-
 	// To signIn user so we get access to auth.currentUser
 	if (auth.currentUser?.uid !== decodedIdToken.uid) {
 		const customToken = await adminAuth

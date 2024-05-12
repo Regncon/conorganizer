@@ -2,20 +2,17 @@
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { Button, Container, InputAdornment, Paper, TextField } from '@mui/material';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
-import {
-	signInAndCreateCookie,
-	signOutAndDeleteCookie,
-	singUpAndCreateCookie,
-	type RegisterDetails,
-} from '$lib/firebase/firebase';
+import { singUpAndCreateCookie, type RegisterDetails } from '$lib/firebase/firebase';
 import PasswordTextField from '../login/PasswordTextField';
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
+import { useRouter } from 'next/navigation';
 
 const Register = () => {
 	const passwordRef = useRef<HTMLInputElement>(null);
 	const confirmPasswordRef = useRef<HTMLInputElement>(null);
 	const formRef = useRef<HTMLFormElement>(null);
 	const emailRegExp = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+.[a-zA-Z]{2,4}$/;
+	const router = useRouter();
 
 	return (
 		<Container component={Paper} fixed maxWidth="xl" sx={{ height: '70dvh' }}>
@@ -36,6 +33,7 @@ const Register = () => {
 
 					if (emailRegExp.test(email)) {
 						singUpAndCreateCookie(e);
+						router.push('/my-events');
 					}
 				}}
 			>

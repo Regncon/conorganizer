@@ -22,7 +22,7 @@ const PasswordTextField = forwardRef<HTMLInputElement, Props>(
 		const handleMouseDownPassword = (e: MouseEvent<HTMLButtonElement>) => {
 			e.preventDefault();
 		};
-		const passwordRegExp = /.{8,}/;
+		const passwordRegExp = /.{6,}/;
 		return (
 			<TextField
 				inputRef={ref}
@@ -55,7 +55,7 @@ const PasswordTextField = forwardRef<HTMLInputElement, Props>(
 				}}
 				inputProps={{
 					pattern: passwordRegExp.source,
-					title: 'Minimum antall tegn er 8',
+					title: 'Minimum antall tegn er 6',
 				}}
 			/>
 		);

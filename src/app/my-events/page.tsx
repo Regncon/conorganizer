@@ -18,18 +18,14 @@ const MyEvents = async () => {
 	// const newEventDocRef = adminDb.collection('/users').get();
 	const { app, user, auth, db } = await getAuthorizedAuth();
 
-	const test = new AsyncLocalStorage();
-	const store = { id: 2 };
-	test.enterWith(store);
-
 	if (app === null || user === null || auth === null || db === null) {
-		throw new Error('asdfg');
+		throw new Error('not Logged inn');
 	}
 
 	const docs = await getAllMyEvents(db, user);
 	const docId = await createId(app, db);
 	return (
-		<Box sx={{ position: 'relative', marginTop: '0.5rem' }}>
+		<Box sx={{ position: 'relative', marginTop: '2rem' }}>
 			<NewEventButton docId={docId} />
 			<Grid2 container spacing="2rem">
 				{docs.map((doc) => (

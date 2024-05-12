@@ -1,8 +1,9 @@
 'use client';
-import IconButton from '@mui/material/IconButton';
-import AddIcon from '@mui/icons-material/Add';
+import IconButton, { iconButtonClasses } from '@mui/material/IconButton';
+import NoteAddIcon from '@mui/icons-material/NoteAdd';
 import { useRouter } from 'next/navigation';
 import { createMyEventDoc } from './actions';
+import { touchRippleClasses } from '@mui/material';
 type Props = { docId: string };
 
 const NewEventButton = ({ docId }: Props) => {
@@ -13,6 +14,7 @@ const NewEventButton = ({ docId }: Props) => {
 		await createMyEventDoc(docId);
 		router.push(`/event/create/${docId}`);
 	};
+
 	return (
 		<IconButton
 			sx={{
@@ -22,13 +24,16 @@ const NewEventButton = ({ docId }: Props) => {
 				zIndex: '22',
 				right: '0.3125rem',
 				top: '-0.375rem',
+				[`.${touchRippleClasses.ripple}`]: {
+					color: 'black',
+				},
 				'&:hover, &:focus, &': {
 					backgroundColor: 'secondary.contrastText',
 				},
 			}}
 			onClick={handleClick}
 		>
-			<AddIcon />
+			<NoteAddIcon />
 		</IconButton>
 	);
 };
