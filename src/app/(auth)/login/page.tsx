@@ -2,17 +2,29 @@
 import { Button, Container, Paper } from '@mui/material';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import PasswordTextField from './PasswordTextField';
-import { signInAndCreateCookie } from '$lib/firebase/firebase';
-import type { FormEvent } from 'react';
+import { forgotPassword, signInAndCreateCookie } from '$lib/firebase/firebase';
+import type { ComponentProps } from 'react';
 import EmailField from '../shared/ui/EmailField';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type { Route } from 'next';
 
 const Login = () => {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const email = searchParams.get('email');
 
-    const handleClick = async (e: FormEvent<HTMLFormElement>) => {
+    const handleFormSubmit: ComponentProps<'form'>['onSubmit'] = async (e) => {
         await signInAndCreateCookie(e);
         router.push('/dashboard');
+    };
+    const handleFormChange: ComponentProps<'form'>['onChange'] = async (e) => {
+        const { value, name } = e.target as HTMLInputElement;
+        if (name === 'email') {
+            router.push(`${'/login'}?email=${value}` as Route);
+        }
+    };
+    const handleForgotPasswordClick: ComponentProps<'button'>['onClick'] = async (e) => {
+        router.push(`/forgot-password?email=${email}`);
     };
     return (
         <Container component={Paper} fixed maxWidth="xl" sx={{ height: '70dvh' }}>
@@ -20,11 +32,13 @@ const Login = () => {
                 component="form"
                 container
                 sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
-                onSubmit={handleClick}
+                onSubmit={handleFormSubmit}
+                onChange={handleFormChange}
             >
                 <EmailField />
                 <PasswordTextField />
                 <Button type="submit">Log inn</Button>
+                <Button onClick={handleForgotPasswordClick}>Glemt passord?</Button>
             </Grid2>
         </Container>
     );

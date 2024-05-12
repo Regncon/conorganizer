@@ -9,7 +9,7 @@ const LogOutButton = () => {
         <Button
             onClick={async () => {
                 await signOutAndDeleteCookie();
-                router.replace('/');
+                router.replace('/login');
             }}
             variant="outlined"
         >
