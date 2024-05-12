@@ -28,11 +28,12 @@ export default async function RootLayout({
 						<CssBaseline enableColorScheme />
 						<Container component={'main'} maxWidth="xl">
 							<Box className={styles['main-test']}>
-								<Link href="/login">
-									<Typography variant="h1">
-										For og lage arrangementer må du være logget inn
-									</Typography>
-								</Link>
+								<Typography variant="h1">
+									For og lage arrangementer må du ha en bruker trykk på{' '}
+									<Link href="/login">logg inn</Link> Eller
+									<Link href="/register"> registrer </Link>
+								</Typography>
+
 								{children}
 							</Box>
 						</Container>

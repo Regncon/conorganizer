@@ -43,7 +43,7 @@ const muiDarkTheme: ThemeOptions = {
 		h2: {
 			fontWeight: '700',
 			fontFamily: Garamond.style.fontFamily,
-			fontSize: '0.91rem',
+			fontSize: '2rem',
 		},
 		h3: {
 			fontWeight: '700',
