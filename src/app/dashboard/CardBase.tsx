@@ -1,6 +1,6 @@
 'use client';
 import Card from '@mui/material/Card';
-import CardActionArea from '@mui/material/CardActionArea';
+import CardActionArea, { cardActionAreaClasses } from '@mui/material/CardActionArea';
 import CardMedia from '@mui/material/CardMedia';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
@@ -11,7 +11,7 @@ import type { Route } from 'next';
 import CardActions from '@mui/material/CardActions';
 import DeleteForeverOutlinedIcon from '@mui/icons-material/DeleteForeverOutlined';
 import Box from '@mui/material/Box';
-import { IconButton } from '@mui/material';
+import { IconButton, iconButtonClasses } from '@mui/material';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { collection, deleteDoc, doc } from 'firebase/firestore';
 type Props = {
@@ -38,9 +38,19 @@ const CardBase = ({ title, img, imgAlt, description, href, docId }: Props) => {
 			await deleteDoc(eventRef);
 		}
 	};
+
 	return (
 		<Card sx={{ maxWidth: 345 }}>
-			<CardActionArea onClick={handleActionClick} disableRipple={disableRipple}>
+			<CardActionArea
+				onClick={handleActionClick}
+				disableRipple={disableRipple}
+				sx={{
+					[`.${cardActionAreaClasses.root}:has(.${iconButtonClasses.root}:hover) .${cardActionAreaClasses.focusHighlight}`]:
+						{
+							backgroundColor: 'unset',
+						},
+				}}
+			>
 				<CardMedia component="img" height={130} image={img} alt={imgAlt} />
 				<CardContent>
 					<Typography gutterBottom variant="h5" component="div">
@@ -53,7 +63,11 @@ const CardBase = ({ title, img, imgAlt, description, href, docId }: Props) => {
 				{docId ?
 					<CardActions>
 						<IconButton
-							sx={{ placeSelf: 'end', color: '#f95e5e', padding: '1rem' }}
+							sx={{
+								placeSelf: 'end',
+								color: '#f95e5e',
+								padding: '1rem',
+							}}
 							onClick={(e) => {
 								e.stopPropagation();
 								setDisableRipple(true);

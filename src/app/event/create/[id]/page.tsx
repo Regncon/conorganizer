@@ -1,7 +1,7 @@
 'use client';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
-import TextField, { textFieldClasses } from '@mui/material/TextField';
+import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
@@ -11,15 +11,13 @@ import TextareaAutosize from '@mui/material/TextareaAutosize';
 import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
-import { Unstable_NumberInput as NumberInput } from '@mui/base/Unstable_NumberInput';
 import Confetti from 'react-confetti';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import type { NewEvent } from '$app/types';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
-import QuantityInput from './CustomNumberInput';
 type Props = {
 	params: {
 		id: string;
@@ -33,18 +31,17 @@ const Create = ({ params: { id } }: Props) => {
 	const [newEvent, setNewEvent] = useState<NewEvent>();
 	const [user, setUser] = useState<User | null>();
 	const newEventDocRef = doc(db, 'users', user?.uid ?? '_', 'my-events', id);
-	console.log(newEventDocRef, 'newEventDocRef');
 
 	useEffect(() => {
 		let unsubscribe: Unsubscribe | undefined;
 		unsubscribe = onSnapshot(newEventDocRef, (snapshot) => {
 			setNewEvent(snapshot.data() as NewEvent);
-			console.log(snapshot, 'snapshot');
 		});
 		return () => {
 			unsubscribe?.();
 		};
 	}, [user]);
+
 	useEffect(() => {
 		const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
 			console.log(user, 'user');
@@ -75,8 +72,15 @@ const Create = ({ params: { id } }: Props) => {
 						name = 'gameType';
 						value = inputName;
 					}
+					if (user?.email !== null) {
+						const payload: Partial<NewEvent> = {
+							[name]: value,
+							updateAt: new Date(Date.now()).toString(),
+							updatedBy: user?.email,
+						};
 
-					setDoc(newEventDocRef, { ...newEvent, [name]: value });
+						setDoc(newEventDocRef, { ...newEvent, ...payload });
+					}
 				}}
 			>
 				{isExploding && (
