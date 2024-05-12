@@ -6,11 +6,11 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 import { firebaseAuth } from '$lib/firebase/firebase';
 
 export async function getAllEvents() {
-	const eventRef = await adminDb.collection('event').get();
-	const events = eventRef.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Event[];
-	return events;
+    const eventRef = await adminDb.collection('events').get();
+    const events = eventRef.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Event[];
+    return events;
 }
 
 export async function updateEvents() {
-	revalidatePath('/', 'page');
+    revalidatePath('/', 'page');
 }

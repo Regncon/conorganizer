@@ -5,17 +5,17 @@ import { useEffect } from 'react';
 import { updateEvents } from './serverAction';
 
 const RealtimeEvents = () => {
-	useEffect(() => {
-		const eventsRef = collection(db, 'event');
-		const unsubscribe = onSnapshot(eventsRef, (snapshot) => {
-			updateEvents();
-		});
+    useEffect(() => {
+        const eventsRef = collection(db, 'events');
+        const unsubscribe = onSnapshot(eventsRef, (snapshot) => {
+            updateEvents();
+        });
 
-		return () => {
-			unsubscribe();
-		};
-	}, []);
-	return null;
+        return () => {
+            unsubscribe();
+        };
+    }, []);
+    return null;
 };
 
 export default RealtimeEvents;
