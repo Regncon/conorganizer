@@ -2,7 +2,7 @@
 import { Button, Container, Paper } from '@mui/material';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import PasswordTextField from './PasswordTextField';
-import { signInAndCreateCookie, signOutAndDeleteCookie } from '$lib/firebase/firebase';
+import { signInAndCreateCookie } from '$lib/firebase/firebase';
 import type { FormEvent } from 'react';
 import EmailField from '../shared/ui/EmailField';
 import { useRouter } from 'next/navigation';
@@ -26,7 +26,6 @@ const Login = () => {
                 <PasswordTextField />
                 <Button type="submit">Log inn</Button>
             </Grid2>
-            <Button onClick={signOutAndDeleteCookie}>logg ut</Button>
         </Container>
     );
 };

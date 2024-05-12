@@ -15,72 +15,72 @@ import { IconButton, iconButtonClasses } from '@mui/material';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { collection, deleteDoc, doc } from 'firebase/firestore';
 type Props = {
-	href: Route;
-	title: string;
-	description: string;
-	img: string;
-	imgAlt: string;
-	docId?: string;
+    href: Route;
+    title: string;
+    subTitle: string;
+    img: string;
+    imgAlt: string;
+    docId?: string;
 };
 
-const CardBase = ({ title, img, imgAlt, description, href, docId }: Props) => {
-	const router = useRouter();
-	const [disableRipple, setDisableRipple] = useState<boolean>(false);
-	useEffect(() => {
-		router.prefetch(href);
-	});
-	const handleActionClick = () => {
-		router.push(href);
-	};
-	const handleDeleteClick = async () => {
-		if (firebaseAuth.currentUser?.uid && docId) {
-			const eventRef = doc(db, 'users', firebaseAuth.currentUser?.uid, 'my-events', docId);
-			await deleteDoc(eventRef);
-		}
-	};
+const CardBase = ({ title, img, imgAlt, subTitle, href, docId }: Props) => {
+    const router = useRouter();
+    const [disableRipple, setDisableRipple] = useState<boolean>(false);
+    useEffect(() => {
+        router.prefetch(href);
+    });
+    const handleActionClick = () => {
+        router.push(href);
+    };
+    const handleDeleteClick = async () => {
+        if (firebaseAuth.currentUser?.uid && docId) {
+            const eventRef = doc(db, 'users', firebaseAuth.currentUser?.uid, 'my-events', docId);
+            await deleteDoc(eventRef);
+        }
+    };
 
-	return (
-		<Card sx={{ maxWidth: 345 }}>
-			<CardActionArea
-				onClick={handleActionClick}
-				disableRipple={disableRipple}
-				sx={{
-					[`.${cardActionAreaClasses.root}:has(.${iconButtonClasses.root}:hover) .${cardActionAreaClasses.focusHighlight}`]:
-						{
-							backgroundColor: 'unset',
-						},
-				}}
-			>
-				<CardMedia component="img" height={130} image={img} alt={imgAlt} />
-				<CardContent>
-					<Typography gutterBottom variant="h5" component="div">
-						{title}
-					</Typography>
-					<Typography variant="body2" color="text.secondary">
-						{description}
-					</Typography>
-				</CardContent>
-				{docId ?
-					<CardActions>
-						<IconButton
-							sx={{
-								placeSelf: 'end',
-								color: '#f95e5e',
-								padding: '1rem',
-							}}
-							onClick={(e) => {
-								e.stopPropagation();
-								setDisableRipple(true);
-								handleDeleteClick();
-							}}
-						>
-							<DeleteForeverOutlinedIcon />
-						</IconButton>
-					</CardActions>
-				:	null}
-			</CardActionArea>
-		</Card>
-	);
+    return (
+        <Card sx={{ maxWidth: 345 }}>
+            <CardActionArea
+                onClick={handleActionClick}
+                disableRipple={disableRipple}
+                sx={{
+                    [`.${cardActionAreaClasses.root}:has(.${iconButtonClasses.root}:hover) .${cardActionAreaClasses.focusHighlight}`]:
+                        {
+                            backgroundColor: 'unset',
+                        },
+                }}
+            >
+                <CardMedia component="img" height={130} image={img} alt={imgAlt} />
+                <CardContent>
+                    <Typography gutterBottom variant="h5" component="div">
+                        {title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        {subTitle}
+                    </Typography>
+                </CardContent>
+                {docId ?
+                    <CardActions>
+                        <IconButton
+                            sx={{
+                                placeSelf: 'end',
+                                color: '#f95e5e',
+                                padding: '1rem',
+                            }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setDisableRipple(true);
+                                handleDeleteClick();
+                            }}
+                        >
+                            <DeleteForeverOutlinedIcon />
+                        </IconButton>
+                    </CardActions>
+                :   null}
+            </CardActionArea>
+        </Card>
+    );
 };
 
 export default CardBase;
