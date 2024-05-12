@@ -8,6 +8,7 @@ import Box from '@mui/material/Box';
 import { getAllMyEvents } from './actions';
 import RealtimeMyEvents from './RealtimeMyEvents';
 import type { Route } from 'next';
+import { Typography } from '@mui/material';
 
 const createId = async (app: FirebaseApp, db: Firestore) => {
 	const collectionRef = collection(db, '_');
@@ -16,7 +17,6 @@ const createId = async (app: FirebaseApp, db: Firestore) => {
 };
 
 const MyEvents = async () => {
-	// const newEventDocRef = adminDb.collection('/users').get();
 	const { app, user, auth, db } = await getAuthorizedAuth();
 
 	if (app === null || user === null || auth === null || db === null) {
@@ -26,23 +26,33 @@ const MyEvents = async () => {
 	const docs = await getAllMyEvents(db, user);
 	const docId = await createId(app, db);
 	return (
-		<Box sx={{ position: 'relative', marginTop: '2rem' }}>
-			<NewEventButton docId={docId} />
-			<Grid2 container spacing="2rem">
-				{docs.map((doc) => (
-					<Grid2 xs={5.7} md={3} key={doc.id}>
-						<CardBase
-							href={`/event/create/${doc.id}` as Route}
-							description={doc.description}
-							img="/my-events.jpg"
-							imgAlt="Mine arrangementer"
-							title={doc.title}
-						/>
-					</Grid2>
-				))}
-			</Grid2>
-			<RealtimeMyEvents userId={user.uid} />
-		</Box>
+		<>
+			<Typography variant="h1">
+				Ta en titt nedenfor for å se en liste over arrangementene du har satt sammen.
+			</Typography>
+			<Box sx={{ position: 'relative', marginTop: '2rem' }}>
+				<NewEventButton docId={docId} />
+				<Grid2 container spacing="2rem">
+					{docs
+						.sort((a, b) => {
+							return a.createdAt > b.createdAt ? 1 : -1;
+						})
+						.map((doc) => (
+							<Grid2 xs={5.7} md={3} key={doc.id}>
+								<CardBase
+									href={`/event/create/${doc.id}` as Route}
+									description={doc.description}
+									img="/my-events.jpg"
+									imgAlt="Mine arrangementer"
+									title={doc.title}
+									docId={doc.id}
+								/>
+							</Grid2>
+						))}
+				</Grid2>
+				<RealtimeMyEvents userId={user.uid} />
+			</Box>
+		</>
 	);
 };
 

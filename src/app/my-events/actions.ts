@@ -9,10 +9,10 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, type User }
 import { firebaseAuth } from '$lib/firebase/firebase';
 
 export const createMyEventDoc = async (docId: string) => {
-	const { app, user: currentUser } = await getAuthorizedAuth();
-	if (app && currentUser) {
+	const { app, user } = await getAuthorizedAuth();
+	if (app && user && user.email) {
 		const db = getFirestore(app);
-		const ref = doc(db, '/users', currentUser.uid, 'my-events', docId);
+		const ref = doc(db, '/users', user.uid, 'my-events', docId);
 		const newEvent: Omit<NewEvent, 'id'> = {
 			fridayEvening: true,
 			saturdayEvening: true,
@@ -36,6 +36,10 @@ export const createMyEventDoc = async (docId: string) => {
 			system: '',
 			title: '',
 			volunteersPossible: false,
+			createdAt: new Date(Date.now()).toString(),
+			createdBy: user.email,
+			updateAt: '',
+			updatedBy: '',
 		};
 		await setDoc(ref, newEvent);
 		return;

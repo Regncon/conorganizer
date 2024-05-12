@@ -39,4 +39,8 @@ export type NewEvent = {
 	description: string;
 	additionalComments: string;
 	unpublished: boolean;
+	createdAt: string;
+	createdBy: string;
+	updateAt: string;
+	updatedBy: string;
 };
