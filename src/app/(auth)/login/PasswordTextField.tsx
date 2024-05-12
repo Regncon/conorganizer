@@ -1,6 +1,7 @@
 'use client';
 
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import { TextField } from '@mui/material';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import OutlinedInput from '@mui/material/OutlinedInput';
@@ -15,26 +16,28 @@ const PasswordTextField = () => {
 	};
 
 	return (
-		<OutlinedInput
+		<TextField
 			type={showPassword ? 'text' : 'password'}
 			name="password"
 			autoComplete="current-password"
 			label="password"
 			required
-			endAdornment={
-				<InputAdornment position="end">
-					<IconButton
-						aria-label="toggle password visibility"
-						onClick={handleClickShowPassword}
-						onMouseDown={handleMouseDownPassword}
-						edge="end"
-					>
-						{showPassword ?
-							<VisibilityOff />
-						:	<Visibility />}
-					</IconButton>
-				</InputAdornment>
-			}
+			InputProps={{
+				endAdornment: (
+					<InputAdornment position="end">
+						<IconButton
+							aria-label="toggle password visibility"
+							onClick={handleClickShowPassword}
+							onMouseDown={handleMouseDownPassword}
+							edge="end"
+						>
+							{showPassword ?
+								<VisibilityOff />
+							:	<Visibility />}
+						</IconButton>
+					</InputAdornment>
+				),
+			}}
 		/>
 	);
 };

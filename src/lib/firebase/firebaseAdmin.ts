@@ -10,7 +10,7 @@ import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 
 import { cookies } from 'next/headers';
 
-import { getAuth, signInWithCustomToken } from 'firebase/auth';
+import { getAuth, signInWithCustomToken, signInWithEmailAndPassword } from 'firebase/auth';
 import { initializeApp, type FirebaseOptions } from 'firebase/app';
 import { firebaseAdminConfig, firebaseConfig } from './config';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -29,27 +29,24 @@ export const getAuthorizedAuth = async () => {
 			'admin'
 		);
 	const adminAuth = getAdminAuth(adminApp);
-	const noSessionReturn = { app: null, currentUser: null };
+	const noSessionReturn = { app: null, currentUser: null, auth: null };
 
 	if (!session) {
-		const idToken = await getAppRouterSession();
+		session = await getAppRouterSession();
 
-		if (idToken) {
-			session = idToken;
-		}
-
-		if (!idToken || !session) {
+		if (!session) {
 			return noSessionReturn;
 		}
 	}
 
-	const decodedIdToken = await adminAuth.verifyIdToken(session);
+	const decodedIdToken = await adminAuth.verifySessionCookie(session);
 	const app = initializeAuthenticatedApp(decodedIdToken.uid);
 	const auth = getAuth(app);
 
-	const isRevoked = !(await adminAuth.verifyIdToken(session, true).catch((e) => console.error(e.message)));
+	const isRevoked = !(await adminAuth.verifySessionCookie(session, true).catch((e) => console.error(e.message)));
 	if (isRevoked) return noSessionReturn;
 
+	// To signIn user so we get access to auth.currentUser
 	if (auth.currentUser?.uid !== decodedIdToken.uid) {
 		const customToken = await adminAuth
 			.createCustomToken(decodedIdToken.uid)
@@ -59,8 +56,7 @@ export const getAuthorizedAuth = async () => {
 
 		await signInWithCustomToken(auth, customToken);
 	}
-
-	return { app, currentUser: auth.currentUser };
+	return { app, currentUser: auth.currentUser, auth };
 };
 
 async function getAppRouterSession() {
@@ -98,6 +94,7 @@ let app: App =
 // }
 
 export const adminDb = getFirestore(app);
+export const testAuth = getAdminAuth(app);
 
 // const adminApp =
 // 	getApps().find((app) => app.name === 'admin') ||

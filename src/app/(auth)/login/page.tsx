@@ -4,6 +4,7 @@ import { Button, Container, InputAdornment, Paper, TextField } from '@mui/materi
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import PasswordTextField from './PasswordTextField';
 import { signInAndCreateCookie, signOutAndDeleteCookie } from '$lib/firebase/firebase';
+import { setSessionCookie } from './action';
 
 const Login = () => {
 	return (
@@ -11,7 +12,7 @@ const Login = () => {
 			<Grid2
 				component="form"
 				container
-				sx={{ placeContent: 'center', height: '100%' }}
+				sx={{ placeContent: 'center', height: '100%', flexDirection: 'column' }}
 				onSubmit={signInAndCreateCookie}
 			>
 				<TextField
@@ -22,8 +23,8 @@ const Login = () => {
 					variant="outlined"
 					required
 					InputProps={{
-						startAdornment: (
-							<InputAdornment position="start">
+						endAdornment: (
+							<InputAdornment position="end">
 								<AccountCircleIcon />
 							</InputAdornment>
 						),

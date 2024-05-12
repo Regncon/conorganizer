@@ -7,19 +7,21 @@ import { collection, getFirestore, getDocs, doc, type Firestore } from 'firebase
 import NewEventButton from './NewEventButton';
 import type { FirebaseApp } from 'firebase/app';
 import Box from '@mui/material/Box';
+import { createUserWithEmailAndPassword, onAuthStateChanged, signInWithEmailAndPassword } from 'firebase/auth';
+import { getAuth } from 'firebase-admin/auth';
 
 const createId = async (app: FirebaseApp, db: Firestore) => {
-	const test = collection(db, '_');
-	const test2 = doc(test);
-	return test2.id;
+	const collectionRef = collection(db, '_');
+	const docRef = doc(collectionRef);
+	return docRef.id;
 };
 
 const MyEvents = async () => {
 	// const newEventDocRef = adminDb.collection('/users').get();
-	const { app, currentUser } = await getAuthorizedAuth();
+	const { app, currentUser, auth } = await getAuthorizedAuth();
 	const user = currentUser;
 
-	if (app === null || currentUser === null) {
+	if (app === null || currentUser === null || auth === null) {
 		throw new Error('asdfg');
 	}
 
