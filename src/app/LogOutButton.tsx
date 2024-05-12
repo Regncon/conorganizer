@@ -1,7 +1,7 @@
 'use client';
 import { signOutAndDeleteCookie } from '$lib/firebase/firebase';
 import Button from '@mui/material/Button';
-import { useRouter } from 'next/navigation';
+import { redirect, useRouter } from 'next/navigation';
 
 const LogOutButton = () => {
     const router = useRouter();
@@ -9,7 +9,7 @@ const LogOutButton = () => {
         <Button
             onClick={async () => {
                 await signOutAndDeleteCookie();
-                router.replace('/login');
+                redirect('/login');
             }}
             variant="outlined"
         >
