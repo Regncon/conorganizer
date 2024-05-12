@@ -7,9 +7,10 @@ import Typography from '@mui/material/Typography';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import type { Route } from 'next';
 
 type Props = {
-	href: string;
+	href: Route;
 	title: string;
 	description: string;
 	img: string;

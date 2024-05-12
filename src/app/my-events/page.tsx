@@ -7,6 +7,7 @@ import type { FirebaseApp } from 'firebase/app';
 import Box from '@mui/material/Box';
 import { getAllMyEvents } from './actions';
 import RealtimeMyEvents from './RealtimeMyEvents';
+import type { Route } from 'next';
 
 const createId = async (app: FirebaseApp, db: Firestore) => {
 	const collectionRef = collection(db, '_');
@@ -31,7 +32,7 @@ const MyEvents = async () => {
 				{docs.map((doc) => (
 					<Grid2 xs={5.7} md={3} key={doc.id}>
 						<CardBase
-							href={`/event/create/${doc.id}`}
+							href={`/event/create/${doc.id}` as Route}
 							description={doc.description}
 							img="/my-events.jpg"
 							imgAlt="Mine arrangementer"
