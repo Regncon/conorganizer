@@ -12,7 +12,7 @@ const Login = () => {
 			<Grid2
 				component="form"
 				container
-				sx={{ placeContent: 'center', height: '100%', flexDirection: 'column' }}
+				sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
 				onSubmit={signInAndCreateCookie}
 			>
 				<TextField

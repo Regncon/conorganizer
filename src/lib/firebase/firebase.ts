@@ -3,7 +3,15 @@
 import { logout, setSessionCookie } from '$app/(auth)/login/action';
 
 import { initializeApp } from 'firebase/app';
-import { getAuth, setPersistence, signInWithEmailAndPassword, signOut, inMemoryPersistence } from 'firebase/auth';
+import {
+	getAuth,
+	setPersistence,
+	signInWithEmailAndPassword,
+	signOut,
+	inMemoryPersistence,
+	createUserWithEmailAndPassword,
+	signInWithCredential,
+} from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import type { FormEvent } from 'react';
 import { firebaseConfig } from './config';
@@ -12,16 +20,25 @@ const app = initializeApp(firebaseConfig, 'client');
 
 export const db = getFirestore(app);
 export const firebaseAuth = getAuth(app);
-setPersistence(firebaseAuth, inMemoryPersistence);
 
 type LoginDetails = {
 	email: string;
 	password: string;
 };
-export const signInAndCreateCookie = async (e: FormEvent<HTMLFormElement>) => {
-	e.preventDefault();
+export type RegisterDetails = {
+	email: string;
+	password: string;
+	confirm: string;
+};
+
+const getEmailAndPasswordFromFormData = (e: FormEvent<HTMLFormElement>) => {
 	const target = e.target as HTMLFormElement;
 	const { email, password } = Object.fromEntries(new FormData(target)) as LoginDetails;
+	return { email, password };
+};
+export const signInAndCreateCookie = async (e: FormEvent<HTMLFormElement>) => {
+	e.preventDefault();
+	const { email, password } = getEmailAndPasswordFromFormData(e);
 	if (!!!email && !!!password) {
 		return;
 	}
@@ -33,6 +50,14 @@ export const signInAndCreateCookie = async (e: FormEvent<HTMLFormElement>) => {
 export const signOutAndDeleteCookie = () => {
 	signOut(firebaseAuth);
 	logout();
+};
+
+export const singUpAndCreateCookie = async (e: FormEvent<HTMLFormElement>) => {
+	const { email, password } = getEmailAndPasswordFromFormData(e);
+	const userCredentials = await createUserWithEmailAndPassword(firebaseAuth, email, password);
+	const idToken = await userCredentials.user.getIdToken();
+
+	setSessionCookie(idToken);
 };
 
 // export const eventsRef = collection(db, 'events');

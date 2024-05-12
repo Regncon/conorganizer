@@ -5,12 +5,12 @@ import Typography from '@mui/material/Typography';
 import styles from './page.module.scss';
 import EventCardBig from './EventCardBig';
 import EventCardSmall from './EventCardSmall';
-import { getAll } from './serverAction';
+import { getAllEvents } from './serverAction';
 import RealtimeEvents from './RealtimeEvents';
 import Grid from '@mui/material/Unstable_Grid2';
 
 export default async function Home() {
-	const events = await getAll();
+	const events = await getAllEvents();
 	console.log(events);
 
 	return (

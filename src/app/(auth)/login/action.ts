@@ -12,7 +12,12 @@ export const setSessionCookie = async (idToken: string) => {
 	expirationDate.setTime(expirationDate.getTime() + twoWeekExpire);
 
 	const sessionCookie = await testAuth.createSessionCookie(idToken, { expiresIn: twoWeekExpire });
-	const option: Partial<ResponseCookie> = { maxAge: twoWeekExpire, httpOnly: true, secure: true };
+	const option: Partial<ResponseCookie> = {
+		maxAge: twoWeekExpire,
+		httpOnly: true,
+		secure: true,
+		expires: expirationDate,
+	};
 
 	cookieStore.set(SESSION_COOKIE_NAME, sessionCookie, option);
 };

@@ -13,7 +13,8 @@ import { cookies } from 'next/headers';
 import { getAuth, signInWithCustomToken, signInWithEmailAndPassword } from 'firebase/auth';
 import { initializeApp, type FirebaseOptions } from 'firebase/app';
 import { firebaseAdminConfig, firebaseConfig } from './config';
-import { getFirestore } from 'firebase-admin/firestore';
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
+import { getFirestore } from 'firebase/firestore';
 
 //console.log(process.env.FIREBASE_CLIENT_ID);
 
@@ -29,7 +30,7 @@ export const getAuthorizedAuth = async () => {
 			'admin'
 		);
 	const adminAuth = getAdminAuth(adminApp);
-	const noSessionReturn = { app: null, currentUser: null, auth: null };
+	const noSessionReturn = { app: null, user: null, auth: null, db: null };
 
 	if (!session) {
 		session = await getAppRouterSession();
@@ -42,6 +43,7 @@ export const getAuthorizedAuth = async () => {
 	const decodedIdToken = await adminAuth.verifySessionCookie(session);
 	const app = initializeAuthenticatedApp(decodedIdToken.uid);
 	const auth = getAuth(app);
+	const db = getFirestore(app);
 
 	const isRevoked = !(await adminAuth.verifySessionCookie(session, true).catch((e) => console.error(e.message)));
 	if (isRevoked) return noSessionReturn;
@@ -56,7 +58,8 @@ export const getAuthorizedAuth = async () => {
 
 		await signInWithCustomToken(auth, customToken);
 	}
-	return { app, currentUser: auth.currentUser, auth };
+
+	return { app, user: auth.currentUser, auth, db };
 };
 
 async function getAppRouterSession() {
@@ -93,7 +96,7 @@ let app: App =
 // 	});
 // }
 
-export const adminDb = getFirestore(app);
+export const adminDb = getAdminFirestore(app);
 export const testAuth = getAdminAuth(app);
 
 // const adminApp =
