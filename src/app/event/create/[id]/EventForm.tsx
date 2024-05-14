@@ -328,12 +328,9 @@ const EventForm = ({ id }: Props) => {
 
                 <Grid2 xs={12}>
                     <Paper sx={{ padding: '1rem' }}>
-                        <Typography>
-                            Skjemaet vert lagra automatisk, men om du likevel vil trykke på ein knapp, så er det ein
-                            her. :)
-                        </Typography>
+                        <Typography>Skjemaet vert lagra automatisk.</Typography>
                         <Button onClick={() => setIsExploding(!isExploding)} variant="contained">
-                            Send inn
+                            {newEvent.isSubmited ? 'Send inn' : 'Meld av'}
                         </Button>
                     </Paper>
                 </Grid2>

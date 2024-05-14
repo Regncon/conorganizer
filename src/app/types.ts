@@ -36,4 +36,5 @@ export type NewEvent = {
     updateAt: string;
     updatedBy: string;
     subTitle: string;
+    isSubmited: boolean;
 };
