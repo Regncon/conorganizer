@@ -33,6 +33,7 @@ export default function EventCardBig({
                         height: '141px',
                         alignItems: 'flex-end',
                         padding: '1rem',
+                        wordBreak: 'break-all',
                     }}
                 />
                 <CardContent
@@ -60,7 +61,7 @@ export default function EventCardBig({
                             <Box component={Image} priority src={rook} alt="rook icon" />
                         </Box> */}
                     </Box>
-                    <Typography sx={{ color: 'white' }}>{shortDescription}</Typography>
+                    <Typography sx={{ color: 'white', wordBreak: 'break-all' }}>{shortDescription}</Typography>
                 </CardContent>
             </CardActionArea>
         </Card>

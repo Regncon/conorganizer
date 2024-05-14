@@ -82,18 +82,22 @@ const EventForm = ({ id }: Props) => {
             setIsSnackBarOpen(true);
         }
     };
-    const handleSubmit = async () => {
+    const handleSubmit: ComponentProps<'form'>['onSubmit'] = async (e) => {
+        e.preventDefault();
         if (!newEvent?.isSubmitted) {
             handleSubmission();
         }
     };
 
     const handleCancelSubmission: ComponentProps<'button'>['onClick'] = async (e) => {
-        e.preventDefault();
         if (newEvent?.isSubmitted) {
+            e.preventDefault();
             handleSubmission();
         }
     };
+
+    const titleRegexp = /.{0,64}/;
+    const subTitleRegexp = /.{0,87}/;
 
     const handleOnChange = (e: FormEvent<HTMLFormElement>) => {
         const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
@@ -110,11 +114,17 @@ const EventForm = ({ id }: Props) => {
             value = inputName;
         }
         if (user?.email !== null) {
-            const payload: Partial<NewEvent> = {
+            let payload: Partial<NewEvent> = {
                 [name]: value,
                 updateAt: new Date(Date.now()).toString(),
                 updatedBy: user?.email,
             };
+            if (newEvent?.isSubmitted) {
+                setIsSnackBarOpen(false);
+                setSnackBarMessage('du må nå sende inn igjen skjemaet');
+                payload = { ...payload, isSubmitted: false };
+                setIsSnackBarOpen(true);
+            }
 
             updateDatabase(payload);
         }
@@ -156,6 +166,10 @@ const EventForm = ({ id }: Props) => {
                                 variant="outlined"
                                 required
                                 fullWidth
+                                inputProps={{
+                                    pattern: titleRegexp.source,
+                                    title: 'minst 1 tegn og maks antall tegn er 64',
+                                }}
                             />
                         </Paper>
                     </Grid2>
@@ -168,6 +182,10 @@ const EventForm = ({ id }: Props) => {
                                 variant="outlined"
                                 required
                                 fullWidth
+                                inputProps={{
+                                    pattern: subTitleRegexp.source,
+                                    title: 'minst 1 tegn og maks antall tegn er 64',
+                                }}
                             />
                         </Paper>
                     </Grid2>
