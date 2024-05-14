@@ -8,8 +8,11 @@ import Box from '@mui/material/Box';
 import { getAllMyEvents } from './actions';
 import RealtimeMyEvents from './RealtimeMyEvents';
 import type { Route } from 'next';
-import { Typography } from '@mui/material';
+import { Typography, touchRippleClasses } from '@mui/material';
 import { revalidatePath } from 'next/cache';
+import EventCardBig from '$app/EventCardBig';
+import Link from 'next/link';
+import Test from './Test';
 
 const createId = async (app: FirebaseApp, db: Firestore) => {
     const collectionRef = collection(db, '_');
@@ -42,14 +45,25 @@ const MyEvents = async () => {
                         })
                         .map((doc) => (
                             <Grid2 xs={5.7} md={3} key={doc.id}>
-                                <CardBase
+                                <Box>
+                                    <EventCardBig
+                                        title={doc.title}
+                                        gameMaster={doc.name}
+                                        shortDescription={doc.subTitle}
+                                        system={doc.system}
+                                        backgroundImage="my-events.jpg"
+                                        // icons={}
+                                    />
+                                    <Test />
+                                </Box>
+                                {/* <CardBase
                                     href={`/event/create/${doc.id}` as Route}
                                     subTitle={doc.subTitle}
                                     img="/my-events.jpg"
                                     imgAlt="Mine arrangementer"
                                     title={doc.title}
                                     docId={doc.id}
-                                />
+                                /> */}
                             </Grid2>
                         ))}
                 </Grid2>
