@@ -9,7 +9,7 @@ import RealtimeMyEvents from './RealtimeMyEvents';
 import type { Route } from 'next';
 import { Link, Typography } from '@mui/material';
 import { revalidatePath } from 'next/cache';
-import EventCardBig from '$app/EventCardBig';
+import EventCardBig from '$app/(public)/EventCardBig';
 import DeleteNewEventButton from './DeleteNewEventButton';
 
 const createId = async (app: FirebaseApp, db: Firestore) => {

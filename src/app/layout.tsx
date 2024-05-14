@@ -22,8 +22,6 @@ export default async function RootLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
-    const { auth } = await getAuthorizedAuth();
-
     return (
         <html lang="en">
             <body className={inter.className}>
@@ -35,21 +33,7 @@ export default async function RootLayout({
                                 <BackButton />
                                 <LogOutButton />
                             </Box>
-                            <Box className={styles['main-test']}>
-                                {auth?.currentUser?.uid ? null : (
-                                    <Card sx={{ marginTop: '1rem' }}>
-                                        <CardContent>
-                                            <Typography variant="h1">
-                                                For og lage arrangementer må du ha en bruker trykk på{' '}
-                                                <Link href="/login">logginn</Link> Eller
-                                                <Link href="/register"> registrer </Link>
-                                            </Typography>
-                                        </CardContent>
-                                    </Card>
-                                )}
-
-                                {children}
-                            </Box>
+                            <Box className={styles['main-test']}>{children}</Box>
                         </Container>
                     </ThemeProvider>
                 </AppRouterCacheProvider>

@@ -3,7 +3,7 @@ import Typography from '@mui/material/Typography';
 import { Card, CardContent, CardHeader } from '@mui/material';
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
-import type { EventCardProps } from './types';
+import type { EventCardProps } from '../types';
 
 export default function EventCardBig({ title, gameMaster, system, icons }: Omit<EventCardProps, 'shortDescription'>) {
     return (
