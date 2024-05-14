@@ -12,8 +12,8 @@ import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import Confetti from 'react-confetti';
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import type { NewEvent } from '$app/types';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
@@ -29,8 +29,14 @@ const EventForm = ({ id }: Props) => {
     const [isExploding, setIsExploding] = useState(false);
     const [newEvent, setNewEvent] = useState<NewEvent>();
     const [user, setUser] = useState<User | null>();
-    const [openSnackBar, setOpenSnackBar] = useState<boolean>(false);
+    const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
+    const snackBarMessageInitial = 'Din endring er lagra!';
+    const [snackBarMessage, setSnackBarMessage] = useState<string>(snackBarMessageInitial);
     const newEventDocRef = doc(db, 'users', user?.uid ?? '_', 'my-events', id);
+
+    const updateDatabase = async (newEvent: Partial<NewEvent>) => {
+        await updateDoc(newEventDocRef, newEvent);
+    };
 
     useEffect(() => {
         let unsubscribe: Unsubscribe | undefined;
@@ -56,12 +62,13 @@ const EventForm = ({ id }: Props) => {
             return;
         }
 
-        setOpenSnackBar(false);
+        setIsSnackBarOpen(false);
     };
 
     const handleBlur = useCallback(() => {
-        setOpenSnackBar(true);
-    }, [openSnackBar]);
+        setSnackBarMessage(snackBarMessageInitial);
+        setIsSnackBarOpen(true);
+    }, [isSnackBarOpen]);
 
     const handleOnChange = (e: FormEvent<HTMLFormElement>) => {
         const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
@@ -84,7 +91,7 @@ const EventForm = ({ id }: Props) => {
                 updatedBy: user?.email,
             };
 
-            setDoc(newEventDocRef, { ...newEvent, ...payload });
+            updateDatabase(payload);
         }
     };
 
@@ -326,18 +333,29 @@ const EventForm = ({ id }: Props) => {
                     <Grid2 xs={12}>
                         <Paper sx={{ padding: '1rem' }}>
                             <Typography>Skjemaet vert lagra automatisk.</Typography>
-                            <Button onClick={() => setIsExploding(!isExploding)} variant="contained">
-                                {newEvent.isSubmited ? 'Send inn' : 'Meld av'}
+                            <Button
+                                onClick={async () => {
+                                    setIsSnackBarOpen(false);
+                                    setIsExploding(!isExploding);
+                                    await updateDatabase({ isSubmitted: !newEvent.isSubmitted });
+                                    setSnackBarMessage(
+                                        `Du har  ${newEvent.isSubmitted ? 'meldt av' : 'sendt inn'}  arrangementet`
+                                    );
+                                    setIsSnackBarOpen(true);
+                                }}
+                                variant="contained"
+                            >
+                                {newEvent.isSubmitted ? 'Meld av' : 'Send inn'}
                             </Button>
                         </Paper>
                     </Grid2>
                 </Grid2>
                 <Snackbar
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                    open={openSnackBar}
+                    open={isSnackBarOpen}
                     onClose={handleSnackBar}
                     TransitionComponent={Slide}
-                    message="Din endring er lagra!"
+                    message={snackBarMessage}
                     autoHideDuration={1200}
                 />
             </>

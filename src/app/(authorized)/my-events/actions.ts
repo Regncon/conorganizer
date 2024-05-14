@@ -1,12 +1,9 @@
 'use server';
 import type { NewEvent } from '$app/types';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import type { Unpublished } from '@mui/icons-material';
 import { collection, doc, getDocs, getFirestore, setDoc, type Firestore } from 'firebase/firestore';
-import { adminDb } from '$lib/firebase/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, type User } from 'firebase/auth';
-import { firebaseAuth } from '$lib/firebase/firebase';
+import { type User } from 'firebase/auth';
 
 export const createMyEventDoc = async (docId: string) => {
     const { app, user } = await getAuthorizedAuth();
@@ -41,6 +38,7 @@ export const createMyEventDoc = async (docId: string) => {
             updateAt: '',
             updatedBy: '',
             subTitle: '',
+            isSubmitted: false,
         };
         await setDoc(ref, newEvent);
         return;
