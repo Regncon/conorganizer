@@ -1,4 +1,4 @@
-import { Box, Container, CssBaseline, ThemeProvider, Typography } from '@mui/material';
+import { Box, Card, CardContent, Container, CssBaseline, ThemeProvider, Typography } from '@mui/material';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
@@ -37,11 +37,15 @@ export default async function RootLayout({
                             </Box>
                             <Box className={styles['main-test']}>
                                 {auth?.currentUser?.uid ? null : (
-                                    <Typography variant="h1">
-                                        For og lage arrangementer må du ha en bruker trykk på{' '}
-                                        <Link href="/login">logg inn</Link> Eller
-                                        <Link href="/register"> registrer </Link>
-                                    </Typography>
+                                    <Card sx={{ marginTop: '1rem' }}>
+                                        <CardContent>
+                                            <Typography variant="h1">
+                                                For og lage arrangementer må du ha en bruker trykk på{' '}
+                                                <Link href="/login">logginn</Link> Eller
+                                                <Link href="/register"> registrer </Link>
+                                            </Typography>
+                                        </CardContent>
+                                    </Card>
                                 )}
 
                                 {children}
