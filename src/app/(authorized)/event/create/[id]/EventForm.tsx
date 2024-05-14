@@ -12,7 +12,7 @@ import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import Confetti from 'react-confetti';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type ComponentProps, type FormEvent } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import type { NewEvent } from '$app/types';
@@ -27,11 +27,14 @@ type Props = {
 };
 const EventForm = ({ id }: Props) => {
     const [isExploding, setIsExploding] = useState(false);
+
     const [newEvent, setNewEvent] = useState<NewEvent>();
     const [user, setUser] = useState<User | null>();
-    const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
+
     const snackBarMessageInitial = 'Din endring er lagra!';
     const [snackBarMessage, setSnackBarMessage] = useState<string>(snackBarMessageInitial);
+    const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
+
     const newEventDocRef = doc(db, 'users', user?.uid ?? '_', 'my-events', id);
 
     const updateDatabase = async (newEvent: Partial<NewEvent>) => {
@@ -70,6 +73,28 @@ const EventForm = ({ id }: Props) => {
         setIsSnackBarOpen(true);
     }, [isSnackBarOpen]);
 
+    const handleSubmission = async () => {
+        if (newEvent) {
+            setIsSnackBarOpen(false);
+            setIsExploding(!isExploding);
+            await updateDatabase({ isSubmitted: !newEvent.isSubmitted });
+            setSnackBarMessage(`Du har  ${newEvent.isSubmitted ? 'meldt av' : 'sendt inn'}  arrangementet`);
+            setIsSnackBarOpen(true);
+        }
+    };
+    const handleSubmit = async () => {
+        if (!newEvent?.isSubmitted) {
+            handleSubmission();
+        }
+    };
+
+    const handleCancelSubmission: ComponentProps<'button'>['onClick'] = async (e) => {
+        e.preventDefault();
+        if (newEvent?.isSubmitted) {
+            handleSubmission();
+        }
+    };
+
     const handleOnChange = (e: FormEvent<HTMLFormElement>) => {
         const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
 
@@ -102,11 +127,13 @@ const EventForm = ({ id }: Props) => {
             <>
                 <Grid2
                     sx={{ marginBlock: '1rem' }}
+                    noValidate={newEvent.isSubmitted}
                     container
                     component="form"
                     spacing="2rem"
                     onBlur={handleBlur}
                     onChange={handleOnChange}
+                    onSubmit={handleSubmit}
                 >
                     {isExploding && (
                         <Confetti
@@ -333,18 +360,7 @@ const EventForm = ({ id }: Props) => {
                     <Grid2 xs={12}>
                         <Paper sx={{ padding: '1rem' }}>
                             <Typography>Skjemaet vert lagra automatisk.</Typography>
-                            <Button
-                                onClick={async () => {
-                                    setIsSnackBarOpen(false);
-                                    setIsExploding(!isExploding);
-                                    await updateDatabase({ isSubmitted: !newEvent.isSubmitted });
-                                    setSnackBarMessage(
-                                        `Du har  ${newEvent.isSubmitted ? 'meldt av' : 'sendt inn'}  arrangementet`
-                                    );
-                                    setIsSnackBarOpen(true);
-                                }}
-                                variant="contained"
-                            >
+                            <Button type="submit" variant="contained" onClick={handleCancelSubmission}>
                                 {newEvent.isSubmitted ? 'Meld av' : 'Send inn'}
                             </Button>
                         </Paper>
