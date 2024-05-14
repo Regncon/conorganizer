@@ -11,7 +11,7 @@ const LogOutButton = () => {
                 await signOutAndDeleteCookie();
                 redirect('/login');
             }}
-            variant="outlined"
+            variant="contained"
         >
             logg ut
         </Button>
