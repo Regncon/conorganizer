@@ -1,4 +1,3 @@
-import CardBase from '$app/dashboard/CardBase';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import { collection, doc, type Firestore } from 'firebase/firestore';
@@ -8,11 +7,10 @@ import Box from '@mui/material/Box';
 import { getAllMyEvents } from './actions';
 import RealtimeMyEvents from './RealtimeMyEvents';
 import type { Route } from 'next';
-import { Typography, touchRippleClasses } from '@mui/material';
+import { Link, Typography } from '@mui/material';
 import { revalidatePath } from 'next/cache';
 import EventCardBig from '$app/EventCardBig';
-import Link from 'next/link';
-import Test from './Test';
+import DeleteNewEventButton from './DeleteNewEventButton';
 
 const createId = async (app: FirebaseApp, db: Firestore) => {
     const collectionRef = collection(db, '_');
@@ -44,26 +42,17 @@ const MyEvents = async () => {
                             return a.createdAt > b.createdAt ? 1 : -1;
                         })
                         .map((doc) => (
-                            <Grid2 xs={5.7} md={3} key={doc.id}>
-                                <Box>
+                            <Grid2 sx={{ textDecoration: 'none', position: 'relative' }} xs={5.7} md={3} key={doc.id}>
+                                <Box component={Link} href={`/event/create/${doc.id}` as Route}>
                                     <EventCardBig
                                         title={doc.title}
                                         gameMaster={doc.name}
                                         shortDescription={doc.subTitle}
                                         system={doc.system}
                                         backgroundImage="my-events.jpg"
-                                        // icons={}
                                     />
-                                    <Test />
                                 </Box>
-                                {/* <CardBase
-                                    href={`/event/create/${doc.id}` as Route}
-                                    subTitle={doc.subTitle}
-                                    img="/my-events.jpg"
-                                    imgAlt="Mine arrangementer"
-                                    title={doc.title}
-                                    docId={doc.id}
-                                /> */}
+                                <DeleteNewEventButton docId={doc.id} />
                             </Grid2>
                         ))}
                 </Grid2>
