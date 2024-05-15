@@ -1,6 +1,6 @@
 'use client';
 import { createTheme, ThemeOptions } from '@mui/material';
-import { EB_Garamond, Inter } from 'next/font/google';
+import { EB_Garamond, Raleway } from 'next/font/google';
 
 const Garamond = EB_Garamond({
 	weight: ['400', '700'],
@@ -8,8 +8,8 @@ const Garamond = EB_Garamond({
 	style: ['normal', 'italic'],
 	display: 'swap',
 });
-const inter = Inter({
-	weight: ['400', '700'],
+const raleway = Raleway({
+	weight: ['500', '700'],
 	subsets: ['latin'],
 	style: ['normal'],
 	display: 'swap',
@@ -61,7 +61,7 @@ const muiDarkTheme: ThemeOptions = {
 			fontFamily: Garamond.style.fontFamily,
 		},
 		body1: {
-			fontFamily: inter.style.fontFamily,
+			fontFamily: raleway.style.fontFamily,
 			fontSize: '1rem',
 		},
 	},

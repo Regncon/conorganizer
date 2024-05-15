@@ -49,7 +49,9 @@ const MyEvents = async () => {
                                         rotate: '-25deg',
                                         left: '0',
                                         zIndex: '2',
-                                        backgroundColor: doc.isSubmitted ? 'success.main' : 'warning.main',
+                                        backgroundColor: 'black',
+                                        color: doc.isSubmitted ? 'success.main' : 'warning.main',
+                                        fontWeight: '700',
                                     }}
                                 >
                                     <Typography>{doc.isSubmitted ? 'sendt inn' : 'kladd'}</Typography>

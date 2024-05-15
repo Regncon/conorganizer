@@ -178,7 +178,7 @@ const EventForm = ({ id }: Props) => {
                             <TextField
                                 name="subTitle"
                                 value={newEvent.subTitle}
-                                label="Her kan du fylle ut ei kort skildring av modulen."
+                                label="Kort oppsummering"
                                 variant="outlined"
                                 required
                                 fullWidth
@@ -377,7 +377,7 @@ const EventForm = ({ id }: Props) => {
 
                     <Grid2 xs={12}>
                         <Paper sx={{ padding: '1rem' }}>
-                            <Typography>Skjemaet vert lagra automatisk.</Typography>
+                            <Typography>Kladden vert lagra automatisk, men du må trykkje på knappen for å sende inn.</Typography>
                             <Button type="submit" variant="contained" onClick={handleCancelSubmission}>
                                 {newEvent.isSubmitted ? 'Meld av' : 'Send inn'}
                             </Button>
