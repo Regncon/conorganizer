@@ -1,5 +1,5 @@
 'use client';
-import { Button, Container, Paper } from '@mui/material';
+import { Button, Container, Link, Paper } from '@mui/material';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import PasswordTextField from './PasswordTextField';
 import { forgotPassword, signInAndCreateCookie } from '$lib/firebase/firebase';
@@ -37,8 +37,11 @@ const Login = () => {
             >
                 <EmailField />
                 <PasswordTextField />
-                <Button type="submit">Log inn</Button>
+                <Button type="submit">Logg inn</Button>
                 <Button onClick={handleForgotPasswordClick}>Glemt passord?</Button>
+                <Link sx={{ marginLeft: 'auto', marginRight: 'auto' }} href="/register">
+                    Registrer ny bruker
+                </Link>
             </Grid2>
         </Container>
     );
