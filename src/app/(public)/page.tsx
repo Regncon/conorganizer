@@ -8,7 +8,6 @@ import { redirect } from 'next/navigation';
 export default async function Home() {
     redirect('/dashboard');
     const events = await getAllEvents();
-    console.log(events);
 
     return (
         <>
