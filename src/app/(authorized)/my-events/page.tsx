@@ -31,9 +31,7 @@ const MyEvents = async () => {
     revalidatePath('/my-events');
     return (
         <>
-            <Typography variant="h1">
-                Ta en titt nedenfor for å se en liste over arrangementene du har satt sammen.
-            </Typography>
+            <Typography variant="h1">Sjå under for ein oversikt over arrangementa du har registrert.</Typography>
             <Box sx={{ position: 'relative', marginTop: '2rem' }}>
                 <NewEventButton docId={docId} />
                 <Grid2 container spacing="2rem">

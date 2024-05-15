@@ -7,6 +7,7 @@ import { forgotPassword } from '$lib/firebase/firebase';
 import type { ComponentProps } from 'react';
 import Container from '@mui/material/Container';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
+import { Typography } from '@mui/material';
 
 const ForgotPassword = () => {
     const router = useRouter();
@@ -27,7 +28,7 @@ const ForgotPassword = () => {
                 onSubmit={handleSubmit}
             >
                 <EmailField defaultValue={searchParamEmail ?? undefined} />
-                <Button type="submit">Glemt passord?</Button>
+                <Button type="submit">Gløymd passord?</Button>
             </Grid2>
         </Container>
     );

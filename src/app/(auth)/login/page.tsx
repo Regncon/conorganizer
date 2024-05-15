@@ -38,9 +38,9 @@ const Login = () => {
                 <EmailField />
                 <PasswordTextField />
                 <Button type="submit">Logg inn</Button>
-                <Button onClick={handleForgotPasswordClick}>Glemt passord?</Button>
+                <Button onClick={handleForgotPasswordClick}>Gløymd passord?</Button>
                 <Link sx={{ marginLeft: 'auto', marginRight: 'auto' }} href="/register">
-                    Registrer ny bruker
+                    Registrer ny brukar
                 </Link>
             </Grid2>
         </Container>
