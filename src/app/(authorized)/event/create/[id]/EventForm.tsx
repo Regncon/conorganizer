@@ -96,9 +96,6 @@ const EventForm = ({ id }: Props) => {
         }
     };
 
-    const titleRegexp = /.{0,64}/;
-    const subTitleRegexp = /.{0,87}/;
-
     const handleOnChange = (e: FormEvent<HTMLFormElement>) => {
         const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
 
@@ -159,6 +156,7 @@ const EventForm = ({ id }: Props) => {
 
                     <Grid2 xs={12}>
                         <Paper>
+                            <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 33 teikn</FormLabel>
                             <TextField
                                 name="title"
                                 label="Tittel på spelmodul / arrangement"
@@ -167,14 +165,15 @@ const EventForm = ({ id }: Props) => {
                                 required
                                 fullWidth
                                 inputProps={{
-                                    pattern: titleRegexp.source,
-                                    title: 'minst 1 tegn og maks antall tegn er 64',
+                                    title: 'Minst 1 teikn og maks teikn er 33',
                                 }}
+                                margin="dense"
                             />
                         </Paper>
                     </Grid2>
                     <Grid2 xs={12}>
-                        <Paper sx={{ padding: '1rem' }}>
+                        <Paper>
+                            <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 50 teikn</FormLabel>
                             <TextField
                                 name="subTitle"
                                 value={newEvent.subTitle}
@@ -182,9 +181,9 @@ const EventForm = ({ id }: Props) => {
                                 variant="outlined"
                                 required
                                 fullWidth
+                                margin="dense"
                                 inputProps={{
-                                    pattern: subTitleRegexp.source,
-                                    title: 'minst 1 tegn og maks antall tegn er 64',
+                                    title: 'Minst 1 teikn og maks 50 teikn',
                                 }}
                             />
                         </Paper>
@@ -377,7 +376,9 @@ const EventForm = ({ id }: Props) => {
 
                     <Grid2 xs={12}>
                         <Paper sx={{ padding: '1rem' }}>
-                            <Typography>Kladden vert lagra automatisk, men du må trykkje på knappen for å sende inn.</Typography>
+                            <Typography>
+                                Kladden vert lagra automatisk, men du må trykkje på knappen for å sende inn.
+                            </Typography>
                             <Button type="submit" variant="contained" onClick={handleCancelSubmission}>
                                 {newEvent.isSubmitted ? 'Meld av' : 'Send inn'}
                             </Button>
