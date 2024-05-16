@@ -4,10 +4,8 @@ import { Card, CardActionArea, CardContent, CardHeader, IconButton } from '@mui/
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
 import type { EventCardProps } from '../types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
-import { faCircleCheck } from '@fortawesome/free-regular-svg-icons';
-import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
+import CheckedOrPencilIcon from './CheckedOrPencilIcon';
+import TrashButton from './TrashButton';
 
 export default function EventCardBig({
     title,
@@ -17,8 +15,10 @@ export default function EventCardBig({
     icons,
     backgroundImage = 'blekksprut2.jpg',
     myEventBar = false,
-    myEventBarSumbitted = false,
+    myEventBarSubmitted = false,
+    myEventDocId,
 }: EventCardProps) {
+    const SuccessOrWarningColor = myEventBarSubmitted ? 'success.main' : 'warning.main';
     return (
         <Card
             sx={{
@@ -31,26 +31,37 @@ export default function EventCardBig({
                 borderRadius: '1.75rem',
             }}
         >
-            <CardActionArea>
+            <CardActionArea
+                sx={{
+                    ['&:has(.disable-ripple) > .MuiTouchRipple-root']: {
+                        display: 'none',
+                    },
+                }}
+            >
                 {myEventBar ?
-                    <Box sx={{ display: 'flex', placeContent: 'space-between' }}>
-                        <Box sx={{ display: 'flex', gap: '0.5rem', color: 'success.main' }}>
-                            {/* <Box component={FontAwesomeIcon} icon={myEventBarSumbitted ? faCircleCheck : faPencil} /> */}
-                            <Typography>{myEventBarSumbitted ? 'Sendt inn' : 'Kladd'}</Typography>
+                    <Box sx={{ display: 'flex', placeContent: 'space-between', padding: '1rem' }}>
+                        <Box sx={{ display: 'flex', gap: '0.5rem', color: 'success.main', placeItems: 'center' }}>
+                            <CheckedOrPencilIcon myEventBarSubmitted={myEventBarSubmitted} />
+                            <Typography sx={{ color: SuccessOrWarningColor }}>
+                                {myEventBarSubmitted ? 'Sendt inn' : 'Kladd'}
+                            </Typography>
                         </Box>
-                        {/* <IconButton>
-                            <Box component={FontAwesomeIcon} icon={faTrash} />
-                        </IconButton> */}
+                        <TrashButton docId={myEventDocId} />
                     </Box>
                 :   null}
                 <CardHeader
                     title={title}
                     titleTypographyProps={{ fontSize: '1.8rem' }}
                     sx={{
-                        height: '141px',
+                        maxHeight: '78px',
+                        maxWidth: '273px',
                         alignItems: 'flex-end',
                         padding: '1rem',
                         wordBreak: 'break-all',
+                        display: '-webkit-box',
+                        overflow: 'clip',
+                        WebkitLineClamp: '2',
+                        WebkitBoxOrient: 'vertical',
                     }}
                 />
                 <CardContent
@@ -78,7 +89,18 @@ export default function EventCardBig({
                             <Box component={Image} priority src={rook} alt="rook icon" />
                         </Box> */}
                     </Box>
-                    <Typography sx={{ color: 'white', wordBreak: 'break-all' }}>{shortDescription}</Typography>
+                    <Typography
+                        sx={{
+                            color: 'white',
+                            wordBreak: 'break-all',
+                            display: '-webkit-box',
+                            overflow: 'clip',
+                            WebkitLineClamp: '2',
+                            WebkitBoxOrient: 'vertical',
+                        }}
+                    >
+                        {shortDescription}
+                    </Typography>
                 </CardContent>
             </CardActionArea>
         </Card>

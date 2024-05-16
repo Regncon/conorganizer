@@ -6,7 +6,8 @@ export type EventCardProps = {
     icons?: string[];
     backgroundImage?: string;
     myEventBar?: boolean;
-    myEventBarSumbitted?: boolean;
+    myEventBarSubmitted?: boolean;
+    myEventDocId?: string;
 };
 
 export type Event = {

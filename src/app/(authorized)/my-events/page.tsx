@@ -10,7 +10,6 @@ import type { Route } from 'next';
 import { Link, Paper, Typography } from '@mui/material';
 import { revalidatePath } from 'next/cache';
 import EventCardBig from '$app/(public)/EventCardBig';
-import DeleteNewEventButton from './DeleteNewEventButton';
 
 const createId = async (app: FirebaseApp, db: Firestore) => {
     const collectionRef = collection(db, '_');
@@ -34,28 +33,13 @@ const MyEvents = async () => {
             <Typography variant="h1">Sjå under for ein oversikt over arrangementa du har registrert.</Typography>
             <Box sx={{ position: 'relative', marginTop: '2rem' }}>
                 <NewEventButton docId={docId} />
-                <Grid2 container spacing="2rem">
+                <Grid2 container rowGap="0.35rem">
                     {docs
                         .sort((a, b) => {
                             return a.createdAt > b.createdAt ? 1 : -1;
                         })
                         .map((doc) => (
-                            <Grid2 sx={{ textDecoration: 'none', position: 'relative' }} xs={5.7} md={3} key={doc.id}>
-                                {/* <Paper
-                                    sx={{
-                                        position: 'absolute',
-                                        minWidth: '90px',
-                                        textAlign: 'center',
-                                        rotate: '-25deg',
-                                        left: '0',
-                                        zIndex: '2',
-                                        backgroundColor: 'black',
-                                        color: doc.isSubmitted ? 'success.main' : 'warning.main',
-                                        fontWeight: '700',
-                                    }}
-                                >
-                                    <Typography>{doc.isSubmitted ? 'sendt inn' : 'kladd'}</Typography>
-                                </Paper> */}
+                            <Grid2 sx={{ textDecoration: 'none', position: 'relative' }} xs={12} md={3} key={doc.id}>
                                 <Box component={Link} href={`/event/create/${doc.id}` as Route}>
                                     <EventCardBig
                                         title={doc.title}
@@ -64,10 +48,10 @@ const MyEvents = async () => {
                                         system={doc.system}
                                         backgroundImage="my-events.jpg"
                                         myEventBar
-                                        myEventBarSumbitted={doc.isSubmitted}
+                                        myEventBarSubmitted={doc.isSubmitted}
+                                        myEventDocId={doc.id}
                                     />
                                 </Box>
-                                <DeleteNewEventButton docId={doc.id} />
                             </Grid2>
                         ))}
                 </Grid2>
