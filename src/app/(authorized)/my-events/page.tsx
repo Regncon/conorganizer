@@ -10,6 +10,7 @@ import type { Route } from 'next';
 import { Link, Paper, Typography } from '@mui/material';
 import { revalidatePath } from 'next/cache';
 import EventCardBig from '$app/(public)/EventCardBig';
+import DynamicLink from './DynamicLink';
 
 const createId = async (app: FirebaseApp, db: Firestore) => {
     const collectionRef = collection(db, '_');
@@ -25,14 +26,14 @@ const MyEvents = async () => {
     }
 
     const docs = await getAllMyEvents(db, user);
-    const docId = await createId(app, db);
+    const newDocumentId = await createId(app, db);
 
     revalidatePath('/my-events');
     return (
         <>
             <Typography variant="h1">Sjå under for ein oversikt over arrangementa du har registrert.</Typography>
             <Box sx={{ position: 'relative', marginTop: '2rem' }}>
-                <NewEventButton docId={docId} />
+                <NewEventButton newDocumentId={newDocumentId} />
                 <Grid2 container rowGap="0.35rem">
                     {docs
                         .sort((a, b) => {
@@ -40,7 +41,7 @@ const MyEvents = async () => {
                         })
                         .map((doc) => (
                             <Grid2 sx={{ textDecoration: 'none', position: 'relative' }} xs={12} md={3} key={doc.id}>
-                                <Box component={Link} href={`/event/create/${doc.id}` as Route}>
+                                <DynamicLink docId={doc.id}>
                                     <EventCardBig
                                         title={doc.title}
                                         gameMaster={doc.name}
@@ -51,7 +52,7 @@ const MyEvents = async () => {
                                         myEventBarSubmitted={doc.isSubmitted}
                                         myEventDocId={doc.id}
                                     />
-                                </Box>
+                                </DynamicLink>
                             </Grid2>
                         ))}
                 </Grid2>

@@ -1,6 +1,7 @@
 import { Paper, Typography } from '@mui/material';
 import Grid2 from '@mui/material/Unstable_Grid2';
 import EventForm from './EventForm';
+
 type Props = {
     params: {
         id: string;

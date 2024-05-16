@@ -4,7 +4,7 @@ import { getAllEvents } from './serverAction';
 import RealtimeEvents from './RealtimeEvents';
 import Grid from '@mui/material/Unstable_Grid2';
 import { redirect } from 'next/navigation';
-
+export const dynamic = 'force-static';
 export default async function Home() {
     redirect('/dashboard');
     const events = await getAllEvents();

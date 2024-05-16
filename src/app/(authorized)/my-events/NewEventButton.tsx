@@ -5,17 +5,17 @@ import { useRouter } from 'next/navigation';
 import { createMyEventDoc } from './actions';
 import { touchRippleClasses } from '@mui/material';
 import { useEffect } from 'react';
-type Props = { docId: string };
+type Props = { newDocumentId: string };
 
-const NewEventButton = ({ docId }: Props) => {
+const NewEventButton = ({ newDocumentId }: Props) => {
     const router = useRouter();
     useEffect(() => {
-        router.prefetch(`/event/create/${docId}`);
+        router.prefetch(`/event/create/${newDocumentId}`);
     }, []);
 
     const handleClick = async () => {
-        await createMyEventDoc(docId);
-        router.push(`/event/create/${docId}`);
+        await createMyEventDoc(newDocumentId);
+        router.push(`/event/create/${newDocumentId}`);
     };
 
     return (

@@ -4,8 +4,10 @@ import { Card, CardActionArea, CardContent, CardHeader, IconButton } from '@mui/
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
 import type { EventCardProps } from '../types';
-import CheckedOrPencilIcon from './CheckedOrPencilIcon';
 import TrashButton from './TrashButton';
+import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
+import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 export default function EventCardBig({
     title,
@@ -18,6 +20,7 @@ export default function EventCardBig({
     myEventBarSubmitted = false,
     myEventDocId,
 }: EventCardProps) {
+    const circleCheckOrPencilIcon = myEventBarSubmitted ? faCircleCheck : faPencil;
     const SuccessOrWarningColor = myEventBarSubmitted ? 'success.main' : 'warning.main';
     return (
         <Card
@@ -41,7 +44,9 @@ export default function EventCardBig({
                 {myEventBar ?
                     <Box sx={{ display: 'flex', placeContent: 'space-between', padding: '1rem' }}>
                         <Box sx={{ display: 'flex', gap: '0.5rem', color: 'success.main', placeItems: 'center' }}>
-                            <CheckedOrPencilIcon myEventBarSubmitted={myEventBarSubmitted} />
+                            <Typography component="span" sx={{ color: SuccessOrWarningColor }}>
+                                <FontAwesomeIcon icon={circleCheckOrPencilIcon} size="2x" />
+                            </Typography>
                             <Typography sx={{ color: SuccessOrWarningColor }}>
                                 {myEventBarSubmitted ? 'Sendt inn' : 'Kladd'}
                             </Typography>
