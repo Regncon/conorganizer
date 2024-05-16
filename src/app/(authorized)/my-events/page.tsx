@@ -41,7 +41,7 @@ const MyEvents = async () => {
                         })
                         .map((doc) => (
                             <Grid2 sx={{ textDecoration: 'none', position: 'relative' }} xs={5.7} md={3} key={doc.id}>
-                                <Paper
+                                {/* <Paper
                                     sx={{
                                         position: 'absolute',
                                         minWidth: '90px',
@@ -55,7 +55,7 @@ const MyEvents = async () => {
                                     }}
                                 >
                                     <Typography>{doc.isSubmitted ? 'sendt inn' : 'kladd'}</Typography>
-                                </Paper>
+                                </Paper> */}
                                 <Box component={Link} href={`/event/create/${doc.id}` as Route}>
                                     <EventCardBig
                                         title={doc.title}
@@ -63,6 +63,8 @@ const MyEvents = async () => {
                                         shortDescription={doc.subTitle}
                                         system={doc.system}
                                         backgroundImage="my-events.jpg"
+                                        myEventBar
+                                        myEventBarSumbitted={doc.isSubmitted}
                                     />
                                 </Box>
                                 <DeleteNewEventButton docId={doc.id} />

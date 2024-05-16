@@ -5,6 +5,8 @@ export type EventCardProps = {
     shortDescription: string;
     icons?: string[];
     backgroundImage?: string;
+    myEventBar?: boolean;
+    myEventBarSumbitted?: boolean;
 };
 
 export type Event = {

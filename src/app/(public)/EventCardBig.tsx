@@ -1,9 +1,13 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { Card, CardActionArea, CardContent, CardHeader } from '@mui/material';
+import { Card, CardActionArea, CardContent, CardHeader, IconButton } from '@mui/material';
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
 import type { EventCardProps } from '../types';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
+import { faCircleCheck } from '@fortawesome/free-regular-svg-icons';
+import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
 
 export default function EventCardBig({
     title,
@@ -12,6 +16,8 @@ export default function EventCardBig({
     system,
     icons,
     backgroundImage = 'blekksprut2.jpg',
+    myEventBar = false,
+    myEventBarSumbitted = false,
 }: EventCardProps) {
     return (
         <Card
@@ -26,6 +32,17 @@ export default function EventCardBig({
             }}
         >
             <CardActionArea>
+                {myEventBar ?
+                    <Box sx={{ display: 'flex', placeContent: 'space-between' }}>
+                        <Box sx={{ display: 'flex', gap: '0.5rem', color: 'success.main' }}>
+                            {/* <Box component={FontAwesomeIcon} icon={myEventBarSumbitted ? faCircleCheck : faPencil} /> */}
+                            <Typography>{myEventBarSumbitted ? 'Sendt inn' : 'Kladd'}</Typography>
+                        </Box>
+                        {/* <IconButton>
+                            <Box component={FontAwesomeIcon} icon={faTrash} />
+                        </IconButton> */}
+                    </Box>
+                :   null}
                 <CardHeader
                     title={title}
                     titleTypographyProps={{ fontSize: '1.8rem' }}
