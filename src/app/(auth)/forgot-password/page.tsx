@@ -4,20 +4,25 @@ import EmailField from '../shared/ui/EmailField';
 import Button from '@mui/material/Button';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { forgotPassword } from '$lib/firebase/firebase';
-import type { ComponentProps } from 'react';
+import { useTransition, type ComponentProps } from 'react';
 import Container from '@mui/material/Container';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import { Typography } from '@mui/material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 
 const ForgotPassword = () => {
+    const [isPending, startTransition] = useTransition();
     const router = useRouter();
     const searchParams = useSearchParams();
     const searchParamEmail = searchParams.get('email') ?? undefined;
     const handleSubmit: ComponentProps<'form'>['onSubmit'] = async (e) => {
         e.preventDefault();
         const { email } = Object.fromEntries(new FormData(e.target as HTMLFormElement)) as { email: string };
-        await forgotPassword(email);
-        router.replace('/login');
+        startTransition(async () => {
+            await forgotPassword(email);
+            router.replace('/login');
+        });
     };
     return (
         <Container component={Paper} fixed maxWidth="xl" sx={{ height: '70dvh' }}>
@@ -28,7 +33,13 @@ const ForgotPassword = () => {
                 onSubmit={handleSubmit}
             >
                 <EmailField defaultValue={searchParamEmail ?? undefined} />
-                <Button type="submit">Gløymd passord?</Button>
+                <Button
+                    type="submit"
+                    disabled={isPending}
+                    endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}
+                >
+                    Gløymd passord?
+                </Button>
             </Grid2>
         </Container>
     );
