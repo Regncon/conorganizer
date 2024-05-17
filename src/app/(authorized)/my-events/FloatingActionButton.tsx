@@ -27,6 +27,9 @@ const FloatingActionButton = ({ newDocumentId }: Props) => {
                 position: 'fixed',
                 bottom: '1rem',
                 right: '0.5rem',
+                [`&:hover`]: {
+                    backgroundColor: 'hsl(0 100% 69% / 1);',
+                },
             }}
             aria-label="edit"
             onClick={handleClick}

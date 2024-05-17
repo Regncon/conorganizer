@@ -1,5 +1,6 @@
 'use client';
-import ArrowBackOutlinedIcon from '@mui/icons-material/ArrowBackOutlined';
+import { faChevronLeft } from '@fortawesome/free-solid-svg-icons/faChevronLeft';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import IconButton from '@mui/material/IconButton';
 
 const BackButton = () => {
@@ -9,7 +10,7 @@ const BackButton = () => {
                 history.back();
             }}
         >
-            <ArrowBackOutlinedIcon />
+            <FontAwesomeIcon icon={faChevronLeft} fixedWidth />
         </IconButton>
     );
 };
