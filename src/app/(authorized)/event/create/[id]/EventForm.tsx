@@ -12,7 +12,7 @@ import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import Confetti from 'react-confetti';
-import { useCallback, useEffect, useRef, useState, type ComponentProps, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type ComponentProps, type FormEvent } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import type { NewEvent } from '$app/types';
@@ -21,7 +21,6 @@ import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import Slide from '@mui/material/Slide';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
-import Box from '@mui/material/Box';
 type Props = {
     id: string;
 };
@@ -394,26 +393,46 @@ const EventForm = ({ id }: Props) => {
                     autoHideDuration={1200}
                 />
             </>
-        :   <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBlock: '1rem' }}>
-                <Skeleton variant="rounded" width={skeletonWidth} height={skeletonHeight} />
-                <Skeleton variant="rounded" width={skeletonWidth} height={skeletonHeight} />
-                <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', gap: '2rem' }}>
-                    <Skeleton variant="rounded" width={'50%'} height={skeletonHeight} />
-                    <Skeleton variant="rounded" width={'50%'} height={skeletonHeight} />
-                </Box>
-                <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', gap: '2rem' }}>
-                    <Skeleton variant="rounded" width={'50%'} height={skeletonHeight} />
-                    <Skeleton variant="rounded" width={'50%'} height={skeletonHeight} />
-                </Box>
-                <Skeleton variant="rounded" width={skeletonWidth} height={129} />
-                <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', gap: '2rem' }}>
-                    <Skeleton variant="rounded" width={skeletonWidth} height={220} />
-                    <Skeleton variant="rounded" width={skeletonWidth} height={220} />
-                    <Skeleton variant="rounded" width={skeletonWidth} height={220} />
-                </Box>
-                <Skeleton variant="rounded" width={skeletonWidth} height={380} />
-                <Skeleton variant="rounded" width={skeletonWidth} height={100} />
-                <Skeleton variant="rounded" width={skeletonWidth} height={100} />
-            </Box>;
+        :   <Grid2 container spacing="2rem">
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12} sm={6} md={3}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12} sm={6} md={3}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12} sm={6} md={3}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12} sm={6} md={3}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={129} />
+                </Grid2>
+                <Grid2 xs={12} sm={4}>
+                    <Skeleton variant="rounded" height={220} />
+                </Grid2>
+                <Grid2 xs={12} sm={4}>
+                    <Skeleton variant="rounded" sx={{ height: { xs: skeletonHeight, sm: '220px' } }} />
+                </Grid2>
+                <Grid2 xs={12} sm={4}>
+                    <Skeleton variant="rounded" height={220} />
+                </Grid2>
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={380} />
+                </Grid2>
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={90} />
+                </Grid2>
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={80} />
+                </Grid2>
+            </Grid2>;
 };
 export default EventForm;
