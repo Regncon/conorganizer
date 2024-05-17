@@ -1,4 +1,5 @@
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
+import Box from '@mui/material/Box';
 import { redirect } from 'next/navigation';
 
 type Props = {
@@ -7,7 +8,7 @@ type Props = {
 const layout = async ({ children }: Props) => {
     const { auth } = await getAuthorizedAuth();
     if (auth === null) {
-        return <>{children}</>;
+        return <Box sx={{ marginBlockStart: '5rem' }}>{children}</Box>;
     }
     redirect('/dashboard');
 };
