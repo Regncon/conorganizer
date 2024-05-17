@@ -4,15 +4,15 @@ import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import { singUpAndCreateCookie, type RegisterDetails } from '$lib/firebase/firebase';
 import PasswordTextField from '../login/PasswordTextField';
 import { useEffect, useRef, useTransition, type ComponentProps } from 'react';
-import { useRouter } from 'next/navigation';
-import { emailRegExp } from '../shared/utils';
-import EmailField from '../shared/ui/EmailField';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { emailRegExp, updateSearchParamsWithEmail } from '../shared/utils';
+import EmailTextField from '../shared/EmailTextField';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 
 const Register = () => {
-    const passwordRef = useRef<HTMLInputElement>(null);
-    const confirmPasswordRef = useRef<HTMLInputElement>(null);
+    const searchParams = useSearchParams();
+    const email = searchParams.get('email') ?? '';
 
     const [isPending, startTransition] = useTransition();
     const router = useRouter();
@@ -44,16 +44,14 @@ const Register = () => {
                 component="form"
                 container
                 sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
+                onChange={(e) => {
+                    updateSearchParamsWithEmail(e, router, '/register');
+                }}
                 onSubmit={handleSubmit}
             >
-                <EmailField />
-                <PasswordTextField autoComplete="new-password" ref={passwordRef} />
-                <PasswordTextField
-                    autoComplete="new-password"
-                    label="bekreft passord"
-                    name="confirm"
-                    ref={confirmPasswordRef}
-                />
+                <EmailTextField defaultValue={email} />
+                <PasswordTextField autoComplete="new-password" />
+                <PasswordTextField autoComplete="new-password" label="bekreft passord" name="confirm" />
                 <Button
                     type="submit"
                     disabled={isPending}

@@ -39,11 +39,13 @@ const muiDarkTheme: ThemeOptions = {
             fontWeight: '700',
             fontFamily: Garamond.style.fontFamily,
             fontSize: '2.7rem',
+            marginBlock: '1rem',
         },
         h2: {
             fontWeight: '700',
             fontFamily: Garamond.style.fontFamily,
             fontSize: '2.3rem',
+            marginBlock: '1rem',
         },
         h3: {
             fontWeight: '700',
@@ -51,6 +53,7 @@ const muiDarkTheme: ThemeOptions = {
             fontSize: '1.8rem',
             // textShadow: "0 0 1em black",
             fontFamily: Garamond.style.fontFamily,
+            marginBlock: '1rem',
         },
         h4: {
             color: '#ddd',
@@ -59,6 +62,7 @@ const muiDarkTheme: ThemeOptions = {
             fontSize: '1.3rem',
             // textShadow: "0 0 .7em black",
             fontFamily: Garamond.style.fontFamily,
+            marginBlock: '1rem',
         },
         body1: {
             fontFamily: raleway.style.fontFamily,

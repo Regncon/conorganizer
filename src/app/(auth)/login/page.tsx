@@ -4,11 +4,12 @@ import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import PasswordTextField from './PasswordTextField';
 import { forgotPassword, signInAndCreateCookie } from '$lib/firebase/firebase';
 import { useEffect, useTransition, type ComponentProps } from 'react';
-import EmailField from '../shared/ui/EmailField';
+import EmailTextField from '../shared/EmailTextField';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { Route } from 'next';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
+import { updateSearchParamsWithEmail } from '../shared/utils';
 
 const Login = () => {
     const [isPending, startTransition] = useTransition();
@@ -26,13 +27,6 @@ const Login = () => {
             await signInAndCreateCookie(e);
             router.replace('/dashboard');
         });
-    };
-
-    const handleFormChange: ComponentProps<'form'>['onChange'] = async (e) => {
-        const { value, name } = e.target as HTMLInputElement;
-        if (name === 'email') {
-            router.replace(`${'/login'}?email=${value}` as Route);
-        }
     };
 
     const handleForgotPasswordClick: ComponentProps<'button'>['onClick'] = async (e) => {
@@ -59,9 +53,11 @@ const Login = () => {
                 container
                 sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
                 onSubmit={handleFormSubmit}
-                onChange={handleFormChange}
+                onChange={(e) => {
+                    updateSearchParamsWithEmail(e, router, '/login');
+                }}
             >
-                <EmailField />
+                <EmailTextField defaultValue={email} />
                 <PasswordTextField />
                 <Button type="submit" {...disableAndLoadingSpinner}>
                     Logg inn

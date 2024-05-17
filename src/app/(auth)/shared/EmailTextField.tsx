@@ -1,11 +1,11 @@
 import { TextField, InputAdornment } from '@mui/material';
-import { emailRegExp } from '../utils';
+import { emailRegExp } from './utils';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 type Props = {
     defaultValue?: string;
 };
 
-const EmailField = ({ defaultValue }: Props) => {
+const EmailTextField = ({ defaultValue }: Props) => {
     return (
         <TextField
             type="email"
@@ -30,4 +30,4 @@ const EmailField = ({ defaultValue }: Props) => {
     );
 };
 
-export default EmailField;
+export default EmailTextField;

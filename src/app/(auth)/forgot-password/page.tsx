@@ -1,6 +1,6 @@
 'use client';
 import Paper from '@mui/material/Paper';
-import EmailField from '../shared/ui/EmailField';
+import EmailTextField from '../shared/EmailTextField';
 import Button from '@mui/material/Button';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { forgotPassword } from '$lib/firebase/firebase';
@@ -32,7 +32,7 @@ const ForgotPassword = () => {
                 sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
                 onSubmit={handleSubmit}
             >
-                <EmailField defaultValue={searchParamEmail ?? undefined} />
+                <EmailTextField defaultValue={searchParamEmail ?? undefined} />
                 <Button
                     type="submit"
                     disabled={isPending}
