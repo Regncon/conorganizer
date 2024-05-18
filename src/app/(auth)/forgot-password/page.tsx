@@ -21,7 +21,7 @@ const ForgotPassword = () => {
         e.preventDefault();
         const { email } = Object.fromEntries(new FormData(e.target as HTMLFormElement)) as { email: string };
         setMessage(
-            'Ein lenkje for å tilbakestille passordet er sendt viss du har ei registrert e-postadresse hos oss. Du vil bli omdirigert til innloggingssida.'
+            'Ein lenkje for å tilbakestille passordet er sendt viss du har ei registrert e-postadresse hos oss. Du vil nå bli omdirigert til innloggingssida.'
         );
         startTransition(async () => {
             await forgotPassword(email);
@@ -33,22 +33,32 @@ const ForgotPassword = () => {
         });
     };
     return (
-        <Grid2
-            container
-            component="form"
-            sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
-            onSubmit={handleSubmit}
-        >
-            <Typography>{message}</Typography>
-            <EmailTextField defaultValue={searchParamEmail ?? undefined} />
-            <Button
-                type="submit"
-                disabled={isPending}
-                endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}
+        <>
+            <Typography sx={{ textAlign: 'center' }}>{message}</Typography>
+            <Grid2
+                container
+                component="form"
+                sx={{
+                    placeContent: 'center',
+                    placeItems: 'center',
+                    minWidth: '20rem',
+                    marginBlockStart: '1rem',
+                    flexDirection: 'column',
+                    gap: '1rem',
+                }}
+                onSubmit={handleSubmit}
             >
-                Gløymd passord?
-            </Button>
-        </Grid2>
+                <EmailTextField defaultValue={searchParamEmail ?? undefined} />
+                <Button
+                    fullWidth
+                    type="submit"
+                    disabled={isPending}
+                    endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}
+                >
+                    Gløymd passord?
+                </Button>
+            </Grid2>
+        </>
     );
 };
 

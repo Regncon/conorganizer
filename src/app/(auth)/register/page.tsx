@@ -42,7 +42,7 @@ const Register = () => {
         <Grid2
             component="form"
             container
-            sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
+            sx={{ placeContent: 'center', flexDirection: 'column', minWidth: '20rem', gap: '1rem' }}
             onChange={(e) => {
                 updateSearchParamsWithEmail(e, router, '/register');
             }}
@@ -52,11 +52,12 @@ const Register = () => {
             <PasswordTextField autoComplete="new-password" />
             <PasswordTextField autoComplete="new-password" label="bekreft passord" name="confirm" />
             <Button
+                fullWidth
                 type="submit"
                 disabled={isPending}
                 endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}
             >
-                Log inn
+                Lag ny brukar
             </Button>
         </Grid2>
     );

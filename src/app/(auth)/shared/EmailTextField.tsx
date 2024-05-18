@@ -14,6 +14,7 @@ const EmailTextField = ({ defaultValue }: Props) => {
             label="e-post"
             variant="outlined"
             defaultValue={defaultValue}
+            fullWidth
             required
             InputProps={{
                 endAdornment: (

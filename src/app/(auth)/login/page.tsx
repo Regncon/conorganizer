@@ -61,6 +61,7 @@ const Login = () => {
             sx={{
                 placeContent: 'center',
                 flexDirection: 'column',
+                minWidth: '20rem',
                 gap: '1rem',
             }}
             onSubmit={handleFormSubmit}
