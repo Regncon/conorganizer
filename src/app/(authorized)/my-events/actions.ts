@@ -21,7 +21,7 @@ export const createMyEventDoc = async (docId: string) => {
             beginnerFriendly: false,
             childFriendly: false,
             description: '',
-            email: '',
+            email: user.email,
             gameType: '',
             lessThanThreeHours: false,
             moduleCompetition: false,
