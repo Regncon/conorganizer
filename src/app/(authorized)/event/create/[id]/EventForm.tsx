@@ -41,24 +41,24 @@ const EventForm = ({ id }: Props) => {
     };
 
     useEffect(() => {
-        let unsubscribe: Unsubscribe | undefined;
-        unsubscribe = onSnapshot(newEventDocRef, (snapshot) => {
-            setNewEvent(snapshot.data() as NewEvent);
-        });
-        return () => {
-            unsubscribe?.();
-        };
-    }, [user]);
+        let unsubscribeSnapshot: Unsubscribe | undefined;
+        if (user) {
+            unsubscribeSnapshot = onSnapshot(newEventDocRef, (snapshot) => {
+                setNewEvent(snapshot.data() as NewEvent);
+            });
+        }
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+        const unsubscribeUser = onAuthStateChanged(firebaseAuth, (user) => {
             console.log(user, 'user');
             setUser(user);
         });
+
         return () => {
-            unsubscribe;
+            unsubscribeSnapshot?.();
+            unsubscribeUser();
         };
-    }, []);
+    }, [user]);
+
     const handleSnackBar = (event: React.SyntheticEvent | Event, reason?: string) => {
         if (reason === 'clickaway') {
             return;
@@ -126,7 +126,6 @@ const EventForm = ({ id }: Props) => {
         }
     };
 
-    const skeletonWidth = '100%';
     const skeletonHeight = 53;
 
     return newEvent ?
