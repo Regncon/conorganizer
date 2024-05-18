@@ -33,24 +33,22 @@ const ForgotPassword = () => {
         });
     };
     return (
-        <Container component={Paper} fixed maxWidth="xl" sx={{ height: '70dvh' }}>
-            <Grid2
-                container
-                component="form"
-                sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
-                onSubmit={handleSubmit}
+        <Grid2
+            container
+            component="form"
+            sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
+            onSubmit={handleSubmit}
+        >
+            <Typography>{message}</Typography>
+            <EmailTextField defaultValue={searchParamEmail ?? undefined} />
+            <Button
+                type="submit"
+                disabled={isPending}
+                endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}
             >
-                <Typography>{message}</Typography>
-                <EmailTextField defaultValue={searchParamEmail ?? undefined} />
-                <Button
-                    type="submit"
-                    disabled={isPending}
-                    endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}
-                >
-                    Gløymd passord?
-                </Button>
-            </Grid2>
-        </Container>
+                Gløymd passord?
+            </Button>
+        </Grid2>
     );
 };
 

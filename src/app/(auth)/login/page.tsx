@@ -3,7 +3,7 @@ import { Button, Container, Link, Paper } from '@mui/material';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import PasswordTextField from './PasswordTextField';
 import { forgotPassword, signInAndCreateCookie } from '$lib/firebase/firebase';
-import { useEffect, useTransition, type ComponentProps } from 'react';
+import { useEffect, useState, useTransition, type ComponentProps } from 'react';
 import EmailTextField from '../shared/EmailTextField';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { Route } from 'next';
@@ -13,6 +13,11 @@ import { updateSearchParamsWithEmail } from '../shared/utils';
 
 const Login = () => {
     const [isPending, startTransition] = useTransition();
+    const [spinners, setSpinners] = useState<{ login: boolean; forgot: boolean; register: boolean }>({
+        forgot: false,
+        login: false,
+        register: false,
+    });
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -23,6 +28,7 @@ const Login = () => {
     }, []);
 
     const handleFormSubmit: ComponentProps<'form'>['onSubmit'] = async (e) => {
+        setSpinners({ ...spinners, login: true });
         startTransition(async () => {
             await signInAndCreateCookie(e);
             router.replace('/dashboard');
@@ -30,51 +36,55 @@ const Login = () => {
     };
 
     const handleForgotPasswordClick: ComponentProps<'button'>['onClick'] = async (e) => {
+        setSpinners({ ...spinners, forgot: true });
         startTransition(() => {
             router.push(`/forgot-password?email=${email}`);
         });
     };
 
     const handleRegisterNewUser: ComponentProps<'button'>['onClick'] = async (e) => {
+        setSpinners({ ...spinners, register: true });
         startTransition(() => {
             router.push(`/register`);
         });
     };
 
-    const disableAndLoadingSpinner = {
+    const disableAndLoadingSpinner = (shouldSpin: boolean) => ({
         disabled: isPending,
-        endIcon: isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined,
-    };
+        endIcon: isPending && shouldSpin ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined,
+    });
 
     return (
-        <Container component={Paper} fixed maxWidth="xs" sx={{ height: '70dvh' }}>
-            <Grid2
-                component="form"
-                container
-                sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
-                onSubmit={handleFormSubmit}
-                onChange={(e) => {
-                    updateSearchParamsWithEmail(e, router, '/login');
-                }}
+        <Grid2
+            component="form"
+            container
+            sx={{
+                placeContent: 'center',
+                flexDirection: 'column',
+                gap: '1rem',
+            }}
+            onSubmit={handleFormSubmit}
+            onChange={(e) => {
+                updateSearchParamsWithEmail(e, router, '/login');
+            }}
+        >
+            <EmailTextField defaultValue={email} />
+            <PasswordTextField />
+            <Button type="submit" {...disableAndLoadingSpinner(spinners.login)}>
+                Logg inn
+            </Button>
+            <Button onClick={handleForgotPasswordClick} {...disableAndLoadingSpinner(spinners.forgot)}>
+                Gløymd passord?
+            </Button>
+            <Button
+                fullWidth
+                sx={{ marginLeft: 'auto', marginRight: 'auto' }}
+                onClick={handleRegisterNewUser}
+                {...disableAndLoadingSpinner(spinners.register)}
             >
-                <EmailTextField defaultValue={email} />
-                <PasswordTextField />
-                <Button type="submit" {...disableAndLoadingSpinner}>
-                    Logg inn
-                </Button>
-                <Button onClick={handleForgotPasswordClick} {...disableAndLoadingSpinner}>
-                    Gløymd passord?
-                </Button>
-                <Button
-                    fullWidth
-                    sx={{ marginLeft: 'auto', marginRight: 'auto' }}
-                    onClick={handleRegisterNewUser}
-                    {...disableAndLoadingSpinner}
-                >
-                    Registrer ny brukar
-                </Button>
-            </Grid2>
-        </Container>
+                Registrer ny brukar
+            </Button>
+        </Grid2>
     );
 };
 

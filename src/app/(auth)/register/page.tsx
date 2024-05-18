@@ -39,28 +39,26 @@ const Register = () => {
     };
 
     return (
-        <Container component={Paper} fixed maxWidth="xl" sx={{ height: '70dvh' }}>
-            <Grid2
-                component="form"
-                container
-                sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
-                onChange={(e) => {
-                    updateSearchParamsWithEmail(e, router, '/register');
-                }}
-                onSubmit={handleSubmit}
+        <Grid2
+            component="form"
+            container
+            sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
+            onChange={(e) => {
+                updateSearchParamsWithEmail(e, router, '/register');
+            }}
+            onSubmit={handleSubmit}
+        >
+            <EmailTextField defaultValue={email} />
+            <PasswordTextField autoComplete="new-password" />
+            <PasswordTextField autoComplete="new-password" label="bekreft passord" name="confirm" />
+            <Button
+                type="submit"
+                disabled={isPending}
+                endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}
             >
-                <EmailTextField defaultValue={email} />
-                <PasswordTextField autoComplete="new-password" />
-                <PasswordTextField autoComplete="new-password" label="bekreft passord" name="confirm" />
-                <Button
-                    type="submit"
-                    disabled={isPending}
-                    endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}
-                >
-                    Log inn
-                </Button>
-            </Grid2>
-        </Container>
+                Log inn
+            </Button>
+        </Grid2>
     );
 };
 
