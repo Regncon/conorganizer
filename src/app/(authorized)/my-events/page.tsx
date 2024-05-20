@@ -34,13 +34,24 @@ const MyEvents = async () => {
                 Sjå under for ein oversikt over arrangementa du har registrert.
             </Typography>
             <Box sx={{ position: 'relative', marginTop: '2rem' }}>
-                <Grid2 container rowGap="0.35rem">
+                <Grid2 container spacing="2rem" sx={{ placeItems: 'center', placeContent: 'center' }}>
                     {docs
                         .sort((a, b) => {
                             return new Date(a.createdAt) > new Date(b.createdAt) ? 1 : -1;
                         })
                         .map((doc) => (
-                            <Grid2 sx={{ textDecoration: 'none', position: 'relative' }} xs={12} md={3} key={doc.id}>
+                            <Grid2
+                                //  xs, sm, md, lg, and xl.
+                                sx={{
+                                    textDecoration: 'none',
+                                    position: 'relative',
+                                    display: 'flex',
+                                    placeContent: 'center',
+                                    placeItems: 'center',
+                                }}
+                                xl={2.7}
+                                key={doc.id}
+                            >
                                 <DynamicLink docId={doc.id}>
                                     <EventCardBig
                                         title={doc.title}
