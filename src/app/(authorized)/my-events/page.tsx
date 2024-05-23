@@ -34,14 +34,13 @@ const MyEvents = async () => {
                 Sjå under for ein oversikt over arrangementa du har registrert.
             </Typography>
             <Box sx={{ position: 'relative', marginTop: '2rem' }}>
-                <Grid2 container spacing="2rem" sx={{ placeItems: 'center', placeContent: 'center' }}>
+                <Grid2 container spacing="2rem">
                     {docs
                         .sort((a, b) => {
                             return new Date(a.createdAt) > new Date(b.createdAt) ? 1 : -1;
                         })
                         .map((doc) => (
                             <Grid2
-                                //  xs, sm, md, lg, and xl.
                                 sx={{
                                     textDecoration: 'none',
                                     position: 'relative',

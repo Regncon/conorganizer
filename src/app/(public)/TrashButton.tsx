@@ -30,10 +30,10 @@ const TrashButton = ({ docId }: Props) => {
             <IconButton
                 component="span"
                 className={[disableRipple ? 'disable-ripple' : ''].join(' ')}
-                sx={{ color: 'secondary.contrastText' }}
+                color="primary"
                 onClick={handleDeleteClick}
             >
-                <Box component={FontAwesomeIcon} icon={faTrash} sx={{ color: 'secondary.contrastText' }} />
+                <Box component={FontAwesomeIcon} icon={faTrash} />
             </IconButton>
         );
     }
