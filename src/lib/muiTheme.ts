@@ -19,17 +19,18 @@ const muiDarkTheme: ThemeOptions = {
     palette: {
         mode: 'dark',
         primary: {
-            light: '#e0cfc9',
-            main: '#a1887f',
-            dark: '#000',
-            contrastText: '#fff',
+            main: '#ff7c7c',
+            contrastText: '#000000',
         },
         secondary: {
-            light: '#ffd54f',
-            main: '#ff8f00',
-            dark: '#000',
-            contrastText: '#FF7979',
+            main: '#ffd082',
+            contrastText: '#000000',
         },
+    background: {
+        default: '#21243d',
+        paper: '#31354e',
+      },
+      divider: '#88E1F2',
     },
     typography: {
         h6: {

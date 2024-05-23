@@ -33,7 +33,6 @@ const marks = [
 ];
 
 const Event = () => {
-    redirect('/dashboard');
     const arrayet = ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'];
     const [interest, setInterest] = useState<number>(0);
 
@@ -95,10 +94,10 @@ const Event = () => {
                         component={FontAwesomeIcon}
                         icon={faUserSecret}
                         size="2x"
-                        sx={{ color: 'secondary.contrastText' }}
+                        sx={{ color: 'primary.main' }}
                     />
                     <Box>
-                        <Typography component="span" sx={{ color: 'secondary.contrastText' }}>
+                        <Typography component="span" sx={{ color: 'primary.main' }}>
                             {arrayet.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
                         </Typography>
                         <Typography variant="h2">Fransibald von Fokkoff</Typography>
@@ -109,10 +108,10 @@ const Event = () => {
                         component={FontAwesomeIcon}
                         icon={faScroll}
                         size="2x"
-                        sx={{ color: 'secondary.contrastText' }}
+                        sx={{ color: 'primary.main' }}
                     />
                     <Box>
-                        <Typography component="span" sx={{ color: 'secondary.contrastText' }}>
+                        <Typography component="span" sx={{ color: 'primary.main' }}>
                             System
                         </Typography>
                         <Typography variant="h2">Mage - the ascension</Typography>
@@ -130,22 +129,22 @@ const Event = () => {
             >
                 {arrayet.map((vesen) => (
                     <Chip
-                        variant="outlined"
                         label={vesen}
                         key={vesen}
-                        sx={{
-                            [`&.${chipClasses.root} .${chipClasses.icon}, &`]: {
-                                color: 'secondary.contrastText',
-                                borderColor: 'secondary.contrastText',
-                            },
-                        }}
+                        color='primary'
+                        // sx={{
+                        //     [`&.${chipClasses.root} .${chipClasses.icon}, &`]: {
+                        //         color: 'primary.light',
+                        //         borderColor: 'primary.light',
+                        //     },
+                        //}}
                         icon={<NavigateBefore />}
                     />
                 ))}
             </Box>
             <Box
                 sx={{
-                    backgroundColor: 'secondary.contrastText',
+                    backgroundColor: 'primary.main',
                     minHeight: '62px',
                     textAlign: 'center',
                     display: 'grid',
@@ -165,7 +164,7 @@ const Event = () => {
                         setInterest(Number(target.value));
                     }}
                     sx={{
-                        color: 'secondary.contrastText',
+                        color: 'primary.main',
                         [`.${sliderClasses.rail}`]: {
                             backgroundColor: '#3d3b3b',
                             height: '1rem',
@@ -175,14 +174,14 @@ const Event = () => {
                         },
                         [`.${sliderClasses.mark}`]: {
                             borderRadius: '50%',
-                            outlineColor: 'secondary.contrastText',
+                            outlineColor: 'primary.main',
                             outlineWidth: '0.8rem',
                             outlineStyle: 'solid',
                             outlineOffset: '-1px',
                             opacity: '1',
                         },
                         [`.${sliderClasses.markActive}`]: {
-                            backgroundColor: 'secondary.contrastText',
+                            backgroundColor: 'primary.main',
                         },
                         [`.${sliderClasses.thumb}:before`]: {
                             boxShadow: 'unset',
@@ -210,7 +209,7 @@ const Event = () => {
                     gap: '0.4rem',
                     marginBottom: '3rem',
                     paddingLeft: '0.5rem',
-                    color: 'secondary.contrastText',
+                    color: 'primary.main',
                 }}
             >
                 <HelpIcon sx={{ scale: '1.5', placeSelf: 'center' }} />
