@@ -8,7 +8,7 @@
         "start": "next start",
         "build&start": "next build && next start",
         "lint": "next lint",
-        "eslint": "eslint --fix",
+        "eslint": "eslint . --ext ts,tsx --report-unused-disable-directives",
         "clear": "rimraf .next"
     },
     "dependencies": {
