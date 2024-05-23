@@ -44,6 +44,7 @@ const marks = [
 ];
 
 const Event = () => {
+    redirect('/dashboard');
     const arrayet = ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'];
     const [interest, setInterest] = useState<number>(0);
     const {
