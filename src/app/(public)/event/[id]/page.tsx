@@ -1,5 +1,15 @@
 'use client';
-import { Box, Chip, Slider, Typography, chipClasses, sliderClasses, type SxProps, type Theme } from '@mui/material';
+import {
+    Box,
+    Chip,
+    Slider,
+    Typography,
+    chipClasses,
+    sliderClasses,
+    useTheme,
+    type SxProps,
+    type Theme,
+} from '@mui/material';
 import Image from 'next/image';
 import NavigateBefore from '@mui/icons-material/NavigateBefore';
 import IconButton from '@mui/material/IconButton';
@@ -11,6 +21,7 @@ import { faChevronLeft, faUserSecret } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
 import { redirect } from 'next/navigation';
+
 export const dynamic = 'force-static';
 
 const marks = [
@@ -35,6 +46,11 @@ const marks = [
 const Event = () => {
     const arrayet = ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'];
     const [interest, setInterest] = useState<number>(0);
+    const {
+        palette: {
+            background: { default: themeBackgroundColor },
+        },
+    } = useTheme();
 
     const paragraphStyle: SxProps<Theme> = { margin: '1rem 0' };
     const strongStyle: SxProps<Theme> = { fontWeight: 700 };
@@ -63,7 +79,7 @@ const Event = () => {
                 />
                 <Box
                     sx={{
-                        background: 'linear-gradient(0deg, #121212, transparent)',
+                        background: `linear-gradient(0deg, ${themeBackgroundColor}, transparent)`,
                     }}
                 >
                     <Box
@@ -90,12 +106,7 @@ const Event = () => {
 
             <Box sx={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
                 <Box sx={{ display: 'flex', gap: '0.8rem', placeItems: 'center' }}>
-                    <Box
-                        component={FontAwesomeIcon}
-                        icon={faUserSecret}
-                        size="2x"
-                        sx={{ color: 'primary.main' }}
-                    />
+                    <Box component={FontAwesomeIcon} icon={faUserSecret} size="2x" sx={{ color: 'primary.main' }} />
                     <Box>
                         <Typography component="span" sx={{ color: 'primary.main' }}>
                             {arrayet.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
@@ -104,12 +115,7 @@ const Event = () => {
                     </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: '0.8rem', placeItems: 'center' }}>
-                    <Box
-                        component={FontAwesomeIcon}
-                        icon={faScroll}
-                        size="2x"
-                        sx={{ color: 'primary.main' }}
-                    />
+                    <Box component={FontAwesomeIcon} icon={faScroll} size="2x" sx={{ color: 'primary.main' }} />
                     <Box>
                         <Typography component="span" sx={{ color: 'primary.main' }}>
                             System
@@ -128,23 +134,13 @@ const Event = () => {
                 }}
             >
                 {arrayet.map((vesen) => (
-                    <Chip
-                        label={vesen}
-                        key={vesen}
-                        color='primary'
-                        // sx={{
-                        //     [`&.${chipClasses.root} .${chipClasses.icon}, &`]: {
-                        //         color: 'primary.light',
-                        //         borderColor: 'primary.light',
-                        //     },
-                        //}}
-                        icon={<NavigateBefore />}
-                    />
+                    <Chip label={vesen} key={vesen} color="primary" icon={<NavigateBefore />} />
                 ))}
             </Box>
             <Box
                 sx={{
                     backgroundColor: 'primary.main',
+                    color: 'primary.contrastText',
                     minHeight: '62px',
                     textAlign: 'center',
                     display: 'grid',

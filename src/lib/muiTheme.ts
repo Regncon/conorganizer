@@ -26,14 +26,13 @@ const muiDarkTheme: ThemeOptions = {
             main: '#ffd082',
             contrastText: '#000000',
         },
-    background: {
-        default: '#21243d',
-        paper: '#31354e',
-      },
-      divider: '#88E1F2',
+        background: {
+            default: '#21243d',
+            paper: '#31354e',
+        },
+        divider: '#88E1F2',
     },
     typography: {
-
         h1: {
             fontWeight: '700',
             fontFamily: Garamond.style.fontFamily,
@@ -65,11 +64,11 @@ const muiDarkTheme: ThemeOptions = {
         },
         h5: {
             fontWeight: 'bold',
-            fontSize:"16px" 
+            fontSize: '16px',
         },
         h6: {
             fontWeight: 'bold',
-            fontSize:"14px"
+            fontSize: '14px',
         },
         body1: {
             fontFamily: raleway.style.fontFamily,
