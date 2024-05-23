@@ -11,6 +11,7 @@ import { faChevronLeft, faUserSecret } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
 import { redirect } from 'next/navigation';
+export const dynamic = 'force-static';
 
 const marks = [
     {

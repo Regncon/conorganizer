@@ -3,52 +3,63 @@ import { Button, Container, Paper } from '@mui/material';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import { singUpAndCreateCookie, type RegisterDetails } from '$lib/firebase/firebase';
 import PasswordTextField from '../login/PasswordTextField';
-import { useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import { emailRegExp } from '../shared/utils';
-import EmailField from '../shared/ui/EmailField';
+import { useEffect, useRef, useTransition, type ComponentProps } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { emailRegExp, updateSearchParamsWithEmail } from '../shared/utils';
+import EmailTextField from '../shared/EmailTextField';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
 
 const Register = () => {
-    const passwordRef = useRef<HTMLInputElement>(null);
-    const confirmPasswordRef = useRef<HTMLInputElement>(null);
-    const formRef = useRef<HTMLFormElement>(null);
+    const searchParams = useSearchParams();
+    const email = searchParams.get('email') ?? '';
 
+    const [isPending, startTransition] = useTransition();
     const router = useRouter();
+    useEffect(() => {
+        router.prefetch('/dashboard');
+    }, []);
+
+    const handleSubmit: ComponentProps<'form'>['onClick'] = async (e) => {
+        e.preventDefault();
+        const { password, confirm, email } = Object.fromEntries(
+            new FormData(e.target as HTMLFormElement)
+        ) as RegisterDetails;
+
+        if (password !== confirm) {
+            console.log('no match', password !== confirm);
+        }
+
+        if (emailRegExp.test(email)) {
+            startTransition(async () => {
+                await singUpAndCreateCookie(e);
+                router.push('/dashboard');
+            });
+        }
+    };
 
     return (
-        <Container component={Paper} fixed maxWidth="xl" sx={{ height: '70dvh' }}>
-            <Grid2
-                ref={formRef}
-                component="form"
-                container
-                sx={{ placeContent: 'center', height: '100%', flexDirection: 'column', gap: '1rem' }}
-                onSubmit={async (e) => {
-                    e.preventDefault();
-                    const { password, confirm, email } = Object.fromEntries(
-                        new FormData(e.target as HTMLFormElement)
-                    ) as RegisterDetails;
-
-                    if (password !== confirm) {
-                        console.log('no match', password !== confirm);
-                    }
-
-                    if (emailRegExp.test(email)) {
-                        await singUpAndCreateCookie(e);
-                        router.push('/dashboard');
-                    }
-                }}
+        <Grid2
+            component="form"
+            container
+            sx={{ placeContent: 'center', flexDirection: 'column', minWidth: '20rem', gap: '1rem' }}
+            onChange={(e) => {
+                updateSearchParamsWithEmail(e, router, '/register');
+            }}
+            onSubmit={handleSubmit}
+        >
+            <EmailTextField defaultValue={email} />
+            <PasswordTextField autoComplete="new-password" />
+            <PasswordTextField autoComplete="new-password" label="bekreft passord" name="confirm" />
+            <Button
+                fullWidth
+                type="submit"
+                disabled={isPending}
+                endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}
             >
-                <EmailField />
-                <PasswordTextField autoComplete="new-password" ref={passwordRef} />
-                <PasswordTextField
-                    autoComplete="new-password"
-                    label="bekreft passord"
-                    name="confirm"
-                    ref={confirmPasswordRef}
-                />
-                <Button type="submit">Log inn</Button>
-            </Grid2>
-        </Container>
+                Lag ny brukar
+            </Button>
+        </Grid2>
     );
 };
 

@@ -7,8 +7,8 @@ import styles from './page.module.scss';
 import './global.scss';
 import Link from 'next/link';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import BackButton from './BackButton';
-import LogOutButton from './LogOutButton';
+import BackButton from './(authorized)/BackButton';
+import LogOutButton from './(authorized)/LogOutButton';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -29,10 +29,6 @@ export default async function RootLayout({
                     <ThemeProvider theme={muiDark}>
                         <CssBaseline enableColorScheme />
                         <Container component={'main'} maxWidth="xl">
-                            <Box sx={{ display: 'flex', placeContent: 'space-between', paddingTop: '1rem' }}>
-                                <BackButton />
-                                <LogOutButton />
-                            </Box>
                             <Box className={styles['main-test']}>{children}</Box>
                         </Container>
                     </ThemeProvider>

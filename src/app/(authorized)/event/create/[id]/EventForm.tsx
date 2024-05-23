@@ -12,7 +12,7 @@ import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
 import Confetti from 'react-confetti';
-import { useCallback, useEffect, useRef, useState, type ComponentProps, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type ComponentProps, type FormEvent } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import type { NewEvent } from '$app/types';
@@ -21,7 +21,6 @@ import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import Slide from '@mui/material/Slide';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
-import Box from '@mui/material/Box';
 type Props = {
     id: string;
 };
@@ -42,24 +41,24 @@ const EventForm = ({ id }: Props) => {
     };
 
     useEffect(() => {
-        let unsubscribe: Unsubscribe | undefined;
-        unsubscribe = onSnapshot(newEventDocRef, (snapshot) => {
-            setNewEvent(snapshot.data() as NewEvent);
-        });
-        return () => {
-            unsubscribe?.();
-        };
-    }, [user]);
+        let unsubscribeSnapshot: Unsubscribe | undefined;
+        if (user) {
+            unsubscribeSnapshot = onSnapshot(newEventDocRef, (snapshot) => {
+                setNewEvent(snapshot.data() as NewEvent);
+            });
+        }
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+        const unsubscribeUser = onAuthStateChanged(firebaseAuth, (user) => {
             console.log(user, 'user');
             setUser(user);
         });
+
         return () => {
-            unsubscribe;
+            unsubscribeSnapshot?.();
+            unsubscribeUser();
         };
-    }, []);
+    }, [user]);
+
     const handleSnackBar = (event: React.SyntheticEvent | Event, reason?: string) => {
         if (reason === 'clickaway') {
             return;
@@ -96,9 +95,6 @@ const EventForm = ({ id }: Props) => {
         }
     };
 
-    const titleRegexp = /.{0,64}/;
-    const subTitleRegexp = /.{0,87}/;
-
     const handleOnChange = (e: FormEvent<HTMLFormElement>) => {
         const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
 
@@ -130,7 +126,6 @@ const EventForm = ({ id }: Props) => {
         }
     };
 
-    const skeletonWidth = '100%';
     const skeletonHeight = 53;
 
     return newEvent ?
@@ -159,6 +154,7 @@ const EventForm = ({ id }: Props) => {
 
                     <Grid2 xs={12}>
                         <Paper>
+                            <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 33 teikn</FormLabel>
                             <TextField
                                 name="title"
                                 label="Tittel på spelmodul / arrangement"
@@ -167,14 +163,15 @@ const EventForm = ({ id }: Props) => {
                                 required
                                 fullWidth
                                 inputProps={{
-                                    pattern: titleRegexp.source,
-                                    title: 'minst 1 tegn og maks antall tegn er 64',
+                                    title: 'Minst 1 teikn og maks teikn er 33',
                                 }}
+                                margin="dense"
                             />
                         </Paper>
                     </Grid2>
                     <Grid2 xs={12}>
-                        <Paper sx={{ padding: '1rem' }}>
+                        <Paper>
+                            <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 50 teikn</FormLabel>
                             <TextField
                                 name="subTitle"
                                 value={newEvent.subTitle}
@@ -182,9 +179,9 @@ const EventForm = ({ id }: Props) => {
                                 variant="outlined"
                                 required
                                 fullWidth
+                                margin="dense"
                                 inputProps={{
-                                    pattern: subTitleRegexp.source,
-                                    title: 'minst 1 tegn og maks antall tegn er 64',
+                                    title: 'Minst 1 teikn og maks 50 teikn',
                                 }}
                             />
                         </Paper>
@@ -377,7 +374,9 @@ const EventForm = ({ id }: Props) => {
 
                     <Grid2 xs={12}>
                         <Paper sx={{ padding: '1rem' }}>
-                            <Typography>Kladden vert lagra automatisk, men du må trykkje på knappen for å sende inn.</Typography>
+                            <Typography>
+                                Kladden vert lagra automatisk, men du må trykkje på knappen for å sende inn.
+                            </Typography>
                             <Button type="submit" variant="contained" onClick={handleCancelSubmission}>
                                 {newEvent.isSubmitted ? 'Meld av' : 'Send inn'}
                             </Button>
@@ -393,26 +392,46 @@ const EventForm = ({ id }: Props) => {
                     autoHideDuration={1200}
                 />
             </>
-        :   <Box sx={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBlock: '1rem' }}>
-                <Skeleton variant="rounded" width={skeletonWidth} height={skeletonHeight} />
-                <Skeleton variant="rounded" width={skeletonWidth} height={skeletonHeight} />
-                <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', gap: '2rem' }}>
-                    <Skeleton variant="rounded" width={'50%'} height={skeletonHeight} />
-                    <Skeleton variant="rounded" width={'50%'} height={skeletonHeight} />
-                </Box>
-                <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', gap: '2rem' }}>
-                    <Skeleton variant="rounded" width={'50%'} height={skeletonHeight} />
-                    <Skeleton variant="rounded" width={'50%'} height={skeletonHeight} />
-                </Box>
-                <Skeleton variant="rounded" width={skeletonWidth} height={129} />
-                <Box sx={{ width: '100%', display: 'flex', flexDirection: 'row', gap: '2rem' }}>
-                    <Skeleton variant="rounded" width={skeletonWidth} height={220} />
-                    <Skeleton variant="rounded" width={skeletonWidth} height={220} />
-                    <Skeleton variant="rounded" width={skeletonWidth} height={220} />
-                </Box>
-                <Skeleton variant="rounded" width={skeletonWidth} height={380} />
-                <Skeleton variant="rounded" width={skeletonWidth} height={100} />
-                <Skeleton variant="rounded" width={skeletonWidth} height={100} />
-            </Box>;
+        :   <Grid2 container spacing="2rem">
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12} sm={6} md={3}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12} sm={6} md={3}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12} sm={6} md={3}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12} sm={6} md={3}>
+                    <Skeleton variant="rounded" height={skeletonHeight} />
+                </Grid2>
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={129} />
+                </Grid2>
+                <Grid2 xs={12} sm={4}>
+                    <Skeleton variant="rounded" height={220} />
+                </Grid2>
+                <Grid2 xs={12} sm={4}>
+                    <Skeleton variant="rounded" sx={{ height: { xs: skeletonHeight, sm: '220px' } }} />
+                </Grid2>
+                <Grid2 xs={12} sm={4}>
+                    <Skeleton variant="rounded" height={220} />
+                </Grid2>
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={380} />
+                </Grid2>
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={90} />
+                </Grid2>
+                <Grid2 xs={12}>
+                    <Skeleton variant="rounded" height={80} />
+                </Grid2>
+            </Grid2>;
 };
 export default EventForm;
