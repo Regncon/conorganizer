@@ -5,12 +5,12 @@ import type { FirebaseApp } from 'firebase/app';
 import Box from '@mui/material/Box';
 import { getAllMyEvents } from './actions';
 import RealtimeMyEvents from './RealtimeMyEvents';
-import { Typography } from '@mui/material';
+import { Paper, Typography } from '@mui/material';
 import { revalidatePath } from 'next/cache';
 import EventCardBig from '$app/(public)/EventCardBig';
 import DynamicLink from './DynamicLink';
 import FloatingActionButton from './FloatingActionButton';
-
+import AddEventCard from './AddEventCard';
 const createId = async (app: FirebaseApp, db: Firestore) => {
     const collectionRef = collection(db, '_');
     const docRef = doc(collectionRef);
@@ -66,6 +66,7 @@ const MyEvents = async () => {
                                 </DynamicLink>
                             </Grid2>
                         ))}
+                    <AddEventCard newDocumentId={newDocumentId} />
                 </Grid2>
                 <FloatingActionButton newDocumentId={newDocumentId} />
                 <RealtimeMyEvents userId={user.uid} />
