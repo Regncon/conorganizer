@@ -19,38 +19,36 @@ const muiDarkTheme: ThemeOptions = {
     palette: {
         mode: 'dark',
         primary: {
-            light: '#e0cfc9',
-            main: '#a1887f',
-            dark: '#000',
-            contrastText: '#fff',
+            main: '#ff7c7c',
+            contrastText: '#000000',
         },
         secondary: {
-            light: '#ffd54f',
-            main: '#ff8f00',
-            dark: '#000',
-            contrastText: '#FF7979',
+            main: '#ffd082',
+            contrastText: '#000000',
         },
+        background: {
+            default: '#21243d',
+            paper: '#31354e',
+        },
+        divider: '#88E1F2',
     },
     typography: {
-        h6: {
-            fontWeight: 'bold',
-        },
         h1: {
             fontWeight: '700',
             fontFamily: Garamond.style.fontFamily,
-            fontSize: '2.7rem',
+            fontSize: '36px',
             marginBlock: '1rem',
         },
         h2: {
             fontWeight: '700',
             fontFamily: Garamond.style.fontFamily,
-            fontSize: '2.3rem',
+            fontSize: '24px',
             marginBlock: '1rem',
         },
         h3: {
             fontWeight: '700',
             lineHeight: '1',
-            fontSize: '1.8rem',
+            fontSize: '22px',
             // textShadow: "0 0 1em black",
             fontFamily: Garamond.style.fontFamily,
             marginBlock: '1rem',
@@ -59,14 +57,22 @@ const muiDarkTheme: ThemeOptions = {
             color: '#ddd',
             fontWeight: '400',
             fontStyle: 'italic',
-            fontSize: '1.3rem',
+            fontSize: '20px',
             // textShadow: "0 0 .7em black",
             fontFamily: Garamond.style.fontFamily,
             marginBlock: '1rem',
         },
+        h5: {
+            fontWeight: 'bold',
+            fontSize: '16px',
+        },
+        h6: {
+            fontWeight: 'bold',
+            fontSize: '14px',
+        },
         body1: {
             fontFamily: raleway.style.fontFamily,
-            fontSize: '1rem',
+            fontSize: '16px',
         },
     },
 };

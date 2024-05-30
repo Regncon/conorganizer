@@ -318,7 +318,7 @@ const EventForm = ({ id }: Props) => {
                                 <FormLabel>Kryss av for det som gjeld</FormLabel>
                                 <FormControlLabel
                                     control={<Checkbox name="moduleCompetition" checked={newEvent.moduleCompetition} />}
-                                    label="Eg vil vere med på modulkonkurransen)"
+                                    label="Eg vil vere med på modulkonkurransen"
                                 />
                                 <Typography>
                                     husk å sende modulen til{' '}
