@@ -17,6 +17,7 @@ const LogOutButton = () => {
                     router.replace('/login');
                 });
             }}
+            color="secondary"
             variant="contained"
             disabled={isPending}
             endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}

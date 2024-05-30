@@ -21,20 +21,16 @@ const FloatingActionButton = ({ newDocumentId }: Props) => {
     };
     return (
         <Fab
+            color="primary"
             sx={{
-                backgroundColor: 'secondary.contrastText',
-                color: 'white',
                 position: 'fixed',
                 bottom: '1rem',
                 right: '0.5rem',
-                [`&:hover`]: {
-                    backgroundColor: 'hsl(0 100% 69% / 1);',
-                },
             }}
             aria-label="edit"
             onClick={handleClick}
         >
-            <FontAwesomeIcon icon={faPlus} size="2x" />
+            <FontAwesomeIcon icon={faPlus} size="3x" />
         </Fab>
     );
 };

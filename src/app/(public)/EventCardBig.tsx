@@ -85,7 +85,7 @@ export default function EventCardBig({
                             sx={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
-                                color: 'secondary.contrastText',
+                                color: 'primary.main',
                                 paddingBottom: '0.5rem',
                             }}
                         >
