@@ -22,7 +22,7 @@ const Layout = async ({ children }: Props) => {
             </>
         );
     }
-    redirect('/login');
+    redirect('/login?&expired=true');
 };
 
 export default Layout;

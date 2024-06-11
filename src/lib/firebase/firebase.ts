@@ -1,7 +1,6 @@
 'use client';
 
 import { logout, setSessionCookie } from '$app/(auth)/login/action';
-
 import { initializeApp } from 'firebase/app';
 import {
     getAuth,
@@ -58,7 +57,7 @@ export const singUpAndCreateCookie = async (e: FormEvent<HTMLFormElement>) => {
     await setSessionCookie(idToken);
 };
 export const forgotPassword = async (email: string) => {
-    const forgot = await sendPasswordResetEmail(firebaseAuth, email);
+    await sendPasswordResetEmail(firebaseAuth, email);
 };
 
 // export const eventsRef = collection(db, 'events');
