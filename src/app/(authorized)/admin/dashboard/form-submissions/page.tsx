@@ -1,7 +1,7 @@
+import FormSubmissionTable from './FormSubmissionTable';
+
 const FormSubmissions = async () => {
-    return (
-<h1> Hello world! </h1>
-    );
+    return <FormSubmissionTable />;
 };
 
 export default FormSubmissions;
