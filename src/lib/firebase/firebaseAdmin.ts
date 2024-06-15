@@ -8,8 +8,6 @@ import { firebaseAdminConfig, firebaseConfig } from './config';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 import { getFirestore } from 'firebase/firestore';
 
-//console.log(process.env.FIREBASE_CLIENT_ID);
-
 export const SESSION_COOKIE_NAME = '__session';
 export const getAuthorizedAuth = async () => {
     let session: string | undefined;

@@ -4,17 +4,10 @@ import { getAllEvents } from './serverAction';
 import RealtimeEvents from './RealtimeEvents';
 import Grid from '@mui/material/Unstable_Grid2';
 import { redirect } from 'next/navigation';
-import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { getMyUserInfo } from '$app/(authorized)/my-events/actions';
+import { redirectToAdminDashboardWhenAdministrator } from '$lib/lib';
 
 export default async function Home() {
-    const { app, user, auth, db } = await getAuthorizedAuth();
-    if (app !== null && user !== null && auth !== null && db !== null) {
-        const userInfo = await getMyUserInfo(db, user);
-        if (userInfo.admin) {
-            redirect('/admin/dashboard');
-        }
-    }
+    await redirectToAdminDashboardWhenAdministrator();
 
     redirect('/dashboard');
     const events = await getAllEvents();

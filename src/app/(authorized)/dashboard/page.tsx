@@ -1,9 +1,9 @@
-import Paper from '@mui/material/Paper';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
-import MyTickets from './MyTickets';
 import MyEvents from './MyEvents';
+import { redirectToAdminDashboardWhenAdministrator } from '$lib/lib';
 
-const Dashboard = () => {
+const Dashboard = async () => {
+    await redirectToAdminDashboardWhenAdministrator();
     return (
         <Grid2 container spacing="2rem" sx={{ marginTop: '0.5rem' }}>
             {/* <Grid2 xs={12} md={3}>
