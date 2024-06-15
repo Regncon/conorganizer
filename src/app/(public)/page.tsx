@@ -4,8 +4,18 @@ import { getAllEvents } from './serverAction';
 import RealtimeEvents from './RealtimeEvents';
 import Grid from '@mui/material/Unstable_Grid2';
 import { redirect } from 'next/navigation';
-export const dynamic = 'force-static';
+import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
+import { getMyUserInfo } from '$app/(authorized)/my-events/actions';
+
 export default async function Home() {
+    const { app, user, auth, db } = await getAuthorizedAuth();
+    if (app !== null && user !== null && auth !== null && db !== null) {
+        const userInfo = await getMyUserInfo(db, user);
+        if (userInfo.admin) {
+            redirect('/admin/dashboard');
+        }
+    }
+
     redirect('/dashboard');
     const events = await getAllEvents();
 

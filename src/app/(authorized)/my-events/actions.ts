@@ -1,9 +1,10 @@
 'use server';
 import type { NewEvent } from '$app/types';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { collection, doc, getDocs, getFirestore, setDoc, type Firestore } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, getFirestore, setDoc, type Firestore } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { type User } from 'firebase/auth';
+import type { MyUserInfo } from './types';
 
 export const createMyEventDoc = async (docId: string) => {
     const { app, user } = await getAuthorizedAuth();
@@ -50,6 +51,11 @@ export async function getAllMyEvents(db: Firestore, user: User) {
     const docs = await getDocs(ref);
     const myEvents = docs.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as NewEvent[];
     return myEvents;
+}
+export async function getMyUserInfo(db: Firestore, user: User) {
+    const ref = doc(db, '/users', user.uid);
+    const docs = await getDoc(ref);
+    return docs.data() as MyUserInfo;
 }
 
 export async function updateMyEvents() {
