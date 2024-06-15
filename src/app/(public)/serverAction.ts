@@ -1,7 +1,7 @@
 'use server';
 import { adminDb } from '$lib/firebase/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-import type { Event } from '../types';
+import type { Event } from '../../lib/types';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { firebaseAuth } from '$lib/firebase/firebase';
 

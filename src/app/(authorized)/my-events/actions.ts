@@ -1,22 +1,22 @@
 'use server';
-import type { NewEvent } from '$app/types';
+
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { collection, doc, getDoc, getDocs, getFirestore, setDoc, type Firestore } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { type User } from 'firebase/auth';
 import type { MyUserInfo } from './types';
+import type { MyNewEvent } from '$lib/types';
 
 export const createMyEventDoc = async (docId: string) => {
     const { app, user } = await getAuthorizedAuth();
     if (app && user && user.email) {
         const db = getFirestore(app);
         const ref = doc(db, '/users', user.uid, 'my-events', docId);
-        const newEvent: Omit<NewEvent, 'id'> = {
+        const newEvent: Omit<MyNewEvent, 'id'> = {
             fridayEvening: true,
             saturdayEvening: true,
             saturdayMorning: true,
             sundayMorning: true,
-            unpublished: true,
             additionalComments: '',
             adultsOnly: false,
             beginnerFriendly: false,
@@ -40,6 +40,8 @@ export const createMyEventDoc = async (docId: string) => {
             updatedBy: '',
             subTitle: '',
             isSubmitted: false,
+            isRead: false,
+            isAccepted: false,
         };
         await setDoc(ref, newEvent);
         return;
@@ -49,7 +51,7 @@ export const createMyEventDoc = async (docId: string) => {
 export async function getAllMyEvents(db: Firestore, user: User) {
     const ref = collection(db, '/users', user.uid, 'my-events');
     const docs = await getDocs(ref);
-    const myEvents = docs.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as NewEvent[];
+    const myEvents = docs.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as MyNewEvent[];
     return myEvents;
 }
 export async function getMyUserInfo(db: Firestore, user: User) {

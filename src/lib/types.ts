@@ -19,7 +19,7 @@ export type Event = {
     icons?: string[];
 };
 
-export type NewEvent = {
+export type MyNewEvent = {
     id: string;
     email: string;
     name: string;
@@ -42,11 +42,12 @@ export type NewEvent = {
     beginnerFriendly: boolean;
     description: string;
     additionalComments: string;
-    unpublished: boolean;
     createdAt: string;
     createdBy: string;
     updateAt: string;
     updatedBy: string;
     subTitle: string;
     isSubmitted: boolean;
+    isRead?: boolean;
+    isAccepted?: boolean;
 };

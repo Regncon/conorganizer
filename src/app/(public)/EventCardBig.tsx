@@ -3,7 +3,7 @@ import Typography from '@mui/material/Typography';
 import { Card, CardActionArea, CardContent, CardHeader, IconButton } from '@mui/material';
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
-import type { EventCardProps } from '../types';
+import type { EventCardProps } from '../../lib/types';
 import TrashButton from './TrashButton';
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
 import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
