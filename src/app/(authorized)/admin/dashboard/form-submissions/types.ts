@@ -1,10 +1,10 @@
 import type { GridColDef } from '@mui/x-data-grid';
 
-export type FromSubmission = {
+export type FormSubmission = {
     id: string;
     title: string;
-    subtitle: string;
-    isRead: boolean | string;
-    isAccepted: boolean | string;
+    subTitle: string;
+    isRead: boolean;
+    isAccepted: boolean;
 };
-export type FromSubmissionColDef = GridColDef<FromSubmission>[];
+export type FormSubmissionColDef = GridColDef<FormSubmission>[];
