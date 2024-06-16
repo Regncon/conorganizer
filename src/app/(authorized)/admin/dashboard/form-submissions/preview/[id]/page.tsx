@@ -44,9 +44,10 @@ const FormSubmissionsPreviewPage = () => {
         system: 'DnD 5e',
         gameMaster: 'Ola Nordmann',
         shortDescription: 'Dette er en kort beskrivelse',
+        icons: ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'],
     };
     return (
-        <Box>
+        <Box sx={{ maxWidth: '375px', margin: 'auto' }}>
             <Typography variant="h1">Forhådsvisning</Typography>
             <Button variant="contained" color="primary" onClick={handleClickOpen}>
                 Godkjenn og start redigering

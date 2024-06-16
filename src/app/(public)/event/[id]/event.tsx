@@ -1,15 +1,5 @@
 'use client';
-import {
-	Box,
-	Chip,
-	Slider,
-	Typography,
-	chipClasses,
-	sliderClasses,
-	useTheme,
-	type SxProps,
-	type Theme,
-} from '@mui/material';
+import { Box, Chip, Slider, Typography, sliderClasses, useTheme, type SxProps, type Theme } from '@mui/material';
 import Image from 'next/image';
 import NavigateBefore from '@mui/icons-material/NavigateBefore';
 import IconButton from '@mui/material/IconButton';
@@ -20,7 +10,6 @@ import Link from 'next/link';
 import { faChevronLeft, faUserSecret } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
-import { redirect } from 'next/navigation';
 import { Event } from '$lib/types';
 
 export const dynamic = 'force-static';
@@ -28,7 +17,7 @@ export const dynamic = 'force-static';
 const marks = [
 	{
 		value: 1,
-		label: '😡 Ikke interessert',
+		label: '🥱 Ikke interessert',
 	},
 	{
 		value: 2,
@@ -48,7 +37,6 @@ type props = {
 	data: Event;
 };
 const MainEvent = ({ data }: props) => {
-	const arrayet = ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'];
 	const [interest, setInterest] = useState<number>(0);
 	const {
 		palette: {
@@ -113,7 +101,7 @@ const MainEvent = ({ data }: props) => {
 					<Box component={FontAwesomeIcon} icon={faUserSecret} size="2x" sx={{ color: 'primary.main' }} />
 					<Box>
 						<Typography component="span" sx={{ color: 'primary.main' }}>
-							{arrayet.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
+							{data.icons?.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
 						</Typography>
 						<Typography variant="h2">{data.gameMaster}</Typography>
 					</Box>
@@ -137,7 +125,7 @@ const MainEvent = ({ data }: props) => {
 					paddingBottom: '0.35rem',
 				}}
 			>
-				{arrayet.map((vesen) => (
+				{data.icons?.map((vesen) => (
 					<Chip label={vesen} key={vesen} color="primary" icon={<NavigateBefore />} />
 				))}
 			</Box>
