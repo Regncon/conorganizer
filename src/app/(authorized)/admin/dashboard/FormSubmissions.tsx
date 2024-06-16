@@ -5,7 +5,7 @@ const FormSubmissions = async () => {
         <CardBase
             href="/admin/dashboard/form-submissions"
             subTitle="Trykk for å gå til innsendte skjemaer"
-            img="/my-events.jpg"
+            img="/form-submissions-thumbnail.webp"
             imgAlt="Innsendte skjemaer"
             title="Innsendte skjemaer"
         />
