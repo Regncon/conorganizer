@@ -23,6 +23,8 @@ import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import type { MyNewEvent } from '$lib/types';
 import EventFromSkeleton from './EventFormSkeleton';
+import Chip from '@mui/material/Chip';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 type Props = {
     id: string;
 };
@@ -35,7 +37,39 @@ const EventForm = ({ id }: Props) => {
     const snackBarMessageInitial = 'Din endring er lagra!';
     const [snackBarMessage, setSnackBarMessage] = useState<string>(snackBarMessageInitial);
     const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
-
+    const [tags, setTags] = useState<{ name: keyof MyNewEvent; label: string; selected: boolean }[]>([
+        { name: 'childFriendly', label: 'Arrangementet passer for barn', selected: newEvent?.childFriendly ?? false },
+        {
+            name: 'adultsOnly',
+            label: 'Arrangementet passer berre for vaksne (18+)',
+            selected: newEvent?.adultsOnly ?? false,
+        },
+        {
+            name: 'beginnerFriendly',
+            label: 'Arrangementet er nybyrjarvenleg',
+            selected: newEvent?.beginnerFriendly ?? false,
+        },
+        {
+            name: 'possiblyEnglish',
+            label: 'Arrangementet kan haldast på engelsk',
+            selected: newEvent?.possiblyEnglish ?? false,
+        },
+        {
+            name: 'volunteersPossible',
+            label: 'Andre kan halda arrangementet',
+            selected: newEvent?.volunteersPossible ?? false,
+        },
+        {
+            name: 'lessThanThreeHours',
+            label: 'Eg trur arrangementet vil vare kortare enn 3 timer',
+            selected: newEvent?.lessThanThreeHours ?? false,
+        },
+        {
+            name: 'moreThanSixHours',
+            label: 'Eg trur arrangementet vil vare lenger enn 6 timer',
+            selected: newEvent?.moreThanSixHours ?? false,
+        },
+    ]);
     const newEventDocRef = doc(db, 'users', user?.uid ?? '_', 'my-events', id);
 
     const updateDatabase = async (newEvent: Partial<MyNewEvent>) => {
@@ -46,7 +80,13 @@ const EventForm = ({ id }: Props) => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
         if (user) {
             unsubscribeSnapshot = onSnapshot(newEventDocRef, (snapshot) => {
-                setNewEvent(snapshot.data() as MyNewEvent);
+                const newEventData = snapshot.data() as MyNewEvent;
+                setNewEvent(newEventData);
+                const newTags = [...tags].map((tag) => ({
+                    ...tag,
+                    selected: (newEventData[tag.name] as boolean) ?? false,
+                }));
+                setTags(newTags);
             });
         }
 
@@ -320,42 +360,30 @@ const EventForm = ({ id }: Props) => {
                                     label="Eg vil vere med på modulkonkurransen"
                                 />
                                 <Typography>
-                                    husk å sende modulen til{' '}
-                                    <a href="mailto:moduler@regncon.no ">moduler@regncon.no </a> innen første september!
+                                    husk å sende modulen til <a href="mailto:moduler@regncon.no">moduler@regncon.no </a>{' '}
+                                    innen første september!
                                 </Typography>
-                                <FormControlLabel
-                                    control={<Checkbox name="childFriendly" checked={newEvent.childFriendly} />}
-                                    label="Arrangementet passer for barn"
-                                />
-                                <FormControlLabel
-                                    control={<Checkbox name="adultsOnly" checked={newEvent.adultsOnly} />}
-                                    label="Arrangementet passer berre for vaksne (18+)"
-                                />
-                                <FormControlLabel
-                                    control={<Checkbox name="beginnerFriendly" checked={newEvent.beginnerFriendly} />}
-                                    label="Arrangementet er nybyrjarvenleg"
-                                />
-                                <FormControlLabel
-                                    control={<Checkbox name="possiblyEnglish" checked={newEvent.possiblyEnglish} />}
-                                    label="Arrangementet kan haldast på engelsk"
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox name="volunteersPossible" checked={newEvent.volunteersPossible} />
-                                    }
-                                    label="Andre kan halda arrangementet"
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox name="lessThanThreeHours" checked={newEvent.lessThanThreeHours} />
-                                    }
-                                    label="Eg trur arrangementet vil vare kortare enn 3 timer"
-                                />
-                                <FormControlLabel
-                                    control={<Checkbox name="moreThanSixHours" checked={newEvent.moreThanSixHours} />}
-                                    label="Eg trur arrangementet vil vare lenger enn 6 timer"
-                                />
                             </FormGroup>
+                            <Typography sx={{ marginBlockStart: '1rem' }}>
+                                Trykk på brikka som passar til spelet ditt:
+                            </Typography>
+                            {tags.map((tag) => (
+                                <Chip
+                                    sx={{ marginBlock: '0.4rem', marginInlineEnd: '0.4rem' }}
+                                    label={tag.label}
+                                    key={tag.name}
+                                    color={tag.selected ? 'primary' : 'secondary'}
+                                    icon={<NavigateBeforeIcon />}
+                                    variant={tag.selected ? 'filled' : 'outlined'}
+                                    onClick={async () => {
+                                        setTags((prev) =>
+                                            prev.map((t) => (t.name === tag.name ? { ...t, selected: !t.selected } : t))
+                                        );
+                                        await updateDatabase({ [tag.name]: !tag.selected });
+                                        setIsSnackBarOpen(true);
+                                    }}
+                                />
+                            ))}
                         </Paper>
                     </Grid2>
                     <Grid2 xs={12}>
