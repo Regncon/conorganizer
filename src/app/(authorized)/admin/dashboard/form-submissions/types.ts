@@ -7,5 +7,6 @@ export type FormSubmission = {
     subTitle: string;
     isRead: boolean;
     isAccepted: boolean;
+    documentPath: string;
 };
 export type FormSubmissionColDef = GridColDef<FormSubmission>[];

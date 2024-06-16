@@ -31,6 +31,7 @@ export const useRealtimeTableData = () => {
                         subTitle: data.subTitle,
                         isRead: data.isRead ?? false,
                         isAccepted: data.isAccepted ?? false,
+                        documentPath: doc.ref.path,
                     };
 
                     return submissions;
