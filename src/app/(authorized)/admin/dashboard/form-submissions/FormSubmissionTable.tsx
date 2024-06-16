@@ -6,7 +6,13 @@ import { useMemo, useRef } from 'react';
 import { updateReadStatus } from './actions';
 
 const columns: FormSubmissionColDef = [
-    { field: 'id', headerName: 'ID', width: 255 },
+    // { field: 'id', headerName: 'ID', width: 255 },
+    {
+        field: 'name',
+        headerName: 'Navn',
+        width: 140,
+        editable: true,
+    },
     {
         field: 'title',
         headerName: 'Tittel',
@@ -105,7 +111,7 @@ const FormSubmissionTable = () => {
     const tableData = useRealtimeTableData();
     const apiRef = useGridApiRef();
     const rows = useMemo(() => tableData, [tableData]);
-
+    console.log(rows);
     return (
         <DataGrid
             sx={{ minHeight: '40rem', insetBlockStart: '2rem' }}

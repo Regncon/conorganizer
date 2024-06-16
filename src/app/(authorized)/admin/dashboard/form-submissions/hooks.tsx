@@ -25,6 +25,7 @@ export const useRealtimeTableData = () => {
                     const data = doc.data() as MyNewEvent;
                     const submissions: FormSubmission = {
                         id: doc.id,
+                        name: data.name,
                         title: data.title,
                         subTitle: data.subTitle,
                         isRead: data.isRead ?? false,
