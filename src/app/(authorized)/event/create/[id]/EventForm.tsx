@@ -22,6 +22,7 @@ import Slide from '@mui/material/Slide';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import type { MyNewEvent } from '$lib/types';
+import EventFromSkeleton from './EventFormSkeleton';
 type Props = {
     id: string;
 };
@@ -50,7 +51,6 @@ const EventForm = ({ id }: Props) => {
         }
 
         const unsubscribeUser = onAuthStateChanged(firebaseAuth, (user) => {
-            console.log(user, 'user');
             setUser(user);
         });
 
@@ -126,8 +126,6 @@ const EventForm = ({ id }: Props) => {
             updateDatabase(payload);
         }
     };
-
-    const skeletonHeight = 53;
 
     return newEvent ?
             <>
@@ -393,46 +391,6 @@ const EventForm = ({ id }: Props) => {
                     autoHideDuration={1200}
                 />
             </>
-        :   <Grid2 container spacing="2rem">
-                <Grid2 xs={12}>
-                    <Skeleton variant="rounded" height={skeletonHeight} />
-                </Grid2>
-                <Grid2 xs={12}>
-                    <Skeleton variant="rounded" height={skeletonHeight} />
-                </Grid2>
-                <Grid2 xs={12} sm={6} md={3}>
-                    <Skeleton variant="rounded" height={skeletonHeight} />
-                </Grid2>
-                <Grid2 xs={12} sm={6} md={3}>
-                    <Skeleton variant="rounded" height={skeletonHeight} />
-                </Grid2>
-                <Grid2 xs={12} sm={6} md={3}>
-                    <Skeleton variant="rounded" height={skeletonHeight} />
-                </Grid2>
-                <Grid2 xs={12} sm={6} md={3}>
-                    <Skeleton variant="rounded" height={skeletonHeight} />
-                </Grid2>
-                <Grid2 xs={12}>
-                    <Skeleton variant="rounded" height={129} />
-                </Grid2>
-                <Grid2 xs={12} sm={4}>
-                    <Skeleton variant="rounded" height={220} />
-                </Grid2>
-                <Grid2 xs={12} sm={4}>
-                    <Skeleton variant="rounded" sx={{ height: { xs: skeletonHeight, sm: '220px' } }} />
-                </Grid2>
-                <Grid2 xs={12} sm={4}>
-                    <Skeleton variant="rounded" height={220} />
-                </Grid2>
-                <Grid2 xs={12}>
-                    <Skeleton variant="rounded" height={380} />
-                </Grid2>
-                <Grid2 xs={12}>
-                    <Skeleton variant="rounded" height={90} />
-                </Grid2>
-                <Grid2 xs={12}>
-                    <Skeleton variant="rounded" height={80} />
-                </Grid2>
-            </Grid2>;
+        :   <EventFromSkeleton />;
 };
 export default EventForm;
