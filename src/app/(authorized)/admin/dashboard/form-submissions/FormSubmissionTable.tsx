@@ -4,6 +4,8 @@ import type { FormSubmission, FormSubmissionColDef } from './types';
 import { useRealtimeTableData } from './hooks';
 import { useMemo, useRef } from 'react';
 import { updateReadStatus } from './actions';
+import { useRouter } from 'next/navigation';
+import { Route } from 'next';
 
 const columns: FormSubmissionColDef = [
     // { field: 'id', headerName: 'ID', width: 255 },
@@ -111,7 +113,8 @@ const FormSubmissionTable = () => {
     const tableData = useRealtimeTableData();
     const apiRef = useGridApiRef();
     const rows = useMemo(() => tableData, [tableData]);
-    console.log(rows);
+    const router = useRouter();
+
     return (
         <DataGrid
             sx={{ minHeight: '40rem', insetBlockStart: '2rem' }}
@@ -138,6 +141,8 @@ const FormSubmissionTable = () => {
             onRowClick={(e: GridRowParams<FormSubmission>) => {
                 console.log(e.row);
                 updateReadStatus(e.row.id);
+                router.push(`/admin/dashboard/form-submissions/preview/${e.row.id}` as Route);
+                //Todo: Få Torstein til å forklare dette på nytt.
             }}
             pageSizeOptions={[10]}
             onPaginationModelChange={(e) => {
