@@ -1,5 +1,5 @@
 'use client';
-import { DataGrid, useGridApiRef, type GridEventListener, type GridRowParams } from '@mui/x-data-grid';
+import { DataGrid, useGridApiRef, type GridEventListener, type GridRowParams, GridToolbar } from '@mui/x-data-grid';
 import type { FormSubmission } from './types';
 import { useColumns } from './hooks/useColumns';
 import { useRealtimeTableData } from './hooks/useRealtimeTableData';
@@ -27,6 +27,9 @@ const FormSubmissionTable = () => {
             sx={{ insetBlockStart: '2rem' }}
             rows={rows ? rows : []}
             columns={columns}
+            slots={{
+                toolbar: GridToolbar,
+            }}
             initialState={{
                 pagination: {
                     paginationModel: {
