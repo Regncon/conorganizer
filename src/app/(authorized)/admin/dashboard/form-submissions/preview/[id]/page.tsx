@@ -48,13 +48,13 @@ const FormSubmissionsPreviewPage = () => {
     };
     return (
         <Box sx={{ maxWidth: '375px', margin: 'auto' }}>
-            <Typography variant="h1">Forhådsvisning</Typography>
+            <Typography variant="h1">Forhåndsvisning</Typography>
             <Button variant="contained" color="primary" onClick={handleClickOpen}>
                 Godkjenn og start redigering
             </Button>
             <SimpleDialog open={open} onClose={handleClose} />
             <hr />
-            <MainEvent data={event} />
+            <MainEvent eventData={event} />
         </Box>
     );
 };

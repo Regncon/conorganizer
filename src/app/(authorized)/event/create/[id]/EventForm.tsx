@@ -15,19 +15,20 @@ import Confetti from 'react-confetti';
 import { useCallback, useEffect, useState, type ComponentProps, type FormEvent } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
-import type { NewEvent } from '$app/types';
+
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import Slide from '@mui/material/Slide';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
+import type { MyNewEvent } from '$lib/types';
 type Props = {
     id: string;
 };
 const EventForm = ({ id }: Props) => {
     const [isExploding, setIsExploding] = useState(false);
 
-    const [newEvent, setNewEvent] = useState<NewEvent>();
+    const [newEvent, setNewEvent] = useState<MyNewEvent>();
     const [user, setUser] = useState<User | null>();
 
     const snackBarMessageInitial = 'Din endring er lagra!';
@@ -36,7 +37,7 @@ const EventForm = ({ id }: Props) => {
 
     const newEventDocRef = doc(db, 'users', user?.uid ?? '_', 'my-events', id);
 
-    const updateDatabase = async (newEvent: Partial<NewEvent>) => {
+    const updateDatabase = async (newEvent: Partial<MyNewEvent>) => {
         await updateDoc(newEventDocRef, newEvent);
     };
 
@@ -44,7 +45,7 @@ const EventForm = ({ id }: Props) => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
         if (user) {
             unsubscribeSnapshot = onSnapshot(newEventDocRef, (snapshot) => {
-                setNewEvent(snapshot.data() as NewEvent);
+                setNewEvent(snapshot.data() as MyNewEvent);
             });
         }
 
@@ -110,7 +111,7 @@ const EventForm = ({ id }: Props) => {
             value = inputName;
         }
         if (user?.email !== null) {
-            let payload: Partial<NewEvent> = {
+            let payload: Partial<MyNewEvent> = {
                 [name]: value,
                 updateAt: new Date(Date.now()).toString(),
                 updatedBy: user?.email,
