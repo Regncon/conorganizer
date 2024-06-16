@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { FormSubmission } from './types';
+
 import { collectionGroup, onSnapshot, query } from 'firebase/firestore';
 import { db } from '$lib/firebase/firebase';
 import type { MyNewEvent } from '$lib/types';
+import type { FormSubmission } from '../types';
 
 export const useRealtimeTableData = () => {
-    const [allSubmissions, setAllSubmissions] = useState<FormSubmission[]>([]);
+    const [allSubmissions, setAllSubmissions] = useState<FormSubmission[]>();
     useEffect(() => {
         const myEventsQuery = query(collectionGroup(db, 'my-events'));
 
