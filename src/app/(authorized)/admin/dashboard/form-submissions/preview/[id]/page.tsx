@@ -1,4 +1,6 @@
 'use client';
+import MainEvent from '$app/(public)/event/[id]/event';
+import { Event } from '$lib/types';
 import { Box, Button, Dialog, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import { useState } from 'react';
 
@@ -36,13 +38,22 @@ const FormSubmissionsPreviewPage = () => {
         setOpen(false);
     };
 
+    const event: Event = {
+        id: '1',
+        title: 'Dette er tittelen',
+        system: 'DnD 5e',
+        gameMaster: 'Ola Nordmann',
+        shortDescription: 'Dette er en kort beskrivelse',
+    };
     return (
         <Box>
-            <Typography variant="h1">Form Submissions Preview Page</Typography>
+            <Typography variant="h1">Forhådsvisning</Typography>
             <Button variant="contained" color="primary" onClick={handleClickOpen}>
                 Godkjenn og start redigering
             </Button>
             <SimpleDialog open={open} onClose={handleClose} />
+            <hr />
+            <MainEvent data={event} />
         </Box>
     );
 };
