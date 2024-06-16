@@ -144,9 +144,7 @@ const MainEvent = ({ id, eventData }: props) => {
                     paddingBottom: '0.35rem',
                 }}
             >
-                {data.icons?.map((vesen) => (
-                    <Chip label={vesen} key={vesen} color="primary" icon={<NavigateBefore />} />
-                ))}
+                {data.icons?.map((tag) => <Chip label={tag} key={tag} color="primary" icon={<NavigateBefore />} />)}
             </Box>
             <Box
                 sx={{
