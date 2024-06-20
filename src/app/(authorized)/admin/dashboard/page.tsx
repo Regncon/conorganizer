@@ -9,11 +9,9 @@ const Dashboard = async () => {
             <Grid2 xs={12} md={3}>
                 <FormSubmissions />
             </Grid2>
-            {/*
             <Grid2 xs={12} md={3}>
                 <Events />
             </Grid2>
-            */}
             <Grid2 xs={12} md={3}>
                 <MyEvents />
             </Grid2>
