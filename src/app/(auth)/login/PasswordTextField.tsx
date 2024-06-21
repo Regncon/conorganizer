@@ -11,9 +11,14 @@ type Props = {
     autoComplete?: string;
     label?: string;
     name?: string;
+    error?: string;
+    helperText?: string;
 };
 
-const PasswordTextField = ({ autoComplete = 'current-password', label = 'passord', name = 'password' }: Props) => {
+const PasswordTextField = (
+    { autoComplete = 'current-password', label = 'passord', name = 'password', error, helperText }: Props,
+    ref?: RefObject<HTMLInputElement>
+) => {
     const [showPassword, setShowPassword] = useState(false);
     const [minCharacterLabel, setMinCharacterLabel] = useState<string>(label);
 
@@ -26,6 +31,8 @@ const PasswordTextField = ({ autoComplete = 'current-password', label = 'passord
         <TextField
             type={showPassword ? 'text' : 'password'}
             name={name}
+            error={!!error}
+            helperText={helperText}
             autoComplete={autoComplete}
             label={minCharacterLabel}
             onFocus={() => {
@@ -52,10 +59,10 @@ const PasswordTextField = ({ autoComplete = 'current-password', label = 'passord
                     </InputAdornment>
                 ),
             }}
-            inputProps={{
-                pattern: passwordRegExp.source,
-                title: 'Minimum antall tegn er 6',
-            }}
+            // inputProps={{
+            //     pattern: passwordRegExp.source,
+            //     title: 'Minimum antall tegn er 6',
+            // }}
         />
     );
 };

@@ -28,14 +28,12 @@ export type RegisterDetails = {
     confirm: string;
 };
 
-const getEmailAndPasswordFromFormData = (e: FormEvent<HTMLFormElement>) => {
-    const target = e.target as HTMLFormElement;
-    const { email, password } = Object.fromEntries(new FormData(target)) as LoginDetails;
+const getEmailAndPasswordFromFormData = (formData: FormData) => {
+    const { email, password } = Object.fromEntries(formData) as LoginDetails;
     return { email, password };
 };
-export const signInAndCreateCookie = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const { email, password } = getEmailAndPasswordFromFormData(e);
+export const signInAndCreateCookie = async (formData: FormData) => {
+    const { email, password } = getEmailAndPasswordFromFormData(formData);
     if (!!!email && !!!password) {
         return;
     }
