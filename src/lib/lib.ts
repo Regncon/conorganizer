@@ -10,4 +10,5 @@ export const redirectToAdminDashboardWhenAdministrator = async () => {
             redirect('/admin/dashboard');
         }
     }
+    redirect('/login');
 };
