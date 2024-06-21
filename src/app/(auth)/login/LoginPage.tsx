@@ -26,7 +26,7 @@ export const disableAndLoadingSpinner = (shouldSpin: boolean, isPending: boolean
 
 const LoginPage = () => {
     const [isPending, startTransition] = useTransition();
-    const [spinners, setSpinners] = useState<{ login: boolean; forgot: boolean; register: boolean }>({
+    const [spinners, setSpinners] = useState<{ forgot: boolean; register: boolean }>({
         forgot: false,
         register: false,
     });
