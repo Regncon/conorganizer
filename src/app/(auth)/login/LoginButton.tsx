@@ -5,14 +5,13 @@ import { disableAndLoadingSpinner } from './LoginPage';
 
 type Props = {
     disabled?: boolean;
-    endIcon?: React.ReactNode;
 };
 
-const LoginButton = ({}: Props) => {
+const LoginButton = ({ disabled = false }: Props) => {
     const { pending } = useFormStatus();
 
     return (
-        <Button type="submit" {...disableAndLoadingSpinner(true, pending)}>
+        <Button type="submit" {...disableAndLoadingSpinner(pending, pending || disabled)}>
             Logg inn
         </Button>
     );

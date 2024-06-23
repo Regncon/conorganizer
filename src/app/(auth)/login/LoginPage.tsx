@@ -6,30 +6,29 @@ import { signInAndCreateCookie } from '$lib/firebase/firebase';
 import { useEffect, useState, useTransition, type ComponentProps } from 'react';
 import EmailTextField from '../shared/EmailTextField';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
-import { useFormState, useFormStatus } from 'react-dom';
-import { validateForm as validateFormAction } from './action';
+import { useFormState } from 'react-dom';
+import { validateLoginForm as validateLoginFormAction } from './actions';
 import LoginButton from './LoginButton';
 import { updateSearchParamsWithEmail } from '../shared/utils';
 
-const initialFormState = {
+const initialLoginFormState = {
     emailError: '',
     passwordError: '',
 };
-export type InitialFormState = typeof initialFormState;
-
+export type InitialLoginFormState = typeof initialLoginFormState;
 export const disableAndLoadingSpinner = (shouldSpin: boolean, isPending: boolean) => ({
     disabled: isPending,
     endIcon: isPending && shouldSpin ? <CircularProgress size="1.5rem" /> : undefined,
 });
 
+const initialSpinnersState = {
+    forgot: false,
+    register: false,
+};
+
 const LoginPage = () => {
     const [isPending, startTransition] = useTransition();
-    const [spinners, setSpinners] = useState<{ forgot: boolean; register: boolean }>({
-        forgot: false,
-        register: false,
-    });
+    const [spinners, setSpinners] = useState<typeof initialSpinnersState>(initialSpinnersState);
 
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -47,32 +46,32 @@ const LoginPage = () => {
         });
     };
 
-    const handleForgotPasswordClick: ComponentProps<'button'>['onClick'] = async (e) => {
+    const handleForgotPasswordClick: ComponentProps<'button'>['onClick'] = async () => {
         setSpinners({ ...spinners, forgot: true });
         startTransition(() => {
             router.push(`/forgot-password?email=${email}`);
         });
     };
 
-    const handleRegisterNewUser: ComponentProps<'button'>['onClick'] = async (e) => {
+    const handleRegisterNewUser = async () => {
         setSpinners({ ...spinners, register: true });
         startTransition(() => {
             router.push(`/register`);
         });
     };
 
-    const validateForm: (
-        state: typeof initialFormState,
+    const validateLoginForm: (
+        state: InitialLoginFormState,
         formData: FormData
-    ) => Promise<typeof initialFormState> = async (_, formData) => {
-        const validatedState = await validateFormAction(formData);
+    ) => Promise<InitialLoginFormState> = async (_, formData) => {
+        const validatedState = await validateLoginFormAction(formData);
         if (!validatedState.emailError && !validatedState.passwordError) {
             await handleFormSubmit(formData);
         }
         return validatedState;
     };
 
-    const [state, formAction] = useFormState(validateForm, initialFormState);
+    const [state, formAction] = useFormState(validateLoginForm, initialLoginFormState);
 
     return (
         <>
@@ -95,10 +94,10 @@ const LoginPage = () => {
                 }}
                 action={formAction}
             >
-                <EmailTextField defaultValue={email} error={state.emailError} helperText={state.emailError} />
-                <PasswordTextField error={state.passwordError} helperText={state.passwordError} />
+                <EmailTextField defaultValue={email} error={!!state.emailError} helperText={state.emailError} />
+                <PasswordTextField error={!!state.passwordError} helperText={state.passwordError} />
 
-                <LoginButton />
+                <LoginButton disabled={isPending} />
 
                 <Button onClick={handleForgotPasswordClick} {...disableAndLoadingSpinner(spinners.forgot, isPending)}>
                     Gløymd passord?

@@ -11,12 +11,12 @@ type Props = {
     autoComplete?: string;
     label?: string;
     name?: string;
-    error?: string;
+    error?: boolean;
     helperText?: string;
 };
 
 const PasswordTextField = (
-    { autoComplete = 'current-password', label = 'passord', name = 'password', error, helperText }: Props,
+    { autoComplete = 'current-password', label = 'passord', name = 'password', error = false, helperText }: Props,
     ref?: RefObject<HTMLInputElement>
 ) => {
     const [showPassword, setShowPassword] = useState(false);
@@ -31,7 +31,7 @@ const PasswordTextField = (
         <TextField
             type={showPassword ? 'text' : 'password'}
             name={name}
-            error={!!error}
+            error={error}
             helperText={helperText}
             autoComplete={autoComplete}
             label={minCharacterLabel}
@@ -42,7 +42,7 @@ const PasswordTextField = (
                 setMinCharacterLabel(label);
             }}
             fullWidth
-            required
+            // required
             InputProps={{
                 endAdornment: (
                     <InputAdornment position="end">

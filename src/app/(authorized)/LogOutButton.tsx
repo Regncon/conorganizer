@@ -1,9 +1,8 @@
 'use client';
 import { signOutAndDeleteCookie } from '$lib/firebase/firebase';
-import { faSpinner } from '@fortawesome/free-solid-svg-icons/faSpinner';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Button from '@mui/material/Button';
-import { redirect, useRouter } from 'next/navigation';
+import CircularProgress from '@mui/material/CircularProgress';
+import { useRouter } from 'next/navigation';
 import { useTransition } from 'react';
 
 const LogOutButton = () => {
@@ -20,7 +19,7 @@ const LogOutButton = () => {
             color="secondary"
             variant="contained"
             disabled={isPending}
-            endIcon={isPending ? <FontAwesomeIcon icon={faSpinner} spin /> : undefined}
+            endIcon={isPending ? <CircularProgress size="1.5rem" /> : undefined}
         >
             logg ut
         </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { logout, setSessionCookie } from '$app/(auth)/login/action';
+import { logout, setSessionCookie } from '$app/(auth)/login/actions';
 import { initializeApp } from 'firebase/app';
 import {
     getAuth,
@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig, 'client');
 export const db = getFirestore(app);
 export const firebaseAuth = getAuth(app);
 
-type LoginDetails = {
+export type LoginDetails = {
     email: string;
     password: string;
 };
@@ -28,11 +28,11 @@ export type RegisterDetails = {
     confirm: string;
 };
 
-const getEmailAndPasswordFromFormData = (formData: FormData) => {
+const getEmailAndPasswordFromFormData: (formData: FormData) => LoginDetails = (formData) => {
     const { email, password } = Object.fromEntries(formData) as LoginDetails;
     return { email, password };
 };
-export const signInAndCreateCookie = async (formData: FormData) => {
+export const signInAndCreateCookie: (formData: FormData) => Promise<void> = async (formData) => {
     const { email, password } = getEmailAndPasswordFromFormData(formData);
     if (!!!email && !!!password) {
         return;
@@ -42,19 +42,19 @@ export const signInAndCreateCookie = async (formData: FormData) => {
 
     await setSessionCookie(idToken);
 };
-export const signOutAndDeleteCookie = async () => {
+export const signOutAndDeleteCookie: () => Promise<void> = async () => {
     await signOut(firebaseAuth);
     await logout();
 };
 
-export const singUpAndCreateCookie = async (e: FormEvent<HTMLFormElement>) => {
-    const { email, password } = getEmailAndPasswordFromFormData(e);
+export const singUpAndCreateCookie: (formData: FormData) => Promise<void> = async (formData) => {
+    const { email, password } = getEmailAndPasswordFromFormData(formData);
     const userCredentials = await createUserWithEmailAndPassword(firebaseAuth, email, password);
     const idToken = await userCredentials.user.getIdToken();
 
     await setSessionCookie(idToken);
 };
-export const forgotPassword = async (email: string) => {
+export const forgotPassword: (email: string) => Promise<void> = async (email) => {
     await sendPasswordResetEmail(firebaseAuth, email);
 };
 

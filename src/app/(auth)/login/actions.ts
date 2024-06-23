@@ -4,7 +4,7 @@ import { SESSION_COOKIE_NAME, adminAuth } from '$lib/firebase/firebaseAdmin';
 import type { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
-import type { InitialFormState } from './LoginPage';
+import type { InitialLoginFormState } from './LoginPage';
 
 export const setSessionCookie = async (idToken: string) => {
     const cookieStore = cookies();
@@ -29,7 +29,7 @@ export const logout = async () => {
     cookieStore.delete(SESSION_COOKIE_NAME);
 };
 
-export const validateForm = async (formData: FormData): Promise<InitialFormState> => {
+export const validateLoginForm = async (formData: FormData): Promise<InitialLoginFormState> => {
     const formDataEntries = Object.fromEntries(formData);
 
     const schemaEmail = z.string().email({ message: 'Ugyldig e-post' });
@@ -38,18 +38,17 @@ export const validateForm = async (formData: FormData): Promise<InitialFormState
     const resultEmail = schemaEmail.safeParse(formDataEntries.email);
     const resultPassword = schemaPassword.safeParse(formDataEntries.password);
 
-    const resetErrorsAfterSuccessfulValidation: InitialFormState = {
+    const resetErrors: InitialLoginFormState = {
         emailError: '',
         passwordError: '',
     };
 
     if (!resultEmail.success || !resultPassword.success) {
         return {
-            passwordError:
-                resultPassword.error?.issues[0].message ?? resetErrorsAfterSuccessfulValidation.passwordError,
-            emailError: resultEmail.error?.issues[0].message ?? resetErrorsAfterSuccessfulValidation.emailError,
+            passwordError: resultPassword.error?.issues[0].message ?? resetErrors.passwordError,
+            emailError: resultEmail.error?.issues[0].message ?? resetErrors.emailError,
         };
     }
 
-    return resetErrorsAfterSuccessfulValidation;
+    return resetErrors;
 };

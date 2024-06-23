@@ -3,11 +3,11 @@ import { emailRegExp } from './utils';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 type Props = {
     defaultValue?: string;
-    error?: string;
+    error?: boolean;
     helperText?: string;
 };
 
-const EmailTextField = ({ defaultValue, error, helperText }: Props) => {
+const EmailTextField = ({ defaultValue, error = false, helperText }: Props) => {
     return (
         <TextField
             type="email"
@@ -15,11 +15,11 @@ const EmailTextField = ({ defaultValue, error, helperText }: Props) => {
             autoComplete="email"
             label="e-post"
             variant="outlined"
-            error={!!error}
+            error={error}
             helperText={helperText}
             defaultValue={defaultValue}
             fullWidth
-            required
+            // required
             InputProps={{
                 endAdornment: (
                     <InputAdornment position="end">
