@@ -8,32 +8,25 @@ import FormLabel from '@mui/material/FormLabel';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
-import FormGroup from '@mui/material/FormGroup';
-import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
-import Confetti from 'react-confetti';
-import { useCallback, useEffect, useState, type ComponentProps, type FormEvent } from 'react';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
-import { db, firebaseAuth } from '$lib/firebase/firebase';
-
+import { useCallback, useState, type ComponentProps, type FormEvent, type SyntheticEvent } from 'react';
+import { Event } from '$lib/types';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
-import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
+import { type User } from 'firebase/auth';
 import Slide from '@mui/material/Slide';
-import Skeleton from '@mui/material/Skeleton';
-import Snackbar from '@mui/material/Snackbar';
+import Snackbar, { type SnackbarCloseReason } from '@mui/material/Snackbar';
 import type { MyNewEvent } from '$lib/types';
 import Chip from '@mui/material/Chip';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
-import EventFromSkeleton from '$app/(authorized)/event/create/[id]/EventFormSkeleton';
 import MainEvent from '$app/(public)/event/[id]/event';
 import Box from '@mui/material/Box';
 type Props = {
-    id: string;
+    id?: string;
 };
 const Edit = ({ id }: Props) => {
     const [isExploding, setIsExploding] = useState(false);
 
-    const [newEvent, setNewEvent] = useState<MyNewEvent>({});
+    const [newEvent, setNewEvent] = useState<MyNewEvent>({} as MyNewEvent);
     const [user, setUser] = useState<User | null>();
 
     const snackBarMessageInitial = 'Din endring er lagra!';
@@ -111,7 +104,7 @@ const Edit = ({ id }: Props) => {
         icons: ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'],
     };
 
-    const handleSnackBar = (event: React.SyntheticEvent | Event, reason?: string) => {
+    const handleSnackBar = (event: SyntheticEvent | globalThis.Event, reason?: SnackbarCloseReason) => {
         if (reason === 'clickaway') {
             return;
         }

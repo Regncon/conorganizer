@@ -26,12 +26,12 @@ import Chip from '@mui/material/Chip';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import EventFromSkeleton from '$app/(authorized)/event/create/[id]/EventFormSkeleton';
 type Props = {
-    id: string;
+    id?: string;
 };
 const Settings = ({ id }: Props) => {
     const [isExploding, setIsExploding] = useState(false);
 
-    const [newEvent, setNewEvent] = useState<MyNewEvent>({});
+    const [newEvent, setNewEvent] = useState<MyNewEvent>({} as MyNewEvent);
     const [user, setUser] = useState<User | null>();
 
     const snackBarMessageInitial = 'Din endring er lagra!';
@@ -179,8 +179,6 @@ const Settings = ({ id }: Props) => {
                 onChange={handleOnChange}
                 onSubmit={handleSubmit}
             >
-
-              
                 <Grid2 xs={12} sm={6} md={3}>
                     <Paper>
                         <TextField
