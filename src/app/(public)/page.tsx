@@ -29,7 +29,7 @@ export default async function Home() {
                                         system={event.system}
                                     />
                                 </Grid>
-                            :   <EventCardSmall
+                                : <EventCardSmall
                                     key={i}
                                     title={event.title}
                                     gameMaster={event.gameMaster}

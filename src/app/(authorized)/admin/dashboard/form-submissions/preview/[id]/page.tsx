@@ -44,6 +44,7 @@ const FormSubmissionsPreviewPage = () => {
         system: 'DnD 5e',
         gameMaster: 'Ola Nordmann',
         shortDescription: 'Dette er en kort beskrivelse',
+        description: 'Dette er en lang beskrivelse',
         icons: ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'],
     };
     return (

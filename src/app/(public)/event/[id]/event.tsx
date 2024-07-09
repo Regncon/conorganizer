@@ -39,7 +39,7 @@ type Props = {
     editable?: boolean;
 };
 
-const initialState: Event = { gameMaster: '', id: '', shortDescription: '', system: '', title: '' };
+const initialState: Event = { gameMaster: '', id: '', shortDescription: '', description: '', system: '', title: '' };
 
 const MainEvent = ({ id, eventData, editable = false }: Props) => {
     const [data, setData] = useState<Event>(eventData ?? initialState);
