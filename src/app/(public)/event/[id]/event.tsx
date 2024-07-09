@@ -1,5 +1,15 @@
 'use client';
-import { Box, Chip, Slider, Typography, sliderClasses, useTheme, type SxProps, type Theme } from '@mui/material';
+import {
+    Box,
+    Chip,
+    Slider,
+    TextField,
+    Typography,
+    sliderClasses,
+    useTheme,
+    type SxProps,
+    type Theme,
+} from '@mui/material';
 import Image from 'next/image';
 import NavigateBefore from '@mui/icons-material/NavigateBefore';
 import IconButton from '@mui/material/IconButton';
@@ -17,36 +27,30 @@ import { onSnapshot, doc, type Unsubscribe } from 'firebase/firestore';
 export const dynamic = 'force-static';
 
 const marks = [
-    {
-        value: 1,
-        label: '🥱 Ikke interessert',
-    },
-    {
-        value: 2,
-        label: '😑 Litt interessert',
-    },
-    {
-        value: 3,
-        label: '😊 Interessert',
-    },
-    {
-        value: 4,
-        label: '🤩 Veldig interessert',
-    },
+    { value: 1, label: '🥱 Ikke interessert' },
+    { value: 2, label: '😑 Litt interessert' },
+    { value: 3, label: '😊 Interessert' },
+    { value: 4, label: '🤩 Veldig interessert' },
 ];
 
-type props = {
+type Props = {
     id?: string;
     eventData?: Event;
+    editable?: boolean;
 };
+
 const initialState: Event = { gameMaster: '', id: '', shortDescription: '', system: '', title: '' };
-const MainEvent = ({ id, eventData }: props) => {
+
+const MainEvent = ({ id, eventData, editable = false }: Props) => {
     const [data, setData] = useState<Event>(eventData ?? initialState);
+    const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
+    const [isEditingGameMaster, setIsEditingGameMaster] = useState<boolean>(false);
+    const [isEditingSystem, setIsEditingSystem] = useState<boolean>(false);
+    const [interest, setInterest] = useState<number>(0);
 
     useEffect(() => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
-        const eventDataPriorityCheck = id !== undefined && eventData === undefined;
-        if (eventDataPriorityCheck) {
+        if (id !== undefined && eventData === undefined) {
             unsubscribeSnapshot = onSnapshot(doc(db, 'events', id), (snapshot) => {
                 setData((snapshot.data() as Event | undefined) ?? initialState);
             });
@@ -54,9 +58,8 @@ const MainEvent = ({ id, eventData }: props) => {
         return () => {
             unsubscribeSnapshot?.();
         };
-    }, []);
+    }, [id, eventData]);
 
-    const [interest, setInterest] = useState<number>(0);
     const {
         palette: {
             background: { default: themeBackgroundColor },
@@ -65,56 +68,52 @@ const MainEvent = ({ id, eventData }: props) => {
 
     const paragraphStyle: SxProps<Theme> = { margin: '1rem 0' };
     const strongStyle: SxProps<Theme> = { fontWeight: 700 };
+
     return (
         <Box>
             <Box
                 sx={{
                     display: 'grid',
-                    '& > *': {
-                        gridColumn: ' 1 / 2',
-                        gridRow: ' 1 / 2',
-                    },
+                    '& > *': { gridColumn: '1 / 2', gridRow: '1 / 2' },
                 }}
             >
                 <Box
                     component={Image}
                     src={blekksprut2}
                     alt="noe alt-tekst"
-                    sx={{
-                        width: '100%',
-                        maxWidth: '100%',
-                        aspectRatio: '3.3 / 2',
-                    }}
+                    sx={{ width: '100%', maxWidth: '100%', aspectRatio: '3.3 / 2' }}
                     placeholder="blur"
                     loading="lazy"
                 />
-                <Box
-                    sx={{
-                        background: `linear-gradient(0deg, ${themeBackgroundColor}, transparent)`,
-                    }}
-                >
+                <Box sx={{ background: `linear-gradient(0deg, ${themeBackgroundColor}, transparent)` }}>
                     <Box
-                        sx={{
-                            display: 'grid',
-                            gridTemplateRows: '2rem 1fr',
-                            height: '100%',
-                            wordBreak: 'break-word',
-                        }}
+                        sx={{ display: 'grid', gridTemplateRows: '2rem 1fr', height: '100%', wordBreak: 'break-word' }}
                     >
                         <IconButton sx={{ placeSelf: 'start' }}>
                             <FontAwesomeIcon icon={faChevronLeft} />
                         </IconButton>
-                        <Typography
-                            variant="h1"
-                            align="center"
-                            sx={{ placeSelf: 'end center', paddingBottom: '2.5rem' }}
-                        >
-                            {data.title}
-                        </Typography>
+                        {isEditingTitle ?
+                            <TextField
+                                value={data.title}
+                                onChange={(e) => setData({ ...data, title: e.target.value })}
+                                onBlur={() => setIsEditingTitle(false)}
+                                autoFocus
+                                variant="outlined"
+                                fullWidth
+                                sx={{ placeSelf: 'end center', paddingBottom: '2.5rem' }}
+                            />
+                            : <Typography
+                                variant="h1"
+                                align="center"
+                                sx={{ placeSelf: 'end center', paddingBottom: '2.5rem' }}
+                                onClick={() => editable && setIsEditingTitle(true)}
+                            >
+                                {data.title}
+                            </Typography>
+                        }
                     </Box>
                 </Box>
             </Box>
-
             <Box sx={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
                 <Box sx={{ display: 'flex', gap: '0.8rem', placeItems: 'center' }}>
                     <Box component={FontAwesomeIcon} icon={faUserSecret} size="2x" sx={{ color: 'primary.main' }} />
@@ -122,7 +121,20 @@ const MainEvent = ({ id, eventData }: props) => {
                         <Typography component="span" sx={{ color: 'primary.main' }}>
                             {data.icons?.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
                         </Typography>
-                        <Typography variant="h2">{data.gameMaster}</Typography>
+                        {isEditingGameMaster ?
+                            <TextField
+                                value={data.gameMaster}
+                                onChange={(e) => setData({ ...data, gameMaster: e.target.value })}
+                                onBlur={() => setIsEditingGameMaster(false)}
+                                autoFocus
+                                variant="outlined"
+                                fullWidth
+                                sx={{ marginTop: '0.5rem' }}
+                            />
+                            : <Typography variant="h2" onClick={() => editable && setIsEditingGameMaster(true)}>
+                                {data.gameMaster}
+                            </Typography>
+                        }
                     </Box>
                 </Box>
                 <Box sx={{ display: 'flex', gap: '0.8rem', placeItems: 'center' }}>
@@ -131,18 +143,25 @@ const MainEvent = ({ id, eventData }: props) => {
                         <Typography component="span" sx={{ color: 'primary.main' }}>
                             System
                         </Typography>
-                        <Typography variant="h2">{data.system}</Typography>
+                        {isEditingSystem ?
+                            <TextField
+                                value={data.system}
+                                onChange={(e) => setData({ ...data, system: e.target.value })}
+                                onBlur={() => setIsEditingSystem(false)}
+                                autoFocus
+                                variant="outlined"
+                                fullWidth
+                                sx={{ marginTop: '0.5rem' }}
+                            />
+                            : <Typography variant="h2" onClick={() => editable && setIsEditingSystem(true)}>
+                                {data.system}
+                            </Typography>
+                        }
                     </Box>
                 </Box>
             </Box>
             <Box
-                sx={{
-                    display: 'flex',
-                    gap: '.5em',
-                    overflowX: 'auto',
-                    marginBottom: '4rem',
-                    paddingBottom: '0.35rem',
-                }}
+                sx={{ display: 'flex', gap: '.5em', overflowX: 'auto', marginBottom: '4rem', paddingBottom: '0.35rem' }}
             >
                 {data.icons?.map((tag) => <Chip label={tag} key={tag} color="primary" icon={<NavigateBefore />} />)}
             </Box>
@@ -170,13 +189,8 @@ const MainEvent = ({ id, eventData }: props) => {
                     }}
                     sx={{
                         color: 'primary.main',
-                        [`.${sliderClasses.rail}`]: {
-                            backgroundColor: '#3d3b3b',
-                            height: '1rem',
-                        },
-                        [`.${sliderClasses.track}`]: {
-                            height: '1rem',
-                        },
+                        [`.${sliderClasses.rail}`]: { backgroundColor: '#3d3b3b', height: '1rem' },
+                        [`.${sliderClasses.track}`]: { height: '1rem' },
                         [`.${sliderClasses.mark}`]: {
                             borderRadius: '50%',
                             outlineColor: 'primary.main',
@@ -185,15 +199,9 @@ const MainEvent = ({ id, eventData }: props) => {
                             outlineOffset: '-1px',
                             opacity: '1',
                         },
-                        [`.${sliderClasses.markActive}`]: {
-                            backgroundColor: 'primary.main',
-                        },
-                        [`.${sliderClasses.thumb}:before`]: {
-                            boxShadow: 'unset',
-                        },
-                        [`.${sliderClasses.valueLabelCircle}`]: {
-                            display: 'none',
-                        },
+                        [`.${sliderClasses.markActive}`]: { backgroundColor: 'primary.main' },
+                        [`.${sliderClasses.thumb}:before`]: { boxShadow: 'unset' },
+                        [`.${sliderClasses.valueLabelCircle}`]: { display: 'none' },
                     }}
                     marks
                     defaultValue={0}
@@ -224,9 +232,7 @@ const MainEvent = ({ id, eventData }: props) => {
                 {data.shortDescription}
             </Typography>
             <Typography sx={{ ...paragraphStyle, marginBottom: 0, paddingBlockEnd: '1rem' }} component="p">
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Natus distinctio quia odit recusandae nobis
-                autem, odio id pariatur magnam illo saepe laborum nesciunt quasi doloremque provident neque eligendi,
-                quisquam quas?
+                {data.description}
             </Typography>
         </Box>
     );

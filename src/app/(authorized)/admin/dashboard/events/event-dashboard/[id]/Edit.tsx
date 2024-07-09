@@ -19,10 +19,12 @@ import type { MyNewEvent } from '$lib/types';
 import Chip from '@mui/material/Chip';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import MainEvent from '$app/(public)/event/[id]/event';
-import Box from '@mui/material/Box';
+import { Box } from '@mui/material';
+
 type Props = {
     id?: string;
 };
+
 const Edit = ({ id }: Props) => {
     const [isExploding, setIsExploding] = useState(false);
 
@@ -101,6 +103,8 @@ const Edit = ({ id }: Props) => {
         system: 'DnD 5e',
         gameMaster: 'Ola Nordmann',
         shortDescription: 'Dette er en kort beskrivelse',
+        description:
+            'Dette er en lang beskrivelse, og den er veldig lang. Veldig, veldig lang. Den er faktisk så lang at den går over flere linjer. Hvem skulle tro det at beskrivelsen kunne være så lang. Det er jo nesten som om det er en hel novellesamling.',
         icons: ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'],
     };
 
@@ -184,7 +188,7 @@ const Edit = ({ id }: Props) => {
                 onSubmit={handleSubmit}
             >
                 <Grid2 xs={5}>
-                    <MainEvent eventData={event} />
+                    <MainEvent eventData={event} editable={true} />
                 </Grid2>
                 <Grid2>
                     <Grid2 xs={5}>
