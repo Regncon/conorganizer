@@ -16,6 +16,7 @@ export type Event = {
     gameMaster: string;
     system: string;
     shortDescription: string;
+    description: string;
     icons?: string[];
 };
 
