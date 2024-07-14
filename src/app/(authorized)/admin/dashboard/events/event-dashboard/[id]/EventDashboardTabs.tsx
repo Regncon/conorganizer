@@ -2,15 +2,13 @@
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
-import { useState } from 'react';
 
 type props = {
     id: string;
+    value: number;
 };
 
-export default function EventDashboardTabs({ id }: props) {
-    const [value, setValue] = useState(0);
-
+export default function EventDashboardTabs({ id, value }: props) {
     return (
         <Box sx={{ width: '100%' }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
