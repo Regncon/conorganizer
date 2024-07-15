@@ -5,26 +5,19 @@ import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormLabel from '@mui/material/FormLabel';
-import Radio from '@mui/material/Radio';
-import RadioGroup from '@mui/material/RadioGroup';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
-import Button from '@mui/material/Button';
-import Confetti from 'react-confetti';
-import { useCallback, useEffect, useState, type ComponentProps, type FormEvent } from 'react';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
-import { db, firebaseAuth } from '$lib/firebase/firebase';
-
+import { useCallback, useState, type ComponentProps, type FormEvent } from 'react';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
-import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
+import { type User } from 'firebase/auth';
 import Slide from '@mui/material/Slide';
-import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import type { MyNewEvent } from '$lib/types';
-import Chip from '@mui/material/Chip';
-import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
-import EventFromSkeleton from '$app/(authorized)/event/create/[id]/EventFormSkeleton';
+import { Box, Radio, RadioGroup, Stack, Switch } from '@mui/material';
+import WarningIcon from '@mui/icons-material/Warning';
+import { Padding } from '@mui/icons-material';
+
 type Props = {
     id?: string;
 };
@@ -166,11 +159,26 @@ const Settings = ({ id }: Props) => {
             updateDatabase(payload);
         }
     };
+    const unwantedTimeSlotWarning = (slot: string, unwanted: boolean) => {
+        return (
+            <Stack direction="row">
+                <Typography component={'span'} sx={{ paddingRight: '1rem' }}>
+                    {slot}
+                </Typography>
+                {unwanted && (
+                    <Box sx={{ display: 'inherit', color: 'warning.main' }}>
+                        <WarningIcon />
+                        <Typography component={'i'}>Gm ønsker ikke denne</Typography>
+                    </Box>
+                )}
+            </Stack>
+        );
+    };
 
     return (
         <>
             <Grid2
-                sx={{ marginBlock: '1rem' }}
+                sx={{ padding: '1rem' }}
                 noValidate={newEvent.isSubmitted}
                 container
                 component="form"
@@ -179,8 +187,53 @@ const Settings = ({ id }: Props) => {
                 onChange={handleOnChange}
                 onSubmit={handleSubmit}
             >
-                <Grid2 xs={12} sm={6} md={3}>
-                    <Paper>
+                <Grid2 xs={12} sm={6}>
+                    <Paper elevation={1} sx={{ padding: '1rem' }}>
+                        <FormGroup>
+                            <FormControlLabel control={<Switch />} label="Publisert" />
+                            <TextField
+                                sx={{ maxWidth: '15rem' }}
+                                type="number"
+                                name="participants"
+                                value={newEvent.participants}
+                                label="Maks antall deltakere"
+                                variant="outlined"
+                                required
+                            />
+                        </FormGroup>
+                    </Paper>
+                </Grid2>
+                <Grid2 xs={12} sm={6}>
+                    <Paper sx={{ padding: '1rem' }}>
+                        <FormGroup>
+                            <FormLabel>Pulje</FormLabel>
+                            <RadioGroup>
+                                <FormControlLabel
+                                    control={<Radio />}
+                                    name="fridayEvening"
+                                    label={unwantedTimeSlotWarning('Fredag Kveld', true)}
+                                />
+                                <FormControlLabel
+                                    control={<Radio />}
+                                    name="saturdayMorning"
+                                    label={unwantedTimeSlotWarning('Lørdag Morgen', true)}
+                                />
+                                <FormControlLabel
+                                    control={<Radio />}
+                                    name="saturdayEvening"
+                                    label={unwantedTimeSlotWarning('Lørdag Kveld', true)}
+                                />
+                                <FormControlLabel
+                                    control={<Radio />}
+                                    name="sundayMorning"
+                                    label={unwantedTimeSlotWarning('Søndag Morgen', true)}
+                                />
+                            </RadioGroup>
+                        </FormGroup>
+                    </Paper>
+                </Grid2>
+                <Grid2 xs={12} sm={6}>
+                    <Paper sx={{ padding: '1rem' }}>
                         <TextField
                             type="email"
                             name="email"
@@ -190,74 +243,19 @@ const Settings = ({ id }: Props) => {
                             fullWidth
                             disabled
                         />
-                    </Paper>
-                </Grid2>
-                <Grid2 xs={12} sm={6} md={3}>
-                    <Paper>
                         <TextField
                             type="phone"
                             name="phone"
                             value={newEvent.phone}
-                            label="Kva telefonnummer kan vi nå deg på?"
+                            label="Telefonnummer"
                             variant="outlined"
                             required
                             fullWidth
                         />
-                    </Paper>
-                </Grid2>
-                <Grid2 xs={12} sm={4}>
-                    <Paper sx={{ padding: '1rem', height: '100%' }}>
-                        <TextField
-                            type="number"
-                            name="participants"
-                            value={newEvent.participants}
-                            label="Maks antall deltakere"
-                            variant="outlined"
-                            required
-                            fullWidth
+                        <FormControlLabel
+                            control={<Checkbox name="moduleCompetition" checked={newEvent.moduleCompetition} />}
+                            label="Eg vil vere med på modulkonkurransen"
                         />
-                    </Paper>
-                </Grid2>
-                <Grid2 xs={12} sm={4}>
-                    <Paper sx={{ padding: '1rem' }}>
-                        <FormGroup>
-                            <FormLabel>Kva for pulje kan du arrangere i?</FormLabel>
-                            <FormControlLabel
-                                control={<Checkbox checked={newEvent.fridayEvening} />}
-                                name="fridayEvening"
-                                label="Fredag Kveld"
-                            />
-                            <FormControlLabel
-                                control={<Checkbox checked={newEvent.saturdayMorning} />}
-                                name="saturdayMorning"
-                                label="Lørdag Morgen"
-                            />
-                            <FormControlLabel
-                                control={<Checkbox checked={newEvent.saturdayEvening} />}
-                                name="saturdayEvening"
-                                label="Lørdag Kveld"
-                            />
-                            <FormControlLabel
-                                control={<Checkbox checked={newEvent.sundayMorning} />}
-                                name="sundayMorning"
-                                label="Søndag Morgen"
-                            />
-                        </FormGroup>
-                    </Paper>
-                </Grid2>
-                <Grid2 xs={12}>
-                    <Paper sx={{ padding: '1rem' }}>
-                        <FormGroup>
-                            <FormLabel>Kryss av for det som gjeld</FormLabel>
-                            <FormControlLabel
-                                control={<Checkbox name="moduleCompetition" checked={newEvent.moduleCompetition} />}
-                                label="Eg vil vere med på modulkonkurransen"
-                            />
-                            <Typography>
-                                husk å sende modulen til <a href="mailto:moduler@regncon.no">moduler@regncon.no </a>{' '}
-                                innen første september!
-                            </Typography>
-                        </FormGroup>
                     </Paper>
                 </Grid2>
                 <Grid2 xs={12}>
@@ -265,7 +263,7 @@ const Settings = ({ id }: Props) => {
                         <FormControl fullWidth>
                             <FormLabel>Merknader: Er det noko anna du vil vi skal vite?</FormLabel>
                             <TextareaAutosize
-                                minRows={3}
+                                minRows={6}
                                 name="additionalComments"
                                 value={newEvent.additionalComments}
                             />
