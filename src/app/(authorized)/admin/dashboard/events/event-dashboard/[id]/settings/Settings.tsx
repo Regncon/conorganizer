@@ -14,9 +14,22 @@ import { type User } from 'firebase/auth';
 import Slide from '@mui/material/Slide';
 import Snackbar from '@mui/material/Snackbar';
 import type { MyNewEvent } from '$lib/types';
-import { Box, Radio, RadioGroup, Stack, Switch } from '@mui/material';
+import {
+    Accordion,
+    AccordionDetails,
+    AccordionSummary,
+    Box,
+    IconButton,
+    Radio,
+    RadioGroup,
+    Stack,
+    Switch,
+} from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
-import { Padding } from '@mui/icons-material';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { ArrowDropUp } from '@mui/icons-material';
 
 type Props = {
     id?: string;
@@ -175,6 +188,12 @@ const Settings = ({ id }: Props) => {
         );
     };
 
+    let eventOrder = [
+        { id: '0', name: 'Opprop fredag kveld Kl: 17:30', order: 0 },
+        { id: '1', name: 'Orker på tur', order: 1 },
+        { id: '2', name: 'Cathulu er forelsket', order: 2, thisEvent: true },
+    ];
+
     return (
         <>
             <Grid2
@@ -189,7 +208,8 @@ const Settings = ({ id }: Props) => {
             >
                 <Grid2 xs={12} sm={6}>
                     <Paper elevation={1} sx={{ padding: '1rem' }}>
-                        <FormGroup>
+                        <FormGroup sx={{ display: 'flex', gap: '1rem' }}>
+                            <FormLabel>Instillinger</FormLabel>
                             <FormControlLabel control={<Switch />} label="Publisert" />
                             <TextField
                                 sx={{ maxWidth: '15rem' }}
@@ -200,6 +220,49 @@ const Settings = ({ id }: Props) => {
                                 variant="outlined"
                                 required
                             />
+                            <Paper elevation={3}>
+                                <Accordion>
+                                    <AccordionSummary
+                                        expandIcon={<ExpandMoreIcon />}
+                                        aria-controls="panel1-content"
+                                        id="panel1-header"
+                                    >
+                                        Sortering rekkefølge
+                                    </AccordionSummary>
+                                    <AccordionDetails>
+                                        <Typography variant={'h3'} sx={{ textAlign: 'center' }}>
+                                            Pulje: Fredag kveld
+                                        </Typography>
+                                        {eventOrder.map((event) => (
+                                            <Paper
+                                                key={event.id}
+                                                elevation={4}
+                                                sx={{
+                                                    padding: '1rem',
+                                                    marginBottom: '1rem',
+                                                    display: 'flex',
+                                                    justifyContent: 'space-between',
+                                                    backgroundColor: event.thisEvent ? 'primary.light' : '',
+                                                }}
+                                            >
+                                                <Typography component={'span'}> {event.name}</Typography>
+                                                <Box
+                                                    sx={{
+                                                        display: 'inline-block',
+                                                    }}
+                                                >
+                                                    <IconButton>
+                                                        <ArrowDropUpIcon />
+                                                    </IconButton>
+                                                    <IconButton>
+                                                        <ArrowDropDownIcon />
+                                                    </IconButton>
+                                                </Box>
+                                            </Paper>
+                                        ))}
+                                    </AccordionDetails>
+                                </Accordion>
+                            </Paper>
                         </FormGroup>
                     </Paper>
                 </Grid2>
@@ -234,28 +297,32 @@ const Settings = ({ id }: Props) => {
                 </Grid2>
                 <Grid2 xs={12} sm={6}>
                     <Paper sx={{ padding: '1rem' }}>
-                        <TextField
-                            type="email"
-                            name="email"
-                            value={newEvent.email}
-                            label="E-postadresse"
-                            variant="outlined"
-                            fullWidth
-                            disabled
-                        />
-                        <TextField
-                            type="phone"
-                            name="phone"
-                            value={newEvent.phone}
-                            label="Telefonnummer"
-                            variant="outlined"
-                            required
-                            fullWidth
-                        />
-                        <FormControlLabel
-                            control={<Checkbox name="moduleCompetition" checked={newEvent.moduleCompetition} />}
-                            label="Eg vil vere med på modulkonkurransen"
-                        />
+                        <FormGroup sx={{ display: 'flex', gap: '1rem' }}>
+                            <FormLabel>Kontaktinfo</FormLabel>
+
+                            <TextField
+                                type="email"
+                                name="email"
+                                value={newEvent.email}
+                                label="E-postadresse"
+                                variant="outlined"
+                                fullWidth
+                                disabled
+                            />
+                            <TextField
+                                type="phone"
+                                name="phone"
+                                value={newEvent.phone}
+                                label="Telefonnummer"
+                                variant="outlined"
+                                required
+                                fullWidth
+                            />
+                            <FormControlLabel
+                                control={<Checkbox name="moduleCompetition" checked={newEvent.moduleCompetition} />}
+                                label="Eg vil vere med på modulkonkurransen"
+                            />
+                        </FormGroup>
                     </Paper>
                 </Grid2>
                 <Grid2 xs={12}>
