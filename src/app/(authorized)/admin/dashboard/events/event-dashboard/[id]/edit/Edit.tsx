@@ -15,7 +15,6 @@ import { Event } from '$lib/types';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import Slide from '@mui/material/Slide';
 import Snackbar, { type SnackbarCloseReason } from '@mui/material/Snackbar';
-import type { MyNewEvent } from '$lib/types';
 import Chip from '@mui/material/Chip';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import MainEvent from '$app/(public)/event/[id]/event';
@@ -93,7 +92,7 @@ const Edit = ({ id }: Props) => {
     const snackBarMessageInitial = 'Din endring er lagra!';
     const [snackBarMessage, setSnackBarMessage] = useState<string>(snackBarMessageInitial);
     const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
-    const [tags, setTags] = useState<{ name: keyof MyNewEvent; label: string; selected: boolean }[]>([
+    const [tags, setTags] = useState<{ name: keyof Event; label: string; selected: boolean }[]>([
         { name: 'childFriendly', label: 'Arrangementet passer for barn', selected: data?.childFriendly ?? false },
         {
             name: 'adultsOnly',
@@ -139,35 +138,9 @@ const Edit = ({ id }: Props) => {
         };
     }, [id]);
 
-    //const dataDocRef = doc(db, 'users', user?.uid ?? '_', 'my-events', id);
-
-    const updateDatabase = async (data: Partial<MyNewEvent>) => {
+    const updateDatabase = async (data: Partial<Event>) => {
         await updateDoc(eventDocRef, data);
     };
-
-    // useEffect(() => {
-    //     let unsubscribeSnapshot: Unsubscribe | undefined;
-    //     if (user) {
-    //         unsubscribeSnapshot = onSnapshot(dataDocRef, (snapshot) => {
-    //             const dataData = snapshot.data() as MyNewEvent;
-    //             setNewEvent(dataData);
-    //             const newTags = [...tags].map((tag) => ({
-    //                 ...tag,
-    //                 selected: (dataData[tag.name] as boolean) ?? false,
-    //             }));
-    //             setTags(newTags);
-    //         });
-    //     }
-
-    //     const unsubscribeUser = onAuthStateChanged(firebaseAuth, (user) => {
-    //         setUser(user);
-    //     });
-
-    //     return () => {
-    //         unsubscribeSnapshot?.();
-    //         unsubscribeUser();
-    //     };
-    // }, [user]);
 
     const handleSnackBar = (event: SyntheticEvent | globalThis.Event, reason?: SnackbarCloseReason) => {
         if (reason === 'clickaway') {
@@ -229,30 +202,15 @@ const Edit = ({ id }: Props) => {
             updateAt: new Date(Date.now()).toString(),
             updatedBy: user?.email,
         };
-        // if (data?.isSubmitted) {
-        //     setIsSnackBarOpen(false);
-        //     setSnackBarMessage('du må nå sende inn igjen skjemaet');
-        //     payload = { ...payload, isSubmitted: false };
-        //     setIsSnackBarOpen(true);
-        // }
+        setIsSnackBarOpen(false);
+        setSnackBarMessage('Endringar lagra!');
+        setIsSnackBarOpen(true);
 
-        console.log(payload, 'payload');
         updateDatabase(payload);
     };
 
     return (
         <Box component="form" onChange={handleOnChange}>
-            <TextField
-                name="title"
-                label="Tittel på spelmodul / arrangement"
-                value={data.title}
-                variant="outlined"
-                required
-                inputProps={{
-                    title: 'Minst 1 teikn og maks teikn er 33',
-                }}
-                margin="dense"
-            />
             <MainEvent id={id} editable={true} />
             <Snackbar
                 anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
@@ -264,6 +222,7 @@ const Edit = ({ id }: Props) => {
             />
         </Box>
     );
+    /*
     return (
         <>
             <Grid2
@@ -428,5 +387,6 @@ const Edit = ({ id }: Props) => {
             />
         </>
     );
+        */
 };
 export default Edit;

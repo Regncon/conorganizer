@@ -39,13 +39,46 @@ type Props = {
     editable?: boolean;
 };
 
-const initialState: Event = { gameMaster: '', id: '', shortDescription: '', description: '', system: '', title: '' };
+const initialState: Event = {
+    gameMaster: '',
+    id: '',
+    shortDescription: '',
+    description: '',
+    system: '',
+    title: '',
+    data: false,
+    email: '',
+    name: '',
+    phone: '',
+    gameType: '',
+    participants: 0,
+    fridayEvening: false,
+    saturdayMorning: false,
+    saturdayEvening: false,
+    sundayMorning: false,
+    moduleCompetition: false,
+    childFriendly: false,
+    possiblyEnglish: false,
+    adultsOnly: false,
+    volunteersPossible: false,
+    lessThanThreeHours: false,
+    moreThanSixHours: false,
+    beginnerFriendly: false,
+    additionalComments: '',
+    createdAt: '',
+    createdBy: '',
+    updateAt: '',
+    updatedBy: '',
+    subTitle: '',
+};
 
 const MainEvent = ({ id, eventData, editable = false }: Props) => {
     const [data, setData] = useState<Event>(eventData ?? initialState);
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
     const [isEditingGameMaster, setIsEditingGameMaster] = useState<boolean>(false);
     const [isEditingSystem, setIsEditingSystem] = useState<boolean>(false);
+    const [isEditingDescription, setIsEditingDescription] = useState<boolean>(false);
+    const [isEditingShortDescription, setIsEditingShortDescription] = useState<boolean>(false);
     const [interest, setInterest] = useState<number>(0);
 
     useEffect(() => {
@@ -67,7 +100,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
     } = useTheme();
 
     const paragraphStyle: SxProps<Theme> = { margin: '1rem 0' };
-    const strongStyle: SxProps<Theme> = { fontWeight: 700 };
+    // const strongStyle: SxProps<Theme> = { fontWeight: 700 };
 
     return (
         <Box>
@@ -94,6 +127,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                         </IconButton>
                         {isEditingTitle ?
                             <TextField
+                                name="title"
                                 value={data.title}
                                 onChange={(e) => setData({ ...data, title: e.target.value })}
                                 onBlur={() => setIsEditingTitle(false)}
@@ -123,6 +157,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                         </Typography>
                         {isEditingGameMaster ?
                             <TextField
+                                name="gameMaster"
                                 value={data.gameMaster}
                                 onChange={(e) => setData({ ...data, gameMaster: e.target.value })}
                                 onBlur={() => setIsEditingGameMaster(false)}
@@ -145,6 +180,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                         </Typography>
                         {isEditingSystem ?
                             <TextField
+                                name="system"
                                 value={data.system}
                                 onChange={(e) => setData({ ...data, system: e.target.value })}
                                 onBlur={() => setIsEditingSystem(false)}
@@ -228,12 +264,45 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                 <HelpIcon sx={{ scale: '1.5', placeSelf: 'center' }} />
                 <Typography component="p">Forvirret? Les mer om påmeldingssystemet</Typography>
             </Box>
-            <Typography sx={strongStyle} component="strong">
-                {data.shortDescription || 'Kort beskrivelse'}
-            </Typography>
-            <Typography sx={{ ...paragraphStyle, marginBottom: 0, paddingBlockEnd: '1rem' }} component="p">
-                {data.description || 'Lang beskrivelse'}
-            </Typography>
+
+            {isEditingShortDescription ?
+                <TextField
+                    name="shortDescription"
+                    value={data.shortDescription}
+                    onChange={(e) => setData({ ...data, shortDescription: e.target.value })}
+                    onBlur={() => setIsEditingShortDescription(false)}
+                    autoFocus
+                    variant="outlined"
+                    fullWidth
+                    sx={{ marginBottom: '1rem' }}
+                />
+                : <Typography
+                    sx={{ ...paragraphStyle, marginBottom: '1rem', textAlign: 'center' }}
+                    onClick={() => editable && setIsEditingShortDescription(true)}
+                >
+                    {data.shortDescription || 'Kort beskrivelse'}
+                </Typography>
+            }
+            {isEditingDescription ?
+                <TextField
+                    name="description"
+                    value={data.description}
+                    onChange={(e) => setData({ ...data, description: e.target.value })}
+                    onBlur={() => setIsEditingDescription(false)}
+                    autoFocus
+                    variant="outlined"
+                    fullWidth
+                    multiline
+                    rows={4}
+                    sx={{ marginBottom: '1rem' }}
+                />
+                : <Typography
+                    sx={{ ...paragraphStyle, marginBottom: '1rem', textAlign: 'center' }}
+                    onClick={() => editable && setIsEditingDescription(true)}
+                >
+                    {data.description || 'Lang beskrivelse'}
+                </Typography>
+            }
         </Box>
     );
 };
