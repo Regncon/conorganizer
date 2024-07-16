@@ -11,6 +11,7 @@ export type EventCardProps = {
 };
 
 export type Event = {
+    data: boolean;
     id: string;
     title: string;
     gameMaster: string;
@@ -18,6 +19,29 @@ export type Event = {
     shortDescription: string;
     description: string;
     icons?: string[];
+    email: string;
+    name: string;
+    phone: string;
+    gameType: string;
+    participants: number;
+    fridayEvening: boolean;
+    saturdayMorning: boolean;
+    saturdayEvening: boolean;
+    sundayMorning: boolean;
+    moduleCompetition: boolean;
+    childFriendly: boolean;
+    possiblyEnglish: boolean;
+    adultsOnly: boolean;
+    volunteersPossible: boolean;
+    lessThanThreeHours: boolean;
+    moreThanSixHours: boolean;
+    beginnerFriendly: boolean;
+    additionalComments: string;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+    subTitle: string;
 };
 
 export type MyNewEvent = {

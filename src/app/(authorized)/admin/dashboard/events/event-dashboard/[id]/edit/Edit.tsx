@@ -1,4 +1,5 @@
 'use client';
+import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
@@ -9,10 +10,9 @@ import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import Button from '@mui/material/Button';
-import { useCallback, useState, type ComponentProps, type FormEvent, type SyntheticEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent, type SyntheticEvent } from 'react';
 import { Event } from '$lib/types';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
-import { type User } from 'firebase/auth';
 import Slide from '@mui/material/Slide';
 import Snackbar, { type SnackbarCloseReason } from '@mui/material/Snackbar';
 import type { MyNewEvent } from '$lib/types';
@@ -20,68 +20,140 @@ import Chip from '@mui/material/Chip';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import MainEvent from '$app/(public)/event/[id]/event';
 import { Box } from '@mui/material';
+import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { db, firebaseAuth } from '$lib/firebase/firebase';
 
 type Props = {
-    id?: string;
+    id: string;
 };
 
 const Edit = ({ id }: Props) => {
-    const [isExploding, setIsExploding] = useState(false);
+    // const [isExploding, setIsExploding] = useState(false);
 
-    const [newEvent, setNewEvent] = useState<MyNewEvent>({} as MyNewEvent);
+    const initialState: Event = {
+        gameMaster: '',
+        id: '',
+        shortDescription: '',
+        description: '',
+        system: '',
+        title: '',
+        data: false,
+        email: '',
+        name: '',
+        phone: '',
+        gameType: '',
+        participants: 0,
+        fridayEvening: false,
+        saturdayMorning: false,
+        saturdayEvening: false,
+        sundayMorning: false,
+        moduleCompetition: false,
+        childFriendly: false,
+        possiblyEnglish: false,
+        adultsOnly: false,
+        volunteersPossible: false,
+        lessThanThreeHours: false,
+        moreThanSixHours: false,
+        beginnerFriendly: false,
+        additionalComments: '',
+        createdAt: '',
+        createdBy: '',
+        updateAt: '',
+        updatedBy: '',
+        subTitle: '',
+    };
+    const [data, setData] = useState<Event>(initialState);
+    const eventDocRef = doc(db, 'events', id);
+
     const [user, setUser] = useState<User | null>();
+    useEffect(() => {
+        let unsubscribeSnapshot: Unsubscribe | undefined;
+        if (user) {
+            unsubscribeSnapshot = onSnapshot(eventDocRef, (snapshot) => {
+                const newEventData = snapshot.data() as Event;
+                setData(newEventData);
+                const newTags = [...tags].map((tag) => ({
+                    ...tag,
+                    selected: (newEventData[tag.name] as boolean) ?? false,
+                }));
+                setTags(newTags);
+            });
+        }
+
+        const unsubscribeUser = onAuthStateChanged(firebaseAuth, (user) => {
+            setUser(user);
+        });
+
+        return () => {
+            unsubscribeSnapshot?.();
+            unsubscribeUser();
+        };
+    }, [user]);
 
     const snackBarMessageInitial = 'Din endring er lagra!';
     const [snackBarMessage, setSnackBarMessage] = useState<string>(snackBarMessageInitial);
     const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
     const [tags, setTags] = useState<{ name: keyof MyNewEvent; label: string; selected: boolean }[]>([
-        { name: 'childFriendly', label: 'Arrangementet passer for barn', selected: newEvent?.childFriendly ?? false },
+        { name: 'childFriendly', label: 'Arrangementet passer for barn', selected: data?.childFriendly ?? false },
         {
             name: 'adultsOnly',
             label: 'Arrangementet passer berre for vaksne (18+)',
-            selected: newEvent?.adultsOnly ?? false,
+            selected: data?.adultsOnly ?? false,
         },
         {
             name: 'beginnerFriendly',
             label: 'Arrangementet er nybyrjarvenleg',
-            selected: newEvent?.beginnerFriendly ?? false,
+            selected: data?.beginnerFriendly ?? false,
         },
         {
             name: 'possiblyEnglish',
             label: 'Arrangementet kan haldast på engelsk',
-            selected: newEvent?.possiblyEnglish ?? false,
+            selected: data?.possiblyEnglish ?? false,
         },
         {
             name: 'volunteersPossible',
             label: 'Andre kan halda arrangementet',
-            selected: newEvent?.volunteersPossible ?? false,
+            selected: data?.volunteersPossible ?? false,
         },
         {
             name: 'lessThanThreeHours',
             label: 'Eg trur arrangementet vil vare kortare enn 3 timer',
-            selected: newEvent?.lessThanThreeHours ?? false,
+            selected: data?.lessThanThreeHours ?? false,
         },
         {
             name: 'moreThanSixHours',
             label: 'Eg trur arrangementet vil vare lenger enn 6 timer',
-            selected: newEvent?.moreThanSixHours ?? false,
+            selected: data?.moreThanSixHours ?? false,
         },
     ]);
-    //const newEventDocRef = doc(db, 'users', user?.uid ?? '_', 'my-events', id);
 
-    const updateDatabase = async (newEvent: Partial<MyNewEvent>) => {
-        // await updateDoc(newEventDocRef, newEvent);
+    useEffect(() => {
+        let unsubscribeSnapshot: Unsubscribe | undefined;
+        if (id !== undefined) {
+            unsubscribeSnapshot = onSnapshot(doc(db, 'events', id), (snapshot) => {
+                setData((snapshot.data() as Event | undefined) ?? initialState);
+            });
+        }
+        return () => {
+            unsubscribeSnapshot?.();
+        };
+    }, [id]);
+
+    //const dataDocRef = doc(db, 'users', user?.uid ?? '_', 'my-events', id);
+
+    const updateDatabase = async (data: Partial<MyNewEvent>) => {
+        await updateDoc(eventDocRef, data);
     };
 
     // useEffect(() => {
     //     let unsubscribeSnapshot: Unsubscribe | undefined;
     //     if (user) {
-    //         unsubscribeSnapshot = onSnapshot(newEventDocRef, (snapshot) => {
-    //             const newEventData = snapshot.data() as MyNewEvent;
-    //             setNewEvent(newEventData);
+    //         unsubscribeSnapshot = onSnapshot(dataDocRef, (snapshot) => {
+    //             const dataData = snapshot.data() as MyNewEvent;
+    //             setNewEvent(dataData);
     //             const newTags = [...tags].map((tag) => ({
     //                 ...tag,
-    //                 selected: (newEventData[tag.name] as boolean) ?? false,
+    //                 selected: (dataData[tag.name] as boolean) ?? false,
     //             }));
     //             setTags(newTags);
     //         });
@@ -97,17 +169,6 @@ const Edit = ({ id }: Props) => {
     //     };
     // }, [user]);
 
-    const event: Event = {
-        id: '1',
-        title: 'Dette er tittelen',
-        system: 'DnD 5e',
-        gameMaster: 'Ola Nordmann',
-        shortDescription: 'Dette er en kort beskrivelse',
-        description:
-            'Dette er en lang beskrivelse, og den er veldig lang. Veldig, veldig lang. Den er faktisk så lang at den går over flere linjer. Hvem skulle tro det at beskrivelsen kunne være så lang. Det er jo nesten som om det er en hel novellesamling.',
-        icons: ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'],
-    };
-
     const handleSnackBar = (event: SyntheticEvent | globalThis.Event, reason?: SnackbarCloseReason) => {
         if (reason === 'clickaway') {
             return;
@@ -121,28 +182,28 @@ const Edit = ({ id }: Props) => {
         setIsSnackBarOpen(true);
     }, [isSnackBarOpen]);
 
-    const handleSubmission = async () => {
-        if (newEvent) {
-            setIsSnackBarOpen(false);
-            setIsExploding(!isExploding);
-            await updateDatabase({ isSubmitted: !newEvent.isSubmitted });
-            setSnackBarMessage(`Du har  ${newEvent.isSubmitted ? 'meldt av' : 'sendt inn'}  arrangementet`);
-            setIsSnackBarOpen(true);
-        }
-    };
-    const handleSubmit: ComponentProps<'form'>['onSubmit'] = async (e) => {
-        e.preventDefault();
-        if (!newEvent?.isSubmitted) {
-            handleSubmission();
-        }
-    };
-
-    const handleCancelSubmission: ComponentProps<'button'>['onClick'] = async (e) => {
-        if (newEvent?.isSubmitted) {
-            e.preventDefault();
-            handleSubmission();
-        }
-    };
+    // const handleSubmission = async () => {
+    //     if (data) {
+    //         setIsSnackBarOpen(false);
+    //         setIsExploding(!isExploding);
+    //         await updateDatabase({ isSubmitted: !data.isSubmitted });
+    //         setSnackBarMessage(`Du har  ${data.isSubmitted ? 'meldt av' : 'sendt inn'}  arrangementet`);
+    //         setIsSnackBarOpen(true);
+    //     }
+    // };
+    // const handleSubmit: ComponentProps<'form'>['onSubmit'] = async (e) => {
+    //     e.preventDefault();
+    //     if (!data?.isSubmitted) {
+    //         handleSubmission();
+    //     }
+    // };
+    //
+    // const handleCancelSubmission: ComponentProps<'button'>['onClick'] = async (e) => {
+    //     if (data?.isSubmitted) {
+    //         e.preventDefault();
+    //         handleSubmission();
+    //     }
+    // };
 
     const handleOnChange = (e: FormEvent<HTMLFormElement>) => {
         const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
@@ -158,28 +219,56 @@ const Edit = ({ id }: Props) => {
             name = 'gameType';
             value = inputName;
         }
-        if (user?.email !== null) {
-            let payload: Partial<MyNewEvent> = {
-                [name]: value,
-                updateAt: new Date(Date.now()).toString(),
-                updatedBy: user?.email,
-            };
-            if (newEvent?.isSubmitted) {
-                setIsSnackBarOpen(false);
-                setSnackBarMessage('du må nå sende inn igjen skjemaet');
-                payload = { ...payload, isSubmitted: false };
-                setIsSnackBarOpen(true);
-            }
-
-            updateDatabase(payload);
+        if (user?.email == null) {
+            console.error('user?.email is null');
+            return;
         }
+
+        let payload: Partial<Event> = {
+            [name]: value,
+            updateAt: new Date(Date.now()).toString(),
+            updatedBy: user?.email,
+        };
+        // if (data?.isSubmitted) {
+        //     setIsSnackBarOpen(false);
+        //     setSnackBarMessage('du må nå sende inn igjen skjemaet');
+        //     payload = { ...payload, isSubmitted: false };
+        //     setIsSnackBarOpen(true);
+        // }
+
+        console.log(payload, 'payload');
+        updateDatabase(payload);
     };
 
+    return (
+        <Box component="form" onChange={handleOnChange}>
+            <TextField
+                name="title"
+                label="Tittel på spelmodul / arrangement"
+                value={data.title}
+                variant="outlined"
+                required
+                inputProps={{
+                    title: 'Minst 1 teikn og maks teikn er 33',
+                }}
+                margin="dense"
+            />
+            <MainEvent id={id} editable={true} />
+            <Snackbar
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                open={isSnackBarOpen}
+                onClose={handleSnackBar}
+                TransitionComponent={Slide}
+                message={snackBarMessage}
+                autoHideDuration={1200}
+            />
+        </Box>
+    );
     return (
         <>
             <Grid2
                 sx={{ marginBlock: '1rem' }}
-                noValidate={newEvent.isSubmitted}
+                noValidate={data.isSubmitted}
                 container
                 component="form"
                 spacing="2rem"
@@ -197,7 +286,7 @@ const Edit = ({ id }: Props) => {
                             <TextField
                                 name="title"
                                 label="Tittel på spelmodul / arrangement"
-                                value={newEvent.title}
+                                value={data.title}
                                 variant="outlined"
                                 required
                                 inputProps={{
@@ -212,7 +301,7 @@ const Edit = ({ id }: Props) => {
                             <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 50 teikn</FormLabel>
                             <TextField
                                 name="subTitle"
-                                value={newEvent.subTitle}
+                                value={data.subTitle}
                                 label="Kort oppsummering"
                                 variant="outlined"
                                 required
@@ -227,7 +316,7 @@ const Edit = ({ id }: Props) => {
                         <Paper>
                             <TextField
                                 name="name"
-                                value={newEvent.name}
+                                value={data.name}
                                 label="Arrangørens namn (Ditt namn)"
                                 variant="outlined"
                                 required
@@ -236,14 +325,14 @@ const Edit = ({ id }: Props) => {
                     </Grid2>
                     <Grid2 xs={6} sm={6} md={3}>
                         <Paper>
-                            <TextField name="system" label="Spillsystem" value={newEvent.system} variant="outlined" />
+                            <TextField name="system" label="Spillsystem" value={data.system} variant="outlined" />
                         </Paper>
                     </Grid2>
                     <Grid2 xs={6}>
                         <Paper sx={{ padding: '1rem' }}>
                             <FormControl>
                                 <FormLabel>Skildring av modulen (tekst til programmet):</FormLabel>
-                                <TextareaAutosize minRows={5} name="description" value={newEvent.description} />
+                                <TextareaAutosize minRows={5} name="description" value={data.description} />
                             </FormControl>
                         </Paper>
                     </Grid2>
@@ -252,7 +341,7 @@ const Edit = ({ id }: Props) => {
                             <FormControl>
                                 <FormLabel>Kva type spel er det?</FormLabel>
                                 <RadioGroup
-                                    value={newEvent.gameType}
+                                    value={data.gameType}
                                     aria-labelledby="demo-controlled-radio-buttons-group"
                                     name="controlled-radio-buttons-group"
                                 >
@@ -311,7 +400,7 @@ const Edit = ({ id }: Props) => {
                                 <TextareaAutosize
                                     minRows={3}
                                     name="additionalComments"
-                                    value={newEvent.additionalComments}
+                                    value={data.additionalComments}
                                 />
                             </FormControl>
                         </Paper>
@@ -323,7 +412,7 @@ const Edit = ({ id }: Props) => {
                                 Kladden vert lagra automatisk, men du må trykkje på knappen for å sende inn.
                             </Typography>
                             <Button type="submit" variant="contained" onClick={handleCancelSubmission}>
-                                {newEvent.isSubmitted ? 'Meld av' : 'Send inn'}
+                                {data.isSubmitted ? 'Meld av' : 'Send inn'}
                             </Button>
                         </Paper>
                     </Grid2>

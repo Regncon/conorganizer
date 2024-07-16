@@ -81,7 +81,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                     component={Image}
                     src={blekksprut2}
                     alt="noe alt-tekst"
-                    sx={{ width: '100%', maxWidth: '100%', aspectRatio: '3.3 / 2' }}
+                    sx={{ width: '100%', height: 'auto', maxWidth: '100%', aspectRatio: '3.3 / 2' }}
                     placeholder="blur"
                     loading="lazy"
                 />
@@ -108,7 +108,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                                 sx={{ placeSelf: 'end center', paddingBottom: '2.5rem' }}
                                 onClick={() => editable && setIsEditingTitle(true)}
                             >
-                                {data.title}
+                                {data.title || 'Tittel'}
                             </Typography>
                         }
                     </Box>
@@ -132,7 +132,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                                 sx={{ marginTop: '0.5rem' }}
                             />
                             : <Typography variant="h2" onClick={() => editable && setIsEditingGameMaster(true)}>
-                                {data.gameMaster}
+                                {data.gameMaster || 'Navn'}
                             </Typography>
                         }
                     </Box>
@@ -154,7 +154,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                                 sx={{ marginTop: '0.5rem' }}
                             />
                             : <Typography variant="h2" onClick={() => editable && setIsEditingSystem(true)}>
-                                {data.system}
+                                {data.system || 'System'}
                             </Typography>
                         }
                     </Box>
@@ -229,10 +229,10 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                 <Typography component="p">Forvirret? Les mer om påmeldingssystemet</Typography>
             </Box>
             <Typography sx={strongStyle} component="strong">
-                {data.shortDescription}
+                {data.shortDescription || 'Kort beskrivelse'}
             </Typography>
             <Typography sx={{ ...paragraphStyle, marginBottom: 0, paddingBlockEnd: '1rem' }} component="p">
-                {data.description}
+                {data.description || 'Lang beskrivelse'}
             </Typography>
         </Box>
     );

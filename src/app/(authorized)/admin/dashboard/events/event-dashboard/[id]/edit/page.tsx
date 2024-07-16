@@ -1,5 +1,6 @@
 import { Paper } from '@mui/material';
 import EventDashboardTabs from '../EventDashboardTabs';
+import MainEvent from '$app/(public)/event/[id]/event';
 import Edit from './Edit';
 
 type Props = {
@@ -10,7 +11,7 @@ type Props = {
 
 const Page = async ({ params: { id } }: Props) => {
     return (
-        <Paper>
+        <Paper elevation={0}>
             <EventDashboardTabs id={id} value={4} />
             <Edit id={id} />
         </Paper>
