@@ -27,8 +27,70 @@ type Props = {
 };
 
 const Edit = ({ id }: Props) => {
-    // const [isExploding, setIsExploding] = useState(false);
+    /**
+     * Debounces a function, creating a new function that does the same as the original, but will not actually run before
+     * a specified amount of time has passed since it was last called.
+     *
+     * @param fn The function to debounce
+     * @param delay Number of milliseconds to wait
+     *
+     * @returns A function that does the same as `fn`, but won't actually run before `delay` milliseconds has passed since
+     * its last invocation
+     */
+    // const debounce = <P extends unknown[]>(fn: (...args: P) => void, delay: number): ((...args: P) => void) => {
+    //     let timer: ReturnType<typeof setTimeout> | null = null;
+    //
+    //     return (...args: P): void => {
+    //         if (timer !== null) {
+    //             clearTimeout(timer);
+    //         }
+    //
+    //         timer = setTimeout(() => {
+    //             fn(...args);
+    //             timer = null;
+    //         }, delay);
+    //     };
+    // };
+    /**
+     * Debounces a function, creating a new function that does the same as the original, but will not actually run before
+     * a specified amount of time has passed since it was last called.
+     *
+     * @param fn The function to debounce
+     * @param delay Number of milliseconds to wait since the last call to the function to actually run it
+     *
+     * @returns A function that does the same as `fn`, but won't actually run before `delay` milliseconds has passed since
+     * its last invocation. Its return value will be wrapped in a promise
+     */
+    const debounce = <P extends unknown[], R>(
+        fn: (...args: P) => R | Promise<R>,
+        delay: Parameters<typeof setTimeout>[1]
+    ): ((...args: P) => Promise<R>) => {
+        let timer: ReturnType<typeof setTimeout> | null = null;
 
+        type Reject = Parameters<ConstructorParameters<typeof Promise<R>>[0]>[1];
+        let prevReject: Reject = () => { };
+
+        return (...args: P): Promise<R> =>
+            new Promise((resolve, reject) => {
+                if (timer !== null) {
+                    clearTimeout(timer);
+                    prevReject('Aborted by debounce');
+                }
+
+                prevReject = reject;
+
+                timer = setTimeout(async () => {
+                    timer = null;
+
+                    try {
+                        const result = await fn(...args);
+                        resolve(result);
+                    } catch (err) {
+                        reject(err);
+                    }
+                }, delay);
+            });
+    };
     const initialState: Event = {
         gameMaster: '',
         id: '',
@@ -177,37 +239,39 @@ const Edit = ({ id }: Props) => {
     //         handleSubmission();
     //     }
     // };
+    const handleOnChange = useCallback(
+        debounce((e: FormEvent<HTMLFormElement>): void => {
+            const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
 
-    const handleOnChange = (e: FormEvent<HTMLFormElement>) => {
-        const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
+            let value: string | boolean = inputValue;
+            let name: string = inputName;
 
-        let value: string | boolean = inputValue;
-        let name: string = inputName;
+            if (type === 'checkbox') {
+                value = checked;
+            }
 
-        if (type === 'checkbox') {
-            value = checked;
-        }
+            if (type === 'radio') {
+                name = 'gameType';
+                value = inputName;
+            }
+            if (!user || !user.email) {
+                console.error('user?.email is null');
+                return;
+            }
 
-        if (type === 'radio') {
-            name = 'gameType';
-            value = inputName;
-        }
-        if (user?.email == null) {
-            console.error('user?.email is null');
-            return;
-        }
+            let payload: Partial<Event> = {
+                [name]: value,
+                updateAt: new Date(Date.now()).toString(),
+                updatedBy: user.email,
+            };
+            setIsSnackBarOpen(false);
+            setSnackBarMessage('Endringar lagra!');
+            setIsSnackBarOpen(true);
 
-        let payload: Partial<Event> = {
-            [name]: value,
-            updateAt: new Date(Date.now()).toString(),
-            updatedBy: user?.email,
-        };
-        setIsSnackBarOpen(false);
-        setSnackBarMessage('Endringar lagra!');
-        setIsSnackBarOpen(true);
-
-        updateDatabase(payload);
-    };
+            updateDatabase(payload);
+        }, 1500),
+        [user]
+    );
 
     return (
         <Box component="form" onChange={handleOnChange}>
