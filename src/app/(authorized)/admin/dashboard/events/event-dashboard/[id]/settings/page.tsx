@@ -10,7 +10,7 @@ type Props = {
 
 const Page = async ({ params: { id } }: Props) => {
     return (
-        <Paper elevation={0}>
+        <Paper sx={{ padding: { sm: '1rem' } }} elevation={0}>
             <EventDashboardTabs id={id} value={2} />
             <Settings id={id} />
         </Paper>

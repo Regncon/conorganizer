@@ -25,29 +25,29 @@ export default function EventDashboardTabs({ id, value }: props) {
                     allowScrollButtonsMobile
                     allowScrollButtonsMobilearia-label="Velg side"
                 >
-                    <Tab icon={<GroupIcon />} iconPosition="start" label={<Hidden xsUp>Spillere</Hidden>} disabled />
+                    <Tab icon={<GroupIcon />} iconPosition="start" label={<Hidden mdDown>Spillere</Hidden>} disabled />
                     <Tab
                         icon={<FavoriteIcon />}
                         iconPosition="start"
-                        label={<Hidden xsUp>Ønskeliste</Hidden>}
+                        label={<Hidden mdDown>Ønskeliste</Hidden>}
                         disabled
                     />
                     <Tab
                         icon={<Settings />}
                         iconPosition="start"
-                        label={<Hidden xsUp>Innstillinger</Hidden>}
+                        label={<Hidden mdDown>Innstillinger</Hidden>}
                         href={`/admin/dashboard/events/event-dashboard/${id}/settings/`}
                     />
                     <Tab
                         icon={<RoomPreferencesIcon />}
                         iconPosition="start"
-                        label={<Hidden xsUp>Rom</Hidden>}
+                        label={<Hidden mdDown>Rom</Hidden>}
                         disabled
                     />
                     <Tab
                         icon={<EditIcon />}
                         iconPosition="start"
-                        label={<Hidden xsUp>Rediger</Hidden>}
+                        label={<Hidden mdDown>Rediger</Hidden>}
                         href={`/admin/dashboard/events/event-dashboard/${id}/edit/`}
                     />
                 </Tabs>
