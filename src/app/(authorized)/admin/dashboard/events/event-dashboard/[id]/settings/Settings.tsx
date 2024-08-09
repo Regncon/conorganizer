@@ -244,10 +244,10 @@ const Settings = ({ id }: Props) => {
                 </Typography>
                 : <>
                     <Grid2
-                        sx={{ padding: '1rem' }}
+                        sx={{ padding: '0rem', paddingTop: '1rem' }}
                         container
                         component="form"
-                        spacing="2rem"
+                        rowSpacing={2}
                         onChange={(evt) =>
                             handleOnChange(evt).catch((err) => {
                                 if (err !== 'Aborted by debounce') {
