@@ -260,28 +260,27 @@ const Edit = ({ id }: Props) => {
                     Loading...
                     <CircularProgress />
                 </Typography>
-                : <>
-                    <Box
-                        component="form"
-                        onChange={(evt) =>
-                            handleOnChange(evt).catch((err) => {
-                                if (err !== 'Aborted by debounce') {
-                                    throw err;
-                                }
-                            })
-                        }
-                    >
-                        <MainEvent id={id} editable={true} />
-                        <Snackbar
-                            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                            open={isSnackBarOpen}
-                            onClose={handleSnackBar}
-                            TransitionComponent={Slide}
-                            message={snackBarMessage}
-                            autoHideDuration={1200}
-                        />
-                    </Box>
-                </>
+                : <Box
+                    component="form"
+                    sx={{ padding: '1rem', backgroundColor: 'inherit' }}
+                    onChange={(evt) =>
+                        handleOnChange(evt).catch((err) => {
+                            if (err !== 'Aborted by debounce') {
+                                throw err;
+                            }
+                        })
+                    }
+                >
+                    <MainEvent id={id} editable={true} />
+                    <Snackbar
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                        open={isSnackBarOpen}
+                        onClose={handleSnackBar}
+                        TransitionComponent={Slide}
+                        message={snackBarMessage}
+                        autoHideDuration={1200}
+                    />
+                </Box>
             }
         </>
     );
