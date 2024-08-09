@@ -10,7 +10,7 @@ import RadioGroup from '@mui/material/RadioGroup';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import Button from '@mui/material/Button';
 import { useCallback, useEffect, useState, type FormEvent, type SyntheticEvent } from 'react';
-import { ConEvent, Pulje } from '$lib/types';
+import { ConEvent } from '$lib/types';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import Slide from '@mui/material/Slide';
 import Snackbar, { type SnackbarCloseReason } from '@mui/material/Snackbar';

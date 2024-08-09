@@ -1,6 +1,6 @@
 'use client';
 import MainEvent from '$app/(public)/event/[id]/event';
-import { ConEvent, Pulje } from '$lib/types';
+import { ConEvent } from '$lib/types';
 import { Box, Button, Dialog, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import { useState } from 'react';
 

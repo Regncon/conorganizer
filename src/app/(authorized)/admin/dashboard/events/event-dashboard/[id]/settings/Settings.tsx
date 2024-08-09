@@ -31,7 +31,7 @@ import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
-import { ConEvent, Pulje } from '$lib/types';
+import { ConEvent } from '$lib/types';
 
 type Props = {
     id: string;
