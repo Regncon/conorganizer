@@ -8,17 +8,16 @@ import FormLabel from '@mui/material/FormLabel';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
-import { useCallback, useState, type ComponentProps, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
-import { type User } from 'firebase/auth';
 import Slide from '@mui/material/Slide';
 import Snackbar from '@mui/material/Snackbar';
-import type { MyNewEvent } from '$lib/types';
 import {
     Accordion,
     AccordionDetails,
     AccordionSummary,
     Box,
+    CircularProgress,
     IconButton,
     Radio,
     RadioGroup,
@@ -29,88 +28,149 @@ import WarningIcon from '@mui/icons-material/Warning';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
-import { ArrowDropUp } from '@mui/icons-material';
+import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
+import { db, firebaseAuth } from '$lib/firebase/firebase';
+import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
+import { ConEvent, Pulje } from '$lib/types';
 
 type Props = {
-    id?: string;
+    id: string;
 };
 const Settings = ({ id }: Props) => {
-    const [isExploding, setIsExploding] = useState(false);
+    /**
+     * Debounces a function, creating a new function that does the same as the original, but will not actually run before
+     * a specified amount of time has passed since it was last called.
+     *
+     * @param fn The function to debounce
+     * @param delay Number of milliseconds to wait since the last call to the function to actually run it
+     *
+     * @returns A function that does the same as `fn`, but won't actually run before `delay` milliseconds has passed since
+     * its last invocation. Its return value will be wrapped in a promise
+     */
+    const debounce = <P extends unknown[], R>(
+        fn: (...args: P) => R | Promise<R>,
+        delay: Parameters<typeof setTimeout>[1]
+    ): ((...args: P) => Promise<R>) => {
+        let timer: ReturnType<typeof setTimeout> | null = null;
 
-    const [newEvent, setNewEvent] = useState<MyNewEvent>({} as MyNewEvent);
+        type Reject = Parameters<ConstructorParameters<typeof Promise<R>>[0]>[1];
+        let prevReject: Reject = () => { };
+
+        return (...args: P): Promise<R> =>
+            new Promise((resolve, reject) => {
+                if (timer !== null) {
+                    clearTimeout(timer);
+                    prevReject('Aborted by debounce');
+                }
+
+                prevReject = reject;
+
+                timer = setTimeout(async () => {
+                    timer = null;
+
+                    try {
+                        const result = await fn(...args);
+                        resolve(result);
+                    } catch (err) {
+                        reject(err);
+                    }
+                }, delay);
+            });
+    };
     const [user, setUser] = useState<User | null>();
-
     const snackBarMessageInitial = 'Din endring er lagra!';
     const [snackBarMessage, setSnackBarMessage] = useState<string>(snackBarMessageInitial);
     const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
-    const [tags, setTags] = useState<{ name: keyof MyNewEvent; label: string; selected: boolean }[]>([
-        { name: 'childFriendly', label: 'Arrangementet passer for barn', selected: newEvent?.childFriendly ?? false },
-        {
-            name: 'adultsOnly',
-            label: 'Arrangementet passer berre for vaksne (18+)',
-            selected: newEvent?.adultsOnly ?? false,
-        },
-        {
-            name: 'beginnerFriendly',
-            label: 'Arrangementet er nybyrjarvenleg',
-            selected: newEvent?.beginnerFriendly ?? false,
-        },
-        {
-            name: 'possiblyEnglish',
-            label: 'Arrangementet kan haldast på engelsk',
-            selected: newEvent?.possiblyEnglish ?? false,
-        },
-        {
-            name: 'volunteersPossible',
-            label: 'Andre kan halda arrangementet',
-            selected: newEvent?.volunteersPossible ?? false,
-        },
-        {
-            name: 'lessThanThreeHours',
-            label: 'Eg trur arrangementet vil vare kortare enn 3 timer',
-            selected: newEvent?.lessThanThreeHours ?? false,
-        },
-        {
-            name: 'moreThanSixHours',
-            label: 'Eg trur arrangementet vil vare lenger enn 6 timer',
-            selected: newEvent?.moreThanSixHours ?? false,
-        },
-    ]);
-    //const newEventDocRef = doc(db, 'users', user?.uid ?? '_', 'my-events', id);
 
-    const updateDatabase = async (newEvent: Partial<MyNewEvent>) => {
-        // await updateDoc(newEventDocRef, newEvent);
+    const initialState: ConEvent = {
+        gameMaster: '',
+        id: '',
+        shortDescription: '',
+        description: '',
+        system: '',
+        title: '',
+        email: '',
+        name: '',
+        phone: '',
+        gameType: '',
+        participants: 0,
+        unwantedFridayEvening: false,
+        unwantedSaturdayMorning: false,
+        unwantedSaturdayEvening: false,
+        unwantedSundayMorning: false,
+        moduleCompetition: false,
+        childFriendly: false,
+        possiblyEnglish: false,
+        adultsOnly: false,
+        volunteersPossible: false,
+        lessThanThreeHours: false,
+        moreThanSixHours: false,
+        beginnerFriendly: false,
+        additionalComments: '',
+        createdAt: '',
+        createdBy: '',
+        updateAt: '',
+        updatedBy: '',
+        subTitle: '',
+        published: false,
+        puljeFridayEvening: false,
+        puljeSaturdayMorning: false,
+        puljeSaturdayEvening: false,
+        puljeSundayMorning: false,
     };
+    const [data, setData] = useState<ConEvent>();
+    // console.log('data', data);
+    const eventDocRef = doc(db, 'events', id);
 
-    // useEffect(() => {
-    //     let unsubscribeSnapshot: Unsubscribe | undefined;
-    //     if (user) {
-    //         unsubscribeSnapshot = onSnapshot(newEventDocRef, (snapshot) => {
-    //             const newEventData = snapshot.data() as MyNewEvent;
-    //             setNewEvent(newEventData);
-    //             const newTags = [...tags].map((tag) => ({
-    //                 ...tag,
-    //                 selected: (newEventData[tag.name] as boolean) ?? false,
-    //             }));
-    //             setTags(newTags);
-    //         });
-    //     }
+    const updateDatabase = async (data: Partial<ConEvent>) => {
+        await updateDoc(eventDocRef, data);
+    };
+    useEffect(() => {
+        let unsubscribeSnapshot: Unsubscribe | undefined;
+        if (id !== undefined) {
+            unsubscribeSnapshot = onSnapshot(doc(db, 'events', id), (snapshot) => {
+                setData((snapshot.data() as ConEvent | undefined) ?? initialState);
+            });
+        }
+        return () => {
+            unsubscribeSnapshot?.();
+        };
+    }, [id]);
 
-    //     const unsubscribeUser = onAuthStateChanged(firebaseAuth, (user) => {
-    //         setUser(user);
-    //     });
+    useEffect(() => {
+        let unsubscribeSnapshot: Unsubscribe | undefined;
+        if (user) {
+            unsubscribeSnapshot = onSnapshot(eventDocRef, (snapshot) => {
+                const newEventData = snapshot.data() as ConEvent;
+                setData(newEventData);
+            });
+        }
 
-    //     return () => {
-    //         unsubscribeSnapshot?.();
-    //         unsubscribeUser();
-    //     };
-    // }, [user]);
+        const unsubscribeUser = onAuthStateChanged(firebaseAuth, (user) => {
+            setUser(user);
+        });
 
-    const handleSnackBar = (event: React.SyntheticEvent | Event, reason?: string) => {
+        return () => {
+            unsubscribeSnapshot?.();
+            unsubscribeUser();
+        };
+    }, [user]);
+
+    useEffect(() => {
+        let unsubscribeSnapshot: Unsubscribe | undefined;
+        if (id !== undefined) {
+            unsubscribeSnapshot = onSnapshot(doc(db, 'events', id), (snapshot) => {
+                setData((snapshot.data() as ConEvent | undefined) ?? initialState);
+            });
+        }
+        return () => {
+            unsubscribeSnapshot?.();
+        };
+    }, [id]);
+    const handleSnackBar = (reason?: string) => {
         if (reason === 'clickaway') {
             return;
         }
-
         setIsSnackBarOpen(false);
     };
 
@@ -119,59 +179,40 @@ const Settings = ({ id }: Props) => {
         setIsSnackBarOpen(true);
     }, [isSnackBarOpen]);
 
-    const handleSubmission = async () => {
-        if (newEvent) {
-            setIsSnackBarOpen(false);
-            setIsExploding(!isExploding);
-            await updateDatabase({ isSubmitted: !newEvent.isSubmitted });
-            setSnackBarMessage(`Du har  ${newEvent.isSubmitted ? 'meldt av' : 'sendt inn'}  arrangementet`);
-            setIsSnackBarOpen(true);
-        }
-    };
-    const handleSubmit: ComponentProps<'form'>['onSubmit'] = async (e) => {
-        e.preventDefault();
-        if (!newEvent?.isSubmitted) {
-            handleSubmission();
-        }
-    };
+    const handleOnChange = useCallback(
+        debounce((e: FormEvent<HTMLFormElement>): void => {
+            const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
 
-    const handleCancelSubmission: ComponentProps<'button'>['onClick'] = async (e) => {
-        if (newEvent?.isSubmitted) {
-            e.preventDefault();
-            handleSubmission();
-        }
-    };
+            let value: string | boolean = inputValue;
+            let name: string = inputName;
 
-    const handleOnChange = (e: FormEvent<HTMLFormElement>) => {
-        const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
-
-        let value: string | boolean = inputValue;
-        let name: string = inputName;
-
-        if (type === 'checkbox') {
-            value = checked;
-        }
-
-        if (type === 'radio') {
-            name = 'gameType';
-            value = inputName;
-        }
-        if (user?.email !== null) {
-            let payload: Partial<MyNewEvent> = {
-                [name]: value,
-                updateAt: new Date(Date.now()).toString(),
-                updatedBy: user?.email,
-            };
-            if (newEvent?.isSubmitted) {
-                setIsSnackBarOpen(false);
-                setSnackBarMessage('du må nå sende inn igjen skjemaet');
-                payload = { ...payload, isSubmitted: false };
-                setIsSnackBarOpen(true);
+            if (type === 'checkbox') {
+                value = checked;
             }
 
+            if (type === 'radio') {
+                name = 'pulje';
+                value = inputName;
+            }
+            if (!user || !user.email) {
+                console.error('user?.email is null');
+                return;
+            }
+
+            let payload: Partial<ConEvent> = {
+                [name]: value,
+                updateAt: new Date(Date.now()).toString(),
+                updatedBy: user.email,
+            };
+            setIsSnackBarOpen(false);
+            setSnackBarMessage('Endringar lagra!');
+            setIsSnackBarOpen(true);
+
             updateDatabase(payload);
-        }
-    };
+        }, 1500),
+        [user]
+    );
+
     const unwantedTimeSlotWarning = (slot: string, unwanted: boolean) => {
         return (
             <Stack direction="row">
@@ -196,156 +237,192 @@ const Settings = ({ id }: Props) => {
 
     return (
         <>
-            <Grid2
-                sx={{ padding: '1rem' }}
-                noValidate={newEvent.isSubmitted}
-                container
-                component="form"
-                spacing="2rem"
-                onBlur={handleBlur}
-                onChange={handleOnChange}
-                onSubmit={handleSubmit}
-            >
-                <Grid2 xs={12} sm={6}>
-                    <Paper elevation={1} sx={{ padding: '1rem' }}>
-                        <FormGroup sx={{ display: 'flex', gap: '1rem' }}>
-                            <FormLabel>Instillinger</FormLabel>
-                            <FormControlLabel control={<Switch />} label="Publisert" />
-                            <TextField
-                                sx={{ maxWidth: '15rem' }}
-                                type="number"
-                                name="participants"
-                                value={newEvent.participants}
-                                label="Maks antall deltakere"
-                                variant="outlined"
-                                required
-                            />
-                            <Paper elevation={3}>
-                                <Accordion>
-                                    <AccordionSummary
-                                        expandIcon={<ExpandMoreIcon />}
-                                        aria-controls="panel1-content"
-                                        id="panel1-header"
-                                    >
-                                        Sortering rekkefølge
-                                    </AccordionSummary>
-                                    <AccordionDetails>
-                                        <Typography variant={'h3'} sx={{ textAlign: 'center' }}>
-                                            Pulje: Fredag kveld
-                                        </Typography>
-                                        {eventOrder.map((event) => (
-                                            <Paper
-                                                key={event.id}
-                                                elevation={4}
-                                                sx={{
-                                                    padding: '1rem',
-                                                    marginBottom: '1rem',
-                                                    display: 'flex',
-                                                    justifyContent: 'space-between',
-                                                    backgroundColor: event.thisEvent ? 'primary.light' : '',
-                                                }}
+            {!data ?
+                <Typography variant="h1">
+                    Loading...
+                    <CircularProgress />
+                </Typography>
+                : <>
+                    <Grid2
+                        sx={{ padding: '1rem' }}
+                        container
+                        component="form"
+                        spacing="2rem"
+                        onChange={(evt) =>
+                            handleOnChange(evt).catch((err) => {
+                                if (err !== 'Aborted by debounce') {
+                                    throw err;
+                                }
+                            })
+                        }
+                    >
+                        <Grid2 xs={12} sm={6}>
+                            <Paper elevation={1} sx={{ padding: '1rem' }}>
+                                <FormGroup sx={{ display: 'flex', gap: '1rem' }}>
+                                    <FormLabel>Instillinger</FormLabel>
+                                    <FormControlLabel
+                                        control={<Switch />}
+                                        label="Publisert"
+                                        name="published"
+                                        checked={data.published}
+                                        onChange={() => setData({ ...data, published: !data.published })}
+                                    />
+                                    <TextField
+                                        sx={{ maxWidth: '15rem' }}
+                                        type="number"
+                                        name="participants"
+                                        value={data.participants}
+                                        onChange={(e) => setData({ ...data, participants: parseInt(e.target.value) })}
+                                        label="Maks antall deltakere"
+                                        variant="outlined"
+                                        required
+                                    />
+                                    <Paper elevation={3}>
+                                        <Accordion>
+                                            <AccordionSummary
+                                                expandIcon={<ExpandMoreIcon />}
+                                                aria-controls="panel1-content"
+                                                id="panel1-header"
                                             >
-                                                <Typography component={'span'}> {event.name}</Typography>
-                                                <Box
-                                                    sx={{
-                                                        display: 'inline-block',
-                                                    }}
-                                                >
-                                                    <IconButton>
-                                                        <ArrowDropUpIcon />
-                                                    </IconButton>
-                                                    <IconButton>
-                                                        <ArrowDropDownIcon />
-                                                    </IconButton>
-                                                </Box>
-                                            </Paper>
-                                        ))}
-                                    </AccordionDetails>
-                                </Accordion>
+                                                Sortering rekkefølge
+                                            </AccordionSummary>
+                                            <AccordionDetails>
+                                                <Typography variant={'h3'} sx={{ textAlign: 'center' }}>
+                                                    Pulje: Fredag kveld
+                                                </Typography>
+                                                {eventOrder.map((event) => (
+                                                    <Paper
+                                                        key={event.id}
+                                                        elevation={4}
+                                                        sx={{
+                                                            padding: '1rem',
+                                                            marginBottom: '1rem',
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            backgroundColor: event.thisEvent ? 'primary.light' : '',
+                                                        }}
+                                                    >
+                                                        <Typography component={'span'}> {event.name}</Typography>
+                                                        <Box
+                                                            sx={{
+                                                                display: 'inline-block',
+                                                            }}
+                                                        >
+                                                            <IconButton>
+                                                                <ArrowDropUpIcon />
+                                                            </IconButton>
+                                                            <IconButton>
+                                                                <ArrowDropDownIcon />
+                                                            </IconButton>
+                                                        </Box>
+                                                    </Paper>
+                                                ))}
+                                            </AccordionDetails>
+                                        </Accordion>
+                                    </Paper>
+                                </FormGroup>
                             </Paper>
-                        </FormGroup>
-                    </Paper>
-                </Grid2>
-                <Grid2 xs={12} sm={6}>
-                    <Paper sx={{ padding: '1rem' }}>
-                        <FormGroup>
-                            <FormLabel>Pulje</FormLabel>
-                            <RadioGroup>
-                                <FormControlLabel
-                                    control={<Radio />}
-                                    name="fridayEvening"
-                                    label={unwantedTimeSlotWarning('Fredag Kveld', true)}
-                                />
-                                <FormControlLabel
-                                    control={<Radio />}
-                                    name="saturdayMorning"
-                                    label={unwantedTimeSlotWarning('Lørdag Morgen', true)}
-                                />
-                                <FormControlLabel
-                                    control={<Radio />}
-                                    name="saturdayEvening"
-                                    label={unwantedTimeSlotWarning('Lørdag Kveld', true)}
-                                />
-                                <FormControlLabel
-                                    control={<Radio />}
-                                    name="sundayMorning"
-                                    label={unwantedTimeSlotWarning('Søndag Morgen', true)}
-                                />
-                            </RadioGroup>
-                        </FormGroup>
-                    </Paper>
-                </Grid2>
-                <Grid2 xs={12} sm={6}>
-                    <Paper sx={{ padding: '1rem' }}>
-                        <FormGroup sx={{ display: 'flex', gap: '1rem' }}>
-                            <FormLabel>Kontaktinfo</FormLabel>
+                        </Grid2>
+                        <Grid2 xs={12} sm={6}>
+                            <Paper sx={{ padding: '1rem' }}>
+                                <FormGroup>
+                                    <FormLabel>Pulje</FormLabel>
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox name="puljeFridayEvening" checked={data.puljeFridayEvening} />
+                                        }
+                                        onChange={() =>
+                                            setData({ ...data, puljeFridayEvening: !data.puljeFridayEvening })
+                                        }
+                                        label={unwantedTimeSlotWarning('Fredag Kveld', data.unwantedFridayEvening)}
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox name="puljeSaturdayMorning" checked={data.puljeSaturdayMorning} />
+                                        }
+                                        onChange={() =>
+                                            setData({ ...data, puljeSaturdayMorning: !data.puljeSaturdayMorning })
+                                        }
+                                        label={unwantedTimeSlotWarning('Lørdag Morgen', data.unwantedSaturdayMorning)}
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox name="puljeSaturdayEvening" checked={data.puljeSaturdayEvening} />
+                                        }
+                                        onChange={() =>
+                                            setData({ ...data, puljeSaturdayEvening: !data.puljeSaturdayEvening })
+                                        }
+                                        label={unwantedTimeSlotWarning('Lørdag Kveld', data.unwantedSaturdayEvening)}
+                                    />
+                                    <FormControlLabel
+                                        control={
+                                            <Checkbox name="puljeSundayMorning" checked={data.puljeSundayMorning} />
+                                        }
+                                        onChange={() =>
+                                            setData({ ...data, puljeSundayMorning: !data.puljeSundayMorning })
+                                        }
+                                        label={unwantedTimeSlotWarning('Søndag Morgen', data.unwantedSundayMorning)}
+                                    />
+                                </FormGroup>
+                            </Paper>
+                        </Grid2>
+                        <Grid2 xs={12} sm={6}>
+                            <Paper sx={{ padding: '1rem' }}>
+                                <FormGroup sx={{ display: 'flex', gap: '1rem' }}>
+                                    <FormLabel>Kontaktinfo</FormLabel>
 
-                            <TextField
-                                type="email"
-                                name="email"
-                                value={newEvent.email}
-                                label="E-postadresse"
-                                variant="outlined"
-                                fullWidth
-                                disabled
-                            />
-                            <TextField
-                                type="phone"
-                                name="phone"
-                                value={newEvent.phone}
-                                label="Telefonnummer"
-                                variant="outlined"
-                                required
-                                fullWidth
-                            />
-                            <FormControlLabel
-                                control={<Checkbox name="moduleCompetition" checked={newEvent.moduleCompetition} />}
-                                label="Eg vil vere med på modulkonkurransen"
-                            />
-                        </FormGroup>
-                    </Paper>
-                </Grid2>
-                <Grid2 xs={12}>
-                    <Paper sx={{ padding: '1rem' }}>
-                        <FormControl fullWidth>
-                            <FormLabel>Merknader: Er det noko anna du vil vi skal vite?</FormLabel>
-                            <TextareaAutosize
-                                minRows={6}
-                                name="additionalComments"
-                                value={newEvent.additionalComments}
-                            />
-                        </FormControl>
-                    </Paper>
-                </Grid2>
-            </Grid2>
-            <Snackbar
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                open={isSnackBarOpen}
-                onClose={handleSnackBar}
-                TransitionComponent={Slide}
-                message={snackBarMessage}
-                autoHideDuration={1200}
-            />
+                                    <TextField
+                                        type="email"
+                                        name="email"
+                                        onChange={(e) => setData({ ...data, email: e.target.value })}
+                                        value={data.email}
+                                        label="E-postadresse"
+                                        variant="outlined"
+                                        fullWidth
+                                    />
+                                    <TextField
+                                        type="phone"
+                                        name="phone"
+                                        onChange={(e) => setData({ ...data, phone: e.target.value })}
+                                        value={data.phone}
+                                        label="Telefonnummer"
+                                        variant="outlined"
+                                        fullWidth
+                                    />
+                                    <FormControlLabel
+                                        control={<Checkbox name="moduleCompetition" checked={data.moduleCompetition} />}
+                                        onChange={(e) =>
+                                            setData({ ...data, moduleCompetition: !data.moduleCompetition })
+                                        }
+                                        label="Modulen er påmeldt konkurransen"
+                                    />
+                                </FormGroup>
+                            </Paper>
+                        </Grid2>
+                        <Grid2 xs={12}>
+                            <Paper sx={{ padding: '1rem' }}>
+                                <FormControl fullWidth>
+                                    <FormLabel>Merknader: Er det noko anna du vil vi skal vite?</FormLabel>
+                                    <TextareaAutosize
+                                        minRows={6}
+                                        name="additionalComments"
+                                        value={data.additionalComments}
+                                        onChange={(e) => setData({ ...data, additionalComments: e.target.value })}
+                                    />
+                                </FormControl>
+                            </Paper>
+                        </Grid2>
+                    </Grid2>
+                    <Snackbar
+                        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                        open={isSnackBarOpen}
+                        onClose={(e, r?) => handleSnackBar(r)}
+                        TransitionComponent={Slide}
+                        message={snackBarMessage}
+                        autoHideDuration={1200}
+                    />
+                </>
+            }
         </>
     );
 };

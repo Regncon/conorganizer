@@ -1,16 +1,33 @@
 import EventCardBig from '$app/(public)/EventCardBig';
+import { getAllEvents } from '$app/(public)/serverAction';
+import { Paper } from '@mui/material';
+import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import Link from 'next/link';
 
 const Events = async () => {
+    const events = await getAllEvents();
+
     return (
-        <Link href="/admin/dashboard/events/event-dashboard/1">
-            <EventCardBig
-                gameMaster="Kåre Carlsson"
-                shortDescription="is water wet? find out in this session! (18+) (NSFW) anyways do NOT join if you are under 18, this is a serious session for serious people only."
-                system="DnD 4e"
-                title="Kåres waterboarding session of doom and despair (18+)"
-            />
-        </Link>
+        <Paper elevation={0}>
+            <Grid2 gap={'2rem'} container sx={{ padding: '2rem' }}>
+                {events.map((event) => {
+                    return (
+                        <Link
+                            href={`/admin/dashboard/events/event-dashboard/${event.id}`}
+                            style={{ textDecoration: 'none' }}
+                            key={event.id}
+                        >
+                            <EventCardBig
+                                title={event.title}
+                                gameMaster={event.gameMaster}
+                                system={event.system}
+                                shortDescription={event.shortDescription}
+                            />
+                        </Link>
+                    );
+                })}
+            </Grid2>
+        </Paper>
     );
 };
 

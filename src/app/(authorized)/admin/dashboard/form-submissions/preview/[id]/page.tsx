@@ -1,6 +1,6 @@
 'use client';
 import MainEvent from '$app/(public)/event/[id]/event';
-import { Event } from '$lib/types';
+import { ConEvent, Pulje } from '$lib/types';
 import { Box, Button, Dialog, DialogContent, DialogContentText, DialogTitle, Typography } from '@mui/material';
 import { useState } from 'react';
 
@@ -38,7 +38,7 @@ const FormSubmissionsPreviewPage = () => {
         setOpen(false);
     };
 
-    const event: Event = {
+    const event: ConEvent = {
         id: '1',
         title: 'Dette er tittelen',
         system: 'DnD 5e',
@@ -46,6 +46,34 @@ const FormSubmissionsPreviewPage = () => {
         shortDescription: 'Dette er en kort beskrivelse',
         description: 'Dette er en lang beskrivelse',
         icons: ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'],
+        published: false,
+        email: '',
+        name: '',
+        phone: '',
+        gameType: '',
+        participants: 0,
+        unwantedFridayEvening: false,
+        unwantedSaturdayMorning: false,
+        unwantedSaturdayEvening: false,
+        unwantedSundayMorning: false,
+        moduleCompetition: false,
+        childFriendly: false,
+        possiblyEnglish: false,
+        adultsOnly: false,
+        volunteersPossible: false,
+        lessThanThreeHours: false,
+        moreThanSixHours: false,
+        beginnerFriendly: false,
+        additionalComments: '',
+        createdAt: '',
+        createdBy: '',
+        updateAt: '',
+        updatedBy: '',
+        subTitle: '',
+        puljeFridayEvening: false,
+        puljeSaturdayMorning: false,
+        puljeSaturdayEvening: false,
+        puljeSundayMorning: false,
     };
     return (
         <Box sx={{ maxWidth: '375px', margin: 'auto' }}>

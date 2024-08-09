@@ -10,8 +10,8 @@ export type EventCardProps = {
     myEventDocId?: string;
 };
 
-export type Event = {
-    data: boolean;
+export type ConEvent = {
+    published: boolean;
     id: string;
     title: string;
     gameMaster: string;
@@ -24,10 +24,14 @@ export type Event = {
     phone: string;
     gameType: string;
     participants: number;
-    fridayEvening: boolean;
-    saturdayMorning: boolean;
-    saturdayEvening: boolean;
-    sundayMorning: boolean;
+    puljeFridayEvening: boolean;
+    puljeSaturdayMorning: boolean;
+    puljeSaturdayEvening: boolean;
+    puljeSundayMorning: boolean;
+    unwantedFridayEvening: boolean;
+    unwantedSaturdayMorning: boolean;
+    unwantedSaturdayEvening: boolean;
+    unwantedSundayMorning: boolean;
     moduleCompetition: boolean;
     childFriendly: boolean;
     possiblyEnglish: boolean;

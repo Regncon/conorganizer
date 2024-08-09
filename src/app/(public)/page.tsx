@@ -7,38 +7,40 @@ import { redirect } from 'next/navigation';
 import { redirectToAdminDashboardWhenAdministrator } from '$lib/lib';
 
 export default async function Home() {
-    await redirectToAdminDashboardWhenAdministrator();
+    // await redirectToAdminDashboardWhenAdministrator();
 
-    redirect('/dashboard');
+    // redirect('/dashboard');
     const events = await getAllEvents();
 
     return (
         <>
             <img src="/placeholderlogo.png" alt="logo" />
             <Grid container spacing={2}>
-                {events.map((event, i) => {
-                    return (
-                        <Grid xs={i === 0 ? 12 : 6}>
-                            {i === 0 ?
-                                <Grid xs={12}>
-                                    <EventCardBig
+                {events
+                    .filter((ce) => ce.published)
+                    .map((event, i) => {
+                        return (
+                            <Grid xs={i === 0 ? 12 : 6}>
+                                {i === 0 ?
+                                    <Grid xs={12}>
+                                        <EventCardBig
+                                            key={i}
+                                            title={event.title}
+                                            gameMaster={event.gameMaster}
+                                            shortDescription={event.shortDescription}
+                                            system={event.system}
+                                        />
+                                    </Grid>
+                                    : <EventCardSmall
                                         key={i}
                                         title={event.title}
                                         gameMaster={event.gameMaster}
-                                        shortDescription={event.shortDescription}
                                         system={event.system}
                                     />
-                                </Grid>
-                                : <EventCardSmall
-                                    key={i}
-                                    title={event.title}
-                                    gameMaster={event.gameMaster}
-                                    system={event.system}
-                                />
-                            }
-                        </Grid>
-                    );
-                })}
+                                }
+                            </Grid>
+                        );
+                    })}
             </Grid>
             {/* <EventCardBig
     					title="Hello world"

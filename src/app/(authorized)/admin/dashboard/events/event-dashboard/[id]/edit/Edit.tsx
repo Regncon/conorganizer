@@ -1,5 +1,4 @@
 'use client';
-import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
@@ -11,46 +10,23 @@ import RadioGroup from '@mui/material/RadioGroup';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import Button from '@mui/material/Button';
 import { useCallback, useEffect, useState, type FormEvent, type SyntheticEvent } from 'react';
-import { Event } from '$lib/types';
+import { ConEvent, Pulje } from '$lib/types';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import Slide from '@mui/material/Slide';
 import Snackbar, { type SnackbarCloseReason } from '@mui/material/Snackbar';
 import Chip from '@mui/material/Chip';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import MainEvent from '$app/(public)/event/[id]/event';
-import { Box } from '@mui/material';
+import { Box, CircularProgress } from '@mui/material';
 import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
+import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 
 type Props = {
     id: string;
 };
 
 const Edit = ({ id }: Props) => {
-    /**
-     * Debounces a function, creating a new function that does the same as the original, but will not actually run before
-     * a specified amount of time has passed since it was last called.
-     *
-     * @param fn The function to debounce
-     * @param delay Number of milliseconds to wait
-     *
-     * @returns A function that does the same as `fn`, but won't actually run before `delay` milliseconds has passed since
-     * its last invocation
-     */
-    // const debounce = <P extends unknown[]>(fn: (...args: P) => void, delay: number): ((...args: P) => void) => {
-    //     let timer: ReturnType<typeof setTimeout> | null = null;
-    //
-    //     return (...args: P): void => {
-    //         if (timer !== null) {
-    //             clearTimeout(timer);
-    //         }
-    //
-    //         timer = setTimeout(() => {
-    //             fn(...args);
-    //             timer = null;
-    //         }, delay);
-    //     };
-    // };
     /**
      * Debounces a function, creating a new function that does the same as the original, but will not actually run before
      * a specified amount of time has passed since it was last called.
@@ -91,23 +67,22 @@ const Edit = ({ id }: Props) => {
                 }, delay);
             });
     };
-    const initialState: Event = {
+    const initialState: ConEvent = {
         gameMaster: '',
         id: '',
         shortDescription: '',
         description: '',
         system: '',
         title: '',
-        data: false,
         email: '',
         name: '',
         phone: '',
         gameType: '',
         participants: 0,
-        fridayEvening: false,
-        saturdayMorning: false,
-        saturdayEvening: false,
-        sundayMorning: false,
+        unwantedFridayEvening: false,
+        unwantedSaturdayMorning: false,
+        unwantedSaturdayEvening: false,
+        unwantedSundayMorning: false,
         moduleCompetition: false,
         childFriendly: false,
         possiblyEnglish: false,
@@ -122,8 +97,13 @@ const Edit = ({ id }: Props) => {
         updateAt: '',
         updatedBy: '',
         subTitle: '',
+        published: false,
+        puljeFridayEvening: false,
+        puljeSaturdayMorning: false,
+        puljeSaturdayEvening: false,
+        puljeSundayMorning: false,
     };
-    const [data, setData] = useState<Event>(initialState);
+    const [data, setData] = useState<ConEvent>();
     const eventDocRef = doc(db, 'events', id);
 
     const [user, setUser] = useState<User | null>();
@@ -131,7 +111,7 @@ const Edit = ({ id }: Props) => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
         if (user) {
             unsubscribeSnapshot = onSnapshot(eventDocRef, (snapshot) => {
-                const newEventData = snapshot.data() as Event;
+                const newEventData = snapshot.data() as ConEvent;
                 setData(newEventData);
                 const newTags = [...tags].map((tag) => ({
                     ...tag,
@@ -154,7 +134,7 @@ const Edit = ({ id }: Props) => {
     const snackBarMessageInitial = 'Din endring er lagra!';
     const [snackBarMessage, setSnackBarMessage] = useState<string>(snackBarMessageInitial);
     const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
-    const [tags, setTags] = useState<{ name: keyof Event; label: string; selected: boolean }[]>([
+    const [tags, setTags] = useState<{ name: keyof ConEvent; label: string; selected: boolean }[]>([
         { name: 'childFriendly', label: 'Arrangementet passer for barn', selected: data?.childFriendly ?? false },
         {
             name: 'adultsOnly',
@@ -192,7 +172,7 @@ const Edit = ({ id }: Props) => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
         if (id !== undefined) {
             unsubscribeSnapshot = onSnapshot(doc(db, 'events', id), (snapshot) => {
-                setData((snapshot.data() as Event | undefined) ?? initialState);
+                setData((snapshot.data() as ConEvent | undefined) ?? initialState);
             });
         }
         return () => {
@@ -200,7 +180,7 @@ const Edit = ({ id }: Props) => {
         };
     }, [id]);
 
-    const updateDatabase = async (data: Partial<Event>) => {
+    const updateDatabase = async (data: Partial<ConEvent>) => {
         await updateDoc(eventDocRef, data);
     };
 
@@ -259,7 +239,7 @@ const Edit = ({ id }: Props) => {
                 return;
             }
 
-            let payload: Partial<Event> = {
+            let payload: Partial<ConEvent> = {
                 [name]: value,
                 updateAt: new Date(Date.now()).toString(),
                 updatedBy: user.email,
@@ -274,17 +254,36 @@ const Edit = ({ id }: Props) => {
     );
 
     return (
-        <Box component="form" onChange={handleOnChange}>
-            <MainEvent id={id} editable={true} />
-            <Snackbar
-                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                open={isSnackBarOpen}
-                onClose={handleSnackBar}
-                TransitionComponent={Slide}
-                message={snackBarMessage}
-                autoHideDuration={1200}
-            />
-        </Box>
+        <>
+            {!data ?
+                <Typography variant="h1">
+                    Loading...
+                    <CircularProgress />
+                </Typography>
+                : <>
+                    <Box
+                        component="form"
+                        onChange={(evt) =>
+                            handleOnChange(evt).catch((err) => {
+                                if (err !== 'Aborted by debounce') {
+                                    throw err;
+                                }
+                            })
+                        }
+                    >
+                        <MainEvent id={id} editable={true} />
+                        <Snackbar
+                            anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                            open={isSnackBarOpen}
+                            onClose={handleSnackBar}
+                            TransitionComponent={Slide}
+                            message={snackBarMessage}
+                            autoHideDuration={1200}
+                        />
+                    </Box>
+                </>
+            }
+        </>
     );
     /*
     return (

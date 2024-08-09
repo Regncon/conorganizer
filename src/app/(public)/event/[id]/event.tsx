@@ -20,7 +20,7 @@ import Link from 'next/link';
 import { faChevronLeft, faUserSecret } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
-import { Event } from '$lib/types';
+import { ConEvent } from '$lib/types';
 import { db } from '$lib/firebase/firebase';
 import { onSnapshot, doc, type Unsubscribe } from 'firebase/firestore';
 
@@ -35,27 +35,26 @@ const marks = [
 
 type Props = {
     id?: string;
-    eventData?: Event;
+    eventData?: ConEvent;
     editable?: boolean;
 };
 
-const initialState: Event = {
+const initialState: ConEvent = {
     gameMaster: '',
     id: '',
     shortDescription: '',
     description: '',
     system: '',
     title: '',
-    data: false,
     email: '',
     name: '',
     phone: '',
     gameType: '',
     participants: 0,
-    fridayEvening: false,
-    saturdayMorning: false,
-    saturdayEvening: false,
-    sundayMorning: false,
+    unwantedFridayEvening: false,
+    unwantedSaturdayMorning: false,
+    unwantedSaturdayEvening: false,
+    unwantedSundayMorning: false,
     moduleCompetition: false,
     childFriendly: false,
     possiblyEnglish: false,
@@ -70,10 +69,15 @@ const initialState: Event = {
     updateAt: '',
     updatedBy: '',
     subTitle: '',
+    published: false,
+    puljeFridayEvening: false,
+    puljeSaturdayMorning: false,
+    puljeSaturdayEvening: false,
+    puljeSundayMorning: false,
 };
 
 const MainEvent = ({ id, eventData, editable = false }: Props) => {
-    const [data, setData] = useState<Event>(eventData ?? initialState);
+    const [data, setData] = useState<ConEvent>(eventData ?? initialState);
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
     const [isEditingGameMaster, setIsEditingGameMaster] = useState<boolean>(false);
     const [isEditingSystem, setIsEditingSystem] = useState<boolean>(false);
@@ -85,7 +89,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
         if (id !== undefined && eventData === undefined) {
             unsubscribeSnapshot = onSnapshot(doc(db, 'events', id), (snapshot) => {
-                setData((snapshot.data() as Event | undefined) ?? initialState);
+                setData((snapshot.data() as ConEvent | undefined) ?? initialState);
             });
         }
         return () => {
