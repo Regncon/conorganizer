@@ -13,7 +13,7 @@ const Events = async () => {
                 {events.map((event) => {
                     return (
                         <Link
-                            href={`/admin/dashboard/events/event-dashboard/${event.id}`}
+                            href={`/admin/dashboard/events/event-dashboard/${event.id}/edit`}
                             style={{ textDecoration: 'none' }}
                             key={event.id}
                         >

@@ -262,7 +262,6 @@ const Edit = ({ id }: Props) => {
                 </Typography>
                 : <Box
                     component="form"
-                    sx={{ padding: '1rem', backgroundColor: 'inherit' }}
                     onChange={(evt) =>
                         handleOnChange(evt).catch((err) => {
                             if (err !== 'Aborted by debounce') {
