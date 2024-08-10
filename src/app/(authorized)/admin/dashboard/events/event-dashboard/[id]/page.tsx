@@ -10,7 +10,7 @@ type Props = {
 const Page = async ({ params: { id } }: Props) => {
     return (
         <Paper>
-            <EventDashboardTabs id={id} value={0} />
+            <EventDashboardTabs id={id} value={4} />
         </Paper>
     );
 };

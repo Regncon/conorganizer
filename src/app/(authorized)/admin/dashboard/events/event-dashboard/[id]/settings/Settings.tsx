@@ -12,112 +12,25 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import Slide from '@mui/material/Slide';
 import Snackbar from '@mui/material/Snackbar';
-import {
-    Accordion,
-    AccordionDetails,
-    AccordionSummary,
-    Box,
-    CircularProgress,
-    IconButton,
-    Radio,
-    RadioGroup,
-    Stack,
-    Switch,
-} from '@mui/material';
-import WarningIcon from '@mui/icons-material/Warning';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import { Box, CircularProgress, Stack, Switch } from '@mui/material';
 import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import { ConEvent } from '$lib/types';
+import Ordering from './ordering';
+import debounce from '$lib/debounce';
+import WarningIcon from '@mui/icons-material/Warning';
 
 type Props = {
     id: string;
+    allEvents: ConEvent[];
 };
-const Settings = ({ id }: Props) => {
-    /**
-     * Debounces a function, creating a new function that does the same as the original, but will not actually run before
-     * a specified amount of time has passed since it was last called.
-     *
-     * @param fn The function to debounce
-     * @param delay Number of milliseconds to wait since the last call to the function to actually run it
-     *
-     * @returns A function that does the same as `fn`, but won't actually run before `delay` milliseconds has passed since
-     * its last invocation. Its return value will be wrapped in a promise
-     */
-    const debounce = <P extends unknown[], R>(
-        fn: (...args: P) => R | Promise<R>,
-        delay: Parameters<typeof setTimeout>[1]
-    ): ((...args: P) => Promise<R>) => {
-        let timer: ReturnType<typeof setTimeout> | null = null;
-
-        type Reject = Parameters<ConstructorParameters<typeof Promise<R>>[0]>[1];
-        let prevReject: Reject = () => { };
-
-        return (...args: P): Promise<R> =>
-            new Promise((resolve, reject) => {
-                if (timer !== null) {
-                    clearTimeout(timer);
-                    prevReject('Aborted by debounce');
-                }
-
-                prevReject = reject;
-
-                timer = setTimeout(async () => {
-                    timer = null;
-
-                    try {
-                        const result = await fn(...args);
-                        resolve(result);
-                    } catch (err) {
-                        reject(err);
-                    }
-                }, delay);
-            });
-    };
+const Settings = ({ id, allEvents }: Props) => {
     const [user, setUser] = useState<User | null>();
     const snackBarMessageInitial = 'Din endring er lagra!';
     const [snackBarMessage, setSnackBarMessage] = useState<string>(snackBarMessageInitial);
     const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
-
-    const initialState: ConEvent = {
-        gameMaster: '',
-        id: '',
-        shortDescription: '',
-        description: '',
-        system: '',
-        title: '',
-        email: '',
-        name: '',
-        phone: '',
-        gameType: '',
-        participants: 0,
-        unwantedFridayEvening: false,
-        unwantedSaturdayMorning: false,
-        unwantedSaturdayEvening: false,
-        unwantedSundayMorning: false,
-        moduleCompetition: false,
-        childFriendly: false,
-        possiblyEnglish: false,
-        adultsOnly: false,
-        volunteersPossible: false,
-        lessThanThreeHours: false,
-        moreThanSixHours: false,
-        beginnerFriendly: false,
-        additionalComments: '',
-        createdAt: '',
-        createdBy: '',
-        updateAt: '',
-        updatedBy: '',
-        subTitle: '',
-        published: false,
-        puljeFridayEvening: false,
-        puljeSaturdayMorning: false,
-        puljeSaturdayEvening: false,
-        puljeSundayMorning: false,
-    };
+    const initialState = {} as ConEvent;
     const [data, setData] = useState<ConEvent>();
     // console.log('data', data);
     const eventDocRef = doc(db, 'events', id);
@@ -174,11 +87,6 @@ const Settings = ({ id }: Props) => {
         setIsSnackBarOpen(false);
     };
 
-    const handleBlur = useCallback(() => {
-        setSnackBarMessage(snackBarMessageInitial);
-        setIsSnackBarOpen(true);
-    }, [isSnackBarOpen]);
-
     const handleOnChange = useCallback(
         debounce((e: FormEvent<HTMLFormElement>): void => {
             const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
@@ -229,12 +137,6 @@ const Settings = ({ id }: Props) => {
         );
     };
 
-    let eventOrder = [
-        { id: '0', name: 'Opprop fredag kveld Kl: 17:30', order: 0 },
-        { id: '1', name: 'Orker på tur', order: 1 },
-        { id: '2', name: 'Cathulu er forelsket', order: 2, thisEvent: true },
-    ];
-
     return (
         <>
             {!data ?
@@ -280,49 +182,6 @@ const Settings = ({ id }: Props) => {
                                         variant="outlined"
                                         required
                                     />
-                                    <Paper elevation={3}>
-                                        <Accordion>
-                                            <AccordionSummary
-                                                expandIcon={<ExpandMoreIcon />}
-                                                aria-controls="panel1-content"
-                                                id="panel1-header"
-                                            >
-                                                Sortering rekkefølge
-                                            </AccordionSummary>
-                                            <AccordionDetails>
-                                                <Typography variant={'h3'} sx={{ textAlign: 'center' }}>
-                                                    Pulje: Fredag kveld
-                                                </Typography>
-                                                {eventOrder.map((event) => (
-                                                    <Paper
-                                                        key={event.id}
-                                                        elevation={4}
-                                                        sx={{
-                                                            padding: '1rem',
-                                                            marginBottom: '1rem',
-                                                            display: 'flex',
-                                                            justifyContent: 'space-between',
-                                                            backgroundColor: event.thisEvent ? 'primary.light' : '',
-                                                        }}
-                                                    >
-                                                        <Typography component={'span'}> {event.name}</Typography>
-                                                        <Box
-                                                            sx={{
-                                                                display: 'inline-block',
-                                                            }}
-                                                        >
-                                                            <IconButton>
-                                                                <ArrowDropUpIcon />
-                                                            </IconButton>
-                                                            <IconButton>
-                                                                <ArrowDropDownIcon />
-                                                            </IconButton>
-                                                        </Box>
-                                                    </Paper>
-                                                ))}
-                                            </AccordionDetails>
-                                        </Accordion>
-                                    </Paper>
                                 </FormGroup>
                             </Paper>
                         </Grid2>
@@ -339,6 +198,12 @@ const Settings = ({ id }: Props) => {
                                         }
                                         label={unwantedTimeSlotWarning('Fredag Kveld', data.unwantedFridayEvening)}
                                     />
+                                    <Ordering
+                                        id={id}
+                                        allEvents={allEvents}
+                                        pulje="Fredag kveld"
+                                        disabled={!data.puljeFridayEvening}
+                                    />
                                     <FormControlLabel
                                         control={
                                             <Checkbox name="puljeSaturdayMorning" checked={data.puljeSaturdayMorning} />
@@ -347,6 +212,12 @@ const Settings = ({ id }: Props) => {
                                             setData({ ...data, puljeSaturdayMorning: !data.puljeSaturdayMorning })
                                         }
                                         label={unwantedTimeSlotWarning('Lørdag Morgen', data.unwantedSaturdayMorning)}
+                                    />
+                                    <Ordering
+                                        id={id}
+                                        allEvents={allEvents}
+                                        pulje="Lørdag morgen"
+                                        disabled={!data.puljeSaturdayMorning}
                                     />
                                     <FormControlLabel
                                         control={
@@ -357,6 +228,12 @@ const Settings = ({ id }: Props) => {
                                         }
                                         label={unwantedTimeSlotWarning('Lørdag Kveld', data.unwantedSaturdayEvening)}
                                     />
+                                    <Ordering
+                                        id={id}
+                                        allEvents={allEvents}
+                                        pulje="Lørdag kveld"
+                                        disabled={!data.puljeSaturdayEvening}
+                                    />
                                     <FormControlLabel
                                         control={
                                             <Checkbox name="puljeSundayMorning" checked={data.puljeSundayMorning} />
@@ -365,6 +242,12 @@ const Settings = ({ id }: Props) => {
                                             setData({ ...data, puljeSundayMorning: !data.puljeSundayMorning })
                                         }
                                         label={unwantedTimeSlotWarning('Søndag Morgen', data.unwantedSundayMorning)}
+                                    />
+                                    <Ordering
+                                        id={id}
+                                        allEvents={allEvents}
+                                        pulje="Søndag morgen"
+                                        disabled={!data.puljeSundayMorning}
                                     />
                                 </FormGroup>
                             </Paper>
