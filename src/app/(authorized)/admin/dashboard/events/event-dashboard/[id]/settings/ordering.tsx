@@ -14,7 +14,6 @@ type Props = {
 
 const Ordering = ({ id, pulje, allEvents, disabled }: Props) => {
     const [expanded, setExpanded] = useState<boolean>(false);
-
     useEffect(() => {
         if (disabled) {
             setExpanded(false);

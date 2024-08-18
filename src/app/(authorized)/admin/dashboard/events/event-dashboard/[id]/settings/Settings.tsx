@@ -190,6 +190,7 @@ const Settings = ({ id, allEvents }: Props) => {
                                 <FormGroup>
                                     <FormLabel>Pulje</FormLabel>
                                     <FormControlLabel
+                                        disabled
                                         control={
                                             <Checkbox name="puljeFridayEvening" checked={data.puljeFridayEvening} />
                                         }
@@ -205,6 +206,7 @@ const Settings = ({ id, allEvents }: Props) => {
                                         disabled={!data.puljeFridayEvening}
                                     />
                                     <FormControlLabel
+                                        disabled
                                         control={
                                             <Checkbox name="puljeSaturdayMorning" checked={data.puljeSaturdayMorning} />
                                         }
@@ -220,6 +222,7 @@ const Settings = ({ id, allEvents }: Props) => {
                                         disabled={!data.puljeSaturdayMorning}
                                     />
                                     <FormControlLabel
+                                        disabled
                                         control={
                                             <Checkbox name="puljeSaturdayEvening" checked={data.puljeSaturdayEvening} />
                                         }
@@ -235,6 +238,7 @@ const Settings = ({ id, allEvents }: Props) => {
                                         disabled={!data.puljeSaturdayEvening}
                                     />
                                     <FormControlLabel
+                                        disabled
                                         control={
                                             <Checkbox name="puljeSundayMorning" checked={data.puljeSundayMorning} />
                                         }

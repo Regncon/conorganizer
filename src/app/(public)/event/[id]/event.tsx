@@ -25,6 +25,8 @@ import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
 import { ConEvent } from '$lib/types';
 import { db } from '$lib/firebase/firebase';
 import { onSnapshot, doc, type Unsubscribe } from 'firebase/firestore';
+import { MuiMarkdown } from 'mui-markdown';
+import DescriptionDialog from './DescriptionDialog';
 
 export const dynamic = 'force-static';
 
@@ -39,46 +41,12 @@ type Props = {
     id?: string;
     eventData?: ConEvent;
     editable?: boolean;
+    editDescription: (edit: boolean) => void;
 };
 
-const initialState: ConEvent = {
-    gameMaster: '',
-    id: '',
-    shortDescription: '',
-    description: '',
-    system: '',
-    title: '',
-    email: '',
-    name: '',
-    phone: '',
-    gameType: '',
-    participants: 0,
-    unwantedFridayEvening: false,
-    unwantedSaturdayMorning: false,
-    unwantedSaturdayEvening: false,
-    unwantedSundayMorning: false,
-    moduleCompetition: false,
-    childFriendly: false,
-    possiblyEnglish: false,
-    adultsOnly: false,
-    volunteersPossible: false,
-    lessThanThreeHours: false,
-    moreThanSixHours: false,
-    beginnerFriendly: false,
-    additionalComments: '',
-    createdAt: '',
-    createdBy: '',
-    updateAt: '',
-    updatedBy: '',
-    subTitle: '',
-    published: false,
-    puljeFridayEvening: false,
-    puljeSaturdayMorning: false,
-    puljeSaturdayEvening: false,
-    puljeSundayMorning: false,
-};
+const initialState = {} as ConEvent;
 
-const MainEvent = ({ id, eventData, editable = false }: Props) => {
+const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) => {
     const [data, setData] = useState<ConEvent>(eventData ?? initialState);
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
     const [isEditingGameMaster, setIsEditingGameMaster] = useState<boolean>(false);
@@ -161,7 +129,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                             : <Typography
                                 variant="h1"
                                 align="center"
-                                sx={{ placeSelf: 'end center', paddingBottom: '2.5rem' }}
+                                sx={{ corsor: 'pointer', placeSelf: 'end center', paddingBottom: '2.5rem' }}
                                 onClick={() => editable && setIsEditingTitle(true)}
                             >
                                 {data.title || 'Tittel'}
@@ -187,7 +155,7 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                                     autoFocus
                                     variant="outlined"
                                     fullWidth
-                                    sx={{ marginTop: '0.5rem' }}
+                                    sx={{ corsor: 'pointer', marginTop: '0.5rem' }}
                                 />
                                 : <Typography variant="h2" onClick={() => editable && setIsEditingGameMaster(true)}>
                                     {data.gameMaster || 'Navn'}
@@ -298,31 +266,28 @@ const MainEvent = ({ id, eventData, editable = false }: Props) => {
                         sx={{ marginBottom: '1rem' }}
                     />
                     : <Typography
-                        sx={{ ...paragraphStyle, marginBottom: '1rem', textAlign: 'center' }}
+                        sx={{ corsor: 'pointer', ...paragraphStyle, marginBottom: '1rem', textAlign: 'center' }}
                         onClick={() => editable && setIsEditingShortDescription(true)}
                     >
                         {data.shortDescription || 'Kort beskrivelse'}
                     </Typography>
                 }
-                {isEditingDescription ?
-                    <TextField
-                        name="description"
-                        value={data.description}
-                        onChange={(e) => setData({ ...data, description: e.target.value })}
-                        onBlur={() => setIsEditingDescription(false)}
-                        autoFocus
-                        variant="outlined"
-                        fullWidth
-                        multiline
-                        rows={4}
-                        sx={{ marginBottom: '1rem' }}
-                    />
-                    : <Typography
-                        sx={{ ...paragraphStyle, marginBottom: '1rem', textAlign: 'center' }}
-                        onClick={() => editable && setIsEditingDescription(true)}
-                    >
-                        {data.description || 'Lang beskrivelse'}
-                    </Typography>
+                {
+                    /*
+          *         <TextField
+                            name="description"
+                            value={data.description}
+                            onChange={(e) => setData({ ...data, description: e.target.value })}
+                            onBlur={() => setIsEditingDescription(false)}
+                            autoFocus
+                            variant="outlined"
+                            fullWidth
+                            multiline
+                            sx={{ marginBottom: '1rem' }}
+                        />*/
+                    <Box sx={{ cursor: 'pointer' }} onClick={() => editable && editDescription(true)}>
+                        <MuiMarkdown>{data.description || '# Lang beskrivelse'}</MuiMarkdown>
+                    </Box>
                 }
             </Box>
         </Paper>
