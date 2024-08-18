@@ -26,7 +26,6 @@ import { ConEvent } from '$lib/types';
 import { db } from '$lib/firebase/firebase';
 import { onSnapshot, doc, type Unsubscribe } from 'firebase/firestore';
 import { MuiMarkdown } from 'mui-markdown';
-import DescriptionDialog from './DescriptionDialog';
 
 export const dynamic = 'force-static';
 
@@ -41,7 +40,7 @@ type Props = {
     id?: string;
     eventData?: ConEvent;
     editable?: boolean;
-    editDescription: (edit: boolean) => void;
+    editDescription?: (edit: boolean) => void;
 };
 
 const initialState = {} as ConEvent;
@@ -51,7 +50,6 @@ const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) 
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
     const [isEditingGameMaster, setIsEditingGameMaster] = useState<boolean>(false);
     const [isEditingSystem, setIsEditingSystem] = useState<boolean>(false);
-    const [isEditingDescription, setIsEditingDescription] = useState<boolean>(false);
     const [isEditingShortDescription, setIsEditingShortDescription] = useState<boolean>(false);
     const [interest, setInterest] = useState<number>(0);
 
@@ -272,23 +270,9 @@ const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) 
                         {data.shortDescription || 'Kort beskrivelse'}
                     </Typography>
                 }
-                {
-                    /*
-          *         <TextField
-                            name="description"
-                            value={data.description}
-                            onChange={(e) => setData({ ...data, description: e.target.value })}
-                            onBlur={() => setIsEditingDescription(false)}
-                            autoFocus
-                            variant="outlined"
-                            fullWidth
-                            multiline
-                            sx={{ marginBottom: '1rem' }}
-                        />*/
-                    <Box sx={{ cursor: 'pointer' }} onClick={() => editable && editDescription(true)}>
-                        <MuiMarkdown>{data.description || '# Lang beskrivelse'}</MuiMarkdown>
-                    </Box>
-                }
+                <Box sx={{ cursor: 'pointer' }} onClick={() => editable && editDescription && editDescription(true)}>
+                    <MuiMarkdown>{data.description || '# Lang beskrivelse'}</MuiMarkdown>
+                </Box>
             </Box>
         </Paper>
     );

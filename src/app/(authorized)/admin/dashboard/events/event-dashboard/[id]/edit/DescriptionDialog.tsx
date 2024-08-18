@@ -38,13 +38,20 @@ const DescriptionDialog = ({ data, handleSave, close: Close, open }: props) => {
     return (
         <Dialog fullScreen open={open} TransitionComponent={Transition}>
             <DialogContent>
+                <Typography variant="h2">Rediger </Typography>
                 <DialogContentText>
                     Beskrivelse av arrangementet. Du kan bruke markdown for å formatere teksten.
                 </DialogContentText>
-                <TextField fullWidth multiline value={description} onChange={(e) => setDescription(e.target.value)} />
+                <TextField
+                    autoFocus
+                    fullWidth
+                    multiline
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                />
             </DialogContent>
             <DialogContent>
-                <Typography variant="h1">Forhåndsvisning </Typography>
+                <Typography variant="h2">Forhåndsvisning </Typography>
                 <hr />
                 <MuiMarkdown>{description}</MuiMarkdown>
             </DialogContent>
