@@ -2,7 +2,7 @@
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Dialog, DialogActions, buttonBaseClasses, buttonClasses } from '@mui/material';
+import { Button, Dialog, DialogActions, buttonBaseClasses, buttonClasses } from '@mui/material';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -33,6 +33,11 @@ const TrashButton = ({ docId }: Props) => {
             }
             setOpenDialog(false);
         };
+        const handleDeleteCancel: ComponentProps<'button'>['onClick'] = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpenDialog(false);
+        };
         return (
             <>
                 <IconButton
@@ -43,15 +48,17 @@ const TrashButton = ({ docId }: Props) => {
                 >
                     <Box component={FontAwesomeIcon} icon={faTrash} />
                 </IconButton>
-                <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-                    <Typography>Er du sikker på at du vil slette arrangementet? Dette kan ikkje gjerast om.</Typography>
+                <Dialog open={openDialog} onClose={handleDeleteCancel}>
+                    <Typography variant="h2">
+                        Er du sikker på at du vil slette arrangementet? Dette kan ikkje gjerast om.
+                    </Typography>
                     <DialogActions>
-                        <IconButton onClick={() => setOpenDialog(false)}>
+                        <Button color="secondary" onClick={handleDeleteCancel}>
                             <Typography>Avbryt</Typography>
-                        </IconButton>
-                        <IconButton onClick={handleDeleteConfirm}>
+                        </Button>
+                        <Button variant="contained" onClick={handleDeleteConfirm}>
                             <Typography>Slett</Typography>
-                        </IconButton>
+                        </Button>
                     </DialogActions>
                 </Dialog>
             </>
