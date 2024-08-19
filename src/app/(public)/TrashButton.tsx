@@ -2,7 +2,7 @@
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { faTrash } from '@fortawesome/free-solid-svg-icons/faTrash';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { buttonBaseClasses, buttonClasses } from '@mui/material';
+import { Dialog, DialogActions, buttonBaseClasses, buttonClasses } from '@mui/material';
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
@@ -15,26 +15,46 @@ type Props = {
 
 const TrashButton = ({ docId }: Props) => {
     const [disableRipple, setDisableRipple] = useState<boolean>(false);
+    const [openDialog, setOpenDialog] = useState<boolean>(false);
     if (docId) {
         const handleDeleteClick: ComponentProps<'button'>['onClick'] = async (e) => {
             e.preventDefault();
             e.stopPropagation();
             setDisableRipple(true);
+            setOpenDialog(true);
+        };
 
+        const handleDeleteConfirm: ComponentProps<'button'>['onClick'] = async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             if (firebaseAuth.currentUser?.uid && docId) {
                 const eventRef = doc(db, 'users', firebaseAuth.currentUser?.uid, 'my-events', docId);
                 await deleteDoc(eventRef);
             }
+            setOpenDialog(false);
         };
         return (
-            <IconButton
-                component="span"
-                className={[disableRipple ? 'disable-ripple' : ''].join(' ')}
-                color="primary"
-                onClick={handleDeleteClick}
-            >
-                <Box component={FontAwesomeIcon} icon={faTrash} />
-            </IconButton>
+            <>
+                <IconButton
+                    component="span"
+                    className={[disableRipple ? 'disable-ripple' : ''].join(' ')}
+                    color="primary"
+                    onClick={handleDeleteClick}
+                >
+                    <Box component={FontAwesomeIcon} icon={faTrash} />
+                </IconButton>
+                <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+                    <Typography>Er du sikker på at du vil slette arrangementet? Dette kan ikkje gjerast om.</Typography>
+                    <DialogActions>
+                        <IconButton onClick={() => setOpenDialog(false)}>
+                            <Typography>Avbryt</Typography>
+                        </IconButton>
+                        <IconButton onClick={handleDeleteConfirm}>
+                            <Typography>Slett</Typography>
+                        </IconButton>
+                    </DialogActions>
+                </Dialog>
+            </>
         );
     }
     return null;
