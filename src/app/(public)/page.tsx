@@ -20,7 +20,7 @@ export default async function Home() {
                     position: 'relative',
                 }}
             >
-                <Image src="/RegnCon2024LogoWhite.webp" layout="fill" alt="logo" />
+                <Image src="/RegnCon2024LogoWhite.webp" fill alt="logo" />
             </Box>
             <Grid container spacing={2}>
                 <Grid container spacing={2}>
