@@ -11,7 +11,17 @@ export default async function Home() {
 
     return (
         <Box>
-            <img src="/RegnCon2024LogoWhite.webp" style={{ width: '100%', objectFit: 'scale-down' }} alt="logo" />
+            <Box
+                sx={{
+                    width: { md: '300px', sm: '250px', xs: '200px' },
+                    height: { md: '300px', sm: '250px', xs: '200px' },
+                    marginBlockStart: '0.5rem',
+                    marginBlockEnd: '1rem',
+                    position: 'relative',
+                }}
+            >
+                <Image src="/RegnCon2024LogoWhite.webp" layout="fill" alt="logo" />
+            </Box>
             <Grid container spacing={2}>
                 <Grid container spacing={2}>
                     {events
@@ -29,7 +39,7 @@ export default async function Home() {
                                                 system={event.system}
                                             />
                                         </Grid>
-                                        : <EventCardSmall
+                                    :   <EventCardSmall
                                             key={i}
                                             title={event.title}
                                             gameMaster={event.gameMaster}
