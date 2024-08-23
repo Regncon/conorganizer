@@ -20,6 +20,8 @@ import { ConEvent } from '$lib/types';
 import Ordering from './ordering';
 import debounce from '$lib/debounce';
 import WarningIcon from '@mui/icons-material/Warning';
+import EventCardBig from '$app/(public)/EventCardBig';
+import EventCardSmall from '$app/(public)/EventCardSmall';
 
 type Props = {
     id: string;
@@ -144,7 +146,7 @@ const Settings = ({ id, allEvents }: Props) => {
                     Loading...
                     <CircularProgress />
                 </Typography>
-                : <>
+            :   <>
                     <Grid2
                         sx={{
                             paddingTop: '1rem',
@@ -182,6 +184,33 @@ const Settings = ({ id, allEvents }: Props) => {
                                         variant="outlined"
                                         required
                                     />
+                                    <Stack component={FormControl} direction="row" spacing={1} alignItems="center">
+                                        <Typography>Stor</Typography>
+                                        <Switch
+                                            name="isSmallCard"
+                                            checked={data.isSmallCard}
+                                            onChange={() => setData({ ...data, isSmallCard: !data.isSmallCard })}
+                                        />
+                                        <Typography>Liten</Typography>
+                                    </Stack>
+
+                                    <Box sx={{ display: 'flex', gap: '1rem' }}>
+                                        <Box sx={{ opacity: data.isSmallCard ? '0.5' : 'unset' }}>
+                                            <EventCardBig
+                                                title={data.title}
+                                                gameMaster={data.gameMaster}
+                                                shortDescription={data.shortDescription}
+                                                system={data.system}
+                                            />
+                                        </Box>
+                                        <Box sx={{ opacity: !data.isSmallCard ? '0.5' : 'unset' }}>
+                                            <EventCardSmall
+                                                title={data.title}
+                                                gameMaster={data.gameMaster}
+                                                system={data.system}
+                                            />
+                                        </Box>
+                                    </Box>
                                 </FormGroup>
                             </Paper>
                         </Grid2>

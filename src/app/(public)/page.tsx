@@ -10,7 +10,7 @@ export default async function Home() {
     const events = await getAllEvents();
 
     return (
-        <Box>
+        <Box sx={{ display: 'grid', placeItems: 'center', placeContent:'center' }}>
             <Box
                 sx={{
                     width: { md: '300px', sm: '250px', xs: '200px' },
@@ -27,27 +27,24 @@ export default async function Home() {
                     {events
                         .filter((ce) => ce.published)
                         .map((event, i) => {
-                            return (
-                                <Grid xs={i === 0 ? 12 : 6}>
-                                    {i === 0 ?
-                                        <Grid xs={12}>
-                                            <EventCardBig
-                                                key={i}
-                                                title={event.title}
-                                                gameMaster={event.gameMaster}
-                                                shortDescription={event.shortDescription}
-                                                system={event.system}
-                                            />
-                                        </Grid>
-                                    :   <EventCardSmall
+                            return event.isSmallCard ?
+                                    <Grid xs={6}>
+                                        <EventCardSmall
                                             key={i}
                                             title={event.title}
                                             gameMaster={event.gameMaster}
                                             system={event.system}
                                         />
-                                    }
-                                </Grid>
-                            );
+                                    </Grid>
+                                :   <Grid xs={12}>
+                                        <EventCardBig
+                                            key={i}
+                                            title={event.title}
+                                            gameMaster={event.gameMaster}
+                                            shortDescription={event.shortDescription}
+                                            system={event.system}
+                                        />
+                                    </Grid>;
                         })}
                 </Grid>
                 <RealtimeEvents />

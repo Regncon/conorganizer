@@ -23,6 +23,7 @@ export type ConEvent = {
     name: string;
     phone: string;
     gameType: string;
+    isSmallCard: boolean;
     participants: number;
     puljeFridayEvening: boolean;
     puljeSaturdayMorning: boolean;
