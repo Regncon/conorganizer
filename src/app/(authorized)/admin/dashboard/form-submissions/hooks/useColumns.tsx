@@ -60,7 +60,7 @@ export const useColumns = () => {
                         icon={<FontAwesomeIcon icon={faArrowUpRightFromSquare} />}
                         label="førehandsvising"
                         onClick={(e) => {
-                            router.push(`/admin/dashboard/form-submissions/preview/${params.id}` as Route);
+                            router.push(`/admin/dashboard/form-submissions/preview/${params.id}/${params.row.userId}` as Route);
                         }}
                     />,
                 ],

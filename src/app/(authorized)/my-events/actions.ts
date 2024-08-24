@@ -54,6 +54,14 @@ export async function getAllMyEvents(db: Firestore, user: User) {
     const myEvents = docs.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as MyNewEvent[];
     return myEvents;
 }
+
+export async function geMyEventByRefPath(db: Firestore, id: string, userId: string) {
+    const ref = doc(db, '/users', userId, 'my-events', id);
+    const docs = await getDoc(ref);
+    return docs.data() as MyNewEvent;
+}
+
+
 export async function getMyUserInfo(db: Firestore, user: User) {
     const ref = doc(db, '/users', user.uid);
     const docs = await getDoc(ref);
