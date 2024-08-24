@@ -25,7 +25,8 @@ const layout = async ({ children }: Props) => {
             </Box>
         );
     }
-    redirect('/dashboard');
+    return null;
+    //redirect('/dashboard');
 };
 
 export default layout;

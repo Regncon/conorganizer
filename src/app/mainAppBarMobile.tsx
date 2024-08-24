@@ -1,9 +1,15 @@
 'use client';
 import { AppBar, Box, Drawer, IconButton, Menu, MenuItem, styled, Toolbar } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import { useState } from 'react';
+import { ComponentProps, useState } from 'react';
 import HomeIcon from '@mui/icons-material/Home';
 import Link from 'next/link';
+import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import ArticleIcon from '@mui/icons-material/Article';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 
 type Props = {};
 const ITEM_HEIGHT = 48;
@@ -11,25 +17,9 @@ const ITEM_HEIGHT = 48;
 const MainAppBarMobile = ({}: Props) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
-    const handleClick = (event: MouseEvent<HTMLElement>) => {
+    const handleClick: ComponentProps<'button'>['onClick'] = (event) => {
         setAnchorEl(event.currentTarget);
     };
-    const options = [
-        'None',
-        'Atria',
-        'Callisto',
-        'Dione',
-        'Ganymede',
-        'Hangouts Call',
-        'Luna',
-        'Oberon',
-        'Phobos',
-        'Pyxis',
-        'Sedna',
-        'Titania',
-        'Triton',
-        'Umbriel',
-    ];
 
     const handleClose = () => {
         setAnchorEl(null);
@@ -61,18 +51,35 @@ const MainAppBarMobile = ({}: Props) => {
                             anchorEl={anchorEl}
                             open={open}
                             onClose={handleClose}
-                            PaperProps={{
-                                style: {
-                                    maxHeight: ITEM_HEIGHT * 4.5,
-                                    width: '20ch',
-                                },
-                            }}
                         >
-                            {options.map((option) => (
-                                <MenuItem key={option} selected={option === 'Pyxis'} onClick={handleClose}>
-                                    {option}
+                            {true ?
+                                <>
+                                    <MenuItem component={Link} href="/">
+                                        <LogoutIcon />
+                                        Logg ut
+                                    </MenuItem>
+                                    <MenuItem component={Link} href="/my-events">
+                                        <ArticleIcon />
+                                        Mine arrangementer
+                                    </MenuItem>
+                                    <MenuItem component={Link} href="/">
+                                        <AccountCircleIcon />
+                                        Min profil
+                                    </MenuItem>
+                                    <MenuItem component={Link} href="/admin">
+                                        <AdminPanelSettingsIcon />
+                                        Admin
+                                    </MenuItem>
+                                    <MenuItem component={Link} href="/admin/dashboard/events">
+                                        <EditNoteIcon />
+                                        Rediger arrangementer
+                                    </MenuItem>
+                                </>
+                            :   <MenuItem component={Link} href="/login">
+                                    <LoginIcon />
+                                    Logg inn
                                 </MenuItem>
-                            ))}
+                            }
                         </Menu>
                     </Box>
                 </Toolbar>
