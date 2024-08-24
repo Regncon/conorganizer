@@ -32,7 +32,8 @@ export default async function RootLayout({
                 <AppRouterCacheProvider options={{ key: 'mui-theme' }}>
                     <ThemeProvider theme={muiDark}>
                         <CssBaseline enableColorScheme />
-                        <Container maxWidth="xl" disableGutters component={'main'}>
+                        <Container maxWidth="xl" disableGutters component={'main'}
+                         sx={{paddingBottom:"5rem"}}>
                             <Box className={styles['main-test']}>{children}</Box>
                         </Container>
                         <MainAppBar />
