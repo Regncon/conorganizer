@@ -51,6 +51,7 @@ const MainAppBarMobile = ({}: Props) => {
                             anchorEl={anchorEl}
                             open={open}
                             onClose={handleClose}
+                            onClick={handleClose}
                         >
                             {true ?
                                 <>
