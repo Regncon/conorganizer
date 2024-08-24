@@ -44,6 +44,17 @@ const FormSubmissionTable = () => {
                         },
                     ],
                 },
+                filter: {
+                    filterModel: {
+                        items: [
+                            {
+                                field: 'isSubmitted',
+                                operator: 'is',
+                                value: 'true',
+                            },
+                        ],
+                    },
+                },
             }}
             pageSizeOptions={[10]}
             onPaginationModelChange={(e) => {

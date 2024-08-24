@@ -29,6 +29,7 @@ export const useRealtimeTableData = () => {
                         name: data.name,
                         title: data.title,
                         subTitle: data.subTitle,
+                        isSubmitted: data.isSubmitted,
                         isRead: data.isRead ?? false,
                         isAccepted: data.isAccepted ?? false,
                         documentPath: doc.ref.path,

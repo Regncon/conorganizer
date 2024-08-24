@@ -30,6 +30,13 @@ export const useColumns = () => {
                 editable: true,
             },
             {
+                field: 'isSubmitted',
+                headerName: 'Innsendt',
+                type: 'boolean',
+                width: 110,
+                editable: true,
+            },
+            {
                 field: 'isRead',
                 headerName: 'Lest',
                 type: 'boolean',

@@ -5,6 +5,7 @@ export type FormSubmission = {
     name: string;
     title: string;
     subTitle: string;
+    isSubmitted: boolean;
     isRead: boolean;
     isAccepted: boolean;
     documentPath: string;
