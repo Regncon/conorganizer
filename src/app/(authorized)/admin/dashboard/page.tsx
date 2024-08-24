@@ -5,7 +5,12 @@ import MyEvents from '$app/(authorized)/dashboard/MyEvents';
 
 const Dashboard = async () => {
     return (
-        <Grid2 container spacing="2rem" sx={{ marginTop: '0.5rem' }}>
+        <Grid2
+            container
+            rowSpacing={{ xs: 2, md: 0 }}
+            columnSpacing={{ xs: 0, md: 2 }}
+            sx={{ marginTop: '0.5rem', paddingBlockEnd: '5rem' }}
+        >
             <Grid2 xs={12} md={3}>
                 <FormSubmissions />
             </Grid2>
