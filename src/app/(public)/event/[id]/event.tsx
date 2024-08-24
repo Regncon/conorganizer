@@ -82,7 +82,7 @@ const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) 
     };
 
     return (
-        <Paper elevation={1}>
+        <Paper elevation={1} sx={{ maxWidth: '430px', margin: 'auto' }}>
             <Box
                 sx={{
                     display: 'grid',

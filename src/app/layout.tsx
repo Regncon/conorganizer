@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import { muiDark } from '$lib/muiTheme';
 import styles from './page.module.scss';
 import './global.scss';
+import MainAppBar from './mainAppBar';
 
 // <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"></link>
 // <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -34,6 +35,7 @@ export default async function RootLayout({
                         <Container maxWidth="xl" disableGutters component={'main'}>
                             <Box className={styles['main-test']}>{children}</Box>
                         </Container>
+                        <MainAppBar />
                     </ThemeProvider>
                 </AppRouterCacheProvider>
             </body>
