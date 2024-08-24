@@ -1,8 +1,6 @@
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
-import { redirect } from 'next/navigation';
-
 type Props = {
     children: React.ReactNode;
 };
@@ -25,8 +23,7 @@ const layout = async ({ children }: Props) => {
             </Box>
         );
     }
-    return null;
-    //redirect('/dashboard');
+    return children;
 };
 
 export default layout;
