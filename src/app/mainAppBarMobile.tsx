@@ -1,7 +1,7 @@
 'use client';
-import { AppBar, Box, Drawer, IconButton, Menu, MenuItem, styled, Toolbar } from '@mui/material';
+import { AppBar, Box, IconButton, Menu, MenuItem, Toolbar } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import { ComponentProps, useState } from 'react';
+import { ComponentProps, useEffect, useState } from 'react';
 import HomeIcon from '@mui/icons-material/Home';
 import Link from 'next/link';
 import LoginIcon from '@mui/icons-material/Login';
@@ -10,13 +10,26 @@ import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import ArticleIcon from '@mui/icons-material/Article';
 import EditNoteIcon from '@mui/icons-material/EditNote';
+import { onAuthStateChanged, type User } from 'firebase/auth';
+import { firebaseAuth } from '$lib/firebase/firebase';
 
 type Props = {};
-const ITEM_HEIGHT = 48;
 
 const MainAppBarMobile = ({}: Props) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
+
+    const [user, setUser] = useState<User | null>();
+    useEffect(() => {
+        const unsubscribeUser = onAuthStateChanged(firebaseAuth, (user) => {
+            setUser(user);
+        });
+
+        return () => {
+            unsubscribeUser();
+        };
+    }, [user]);
+
     const handleClick: ComponentProps<'button'>['onClick'] = (event) => {
         setAnchorEl(event.currentTarget);
     };
@@ -53,9 +66,9 @@ const MainAppBarMobile = ({}: Props) => {
                             onClose={handleClose}
                             onClick={handleClose}
                         >
-                            {true ?
+                            {user ?
                                 <>
-                                    <MenuItem component={Link} href="/">
+                                    <MenuItem component={Link} href="/logout">
                                         <LogoutIcon />
                                         Logg ut
                                     </MenuItem>
