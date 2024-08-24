@@ -38,15 +38,7 @@ const FormSubmissionsPreviewPage = () => {
         setOpen(false);
     };
 
-    const event: Event = {
-        id: '1',
-        title: 'Dette er tittelen',
-        system: 'DnD 5e',
-        gameMaster: 'Ola Nordmann',
-        shortDescription: 'Dette er en kort beskrivelse',
-        description: 'Dette er en lang beskrivelse',
-        icons: ['katt', 'hund', 'fugl', 'rollespill', 'nisse', 'visse', 'nisse2', 'nisse3', 'nisse4'],
-    };
+    const event: Event = {} as Event;
     return (
         <Box sx={{ maxWidth: '375px', margin: 'auto' }}>
             <Typography variant="h1">Forhåndsvisning</Typography>
