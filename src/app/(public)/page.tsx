@@ -5,30 +5,43 @@ import RealtimeEvents from './RealtimeEvents';
 import Grid from '@mui/material/Unstable_Grid2';
 import Image from 'next/image';
 import { Box } from '@mui/material';
+import Link from 'next/link';
 
 export default async function Home() {
     const events = await getAllEvents();
 
     return (
-        <Box sx={{ display: 'grid', placeItems: 'center', placeContent:'center' }}>
-            <Box
-                sx={{
-                    width: { md: '300px', sm: '250px', xs: '200px' },
-                    height: { md: '300px', sm: '250px', xs: '200px' },
-                    marginBlockStart: '0.5rem',
-                    marginBlockEnd: '1rem',
-                    position: 'relative',
-                }}
-            >
-                <Image src="/RegnCon2024LogoWhite.webp" fill alt="logo" />
-            </Box>
-            <Grid container spacing={2}>
-                <Grid container spacing={2}>
+        <Box>
+            <Link href="/">
+                <Box
+                    sx={{
+                        maxWidth: '430px',
+                        maxHeight: '430px',
+                        margin: 'auto',
+                        width: '100vw',
+                        aspectRatio: '1/1',
+                        marginBlockStart: '0.5rem',
+                        marginBlockEnd: '1rem',
+                        position: 'relative',
+                    }}
+                >
+                    <Image src="/RegnCon2024LogoWhite.webp" fill alt="logo" />
+                </Box>
+            </Link>
+            <Grid container spacing={0}>
+                <Grid container spacing={0}>
                     {events
                         .filter((ce) => ce.published)
                         .map((event, i) => {
                             return event.isSmallCard ?
-                                    <Grid xs={6}>
+                                <Grid xs={6}>
+                                    <Grid
+                                        xs
+                                        display="flex"
+                                        justifyContent="center"
+                                        alignItems="center"
+                                        paddingBottom={'1rem'}
+                                    >
                                         <EventCardSmall
                                             key={i}
                                             title={event.title}
@@ -36,7 +49,15 @@ export default async function Home() {
                                             system={event.system}
                                         />
                                     </Grid>
-                                :   <Grid xs={12}>
+                                </Grid>
+                                : <Grid xs={12}>
+                                    <Grid
+                                        xs
+                                        display="flex"
+                                        justifyContent="center"
+                                        alignItems="center"
+                                        paddingBottom={'1rem'}
+                                    >
                                         <EventCardBig
                                             key={i}
                                             title={event.title}
@@ -44,7 +65,8 @@ export default async function Home() {
                                             shortDescription={event.shortDescription}
                                             system={event.system}
                                         />
-                                    </Grid>;
+                                    </Grid>
+                                </Grid>;
                         })}
                 </Grid>
                 <RealtimeEvents />

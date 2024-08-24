@@ -74,6 +74,7 @@ const FormSubmissionsPreviewPage = () => {
         puljeSaturdayMorning: false,
         puljeSaturdayEvening: false,
         puljeSundayMorning: false,
+        isSmallCard: false,
     };
     return (
         <Box sx={{ maxWidth: '375px', margin: 'auto' }}>

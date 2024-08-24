@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { Card, CardActionArea, CardContent, CardHeader, IconButton, type SxProps, type Theme } from '@mui/material';
+import { Card, CardActionArea, CardContent, CardHeader, type SxProps, type Theme } from '@mui/material';
 import Image from 'next/image';
 import rook from '$lib/image/rook.svg';
 import type { EventCardProps } from '../../lib/types';
@@ -14,7 +14,6 @@ export default function EventCardBig({
     gameMaster,
     shortDescription,
     system,
-    icons,
     backgroundImage = 'blekksprut2.jpg',
     myEventBar = false,
     myEventBarSubmitted = false,
@@ -22,16 +21,16 @@ export default function EventCardBig({
 }: EventCardProps) {
     const circleCheckOrPencilIcon = myEventBarSubmitted ? faCircleCheck : faPencil;
     const SuccessOrWarningColor = myEventBarSubmitted ? 'success.main' : 'warning.main';
-    const width = '306px';
-    const widthHeight: SxProps<Theme> = {
-        width: width,
-        height: '267px',
+    const width: SxProps<Theme> = {
+        width: '100vw',
+        maxWidth: '430px',
     };
     return (
         <Card
             sx={{
                 backgroundImage: `url(/${backgroundImage})`,
-                ...widthHeight,
+                ...width,
+                height: '269px',
                 backgroundSize: 'cover',
                 borderRadius: '1.75rem',
             }}
@@ -41,40 +40,40 @@ export default function EventCardBig({
                     ['&:has(.disable-ripple) > .MuiTouchRipple-root']: {
                         display: 'none',
                     },
-                    ...widthHeight,
                     display: 'grid',
                     gridTemplateRows: '1fr 1fr',
                     placeItems: 'end',
                 }}
             >
-                {myEventBar ?
-                    <Box
-                        sx={{
-                            display: 'flex',
-                            placeSelf: 'start',
-                            placeContent: 'space-between',
-                            padding: '1rem',
-                            width: '100%',
-                        }}
-                    >
-                        <Box sx={{ display: 'flex', gap: '0.5rem', color: 'success.main', placeItems: 'center' }}>
-                            <Typography component="span" sx={{ color: SuccessOrWarningColor }}>
-                                <FontAwesomeIcon icon={circleCheckOrPencilIcon} size="2x" />
-                            </Typography>
-                            <Typography sx={{ color: SuccessOrWarningColor }}>
-                                {myEventBarSubmitted ? 'Sendt inn' : 'Kladd'}
-                            </Typography>
-                        </Box>
-                        <TrashButton docId={myEventDocId} />
-                    </Box>
-                :   null}
+                <Box
+                    sx={{
+                        display: 'flex',
+                        placeSelf: 'start',
+                        placeContent: 'space-between',
+                        padding: '1rem',
+                        width: '100%',
+                    }}
+                >
+                    {myEventBar ?
+                        <>
+                            <Box sx={{ display: 'flex', gap: '0.5rem', color: 'success.main', placeItems: 'center' }}>
+                                <Typography component="span" sx={{ color: SuccessOrWarningColor }}>
+                                    <FontAwesomeIcon icon={circleCheckOrPencilIcon} size="2x" />
+                                </Typography>
+                                <Typography sx={{ color: SuccessOrWarningColor }}>
+                                    {myEventBarSubmitted ? 'Sendt inn' : 'Kladd'}
+                                </Typography>
+                            </Box>
+                            <TrashButton docId={myEventDocId} />
+                        </>
+                        : null}
+                </Box>
                 <CardHeader
                     title={title}
                     titleTypographyProps={{ fontSize: '1.8rem' }}
                     sx={{
-                        minWidth: '273px',
-                        maxHeight: '78px',
-                        maxWidth: '273px',
+                        ...width,
+                        height: '72px',
                         alignItems: 'flex-end',
                         padding: '1rem',
                         wordBreak: 'break-all',
@@ -91,7 +90,7 @@ export default function EventCardBig({
                         backgroundColor: 'rgba(0,0,0,0.5)',
                         backdropFilter: 'blur(4px)',
                         padding: '1rem',
-                        width,
+                        ...width,
                     }}
                 >
                     <Typography sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}> {gameMaster} </Typography>
@@ -104,12 +103,12 @@ export default function EventCardBig({
                         }}
                     >
                         <Typography> {system} </Typography>
-                        {/* <Box sx={{ display: 'flex', gap: '1rem' }}>
-                                <Box component={Image} priority src={rook} alt="rook icon" />
-                                <Box component={Image} priority src={rook} alt="rook icon" />
-                                <Box component={Image} priority src={rook} alt="rook icon" />
-                                <Box component={Image} priority src={rook} alt="rook icon" />
-                            </Box> */}
+                        <Box sx={{ display: 'flex', gap: '1rem' }}>
+                            <Box component={Image} priority src={rook} alt="rook icon" />
+                            <Box component={Image} priority src={rook} alt="rook icon" />
+                            <Box component={Image} priority src={rook} alt="rook icon" />
+                            <Box component={Image} priority src={rook} alt="rook icon" />
+                        </Box>
                     </Box>
                     <Typography
                         sx={{
