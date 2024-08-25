@@ -239,7 +239,7 @@ const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) 
 
                 <Box
                     component={Link}
-                    href="#"
+                    href="/hjelppaamelding"
                     sx={{
                         display: 'inline-flex',
                         gap: '0.4rem',
