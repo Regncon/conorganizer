@@ -15,7 +15,7 @@ import { firebaseAuth } from '$lib/firebase/firebase';
 
 type Props = {};
 
-const MainAppBarMobile = ({}: Props) => {
+const MainAppBarMobile = ({ }: Props) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -41,10 +41,11 @@ const MainAppBarMobile = ({}: Props) => {
         <>
             <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
                 <Toolbar>
+                    <Box sx={{ flexGrow: 1 }} />
                     <IconButton href="/" aria-label="home" component={Link}>
+                        <Box sx={{ flexGrow: 1 }} />
                         <HomeIcon />
                     </IconButton>
-                    <Box sx={{ flexGrow: 1 }} />
                     <Box>
                         <IconButton
                             aria-label="more"
@@ -89,13 +90,14 @@ const MainAppBarMobile = ({}: Props) => {
                                         Rediger arrangementer
                                     </MenuItem>
                                 </>
-                            :   <MenuItem component={Link} href="/login">
+                                : <MenuItem component={Link} href="/login">
                                     <LoginIcon />
                                     Logg inn
                                 </MenuItem>
                             }
                         </Menu>
                     </Box>
+                    <Box sx={{ flexGrow: 1 }} />
                 </Toolbar>
             </AppBar>
         </>
