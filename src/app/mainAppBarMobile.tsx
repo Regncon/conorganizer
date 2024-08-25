@@ -39,7 +39,11 @@ const MainAppBarMobile = ({ }: Props) => {
     };
     return (
         <>
-            <AppBar position="fixed" color="primary" sx={{ top: 'auto', bottom: 0 }}>
+            <AppBar
+                position="fixed"
+                color="primary"
+                sx={{ top: 'auto', bottom: 0, display: { xs: 'block', sm: 'none' } }}
+            >
                 <Toolbar>
                     <Box sx={{ flexGrow: 1 }} />
                     <IconButton href="/" aria-label="home" component={Link}>

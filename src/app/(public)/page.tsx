@@ -58,13 +58,15 @@ export default async function Home() {
                                         alignItems="center"
                                         paddingBottom={'1rem'}
                                     >
-                                        <EventCardBig
-                                            key={i}
-                                            title={event.title}
-                                            gameMaster={event.gameMaster}
-                                            shortDescription={event.shortDescription}
-                                            system={event.system}
-                                        />
+                                        <Link href={`/event/${event.id}`} style={{ all: 'unset' }}>
+                                            <EventCardBig
+                                                key={i}
+                                                title={event.title}
+                                                gameMaster={event.gameMaster}
+                                                shortDescription={event.shortDescription}
+                                                system={event.system}
+                                            />
+                                        </Link>
                                     </Grid>
                                 </Grid>;
                         })}

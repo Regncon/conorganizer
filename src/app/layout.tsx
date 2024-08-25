@@ -1,4 +1,4 @@
-import { Box, Container, CssBaseline, ThemeProvider, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Container, CssBaseline, ThemeProvider } from '@mui/material';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
@@ -32,8 +32,12 @@ export default async function RootLayout({
                 <AppRouterCacheProvider options={{ key: 'mui-theme' }}>
                     <ThemeProvider theme={muiDark}>
                         <CssBaseline enableColorScheme />
-                        <Container maxWidth="xl" disableGutters component={'main'}
-                         sx={{paddingBottom:"5rem"}}>
+                        <Container
+                            maxWidth="xl"
+                            disableGutters
+                            component={'main'}
+                            sx={{ paddingBottom: { xs: '5rem', sm: '0rem' }, paddingTop: { xs: '0rem', sm: '5rem' } }}
+                        >
                             <Box className={styles['main-test']}>{children}</Box>
                         </Container>
                         <MainAppBar />

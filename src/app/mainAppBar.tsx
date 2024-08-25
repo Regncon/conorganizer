@@ -1,9 +1,15 @@
-import MainAppBarMobile from "./mainAppBarMobile";
+import MainAppBarDesktop from './mainAppBarDesktop';
+import MainAppBarMobile from './mainAppBarMobile';
 
-type Props = {}; 
+type Props = {};
 
-const MainAppBar = ({}:Props) => { 
-    return (<MainAppBarMobile />);
+const MainAppBar = ({ }: Props) => {
+    return (
+        <>
+            <MainAppBarDesktop />
+            <MainAppBarMobile />
+        </>
+    );
 };
 
- export default MainAppBar;
+export default MainAppBar;
