@@ -2,7 +2,7 @@
 
 ## Description
 
-This is the source code for the Regncon 2023 app. It's a work in progress, but the idea is to have a place to keep track
+This is the source code for the Regncon 2024 app. It's a work in progress, but the idea is to have a place to keep track
 of your con schedule, your panels, and your expenses.
 
 ## referat fra post-mortem: sorteres inn i must-haves og nice-to-haves av neste styre
@@ -26,7 +26,25 @@ of your con schedule, your panels, and your expenses.
 
 ## Todo
 
-### Must haves Mvp
+### Must haves for publishing events
+
+-   Easy next and previous navigation
+-   Fix bug in debounce
+-   Convert my events to use new event system
+-   Desktop view
+-   Icons
+-   Help text explaining how the algorithm works
+-   Store interests
+-   Connect to checkin system
+-   Display label on new or unread events
+
+#### Nice to haves for publishing events
+
+-   Picture upload
+-   Check preloading of pages
+-   Fix small card layout
+
+### Must haves for publishing full program
 
 -   Make it very clear what day is displayed
 -   Filter out my signups
