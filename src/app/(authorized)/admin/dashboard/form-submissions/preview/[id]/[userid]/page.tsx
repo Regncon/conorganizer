@@ -26,7 +26,7 @@ const FormSubmissionsPreviewPage = async ({ params: { id, userid } }: Props) => 
         gameType: nyEvent.gameType,
         system: nyEvent.system,
         data: false,
-        gameMaster: '',
+        gameMaster: nyEvent.name,
         shortDescription: '',
         email: '',
         phone: '',
