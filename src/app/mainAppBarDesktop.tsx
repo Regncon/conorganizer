@@ -12,6 +12,8 @@ import ArticleIcon from '@mui/icons-material/Article';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { firebaseAuth } from '$lib/firebase/firebase';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import GroupsIcon from '@mui/icons-material/Groups';
 
 type Props = {};
 
@@ -40,10 +42,28 @@ const MainAppBarDesktop = ({ }: Props) => {
     return (
         <>
             <AppBar position="fixed" color="primary" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                <Toolbar>
+                <Toolbar sx={{ gap: 2 }}>
                     <Button startIcon={<HomeIcon />} href="/" aria-label="home" component={Link}>
                         <Box sx={{ flexGrow: 1 }} />
                         Hjem
+                    </Button>
+                    <Button
+                        sx={{ color: 'white' }}
+                        startIcon={<FavoriteIcon />}
+                        href="/?filters=favorits"
+                        aria-label="favorites"
+                        component={Link}
+                    >
+                        Favoritter
+                    </Button>
+                    <Button
+                        sx={{ color: 'white' }}
+                        startIcon={<GroupsIcon />}
+                        href="/?filters=assigned"
+                        aria-label="assigend-events"
+                        component={Link}
+                    >
+                        Påmeldt
                     </Button>
                     <Box sx={{ flexGrow: 1 }} />
                     <Box>

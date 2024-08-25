@@ -12,6 +12,8 @@ import ArticleIcon from '@mui/icons-material/Article';
 import EditNoteIcon from '@mui/icons-material/EditNote';
 import { onAuthStateChanged, type User } from 'firebase/auth';
 import { firebaseAuth } from '$lib/firebase/firebase';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import GroupsIcon from '@mui/icons-material/Groups';
 
 type Props = {};
 
@@ -44,11 +46,18 @@ const MainAppBarMobile = ({ }: Props) => {
                 color="primary"
                 sx={{ top: 'auto', bottom: 0, display: { xs: 'block', sm: 'none' } }}
             >
-                <Toolbar>
+                <Toolbar sx={{ gap: 2 }}>
                     <Box sx={{ flexGrow: 1 }} />
                     <IconButton href="/" aria-label="home" component={Link}>
                         <Box sx={{ flexGrow: 1 }} />
                         <HomeIcon />
+                    </IconButton>
+
+                    <IconButton href="/?filters=favorits" aria-label="favorites" component={Link}>
+                        <FavoriteIcon />
+                    </IconButton>
+                    <IconButton href="/?filters=assigned" aria-label="assigend-events" component={Link}>
+                        <GroupsIcon />
                     </IconButton>
                     <Box>
                         <IconButton
