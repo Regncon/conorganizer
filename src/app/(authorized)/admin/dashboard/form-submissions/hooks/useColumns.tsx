@@ -30,6 +30,13 @@ export const useColumns = () => {
                 editable: true,
             },
             {
+                field: 'isSubmitted',
+                headerName: 'Innsendt',
+                type: 'boolean',
+                width: 110,
+                editable: true,
+            },
+            {
                 field: 'isRead',
                 headerName: 'Lest',
                 type: 'boolean',
@@ -53,7 +60,7 @@ export const useColumns = () => {
                         icon={<FontAwesomeIcon icon={faArrowUpRightFromSquare} />}
                         label="førehandsvising"
                         onClick={(e) => {
-                            router.push(`/admin/dashboard/form-submissions/preview/${params.id}` as Route);
+                            router.push(`/admin/dashboard/form-submissions/preview/${params.id}/${params.row.userId}` as Route);
                         }}
                     />,
                 ],

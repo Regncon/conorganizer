@@ -2,9 +2,11 @@ import type { GridColDef } from '@mui/x-data-grid';
 
 export type FormSubmission = {
     id: string;
+    userId: string;
     name: string;
     title: string;
     subTitle: string;
+    isSubmitted: boolean;
     isRead: boolean;
     isAccepted: boolean;
     documentPath: string;

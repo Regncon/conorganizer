@@ -6,6 +6,7 @@ import { useRealtimeTableData } from './hooks/useRealtimeTableData';
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Route } from 'next';
+import { log } from 'console';
 
 const FormSubmissionTable = () => {
     const columns = useColumns();
@@ -16,7 +17,7 @@ const FormSubmissionTable = () => {
 
     useEffect(() => {
         const handleRowHover: GridEventListener<'rowMouseEnter'> = (params: GridRowParams<FormSubmission>) => {
-            router.prefetch(`/admin/dashboard/form-submissions/preview/${params.id}` as Route);
+            router.prefetch(`/admin/dashboard/form-submissions/preview/${params.id}/${params.row.userId}` as Route);
         };
 
         return apiRef.current.subscribeEvent('rowMouseEnter', handleRowHover);
@@ -43,6 +44,17 @@ const FormSubmissionTable = () => {
                             sort: 'asc',
                         },
                     ],
+                },
+                filter: {
+                    filterModel: {
+                        items: [
+                            {
+                                field: 'isSubmitted',
+                                operator: 'is',
+                                value: 'true',
+                            },
+                        ],
+                    },
                 },
             }}
             pageSizeOptions={[10]}
