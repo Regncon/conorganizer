@@ -2,14 +2,15 @@
 import { Button, CircularProgress, Typography } from '@mui/material';
 import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import PasswordTextField from './PasswordTextField';
-import { signInAndCreateCookie } from '$lib/firebase/firebase';
+import { firebaseAuth, signInAndCreateCookie } from '$lib/firebase/firebase';
 import { useEffect, useState, useTransition, type ComponentProps } from 'react';
 import EmailTextField from '../shared/EmailTextField';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFormState } from 'react-dom';
-import { validateLoginForm as validateLoginFormAction } from './actions';
+import { setSessionCookie, validateLoginForm as validateLoginFormAction } from './actions';
 import LoginButton from './LoginButton';
 import { updateSearchParamsWithEmail } from '../shared/utils';
+import { getAuth, getRedirectResult, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 const initialLoginFormState = {
     emailError: '',
@@ -34,6 +35,65 @@ const LoginPage = () => {
     const searchParams = useSearchParams();
     const email = searchParams.get('email') ?? '';
     const expiredSession = searchParams.get('expired') === 'true' ? true : false;
+
+    const provider = new GoogleAuthProvider();
+
+    const handleGoogleLoginPopup = async () => {
+        signInWithPopup(firebaseAuth, provider)
+            .then(async (result) => {
+                // This gives you a Google Access Token. You can use it to access the Google API.
+                const credential = GoogleAuthProvider.credentialFromResult(result);
+                const token = credential?.accessToken;
+
+                // The signed-in user info.
+                const user = result.user;
+                // IdP data available using getAdditionalUserInfo(result)
+                // ...
+            })
+            .catch((error) => {
+                // Handle Errors here.
+                const errorCode = error.code;
+                console.error('errorCode', errorCode);
+                const errorMessage = error.message;
+                console.error('errorMessage', errorMessage);
+                // The email of the user's account used.
+                const email = error.customData?.email;
+                console.error('email', email);
+                // The AuthCredential type that was used.
+                const credential = GoogleAuthProvider.credentialFromError(error);
+                console.error('credential', credential);
+                // ...
+            });
+    };
+
+    const handleGoogleLoginRedirect = async () => {
+        getRedirectResult(firebaseAuth)
+            .then((result) => {
+                // This gives you a Google Access Token. You can use it to access Google APIs.
+                const credential = result ? GoogleAuthProvider.credentialFromResult(result) : null;
+                const token = credential?.accessToken;
+
+                // The signed-in user info.
+                const user = result?.user;
+                console.log('user', user);
+                // IdP data available using getAdditionalUserInfo(result)
+                // ...
+            })
+            .catch((error) => {
+                // Handle Errors here.
+                const errorCode = error.code;
+                console.error('errorCode', errorCode);
+                const errorMessage = error.message;
+                console.error('errorMessage', errorMessage);
+                // The email of the user's account used.
+                const email = error.customData?.email;
+                console.error('email', email);
+                // The AuthCredential type that was used.
+                const credential = GoogleAuthProvider.credentialFromError(error);
+                console.error('credential', credential);
+                // ...
+            });
+    };
 
     useEffect(() => {
         router.prefetch('/dashboard');
@@ -80,6 +140,8 @@ const LoginPage = () => {
                     Økta har gått ut, ver venleg og logg inn igjen.
                 </Typography>
             )}
+            <Button onClick={handleGoogleLoginPopup}>Logg inn med Google Popup</Button>
+            <Button onClick={handleGoogleLoginRedirect}>Logg inn med Google Redirect</Button>
             <Grid2
                 component="form"
                 container
