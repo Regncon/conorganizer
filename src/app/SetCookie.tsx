@@ -13,7 +13,7 @@ const SetCookie = ({}:Props) => {
                 return;
             }
             const idToken = await user.getIdToken();
-
+            console.log('setting cookie');
             await setSessionCookie(idToken);
         });
 

@@ -46,9 +46,9 @@ const LoginPage = () => {
             if (!user) {
                 return;
             }
-            const idToken = await user.getIdToken();
+            //const idToken = await user.getIdToken();
 
-            await setSessionCookie(idToken);
+            //await setSessionCookie(idToken);
         });
 
         return () => {
