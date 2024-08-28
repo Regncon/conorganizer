@@ -28,6 +28,7 @@ of your con schedule, your panels, and your expenses.
 
 ### Must haves for publishing events
 
+-   Bug: Problems with hitting enter while editing event
 -   Easy next and previous navigation
 -   Fix bug in debounce
 -   Convert my events to use new event system
@@ -36,6 +37,7 @@ of your con schedule, your panels, and your expenses.
 -   Help text explaining how the algorithm works
 -   Store interests
 -   Connect to checkin system
+-   Participants can choose favorite events
 -   Display label on new or unread events
 
 #### Nice to haves for publishing events

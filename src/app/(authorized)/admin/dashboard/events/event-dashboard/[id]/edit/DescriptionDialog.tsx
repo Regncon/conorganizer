@@ -1,4 +1,5 @@
 import {
+    Box,
     Button,
     Dialog,
     DialogActions,
@@ -37,40 +38,42 @@ const DescriptionDialog = ({ data, handleSave, close: Close, open }: props) => {
     }, [data, open]);
     return (
         <Dialog fullScreen open={open} TransitionComponent={Transition}>
-            <DialogContent>
-                <Typography variant="h2">Rediger </Typography>
-                <DialogContentText>
-                    Beskrivelse av arrangementet. Du kan bruke markdown for å formatere teksten.
-                </DialogContentText>
-                <TextField
-                    autoFocus
-                    fullWidth
-                    multiline
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                />
-            </DialogContent>
-            <DialogContent>
-                <Typography variant="h2">Forhåndsvisning </Typography>
-                <hr />
-                <MuiMarkdown>{description}</MuiMarkdown>
-            </DialogContent>
-            <DialogActions>
-                <Button variant="contained" color="error" startIcon={<CancelIcon />} onClick={Close}>
-                    Cancel
-                </Button>
-                <Button
-                    variant="contained"
-                    color="info"
-                    startIcon={<SaveIcon />}
-                    onClick={() => {
-                        data.description = description;
-                        handleSave(data);
-                    }}
-                >
-                    save
-                </Button>
-            </DialogActions>
+            <Box sx={{ maxWidth: '430px', margin: 'auto' }}>
+                <DialogContent>
+                    <Typography variant="h2">Rediger </Typography>
+                    <DialogContentText>
+                        Beskrivelse av arrangementet. Du kan bruke markdown for å formatere teksten.
+                    </DialogContentText>
+                    <TextField
+                        autoFocus
+                        fullWidth
+                        multiline
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                    />
+                </DialogContent>
+                <DialogContent>
+                    <Typography variant="h2">Forhåndsvisning </Typography>
+                    <hr />
+                    <MuiMarkdown>{description}</MuiMarkdown>
+                </DialogContent>
+                <DialogActions>
+                    <Button variant="contained" color="error" startIcon={<CancelIcon />} onClick={Close}>
+                        Cancel
+                    </Button>
+                    <Button
+                        variant="contained"
+                        color="info"
+                        startIcon={<SaveIcon />}
+                        onClick={() => {
+                            data.description = description;
+                            handleSave(data);
+                        }}
+                    >
+                        save
+                    </Button>
+                </DialogActions>
+            </Box>
         </Dialog>
     );
 };
