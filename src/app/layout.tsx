@@ -6,6 +6,7 @@ import { muiDark } from '$lib/muiTheme';
 import styles from './page.module.scss';
 import './global.scss';
 import MainAppBar from './mainAppBar';
+import SetCookie from './SetCookie';
 
 // <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"></link>
 // <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
@@ -31,6 +32,7 @@ export default async function RootLayout({
             <body className={inter.className}>
                 <AppRouterCacheProvider options={{ key: 'mui-theme' }}>
                     <ThemeProvider theme={muiDark}>
+                        <SetCookie />
                         <CssBaseline enableColorScheme />
                         <Container
                             maxWidth="xl"
