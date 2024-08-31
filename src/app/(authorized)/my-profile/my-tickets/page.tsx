@@ -1,5 +1,6 @@
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 import Ticket from "./Ticket";
+import CustomIcon from "$lib/icons/miscgame";
 
 export default function MyTickets() {
     return (
@@ -22,7 +23,9 @@ export default function MyTickets() {
             </Paper>
             <Paper sx={{marginBottom: "2rem", paddingLeft:"2rem", width:"320px"}}>
                 <Typography variant="h1">My Tickets</Typography>
-                <Ticket />
+                <CustomIcon color="primary" size="large" />
+                <CustomIcon color="secondary" size="small" />
+                <Ticket /> 
                 <Ticket />
             </Paper>
         <Button variant="contained" color="primary" href="/my-profile">Go back to my profile</Button>
