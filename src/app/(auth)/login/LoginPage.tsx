@@ -1,6 +1,5 @@
 'use client';
-import { Button, CircularProgress, Typography } from '@mui/material';
-import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
+import { Button, CircularProgress, Grid2, Typography } from '@mui/material';
 import PasswordTextField from './PasswordTextField';
 import { firebaseAuth, signInAndCreateCookie } from '$lib/firebase/firebase';
 import { useEffect, useState, useTransition, type ComponentProps } from 'react';

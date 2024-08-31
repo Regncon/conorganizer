@@ -15,8 +15,6 @@ import Confetti from 'react-confetti';
 import { useCallback, useEffect, useState, type ComponentProps, type FormEvent } from 'react';
 import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
-
-import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import Slide from '@mui/material/Slide';
 import Skeleton from '@mui/material/Skeleton';
@@ -25,6 +23,7 @@ import type { MyNewEvent } from '$lib/types';
 import EventFromSkeleton from './EventFormSkeleton';
 import Chip from '@mui/material/Chip';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import { Grid2 } from '@mui/material';
 type Props = {
     id: string;
 };
@@ -191,7 +190,7 @@ const EventForm = ({ id }: Props) => {
                         />
                     )}
 
-                    <Grid2 xs={12}>
+                    <Grid2 size={12}>
                         <Paper>
                             <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 33 teikn</FormLabel>
                             <TextField
@@ -208,7 +207,7 @@ const EventForm = ({ id }: Props) => {
                             />
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12}>
+                    <Grid2 size={12}>
                         <Paper>
                             <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 50 teikn</FormLabel>
                             <TextField
@@ -225,7 +224,12 @@ const EventForm = ({ id }: Props) => {
                             />
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12} sm={6} md={3}>
+                    <Grid2
+                        size={{
+                            xs: 12,
+                            sm: 6,
+                            md: 3
+                        }}>
                         <Paper>
                             <TextField
                                 type="email"
@@ -238,7 +242,12 @@ const EventForm = ({ id }: Props) => {
                             />
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12} sm={6} md={3}>
+                    <Grid2
+                        size={{
+                            xs: 12,
+                            sm: 6,
+                            md: 3
+                        }}>
                         <Paper>
                             <TextField
                                 name="name"
@@ -250,7 +259,12 @@ const EventForm = ({ id }: Props) => {
                             />
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12} sm={6} md={3}>
+                    <Grid2
+                        size={{
+                            xs: 12,
+                            sm: 6,
+                            md: 3
+                        }}>
                         <Paper>
                             <TextField
                                 type="phone"
@@ -263,7 +277,12 @@ const EventForm = ({ id }: Props) => {
                             />
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12} sm={6} md={3}>
+                    <Grid2
+                        size={{
+                            xs: 12,
+                            sm: 6,
+                            md: 3
+                        }}>
                         <Paper>
                             <TextField
                                 name="system"
@@ -274,7 +293,7 @@ const EventForm = ({ id }: Props) => {
                             />
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12}>
+                    <Grid2 size={12}>
                         <Paper sx={{ padding: '1rem' }}>
                             <FormControl fullWidth>
                                 <FormLabel>Skildring av modulen (tekst til programmet):</FormLabel>
@@ -282,7 +301,11 @@ const EventForm = ({ id }: Props) => {
                             </FormControl>
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12} sm={4}>
+                    <Grid2
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
                         <Paper sx={{ padding: '1rem' }}>
                             <FormControl fullWidth>
                                 <FormLabel>Kva type spel er det?</FormLabel>
@@ -311,7 +334,11 @@ const EventForm = ({ id }: Props) => {
                             </FormControl>
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12} sm={4}>
+                    <Grid2
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
                         <Paper sx={{ padding: '1rem', height: '100%' }}>
                             <TextField
                                 type="number"
@@ -324,7 +351,11 @@ const EventForm = ({ id }: Props) => {
                             />
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12} sm={4}>
+                    <Grid2
+                        size={{
+                            xs: 12,
+                            sm: 4
+                        }}>
                         <Paper sx={{ padding: '1rem' }}>
                             <FormGroup>
                                 <FormLabel>Kva for pulje kan du arrangere i?</FormLabel>
@@ -351,7 +382,7 @@ const EventForm = ({ id }: Props) => {
                             </FormGroup>
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12}>
+                    <Grid2 size={12}>
                         <Paper sx={{ padding: '1rem' }}>
                             <FormGroup>
                                 <FormLabel>Kryss av for det som gjeld</FormLabel>
@@ -386,7 +417,7 @@ const EventForm = ({ id }: Props) => {
                             ))}
                         </Paper>
                     </Grid2>
-                    <Grid2 xs={12}>
+                    <Grid2 size={12}>
                         <Paper sx={{ padding: '1rem' }}>
                             <FormControl fullWidth>
                                 <FormLabel>Merknader: Er det noko anna du vil vi skal vite?</FormLabel>
@@ -399,7 +430,7 @@ const EventForm = ({ id }: Props) => {
                         </Paper>
                     </Grid2>
 
-                    <Grid2 xs={12}>
+                    <Grid2 size={12}>
                         <Paper sx={{ padding: '1rem' }}>
                             <Typography>
                                 Kladden vert lagra automatisk, men du må trykkje på knappen for å sende inn.

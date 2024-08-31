@@ -1,11 +1,11 @@
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
+  
 import { collection, doc, type Firestore } from 'firebase/firestore';
 import type { FirebaseApp } from 'firebase/app';
 import Box from '@mui/material/Box';
 import { getAllMyEvents } from './actions';
 import RealtimeMyEvents from './RealtimeMyEvents';
-import { Typography } from '@mui/material';
+import { Grid2, Typography } from '@mui/material';
 import { revalidatePath } from 'next/cache';
 import EventCardBig from '$app/(public)/EventCardBig';
 import DynamicLink from './DynamicLink';
@@ -27,58 +27,60 @@ const MyEvents = async () => {
     const newDocumentId = await createId(app, db);
 
     revalidatePath('/my-events');
-    return (
-        <>
-            <Typography sx={{ textAlign: 'center', fontSize: '1.8rem' }}>
-                Sjå under for ein oversikt over arrangementa du har registrert.
-            </Typography>
-            <Box sx={{ position: 'relative', marginTop: '2rem' }}>
-                <Grid2 container spacing="2rem">
-                    {docs
-                        .sort((a, b) => {
-                            return new Date(a.createdAt) > new Date(b.createdAt) ? 1 : -1;
-                        })
-                        .map((doc) => (
-                            <Grid2
-                                sx={{
-                                    textDecoration: 'none',
-                                    position: 'relative',
-                                    display: 'flex',
-                                    placeContent: 'center',
-                                    placeItems: 'center',
-                                }}
-                                xl={2.7}
-                                key={doc.id}
-                            >
-                                <DynamicLink docId={doc.id}>
-                                    <EventCardBig
-                                        title={doc.title}
-                                        gameMaster={doc.name}
-                                        shortDescription={doc.subTitle}
-                                        system={doc.system}
-                                        backgroundImage="my-events.jpg"
-                                        myEventBar
-                                        myEventBarSubmitted={doc.isSubmitted}
-                                        myEventDocId={doc.id}
-                                    />
-                                </DynamicLink>
-                            </Grid2>
-                        ))}
-                    <Grid2
-                        sx={{
-                            display: 'flex',
-                            placeContent: 'center',
-                            placeItems: 'center',
-                        }}
-                        xl={2.7}
-                    >
-                        <AddEventCard newDocumentId={newDocumentId} />
-                    </Grid2>
+    return (<>
+        <Typography sx={{ textAlign: 'center', fontSize: '1.8rem' }}>
+            Sjå under for ein oversikt over arrangementa du har registrert.
+        </Typography>
+        <Box sx={{ position: 'relative', marginTop: '2rem' }}>
+            <Grid2 container spacing="2rem">
+                {docs
+                    .sort((a, b) => {
+                        return new Date(a.createdAt) > new Date(b.createdAt) ? 1 : -1;
+                    })
+                    .map((doc) => (
+                        <Grid2
+                            sx={{
+                                textDecoration: 'none',
+                                position: 'relative',
+                                display: 'flex',
+                                placeContent: 'center',
+                                placeItems: 'center',
+                            }}
+                            key={doc.id}
+                            size={{
+                                xl: 2.7
+                            }}
+                        >
+                            <DynamicLink docId={doc.id}>
+                                <EventCardBig
+                                    title={doc.title}
+                                    gameMaster={doc.name}
+                                    shortDescription={doc.subTitle}
+                                    system={doc.system}
+                                    backgroundImage="my-events.jpg"
+                                    myEventBar
+                                    myEventBarSubmitted={doc.isSubmitted}
+                                    myEventDocId={doc.id}
+                                />
+                            </DynamicLink>
+                        </Grid2>
+                    ))}
+                <Grid2
+                    sx={{
+                        display: 'flex',
+                        placeContent: 'center',
+                        placeItems: 'center',
+                    }}
+                    size={{
+                        xl: 2.7
+                    }}
+                >
+                    <AddEventCard newDocumentId={newDocumentId} />
                 </Grid2>
-                <RealtimeMyEvents userId={user.uid} />
-            </Box>
-        </>
-    );
+            </Grid2>
+            <RealtimeMyEvents userId={user.uid} />
+        </Box>
+    </>);
 };
 
 export default MyEvents;

@@ -28,6 +28,7 @@ of your con schedule, your panels, and your expenses.
 
 ### Must haves for publishing events
 
+-   Fix cookie lifetime
 -   Bug: Problems with hitting enter while editing event
 -   Easy next and previous navigation
 -   Fix bug in debounce

@@ -1,5 +1,4 @@
-import { Paper, Typography } from '@mui/material';
-import Grid2 from '@mui/material/Unstable_Grid2';
+import { Grid2, Paper, Typography } from '@mui/material';
 import EventForm from './EventForm';
 
 type Props = {

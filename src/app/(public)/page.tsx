@@ -2,16 +2,15 @@ import EventCardBig from './EventCardBig';
 import EventCardSmall from './EventCardSmall';
 import { getAllEvents } from './serverAction';
 import RealtimeEvents from './RealtimeEvents';
-import Grid from '@mui/material/Unstable_Grid2';
 import Image from 'next/image';
-import { Box } from '@mui/material';
+import { Box, Grid2 } from '@mui/material';
 import Link from 'next/link';
 
 export default async function Home() {
     const events = await getAllEvents();
 
     return (
-        <Box>
+        (<Box>
             <Link href="/">
                 <Box
                     sx={{
@@ -28,19 +27,19 @@ export default async function Home() {
                     <Image src="/RegnCon2024LogoWhite.webp" fill alt="logo" />
                 </Box>
             </Link>
-            <Grid container spacing={0}>
-                <Grid container spacing={0}>
+            <Grid2 container spacing={0}>
+                <Grid2 container spacing={0}>
                     {events
                         .filter((ce) => ce.published)
                         .map((event, i) => {
                             return event.isSmallCard ?
-                                <Grid xs={6}>
-                                    <Grid
-                                        xs
+                                <Grid2 size={6}>
+                                    <Grid2
                                         display="flex"
                                         justifyContent="center"
                                         alignItems="center"
                                         paddingBottom={'1rem'}
+                                        size="grow"
                                     >
                                         <EventCardSmall
                                             key={i}
@@ -48,15 +47,15 @@ export default async function Home() {
                                             gameMaster={event.gameMaster}
                                             system={event.system}
                                         />
-                                    </Grid>
-                                </Grid>
-                                : <Grid xs={12}>
-                                    <Grid
-                                        xs
+                                    </Grid2>
+                                </Grid2>
+                                : <Grid2 size={12}>
+                                    <Grid2
                                         display="flex"
                                         justifyContent="center"
                                         alignItems="center"
                                         paddingBottom={'1rem'}
+                                        size="grow"
                                     >
                                         <Link href={`/event/${event.id}`} style={{ all: 'unset' }}>
                                             <EventCardBig
@@ -67,12 +66,12 @@ export default async function Home() {
                                                 system={event.system}
                                             />
                                         </Link>
-                                    </Grid>
-                                </Grid>;
+                                    </Grid2>
+                                </Grid2>;
                         })}
-                </Grid>
+                </Grid2>
                 <RealtimeEvents />
-            </Grid>
-        </Box>
+            </Grid2>
+        </Box>)
     );
 }

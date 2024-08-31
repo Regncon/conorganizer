@@ -13,6 +13,7 @@ const SetCookie = ({}:Props) => {
                 return;
             }
             const idToken = await user.getIdToken();
+            //ToDo: only set cookie if it is not already set or the cookie is expired
             console.log('setting cookie');
             await setSessionCookie(idToken);
         });

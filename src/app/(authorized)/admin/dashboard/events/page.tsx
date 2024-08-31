@@ -1,7 +1,6 @@
 import EventCardBig from '$app/(public)/EventCardBig';
 import { getAllEvents } from '$app/(public)/serverAction';
-import { Paper } from '@mui/material';
-import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
+import { Grid2, Paper } from '@mui/material';
 import Link from 'next/link';
 
 const Events = async () => {
