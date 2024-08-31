@@ -110,7 +110,7 @@ const MainAppBarContent = ({ sx, user, mobile, admin }: Props) => {
                                     <ArticleIcon />
                                     Mine arrangementer
                                 </MenuItem>
-                                <MenuItem key="/" component={Link} href="/">
+                                <MenuItem key="/" component={Link} href="/my-profile">
                                     <AccountCircleIcon />
                                     Min profil
                                 </MenuItem>
