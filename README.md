@@ -40,6 +40,7 @@ of your con schedule, your panels, and your expenses.
 -   Connect to checkin system
 -   Participants can choose favorite events
 -   Display label on new or unread events
+-   Debounce/fix text box, my events
 
 #### Nice to haves for publishing events
 
