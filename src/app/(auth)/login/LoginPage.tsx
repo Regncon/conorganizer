@@ -55,19 +55,13 @@ const LoginPage = () => {
         };
     }, [user]);
 
-    console.log('user', user);
-    
-
-
     const handleGoogleLoginPopup = async () => {
         signInWithPopup(firebaseAuth, provider)
             .then(async (result) => {
                 // This gives you a Google Access Token. You can use it to access the Google API.
                 const credential = GoogleAuthProvider.credentialFromResult(result);
                 const token = credential?.accessToken;
-                console.log('token', token);
                 const idToken = credential?.idToken;
-                console.log('idToken', credential?.idToken);
                 //await setSessionCookie(idToken?? '');
 
                 // The signed-in user info.
@@ -100,11 +94,8 @@ const LoginPage = () => {
             // This gives you a Google Access Token. You can use it to access Google APIs.
             const credential = result ? GoogleAuthProvider.credentialFromResult(result) : null;
             const token = credential?.accessToken;
-            console.log('token', token);
-
             // The signed-in user info.
             const user = result?.user;
-            console.log('user', user);
             // IdP data available using getAdditionalUserInfo(result)
             // ...
         })

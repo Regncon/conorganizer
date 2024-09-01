@@ -41,6 +41,9 @@ of your con schedule, your panels, and your expenses.
 -   Participants can choose favorite events
 -   Display label on new or unread events
 -   Debounce/fix text box, my events
+-   Send emails from server
+-   Create participant in database
+-   Get tickets from checkin
 
 #### Nice to haves for publishing events
 
