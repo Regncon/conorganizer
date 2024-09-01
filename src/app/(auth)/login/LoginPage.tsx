@@ -9,7 +9,15 @@ import { useFormState } from 'react-dom';
 import { setSessionCookie, validateLoginForm as validateLoginFormAction } from './actions';
 import LoginButton from './LoginButton';
 import { updateSearchParamsWithEmail } from '../shared/utils';
-import { getAuth, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signInWithRedirect, User } from 'firebase/auth';
+import {
+    getAuth,
+    getRedirectResult,
+    GoogleAuthProvider,
+    onAuthStateChanged,
+    signInWithPopup,
+    signInWithRedirect,
+    User,
+} from 'firebase/auth';
 import GoogleSignInButton from './GoogleButton';
 
 const initialLoginFormState = {
@@ -36,8 +44,6 @@ const LoginPage = () => {
     const email = searchParams.get('email') ?? '';
     const expiredSession = searchParams.get('expired') === 'true' ? true : false;
 
-    const provider = new GoogleAuthProvider();
-
     const [user, setUser] = useState<User | null>();
     useEffect(() => {
         const unsubscribeUser = onAuthStateChanged(firebaseAuth, async (user) => {
@@ -56,42 +62,8 @@ const LoginPage = () => {
     }, [user]);
 
     console.log('user', user);
-    
 
-
-    const handleGoogleLoginPopup = async () => {
-        signInWithPopup(firebaseAuth, provider)
-            .then(async (result) => {
-                // This gives you a Google Access Token. You can use it to access the Google API.
-                const credential = GoogleAuthProvider.credentialFromResult(result);
-                const token = credential?.accessToken;
-                console.log('token', token);
-                const idToken = credential?.idToken;
-                console.log('idToken', credential?.idToken);
-                //await setSessionCookie(idToken?? '');
-
-                // The signed-in user info.
-                const user = result.user;
-                // IdP data available using getAdditionalUserInfo(result)
-                // ...
-                router.replace('/');
-            })
-            .catch((error) => {
-                // Handle Errors here.
-                const errorCode = error.code;
-                console.error('errorCode', errorCode);
-                const errorMessage = error.message;
-                console.error('errorMessage', errorMessage);
-                // The email of the user's account used.
-                const email = error.customData?.email;
-                console.error('email', email);
-                // The AuthCredential type that was used.
-                const credential = GoogleAuthProvider.credentialFromError(error);
-                console.error('credential', credential);
-                // ...
-            });
-    };
-
+    const provider = new GoogleAuthProvider();
     const handleGoogleLoginRedirect = async () => {
         signInWithRedirect(firebaseAuth, provider);
     };
@@ -168,7 +140,7 @@ const LoginPage = () => {
                     Økta har gått ut, ver venleg og logg inn igjen.
                 </Typography>
             )}
-            <GoogleSignInButton onClick={handleGoogleLoginPopup} />
+            <GoogleSignInButton />
             <Typography variant="h3" textAlign="center">
                 eller
             </Typography>
