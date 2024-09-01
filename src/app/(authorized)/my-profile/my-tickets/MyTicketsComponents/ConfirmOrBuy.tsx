@@ -14,7 +14,7 @@ const ConfirmOrBuy = async ({}: Props) => {
             <Typography variant="h2">Har billetter</Typography>
             <Box sx={{ display: 'grid', gap: '1rem' }}>
                 <ConfirmEmailButton />
-                <GoogleSignInButton />
+                {user?.emailVerified ? null : <GoogleSignInButton />}
             </Box>
             <Typography variant="h2">Har ikke billetter</Typography>
             <Button

@@ -13,8 +13,15 @@ const ConfirmEmailButton = ({}: Props) => {
         }
     };
     return (
-        <Button fullWidth variant="contained" color="primary" onClick={handleClick} disabled={!user}>
-            Bekreft e-post {!user && <CircularProgress size="1.5rem" sx={{ marginInlineStart: '1rem' }} />}
+        <Button
+            fullWidth
+            variant="contained"
+            color="primary"
+            onClick={handleClick}
+            disabled={user?.emailVerified ?? false}
+        >
+            {user?.emailVerified ? 'allerede verifisert' : 'Bekreft e-post'}
+            {!user && <CircularProgress size="1.5rem" sx={{ marginInlineStart: '1rem' }} />}
         </Button>
     );
 };
