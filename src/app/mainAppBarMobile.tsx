@@ -1,14 +1,14 @@
 import MainAppBarContent from './MainAppBarContent';
 
 type Props = {
-    user: boolean;
+    isLoggedIn: boolean;
     admin: boolean;
 };
 
-const MainAppBarMobile = ({ user, admin }: Props) => {
+const MainAppBarMobile = ({ isLoggedIn, admin }: Props) => {
     return (
         <MainAppBarContent
-            user={!!user}
+            isLoggedIn={!!isLoggedIn}
             mobile={true}
             admin={admin}
             sx={{ top: 'auto', bottom: 0, display: { xs: 'flex', sm: 'none' } }}

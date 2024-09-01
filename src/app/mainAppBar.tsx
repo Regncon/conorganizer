@@ -13,8 +13,8 @@ const MainAppBar = async ({}: Props) => {
 
     return (
         <>
-            <MainAppBarDesktop user={!!user} admin={admin} />
-            <MainAppBarMobile user={!!user} admin={admin} />
+            <MainAppBarDesktop isLoggedIn={!!user} admin={admin} />
+            <MainAppBarMobile isLoggedIn={!!user} admin={admin} />
         </>
     );
 };
