@@ -42,10 +42,9 @@ export const getAuthorizedAuth = async () => {
         // To signIn user so we get access to auth.currentUser
         if (auth.currentUser?.uid !== decodedIdToken.uid) {
             const userRef = doc(db, '/users', decodedIdToken.uid);
-
             const userData = (await getDoc(userRef)).data() as { admin: boolean };
             const customToken = await adminAuth
-                .createCustomToken(decodedIdToken.uid)
+                .createCustomToken(decodedIdToken.uid, {admin: userData.admin ?? false})
                 .catch((e) => console.error(e.message));
 
             if (!customToken) return noSessionReturn;

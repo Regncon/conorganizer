@@ -8,7 +8,7 @@ type Props = {
 const MainAppBarDesktop = ({ isLoggedIn, admin }: Props) => {
     return (
         <MainAppBarContent
-            isLoggedIn={!!isLoggedIn}
+            isLoggedIn={isLoggedIn}
             mobile={false}
             admin={admin}
             sx={{ display: { xs: 'none', sm: 'flex' } }}

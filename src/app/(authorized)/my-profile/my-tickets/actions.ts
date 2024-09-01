@@ -1,7 +1,4 @@
 'use server';
-
-import Ticket from './Ticket';
-
 export type CrmRecord = {
     id: number;
     firstName: string;
