@@ -14,12 +14,12 @@ import Link from 'next/link';
 import { useState, type ComponentProps } from 'react';
 type Props = {
     sx?: SxProps<Theme>;
-    user: boolean;
+    isLoggedIn: boolean;
     admin: boolean;
     mobile: boolean;
 };
 
-const MainAppBarContent = ({ sx, user, mobile, admin }: Props) => {
+const MainAppBarContent = ({ sx, isLoggedIn, mobile, admin }: Props) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -80,7 +80,7 @@ const MainAppBarContent = ({ sx, user, mobile, admin }: Props) => {
             <Toolbar sx={{ gap: 2 }}>
                 {mobile ? mobileBottomContent : desktopBottomContent}
                 <Box>
-                    {user ?
+                    {isLoggedIn ?
                         <>
                             <IconButton
                                 aria-label="more"
