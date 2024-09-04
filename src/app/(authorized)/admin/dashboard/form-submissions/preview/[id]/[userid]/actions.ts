@@ -5,7 +5,7 @@ import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { ConEvent, MyNewEvent } from '$lib/types';
 import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 
-export async function approveNewEvent(myEventId: string, myEventUserId: string) {
+export async function convertToConEvent(myEventId: string, myEventUserId: string) {
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {
         return;

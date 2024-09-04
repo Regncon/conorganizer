@@ -21,7 +21,7 @@ import type { DataGridPropsWithoutDefaultValue } from '@mui/x-data-grid/internal
 import debounce from '$lib/debounce';
 import { updateReadAndOrAcceptedStatus, type MyEventUpdateValueName } from './actions';
 import { Box, Button, CircularProgress } from '@mui/material';
-import { approveNewEvent } from './preview/[id]/[userid]/actions';
+import { convertToConEvent } from './preview/[id]/[userid]/actions';
 type DataGridPropsWithoutDefaultValueWithPromise<T extends GridValidRowModel> = Omit<
     DataGridPropsWithoutDefaultValue<T>,
     'onRowSelectionModelChange'
@@ -67,7 +67,7 @@ const FormSubmissionTable = () => {
             if (row?.id === undefined || row?.userId === undefined) {
                 return null;
             }
-            return () => approveNewEvent(row.id, row.userId);
+            return () => convertToConEvent(row.id, row.userId);
         });
 
         await Promise.all(selectedRows.map((row) => row?.()));
