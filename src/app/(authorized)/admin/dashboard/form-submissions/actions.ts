@@ -1,20 +1,17 @@
 'use server';
 
-import { getMyUserInfo } from '$app/(authorized)/my-events/actions';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { collectionGroup, documentId, getDoc, getDocs, query, where, type Firestore } from 'firebase/firestore';
-import { redirect } from 'next/navigation';
+import type { MyNewEvent } from '$lib/types';
+import { doc, updateDoc, type DocumentReference, type Firestore } from 'firebase/firestore';
 
-const setReadStatus = async (db: Firestore, queryValue: string) => {
-    // const myEventsQuery = query(collectionGroup(db, 'my-events'));
-    const myEventsQuery = query(collectionGroup(db, 'my-events'), where(documentId(), '==', queryValue));
-    console.log(myEventsQuery);
-
-    console.log(await getDocs(myEventsQuery));
+export type MyEventUpdateValueName = { isRead: boolean; isAccepted?: boolean };
+const setReadStatusAndOrAccepted = async (db: Firestore, queryValue: string, updatedValue: MyEventUpdateValueName) => {
+    const userRef = doc(db, queryValue) as DocumentReference<MyNewEvent, MyNewEvent>;
+    await updateDoc(userRef, updatedValue);
 };
-export const updateReadStatus = async (queryValue: string) => {
+export const updateReadAndOrAcceptedStatus = async (queryValue: string, updatedValue: MyEventUpdateValueName) => {
     const { app, user, auth, db } = await getAuthorizedAuth();
     if (app !== null && user !== null && auth !== null && db !== null) {
-        setReadStatus(db, queryValue);
+        setReadStatusAndOrAccepted(db, queryValue, updatedValue);
     }
 };
