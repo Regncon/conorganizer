@@ -9,6 +9,7 @@ import {
     type GridCallbackDetails,
     type GridRowSelectionModel,
     type GridValidRowModel,
+    GridPagination,
 } from '@mui/x-data-grid';
 import type { FormSubmission } from './types';
 import { useColumns } from './hooks/useColumns';
@@ -19,6 +20,8 @@ import { Route } from 'next';
 import type { DataGridPropsWithoutDefaultValue } from '@mui/x-data-grid/internals';
 import debounce from '$lib/debounce';
 import { updateReadAndOrAcceptedStatus, type MyEventUpdateValueName } from './actions';
+import { Box, Button, CircularProgress } from '@mui/material';
+import { approveNewEvent } from './preview/[id]/[userid]/actions';
 type DataGridPropsWithoutDefaultValueWithPromise<T extends GridValidRowModel> = Omit<
     DataGridPropsWithoutDefaultValue<T>,
     'onRowSelectionModelChange'
@@ -35,7 +38,8 @@ const FormSubmissionTable = () => {
     const apiRef = useGridApiRef();
     const rows = useMemo(() => tableData, [tableData]);
     const router = useRouter();
-    const [selectedRows, setSelectedRows] = useState<readonly GridRowId[]>([]);
+    const [selectedRowsModel, setSelectedRowsModel] = useState<readonly GridRowId[]>([]);
+    const [isLoadingConverting, setIsLoadingConverting] = useState<boolean>(false);
 
     useEffect(() => {
         const handleRowHover: GridEventListener<'rowMouseEnter'> = (params: GridRowParams<FormSubmission>) => {
@@ -45,18 +49,31 @@ const FormSubmissionTable = () => {
         return apiRef.current.subscribeEvent('rowMouseEnter', handleRowHover);
     }, [apiRef]);
 
-    const setDebouncedSelectedRows: DataGridPropsWithoutDefaultValueWithPromise<FormSubmission>['onRowSelectionModelChange'] =
-        debounce((selectedRows, details): void => {
-            setSelectedRows(selectedRows);
-        }, 1500);
-    const handleSelectionChange: DataGridPropsWithoutDefaultValue<FormSubmission>['onRowSelectionModelChange'] = async (
-        rowSelectionModel,
-        details
-    ) => {
-        await setDebouncedSelectedRows(rowSelectionModel, details);
-    };
-    console.log(selectedRows);
+    const debouncedSetSelectedRows: DataGridPropsWithoutDefaultValueWithPromise<FormSubmission>['onRowSelectionModelChange'] =
+        debounce((rowSelectionModel, details): void => {
+            setSelectedRowsModel(rowSelectionModel);
+        }, 800);
 
+    const handleSelectionChange: DataGridPropsWithoutDefaultValueWithPromise<FormSubmission>['onRowSelectionModelChange'] =
+        async (rowSelectionModel, details) => {
+            await debouncedSetSelectedRows(rowSelectionModel, details);
+            details.api.getRow;
+        };
+
+    const handleConvertToEvents = async () => {
+        setIsLoadingConverting(true);
+        const selectedRows = selectedRowsModel.map((rowId) => {
+            const row: FormSubmission | null = apiRef.current.getRow(rowId);
+            if (row?.id === undefined || row?.userId === undefined) {
+                return null;
+            }
+            return () => approveNewEvent(row.id, row.userId);
+        });
+
+        await Promise.all(selectedRows.map((row) => row?.()));
+        setIsLoadingConverting(false);
+    };
+    console.log(selectedRowsModel);
     return (
         <DataGrid
             sx={{ insetBlockStart: '2rem', '.MuiDataGrid-cell--editable': { backgroundColor: 'secondary.dark' } }}
@@ -64,6 +81,27 @@ const FormSubmissionTable = () => {
             columns={columns}
             slots={{
                 toolbar: GridToolbar,
+                footer: () => (
+                    <>
+                        <GridPagination />
+                        {selectedRowsModel.length > 0 ?
+                            <Box sx={{ display: 'grid', placeContent: 'end' }}>
+                                <Button
+                                    variant="contained"
+                                    disabled={isLoadingConverting}
+                                    onClick={handleConvertToEvents}
+                                >
+                                    {isLoadingConverting ?
+                                        <>
+                                            Vennligst vent Konverter arrangementer
+                                            <CircularProgress sx={{ marginInlineStart: '2rem' }} size="1.5rem" />
+                                        </>
+                                    :   'Konverter til arrangementer'}
+                                </Button>
+                            </Box>
+                        :   null}
+                    </>
+                ),
             }}
             initialState={{
                 pagination: {
