@@ -17,16 +17,17 @@ import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import Slide from '@mui/material/Slide';
-import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import type { MyNewEvent } from '$lib/types';
 import EventFromSkeleton from './EventFormSkeleton';
 import Chip from '@mui/material/Chip';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import { Grid2 } from '@mui/material';
+
 type Props = {
     id: string;
 };
+
 const EventForm = ({ id }: Props) => {
     const [isExploding, setIsExploding] = useState(false);
 
@@ -167,289 +168,296 @@ const EventForm = ({ id }: Props) => {
     };
 
     return newEvent ?
-            <>
-                <Grid2
-                    sx={{ marginBlock: '1rem' }}
-                    noValidate={newEvent.isSubmitted}
-                    container
-                    component="form"
-                    spacing="2rem"
-                    onBlur={handleBlur}
-                    onChange={handleOnChange}
-                    onSubmit={handleSubmit}
-                >
-                    {isExploding && (
-                        <Confetti
-                            onConfettiComplete={() => {
-                                setIsExploding(!isExploding);
+        <>
+            <Grid2
+                sx={{ marginBlock: '1rem' }}
+                noValidate={newEvent.isSubmitted}
+                container
+                component="form"
+                spacing="2rem"
+                onBlur={handleBlur}
+                onChange={handleOnChange}
+                onSubmit={handleSubmit}
+            >
+                {isExploding && (
+                    <Confetti
+                        onConfettiComplete={() => {
+                            setIsExploding(!isExploding);
+                        }}
+                        numberOfPieces={2000}
+                        recycle={false}
+                        height={document.body.scrollHeight}
+                        width={document.body.scrollWidth}
+                    />
+                )}
+
+                <Grid2 size={12}>
+                    <Paper>
+                        <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 33 teikn</FormLabel>
+                        <TextField
+                            name="title"
+                            label="Tittel på spelmodul / arrangement"
+                            value={newEvent.title}
+                            variant="outlined"
+                            required
+                            fullWidth
+                            inputProps={{
+                                title: 'Minst 1 teikn og maks teikn er 33',
                             }}
-                            numberOfPieces={2000}
-                            recycle={false}
-                            height={document.body.scrollHeight}
-                            width={document.body.scrollWidth}
+                            margin="dense"
                         />
-                    )}
-
-                    <Grid2 size={12}>
-                        <Paper>
-                            <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 33 teikn</FormLabel>
-                            <TextField
-                                name="title"
-                                label="Tittel på spelmodul / arrangement"
-                                value={newEvent.title}
-                                variant="outlined"
-                                required
-                                fullWidth
-                                inputProps={{
-                                    title: 'Minst 1 teikn og maks teikn er 33',
-                                }}
-                                margin="dense"
-                            />
-                        </Paper>
-                    </Grid2>
-                    <Grid2 size={12}>
-                        <Paper>
-                            <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 50 teikn</FormLabel>
-                            <TextField
-                                name="subTitle"
-                                value={newEvent.subTitle}
-                                label="Kort oppsummering"
-                                variant="outlined"
-                                required
-                                fullWidth
-                                margin="dense"
-                                inputProps={{
-                                    title: 'Minst 1 teikn og maks 50 teikn',
-                                }}
-                            />
-                        </Paper>
-                    </Grid2>
-                    <Grid2
-                        size={{
-                            xs: 12,
-                            sm: 6,
-                            md: 3
-                        }}>
-                        <Paper>
-                            <TextField
-                                type="email"
-                                name="email"
-                                value={newEvent.email}
-                                label="E-postadresse"
-                                variant="outlined"
-                                required
-                                fullWidth
-                            />
-                        </Paper>
-                    </Grid2>
-                    <Grid2
-                        size={{
-                            xs: 12,
-                            sm: 6,
-                            md: 3
-                        }}>
-                        <Paper>
-                            <TextField
-                                name="name"
-                                value={newEvent.name}
-                                label="Arrangørens namn (Ditt namn)"
-                                variant="outlined"
-                                required
-                                fullWidth
-                            />
-                        </Paper>
-                    </Grid2>
-                    <Grid2
-                        size={{
-                            xs: 12,
-                            sm: 6,
-                            md: 3
-                        }}>
-                        <Paper>
-                            <TextField
-                                type="phone"
-                                name="phone"
-                                value={newEvent.phone}
-                                label="Kva telefonnummer kan vi nå deg på?"
-                                variant="outlined"
-                                required
-                                fullWidth
-                            />
-                        </Paper>
-                    </Grid2>
-                    <Grid2
-                        size={{
-                            xs: 12,
-                            sm: 6,
-                            md: 3
-                        }}>
-                        <Paper>
-                            <TextField
-                                name="system"
-                                label="Spillsystem"
-                                value={newEvent.system}
-                                variant="outlined"
-                                fullWidth
-                            />
-                        </Paper>
-                    </Grid2>
-                    <Grid2 size={12}>
-                        <Paper sx={{ padding: '1rem' }}>
-                            <FormControl fullWidth>
-                                <FormLabel>Skildring av modulen (tekst til programmet):</FormLabel>
-                                <TextareaAutosize minRows={5} name="description" value={newEvent.description} />
-                            </FormControl>
-                        </Paper>
-                    </Grid2>
-                    <Grid2
-                        size={{
-                            xs: 12,
-                            sm: 4
-                        }}>
-                        <Paper sx={{ padding: '1rem' }}>
-                            <FormControl fullWidth>
-                                <FormLabel>Kva type spel er det?</FormLabel>
-                                <RadioGroup
-                                    value={newEvent.gameType}
-                                    aria-labelledby="demo-controlled-radio-buttons-group"
-                                    name="controlled-radio-buttons-group"
-                                >
-                                    <FormControlLabel
-                                        value="rolePlaying"
-                                        control={<Radio name="rolePlaying" />}
-                                        label="rollespel"
-                                    />
-                                    <FormControlLabel
-                                        value="boardGame"
-                                        control={<Radio name="boardGame" />}
-                                        label="Brettspel"
-                                    />
-                                    <FormControlLabel
-                                        value="cardGame"
-                                        control={<Radio name="cardGame" />}
-                                        label="Kortspel"
-                                    />
-                                    <FormControlLabel value="other" control={<Radio name="other" />} label="Annet" />
-                                </RadioGroup>
-                            </FormControl>
-                        </Paper>
-                    </Grid2>
-                    <Grid2
-                        size={{
-                            xs: 12,
-                            sm: 4
-                        }}>
-                        <Paper sx={{ padding: '1rem', height: '100%' }}>
-                            <TextField
-                                type="number"
-                                name="participants"
-                                value={newEvent.participants}
-                                label="Maks antall deltakere"
-                                variant="outlined"
-                                required
-                                fullWidth
-                            />
-                        </Paper>
-                    </Grid2>
-                    <Grid2
-                        size={{
-                            xs: 12,
-                            sm: 4
-                        }}>
-                        <Paper sx={{ padding: '1rem' }}>
-                            <FormGroup>
-                                <FormLabel>Kva for pulje kan du arrangere i?</FormLabel>
-                                <FormControlLabel
-                                    control={<Checkbox checked={newEvent.fridayEvening} />}
-                                    name="fridayEvening"
-                                    label="Fredag Kveld"
-                                />
-                                <FormControlLabel
-                                    control={<Checkbox checked={newEvent.saturdayMorning} />}
-                                    name="saturdayMorning"
-                                    label="Lørdag Morgen"
-                                />
-                                <FormControlLabel
-                                    control={<Checkbox checked={newEvent.saturdayEvening} />}
-                                    name="saturdayEvening"
-                                    label="Lørdag Kveld"
-                                />
-                                <FormControlLabel
-                                    control={<Checkbox checked={newEvent.sundayMorning} />}
-                                    name="sundayMorning"
-                                    label="Søndag Morgen"
-                                />
-                            </FormGroup>
-                        </Paper>
-                    </Grid2>
-                    <Grid2 size={12}>
-                        <Paper sx={{ padding: '1rem' }}>
-                            <FormGroup>
-                                <FormLabel>Kryss av for det som gjeld</FormLabel>
-                                <FormControlLabel
-                                    control={<Checkbox name="moduleCompetition" checked={newEvent.moduleCompetition} />}
-                                    label="Eg vil vere med på modulkonkurransen"
-                                />
-                                <Typography>
-                                    husk å sende modulen til <a href="mailto:moduler@regncon.no">moduler@regncon.no </a>{' '}
-                                    innen første september!
-                                </Typography>
-                            </FormGroup>
-                            <Typography sx={{ marginBlockStart: '1rem' }}>
-                                Trykk på brikka som passar til spelet ditt:
-                            </Typography>
-                            {tags.map((tag) => (
-                                <Chip
-                                    sx={{ marginBlock: '0.4rem', marginInlineEnd: '0.4rem' }}
-                                    label={tag.label}
-                                    key={tag.name}
-                                    color={tag.selected ? 'primary' : 'secondary'}
-                                    icon={<NavigateBeforeIcon />}
-                                    variant={tag.selected ? 'filled' : 'outlined'}
-                                    onClick={async () => {
-                                        setTags((prev) =>
-                                            prev.map((t) => (t.name === tag.name ? { ...t, selected: !t.selected } : t))
-                                        );
-                                        await updateDatabase({ [tag.name]: !tag.selected });
-                                        setIsSnackBarOpen(true);
-                                    }}
-                                />
-                            ))}
-                        </Paper>
-                    </Grid2>
-                    <Grid2 size={12}>
-                        <Paper sx={{ padding: '1rem' }}>
-                            <FormControl fullWidth>
-                                <FormLabel>Merknader: Er det noko anna du vil vi skal vite?</FormLabel>
-                                <TextareaAutosize
-                                    minRows={3}
-                                    name="additionalComments"
-                                    value={newEvent.additionalComments}
-                                />
-                            </FormControl>
-                        </Paper>
-                    </Grid2>
-
-                    <Grid2 size={12}>
-                        <Paper sx={{ padding: '1rem' }}>
-                            <Typography>
-                                Kladden vert lagra automatisk, men du må trykkje på knappen for å sende inn.
-                            </Typography>
-                            <Button type="submit" variant="contained" onClick={handleCancelSubmission}>
-                                {newEvent.isSubmitted ? 'Meld av' : 'Send inn'}
-                            </Button>
-                        </Paper>
-                    </Grid2>
+                    </Paper>
                 </Grid2>
-                <Snackbar
-                    anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                    open={isSnackBarOpen}
-                    onClose={handleSnackBar}
-                    TransitionComponent={Slide}
-                    message={snackBarMessage}
-                    autoHideDuration={1200}
-                />
-            </>
-        :   <EventFromSkeleton />;
+                <Grid2 size={12}>
+                    <Paper>
+                        <FormLabel sx={{ padding: '1rem' }}>Du kan bruke opptil 50 teikn</FormLabel>
+                        <TextField
+                            name="subTitle"
+                            value={newEvent.subTitle}
+                            label="Kort oppsummering"
+                            variant="outlined"
+                            required
+                            fullWidth
+                            margin="dense"
+                            inputProps={{
+                                title: 'Minst 1 teikn og maks 50 teikn',
+                            }}
+                        />
+                    </Paper>
+                </Grid2>
+                <Grid2
+                    size={{
+                        xs: 12,
+                        sm: 6,
+                        md: 3,
+                    }}
+                >
+                    <Paper>
+                        <TextField
+                            type="email"
+                            name="email"
+                            value={newEvent.email}
+                            label="E-postadresse"
+                            variant="outlined"
+                            required
+                            fullWidth
+                        />
+                    </Paper>
+                </Grid2>
+                <Grid2
+                    size={{
+                        xs: 12,
+                        sm: 6,
+                        md: 3,
+                    }}
+                >
+                    <Paper>
+                        <TextField
+                            name="name"
+                            value={newEvent.name}
+                            label="Arrangørens namn (Ditt namn)"
+                            variant="outlined"
+                            required
+                            fullWidth
+                        />
+                    </Paper>
+                </Grid2>
+                <Grid2
+                    size={{
+                        xs: 12,
+                        sm: 6,
+                        md: 3,
+                    }}
+                >
+                    <Paper>
+                        <TextField
+                            type="phone"
+                            name="phone"
+                            value={newEvent.phone}
+                            label="Kva telefonnummer kan vi nå deg på?"
+                            variant="outlined"
+                            required
+                            fullWidth
+                        />
+                    </Paper>
+                </Grid2>
+                <Grid2
+                    size={{
+                        xs: 12,
+                        sm: 6,
+                        md: 3,
+                    }}
+                >
+                    <Paper>
+                        <TextField
+                            name="system"
+                            label="Spillsystem"
+                            value={newEvent.system}
+                            variant="outlined"
+                            fullWidth
+                        />
+                    </Paper>
+                </Grid2>
+                <Grid2 size={12}>
+                    <Paper sx={{ padding: '1rem' }}>
+                        <FormControl fullWidth>
+                            <FormLabel>Skildring av modulen (tekst til programmet):</FormLabel>
+                            <TextareaAutosize minRows={5} name="description" value={newEvent.description} />
+                        </FormControl>
+                    </Paper>
+                </Grid2>
+                <Grid2
+                    size={{
+                        xs: 12,
+                        sm: 4,
+                    }}
+                >
+                    <Paper sx={{ padding: '1rem' }}>
+                        <FormControl fullWidth>
+                            <FormLabel>Kva type spel er det?</FormLabel>
+                            <RadioGroup
+                                value={newEvent.gameType}
+                                aria-labelledby="demo-controlled-radio-buttons-group"
+                                name="controlled-radio-buttons-group"
+                            >
+                                <FormControlLabel
+                                    value="rolePlaying"
+                                    control={<Radio name="rolePlaying" />}
+                                    label="rollespel"
+                                />
+                                <FormControlLabel
+                                    value="boardGame"
+                                    control={<Radio name="boardGame" />}
+                                    label="Brettspel"
+                                />
+                                <FormControlLabel
+                                    value="cardGame"
+                                    control={<Radio name="cardGame" />}
+                                    label="Kortspel"
+                                />
+                                <FormControlLabel value="other" control={<Radio name="other" />} label="Annet" />
+                            </RadioGroup>
+                        </FormControl>
+                    </Paper>
+                </Grid2>
+                <Grid2
+                    size={{
+                        xs: 12,
+                        sm: 4,
+                    }}
+                >
+                    <Paper sx={{ padding: '1rem', height: '100%' }}>
+                        <TextField
+                            type="number"
+                            name="participants"
+                            value={newEvent.participants}
+                            label="Maks antall deltakere"
+                            variant="outlined"
+                            required
+                            fullWidth
+                        />
+                    </Paper>
+                </Grid2>
+                <Grid2
+                    size={{
+                        xs: 12,
+                        sm: 4,
+                    }}
+                >
+                    <Paper sx={{ padding: '1rem' }}>
+                        <FormGroup>
+                            <FormLabel>Kva for pulje kan du arrangere i?</FormLabel>
+                            <FormControlLabel
+                                control={<Checkbox checked={newEvent.fridayEvening} />}
+                                name="fridayEvening"
+                                label="Fredag Kveld"
+                            />
+                            <FormControlLabel
+                                control={<Checkbox checked={newEvent.saturdayMorning} />}
+                                name="saturdayMorning"
+                                label="Lørdag Morgen"
+                            />
+                            <FormControlLabel
+                                control={<Checkbox checked={newEvent.saturdayEvening} />}
+                                name="saturdayEvening"
+                                label="Lørdag Kveld"
+                            />
+                            <FormControlLabel
+                                control={<Checkbox checked={newEvent.sundayMorning} />}
+                                name="sundayMorning"
+                                label="Søndag Morgen"
+                            />
+                        </FormGroup>
+                    </Paper>
+                </Grid2>
+                <Grid2 size={12}>
+                    <Paper sx={{ padding: '1rem' }}>
+                        <FormGroup>
+                            <FormLabel>Kryss av for det som gjeld</FormLabel>
+                            <FormControlLabel
+                                control={<Checkbox name="moduleCompetition" checked={newEvent.moduleCompetition} />}
+                                label="Eg vil vere med på modulkonkurransen"
+                            />
+                            <Typography>
+                                husk å sende modulen til <a href="mailto:moduler@regncon.no">moduler@regncon.no </a>{' '}
+                                innen første september!
+                            </Typography>
+                        </FormGroup>
+                        <Typography sx={{ marginBlockStart: '1rem' }}>
+                            Trykk på brikka som passar til spelet ditt:
+                        </Typography>
+                        {tags.map((tag) => (
+                            <Chip
+                                sx={{ marginBlock: '0.4rem', marginInlineEnd: '0.4rem' }}
+                                label={tag.label}
+                                key={tag.name}
+                                color={tag.selected ? 'primary' : 'secondary'}
+                                icon={<NavigateBeforeIcon />}
+                                variant={tag.selected ? 'filled' : 'outlined'}
+                                onClick={async () => {
+                                    setTags((prev) =>
+                                        prev.map((t) => (t.name === tag.name ? { ...t, selected: !t.selected } : t))
+                                    );
+                                    await updateDatabase({ [tag.name]: !tag.selected });
+                                    setIsSnackBarOpen(true);
+                                }}
+                            />
+                        ))}
+                    </Paper>
+                </Grid2>
+                <Grid2 size={12}>
+                    <Paper sx={{ padding: '1rem' }}>
+                        <FormControl fullWidth>
+                            <FormLabel>Merknader: Er det noko anna du vil vi skal vite?</FormLabel>
+                            <TextareaAutosize
+                                minRows={3}
+                                name="additionalComments"
+                                value={newEvent.additionalComments}
+                            />
+                        </FormControl>
+                    </Paper>
+                </Grid2>
+
+                <Grid2 size={12}>
+                    <Paper sx={{ padding: '1rem' }}>
+                        <Typography>
+                            Kladden vert lagra automatisk, men du må trykkje på knappen for å sende inn.
+                        </Typography>
+                        <Button type="submit" variant="contained" onClick={handleCancelSubmission}>
+                            {newEvent.isSubmitted ? 'Meld av' : 'Send inn'}
+                        </Button>
+                    </Paper>
+                </Grid2>
+            </Grid2>
+            <Snackbar
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                open={isSnackBarOpen}
+                onClose={handleSnackBar}
+                TransitionComponent={Slide}
+                message={snackBarMessage}
+                autoHideDuration={1200}
+            />
+        </>
+        : <EventFromSkeleton />;
 };
 export default EventForm;

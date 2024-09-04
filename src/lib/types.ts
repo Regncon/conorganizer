@@ -12,7 +12,7 @@ export type EventCardProps = {
 
 export type ConEvent = {
     published: boolean;
-    id: string;
+    id?: string;
     title: string;
     gameMaster: string;
     system: string;
@@ -51,6 +51,7 @@ export type ConEvent = {
 
 export type MyNewEvent = {
     id: string;
+    eventDocId?: string;
     email: string;
     name: string;
     phone: string;

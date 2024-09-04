@@ -28,34 +28,35 @@ of your con schedule, your panels, and your expenses.
 
 ### Must haves for publishing events
 
--   Fix cookie lifetime
+-   Make it very clear what day is displayed
 -   Bug: Problems with hitting enter while editing event
--   Easy next and previous navigation
--   Fix bug in debounce
--   Convert my events to use new event system
--   Desktop view
--   Icons
+-   Add is gm to event
 -   Help text explaining how the algorithm works
+-   Icons
+-   Convert my events to use new event system
+-   Easy next and previous navigation
+-   Debounce/fix text box, my events
+
+#### Events with signups
+
+-   Filter out my signups
+-   Fix cookie lifetime
+-   Fix bug in debounce
+-   Desktop view
 -   Store interests
 -   Connect to checkin system
 -   Participants can choose favorite events
 -   Display label on new or unread events
--   Debounce/fix text box, my events
 -   Send emails from server
 -   Create participant in database
 -   Get tickets from checkin
+-   Ckcek if participant is over 18
 
 #### Nice to haves for publishing events
 
 -   Picture upload
 -   Check preloading of pages
 -   Fix small card layout
-
-### Must haves for publishing full program
-
--   Make it very clear what day is displayed
--   Filter out my signups
--   Add is gm to event
 
 ## Nice to haves
 
