@@ -3,19 +3,26 @@ import MainEvent from '$app/(public)/event/[id]/event';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { ConEvent, MyNewEvent } from '$lib/types';
 import { Box, Typography } from '@mui/material';
+import { updateReadAndOrAcceptedStatus } from '../../../actions';
 
 type Props = {
     params: {
         id: string;
-        userid: string;
+        userId: string;
     };
 };
-const FormSubmissionsPreviewPage = async ({ params: { id, userid } }: Props) => {
+const FormSubmissionsPreviewPage = async ({ params: { id, userId } }: Props) => {
     const { db } = await getAuthorizedAuth();
     if (db === null) {
         return;
     }
-    const nyEvent: MyNewEvent = await geMyEventByRefPath(db, id, userid);
+    const nyEvent: MyNewEvent = await geMyEventByRefPath(db, id, userId);
+
+    if (nyEvent.isRead === false) {
+        updateReadAndOrAcceptedStatus(`users/${userId}/my-events/${id}`, {
+            isRead: true,
+        });
+    }
 
     const event: ConEvent = {
         id: nyEvent.id,
