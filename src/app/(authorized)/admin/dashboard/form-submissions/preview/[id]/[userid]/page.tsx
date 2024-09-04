@@ -8,18 +8,18 @@ import { updateReadAndOrAcceptedStatus } from '../../../actions';
 type Props = {
     params: {
         id: string;
-        userId: string;
+        userid: string;
     };
 };
-const FormSubmissionsPreviewPage = async ({ params: { id, userId } }: Props) => {
+const FormSubmissionsPreviewPage = async ({ params: { id, userid } }: Props) => {
     const { db } = await getAuthorizedAuth();
     if (db === null) {
         return;
     }
-    const nyEvent: MyNewEvent = await geMyEventByRefPath(db, id, userId);
+    const nyEvent: MyNewEvent = await geMyEventByRefPath(db, id, userid);
 
     if (nyEvent.isRead === false) {
-        updateReadAndOrAcceptedStatus(`users/${userId}/my-events/${id}`, {
+        updateReadAndOrAcceptedStatus(`users/${userid}/my-events/${id}`, {
             isRead: true,
         });
     }
