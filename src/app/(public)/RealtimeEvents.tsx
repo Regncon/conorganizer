@@ -2,13 +2,15 @@
 import { db } from '$lib/firebase/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { useEffect } from 'react';
-import { updateEvents } from './serverAction';
-
-const RealtimeEvents = () => {
+import { updateDashboardEvents, updateEvents } from './serverAction';
+type Props = {
+    DashboardEvents: boolean;
+};
+const RealtimeEvents = ({ DashboardEvents = false }: Props) => {
     useEffect(() => {
         const eventsRef = collection(db, 'events');
         const unsubscribe = onSnapshot(eventsRef, (snapshot) => {
-            updateEvents();
+            updateDashboardEvents ? updateDashboardEvents() : updateEvents();
         });
 
         return () => {

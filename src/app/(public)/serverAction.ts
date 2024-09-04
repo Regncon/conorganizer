@@ -12,9 +12,12 @@ export async function getAllEvents() {
 
 export async function getEventById(id: string) {
     const event = (await adminDb.collection('events').doc(id).get()).data() as ConEvent;
-    return { ...event, id};
+    return { ...event, id };
 }
 
 export async function updateEvents() {
     revalidatePath('/', 'page');
+}
+export async function updateDashboardEvents() {
+    revalidatePath('/admin/dashboard/events', 'page');
 }
