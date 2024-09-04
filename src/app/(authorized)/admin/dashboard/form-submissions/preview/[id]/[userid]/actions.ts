@@ -60,6 +60,7 @@ export async function approveNewEvent(myEventId: string, myEventUserId: string) 
         myEvent.isAccepted = true;
     } catch (e) {
         console.error('Error adding document: ', e);
+        return;
     }
 
     try {
@@ -68,5 +69,4 @@ export async function approveNewEvent(myEventId: string, myEventUserId: string) 
     } catch (e) {
         console.error('Error updating document: ', e);
     }
-
 }
