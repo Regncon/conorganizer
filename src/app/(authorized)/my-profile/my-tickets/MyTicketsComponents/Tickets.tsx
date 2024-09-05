@@ -1,4 +1,5 @@
-import CustomIcon from '$lib/icons/miscgame';
+import MiscGameIcon from '$lib/icons/miscgame';
+import BoardGameIcon from '$lib/icons/boardgame';
 import { Paper, Typography } from '@mui/material';
 import Ticket from './UI/Ticket';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
@@ -14,8 +15,8 @@ const Tickets = async ({}: Props) => {
         return (
             <Paper sx={{ marginBottom: '2rem', paddingLeft: '2rem', width: '320px' }}>
                 <Typography variant="h1">My Tickets</Typography>
-                <CustomIcon color="primary" size="large" />
-                <CustomIcon color="secondary" size="small" />
+                <MiscGameIcon color="primary" size="large" />
+                <BoardGameIcon color="primary" size="large" />
                 <Ticket />
                 <Ticket />
             </Paper>

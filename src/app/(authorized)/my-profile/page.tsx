@@ -3,6 +3,7 @@ import { Box, Button, Paper, Typography } from '@mui/material';
 import { GetTicketsByEmail, GetTicketsFromCheckIn } from './my-tickets/actions';
 import MyEvents from '../dashboard/MyEvents';
 import MyTickets from '../dashboard/MyTickets';
+import Tickets from './my-tickets/MyTicketsComponents/Tickets';
 
 export default async function MyProfile() {
     const { user } = await getAuthorizedAuth();
