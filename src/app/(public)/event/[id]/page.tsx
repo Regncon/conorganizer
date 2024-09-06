@@ -9,6 +9,7 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const id = params.id;
     const event = await getEventById(id);
+
     return {
         title: event.title,
         description: event.shortDescription,

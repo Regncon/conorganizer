@@ -1,3 +1,11 @@
+:root {
+    --scroll-margin-top: 0;
+
+}
 html {
     font-size: 14px;
+    @media (prefers-reduced-motion: no-preference) {
+        scroll-behavior: smooth;
+    }
+    scroll-behavior: auto;
 }
