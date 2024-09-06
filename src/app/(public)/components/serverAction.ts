@@ -1,8 +1,7 @@
 'use server';
 import { adminDb } from '$lib/firebase/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-import type { ConEvent } from '../../lib/types';
-import { firebaseAuth } from '$lib/firebase/firebase';
+import type { ConEvent } from '$lib/types';
 
 export async function getAllEvents() {
     const eventRef = await adminDb.collection('events').get();

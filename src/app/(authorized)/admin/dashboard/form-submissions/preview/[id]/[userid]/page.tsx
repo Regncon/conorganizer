@@ -1,5 +1,5 @@
 import { geMyEventByRefPath } from '$app/(authorized)/my-events/actions';
-import MainEvent from '$app/(public)/event/[id]/event';
+import MainEvent from '$app/(public)/event/[id]/MainEvent';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { ConEvent, MyNewEvent } from '$lib/types';
 import { Box, Typography } from '@mui/material';

@@ -1,6 +1,6 @@
-import EventCardBig from '$app/(public)/EventCardBig';
-import RealtimeEvents from '$app/(public)/RealtimeEvents';
-import { getAllEvents } from '$app/(public)/serverAction';
+import EventCardBig from '$app/(public)/components/EventCardBig';
+import RealtimeEvents from '$app/(public)/components/RealtimeEvents';
+import { getAllEvents } from '$app/(public)/components/serverAction';
 import { Grid2, Paper } from '@mui/material';
 import Link from 'next/link';
 
@@ -29,7 +29,7 @@ const Events = async () => {
                     })}
                 </Grid2>
             </Paper>
-            <RealtimeEvents DashboardEvents />
+            <RealtimeEvents where="DASHBOARD_EVENTS" />
         </>
     );
 };

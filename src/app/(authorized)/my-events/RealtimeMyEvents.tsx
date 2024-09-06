@@ -4,21 +4,21 @@ import { collection, onSnapshot } from 'firebase/firestore';
 import { useEffect } from 'react';
 import { updateMyEvents } from './actions';
 type Props = {
-	userId: string;
+    userId: string;
 };
 
 const RealtimeMyEvents = ({ userId }: Props) => {
-	useEffect(() => {
-		const eventsRef = collection(db, 'users', userId, 'my-events');
-		const unsubscribe = onSnapshot(eventsRef, () => {
-			updateMyEvents();
-		});
+    useEffect(() => {
+        const eventsRef = collection(db, 'users', userId, 'my-events');
+        const unsubscribe = onSnapshot(eventsRef, () => {
+            updateMyEvents();
+        });
 
-		return () => {
-			unsubscribe();
-		};
-	}, []);
-	return null;
+        return () => {
+            unsubscribe();
+        };
+    }, []);
+    return null;
 };
 
 export default RealtimeMyEvents;
