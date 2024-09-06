@@ -92,12 +92,12 @@ const FormSubmissionTable = () => {
                             >
                                 {isLoadingConverting ?
                                     <>
-                                        Vennligst vent Konverter arrangementer
+                                        {`Vennligst vent Konverter (${selectedRowsModel.length}) moduler til arrangementer`}
                                         <CircularProgress sx={{ marginInlineStart: '2rem' }} size="1.5rem" />
                                     </>
                                 : selectedRowsModel.length > 0 ?
-                                    'Konverter til arrangementer'
-                                :   'vennligst velg en modul'}
+                                    `Konverter (${selectedRowsModel.length}) moduler til arrangementer`
+                                :   'vennligst velg minst en modul for og konvertere'}
                             </Button>
                         </Box>
                     </>
