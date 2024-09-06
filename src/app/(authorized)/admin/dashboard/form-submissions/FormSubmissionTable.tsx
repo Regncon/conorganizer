@@ -84,22 +84,22 @@ const FormSubmissionTable = () => {
                 footer: () => (
                     <>
                         <GridPagination />
-                        {selectedRowsModel.length > 0 ?
-                            <Box sx={{ display: 'grid', placeContent: 'end' }}>
-                                <Button
-                                    variant="contained"
-                                    disabled={isLoadingConverting}
-                                    onClick={handleConvertToEvents}
-                                >
-                                    {isLoadingConverting ?
-                                        <>
-                                            Vennligst vent Konverter arrangementer
-                                            <CircularProgress sx={{ marginInlineStart: '2rem' }} size="1.5rem" />
-                                        </>
-                                    :   'Konverter til arrangementer'}
-                                </Button>
-                            </Box>
-                        :   null}
+                        <Box sx={{ display: 'grid', placeContent: 'end' }}>
+                            <Button
+                                variant="contained"
+                                disabled={isLoadingConverting || selectedRowsModel.length === 0}
+                                onClick={handleConvertToEvents}
+                            >
+                                {isLoadingConverting ?
+                                    <>
+                                        Vennligst vent Konverter arrangementer
+                                        <CircularProgress sx={{ marginInlineStart: '2rem' }} size="1.5rem" />
+                                    </>
+                                : selectedRowsModel.length > 0 ?
+                                    'Konverter til arrangementer'
+                                :   'vennligst velg en modul'}
+                            </Button>
+                        </Box>
                     </>
                 ),
             }}
