@@ -1,7 +1,7 @@
 import { Box, Button } from '@mui/material';
-import ConfirmOrBuy from './MyTicketsComponents/ConfirmOrBuy';
-import TicketNotFound from './MyTicketsComponents/TicketNotFound';
-import Tickets from './MyTicketsComponents/Tickets';
+import ConfirmOrBuy from './components/ConfirmOrBuy';
+import TicketNotFound from './components/TicketNotFound';
+import Tickets from './components/Tickets';
 
 const MyTickets = async () => {
     return (

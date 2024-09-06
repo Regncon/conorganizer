@@ -9,7 +9,7 @@ type Props = {};
 const Tickets = async ({}: Props) => {
     const { user } = await getAuthorizedAuth();
     const verifiedEmail = user?.emailVerified ?? false;
-    const verifiedCheckIn = false;
+    const verifiedCheckIn = true;
 
     if (verifiedEmail && verifiedCheckIn) {
         return (
