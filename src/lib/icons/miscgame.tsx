@@ -7,7 +7,7 @@ type Props = {
     size?: 'small' | 'medium' | 'large';
   }
 
-const CustomIcon = ({ color = 'primary', size = 'medium' }:Props) => {
+const MiscGameIcon = ({ color = 'primary', size = 'medium' }:Props) => {
   return (
     <SvgIcon
       style={{ fontSize: size === 'small' ? "2rem" : size === 'large' ? "4rem" : 24 }}
@@ -28,4 +28,4 @@ const CustomIcon = ({ color = 'primary', size = 'medium' }:Props) => {
   );
 };
 
-export default CustomIcon;
+export default MiscGameIcon;
