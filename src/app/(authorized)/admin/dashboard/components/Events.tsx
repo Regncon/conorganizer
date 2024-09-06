@@ -1,4 +1,4 @@
-import CardBase from '$app/(authorized)/dashboard/CardBase';
+import CardBase from '$app/(authorized)/dashboard/components/CardBase';
 
 const Events = async () => {
     return (

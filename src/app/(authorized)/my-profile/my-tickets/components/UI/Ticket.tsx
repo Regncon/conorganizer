@@ -1,5 +1,4 @@
 import { Box, Button, Card, CardContent, Paper, Typography } from '@mui/material';
-import CardBase from '$app/(authorized)/dashboard/CardBase';
 
 export default function Ticket() {
     return (

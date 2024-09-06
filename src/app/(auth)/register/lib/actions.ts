@@ -1,7 +1,7 @@
 'use server';
 
 import { z } from 'zod';
-import type { InitialRegisterFormState } from './RegisterPage';
+import type { InitialRegisterFormState } from '../components/RegisterPage';
 import type { RegisterDetails } from '$lib/firebase/firebase';
 
 export const validateRegisterFormAction = async (formData: FormData): Promise<InitialRegisterFormState> => {

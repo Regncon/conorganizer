@@ -1,6 +1,6 @@
 import { Paper } from '@mui/material';
-import EventDashboardTabs from '../EventDashboardTabs';
-import Settings from './Settings';
+import EventDashboardTabs from '../components/EventDashboardTabs';
+import Settings from './components/Settings';
 import { getAllEvents } from '$app/(public)/components/serverAction';
 
 type Props = {

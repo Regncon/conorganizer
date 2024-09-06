@@ -1,12 +1,12 @@
 'use client';
 import { Button, CircularProgress, Grid2 } from '@mui/material';
 import { singUpAndCreateCookie, type RegisterDetails } from '$lib/firebase/firebase';
-import PasswordTextField from '../login/PasswordTextField';
+import PasswordTextField from '../../login/components/ui/PasswordTextField';
 import { useEffect, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { emailRegExp, updateSearchParamsWithEmail } from '../shared/utils';
-import EmailTextField from '../shared/EmailTextField';
-import { validateRegisterFormAction } from './actions';
+import { emailRegExp, updateSearchParamsWithEmail } from '../../shared/utils';
+import EmailTextField from '../../shared/EmailTextField';
+import { validateRegisterFormAction } from '../lib/actions';
 import { useFormState } from 'react-dom';
 
 export const initialRegisterFormState = {

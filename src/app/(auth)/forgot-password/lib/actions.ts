@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { InitialForgotFormState } from './ForgotPassword';
+import type { InitialForgotFormState } from '../components/ForgotPassword';
 
 export const validateForgotFormAction = async (formData: FormData): Promise<InitialForgotFormState> => {
     const formDataEntries = Object.fromEntries(formData);

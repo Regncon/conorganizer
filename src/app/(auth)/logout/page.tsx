@@ -1,4 +1,4 @@
-import LogOut from './LogOut';
+import LogOut from './components/LogOut';
 
 const LogOutPage = async () => {
     return <LogOut />;

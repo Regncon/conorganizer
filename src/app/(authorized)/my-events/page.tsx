@@ -3,12 +3,12 @@ import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { collection, doc, type Firestore } from 'firebase/firestore';
 import type { FirebaseApp } from 'firebase/app';
 import Box from '@mui/material/Box';
-import { getAllMyEvents } from './actions';
-import RealtimeMyEvents from './RealtimeMyEvents';
+import { getAllMyEvents } from './lib/actions';
+import RealtimeMyEvents from './components/RealtimeMyEvents';
 import { Grid2, Typography } from '@mui/material';
 import { revalidatePath } from 'next/cache';
-import DynamicLink from './DynamicLink';
-import AddEventCard from './AddEventCard';
+import DynamicLink from './components/DynamicLink';
+import AddEventCard from './components/AddEventCard';
 import EventCardBig from '$app/(public)/components/EventCardBig';
 const createId = async (app: FirebaseApp, db: Firestore) => {
     const collectionRef = collection(db, '_');

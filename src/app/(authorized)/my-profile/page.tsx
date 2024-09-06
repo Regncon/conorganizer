@@ -1,8 +1,8 @@
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { Box, Button, Paper, Typography } from '@mui/material';
 import { GetTicketsByEmail, GetTicketsFromCheckIn } from './my-tickets/actions';
-import MyEvents from '../dashboard/MyEvents';
-import MyTickets from '../dashboard/MyTickets';
+import MyEvents from '../dashboard/components/MyEvents';
+import MyTickets from '../dashboard/components/MyTickets';
 import Tickets from './my-tickets/components/Tickets';
 
 export default async function MyProfile() {

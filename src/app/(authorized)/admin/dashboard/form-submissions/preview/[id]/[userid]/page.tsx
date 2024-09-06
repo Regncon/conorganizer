@@ -1,9 +1,9 @@
-import { geMyEventByRefPath } from '$app/(authorized)/my-events/actions';
-import MainEvent from '$app/(public)/event/[id]/MainEvent';
+import { geMyEventByRefPath } from '$app/(authorized)/my-events/lib/actions';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { ConEvent, MyNewEvent } from '$lib/types';
 import { Box, Typography } from '@mui/material';
-import { updateReadAndOrAcceptedStatus } from '../../../actions';
+import { updateReadAndOrAcceptedStatus } from '../../../lib/actions';
+import MainEvent from '$app/(public)/event/[id]/components/MainEvent';
 
 type Props = {
     params: {

@@ -1,4 +1,4 @@
-import BackButton from '$app/(authorized)/BackButton';
+import BackButton from '$app/(authorized)/components/BackButton';
 import { Paper } from '@mui/material';
 import { Metadata } from 'next';
 

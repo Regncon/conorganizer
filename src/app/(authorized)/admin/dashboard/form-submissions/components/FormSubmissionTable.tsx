@@ -11,17 +11,17 @@ import {
     type GridValidRowModel,
     GridPagination,
 } from '@mui/x-data-grid';
-import type { FormSubmission } from './types';
-import { useColumns } from './hooks/useColumns';
-import { useRealtimeTableData } from './hooks/useRealtimeTableData';
+import type { FormSubmission } from '../lib/types';
+import { useColumns } from '../hooks/useColumns';
+import { useRealtimeTableData } from '../hooks/useRealtimeTableData';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Route } from 'next';
 import type { DataGridPropsWithoutDefaultValue } from '@mui/x-data-grid/internals';
 import debounce from '$lib/debounce';
-import { updateReadAndOrAcceptedStatus, type MyEventUpdateValueName } from './actions';
+import { updateReadAndOrAcceptedStatus, type MyEventUpdateValueName } from '../lib/actions';
 import { Box, Button, CircularProgress } from '@mui/material';
-import { convertToConEvent } from './preview/[id]/[userid]/actions';
+import { convertToConEvent } from '../preview/[id]/[userid]/lib/actions';
 type DataGridPropsWithoutDefaultValueWithPromise<T extends GridValidRowModel> = Omit<
     DataGridPropsWithoutDefaultValue<T>,
     'onRowSelectionModelChange'

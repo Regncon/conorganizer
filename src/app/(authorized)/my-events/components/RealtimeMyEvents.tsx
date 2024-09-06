@@ -2,7 +2,7 @@
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
 import { useEffect } from 'react';
-import { updateMyEvents } from './actions';
+import { updateMyEvents } from '../lib/actions';
 type Props = {
     userId: string;
 };

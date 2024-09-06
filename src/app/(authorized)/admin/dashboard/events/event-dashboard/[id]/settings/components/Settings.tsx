@@ -16,7 +16,7 @@ import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import { ConEvent } from '$lib/types';
-import Ordering from './components/ordering';
+import Ordering from './ordering';
 import debounce from '$lib/debounce';
 import WarningIcon from '@mui/icons-material/Warning';
 import EventCardBig from '$app/(public)/components/EventCardBig';

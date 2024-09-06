@@ -1,5 +1,5 @@
 import { Grid2, Paper, Typography } from '@mui/material';
-import EventForm from './EventForm';
+import EventForm from './components/EventForm';
 
 type Props = {
     params: {

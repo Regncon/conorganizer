@@ -1,7 +1,7 @@
 import { Paper, Typography, Button, Box } from '@mui/material';
 import ConfirmEmailButton from './UI/ConfirmEmail';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import GoogleSignInButton from '$app/(auth)/login/GoogleButton';
+import GoogleSignInButton from '$app/(auth)/login/components/ui/GoogleButton';
 import LaunchIcon from '@mui/icons-material/Launch';
 
 type Props = {};

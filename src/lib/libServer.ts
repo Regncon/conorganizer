@@ -1,4 +1,4 @@
-import { getMyUserInfo } from '$app/(authorized)/my-events/actions';
+import { getMyUserInfo } from '$app/(authorized)/my-events/lib/actions';
 import { redirect } from 'next/navigation';
 import { getAuthorizedAuth } from './firebase/firebaseAdmin';
 

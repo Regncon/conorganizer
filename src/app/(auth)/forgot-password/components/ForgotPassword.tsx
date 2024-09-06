@@ -1,12 +1,12 @@
 'use client';
-import EmailTextField from '../shared/EmailTextField';
+import EmailTextField from '../../shared/EmailTextField';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { forgotPassword, type LoginDetails } from '$lib/firebase/firebase';
 import { useState } from 'react';
 import { Grid2, Typography } from '@mui/material';
 import { useFormState } from 'react-dom';
-import { validateForgotFormAction } from './actions';
-import ForgotPasswordButton from './ForgotPasswordButton';
+import ForgotPasswordButton from './ui/ForgotPasswordButton';
+import { validateForgotFormAction } from '../lib/actions';
 
 export const initialForgotFormState = {
     emailError: '',

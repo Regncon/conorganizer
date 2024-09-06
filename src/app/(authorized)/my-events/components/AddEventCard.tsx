@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { createMyEventDoc } from './actions';
+import { createMyEventDoc } from '../lib/actions';
 import { useEffect } from 'react';
 import AddIcon from '@mui/icons-material/Add';
 import { Box, Card, CardActionArea, CardHeader, Paper, Typography } from '@mui/material';

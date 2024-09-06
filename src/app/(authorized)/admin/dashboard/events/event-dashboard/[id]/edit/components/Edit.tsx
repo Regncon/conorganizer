@@ -4,13 +4,13 @@ import { useCallback, useEffect, useState, type FormEvent, type SyntheticEvent }
 import { ConEvent } from '$lib/types';
 import Slide from '@mui/material/Slide';
 import Snackbar, { type SnackbarCloseReason } from '@mui/material/Snackbar';
-import MainEvent from '$app/(public)/event/[id]/MainEvent';
 import { Box, CircularProgress } from '@mui/material';
 import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import DescriptionDialog from './DescriptionDialog';
 import debounce from '$lib/debounce';
+import MainEvent from '$app/(public)/event/[id]/components/MainEvent';
 
 type Props = {
     id: string;

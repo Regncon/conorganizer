@@ -1,7 +1,6 @@
 import { Paper } from '@mui/material';
-import EventDashboardTabs from '../EventDashboardTabs';
-import MainEvent from '$app/(public)/event/[id]/MainEvent';
-import Edit from './Edit';
+import EventDashboardTabs from '../components/EventDashboardTabs';
+import Edit from './components/Edit';
 
 type Props = {
     params: {

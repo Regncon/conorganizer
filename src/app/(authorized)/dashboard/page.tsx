@@ -1,5 +1,5 @@
 import { redirectToAdminDashboardWhenAdministrator } from '$lib/libServer';
-import MyEvents from './MyEvents';
+import MyEvents from './components/MyEvents';
 
 import { Grid2 } from '@mui/material';
 

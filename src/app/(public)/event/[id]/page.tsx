@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import MainEvent from './MainEvent';
+import MainEvent from './components/MainEvent';
 import { getEventById } from '$app/(public)/components/serverAction';
 
 type Props = {

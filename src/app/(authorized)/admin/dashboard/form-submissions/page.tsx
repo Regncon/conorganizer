@@ -1,4 +1,4 @@
-import FormSubmissionTable from './FormSubmissionTable';
+import FormSubmissionTable from './components/FormSubmissionTable';
 
 const FormSubmissions = async () => {
     return <FormSubmissionTable />;

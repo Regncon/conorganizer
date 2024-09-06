@@ -1,14 +1,14 @@
 'use client';
 import { Button, CircularProgress, Grid2, Typography } from '@mui/material';
-import PasswordTextField from './PasswordTextField';
+import PasswordTextField from './ui/PasswordTextField';
 import { firebaseAuth, signInAndCreateCookie } from '$lib/firebase/firebase';
 import { useEffect, useState, useTransition, type ComponentProps } from 'react';
-import EmailTextField from '../shared/EmailTextField';
+import EmailTextField from '../../shared/EmailTextField';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFormState } from 'react-dom';
-import { setSessionCookie, validateLoginForm as validateLoginFormAction } from './actions';
-import LoginButton from './LoginButton';
-import { updateSearchParamsWithEmail } from '../shared/utils';
+import { setSessionCookie, validateLoginForm as validateLoginFormAction } from '../lib/actions';
+import LoginButton from './ui/LoginButton';
+import { updateSearchParamsWithEmail } from '../../shared/utils';
 import {
     getAuth,
     getRedirectResult,
@@ -18,7 +18,7 @@ import {
     signInWithRedirect,
     User,
 } from 'firebase/auth';
-import GoogleSignInButton from './GoogleButton';
+import GoogleSignInButton from './ui/GoogleButton';
 
 const initialLoginFormState = {
     emailError: '',

@@ -1,7 +1,7 @@
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import { useFormStatus } from 'react-dom';
-import { disableAndLoadingSpinner } from './LoginPage';
+import { disableAndLoadingSpinner } from '../LoginPage';
 
 type Props = {
     disabled?: boolean;

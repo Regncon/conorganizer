@@ -1,6 +1,6 @@
 'use server';
 
-import { geMyEventByRefPath } from '$app/(authorized)/my-events/actions';
+import { geMyEventByRefPath } from '$app/(authorized)/my-events/lib/actions';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { ConEvent, MyNewEvent } from '$lib/types';
 import { addDoc, collection, doc, updateDoc } from 'firebase/firestore';

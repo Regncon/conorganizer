@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { collectionGroup, onSnapshot, query } from 'firebase/firestore';
 import { db } from '$lib/firebase/firebase';
 import type { MyNewEvent } from '$lib/types';
-import type { FormSubmission } from '../types';
+import type { FormSubmission } from '../lib/types';
 
 export const useRealtimeTableData = () => {
     const [allSubmissions, setAllSubmissions] = useState<FormSubmission[]>();

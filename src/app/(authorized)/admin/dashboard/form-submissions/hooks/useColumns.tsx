@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { FormSubmissionColDef } from '../types';
+import type { FormSubmissionColDef } from '../lib/types';
 import { useRouter } from 'next/navigation';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

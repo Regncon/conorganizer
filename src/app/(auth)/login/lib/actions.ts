@@ -4,7 +4,7 @@ import { SESSION_COOKIE_NAME, adminAuth } from '$lib/firebase/firebaseAdmin';
 import type { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 import { cookies } from 'next/headers';
 import { z } from 'zod';
-import type { InitialLoginFormState } from './LoginPage';
+import type { InitialLoginFormState } from '../components/LoginPage';
 
 export const setSessionCookie = async (idToken: string) => {
     console.log(idToken, 'idToken');

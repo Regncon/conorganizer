@@ -1,7 +1,7 @@
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import type { IdTokenResult, ParsedToken } from 'firebase/auth';
-import MainAppBarDesktop from './mainAppBarDesktop';
-import MainAppBarMobile from './mainAppBarMobile';
+import MainAppBarDesktop from './ui/mainAppBarDesktop';
+import MainAppBarMobile from './ui/mainAppBarMobile';
 
 type ParsedTokenWithAdmin = (ParsedToken & { admin: boolean | undefined }) | undefined;
 type Props = {};

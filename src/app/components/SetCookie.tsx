@@ -1,16 +1,16 @@
 'use client';
-import { firebaseAuth } from "$lib/firebase/firebase";
-import { onAuthStateChanged } from "firebase/auth";
-import { useEffect } from "react";
-import { setSessionCookie } from "./(auth)/login/actions";
+import { firebaseAuth } from '$lib/firebase/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { useEffect } from 'react';
+import { setSessionCookie } from '../(auth)/login/lib/actions';
 
-type Props = {}; 
+type Props = {};
 
-const SetCookie = ({}:Props) => { 
+const SetCookie = ({}: Props) => {
     useEffect(() => {
         const unsubscribeUser = onAuthStateChanged(firebaseAuth, async (user) => {
             console.log(user, 'user');
-            
+
             if (!user) {
                 return;
             }
@@ -25,7 +25,7 @@ const SetCookie = ({}:Props) => {
             unsubscribeUser();
         };
     }, []);
-    return (null);
+    return null;
 };
 
- export default SetCookie;
+export default SetCookie;
