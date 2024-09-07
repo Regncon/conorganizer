@@ -47,7 +47,7 @@ export default async function Home() {
                         position: 'relative',
                     }}
                 >
-                    <Image src="/RegnCon2024LogoWhite.webp" fill alt="logo" />
+                    <Image src="/RegnCon2024LogoWhite.webp" fill alt="logo" priority={true} sizes="100vw" />
                 </Box>
 
                 <EventsList events={events} eventDays={eventDays} />
