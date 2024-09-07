@@ -1,6 +1,6 @@
-import EventCardBig from '$app/(public)/components/EventCardBig';
+import EventCardBig from '$app/(public)/components/components/EventCardBig';
 import RealtimeEvents from '$app/(public)/components/RealtimeEvents';
-import { getAllEvents } from '$app/(public)/components/serverAction';
+import { getAllEvents } from '$app/(public)/components/lib/serverAction';
 import { Grid2, Paper } from '@mui/material';
 import Link from 'next/link';
 

@@ -1,6 +1,6 @@
 import { Metadata } from 'next';
 import MainEvent from './components/MainEvent';
-import { getEventById } from '$app/(public)/components/serverAction';
+import { getEventById } from '$app/(public)/components/lib/serverAction';
 
 type Props = {
     params: { id: string };

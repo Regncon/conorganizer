@@ -9,6 +9,7 @@ type Props = {
 
 const MainAppBarDesktop = ({ isLoggedIn, admin }: Props) => {
     const ref = useSetCustomCssVariable({ '--app-bar-height': 'height' });
+
     return (
         <MainAppBarContent
             isLoggedIn={isLoggedIn}

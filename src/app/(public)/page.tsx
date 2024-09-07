@@ -1,24 +1,31 @@
-import EventCardBig from './components/EventCardBig';
+import EventCardBig from './components/components/EventCardBig';
 import Image from 'next/image';
 import { Box, Link, Typography } from '@mui/material';
 import NextLink from 'next/link';
 
-import EventCardSmall from './components/EventCardSmall';
+import EventCardSmall from './components/components/EventCardSmall';
 import RealtimeEvents from './components/RealtimeEvents';
-import { getAllEvents } from './components/serverAction';
+import { getAllEvents } from './components/lib/serverAction';
 import DaysHeader from './components/ui/DaysHeader';
+import type { ConEvent } from '$lib/types';
+import EventsList from './components/HeaderAndEventList';
 
+export type EventDays = typeof eventDays;
+export type EventDay = EventDays[keyof EventDays] | '';
+export type ConEvents = {
+    day: EventDay;
+    events: ConEvent[];
+}[];
 const eventDays = {
     fridayEvening: 'Fredag',
     saturdayMorning: 'Lørdag Morgen',
     saturdayEvening: 'Lørdag Kveld',
     sunday: 'Søndag',
-};
-export type EventDays = typeof eventDays;
+} as const;
 export default async function Home() {
     const allEvents = await getAllEvents();
 
-    const events = [
+    const events: ConEvents = [
         { day: eventDays.fridayEvening, events: [...allEvents] },
         { day: eventDays.saturdayMorning, events: [...allEvents] },
         { day: eventDays.saturdayEvening, events: [...allEvents] },
@@ -43,42 +50,8 @@ export default async function Home() {
                     <Image src="/RegnCon2024LogoWhite.webp" fill alt="logo" />
                 </Box>
 
-                <DaysHeader eventDays={eventDays} />
+                <EventsList events={events} eventDays={eventDays} />
 
-                <Box>
-                    {events.map((event) => {
-                        return (
-                            <Box key={event.day}>
-                                <Typography
-                                    id={event.day}
-                                    sx={{ scrollMarginTop: 'calc(var(--scroll-margin-top) + var(--app-bar-height))' }}
-                                    variant="h1"
-                                >
-                                    {event.day}
-                                </Typography>
-                                <Box sx={{ display: 'grid' }}>
-                                    {event.events.map((event) => (
-                                        <NextLink key={event.id} href={`/event/${event.id}`} style={{ all: 'unset' }}>
-                                            {event.isSmallCard ?
-                                                <EventCardSmall
-                                                    title={event.title}
-                                                    gameMaster={event.gameMaster}
-                                                    system={event.system}
-                                                />
-                                            :   <EventCardBig
-                                                    title={event.title}
-                                                    gameMaster={event.gameMaster}
-                                                    shortDescription={event.shortDescription}
-                                                    system={event.system}
-                                                />
-                                            }
-                                        </NextLink>
-                                    ))}
-                                </Box>
-                            </Box>
-                        );
-                    })}
-                </Box>
                 {/* <Grid2 container spacing={0}>
                     <Grid2 container spacing={0}>
                         {events

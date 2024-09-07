@@ -19,8 +19,8 @@ import { ConEvent } from '$lib/types';
 import Ordering from './components/ordering';
 import debounce from '$lib/debounce';
 import WarningIcon from '@mui/icons-material/Warning';
-import EventCardBig from '$app/(public)/components/EventCardBig';
-import EventCardSmall from '$app/(public)/components/EventCardSmall';
+import EventCardBig from '$app/(public)/components/components/EventCardBig';
+import EventCardSmall from '$app/(public)/components/components/EventCardSmall';
 
 type Props = {
     id: string;

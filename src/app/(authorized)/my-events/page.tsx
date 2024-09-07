@@ -9,7 +9,7 @@ import { Grid2, Typography } from '@mui/material';
 import { revalidatePath } from 'next/cache';
 import DynamicLink from './components/DynamicLink';
 import AddEventCard from './components/AddEventCard';
-import EventCardBig from '$app/(public)/components/EventCardBig';
+import EventCardBig from '$app/(public)/components/components/EventCardBig';
 const createId = async (app: FirebaseApp, db: Firestore) => {
     const collectionRef = collection(db, '_');
     const docRef = doc(collectionRef);

@@ -1,13 +1,12 @@
 'use client';
-import type { EventDays } from '$app/(public)/page';
+import type { EventDay, EventDays } from '$app/(public)/page';
 import { useSetCustomCssVariable } from '$lib/hooks/useSetCustomCssVariable';
-import { type RemoveProperty, setCustomVariable } from '$lib/libClient';
-import { Box, Typography, Link, type SxProps } from '@mui/material';
-import { useEffect, useRef } from 'react';
-import { unmountComponentAtNode } from 'react-dom';
+import { Box, Typography, Link, type SxProps, Divider } from '@mui/material';
+import { useState } from 'react';
 
 type Props = {
     eventDays: EventDays;
+    locationHash: EventDay;
 };
 const sxDayTypography: SxProps = {
     maxWidth: '5rem',
@@ -17,9 +16,8 @@ const sxDayTypography: SxProps = {
     padding: '0.5em',
 };
 
-const DaysHeader = ({ eventDays }: Props) => {
+const DaysHeader = ({ eventDays, locationHash }: Props) => {
     const ref = useSetCustomCssVariable({ '--scroll-margin-top': 'height' });
-
     return (
         <>
             <Box
@@ -39,15 +37,22 @@ const DaysHeader = ({ eventDays }: Props) => {
                 <Box
                     sx={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(4, max-content)',
+                        gridTemplateColumns: 'repeat(9, max-content)',
                         placeContent: 'center',
                         placeItems: 'center',
                     }}
                 >
-                    {Object.values(eventDays).map((day) => (
-                        <Typography key={day} component={Link} href={`#${day}`} variant="h5" sx={sxDayTypography}>
-                            {day}
-                        </Typography>
+                    {Object.values(eventDays).map((day, i) => (
+                        <Box
+                            sx={{ backgroundColor: locationHash === day ? 'secondary.main' : 'transparent' }}
+                            key={day}
+                        >
+                            {i === 0 && <Divider orientation="vertical" />}
+                            <Typography key={day} component={Link} href={`#${day}`} variant="h5" sx={sxDayTypography}>
+                                {day}
+                            </Typography>
+                            <Divider orientation="vertical" />
+                        </Box>
                     ))}
                 </Box>
             </Box>
