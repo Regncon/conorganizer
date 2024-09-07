@@ -11,7 +11,7 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import GroupsIcon from '@mui/icons-material/Groups';
 import Link from 'next/link';
-import { useState, type ComponentProps } from 'react';
+import { forwardRef, useState, type ComponentProps } from 'react';
 type Props = {
     sx?: SxProps<Theme>;
     isLoggedIn: boolean;
@@ -19,7 +19,7 @@ type Props = {
     mobile: boolean;
 };
 
-const MainAppBarContent = ({ sx, isLoggedIn, mobile, admin }: Props) => {
+const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admin, mobile }, ref) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -76,7 +76,7 @@ const MainAppBarContent = ({ sx, isLoggedIn, mobile, admin }: Props) => {
     );
 
     return (
-        <AppBar position="fixed" color="primary" sx={sx}>
+        <AppBar position="fixed" color="primary" sx={sx} ref={ref}>
             <Toolbar sx={{ gap: 2 }}>
                 {mobile ? mobileBottomContent : desktopBottomContent}
                 <Box>
@@ -140,6 +140,6 @@ const MainAppBarContent = ({ sx, isLoggedIn, mobile, admin }: Props) => {
             </Toolbar>
         </AppBar>
     );
-};
+});
 
 export default MainAppBarContent;
