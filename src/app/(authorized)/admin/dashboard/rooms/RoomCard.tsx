@@ -9,15 +9,30 @@ type Props = {
     system: string;
     imageUri: string;
 };
-const RoomCard = ({ roomPosition, title, gameMaster, system, imageUri }: Props) => {
+const RoomCard = ({ roomName, title, gameMaster, system, imageUri }: Props) => {
+    const smallRoomRowX = 2460;
+    const roomCoordinates = () => {
+        switch (roomName) {
+            case RoomName.Klang:
+                return { x: smallRoomRowX, y: 450 };
+            case RoomName.Sonate:
+                return { x: smallRoomRowX, y: 640 };
+            default:
+                return { x: 0, y: 0 };
+        }
+    };
     return (
         <Box
             sx={{
                 padding: '1rem',
                 width: '306px',
-                backgroundImage: `url(${imageUri})`,
+                opacity: 0.9,
+                background: `linear-gradient( rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5) ), url(${imageUri})`,
                 backgroundSize: 'cover',
                 borderRadius: '1.75rem',
+                position: 'absolute',
+                left: roomCoordinates().x,
+                top: roomCoordinates().y,
             }}
         >
             <Typography>{title}</Typography>

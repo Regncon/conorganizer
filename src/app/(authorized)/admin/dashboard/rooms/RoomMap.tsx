@@ -26,7 +26,7 @@ const RoomMap = async ({ pool }: Props) => {
                 system={'Call of Cthulhu'}
                 imageUri="/blekksprut2.jpg"
             ></RoomCard>
-            <Image src={'/rooms.webp'} alt={'Romkart'} width={'3868'} height={'2764'}></Image>
+            <Image src={'/rooms.webp'} alt={'Romkart'} width={'2901'} height={'2073'}></Image>
         </Box>
     );
 };
