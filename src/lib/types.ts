@@ -49,6 +49,65 @@ export type ConEvent = {
     subTitle: string;
 };
 
+export type ConEventParent = {
+    id?: string;
+    childEvents: string[];
+    title: string;
+    gameMaster: string;
+    system: string;
+    shortDescription: string;
+    description: string;
+    email: string;
+    name: string;
+    phone: string;
+    gameType: string;
+    isSmallCard: boolean;
+    participants: number;
+    unwantedFridayEvening: boolean;
+    unwantedSaturdayMorning: boolean;
+    unwantedSaturdayEvening: boolean;
+    unwantedSundayMorning: boolean;
+    moduleCompetition: boolean;
+    childFriendly: boolean;
+    possiblyEnglish: boolean;
+    adultsOnly: boolean;
+    volunteersPossible: boolean;
+    lessThanThreeHours: boolean;
+    moreThanSixHours: boolean;
+    beginnerFriendly: boolean;
+    additionalComments: string;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+    subTitle: string;
+};
+
+export type ConEventPulje = {
+    published: boolean;
+    id?: string;
+    parentEventId: string;
+    title: string;
+    gameMaster: string;
+    system: string;
+    shortDescription: string;
+    description: string;
+    gameType: string;
+    isSmallCard: boolean;
+    participants: number;
+    childFriendly: boolean;
+    possiblyEnglish: boolean;
+    adultsOnly: boolean;
+    lessThanThreeHours: boolean;
+    moreThanSixHours: boolean;
+    beginnerFriendly: boolean;
+    additionalComments: string;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+};
+
 export type MyNewEvent = {
     id: string;
     eventDocId?: string;

@@ -2,6 +2,7 @@ import FormSubmissions from './components/FormSubmissions';
 import Events from './components/Events';
 import MyEvents from '$app/(authorized)/dashboard/components/MyEvents';
 import { Box } from '@mui/material';
+import CardBase from '$app/(authorized)/dashboard/components/CardBase';
 
 const Dashboard = async () => {
     return (
@@ -16,6 +17,13 @@ const Dashboard = async () => {
             }}
         >
             <FormSubmissions />
+            <CardBase
+                href="/admin/dashboard/rooms"
+                subTitle="Trykk for å gå til romfordelingen"
+                img="/rooms-small.webp"
+                imgAlt="Romfordeling"
+                title="Romfordeling"
+            />
             <Events />
             <MyEvents />
         </Box>

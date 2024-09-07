@@ -33,7 +33,6 @@ of your con schedule, your panels, and your expenses.
 -   Add is gm to event
 -   Help text explaining how the algorithm works
 -   Icons
--   Convert my events to use new event system
 -   Easy next and previous navigation
 -   Debounce/fix text box, my events
 
@@ -69,6 +68,7 @@ of your con schedule, your panels, and your expenses.
 
 ## Done
 
+-   Convert my events to use new event system
 -   Add none events to list
 -   Match header and footer to design
 -   Check if firebase token should be private
