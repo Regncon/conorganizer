@@ -26,7 +26,7 @@ const DaysHeader = ({ eventDays }: Props) => {
                 component="header"
                 sx={{
                     position: 'sticky',
-                    top: '0',
+                    top: 'var(--app-bar-height)',
                     backgroundColor: 'background.paper',
                     padding: '0.5rem',
                     zIndex: 1,
@@ -40,7 +40,7 @@ const DaysHeader = ({ eventDays }: Props) => {
                     sx={{
                         display: 'grid',
                         gridTemplateColumns: 'repeat(4, max-content)',
-                        placeContent: 'end',
+                        placeContent: 'center',
                         placeItems: 'center',
                     }}
                 >
