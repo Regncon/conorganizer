@@ -2,7 +2,7 @@
 import type { EventDay, EventDays } from '$app/(public)/page';
 import { useSetCustomCssVariable } from '$lib/hooks/useSetCustomCssVariable';
 import { Box, Typography, Link, type SxProps, Divider } from '@mui/material';
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 
 type Props = {
     eventDays: EventDays;
@@ -13,7 +13,7 @@ const sxDayTypography: SxProps = {
     minHeight: '4rem',
     display: 'grid',
     placeItems: 'center',
-    padding: '0.5em',
+    paddingInline: '0.5em',
 };
 
 const DaysHeader = ({ eventDays, locationHash }: Props) => {
@@ -31,7 +31,7 @@ const DaysHeader = ({ eventDays, locationHash }: Props) => {
                 }}
                 ref={ref}
             >
-                <Box sx={{ display: 'grid', placeContent: 'end', marginInline: '2rem', marginBlock: '0.5rem' }}>
+                <Box sx={{ display: 'grid', placeContent: 'center', marginInline: '2rem', marginBlock: '0.5rem' }}>
                     FILTER
                 </Box>
                 <Box
@@ -43,16 +43,34 @@ const DaysHeader = ({ eventDays, locationHash }: Props) => {
                     }}
                 >
                     {Object.values(eventDays).map((day, i) => (
-                        <Box
-                            sx={{ backgroundColor: locationHash === day ? 'secondary.main' : 'transparent' }}
-                            key={day}
-                        >
-                            {i === 0 && <Divider orientation="vertical" />}
-                            <Typography key={day} component={Link} href={`#${day}`} variant="h5" sx={sxDayTypography}>
-                                {day}
-                            </Typography>
-                            <Divider orientation="vertical" />
-                        </Box>
+                        <Fragment key={day}>
+                            {i === 0 && (
+                                <Divider
+                                    orientation="vertical"
+                                    sx={{ borderColor: locationHash === day ? 'secondary.main' : '' }}
+                                />
+                            )}
+                            <Box
+                                sx={{
+                                    backgroundColor: locationHash === day ? 'secondary.main' : '',
+                                    transition: 'background-color 0.5s ease-in-out;',
+                                }}
+                            >
+                                <Typography
+                                    key={day}
+                                    component={Link}
+                                    href={`#${day}`}
+                                    variant="h5"
+                                    sx={sxDayTypography}
+                                >
+                                    {day}
+                                </Typography>
+                            </Box>
+                            <Divider
+                                orientation="vertical"
+                                sx={{ borderColor: locationHash === day ? 'secondary.main' : '' }}
+                            />
+                        </Fragment>
                     ))}
                 </Box>
             </Box>

@@ -4,40 +4,31 @@ import type { ConEvents } from '../../page';
 import EventCardBig from '../components/EventCardBig';
 import EventCardSmall from '../components/EventCardSmall';
 import NextLink from 'next/link';
-import { useEffect, useRef } from 'react';
+import { use, useEffect, useRef } from 'react';
 import EventListDay from './EventListDay';
+import { IntersectionObserverContext } from '../lib/IntersectionObserverContext';
 type Props = {
     events: ConEvents;
-    intersectionObserver: IntersectionObserver | null;
 };
 
-const EventList = ({ events, intersectionObserver }: Props) => {
-    const ref = useRef<HTMLDivElement>(null);
-    // const intersectionObserver = new IntersectionObserver(
-    //     (entries) => {
-    //         entries.forEach((entry) => {
-    //             console.log(entry);
-    //         });
-    //     },
-    //     { root: ref.current, threshold: 1 }
-    // );
-
-    // useEffect(() => {
-    //     if (ref.current) {
-    //         console.log('test');
-
-    //         intersectionObserver.observe(ref.current);
-    //     }
-    //     return () => {
-    //         if (ref.current) {
-    //             intersectionObserver.unobserve(ref.current);
-    //         }
-    //     };
-    // }, [ref, ref.current]);
+const EventList = ({ events }: Props) => {
     return events.map((event) => {
+        const ref = useRef<HTMLDivElement>(null);
+        const intersectionObserver = use(IntersectionObserverContext);
+
+        useEffect(() => {
+            if (ref.current) {
+                intersectionObserver?.observe(ref.current);
+            }
+            return () => {
+                if (ref.current) {
+                    intersectionObserver?.unobserve(ref.current);
+                }
+            };
+        }, [ref, ref.current]);
         return (
-            <Box key={event.day}>
-                <EventListDay eventDay={event.day} intersectionObserver={intersectionObserver} />
+            <Box key={event.day} ref={ref}>
+                <EventListDay eventDay={event.day} />
                 <Box sx={{ display: 'grid' }}>
                     {event.events.map((event) => (
                         <NextLink key={event.id} href={`/event/${event.id}`} style={{ all: 'unset' }}>
