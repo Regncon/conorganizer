@@ -2,11 +2,10 @@
 import type { EventDay, EventDays } from '$app/(public)/page';
 import { useSetCustomCssVariable } from '$lib/hooks/useSetCustomCssVariable';
 import { Box, Typography, Link, type SxProps, Divider } from '@mui/material';
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 
 type Props = {
     eventDays: EventDays;
-    locationHash: EventDay;
 };
 const sxDayTypography: SxProps = {
     maxWidth: '5rem',
@@ -14,10 +13,18 @@ const sxDayTypography: SxProps = {
     display: 'grid',
     placeItems: 'center',
     paddingInline: '0.5em',
+    transition: 'background-color 0.5s ease-in-out;',
 };
 
-const DaysHeader = ({ eventDays, locationHash }: Props) => {
+const DaysHeader = ({ eventDays }: Props) => {
     const ref = useSetCustomCssVariable({ '--scroll-margin-top': 'height' });
+    const [locationHash, setLocationHash] = useState<EventDay>('');
+
+    useEffect(() => {
+        if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+            setLocationHash(decodeURI(window.location.hash).substring(1) as EventDay);
+        }
+    }, []);
     return (
         <>
             <Box
@@ -41,37 +48,42 @@ const DaysHeader = ({ eventDays, locationHash }: Props) => {
                         placeContent: 'center',
                         placeItems: 'center',
                     }}
+                    className="links"
                 >
-                    {Object.values(eventDays).map((day, i) => (
-                        <Fragment key={day}>
-                            {i === 0 && (
-                                <Divider
-                                    orientation="vertical"
-                                    sx={{ borderColor: locationHash === day ? 'secondary.main' : '' }}
-                                />
-                            )}
-                            <Box
-                                sx={{
-                                    backgroundColor: locationHash === day ? 'secondary.main' : '',
-                                    transition: 'background-color 0.5s ease-in-out;',
-                                }}
-                            >
-                                <Typography
-                                    key={day}
-                                    component={Link}
-                                    href={`#${day}`}
-                                    variant="h5"
-                                    sx={sxDayTypography}
+                    {Object.values(eventDays).map((day, i) => {
+                        const activeClassColorSx: SxProps = {
+                            borderColor: 'secondary.main',
+                            backgroundColor: locationHash === day ? 'secondary.main' : '',
+                            '.active': {
+                                backgroundColor: 'secondary.main',
+                                borderColor: 'secondary.main',
+                            },
+                        };
+
+                        return (
+                            <Fragment key={day}>
+                                {i === 0 && <Divider orientation="vertical" sx={activeClassColorSx} />}
+                                <Box
+                                    sx={{
+                                        ...activeClassColorSx,
+                                        transition: 'background-color 0.2s ease-in-out;',
+                                    }}
+                                    onClick={() => setLocationHash('')}
                                 >
-                                    {day}
-                                </Typography>
-                            </Box>
-                            <Divider
-                                orientation="vertical"
-                                sx={{ borderColor: locationHash === day ? 'secondary.main' : '' }}
-                            />
-                        </Fragment>
-                    ))}
+                                    <Typography
+                                        key={day}
+                                        component={Link}
+                                        href={`#${day}`}
+                                        variant="h5"
+                                        sx={sxDayTypography}
+                                    >
+                                        {day}
+                                    </Typography>
+                                </Box>
+                                <Divider orientation="vertical" sx={activeClassColorSx} />
+                            </Fragment>
+                        );
+                    })}
                 </Box>
             </Box>
         </>

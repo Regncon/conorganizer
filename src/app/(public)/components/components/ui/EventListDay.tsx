@@ -1,8 +1,6 @@
 'use client';
-import type { EventDay, EventDays } from '$app/(public)/page';
+import type { EventDay } from '$app/(public)/page';
 import { Typography } from '@mui/material';
-import { use, useContext, useEffect, useRef } from 'react';
-import { IntersectionObserverContext } from '../lib/IntersectionObserverContext';
 
 type Props = {
     eventDay: EventDay;

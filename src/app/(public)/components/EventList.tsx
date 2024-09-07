@@ -1,12 +1,13 @@
 'use client';
 import { Box, Typography } from '@mui/material';
-import type { ConEvents } from '../../page';
-import EventCardBig from '../components/EventCardBig';
-import EventCardSmall from '../components/EventCardSmall';
+import type { ConEvents, EventDay } from '../page';
+import EventCardBig from './components/EventCardBig';
+import EventCardSmall from './components/EventCardSmall';
 import NextLink from 'next/link';
-import { use, useEffect, useRef } from 'react';
-import EventListDay from './EventListDay';
-import { IntersectionObserverContext } from '../lib/IntersectionObserverContext';
+import { use, useEffect, useRef, useState } from 'react';
+import EventListDay from './components/ui/EventListDay';
+import { useIntersectionObserver } from './lib/hooks/useIntersectionObserver';
+import { useObserveIntersectionObserver } from './lib/hooks/useObserveIntersectionObserver';
 type Props = {
     events: ConEvents;
 };
@@ -14,18 +15,8 @@ type Props = {
 const EventList = ({ events }: Props) => {
     return events.map((event) => {
         const ref = useRef<HTMLDivElement>(null);
-        const intersectionObserver = use(IntersectionObserverContext);
+        useObserveIntersectionObserver(ref);
 
-        useEffect(() => {
-            if (ref.current) {
-                intersectionObserver?.observe(ref.current);
-            }
-            return () => {
-                if (ref.current) {
-                    intersectionObserver?.unobserve(ref.current);
-                }
-            };
-        }, [ref, ref.current]);
         return (
             <Box key={event.day} ref={ref}>
                 <EventListDay eventDay={event.day} />
