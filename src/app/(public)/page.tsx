@@ -51,7 +51,7 @@ export default async function Home() {
                             <Box key={event.day}>
                                 <Typography
                                     id={event.day}
-                                    sx={{ scrollMarginTop: 'var(--scroll-margin-top)' }}
+                                    sx={{ scrollMarginTop: 'calc(var(--scroll-margin-top) + var(--app-bar-height))' }}
                                     variant="h1"
                                 >
                                     {event.day}
