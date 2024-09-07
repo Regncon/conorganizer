@@ -1,5 +1,6 @@
 import { AppBar, Paper, Tab, Tabs, Toolbar, Typography } from '@mui/material';
 import RoomMap from './RoomMap';
+import { PoolName } from '$lib/enums';
 const Rooms = async () => {
     const pool = 'Lørdag Morgen';
     return (
@@ -27,7 +28,7 @@ const Rooms = async () => {
                 </Toolbar>
             </AppBar>
             <Toolbar />
-            <RoomMap pool="Lørdag Morgen" />
+            <RoomMap pool={PoolName.fridayEvening} />
         </Paper>
     );
 };
