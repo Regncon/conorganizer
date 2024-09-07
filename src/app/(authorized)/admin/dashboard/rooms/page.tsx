@@ -1,4 +1,4 @@
-import { Paper, Typography } from '@mui/material';
+import { AppBar, Paper, Tab, Tabs, Toolbar, Typography } from '@mui/material';
 import RoomMap from './RoomMap';
 const Rooms = async () => {
     const pool = 'Lørdag Morgen';
@@ -14,7 +14,19 @@ const Rooms = async () => {
                 margin: '1rem',
             }}
         >
-            <Typography variant="h1">Romfordeling: {pool} </Typography>
+            {' '}
+            <AppBar position="fixed" sx={{ paddingTop: '60px' }}>
+                <Toolbar>
+                    <Typography variant="h1">Romfordeling </Typography>
+                    <Tabs value={1}  aria-label="basic tabs example">
+                        <Tab label="Fredag Kveld" />
+                        <Tab label="Lørdag Morgen" />
+                        <Tab label="Lørdag Kveld" />
+                        <Tab label="Søndag Morgen" />
+                    </Tabs>
+                </Toolbar>
+            </AppBar>
+            <Toolbar />
             <RoomMap pool="Lørdag Morgen" />
         </Paper>
     );
