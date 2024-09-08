@@ -1,10 +1,11 @@
 'use server';
 
 import { getEventById, getPoolEventById } from '$app/(public)/components/lib/serverAction';
-import { PoolName } from '$lib/enums';
+import type { EventDay } from '$app/(public)/page';
+import { PoolName, type RoomName } from '$lib/enums';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { ConEvent, PoolEvent } from '$lib/types';
-import { addDoc, collection, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { ConEvent, PoolEvent, type Room, type RoomChildRef } from '$lib/types';
+import { addDoc, collection, deleteDoc, doc, setDoc, updateDoc, type DocumentReference } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 export async function removeFromPool(eventId: string, poolName: PoolName) {
@@ -55,7 +56,7 @@ export async function removeFromPool(eventId: string, poolName: PoolName) {
     }
 
     conEvent.updateAt = Date.now().toString();
-    
+
     try {
         await updateDoc(doc(db, 'events', eventId), conEvent);
         console.log('Document updated', eventId);
@@ -149,4 +150,51 @@ export async function convertToPoolEvent(eventId: string, poolName: PoolName) {
         console.error('Error updating document: ', e);
     }
     revalidatePath('/admin/dashboard/rooms', 'page');
+}
+
+export async function addToRoom(eventId: string, roomName: RoomName, poolName: PoolName) {
+    const { db, user } = await getAuthorizedAuth();
+    if (db === null || user === null) {
+        return;
+    }
+    const conEvent: ConEvent = await getEventById(eventId);
+
+    const roomPoolId = conEvent.poolIds.find((pool) => pool.poolName === poolName);
+
+    const poolEvent: PoolEvent = await getPoolEventById(roomPoolId?.id ?? '');
+    const room: Omit<Room, 'id'> = {
+        name: roomName,
+        eventId: eventId,
+        players: [],
+    };
+
+    if (poolEvent.id) {
+        let roomDocument: Awaited<ReturnType<typeof addDoc>> | undefined;
+        try {
+            roomDocument = await addDoc(collection(db, 'pool-events', poolEvent.id, 'room'), room);
+            console.log('Room collection created');
+        } catch (e) {
+            console.error('Error room collection creation failed: ', e);
+        }
+
+        try {
+            const roomChildRef: Partial<ConEvent> = {
+                roomIds: [
+                    {
+                        id: roomDocument?.id ?? '',
+                        roomName: roomName,
+                        poolName: poolName,
+                        createdAt: Date.now().toString(),
+                        createdBy: user.uid,
+                        updateAt: Date.now().toString(),
+                        updatedBy: user.uid,
+                    },
+                ],
+            };
+            await updateDoc(doc(db, 'events', eventId) as DocumentReference<ConEvent, ConEvent>, roomChildRef);
+            console.log('Event updated');
+        } catch (e) {
+            console.error('Error updating document: ', e);
+        }
+    }
 }

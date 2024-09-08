@@ -32,7 +32,6 @@ const Rooms = async ({ searchParams }: { searchParams: { [key: string]: string |
                 margin: '1rem',
             }}
         >
-            {' '}
             <AppBar position="fixed" sx={{ paddingTop: '60px' }}>
                 <Toolbar>
                     <Typography variant="h1">Romfordeling </Typography>

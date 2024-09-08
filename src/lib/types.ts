@@ -1,4 +1,5 @@
-import { PoolName } from './enums';
+import type { EventDay } from '$app/(public)/page';
+import { PoolName, type RoomName } from './enums';
 
 export type EventCardProps = {
     title: string;
@@ -32,6 +33,7 @@ export type ConEvent = {
     puljeSaturdayEvening: boolean;
     puljeSundayMorning: boolean;
     poolIds: PoolChildRef[];
+    roomIds: RoomChildRef[];
     unwantedFridayEvening: boolean;
     unwantedSaturdayMorning: boolean;
     unwantedSaturdayEvening: boolean;
@@ -50,6 +52,28 @@ export type ConEvent = {
     updateAt: string;
     updatedBy: string;
     subTitle: string;
+};
+
+export type RoomPlayer = {
+    email: string;
+    name: string;
+    id: string;
+};
+export type Room = {
+    id?: string;
+    name: RoomName;
+    eventId: string;
+    players: RoomPlayer[];
+};
+
+export type RoomChildRef = {
+    id: string;
+    poolName: PoolName;
+    roomName: RoomName;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
 };
 export type PoolChildRef = {
     id: string;

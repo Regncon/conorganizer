@@ -8,6 +8,7 @@ import RoomCard from './RoomCard';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { convertToPoolEvent, removeFromPool } from './actions';
+import RoomAddButton from './RoomAddButton';
 
 type Props = {
     poolName: PoolName;
@@ -62,13 +63,13 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
         switch (roomName) {
             case RoomName.NotSet:
                 return { x: 1000, y: 350 };
-            case RoomName.Styreromm1:
+            case RoomName.Styrerom1:
                 return { x: styreRomRowX, y: 350 };
-            case RoomName.Styreromm2:
-            case RoomName.Styreromm3:
-            case RoomName.Styreromm4:
-            case RoomName.Styreromm5:
-            case RoomName.Styreromm6:
+            case RoomName.Styrerom2:
+            case RoomName.Styrerom3:
+            case RoomName.Styrerom4:
+            case RoomName.Styrerom5:
+            case RoomName.Styrerom6:
             case RoomName.Klang:
             case RoomName.Sonate:
             case RoomName.Klang:
@@ -85,9 +86,129 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
 
     return (
         <>
-            <Button sx={{ fontSize: '90px', color: 'lightgray', position: 'absolute', left:2560, top:450  }}>
-                <AddCircleIcon sx={{ fontSize: '90px' }} />
-            </Button>
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{ x: 2560, y: 450 }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Klang}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 2532,
+                    y: 628,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Sonate}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 2510,
+                    y: 800,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Ballade}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 2490,
+                    y: 980,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Klaver}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 2650,
+                    y: 1125,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Hymne}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 2650,
+                    y: 1280,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Fanfare}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 2460,
+                    y: 1510,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Kammer}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 2097,
+                    y: 1950,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Beyer}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 1900,
+                    y: 2050,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Siljuslåtten}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 1560,
+                    y: 2050,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.PeerGynt}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 250,
+                    y: 1000,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.SolveigsSang}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 250,
+                    y: 750,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.AnitrasDans}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 450,
+                    y: 550,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Werenskiold}
+            />
+            <RoomAddButton
+                events={events}
+                roomCoordinates={{
+                    x: 450,
+                    y: 250,
+                }}
+                poolName={PoolName.fridayEvening}
+                roomName={RoomName.Welhaven}
+            />
 
             {eventsInRoom && (
                 <>
