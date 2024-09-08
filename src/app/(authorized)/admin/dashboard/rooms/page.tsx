@@ -19,6 +19,7 @@ const Rooms = async ({ searchParams }: { searchParams: { [key: string]: string |
     } else if (searchParams.pool === PoolName[PoolName.sundayMorning]) {
         value = 3;
     }
+
     return (
         <Paper
             sx={{

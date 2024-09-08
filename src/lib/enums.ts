@@ -6,12 +6,12 @@ export enum PoolName {
 }
 
 export enum RoomName {
-    'Styreromm 1',
-    'Styreromm 2',
-    'Styreromm 3',
-    'Styreromm 4',
-    'Styreromm 5',
-    'Styreromm 6',
+    'Styreromm1',
+    'Styreromm2',
+    'Styreromm3',
+    'Styreromm4',
+    'Styreromm5',
+    'Styreromm6',
     'Klang',
     'Sonate',
 }
