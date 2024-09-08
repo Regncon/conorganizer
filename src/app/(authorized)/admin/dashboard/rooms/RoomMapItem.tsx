@@ -89,7 +89,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
             <RoomAddButton
                 events={events}
                 roomCoordinates={{ x: 2560, y: 450 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Klang}
             />
             <RoomAddButton
@@ -98,7 +98,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 2532,
                     y: 628,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Sonate}
             />
             <RoomAddButton
@@ -107,7 +107,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 2510,
                     y: 800,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Ballade}
             />
             <RoomAddButton
@@ -116,7 +116,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 2490,
                     y: 980,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Klaver}
             />
             <RoomAddButton
@@ -125,7 +125,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 2650,
                     y: 1125,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Hymne}
             />
             <RoomAddButton
@@ -134,7 +134,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 2650,
                     y: 1280,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Fanfare}
             />
             <RoomAddButton
@@ -143,7 +143,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 2460,
                     y: 1510,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Kammer}
             />
             <RoomAddButton
@@ -152,7 +152,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 2097,
                     y: 1950,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Beyer}
             />
             <RoomAddButton
@@ -161,7 +161,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 1900,
                     y: 2050,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Siljuslåtten}
             />
             <RoomAddButton
@@ -170,7 +170,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 1560,
                     y: 2050,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.PeerGynt}
             />
             <RoomAddButton
@@ -179,7 +179,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 250,
                     y: 1000,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.SolveigsSang}
             />
             <RoomAddButton
@@ -188,7 +188,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 250,
                     y: 750,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.AnitrasDans}
             />
             <RoomAddButton
@@ -197,7 +197,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 450,
                     y: 550,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Werenskiold}
             />
             <RoomAddButton
@@ -206,7 +206,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                     x: 450,
                     y: 250,
                 }}
-                poolName={PoolName.fridayEvening}
+                poolName={poolName}
                 roomName={RoomName.Welhaven}
             />
 
