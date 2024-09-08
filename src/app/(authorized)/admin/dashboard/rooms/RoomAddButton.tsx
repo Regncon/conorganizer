@@ -20,14 +20,15 @@ type Props = {
 
 const RoomAddButton = ({ roomCoordinates, events, poolName, roomName }: Props) => {
     const [open, setOpen] = useState<boolean>(false);
-    const [selectedValue, setSelectedValue] = useState<string>('');
-
     const handleAddClick = () => {
         setOpen(true);
     };
-    const handleClose = (value: string) => {
+    const handleClose = async (value: string) => {
         setOpen(false);
-        setSelectedValue(value);
+        console.log('close', value);
+        if (!value) {
+            return;
+        }
         addToRoom(value, roomName, poolName);
     };
     const roomCoordinatesSx: SxProps = {
@@ -35,6 +36,7 @@ const RoomAddButton = ({ roomCoordinates, events, poolName, roomName }: Props) =
         left: roomCoordinates.x,
         top: roomCoordinates.y,
     };
+    const dayFilteredEvents = events.filter((event) => event.poolIds?.some((pool) => pool.poolName === poolName));
 
     return (
         <>
@@ -42,12 +44,7 @@ const RoomAddButton = ({ roomCoordinates, events, poolName, roomName }: Props) =
                 <AddCircleIcon sx={{ fontSize: '90px' }} />
             </Button>
 
-            <RoomSelectDialog
-                open={open}
-                selectedValue={selectedValue}
-                onClose={handleClose}
-                events={events}
-            ></RoomSelectDialog>
+            <RoomSelectDialog open={open} selectedValue={''} onClose={handleClose} events={events}></RoomSelectDialog>
         </>
     );
 };
