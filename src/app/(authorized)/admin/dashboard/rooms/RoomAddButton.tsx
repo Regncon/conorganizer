@@ -24,8 +24,6 @@ const RoomAddButton = ({ roomCoordinates, events, poolName, roomName }: Props) =
 
     const handleAddClick = () => {
         setOpen(true);
-
-        console.log('Add click');
     };
     const handleClose = (value: string) => {
         setOpen(false);

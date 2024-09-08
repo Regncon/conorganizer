@@ -26,6 +26,8 @@ export async function convertToConEvent(myEventId: string, myEventUserId: string
         shortDescription: '',
         email: myEvent.email,
         phone: myEvent.phone,
+        roomIds: [],
+        poolIds: [],
         isSmallCard: false,
         participants: myEvent.participants,
         puljeFridayEvening: false,

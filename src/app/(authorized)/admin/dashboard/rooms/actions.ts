@@ -159,7 +159,7 @@ export async function addToRoom(eventId: string, roomName: RoomName, poolName: P
     }
     const conEvent: ConEvent = await getEventById(eventId);
 
-    const roomPoolId = conEvent.poolIds.find((pool) => pool.poolName === poolName);
+    const roomPoolId = conEvent.poolIds?.find((pool) => pool.poolName === poolName);
 
     const poolEvent: PoolEvent = await getPoolEventById(roomPoolId?.id ?? '');
     const room: Omit<Room, 'id'> = {

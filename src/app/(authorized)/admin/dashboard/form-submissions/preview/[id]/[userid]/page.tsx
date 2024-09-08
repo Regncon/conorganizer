@@ -37,6 +37,8 @@ const FormSubmissionsPreviewPage = async ({ params: { id, userid } }: Props) => 
         shortDescription: '',
         email: '',
         phone: '',
+        poolIds: [],
+        roomIds: [],
         isSmallCard: false,
         participants: 0,
         puljeFridayEvening: false,
