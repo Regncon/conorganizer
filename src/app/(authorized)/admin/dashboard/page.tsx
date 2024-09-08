@@ -18,7 +18,7 @@ const Dashboard = async () => {
         >
             <FormSubmissions />
             <CardBase
-                href="/admin/dashboard/rooms"
+                href="/admin/dashboard/rooms?pool=fridayEvening"
                 subTitle="Trykk for å gå til romfordelingen"
                 img="/rooms-small.webp"
                 imgAlt="Romfordeling"

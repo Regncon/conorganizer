@@ -1,8 +1,8 @@
 export enum PoolName {
-    fridayEvening,
-    saturdayMorning,
-    saturdayEvening,
-    sundayMorning,
+    fridayEvening = 'fridayEvening',
+    saturdayMorning = 'saturdayMorning',
+    saturdayEvening = 'saturdayEvening',
+    sundayMorning = 'sundayMorning',
 }
 
 export enum RoomName {

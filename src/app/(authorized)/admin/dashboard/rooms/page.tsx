@@ -1,8 +1,24 @@
 import { AppBar, Paper, Tab, Tabs, Toolbar, Typography } from '@mui/material';
 import RoomMap from './RoomMap';
 import { PoolName } from '$lib/enums';
-const Rooms = async () => {
-    const pool = 'Lørdag Morgen';
+import { redirect } from 'next/navigation';
+
+const Rooms = async ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
+    if (!searchParams.pool) {
+        const detfaultPoolPage = `./rooms?pool=${PoolName[PoolName.fridayEvening]}`;
+        redirect(detfaultPoolPage);
+    }
+
+    let value = 0;
+    if (searchParams.pool === PoolName[PoolName.fridayEvening]) {
+        value = 0;
+    } else if (searchParams.pool === PoolName[PoolName.saturdayMorning]) {
+        value = 1;
+    } else if (searchParams.pool === PoolName[PoolName.saturdayEvening]) {
+        value = 2;
+    } else if (searchParams.pool === PoolName[PoolName.sundayMorning]) {
+        value = 3;
+    }
     return (
         <Paper
             sx={{
@@ -19,16 +35,16 @@ const Rooms = async () => {
             <AppBar position="fixed" sx={{ paddingTop: '60px' }}>
                 <Toolbar>
                     <Typography variant="h1">Romfordeling </Typography>
-                    <Tabs value={1}  aria-label="basic tabs example">
-                        <Tab label="Fredag Kveld" />
-                        <Tab label="Lørdag Morgen" />
-                        <Tab label="Lørdag Kveld" />
-                        <Tab label="Søndag Morgen" />
+                    <Tabs value={value} aria-label="basic tabs example">
+                        <Tab label="Fredag Kveld" href={`./rooms?pool=${PoolName[PoolName.fridayEvening]}`} />
+                        <Tab label="Lørdag Morgen" href={`./rooms?pool=${PoolName[PoolName.saturdayMorning]}`} />
+                        <Tab label="Lørdag Kveld" href={`./rooms?pool=${PoolName[PoolName.saturdayEvening]}`} />
+                        <Tab label="Søndag Morgen" href={`./rooms?pool=${PoolName[PoolName.sundayMorning]}`} />
                     </Tabs>
                 </Toolbar>
             </AppBar>
             <Toolbar />
-            <RoomMap pool={PoolName.fridayEvening} />
+            <RoomMap pool={searchParams.pool as PoolName}></RoomMap>
         </Paper>
     );
 };
