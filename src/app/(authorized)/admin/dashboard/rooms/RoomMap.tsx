@@ -3,12 +3,16 @@ import Image from 'next/image';
 import { PoolName, RoomName } from '$lib/enums';
 import { getAllEvents } from '$app/(public)/components/lib/serverAction';
 import RoomMapItem from './RoomMapItem';
+import { ConEvent } from '$lib/types';
 
 type Props = {
-    pool: PoolName;
+    pool: PoolName | undefined;
 };
 
 const RoomMap = async ({ pool }: Props) => {
+    if (!pool) {
+        return <Typography>Velg en pulje</Typography>;
+    }
     const events = await getAllEvents();
 
     const poolTitles = {
@@ -27,35 +31,13 @@ const RoomMap = async ({ pool }: Props) => {
                 {poolTitles[pool]}
             </Typography>
             <Typography variant="h2" sx={{ color: 'black', position: 'absolute', top: '300px', left: '1000px' }}>
-                Styrerom 1 Gerhard
+                Arrangementer på {poolTitles[pool]} uten rom
             </Typography>
-            <RoomMapItem
-                poolName={pool}
-                roomName={RoomName.Styreromm1}
-                title={'Kjempegøy drager og fangehull'}
-                gameMaster={'Kari Nordmann'}
-                system={'D&D'}
-                imageUri="/blekksprut2.jpg"
-                events={events}
-            ></RoomMapItem>
-            <RoomMapItem
-                poolName={pool}
-                roomName={RoomName.Klang}
-                title={'Kjempegøy drager og fangehull'}
-                gameMaster={'Kari Nordmann'}
-                system={'D&D'}
-                imageUri="/blekksprut2.jpg"
-                events={events}
-            ></RoomMapItem>
-            <RoomMapItem
-                poolName={pool}
-                roomName={RoomName.Sonate}
-                title={'En telefon fra Cthulhu'}
-                gameMaster={'Ola Nordmann'}
-                system={'Call of Cthulhu'}
-                imageUri="/blekksprut2.jpg"
-                events={events}
-            ></RoomMapItem>
+            {events.map((event) => {
+                return (
+                    <RoomMapItem key={event.id} eventId={event.id || ''} poolName={pool} events={events}></RoomMapItem>
+                );
+            })}
             <Image src={'/rooms.webp'} alt={'Romkart'} width={'2901'} height={'2073'}></Image>
         </Box>
     );

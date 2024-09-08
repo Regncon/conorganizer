@@ -7,21 +7,21 @@ import { z } from 'zod';
 import type { InitialLoginFormState } from '../components/LoginPage';
 
 export const setSessionCookie = async (idToken: string) => {
-    console.log(idToken, 'idToken');
+    // console.log(idToken, 'idToken');
     const cookieStore = cookies();
     const twoWeekExpire = 14 * 24 * 60 * 60 * 1000;
     const expirationDate = Date.now() + twoWeekExpire;
     const twoWeeksInSeconds = 14 * 24 * 60 * 60;
 
     const adminIdToken = await adminAuth.createSessionCookie(idToken, { expiresIn: twoWeekExpire });
-    console.log('adminIdToken', adminIdToken);
+    // console.log('adminIdToken', adminIdToken);
     const options: Partial<ResponseCookie> = {
         maxAge: twoWeeksInSeconds,
         httpOnly: true,
         secure: true,
         expires: expirationDate,
     };
-    console.log(new Date(expirationDate), expirationDate, options);
+    // console.log(new Date(expirationDate), expirationDate, options);
 
     cookieStore.set(SESSION_COOKIE_NAME, adminIdToken, options);
 };

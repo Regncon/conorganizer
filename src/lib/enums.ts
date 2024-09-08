@@ -6,6 +6,7 @@ export enum PoolName {
 }
 
 export enum RoomName {
+    'NotSet',
     'Styreromm1',
     'Styreromm2',
     'Styreromm3',

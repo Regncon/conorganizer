@@ -6,16 +6,16 @@ import { setSessionCookie } from '../(auth)/login/lib/actions';
 
 type Props = {};
 
-const SetCookie = ({}: Props) => {
+const SetCookie = ({ }: Props) => {
     useEffect(() => {
         const unsubscribeUser = onAuthStateChanged(firebaseAuth, async (user) => {
-            console.log(user, 'user');
+            // console.log(user, 'user');
 
             if (!user) {
                 return;
             }
             const idToken = await user.getIdToken();
-            console.log(idToken, 'idToken');
+            // console.log(idToken, 'idToken');
             //ToDo: only set cookie if it is not already set or the cookie is expired
             //console.log('setting cookie');
             await setSessionCookie(idToken);
