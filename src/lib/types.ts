@@ -31,6 +31,7 @@ export type ConEvent = {
     puljeSaturdayMorning: boolean;
     puljeSaturdayEvening: boolean;
     puljeSundayMorning: boolean;
+    poolIds: PoolChildRef[];
     unwantedFridayEvening: boolean;
     unwantedSaturdayMorning: boolean;
     unwantedSaturdayEvening: boolean;
@@ -49,6 +50,14 @@ export type ConEvent = {
     updateAt: string;
     updatedBy: string;
     subTitle: string;
+};
+export type PoolChildRef = {
+    id: string;
+    poolName: PoolName;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
 };
 
 export type PoolEvent = {

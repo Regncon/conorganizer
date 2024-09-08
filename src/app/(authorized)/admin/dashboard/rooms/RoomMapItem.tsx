@@ -6,6 +6,7 @@ import { useState } from 'react';
 import RoomSelectDialog from './RoomSelectDialog';
 import RoomCard from './RoomCard';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
+import { convertToPoolEvent } from './actions';
 
 type Props = {
     poolName: PoolName;
@@ -35,6 +36,7 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
         setOpen(false);
         setSelectedValue(value);
         console.log(value);
+        convertToPoolEvent(value, poolName);
     };
 
     const smallRoomRowX = 2460;
