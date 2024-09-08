@@ -12,6 +12,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import { blue } from '@mui/material/colors';
 import { ConEvent } from '$lib/types';
 import { Box, DialogContent, Typography } from '@mui/material';
+import RoomCard from './RoomCard';
 
 type Props = {
     open: boolean;
@@ -41,17 +42,18 @@ const RoomSelectDialog = ({ open, selectedValue, onClose, events }: Props) => {
                                     <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                         <Box
                                             sx={{
-                                                width: '35rem',
+                                                width: '30rem',
                                                 display: 'flex',
                                                 flexDirection: 'column',
                                                 alignItems: 'flex-start',
                                             }}
                                         >
-                                            <Typography>{event.title}</Typography>
-                                            <Typography sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}>
-                                                {event.gameMaster}
-                                            </Typography>
-                                            <Typography sx={{ color: 'primary.main' }}>{event.system}</Typography>
+                                            <RoomCard
+                                                title={event.title}
+                                                gameMaster={event.gameMaster}
+                                                system={event.system}
+                                                imageUri="/blekksprut2.jpg"
+                                            />
                                         </Box>
                                         <Box
                                             sx={{

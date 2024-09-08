@@ -1,8 +1,8 @@
 import { Box, Typography } from '@mui/material';
 import Image from 'next/image';
-import RoomCard from './RoomCard';
 import { PoolName, RoomName } from '$lib/enums';
 import { getAllEvents } from '$app/(public)/components/lib/serverAction';
+import RoomMapItem from './RoomMapItem';
 
 type Props = {
     pool: PoolName;
@@ -29,7 +29,7 @@ const RoomMap = async ({ pool }: Props) => {
             <Typography variant="h2" sx={{ color: 'black', position: 'absolute', top: '300px', left: '1000px' }}>
                 Styrerom 1 Gerhard
             </Typography>
-            <RoomCard
+            <RoomMapItem
                 poolName={pool}
                 roomName={RoomName.Styreromm1}
                 title={'Kjempegøy drager og fangehull'}
@@ -37,8 +37,8 @@ const RoomMap = async ({ pool }: Props) => {
                 system={'D&D'}
                 imageUri="/blekksprut2.jpg"
                 events={events}
-            ></RoomCard>
-            <RoomCard
+            ></RoomMapItem>
+            <RoomMapItem
                 poolName={pool}
                 roomName={RoomName.Klang}
                 title={'Kjempegøy drager og fangehull'}
@@ -46,8 +46,8 @@ const RoomMap = async ({ pool }: Props) => {
                 system={'D&D'}
                 imageUri="/blekksprut2.jpg"
                 events={events}
-            ></RoomCard>
-            <RoomCard
+            ></RoomMapItem>
+            <RoomMapItem
                 poolName={pool}
                 roomName={RoomName.Sonate}
                 title={'En telefon fra Cthulhu'}
@@ -55,7 +55,7 @@ const RoomMap = async ({ pool }: Props) => {
                 system={'Call of Cthulhu'}
                 imageUri="/blekksprut2.jpg"
                 events={events}
-            ></RoomCard>
+            ></RoomMapItem>
             <Image src={'/rooms.webp'} alt={'Romkart'} width={'2901'} height={'2073'}></Image>
         </Box>
     );
