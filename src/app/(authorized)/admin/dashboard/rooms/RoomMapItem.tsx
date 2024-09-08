@@ -85,6 +85,10 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
 
     return (
         <>
+            <Button sx={{ fontSize: '90px', color: 'lightgray', position: 'absolute', left:2560, top:450  }}>
+                <AddCircleIcon sx={{ fontSize: '90px' }} />
+            </Button>
+
             {eventsInRoom && (
                 <>
                     <Box
