@@ -165,6 +165,10 @@ export async function addToRoom(eventId: string, roomName: RoomName, poolName: P
         name: roomName,
         eventId: eventId,
         players: [],
+        createdAt: Date.now().toString(),
+        createdBy: user.uid,
+        updateAt: Date.now().toString(),
+        updatedBy: user.uid,
     };
 
     if (poolEvent.id) {

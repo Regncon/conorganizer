@@ -58,12 +58,20 @@ export type RoomPlayer = {
     email: string;
     name: string;
     id: string;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
 };
 export type Room = {
     id?: string;
     name: RoomName;
     eventId: string;
     players: RoomPlayer[];
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
 };
 
 export type RoomChildRef = {
