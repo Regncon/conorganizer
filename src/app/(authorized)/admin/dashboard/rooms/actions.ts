@@ -158,7 +158,6 @@ export async function addToRoom(eventId: string, roomName: RoomName, poolName: P
         return;
     }
     const conEvent: ConEvent = await getEventById(eventId);
-
     const roomPoolId = conEvent.poolIds?.find((pool) => pool.poolName === poolName);
 
     const poolEvent: PoolEvent = await getPoolEventById(roomPoolId?.id ?? '');
@@ -180,6 +179,7 @@ export async function addToRoom(eventId: string, roomName: RoomName, poolName: P
         try {
             const roomChildRef: Partial<ConEvent> = {
                 roomIds: [
+                    ...conEvent.roomIds,
                     {
                         id: roomDocument?.id ?? '',
                         roomName: roomName,
