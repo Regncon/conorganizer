@@ -1,12 +1,13 @@
 'use client';
-import { Box, Paper } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogTitle, Paper } from '@mui/material';
 import { PoolName, RoomName } from '$lib/enums';
 import { ConEvent } from '$lib/types';
 import { useState } from 'react';
 import RoomSelectDialog from './RoomSelectDialog';
 import RoomCard from './RoomCard';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import { convertToPoolEvent } from './actions';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { convertToPoolEvent, removeFromPool } from './actions';
 
 type Props = {
     poolName: PoolName;
@@ -18,7 +19,6 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
     const [selectedValue, setSelectedValue] = useState('');
     const [roomName, setRoomName] = useState<RoomName>(RoomName.NotSet);
 
-    const event = events.find((event) => event.id === eventId);
     const poolFilters = {
         [PoolName.fridayEvening]: (event: ConEvent) => event.puljeFridayEvening,
         [PoolName.saturdayMorning]: (event: ConEvent) => event.puljeSaturdayMorning,
@@ -27,16 +27,32 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
     };
     const filteredEvents = events.filter(poolFilters[poolName]);
 
-    console.log('poolName', poolName);
+    const handleClose = (value: string) => {
+        setOpen(false);
+        setSelectedValue(value);
+        if (!value) return;
+        convertToPoolEvent(value, poolName);
+    };
+    const [openDeletDialog, setOpenDeleteDialog] = useState(false);
+    const handleClickDeleteOpen = (id: string | undefined) => {
+        setSelectedDeleteEvent(events.find((event) => event.id === id));
+        setOpenDeleteDialog(true);
+    };
+
+    const [selectedDeleteEvent, setSelectedDeleteEvent] = useState<ConEvent>();
+
     const handleClickOpen = () => {
         setOpen(true);
     };
 
-    const handleClose = (value: string) => {
-        setOpen(false);
-        setSelectedValue(value);
-        console.log(value);
-        convertToPoolEvent(value, poolName);
+    const handleCancel = () => {
+        setOpenDeleteDialog(false);
+    };
+
+    const handleOkDeleteDialog = () => {
+        setOpenDeleteDialog(false);
+        console.log('selectedDeleteEvent', selectedDeleteEvent);
+        removeFromPool(selectedDeleteEvent?.id ?? '', poolName);
     };
 
     const smallRoomRowX = 2460;
@@ -89,9 +105,8 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                         {eventsInRoom.map((roomEvent) => {
                             return (
                                 <Box
-                                    onClick={handleClickOpen}
+                                    key={roomEvent.id}
                                     sx={{ display: 'flex', backgroundColor: 'inherit', border: 'none' }}
-                                    component={'button'}
                                 >
                                     <RoomCard
                                         title={roomEvent?.title ?? 'Not set'}
@@ -99,12 +114,27 @@ const RoomMapItem = ({ eventId, poolName, events }: Props) => {
                                         system={roomEvent?.system ?? 'Not set'}
                                         imageUri={'/blekksprut2.jpg'}
                                     />
-                                    <AddCircleIcon sx={{ fontSize: '90px', color: 'lightgray' }} />
+                                    <Button onClick={handleClickOpen} sx={{ fontSize: '90px', color: 'lightgray' }}>
+                                        <AddCircleIcon sx={{ fontSize: '90px' }} />
+                                    </Button>
+
+                                    <Button onClick={() => handleClickDeleteOpen(roomEvent.id)}>
+                                        <DeleteIcon sx={{ fontSize: '90px' }} />
+                                    </Button>
                                 </Box>
                             );
                         })}
                     </Box>
                     <RoomSelectDialog selectedValue={selectedValue} open={open} onClose={handleClose} events={events} />
+                    <Dialog open={openDeletDialog}>
+                        <DialogTitle>Fjern fra pulje</DialogTitle>
+                        <DialogActions>
+                            <Button autoFocus onClick={handleCancel}>
+                                Cancel
+                            </Button>
+                            <Button onClick={handleOkDeleteDialog}>Ok</Button>
+                        </DialogActions>
+                    </Dialog>
                 </>
             )}
         </>

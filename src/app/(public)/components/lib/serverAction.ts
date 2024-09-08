@@ -1,7 +1,7 @@
 'use server';
 import { adminDb } from '$lib/firebase/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-import type { ConEvent } from '$lib/types';
+import type { ConEvent, PoolEvent } from '$lib/types';
 
 export async function getAllEvents() {
     const eventRef = await adminDb.collection('events').get();
@@ -14,9 +14,16 @@ export async function getEventById(id: string) {
     return { ...event, id };
 }
 
+export async function getPoolEventById(id: string) {
+    const event = (await adminDb.collection('pool-events').doc(id).get()).data() as PoolEvent;
+    return { ...event, id };
+}
+
 export async function updateEvents() {
     revalidatePath('/', 'page');
 }
 export async function updateDashboardEvents() {
     revalidatePath('/admin/dashboard/events', 'page');
 }
+
+

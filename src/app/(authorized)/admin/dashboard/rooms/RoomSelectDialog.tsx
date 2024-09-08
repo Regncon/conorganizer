@@ -1,15 +1,9 @@
 'use client';
-import * as React from 'react';
-import Avatar from '@mui/material/Avatar';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
-import ListItemAvatar from '@mui/material/ListItemAvatar';
 import ListItemButton from '@mui/material/ListItemButton';
-import ListItemText from '@mui/material/ListItemText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
-import PersonIcon from '@mui/icons-material/Person';
-import { blue } from '@mui/material/colors';
 import { ConEvent } from '$lib/types';
 import { Box, DialogContent, Typography } from '@mui/material';
 import RoomCard from './RoomCard';
