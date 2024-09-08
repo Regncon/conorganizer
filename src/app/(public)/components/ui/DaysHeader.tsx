@@ -18,8 +18,6 @@ const sxDayTypography: SxProps = {
 
 const DaysHeader = ({ eventDays }: Props) => {
     const ref = useSetCustomCssVariable({ '--scroll-margin-top': 'height' });
-    const [locationHash, setLocationHash] = useState<EventDay>('');
-
     return (
         <>
             <Box
@@ -48,10 +46,8 @@ const DaysHeader = ({ eventDays }: Props) => {
                     {Object.values(eventDays).map((day, i) => {
                         const activeClassColorSx: SxProps = {
                             borderColor: 'secondary.main',
-                            backgroundColor: locationHash === day ? 'secondary.main' : '',
                             '.active': {
                                 backgroundColor: 'secondary.main',
-                                borderColor: 'secondary.main',
                             },
                         };
 
@@ -63,7 +59,6 @@ const DaysHeader = ({ eventDays }: Props) => {
                                         ...activeClassColorSx,
                                         transition: 'background-color 0.2s ease-in-out;',
                                     }}
-                                    onClick={() => setLocationHash('')}
                                 >
                                     <Typography
                                         key={day}

@@ -9,16 +9,16 @@ import EventList from './components/EventList';
 import Logo from './components/ui/Logo';
 
 export type EventDays = typeof eventDays;
-export type EventDay = EventDays[keyof EventDays] | '';
+export type EventDay = EventDays[keyof EventDays];
 export type ConEvents = {
     day: EventDay;
     events: ConEvent[];
 }[];
 const eventDays = {
-    fridayEvening: 'Fredag',
-    saturdayMorning: 'Lørdag Morgen',
-    saturdayEvening: 'Lørdag Kveld',
-    sunday: 'Søndag',
+    fridayEvening: 'Fredag kveld',
+    saturdayMorning: 'Lørdag morgen',
+    saturdayEvening: 'Lørdag kveld',
+    sundayMorning: 'Søndag morgen',
 } as const;
 export default async function Home() {
     const allEvents = await getAllEvents();
@@ -27,7 +27,7 @@ export default async function Home() {
         { day: eventDays.fridayEvening, events: [...allEvents] },
         { day: eventDays.saturdayMorning, events: [...allEvents] },
         { day: eventDays.saturdayEvening, events: [...allEvents] },
-        { day: eventDays.sunday, events: [...allEvents] },
+        { day: eventDays.sundayMorning, events: [...allEvents] },
     ];
 
     return (
