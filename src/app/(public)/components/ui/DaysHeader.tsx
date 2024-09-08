@@ -20,11 +20,6 @@ const DaysHeader = ({ eventDays }: Props) => {
     const ref = useSetCustomCssVariable({ '--scroll-margin-top': 'height' });
     const [locationHash, setLocationHash] = useState<EventDay>('');
 
-    useEffect(() => {
-        if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-            setLocationHash(decodeURI(window.location.hash).substring(1) as EventDay);
-        }
-    }, []);
     return (
         <>
             <Box
