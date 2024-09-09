@@ -21,18 +21,17 @@ export default function EventCardBig({
 }: EventCardProps) {
     const circleCheckOrPencilIcon = myEventBarSubmitted ? faCircleCheck : faPencil;
     const SuccessOrWarningColor = myEventBarSubmitted ? 'success.main' : 'warning.main';
-    const width: SxProps<Theme> = {
-        width: '100vw',
-        maxWidth: '430px',
-    };
+
     return (
         <Card
             sx={{
                 backgroundImage: `url(/${backgroundImage})`,
-                ...width,
-                height: '269px',
+                minHeight: `${myEventBar ? 'calc(267px + 65px)' : '267px'}`,
+                maxHeight: `${myEventBar ? 'calc(267px + 65px)' : '267px'}`,
                 backgroundSize: 'cover',
                 borderRadius: '1.75rem',
+                display: 'grid',
+                minWidth: '306px',
             }}
         >
             <CardActionArea
@@ -41,21 +40,22 @@ export default function EventCardBig({
                         display: 'none',
                     },
                     display: 'grid',
-                    gridTemplateRows: '1fr 1fr',
+                    gridTemplateRows: `${myEventBar ? 'auto' : ''} 1fr 0.895fr`,
                     placeItems: 'end',
+                    gridTemplateColumns: 'subgrid',
                 }}
             >
-                <Box
-                    sx={{
-                        display: 'flex',
-                        placeSelf: 'start',
-                        placeContent: 'space-between',
-                        padding: '1rem',
-                        width: '100%',
-                    }}
-                >
-                    {myEventBar ?
-                        <>
+                {myEventBar ?
+                    <>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridAutoFlow: 'column',
+                                placeContent: 'space-between',
+                                width: '100%',
+                                padding: '1rem',
+                            }}
+                        >
                             <Box sx={{ display: 'flex', gap: '0.5rem', color: 'success.main', placeItems: 'center' }}>
                                 <Typography component="span" sx={{ color: SuccessOrWarningColor }}>
                                     <FontAwesomeIcon icon={circleCheckOrPencilIcon} size="2x" />
@@ -65,15 +65,14 @@ export default function EventCardBig({
                                 </Typography>
                             </Box>
                             <TrashButton docId={myEventDocId} />
-                        </>
-                    :   null}
-                </Box>
+                        </Box>
+                    </>
+                :   null}
+
                 <CardHeader
                     title={title}
                     titleTypographyProps={{ fontSize: '1.8rem' }}
                     sx={{
-                        ...width,
-                        height: '72px',
                         alignItems: 'flex-end',
                         padding: '1rem',
                         wordBreak: 'break-all',
@@ -86,11 +85,11 @@ export default function EventCardBig({
                 />
                 <CardContent
                     sx={{
-                        height: '126px',
                         backgroundColor: 'rgba(0,0,0,0.5)',
                         backdropFilter: 'blur(4px)',
                         padding: '1rem',
-                        ...width,
+                        height: '100%',
+                        width: '100%',
                     }}
                 >
                     <Typography sx={{ fontWeight: 'bold', fontSize: '1.1rem' }}> {gameMaster} </Typography>
@@ -102,7 +101,7 @@ export default function EventCardBig({
                             paddingBottom: '0.5rem',
                         }}
                     >
-                        <Typography> {system} </Typography>
+                        <Typography fontSize="1rem"> {system} </Typography>
                         <Box sx={{ display: 'flex', gap: '1rem' }}>
                             <Box component={Image} priority src={rook} alt="rook icon" />
                             <Box component={Image} priority src={rook} alt="rook icon" />
@@ -118,6 +117,8 @@ export default function EventCardBig({
                             overflow: 'clip',
                             WebkitLineClamp: '2',
                             WebkitBoxOrient: 'vertical',
+                            fontSize: '1rem',
+                            width: '90%',
                         }}
                     >
                         {shortDescription}

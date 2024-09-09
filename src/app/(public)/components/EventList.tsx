@@ -22,9 +22,15 @@ const EventList = ({ events }: Props) => {
                 return (
                     <Box key={event.day} ref={ref}>
                         <EventListDay eventDay={event.day} />
-                        <Box sx={{ display: 'grid' }}>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit,minmax(306px, 1fr))',
+                                gap: '1rem',
+                            }}
+                        >
                             {event.events.map((event) => (
-                                <NextLink key={event.id} href={`/event/${event.id}`} style={{ all: 'unset' }}>
+                                <NextLink key={event.id} href={`/event/${event.id}`}>
                                     {event.isSmallCard ?
                                         <EventCardSmall
                                             title={event.title}
