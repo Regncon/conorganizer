@@ -26,7 +26,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
 		<>
 			<h2>{error.message}</h2>
 			<Button onClick={reset} variant="outlined">
-				Prøv igjenn
+				Prøv igjen
 			</Button>
 			<Typography component="span">eller</Typography>
 			<Button component={Link} href="/" variant="outlined">

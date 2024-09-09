@@ -1,4 +1,3 @@
-import type { EventDay } from '$app/(public)/page';
 import { PoolName, type RoomName } from './enums';
 
 export type EventCardProps = {
@@ -83,6 +82,13 @@ export type RoomChildRef = {
     updateAt: string;
     updatedBy: string;
 };
+
+export type RoomItemInfo = {
+    roomName: RoomName;
+    top: number;
+    left: number;
+};
+
 export type PoolChildRef = {
     id: string;
     poolName: PoolName;

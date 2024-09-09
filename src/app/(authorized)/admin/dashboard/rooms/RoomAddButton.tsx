@@ -9,16 +9,12 @@ import { addToRoom } from './actions';
 import { PoolName, RoomName } from '$lib/enums';
 
 type Props = {
-    roomCoordinates: {
-        x: number;
-        y: number;
-    };
     events: ConEvent[];
     poolName: PoolName;
     roomName: RoomName;
 };
 
-const RoomAddButton = ({ roomCoordinates, events, poolName, roomName }: Props) => {
+const RoomAddButton = ({ events, poolName, roomName }: Props) => {
     const [open, setOpen] = useState<boolean>(false);
     const handleAddClick = () => {
         setOpen(true);
@@ -30,16 +26,12 @@ const RoomAddButton = ({ roomCoordinates, events, poolName, roomName }: Props) =
         }
         addToRoom(value, roomName, poolName);
     };
-    const roomCoordinatesSx: SxProps = {
-        position: 'absolute',
-        left: roomCoordinates.x,
-        top: roomCoordinates.y,
-    };
+
     const dayFilteredEvents = events.filter((event) => event.poolIds?.some((pool) => pool.poolName === poolName));
 
     return (
         <>
-            <Button sx={{ fontSize: '90px', color: 'lightgray', ...roomCoordinatesSx }} onClick={handleAddClick}>
+            <Button sx={{ fontSize: '90px', color: 'lightgray' }} onClick={handleAddClick}>
                 <AddCircleIcon sx={{ fontSize: '90px' }} />
             </Button>
 
