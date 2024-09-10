@@ -88,17 +88,17 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
     let eventsInRoom: ConEvent[] = [];
     filteredEvents.forEach((event) => {
         const roomIds = event.roomIds;
-        if (roomIds && roomIds.length > 0) {
+        if (roomIds) {
             // console.log('roomIds', roomIds);
             roomIds.forEach((roomId) => {
                 if (roomId.poolName === poolName && roomId.roomName === roomName) {
                     console.log('roomId', roomId);
                     eventsInRoom.push(event);
+                } else if (roomName === RoomName.NotSet) {
+                    eventsInRoom.push(event);
+                    // console.log(event, 'event');
                 }
             });
-        } else if (roomName === RoomName.NotSet) {
-            eventsInRoom.push(event);
-            // console.log(event, 'event');
         }
     });
     // const filteredEventsInRoom = filteredEvents.filter((event) => event.roomIds? === true);
