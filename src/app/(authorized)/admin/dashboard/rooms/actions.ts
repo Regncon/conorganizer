@@ -1,11 +1,10 @@
 'use server';
 
 import { getEventById, getPoolEventById } from '$app/(public)/components/lib/serverAction';
-import type { EventDay } from '$app/(public)/page';
 import { PoolName, type RoomName } from '$lib/enums';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { ConEvent, PoolEvent, type Room, type RoomChildRef } from '$lib/types';
-import { addDoc, collection, deleteDoc, doc, setDoc, updateDoc, type DocumentReference } from 'firebase/firestore';
+import { ConEvent, PoolEvent, EventRoom } from '$lib/types';
+import { addDoc, collection, deleteDoc, doc, updateDoc, type DocumentReference } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 export async function removeFromPool(eventId: string, poolName: PoolName) {
@@ -55,6 +54,50 @@ export async function removeFromPool(eventId: string, poolName: PoolName) {
         conEvent.puljeSundayMorning = false;
     }
 
+    conEvent.updateAt = Date.now().toString();
+
+    try {
+        await updateDoc(doc(db, 'events', eventId), conEvent);
+        console.log('Document updated', eventId);
+    } catch (e) {
+        console.error('Error updating document: ', e);
+    }
+
+    revalidatePath('/admin/dashboard/rooms', 'page');
+}
+export async function removeFromRoom(eventId: string, roomName: RoomName, poolName: PoolName) {
+    const { db, user } = await getAuthorizedAuth();
+    if (db === null || user === null) {
+        return;
+    }
+    const conEvent: ConEvent = await getEventById(eventId);
+    const roomPoolId = conEvent.poolIds?.find((pool) => pool.poolName === poolName);
+
+    if (!roomPoolId) {
+        console.error('Pool not found');
+        return;
+    }
+
+    // const poolEvent: PoolEvent = await getPoolEventById(roomPoolId.id);
+    //
+    // if (!poolEvent) {
+    //     console.error('PoolEvent not found');
+    //     return;
+    // }
+
+    const roomId: string = conEvent.roomIds.find((room) => room.roomName === roomName)?.id ?? '';
+    const poolId = conEvent.roomIds.find((room) => room.roomName === roomName)?.poolId ?? '';
+
+    try {
+        await deleteDoc(doc(db, 'pool-events', poolId, 'room', roomId));
+        console.log('Document deleted', roomId);
+    } catch (e) {
+        console.error('Error updating document: ', e);
+    }
+
+    const removeRoomId = conEvent.roomIds.filter((room) => room.id !== roomId);
+    console.log('removeRoomId: ', removeRoomId);
+    conEvent.roomIds = removeRoomId;
     conEvent.updateAt = Date.now().toString();
 
     try {
@@ -136,10 +179,11 @@ export async function convertToPoolEvent(eventId: string, poolName: PoolName) {
     if (poolName === PoolName.saturdayEvening) {
         conEvent.puljeSaturdayEvening = true;
     }
-    if (poolName === PoolName.saturdayEvening) {
-        conEvent.puljeSaturdayEvening = true;
+    if (poolName === PoolName.sundayMorning) {
+        conEvent.puljeSundayMorning = true;
     }
 
+    conEvent.roomIds = conEvent.roomIds ?? [];
     conEvent.updateAt = Date.now().toString();
     conEvent.updatedBy = user.uid;
 
@@ -157,13 +201,20 @@ export async function addToRoom(eventId: string, roomName: RoomName, poolName: P
     if (db === null || user === null) {
         return;
     }
+    await convertToPoolEvent(eventId, poolName);
+
     const conEvent: ConEvent = await getEventById(eventId);
     const roomPoolId = conEvent.poolIds?.find((pool) => pool.poolName === poolName);
 
     const poolEvent: PoolEvent = await getPoolEventById(roomPoolId?.id ?? '');
-    const room: Omit<Room, 'id'> = {
+    if (!poolEvent) {
+        console.error('PoolEvent not found');
+        return;
+    }
+    const room: Omit<EventRoom, 'id'> = {
         name: roomName,
         eventId: eventId,
+        poolId: poolEvent?.id ?? '',
         players: [],
         createdAt: Date.now().toString(),
         createdBy: user.uid,
@@ -187,6 +238,7 @@ export async function addToRoom(eventId: string, roomName: RoomName, poolName: P
                     {
                         id: roomDocument?.id ?? '',
                         roomName: roomName,
+                        poolId: poolEvent.id,
                         poolName: poolName,
                         createdAt: Date.now().toString(),
                         createdBy: user.uid,
@@ -201,4 +253,5 @@ export async function addToRoom(eventId: string, roomName: RoomName, poolName: P
             console.error('Error updating document: ', e);
         }
     }
+    revalidatePath('/admin/dashboard/rooms', 'page');
 }

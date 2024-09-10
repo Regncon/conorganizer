@@ -62,10 +62,11 @@ export type RoomPlayer = {
     updateAt: string;
     updatedBy: string;
 };
-export type Room = {
+export type EventRoom = {
     id?: string;
     name: RoomName;
     eventId: string;
+    poolId: string;
     players: RoomPlayer[];
     createdAt: string;
     createdBy: string;
@@ -75,6 +76,7 @@ export type Room = {
 
 export type RoomChildRef = {
     id: string;
+    poolId: string;
     poolName: PoolName;
     roomName: RoomName;
     createdAt: string;

@@ -7,7 +7,7 @@ import RoomSelectDialog from './RoomSelectDialog';
 import RoomCard from './RoomCard';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { convertToPoolEvent, removeFromPool } from './actions';
+import { convertToPoolEvent, removeFromPool, removeFromRoom } from './actions';
 import RoomAddButton from './RoomAddButton';
 
 type Props = {
@@ -53,7 +53,9 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
     const handleOkDeleteDialog = () => {
         setOpenDeleteDialog(false);
         console.log('selectedDeleteEvent', selectedDeleteEvent);
-        removeFromPool(selectedDeleteEvent?.id ?? '', poolName);
+        if (roomName !== RoomName.NotSet) {
+            removeFromRoom(selectedDeleteEvent?.id ?? '', roomName, poolName);
+        } else removeFromPool(selectedDeleteEvent?.id ?? '', poolName);
     };
     //
     // const smallRoomRowX = 2460;
@@ -86,16 +88,17 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
     let eventsInRoom: ConEvent[] = [];
     filteredEvents.forEach((event) => {
         const roomIds = event.roomIds;
-        if (roomIds) {
+        if (roomIds && roomIds.length > 0) {
             // console.log('roomIds', roomIds);
             roomIds.forEach((roomId) => {
-                if (roomId.roomName === roomName) {
-                    // console.log('roomId', roomId);
+                if (roomId.poolName === poolName && roomId.roomName === roomName) {
+                    console.log('roomId', roomId);
                     eventsInRoom.push(event);
                 }
             });
         } else if (roomName === RoomName.NotSet) {
             eventsInRoom.push(event);
+            // console.log(event, 'event');
         }
     });
     // const filteredEventsInRoom = filteredEvents.filter((event) => event.roomIds? === true);
@@ -103,7 +106,7 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
     // const eventsInRoom = events.filter(poolFilters[poolName]).filter((event) => event.room === roomName);
     // const eventsInRoom = filteredEvents;
 
-    console.log(roomName, 'roomName', 'top:', top, 'left:', left);
+    // console.log(roomName, 'roomName', 'top:', top, 'left:', left);
     return (
         <>
             <Box

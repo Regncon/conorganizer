@@ -35,12 +35,7 @@ const RoomAddButton = ({ events, poolName, roomName }: Props) => {
                 <AddCircleIcon sx={{ fontSize: '90px' }} />
             </Button>
 
-            <RoomSelectDialog
-                open={open}
-                selectedValue={''}
-                onClose={handleClose}
-                events={dayFilteredEvents}
-            ></RoomSelectDialog>
+            <RoomSelectDialog open={open} selectedValue={''} onClose={handleClose} events={events}></RoomSelectDialog>
         </>
     );
 };

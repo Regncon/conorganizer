@@ -25,5 +25,3 @@ export async function updateEvents() {
 export async function updateDashboardEvents() {
     revalidatePath('/admin/dashboard/events', 'page');
 }
-
-
