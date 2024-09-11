@@ -9,6 +9,7 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { convertToPoolEvent, removeFromPool, removeFromRoom } from './actions';
 import RoomAddButton from './RoomAddButton';
+import { skip } from 'node:test';
 
 type Props = {
     poolName: PoolName;
@@ -92,13 +93,16 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
             // console.log('roomIds', roomIds);
             roomIds.forEach((roomId) => {
                 if (roomId.poolName === poolName && roomId.roomName === roomName) {
-                    console.log('roomId', roomId);
+                    // console.log('roomId', roomId);
                     eventsInRoom.push(event);
-                } else if (roomName === RoomName.NotSet) {
-                    eventsInRoom.push(event);
-                    // console.log(event, 'event');
                 }
             });
+        }
+        if (roomName === RoomName.NotSet) {
+            if (!roomIds || !roomIds.find((roomId) => roomId.poolName === poolName)) {
+                eventsInRoom.push(event);
+                console.log(event, 'event');
+            }
         }
     });
     // const filteredEventsInRoom = filteredEvents.filter((event) => event.roomIds? === true);
@@ -163,7 +167,7 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
             </Box>
             <RoomSelectDialog selectedValue={selectedValue} open={open} onClose={handleClose} events={events} />
             <Dialog open={openDeletDialog}>
-                <DialogTitle>Fjern fra pulje</DialogTitle>
+                <DialogTitle>Slett?</DialogTitle>
                 <DialogActions>
                     <Button autoFocus onClick={handleCancel}>
                         Cancel
