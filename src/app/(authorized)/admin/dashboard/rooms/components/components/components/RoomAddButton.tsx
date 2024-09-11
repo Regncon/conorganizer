@@ -2,11 +2,11 @@
 
 import { Button, type SxProps } from '@mui/material';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
-import RoomSelectDialog from '../RoomSelectDialog';
 import { useState } from 'react';
 import type { ConEvent } from '$lib/types';
 import { addToRoom } from '../lib/actions';
 import { PoolName, RoomName } from '$lib/enums';
+import RoomSelectDialog from '../ui/RoomSelectDialog';
 
 type Props = {
     events: ConEvent[];
