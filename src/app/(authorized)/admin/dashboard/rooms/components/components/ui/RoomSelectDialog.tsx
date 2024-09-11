@@ -57,13 +57,15 @@ const RoomSelectDialog = ({ open, selectedValue, onClose, events }: Props) => {
                                                 alignItems: 'flex-start',
                                             }}
                                         >
-                                            <Typography>Puje: Lørdag kveld</Typography>
-                                            <Typography>Rom: Styrerom 1 Gerhard</Typography>
-                                            <Typography>Rom: Symfoni</Typography>
-
-                                            <Typography>Puje: Lørdag kveld</Typography>
-                                            <Typography>Rom: Styrerom 1 Gerhard</Typography>
-                                            <Typography>Rom: Symfoni</Typography>
+                                            {event.poolIds?.map((poolId) => {
+                                                return (
+                                                    <Box key={poolId.id}>
+                                                        <Typography>Puje: </Typography>
+                                                        <Typography>Rom: Styrerom 1 Gerhard</Typography>
+                                                        <Typography>Rom: Symfoni</Typography>
+                                                    </Box>
+                                                );
+                                            })}
                                         </Box>
                                     </Box>
                                 </ListItemButton>

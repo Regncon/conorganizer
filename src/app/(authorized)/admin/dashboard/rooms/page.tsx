@@ -1,7 +1,7 @@
 import { AppBar, Paper, Tab, Tabs, Toolbar, Typography } from '@mui/material';
-import RoomMap from './RoomMap';
 import { PoolName } from '$lib/enums';
 import { redirect } from 'next/navigation';
+import RoomMap from './components/RoomMap';
 
 const Rooms = async ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
     if (!searchParams.pool) {
@@ -44,7 +44,7 @@ const Rooms = async ({ searchParams }: { searchParams: { [key: string]: string |
                 </Toolbar>
             </AppBar>
             <Toolbar />
-            <RoomMap pool={searchParams.pool as PoolName}></RoomMap>
+            <RoomMap pool={searchParams.pool as PoolName}/>
         </Paper>
     );
 };

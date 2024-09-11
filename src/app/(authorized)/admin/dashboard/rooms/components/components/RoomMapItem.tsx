@@ -3,13 +3,12 @@ import { Box, Button, Dialog, DialogActions, DialogTitle, Typography } from '@mu
 import { PoolName, RoomName } from '$lib/enums';
 import { ConEvent } from '$lib/types';
 import { useState } from 'react';
-import RoomSelectDialog from './RoomSelectDialog';
-import RoomCard from './RoomCard';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { convertToPoolEvent, removeFromPool, removeFromRoom } from './actions';
-import RoomAddButton from './RoomAddButton';
-import { skip } from 'node:test';
+import RoomAddButton from './components/RoomAddButton';
+import { convertToPoolEvent, removeFromRoom, removeFromPool } from './lib/actions';
+import RoomCard from './ui/RoomCard';
+import RoomSelectDialog from './ui/RoomSelectDialog';
 
 type Props = {
     poolName: PoolName;
@@ -58,42 +57,14 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
             removeFromRoom(selectedDeleteEvent?.id ?? '', roomName, poolName);
         } else removeFromPool(selectedDeleteEvent?.id ?? '', poolName);
     };
-    //
-    // const smallRoomRowX = 2460;
-    // const styreRomRowX = 1500;
-    //
-    // const roomCoordinates = () => {
-    //     switch (roomName) {
-    //         case RoomName.NotSet:
-    //             return { x: 1000, y: 350 };
-    //         case RoomName.Styrerom1:
-    //             return { x: styreRomRowX, y: 350 };
-    //         case RoomName.Styrerom2:
-    //         case RoomName.Styrerom3:
-    //         case RoomName.Styrerom4:
-    //         case RoomName.Styrerom5:
-    //         case RoomName.Styrerom6:
-    //         case RoomName.Klang:
-    //         case RoomName.Sonate:
-    //         case RoomName.Klang:
-    //             return { x: smallRoomRowX, y: 450 };
-    //         case RoomName.Sonate:
-    //             return { x: smallRoomRowX, y: 640 };
-    //         default:
-    //             return { x: 0, y: 0 };
-    //     }
-    // };
 
     const filteredEvents = events.filter(poolFilters[poolName]);
-    // console.log('filteredEvents', filteredEvents);
     let eventsInRoom: ConEvent[] = [];
     filteredEvents.forEach((event) => {
         const roomIds = event.roomIds;
         if (roomIds) {
-            // console.log('roomIds', roomIds);
             roomIds.forEach((roomId) => {
                 if (roomId.poolName === poolName && roomId.roomName === roomName) {
-                    // console.log('roomId', roomId);
                     eventsInRoom.push(event);
                 }
             });
@@ -105,12 +76,7 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
             }
         }
     });
-    // const filteredEventsInRoom = filteredEvents.filter((event) => event.roomIds? === true);
-    // console.log('filteredEventsInRoom', filteredEventsInRoom.length, filteredEventsInRoom);
-    // const eventsInRoom = events.filter(poolFilters[poolName]).filter((event) => event.room === roomName);
-    // const eventsInRoom = filteredEvents;
 
-    // console.log(roomName, 'roomName', 'top:', top, 'left:', left);
     return (
         <>
             <Box
