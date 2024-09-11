@@ -11,11 +11,7 @@ const NavigateNextLink = ({ nextNavigationId }: Props) => {
     const href = `/event/${nextNavigationId}`;
 
     return nextNavigationId ?
-            <Button
-                sx={{ color: 'white', ...sx, position: 'absolute', top: '-0.04rem', right: '-8rem' }}
-                component={Link}
-                href={href}
-            >
+            <Button sx={{ color: 'white', ...sx }} component={Link} href={href}>
                 <Typography sx={{ marginLeft: '0.5rem' }}>neste</Typography>
                 <ArrowForwardIcon />
             </Button>
