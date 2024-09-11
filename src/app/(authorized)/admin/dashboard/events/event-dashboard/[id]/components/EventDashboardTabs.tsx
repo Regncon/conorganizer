@@ -23,7 +23,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                     variant="scrollable"
                     scrollButtons
                     allowScrollButtonsMobile
-                    allowScrollButtonsMobilearia-label="Velg side"
+                    allowscrollbuttonsmobilearia-label="Velg side"
                 >
                     <Tab icon={<GroupIcon />} iconPosition="start" label={<Hidden mdDown>Spillere</Hidden>} disabled />
                     <Tab
@@ -42,7 +42,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                         icon={<RoomPreferencesIcon />}
                         iconPosition="start"
                         label={<Hidden mdDown>Rom</Hidden>}
-                        disabled
+                        href={`/admin/dashboard/events/event-dashboard/${id}/room/`}
                     />
                     <Tab
                         icon={<EditIcon />}
