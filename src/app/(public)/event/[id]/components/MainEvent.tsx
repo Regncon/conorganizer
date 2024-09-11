@@ -17,7 +17,7 @@ import NavigateBefore from '@mui/icons-material/NavigateBefore';
 import IconButton from '@mui/material/IconButton';
 import blekksprut2 from '$public/blekksprut2.jpg';
 import HelpIcon from '@mui/icons-material/Help';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { faChevronLeft, faUserSecret } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -26,6 +26,8 @@ import { ConEvent } from '$lib/types';
 import { db } from '$lib/firebase/firebase';
 import { onSnapshot, doc, type Unsubscribe } from 'firebase/firestore';
 import { MuiMarkdown } from 'mui-markdown';
+import NavigatePreviousLink from './ui/NavigatePreviousLink';
+import NavigateNextLink from './ui/NavigateNextLink';
 
 export const dynamic = 'force-static';
 
@@ -41,11 +43,13 @@ type Props = {
     eventData?: ConEvent;
     editable?: boolean;
     editDescription?: (edit: boolean) => void;
+    prevNavigationId?: string;
+    nextNavigationId?: string;
 };
 
 const initialState = {} as ConEvent;
 
-const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) => {
+const MainEvent = ({ id, eventData, editable = false, editDescription, prevNavigationId, nextNavigationId }: Props) => {
     const [data, setData] = useState<ConEvent>(eventData ?? initialState);
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
     const [isEditingGameMaster, setIsEditingGameMaster] = useState<boolean>(false);
@@ -82,7 +86,17 @@ const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) 
     };
 
     return (
-        <Paper elevation={1} sx={{ maxWidth: '430px', margin: 'auto' }}>
+        <Paper
+            elevation={1}
+            sx={{
+                maxWidth: 'var(--max-width)',
+                margin: 'auto',
+                '&': {
+                    '--max-width': '430px',
+                    '--arrow-size': '2rem',
+                },
+            }}
+        >
             <Box
                 sx={{
                     display: 'grid',
@@ -124,7 +138,7 @@ const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) 
                                 fullWidth
                                 sx={{ placeSelf: 'end center', paddingBottom: '2.5rem' }}
                             />
-                            : <Typography
+                        :   <Typography
                                 variant="h1"
                                 align="center"
                                 sx={{ corsor: 'pointer', placeSelf: 'end center', paddingBottom: '2.5rem' }}
@@ -155,7 +169,7 @@ const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) 
                                     fullWidth
                                     sx={{ corsor: 'pointer', marginTop: '0.5rem' }}
                                 />
-                                : <Typography variant="h2" onClick={() => editable && setIsEditingGameMaster(true)}>
+                            :   <Typography variant="h2" onClick={() => editable && setIsEditingGameMaster(true)}>
                                     {data.gameMaster || 'Navn'}
                                 </Typography>
                             }
@@ -178,7 +192,7 @@ const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) 
                                     fullWidth
                                     sx={{ marginTop: '0.5rem' }}
                                 />
-                                : <Typography variant="h2" onClick={() => editable && setIsEditingSystem(true)}>
+                            :   <Typography variant="h2" onClick={() => editable && setIsEditingSystem(true)}>
                                     {data.system || 'System'}
                                 </Typography>
                             }
@@ -232,26 +246,38 @@ const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) 
                         max={3}
                     />
                 </Box>
-
                 <Typography sx={{ marginBottom: '0.8rem', textAlign: 'center' }}>
                     Dra baren over for å melde din interesse!
                 </Typography>
-
-                <Box
-                    component={Link}
-                    href="/hjelppaamelding"
-                    sx={{
-                        display: 'inline-flex',
-                        gap: '0.4rem',
-                        marginBottom: '3rem',
-                        paddingLeft: '0.5rem',
-                        color: 'primary.main',
-                    }}
-                >
-                    <HelpIcon sx={{ scale: '1.5', placeSelf: 'center' }} />
-                    <Typography component="p">Forvirret? Les mer om påmeldingssystemet</Typography>
+                <Box>
+                    <Box sx={{ marginBottom: '3rem' }}>
+                        <Box
+                            component={Link}
+                            href="/hjelppaamelding"
+                            sx={{
+                                display: 'inline-flex',
+                                gap: '0.4rem',
+                                paddingLeft: '0.5rem',
+                                color: 'primary.main',
+                            }}
+                        >
+                            <HelpIcon sx={{ scale: '1.5', placeSelf: 'center' }} />
+                            <Typography component="p">Forvirret? Les mer om påmeldingssystemet</Typography>
+                        </Box>
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                placeItems: 'space-between',
+                                marginBlockStart: '1rem',
+                                position: 'relative',
+                            }}
+                        >
+                            <NavigatePreviousLink previousNavigationId={prevNavigationId} />
+                            <NavigateNextLink nextNavigationId={nextNavigationId} />
+                        </Box>
+                    </Box>
                 </Box>
-
                 {isEditingShortDescription ?
                     <TextField
                         name="shortDescription"
@@ -263,7 +289,7 @@ const MainEvent = ({ id, eventData, editable = false, editDescription }: Props) 
                         fullWidth
                         sx={{ marginBottom: '1rem' }}
                     />
-                    : <Typography
+                :   <Typography
                         sx={{ corsor: 'pointer', ...paragraphStyle, marginBottom: '1rem', textAlign: 'center' }}
                         onClick={() => editable && setIsEditingShortDescription(true)}
                     >

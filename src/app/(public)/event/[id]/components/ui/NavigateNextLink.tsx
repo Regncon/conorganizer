@@ -1,0 +1,25 @@
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { Button, IconButton, Typography, useMediaQuery, type SxProps } from '@mui/material';
+import Link from 'next/link';
+
+type Props = {
+    nextNavigationId: string | undefined;
+};
+
+const NavigateNextLink = ({ nextNavigationId }: Props) => {
+    const sx: SxProps = { fontSize: 'var(--arrow-size)', width: 'fit-content', placeSelf: 'end' };
+    const href = `/event/${nextNavigationId}`;
+
+    return nextNavigationId ?
+            <Button
+                sx={{ color: 'white', ...sx, position: 'absolute', top: '-0.04rem', right: '-8rem' }}
+                component={Link}
+                href={href}
+            >
+                <Typography sx={{ marginLeft: '0.5rem' }}>neste</Typography>
+                <ArrowForwardIcon />
+            </Button>
+        :   null;
+};
+
+export default NavigateNextLink;
