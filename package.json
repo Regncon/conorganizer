@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "trace": "NODE_OPTIONS='--trace-deprecation' next dev",
     "build&start": "next build && next start",
     "lint": "next lint",
     "eslint": "eslint . --ext ts,tsx --report-unused-disable-directives",
@@ -19,18 +20,19 @@
     "@fortawesome/free-regular-svg-icons": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
-    "@mui/icons-material": "^6.0.2",
-    "@mui/material": "^6.0.2",
-    "@mui/material-nextjs": "^6.0.2",
+    "@mui/icons-material": "^6.1.0",
+    "@mui/material": "^6.1.0",
+    "@mui/material-nextjs": "^6.1.0",
     "@mui/x-data-grid": "^7.16.0",
     "firebase": "^10.13.1",
     "firebase-admin": "^12.4.0",
     "mui-markdown": "^1.2.2",
-    "next": "^14.2.8",
+    "next": "^14.2.9",
     "prism-react-renderer": "^2.4.0",
     "react": "^18.3.1",
     "react-confetti": "^6.1.0",
     "react-dom": "^18.3.1",
+    "react-swipeable": "^7.0.1",
     "sharp": "^0.33.5",
     "zod": "^3.23.8"
   },
@@ -51,6 +53,6 @@
     "prettier-eslint": "^16.3.0",
     "rimraf": "^6.0.1",
     "sass": "^1.78.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.6.2"
   }
 }
