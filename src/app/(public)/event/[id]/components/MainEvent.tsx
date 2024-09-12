@@ -273,10 +273,11 @@ const MainEvent = ({ id, eventData, editable = false, editDescription, prevNavig
                             <Box
                                 sx={{
                                     display: 'grid',
-                                    gridTemplateColumns: '1fr 1fr',
+                                    gridTemplateColumns: !prevNavigationId || !nextNavigationId ? '1fr' : '1fr 1fr',
                                     placeItems: 'space-between',
                                     marginBlockStart: '1rem',
                                     position: 'relative',
+                                    width: '100%',
                                 }}
                             >
                                 <NavigatePreviousLink previousNavigationId={prevNavigationId} />
