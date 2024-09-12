@@ -28,19 +28,23 @@ of your con schedule, your panels, and your expenses.
 
 ### Must haves for publishing events
 
--   Room assignment
--   Bug: Problems with hitting enter while editing event
--   Add is gm to event
--   Help text explaining how the algorithm works
--   Icons
+-   Log-in bug, e-mail input loses focus when you input a letter | 
+-   Room assignment | Gerhard
+-   Icons | Grethe :D
+-   Bug: Problems with hitting enter while editing event |
+-   Fix cookie lifetime |
+
+#### Ready for admin
+
+-   Desktop view | Torstein
 -   Filter out my signups and tags
--   Fix cookie lifetime
--   Desktop view
--   Connect to checkin system
+-   Help text explaining how the algorithm works
+-   Add is gm to event
 -   Participants can choose favorite events
 -   Send emails from server
 -   Create participant in database
--   Ckcek if participant is over 18
+-   Check if participant is over 18 |
+-   Connect to checkin system
 
 #### Nice to haves for publishing events
 
