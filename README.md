@@ -28,27 +28,18 @@ of your con schedule, your panels, and your expenses.
 
 ### Must haves for publishing events
 
--   Make it very clear what day is displayed
+-   Room assignment
 -   Bug: Problems with hitting enter while editing event
 -   Add is gm to event
 -   Help text explaining how the algorithm works
 -   Icons
--   Easy next and previous navigation
--   Debounce/fix text box, my events
-
-#### Events with signups
-
--   Filter out my signups
+-   Filter out my signups and tags
 -   Fix cookie lifetime
--   Fix bug in debounce
 -   Desktop view
--   Store interests
 -   Connect to checkin system
 -   Participants can choose favorite events
--   Display label on new or unread events
 -   Send emails from server
 -   Create participant in database
--   Get tickets from checkin
 -   Ckcek if participant is over 18
 
 #### Nice to haves for publishing events
@@ -56,6 +47,8 @@ of your con schedule, your panels, and your expenses.
 -   Picture upload
 -   Check preloading of pages
 -   Fix small card layout
+-   Debounce/fix text box, my events
+-   Display label on new or unread events
 
 ## Nice to haves
 
@@ -89,3 +82,6 @@ of your con schedule, your panels, and your expenses.
 -   Get event from database
 -   Add new event
 -   Edit event
+-   Easy next and previous navigation
+-   Make it very clear what day is displayed
+-   Get tickets from checkin
