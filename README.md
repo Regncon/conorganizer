@@ -28,15 +28,17 @@ of your con schedule, your panels, and your expenses.
 
 ### Must haves for publishing events
 
--   Log-in bug, e-mail input loses focus when you input a letter | 
+-   Log-in bug, e-mail input loses focus when you input a letter |
 -   Room assignment | Gerhard
 -   Icons | Grethe :D
 -   Bug: Problems with hitting enter while editing event |
--   Fix cookie lifetime |
+-   Fix cookie lifetime
+-   Fix events front page | Torstein
+-   Add picture url
+-   Desktop view | Torstein
 
 #### Ready for admin
 
--   Desktop view | Torstein
 -   Filter out my signups and tags
 -   Help text explaining how the algorithm works
 -   Add is gm to event
