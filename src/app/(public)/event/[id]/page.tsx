@@ -1,9 +1,10 @@
 import { Metadata } from 'next';
 import MainEvent from './components/MainEvent';
-import { getAllEvents, getEventById } from '$app/(public)/components/lib/serverAction';
+import { getAllEvents, getAllPoolEventsSortedByDay, getEventById } from '$app/(public)/components/lib/serverAction';
 import MainEventBig from './components/MainEventBig';
 import BigMediaQueryWrapper from './components/ui/BigMediaQueryWrapper';
 import SmallMediaQueryWrapper from './components/ui/SmallMediaQueryWrapper';
+import { Box } from '@mui/material';
 
 type Props = {
     params: { id: string };
@@ -25,6 +26,12 @@ const EventPage = async ({ params: { id } }: Props) => {
     const prevNavigationId = events[eventIndex - 1]?.id;
     const nextNavigationId = events[eventIndex + 1]?.id;
     const event = await getEventById(id);
+    const poolEvents = await getAllPoolEventsSortedByDay();
+    // console.log(poolEvents[0].poolEvents, poolEvents[0].day);
+    // console.log(poolEvents[1].poolEvents, poolEvents[1].day);
+    // console.log(poolEvents[2].poolEvents, poolEvents[2].day);
+    // console.log(poolEvents[3].poolEvents, poolEvents[3].day);
+
     return (
         <>
             <SmallMediaQueryWrapper>
@@ -32,7 +39,13 @@ const EventPage = async ({ params: { id } }: Props) => {
             </SmallMediaQueryWrapper>
 
             <BigMediaQueryWrapper>
-                <MainEventBig event={event} prevNavigationId={prevNavigationId} nextNavigationId={nextNavigationId} />
+                <Box sx={{ display: 'grid', placeContent: ' center' }}>
+                    <MainEventBig
+                        event={event}
+                        prevNavigationId={prevNavigationId}
+                        nextNavigationId={nextNavigationId}
+                    />
+                </Box>
             </BigMediaQueryWrapper>
         </>
     );

@@ -6,7 +6,7 @@ import type { ComponentPropsWithoutRef, PropsWithChildren } from 'react';
 type Props = {};
 
 const BigMediaQueryWrapper = ({ children }: PropsWithChildren<Props>) => {
-    const isBigScreen = useMediaQuery('(min-width:600px)');
+    const isBigScreen = useMediaQuery('(min-width:677px)');
     return isBigScreen ? children : null;
 };
 

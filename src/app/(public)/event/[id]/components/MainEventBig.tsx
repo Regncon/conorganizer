@@ -28,6 +28,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                     '--slider-interest-width': '19.5714rem',
                     '--event-margin-left': '4rem',
                 },
+                maxWidth: '1200px',
             }}
         >
             <Box
@@ -115,12 +116,14 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                                     </Box>
                                 </Box>
                             </Box>
+
                             <Typography
                                 sx={{
-                                    corsor: 'pointer',
                                     ...paragraphStyle,
                                     marginBottom: '1rem',
                                     textAlign: 'center',
+                                    overflow: 'clip',
+                                    maxHeight: 'calc(var(--image-height) - 3rem)',
                                 }}
                             >
                                 {event.shortDescription || 'Kort beskrivelse'}
