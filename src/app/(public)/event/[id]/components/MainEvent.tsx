@@ -268,7 +268,7 @@ const MainEvent = ({ id, eventData, editable = false, editDescription, prevNavig
                                 }}
                             >
                                 <HelpIcon sx={{ scale: '1.5', placeSelf: 'center' }} />
-                                <Typography component="p">Forvirret? Les mer om påmeldingssystemet</Typography>
+                                <Typography component="p">Forvirret? Les mer om påmeldingsystemet</Typography>
                             </Box>
                             <Box
                                 sx={{

@@ -22,6 +22,10 @@ export async function getPoolEventById(id: string) {
 export async function updateEvents() {
     revalidatePath('/', 'page');
 }
+export async function updateEventById(id: string) {
+    revalidatePath(`/event/${id}`, 'page');
+}
+
 export async function updateDashboardEvents() {
     revalidatePath('/admin/dashboard/events', 'page');
 }

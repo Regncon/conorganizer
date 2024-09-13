@@ -20,18 +20,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const EventPage = async ({ params: { id } }: Props) => {
-    const event = await getAllEvents();
-    const eventIndex = event.findIndex((event) => event.id === id);
-    const prevNavigationId = event[eventIndex - 1]?.id;
-    const nextNavigationId = event[eventIndex + 1]?.id;
+    const events = await getAllEvents();
+    const eventIndex = events.findIndex((event) => event.id === id);
+    const prevNavigationId = events[eventIndex - 1]?.id;
+    const nextNavigationId = events[eventIndex + 1]?.id;
+    const event = await getEventById(id);
     return (
         <>
-            {/* <SmallMediaQueryWrapper> */}
-            <MainEvent id={id} prevNavigationId={prevNavigationId} nextNavigationId={nextNavigationId} />
-            {/* </SmallMediaQueryWrapper> */}
-            {/* <BigMediaQueryWrapper>
-                <MainEventBig id={id} prevNavigationId={prevNavigationId} nextNavigationId={nextNavigationId} />
-            </BigMediaQueryWrapper> */}
+            <SmallMediaQueryWrapper>
+                <MainEvent id={id} prevNavigationId={prevNavigationId} nextNavigationId={nextNavigationId} />
+            </SmallMediaQueryWrapper>
+
+            <BigMediaQueryWrapper>
+                <MainEventBig event={event} prevNavigationId={prevNavigationId} nextNavigationId={nextNavigationId} />
+            </BigMediaQueryWrapper>
         </>
     );
 };
