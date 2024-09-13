@@ -66,25 +66,23 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                             wordBreak: 'break-word',
                         }}
                     >
-                        <Tooltip title={event.title || 'Tittel'}>
-                            <Typography
-                                variant="h1"
-                                sx={{
-                                    margin: '0',
-                                    marginBlockStart: '1rem',
-                                    marginInlineStart: 'var(--event-header-margin-left)',
-                                    fontSize: 'clamp(1.7rem, 2.9vw, 3.42857rem)',
-                                    whiteSpace: 'nowrap',
-                                    textOverflow: 'ellipsis',
-                                    overflow: 'clip',
-                                    maxHeight: 'var(--image-height)',
-                                    maxWidth:
-                                        'min(calc(100dvw - var(--event-header-margin-left)), calc(1200px - var(--event-header-margin-left)))',
-                                }}
-                            >
-                                {event.title || 'Tittel'}
-                            </Typography>
-                        </Tooltip>
+                        <Typography
+                            variant="h1"
+                            sx={{
+                                margin: '0',
+                                marginBlockStart: '1rem',
+                                marginInlineStart: 'var(--event-header-margin-left)',
+                                fontSize: 'clamp(1.7rem, 2.9vw, 3.42857rem)',
+                                whiteSpace: 'nowrap',
+                                textOverflow: 'ellipsis',
+                                overflow: 'clip',
+                                maxHeight: 'var(--image-height)',
+                                maxWidth:
+                                    'min(calc(100dvw - var(--event-header-margin-left)), calc(1200px - var(--event-header-margin-left)))',
+                            }}
+                        >
+                            {event.title || 'Tittel'}
+                        </Typography>
 
                         <Box
                             sx={{
