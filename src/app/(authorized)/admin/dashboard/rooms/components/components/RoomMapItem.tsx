@@ -52,7 +52,6 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
 
     const handleOkDeleteDialog = () => {
         setOpenDeleteDialog(false);
-        console.log('selectedDeleteEvent', selectedDeleteEvent);
         if (roomName !== RoomName.NotSet) {
             removeFromRoom(selectedDeleteEvent?.id ?? '', roomName, poolName);
         } else removeFromPool(selectedDeleteEvent?.id ?? '', poolName);
@@ -72,7 +71,6 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
         if (roomName === RoomName.NotSet) {
             if (!roomIds || !roomIds.find((roomId) => roomId.poolName === poolName)) {
                 eventsInRoom.push(event);
-                console.log(event, 'event');
             }
         }
     });

@@ -5,8 +5,11 @@ import ListItemButton from '@mui/material/ListItemButton';
 import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
 import { ConEvent } from '$lib/types';
-import { Box, DialogContent, Typography } from '@mui/material';
+import { Box, DialogContent, Divider } from '@mui/material';
 import RoomCard from './RoomCard';
+import RoomPoolInfo from './RoomPoolInfo';
+import { PoolName } from '$lib/enums';
+import UnwantedPoolByGm from './UnwantedPoolByGm';
 
 type Props = {
     open: boolean;
@@ -24,52 +27,61 @@ const RoomSelectDialog = ({ open, selectedValue, onClose, events }: Props) => {
         onClose(value);
     };
 
+    const pools = [
+        { poolName: PoolName.fridayEvening },
+        { poolName: PoolName.saturdayMorning },
+        { poolName: PoolName.saturdayEvening },
+        { poolName: PoolName.sundayMorning },
+    ];
+
     return (
         <Dialog onClose={handleClose} open={open} fullWidth={true} maxWidth={'md'}>
             <DialogTitle>Velg arrangement</DialogTitle>
             <DialogContent>
                 <List sx={{ pt: 0 }}>
-                    {events.map((event) => {
+                    {events.map((conEvent) => {
                         return (
-                            <ListItem disableGutters key={event.id}>
-                                <ListItemButton onClick={() => handleListItemClick(event.id ?? '')}>
-                                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                        <Box
-                                            sx={{
-                                                width: '30rem',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'flex-start',
-                                            }}
-                                        >
-                                            <RoomCard
-                                                title={event.title}
-                                                gameMaster={event.gameMaster}
-                                                system={event.system}
-                                                imageUri="/blekksprut2.jpg"
-                                            />
+                            <>
+                                <ListItem disableGutters key={conEvent.id}>
+                                    <ListItemButton onClick={() => handleListItemClick(conEvent.id ?? '')}>
+                                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                            <Box
+                                                sx={{
+                                                    width: '24rem',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    alignItems: 'flex-start',
+                                                }}
+                                            >
+                                                <RoomCard
+                                                    title={conEvent.title}
+                                                    gameMaster={conEvent.gameMaster}
+                                                    system={conEvent.system}
+                                                    imageUri="/blekksprut2.jpg"
+                                                />
+                                            </Box>
+                                            <Box>
+                                                {pools.map((pool) => {
+                                                    return (
+                                                        <>
+                                                            <UnwantedPoolByGm
+                                                                poolName={pool.poolName}
+                                                                conEvent={conEvent}
+                                                            />
+                                                            <RoomPoolInfo
+                                                                key={pool.poolName}
+                                                                poolName={pool.poolName}
+                                                                conEvent={conEvent}
+                                                            />
+                                                        </>
+                                                    );
+                                                })}
+                                            </Box>
                                         </Box>
-                                        <Box
-                                            sx={{
-                                                width: '20rem',
-                                                display: 'flex',
-                                                flexDirection: 'column',
-                                                alignItems: 'flex-start',
-                                            }}
-                                        >
-                                            {event.poolIds?.map((poolId) => {
-                                                return (
-                                                    <Box key={poolId.id}>
-                                                        <Typography>Puje: </Typography>
-                                                        <Typography>Rom: Styrerom 1 Gerhard</Typography>
-                                                        <Typography>Rom: Symfoni</Typography>
-                                                    </Box>
-                                                );
-                                            })}
-                                        </Box>
-                                    </Box>
-                                </ListItemButton>
-                            </ListItem>
+                                    </ListItemButton>
+                                </ListItem>
+                                <Divider />
+                            </>
                         );
                     })}
                 </List>
