@@ -29,6 +29,7 @@ import { onSnapshot, doc, type Unsubscribe } from 'firebase/firestore';
 import { MuiMarkdown } from 'mui-markdown';
 import NavigatePreviousLink from './ui/NavigatePreviousLink';
 import NavigateNextLink from './ui/NavigateNextLink';
+import BackButton from '$app/(authorized)/components/BackButton';
 
 export const dynamic = 'force-static';
 
@@ -123,9 +124,9 @@ const MainEvent = ({ id, eventData, editable = false, editDescription, prevNavig
                                 wordBreak: 'break-word',
                             }}
                         >
-                            <IconButton sx={{ placeSelf: 'start' }}>
-                                <FontAwesomeIcon icon={faChevronLeft} />
-                            </IconButton>
+                            <Box sx={{ placeSelf: 'start' }}>
+                                <BackButton />
+                            </Box>
                             {isEditingTitle ?
                                 <TextField
                                     name="title"

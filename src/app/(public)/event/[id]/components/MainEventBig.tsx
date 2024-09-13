@@ -8,6 +8,8 @@ import Image from 'next/image';
 import blekksprut2 from '$public/blekksprut2.jpg';
 import BackButton from '$app/(authorized)/components/BackButton';
 import InterestSelector from './components/InterestSelector';
+import NavigatePreviousLink from './ui/NavigatePreviousLink';
+import NavigateNextLink from './ui/NavigateNextLink';
 
 type Props = {
     event: ConEvent;
@@ -27,6 +29,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                     '--image-height': '15.1429rem',
                     '--slider-interest-width': '19.5714rem',
                     '--event-margin-left': '4rem',
+                    '--next-prev-button-height': '9.1743rem',
                 },
                 maxWidth: '1200px',
             }}
@@ -72,14 +75,17 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                             <Box
                                 sx={{
                                     display: 'grid',
-                                    gridTemplateRows: '1fr 1fr',
-                                    gap: '1rem',
-                                    marginBottom: '2rem',
+                                    gridTemplateRows: '1fr 1fr 1fr',
                                 }}
                             >
                                 <Typography
                                     variant="h1"
-                                    sx={{ marginInlineStart: 'calc(var(--event-margin-left) - 1.5rem)' }}
+                                    sx={{
+                                        margin: '0',
+                                        marginBlockStart: '1rem',
+                                        marginInlineStart: 'calc(var(--event-margin-left) - 1rem)',
+                                        fontSize: '3.42857rem',
+                                    }}
                                 >
                                     {event.title || 'Tittel'}
                                 </Typography>
@@ -90,6 +96,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                                         gridTemplateColumns: 'repeat(2, max-content)',
                                         placeContent: 'start',
                                         marginInlineStart: 'var(--event-margin-left)',
+                                        placeSelf: 'end start',
                                     }}
                                 >
                                     <Box sx={{ display: 'flex', gap: '0.8rem', placeItems: 'center' }}>
@@ -115,26 +122,32 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                                         </Box>
                                     </Box>
                                 </Box>
+                                <Box sx={{ placeSelf: 'center start', marginInlineStart: '1rem' }}>
+                                    <NavigatePreviousLink previousNavigationId={prevNavigationId} />
+                                </Box>
                             </Box>
+                            <Box>
+                                <Typography
+                                    sx={{
+                                        ...paragraphStyle,
+                                        marginBottom: '1rem',
+                                        textAlign: 'center',
+                                        overflow: 'clip',
+                                        maxHeight: 'calc(var(--image-height) - 3rem)',
+                                    }}
+                                >
+                                    {event.shortDescription || 'Kort beskrivelse'}
+                                </Typography>
 
-                            <Typography
-                                sx={{
-                                    ...paragraphStyle,
-                                    marginBottom: '1rem',
-                                    textAlign: 'center',
-                                    overflow: 'clip',
-                                    maxHeight: 'calc(var(--image-height) - 3rem)',
-                                }}
-                            >
-                                {event.shortDescription || 'Kort beskrivelse'}
-                            </Typography>
+                                {/* <NavigateNextLink nextNavigationId={nextNavigationId} /> */}
+                            </Box>
                         </Box>
                     </Box>
                 </Box>
             </Box>
             <Box
                 sx={{
-                    padding: '0 1rem 1rem 0rem',
+                    padding: '1.5rem 1rem 1rem 0rem',
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     marginInlineStart: 'var(--event-margin-left)',
@@ -192,21 +205,6 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                         />
                     </Box>
                     <InterestSelector />
-                    <Box>
-                        <Box
-                            sx={{
-                                display: 'grid',
-                                gridTemplateColumns: !prevNavigationId || !nextNavigationId ? '1fr' : '1fr 1fr',
-                                placeItems: 'space-between',
-                                marginBlockStart: '1rem',
-                                position: 'relative',
-                                width: '100%',
-                            }}
-                        >
-                            {/* <NavigatePreviousLink previousNavigationId={prevNavigationId} />
-                                <NavigateNextLink nextNavigationId={nextNavigationId} /> */}
-                        </Box>
-                    </Box>
                 </Box>
 
                 <MuiMarkdown>{event.description || '# Lang beskrivelse'}</MuiMarkdown>
