@@ -2,13 +2,14 @@ import type { ConEvent } from '$lib/types';
 import { faUserSecret, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { NavigateBefore } from '@mui/icons-material';
-import { Paper, Box, Typography, Chip } from '@mui/material';
+import { Paper, Box, Typography, Chip, Tooltip } from '@mui/material';
 import MuiMarkdown from 'mui-markdown';
 import Image from 'next/image';
 import blekksprut2 from '$public/blekksprut2.jpg';
 import InterestSelector from './components/InterestSelector';
 import NavigatePreviousLink from './ui/NavigatePreviousLink';
 import NavigateNextLink from './ui/NavigateNextLink';
+import MuiMarkdownClient from './ui/MuiMarkdownClient';
 
 type Props = {
     event: ConEvent;
@@ -65,22 +66,25 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                             wordBreak: 'break-word',
                         }}
                     >
-                        <Typography
-                            variant="h1"
-                            sx={{
-                                margin: '0',
-                                marginBlockStart: '1rem',
-                                marginInlineStart: 'var(--event-header-margin-left)',
-                                fontSize: '3.42857rem',
-                                whiteSpace: 'nowrap',
-                                textOverflow: 'ellipsis',
-                                overflow: 'clip',
-                                maxHeight: 'var(--image-height)',
-                                maxWidth: 'min(100dvw, calc(1200px - var(--event-header-margin-left)))',
-                            }}
-                        >
-                            {event.title || 'Tittel'}
-                        </Typography>
+                        <Tooltip title={event.title || 'Tittel'}>
+                            <Typography
+                                variant="h1"
+                                sx={{
+                                    margin: '0',
+                                    marginBlockStart: '1rem',
+                                    marginInlineStart: 'var(--event-header-margin-left)',
+                                    fontSize: 'clamp(1.7rem, 2.9vw, 3.42857rem)',
+                                    whiteSpace: 'nowrap',
+                                    textOverflow: 'ellipsis',
+                                    overflow: 'clip',
+                                    maxHeight: 'var(--image-height)',
+                                    maxWidth:
+                                        'min(calc(100dvw - var(--event-header-margin-left)), calc(1200px - var(--event-header-margin-left)))',
+                                }}
+                            >
+                                {event.title || 'Tittel'}
+                            </Typography>
+                        </Tooltip>
 
                         <Box
                             sx={{
@@ -210,7 +214,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                     </Box>
                     <InterestSelector />
                 </Box>
-                <MuiMarkdown>{event.description || '# Lang beskrivelse'}</MuiMarkdown>
+                <MuiMarkdownClient description={event.description} />
             </Box>
         </Paper>
     );
