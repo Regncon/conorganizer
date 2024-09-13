@@ -10,7 +10,7 @@ const NavigatePreviousLink = ({ previousNavigationId }: Props) => {
     const href = `/event/${previousNavigationId}`;
 
     return previousNavigationId ?
-            <Button variant="outlined" color="secondary" sx={sx} component={Link} href={href} replace>
+            <Button variant="outlined" color="secondary" sx={sx} component={Link} href={href}>
                 <ArrowBackIcon />
                 <Typography sx={{ marginLeft: '0.5rem' }}>forrige</Typography>
             </Button>

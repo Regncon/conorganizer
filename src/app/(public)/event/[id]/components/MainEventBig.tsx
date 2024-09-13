@@ -2,11 +2,10 @@ import type { ConEvent } from '$lib/types';
 import { faUserSecret, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { NavigateBefore } from '@mui/icons-material';
-import { type SxProps, Paper, Box, Typography, Chip, type Theme } from '@mui/material';
+import { Paper, Box, Typography, Chip } from '@mui/material';
 import MuiMarkdown from 'mui-markdown';
 import Image from 'next/image';
 import blekksprut2 from '$public/blekksprut2.jpg';
-import BackButton from '$app/(authorized)/components/BackButton';
 import InterestSelector from './components/InterestSelector';
 import NavigatePreviousLink from './ui/NavigatePreviousLink';
 import NavigateNextLink from './ui/NavigateNextLink';
@@ -19,7 +18,6 @@ type Props = {
 
 const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
     console.log(typeof window === 'undefined' ? 'server' : 'client');
-    const paragraphStyle: SxProps<Theme> = { margin: '1rem 0' };
     return (
         <Paper
             elevation={0}
@@ -29,7 +27,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                     '--image-height': '15.1429rem',
                     '--slider-interest-width': '19.5714rem',
                     '--event-margin-left': '4rem',
-                    '--next-prev-button-height': '9.1743rem',
+                    '--event-header-margin-left': 'calc(var(--event-margin-left) - 1rem)',
                 },
                 maxWidth: '1200px',
             }}
@@ -63,40 +61,46 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                     <Box
                         sx={{
                             display: 'grid',
-                            gridTemplateRows: '2rem 1fr',
                             height: '100%',
                             wordBreak: 'break-word',
                         }}
                     >
-                        <Box sx={{ placeSelf: 'start' }}>
-                            <BackButton />
-                        </Box>
-                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 0.5fr' }}>
+                        <Typography
+                            variant="h1"
+                            sx={{
+                                margin: '0',
+                                marginBlockStart: '1rem',
+                                marginInlineStart: 'var(--event-header-margin-left)',
+                                fontSize: '3.42857rem',
+                                whiteSpace: 'nowrap',
+                                textOverflow: 'ellipsis',
+                                overflow: 'clip',
+                                maxHeight: 'var(--image-height)',
+                                maxWidth: 'min(100dvw, calc(1200px - var(--event-header-margin-left)))',
+                            }}
+                        >
+                            {event.title || 'Tittel'}
+                        </Typography>
+
+                        <Box
+                            sx={{
+                                display: 'grid',
+                                gridTemplateColumns: '50% 50%',
+                                gridTemplateRows: '10.4286rem',
+                            }}
+                        >
                             <Box
                                 sx={{
                                     display: 'grid',
-                                    gridTemplateRows: '1fr 1fr 1fr',
+                                    gridTemplateColum: '1fr 1fr',
                                 }}
                             >
-                                <Typography
-                                    variant="h1"
-                                    sx={{
-                                        margin: '0',
-                                        marginBlockStart: '1rem',
-                                        marginInlineStart: 'calc(var(--event-margin-left) - 1rem)',
-                                        fontSize: '3.42857rem',
-                                    }}
-                                >
-                                    {event.title || 'Tittel'}
-                                </Typography>
-
                                 <Box
                                     sx={{
                                         display: 'grid',
-                                        gridTemplateColumns: 'repeat(2, max-content)',
+                                        gridTemplateRows: '1fr 1fr',
                                         placeContent: 'start',
                                         marginInlineStart: 'var(--event-margin-left)',
-                                        placeSelf: 'end start',
                                     }}
                                 >
                                     <Box sx={{ display: 'flex', gap: '0.8rem', placeItems: 'center' }}>
@@ -122,27 +126,26 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                                         </Box>
                                     </Box>
                                 </Box>
-                                <Box sx={{ placeSelf: 'center start', marginInlineStart: '1rem' }}>
-                                    <NavigatePreviousLink previousNavigationId={prevNavigationId} />
-                                </Box>
                             </Box>
-                            <Box>
-                                <Typography
-                                    sx={{
-                                        ...paragraphStyle,
-                                        marginBottom: '1rem',
-                                        textAlign: 'center',
-                                        overflow: 'clip',
-                                        maxHeight: 'calc(var(--image-height) - 3rem)',
-                                    }}
-                                >
-                                    {event.shortDescription || 'Kort beskrivelse'}
-                                </Typography>
 
-                                {/* <NavigateNextLink nextNavigationId={nextNavigationId} /> */}
-                            </Box>
+                            <Typography
+                                sx={{
+                                    overflow: 'clip',
+                                    maxHeight: 'var(--image-height)',
+                                }}
+                            >
+                                {event.shortDescription || 'Kort beskrivelse'}
+                            </Typography>
                         </Box>
                     </Box>
+                </Box>
+            </Box>
+            <Box sx={{ display: 'grid', gridAutoFlow: 'column', marginInline: '2rem', marginBlockStart: '0.5rem' }}>
+                <Box sx={{ placeSelf: 'center start' }}>
+                    <NavigatePreviousLink previousNavigationId={prevNavigationId} />
+                </Box>
+                <Box sx={{ placeSelf: 'center end' }}>
+                    <NavigateNextLink nextNavigationId={nextNavigationId} />
                 </Box>
             </Box>
             <Box
@@ -151,6 +154,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
                     marginInlineStart: 'var(--event-margin-left)',
+                    position: 'relative',
                 }}
             >
                 <Box>
@@ -206,7 +210,6 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                     </Box>
                     <InterestSelector />
                 </Box>
-
                 <MuiMarkdown>{event.description || '# Lang beskrivelse'}</MuiMarkdown>
             </Box>
         </Paper>
