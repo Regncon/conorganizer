@@ -40,8 +40,11 @@ const DescriptionDialog = ({ data, handleSave, close: Close, open }: props) => {
         <Dialog fullScreen open={open} TransitionComponent={Transition}>
             <Box
                 sx={{
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    maxWidth: '950px',
                     display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit,minmax(306px, 430px))',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(306px, 430px))',
                     gap: '16px',
                     justifyContent: 'center',
                     alignItems: 'center',
