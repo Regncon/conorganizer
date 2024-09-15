@@ -142,7 +142,6 @@ const LoginPage = () => {
                 eller
             </Typography>
 
-            <Button onClick={handleGoogleLoginRedirect}>Logg inn med Google Redirect</Button>
             <Grid2
                 component="form"
                 container
@@ -157,6 +156,8 @@ const LoginPage = () => {
                 }}
                 action={formAction}
             >
+                <Button onClick={handleGoogleLoginRedirect}>Logg inn med Google Redirect</Button>
+
                 <EmailTextField defaultValue={email} error={!!state.emailError} helperText={state.emailError} />
                 <PasswordTextField error={!!state.passwordError} helperText={state.passwordError} />
 
