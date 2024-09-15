@@ -2,6 +2,7 @@ import { PoolName } from '$lib/enums';
 import { ConEvent } from '$lib/types';
 import { Divider, Stack, Typography } from '@mui/material';
 import { poolTitles } from '../../lib/helpers';
+import UnwantedPoolByGm from './UnwantedPoolByGm';
 
 type props = {
     poolName: PoolName;
@@ -19,6 +20,7 @@ const RoomPoolInfo = ({ poolName, conEvent }: props) => {
         <Stack>
             <Divider />
             <Typography variant="h4">{poolTitles[poolName]} </Typography>
+            <UnwantedPoolByGm poolName={poolName} conEvent={conEvent} color="error.main" />
             {roomIsInPool ?
                 <>
                     {conEvent.roomIds?.map((roomId) => {

@@ -7,9 +7,10 @@ import { poolTitles } from '../../lib/helpers';
 type props = {
     poolName: PoolName;
     conEvent: ConEvent;
+    color?: string;
 };
 
-const UnwantedPoolByGm = ({ poolName, conEvent }: props) => {
+const UnwantedPoolByGm = ({ poolName, conEvent, color = 'warning.main' }: props) => {
     let showUnwanted = false;
     switch (poolName) {
         case PoolName.fridayEvening:
@@ -28,9 +29,10 @@ const UnwantedPoolByGm = ({ poolName, conEvent }: props) => {
     if (!showUnwanted) {
         return null;
     }
+    console.log(color, 'color');
     return (
         <Stack direction="row">
-            <Box sx={{ display: 'inherit', color: 'warning.main' }}>
+            <Box sx={{ display: 'inherit', color: color }}>
                 <WarningIcon />
                 <Typography component={'i'}>Gm ønsker ikke {poolTitles[poolName]}</Typography>
             </Box>
