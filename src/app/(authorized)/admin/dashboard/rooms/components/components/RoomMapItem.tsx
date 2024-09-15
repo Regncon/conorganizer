@@ -90,9 +90,10 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
                     border: '4px solid black',
                     maxHeight: '650px',
                     overflowY: 'auto',
+                    backgroundColor: 'white',
                 }}
             >
-                <Typography variant="h6" sx={{ color: 'black', display: 'none' }}>
+                <Typography variant="h2" sx={{ fontWeight: 'bold', margin: '0', color: 'black' }}>
                     {roomName}
                 </Typography>
                 <Box sx={{ display: 'flex' }}>

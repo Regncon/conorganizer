@@ -23,13 +23,14 @@ const Rooms = async ({ searchParams }: { searchParams: { [key: string]: string |
     return (
         <Paper
             sx={{
-                width: 'calc(2901px + 2rem)',
-                height: 'calc(2073px + 7rem)',
+                width: 'calc(2901px + 300px + 2rem)',
+                height: 'calc(2073px + 300px + 7rem)',
                 position: 'absolute',
                 left: '0',
                 top: '60px',
                 padding: '1rem',
                 margin: '1rem',
+                backgroundColor: 'white',
             }}
         >
             <AppBar position="fixed" sx={{ paddingTop: '60px' }}>
@@ -44,7 +45,7 @@ const Rooms = async ({ searchParams }: { searchParams: { [key: string]: string |
                 </Toolbar>
             </AppBar>
             <Toolbar />
-            <RoomMap pool={searchParams.pool as PoolName}/>
+            <RoomMap pool={searchParams.pool as PoolName} />
         </Paper>
     );
 };
