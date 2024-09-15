@@ -30,7 +30,7 @@ of your con schedule, your panels, and your expenses.
 
 -   Log-in bug, e-mail input loses focus when you input a letter |
 -   Icons | Grethe :D
--   Bug: Problems with hitting enter while editing event |
+-   Bug: Problems with hitting enter while editing event | Gerhard
 -   Fix cookie lifetime
 -   Fix events front page | Torstein
 -   Add picture url

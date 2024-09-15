@@ -38,9 +38,17 @@ const DescriptionDialog = ({ data, handleSave, close: Close, open }: props) => {
     }, [data, open]);
     return (
         <Dialog fullScreen open={open} TransitionComponent={Transition}>
-            <Box sx={{ maxWidth: '430px', margin: 'auto' }}>
+            <Box
+                sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit,minmax(306px, 430px))',
+                    gap: '16px',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}
+            >
                 <DialogContent>
-                    <Typography variant="h2">Rediger </Typography>
+                    <Typography variant="h2">Rediger</Typography>
                     <DialogContentText>
                         Beskrivelse av arrangementet. Du kan bruke markdown for å formatere teksten.
                     </DialogContentText>
@@ -53,10 +61,11 @@ const DescriptionDialog = ({ data, handleSave, close: Close, open }: props) => {
                     />
                 </DialogContent>
                 <DialogContent>
-                    <Typography variant="h2">Forhåndsvisning </Typography>
+                    <Typography variant="h2">Forhåndsvisning</Typography>
                     <hr />
                     <MuiMarkdown>{description}</MuiMarkdown>
                 </DialogContent>
+                <Box />
                 <DialogActions>
                     <Button variant="contained" color="error" startIcon={<CancelIcon />} onClick={Close}>
                         Cancel
