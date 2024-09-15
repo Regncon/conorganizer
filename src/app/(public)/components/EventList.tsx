@@ -37,11 +37,12 @@ const EventList = ({ events }: Props) => {
                                             gameMaster={event.gameMaster}
                                             system={event.system}
                                         />
-                                    :   <EventCardBig
+                                        : <EventCardBig
                                             title={event.title}
                                             gameMaster={event.gameMaster}
                                             shortDescription={event.shortDescription}
                                             system={event.system}
+                                            backgroundImage={event.smallImageURL}
                                         />
                                     }
                                 </NextLink>

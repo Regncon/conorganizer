@@ -14,7 +14,7 @@ export default function EventCardBig({
     gameMaster,
     shortDescription,
     system,
-    backgroundImage = 'blekksprut2.jpg',
+    backgroundImage = '/blekksprut2.jpg',
     myEventBar = false,
     myEventBarSubmitted = false,
     myEventDocId,
@@ -25,7 +25,7 @@ export default function EventCardBig({
     return (
         <Card
             sx={{
-                backgroundImage: `url(/${backgroundImage})`,
+                backgroundImage: `url(${backgroundImage})`,
                 minHeight: `${myEventBar ? 'calc(267px + 65px)' : '267px'}`,
                 maxHeight: `${myEventBar ? 'calc(267px + 65px)' : '267px'}`,
                 backgroundSize: 'cover',
@@ -67,7 +67,7 @@ export default function EventCardBig({
                             <TrashButton docId={myEventDocId} />
                         </Box>
                     </>
-                :   null}
+                    : null}
 
                 <CardHeader
                     title={title}

@@ -31,6 +31,7 @@ const Events = async () => {
                                         gameMaster={conEvent.gameMaster}
                                         system={conEvent.system}
                                         shortDescription={conEvent.shortDescription}
+                                        backgroundImage={conEvent.smallImageURL}
                                     />
                                 </Link>
                             );

@@ -20,6 +20,8 @@ export type ConEvent = {
     system: string;
     shortDescription: string;
     description: string;
+    smallImageURL: string;
+    bigImageURL: string;
     icons?: string[];
     email: string;
     name: string;

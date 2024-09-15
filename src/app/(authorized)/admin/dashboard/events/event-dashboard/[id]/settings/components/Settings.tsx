@@ -11,29 +11,25 @@ import Checkbox from '@mui/material/Checkbox';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import Slide from '@mui/material/Slide';
 import Snackbar from '@mui/material/Snackbar';
-import { Box, CircularProgress, Grid2, Stack, Switch } from '@mui/material';
+import { Box, CircularProgress, Divider, Grid2, Stack, Switch } from '@mui/material';
 import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import { ConEvent } from '$lib/types';
-import Ordering from './ordering';
 import debounce from '$lib/debounce';
-import WarningIcon from '@mui/icons-material/Warning';
 import EventCardBig from '$app/(public)/components/components/EventCardBig';
 import EventCardSmall from '$app/(public)/components/components/EventCardSmall';
 
 type Props = {
     id: string;
-    allEvents: ConEvent[];
 };
-const Settings = ({ id, allEvents }: Props) => {
+const Settings = ({ id }: Props) => {
     const [user, setUser] = useState<User | null>();
     const snackBarMessageInitial = 'Din endring er lagra!';
     const [snackBarMessage, setSnackBarMessage] = useState<string>(snackBarMessageInitial);
     const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
     const initialState = {} as ConEvent;
     const [data, setData] = useState<ConEvent>();
-    // console.log('data', data);
     const eventDocRef = doc(db, 'events', id);
 
     const updateDatabase = async (data: Partial<ConEvent>) => {
@@ -122,22 +118,6 @@ const Settings = ({ id, allEvents }: Props) => {
         [user]
     );
 
-    const unwantedTimeSlotWarning = (slot: string, unwanted: boolean) => {
-        return (
-            <Stack direction="row">
-                <Typography component={'span'} sx={{ paddingRight: '1rem' }}>
-                    {slot}
-                </Typography>
-                {unwanted && (
-                    <Box sx={{ display: 'inherit', color: 'warning.main' }}>
-                        <WarningIcon />
-                        <Typography component={'i'}>Gm ønsker ikke denne</Typography>
-                    </Box>
-                )}
-            </Stack>
-        );
-    };
-
     return (
         <>
             {!data ?
@@ -145,7 +125,7 @@ const Settings = ({ id, allEvents }: Props) => {
                     Loading...
                     <CircularProgress />
                 </Typography>
-            :   <>
+                : <>
                     <Grid2
                         sx={{
                             paddingTop: '1rem',
@@ -199,12 +179,13 @@ const Settings = ({ id, allEvents }: Props) => {
                                     </Stack>
 
                                     <Box sx={{ display: 'flex', gap: '1rem' }}>
-                                        <Box sx={{ opacity: data.isSmallCard ? '0.5' : 'unset' }}>
+                                        <Box sx={{ opacity: data.isSmallCard ? '0.5' : 'unset', maxWidth: '430px' }}>
                                             <EventCardBig
                                                 title={data.title}
                                                 gameMaster={data.gameMaster}
                                                 shortDescription={data.shortDescription}
                                                 system={data.system}
+                                                backgroundImage={data.smallImageURL}
                                             />
                                         </Box>
                                         <Box sx={{ opacity: !data.isSmallCard ? '0.5' : 'unset' }}>
@@ -224,74 +205,36 @@ const Settings = ({ id, allEvents }: Props) => {
                                 sm: 6,
                             }}
                         >
-                            <Paper sx={{ padding: '1rem' }}>
-                                <FormGroup>
-                                    <FormLabel>Pulje</FormLabel>
-                                    <FormControlLabel
-                                        disabled
-                                        control={
-                                            <Checkbox name="puljeFridayEvening" checked={data.puljeFridayEvening} />
-                                        }
-                                        onChange={() =>
-                                            setData({ ...data, puljeFridayEvening: !data.puljeFridayEvening })
-                                        }
-                                        label={unwantedTimeSlotWarning('Fredag Kveld', data.unwantedFridayEvening)}
-                                    />
-                                    <Ordering
-                                        id={id}
-                                        allEvents={allEvents}
-                                        pulje="Fredag kveld"
-                                        disabled={!data.puljeFridayEvening}
-                                    />
-                                    <FormControlLabel
-                                        disabled
-                                        control={
-                                            <Checkbox name="puljeSaturdayMorning" checked={data.puljeSaturdayMorning} />
-                                        }
-                                        onChange={() =>
-                                            setData({ ...data, puljeSaturdayMorning: !data.puljeSaturdayMorning })
-                                        }
-                                        label={unwantedTimeSlotWarning('Lørdag Morgen', data.unwantedSaturdayMorning)}
-                                    />
-                                    <Ordering
-                                        id={id}
-                                        allEvents={allEvents}
-                                        pulje="Lørdag morgen"
-                                        disabled={!data.puljeSaturdayMorning}
-                                    />
-                                    <FormControlLabel
-                                        disabled
-                                        control={
-                                            <Checkbox name="puljeSaturdayEvening" checked={data.puljeSaturdayEvening} />
-                                        }
-                                        onChange={() =>
-                                            setData({ ...data, puljeSaturdayEvening: !data.puljeSaturdayEvening })
-                                        }
-                                        label={unwantedTimeSlotWarning('Lørdag Kveld', data.unwantedSaturdayEvening)}
-                                    />
-                                    <Ordering
-                                        id={id}
-                                        allEvents={allEvents}
-                                        pulje="Lørdag kveld"
-                                        disabled={!data.puljeSaturdayEvening}
-                                    />
-                                    <FormControlLabel
-                                        disabled
-                                        control={
-                                            <Checkbox name="puljeSundayMorning" checked={data.puljeSundayMorning} />
-                                        }
-                                        onChange={() =>
-                                            setData({ ...data, puljeSundayMorning: !data.puljeSundayMorning })
-                                        }
-                                        label={unwantedTimeSlotWarning('Søndag Morgen', data.unwantedSundayMorning)}
-                                    />
-                                    <Ordering
-                                        id={id}
-                                        allEvents={allEvents}
-                                        pulje="Søndag morgen"
-                                        disabled={!data.puljeSundayMorning}
-                                    />
-                                </FormGroup>
+                            <Paper sx={{ padding: '1rem', display: 'flex', gap: '1rem', flexDirection: 'column' }}>
+                                <Typography variant="h2">Bilder</Typography>
+                                <Typography>Filformat .webp</Typography>
+                                <Typography>
+                                    Tips: Ikke bruk spesialtegin i filnavn og unngå mellomrom og store bokstaver
+                                </Typography>
+                                <Typography component={'h4'}>Lite bilde bredde 430 og høyde 260</Typography>
+                                <TextField
+                                    type="text"
+                                    name="smallImageURL"
+                                    onChange={(e) => setData({ ...data, smallImageURL: e.target.value })}
+                                    value={data.smallImageURL}
+                                    label="Lite bilde url"
+                                    variant="outlined"
+                                    fullWidth
+                                />
+                                <img src={data.smallImageURL} alt="small" />
+                                <Divider />
+
+                                <Typography component={'h3'}>Stort blide bredde 1200 og høyde 212</Typography>
+                                <TextField
+                                    type="text"
+                                    name="bigImageURL"
+                                    onChange={(e) => setData({ ...data, bigImageURL: e.target.value })}
+                                    value={data.bigImageURL}
+                                    label="Stort bilde url"
+                                    variant="outlined"
+                                    fullWidth
+                                />
+                                <Box component={'img'} maxWidth={430} src={data.bigImageURL} alt="big" />
                             </Paper>
                         </Grid2>
                         <Grid2
