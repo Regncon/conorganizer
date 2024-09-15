@@ -14,7 +14,7 @@ export enum RoomName {
     'Styrerom5' = 'Styrerom 5',
     'Styrerom6' = 'Styrerom 6',
     'fellerom1' = 'Fellerområde 1',
-    'fellerom2' = 'Fellerområde 2',
+    'fellerom2' = 'Fallerområde 2',
     'Klang' = 'Klang',
     'Sonate' = 'Sonate',
     'Ballade' = 'Ballade',

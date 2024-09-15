@@ -39,51 +39,53 @@ const RoomSelectDialog = ({ open, selectedValue, onClose, events }: Props) => {
             <DialogTitle>Velg arrangement</DialogTitle>
             <DialogContent>
                 <List sx={{ pt: 0 }}>
-                    {events.map((conEvent) => {
-                        return (
-                            <>
-                                <ListItem disableGutters key={conEvent.id}>
-                                    <ListItemButton onClick={() => handleListItemClick(conEvent.id ?? '')}>
-                                        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                            <Box
-                                                sx={{
-                                                    width: '24rem',
-                                                    display: 'flex',
-                                                    flexDirection: 'column',
-                                                    alignItems: 'flex-start',
-                                                }}
-                                            >
-                                                <RoomCard
-                                                    title={conEvent.title}
-                                                    gameMaster={conEvent.gameMaster}
-                                                    system={conEvent.system}
-                                                    imageUri="/blekksprut2.jpg"
-                                                />
+                    {events
+                        .toSorted((a, b) => a.title.localeCompare(b.title))
+                        .map((conEvent) => {
+                            return (
+                                <>
+                                    <ListItem disableGutters key={conEvent.id}>
+                                        <ListItemButton onClick={() => handleListItemClick(conEvent.id ?? '')}>
+                                            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                                <Box
+                                                    sx={{
+                                                        width: '24rem',
+                                                        display: 'flex',
+                                                        flexDirection: 'column',
+                                                        alignItems: 'flex-start',
+                                                    }}
+                                                >
+                                                    <RoomCard
+                                                        title={conEvent.title}
+                                                        gameMaster={conEvent.gameMaster}
+                                                        system={conEvent.system}
+                                                        imageUri="/blekksprut2.jpg"
+                                                    />
+                                                </Box>
+                                                <Box>
+                                                    {pools.map((pool) => {
+                                                        return (
+                                                            <>
+                                                                <UnwantedPoolByGm
+                                                                    poolName={pool.poolName}
+                                                                    conEvent={conEvent}
+                                                                />
+                                                                <RoomPoolInfo
+                                                                    key={pool.poolName}
+                                                                    poolName={pool.poolName}
+                                                                    conEvent={conEvent}
+                                                                />
+                                                            </>
+                                                        );
+                                                    })}
+                                                </Box>
                                             </Box>
-                                            <Box>
-                                                {pools.map((pool) => {
-                                                    return (
-                                                        <>
-                                                            <UnwantedPoolByGm
-                                                                poolName={pool.poolName}
-                                                                conEvent={conEvent}
-                                                            />
-                                                            <RoomPoolInfo
-                                                                key={pool.poolName}
-                                                                poolName={pool.poolName}
-                                                                conEvent={conEvent}
-                                                            />
-                                                        </>
-                                                    );
-                                                })}
-                                            </Box>
-                                        </Box>
-                                    </ListItemButton>
-                                </ListItem>
-                                <Divider />
-                            </>
-                        );
-                    })}
+                                        </ListItemButton>
+                                    </ListItem>
+                                    <Divider />
+                                </>
+                            );
+                        })}
                 </List>
             </DialogContent>
         </Dialog>
