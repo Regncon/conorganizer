@@ -29,7 +29,6 @@ of your con schedule, your panels, and your expenses.
 ### Must haves for publishing events
 
 -   Log-in bug, e-mail input loses focus when you input a letter |
--   Room assignment | Gerhard
 -   Icons | Grethe :D
 -   Bug: Problems with hitting enter while editing event |
 -   Fix cookie lifetime
@@ -91,3 +90,4 @@ of your con schedule, your panels, and your expenses.
 -   Easy next and previous navigation
 -   Make it very clear what day is displayed
 -   Get tickets from checkin
+-   Room assignment | Gerhard
