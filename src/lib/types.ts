@@ -112,6 +112,8 @@ export type PoolEvent = {
     system: string;
     shortDescription: string;
     description: string;
+    smallImageURL?: string;
+    bigImageURL?: string;
     gameType: string;
     isSmallCard: boolean;
     participants: number;

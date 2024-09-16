@@ -19,6 +19,7 @@ import { ConEvent } from '$lib/types';
 import debounce from '$lib/debounce';
 import EventCardBig from '$app/(public)/components/components/EventCardBig';
 import EventCardSmall from '$app/(public)/components/components/EventCardSmall';
+import { updateEnventAndPoolEvent } from './lib/actions';
 
 type Props = {
     id: string;
@@ -33,7 +34,9 @@ const Settings = ({ id }: Props) => {
     const eventDocRef = doc(db, 'events', id);
 
     const updateDatabase = async (data: Partial<ConEvent>) => {
-        await updateDoc(eventDocRef, data);
+        // await updateDoc(eventDocRef, data);
+        console.log('updateDatabase', data);
+        await updateEnventAndPoolEvent(id, data);
     };
     useEffect(() => {
         let unsubscribeSnapshot: Unsubscribe | undefined;

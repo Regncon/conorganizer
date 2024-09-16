@@ -11,6 +11,7 @@ import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import DescriptionDialog from './DescriptionDialog';
 import debounce from '$lib/debounce';
 import MainEvent from '$app/(public)/event/[id]/components/MainEvent';
+import { updateEnventAndPoolEvent } from '../../settings/components/lib/actions';
 
 type Props = {
     id: string;
@@ -90,7 +91,7 @@ const Edit = ({ id }: Props) => {
         [user]
     );
 
-    const saveToDb = (name: string, value: string | boolean) => {
+    const saveToDb = async (name: string, value: string | boolean) => {
         if (!user || !user.email) {
             console.error('user?.email is null');
             return;
@@ -105,7 +106,8 @@ const Edit = ({ id }: Props) => {
         setSnackBarMessage('Endringar lagra!');
         setIsSnackBarOpen(true);
 
-        updateDatabase(payload);
+        // updateDatabase(payload);
+        await updateEnventAndPoolEvent(id, payload);
     };
 
     return (
@@ -115,7 +117,7 @@ const Edit = ({ id }: Props) => {
                     Loading...
                     <CircularProgress />
                 </Typography>
-            :   <>
+                : <>
                     <Box
                         component="form"
                         onChange={(evt) =>
