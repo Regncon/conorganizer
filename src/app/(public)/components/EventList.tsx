@@ -29,7 +29,7 @@ const EventList = ({ events }: Props) => {
                                 gap: '1rem',
                             }}
                         >
-                            {[...events.values()].map((event) => (
+                            {events.map((event) => (
                                 <NextLink key={event.id} href={`/event/${event.id}`}>
                                     {event.isSmallCard ?
                                         <EventCardSmall
@@ -51,37 +51,6 @@ const EventList = ({ events }: Props) => {
                         </Box>
                     </Box>
                 );
-                // return (
-                //     <Box key={event.day} ref={ref}>
-                //         <EventListDay eventDay={event.day} />
-                //         <Box
-                //             sx={{
-                //                 display: 'grid',
-                //                 gridTemplateColumns: 'repeat(auto-fit,minmax(306px, 1fr))',
-                //                 gap: '1rem',
-                //             }}
-                //         >
-                //             {event.events.map((event) => (
-                //                 <NextLink key={event.id} href={`/event/${event.id}`}>
-                //                     {event.isSmallCard ?
-                //                         <EventCardSmall
-                //                             title={event.title}
-                //                             gameMaster={event.gameMaster}
-                //                             system={event.system}
-                //                         />
-                //                     :   <EventCardBig
-                //                             title={event.title}
-                //                             gameMaster={event.gameMaster}
-                //                             shortDescription={event.shortDescription}
-                //                             system={event.system}
-                //                             backgroundImage={event.smallImageURL}
-                //                         />
-                //                     }
-                //                 </NextLink>
-                //             ))}
-                //         </Box>
-                //     </Box>
-                // );
             })}
         </Box>
     );
