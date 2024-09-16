@@ -67,7 +67,7 @@ export default function EventCardBig({
                             <TrashButton docId={myEventDocId} />
                         </Box>
                     </>
-                    : null}
+                :   null}
 
                 <CardHeader
                     title={title}

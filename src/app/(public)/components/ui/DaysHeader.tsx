@@ -1,12 +1,10 @@
 'use client';
-import type { EventDay, EventDays } from '$app/(public)/page';
+import { PoolName } from '$lib/enums';
 import { useSetCustomCssVariable } from '$lib/hooks/useSetCustomCssVariable';
 import { Box, Typography, Link, type SxProps, Divider } from '@mui/material';
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment } from 'react';
+import { translatedDays } from '../lib/helpers/translation';
 
-type Props = {
-    eventDays: EventDays;
-};
 const sxDayTypography: SxProps = {
     maxWidth: '5rem',
     minHeight: '4rem',
@@ -16,8 +14,12 @@ const sxDayTypography: SxProps = {
     transition: 'background-color 0.5s ease-in-out;',
 };
 
-const DaysHeader = ({ eventDays }: Props) => {
+type Props = {};
+
+const DaysHeader = ({}: Props) => {
     const ref = useSetCustomCssVariable({ '--scroll-margin-top': 'height' });
+    const TranslatedPoolNames = [...translatedDays.values()] as [PoolName];
+
     return (
         <>
             <Box
@@ -43,7 +45,7 @@ const DaysHeader = ({ eventDays }: Props) => {
                     }}
                     className="links"
                 >
-                    {Object.values(eventDays).map((day, i) => {
+                    {TranslatedPoolNames.map((day, i) => {
                         const activeClassColorSx: SxProps = {
                             borderColor: 'secondary.main',
                             '.active': {

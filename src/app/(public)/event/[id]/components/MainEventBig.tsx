@@ -1,9 +1,8 @@
-import type { ConEvent } from '$lib/types';
+import type { PoolEvent } from '$lib/types';
 import { faUserSecret, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { NavigateBefore } from '@mui/icons-material';
-import { Paper, Box, Typography, Chip, Tooltip } from '@mui/material';
-import MuiMarkdown from 'mui-markdown';
+import { Paper, Box, Typography, Chip } from '@mui/material';
 import Image from 'next/image';
 import blekksprut2 from '$public/blekksprut2.jpg';
 import InterestSelector from './components/InterestSelector';
@@ -12,12 +11,12 @@ import NavigateNextLink from './ui/NavigateNextLink';
 import MuiMarkdownClient from './ui/MuiMarkdownClient';
 
 type Props = {
-    event: ConEvent;
+    poolEvent: PoolEvent;
     prevNavigationId?: string;
     nextNavigationId?: string;
 };
 
-const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
+const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) => {
     console.log(typeof window === 'undefined' ? 'server' : 'client');
     return (
         <Paper
@@ -41,7 +40,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
             >
                 <Box
                     component={Image}
-                    src={blekksprut2}
+                    src={poolEvent.bigImageURL ?? blekksprut2}
                     alt="noe alt-tekst"
                     sx={{
                         width: '100%',
@@ -81,7 +80,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                                     'min(calc(100dvw - var(--event-header-margin-left)), calc(1200px - var(--event-header-margin-left)))',
                             }}
                         >
-                            {event.title || 'Tittel'}
+                            {poolEvent.title || 'Tittel'}
                         </Typography>
 
                         <Box
@@ -109,10 +108,10 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                                         <FontAwesomeIcon icon={faUserSecret} size="2x" style={{ color: '#ff7c7c' }} />
                                         <Box>
                                             <Typography component="span" sx={{ color: 'primary.main' }}>
-                                                {event.icons?.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
+                                                {poolEvent.icons?.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
                                             </Typography>
                                             <Typography variant="body1" margin={0}>
-                                                {event.gameMaster || 'Navn'}
+                                                {poolEvent.gameMaster || 'Navn'}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -123,7 +122,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                                                 System
                                             </Typography>
                                             <Typography variant="body1" margin={0}>
-                                                {event.system || 'System'}
+                                                {poolEvent.system || 'System'}
                                             </Typography>
                                         </Box>
                                     </Box>
@@ -136,7 +135,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                                     maxHeight: 'var(--image-height)',
                                 }}
                             >
-                                {event.shortDescription || 'Kort beskrivelse'}
+                                {poolEvent.shortDescription || 'Kort beskrivelse'}
                             </Typography>
                         </Box>
                     </Box>
@@ -212,7 +211,7 @@ const MainEventBig = ({ event, prevNavigationId, nextNavigationId }: Props) => {
                     </Box>
                     <InterestSelector />
                 </Box>
-                <MuiMarkdownClient description={event.description} />
+                <MuiMarkdownClient description={poolEvent.description} />
             </Box>
         </Paper>
     );

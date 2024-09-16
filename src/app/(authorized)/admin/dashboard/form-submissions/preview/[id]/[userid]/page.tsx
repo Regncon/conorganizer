@@ -1,6 +1,6 @@
 import { geMyEventByRefPath } from '$app/(authorized)/my-events/lib/actions';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { ConEvent, MyNewEvent } from '$lib/types';
+import { ConEvent, MyNewEvent, type PoolEvent } from '$lib/types';
 import { Box, Typography } from '@mui/material';
 import { updateReadAndOrAcceptedStatus } from '../../../lib/actions';
 import MainEvent from '$app/(public)/event/[id]/components/MainEvent';
@@ -67,7 +67,7 @@ const FormSubmissionsPreviewPage = async ({ params: { id, userid } }: Props) => 
         <Box sx={{ maxWidth: '430px', margin: 'auto' }}>
             <Typography variant="h1">Forhåndsvisning</Typography>
             <hr />
-            <MainEvent eventData={event} />
+            <MainEvent eventData={event as unknown as PoolEvent} />
         </Box>
     );
 };

@@ -128,6 +128,9 @@ export type PoolEvent = {
     createdBy: string;
     updateAt: string;
     updatedBy: string;
+    bigImageURL: string | undefined;
+    smallImageURL: string | undefined;
+    icons?: string[];
 };
 
 export type MyNewEvent = {

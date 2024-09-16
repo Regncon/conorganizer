@@ -1,19 +1,22 @@
 'use client';
-import type { EventDay } from '$app/(public)/page';
+
+import type { PoolName } from '$lib/enums';
 import { Typography } from '@mui/material';
+import { getTranslatedDay } from '../../lib/helpers/translation';
 
 type Props = {
-    eventDay: EventDay;
+    poolDay: PoolName;
 };
 
-const EventListDay = ({ eventDay }: Props) => {
+const EventListDay = ({ poolDay }: Props) => {
+    const translatedDay = getTranslatedDay(poolDay);
     return (
         <Typography
-            id={eventDay}
+            id={translatedDay}
             sx={{ scrollMarginTop: 'calc(var(--scroll-margin-top) + var(--app-bar-height))' }}
             variant="h1"
         >
-            {eventDay}
+            {translatedDay}
         </Typography>
     );
 };

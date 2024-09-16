@@ -1,27 +1,27 @@
 'use client';
-import { Box, Typography } from '@mui/material';
-import type { ConEvents, EventDay } from '../page';
+import { Box } from '@mui/material';
+
 import EventCardBig from './components/EventCardBig';
 import EventCardSmall from './components/EventCardSmall';
 import NextLink from 'next/link';
-import { use, useEffect, useRef, useState } from 'react';
+import { useRef } from 'react';
 import EventListDay from './components/ui/EventListDay';
-import { useIntersectionObserver } from './lib/hooks/useIntersectionObserver';
 import { useObserveIntersectionObserver } from './lib/hooks/useObserveIntersectionObserver';
+import type { PoolEvents } from './lib/serverAction';
+
 type Props = {
-    events: ConEvents;
+    events: PoolEvents;
 };
 
 const EventList = ({ events }: Props) => {
     return (
         <Box>
-            {events.map((event) => {
+            {[...events.entries()].map(([day, events]) => {
                 const ref = useRef<HTMLDivElement>(null);
                 useObserveIntersectionObserver(ref);
-
                 return (
-                    <Box key={event.day} ref={ref}>
-                        <EventListDay eventDay={event.day} />
+                    <Box key={day} ref={ref}>
+                        <EventListDay poolDay={day} />
                         <Box
                             sx={{
                                 display: 'grid',
@@ -29,15 +29,16 @@ const EventList = ({ events }: Props) => {
                                 gap: '1rem',
                             }}
                         >
-                            {event.events.map((event) => (
+                            {[...events.values()].map((event) => (
                                 <NextLink key={event.id} href={`/event/${event.id}`}>
                                     {event.isSmallCard ?
                                         <EventCardSmall
                                             title={event.title}
                                             gameMaster={event.gameMaster}
                                             system={event.system}
+                                            backgroundImage={event.smallImageURL}
                                         />
-                                        : <EventCardBig
+                                    :   <EventCardBig
                                             title={event.title}
                                             gameMaster={event.gameMaster}
                                             shortDescription={event.shortDescription}
@@ -50,6 +51,37 @@ const EventList = ({ events }: Props) => {
                         </Box>
                     </Box>
                 );
+                // return (
+                //     <Box key={event.day} ref={ref}>
+                //         <EventListDay eventDay={event.day} />
+                //         <Box
+                //             sx={{
+                //                 display: 'grid',
+                //                 gridTemplateColumns: 'repeat(auto-fit,minmax(306px, 1fr))',
+                //                 gap: '1rem',
+                //             }}
+                //         >
+                //             {event.events.map((event) => (
+                //                 <NextLink key={event.id} href={`/event/${event.id}`}>
+                //                     {event.isSmallCard ?
+                //                         <EventCardSmall
+                //                             title={event.title}
+                //                             gameMaster={event.gameMaster}
+                //                             system={event.system}
+                //                         />
+                //                     :   <EventCardBig
+                //                             title={event.title}
+                //                             gameMaster={event.gameMaster}
+                //                             shortDescription={event.shortDescription}
+                //                             system={event.system}
+                //                             backgroundImage={event.smallImageURL}
+                //                         />
+                //                     }
+                //                 </NextLink>
+                //             ))}
+                //         </Box>
+                //     </Box>
+                // );
             })}
         </Box>
     );

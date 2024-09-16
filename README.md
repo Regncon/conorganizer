@@ -34,7 +34,7 @@ of your con schedule, your panels, and your expenses.
 -   Bug: Problems with hitting enter while editing event
 -   Fix cookie lifetime
 -   Fix events front page | Torstein
--   Desktop view | Torstein
+
 
 #### Ready for admin
 
@@ -66,6 +66,7 @@ of your con schedule, your panels, and your expenses.
 
 ## Done
 
+-   Desktop view | Torstein
 -   Convert my events to use new event system
 -   Add none events to list
 -   Match header and footer to design

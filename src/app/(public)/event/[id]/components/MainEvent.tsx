@@ -15,15 +15,14 @@ import {
 } from '@mui/material';
 import Image from 'next/image';
 import NavigateBefore from '@mui/icons-material/NavigateBefore';
-import IconButton from '@mui/material/IconButton';
 import blekksprut2 from '$public/blekksprut2.jpg';
 import HelpIcon from '@mui/icons-material/Help';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { faChevronLeft, faUserSecret } from '@fortawesome/free-solid-svg-icons';
+import { faUserSecret } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faScroll } from '@fortawesome/free-solid-svg-icons/faScroll';
-import { ConEvent } from '$lib/types';
+import { type PoolEvent } from '$lib/types';
 import { db } from '$lib/firebase/firebase';
 import { onSnapshot, doc, type Unsubscribe } from 'firebase/firestore';
 import { MuiMarkdown } from 'mui-markdown';
@@ -42,7 +41,7 @@ const marks = [
 
 type Props = {
     id?: string;
-    eventData?: ConEvent;
+    eventData?: PoolEvent;
     editable?: boolean;
     editDescription?: (edit: boolean) => void;
     prevNavigationId?: string;
@@ -50,7 +49,7 @@ type Props = {
 };
 
 const MainEvent = ({ id, eventData, editable = false, editDescription, prevNavigationId, nextNavigationId }: Props) => {
-    const [data, setData] = useState<ConEvent | undefined>(eventData);
+    const [data, setData] = useState<PoolEvent | undefined>(eventData);
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
     const [isEditingGameMaster, setIsEditingGameMaster] = useState<boolean>(false);
     const [isEditingSystem, setIsEditingSystem] = useState<boolean>(false);
@@ -60,8 +59,10 @@ const MainEvent = ({ id, eventData, editable = false, editDescription, prevNavig
     useEffect(() => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
         if (id !== undefined && eventData === undefined) {
-            unsubscribeSnapshot = onSnapshot(doc(db, 'events', id), (snapshot) => {
-                setData(snapshot.data() as ConEvent | undefined);
+            unsubscribeSnapshot = onSnapshot(doc(db, 'pool-events', id), (snapshot) => {
+                console.log(snapshot.data());
+
+                setData(snapshot.data() as PoolEvent | undefined);
             });
         }
         return () => {
@@ -105,7 +106,7 @@ const MainEvent = ({ id, eventData, editable = false, editDescription, prevNavig
                 >
                     <Box
                         component={Image}
-                        src={blekksprut2}
+                        src={eventData?.smallImageURL ?? blekksprut2}
                         alt="noe alt-tekst"
                         sx={{ width: '100%', height: 'auto', maxWidth: '100%', aspectRatio: '3.3 / 2' }}
                         placeholder="blur"
