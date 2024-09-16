@@ -126,6 +126,7 @@ const Edit = ({ id }: Props) => {
                                 }
                             })
                         }
+                        onSubmit={(evt) => evt.preventDefault()}
                     >
                         <MainEvent
                             id={id}
