@@ -13,35 +13,35 @@ export async function getAllEvents() {
 
 export type PoolEvents = Awaited<ReturnType<typeof getAllPoolEvents>>;
 
-const initialSortedMap = new Map<PoolName, Set<PoolEvent>>([
-    [PoolName.fridayEvening, new Set()],
-    [PoolName.saturdayMorning, new Set()],
-    [PoolName.saturdayEvening, new Set()],
-    [PoolName.sundayMorning, new Set()],
+const initialSortedMap = new Map<PoolName, PoolEvent[]>([
+    [PoolName.fridayEvening, []],
+    [PoolName.saturdayMorning, []],
+    [PoolName.saturdayEvening, []],
+    [PoolName.sundayMorning, []],
 ]);
 
 export async function getAllPoolEvents() {
     const allPoolEventsRef = await adminDb.collection('pool-events').get();
     const allPoolEvents = allPoolEventsRef.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as PoolEvent[];
 
-    const sortedPoolEventDay = allPoolEvents.reduce((acc, poolEvent) => {
-        const currentAcc = acc.get(poolEvent.poolName);
-        if (currentAcc !== undefined) {
-            const existPoolEvent = [...currentAcc].find((event) => event.id === poolEvent.id);
-            if (existPoolEvent === undefined) {
-                acc.set(poolEvent.poolName, currentAcc.add(poolEvent));
-            }
+    const sortedPoolEventDay = allPoolEvents.reduce((accumulator, poolEvent) => {
+        const currentAccumulator = accumulator.get(poolEvent.poolName);
+
+        if (currentAccumulator !== undefined) {
+            accumulator.set(poolEvent.poolName, [...currentAccumulator.values(), poolEvent]);
         }
-        return acc;
-    }, new Map<PoolName, Set<PoolEvent>>(initialSortedMap));
+
+        return accumulator;
+    }, new Map<PoolName, PoolEvent[]>(initialSortedMap));
+
     return sortedPoolEventDay;
 }
 export async function getAdjacentPoolEventsById(id: string, day: PoolName) {
     const poolDayEvents = await getAllPoolEvents();
-    const poolEventSet = poolDayEvents.get(day);
+    const getPoolEventsByDay = poolDayEvents.get(day);
 
-    if (poolEventSet) {
-        const poolEvents = [...poolEventSet];
+    if (getPoolEventsByDay) {
+        const poolEvents = getPoolEventsByDay;
         const eventIndex = poolEvents.findIndex((event) => event.id === id);
         const prevNavigationId = poolEvents[eventIndex - 1]?.id;
         const nextNavigationId = poolEvents[eventIndex + 1]?.id;
