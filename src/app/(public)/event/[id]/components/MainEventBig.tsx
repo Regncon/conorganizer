@@ -36,20 +36,15 @@ const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) 
                 sx={{
                     display: 'grid',
                     '& > *': { gridColumn: '1 / 2', gridRow: '1 / 2' },
+                    '& > img': { width: 'min(100%, 1200px)', maxHeight: '195px' },
                 }}
             >
-                <Box
-                    component={Image}
+                <Image
+                    alt="Game logo"
                     src={poolEvent.bigImageURL ?? blekksprut2}
-                    alt="noe alt-tekst"
-                    sx={{
-                        width: '100%',
-                        height: 'auto',
-                        maxHeight: 'var(--image-height)',
-                        maxWidth: '100%',
-                        // aspectRatio: '3.3 / 2',
-                    }}
-                    placeholder="blur"
+                    width={1200}
+                    height={193}
+                    sizes="100vw"
                     loading="lazy"
                 />
                 <Box

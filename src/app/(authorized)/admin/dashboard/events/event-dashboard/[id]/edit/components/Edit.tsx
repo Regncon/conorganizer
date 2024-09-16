@@ -21,7 +21,6 @@ const Edit = ({ id }: Props) => {
     const initialState: ConEvent = {} as ConEvent;
     const [data, setData] = useState<ConEvent>();
     const eventDocRef = doc(db, 'events', id);
-
     const [user, setUser] = useState<User | null>();
     useEffect(() => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
@@ -117,7 +116,7 @@ const Edit = ({ id }: Props) => {
                     Loading...
                     <CircularProgress />
                 </Typography>
-                : <>
+            :   <>
                     <Box
                         component="form"
                         onChange={(evt) =>
@@ -128,7 +127,12 @@ const Edit = ({ id }: Props) => {
                             })
                         }
                     >
-                        <MainEvent id={id} editable={true} editDescription={(edit) => setOpenDescriptionDialog(edit)} />
+                        <MainEvent
+                            id={id}
+                            parent
+                            editable={true}
+                            editDescription={(edit) => setOpenDescriptionDialog(edit)}
+                        />
                         <Snackbar
                             anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
                             open={isSnackBarOpen}

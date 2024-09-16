@@ -6,7 +6,6 @@ import Link from 'next/link';
 
 const Events = async () => {
     const events = await getAllEvents();
-
     return (
         <>
             <Paper elevation={0}>

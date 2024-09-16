@@ -46,9 +46,18 @@ type Props = {
     editDescription?: (edit: boolean) => void;
     prevNavigationId?: string;
     nextNavigationId?: string;
+    parent?: boolean;
 };
 
-const MainEvent = ({ id, eventData, editable = false, editDescription, prevNavigationId, nextNavigationId }: Props) => {
+const MainEvent = ({
+    id,
+    eventData,
+    editable = false,
+    parent = false,
+    editDescription,
+    prevNavigationId,
+    nextNavigationId,
+}: Props) => {
     const [data, setData] = useState<PoolEvent | undefined>(eventData);
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
     const [isEditingGameMaster, setIsEditingGameMaster] = useState<boolean>(false);
@@ -59,9 +68,7 @@ const MainEvent = ({ id, eventData, editable = false, editDescription, prevNavig
     useEffect(() => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
         if (id !== undefined && eventData === undefined) {
-            unsubscribeSnapshot = onSnapshot(doc(db, 'pool-events', id), (snapshot) => {
-                console.log(snapshot.data());
-
+            unsubscribeSnapshot = onSnapshot(doc(db, `${parent ? 'events' : 'pool-events'}`, id), (snapshot) => {
                 setData(snapshot.data() as PoolEvent | undefined);
             });
         }
@@ -102,14 +109,15 @@ const MainEvent = ({ id, eventData, editable = false, editDescription, prevNavig
                     sx={{
                         display: 'grid',
                         '& > *': { gridColumn: '1 / 2', gridRow: '1 / 2' },
+                        '& > img': { width: '100%', height: '100%' },
                     }}
                 >
-                    <Box
-                        component={Image}
-                        src={eventData?.smallImageURL ?? blekksprut2}
+                    <Image
+                        src={data?.smallImageURL ?? blekksprut2}
+                        width={320}
+                        height={273}
+                        sizes="100vw"
                         alt="noe alt-tekst"
-                        sx={{ width: '100%', height: 'auto', maxWidth: '100%', aspectRatio: '3.3 / 2' }}
-                        placeholder="blur"
                         loading="lazy"
                     />
                     <Box
