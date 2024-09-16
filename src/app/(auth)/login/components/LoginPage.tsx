@@ -137,10 +137,6 @@ const LoginPage = () => {
                     Økta har gått ut, ver venleg og logg inn igjen.
                 </Typography>
             )}
-            <GoogleSignInButton />
-            <Typography variant="h3" textAlign="center">
-                eller
-            </Typography>
 
             <Grid2
                 component="form"
@@ -150,12 +146,17 @@ const LoginPage = () => {
                     flexDirection: 'column',
                     minWidth: '20rem',
                     gap: '1rem',
+                    paddingBlock: '1rem',
                 }}
                 onChange={(e) => {
                     updateSearchParamsWithEmail(e, router, '/login');
                 }}
                 action={formAction}
             >
+                <GoogleSignInButton />
+                <Typography variant="h3" textAlign="center">
+                    eller
+                </Typography>
                 <Button onClick={handleGoogleLoginRedirect}>Logg inn med Google Redirect</Button>
 
                 <EmailTextField defaultValue={email} error={!!state.emailError} helperText={state.emailError} />

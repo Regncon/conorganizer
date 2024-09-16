@@ -17,7 +17,7 @@ const layout = async ({ children }: Props) => {
                     alignItems: 'center',
                 }}
             >
-                <Paper sx={{ display: 'grid', placeContent: 'center', placeItems: 'center', height: '65%' }}>
+                <Paper sx={{ display: 'grid', placeContent: 'center', placeItems: 'center', minHeight: '65%' }}>
                     {children}
                 </Paper>
             </Box>

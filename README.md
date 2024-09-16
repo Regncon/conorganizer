@@ -29,7 +29,6 @@ of your con schedule, your panels, and your expenses.
 ### Must haves for publishing events
 
 -   Add picture url | Gerhard
--   Log-in bug, e-mail input loses focus when you input a letter |
 -   Icons | Grethe :D
 -   Bug: Problems with hitting enter while editing event
 -   Fix cookie lifetime
@@ -65,6 +64,7 @@ of your con schedule, your panels, and your expenses.
 
 ## Done
 
+-   Log-in bug, e-mail input loses focus when you input a letter | Torstein
 -   Fix events front page | Torstein
 -   Desktop view | Torstein
 -   Convert my events to use new event system

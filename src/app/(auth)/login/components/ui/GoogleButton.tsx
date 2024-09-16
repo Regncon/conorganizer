@@ -70,6 +70,7 @@ const GoogleSignInButton = ({}: Props) => {
             variant="outlined"
             startIcon={<GoogleIcon />}
             sx={{
+                placeSelf: 'center',
                 backgroundColor: '#131314',
                 borderColor: '#8e918f',
                 color: '#e3e3e3',
@@ -79,7 +80,7 @@ const GoogleSignInButton = ({}: Props) => {
                 fontSize: '14px',
                 height: '40px',
                 padding: '0 12px',
-                maxWidth: '400px',
+                maxWidth: 'max-content',
                 minWidth: 'min-content',
                 '&:hover': {
                     boxShadow: '0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15)',
