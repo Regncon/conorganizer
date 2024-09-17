@@ -3,6 +3,10 @@ import RealtimeEvents from '$app/(public)/components/RealtimeEvents';
 import { getAllEvents } from '$app/(public)/components/lib/serverAction';
 import { Box, Paper } from '@mui/material';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+export const metadata: Metadata = {
+    title: 'Liste over arrangementer som kan administreres',
+};
 
 const Events = async () => {
     const events = await getAllEvents();

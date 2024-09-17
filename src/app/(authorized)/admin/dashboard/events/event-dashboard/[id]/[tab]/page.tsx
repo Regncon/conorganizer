@@ -3,6 +3,8 @@ import Edit from './edit/Edit';
 import type { TabNames } from './lib/types/types';
 import Room from './room/Room';
 import Settings from './settings/Settings';
+import type { Metadata } from 'next';
+import { getEventById } from '$app/(public)/components/lib/serverAction';
 
 type Props = {
     params: {
@@ -10,6 +12,29 @@ type Props = {
         tab: TabNames;
     };
 };
+export async function generateMetadata({ params: { id, tab } }: Props): Promise<Metadata> {
+    const event = await getEventById(id);
+
+    let tabName;
+    switch (tab) {
+        case 'edit':
+            tabName = 'Rediger';
+            break;
+        case 'room':
+            tabName = 'Rom';
+            break;
+        case 'settings':
+            tabName = 'Innstillinger';
+            break;
+        default:
+            tabName = 'Ukjent';
+            break;
+    }
+
+    return {
+        title: `${tabName} | ${event.title}`,
+    };
+}
 
 const page = ({ params: { id, tab } }: Props) => {
     if (tab === 'edit') {

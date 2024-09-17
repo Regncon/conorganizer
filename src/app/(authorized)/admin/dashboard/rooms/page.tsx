@@ -2,8 +2,19 @@ import { AppBar, Paper, Tab, Tabs, Toolbar, Typography } from '@mui/material';
 import { PoolName } from '$lib/enums';
 import { redirect } from 'next/navigation';
 import RoomMap from './components/RoomMap';
+import type { Metadata } from 'next';
+import { translatedDays } from '$app/(public)/components/lib/helpers/translation';
 
-const Rooms = async ({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) => {
+type Props = { searchParams: { pool: PoolName | undefined } };
+export async function generateMetadata({ searchParams: { pool } }: Props): Promise<Metadata> {
+    if (pool) {
+        return {
+            title: `Romfordeling for ${translatedDays.get(pool)}`,
+        };
+    }
+    return {};
+}
+const Rooms = async ({ searchParams }: Props) => {
     if (!searchParams.pool) {
         const detfaultPoolPage = `./rooms?pool=${PoolName[PoolName.fridayEvening]}`;
         redirect(detfaultPoolPage);
