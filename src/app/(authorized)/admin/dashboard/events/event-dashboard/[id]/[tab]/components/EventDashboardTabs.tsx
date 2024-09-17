@@ -9,6 +9,7 @@ import RoomPreferencesIcon from '@mui/icons-material/RoomPreferences';
 import EditIcon from '@mui/icons-material/Edit';
 import HideLabel from './ui/HideLabel';
 import NextLink from 'next/link';
+import type { Route } from 'next';
 
 type props = {
     id: string;
@@ -25,7 +26,7 @@ export default function EventDashboardTabs({ id, value }: props) {
     };
     return (
         <Box sx={{ width: '100%' }}>
-            <Link component={NextLink} href="/admin/dashboard/events/">
+            <Link component={NextLink} href="/admin/dashboard/events">
                 Tilbake til arrangementer
             </Link>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -59,7 +60,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                         icon={<Settings />}
                         iconPosition="start"
                         label={<HideLabel>Innstillinger</HideLabel>}
-                        href={`/admin/dashboard/events/event-dashboard/${id}/settings/`}
+                        href={`/admin/dashboard/events/event-dashboard/${id}/settings` as Route}
                     />
                     <Tab
                         component={NextLink}
@@ -67,7 +68,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                         icon={<RoomPreferencesIcon />}
                         iconPosition="start"
                         label={<HideLabel>Rom</HideLabel>}
-                        href={`/admin/dashboard/events/event-dashboard/${id}/room/`}
+                        href={`/admin/dashboard/events/event-dashboard/${id}/room` as Route}
                     />
                     <Tab
                         component={NextLink}
@@ -75,7 +76,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                         icon={<EditIcon />}
                         iconPosition="start"
                         label={<HideLabel>Rediger</HideLabel>}
-                        href={`/admin/dashboard/events/event-dashboard/${id}/edit/`}
+                        href={`/admin/dashboard/events/event-dashboard/${id}/edit` as Route}
                     />
                 </Tabs>
             </Box>
