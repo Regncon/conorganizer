@@ -1,5 +1,5 @@
 import { Paper } from '@mui/material';
-import EventDashboardTabs from '../components/EventDashboardTabs';
+import EventDashboardTabs from './components/EventDashboardTabs';
 import type { PropsWithChildren } from 'react';
 import type { TabNames } from './lib/types/types';
 
