@@ -8,7 +8,7 @@ import FormLabel from '@mui/material/FormLabel';
 import TextareaAutosize from '@mui/material/TextareaAutosize';
 import FormGroup from '@mui/material/FormGroup';
 import Checkbox from '@mui/material/Checkbox';
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import Slide from '@mui/material/Slide';
 import Snackbar from '@mui/material/Snackbar';
 import { Box, CircularProgress, Divider, Grid2, Stack, Switch } from '@mui/material';
@@ -16,7 +16,6 @@ import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import { ConEvent } from '$lib/types';
-import debounce from '$lib/debounce';
 import EventCardBig from '$app/(public)/components/components/EventCardBig';
 import EventCardSmall from '$app/(public)/components/components/EventCardSmall';
 import { updatePoolEvent } from './components/lib/actions';
@@ -29,7 +28,6 @@ const Settings = ({ id }: Props) => {
     const snackBarMessageInitial = 'Din endring er lagra!';
     const [snackBarMessage, setSnackBarMessage] = useState<string>(snackBarMessageInitial);
     const [isSnackBarOpen, setIsSnackBarOpen] = useState<boolean>(false);
-    const initialState = {} as ConEvent;
     const [data, setData] = useState<ConEvent>();
     const eventDocRef = doc(db, 'events', id);
 
@@ -148,8 +146,8 @@ const Settings = ({ id }: Props) => {
                                         <Typography>Liten</Typography>
                                     </Stack>
 
-                                    <Box sx={{ display: 'flex', gap: '1rem' }}>
-                                        <Box sx={{ opacity: data.isSmallCard ? '0.5' : 'unset', maxWidth: '430px' }}>
+                                    <Box sx={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                                        <Box sx={{ opacity: data.isSmallCard ? '0.5' : 'unset', maxWidth: '297px' }}>
                                             <EventCardBig
                                                 title={data.title}
                                                 gameMaster={data.gameMaster}
