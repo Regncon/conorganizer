@@ -22,6 +22,7 @@ const Events = async () => {
                             return (
                                 <Link
                                     href={`/admin/dashboard/events/event-dashboard/${conEvent.id}/edit`}
+                                    prefetch
                                     style={{ textDecoration: 'none' }}
                                     key={conEvent.id}
                                 >
