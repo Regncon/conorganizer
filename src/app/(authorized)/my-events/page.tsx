@@ -50,6 +50,9 @@ const MyEvents = async () => {
                                 key={doc.id}
                                 size={{
                                     xl: 2.7,
+                                    md: 4,
+                                    sm: 6,
+                                    xs: 12,
                                 }}
                             >
                                 <DynamicLink docId={doc.id}>
