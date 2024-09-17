@@ -10,6 +10,7 @@ export type EventCardProps = {
     myEventBar?: boolean;
     myEventBarSubmitted?: boolean;
     myEventDocId?: string;
+    isAccepted?: boolean;
 };
 
 export type ConEvent = {

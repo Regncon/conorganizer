@@ -10,12 +10,17 @@ import { revalidatePath } from 'next/cache';
 import DynamicLink from './components/DynamicLink';
 import AddEventCard from './components/AddEventCard';
 import EventCardBig from '$app/(public)/components/components/EventCardBig';
+import type { Metadata } from 'next';
 const createId = async (app: FirebaseApp, db: Firestore) => {
     const collectionRef = collection(db, '_');
     const docRef = doc(collectionRef);
     return docRef.id;
 };
 
+export const metadata: Metadata = {
+    title: 'Mine arrangementer',
+    description: 'Her kan du følge med på statusen og lage/redigere dine arrangementer',
+};
 const MyEvents = async () => {
     const { app, user, auth, db } = await getAuthorizedAuth();
 
@@ -55,8 +60,9 @@ const MyEvents = async () => {
                                     xs: 12,
                                 }}
                             >
-                                <DynamicLink docId={doc.id}>
+                                <DynamicLink docId={doc.id} disable={doc.isAccepted}>
                                     <EventCardBig
+                                        isAccepted={doc.isAccepted}
                                         title={doc.title}
                                         gameMaster={doc.name}
                                         shortDescription={doc.subTitle}

@@ -5,17 +5,23 @@ import { useRouter } from 'next/navigation';
 
 import { useEffect, type PropsWithChildren } from 'react';
 
-type Props = { docId: string } & PropsWithChildren;
+type Props = { docId: string; disable?: boolean } & PropsWithChildren;
 
-const DynamicLink = ({ children, docId }: Props) => {
+const DynamicLink = ({ children, docId, disable }: Props) => {
     const router = useRouter();
     const createEventHref = `/event/create/${docId}` as Route;
     useEffect(() => {
+        if (disable) {
+            return;
+        }
         router.prefetch(createEventHref as Route);
     }, []);
     return (
         <Box
             onClick={() => {
+                if (disable) {
+                    return;
+                }
                 router.push(createEventHref);
             }}
         >

@@ -8,6 +8,7 @@ import TrashButton from './TrashButton';
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
 import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
 
 export default function EventCardBig({
     title,
@@ -18,9 +19,16 @@ export default function EventCardBig({
     myEventBar = false,
     myEventBarSubmitted = false,
     myEventDocId,
+    isAccepted = false,
 }: EventCardProps) {
-    const circleCheckOrPencilIcon = myEventBarSubmitted ? faCircleCheck : faPencil;
-    const SuccessOrWarningColor = myEventBarSubmitted ? 'success.main' : 'warning.main';
+    const circleCheckOrPencilIcon =
+        isAccepted ? faCheckDouble
+        : myEventBarSubmitted ? faCircleCheck
+        : faPencil;
+    const SuccessOrWarningColor =
+        isAccepted ? 'success.dark'
+        : myEventBarSubmitted ? 'success.light'
+        : 'warning.main';
 
     return (
         <Card
@@ -32,9 +40,11 @@ export default function EventCardBig({
                 borderRadius: '1.75rem',
                 display: 'grid',
                 minWidth: '306px',
+                opacity: isAccepted ? '0.5' : '1',
             }}
         >
             <CardActionArea
+                disabled={isAccepted}
                 sx={{
                     ['&:has(.disable-ripple) > .MuiTouchRipple-root']: {
                         display: 'none',
@@ -61,7 +71,11 @@ export default function EventCardBig({
                                     <FontAwesomeIcon icon={circleCheckOrPencilIcon} size="2x" />
                                 </Typography>
                                 <Typography sx={{ color: SuccessOrWarningColor }}>
-                                    {myEventBarSubmitted ? 'Sendt inn' : 'Kladd'}
+                                    {isAccepted ?
+                                        'Godtatt'
+                                    : myEventBarSubmitted ?
+                                        'Sendt inn'
+                                    :   'Kladd'}
                                 </Typography>
                             </Box>
                             <TrashButton docId={myEventDocId} />
@@ -74,13 +88,16 @@ export default function EventCardBig({
                     titleTypographyProps={{ fontSize: '1.8rem' }}
                     sx={{
                         alignItems: 'flex-end',
-                        padding: '1rem',
+                        marginBlockEnd: '1rem',
                         wordBreak: 'break-all',
-                        display: '-webkit-box',
                         overflow: 'clip',
-                        WebkitLineClamp: '2',
-                        WebkitBoxOrient: 'vertical',
+                        maxHeight: '7rem',
+                        padding: '0',
+                        paddingInlineStart: '1rem',
                         placeSelf: 'end start',
+                        '.MuiCardHeader-content': {
+                            maxHeight: '7rem',
+                        },
                     }}
                 />
                 <CardContent
