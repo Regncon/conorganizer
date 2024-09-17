@@ -28,11 +28,9 @@ of your con schedule, your panels, and your expenses.
 
 ### Must haves for publishing events
 
--   Add picture url | Gerhard
 -   Icons | Grethe :D
 -   Bug: Problems with hitting enter while editing event
 -   Fix cookie lifetime
-
 
 #### Ready for admin
 
@@ -64,6 +62,7 @@ of your con schedule, your panels, and your expenses.
 
 ## Done
 
+-   Add picture url | Gerhard
 -   Log-in bug, e-mail input loses focus when you input a letter | Torstein
 -   Fix events front page | Torstein
 -   Desktop view | Torstein
