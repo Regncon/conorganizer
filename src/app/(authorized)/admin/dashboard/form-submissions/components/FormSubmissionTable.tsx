@@ -132,7 +132,6 @@ const FormSubmissionTable = () => {
             processRowUpdate={async (newEdit, oldEdit) => {
                 updateReadAndOrAcceptedStatus(newEdit.documentPath, {
                     isRead: newEdit.isRead,
-                    isAccepted: newEdit.isAccepted,
                 });
                 return newEdit;
             }}

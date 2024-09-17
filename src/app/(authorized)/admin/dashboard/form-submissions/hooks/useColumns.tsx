@@ -44,7 +44,6 @@ export const useColumns = () => {
                 headerName: 'Godkjent',
                 type: 'boolean',
                 width: 120,
-                editable: true,
             },
             {
                 field: 'actions',
