@@ -30,6 +30,6 @@
 			"$public/*": ["./public/*"]
 		}
 	},
-	"include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", ".eslintrc.json"],
+	"include": ["next-env.d.ts", "./src/**/*", ".next/types/**/*.ts", ".eslintrc.json"],
 	"exclude": ["node_modules"]
 }
