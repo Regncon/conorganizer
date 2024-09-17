@@ -4,14 +4,14 @@ import { useCallback, useEffect, useState, type FormEvent, type SyntheticEvent }
 import { ConEvent } from '$lib/types';
 import Slide from '@mui/material/Slide';
 import Snackbar, { type SnackbarCloseReason } from '@mui/material/Snackbar';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, TextField } from '@mui/material';
 import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
 import DescriptionDialog from './components/DescriptionDialog';
 import debounce from '$lib/debounce';
 import MainEvent from '$app/(public)/event/[id]/components/MainEvent';
-import { updateEventAndPoolEvent } from '../settings/components/lib/actions';
+import { updatePoolEvent } from '../settings/components/lib/actions';
 
 type Props = {
     id: string;
@@ -105,8 +105,8 @@ const Edit = ({ id }: Props) => {
         setSnackBarMessage('Endringar lagra!');
         setIsSnackBarOpen(true);
 
-        // updateDatabase(payload);
-        await updateEventAndPoolEvent(id, payload);
+        updateDoc(eventDocRef, payload);
+        await updatePoolEvent(id, payload);
     };
 
     return (

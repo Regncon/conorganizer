@@ -19,7 +19,7 @@ import { ConEvent } from '$lib/types';
 import debounce from '$lib/debounce';
 import EventCardBig from '$app/(public)/components/components/EventCardBig';
 import EventCardSmall from '$app/(public)/components/components/EventCardSmall';
-import { updateEventAndPoolEvent } from './components/lib/actions';
+import { updatePoolEvent } from './components/lib/actions';
 
 type Props = {
     id: string;
@@ -34,22 +34,10 @@ const Settings = ({ id }: Props) => {
     const eventDocRef = doc(db, 'events', id);
 
     const updateDatabase = async (data: Partial<ConEvent>) => {
-        // await updateDoc(eventDocRef, data);
+        updateDoc(eventDocRef, data);
         console.log('updateDatabase', data);
-        await updateEventAndPoolEvent(id, data);
+        updatePoolEvent(id, data);
     };
-    useEffect(() => {
-        let unsubscribeSnapshot: Unsubscribe | undefined;
-        if (id !== undefined) {
-            unsubscribeSnapshot = onSnapshot(doc(db, 'events', id), (snapshot) => {
-                setData((snapshot.data() as ConEvent | undefined) ?? initialState);
-            });
-        }
-        return () => {
-            unsubscribeSnapshot?.();
-        };
-    }, [id]);
-
     useEffect(() => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
         if (user) {
@@ -68,18 +56,6 @@ const Settings = ({ id }: Props) => {
             unsubscribeUser();
         };
     }, [user]);
-
-    useEffect(() => {
-        let unsubscribeSnapshot: Unsubscribe | undefined;
-        if (id !== undefined) {
-            unsubscribeSnapshot = onSnapshot(doc(db, 'events', id), (snapshot) => {
-                setData((snapshot.data() as ConEvent | undefined) ?? initialState);
-            });
-        }
-        return () => {
-            unsubscribeSnapshot?.();
-        };
-    }, [id]);
     const handleSnackBar = (reason?: string) => {
         if (reason === 'clickaway') {
             return;
@@ -150,14 +126,14 @@ const Settings = ({ id }: Props) => {
                                         label="Publisert"
                                         name="published"
                                         checked={data.published}
-                                        onChange={() => setData({ ...data, published: !data.published })}
+                                        // onChange={() => setData({ ...data, published: !data.published })}
                                     />
                                     <TextField
                                         sx={{ maxWidth: '15rem' }}
                                         type="number"
                                         name="participants"
                                         value={data.participants}
-                                        onChange={(e) => setData({ ...data, participants: parseInt(e.target.value) })}
+                                        // onChange={(e) => setData({ ...data, participants: parseInt(e.target.value) })}
                                         label="Maks antall deltakere"
                                         variant="outlined"
                                         required
@@ -167,7 +143,7 @@ const Settings = ({ id }: Props) => {
                                         <Switch
                                             name="isSmallCard"
                                             checked={data.isSmallCard}
-                                            onChange={() => setData({ ...data, isSmallCard: !data.isSmallCard })}
+                                            // onChange={() => setData({ ...data, isSmallCard: !data.isSmallCard })}
                                         />
                                         <Typography>Liten</Typography>
                                     </Stack>
@@ -209,7 +185,7 @@ const Settings = ({ id }: Props) => {
                                 <TextField
                                     type="text"
                                     name="smallImageURL"
-                                    onChange={(e) => setData({ ...data, smallImageURL: e.target.value })}
+                                    // onChange={(e) => setData({ ...data, smallImageURL: e.target.value })}
                                     value={data.smallImageURL}
                                     label="Lite bilde url"
                                     variant="outlined"
@@ -222,7 +198,7 @@ const Settings = ({ id }: Props) => {
                                 <TextField
                                     type="text"
                                     name="bigImageURL"
-                                    onChange={(e) => setData({ ...data, bigImageURL: e.target.value })}
+                                    // onChange={(e) => setData({ ...data, bigImageURL: e.target.value })}
                                     value={data.bigImageURL}
                                     label="Stort bilde url"
                                     variant="outlined"
@@ -244,7 +220,7 @@ const Settings = ({ id }: Props) => {
                                     <TextField
                                         type="email"
                                         name="email"
-                                        onChange={(e) => setData({ ...data, email: e.target.value })}
+                                        // onChange={(e) => setData({ ...data, email: e.target.value })}
                                         value={data.email}
                                         label="E-postadresse"
                                         variant="outlined"
@@ -253,7 +229,7 @@ const Settings = ({ id }: Props) => {
                                     <TextField
                                         type="phone"
                                         name="phone"
-                                        onChange={(e) => setData({ ...data, phone: e.target.value })}
+                                        // onChange={(e) => setData({ ...data, phone: e.target.value })}
                                         value={data.phone}
                                         label="Telefonnummer"
                                         variant="outlined"
@@ -261,9 +237,9 @@ const Settings = ({ id }: Props) => {
                                     />
                                     <FormControlLabel
                                         control={<Checkbox name="moduleCompetition" checked={data.moduleCompetition} />}
-                                        onChange={(e) =>
-                                            setData({ ...data, moduleCompetition: !data.moduleCompetition })
-                                        }
+                                        // onChange={(e) =>
+                                        //     setData({ ...data, moduleCompetition: !data.moduleCompetition })
+                                        // }
                                         label="Modulen er påmeldt konkurransen"
                                     />
                                 </FormGroup>
@@ -277,7 +253,7 @@ const Settings = ({ id }: Props) => {
                                         minRows={6}
                                         name="additionalComments"
                                         value={data.additionalComments}
-                                        onChange={(e) => setData({ ...data, additionalComments: e.target.value })}
+                                        // onChange={(e) => setData({ ...data, additionalComments: e.target.value })}
                                     />
                                 </FormControl>
                             </Paper>
