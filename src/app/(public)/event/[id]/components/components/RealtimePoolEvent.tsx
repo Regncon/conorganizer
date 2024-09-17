@@ -1,6 +1,6 @@
+'use client';
 import { updateEventById } from '$app/(public)/components/lib/serverAction';
 import { db } from '$lib/firebase/firebase';
-import type { ConEvent } from '$lib/types';
 import type { Unsubscribe } from 'firebase/auth';
 import { onSnapshot, doc } from 'firebase/firestore';
 import { useEffect } from 'react';
@@ -9,11 +9,13 @@ type Props = {
     id: string | undefined;
 };
 
-const RealtimeEvent = ({ id }: Props) => {
+const RealtimePoolEvent = ({ id }: Props) => {
     useEffect(() => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
         if (id !== undefined) {
-            unsubscribeSnapshot = onSnapshot(doc(db, 'events', id), (snapshot) => {
+            unsubscribeSnapshot = onSnapshot(doc(db, 'pool-events', id), (snapshot) => {
+                console.log('here1', id, snapshot.data());
+
                 updateEventById(id);
             });
         }
@@ -21,7 +23,7 @@ const RealtimeEvent = ({ id }: Props) => {
             unsubscribeSnapshot?.();
         };
     }, [id]);
-    return <></>;
+    return null;
 };
 
-export default RealtimeEvent;
+export default RealtimePoolEvent;

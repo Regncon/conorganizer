@@ -12,6 +12,7 @@ import BigMediaQueryWrapper from './components/ui/BigMediaQueryWrapper';
 import SmallMediaQueryWrapper from './components/ui/SmallMediaQueryWrapper';
 import { Box } from '@mui/material';
 import { PoolName } from '$lib/enums';
+import RealtimePoolEvent from './components/components/RealtimePoolEvent';
 
 type Props = {
     params: { id: string };
@@ -46,6 +47,7 @@ const EventPage = async ({ params: { id } }: Props) => {
                     />
                 </Box>
             </BigMediaQueryWrapper>
+            <RealtimePoolEvent id={id} />
         </>
     );
 };
