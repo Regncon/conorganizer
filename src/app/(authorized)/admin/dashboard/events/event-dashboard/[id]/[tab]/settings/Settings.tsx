@@ -87,39 +87,36 @@ const Settings = ({ id }: Props) => {
         setIsSnackBarOpen(false);
     };
 
-    const handleOnChange = useCallback(
-        debounce((e: FormEvent<HTMLFormElement>): void => {
-            const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
+    const handleOnChange = (e: FormEvent<HTMLFormElement>): void => {
+        const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
 
-            let value: string | boolean = inputValue;
-            let name: string = inputName;
+        let value: string | boolean = inputValue;
+        let name: string = inputName;
 
-            if (type === 'checkbox') {
-                value = checked;
-            }
+        if (type === 'checkbox') {
+            value = checked;
+        }
 
-            if (type === 'radio') {
-                name = 'pulje';
-                value = inputName;
-            }
-            if (!user || !user.email) {
-                console.error('user?.email is null');
-                return;
-            }
+        if (type === 'radio') {
+            name = 'pulje';
+            value = inputName;
+        }
+        if (!user || !user.email) {
+            console.error('user?.email is null');
+            return;
+        }
 
-            let payload: Partial<ConEvent> = {
-                [name]: value,
-                updateAt: new Date(Date.now()).toString(),
-                updatedBy: user.email,
-            };
-            setIsSnackBarOpen(false);
-            setSnackBarMessage('Endringar lagra!');
-            setIsSnackBarOpen(true);
+        let payload: Partial<ConEvent> = {
+            [name]: value,
+            updateAt: new Date(Date.now()).toString(),
+            updatedBy: user.email,
+        };
+        setIsSnackBarOpen(false);
+        setSnackBarMessage('Endringar lagra!');
+        setIsSnackBarOpen(true);
 
-            updateDatabase(payload);
-        }, 1500),
-        [user]
-    );
+        updateDatabase(payload);
+    };
 
     return (
         <>
@@ -137,13 +134,7 @@ const Settings = ({ id }: Props) => {
                         component="form"
                         rowSpacing={{ xs: 1, md: 2 }}
                         columnSpacing={{ xs: 0, sm: 1, md: 2 }}
-                        onChange={(evt) =>
-                            handleOnChange(evt).catch((err) => {
-                                if (err !== 'Aborted by debounce') {
-                                    throw err;
-                                }
-                            })
-                        }
+                        onChange={(evt) => handleOnChange(evt)}
                     >
                         <Grid2
                             size={{
