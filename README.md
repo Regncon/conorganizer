@@ -29,8 +29,11 @@ of your con schedule, your panels, and your expenses.
 ### Must haves for publishing events
 
 -   Icons | Grethe :D
--   Bug: Problems with hitting enter while editing event
 -   Fix cookie lifetime
+-   Legg på redirect til my events til publisering av arrangementer
+-   Legge til tags i events og pool-events
+-   Vise hvilken deltaker du er vist du har flere deltakere på samme billett
+-   Linke til pool-events vist det finnes i flere pools
 
 #### Ready for admin
 
@@ -62,6 +65,7 @@ of your con schedule, your panels, and your expenses.
 
 ## Done
 
+-   Bug: Problems with hitting enter while editing event
 -   Add picture url | Gerhard
 -   Log-in bug, e-mail input loses focus when you input a letter | Torstein
 -   Fix events front page | Torstein
