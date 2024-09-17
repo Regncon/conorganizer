@@ -8,10 +8,10 @@ import { Box, CircularProgress } from '@mui/material';
 import { onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { db, firebaseAuth } from '$lib/firebase/firebase';
 import { onAuthStateChanged, type Unsubscribe, type User } from 'firebase/auth';
-import DescriptionDialog from './DescriptionDialog';
+import DescriptionDialog from './components/DescriptionDialog';
 import debounce from '$lib/debounce';
 import MainEvent from '$app/(public)/event/[id]/components/MainEvent';
-import { updateEnventAndPoolEvent } from '../../settings/components/lib/actions';
+import { updateEventAndPoolEvent } from '../settings/components/lib/actions';
 
 type Props = {
     id: string;
@@ -106,7 +106,7 @@ const Edit = ({ id }: Props) => {
         setIsSnackBarOpen(true);
 
         // updateDatabase(payload);
-        await updateEnventAndPoolEvent(id, payload);
+        await updateEventAndPoolEvent(id, payload);
     };
 
     return (

@@ -5,7 +5,7 @@ import { ConEvent, PoolEvent } from '$lib/types';
 import { doc, updateDoc } from 'firebase/firestore';
 import { console } from 'inspector';
 
-export async function updateEnventAndPoolEvent(eventId: string, incomingData: Partial<ConEvent>) {
+export async function updateEventAndPoolEvent(eventId: string, incomingData: Partial<ConEvent>) {
     console.log('incomingData: ', incomingData);
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {

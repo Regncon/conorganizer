@@ -1,9 +1,6 @@
 import { getEventById } from '$app/(public)/components/lib/serverAction';
 import { PoolName } from '$lib/enums';
-import type { RoomChildRef } from '$lib/types';
 import { Box, Link, Paper, Typography } from '@mui/material';
-import NextLink from 'next/link';
-import { Fragment } from 'react';
 
 type Props = {
     id: string;
