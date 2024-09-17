@@ -30,7 +30,7 @@ const EventList = ({ events }: Props) => {
                             }}
                         >
                             {events.map((event) => (
-                                <NextLink key={event.id} href={`/event/${event.id}`}>
+                                <NextLink key={event.id} prefetch href={`/event/${event.id}`}>
                                     {event.isSmallCard ?
                                         <EventCardSmall
                                             title={event.title}
