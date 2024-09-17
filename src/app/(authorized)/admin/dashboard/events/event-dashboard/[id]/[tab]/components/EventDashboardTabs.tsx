@@ -1,14 +1,14 @@
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Box from '@mui/material/Box';
-import { Hidden, Link, Typography, type SxProps } from '@mui/material';
+import { Link, type SxProps } from '@mui/material';
 import GroupIcon from '@mui/icons-material/Group';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import Settings from '@mui/icons-material/Settings';
 import RoomPreferencesIcon from '@mui/icons-material/RoomPreferences';
 import EditIcon from '@mui/icons-material/Edit';
-import type { PropsWithChildren } from 'react';
 import HideLabel from './ui/HideLabel';
+import NextLink from 'next/link';
 
 type props = {
     id: string;
@@ -18,13 +18,19 @@ type props = {
 export default function EventDashboardTabs({ id, value }: props) {
     const tabsSx: SxProps = {
         padding: { md: '1rem', xs: '0' },
+        '.MuiTab-icon': {
+            marginInlineEnd: { md: '0.5714rem', xs: '0' },
+        },
+        minWidth: { xs: '3.4rem' },
     };
     return (
         <Box sx={{ width: '100%' }}>
-            <Link href="/admin/dashboard/events/">Tilbake til arrangementer</Link>
+            <Link component={NextLink} href="/admin/dashboard/events/">
+                Tilbake til arrangementer
+            </Link>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs
-                    sx={tabsSx}
+                    // sx={tabsSx}
                     value={value}
                     variant="scrollable"
                     scrollButtons
@@ -32,6 +38,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                     allowscrollbuttonsmobilearia-label="Velg side"
                 >
                     <Tab
+                        // component={NextLink}
                         icon={<GroupIcon />}
                         sx={tabsSx}
                         iconPosition="start"
@@ -39,6 +46,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                         disabled
                     />
                     <Tab
+                        // component={NextLink}
                         sx={tabsSx}
                         icon={<FavoriteIcon />}
                         iconPosition="start"
@@ -46,6 +54,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                         disabled
                     />
                     <Tab
+                        component={NextLink}
                         sx={tabsSx}
                         icon={<Settings />}
                         iconPosition="start"
@@ -53,6 +62,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                         href={`/admin/dashboard/events/event-dashboard/${id}/settings/`}
                     />
                     <Tab
+                        component={NextLink}
                         sx={tabsSx}
                         icon={<RoomPreferencesIcon />}
                         iconPosition="start"
@@ -60,6 +70,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                         href={`/admin/dashboard/events/event-dashboard/${id}/room/`}
                     />
                     <Tab
+                        component={NextLink}
                         sx={tabsSx}
                         icon={<EditIcon />}
                         iconPosition="start"
