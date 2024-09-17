@@ -1,3 +1,4 @@
+import { notFound } from 'next/navigation';
 import Edit from './edit/Edit';
 import type { TabNames } from './lib/types/types';
 import Room from './room/Room';
@@ -20,7 +21,7 @@ const page = ({ params: { id, tab } }: Props) => {
     if (tab === 'settings') {
         return <Settings id={id} />;
     }
-    return null;
+    return notFound();
 };
 
 export default page;
