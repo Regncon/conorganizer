@@ -27,10 +27,12 @@ const Layout = async ({ params: { id, tab }, children }: PropsWithChildren<Props
             break;
     }
     return (
-        <Paper>
-            <EventDashboardTabs id={id} value={currentTabValue} />
+        <>
+            <Paper>
+                <EventDashboardTabs id={id} value={currentTabValue} />
+            </Paper>
             {children}
-        </Paper>
+        </>
     );
 };
 
