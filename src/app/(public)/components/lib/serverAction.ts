@@ -3,7 +3,6 @@ import { adminDb } from '$lib/firebase/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
 import type { ConEvent, PoolEvent } from '$lib/types';
 import { PoolName } from '$lib/enums';
-import { cache } from 'react';
 
 export async function getAllEvents() {
     const eventRef = await adminDb.collection('events').get();
@@ -57,6 +56,12 @@ export async function getPoolEventById(id: string) {
 
 export async function getEventById(id: string) {
     const event = (await adminDb.collection('events').doc(id).get()).data() as ConEvent;
+    return { ...event, id };
+}
+export async function getMyEventById(id: string, userId: string) {
+    const event = (
+        await adminDb.collection('users').doc(userId).collection('my-events').doc(id).get()
+    ).data() as ConEvent;
     return { ...event, id };
 }
 
