@@ -10,6 +10,7 @@ import RoomCard from './RoomCard';
 import RoomPoolInfo from './RoomPoolInfo';
 import { PoolName } from '$lib/enums';
 import UnwantedPoolByGm from './UnwantedPoolByGm';
+import { Fragment } from 'react';
 
 type Props = {
     open: boolean;
@@ -43,8 +44,8 @@ const RoomSelectDialog = ({ open, selectedValue, onClose, events }: Props) => {
                         .toSorted((a, b) => a.title.localeCompare(b.title))
                         .map((conEvent) => {
                             return (
-                                <>
-                                    <ListItem disableGutters key={conEvent.id}>
+                                <Fragment key={conEvent.id}>
+                                    <ListItem disableGutters>
                                         <ListItemButton onClick={() => handleListItemClick(conEvent.id ?? '')}>
                                             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                                 <Box
@@ -65,17 +66,16 @@ const RoomSelectDialog = ({ open, selectedValue, onClose, events }: Props) => {
                                                 <Box>
                                                     {pools.map((pool) => {
                                                         return (
-                                                            <>
+                                                            <Fragment key={pool.poolName}>
                                                                 <UnwantedPoolByGm
                                                                     poolName={pool.poolName}
                                                                     conEvent={conEvent}
                                                                 />
                                                                 <RoomPoolInfo
-                                                                    key={pool.poolName}
                                                                     poolName={pool.poolName}
                                                                     conEvent={conEvent}
                                                                 />
-                                                            </>
+                                                            </Fragment>
                                                         );
                                                     })}
                                                 </Box>
@@ -83,7 +83,7 @@ const RoomSelectDialog = ({ open, selectedValue, onClose, events }: Props) => {
                                         </ListItemButton>
                                     </ListItem>
                                     <Divider />
-                                </>
+                                </Fragment>
                             );
                         })}
                 </List>
