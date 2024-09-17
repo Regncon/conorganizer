@@ -2,7 +2,7 @@ import { getEventById } from '$app/(public)/components/lib/serverAction';
 import { PoolName } from '$lib/enums';
 import type { RoomChildRef } from '$lib/types';
 import { Box, Link, Paper, Typography } from '@mui/material';
-
+import NextLink from 'next/link';
 type Props = {
     id: string;
 };
@@ -39,7 +39,7 @@ const Room = async ({ id }: Props) => {
     };
     return (
         <Box>
-            <Link component={Link} href="/admin/dashboard/rooms">
+            <Link component={NextLink} href="/admin/dashboard/rooms">
                 Gå til puljetildeling
             </Link>
             {event.roomIds.length === 0 ?
