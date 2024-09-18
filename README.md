@@ -31,8 +31,6 @@ of your con schedule, your panels, and your expenses.
 #### Ready for soft launch
 
 -   Legge in beta logo
--   Finne ut hva vi gjør med intresert knappen.
--   Sjekke at alt er klart til soft launch
 
 #### Hard launch
 

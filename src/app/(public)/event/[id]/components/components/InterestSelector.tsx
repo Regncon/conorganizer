@@ -11,7 +11,7 @@ const marks = [
 ];
 type Props = {};
 
-const InterestSelector = ({}: Props) => {
+const InterestSelector = ({ }: Props) => {
     const [interest, setInterest] = useState<number>(0);
     const incrementInterest = () => {
         if (interest === 3) {
@@ -36,6 +36,7 @@ const InterestSelector = ({}: Props) => {
                 }}
                 onClick={incrementInterest}
             >
+                <Typography>Virker ikke enda: </Typography>
                 {marks[interest].label}
             </Button>
             <Box sx={{ padding: '0.35rem', marginBottom: '0.1rem', maxWidth: 'var(--slider-interest-width)' }}>

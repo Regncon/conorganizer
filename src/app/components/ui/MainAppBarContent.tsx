@@ -1,5 +1,16 @@
 'use client';
-import { AppBar, Box, Button, IconButton, Menu, MenuItem, Toolbar, type SxProps, type Theme } from '@mui/material';
+import {
+    AppBar,
+    Box,
+    Button,
+    IconButton,
+    Menu,
+    MenuItem,
+    Toolbar,
+    Typography,
+    type SxProps,
+    type Theme,
+} from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import LoginIcon from '@mui/icons-material/Login';
@@ -33,6 +44,9 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
 
     const desktopBottomContent = (
         <>
+            <Typography variant="h1" sx={{}}>
+                BETA TEST
+            </Typography>
             <Button startIcon={<HomeIcon />} href="/" aria-label="home" component={Link}>
                 <Box sx={{ flexGrow: 1 }} />
                 Hjem
@@ -125,10 +139,10 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                                             Rediger arrangementer
                                         </MenuItem>,
                                     ]
-                                :   null}
+                                    : null}
                             </Menu>
                         </>
-                    :   <Button component={Link} href="/login">
+                        : <Button component={Link} href="/login">
                             <LoginIcon />
                             Logg inn
                         </Button>
@@ -136,7 +150,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 </Box>
                 {mobile ?
                     <Box sx={{ flexGrow: 1 }} />
-                :   null}
+                    : null}
             </Toolbar>
         </AppBar>
     );

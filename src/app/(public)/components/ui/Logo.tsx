@@ -2,7 +2,7 @@ import { Box } from '@mui/material';
 import Image from 'next/image';
 type Props = {};
 
-const Logo = ({}: Props) => {
+const Logo = ({ }: Props) => {
     return (
         <Box
             sx={{
@@ -16,7 +16,7 @@ const Logo = ({}: Props) => {
                 position: 'relative',
             }}
         >
-            <Image src="/RegnCon2024LogoWhite.webp" fill alt="logo" priority={true} sizes="100vw" />
+            <Image src="/BetaTestRegnconLogo.webp" fill alt="logo" priority={true} sizes="100vw" />
         </Box>
     );
 };
