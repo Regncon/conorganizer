@@ -29,7 +29,7 @@ const UnwantedPoolByGm = ({ poolName, conEvent, color = 'warning.main' }: props)
     if (!showUnwanted) {
         return null;
     }
-    console.log(color, 'color');
+
     return (
         <Stack direction="row">
             <Box sx={{ display: 'inherit', color: color }}>

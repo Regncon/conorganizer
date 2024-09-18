@@ -140,14 +140,13 @@ export async function convertToPoolEvent(eventId: string, poolName: PoolName) {
         moreThanSixHours: conEvent.moreThanSixHours,
         beginnerFriendly: conEvent.beginnerFriendly,
         additionalComments: conEvent.additionalComments,
-        bigImageURL: conEvent.bigImageURL,
-        smallImageURL: conEvent.smallImageURL,
+        bigImageURL: conEvent.bigImageURL ?? '',
+        smallImageURL: conEvent.smallImageURL ?? '',
         createdAt: Date.now().toString(),
         createdBy: user.uid,
         updateAt: Date.now().toString(),
         updatedBy: user.uid,
     };
-
     let poolEventId = '';
     try {
         const docRef = await addDoc(collection(db, 'pool-events'), poolEvent);

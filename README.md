@@ -28,15 +28,19 @@ of your con schedule, your panels, and your expenses.
 
 ### Must haves for publishing events
 
+#### Ready for soft launch
+
+-   Legge in beta logo
+-   Finne ut hva vi gjør med intresert knappen.
+-   Sjekke at alt er klart til soft launch
+
+#### Hard launch
+
 -   Icons | Grethe :D
 -   Fix cookie lifetime
--   Legg på redirect til my events til publisering av arrangementer
 -   Legge til tags i events og pool-events
 -   Vise hvilken deltaker du er vist du har flere deltakere på samme billett
 -   Linke til pool-events vist det finnes i flere pools
-
-#### Ready for admin
-
 -   Filter out my signups and tags
 -   Help text explaining how the algorithm works
 -   Add is gm to event
