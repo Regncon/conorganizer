@@ -1,4 +1,4 @@
-import ForgotPasswordPage from './ForgotPassword';
+import ForgotPasswordPage from './components/ForgotPassword';
 
 type Props = {};
 

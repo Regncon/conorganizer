@@ -2,7 +2,7 @@ import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { Typography } from '@mui/material';
 import Link from 'next/link';
 import type { PropsWithChildren } from 'react';
-import { getMyUserInfo } from '../my-events/actions';
+import { getMyUserInfo } from '../my-events/lib/actions';
 
 type Props = {} & PropsWithChildren;
 

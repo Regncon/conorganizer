@@ -1,14 +1,22 @@
-import { Box, Card, CardContent, Container, CssBaseline, ThemeProvider, Typography } from '@mui/material';
+import { Box, Container, CssBaseline, ThemeProvider } from '@mui/material';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { muiDark } from '$lib/muiTheme';
 import styles from './page.module.scss';
 import './global.scss';
-import Link from 'next/link';
-import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import BackButton from './(authorized)/BackButton';
-import LogOutButton from './(authorized)/LogOutButton';
+import MainAppBar from './components/mainAppBar';
+import SetCookie from './components/SetCookie';
+import { config } from '@fortawesome/fontawesome-svg-core';
+import '@fortawesome/fontawesome-svg-core/styles.css';
+config.autoAddCss = false;
+// <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"></link>
+// <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+// <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+// <link rel="manifest" href="/site.webmanifest">
+// <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#88E1F2">
+// <meta name="msapplication-TileColor" content="#ff7c7c">
+// <meta name="theme-color" content="#000000">
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -16,7 +24,6 @@ export const metadata: Metadata = {
     title: 'Regncon program 2024',
     description: 'Regncon program og puljepåmelding 2024',
 };
-
 export default async function RootLayout({
     children,
 }: Readonly<{
@@ -27,10 +34,17 @@ export default async function RootLayout({
             <body className={inter.className}>
                 <AppRouterCacheProvider options={{ key: 'mui-theme' }}>
                     <ThemeProvider theme={muiDark}>
+                        <SetCookie />
                         <CssBaseline enableColorScheme />
-                        <Container component={'main'} maxWidth="xl">
+                        <Container
+                            maxWidth="xl"
+                            disableGutters
+                            component={'main'}
+                            sx={{ paddingBottom: { xs: '5rem', sm: '0rem' }, paddingTop: { xs: '0rem', sm: '5rem' } }}
+                        >
                             <Box className={styles['main-test']}>{children}</Box>
                         </Container>
+                        <MainAppBar />
                     </ThemeProvider>
                 </AppRouterCacheProvider>
             </body>

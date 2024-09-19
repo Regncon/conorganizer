@@ -1,8 +1,9 @@
-import { geMyEventByRefPath } from '$app/(authorized)/my-events/actions';
-import MainEvent from '$app/(public)/event/[id]/event';
+import { geMyEventByRefPath } from '$app/(authorized)/my-events/lib/actions';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { Event, MyNewEvent } from '$lib/types';
+import { ConEvent, MyNewEvent, type PoolEvent } from '$lib/types';
 import { Box, Typography } from '@mui/material';
+import { updateReadAndOrAcceptedStatus } from '../../../lib/actions';
+import MainEvent from '$app/(public)/event/[id]/components/MainEvent';
 
 type Props = {
     params: {
@@ -17,7 +18,13 @@ const FormSubmissionsPreviewPage = async ({ params: { id, userid } }: Props) => 
     }
     const nyEvent: MyNewEvent = await geMyEventByRefPath(db, id, userid);
 
-    const event: Event = {
+    if (nyEvent.isRead === false) {
+        updateReadAndOrAcceptedStatus(`users/${userid}/my-events/${id}`, {
+            isRead: true,
+        });
+    }
+
+    const event: ConEvent = {
         id: nyEvent.id,
         name: nyEvent.name,
         title: nyEvent.title,
@@ -25,16 +32,23 @@ const FormSubmissionsPreviewPage = async ({ params: { id, userid } }: Props) => 
         description: nyEvent.description,
         gameType: nyEvent.gameType,
         system: nyEvent.system,
-        data: false,
         gameMaster: nyEvent.name,
+        published: false,
         shortDescription: '',
         email: '',
         phone: '',
+        poolIds: [],
+        roomIds: [],
+        isSmallCard: false,
         participants: 0,
-        fridayEvening: false,
-        saturdayMorning: false,
-        saturdayEvening: false,
-        sundayMorning: false,
+        puljeFridayEvening: false,
+        puljeSaturdayMorning: false,
+        puljeSaturdayEvening: false,
+        puljeSundayMorning: false,
+        unwantedFridayEvening: false,
+        unwantedSaturdayMorning: false,
+        unwantedSaturdayEvening: false,
+        unwantedSundayMorning: false,
         moduleCompetition: false,
         childFriendly: false,
         possiblyEnglish: false,
@@ -53,7 +67,7 @@ const FormSubmissionsPreviewPage = async ({ params: { id, userid } }: Props) => 
         <Box sx={{ maxWidth: '430px', margin: 'auto' }}>
             <Typography variant="h1">Forhåndsvisning</Typography>
             <hr />
-            <MainEvent eventData={event} />
+            <MainEvent eventData={event as unknown as PoolEvent} />
         </Box>
     );
 };

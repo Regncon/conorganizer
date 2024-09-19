@@ -15,7 +15,7 @@ const FirebaseLoginError = {
 const LoginErrorBoundary: ErrorBoundaryProps = ({ error, reset }) => {
     const ResetButton = (
         <Button onClick={reset} variant="contained">
-            Prøv igjenn
+            Prøv igjen
         </Button>
     );
     const InlineWrapper = ({ children, marginBottom }: { marginBottom?: boolean } & PropsWithChildren) => (

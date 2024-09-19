@@ -2,11 +2,11 @@ import { credential } from 'firebase-admin';
 import { getApps, initializeApp as initializeAdminApp, ServiceAccount, type App } from 'firebase-admin/app';
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { cookies } from 'next/headers';
-import { getAuth, signInWithCustomToken } from 'firebase/auth';
+import { getAuth, signInWithCustomToken, type User } from 'firebase/auth';
 import { initializeApp } from 'firebase/app';
 import { firebaseAdminConfig, firebaseConfig } from './config';
 import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
-import { getFirestore } from 'firebase/firestore';
+import { doc, getDoc, getFirestore } from 'firebase/firestore';
 
 export const SESSION_COOKIE_NAME = '__session';
 export const getAuthorizedAuth = async () => {
@@ -41,12 +41,13 @@ export const getAuthorizedAuth = async () => {
         if (isRevoked) return noSessionReturn;
         // To signIn user so we get access to auth.currentUser
         if (auth.currentUser?.uid !== decodedIdToken.uid) {
+            const userRef = doc(db, '/users', decodedIdToken.uid);
+            const userData = (await getDoc(userRef)).data() as undefined | { admin: boolean };
             const customToken = await adminAuth
-                .createCustomToken(decodedIdToken.uid)
+                .createCustomToken(decodedIdToken.uid, { admin: userData?.admin ?? false })
                 .catch((e) => console.error(e.message));
 
             if (!customToken) return noSessionReturn;
-
             await signInWithCustomToken(auth, customToken);
         }
 

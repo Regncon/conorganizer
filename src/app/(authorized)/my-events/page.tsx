@@ -1,21 +1,26 @@
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import Grid2 from '@mui/material/Unstable_Grid2/Grid2';
+
 import { collection, doc, type Firestore } from 'firebase/firestore';
 import type { FirebaseApp } from 'firebase/app';
 import Box from '@mui/material/Box';
-import { getAllMyEvents } from './actions';
-import RealtimeMyEvents from './RealtimeMyEvents';
-import { Typography } from '@mui/material';
+import { getAllMyEvents } from './lib/actions';
+import RealtimeMyEvents from './components/RealtimeMyEvents';
+import { Grid2, Typography } from '@mui/material';
 import { revalidatePath } from 'next/cache';
-import EventCardBig from '$app/(public)/EventCardBig';
-import DynamicLink from './DynamicLink';
-import AddEventCard from './AddEventCard';
+import DynamicLink from './components/DynamicLink';
+import AddEventCard from './components/AddEventCard';
+import EventCardBig from '$app/(public)/components/components/EventCardBig';
+import type { Metadata } from 'next';
 const createId = async (app: FirebaseApp, db: Firestore) => {
     const collectionRef = collection(db, '_');
     const docRef = doc(collectionRef);
     return docRef.id;
 };
 
+export const metadata: Metadata = {
+    title: 'Mine arrangementer',
+    description: 'Her kan du følge med på statusen og lage/redigere dine arrangementer',
+};
 const MyEvents = async () => {
     const { app, user, auth, db } = await getAuthorizedAuth();
 
@@ -47,11 +52,17 @@ const MyEvents = async () => {
                                     placeContent: 'center',
                                     placeItems: 'center',
                                 }}
-                                xl={2.7}
                                 key={doc.id}
+                                size={{
+                                    xl: 2.7,
+                                    md: 4,
+                                    sm: 6,
+                                    xs: 12,
+                                }}
                             >
-                                <DynamicLink docId={doc.id}>
+                                <DynamicLink docId={doc.id} disable={doc.isAccepted}>
                                     <EventCardBig
+                                        isAccepted={doc.isAccepted}
                                         title={doc.title}
                                         gameMaster={doc.name}
                                         shortDescription={doc.subTitle}
@@ -70,7 +81,9 @@ const MyEvents = async () => {
                             placeContent: 'center',
                             placeItems: 'center',
                         }}
-                        xl={2.7}
+                        size={{
+                            xl: 2.7,
+                        }}
                     >
                         <AddEventCard newDocumentId={newDocumentId} />
                     </Grid2>

@@ -2,7 +2,7 @@
 
 ## Description
 
-This is the source code for the Regncon 2023 app. It's a work in progress, but the idea is to have a place to keep track
+This is the source code for the Regncon 2024 app. It's a work in progress, but the idea is to have a place to keep track
 of your con schedule, your panels, and your expenses.
 
 ## referat fra post-mortem: sorteres inn i must-haves og nice-to-haves av neste styre
@@ -26,11 +26,34 @@ of your con schedule, your panels, and your expenses.
 
 ## Todo
 
-### Must haves Mvp
+### Must haves for publishing events
 
--   Make it very clear what day is displayed
--   Filter out my signups
+#### Ready for soft launch
+
+#### Hard launch
+
+-   Icons | Grethe :D
+-   Fix cookie lifetime
+-   Legge til tags i events og pool-events
+-   Vise hvilken deltaker du er vist du har flere deltakere på samme billett
+-   Linke til pool-events vist det finnes i flere pools
+-   Filter out my signups and tags
+-   Help text explaining how the algorithm works
 -   Add is gm to event
+-   Participants can choose favorite events
+-   Send emails from server
+-   Create participant in database
+-   Check if participant is over 18 |
+-   Connect to checkin system
+-   Something that says which participant you're logged in as
+
+#### Nice to haves for publishing events
+
+-   Picture upload
+-   Check preloading of pages
+-   Fix small card layout
+-   Debounce/fix text box, my events
+-   Display label on new or unread events
 
 ## Nice to haves
 
@@ -43,6 +66,12 @@ of your con schedule, your panels, and your expenses.
 
 ## Done
 
+-   Bug: Problems with hitting enter while editing event
+-   Add picture url | Gerhard
+-   Log-in bug, e-mail input loses focus when you input a letter | Torstein
+-   Fix events front page | Torstein
+-   Desktop view | Torstein
+-   Convert my events to use new event system
 -   Add none events to list
 -   Match header and footer to design
 -   Check if firebase token should be private
@@ -63,3 +92,11 @@ of your con schedule, your panels, and your expenses.
 -   Get event from database
 -   Add new event
 -   Edit event
+-   Easy next and previous navigation
+-   Make it very clear what day is displayed
+-   Get tickets from checkin
+-   Room assignment | Gerhard
+-   Legge in beta logo
+-   Switch default card image
+-   Google log-in redirect bug
+-   Disable interest function

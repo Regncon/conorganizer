@@ -1,10 +1,10 @@
 import { useMemo } from 'react';
-import type { FormSubmissionColDef } from '../types';
+import type { FormSubmissionColDef } from '../lib/types';
 import { useRouter } from 'next/navigation';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { GridActionsCellItem } from '@mui/x-data-grid';
 import type { Route } from 'next';
+import { Link, Tooltip } from '@mui/material';
 
 export const useColumns = () => {
     const router = useRouter();
@@ -15,26 +15,22 @@ export const useColumns = () => {
                 field: 'name',
                 headerName: 'Navn',
                 width: 140,
-                editable: true,
             },
             {
                 field: 'title',
                 headerName: 'Tittel',
                 width: 140,
-                editable: true,
             },
             {
                 field: 'subTitle',
                 headerName: 'Kort beskrivelse',
                 width: 240,
-                editable: true,
             },
             {
                 field: 'isSubmitted',
                 headerName: 'Innsendt',
                 type: 'boolean',
                 width: 110,
-                editable: true,
             },
             {
                 field: 'isRead',
@@ -48,22 +44,26 @@ export const useColumns = () => {
                 headerName: 'Godkjent',
                 type: 'boolean',
                 width: 120,
-                editable: true,
             },
             {
                 field: 'actions',
                 type: 'actions',
                 headerName: 'Gå til førehandsvising',
                 width: 150,
-                getActions: (params) => [
-                    <GridActionsCellItem
-                        icon={<FontAwesomeIcon icon={faArrowUpRightFromSquare} />}
-                        label="førehandsvising"
-                        onClick={(e) => {
-                            router.push(`/admin/dashboard/form-submissions/preview/${params.id}/${params.row.userId}` as Route);
-                        }}
-                    />,
-                ],
+                getActions: (params) => {
+                    return [
+                        <Tooltip title="førehandsvising">
+                            <Link
+                                sx={{ color: 'white' }}
+                                href={
+                                    `/admin/dashboard/form-submissions/preview/${params.id}/${params.row.userId}` as Route
+                                }
+                            >
+                                <FontAwesomeIcon icon={faArrowUpRightFromSquare} />
+                            </Link>
+                        </Tooltip>,
+                    ];
+                },
             },
         ],
         [router]

@@ -1,6 +1,6 @@
 'use client';
 
-import { logout, setSessionCookie } from '$app/(auth)/login/actions';
+import { logout, setSessionCookie } from '$app/(auth)/login/lib/actions';
 import { initializeApp } from 'firebase/app';
 import {
     getAuth,

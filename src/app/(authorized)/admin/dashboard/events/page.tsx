@@ -1,16 +1,49 @@
-import EventCardBig from '$app/(public)/EventCardBig';
+import EventCardBig from '$app/(public)/components/components/EventCardBig';
+import RealtimeEvents from '$app/(public)/components/RealtimeEvents';
+import { getAllEvents } from '$app/(public)/components/lib/serverAction';
+import { Box, Paper } from '@mui/material';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+export const metadata: Metadata = {
+    title: 'Liste over arrangementer som kan administreres',
+};
 
 const Events = async () => {
+    const events = await getAllEvents();
     return (
-        <Link href="/admin/dashboard/events/event-dashboard/1">
-            <EventCardBig
-                gameMaster="Kåre Carlsson"
-                shortDescription="is water wet? find out in this session! (18+) (NSFW) anyways do NOT join if you are under 18, this is a serious session for serious people only."
-                system="DnD 4e"
-                title="Kåres waterboarding session of doom and despair (18+)"
-            />
-        </Link>
+        <>
+            <Paper elevation={0}>
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit,minmax(306px, 1fr))',
+                        gap: '1rem',
+                    }}
+                >
+                    {events
+                        .sort((a, b) => a.title.localeCompare(b.title))
+                        .map((conEvent) => {
+                            return (
+                                <Link
+                                    href={`/admin/dashboard/events/event-dashboard/${conEvent.id}/edit`}
+                                    prefetch
+                                    style={{ textDecoration: 'none' }}
+                                    key={conEvent.id}
+                                >
+                                    <EventCardBig
+                                        title={conEvent.title}
+                                        gameMaster={conEvent.gameMaster}
+                                        system={conEvent.system}
+                                        shortDescription={conEvent.shortDescription}
+                                        backgroundImage={conEvent.smallImageURL}
+                                    />
+                                </Link>
+                            );
+                        })}
+                </Box>
+            </Paper>
+            <RealtimeEvents where="DASHBOARD_EVENTS" />
+        </>
     );
 };
 

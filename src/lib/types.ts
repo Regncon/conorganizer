@@ -1,3 +1,5 @@
+import { PoolName, type RoomName } from './enums';
+
 export type EventCardProps = {
     title: string;
     gameMaster: string;
@@ -8,26 +10,36 @@ export type EventCardProps = {
     myEventBar?: boolean;
     myEventBarSubmitted?: boolean;
     myEventDocId?: string;
+    isAccepted?: boolean;
 };
 
-export type Event = {
-    data: boolean;
-    id: string;
+export type ConEvent = {
+    published: boolean;
+    id?: string;
     title: string;
     gameMaster: string;
     system: string;
     shortDescription: string;
     description: string;
+    smallImageURL?: string;
+    bigImageURL?: string;
     icons?: string[];
     email: string;
     name: string;
     phone: string;
     gameType: string;
+    isSmallCard: boolean;
     participants: number;
-    fridayEvening: boolean;
-    saturdayMorning: boolean;
-    saturdayEvening: boolean;
-    sundayMorning: boolean;
+    puljeFridayEvening: boolean;
+    puljeSaturdayMorning: boolean;
+    puljeSaturdayEvening: boolean;
+    puljeSundayMorning: boolean;
+    poolIds: PoolChildRef[];
+    roomIds: RoomChildRef[];
+    unwantedFridayEvening: boolean;
+    unwantedSaturdayMorning: boolean;
+    unwantedSaturdayEvening: boolean;
+    unwantedSundayMorning: boolean;
     moduleCompetition: boolean;
     childFriendly: boolean;
     possiblyEnglish: boolean;
@@ -44,8 +56,85 @@ export type Event = {
     subTitle: string;
 };
 
+export type RoomPlayer = {
+    email: string;
+    name: string;
+    id: string;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+};
+export type EventRoom = {
+    id?: string;
+    name: RoomName;
+    eventId: string;
+    poolId: string;
+    players: RoomPlayer[];
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+};
+
+export type RoomChildRef = {
+    id: string;
+    poolId: string;
+    poolName: PoolName;
+    roomName: RoomName;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+};
+
+export type RoomItemInfo = {
+    roomName: RoomName;
+    top: number;
+    left: number;
+};
+
+export type PoolChildRef = {
+    id: string;
+    poolName: PoolName;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+};
+
+export type PoolEvent = {
+    poolName: PoolName;
+    published: boolean;
+    id?: string;
+    parentEventId: string;
+    title: string;
+    gameMaster: string;
+    system: string;
+    shortDescription: string;
+    description: string;
+    smallImageURL?: string;
+    bigImageURL?: string;
+    gameType: string;
+    isSmallCard: boolean;
+    participants: number;
+    childFriendly: boolean;
+    possiblyEnglish: boolean;
+    adultsOnly: boolean;
+    lessThanThreeHours: boolean;
+    moreThanSixHours: boolean;
+    beginnerFriendly: boolean;
+    additionalComments: string;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+    icons?: string[];
+};
+
 export type MyNewEvent = {
     id: string;
+    eventDocId?: string;
     email: string;
     name: string;
     phone: string;

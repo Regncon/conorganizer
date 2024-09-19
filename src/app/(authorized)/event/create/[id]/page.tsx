@@ -1,15 +1,27 @@
-import { Paper, Typography } from '@mui/material';
-import Grid2 from '@mui/material/Unstable_Grid2';
-import EventForm from './EventForm';
+import { Grid2, Paper, Typography } from '@mui/material';
+import EventForm from './components/EventForm';
+import type { Metadata } from 'next';
+import { getMyEventById } from '$app/(public)/components/lib/serverAction';
+import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 
 type Props = {
     params: {
         id: string;
     };
-    searchParams: {
-        userId: string;
-    };
 };
+export async function generateMetadata({ params: { id } }: Props): Promise<Metadata> {
+    const { user } = await getAuthorizedAuth();
+
+    if (user) {
+        const event = await getMyEventById(id, user.uid);
+        if (event && event.title && event.title.length > 0) {
+            return {
+                title: `Oppdater arrangementet ${event.title}`,
+            };
+        }
+    }
+    return {};
+}
 const Create = async ({ params: { id } }: Props) => {
     return (
         <>
