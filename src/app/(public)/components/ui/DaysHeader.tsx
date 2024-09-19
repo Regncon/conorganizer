@@ -6,11 +6,12 @@ import { Fragment } from 'react';
 import { translatedDays } from '../lib/helpers/translation';
 
 const sxDayTypography: SxProps = {
-    maxWidth: '5rem',
+    maxWidth: '5.5rem',
     minHeight: '4rem',
     display: 'grid',
     placeItems: 'center',
     paddingInline: '0.5em',
+    textAlign: 'center',
     transition: 'background-color 0.5s ease-in-out;',
 };
 
