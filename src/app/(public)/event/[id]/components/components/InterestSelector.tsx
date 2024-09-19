@@ -9,9 +9,11 @@ const marks = [
     { value: 3, label: '😊 Interessert' },
     { value: 4, label: '🤩 Veldig interessert' },
 ];
-type Props = {};
+type Props = {
+    disabled: boolean;
+};
 
-const InterestSelector = ({ }: Props) => {
+const InterestSelector = ({ disabled }: Props) => {
     const [interest, setInterest] = useState<number>(0);
     const incrementInterest = () => {
         if (interest === 3) {
@@ -35,8 +37,8 @@ const InterestSelector = ({ }: Props) => {
                     maxWidth: 'var(--slider-interest-width)',
                 }}
                 onClick={incrementInterest}
+                disabled={disabled}
             >
-                <Typography>Virker ikke enda: </Typography>
                 {marks[interest].label}
             </Button>
             <Box sx={{ padding: '0.35rem', marginBottom: '0.1rem', maxWidth: 'var(--slider-interest-width)' }}>
@@ -45,6 +47,7 @@ const InterestSelector = ({ }: Props) => {
                         const target = e.target as HTMLInputElement;
                         setInterest(Number(target.value));
                     }}
+                    disabled={disabled}
                     sx={{
                         color: 'primary.main',
                         [`.${sliderClasses.rail}`]: { backgroundColor: '#3d3b3b', height: '1rem' },

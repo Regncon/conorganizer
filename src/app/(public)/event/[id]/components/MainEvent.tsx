@@ -1,14 +1,11 @@
 'use client';
 import {
     Box,
-    Button,
     Chip,
     CircularProgress,
     Paper,
-    Slider,
     TextField,
     Typography,
-    sliderClasses,
     useTheme,
     type SxProps,
     type Theme,
@@ -29,15 +26,10 @@ import { MuiMarkdown } from 'mui-markdown';
 import NavigatePreviousLink from './ui/NavigatePreviousLink';
 import NavigateNextLink from './ui/NavigateNextLink';
 import BackButton from '$app/(authorized)/components/BackButton';
+import InterestSelector from './components/InterestSelector';
+import { width } from '@fortawesome/free-solid-svg-icons/faTrash';
 
 export const dynamic = 'force-static';
-
-const marks = [
-    { value: 1, label: '🥱 Ikke interessert' },
-    { value: 2, label: '😑 Litt interessert' },
-    { value: 3, label: '😊 Interessert' },
-    { value: 4, label: '🤩 Veldig interessert' },
-];
 
 type Props = {
     id?: string;
@@ -63,7 +55,6 @@ const MainEvent = ({
     const [isEditingGameMaster, setIsEditingGameMaster] = useState<boolean>(false);
     const [isEditingSystem, setIsEditingSystem] = useState<boolean>(false);
     const [isEditingShortDescription, setIsEditingShortDescription] = useState<boolean>(false);
-    const [interest, setInterest] = useState<number>(0);
 
     useEffect(() => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
@@ -84,15 +75,6 @@ const MainEvent = ({
     } = useTheme();
 
     const paragraphStyle: SxProps<Theme> = { margin: '1rem 0' };
-    // const strongStyle: SxProps<Theme> = { fontWeight: 700 };
-    const incrementInterest = () => {
-        if (interest === 3) {
-            setInterest(0);
-        } else {
-            setInterest(interest + 1);
-        }
-    };
-
     return data ?
         <Paper
             elevation={1}
@@ -225,76 +207,25 @@ const MainEvent = ({
                         <Chip label={tag} key={tag} color="primary" icon={<NavigateBefore />} />
                     ))}
                 </Box>
-                <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    sx={{ fontSize: '1.2rem', textTransform: 'none', marginBottom: '1rem', minHeight: '62px' }}
-                    onClick={incrementInterest}
+                <Box
+                    sx={{
+                        '--slider-interest-width': '100%',
+                    }}
                 >
-                    <Typography>Virker ikke enda: </Typography>
-                    {marks[interest].label}
-                </Button>
-                <Box sx={{ padding: '0.35rem', marginBottom: '0.1rem' }}>
-                    <Slider
-                        onChange={(e) => {
-                            const target = e.target as HTMLInputElement;
-                            setInterest(Number(target.value));
-                        }}
-                        sx={{
-                            color: 'primary.main',
-                            [`.${sliderClasses.rail}`]: { backgroundColor: '#3d3b3b', height: '1rem' },
-                            [`.${sliderClasses.track}`]: { height: '1rem' },
-                            [`.${sliderClasses.mark}`]: {
-                                borderRadius: '50%',
-                                outlineColor: 'primary.main',
-                                outlineWidth: '0.8rem',
-                                outlineStyle: 'solid',
-                                outlineOffset: '-1px',
-                                opacity: '1',
-                            },
-                            [`.${sliderClasses.markActive}`]: { backgroundColor: 'primary.main' },
-                            [`.${sliderClasses.thumb}:before`]: { boxShadow: 'unset' },
-                            [`.${sliderClasses.valueLabelCircle}`]: { display: 'none' },
-                        }}
-                        marks
-                        value={interest}
-                        min={0}
-                        max={3}
-                    />
+                    <InterestSelector disabled />
                 </Box>
-                <Typography sx={{ marginBottom: '0.8rem', textAlign: 'center' }}>
-                    Dra baren over for å melde din interesse!
-                </Typography>
-                <Box>
-                    <Box sx={{ marginBottom: '3rem' }}>
-                        <Box
-                            component={Link}
-                            href="/hjelppaamelding"
-                            sx={{
-                                display: 'inline-flex',
-                                gap: '0.4rem',
-                                paddingLeft: '0.5rem',
-                                color: 'primary.main',
-                            }}
-                        >
-                            <HelpIcon sx={{ scale: '1.5', placeSelf: 'center' }} />
-                            <Typography component="p">Forvirret? Les mer om påmeldingsystemet</Typography>
-                        </Box>
-                        <Box
-                            sx={{
-                                display: 'grid',
-                                gridTemplateColumns: !prevNavigationId || !nextNavigationId ? '1fr' : '1fr 1fr',
-                                placeItems: 'space-between',
-                                marginBlockStart: '1rem',
-                                position: 'relative',
-                                width: '100%',
-                            }}
-                        >
-                            <NavigatePreviousLink previousNavigationId={prevNavigationId} />
-                            <NavigateNextLink nextNavigationId={nextNavigationId} />
-                        </Box>
-                    </Box>
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: !prevNavigationId || !nextNavigationId ? '1fr' : '1fr 1fr',
+                        placeItems: 'space-between',
+                        marginBlockStart: '1rem',
+                        position: 'relative',
+                        width: '100%',
+                    }}
+                >
+                    <NavigatePreviousLink previousNavigationId={prevNavigationId} />
+                    <NavigateNextLink nextNavigationId={nextNavigationId} />
                 </Box>
                 {isEditingShortDescription ?
                     <TextField

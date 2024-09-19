@@ -30,8 +30,6 @@ of your con schedule, your panels, and your expenses.
 
 #### Ready for soft launch
 
--   Disable interest function
-
 #### Hard launch
 
 -   Icons | Grethe :D
@@ -101,3 +99,4 @@ of your con schedule, your panels, and your expenses.
 -   Legge in beta logo
 -   Switch default card image
 -   Google log-in redirect bug
+-   Disable interest function

@@ -1,6 +1,5 @@
 'use client';
 import { Box } from '@mui/material';
-
 import EventCardBig from './components/EventCardBig';
 import EventCardSmall from './components/EventCardSmall';
 import NextLink from 'next/link';
@@ -8,6 +7,7 @@ import { useRef } from 'react';
 import EventListDay from './components/ui/EventListDay';
 import { useObserveIntersectionObserver } from './lib/hooks/useObserveIntersectionObserver';
 import type { PoolEvents } from './lib/serverAction';
+import { Route } from 'next';
 
 type Props = {
     events: PoolEvents;
@@ -30,7 +30,13 @@ const EventList = ({ events }: Props) => {
                             }}
                         >
                             {events.map((event) => (
-                                <NextLink key={event.id} prefetch href={`/event/${event.id}`}>
+                                <Box
+                                    component={NextLink}
+                                    key={event.id}
+                                    sx={{ textDecoration: 'none' }}
+                                    prefetch
+                                    href={`/event/${event.id}` as Route}
+                                >
                                     {event.isSmallCard ?
                                         <EventCardSmall
                                             title={event.title}
@@ -38,7 +44,7 @@ const EventList = ({ events }: Props) => {
                                             system={event.system}
                                             backgroundImage={event.smallImageURL}
                                         />
-                                    :   <EventCardBig
+                                        : <EventCardBig
                                             title={event.title}
                                             gameMaster={event.gameMaster}
                                             shortDescription={event.shortDescription}
@@ -46,7 +52,7 @@ const EventList = ({ events }: Props) => {
                                             backgroundImage={event.smallImageURL}
                                         />
                                     }
-                                </NextLink>
+                                </Box>
                             ))}
                         </Box>
                     </Box>

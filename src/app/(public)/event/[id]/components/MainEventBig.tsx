@@ -204,7 +204,7 @@ const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) 
                             icon={<NavigateBefore />}
                         />
                     </Box>
-                    <InterestSelector />
+                    <InterestSelector disabled />
                 </Box>
                 <MuiMarkdownClient description={poolEvent.description} />
             </Box>
