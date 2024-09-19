@@ -1,6 +1,8 @@
 import CardBase from './CardBase';
 
 const MyTickets = () => {
+    // Retunr null to prevent errors in early access
+    return null;
     return (
         <CardBase
             href="/my-profile/my-tickets"
