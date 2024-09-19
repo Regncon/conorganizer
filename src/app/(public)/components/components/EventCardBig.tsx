@@ -15,7 +15,7 @@ export default function EventCardBig({
     gameMaster,
     shortDescription,
     system,
-    backgroundImage = '/blekksprut2.jpg',
+    backgroundImage = '/dice-small.webp',
     myEventBar = false,
     myEventBarSubmitted = false,
     myEventDocId,
@@ -23,12 +23,12 @@ export default function EventCardBig({
 }: EventCardProps) {
     const circleCheckOrPencilIcon =
         isAccepted ? faCheckDouble
-        : myEventBarSubmitted ? faCircleCheck
-        : faPencil;
+            : myEventBarSubmitted ? faCircleCheck
+                : faPencil;
     const SuccessOrWarningColor =
         isAccepted ? 'success.dark'
-        : myEventBarSubmitted ? 'success.light'
-        : 'warning.main';
+            : myEventBarSubmitted ? 'success.light'
+                : 'warning.main';
 
     return (
         <Card
@@ -73,15 +73,15 @@ export default function EventCardBig({
                                 <Typography sx={{ color: SuccessOrWarningColor }}>
                                     {isAccepted ?
                                         'Godtatt'
-                                    : myEventBarSubmitted ?
-                                        'Sendt inn'
-                                    :   'Kladd'}
+                                        : myEventBarSubmitted ?
+                                            'Sendt inn'
+                                            : 'Kladd'}
                                 </Typography>
                             </Box>
                             <TrashButton docId={myEventDocId} />
                         </Box>
                     </>
-                :   null}
+                    : null}
 
                 <CardHeader
                     title={title}

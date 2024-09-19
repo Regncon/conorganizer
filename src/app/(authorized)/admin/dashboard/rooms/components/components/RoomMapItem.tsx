@@ -113,7 +113,7 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
                                         title={roomEvent?.title ?? 'Not set'}
                                         gameMaster={roomEvent?.gameMaster ?? 'Not set'}
                                         system={roomEvent?.system ?? 'Not set'}
-                                        imageUri={'/blekksprut2.jpg'}
+                                        imageUri={roomEvent.smallImageURL ?? '/dice-small.webp'}
                                     />
 
                                     <Button onClick={() => handleClickDeleteOpen(roomEvent.id)}>

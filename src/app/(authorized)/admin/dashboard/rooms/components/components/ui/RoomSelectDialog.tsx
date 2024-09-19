@@ -60,7 +60,7 @@ const RoomSelectDialog = ({ open, selectedValue, onClose, events }: Props) => {
                                                         title={conEvent.title}
                                                         gameMaster={conEvent.gameMaster}
                                                         system={conEvent.system}
-                                                        imageUri="/blekksprut2.jpg"
+                                                        imageUri={conEvent.smallImageURL ?? '/dice-small.webp'}
                                                     />
                                                 </Box>
                                                 <Box>

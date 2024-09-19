@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import Image from 'next/image';
 import NavigateBefore from '@mui/icons-material/NavigateBefore';
-import blekksprut2 from '$public/blekksprut2.jpg';
+import diceSmall from '$public/dice-small.webp';
 import HelpIcon from '@mui/icons-material/Help';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -113,7 +113,7 @@ const MainEvent = ({
                 }}
             >
                 <Image
-                    src={data?.smallImageURL ?? blekksprut2}
+                    src={data?.smallImageURL ?? diceSmall}
                     width={320}
                     height={273}
                     sizes="100vw"

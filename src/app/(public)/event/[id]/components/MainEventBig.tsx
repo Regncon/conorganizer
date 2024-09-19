@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { NavigateBefore } from '@mui/icons-material';
 import { Paper, Box, Typography, Chip } from '@mui/material';
 import Image from 'next/image';
-import blekksprut2 from '$public/blekksprut2.jpg';
+import diceBig from '$public/dice-big.webp';
 import InterestSelector from './components/InterestSelector';
 import NavigatePreviousLink from './ui/NavigatePreviousLink';
 import NavigateNextLink from './ui/NavigateNextLink';
@@ -41,7 +41,7 @@ const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) 
             >
                 <Image
                     alt="Game logo"
-                    src={poolEvent.bigImageURL ?? blekksprut2}
+                    src={poolEvent.bigImageURL ?? diceBig}
                     width={1200}
                     height={193}
                     sizes="100vw"
