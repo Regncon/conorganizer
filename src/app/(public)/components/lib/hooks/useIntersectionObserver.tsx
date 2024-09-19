@@ -11,7 +11,6 @@ export const useIntersectionObserver = () => {
                     const currentLink = allLinks.find(
                         (link) => link.textContent === entry.target.querySelector('h1')?.textContent
                     );
-
                     if (entry.isIntersecting) {
                         if (lastTimeout) clearTimeout(lastTimeout);
                         lastTimeout = setTimeout(function () {
@@ -25,7 +24,7 @@ export const useIntersectionObserver = () => {
             setIntersectionObserver(
                 new IntersectionObserver(handleIntersectionObserver, {
                     root: null,
-                    threshold: 0.3,
+                    threshold: 0.1,
                 })
             );
         }
