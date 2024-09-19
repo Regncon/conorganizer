@@ -4,7 +4,7 @@ import Button from '@mui/material/Button';
 import SvgIcon from '@mui/material/SvgIcon';
 import { firebaseAuth } from '$lib/firebase/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import router from 'next/router';
+import { useRouter } from 'next/navigation';
 
 const GoogleIcon = () => (
     <SvgIcon viewBox="0 0 48 48">
@@ -30,11 +30,13 @@ const GoogleIcon = () => (
 
 type Props = {};
 
-const GoogleSignInButton = ({}: Props) => {
+const GoogleSignInButton = ({ }: Props) => {
+    const router = useRouter();
     const handleClick = async () => {
         const provider = new GoogleAuthProvider();
         signInWithPopup(firebaseAuth, provider)
             .then(async (result) => {
+                router.prefetch('/');
                 // This gives you a Google Access Token. You can use it to access the Google API.
                 const credential = GoogleAuthProvider.credentialFromResult(result);
                 const token = credential?.accessToken;

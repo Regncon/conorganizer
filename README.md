@@ -30,8 +30,6 @@ of your con schedule, your panels, and your expenses.
 
 #### Ready for soft launch
 
--   Google log-in redirect bug
--   Switch default card image
 -   Disable interest function
 
 #### Hard launch
@@ -101,4 +99,5 @@ of your con schedule, your panels, and your expenses.
 -   Get tickets from checkin
 -   Room assignment | Gerhard
 -   Legge in beta logo
-
+-   Switch default card image
+-   Google log-in redirect bug

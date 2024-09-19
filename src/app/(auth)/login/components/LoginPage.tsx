@@ -6,18 +6,10 @@ import { useEffect, useState, useTransition, type ComponentProps } from 'react';
 import EmailTextField from '../../shared/EmailTextField';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useFormState } from 'react-dom';
-import { setSessionCookie, validateLoginForm as validateLoginFormAction } from '../lib/actions';
+import { validateLoginForm as validateLoginFormAction } from '../lib/actions';
 import LoginButton from './ui/LoginButton';
 import { updateSearchParamsWithEmail } from '../../shared/utils';
-import {
-    getAuth,
-    getRedirectResult,
-    GoogleAuthProvider,
-    onAuthStateChanged,
-    signInWithPopup,
-    signInWithRedirect,
-    User,
-} from 'firebase/auth';
+import { getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signInWithRedirect, User } from 'firebase/auth';
 import GoogleSignInButton from './ui/GoogleButton';
 
 const initialLoginFormState = {
