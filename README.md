@@ -30,7 +30,9 @@ of your con schedule, your panels, and your expenses.
 
 #### Ready for soft launch
 
--   Legge in beta logo
+-   Google log-in redirect bug
+-   Switch default card image
+-   Disable interest function
 
 #### Hard launch
 
@@ -47,6 +49,7 @@ of your con schedule, your panels, and your expenses.
 -   Create participant in database
 -   Check if participant is over 18 |
 -   Connect to checkin system
+-   Something that says which participant you're logged in as
 
 #### Nice to haves for publishing events
 
@@ -97,3 +100,5 @@ of your con schedule, your panels, and your expenses.
 -   Make it very clear what day is displayed
 -   Get tickets from checkin
 -   Room assignment | Gerhard
+-   Legge in beta logo
+
