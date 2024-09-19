@@ -11,7 +11,13 @@ const MainAppBarMobile = ({ isLoggedIn, admin }: Props) => {
             isLoggedIn={isLoggedIn}
             mobile={true}
             admin={admin}
-            sx={{ top: 'auto', bottom: 0, display: { xs: 'flex', sm: 'none' } }}
+            sx={{
+                top: 'auto',
+                bottom: 0,
+                display: { xs: 'flex', sm: 'none' },
+                minHeight: '5.3571rem',
+                placeContent: 'center',
+            }}
         />
     );
 };

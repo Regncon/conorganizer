@@ -70,42 +70,54 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 Påmeldt
             </Button>
             <Box sx={{ flexGrow: 1 }} />
+            {isLoggedIn ?
+                <IconButton
+                    aria-label="more"
+                    id="long-button"
+                    aria-controls={open ? 'long-menu' : undefined}
+                    aria-expanded={open ? 'true' : undefined}
+                    aria-haspopup="true"
+                    onClick={handleClick}
+                >
+                    <MenuIcon />
+                </IconButton>
+            :   null}
         </>
     );
     const mobileBottomContent = (
         <>
             <Box sx={{ flexGrow: 1 }} />
             <IconButton href="/" aria-label="home" component={Link}>
-                <Box sx={{ flexGrow: 1 }} />
-                <HomeIcon />
+                <HomeIcon fontSize="large" />
             </IconButton>
-
             <IconButton href="/?filters=favorites" aria-label="favorites" component={Link}>
-                <FavoriteIcon />
+                <FavoriteIcon fontSize="large" />
             </IconButton>
             <IconButton href="/?filters=assigned" aria-label="assigned-events" component={Link}>
-                <GroupsIcon />
+                <GroupsIcon fontSize="large" />
             </IconButton>
+            {isLoggedIn ?
+                <IconButton
+                    aria-label="more"
+                    id="long-button"
+                    aria-controls={open ? 'long-menu' : undefined}
+                    aria-expanded={open ? 'true' : undefined}
+                    aria-haspopup="true"
+                    onClick={handleClick}
+                >
+                    <MenuIcon fontSize="large" />
+                </IconButton>
+            :   null}
         </>
     );
 
     return (
         <AppBar position="fixed" color="primary" sx={sx} ref={ref}>
-            <Toolbar sx={{ gap: 2 }}>
+            <Toolbar sx={{ gap: 2, placeItems: 'center', height: '100%' }}>
                 {mobile ? mobileBottomContent : desktopBottomContent}
                 <Box>
                     {isLoggedIn ?
                         <>
-                            <IconButton
-                                aria-label="more"
-                                id="long-button"
-                                aria-controls={open ? 'long-menu' : undefined}
-                                aria-expanded={open ? 'true' : undefined}
-                                aria-haspopup="true"
-                                onClick={handleClick}
-                            >
-                                <MenuIcon />
-                            </IconButton>
                             <Menu
                                 id="long-menu"
                                 MenuListProps={{
@@ -139,10 +151,10 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                                             Rediger arrangementer
                                         </MenuItem>,
                                     ]
-                                    : null}
+                                :   null}
                             </Menu>
                         </>
-                        : <Button component={Link} href="/login">
+                    :   <Button component={Link} href="/login">
                             <LoginIcon />
                             Logg inn
                         </Button>
@@ -150,7 +162,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 </Box>
                 {mobile ?
                     <Box sx={{ flexGrow: 1 }} />
-                    : null}
+                :   null}
             </Toolbar>
         </AppBar>
     );
