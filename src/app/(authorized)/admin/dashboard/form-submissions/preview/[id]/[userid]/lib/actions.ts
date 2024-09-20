@@ -12,6 +12,10 @@ export async function convertToConEvent(myEventId: string, myEventUserId: string
     }
     const myEvent: MyNewEvent = await geMyEventByRefPath(db, myEventId, myEventUserId);
     console.log('My event', myEvent);
+    if (myEvent.isAccepted) {
+        console.log('Event', myEventId, 'is already approved');
+        return;
+    }
     console.log('Approving event', myEventId, 'for user', myEventUserId);
 
     const event: ConEvent = {
