@@ -140,6 +140,7 @@ export async function convertToPoolEvent(eventId: string, poolName: PoolName) {
         moreThanSixHours: conEvent.moreThanSixHours,
         beginnerFriendly: conEvent.beginnerFriendly,
         additionalComments: conEvent.additionalComments,
+        volunteersPossible: conEvent.volunteersPossible,
         bigImageURL: conEvent.bigImageURL ?? '',
         smallImageURL: conEvent.smallImageURL ?? '',
         createdAt: Date.now().toString(),

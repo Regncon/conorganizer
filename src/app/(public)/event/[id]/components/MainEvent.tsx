@@ -170,7 +170,7 @@ const MainEvent = ({
                             />
                             <Box>
                                 <Typography component="span" sx={{ color: 'primary.main' }}>
-                                    {data.icons?.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
+                                    {data.gameType === 'rolePlaying' ? 'Gamemaster' : 'Arrangør'}
                                 </Typography>
                                 {isEditingGameMaster ?
                                     <TextField

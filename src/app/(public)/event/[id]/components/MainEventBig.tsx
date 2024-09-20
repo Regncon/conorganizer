@@ -104,7 +104,7 @@ const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) 
                                         <FontAwesomeIcon icon={faUserSecret} size="2x" style={{ color: '#ff7c7c' }} />
                                         <Box>
                                             <Typography component="span" sx={{ color: 'primary.main' }}>
-                                                {poolEvent.icons?.includes('rollespill') ? 'Gamemaster' : 'Arrangør'}
+                                                {poolEvent.gameType === 'rolePlaying' ? 'Gamemaster' : 'Arrangør'}
                                             </Typography>
                                             <Typography variant="body1" margin={0}>
                                                 {poolEvent.gameMaster || 'Navn'}

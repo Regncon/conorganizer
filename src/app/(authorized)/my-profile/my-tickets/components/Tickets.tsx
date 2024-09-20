@@ -2,7 +2,6 @@ import { Paper, Typography } from '@mui/material';
 import Ticket from './UI/Ticket';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import AdultsOnlyIcon from '$lib/components/icons/AdultsOnlyIcon';
-import BeginnerIcon from '$lib/icons/BeginnerIco';
 import BoardGameIcon from '$lib/components/icons/BoardGameIcon';
 import CardGameIcon from '$lib/components/icons/CardGameIcon';
 import ChildFriendlyIcon from '$lib/components/icons/ChildFriendlyIcon';
@@ -12,6 +11,7 @@ import LessHoursIcon from '$lib/components/icons/LessHoursIcon';
 import MiscGameIcon from '$lib/components/icons/MiscGameIcon';
 import MoreHoursIcon from '$lib/components/icons/MoreHoursIcon';
 import RoleplayingGameIcon from '$lib/components/icons/RoleplayingGameIcon';
+import BeginnerIcon from '$lib/components/icons/BeginnerIcon';
 
 type Props = {};
 
