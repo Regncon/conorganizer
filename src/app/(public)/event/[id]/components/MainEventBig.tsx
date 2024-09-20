@@ -9,6 +9,7 @@ import InterestSelector from './components/InterestSelector';
 import NavigatePreviousLink from './ui/NavigatePreviousLink';
 import NavigateNextLink from './ui/NavigateNextLink';
 import MuiMarkdownClient from './ui/MuiMarkdownClient';
+import { createIconFromString } from '$app/(public)/components/lib/helpers/icons';
 
 type Props = {
     poolEvent: PoolEvent;
@@ -163,46 +164,15 @@ const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) 
                             paddingBottom: '0.35rem',
                         }}
                     >
-                        {/* {event.icons?.map((tag) => (
-                                <Chip label={tag} key={tag} color="primary" icon={<NavigateBefore />} />
-                            ))} */}
-
-                        <Chip label={'tag'} key={'tag'} color="primary" variant="outlined" icon={<NavigateBefore />} />
-                        <Chip
-                            label={'tatagtagtagg'}
-                            key={'tag'}
-                            color="primary"
-                            variant="outlined"
-                            icon={<NavigateBefore />}
-                        />
-                        <Chip
-                            label={'tagtagtag'}
-                            key={'tag'}
-                            color="primary"
-                            variant="outlined"
-                            icon={<NavigateBefore />}
-                        />
-                        <Chip
-                            label={'tagtagtag'}
-                            key={'tag'}
-                            color="primary"
-                            variant="outlined"
-                            icon={<NavigateBefore />}
-                        />
-                        <Chip
-                            label={'tagtagtag'}
-                            key={'tag'}
-                            color="primary"
-                            variant="outlined"
-                            icon={<NavigateBefore />}
-                        />
-                        <Chip
-                            label={'tagtagtag'}
-                            key={'tag'}
-                            color="primary"
-                            variant="outlined"
-                            icon={<NavigateBefore />}
-                        />
+                        {poolEvent.icons?.map((iconOption) => (
+                            <Chip
+                                label={iconOption.label}
+                                key={iconOption.label}
+                                color="primary"
+                                variant="outlined"
+                                icon={createIconFromString(iconOption.icon)}
+                            />
+                        ))}
                     </Box>
                     <InterestSelector disabled />
                 </Box>

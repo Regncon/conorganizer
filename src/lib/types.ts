@@ -102,7 +102,21 @@ export type PoolChildRef = {
     updateAt: string;
     updatedBy: string;
 };
+export type IconTypes = {
+    childFriendly: boolean;
+    possiblyEnglish: boolean;
+    adultsOnly: boolean;
+    lessThanThreeHours: boolean;
+    moreThanSixHours: boolean;
+    beginnerFriendly: boolean;
+    volunteersPossible: boolean;
+};
 
+export type IconName = keyof IconTypes;
+export type IconOption = {
+    label: string;
+    icon: IconName;
+};
 export type PoolEvent = {
     poolName: PoolName;
     published: boolean;
@@ -121,6 +135,7 @@ export type PoolEvent = {
     childFriendly: boolean;
     possiblyEnglish: boolean;
     adultsOnly: boolean;
+    volunteersPossible: boolean;
     lessThanThreeHours: boolean;
     moreThanSixHours: boolean;
     beginnerFriendly: boolean;
@@ -129,7 +144,7 @@ export type PoolEvent = {
     createdBy: string;
     updateAt: string;
     updatedBy: string;
-    icons?: string[];
+    icons?: IconOption[];
 };
 
 export type MyNewEvent = {

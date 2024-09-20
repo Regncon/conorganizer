@@ -1,7 +1,7 @@
 'use client';
 import Typography from '@mui/material/Typography';
 import { useCallback, useEffect, useState, type FormEvent, type SyntheticEvent } from 'react';
-import { ConEvent } from '$lib/types';
+import { ConEvent, type PoolEvent } from '$lib/types';
 import Slide from '@mui/material/Slide';
 import Snackbar, { type SnackbarCloseReason } from '@mui/material/Snackbar';
 import { Box, CircularProgress, TextField } from '@mui/material';
@@ -85,7 +85,9 @@ const Edit = ({ id }: Props) => {
                 name = 'gameType';
                 value = inputName;
             }
-            saveToDb(name, value);
+            console.log(name, value, 'change');
+
+            // saveToDb(name, value);
         }, 1500),
         [user]
     );
@@ -107,6 +109,14 @@ const Edit = ({ id }: Props) => {
 
         updateDoc(eventDocRef, payload);
         await updatePoolEvent(id, payload);
+    };
+    const saveTagsToDb = async (data: Partial<ConEvent>) => {
+        setIsSnackBarOpen(false);
+        setSnackBarMessage('Endringar lagra!');
+        setIsSnackBarOpen(true);
+
+        updateDoc(eventDocRef, data);
+        await updatePoolEvent(id, data);
     };
 
     return (
@@ -133,6 +143,7 @@ const Edit = ({ id }: Props) => {
                             parent
                             editable={true}
                             editDescription={(edit) => setOpenDescriptionDialog(edit)}
+                            handleChange={saveTagsToDb}
                         />
                         <Snackbar
                             anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}

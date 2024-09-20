@@ -3,6 +3,7 @@ import { adminDb } from '$lib/firebase/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
 import type { ConEvent, PoolEvent } from '$lib/types';
 import { PoolName } from '$lib/enums';
+import { createIconArray } from './helpers/icons';
 
 export async function getAllEvents() {
     const eventRef = await adminDb.collection('events').get();
@@ -50,8 +51,18 @@ export async function getAdjacentPoolEventsById(id: string, day: PoolName) {
     return { prevNavigationId: undefined, nextNavigationId: undefined };
 }
 export async function getPoolEventById(id: string) {
-    const event = (await adminDb.collection('pool-events').doc(id).get()).data() as PoolEvent;
-    return { ...event, id };
+    const poolEvent = (await adminDb.collection('pool-events').doc(id).get()).data() as PoolEvent;
+    let icons = createIconArray({
+        adultsOnly: poolEvent.adultsOnly,
+        childFriendly: poolEvent.childFriendly,
+        beginnerFriendly: poolEvent.beginnerFriendly,
+        lessThanThreeHours: poolEvent.lessThanThreeHours,
+        moreThanSixHours: poolEvent.moreThanSixHours,
+        possiblyEnglish: poolEvent.possiblyEnglish,
+        volunteersPossible: poolEvent.volunteersPossible,
+    });
+    poolEvent.icons = icons;
+    return { ...poolEvent, id };
 }
 
 export async function getEventById(id: string) {
