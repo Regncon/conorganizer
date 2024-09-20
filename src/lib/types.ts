@@ -180,3 +180,27 @@ export type MyNewEvent = {
     isRead?: boolean;
     isAccepted?: boolean;
 };
+export type Participant = {
+    id: string;
+    name: string;
+    userId?: string;
+    over18: boolean;
+    notes: ParticipantNote[];
+    ticketId: string;
+    ticketType: string;
+    ticketEmail: string;
+    ticketStatus: string;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+};
+export type ParticipantNote = {
+    id: string;
+    participantId: string;
+    note: string;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+};
