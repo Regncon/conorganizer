@@ -26,6 +26,13 @@ const Dashboard = async () => {
             />
             <Events />
             <MyEvents />
+            <CardBase
+                href="/admin/dashboard/participants"
+                subTitle="Trykk for å gå til deltakaroversikta"
+                img="/participants-small.webp"
+                imgAlt="Deltakaroversikt"
+                title="Deltakaroversikt"
+            />
         </Box>
     );
 };

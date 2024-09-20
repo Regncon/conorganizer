@@ -5,7 +5,7 @@ const Events = async () => {
         <CardBase
             href="/admin/dashboard/events"
             subTitle="Trykk for å gå til alle arrangement"
-            img="/my-events.jpg"
+            img="/alle-arrangement-small.webp"
             imgAlt="Alle arrangement"
             title="Alle arrangement"
         />

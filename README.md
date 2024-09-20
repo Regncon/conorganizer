@@ -28,10 +28,9 @@ of your con schedule, your panels, and your expenses.
 
 ### Must haves for publishing events
 
-#### Ready for soft launch
-
 #### Hard launch
 
+-   Participant admin page | Gerhard
 -   Icons | Grethe :D
 -   Fix cookie lifetime
 -   Legge til tags i events og pool-events
