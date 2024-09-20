@@ -72,7 +72,6 @@ const MainEvent = ({
                     lessThanThreeHours: poolEvent?.lessThanThreeHours ?? false,
                     moreThanSixHours: poolEvent?.moreThanSixHours ?? false,
                     possiblyEnglish: poolEvent?.possiblyEnglish ?? false,
-                    volunteersPossible: poolEvent?.volunteersPossible ?? false,
                 });
 
                 if (poolEvent) {

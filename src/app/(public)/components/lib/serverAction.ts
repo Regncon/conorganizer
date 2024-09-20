@@ -59,7 +59,6 @@ export async function getPoolEventById(id: string) {
         lessThanThreeHours: poolEvent.lessThanThreeHours,
         moreThanSixHours: poolEvent.moreThanSixHours,
         possiblyEnglish: poolEvent.possiblyEnglish,
-        volunteersPossible: poolEvent.volunteersPossible,
     });
     poolEvent.icons = icons;
     return { ...poolEvent, id };

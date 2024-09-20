@@ -85,6 +85,7 @@ const Settings = ({ id }: Props) => {
             updateAt: new Date(Date.now()).toString(),
             updatedBy: user.email,
         };
+
         setIsSnackBarOpen(false);
         setSnackBarMessage('Endringar lagra!');
         setIsSnackBarOpen(true);
@@ -118,12 +119,19 @@ const Settings = ({ id }: Props) => {
                         >
                             <Paper elevation={1} sx={{ padding: '1rem' }}>
                                 <FormGroup sx={{ display: 'flex', gap: '1rem' }}>
-                                    <FormLabel>Instillinger</FormLabel>
+                                    <FormLabel>Innstillinger</FormLabel>
                                     <FormControlLabel
                                         control={<Switch />}
                                         label="Publisert"
                                         name="published"
                                         checked={data.published}
+                                        // onChange={() => setData({ ...data, published: !data.published })}
+                                    />
+                                    <FormControlLabel
+                                        control={<Switch />}
+                                        label="Kan arrangeres av andre frivillige"
+                                        name="volunteersPossible"
+                                        checked={data.volunteersPossible}
                                         // onChange={() => setData({ ...data, published: !data.published })}
                                     />
                                     <TextField
