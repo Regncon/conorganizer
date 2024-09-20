@@ -36,54 +36,6 @@ const LoginPage = () => {
     const email = searchParams.get('email') ?? '';
     const expiredSession = searchParams.get('expired') === 'true' ? true : false;
 
-    const [user, setUser] = useState<User | null>();
-    useEffect(() => {
-        const unsubscribeUser = onAuthStateChanged(firebaseAuth, async (user) => {
-            setUser(user);
-            if (!user) {
-                return;
-            }
-            //const idToken = await user.getIdToken();
-
-            //await setSessionCookie(idToken);
-        });
-
-        return () => {
-            unsubscribeUser();
-        };
-    }, [user]);
-
-    console.log('user', user);
-
-    const provider = new GoogleAuthProvider();
-    const handleGoogleLoginRedirect = async () => {
-        signInWithRedirect(firebaseAuth, provider);
-    };
-    getRedirectResult(firebaseAuth)
-        .then((result) => {
-            // This gives you a Google Access Token. You can use it to access Google APIs.
-            const credential = result ? GoogleAuthProvider.credentialFromResult(result) : null;
-            const token = credential?.accessToken;
-            // The signed-in user info.
-            const user = result?.user;
-            // IdP data available using getAdditionalUserInfo(result)
-            // ...
-        })
-        .catch((error) => {
-            // Handle Errors here.
-            const errorCode = error.code;
-            console.error('errorCode', errorCode);
-            const errorMessage = error.message;
-            console.error('errorMessage', errorMessage);
-            // The email of the user's account used.
-            const email = error.customData?.email;
-            console.error('email', email);
-            // The AuthCredential type that was used.
-            const credential = GoogleAuthProvider.credentialFromError(error);
-            console.error('credential', credential);
-            // ...
-        });
-
     useEffect(() => {
         router.prefetch('/');
     }, []);
@@ -146,10 +98,6 @@ const LoginPage = () => {
                 action={formAction}
             >
                 <GoogleSignInButton />
-                <Typography variant="h3" textAlign="center">
-                    eller
-                </Typography>
-                <Button onClick={handleGoogleLoginRedirect}>Logg inn med Google Redirect</Button>
 
                 <EmailTextField defaultValue={email} error={!!state.emailError} helperText={state.emailError} />
                 <PasswordTextField error={!!state.passwordError} helperText={state.passwordError} />
