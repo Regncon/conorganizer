@@ -1,7 +1,6 @@
 import type { PoolEvent } from '$lib/types';
 import { faUserSecret, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { NavigateBefore } from '@mui/icons-material';
 import { Paper, Box, Typography, Chip } from '@mui/material';
 import Image from 'next/image';
 import diceBig from '$public/dice-big.webp';
