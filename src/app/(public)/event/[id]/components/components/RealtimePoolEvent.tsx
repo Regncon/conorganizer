@@ -14,8 +14,6 @@ const RealtimePoolEvent = ({ id }: Props) => {
         let unsubscribeSnapshot: Unsubscribe | undefined;
         if (id !== undefined) {
             unsubscribeSnapshot = onSnapshot(doc(db, 'pool-events', id), (snapshot) => {
-                console.log('here1', id, snapshot.data());
-
                 updateEventById(id);
             });
         }
