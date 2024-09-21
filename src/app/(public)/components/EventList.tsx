@@ -8,11 +8,13 @@ import EventListDay from './components/ui/EventListDay';
 import { useObserveIntersectionObserver } from './lib/hooks/useObserveIntersectionObserver';
 import type { PoolEvents } from './lib/serverAction';
 import { Route } from 'next';
+import type { PoolEvent } from '$lib/types';
 
 type Props = {
     events: PoolEvents;
 };
 
+const removeUnpublishedEventsFilter = (event: PoolEvent) => event.published;
 const EventList = ({ events }: Props) => {
     return (
         <Box>
@@ -29,7 +31,7 @@ const EventList = ({ events }: Props) => {
                                 gap: '1rem',
                             }}
                         >
-                            {events.map((event) => (
+                            {events.filter(removeUnpublishedEventsFilter).map((event) => (
                                 <Box
                                     component={NextLink}
                                     key={event.id}
