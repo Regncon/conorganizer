@@ -1,7 +1,6 @@
 'use server';
-
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { Participant } from '$lib/types';
+import { ActionResponse, Participant } from '$lib/types';
 import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 
 export type CrmRecord = {
@@ -118,14 +117,18 @@ export const GetTicketsByEmail = async (email: string | null | undefined) => {
 };
 export const ConvertTicketIdToParticipant = async (ticketId: number) => {
     console.log('ConvertTicketToParticipant ', ticketId);
-    //Query ticket from CheckIn by id
     const tickets = await GetTicketsFromCheckIn();
 
     const ticket = tickets?.find((ticket) => ticket.id === ticketId);
     console.log(ticket, 'ticket');
 
     if (!ticket) {
-        return 'No ticket found';
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Fant ikke billetten',
+        };
+        console.error(response);
+        return response;
     }
 
     const result = await ConvertTicketToParticipant(ticket);
@@ -169,7 +172,17 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
 const ConvertTicketToParticipant = async (ticket: EventTicket) => {
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {
-        return;
+        // return new ActionResponse = {
+        //     type: "error"
+        //     , message: 'Ikke autorisert'
+        //     error: 'getAuthorizedAuth failed'
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Ikke autorisert',
+            error: 'getAuthorizedAuth failed',
+        };
+        console.error(response);
+        return response;
     }
 
     const participantRef = collection(db, 'participants');
@@ -178,7 +191,11 @@ const ConvertTicketToParticipant = async (ticket: EventTicket) => {
 
     if (!querySnapshot.empty) {
         console.log('Participant already exists:', querySnapshot.docs[0].data());
-        return 'Participant already exists';
+        const response: ActionResponse = {
+            type: 'warning',
+            message: 'Deltageren er allerede registrert',
+        };
+        return response;
     }
 
     let participant: Partial<Participant> = {
@@ -201,10 +218,19 @@ const ConvertTicketToParticipant = async (ticket: EventTicket) => {
         console.log('Document written with ID: ', docRef.id);
         participantId = docRef.id;
     } catch (e) {
-        console.error('Error adding prticipant document: ', e);
-        return;
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Feil ved lagring av deltager',
+            error: e,
+        };
+        console.error(response);
+        return response;
     }
-    return 'Convertion done';
+    const response: ActionResponse = {
+        type: 'success',
+        message: 'Deltager lagret',
+    };
+    return response;
 };
 
 export const GetTicketsFromCheckIn = async () => {

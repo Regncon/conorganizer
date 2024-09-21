@@ -1,23 +1,10 @@
 'use client';
-import {
-    Box,
-    Button,
-    Card,
-    CardActions,
-    CardContent,
-    FormControl,
-    Input,
-    InputAdornment,
-    InputLabel,
-    Typography,
-} from '@mui/material';
+import { Box, Card, CardActions, FormControl, Input, InputAdornment, InputLabel } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import React, { useEffect, useState } from 'react';
-import {
-    ConvertTicketIdToParticipant,
-    EventTicket,
-} from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import { EventTicket } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 import Fuse from 'fuse.js';
+import TicketCard from './components/TicketCard';
 
 type Props = {
     tickets: EventTicket[];
@@ -43,10 +30,6 @@ const TicketList = ({ tickets }: Props) => {
         setFilteredTickets(result);
     }, [searchQuery, tickets]);
 
-    const handleConvertToParticipant = async (id: number) => {
-        const result = await ConvertTicketIdToParticipant(id);
-        console.log(result);
-    };
     return (
         <Box
             sx={{
@@ -72,27 +55,7 @@ const TicketList = ({ tickets }: Props) => {
                     </FormControl>
                 </CardActions>
             </Card>
-            {filteredTickets?.map((ticket) => (
-                <Card key={ticket.id}>
-                    <CardContent>
-                        <Typography>Bilett: {ticket.order_id}</Typography>
-                        <Typography>{ticket.category}</Typography>
-                        <Typography>
-                            {ticket.crm.first_name} {ticket.crm.last_name}
-                        </Typography>
-                        <Typography>{ticket.crm.email}</Typography>
-                    </CardContent>
-                    <CardActions>
-                        <Button
-                            onClick={() => handleConvertToParticipant(ticket.id)}
-                            variant="contained"
-                            color="primary"
-                        >
-                            Konverter bilett til deltager
-                        </Button>
-                    </CardActions>
-                </Card>
-            ))}
+            {filteredTickets?.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)}
         </Box>
     );
 };
