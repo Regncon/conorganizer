@@ -1,7 +1,7 @@
 import type { PoolEvent } from '$lib/types';
 import { faUserSecret, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Paper, Box, Typography, Chip } from '@mui/material';
+import { Paper, Box, Typography, Chip, Link, Button } from '@mui/material';
 import Image from 'next/image';
 import diceBig from '$public/dice-big.webp';
 import InterestSelector from './components/InterestSelector';
@@ -9,14 +9,16 @@ import NavigatePreviousLink from './ui/NavigatePreviousLink';
 import NavigateNextLink from './ui/NavigateNextLink';
 import MuiMarkdownClient from './ui/MuiMarkdownClient';
 import { createIconFromString } from '$app/(public)/components/lib/helpers/icons';
+import GoToEventAdministrationButton from './ui/GoToEventAdministrationButton';
 
 type Props = {
     poolEvent: PoolEvent;
     prevNavigationId?: string;
     nextNavigationId?: string;
+    isAdmin?: boolean;
 };
 
-const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) => {
+const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isAdmin = false }: Props) => {
     console.log(typeof window === 'undefined' ? 'server' : 'client');
 
     return (
@@ -29,7 +31,7 @@ const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) 
                     '--slider-interest-width': '19.5714rem',
                     '--event-margin-left': '4rem',
                     '--event-header-margin-left': 'calc(var(--event-margin-left) - 1rem)',
-                    '--event-width': 'min(100dvw, 1200px)',
+                    '--event-width': 'min(100%, 1200px)',
                 },
                 maxWidth: 'var(--event-width)',
             }}
@@ -142,6 +144,9 @@ const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) 
                 <Box sx={{ placeSelf: 'center start' }}>
                     <NavigatePreviousLink previousNavigationId={prevNavigationId} />
                 </Box>
+
+                <GoToEventAdministrationButton parentEventId={poolEvent.parentEventId} isAdmin={isAdmin} />
+
                 <Box sx={{ placeSelf: 'center end' }}>
                     <NavigateNextLink nextNavigationId={nextNavigationId} />
                 </Box>

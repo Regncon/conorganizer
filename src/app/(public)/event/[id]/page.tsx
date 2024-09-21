@@ -13,6 +13,7 @@ import SmallMediaQueryWrapper from './components/ui/SmallMediaQueryWrapper';
 import { Box } from '@mui/material';
 import { PoolName } from '$lib/enums';
 import RealtimePoolEvent from './components/components/RealtimePoolEvent';
+import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 
 type Props = {
     params: { id: string };
@@ -31,19 +32,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const EventPage = async ({ params: { id } }: Props) => {
     const poolEvent = await getPoolEventById(id);
     const { prevNavigationId, nextNavigationId } = await getAdjacentPoolEventsById(id, poolEvent.poolName);
+    const { user } = await getAuthorizedAuth();
+    const claims = (await user?.getIdTokenResult())?.claims;
+    const isAdmin = claims?.admin ?? false;
 
     return (
         <>
             <SmallMediaQueryWrapper>
-                <MainEvent id={id} prevNavigationId={prevNavigationId} nextNavigationId={nextNavigationId} />
+                <MainEvent
+                    id={id}
+                    prevNavigationId={prevNavigationId}
+                    nextNavigationId={nextNavigationId}
+                    isAdmin={isAdmin}
+                />
             </SmallMediaQueryWrapper>
 
             <BigMediaQueryWrapper>
-                <Box sx={{ display: 'grid', placeContent: ' center' }}>
+                <Box sx={{ display: 'grid', placeItems: ' center' }}>
                     <MainEventBig
                         poolEvent={poolEvent}
                         prevNavigationId={prevNavigationId}
                         nextNavigationId={nextNavigationId}
+                        isAdmin={isAdmin}
                     />
                 </Box>
             </BigMediaQueryWrapper>
