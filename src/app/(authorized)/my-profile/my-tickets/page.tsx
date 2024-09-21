@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import TicketNotFound from './components/TicketNotFound';
+import TicketNotFound from './not-found/TicketNotFound';
 import Tickets from './components/Tickets';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { redirect } from 'next/navigation';
@@ -12,11 +12,13 @@ const MyTickets = async () => {
     }
     const tickets = await GetTicketsByEmail(user?.email);
 
+    if (tickets?.length === 0 || tickets === undefined) {
+        redirect('/my-profile/my-tickets/not-found');
+    }
+
     return (
         <Box sx={{ display: 'flex', paddingLeft: '2rem', gap: '1rem' }}>
-            {tickets?.length === 0 ?
-                <TicketNotFound />
-                : <Tickets tickets={tickets as EventTicket[]} />}
+            <Tickets tickets={tickets} />
         </Box>
     );
 };

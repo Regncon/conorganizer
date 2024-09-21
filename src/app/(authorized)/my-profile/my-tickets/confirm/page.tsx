@@ -1,7 +1,7 @@
-import { Paper, Typography, Button, Box } from '@mui/material';
+import { Paper, Typography, Box } from '@mui/material';
 import ConfirmEmailButtons from './components/ui/ConfirmEmailButtons';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import LaunchIcon from '@mui/icons-material/Launch';
+import BuyTicketButton from '../shared/ui/BuyTicketButton';
 
 type Props = {};
 
@@ -20,14 +20,7 @@ const Confirm = async ({ }: Props) => {
                     <ConfirmEmailButtons disabled={user?.emailVerified} />
                 </Box>
                 <Typography variant="h2">Har ikke billetter</Typography>
-                <Button
-                    fullWidth
-                    variant="contained"
-                    href="https://event.checkin.no/73685/regncon-xxxii-2024"
-                    color="secondary"
-                >
-                    Kjøp billett <LaunchIcon sx={{ marginInlineStart: '1rem' }} />
-                </Button>
+                <BuyTicketButton />
             </Paper>
         </Box>
     );
