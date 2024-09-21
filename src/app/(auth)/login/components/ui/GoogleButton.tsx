@@ -5,6 +5,7 @@ import SvgIcon from '@mui/material/SvgIcon';
 import { firebaseAuth } from '$lib/firebase/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
+import type { Route } from 'next';
 
 const GoogleIcon = () => (
     <SvgIcon viewBox="0 0 48 48">
@@ -28,15 +29,18 @@ const GoogleIcon = () => (
     </SvgIcon>
 );
 
-type Props = {};
+type Props = {
+    redirectTo?: Route;
+    disabled?: boolean;
+};
 
-const GoogleSignInButton = ({ }: Props) => {
+const GoogleSignInButton = ({ redirectTo = '/', disabled = false }: Props) => {
     const router = useRouter();
     const handleClick = async () => {
         const provider = new GoogleAuthProvider();
         signInWithPopup(firebaseAuth, provider)
             .then(async (result) => {
-                router.prefetch('/');
+                router.prefetch(redirectTo);
                 // This gives you a Google Access Token. You can use it to access the Google API.
                 const credential = GoogleAuthProvider.credentialFromResult(result);
                 const token = credential?.accessToken;
@@ -49,7 +53,7 @@ const GoogleSignInButton = ({ }: Props) => {
                 const user = result.user;
                 // IdP data available using getAdditionalUserInfo(result)
                 // ...
-                router.replace('/');
+                router.replace(redirectTo);
             })
             .catch((error) => {
                 // Handle Errors here.
@@ -95,6 +99,7 @@ const GoogleSignInButton = ({ }: Props) => {
                     opacity: 0.38,
                 },
             }}
+            disabled={disabled}
         >
             Sign in with Google
         </Button>

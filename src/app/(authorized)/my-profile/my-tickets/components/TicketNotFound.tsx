@@ -1,5 +1,5 @@
 import { Paper, Typography, Button, TextField, Box, FormControl } from '@mui/material';
-import ConfirmEmailButton from './UI/ConfirmEmail';
+import ConfirmEmailButtons from '../confirm/components/ui/ConfirmEmailButtons';
 
 type Props = {};
 

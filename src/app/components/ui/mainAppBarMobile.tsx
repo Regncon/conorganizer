@@ -1,3 +1,6 @@
+'use client';
+import { useSetCustomCssVariable } from '$lib/hooks/useSetCustomCssVariable';
+import { useMediaQuery } from '@mui/material';
 import MainAppBarContent from './MainAppBarContent';
 
 type Props = {
@@ -6,6 +9,8 @@ type Props = {
 };
 
 const MainAppBarMobile = ({ isLoggedIn, admin }: Props) => {
+    const isMobile = useMediaQuery('(max-width: 600px)');
+    const ref = useSetCustomCssVariable({ '--app-bar-height': 'height' }, isMobile);
     return (
         <MainAppBarContent
             isLoggedIn={isLoggedIn}
@@ -18,6 +23,7 @@ const MainAppBarMobile = ({ isLoggedIn, admin }: Props) => {
                 minHeight: '5.3571rem',
                 placeContent: 'center',
             }}
+            ref={ref}
         />
     );
 };

@@ -33,7 +33,6 @@ of your con schedule, your panels, and your expenses.
 -   Participant admin page | Gerhard
 -   Icons | Grethe :D
 -   Fix cookie lifetime
--   Legge til tags i events og pool-events
 -   Vise hvilken deltaker du er vist du har flere deltakere på samme billett
 -   Linke til pool-events vist det finnes i flere pools
 -   Filter out my signups and tags
@@ -99,3 +98,4 @@ of your con schedule, your panels, and your expenses.
 -   Switch default card image
 -   Google log-in redirect bug
 -   Disable interest function
+-   Legge til tags i events og pool-event

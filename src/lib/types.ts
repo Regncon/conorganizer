@@ -109,7 +109,6 @@ export type IconTypes = {
     lessThanThreeHours: boolean;
     moreThanSixHours: boolean;
     beginnerFriendly: boolean;
-    volunteersPossible: boolean;
 };
 
 export type IconName = keyof IconTypes;

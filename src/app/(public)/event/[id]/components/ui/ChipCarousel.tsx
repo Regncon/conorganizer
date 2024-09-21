@@ -16,7 +16,6 @@ const chipIcons = createIconArray({
     lessThanThreeHours: true,
     moreThanSixHours: true,
     possiblyEnglish: true,
-    volunteersPossible: true,
 });
 type Props = {
     data: PoolEvent;

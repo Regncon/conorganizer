@@ -13,7 +13,6 @@ export const createIconArray = ({
     lessThanThreeHours,
     moreThanSixHours,
     possiblyEnglish,
-    volunteersPossible,
 }: IconTypes) => {
     let icons: IconOption[] = [];
     if (childFriendly) icons = [...icons, { label: 'Barnevennlig', icon: 'childFriendly' }];
@@ -22,9 +21,6 @@ export const createIconArray = ({
     if (lessThanThreeHours) icons = [...icons, { label: 'Mindre enn tre timer', icon: 'lessThanThreeHours' }];
     if (moreThanSixHours) icons = [...icons, { label: 'Mer enn seks timer', icon: 'moreThanSixHours' }];
     if (beginnerFriendly) icons = [...icons, { label: 'Nybegynnervennlig', icon: 'beginnerFriendly' }];
-    if (volunteersPossible) {
-        icons = [...icons, { label: 'Kan arrangeres av andre frivillige', icon: 'volunteersPossible' }];
-    }
     return icons;
 };
 
@@ -43,8 +39,6 @@ export const createIconFromString = (iconString: IconName) => {
             return <MoreHoursIcon />;
         case 'beginnerFriendly':
             return <BeginnerIcon />;
-        case 'volunteersPossible':
-            return <ChildFriendlyIcon />;
         default:
             return undefined;
     }

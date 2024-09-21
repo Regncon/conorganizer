@@ -1,4 +1,5 @@
 :root {
+    --centering-height: calc(100dvh - var(--app-bar-height, 0px));
     --scroll-margin-top: 0;
     --app-bar-height: 0;
     --image-height: 0;
