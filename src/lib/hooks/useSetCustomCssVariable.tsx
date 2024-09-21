@@ -8,13 +8,16 @@ type PropertyType = PartialRecord<CustomCssVariables, BoundingRectProperties>;
 
 /**
  * Custom hook to dynamically set a CSS variable based on the size of a referenced element.
- * @param {PropertyType} property - The CSS custom property to set.
- * @returns A ref to attach to the DOM element whose size will determine the custom variable.
+ * @param {PropertyType} propertiesMap - A map where the key is the CSS custom property (e.g., '--scroll-margin-top') and the value is a corresponding DOMRect property (e.g., `width`, `height`, etc.).
+ * @param {boolean | undefined} isActive - Controls whether the hook runs. The hook will run if `true` or `undefined`, and will be disabled if explicitly set to `false`.
+ * @returns {React.RefObject<HTMLElement>} A ref to attach to the DOM element whose size will determine the custom CSS variable.
  */
-export const useSetCustomCssVariable = (propertiesMap: PropertyType) => {
+export const useSetCustomCssVariable = (propertiesMap: PropertyType, isActive?: boolean) => {
     const ref = useRef<HTMLElement | null>(null);
 
     useEffect(() => {
+        if (isActive === false) return;
+
         let removeProperties: RemoveProperty[] = [];
         const updateCssVariables = () => {
             if (ref.current) {
@@ -40,7 +43,7 @@ export const useSetCustomCssVariable = (propertiesMap: PropertyType) => {
             resizeObserver.disconnect();
             removeProperties.forEach((remove) => remove());
         };
-    }, [propertiesMap]);
+    }, [propertiesMap, isActive]);
 
     return ref;
 };
