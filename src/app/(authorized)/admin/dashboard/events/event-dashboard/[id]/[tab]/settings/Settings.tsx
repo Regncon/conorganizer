@@ -185,7 +185,7 @@ const Settings = ({ id }: Props) => {
                                 <Typography variant="h2">Bilder</Typography>
                                 <Typography>Filformat .webp</Typography>
                                 <Typography>
-                                    Tips: Ikke bruk spesialtegin i filnavn og unngå mellomrom og store bokstaver
+                                    Tips: Ikke bruk spesialtegn i filnavn og unngå mellomrom og store bokstaver
                                 </Typography>
                                 <Typography component={'h4'}>Lite bilde bredde 430 og høyde 260</Typography>
                                 <TextField
@@ -197,7 +197,7 @@ const Settings = ({ id }: Props) => {
                                     variant="outlined"
                                     fullWidth
                                 />
-                                <img src={data.smallImageURL} alt="small" />
+                                <img src={data.smallImageURL ? data.smallImageURL : '/dice-small.webp'} alt="small" />
                                 <Divider />
 
                                 <Typography component={'h3'}>Stort blide bredde 1200 og høyde 212</Typography>
@@ -210,7 +210,12 @@ const Settings = ({ id }: Props) => {
                                     variant="outlined"
                                     fullWidth
                                 />
-                                <Box component={'img'} maxWidth={430} src={data.bigImageURL} alt="big" />
+                                <Box
+                                    component={'img'}
+                                    maxWidth={430}
+                                    src={data.bigImageURL ? data.bigImageURL : '/dice-big.webp'}
+                                    alt="big"
+                                />
                             </Paper>
                         </Grid2>
                         <Grid2

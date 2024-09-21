@@ -49,7 +49,7 @@ const EventList = ({ events }: Props) => {
                                             gameMaster={event.gameMaster}
                                             shortDescription={event.shortDescription}
                                             system={event.system}
-                                            backgroundImage={event.smallImageURL ? event.smallImageURL : undefined}
+                                            backgroundImage={event.smallImageURL}
                                         />
                                     }
                                 </Box>

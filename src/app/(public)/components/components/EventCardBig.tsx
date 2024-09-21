@@ -23,17 +23,17 @@ export default function EventCardBig({
 }: EventCardProps) {
     const circleCheckOrPencilIcon =
         isAccepted ? faCheckDouble
-            : myEventBarSubmitted ? faCircleCheck
-                : faPencil;
+        : myEventBarSubmitted ? faCircleCheck
+        : faPencil;
     const SuccessOrWarningColor =
         isAccepted ? 'success.dark'
-            : myEventBarSubmitted ? 'success.light'
-                : 'warning.main';
+        : myEventBarSubmitted ? 'success.light'
+        : 'warning.main';
 
     return (
         <Card
             sx={{
-                backgroundImage: `url(${backgroundImage})`,
+                backgroundImage: `url(${backgroundImage ? backgroundImage : '/dice-small.webp'})`,
                 minHeight: `${myEventBar ? 'calc(267px + 65px)' : '267px'}`,
                 maxHeight: `${myEventBar ? 'calc(267px + 65px)' : '267px'}`,
                 backgroundSize: 'cover',
@@ -73,15 +73,15 @@ export default function EventCardBig({
                                 <Typography sx={{ color: SuccessOrWarningColor }}>
                                     {isAccepted ?
                                         'Godtatt'
-                                        : myEventBarSubmitted ?
-                                            'Sendt inn'
-                                            : 'Kladd'}
+                                    : myEventBarSubmitted ?
+                                        'Sendt inn'
+                                    :   'Kladd'}
                                 </Typography>
                             </Box>
                             <TrashButton docId={myEventDocId} />
                         </Box>
                     </>
-                    : null}
+                :   null}
 
                 <CardHeader
                     title={title}
