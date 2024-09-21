@@ -3,7 +3,7 @@ import {
     GetTicketsFromCheckIn,
 } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 import { Typography } from '@mui/material';
-import TicketList from './TicketList';
+import TicketList from './components/TicketList';
 
 const AddParticipant = async () => {
     const tickets: EventTicket[] | undefined = await GetTicketsFromCheckIn();
