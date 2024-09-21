@@ -1,4 +1,3 @@
-import { Box } from '@mui/material';
 import Tickets from './components/Tickets';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { redirect } from 'next/navigation';
