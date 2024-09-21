@@ -2,7 +2,7 @@
 
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { Participant } from '$lib/types';
-import { addDoc, collection } from 'firebase/firestore';
+import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
 
 export type CrmRecord = {
     id: number;
@@ -167,13 +167,20 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
 };
 
 const ConvertTicketToParticipant = async (ticket: EventTicket) => {
-    //Ckeck if ticket is already converted
-
-    //Create participant from ticket
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {
         return;
     }
+
+    const participantRef = collection(db, 'participants');
+    const q = query(participantRef, where('ticketId', '==', ticket.id));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        console.log('Participant already exists:', querySnapshot.docs[0].data());
+        return 'Participant already exists';
+    }
+
     let participant: Partial<Participant> = {
         name: `${ticket.crm.first_name} ${ticket.crm.last_name}`,
         ticketEmail: ticket.crm.email,
@@ -187,17 +194,6 @@ const ConvertTicketToParticipant = async (ticket: EventTicket) => {
         updatedBy: user.email as string,
     };
     console.log(participant, 'participant');
-
-    //Save participant to firestore
-    // let poolEventId = '';
-    // try {
-    //     const docRef = await addDoc(collection(db, 'pool-events'), poolEvent);
-    //     console.log('Document written with ID: ', docRef.id);
-    //     poolEventId = docRef.id;
-    // } catch (e) {
-    //     console.error('Error adding document: ', e);
-    //     return;
-    // }
 
     let participantId = '';
     try {
