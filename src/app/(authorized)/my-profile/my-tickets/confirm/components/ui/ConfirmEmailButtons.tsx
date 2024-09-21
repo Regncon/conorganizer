@@ -1,5 +1,4 @@
 'use client';
-import GoogleSignInButton from '$app/(auth)/login/components/ui/GoogleButton';
 import useUser from '$lib/hooks/useUser';
 import { Button, CircularProgress } from '@mui/material';
 import { sendEmailVerification } from 'firebase/auth';
@@ -40,16 +39,13 @@ const ConfirmEmailButtons = ({ disabled = false }: Props) => {
             >
                 {disabled || isUserVerified ?
                     'allerede verifisert'
-                : isVerificationStarted ?
-                    'Venter på verifisering av e-post'
-                :   'Bekreft e-post'}
+                    : isVerificationStarted ?
+                        'Venter på verifisering av e-post'
+                        : 'Bekreft e-post'}
                 {!disabled && !isUserVerified && isVerificationStarted ?
                     <CircularProgress color="secondary" size="1.5rem" sx={{ marginInlineStart: '1rem' }} />
-                :   null}
+                    : null}
             </Button>
-            {disabled || isUserVerified ? null : (
-                <GoogleSignInButton redirectTo="/my-profile/my-tickets" disabled={isVerificationStarted} />
-            )}
         </>
     );
 };

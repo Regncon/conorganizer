@@ -39,9 +39,6 @@ of your con schedule, your panels, and your expenses.
 -   Add is gm to event
 -   Participants can choose favorite events
 -   Send emails from server
--   Create participant in database
--   Check if participant is over 18 |
--   Connect to checkin system
 -   Something that says which participant you're logged in as
 
 #### Nice to haves for publishing events
@@ -99,3 +96,6 @@ of your con schedule, your panels, and your expenses.
 -   Disable interest function
 -   Legge til tags i events og pool-event
 -   Participant admin page | Gerhard
+-   Create participant in database
+-   Check if participant is over 18 |
+-   Connect to checkin system
