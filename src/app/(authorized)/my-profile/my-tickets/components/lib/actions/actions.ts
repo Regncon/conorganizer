@@ -1,4 +1,9 @@
 'use server';
+
+import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
+import { Participant } from '$lib/types';
+import { addDoc, collection } from 'firebase/firestore';
+
 export type CrmRecord = {
     id: number;
     firstName: string;
@@ -110,6 +115,100 @@ export const GetTicketsByEmail = async (email: string | null | undefined) => {
     );
 
     return ticketsWithOrderNumberFromEmail;
+};
+export const ConvertTicketIdToParticipant = async (ticketId: number) => {
+    console.log('ConvertTicketToParticipant ', ticketId);
+    //Query ticket from CheckIn by id
+    const tickets = await GetTicketsFromCheckIn();
+
+    const ticket = tickets?.find((ticket) => ticket.id === ticketId);
+    console.log(ticket, 'ticket');
+
+    if (!ticket) {
+        return 'No ticket found';
+    }
+
+    const result = await ConvertTicketToParticipant(ticket);
+    return result;
+
+    // const query = `{
+    // eventTickets(customer_id: 13446, id: ${ticketId}, onlyCompleted: true) {
+    //   id
+    //   category
+    //   category_id
+    //   crm {
+    //     first_name
+    //     last_name
+    //     id
+    //     email
+    //   }
+    //   order_id
+    // }
+    // }`;
+    //
+    // const res = await fetch(
+    //     `https://app.checkin.no/graphql?client_id=${process.env.CHECKIN_KEY}&client_secret=${process.env.CHECKIN_SECRET}`,
+    //     {
+    //         method: 'POST',
+    //         body: JSON.stringify({ query }),
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //         },
+    //     }
+    // );
+    // if (res.status !== 200) {
+    //     throw new Error('Failed to fetch tickets');
+    // }
+    // const queryResult: CrmJson | undefined = await res.json();
+    // console.log(queryResult, 'queryResult');
+    //
+    // // const result = await ConvertTicketToParticipant(queryResult?.data.eventTickets[0] as EventTicket);
+    // return result;
+};
+
+const ConvertTicketToParticipant = async (ticket: EventTicket) => {
+    //Ckeck if ticket is already converted
+
+    //Create participant from ticket
+    const { db, user } = await getAuthorizedAuth();
+    if (db === null || user === null) {
+        return;
+    }
+    let participant: Partial<Participant> = {
+        name: `${ticket.crm.first_name} ${ticket.crm.last_name}`,
+        ticketEmail: ticket.crm.email,
+        ticketId: ticket.id,
+        orderId: ticket.order_id,
+        ticketCategory: ticket.category,
+        ticketCategoryId: ticket.category_id,
+        createdAt: new Date().toISOString(),
+        createdBy: user.email as string,
+        updateAt: new Date().toISOString(),
+        updatedBy: user.email as string,
+    };
+    console.log(participant, 'participant');
+
+    //Save participant to firestore
+    // let poolEventId = '';
+    // try {
+    //     const docRef = await addDoc(collection(db, 'pool-events'), poolEvent);
+    //     console.log('Document written with ID: ', docRef.id);
+    //     poolEventId = docRef.id;
+    // } catch (e) {
+    //     console.error('Error adding document: ', e);
+    //     return;
+    // }
+
+    let participantId = '';
+    try {
+        const docRef = await addDoc(collection(db, 'participants'), participant);
+        console.log('Document written with ID: ', docRef.id);
+        participantId = docRef.id;
+    } catch (e) {
+        console.error('Error adding prticipant document: ', e);
+        return;
+    }
+    return 'Convertion done';
 };
 
 export const GetTicketsFromCheckIn = async () => {

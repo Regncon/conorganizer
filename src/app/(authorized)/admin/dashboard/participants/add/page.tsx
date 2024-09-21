@@ -2,7 +2,7 @@ import {
     EventTicket,
     GetTicketsFromCheckIn,
 } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
-import { Paper, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import TicketList from './TicketList';
 
 const AddParticipant = async () => {
@@ -10,7 +10,7 @@ const AddParticipant = async () => {
     return (
         <>
             <Typography variant="h1">Ligg til deltager</Typography>
-            <TicketList tickets={tickets || []} />;
+            <TicketList tickets={tickets || []} />
         </>
     );
 };

@@ -185,10 +185,11 @@ export type Participant = {
     userId?: string;
     over18: boolean;
     notes: ParticipantNote[];
-    ticketId: string;
-    ticketType: string;
+    orderId: number;
+    ticketId: number;
     ticketEmail: string;
-    ticketStatus: string;
+    ticketCategory: string;
+    ticketCategoryId: number;
     createdAt: string;
     createdBy: string;
     updateAt: string;

@@ -1,6 +1,7 @@
 'use client';
 import {
     Box,
+    Button,
     Card,
     CardActions,
     CardContent,
@@ -12,7 +13,10 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import React, { useEffect, useState } from 'react';
-import { EventTicket } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import {
+    ConvertTicketIdToParticipant,
+    EventTicket,
+} from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 import Fuse from 'fuse.js';
 
 type Props = {
@@ -39,6 +43,10 @@ const TicketList = ({ tickets }: Props) => {
         setFilteredTickets(result);
     }, [searchQuery, tickets]);
 
+    const handleConvertToParticipant = async (id: number) => {
+        const result = await ConvertTicketIdToParticipant(id);
+        console.log(result);
+    };
     return (
         <Box
             sx={{
@@ -50,7 +58,7 @@ const TicketList = ({ tickets }: Props) => {
             <Card>
                 <CardActions>
                     <FormControl variant="standard">
-                        <InputLabel htmlFor="input-with-icon-adornment">Search for a ticket</InputLabel>
+                        <InputLabel htmlFor="input-with-icon-adornment">Søk etter bilett</InputLabel>
                         <Input
                             id="input-with-icon-adornment"
                             value={searchQuery}
@@ -67,13 +75,22 @@ const TicketList = ({ tickets }: Props) => {
             {filteredTickets?.map((ticket) => (
                 <Card key={ticket.id}>
                     <CardContent>
-                        <Typography>Ticket: {ticket.order_id}</Typography>
+                        <Typography>Bilett: {ticket.order_id}</Typography>
                         <Typography>{ticket.category}</Typography>
                         <Typography>
                             {ticket.crm.first_name} {ticket.crm.last_name}
                         </Typography>
                         <Typography>{ticket.crm.email}</Typography>
                     </CardContent>
+                    <CardActions>
+                        <Button
+                            onClick={() => handleConvertToParticipant(ticket.id)}
+                            variant="contained"
+                            color="primary"
+                        >
+                            Konverter bilett til deltager
+                        </Button>
+                    </CardActions>
                 </Card>
             ))}
         </Box>
