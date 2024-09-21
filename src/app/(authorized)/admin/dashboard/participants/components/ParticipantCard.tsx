@@ -51,7 +51,7 @@ const ParticipantCard = ({ participant }: Props) => {
     };
 
     return (
-        <Card sx={{ minWidth: 306 }}>
+        <Card sx={{ minWidth: 306, maxWidth: 430 }}>
             <CardHeader title={participant.name} subheader={participant.ticketCategory} />
             <CardContent sx={{ paddingTop: 0 }}>
                 <Stack direction="row" spacing={2}>

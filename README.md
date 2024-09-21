@@ -30,7 +30,6 @@ of your con schedule, your panels, and your expenses.
 
 #### Hard launch
 
--   Participant admin page | Gerhard
 -   Icons | Grethe :D
 -   Fix cookie lifetime
 -   Vise hvilken deltaker du er vist du har flere deltakere på samme billett
@@ -99,3 +98,4 @@ of your con schedule, your panels, and your expenses.
 -   Google log-in redirect bug
 -   Disable interest function
 -   Legge til tags i events og pool-event
+-   Participant admin page | Gerhard
