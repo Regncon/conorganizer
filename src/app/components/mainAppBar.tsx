@@ -8,7 +8,7 @@ type Props = {};
 
 const MainAppBar = async ({}: Props) => {
     const { user } = await getAuthorizedAuth();
-    const claims = (await user?.getIdTokenResult())?.claims as ParsedTokenWithAdmin;
+    const claims = (await user?.getIdTokenResult())?.claims;
     const admin = claims?.admin ?? false;
 
     return (
