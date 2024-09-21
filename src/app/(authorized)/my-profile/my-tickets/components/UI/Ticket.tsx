@@ -1,21 +1,29 @@
 import { Box, Button, Card, CardContent, Paper, Typography } from '@mui/material';
+import { EventTicket } from '../lib/actions/actions';
 
-export default function Ticket() {
+type Props = {
+    ticket: EventTicket;
+};
+
+export default function Ticket({ ticket }: Props) {
     return (
-        <Paper elevation={2} sx={{ width: '18rem', marginBottom: '2rem' }}>
-            <Typography> Festivalpass+ </Typography>
-            <Box sx={{ marginBlock: '0.75rem' }}>
-                <Typography> John Doe </Typography>
-                <Typography>johndoe@gmail.kil </Typography>
-            </Box>
-            <Typography> Billet nummer: 420P0GCH4MP </Typography>
-            <Typography>Status: betalt </Typography>
+        <Card>
+            <CardContent>
+                <Typography>{ticket.category}</Typography>
+                <Box sx={{ marginBlock: '0.75rem' }}>
+                    <Typography>
+                        {ticket.crm.first_name} {ticket.crm.last_name}
+                    </Typography>
+                    <Typography>{ticket.crm.email}</Typography>
+                </Box>
+                <Typography>Bestilling: {ticket.order_id}</Typography>
+            </CardContent>
             <Button variant="contained" color="primary">
                 Tildel meg
             </Button>
             <Button variant="contained" color="primary">
                 Tildel andre
             </Button>
-        </Paper>
+        </Card>
     );
 }

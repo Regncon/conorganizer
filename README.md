@@ -31,14 +31,14 @@ of your con schedule, your panels, and your expenses.
 #### Hard launch
 
 -   Icons | Grethe :D
+-   Assign user to participant
 -   Fix cookie lifetime
 -   Vise hvilken deltaker du er vist du har flere deltakere på samme billett
 -   Linke til pool-events vist det finnes i flere pools
--   Filter out my signups and tags
+-   Filter my signups, events and tags
 -   Help text explaining how the algorithm works
 -   Add is gm to event
 -   Participants can choose favorite events
--   Send emails from server
 -   Something that says which participant you're logged in as
 
 #### Nice to haves for publishing events

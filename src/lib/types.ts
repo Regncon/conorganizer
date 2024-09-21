@@ -1,3 +1,4 @@
+import { type } from 'os';
 import { PoolName, type RoomName } from './enums';
 
 export type EventCardProps = {
@@ -182,9 +183,8 @@ export type MyNewEvent = {
 export type Participant = {
     id: string;
     name: string;
-    userId?: string;
+    users?: string[];
     over18: boolean;
-    notes: ParticipantNote[];
     orderId: number;
     ticketId: number;
     ticketEmail: string;
@@ -197,14 +197,12 @@ export type Participant = {
     updateAt: string;
     updatedBy: string;
 };
-export type ParticipantNote = {
-    id: string;
-    participantId: string;
-    note: string;
-    createdAt: string;
-    createdBy: string;
-    updateAt: string;
-    updatedBy: string;
+
+export type ConUser = {
+    id?: string;
+    email?: string;
+    admin?: boolean;
+    participants?: Participant[];
 };
 
 export type ActionResponse = {

@@ -40,75 +40,23 @@ export type EventTicket = {
         born: string;
     };
 };
+
+export const AssignParticipantByEmail = async () => {
+    // Check if the user is authorized
+    // get tickets by email
+    // if tickets matches user email the create participant
+    // get participants by email
+    // assign user to participant
+    // add participant to user
+    // return participant
+};
+
 export const GetTicketsByEmail = async (email: string | null | undefined) => {
     if ((typeof email === 'string') == false) {
         return;
     }
 
-    //const allTickets = await GetTicketsFromCheckIn();
-
-    const allTickets = [
-        {
-            id: 4098407,
-            category: 'Bilett 1',
-            category_id: 157049,
-            crm: {
-                first_name: 'Gerhard',
-                last_name: 'Just-Olsen',
-                id: 1555823,
-                email: 'cinmay05@gmail.com',
-            },
-            order_id: 12743193,
-        },
-        {
-            id: 4098408,
-            category: 'Bilett 1 the sequel',
-            category_id: 157057,
-            crm: {
-                first_name: 'Nils-Erik',
-                last_name: 'Just-Olsen',
-                id: 2585634,
-                email: 'nils.erik.tarpan@gmail.com',
-            },
-            order_id: 12743193,
-        },
-        {
-            id: 4098407,
-            category: 'Bilett 2',
-            category_id: 157049,
-            crm: {
-                first_name: 'Gerhard',
-                last_name: 'Just-Olsen',
-                id: 1555823,
-                email: 'cinmay05@gmail.com',
-            },
-            order_id: 127431934,
-        },
-        {
-            id: 4098408,
-            category: 'Bilett nr 2 the sequel',
-            category_id: 157057,
-            crm: {
-                first_name: 'Nils-Erik',
-                last_name: 'Just-Olsen',
-                id: 2585634,
-                email: 'en annen email',
-            },
-            order_id: 127431934,
-        },
-        {
-            id: 4098408,
-            category: 'Bilett nr 3',
-            category_id: 157057,
-            crm: {
-                first_name: 'Nils-Erik',
-                last_name: 'Just-Olsen',
-                id: 2585634,
-                email: 'en annen email',
-            },
-            order_id: 127431937,
-        },
-    ];
+    const allTickets = await GetTicketsFromCheckIn();
 
     const emailTickets = allTickets?.filter((ticket) => ticket.crm.email === email);
     const ticketsWithOrderNumberFromEmail = allTickets?.filter((ticket) =>
@@ -117,6 +65,7 @@ export const GetTicketsByEmail = async (email: string | null | undefined) => {
 
     return ticketsWithOrderNumberFromEmail;
 };
+
 export const ConvertTicketIdToParticipant = async (ticketId: number) => {
     console.log('ConvertTicketToParticipant ', ticketId);
     const tickets = await GetTicketsFromCheckIn();

@@ -3,11 +3,15 @@ import ConfirmEmailButtons from '../confirm/components/ui/ConfirmEmailButtons';
 
 type Props = {};
 
-const TicketNotFound = ({}: Props) => {
+const TicketNotFound = ({ }: Props) => {
     return (
         <Paper sx={{ marginBottom: '2rem', paddingInline: '1rem', maxWidth: '320px' }}>
             <Typography variant="h1">Ingen?/Mine billetter</Typography>
             <Typography variant="h2">Fant ingen billetter.</Typography>
+            <Typography>
+                Legge inn en fin hjelpetekst skrevet av en som ikke er meg eller dyslektiker som forklarer at folk må ta
+                kontakt desrom de trenger hjelp
+            </Typography>
             <Box sx={{ display: 'grid', gap: '1rem', marginBlockEnd: '1rem' }}>
                 <Button fullWidth variant="contained">
                     Kjøp billett

@@ -1,43 +1,32 @@
-import { Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import Ticket from './UI/Ticket';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import AdultsOnlyIcon from '$lib/components/icons/AdultsOnlyIcon';
-import BoardGameIcon from '$lib/components/icons/BoardGameIcon';
-import CardGameIcon from '$lib/components/icons/CardGameIcon';
-import ChildFriendlyIcon from '$lib/components/icons/ChildFriendlyIcon';
-import EnglishIcon from '$lib/components/icons/EnglishIcon';
-import GamemasterIcon from '$lib/components/icons/GameMasterIcon';
-import LessHoursIcon from '$lib/components/icons/LessHoursIcon';
-import MiscGameIcon from '$lib/components/icons/MiscGameIcon';
-import MoreHoursIcon from '$lib/components/icons/MoreHoursIcon';
-import RoleplayingGameIcon from '$lib/components/icons/RoleplayingGameIcon';
-import BeginnerIcon from '$lib/components/icons/BeginnerIcon';
+import { EventTicket } from './lib/actions/actions';
 
-type Props = {};
+type Props = { tickets: EventTicket[] };
 
-const Tickets = async ({}: Props) => {
+const Tickets = async ({ tickets }: Props) => {
     const { user } = await getAuthorizedAuth();
     const verifiedEmail = user?.emailVerified ?? false;
     const verifiedCheckIn = true;
 
     if (verifiedEmail && verifiedCheckIn) {
         return (
-            <Paper sx={{ marginBottom: '2rem', paddingLeft: '2rem', width: '320px' }}>
+            <Box sx={{ display: 'grid', height: 'var(--centering-height)', placeContent: 'center' }}>
+                <Typography>En smart hjelpetekst skrevet av en som ikke er meg eller dyskelktiker</Typography>
                 <Typography variant="h1">My Tickets</Typography>
-                <RoleplayingGameIcon color="primary" size="large" />
-                <BoardGameIcon color="primary" size="large" />
-                <CardGameIcon color="primary" size="large" />
-                <MiscGameIcon color="primary" size="large" />
-                <GamemasterIcon color="primary" size="large" />
-                <AdultsOnlyIcon color="primary" size="large" />
-                <ChildFriendlyIcon color="primary" size="large" />
-                <EnglishIcon color="primary" size="large" />
-                <MoreHoursIcon color="primary" size="large" />
-                <LessHoursIcon color="primary" size="large" />
-                <BeginnerIcon color="primary" size="large" />
-                <Ticket />
-                <Ticket />
-            </Paper>
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit,minmax(306px, 1fr))',
+                        gap: '1rem',
+                    }}
+                >
+                    {tickets.map((ticket) => (
+                        <Ticket key={ticket.id} ticket={ticket} />
+                    ))}
+                </Box>
+            </Box>
         );
     }
     return null;
