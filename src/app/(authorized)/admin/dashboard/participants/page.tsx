@@ -1,11 +1,12 @@
-import { Box, Card, CardActionArea, Typography } from '@mui/material';
+import { Box, Card, Typography } from '@mui/material';
 import ParticipantCard from './components/ParticipantCard';
 import { Participant } from '$lib/types';
 import AddIcon from '@mui/icons-material/Add';
 import Link from 'next/link';
+import { getAllParticipants } from '$app/(public)/components/lib/serverAction';
 
-const participants = () => {
-    const tmpParticipants: Participant[] = [];
+const participants = async () => {
+    const tmpParticipants = await getAllParticipants();
     return (
         <Box>
             <Typography variant="h1">Participants</Typography>

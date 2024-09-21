@@ -26,20 +26,22 @@ const ParticipantCard = ({ participant }: Props) => {
         <Card sx={{ minWidth: 306 }}>
             <CardHeader title={participant.name} subheader={participant.ticketCategory} />
             <CardContent sx={{ paddingTop: 0 }}>
+                <Stack direction="row" spacing={2}>
+                    <Typography sx={{ fontWeight: 'bold' }}>Bestilling:</Typography>
+                    <Typography> {participant.ticketId}</Typography>
+                </Stack>
                 <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
                     {participant.over18 ?
                         <>
-                            <Typography sx={{ fontWeight: 'bold' }}>Over 18</Typography>
-                            <AdultsOnlyIcon />
+                            <AdultsOnlyIcon chipMargin={false} />
+                            <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Over 18</Typography>
                         </>
                         : <>
-                            <Typography sx={{ fontWeight: 'bold' }}>Under 18</Typography>
-                            <ChildFriendlyIcon />
+                            <ChildFriendlyIcon chipMargin={false} />
+                            <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Under 18</Typography>
                         </>
                     }
                 </Box>
-                <Typography sx={{ fontWeight: 'bold' }}>Bestilling:</Typography>
-                <Typography> {participant.ticketId}</Typography>
             </CardContent>
             <CardContent>
                 <Accordion sx={{ backgroundColor: '#373B57' }}>

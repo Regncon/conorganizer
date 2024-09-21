@@ -36,6 +36,7 @@ export type EventTicket = {
         last_name: string;
         id: number;
         email: string;
+        born: string;
     };
 };
 export const GetTicketsByEmail = async (email: string | null | undefined) => {
@@ -197,9 +198,11 @@ const ConvertTicketToParticipant = async (ticket: EventTicket) => {
         };
         return response;
     }
+    const isOver18 = new Date().getFullYear() - new Date(ticket.crm.born).getFullYear() > 18;
 
     let participant: Partial<Participant> = {
         name: `${ticket.crm.first_name} ${ticket.crm.last_name}`,
+        over18: isOver18,
         ticketEmail: ticket.crm.email,
         ticketId: ticket.id,
         orderId: ticket.order_id,
@@ -244,6 +247,7 @@ export const GetTicketsFromCheckIn = async () => {
         last_name
         id
         email
+        born
       }
       order_id
     }

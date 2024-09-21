@@ -7,6 +7,7 @@ import TicketList from './components/TicketList';
 
 const AddParticipant = async () => {
     const tickets: EventTicket[] | undefined = await GetTicketsFromCheckIn();
+
     return (
         <>
             <Typography variant="h1">Ligg til deltager</Typography>

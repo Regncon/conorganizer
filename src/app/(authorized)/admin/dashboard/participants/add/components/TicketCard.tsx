@@ -1,11 +1,13 @@
 'use client';
-import { Alert, Button, Card, CardActions, CardContent, CircularProgress, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardActions, CardContent, CircularProgress, Typography } from '@mui/material';
 import {
     ConvertTicketIdToParticipant,
     EventTicket,
 } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 import { useState } from 'react';
 import { ActionResponse } from '$lib/types';
+import AdultsOnlyIcon from '$lib/components/icons/AdultsOnlyIcon';
+import ChildFriendlyIcon from '$lib/components/icons/ChildFriendlyIcon';
 
 type Props = {
     ticket: EventTicket;
@@ -27,6 +29,8 @@ const TicketCard = ({ ticket }: Props) => {
         setLoading(false);
     };
 
+    const isOver18 = new Date().getFullYear() - new Date(ticket.crm.born).getFullYear() > 18;
+
     return (
         <Card key={ticket.id}>
             <CardContent>
@@ -36,6 +40,18 @@ const TicketCard = ({ ticket }: Props) => {
                     {ticket.crm.first_name} {ticket.crm.last_name}
                 </Typography>
                 <Typography>{ticket.crm.email}</Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
+                    {isOver18 ?
+                        <>
+                            <AdultsOnlyIcon chipMargin={false} />
+                            <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Over 18</Typography>
+                        </>
+                        : <>
+                            <ChildFriendlyIcon chipMargin={false} />
+                            <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Under 18</Typography>
+                        </>
+                    }
+                </Box>
                 {loading ?
                     <CircularProgress />
                     : convertResponce && <Alert severity={convertResponce.type}>{convertResponce.message}</Alert>}
