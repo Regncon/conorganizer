@@ -1,45 +1,75 @@
+'use client';
+import { useState } from 'react';
 import AdultsOnlyIcon from '$lib/components/icons/AdultsOnlyIcon';
 import ChildFriendlyIcon from '$lib/components/icons/ChildFriendlyIcon';
-import { Participant } from '$lib/types';
+import DeleteIcon from '@mui/icons-material/Delete';
+import { ActionResponse, Participant } from '$lib/types';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
     Accordion,
-    AccordionActions,
     AccordionDetails,
     AccordionSummary,
+    Alert,
     Box,
     Button,
     Card,
     CardActions,
     CardContent,
     CardHeader,
+    CircularProgress,
+    IconButton,
     Stack,
+    TextField,
     Typography,
 } from '@mui/material';
+import {
+    ConnectEmailToParticipant,
+    DeleteConnectedEmail,
+} from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
 type Props = {
     participant: Participant;
 };
 
 const ParticipantCard = ({ participant }: Props) => {
+    const [email, setEmail] = useState('');
+    const [connectResponce, setConnectResponce] = useState<ActionResponse>();
+    const [loading, setLoading] = useState(false);
+
+    const handleConnectToEmail = async () => {
+        setLoading(true);
+        const responce = await ConnectEmailToParticipant(participant.id, email);
+        setConnectResponce(responce);
+        setLoading(false);
+    };
+
+    const handleDeleteConnected = async (email: string) => {
+        setLoading(true);
+        const responce = await DeleteConnectedEmail(participant.id, email);
+        setConnectResponce(responce);
+        setLoading(false);
+    };
+
     return (
         <Card sx={{ minWidth: 306 }}>
             <CardHeader title={participant.name} subheader={participant.ticketCategory} />
             <CardContent sx={{ paddingTop: 0 }}>
+                <Stack direction="row" spacing={2}>
+                    <Typography sx={{ fontWeight: 'bold' }}>Bestilling:</Typography>
+                    <Typography> {participant.orderId}</Typography>
+                </Stack>
                 <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
                     {participant.over18 ?
                         <>
-                            <Typography sx={{ fontWeight: 'bold' }}>Over 18</Typography>
-                            <AdultsOnlyIcon />
+                            <AdultsOnlyIcon chipMargin={false} />
+                            <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Over 18</Typography>
                         </>
                         : <>
-                            <Typography sx={{ fontWeight: 'bold' }}>Under 18</Typography>
-                            <ChildFriendlyIcon />
+                            <ChildFriendlyIcon chipMargin={false} />
+                            <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Under 18</Typography>
                         </>
                     }
                 </Box>
-                <Typography sx={{ fontWeight: 'bold' }}>Bestilling:</Typography>
-                <Typography> {participant.ticketId}</Typography>
             </CardContent>
             <CardContent>
                 <Accordion sx={{ backgroundColor: '#373B57' }}>
@@ -54,23 +84,36 @@ const ParticipantCard = ({ participant }: Props) => {
                     </AccordionSummary>
                     <AccordionDetails>Imgen ønsker registrert</AccordionDetails>
                 </Accordion>
-                <Accordion sx={{ backgroundColor: '#373B57' }}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel3-content" id="panel3-header">
-                        Notater
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit
-                        amet blandit leo lobortis eget.
-                    </AccordionDetails>
-                    <AccordionActions>
-                        <Button>Cancel</Button>
-                        <Button>Lagre</Button>
-                    </AccordionActions>
-                </Accordion>
+            </CardContent>
+            <CardContent>
+                {loading ?
+                    <CircularProgress />
+                    : connectResponce && <Alert severity={connectResponce.type}>{connectResponce.message}</Alert>}
             </CardContent>
             <CardActions>
-                <Button size="small">Learn More</Button>
+                <TextField label="Epost" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Button variant="contained" onClick={handleConnectToEmail}>
+                    Koble til epost
+                </Button>
             </CardActions>
+            <CardContent>
+                <Typography>Bilett epost: {participant.ticketEmail}</Typography>
+                {participant.oredrEmails?.map((email, index) => (
+                    <Typography key={index}>
+                        Bestillings epost {index + 1}: {email}
+                    </Typography>
+                ))}
+                {participant.connectedEmails?.map((email, index) => (
+                    <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
+                        <Typography>
+                            Kobledt epost {index + 1}: {email}
+                        </Typography>
+                        <IconButton aria-label="delete" color="primary" onClick={() => handleDeleteConnected(email)}>
+                            <DeleteIcon />
+                        </IconButton>
+                    </Box>
+                ))}
+            </CardContent>
         </Card>
     );
 };

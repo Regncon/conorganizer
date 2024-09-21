@@ -1,7 +1,7 @@
 'use server';
 import { adminDb } from '$lib/firebase/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-import type { ConEvent, PoolEvent } from '$lib/types';
+import type { ConEvent, Participant, PoolEvent } from '$lib/types';
 import { PoolName } from '$lib/enums';
 import { createIconArray } from './helpers/icons';
 
@@ -84,4 +84,10 @@ export async function updateEventById(id: string) {
 
 export async function updateDashboardEvents() {
     revalidatePath('/admin/dashboard/events', 'page');
+}
+
+export async function getAllParticipants() {
+    const participantsRef = await adminDb.collection('participants').get();
+    const participants = participantsRef.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Participant[];
+    return participants;
 }

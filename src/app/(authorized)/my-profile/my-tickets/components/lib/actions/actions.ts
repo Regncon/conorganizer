@@ -1,7 +1,8 @@
 'use server';
-import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
+import { adminDb, getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { ActionResponse, Participant } from '$lib/types';
-import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { addDoc, collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
+import { revalidatePath } from 'next/cache';
 
 export type CrmRecord = {
     id: number;
@@ -36,6 +37,7 @@ export type EventTicket = {
         last_name: string;
         id: number;
         email: string;
+        born: string;
     };
 };
 export const GetTicketsByEmail = async (email: string | null | undefined) => {
@@ -131,7 +133,7 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
         return response;
     }
 
-    const result = await ConvertTicketToParticipant(ticket);
+    const result = await ConvertTicketToParticipant(ticket, tickets as EventTicket[]);
     return result;
 
     // const query = `{
@@ -169,7 +171,7 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
     // return result;
 };
 
-const ConvertTicketToParticipant = async (ticket: EventTicket) => {
+const ConvertTicketToParticipant = async (ticket: EventTicket, tickets: EventTicket[]) => {
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {
         // return new ActionResponse = {
@@ -197,10 +199,18 @@ const ConvertTicketToParticipant = async (ticket: EventTicket) => {
         };
         return response;
     }
+    const isOver18 = new Date().getFullYear() - new Date(ticket.crm.born).getFullYear() > 18;
+
+    const orderEmails = tickets
+        .filter((t) => t.order_id === ticket.order_id)
+        .map((t) => t.crm.email)
+        .filter((email) => email !== ticket.crm.email);
 
     let participant: Partial<Participant> = {
         name: `${ticket.crm.first_name} ${ticket.crm.last_name}`,
+        over18: isOver18,
         ticketEmail: ticket.crm.email,
+        oredrEmails: orderEmails,
         ticketId: ticket.id,
         orderId: ticket.order_id,
         ticketCategory: ticket.category,
@@ -230,6 +240,7 @@ const ConvertTicketToParticipant = async (ticket: EventTicket) => {
         type: 'success',
         message: 'Deltager lagret',
     };
+    revalidatePath('/admin/dashboard/participants', 'page');
     return response;
 };
 
@@ -244,6 +255,7 @@ export const GetTicketsFromCheckIn = async () => {
         last_name
         id
         email
+        born
       }
       order_id
     }
@@ -264,4 +276,116 @@ export const GetTicketsFromCheckIn = async () => {
     //console.log(queryResult, 'queryResult');
 
     return queryResult?.data.eventTickets;
+};
+
+export const ConnectEmailToParticipant = async (participantId: string, email: string) => {
+    console.log('ConnectEmailToParticipant ', participantId, email);
+    const { db } = await getAuthorizedAuth();
+    if (db === null) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Ikke autorisert',
+            error: 'getAuthorizedAuth failed',
+        };
+        console.error(response);
+        return response;
+    }
+
+    const participant = (await adminDb.collection('participants').doc(participantId).get()).data() as Participant;
+
+    if (participant === undefined) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Fant ikke deltager',
+        };
+        console.error(response);
+        return response;
+    }
+    if (participant.connectedEmails === undefined) {
+        participant.connectedEmails = [];
+    }
+
+    if (participant.connectedEmails.includes(email)) {
+        const response: ActionResponse = {
+            type: 'warning',
+            message: 'Eposten er allerede koblet til deltageren',
+        };
+        return response;
+    }
+
+    participant.connectedEmails.push(email);
+
+    try {
+        await updateDoc(doc(db, 'participants', participantId), participant);
+    } catch (e) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Feil ved lagring av deltager',
+            error: e as string,
+        };
+        console.error(response);
+        return response;
+    }
+    const response: ActionResponse = {
+        type: 'success',
+        message: 'Epost lagt til',
+    };
+    revalidatePath('/admin/dashboard/participants', 'page');
+    return response;
+};
+
+export const DeleteConnectedEmail = async (participantId: string, email: string) => {
+    console.log('DeleteConnectedEmail ', participantId, email);
+    const { db } = await getAuthorizedAuth();
+    if (db === null) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Ikke autorisert',
+            error: 'getAuthorizedAuth failed',
+        };
+        console.error(response);
+        return response;
+    }
+
+    const participant = (await adminDb.collection('participants').doc(participantId).get()).data() as Participant;
+
+    if (participant === undefined) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Fant ikke deltager',
+        };
+        console.error(response);
+        return response;
+    }
+    if (participant.connectedEmails === undefined) {
+        participant.connectedEmails = [];
+    }
+
+    if (!participant.connectedEmails.includes(email)) {
+        const response: ActionResponse = {
+            type: 'warning',
+            message: 'Eposten er ikke koblet til deltageren',
+        };
+        return response;
+    }
+
+    participant.connectedEmails = participant.connectedEmails.filter((e) => e !== email);
+
+    try {
+        await updateDoc(doc(db, 'participants', participantId), participant);
+    } catch (e) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Feil ved lagring av deltager',
+            error: e as string,
+        };
+        console.error(response);
+        return response;
+    }
+    const response: ActionResponse = {
+        type: 'success',
+        message: 'Epost fjernet',
+    };
+    revalidatePath('/admin/dashboard/participants', 'page');
+    return response;
 };
