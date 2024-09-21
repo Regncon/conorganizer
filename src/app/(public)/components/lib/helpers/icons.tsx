@@ -16,7 +16,7 @@ export const createIconArray = ({
 }: IconTypes) => {
     let icons: IconOption[] = [];
     if (childFriendly) icons = [...icons, { label: 'Barnevennlig', icon: 'childFriendly' }];
-    if (possiblyEnglish) icons = [...icons, { label: 'Kan kjøres på engelsk', icon: 'possiblyEnglish' }];
+    if (possiblyEnglish) icons = [...icons, { label: 'Can be run in English', icon: 'possiblyEnglish' }];
     if (adultsOnly) icons = [...icons, { label: 'Kun for voksne (18+)', icon: 'adultsOnly' }];
     if (lessThanThreeHours) icons = [...icons, { label: 'Mindre enn tre timer', icon: 'lessThanThreeHours' }];
     if (moreThanSixHours) icons = [...icons, { label: 'Mer enn seks timer', icon: 'moreThanSixHours' }];
@@ -24,7 +24,7 @@ export const createIconArray = ({
     return icons;
 };
 
-export const createIconColor = (iconString: IconName) => {};
+export const createIconColor = (iconString: IconName) => { };
 export const createIconFromString = (iconString: IconName) => {
     switch (iconString) {
         case 'childFriendly':

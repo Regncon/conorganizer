@@ -1,4 +1,8 @@
 'use server';
+import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
+import { ActionResponse, Participant } from '$lib/types';
+import { addDoc, collection, getDocs, query, where } from 'firebase/firestore';
+
 export type CrmRecord = {
     id: number;
     firstName: string;
@@ -110,6 +114,123 @@ export const GetTicketsByEmail = async (email: string | null | undefined) => {
     );
 
     return ticketsWithOrderNumberFromEmail;
+};
+export const ConvertTicketIdToParticipant = async (ticketId: number) => {
+    console.log('ConvertTicketToParticipant ', ticketId);
+    const tickets = await GetTicketsFromCheckIn();
+
+    const ticket = tickets?.find((ticket) => ticket.id === ticketId);
+    console.log(ticket, 'ticket');
+
+    if (!ticket) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Fant ikke billetten',
+        };
+        console.error(response);
+        return response;
+    }
+
+    const result = await ConvertTicketToParticipant(ticket);
+    return result;
+
+    // const query = `{
+    // eventTickets(customer_id: 13446, id: ${ticketId}, onlyCompleted: true) {
+    //   id
+    //   category
+    //   category_id
+    //   crm {
+    //     first_name
+    //     last_name
+    //     id
+    //     email
+    //   }
+    //   order_id
+    // }
+    // }`;
+    //
+    // const res = await fetch(
+    //     `https://app.checkin.no/graphql?client_id=${process.env.CHECKIN_KEY}&client_secret=${process.env.CHECKIN_SECRET}`,
+    //     {
+    //         method: 'POST',
+    //         body: JSON.stringify({ query }),
+    //         headers: {
+    //             'Content-Type': 'application/json',
+    //         },
+    //     }
+    // );
+    // if (res.status !== 200) {
+    //     throw new Error('Failed to fetch tickets');
+    // }
+    // const queryResult: CrmJson | undefined = await res.json();
+    // console.log(queryResult, 'queryResult');
+    //
+    // // const result = await ConvertTicketToParticipant(queryResult?.data.eventTickets[0] as EventTicket);
+    // return result;
+};
+
+const ConvertTicketToParticipant = async (ticket: EventTicket) => {
+    const { db, user } = await getAuthorizedAuth();
+    if (db === null || user === null) {
+        // return new ActionResponse = {
+        //     type: "error"
+        //     , message: 'Ikke autorisert'
+        //     error: 'getAuthorizedAuth failed'
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Ikke autorisert',
+            error: 'getAuthorizedAuth failed',
+        };
+        console.error(response);
+        return response;
+    }
+
+    const participantRef = collection(db, 'participants');
+    const q = query(participantRef, where('ticketId', '==', ticket.id));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        console.log('Participant already exists:', querySnapshot.docs[0].data());
+        const response: ActionResponse = {
+            type: 'warning',
+            message: 'Deltageren er allerede registrert',
+        };
+        return response;
+    }
+
+    let participant: Partial<Participant> = {
+        name: `${ticket.crm.first_name} ${ticket.crm.last_name}`,
+        ticketEmail: ticket.crm.email,
+        ticketId: ticket.id,
+        orderId: ticket.order_id,
+        ticketCategory: ticket.category,
+        ticketCategoryId: ticket.category_id,
+        createdAt: new Date().toISOString(),
+        createdBy: user.email as string,
+        updateAt: new Date().toISOString(),
+        updatedBy: user.email as string,
+    };
+    console.log(participant, 'participant');
+
+    let participantId = '';
+    try {
+        const docRef = await addDoc(collection(db, 'participants'), participant);
+        console.log('Document written with ID: ', docRef.id);
+        participantId = docRef.id;
+    } catch (e) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Feil ved lagring av deltager',
+            error: e as string,
+        };
+        console.error(response);
+        return response;
+    }
+    const response: ActionResponse = {
+        type: 'success',
+        message: 'Deltager lagret',
+    };
+    return response;
 };
 
 export const GetTicketsFromCheckIn = async () => {
