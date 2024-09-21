@@ -13,35 +13,37 @@ import {
 import SearchIcon from '@mui/icons-material/Search';
 import React, { useEffect, useState } from 'react';
 import { EventTicket } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import Fuse from 'fuse.js'; // Import Fuse.js
 
 type Props = {
     tickets: EventTicket[];
 };
 
 const TicketList = ({ tickets }: Props) => {
-    // Fetch tickets from the action
     const dinnerTicketId = 157059;
 
     // State to hold the search query
     const [searchQuery, setSearchQuery] = useState<string>('');
 
     // State to hold the filtered tickets
-    const [filteredTickets, setFilteredTickets] = useState<EventTicket[]>([]);
+    const [filteredTickets, setFilteredTickets] = useState<EventTicket[]>(tickets);
+
+    // Fuse.js options
+    const fuseOptions = {
+        keys: ['crm.first_name', 'crm.last_name', 'crm.email', 'order_id'], // Fields to search in
+        threshold: 0.3, // Adjust to control fuzziness (lower is stricter)
+    };
 
     useEffect(() => {
-        // Filter tickets based on the search query
-        const filtered = tickets
-            ?.filter(
-                (ticket) =>
-                    ticket.category_id !== dinnerTicketId &&
-                    (ticket.crm.first_name.toLowerCase() + ' ' + ticket.crm.last_name.toLowerCase()).includes(
-                        searchQuery.toLowerCase()
-                    )
-            )
-            .sort((a, b) => a.crm.first_name.localeCompare(b.crm.first_name));
+        const fuse = new Fuse(
+            tickets.filter((ticket) => ticket.category_id !== dinnerTicketId), // Filter out dinner tickets
+            fuseOptions
+        );
 
-        setFilteredTickets(filtered || []);
-    }, [searchQuery, tickets]); // Re-run the filter whenever searchQuery or tickets change
+        // Perform fuzzy search if searchQuery is not empty, else show all
+        const result = searchQuery ? fuse.search(searchQuery).map((res) => res.item) : tickets;
+        setFilteredTickets(result);
+    }, [searchQuery, tickets]); // Re-run when search query or tickets change
 
     return (
         <Box>

@@ -26,6 +26,7 @@
     "@mui/x-data-grid": "^7.17.0",
     "firebase": "^10.13.1",
     "firebase-admin": "^12.5.0",
+    "fuse.js": "^7.0.0",
     "mui-markdown": "^1.2.2",
     "next": "^14.2.11",
     "prism-react-renderer": "^2.4.0",
