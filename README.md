@@ -40,6 +40,7 @@ of your con schedule, your panels, and your expenses.
 -   Add is gm to event
 -   Participants can choose favorite events
 -   Something that says which participant you're logged in as
+-   filere ut events som ikke er publisert
 
 #### Nice to haves for publishing events
 
