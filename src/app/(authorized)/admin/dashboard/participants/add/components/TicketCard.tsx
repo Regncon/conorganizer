@@ -34,7 +34,7 @@ const TicketCard = ({ ticket }: Props) => {
     return (
         <Card key={ticket.id}>
             <CardContent>
-                <Typography>Bilett: {ticket.order_id}</Typography>
+                <Typography>Bestilling: {ticket.order_id}</Typography>
                 <Typography>{ticket.category}</Typography>
                 <Typography>
                     {ticket.crm.first_name} {ticket.crm.last_name}

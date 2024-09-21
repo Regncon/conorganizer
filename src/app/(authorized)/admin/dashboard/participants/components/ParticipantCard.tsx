@@ -28,7 +28,7 @@ const ParticipantCard = ({ participant }: Props) => {
             <CardContent sx={{ paddingTop: 0 }}>
                 <Stack direction="row" spacing={2}>
                     <Typography sx={{ fontWeight: 'bold' }}>Bestilling:</Typography>
-                    <Typography> {participant.ticketId}</Typography>
+                    <Typography> {participant.orderId}</Typography>
                 </Stack>
                 <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
                     {participant.over18 ?
