@@ -87,7 +87,7 @@ const Edit = ({ id }: Props) => {
             }
             console.log(name, value, 'change');
 
-            // saveToDb(name, value);
+            saveToDb(name, value);
         }, 1500),
         [user]
     );
@@ -126,7 +126,7 @@ const Edit = ({ id }: Props) => {
                     Loading...
                     <CircularProgress />
                 </Typography>
-            :   <>
+                : <>
                     <Box
                         component="form"
                         onChange={(evt) =>
