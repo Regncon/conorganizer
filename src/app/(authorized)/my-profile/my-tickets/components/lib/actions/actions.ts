@@ -132,7 +132,7 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
         return response;
     }
 
-    const result = await ConvertTicketToParticipant(ticket);
+    const result = await ConvertTicketToParticipant(ticket, tickets);
     return result;
 
     // const query = `{
@@ -170,7 +170,7 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
     // return result;
 };
 
-const ConvertTicketToParticipant = async (ticket: EventTicket) => {
+const ConvertTicketToParticipant = async (ticket: EventTicket, tickets: EventTicket[]) => {
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {
         // return new ActionResponse = {
@@ -200,10 +200,16 @@ const ConvertTicketToParticipant = async (ticket: EventTicket) => {
     }
     const isOver18 = new Date().getFullYear() - new Date(ticket.crm.born).getFullYear() > 18;
 
+    const orderEmails = tickets
+        .filter((t) => t.order_id === ticket.order_id)
+        .map((t) => t.crm.email)
+        .filter((email) => email !== ticket.crm.email);
+
     let participant: Partial<Participant> = {
         name: `${ticket.crm.first_name} ${ticket.crm.last_name}`,
         over18: isOver18,
         ticketEmail: ticket.crm.email,
+        oredrEmails: orderEmails,
         ticketId: ticket.id,
         orderId: ticket.order_id,
         ticketCategory: ticket.category,

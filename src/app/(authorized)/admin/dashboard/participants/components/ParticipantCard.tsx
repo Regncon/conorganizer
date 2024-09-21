@@ -1,10 +1,11 @@
+'use client';
+import { useState } from 'react';
 import AdultsOnlyIcon from '$lib/components/icons/AdultsOnlyIcon';
 import ChildFriendlyIcon from '$lib/components/icons/ChildFriendlyIcon';
 import { Participant } from '$lib/types';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
     Accordion,
-    AccordionActions,
     AccordionDetails,
     AccordionSummary,
     Box,
@@ -14,6 +15,7 @@ import {
     CardContent,
     CardHeader,
     Stack,
+    TextField,
     Typography,
 } from '@mui/material';
 
@@ -22,6 +24,12 @@ type Props = {
 };
 
 const ParticipantCard = ({ participant }: Props) => {
+    const [email, setEmail] = useState('');
+
+    const handleConnectToEmail = () => {
+        console.log('Connect to email:', email);
+    };
+
     return (
         <Card sx={{ minWidth: 306 }}>
             <CardHeader title={participant.name} subheader={participant.ticketCategory} />
@@ -56,23 +64,21 @@ const ParticipantCard = ({ participant }: Props) => {
                     </AccordionSummary>
                     <AccordionDetails>Imgen ønsker registrert</AccordionDetails>
                 </Accordion>
-                <Accordion sx={{ backgroundColor: '#373B57' }}>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="panel3-content" id="panel3-header">
-                        Notater
-                    </AccordionSummary>
-                    <AccordionDetails>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse malesuada lacus ex, sit
-                        amet blandit leo lobortis eget.
-                    </AccordionDetails>
-                    <AccordionActions>
-                        <Button>Cancel</Button>
-                        <Button>Lagre</Button>
-                    </AccordionActions>
-                </Accordion>
             </CardContent>
             <CardActions>
-                <Button size="small">Learn More</Button>
+                <TextField label="Epost" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Button variant="contained" onClick={handleConnectToEmail}>
+                    Koble til epost
+                </Button>
             </CardActions>
+            <CardContent>
+                <Typography>Bilett epost: {participant.ticketEmail}</Typography>
+                {participant.oredrEmails?.map((email, index) => (
+                    <Typography key={index}>
+                        Bestillings epost {index + 1}: {email}
+                    </Typography>
+                ))}
+            </CardContent>
         </Card>
     );
 };
