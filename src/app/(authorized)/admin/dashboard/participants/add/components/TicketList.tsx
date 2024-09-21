@@ -4,7 +4,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import React, { useEffect, useState } from 'react';
 import { EventTicket } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 import Fuse from 'fuse.js';
-import TicketCard from './components/TicketCard';
+import TicketCard from './TicketCard';
 
 type Props = {
     tickets: EventTicket[];
