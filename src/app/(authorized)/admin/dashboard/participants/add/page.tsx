@@ -2,11 +2,17 @@ import {
     EventTicket,
     GetTicketsFromCheckIn,
 } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import { Paper, Typography } from '@mui/material';
 import TicketList from './TicketList';
 
 const AddParticipant = async () => {
     const tickets: EventTicket[] | undefined = await GetTicketsFromCheckIn();
-    return <TicketList tickets={tickets || []} />;
+    return (
+        <>
+            <Typography variant="h1">Ligg til deltager</Typography>
+            <TicketList tickets={tickets || []} />;
+        </>
+    );
 };
 
 export default AddParticipant;
