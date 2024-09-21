@@ -8,26 +8,24 @@ const useUser = (checkForEmailVerification = false) => {
     const fiveSeconds = 5_000;
 
     useEffect(() => {
+        let userReloadInterval: NodeJS.Timeout | undefined;
         const unsubscribeUser = onAuthStateChanged(firebaseAuth, async (user) => {
             userRef.current = user;
             if (checkForEmailVerification) {
-                const userReloadInterval = setInterval(() => {
+                userReloadInterval = setInterval(() => {
                     if (!isVerified) {
                         user?.reload().then(() => {
                             userRef.current = user;
                             setIsVerified(user?.emailVerified);
                         });
-                        console.log(!isVerified, '!isVerified');
                     }
                 }, fiveSeconds);
-                if (isVerified) {
-                    clearInterval(userReloadInterval);
-                }
             }
         });
 
         return () => {
             unsubscribeUser();
+            clearInterval(userReloadInterval);
         };
     }, [checkForEmailVerification, isVerified]);
 
