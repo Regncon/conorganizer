@@ -5,50 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import Link from 'next/link';
 
 const participants = () => {
-    const tmpParticipants: Participant[] = [
-        {
-            id: '1',
-            name: 'Ola Nordmann',
-            over18: true,
-            notes: [],
-            ticketId: '12345678',
-            ticketType: 'Festivalpass Voksen (26 år +) Early-bird',
-            ticketEmail: '',
-            ticketStatus: 'Betalt',
-            createdAt: '',
-            createdBy: '',
-            updateAt: '',
-            updatedBy: '',
-        },
-        {
-            id: '2',
-            name: 'Kari Nordmann',
-            over18: true,
-            notes: [],
-            ticketId: '12345678',
-            ticketType: 'Festivalpass Ungdom/student (13-25/30år) Early-bird',
-            ticketEmail: '',
-            ticketStatus: 'Betalt',
-            createdAt: '',
-            createdBy: '',
-            updateAt: '',
-            updatedBy: '',
-        },
-        {
-            id: '3',
-            name: 'Per Nordmann',
-            over18: false,
-            notes: [],
-            ticketId: '12345678',
-            ticketType: 'SØNDAG Dagspass Barn (3-12)',
-            ticketEmail: '',
-            ticketStatus: 'Betalt',
-            createdAt: '',
-            createdBy: '',
-            updateAt: '',
-            updatedBy: '',
-        },
-    ];
+    const tmpParticipants: Participant[] = [];
     return (
         <Box>
             <Typography variant="h1">Participants</Typography>

@@ -221,7 +221,7 @@ const ConvertTicketToParticipant = async (ticket: EventTicket) => {
         const response: ActionResponse = {
             type: 'error',
             message: 'Feil ved lagring av deltager',
-            error: e,
+            error: e as string,
         };
         console.error(response);
         return response;

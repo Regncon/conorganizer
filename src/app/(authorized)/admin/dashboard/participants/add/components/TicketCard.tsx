@@ -18,6 +18,11 @@ const TicketCard = ({ ticket }: Props) => {
     const handleConvertToParticipant = async (id: number) => {
         setLoading(true);
         const result = await ConvertTicketIdToParticipant(id);
+
+        if (result.type === 'error') {
+            console.error(result);
+        }
+
         setConvertResponce(result);
         setLoading(false);
     };

@@ -204,3 +204,9 @@ export type ParticipantNote = {
     updateAt: string;
     updatedBy: string;
 };
+
+export type ActionResponse = {
+    type: 'info' | 'success' | 'warning' | 'error';
+    error?: string;
+    message: string;
+};

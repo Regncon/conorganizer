@@ -24,7 +24,7 @@ type Props = {
 const ParticipantCard = ({ participant }: Props) => {
     return (
         <Card sx={{ minWidth: 306 }}>
-            <CardHeader title={participant.name} subheader={participant.ticketType} />
+            <CardHeader title={participant.name} subheader={participant.ticketCategory} />
             <CardContent sx={{ paddingTop: 0 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
                     {participant.over18 ?
@@ -38,12 +38,8 @@ const ParticipantCard = ({ participant }: Props) => {
                         </>
                     }
                 </Box>
-                <Stack direction="row" spacing={2}>
-                    <Typography sx={{ fontWeight: 'bold' }}>Bestilling:</Typography>
-                    <Typography> {participant.ticketId}</Typography>
-                    <Typography sx={{ fontWeight: 'bold' }}>Status:</Typography>
-                    <Typography> {participant.ticketStatus}</Typography>
-                </Stack>
+                <Typography sx={{ fontWeight: 'bold' }}>Bestilling:</Typography>
+                <Typography> {participant.ticketId}</Typography>
             </CardContent>
             <CardContent>
                 <Accordion sx={{ backgroundColor: '#373B57' }}>
