@@ -11,9 +11,30 @@ export async function getAllEvents() {
     return events;
 }
 
+const initialSortedEventMap = new Map<PoolName, ConEvent[]>([
+    [PoolName.fridayEvening, []],
+    [PoolName.saturdayMorning, []],
+    [PoolName.saturdayEvening, []],
+    [PoolName.sundayMorning, []],
+]);
+export async function getAllEventsSortedByPoolName() {
+    const events = await getAllEvents();
+    const sortedEventDay = events.reduce((accumulator, poolEvent) => {
+        poolEvent.poolIds.forEach((poolChildRef) => {
+            const currentAccumulator = accumulator.get(poolChildRef.poolName);
+
+            if (currentAccumulator !== undefined) {
+                accumulator.set(poolChildRef.poolName, [...currentAccumulator.values(), poolEvent]);
+            }
+        });
+        return accumulator;
+    }, new Map<PoolName, ConEvent[]>(initialSortedEventMap));
+    return sortedEventDay;
+}
+
 export type PoolEvents = Awaited<ReturnType<typeof getAllPoolEvents>>;
 
-const initialSortedMap = new Map<PoolName, PoolEvent[]>([
+const initialSortedPoolMap = new Map<PoolName, PoolEvent[]>([
     [PoolName.fridayEvening, []],
     [PoolName.saturdayMorning, []],
     [PoolName.saturdayEvening, []],
@@ -32,7 +53,7 @@ export async function getAllPoolEvents() {
         }
 
         return accumulator;
-    }, new Map<PoolName, PoolEvent[]>(initialSortedMap));
+    }, new Map<PoolName, PoolEvent[]>(initialSortedPoolMap));
 
     return sortedPoolEventDay;
 }
