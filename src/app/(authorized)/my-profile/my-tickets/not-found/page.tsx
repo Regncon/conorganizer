@@ -6,7 +6,7 @@ type Props = {};
 const TicketNotFound = ({}: Props) => {
     return (
         <Box sx={{ display: 'grid', height: 'var(--centering-height)', placeContent: 'center' }}>
-            <Paper sx={{ marginBottom: '2rem', paddingInline: '1rem', maxWidth: '320px' }}>
+            <Paper sx={{ marginBottom: '2rem', paddingInline: '1rem', maxWidth: '400px' }}>
                 <Typography variant="h1">Ingen?/Mine billetter</Typography>
                 <Typography variant="h2">Fant ingen billetter.</Typography>
                 <Typography>
