@@ -40,7 +40,7 @@ of your con schedule, your panels, and your expenses.
 -   Add is gm to event
 -   Participants can choose favorite events
 -   Something that says which participant you're logged in as
--   filere ut events som ikke er publisert
+
 
 #### Nice to haves for publishing events
 
@@ -100,3 +100,5 @@ of your con schedule, your panels, and your expenses.
 -   Create participant in database
 -   Check if participant is over 18 |
 -   Connect to checkin system
+-   filere ut events som ikke er publisert
+-   add button to redirect to administration page of event
