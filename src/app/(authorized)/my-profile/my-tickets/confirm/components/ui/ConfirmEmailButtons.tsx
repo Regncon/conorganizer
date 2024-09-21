@@ -2,14 +2,16 @@
 import GoogleSignInButton from '$app/(auth)/login/components/ui/GoogleButton';
 import useUser from '$lib/hooks/useUser';
 import { Button, CircularProgress } from '@mui/material';
-import { sendEmailVerification, type User } from 'firebase/auth';
-import { useState } from 'react';
+import { sendEmailVerification } from 'firebase/auth';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 type Props = {
     disabled: boolean | undefined;
 };
 
 const ConfirmEmailButtons = ({ disabled = false }: Props) => {
+    const router = useRouter();
     const [isVerificationStarted, setIsVerificationStarted] = useState<boolean>(false);
     const { user, isUserVerified } = useUser(isVerificationStarted);
     const handleClick = async () => {
@@ -18,6 +20,14 @@ const ConfirmEmailButtons = ({ disabled = false }: Props) => {
             await sendEmailVerification(user);
         }
     };
+
+    useEffect(() => {
+        router.prefetch('/my-profile/my-tickets');
+
+        if (isUserVerified) {
+            router.replace('/my-profile/my-tickets');
+        }
+    }, [isUserVerified, router]);
 
     return (
         <>
@@ -31,7 +41,7 @@ const ConfirmEmailButtons = ({ disabled = false }: Props) => {
                 {disabled || isUserVerified ?
                     'allerede verifisert'
                 : isVerificationStarted ?
-                    'Venter på verifisering av epost'
+                    'Venter på verifisering av e-post'
                 :   'Bekreft e-post'}
                 {!disabled && !isUserVerified && isVerificationStarted ?
                     <CircularProgress color="secondary" size="1.5rem" sx={{ marginInlineStart: '1rem' }} />
