@@ -19,6 +19,7 @@ type Props = {
 
 const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) => {
     console.log(typeof window === 'undefined' ? 'server' : 'client');
+
     return (
         <Paper
             elevation={0}
@@ -29,20 +30,21 @@ const MainEventBig = ({ poolEvent, prevNavigationId, nextNavigationId }: Props) 
                     '--slider-interest-width': '19.5714rem',
                     '--event-margin-left': '4rem',
                     '--event-header-margin-left': 'calc(var(--event-margin-left) - 1rem)',
+                    '--event-width': 'min(100dvw, 1200px)',
                 },
-                maxWidth: '1200px',
+                maxWidth: 'var(--event-width)',
             }}
         >
             <Box
                 sx={{
                     display: 'grid',
                     '& > *': { gridColumn: '1 / 2', gridRow: '1 / 2' },
-                    '& > img': { width: 'min(100%, 1200px)', maxHeight: '195px' },
+                    '& > img': { width: ' var(--event-width)', height: '193px' },
                 }}
             >
                 <Image
                     alt="Game logo"
-                    src={poolEvent.bigImageURL ?? diceBig}
+                    src={poolEvent.bigImageURL ? poolEvent.bigImageURL : diceBig}
                     width={1200}
                     height={193}
                     sizes="100vw"

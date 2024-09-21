@@ -44,12 +44,12 @@ const EventList = ({ events }: Props) => {
                                             system={event.system}
                                             backgroundImage={event.smallImageURL}
                                         />
-                                        : <EventCardBig
+                                    :   <EventCardBig
                                             title={event.title}
                                             gameMaster={event.gameMaster}
                                             shortDescription={event.shortDescription}
                                             system={event.system}
-                                            backgroundImage={event.smallImageURL}
+                                            backgroundImage={event.smallImageURL ? event.smallImageURL : undefined}
                                         />
                                     }
                                 </Box>
