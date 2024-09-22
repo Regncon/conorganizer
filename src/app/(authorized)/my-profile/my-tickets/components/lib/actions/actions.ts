@@ -63,7 +63,6 @@ export const getParticipantByUser = async () => {
     );
 };
 export const AssignParticipantByEmail = async () => {
-    console.log('AssignParticipantByEmail');
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {
         const response: ActionResponse = {
@@ -74,14 +73,23 @@ export const AssignParticipantByEmail = async () => {
         console.error(response);
         throw response;
     }
-    console.log('user email', user?.email);
 
     const tickets = await GetTicketsByEmail(user?.email);
-    console.log('tickets', tickets);
+    if (!tickets) {
+        throw new Error('Failed to get tickets from Checkin');
+    }
 
-    // create participant from ticket
+    let participants = await GetParticipantsByEmail(user?.email as string);
 
-    const participants = await GetParticipantsByEmail(user?.email as string);
+    const newTickets = tickets.filter(
+        (ticket) => !participants.some((participant) => participant.ticketId === ticket.id)
+    );
+    newTickets.forEach(async (newTicket) => {
+        await ConvertTicketToParticipant(newTicket.id, tickets);
+        participants = await GetParticipantsByEmail(user?.email as string);
+    });
+    console.log(newTickets, 'newTickets');
+
     const myParticipants = participants.filter((participant) => participant.users?.includes(user.uid));
     if (participants.length === myParticipants.length) {
         console.log('ticket connected do user YOU WIN');
@@ -125,7 +133,7 @@ export const AssignParticipantByEmail = async () => {
     if (!myUserInfo) {
         adminDb.collection('users').doc(user.uid).set(myUserInfoToBeUpdated);
     }
-
+    console.log('completed assignParticipantByEmail');
     return participants;
 };
 
@@ -219,8 +227,8 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
 };
 
 const ConvertTicketToParticipant = async (ticketId: number, tickets: EventTicket[]) => {
-    const { db, user } = await getAuthorizedAuth();
-    if (db === null || user === null) {
+    const { user } = await getAuthorizedAuth();
+    if (user === null) {
         // return new ActionResponse = {
         //     type: "error"
         //     , message: 'Ikke autorisert'
@@ -237,9 +245,8 @@ const ConvertTicketToParticipant = async (ticketId: number, tickets: EventTicket
     const ticket = tickets.find((ticket) => ticket.id === ticketId);
     if (!ticket) throw new Error('ticket not found');
 
-    const participantRef = collection(db, 'participants');
-    const q = query(participantRef, where('ticketId', '==', ticketId));
-    const querySnapshot = await getDocs(q);
+    const participantRef = adminDb.collection('participants').where('ticketId', '==', ticketId);
+    const querySnapshot = await participantRef.get();
 
     if (!querySnapshot.empty) {
         console.log('Participant already exists:', querySnapshot.docs[0].data());
@@ -269,11 +276,9 @@ const ConvertTicketToParticipant = async (ticketId: number, tickets: EventTicket
     };
     console.log(participant, 'participant');
 
-    let participantId = '';
     try {
-        const docRef = await addDoc(collection(db, 'participants'), participant);
+        const docRef = await adminDb.collection('participants').add(participant);
         console.log('Document written with ID: ', docRef.id);
-        participantId = docRef.id;
     } catch (e) {
         const response: ActionResponse = {
             type: 'error',
