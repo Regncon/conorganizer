@@ -7,9 +7,10 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 type Props = {
     participants: Participant[];
+    activeParticipantId: string;
 };
 
-const ParticipantSelector = ({ participants }: Props) => {
+const ParticipantSelector = ({ participants, activeParticipantId }: Props) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -30,7 +31,9 @@ const ParticipantSelector = ({ participants }: Props) => {
                 onClick={handleClick}
                 variant="text"
             >
-                <ParticipantAvatar name="Kari Nordmann" />
+                <ParticipantAvatar
+                    name={participants.find((participant) => participant.id === activeParticipantId)?.name || ''}
+                />
                 <ExpandMoreIcon />
             </Button>
             <Menu
