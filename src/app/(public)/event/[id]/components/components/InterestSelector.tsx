@@ -1,14 +1,54 @@
 'use client';
+
 import { Button, Box, Slider, sliderClasses, Typography } from '@mui/material';
 import Link from 'next/link';
 import HelpIcon from '@mui/icons-material/Help';
 import { useState } from 'react';
+import Image from 'next/image';
+import AwakeDragons from 'public/interessedragene/2024AwakeDragons1_1.png';
+import HappyDragons from 'public/interessedragene/2024HappyDragons1_1.png';
+import SleepyDragons from 'public/interessedragene/2024SleepyDragons1_1.png';
+import VeryHappyDragons from 'public/interessedragene/2024VeryHappyDragons1_1.png';
+
 const marks = [
-    { value: 1, label: '🥱 Ikke interessert' },
-    { value: 2, label: '😑 Litt interessert' },
-    { value: 3, label: '😊 Interessert' },
-    { value: 4, label: '🤩 Veldig interessert' },
+    { 
+        value: 1, 
+        label: (
+            <Box sx={{ display: 'flex', width:'25rem', alignItems: 'center', gap: '0.5rem' }}>
+                <Image src={SleepyDragons} alt="Ikke interessert" width={50} height={50} />
+                <Typography>Ikke interessert</Typography>
+            </Box>
+        ) 
+    },
+    { 
+        value: 2, 
+        label: (
+            <Box sx={{ display: 'flex', width:'25rem', alignItems: 'center', gap: '0.5rem' }}>
+                <Image src={AwakeDragons} alt="Litt interessert" width={50} height={50} />
+                <Typography>Litt interessert</Typography>
+            </Box>
+        ) 
+    },
+    { 
+        value: 3, 
+        label: (
+            <Box sx={{ display: 'flex', width:'25rem', alignItems: 'center', gap: '0.5rem' }}>
+                <Image src={HappyDragons} alt="Interessert" width={50} height={50} />
+                <Typography>Interessert</Typography>
+            </Box>
+        ) 
+    },
+    { 
+        value: 4, 
+        label: (
+            <Box sx={{ display: 'flex', width:'25rem', alignItems: 'center', gap: '0.5rem' }}>
+                <Image src={VeryHappyDragons} alt="Veldig interessert" width={50} height={50} />
+                <Typography>Veldig interessert</Typography>
+            </Box>
+        ) 
+    },
 ];
+
 type Props = {
     disabled: boolean;
 };
