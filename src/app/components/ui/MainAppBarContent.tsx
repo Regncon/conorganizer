@@ -22,12 +22,34 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import GroupsIcon from '@mui/icons-material/Groups';
 import Link from 'next/link';
-import { forwardRef, useState, type ComponentProps } from 'react';
+import { forwardRef, useEffect, useState, type ComponentProps } from 'react';
+import ParticipantSelector from '$ui/participant/ParticipantSelector';
+import { collection, Firestore, getDocs } from 'firebase/firestore';
+import { Participant } from '$lib/types';
+import { db } from '$lib/firebase/firebase';
+
 type Props = {
     sx?: SxProps<Theme>;
     isLoggedIn: boolean;
     admin: boolean;
     mobile: boolean;
+};
+
+const GetAllParticipants = async (db: Firestore) => {
+    if (db === null) {
+        const response = {
+            type: 'error',
+            message: 'Ikke autorisert',
+            error: 'getAuthorizedAuth failed',
+        };
+        throw response;
+    }
+
+    const querySnapshot = await getDocs(collection(db, 'participants'));
+    querySnapshot.forEach((doc) => {
+        console.log(doc.id, ' => ', doc.data());
+    });
+    return querySnapshot.docs.map((doc) => doc.data()) as Participant[];
 };
 
 const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admin, mobile }, ref) => {
@@ -41,6 +63,13 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
     const handleClose = () => {
         setAnchorEl(null);
     };
+
+    const [participants, setParticipants] = useState<Participant[] | null>(null);
+    useEffect(() => {
+        GetAllParticipants(db).then((participants) => {
+            setParticipants(participants);
+        });
+    }, []);
 
     const desktopBottomContent = (
         <>
@@ -71,17 +100,23 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             </Button>
             <Box sx={{ flexGrow: 1 }} />
             {isLoggedIn ?
-                <IconButton
-                    aria-label="more"
-                    id="long-button"
-                    aria-controls={open ? 'long-menu' : undefined}
-                    aria-expanded={open ? 'true' : undefined}
-                    aria-haspopup="true"
-                    onClick={handleClick}
-                >
-                    <MenuIcon />
-                </IconButton>
-            :   null}
+                <>
+                    {participants ?
+                        <ParticipantSelector participants={participants} />
+                        : <Button href="/my-profile/my-tickets">Hent bilett</Button>}
+
+                    <IconButton
+                        aria-label="more"
+                        id="long-button"
+                        aria-controls={open ? 'long-menu' : undefined}
+                        aria-expanded={open ? 'true' : undefined}
+                        aria-haspopup="true"
+                        onClick={handleClick}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                </>
+                : null}
         </>
     );
     const mobileBottomContent = (
@@ -107,7 +142,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 >
                     <MenuIcon fontSize="large" />
                 </IconButton>
-            :   null}
+                : null}
         </>
     );
 
@@ -151,10 +186,10 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                                             Rediger arrangementer
                                         </MenuItem>,
                                     ]
-                                :   null}
+                                    : null}
                             </Menu>
                         </>
-                    :   <Button component={Link} href="/login">
+                        : <Button component={Link} href="/login">
                             <LoginIcon />
                             Logg inn
                         </Button>
@@ -162,7 +197,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 </Box>
                 {mobile ?
                     <Box sx={{ flexGrow: 1 }} />
-                :   null}
+                    : null}
             </Toolbar>
         </AppBar>
     );

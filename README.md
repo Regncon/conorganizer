@@ -41,7 +41,6 @@ of your con schedule, your panels, and your expenses.
 -   Participants can choose favorite events
 -   Something that says which participant you're logged in as
 
-
 #### Nice to haves for publishing events
 
 -   Picture upload

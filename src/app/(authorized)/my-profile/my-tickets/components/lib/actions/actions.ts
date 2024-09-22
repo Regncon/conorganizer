@@ -1,4 +1,5 @@
 'use server';
+import { GetAllParticipants } from '$app/(public)/components/lib/serverAction';
 import { adminDb, getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { ActionResponse, Participant } from '$lib/types';
 import { addDoc, collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
@@ -42,13 +43,51 @@ export type EventTicket = {
 };
 
 export const AssignParticipantByEmail = async () => {
-    // Check if the user is authorized
-    // get tickets by email
-    // if tickets matches user email the create participant
-    // get participants by email
-    // assign user to participant
+    console.log('AssignParticipantByEmail');
+    const { db, user } = await getAuthorizedAuth();
+    if (db === null) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Ikke autorisert',
+            error: 'getAuthorizedAuth failed',
+        };
+        console.error(response);
+        throw response;
+    }
+    console.log('user email', user?.email);
+
+    const tickets = await GetTicketsByEmail(user?.email);
+    console.log('tickets', tickets);
+
+    // create participant from ticket
+
+    const participants = await GetParticipantsByEmail(user?.email as string);
+    console.log('participants', participants);
+
+    // assign user to participants
+
     // add participant to user
+
     // return participant
+    const result: Participant[] = [
+        {
+            name: 'Test Testesen',
+            over18: true,
+            ticketEmail: '',
+            id: '',
+            orderId: 0,
+            ticketId: 0,
+            oredrEmails: [],
+            ticketCategory: '',
+            ticketCategoryId: 0,
+            connectedEmails: [],
+            createdAt: '',
+            createdBy: '',
+            updateAt: '',
+            updatedBy: '',
+        },
+    ];
+    return result as Participant[];
 };
 
 export const GetTicketsByEmail = async (email: string | null | undefined) => {
@@ -66,6 +105,16 @@ export const GetTicketsByEmail = async (email: string | null | undefined) => {
     return ticketsWithOrderNumberFromEmail;
 };
 
+export const GetParticipantsByEmail = async (email: string) => {
+    const allParticipants = (await GetAllParticipants()) as Participant[];
+    const participants = allParticipants.filter(
+        (participant) =>
+            participant.ticketEmail === email ||
+            participant.oredrEmails.includes(email) ||
+            (participant.connectedEmails && participant.connectedEmails.includes(email))
+    );
+    return participants;
+};
 export const ConvertTicketIdToParticipant = async (ticketId: number) => {
     console.log('ConvertTicketToParticipant ', ticketId);
     const tickets = await GetTicketsFromCheckIn();
