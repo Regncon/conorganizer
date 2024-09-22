@@ -31,7 +31,6 @@ of your con schedule, your panels, and your expenses.
 #### Hard launch
 
 -   Icons | Grethe :D
--   Assign user to participant
 -   Fix cookie lifetime
 -   Vise hvilken deltaker du er vist du har flere deltakere på samme billett
 -   Linke til pool-events vist det finnes i flere pools
@@ -40,6 +39,7 @@ of your con schedule, your panels, and your expenses.
 -   Add is gm to event
 -   Participants can choose favorite events
 -   Something that says which participant you're logged in as
+-   Fix race condition in assignParticipantByEmail
 
 #### Nice to haves for publishing events
 
@@ -101,3 +101,4 @@ of your con schedule, your panels, and your expenses.
 -   Connect to checkin system
 -   filere ut events som ikke er publisert
 -   add button to redirect to administration page of event
+-   Assign user to participant
