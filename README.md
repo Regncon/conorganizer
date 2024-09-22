@@ -30,13 +30,11 @@ of your con schedule, your panels, and your expenses.
 
 #### Hard launch
 
--   Icons | Grethe :D
 -   Assign user to participant
 -   Fix cookie lifetime
 -   Vise hvilken deltaker du er vist du har flere deltakere på samme billett
 -   Linke til pool-events vist det finnes i flere pools
 -   Filter my signups, events and tags
--   Help text explaining how the algorithm works
 -   Add is gm to event
 -   Participants can choose favorite events
 -   Something that says which participant you're logged in as
@@ -61,6 +59,8 @@ of your con schedule, your panels, and your expenses.
 
 ## Done
 
+-   Icons | Grethe :D
+-   Help text explaining how the algorithm works
 -   Bug: Problems with hitting enter while editing event
 -   Add picture url | Gerhard
 -   Log-in bug, e-mail input loses focus when you input a letter | Torstein
