@@ -88,7 +88,8 @@ export const AssignParticipantByEmail = async () => {
         return participants;
     }
 
-    const userInfo = (await getMyUserInfo(db, user)) ?? { admin: false, participantIds: [] };
+    const myUserInfo = await getMyUserInfo(db, user);
+    let myUserInfoToBeUpdated = myUserInfo ? { ...myUserInfo } : { admin: false, participantIds: [] };
 
     participants.forEach(async (participant) => {
         //TODO: HUSK OG TEST
@@ -105,17 +106,25 @@ export const AssignParticipantByEmail = async () => {
             participant.users.push(user.uid);
         }
 
-        if (userInfo.participantIds?.includes(participant.id) === false || userInfo.participantIds === undefined) {
-            if (userInfo.participantIds === undefined) {
-                userInfo.participantIds = [];
+        if (
+            myUserInfoToBeUpdated.participantIds?.includes(participant.id) === false ||
+            myUserInfoToBeUpdated.participantIds === undefined
+        ) {
+            if (myUserInfoToBeUpdated.participantIds === undefined) {
+                myUserInfoToBeUpdated.participantIds = [];
             }
-            userInfo.participantIds.push(participant.id);
+            myUserInfoToBeUpdated.participantIds.push(participant.id);
         }
         // console.log((await test.query.where('id', '==', participant.id).get()).forEach(e => e.ref.update(participant.users ?? [])), 'ASDASDASDASD ==============');
         adminDb.collection('participants').doc(participant.id).update(participant);
     });
 
-    adminDb.collection('users').doc(user.uid).update(userInfo);
+    if (myUserInfo) {
+        adminDb.collection('users').doc(user.uid).update(myUserInfoToBeUpdated);
+    }
+    if (!myUserInfo) {
+        adminDb.collection('users').doc(user.uid).set(myUserInfoToBeUpdated);
+    }
 
     return participants;
 };
