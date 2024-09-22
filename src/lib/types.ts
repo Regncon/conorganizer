@@ -188,7 +188,7 @@ export type Participant = {
     orderId: number;
     ticketId: number;
     ticketEmail: string;
-    oredrEmails: string[];
+    orderEmails: string[];
     ticketCategory: string;
     ticketCategoryId: number;
     connectedEmails: string[];

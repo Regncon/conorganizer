@@ -1,5 +1,6 @@
 'use server';
-import { GetAllParticipants } from '$app/(public)/components/lib/serverAction';
+import { getMyUserInfo } from '$app/(authorized)/my-events/lib/actions';
+import { GetAllParticipants, GetAllParticipantsSnapshot } from '$app/(public)/components/lib/serverAction';
 import { adminDb, getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { ActionResponse, Participant } from '$lib/types';
 import { addDoc, collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
@@ -42,10 +43,29 @@ export type EventTicket = {
     };
 };
 
+export const getParticipantByUser = async () => {
+    const { user } = await getAuthorizedAuth();
+    if (user === null) return null;
+
+    console.log(
+        adminDb
+            .collection('participants')
+            // .where('userId', 'array-contains', user.uid)
+            .get()
+            .then((querySnapshot) => {
+                querySnapshot.forEach((doc) => {
+                    console.log(doc.id, ' => ', doc.data());
+                });
+            })
+            .catch((error) => {
+                console.error('Error getting documents: ', error);
+            })
+    );
+};
 export const AssignParticipantByEmail = async () => {
     console.log('AssignParticipantByEmail');
     const { db, user } = await getAuthorizedAuth();
-    if (db === null) {
+    if (db === null || user === null) {
         const response: ActionResponse = {
             type: 'error',
             message: 'Ikke autorisert',
@@ -62,32 +82,42 @@ export const AssignParticipantByEmail = async () => {
     // create participant from ticket
 
     const participants = await GetParticipantsByEmail(user?.email as string);
-    console.log('participants', participants);
+    const myParticipants = participants.filter((participant) => participant.users?.includes(user.uid));
+    if (participants.length === myParticipants.length) {
+        console.log('ticket connected do user YOU WIN');
+        return participants;
+    }
 
-    // assign user to participants
+    const userInfo = (await getMyUserInfo(db, user)) ?? { admin: false, participantIds: [] };
 
-    // add participant to user
+    participants.forEach(async (participant) => {
+        //TODO: HUSK OG TEST
+        if (participant.users?.includes(user?.uid)) {
+            console.log('ticket connected do user YOU WIN');
+            return;
+        }
 
-    // return participant
-    const result: Participant[] = [
-        {
-            name: 'Test Testesen',
-            over18: true,
-            ticketEmail: '',
-            id: '',
-            orderId: 0,
-            ticketId: 0,
-            oredrEmails: [],
-            ticketCategory: '',
-            ticketCategoryId: 0,
-            connectedEmails: [],
-            createdAt: '',
-            createdBy: '',
-            updateAt: '',
-            updatedBy: '',
-        },
-    ];
-    return result as Participant[];
+        if (participant.users?.includes(user.uid) === false || participant?.users === undefined) {
+            if (participant.users === undefined) {
+                participant.users = [];
+            }
+
+            participant.users.push(user.uid);
+        }
+
+        if (userInfo.participantIds?.includes(participant.id) === false || userInfo.participantIds === undefined) {
+            if (userInfo.participantIds === undefined) {
+                userInfo.participantIds = [];
+            }
+            userInfo.participantIds.push(participant.id);
+        }
+        // console.log((await test.query.where('id', '==', participant.id).get()).forEach(e => e.ref.update(participant.users ?? [])), 'ASDASDASDASD ==============');
+        adminDb.collection('participants').doc(participant.id).update(participant);
+    });
+
+    adminDb.collection('users').doc(user.uid).update(userInfo);
+
+    return participants;
 };
 
 export const GetTicketsByEmail = async (email: string | null | undefined) => {
@@ -107,10 +137,11 @@ export const GetTicketsByEmail = async (email: string | null | undefined) => {
 
 export const GetParticipantsByEmail = async (email: string) => {
     const allParticipants = (await GetAllParticipants()) as Participant[];
+
     const participants = allParticipants.filter(
         (participant) =>
             participant.ticketEmail === email ||
-            participant.oredrEmails.includes(email) ||
+            participant.orderEmails.includes(email) ||
             (participant.connectedEmails && participant.connectedEmails.includes(email))
     );
     return participants;
@@ -118,6 +149,15 @@ export const GetParticipantsByEmail = async (email: string) => {
 export const ConvertTicketIdToParticipant = async (ticketId: number) => {
     console.log('ConvertTicketToParticipant ', ticketId);
     const tickets = await GetTicketsFromCheckIn();
+
+    if (!tickets) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Checkin feilet',
+        };
+        console.error(response);
+        return response;
+    }
 
     const ticket = tickets?.find((ticket) => ticket.id === ticketId);
     console.log(ticket, 'ticket');
@@ -131,7 +171,7 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
         return response;
     }
 
-    const result = await ConvertTicketToParticipant(ticket, tickets as EventTicket[]);
+    const result = await ConvertTicketToParticipant(ticket.id, tickets);
     return result;
 
     // const query = `{
@@ -169,7 +209,7 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
     // return result;
 };
 
-const ConvertTicketToParticipant = async (ticket: EventTicket, tickets: EventTicket[]) => {
+const ConvertTicketToParticipant = async (ticketId: number, tickets: EventTicket[]) => {
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {
         // return new ActionResponse = {
@@ -185,8 +225,11 @@ const ConvertTicketToParticipant = async (ticket: EventTicket, tickets: EventTic
         return response;
     }
 
+    const ticket = tickets.find((ticket) => ticket.id === ticketId);
+    if (!ticket) throw new Error('ticket not found');
+
     const participantRef = collection(db, 'participants');
-    const q = query(participantRef, where('ticketId', '==', ticket.id));
+    const q = query(participantRef, where('ticketId', '==', ticketId));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
@@ -199,16 +242,13 @@ const ConvertTicketToParticipant = async (ticket: EventTicket, tickets: EventTic
     }
     const isOver18 = new Date().getFullYear() - new Date(ticket.crm.born).getFullYear() > 18;
 
-    const orderEmails = tickets
-        .filter((t) => t.order_id === ticket.order_id)
-        .map((t) => t.crm.email)
-        .filter((email) => email !== ticket.crm.email);
+    const orderEmails = tickets.filter((t) => t.order_id === ticket.order_id).map((t) => t.crm.email);
 
     let participant: Partial<Participant> = {
         name: `${ticket.crm.first_name} ${ticket.crm.last_name}`,
         over18: isOver18,
         ticketEmail: ticket.crm.email,
-        oredrEmails: orderEmails,
+        orderEmails: orderEmails,
         ticketId: ticket.id,
         orderId: ticket.order_id,
         ticketCategory: ticket.category,
@@ -306,7 +346,7 @@ export const ConnectEmailToParticipant = async (participantId: string, email: st
     if (participant.connectedEmails.includes(email)) {
         const response: ActionResponse = {
             type: 'warning',
-            message: 'Eposten er allerede koblet til deltageren',
+            message: 'E-posten er allerede koblet til deltageren',
         };
         return response;
     }

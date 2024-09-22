@@ -22,7 +22,7 @@ type Props = {
 
 const MyParticipant = ({ participant }: Props) => {
     const [email, setEmail] = useState('');
-    const [connectResponce, setConnectResponce] = useState<ActionResponse>();
+    const [connectResponse, setConnectResponce] = useState<ActionResponse>();
     const [loading, setLoading] = useState(false);
 
     const handleConnectToEmail = async () => {
@@ -49,7 +49,7 @@ const MyParticipant = ({ participant }: Props) => {
 
             {loading ?
                 <CircularProgress />
-                : connectResponce && <Alert severity={connectResponce.type}>{connectResponce.message}</Alert>}
+            :   connectResponse && <Alert severity={connectResponse.type}>{connectResponse.message}</Alert>}
             <CardActions>
                 <TextField label="Epost" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 <Button variant="contained" onClick={handleConnectToEmail}>
@@ -58,13 +58,13 @@ const MyParticipant = ({ participant }: Props) => {
             </CardActions>
             <CardContent>
                 <Typography>Bilett epost: {participant.ticketEmail}</Typography>
-                {participant.oredrEmails?.map((email, index) => (
+                {participant.orderEmails?.map((email, index) => (
                     <Typography key={index}>
                         Bestillings epost {index + 1}: {email}
                     </Typography>
                 ))}
                 {participant.connectedEmails?.map((email, index) => (
-                    <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }} key={index}>
                         <Typography>
                             Kobledt epost {index + 1}: {email}
                         </Typography>

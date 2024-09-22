@@ -31,9 +31,7 @@ const ParticipantSelector = ({ participants, activeParticipantId }: Props) => {
                 onClick={handleClick}
                 variant="text"
             >
-                <ParticipantAvatar
-                    name={participants.find((participant) => participant.id === activeParticipantId)?.name || ''}
-                />
+                <ParticipantAvatar name={'Ola Nordmann'} />
                 <ExpandMoreIcon />
             </Button>
             <Menu

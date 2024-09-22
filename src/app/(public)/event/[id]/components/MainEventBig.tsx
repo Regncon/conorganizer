@@ -10,6 +10,7 @@ import NavigateNextLink from './ui/NavigateNextLink';
 import MuiMarkdownClient from './ui/MuiMarkdownClient';
 import { createIconFromString } from '$app/(public)/components/lib/helpers/icons';
 import GoToEventAdministrationButton from './ui/GoToEventAdministrationButton';
+import { getParticipantByUser } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
 type Props = {
     poolEvent: PoolEvent;
@@ -20,7 +21,7 @@ type Props = {
 
 const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isAdmin = false }: Props) => {
     console.log(typeof window === 'undefined' ? 'server' : 'client');
-
+    await getParticipantByUser();
     return (
         <Paper
             elevation={0}

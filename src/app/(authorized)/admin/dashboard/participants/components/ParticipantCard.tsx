@@ -64,7 +64,7 @@ const ParticipantCard = ({ participant }: Props) => {
                             <AdultsOnlyIcon chipMargin={false} />
                             <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Over 18</Typography>
                         </>
-                        : <>
+                    :   <>
                             <ChildFriendlyIcon chipMargin={false} />
                             <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Under 18</Typography>
                         </>
@@ -88,7 +88,7 @@ const ParticipantCard = ({ participant }: Props) => {
             <CardContent>
                 {loading ?
                     <CircularProgress />
-                    : connectResponce && <Alert severity={connectResponce.type}>{connectResponce.message}</Alert>}
+                :   connectResponce && <Alert severity={connectResponce.type}>{connectResponce.message}</Alert>}
             </CardContent>
             <CardActions>
                 <TextField label="Epost" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -98,7 +98,7 @@ const ParticipantCard = ({ participant }: Props) => {
             </CardActions>
             <CardContent>
                 <Typography>Bilett epost: {participant.ticketEmail}</Typography>
-                {participant.oredrEmails?.map((email, index) => (
+                {participant.orderEmails?.map((email, index) => (
                     <Typography key={index}>
                         Bestillings epost {index + 1}: {email}
                     </Typography>

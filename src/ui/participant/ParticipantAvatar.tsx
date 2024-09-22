@@ -17,12 +17,13 @@ const ParticipantAvatar = ({ name }: props) => {
         }
 
         let color = '#';
-
-        for (i = 0; i < 3; i += 1) {
-            const value = (hash >> (i * 8)) & 0xff;
-            color += `00${value.toString(16)}`.slice(-2);
+        const saturation = 0.65; // Saturation factor (0-1)
+        const lightness = 0.8; // Lightness factor (0-1)
+        for (let i = 0; i < 3; i++) {
+            const baseValue = (hash >> (i * 8)) & 0xff;
+            const newValue = Math.floor(baseValue * saturation + lightness * 255 * (1 - saturation));
+            color += newValue.toString(16).padStart(2, '0').slice(-2);
         }
-        /* eslint-enable no-bitwise */
 
         return color;
     }
@@ -37,9 +38,9 @@ const ParticipantAvatar = ({ name }: props) => {
     }
 
     return (
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <Avatar {...stringAvatar(name)} />
-            <Typography>{name}</Typography>
+            <Typography sx={{ display: { xs: 'none', sm: 'block' } }}>{name}</Typography>
         </Box>
     );
 };

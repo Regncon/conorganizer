@@ -9,7 +9,6 @@ const MyTickets = async () => {
         redirect('/my-profile/my-tickets/confirm');
     }
     const participants = await AssignParticipantByEmail();
-    console.log(participants);
 
     if (participants?.length === 0 || participants === undefined) {
         redirect('/my-profile/my-tickets/not-found');

@@ -103,7 +103,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 <>
                     {participants ?
                         <ParticipantSelector participants={participants} />
-                        : <Button href="/my-profile/my-tickets">Hent bilett</Button>}
+                    :   <Button href="/my-profile/my-tickets">Hent billett</Button>}
 
                     <IconButton
                         aria-label="more"
@@ -116,7 +116,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                         <MenuIcon />
                     </IconButton>
                 </>
-                : null}
+            :   null}
         </>
     );
     const mobileBottomContent = (
@@ -142,7 +142,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 >
                     <MenuIcon fontSize="large" />
                 </IconButton>
-                : null}
+            :   null}
         </>
     );
 
@@ -186,10 +186,10 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                                             Rediger arrangementer
                                         </MenuItem>,
                                     ]
-                                    : null}
+                                :   null}
                             </Menu>
                         </>
-                        : <Button component={Link} href="/login">
+                    :   <Button component={Link} href="/login">
                             <LoginIcon />
                             Logg inn
                         </Button>
@@ -197,7 +197,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 </Box>
                 {mobile ?
                     <Box sx={{ flexGrow: 1 }} />
-                    : null}
+                :   null}
             </Toolbar>
         </AppBar>
     );

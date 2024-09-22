@@ -22,6 +22,11 @@ export async function GetAllParticipants() {
     const participants = participantsRef.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     return participants;
 }
+export async function GetAllParticipantsSnapshot() {
+    const participantsRef = await adminDb.collection('participants').get();
+    const participants = participantsRef;
+    return participants;
+}
 
 const initialSortedEventMap = new Map<PoolName, ConEvent[]>([
     [PoolName.fridayEvening, []],
