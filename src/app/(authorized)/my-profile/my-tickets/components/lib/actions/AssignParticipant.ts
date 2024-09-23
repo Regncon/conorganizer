@@ -24,7 +24,7 @@ export const AssignParticipantByEmail = async () => {
     const participants = await GetParticipantsByEmail(user.email);
 
     // Process data
-    const { newParticipants, updatedParticipants, myUserInfoToBeUpdated } = processParticipantAssignment(
+    const { newParticipants, updatedParticipants, myUserInfoToBeUpdated } = await processParticipantAssignment(
         tickets,
         participants,
         user

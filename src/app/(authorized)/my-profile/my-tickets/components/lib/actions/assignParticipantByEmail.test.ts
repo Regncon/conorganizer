@@ -1,5 +1,8 @@
 // assignParticipantByEmail.test.ts
-import jest from 'jest';
+
+import { getMyUserInfo } from "$app/(authorized)/my-events/lib/actions";
+import { adminDb, getAuthorizedAuth } from "$lib/firebase/firebaseAdmin";
+import { AssignParticipantByEmail, GetParticipantsByEmail, GetTicketsByEmail } from "./actions";
 
 jest.mock('./auth');
 jest.mock('./tickets');
@@ -31,6 +34,7 @@ describe('AssignParticipantByEmail', () => {
 
         // Mock database methods
         adminDb.collection = jest.fn().mockReturnThis();
+        adminDb.doc = jest.fn().mockReturnThis();
         adminDb.add = jest.fn().mockResolvedValue({ id: 'newParticipantId' });
         adminDb.update = jest.fn().mockResolvedValue({});
         adminDb.set = jest.fn().mockResolvedValue({});

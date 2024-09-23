@@ -1,36 +1,68 @@
 // participants.test.ts
 
 import { Participant } from '$lib/types';
-import { describe, it } from 'node:test';
+import { IdTokenResult, User } from 'firebase/auth';
+import { EventTicket } from './actions';
+
 import { processParticipantAssignment } from './AssignParticipant';
+import { UserMetadata } from 'firebase-admin/auth';
 
 describe('processParticipantAssignment', () => {
-    const user = { email: 'test@example.com', uid: 'user123' };
+    const user: User = {
+        email: 'test@example.com', uid: 'user123',
+        emailVerified: false,
+        isAnonymous: false,
+        metadata: {},
+        providerData: [],
+        refreshToken: '',
+        tenantId: null,
+        delete: function (): Promise<void> {
+            throw new Error('Function not implemented.');
+        },
+        getIdToken: function (forceRefresh?: boolean): Promise<string> {
+            throw new Error('Function not implemented.');
+        },
+        getIdTokenResult: function (forceRefresh?: boolean): Promise<IdTokenResult> {
+            throw new Error('Function not implemented.');
+        },
+        reload: function (): Promise<void> {
+            throw new Error('Function not implemented.');
+        },
+        toJSON: function (): object {
+            throw new Error('Function not implemented.');
+        },
+        displayName: null,
+        phoneNumber: null,
+        photoURL: null,
+        providerId: ''
+    };
 
-    const tickets = [
+    const tickets : EventTicket[] = [
         {
             id: 1,
-            order_id: 'order1',
+            order_id: 1001,
             crm: {
                 email: 'test@example.com',
                 first_name: 'John',
                 last_name: 'Doe',
                 born: '1990-01-01',
+                id: 100
             },
             category: 'General Admission',
-            category_id: 'cat1',
+            category_id: 1,
         },
         {
             id: 2,
-            order_id: 'order2',
+            order_id: 1002,
             crm: {
                 email: 'jane@example.com',
                 first_name: 'Jane',
                 last_name: 'Smith',
                 born: '1995-05-15',
+                id: 101
             },
             category: 'VIP',
-            category_id: 'cat2',
+            category_id: 2,
         },
     ];
 
@@ -44,8 +76,8 @@ describe('processParticipantAssignment', () => {
         },
     ];
 
-    it('should create new participants and update existing ones', () => {
-        const result = processParticipantAssignment(tickets, participants, user);
+    it('should create new participants and update existing ones', async () => {
+        const result = await processParticipantAssignment(tickets, participants as Participant[], user);
 
         // New participants
         expect(result.newParticipants).toHaveLength(1);
@@ -64,16 +96,16 @@ describe('processParticipantAssignment', () => {
         expect(new Set(participantIds).size).toBe(participantIds.length);
     });
 
-    it('should handle cases with no new tickets', () => {
+    it('should handle cases with no new tickets', async () => {
         const updatedTickets = tickets.slice(0, 1); // Only ticket with id 1
-        const result = processParticipantAssignment(updatedTickets, participants, user);
+        const result = await processParticipantAssignment(updatedTickets, participants as Participant[], user);
 
         expect(result.newParticipants).toHaveLength(0);
         expect(result.updatedParticipants).toHaveLength(1);
     });
 
-    it('should handle cases with no existing participants', () => {
-        const result = processParticipantAssignment(tickets, [], user);
+    it('should handle cases with no existing participants', async () => {
+        const result = await processParticipantAssignment(tickets, [], user);
 
         expect(result.newParticipants).toHaveLength(2);
         expect(result.updatedParticipants).toHaveLength(0);
