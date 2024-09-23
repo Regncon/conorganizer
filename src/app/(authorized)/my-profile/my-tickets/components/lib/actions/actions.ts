@@ -1,9 +1,10 @@
 'use server';
 import { getMyUserInfo } from '$app/(authorized)/my-events/lib/actions';
-import { GetAllParticipants, GetAllParticipantsSnapshot } from '$app/(public)/components/lib/serverAction';
+import { GetAllParticipants } from '$app/(public)/components/lib/serverAction';
 import { adminDb, getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { ActionResponse, Participant } from '$lib/types';
-import { addDoc, collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
+import { throws } from 'assert';
+import { doc, updateDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 export type CrmRecord = {
@@ -62,16 +63,11 @@ export const getParticipantByUser = async () => {
             })
     );
 };
+
 export const AssignParticipantByEmail = async () => {
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {
-        const response: ActionResponse = {
-            type: 'error',
-            message: 'Ikke autorisert',
-            error: 'getAuthorizedAuth failed',
-        };
-        console.error(response);
-        throw response;
+        throw new Error('Failed to get authorized auth');
     }
 
     const tickets = await GetTicketsByEmail(user?.email);
@@ -84,14 +80,24 @@ export const AssignParticipantByEmail = async () => {
     const newTickets = tickets.filter(
         (ticket) => !participants.some((participant) => participant.ticketId === ticket.id)
     );
+
+    let newParticipantIds: string[] = [];
     newTickets.forEach(async (newTicket) => {
-        await ConvertTicketToParticipant(newTicket.id, tickets);
-        participants = await GetParticipantsByEmail(user?.email as string);
+        let newParticipant = generateParticipant(newTicket.id, tickets, user.email as string);
+        newParticipant = { ...newParticipant, users: [user.uid] };
+
+        try {
+            const docRef = await adminDb.collection('participants').add(newParticipant);
+            newParticipantIds.push(docRef.id);
+            console.log('Participant written with ID: ', docRef.id);
+        } catch (e) {
+            throw e;
+        }
+        console.log('newParticipantIds', newParticipantIds);
     });
-    console.log(newTickets, 'newTickets');
 
     const myParticipants = participants.filter((participant) => participant.users?.includes(user.uid));
-    if (participants.length === myParticipants.length) {
+    if (participants.length === myParticipants.length && newParticipantIds.length === 0) {
         console.log('ticket connected do user YOU WIN');
         return participants;
     }
@@ -99,8 +105,15 @@ export const AssignParticipantByEmail = async () => {
     const myUserInfo = await getMyUserInfo(db, user);
     let myUserInfoToBeUpdated = myUserInfo ? { ...myUserInfo } : { admin: false, participantIds: [] };
 
+    if (myUserInfoToBeUpdated.participantIds === undefined) {
+        myUserInfoToBeUpdated.participantIds = [];
+    }
+
+    if (newParticipantIds.length > 0) {
+        myUserInfoToBeUpdated.participantIds = myUserInfoToBeUpdated.participantIds.concat(newParticipantIds);
+    }
+
     participants.forEach(async (participant) => {
-        //TODO: HUSK OG TEST
         if (participant.users?.includes(user?.uid)) {
             console.log('ticket connected do user YOU WIN');
             return;
@@ -114,17 +127,9 @@ export const AssignParticipantByEmail = async () => {
             participant.users.push(user.uid);
         }
 
-        if (
-            myUserInfoToBeUpdated.participantIds?.includes(participant.id) === false ||
-            myUserInfoToBeUpdated.participantIds === undefined
-        ) {
-            if (myUserInfoToBeUpdated.participantIds === undefined) {
-                myUserInfoToBeUpdated.participantIds = [];
-            }
+        if (myUserInfoToBeUpdated.participantIds?.includes(participant.id) === false) {
             myUserInfoToBeUpdated.participantIds.push(participant.id);
         }
-        // console.log((await test.query.where('id', '==', participant.id).get()).forEach(e => e.ref.update(participant.users ?? [])), 'ASDASDASDASD ==============');
-        adminDb.collection('participants').doc(participant.id).update(participant);
     });
 
     if (myUserInfo) {
@@ -190,40 +195,6 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
 
     const result = await ConvertTicketToParticipant(ticket.id, tickets);
     return result;
-
-    // const query = `{
-    // eventTickets(customer_id: 13446, id: ${ticketId}, onlyCompleted: true) {
-    //   id
-    //   category
-    //   category_id
-    //   crm {
-    //     first_name
-    //     last_name
-    //     id
-    //     email
-    //   }
-    //   order_id
-    // }
-    // }`;
-    //
-    // const res = await fetch(
-    //     `https://app.checkin.no/graphql?client_id=${process.env.CHECKIN_KEY}&client_secret=${process.env.CHECKIN_SECRET}`,
-    //     {
-    //         method: 'POST',
-    //         body: JSON.stringify({ query }),
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //         },
-    //     }
-    // );
-    // if (res.status !== 200) {
-    //     throw new Error('Failed to fetch tickets');
-    // }
-    // const queryResult: CrmJson | undefined = await res.json();
-    // console.log(queryResult, 'queryResult');
-    //
-    // // const result = await ConvertTicketToParticipant(queryResult?.data.eventTickets[0] as EventTicket);
-    // return result;
 };
 
 const ConvertTicketToParticipant = async (ticketId: number, tickets: EventTicket[]) => {
@@ -242,9 +213,6 @@ const ConvertTicketToParticipant = async (ticketId: number, tickets: EventTicket
         return response;
     }
 
-    const ticket = tickets.find((ticket) => ticket.id === ticketId);
-    if (!ticket) throw new Error('ticket not found');
-
     const participantRef = adminDb.collection('participants').where('ticketId', '==', ticketId);
     const querySnapshot = await participantRef.get();
 
@@ -256,25 +224,8 @@ const ConvertTicketToParticipant = async (ticketId: number, tickets: EventTicket
         };
         return response;
     }
-    const isOver18 = new Date().getFullYear() - new Date(ticket.crm.born).getFullYear() > 18;
 
-    const orderEmails = tickets.filter((t) => t.order_id === ticket.order_id).map((t) => t.crm.email);
-
-    let participant: Partial<Participant> = {
-        name: `${ticket.crm.first_name} ${ticket.crm.last_name}`,
-        over18: isOver18,
-        ticketEmail: ticket.crm.email,
-        orderEmails: orderEmails,
-        ticketId: ticket.id,
-        orderId: ticket.order_id,
-        ticketCategory: ticket.category,
-        ticketCategoryId: ticket.category_id,
-        createdAt: new Date().toISOString(),
-        createdBy: user.email as string,
-        updateAt: new Date().toISOString(),
-        updatedBy: user.email as string,
-    };
-    console.log(participant, 'participant');
+    const participant = generateParticipant(ticketId, tickets, user.email as string);
 
     try {
         const docRef = await adminDb.collection('participants').add(participant);
@@ -294,6 +245,32 @@ const ConvertTicketToParticipant = async (ticketId: number, tickets: EventTicket
     };
     revalidatePath('/admin/dashboard/participants', 'page');
     return response;
+};
+
+export const generateParticipant = async (ticketId: number, tickets: EventTicket[], userEmail: string) => {
+    const ticket = tickets.find((ticket) => ticket.id === ticketId);
+    if (!ticket) throw new Error('ticket not found');
+
+    const isOver18 = new Date().getFullYear() - new Date(ticket.crm.born).getFullYear() > 18;
+
+    const orderEmails = tickets.filter((t) => t.order_id === ticket.order_id).map((t) => t.crm.email);
+
+    let participant: Partial<Participant> = {
+        name: `${ticket.crm.first_name} ${ticket.crm.last_name}`,
+        over18: isOver18,
+        ticketEmail: ticket.crm.email,
+        orderEmails: orderEmails,
+        ticketId: ticket.id,
+        orderId: ticket.order_id,
+        ticketCategory: ticket.category,
+        ticketCategoryId: ticket.category_id,
+        createdAt: new Date().toISOString(),
+        createdBy: userEmail,
+        updateAt: new Date().toISOString(),
+        updatedBy: userEmail,
+    };
+    console.log(participant, 'participant');
+    return participant;
 };
 
 export const GetTicketsFromCheckIn = async () => {
