@@ -1,7 +1,7 @@
 import { Participant } from '$lib/types';
 import { User } from 'firebase/auth';
 import { EventTicket } from './actions';
-import { NewTickets } from './NewTickets';
+import { NewTickets } from './Helpers';
 
 describe('NewTickets', () => {
     // Setup
@@ -187,7 +187,7 @@ describe('NewTickets', () => {
                 },
             ];
 
-            const result = await NewTickets(tickets, existingParticipants, user);
+            const result = NewTickets(tickets, existingParticipants, user);
 
             test('then the new participants should be created and the existing ones should be updated', async () => {
                 const resultWithoutDate = result.map((participant) => ({

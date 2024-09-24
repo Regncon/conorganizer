@@ -27,14 +27,14 @@ const MyParticipant = ({ participant }: Props) => {
 
     const handleConnectToEmail = async () => {
         setLoading(true);
-        const responce = await ConnectEmailToParticipant(participant.id, email);
+        const responce = await ConnectEmailToParticipant(participant.id as string, email);
         setConnectResponce(responce);
         setLoading(false);
     };
 
     const handleDeleteConnected = async (email: string) => {
         setLoading(true);
-        const responce = await DeleteConnectedEmail(participant.id, email);
+        const responce = await DeleteConnectedEmail(participant.id as string, email);
         setConnectResponce(responce);
         setLoading(false);
     };
@@ -43,13 +43,13 @@ const MyParticipant = ({ participant }: Props) => {
         <Card>
             <CardContent>
                 <Typography>{participant.ticketCategory}</Typography>
-                <Typography>{participant.name}</Typography>
+                <Typography>{`${participant.firstName} ${participant.lastName}`}</Typography>
                 <Typography>Bestilling: {participant.orderId}</Typography>
             </CardContent>
 
             {loading ?
                 <CircularProgress />
-            :   connectResponse && <Alert severity={connectResponse.type}>{connectResponse.message}</Alert>}
+                : connectResponse && <Alert severity={connectResponse.type}>{connectResponse.message}</Alert>}
             <CardActions>
                 <TextField label="Epost" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 <Button variant="contained" onClick={handleConnectToEmail}>

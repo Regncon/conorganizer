@@ -38,21 +38,24 @@ const ParticipantCard = ({ participant }: Props) => {
 
     const handleConnectToEmail = async () => {
         setLoading(true);
-        const responce = await ConnectEmailToParticipant(participant.id, email);
+        const responce = await ConnectEmailToParticipant(participant.id as string, email);
         setConnectResponce(responce);
         setLoading(false);
     };
 
     const handleDeleteConnected = async (email: string) => {
         setLoading(true);
-        const responce = await DeleteConnectedEmail(participant.id, email);
+        const responce = await DeleteConnectedEmail(participant.id as string, email);
         setConnectResponce(responce);
         setLoading(false);
     };
 
     return (
         <Card sx={{ minWidth: 306, maxWidth: 430 }}>
-            <CardHeader title={participant.name} subheader={participant.ticketCategory} />
+            <CardHeader
+                title={`${participant.firstName} ${participant.lastName}`}
+                subheader={participant.ticketCategory}
+            />
             <CardContent sx={{ paddingTop: 0 }}>
                 <Stack direction="row" spacing={2}>
                     <Typography sx={{ fontWeight: 'bold' }}>Bestilling:</Typography>
@@ -64,7 +67,7 @@ const ParticipantCard = ({ participant }: Props) => {
                             <AdultsOnlyIcon chipMargin={false} />
                             <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Over 18</Typography>
                         </>
-                    :   <>
+                        : <>
                             <ChildFriendlyIcon chipMargin={false} />
                             <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Under 18</Typography>
                         </>
@@ -88,7 +91,7 @@ const ParticipantCard = ({ participant }: Props) => {
             <CardContent>
                 {loading ?
                     <CircularProgress />
-                :   connectResponce && <Alert severity={connectResponce.type}>{connectResponce.message}</Alert>}
+                    : connectResponce && <Alert severity={connectResponce.type}>{connectResponce.message}</Alert>}
             </CardContent>
             <CardActions>
                 <TextField label="Epost" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />

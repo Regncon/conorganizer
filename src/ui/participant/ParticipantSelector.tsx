@@ -45,7 +45,7 @@ const ParticipantSelector = ({ participants, activeParticipantId }: Props) => {
             >
                 {participants.map((participant) => (
                     <MenuItem key={participant.id} onClick={handleClose}>
-                        <ParticipantAvatar name={participant.name} />
+                        <ParticipantAvatar name={`${participant.firstName} ${participant.lastName}`} />
                     </MenuItem>
                 ))}
             </Menu>

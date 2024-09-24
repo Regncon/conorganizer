@@ -1,6 +1,6 @@
 import { Participant } from '$lib/types';
 import { User } from 'firebase/auth';
-import { AssignUserToParticipant } from './NewTickets';
+import { AssignUserToParticipant } from './Helpers';
 
 describe('AssignParticipantToUser', () => {
     // Setup
@@ -9,66 +9,49 @@ describe('AssignParticipantToUser', () => {
         uid: 'user123',
     };
     const user = partialUser as User;
-    describe('Given that there are pargticipants that the user should be assigned to', () => {
+
+    describe('Given that there are participants that the user should be assigned to', () => {
         describe('When the user is assigned to the participants', () => {
-            const expectedNewParticipants: Participant[] = [
+            const expectedNewParticipants: Partial<Participant>[] = [
                 {
-                    ticketId: 1,
-                    ticketEmail: 'user1@example.com',
-                    firstName: 'New Participant 1',
-                    lastName: 'User email is in order emails and shold be assigned to this participant',
+                    id: '101',
                     users: ['user123'],
-                    over18: true,
-                    orderId: 1001,
-                    orderEmails: ['user1@example.com'],
-                    ticketCategory: '',
-                    ticketCategoryId: 0,
-                    connectedEmails: [],
-                    createdAt: '',
-                    createdBy: 'user1@example.com',
-                    updateAt: '',
                     updatedBy: 'user1@example.com',
+                    updateAt: expect.any(String),
                 },
                 {
-                    ticketId: 2,
-                    ticketEmail: 'user2@example.com',
-                    firstName: 'New Participant 2',
-                    lastName: 'user email is in connected emails, should be assigned',
-                    orderEmails: ['user2@example.com'],
+                    id: '102',
                     users: ['user456', 'user123'],
-                    over18: true,
-                    orderId: 1002,
-                    ticketCategory: '',
-                    ticketCategoryId: 0,
-                    connectedEmails: ['user1@example.com'],
-                    createdAt: '',
-                    createdBy: 'user2@example.com',
-                    updateAt: '',
-                    updatedBy: 'user2@example.com',
+                    updatedBy: 'user1@example.com',
+                    updateAt: expect.any(String),
                 },
             ];
+
             const existingParticipants: Participant[] = [
                 {
+                    id: '101',
                     ticketId: 1,
                     ticketEmail: 'user1@example.com',
                     firstName: 'New Participant 1',
-                    lastName: 'User email is in order emails and shold be assigned to this participant',
+                    lastName: 'User email is in order emails and should be assigned to this participant',
                     over18: true,
                     orderId: 1001,
                     orderEmails: ['user1@example.com'],
                     ticketCategory: '',
                     ticketCategoryId: 0,
                     connectedEmails: [],
+                    users: [],
                     createdAt: '',
                     createdBy: 'user1@example.com',
                     updateAt: '',
                     updatedBy: 'user1@example.com',
                 },
                 {
+                    id: '102',
                     ticketId: 2,
                     ticketEmail: 'user2@example.com',
                     firstName: 'New Participant 2',
-                    lastName: 'user email is in connected emails, should be assigned',
+                    lastName: 'User email is in connected emails, should be assigned',
                     orderEmails: ['user2@example.com'],
                     users: ['user456'],
                     over18: true,
@@ -81,15 +64,17 @@ describe('AssignParticipantToUser', () => {
                     updateAt: '',
                     updatedBy: 'user2@example.com',
                 },
+                // Existing participants that should not be updated
                 {
+                    id: '103',
                     ticketId: 3,
                     ticketEmail: 'user1@example.com',
                     firstName: 'New Participant 3',
-                    lastName: 'user already assigned to this user, should not be ignored',
+                    lastName: 'User already assigned to this participant, should not be changed',
                     orderEmails: ['user1@example.com'],
                     users: ['user123'],
                     over18: true,
-                    orderId: 1002,
+                    orderId: 1003,
                     ticketCategory: '',
                     ticketCategoryId: 0,
                     connectedEmails: [],
@@ -99,10 +84,11 @@ describe('AssignParticipantToUser', () => {
                     updatedBy: 'user1@example.com',
                 },
                 {
+                    id: '104',
                     ticketId: 4,
                     ticketEmail: 'user4@example.com',
                     firstName: 'New Participant 4',
-                    lastName: 'user email is in not in order emails or connected emails, should not be ignored',
+                    lastName: 'User email is not related, should not be updated',
                     orderEmails: ['user4@example.com'],
                     users: ['user456'],
                     over18: true,
@@ -116,6 +102,7 @@ describe('AssignParticipantToUser', () => {
                     updatedBy: 'user4@example.com',
                 },
             ];
+
             const result = AssignUserToParticipant(existingParticipants, user);
 
             test('Then the user should be assigned to the participants', () => {

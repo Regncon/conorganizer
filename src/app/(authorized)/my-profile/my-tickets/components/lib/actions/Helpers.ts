@@ -1,5 +1,57 @@
-import { Participant } from '$lib/types';
+import { ConUser, Participant } from '$lib/types';
+import { User } from 'firebase/auth';
 import { EventTicket } from './actions';
+import { Update } from '@mui/icons-material';
+
+export const NewTickets = (tickets: EventTicket[], participants: Participant[], user: User) => {
+    console.log('Assigning new tickets to participants');
+
+    const ticketsWithoutParticipants = tickets?.filter(
+        (ticket) => !participants.some((participant) => participant.ticketId === ticket.id)
+    );
+
+    const usersTickets = GetTicketsThatBelongToUser(ticketsWithoutParticipants, user);
+
+    const newParticipants: Participant[] = [];
+    usersTickets.forEach((ticket) => {
+        const newParticipant = generateParticipant(ticket.id, tickets, user.email as string);
+        newParticipant.users = [user.uid];
+        newParticipants.push(newParticipant);
+    });
+    return newParticipants;
+};
+
+export const AssignUserToParticipant = (participants: Participant[], user: User): Partial<Participant>[] => {
+    const filteredParticipants = participants.filter(
+        (participant) =>
+            (participant.orderEmails.includes(user.email as string) ||
+                participant.connectedEmails?.includes(user.email as string)) &&
+            !participant.users?.includes(user.uid)
+    );
+
+    const assignedParticipants = filteredParticipants.map((participant) => {
+        const updatedParticipant: Partial<Participant> = {
+            id: participant.id,
+            ticketId: participant.ticketId,
+            users: [...(participant.users || []), user.uid],
+            updatedBy: user.email || '',
+            updateAt: new Date().toISOString(),
+        };
+        return updatedParticipant;
+    });
+
+    return assignedParticipants;
+};
+
+const GetTicketsThatBelongToUser = (tickets: EventTicket[], user: User) => {
+    const ticketsWithUsersEmail = tickets?.filter((ticket) => ticket.crm.email === (user.email as string));
+
+    const ticketsWithOrderNumberFromEmail = tickets?.filter((ticket) =>
+        ticketsWithUsersEmail?.some((emailTicket) => emailTicket.order_id === ticket.order_id)
+    );
+
+    return ticketsWithOrderNumberFromEmail;
+};
 
 export const generateParticipant = (ticketId: number, tickets: EventTicket[], userEmail: string) => {
     const ticket = tickets.find((ticket) => ticket.id === ticketId);
