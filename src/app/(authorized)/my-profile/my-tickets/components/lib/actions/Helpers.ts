@@ -25,6 +25,5 @@ export const generateParticipant = (ticketId: number, tickets: EventTicket[], us
         updatedBy: userEmail,
         connectedEmails: [],
     };
-    // console.log(participant, 'participant');
     return participant;
 };
