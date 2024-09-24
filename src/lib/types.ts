@@ -181,7 +181,7 @@ export type MyNewEvent = {
     isAccepted?: boolean;
 };
 export type Participant = {
-    id: string;
+    id?: string;
     firstName: string;
     lastName: string;
     users?: string[];

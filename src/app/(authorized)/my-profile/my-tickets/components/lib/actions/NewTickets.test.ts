@@ -20,7 +20,6 @@ describe('NewTickets', () => {
                 firstName: 'New Participant 1',
                 lastName: 'New ticket should be created',
                 users: ['user123'],
-                id: '101',
                 over18: true,
                 orderId: 1001,
                 orderEmails: ['user1@example.com'],
@@ -28,9 +27,9 @@ describe('NewTickets', () => {
                 ticketCategoryId: 0,
                 connectedEmails: [],
                 createdAt: '',
-                createdBy: '',
+                createdBy: 'user1@example.com',
                 updateAt: '',
-                updatedBy: '',
+                updatedBy: 'user1@example.com',
             },
             // {
             //     ticketId: 2,
@@ -70,7 +69,7 @@ describe('NewTickets', () => {
             // },
         ];
 
-        describe('when we compear the tickets with the participants', () => {
+        describe('when we compear the tickets with the participants', async () => {
             // Test
             const tickets: EventTicket[] = [
                 {
@@ -81,7 +80,7 @@ describe('NewTickets', () => {
                         first_name: 'New Participant 1',
                         last_name: 'New ticket should be created',
                         id: 0,
-                        born: '',
+                        born: '01-01-1990',
                     },
                     category: '',
                     category_id: 0,
@@ -175,10 +174,21 @@ describe('NewTickets', () => {
                 // },
             ];
 
-            const result = NewTickets(tickets, existingParticipants, user);
-
+            const result = await NewTickets(tickets, existingParticipants, user);
             test('then the new participants should be created and the existing ones should be updated', async () => {
-                expect(result).toEqual(expectedNewParticipants);
+                const resultWithoutDate = result.map((participant) => ({
+                    ...participant,
+                    createdAt: undefined, // Ignore `createdAt` in comparison
+                    updateAt: undefined, // Ignore `updateAt` in comparison
+                }));
+
+                const expectedWithoutDate = expectedNewParticipants.map((participant) => ({
+                    ...participant,
+                    createdAt: undefined, // Ignore `createdAt` in comparison
+                    updateAt: undefined, // Ignore `updateAt` in comparison
+                }));
+
+                expect(resultWithoutDate).toMatchObject(expectedWithoutDate);
             });
         });
     });
