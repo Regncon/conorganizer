@@ -2,15 +2,17 @@ import { Box, Typography } from '@mui/material';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { Participant } from '$lib/types';
 import MyParticipant from './UI/MyParticipantCard';
+import { AssignParticipantByEmail } from './lib/actions/actions';
 
 type Props = { participants: Participant[] | undefined };
 
-const Tickets = async ({ participants }: Props) => {
+const MyParticipants = async ({ participants }: Props) => {
     const { user } = await getAuthorizedAuth();
     const verifiedEmail = user?.emailVerified ?? false;
     const verifiedCheckIn = true;
 
     if (verifiedEmail && verifiedCheckIn) {
+        const participants = await AssignParticipantByEmail();
         return (
             <Box sx={{ display: 'grid', height: 'var(--centering-height)', placeContent: 'center' }}>
                 <Box>
@@ -34,4 +36,4 @@ const Tickets = async ({ participants }: Props) => {
     return null;
 };
 
-export default Tickets;
+export default MyParticipants;
