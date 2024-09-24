@@ -182,7 +182,8 @@ export type MyNewEvent = {
 };
 export type Participant = {
     id: string;
-    name: string;
+    firstName: string;
+    lastName: string;
     users?: string[];
     over18: boolean;
     orderId: number;

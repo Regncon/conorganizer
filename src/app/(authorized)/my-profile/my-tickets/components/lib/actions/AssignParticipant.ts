@@ -1,13 +1,8 @@
 'use server';
 import { getMyUserInfo } from '$app/(authorized)/my-events/lib/actions';
-import { GetAllParticipants } from '$app/(public)/components/lib/serverAction';
 import { adminDb, getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { ActionResponse, ConUser, Participant } from '$lib/types';
-import { throws } from 'assert';
-import { doc, updateDoc } from 'firebase/firestore';
-import { revalidatePath } from 'next/cache';
+import { Participant } from '$lib/types';
 import { EventTicket, generateParticipant, GetParticipantsByEmail, GetTicketsByEmail } from './actions';
-import { Firestore } from 'firebase-admin/firestore';
 import { User } from 'firebase/auth';
 
 export const AssignParticipantByEmail = async () => {
