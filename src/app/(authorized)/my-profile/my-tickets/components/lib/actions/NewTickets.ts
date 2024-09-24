@@ -2,6 +2,7 @@ import { Participant } from '$lib/types';
 import { User } from 'firebase/auth';
 import { EventTicket } from './actions';
 import { generateParticipant } from './Helpers';
+import { number } from 'zod';
 
 export const NewTickets = async (tickets: EventTicket[], participants: Participant[], user: User) => {
     console.log('Assigning new tickets to participants');
@@ -22,15 +23,23 @@ export const NewTickets = async (tickets: EventTicket[], participants: Participa
 };
 
 export const AssignUserToParticipant = (participants: Participant[], user: User) => {
-    const assignedParticipants = participants.map((participant) => {
-        if (participant.orderEmails.includes(user.email as string) && !participant.users?.includes(user.uid)) {
-            if (!participant.users) {
-                participant.users = [];
-            }
-            participant.users.push(user.uid);
+    // First, filter the participants that match the conditions
+    const filteredParticipants = participants.filter(
+        (participant) =>
+            (participant.orderEmails.includes(user.email as string) ||
+                participant.connectedEmails?.includes(user.email as string)) &&
+            !participant.users?.includes(user.uid)
+    );
+
+    // Then map over the filtered participants and assign the user
+    const assignedParticipants = filteredParticipants.map((participant) => {
+        if (!participant.users) {
+            participant.users = [];
         }
+        participant.users.push(user.uid);
         return participant;
     });
+
     return assignedParticipants;
 };
 
