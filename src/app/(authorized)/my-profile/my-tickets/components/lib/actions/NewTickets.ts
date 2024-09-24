@@ -21,6 +21,11 @@ export const NewTickets = async (tickets: EventTicket[], participants: Participa
     return newParticipants;
 };
 
+export const AssignUserToParticipant = (participants: Participant[], user: User) => {
+    const assignedParticipants: Participant[] = [];
+    return assignedParticipants;
+};
+
 const GetTicketsThatBelongToUser = (tickets: EventTicket[], user: User) => {
     const ticketsWithUsersEmail = tickets?.filter((ticket) => ticket.crm.email === (user.email as string));
 
