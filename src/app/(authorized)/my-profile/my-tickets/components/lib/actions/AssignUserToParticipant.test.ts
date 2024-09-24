@@ -83,25 +83,40 @@ describe('AssignParticipantToUser', () => {
                 },
                 {
                     ticketId: 3,
-                    ticketEmail: 'user2@example.com',
+                    ticketEmail: 'user1@example.com',
                     firstName: 'New Participant 3',
-                    lastName: 'user email is in not in order emails or connected emails, should not be assigned',
-                    orderEmails: ['user2@example.com'],
-                    users: ['user456'],
+                    lastName: 'user already assigned to this user, should not be ignored',
+                    orderEmails: ['user1@example.com'],
+                    users: ['user123'],
                     over18: true,
                     orderId: 1002,
                     ticketCategory: '',
                     ticketCategoryId: 0,
-                    connectedEmails: ['user3@example.com'],
+                    connectedEmails: [],
                     createdAt: '',
                     createdBy: 'user1@example.com',
                     updateAt: '',
                     updatedBy: 'user1@example.com',
                 },
+                {
+                    ticketId: 4,
+                    ticketEmail: 'user4@example.com',
+                    firstName: 'New Participant 4',
+                    lastName: 'user email is in not in order emails or connected emails, should not be ignored',
+                    orderEmails: ['user4@example.com'],
+                    users: ['user456'],
+                    over18: true,
+                    orderId: 1004,
+                    ticketCategory: '',
+                    ticketCategoryId: 0,
+                    connectedEmails: ['user5@example.com'],
+                    createdAt: '',
+                    createdBy: 'user4@example.com',
+                    updateAt: '',
+                    updatedBy: 'user4@example.com',
+                },
             ];
-            console.log('existingParticipants', existingParticipants);
             const result = AssignUserToParticipant(existingParticipants, user);
-            console.log('result', result);
 
             test('Then the user should be assigned to the participants', () => {
                 const resultWithoutDate = result.map((participant) => ({

@@ -23,7 +23,6 @@ export const NewTickets = async (tickets: EventTicket[], participants: Participa
 };
 
 export const AssignUserToParticipant = (participants: Participant[], user: User) => {
-    // First, filter the participants that match the conditions
     const filteredParticipants = participants.filter(
         (participant) =>
             (participant.orderEmails.includes(user.email as string) ||
@@ -31,7 +30,6 @@ export const AssignUserToParticipant = (participants: Participant[], user: User)
             !participant.users?.includes(user.uid)
     );
 
-    // Then map over the filtered participants and assign the user
     const assignedParticipants = filteredParticipants.map((participant) => {
         if (!participant.users) {
             participant.users = [];
