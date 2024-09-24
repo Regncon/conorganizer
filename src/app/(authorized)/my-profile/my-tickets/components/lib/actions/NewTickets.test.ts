@@ -52,7 +52,7 @@ describe('NewTickets', () => {
                 ticketId: 3,
                 ticketEmail: 'user2@example.com',
                 firstName: 'New Participant 3',
-                lastName: 'Same orderId as ticket 3 should not be included',
+                lastName: 'Same orderId as ticket 3 should be creaded',
                 users: ['user123'],
                 over18: false,
                 orderId: 1002,
