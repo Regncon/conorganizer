@@ -122,19 +122,19 @@ describe('NewTickets', () => {
                     category: '',
                     category_id: 0,
                 },
-                // {
-                //     id: 5,
-                //     order_id: 1004,
-                //     crm: {
-                //         email: 'user3@example.com',
-                //         first_name: 'New Participant 5',
-                //         last_name: 'Not assosiated with email, new ticket should be ignored',
-                //         id: 0,
-                //         born: '',
-                //     },
-                //     category: '',
-                //     category_id: 0,
-                // },
+                {
+                    id: 5,
+                    order_id: 1004,
+                    crm: {
+                        email: 'user1@example.com',
+                        first_name: 'Participant 5',
+                        last_name: 'Ticket already claimed by user and has participant. Ticket should be ignored',
+                        id: 0,
+                        born: '01-01-1990',
+                    },
+                    category: '',
+                    category_id: 0,
+                },
                 // {
                 //     id: 6,
                 //     order_id: 1005,
@@ -152,24 +152,23 @@ describe('NewTickets', () => {
             ];
 
             const existingParticipants: Participant[] = [
-                // {
-                //     ticketId: 5,
-                //     ticketEmail: 'user3@example.com',
-                //     id: '',
-                //     firstName: 'Participant 5',
-                //     lastName: 'Not assosiated with email, should be ignored',
-                //     users: ['user456'],
-                //     over18: false,
-                //     orderId: 0,
-                //     orderEmails: [],
-                //     ticketCategory: '',
-                //     ticketCategoryId: 0,
-                //     connectedEmails: [],
-                //     createdAt: '',
-                //     createdBy: '',
-                //     updateAt: '',
-                //     updatedBy: '',
-                // },
+                {
+                    ticketId: 5,
+                    ticketEmail: 'user1@example.com',
+                    firstName: 'Participant 5',
+                    lastName: 'Ticket already claimed by user and has participant. Ticket should be ignored',
+                    users: ['user123'],
+                    over18: true,
+                    orderId: 0,
+                    orderEmails: ['user1@example.com'],
+                    ticketCategory: '',
+                    ticketCategoryId: 0,
+                    connectedEmails: [],
+                    createdAt: '',
+                    createdBy: '',
+                    updateAt: '',
+                    updatedBy: '',
+                },
             ];
 
             const result = await NewTickets(tickets, existingParticipants, user);

@@ -7,7 +7,11 @@ export const NewTickets = async (tickets: EventTicket[], participants: Participa
     console.log('Assigning new tickets to participants');
     // console.log('tickes', tickets, 'participants', participants, 'user', user);
 
-    const usersTickets = GetTicketsThatBelongToUser(tickets, user);
+    const ticketsWithoutParticipants = tickets?.filter(
+        (ticket) => !participants.some((participant) => participant.ticketId === ticket.id)
+    );
+
+    const usersTickets = GetTicketsThatBelongToUser(ticketsWithoutParticipants, user);
 
     const newParticipants: Participant[] = [];
     usersTickets.forEach((ticket) => {
