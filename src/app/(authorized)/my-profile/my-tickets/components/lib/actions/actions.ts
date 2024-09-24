@@ -46,7 +46,7 @@ export type EventTicket = {
 
 export const getParticipantByUser = async () => {
     const { user } = await getAuthorizedAuth();
-    if (user === null) return null;
+    if (user === null) throw new Error('Failed to get authorized auth');
 
     // console.log(
     //     adminDb

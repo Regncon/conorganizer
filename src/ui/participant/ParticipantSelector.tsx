@@ -1,16 +1,11 @@
 'use client';
 import { Participant } from '$lib/types';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Menu, MenuItem, Button } from '@mui/material';
 import ParticipantAvatar from './ParticipantAvatar';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-type Props = {
-    participants: Participant[];
-    activeParticipantId: string;
-};
-
-const ParticipantSelector = ({ participants, activeParticipantId }: Props) => {
+const ParticipantSelector = () => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -22,6 +17,23 @@ const ParticipantSelector = ({ participants, activeParticipantId }: Props) => {
         setAnchorEl(null);
     };
 
+    // State to store participants
+    const [participants, setParticipants] = useState<Participant[]>([]);
+
+    // Fetch participants from localStorage when component mounts
+    useEffect(() => {
+        const storedParticipants = localStorage.getItem('newParticipants');
+        if (storedParticipants) {
+            setParticipants(JSON.parse(storedParticipants));
+        }
+    }, []);
+
+    if (!participants || participants.length === 0) {
+        return <Button href="/my-profile/my-tickets">Hent billett</Button>;
+    }
+
+    const selectedParticipant = participants[0];
+
     return (
         <>
             <Button
@@ -30,8 +42,14 @@ const ParticipantSelector = ({ participants, activeParticipantId }: Props) => {
                 aria-expanded={open ? 'true' : undefined}
                 onClick={handleClick}
                 variant="text"
+                sx={{ textDecoration: 'none', textTransform: 'none' }}
             >
-                <ParticipantAvatar name={'Ola Nordmann'} />
+                <ParticipantAvatar
+                    firstName={selectedParticipant.firstName}
+                    lastName={selectedParticipant.lastName}
+                    small
+                />
+                '
                 <ExpandMoreIcon />
             </Button>
             <Menu
@@ -45,7 +63,7 @@ const ParticipantSelector = ({ participants, activeParticipantId }: Props) => {
             >
                 {participants.map((participant) => (
                     <MenuItem key={participant.id} onClick={handleClose}>
-                        <ParticipantAvatar name={`${participant.firstName} ${participant.lastName}`} />
+                        <ParticipantAvatar firstName={participant.firstName} lastName={participant.lastName} />
                     </MenuItem>
                 ))}
             </Menu>

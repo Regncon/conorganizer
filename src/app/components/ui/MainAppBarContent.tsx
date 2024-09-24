@@ -24,32 +24,12 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import Link from 'next/link';
 import { forwardRef, useEffect, useState, type ComponentProps } from 'react';
 import ParticipantSelector from '$ui/participant/ParticipantSelector';
-import { collection, Firestore, getDocs } from 'firebase/firestore';
-import { Participant } from '$lib/types';
-import { db } from '$lib/firebase/firebase';
 
 type Props = {
     sx?: SxProps<Theme>;
     isLoggedIn: boolean;
     admin: boolean;
     mobile: boolean;
-};
-
-const GetAllParticipants = async (db: Firestore) => {
-    if (db === null) {
-        const response = {
-            type: 'error',
-            message: 'Ikke autorisert',
-            error: 'getAuthorizedAuth failed',
-        };
-        throw response;
-    }
-
-    const querySnapshot = await getDocs(collection(db, 'participants'));
-    querySnapshot.forEach((doc) => {
-        console.log(doc.id, ' => ', doc.data());
-    });
-    return querySnapshot.docs.map((doc) => doc.data()) as Participant[];
 };
 
 const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admin, mobile }, ref) => {
@@ -63,13 +43,6 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
     const handleClose = () => {
         setAnchorEl(null);
     };
-
-    const [participants, setParticipants] = useState<Participant[] | null>(null);
-    useEffect(() => {
-        GetAllParticipants(db).then((participants) => {
-            setParticipants(participants);
-        });
-    }, []);
 
     const desktopBottomContent = (
         <>
@@ -101,12 +74,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             <Box sx={{ flexGrow: 1 }} />
             {isLoggedIn ?
                 <>
-                    {participants ?
-                        <ParticipantSelector
-                            participants={participants}
-                            activeParticipantId={participants[0].id as string}
-                        />
-                        : <Button href="/my-profile/my-tickets">Hent billett</Button>}
+                    <ParticipantSelector />
 
                     <IconButton
                         aria-label="more"

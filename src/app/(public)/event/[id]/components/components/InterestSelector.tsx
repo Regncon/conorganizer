@@ -9,43 +9,45 @@ import AwakeDragons from 'public/interessedragene/2024AwakeDragons1_1.png';
 import HappyDragons from 'public/interessedragene/2024HappyDragons1_1.png';
 import SleepyDragons from 'public/interessedragene/2024SleepyDragons1_1.png';
 import VeryHappyDragons from 'public/interessedragene/2024VeryHappyDragons1_1.png';
+import ParticipantSelector from '$ui/participant/ParticipantSelector';
+import { DisplaySettings } from '@mui/icons-material';
 
 const marks = [
-    { 
-        value: 1, 
+    {
+        value: 1,
         label: (
-            <Box sx={{ display: 'flex', width:'25rem', alignItems: 'center', gap: '0.5rem' }}>
+            <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
                 <Image src={SleepyDragons} alt="Ikke interessert" width={50} height={50} />
                 <Typography>Ikke interessert</Typography>
             </Box>
-        ) 
+        ),
     },
-    { 
-        value: 2, 
+    {
+        value: 2,
         label: (
-            <Box sx={{ display: 'flex', width:'25rem', alignItems: 'center', gap: '0.5rem' }}>
+            <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
                 <Image src={AwakeDragons} alt="Litt interessert" width={50} height={50} />
                 <Typography>Litt interessert</Typography>
             </Box>
-        ) 
+        ),
     },
-    { 
-        value: 3, 
+    {
+        value: 3,
         label: (
-            <Box sx={{ display: 'flex', width:'25rem', alignItems: 'center', gap: '0.5rem' }}>
+            <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
                 <Image src={HappyDragons} alt="Interessert" width={50} height={50} />
                 <Typography>Interessert</Typography>
             </Box>
-        ) 
+        ),
     },
-    { 
-        value: 4, 
+    {
+        value: 4,
         label: (
-            <Box sx={{ display: 'flex', width:'25rem', alignItems: 'center', gap: '0.5rem' }}>
+            <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
                 <Image src={VeryHappyDragons} alt="Veldig interessert" width={50} height={50} />
                 <Typography>Veldig interessert</Typography>
             </Box>
-        ) 
+        ),
     },
 ];
 
@@ -65,22 +67,25 @@ const InterestSelector = ({ disabled }: Props) => {
 
     return (
         <>
-            <Button
-                variant="contained"
-                color="primary"
-                fullWidth
-                sx={{
-                    fontSize: '1.2rem',
-                    textTransform: 'none',
-                    marginBlock: '1rem',
-                    minHeight: '62px',
-                    maxWidth: 'var(--slider-interest-width)',
-                }}
-                onClick={incrementInterest}
-                disabled={disabled}
-            >
-                {marks[interest].label}
-            </Button>
+            <Box sx={{ display: 'flex', flexDirection: 'column', maxWidth: 'var(--slider-interest-width)' }}>
+                <ParticipantSelector />
+                <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{
+                        fontSize: '1.2rem',
+                        textTransform: 'none',
+                        marginBlock: '1rem',
+                        minHeight: '62px',
+                        maxWidth: 'var(--slider-interest-width)',
+                    }}
+                    onClick={incrementInterest}
+                    disabled={disabled}
+                >
+                    {marks[interest].label}
+                </Button>
+            </Box>
             <Box sx={{ padding: '0.35rem', marginBottom: '0.1rem', maxWidth: 'var(--slider-interest-width)' }}>
                 <Slider
                     onChange={(e) => {

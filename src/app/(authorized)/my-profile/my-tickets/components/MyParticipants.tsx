@@ -3,6 +3,7 @@ import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { Participant } from '$lib/types';
 import MyParticipant from './UI/MyParticipantCard';
 import { AssignParticipantByEmail } from './lib/actions/actions';
+import MyParticipantsHeader from './MyParticipantsHeader';
 
 type Props = { participants: Participant[] | undefined };
 
@@ -16,8 +17,7 @@ const MyParticipants = async ({ participants }: Props) => {
         return (
             <Box sx={{ display: 'grid', height: 'var(--centering-height)', placeContent: 'center' }}>
                 <Box>
-                    <Typography>En smart hjelpetekst skrevet av en som ikke er meg eller dyslektiker</Typography>
-                    <Typography variant="h1">Mine billetter</Typography>
+                    <MyParticipantsHeader participants={participants} />
                     <Box
                         sx={{
                             display: 'grid',

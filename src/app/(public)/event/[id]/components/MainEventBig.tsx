@@ -44,7 +44,7 @@ const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isA
                     '& > img': { width: ' var(--event-width)', height: '193px' },
                 }}
             >
-                <Image
+                <img
                     alt="Game logo"
                     src={poolEvent.bigImageURL ? poolEvent.bigImageURL : diceBig}
                     width={1200}
