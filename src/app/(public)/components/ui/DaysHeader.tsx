@@ -4,6 +4,7 @@ import { useSetCustomCssVariable } from '$lib/hooks/useSetCustomCssVariable';
 import { Box, Typography, Link, type SxProps, Divider } from '@mui/material';
 import { Fragment } from 'react';
 import { translatedDays } from '../lib/helpers/translation';
+import Filter from '../components/ui/Filter';
 
 const sxDayTypography: SxProps = {
     maxWidth: '5.5rem',
@@ -35,7 +36,7 @@ const DaysHeader = ({}: Props) => {
                 ref={ref}
             >
                 <Box sx={{ display: 'grid', placeContent: 'center', marginInline: '2rem', marginBlock: '0.5rem' }}>
-                    FILTER
+                    <Filter />
                 </Box>
                 <Box
                     sx={{

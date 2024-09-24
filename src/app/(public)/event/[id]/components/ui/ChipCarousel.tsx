@@ -1,4 +1,4 @@
-import { createIconArray, createIconFromString } from '$app/(public)/components/lib/helpers/icons';
+import { createIconOptions, createIconFromString } from '$app/(public)/components/lib/helpers/icons';
 import type { ConEvent, IconName, PoolEvent } from '$lib/types';
 import { Box, Chip, debounce, TextField } from '@mui/material';
 import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from 'react';
@@ -6,17 +6,10 @@ import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from
 type SelectedTags = {
     selected: boolean;
     label: string;
-    icon: IconName;
+    iconName: IconName;
 };
 
-const chipIcons = createIconArray({
-    adultsOnly: true,
-    childFriendly: true,
-    beginnerFriendly: true,
-    lessThanThreeHours: true,
-    moreThanSixHours: true,
-    possiblyEnglish: true,
-});
+const chipIcons = createIconOptions();
 type Props = {
     data: PoolEvent;
     setData: (data: PoolEvent) => void;
@@ -27,7 +20,7 @@ const ChipCarousel = ({ data, editable, setData, handleChange }: Props) => {
     const [isEditingTags, setIsEditingTags] = useState<boolean>(false);
     const [selectedTags, setSelectedTags] = useState<SelectedTags[]>(
         chipIcons.map((chipIcon) => {
-            return { ...chipIcon, selected: data.icons?.some((icon) => icon.icon === chipIcon.icon) ?? false };
+            return { ...chipIcon, selected: data.icons?.some((icon) => icon.iconName === chipIcon.iconName) ?? false };
         })
     );
 
@@ -47,9 +40,9 @@ const ChipCarousel = ({ data, editable, setData, handleChange }: Props) => {
     const handleChipClick = (clickedChips: SelectedTags) => {
         const selectedTagsToConEventData: Partial<ConEvent> = {
             ...selectedTags.reduce((acc, value) => {
-                return { ...acc, [value.icon]: value.selected };
+                return { ...acc, [value.iconName]: value.selected };
             }, {}),
-            [clickedChips.icon]: clickedChips.selected,
+            [clickedChips.iconName]: clickedChips.selected,
         };
 
         updateConEvents(selectedTagsToConEventData);
@@ -57,7 +50,7 @@ const ChipCarousel = ({ data, editable, setData, handleChange }: Props) => {
         setSelectedTags((prev) => {
             return [
                 ...prev.map((chip) =>
-                    chip.icon === clickedChips.icon ? { ...chip, selected: clickedChips.selected } : chip
+                    chip.iconName === clickedChips.iconName ? { ...chip, selected: clickedChips.selected } : chip
                 ),
             ];
         });
@@ -74,7 +67,7 @@ const ChipCarousel = ({ data, editable, setData, handleChange }: Props) => {
                         key={`${iconOption.label}-${index}`}
                         color={iconOption.selected ? 'secondary' : 'primary'}
                         variant="outlined"
-                        icon={createIconFromString(iconOption.icon)}
+                        icon={createIconFromString(iconOption.iconName)}
                     />
                 ))}
             </Box>
@@ -110,7 +103,7 @@ const ChipCarousel = ({ data, editable, setData, handleChange }: Props) => {
                             key={`${iconOption.label}-${index}`}
                             color="primary"
                             variant="outlined"
-                            icon={createIconFromString(iconOption.icon)}
+                            icon={createIconFromString(iconOption.iconName)}
                             sx={{
                                 marginRight: index === originalIconLength - 1 ? '2rem' : 'unset',
                                 marginLeft: index === 0 ? '2.5rem' : 'unset',

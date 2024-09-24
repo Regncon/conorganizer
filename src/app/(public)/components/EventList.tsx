@@ -1,14 +1,12 @@
-'use client';
 import { Box } from '@mui/material';
 import EventCardBig from './components/EventCardBig';
 import EventCardSmall from './components/EventCardSmall';
 import NextLink from 'next/link';
-import { useRef } from 'react';
 import EventListDay from './components/ui/EventListDay';
-import { useObserveIntersectionObserver } from './lib/hooks/useObserveIntersectionObserver';
 import type { PoolEvents } from './lib/serverAction';
 import { Route } from 'next';
 import type { PoolEvent } from '$lib/types';
+import EventListWrapper from './components/EventListWrapper';
 
 type Props = {
     events: PoolEvents;
@@ -19,10 +17,8 @@ const EventList = ({ events }: Props) => {
     return (
         <Box>
             {[...events.entries()].map(([day, events]) => {
-                const ref = useRef<HTMLDivElement>(null);
-                useObserveIntersectionObserver(ref);
                 return (
-                    <Box key={day} ref={ref}>
+                    <EventListWrapper key={day} day={day}>
                         <EventListDay poolDay={day} />
                         <Box
                             sx={{
@@ -57,7 +53,7 @@ const EventList = ({ events }: Props) => {
                                 </Box>
                             ))}
                         </Box>
-                    </Box>
+                    </EventListWrapper>
                 );
             })}
         </Box>

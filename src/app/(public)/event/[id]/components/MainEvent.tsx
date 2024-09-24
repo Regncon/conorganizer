@@ -14,7 +14,7 @@ import NavigatePreviousLink from './ui/NavigatePreviousLink';
 import NavigateNextLink from './ui/NavigateNextLink';
 import BackButton from '$app/(authorized)/components/BackButton';
 import InterestSelector from './components/InterestSelector';
-import { createIconArray } from '$app/(public)/components/lib/helpers/icons';
+import { createIconOptions } from '$app/(public)/components/lib/helpers/icons';
 import ChipCarousel from './ui/ChipCarousel';
 import GoToEventAdministrationButton from './ui/GoToEventAdministrationButton';
 
@@ -54,14 +54,14 @@ const MainEvent = ({
         if (id !== undefined && eventData === undefined) {
             unsubscribeSnapshot = onSnapshot(doc(db, `${parent ? 'events' : 'pool-events'}`, id), (snapshot) => {
                 let poolEvent = snapshot.data() as PoolEvent | undefined;
-                let icons = createIconArray({
-                    adultsOnly: poolEvent?.adultsOnly ?? false,
-                    childFriendly: poolEvent?.childFriendly ?? false,
-                    beginnerFriendly: poolEvent?.beginnerFriendly ?? false,
-                    lessThanThreeHours: poolEvent?.lessThanThreeHours ?? false,
-                    moreThanSixHours: poolEvent?.moreThanSixHours ?? false,
-                    possiblyEnglish: poolEvent?.possiblyEnglish ?? false,
-                });
+                let icons = createIconOptions(
+                    poolEvent?.adultsOnly ?? false,
+                    poolEvent?.childFriendly ?? false,
+                    poolEvent?.beginnerFriendly ?? false,
+                    poolEvent?.lessThanThreeHours ?? false,
+                    poolEvent?.moreThanSixHours ?? false,
+                    poolEvent?.possiblyEnglish ?? false
+                );
 
                 if (poolEvent) {
                     poolEvent.icons = icons;

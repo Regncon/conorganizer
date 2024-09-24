@@ -115,7 +115,7 @@ export type IconTypes = {
 export type IconName = keyof IconTypes;
 export type IconOption = {
     label: string;
-    icon: IconName;
+    iconName: IconName;
 };
 export type PoolEvent = {
     poolName: PoolName;
