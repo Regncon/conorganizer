@@ -30,7 +30,6 @@ of your con schedule, your panels, and your expenses.
 
 #### Hard launch
 
--   Vise hvilken deltaker du er viss du har flere deltakere på samme billett (Nesten ferdig)
 -   Gjør det tydelig hvilke pulje arrangementet er i og om det kjøres i andre puljer også.
 -   Lagre interessene til deltagere i databasen.- Assign user to participant
 
@@ -102,3 +101,4 @@ of your con schedule, your panels, and your expenses.
 -   Assign user to participant
 -   Fix race condition in assignParticipantByEmail
 -   Tildel billett til bruker (Super nesten ferdig, "bank i bordet")
+-   Vise hvilken deltaker du er viss du har flere deltakere på samme billett (Nesten ferdig)
