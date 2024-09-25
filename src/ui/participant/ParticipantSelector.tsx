@@ -1,7 +1,7 @@
 'use client';
 import { ParticipantLocalStorage } from '$lib/types';
 import { useState, useEffect } from 'react';
-import { Menu, MenuItem, Button } from '@mui/material';
+import { Menu, MenuItem, Button, Box } from '@mui/material';
 import ParticipantAvatar from './ParticipantAvatar';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
@@ -32,7 +32,7 @@ const ParticipantSelector = () => {
         return <Button href="/my-profile/my-tickets">Hent billett</Button>;
     }
 
-    const handleParticipantSelect = (id: string| undefined) => {
+    const handleParticipantSelect = (id: string | undefined) => {
         if (id === undefined) {
             return;
         }
@@ -45,7 +45,7 @@ const ParticipantSelector = () => {
     };
 
     return (
-        <>
+        <Box>
             <Button
                 aria-controls={open ? 'participant-menu' : undefined}
                 aria-haspopup="true"
@@ -54,7 +54,11 @@ const ParticipantSelector = () => {
                 variant="text"
                 sx={{ textDecoration: 'none', textTransform: 'none' }}
             >
-                <ParticipantAvatar firstName={selectedParticipant.firstName} lastName={selectedParticipant.lastName} />
+                <ParticipantAvatar
+                    firstName={selectedParticipant.firstName}
+                    lastName={selectedParticipant.lastName}
+                    small
+                />
                 <ExpandMoreIcon />
             </Button>
             <Menu
@@ -72,7 +76,7 @@ const ParticipantSelector = () => {
                     </MenuItem>
                 ))}
             </Menu>
-        </>
+        </Box>
     );
 };
 

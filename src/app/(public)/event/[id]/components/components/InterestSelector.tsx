@@ -67,25 +67,23 @@ const InterestSelector = ({ disabled }: Props) => {
 
     return (
         <>
-            <Box sx={{ display: 'flex', flexDirection: 'column', maxWidth: 'var(--slider-interest-width)' }}>
-                <ParticipantSelector />
-                <Button
-                    variant="contained"
-                    color="primary"
-                    fullWidth
-                    sx={{
-                        fontSize: '1.2rem',
-                        textTransform: 'none',
-                        marginBlock: '1rem',
-                        minHeight: '62px',
-                        maxWidth: 'var(--slider-interest-width)',
-                    }}
-                    onClick={incrementInterest}
-                    disabled={disabled}
-                >
-                    {marks[interest].label}
-                </Button>
-            </Box>
+            <ParticipantSelector />
+            <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                sx={{
+                    fontSize: '1.2rem',
+                    textTransform: 'none',
+                    marginBlock: '1rem',
+                    minHeight: '62px',
+                    maxWidth: 'var(--slider-interest-width)',
+                }}
+                onClick={incrementInterest}
+                disabled={disabled}
+            >
+                {marks[interest].label}
+            </Button>
             <Box sx={{ padding: '0.35rem', marginBottom: '0.1rem', maxWidth: 'var(--slider-interest-width)' }}>
                 <Slider
                     onChange={(e) => {

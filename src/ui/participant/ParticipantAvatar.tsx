@@ -43,7 +43,7 @@ const ParticipantAvatar = ({ firstName, lastName, small }: props) => {
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <Avatar {...stringAvatar(name)} />
-            <Typography sx={{ display: { xs: 'none', sm: 'block' } }}>{small ? firstName : name}</Typography>
+            <Typography>{small ? firstName : name}</Typography>
         </Box>
     );
 };
