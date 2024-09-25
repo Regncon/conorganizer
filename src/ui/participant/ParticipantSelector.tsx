@@ -20,7 +20,7 @@ const ParticipantSelector = () => {
     const [participants, setParticipants] = useState<ParticipantLocalStorage[]>([]);
 
     useEffect(() => {
-        const storedParticipants = localStorage.getItem('newParticipants');
+        const storedParticipants = localStorage.getItem('myParticipants');
         if (storedParticipants) {
             setParticipants(JSON.parse(storedParticipants));
         }
@@ -31,6 +31,18 @@ const ParticipantSelector = () => {
     if (!participants || participants.length === 0 || selectedParticipant === undefined) {
         return <Button href="/my-profile/my-tickets">Hent billett</Button>;
     }
+
+    const handleParticipantSelect = (id: string| undefined) => {
+        if (id === undefined) {
+            return;
+        }
+        const updatedParticipants = participants.map((participant) =>
+            participant.id === id ? { ...participant, isSelected: true } : { ...participant, isSelected: false }
+        );
+        setParticipants(updatedParticipants);
+        localStorage.setItem('myParticipants', JSON.stringify(updatedParticipants));
+        handleClose();
+    };
 
     return (
         <>
@@ -55,7 +67,7 @@ const ParticipantSelector = () => {
                 }}
             >
                 {participants.map((participant) => (
-                    <MenuItem key={participant.id} onClick={handleClose}>
+                    <MenuItem key={participant.id} onClick={() => handleParticipantSelect(participant.id)}>
                         <ParticipantAvatar firstName={participant.firstName} lastName={participant.lastName} />
                     </MenuItem>
                 ))}
