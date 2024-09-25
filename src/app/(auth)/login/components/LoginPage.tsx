@@ -11,6 +11,7 @@ import LoginButton from './ui/LoginButton';
 import { updateSearchParamsWithEmail } from '../../shared/utils';
 import { getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signInWithRedirect, User } from 'firebase/auth';
 import GoogleSignInButton from './ui/GoogleButton';
+import { GetMyParticipants } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
 const initialLoginFormState = {
     emailError: '',
@@ -25,6 +26,11 @@ export const disableAndLoadingSpinner = (shouldSpin: boolean, isPending: boolean
 const initialSpinnersState = {
     forgot: false,
     register: false,
+};
+
+const setMyParticipants = async () => {
+    const myParticipants = await GetMyParticipants();
+    localStorage.setItem('myParticipants', JSON.stringify(myParticipants));
 };
 
 const LoginPage = () => {
@@ -43,6 +49,7 @@ const LoginPage = () => {
     const handleFormSubmit = async (formData: FormData) => {
         startTransition(async () => {
             await signInAndCreateCookie(formData);
+            await setMyParticipants();
             router.replace('/');
         });
     };

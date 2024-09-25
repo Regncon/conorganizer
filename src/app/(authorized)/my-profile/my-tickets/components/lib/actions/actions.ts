@@ -66,6 +66,23 @@ export const getParticipantByUser = async () => {
     return participants.filter((participant) => participant.users?.includes(user.uid));
 };
 
+export const GetMyParticipants = async () => {
+    const { user } = await getAuthorizedAuth();
+    if (user === null) {
+        throw new Error('Failed to get authorized auth');
+    }
+    const participants = (await GetAllParticipants()) as Participant[];
+    const newParticipants = participants.filter((participant) => participant.users?.includes(user.uid));
+    return newParticipants.map((participant, i) => {
+        return {
+            id: participant.id,
+            firstName: participant.firstName,
+            lastName: participant.lastName,
+            isSelected: i === 0 ? true : false,
+        };
+    });
+};
+
 export const AssignParticipantByEmail = async () => {
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {

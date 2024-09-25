@@ -26,7 +26,7 @@ const MyParticipantsHeader = ({ participants }: Props) => {
         const newParticipants = GenerateNewParticipantStorage(participants);
         console.log(newParticipants, 'newParticipants');
 
-        localStorage.setItem('newParticipants', JSON.stringify(newParticipants));
+        localStorage.setItem('myParticipants', JSON.stringify(newParticipants));
     }, [participants]);
 
     return (
