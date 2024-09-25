@@ -7,7 +7,7 @@ import { useEffect, startTransition } from 'react';
 
 type Props = {};
 
-const LogOut = ({}: Props) => {
+const LogOut = ({ }: Props) => {
     const router = useRouter();
     useEffect(() => {
         startTransition(async () => {

@@ -9,6 +9,7 @@ import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
 import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
+import { getParticipantByUser } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
 export default function EventCardBig({
     title,

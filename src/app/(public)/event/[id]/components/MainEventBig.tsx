@@ -10,6 +10,7 @@ import NavigateNextLink from './ui/NavigateNextLink';
 import MuiMarkdownClient from './ui/MuiMarkdownClient';
 import { createIconFromString } from '$app/(public)/components/lib/helpers/icons';
 import GoToEventAdministrationButton from './ui/GoToEventAdministrationButton';
+import { getParticipantByUser } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
 type Props = {
     poolEvent: PoolEvent;
@@ -20,7 +21,7 @@ type Props = {
 
 const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isAdmin = false }: Props) => {
     console.log(typeof window === 'undefined' ? 'server' : 'client');
-
+    await getParticipantByUser();
     return (
         <Paper
             elevation={0}
@@ -43,9 +44,9 @@ const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isA
                     '& > img': { width: ' var(--event-width)', height: '193px' },
                 }}
             >
-                <Image
+                <img
                     alt="Game logo"
-                    src={poolEvent.bigImageURL ? poolEvent.bigImageURL : diceBig}
+                    src={poolEvent.bigImageURL ? poolEvent.bigImageURL : '/dice-big.webp'}
                     width={1200}
                     height={193}
                     sizes="100vw"

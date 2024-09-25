@@ -22,7 +22,9 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import GroupsIcon from '@mui/icons-material/Groups';
 import Link from 'next/link';
-import { forwardRef, useState, type ComponentProps } from 'react';
+import { forwardRef, useEffect, useState, type ComponentProps } from 'react';
+import ParticipantSelector from '$ui/participant/ParticipantSelector';
+
 type Props = {
     sx?: SxProps<Theme>;
     isLoggedIn: boolean;
@@ -71,17 +73,21 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             </Button>
             <Box sx={{ flexGrow: 1 }} />
             {isLoggedIn ?
-                <IconButton
-                    aria-label="more"
-                    id="long-button"
-                    aria-controls={open ? 'long-menu' : undefined}
-                    aria-expanded={open ? 'true' : undefined}
-                    aria-haspopup="true"
-                    onClick={handleClick}
-                >
-                    <MenuIcon />
-                </IconButton>
-            :   null}
+                <>
+                    <ParticipantSelector />
+
+                    <IconButton
+                        aria-label="more"
+                        id="long-button"
+                        aria-controls={open ? 'long-menu' : undefined}
+                        aria-expanded={open ? 'true' : undefined}
+                        aria-haspopup="true"
+                        onClick={handleClick}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                </>
+                : null}
         </>
     );
     const mobileBottomContent = (
@@ -107,7 +113,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 >
                     <MenuIcon fontSize="large" />
                 </IconButton>
-            :   null}
+                : null}
         </>
     );
 
@@ -151,10 +157,10 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                                             Rediger arrangementer
                                         </MenuItem>,
                                     ]
-                                :   null}
+                                    : null}
                             </Menu>
                         </>
-                    :   <Button component={Link} href="/login">
+                        : <Button component={Link} href="/login">
                             <LoginIcon />
                             Logg inn
                         </Button>
@@ -162,7 +168,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 </Box>
                 {mobile ?
                     <Box sx={{ flexGrow: 1 }} />
-                :   null}
+                    : null}
             </Toolbar>
         </AppBar>
     );

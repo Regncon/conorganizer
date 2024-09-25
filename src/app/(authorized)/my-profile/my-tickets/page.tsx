@@ -1,20 +1,20 @@
-import Tickets from './components/Tickets';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { redirect } from 'next/navigation';
-import { GetTicketsByEmail } from './components/lib/actions/actions';
+import MyParticipants from './components/MyParticipants';
+import { AssignParticipantByEmail } from './components/lib/actions/actions';
 
 const MyTickets = async () => {
     const { user } = await getAuthorizedAuth();
     if (user?.emailVerified === false) {
         redirect('/my-profile/my-tickets/confirm');
     }
-    const tickets = await GetTicketsByEmail(user?.email);
+    const participants = await AssignParticipantByEmail();
 
-    if (tickets?.length === 0 || tickets === undefined) {
+    if (participants?.length === 0 || participants === undefined) {
         redirect('/my-profile/my-tickets/not-found');
     }
 
-    return <Tickets tickets={tickets} />;
+    return <MyParticipants participants={participants} />;
 };
 
 export default MyTickets;

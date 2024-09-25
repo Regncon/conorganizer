@@ -12,6 +12,7 @@ import {
 import { getFirestore } from 'firebase/firestore';
 import type { FormEvent } from 'react';
 import { firebaseConfig } from './config';
+import { ParticipantLocalStorage } from '$lib/types';
 
 const app = initializeApp(firebaseConfig, 'client');
 
@@ -42,9 +43,16 @@ export const signInAndCreateCookie: (formData: FormData) => Promise<void> = asyn
 
     await setSessionCookie(idToken);
 };
+
 export const signOutAndDeleteCookie: () => Promise<void> = async () => {
+    clearLocalStorage();
     await signOut(firebaseAuth);
     await logout();
+};
+
+const clearLocalStorage: () => void = () => {
+    localStorage.removeItem('myParticipants');
+    localStorage.removeItem('filters');
 };
 
 export const singUpAndCreateCookie: (formData: FormData) => Promise<void> = async (formData) => {

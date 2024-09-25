@@ -180,15 +180,17 @@ export type MyNewEvent = {
     isRead?: boolean;
     isAccepted?: boolean;
 };
+
 export type Participant = {
-    id: string;
-    name: string;
+    id?: string;
+    firstName: string;
+    lastName: string;
     users?: string[];
     over18: boolean;
     orderId: number;
     ticketId: number;
     ticketEmail: string;
-    oredrEmails: string[];
+    orderEmails: string[];
     ticketCategory: string;
     ticketCategoryId: number;
     connectedEmails: string[];
@@ -196,6 +198,10 @@ export type Participant = {
     createdBy: string;
     updateAt: string;
     updatedBy: string;
+};
+
+export type ParticipantLocalStorage = Pick<Participant, 'id' | 'firstName' | 'lastName'> & {
+    isSelected: boolean;
 };
 
 export type ConUser = {

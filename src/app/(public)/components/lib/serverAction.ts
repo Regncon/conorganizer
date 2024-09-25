@@ -11,6 +11,23 @@ export async function getAllEvents() {
     return events;
 }
 
+export async function GetAllUsers() {
+    const userRef = await adminDb.collection('users').get();
+    const users = userRef.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return users;
+}
+
+export async function GetAllParticipants() {
+    const participantsRef = await adminDb.collection('participants').get();
+    const participants = participantsRef.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+    return participants;
+}
+export async function GetAllParticipantsSnapshot() {
+    const participantsRef = await adminDb.collection('participants').get();
+    const participants = participantsRef;
+    return participants;
+}
+
 const initialSortedEventMap = new Map<PoolName, ConEvent[]>([
     [PoolName.fridayEvening, []],
     [PoolName.saturdayMorning, []],
