@@ -1,7 +1,7 @@
 'use client';
 import { Box, CircularProgress, Paper, TextField, Typography, useTheme, type SxProps, type Theme } from '@mui/material';
 import Image from 'next/image';
-import diceSmall from '$public/dice-small.webp';
+// import diceSmall from '$public/dice-small.webp';
 import { useEffect, useState } from 'react';
 import { faUserSecret } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -101,7 +101,7 @@ const MainEvent = ({
                 }}
             >
                 <img
-                    src={data?.smallImageURL ?? diceSmall}
+                    src={data?.smallImageURL ?? '/dice-small.webp'}
                     width={320}
                     height={273}
                     sizes="100vw"

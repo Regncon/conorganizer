@@ -46,7 +46,7 @@ const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isA
             >
                 <img
                     alt="Game logo"
-                    src={poolEvent.bigImageURL ? poolEvent.bigImageURL : diceBig}
+                    src={poolEvent.bigImageURL ? poolEvent.bigImageURL : '/dice-big.webp'}
                     width={1200}
                     height={193}
                     sizes="100vw"
