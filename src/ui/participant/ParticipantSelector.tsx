@@ -1,5 +1,5 @@
 'use client';
-import { Participant } from '$lib/types';
+import { ParticipantLocalStorage } from '$lib/types';
 import { useState, useEffect } from 'react';
 import { Menu, MenuItem, Button } from '@mui/material';
 import ParticipantAvatar from './ParticipantAvatar';
@@ -17,10 +17,8 @@ const ParticipantSelector = () => {
         setAnchorEl(null);
     };
 
-    // State to store participants
-    const [participants, setParticipants] = useState<Participant[]>([]);
+    const [participants, setParticipants] = useState<ParticipantLocalStorage[]>([]);
 
-    // Fetch participants from localStorage when component mounts
     useEffect(() => {
         const storedParticipants = localStorage.getItem('newParticipants');
         if (storedParticipants) {
@@ -28,11 +26,11 @@ const ParticipantSelector = () => {
         }
     }, []);
 
-    if (!participants || participants.length === 0) {
+    const selectedParticipant = participants.find((participant) => participant.isSelected);
+
+    if (!participants || participants.length === 0 || selectedParticipant === undefined) {
         return <Button href="/my-profile/my-tickets">Hent billett</Button>;
     }
-
-    const selectedParticipant = participants[0];
 
     return (
         <>
@@ -44,12 +42,7 @@ const ParticipantSelector = () => {
                 variant="text"
                 sx={{ textDecoration: 'none', textTransform: 'none' }}
             >
-                <ParticipantAvatar
-                    firstName={selectedParticipant.firstName}
-                    lastName={selectedParticipant.lastName}
-                    small
-                />
-                '
+                <ParticipantAvatar firstName={selectedParticipant.firstName} lastName={selectedParticipant.lastName} />
                 <ExpandMoreIcon />
             </Button>
             <Menu

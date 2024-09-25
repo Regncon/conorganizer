@@ -33,10 +33,10 @@ of your con schedule, your panels, and your expenses.
 -   Vise hvilken deltaker du er viss du har flere deltakere på samme billett (Nesten ferdig)
 -   Gjør det tydelig hvilke pulje arrangementet er i og om det kjøres i andre puljer også.
 -   Lagre interessene til deltagere i databasen.- Assign user to participant
--   Fix cookie lifetime?
 
 #### Nice to haves for publishing events
 
+-   Fix cookie lifetime?
 -   Add is gm to event
 -   Filter my signups, events and tags
 -   Picture upload

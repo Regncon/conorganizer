@@ -1,6 +1,6 @@
 'use client';
 
-import { Participant } from '$lib/types';
+import { Participant, ParticipantLocalStorage } from '$lib/types';
 import { Box, Typography } from '@mui/material';
 import { useEffect } from 'react';
 
@@ -8,12 +8,13 @@ type Props = {
     participants: Participant[];
 };
 
-const GenerateNewParticipantStorage = (participants: Participant[]): Partial<Participant>[] => {
-    const newParticipants = participants.map((participant) => {
+const GenerateNewParticipantStorage = (participants: Participant[]): ParticipantLocalStorage[] => {
+    const newParticipants = participants.map((participant, i) => {
         return {
             id: participant.id,
             firstName: participant.firstName,
             lastName: participant.lastName,
+            isSelected: i === 0 ? true : false,
         };
     });
 
