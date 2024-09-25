@@ -35,7 +35,7 @@ const Filter = ({}: Props) => {
     }, []);
     console.log(chipOptions);
     const debounceRouter = useCallback(
-        debounce((toggleState2: Filters) => {
+        debounce(() => {
             if (toggleState) {
                 const test = Object.values(toggleState).map((ts) => ({
                     key: ts.name as string,
@@ -53,7 +53,7 @@ const Filter = ({}: Props) => {
         if (toggleState) {
             setFilters(toggleState);
 
-            debounceRouter(toggleState);
+            debounceRouter();
         }
     }, [toggleState]);
     return (
