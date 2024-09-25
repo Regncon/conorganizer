@@ -1,9 +1,7 @@
 import type { PoolEvent } from '$lib/types';
 import { faUserSecret, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Paper, Box, Typography, Chip, Link, Button } from '@mui/material';
-import Image from 'next/image';
-import diceBig from '$public/dice-big.webp';
+import { Paper, Box, Typography, Chip } from '@mui/material';
 import InterestSelector from './components/InterestSelector';
 import NavigatePreviousLink from './ui/NavigatePreviousLink';
 import NavigateNextLink from './ui/NavigateNextLink';
@@ -181,7 +179,7 @@ const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isA
                             />
                         ))}
                     </Box>
-                    <InterestSelector disabled />
+                    <InterestSelector poolName={poolEvent.poolName} disabled />
                 </Box>
                 <MuiMarkdownClient description={poolEvent.description} />
             </Box>

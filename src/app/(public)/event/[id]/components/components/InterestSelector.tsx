@@ -11,51 +11,21 @@ import SleepyDragons from 'public/interessedragene/2024SleepyDragons1_1.png';
 import VeryHappyDragons from 'public/interessedragene/2024VeryHappyDragons1_1.png';
 import ParticipantSelector from '$ui/participant/ParticipantSelector';
 import { DisplaySettings } from '@mui/icons-material';
+import { PoolName } from '$lib/enums';
 
-const marks = [
-    {
-        value: 1,
-        label: (
-            <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
-                <Image src={SleepyDragons} alt="Ikke interessert" width={50} height={50} />
-                <Typography>Ikke interessert</Typography>
-            </Box>
-        ),
-    },
-    {
-        value: 2,
-        label: (
-            <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
-                <Image src={AwakeDragons} alt="Litt interessert" width={50} height={50} />
-                <Typography>Litt interessert</Typography>
-            </Box>
-        ),
-    },
-    {
-        value: 3,
-        label: (
-            <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
-                <Image src={HappyDragons} alt="Interessert" width={50} height={50} />
-                <Typography>Interessert</Typography>
-            </Box>
-        ),
-    },
-    {
-        value: 4,
-        label: (
-            <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
-                <Image src={VeryHappyDragons} alt="Veldig interessert" width={50} height={50} />
-                <Typography>Veldig interessert</Typography>
-            </Box>
-        ),
-    },
-];
-
+const poolTitlesWithTime = {
+    [PoolName.fridayEvening]: 'Fredag Kveld Kl 18 - 23',
+    [PoolName.saturdayMorning]: 'Lørdag Morgen Kl 10 - 15',
+    [PoolName.saturdayEvening]: 'Lørdag Kveld Kl 18 - 23',
+    [PoolName.sundayMorning]: 'Søndag Morgen Kl 10 - 15',
+};
 type Props = {
+    poolName?: PoolName;
     disabled: boolean;
 };
 
-const InterestSelector = ({ disabled }: Props) => {
+const InterestSelector = ({ poolName, disabled }: Props) => {
+    disabled = false;
     const [interest, setInterest] = useState<number>(0);
     const incrementInterest = () => {
         if (interest === 3) {
@@ -64,6 +34,65 @@ const InterestSelector = ({ disabled }: Props) => {
             setInterest(interest + 1);
         }
     };
+
+    const marks = [
+        {
+            value: 1,
+            label: (
+                <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
+                    <Image src={SleepyDragons} alt="Ikke interessert" width={50} height={50} />
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        {poolName ?
+                            <Typography>{poolTitlesWithTime[poolName]}</Typography>
+                            : null}
+                        <Typography>Ikke interessert</Typography>
+                    </Box>
+                </Box>
+            ),
+        },
+        {
+            value: 2,
+            label: (
+                <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
+                    <Image src={AwakeDragons} alt="Litt interessert" width={50} height={50} />
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        {poolName ?
+                            <Typography>{poolTitlesWithTime[poolName]}</Typography>
+                            : null}
+                        <Typography>Litt interessert</Typography>
+                    </Box>
+                </Box>
+            ),
+        },
+        {
+            value: 3,
+            label: (
+                <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
+                    <Image src={HappyDragons} alt="Interessert" width={50} height={50} />
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        {poolName ?
+                            <Typography>{poolTitlesWithTime[poolName]}</Typography>
+                            : null}
+                        <Typography>Interessert</Typography>
+                    </Box>
+                </Box>
+            ),
+        },
+        {
+            value: 4,
+            label: (
+                <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
+                    <Image src={VeryHappyDragons} alt="Veldig interessert" width={50} height={50} />
+                    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        {poolName ?
+                            <Typography>{poolTitlesWithTime[poolName]}</Typography>
+                            : null}
+                        <Typography>Veldig interessert</Typography>
+                    </Box>
+                </Box>
+            ),
+        },
+    ];
 
     return (
         <>
