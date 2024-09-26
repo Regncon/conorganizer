@@ -49,6 +49,8 @@ const ParticipantSelector = ({ poolEventId }: Props) => {
     }
 
     const handleParticipantSelect = (id: string | undefined) => {
+        const myParticipantsChangedTrue = new CustomEvent('my-participants-changed', { detail: { loading: true } });
+        document.dispatchEvent(myParticipantsChangedTrue);
         if (id === undefined) {
             return;
         }

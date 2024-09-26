@@ -32,11 +32,23 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
     const [interest, setInterest] = useState<number>(
         typeof activeParticipant?.interestLevel === 'string' ? 0 : (activeParticipant?.interestLevel ?? 0)
     );
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const notLoggedIn = activeParticipant?.id === undefined && activeParticipant?.interestLevel === undefined;
+
+    const handleParticipantSelect = (e: Event & { detail?: { loading?: boolean } }) => {
+        const isLoading = e.detail?.loading;
+        setIsLoading(isLoading ?? false);
+    };
 
     useEffect(() => {
         setInterest(typeof activeParticipant?.interestLevel === 'string' ? 0 : (activeParticipant?.interestLevel ?? 0));
     }, [activeParticipant]);
+    useEffect(() => {
+        document.addEventListener('my-participants-changed', handleParticipantSelect);
+        return () => {
+            document.removeEventListener('my-participants-changed', handleParticipantSelect);
+        };
+    }, []);
 
     const [isPending, startTransition] = useTransition();
     const startTransitionDebounced = useCallback(debounce(startTransition, 500), []);
@@ -139,7 +151,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
                     maxWidth: 'var(--slider-interest-width)',
                 }}
                 onClick={incrementInterestButton}
-                disabled={disabled || isPending || notLoggedIn}
+                disabled={disabled || isPending || notLoggedIn || isLoading}
             >
                 {isPending ? 'lagrer :)' : marks[interest].label}
             </Button>
@@ -150,7 +162,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
                         setInterest(Number(target.value));
                         incrementInterestSlider(Number(target.value));
                     }}
-                    disabled={disabled || isPending || notLoggedIn}
+                    disabled={disabled || isPending || notLoggedIn || isLoading}
                     sx={{
                         color: 'primary.main',
                         [`.${sliderClasses.rail}`]: { backgroundColor: '#3d3b3b', height: '1rem' },

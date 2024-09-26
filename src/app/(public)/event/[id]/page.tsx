@@ -1,22 +1,17 @@
 import { Metadata } from 'next';
 import MainEvent from './components/MainEvent';
-import {
-    getAdjacentPoolEventsById,
-    getAllEvents,
-    getAllPoolEvents,
-    getEventById,
-    getPoolEventById,
-} from '$app/(public)/components/lib/serverAction';
+import { getAdjacentPoolEventsById, getPoolEventById } from '$app/(public)/components/lib/serverAction';
 import MainEventBig from './components/MainEventBig';
 import BigMediaQueryWrapper from './components/ui/BigMediaQueryWrapper';
 import SmallMediaQueryWrapper from './components/ui/SmallMediaQueryWrapper';
 import { Box } from '@mui/material';
-import { PoolName, type InterestLevel } from '$lib/enums';
+import { type InterestLevel } from '$lib/enums';
 import RealtimePoolEvent from './components/components/RealtimePoolEvent';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { cookies } from 'next/headers';
 import type { ParticipantCookie } from '$lib/types';
 import { getInterest } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import CustomEventListener from './components/helpers/CustomEventListener';
 
 type Props = {
     params: { id: string };
@@ -70,6 +65,7 @@ const EventPage = async ({ params: { id } }: Props) => {
                 </Box>
             </BigMediaQueryWrapper>
             <RealtimePoolEvent id={id} />
+            <CustomEventListener />
         </>
     );
 };
