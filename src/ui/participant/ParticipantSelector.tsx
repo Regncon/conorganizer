@@ -1,10 +1,9 @@
 'use client';
-import { ParticipantLocalStorage } from '$lib/types';
+import { ParticipantCookie } from '$lib/types';
 import { useState, useEffect } from 'react';
 import { Menu, MenuItem, Button, Box } from '@mui/material';
 import ParticipantAvatar from './ParticipantAvatar';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-
 
 const ParticipantSelector = () => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -18,15 +17,15 @@ const ParticipantSelector = () => {
         setAnchorEl(null);
     };
 
-    const [participants, setParticipants] = useState<ParticipantLocalStorage[]>([]);
+    const [participants, setParticipants] = useState<ParticipantCookie[]>([]);
 
-    useEffect(() => {        
+    useEffect(() => {
         const myParticipantsCookie = document.cookie
-        .split('; ')
-        .find(row => row.startsWith('myParticipants='))
-        ?.split('=')[1];
+            .split('; ')
+            .find((row) => row.startsWith('myParticipants='))
+            ?.split('=')[1];
 
-        const myParticipants: ParticipantLocalStorage[] = JSON.parse(myParticipantsCookie || '[]');
+        const myParticipants: ParticipantCookie[] = JSON.parse(myParticipantsCookie || '[]');
         if (myParticipants) {
             setParticipants(myParticipants);
         }

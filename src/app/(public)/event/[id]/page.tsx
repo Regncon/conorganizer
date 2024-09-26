@@ -11,9 +11,12 @@ import MainEventBig from './components/MainEventBig';
 import BigMediaQueryWrapper from './components/ui/BigMediaQueryWrapper';
 import SmallMediaQueryWrapper from './components/ui/SmallMediaQueryWrapper';
 import { Box } from '@mui/material';
-import { PoolName } from '$lib/enums';
+import { PoolName, type InterestLevel } from '$lib/enums';
 import RealtimePoolEvent from './components/components/RealtimePoolEvent';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
+import { cookies } from 'next/headers';
+import type { ParticipantCookie } from '$lib/types';
+import { getInterest } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
 type Props = {
     params: { id: string };
@@ -36,6 +39,12 @@ const EventPage = async ({ params: { id } }: Props) => {
     const claims = (await user?.getIdTokenResult())?.claims;
     const isAdmin = claims?.admin ?? false;
 
+    const cookie = cookies();
+    const activeParticipantsString = cookie.get('myParticipants');
+    const activeParticipants: ParticipantCookie[] = JSON.parse(activeParticipantsString?.value ?? '');
+    const activeParticipantId = activeParticipants?.find((participant) => participant.isSelected)?.id;
+    const interestLevel = await getInterest(activeParticipantId, poolEvent.id);
+
     return (
         <>
             <SmallMediaQueryWrapper>
@@ -44,6 +53,7 @@ const EventPage = async ({ params: { id } }: Props) => {
                     prevNavigationId={prevNavigationId}
                     nextNavigationId={nextNavigationId}
                     isAdmin={isAdmin}
+                    interestLevel={interestLevel}
                 />
             </SmallMediaQueryWrapper>
 
@@ -54,6 +64,7 @@ const EventPage = async ({ params: { id } }: Props) => {
                         prevNavigationId={prevNavigationId}
                         nextNavigationId={nextNavigationId}
                         isAdmin={isAdmin}
+                        interestLevel={interestLevel}
                     />
                 </Box>
             </BigMediaQueryWrapper>

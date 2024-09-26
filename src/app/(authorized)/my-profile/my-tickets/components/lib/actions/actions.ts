@@ -72,7 +72,7 @@ export const updateInterest = async (participantId: string, poolEventId: string,
         .doc(participantId)
         .get();
 
-    console.log('interest', interest.data());
+    console.log('current interest', interest.data());
 
     // if the interest document does not exist, create it
     if (interest.data() === undefined) {
@@ -82,7 +82,7 @@ export const updateInterest = async (participantId: string, poolEventId: string,
             interestLevel: interestLevel,
             poolEventId: poolEventId,
             participantId: participantId,
-            pardicipantFirstName: participant.firstName,
+            participantFirstName: participant.firstName,
             participantLastName: participant.lastName,
             createdAt: new Date().toISOString(),
             createdBy: user.email || '',
@@ -97,7 +97,7 @@ export const updateInterest = async (participantId: string, poolEventId: string,
             .set(newInterest);
     } else {
         // if the interest document exists, update it
-        console.log('interest exists updating');
+        console.log('interest exists updating', interestLevel);
         const updatedInterest: Partial<Interest> = {
             interestLevel: interestLevel,
             updateAt: new Date().toISOString(),
@@ -123,7 +123,7 @@ export const updateInterest = async (participantId: string, poolEventId: string,
             interestLevel: interestLevel,
             poolEventId: poolEventId,
             participantId: participantId,
-            pardicipantFirstName: participant.firstName,
+            participantFirstName: participant.firstName,
             participantLastName: participant.lastName,
             createdAt: new Date().toISOString(),
             createdBy: user.email || '',
@@ -152,11 +152,17 @@ export const updateInterest = async (participantId: string, poolEventId: string,
     }
 };
 
-export const getInterest = async (participantId: string, poolEventId: string) => {
+export const getInterest = async (participantId?: string, poolEventId?: string) => {
     console.log('getInterest', participantId, poolEventId);
 
     const { user } = await getAuthorizedAuth();
-    if (user === null || user.email === undefined || user.uid === undefined) {
+    if (
+        user === null ||
+        user.email === undefined ||
+        user.uid === undefined ||
+        participantId === undefined ||
+        poolEventId === undefined
+    ) {
         return;
     }
 

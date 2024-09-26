@@ -1,4 +1,4 @@
-import type { PoolEvent } from '$lib/types';
+import type { ParticipantCookie, PoolEvent } from '$lib/types';
 import { faUserSecret, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Paper, Box, Typography, Chip } from '@mui/material';
@@ -8,16 +8,28 @@ import NavigateNextLink from './ui/NavigateNextLink';
 import MuiMarkdownClient from './ui/MuiMarkdownClient';
 import { createIconFromString } from '$app/(public)/components/lib/helpers/icons';
 import GoToEventAdministrationButton from './ui/GoToEventAdministrationButton';
-import { getParticipantByUser } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import {
+    getInterest,
+    getParticipantByUser,
+} from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import { cookies } from 'next/headers';
+import type { InterestLevel } from '$lib/enums';
 
 type Props = {
     poolEvent: PoolEvent;
     prevNavigationId?: string;
     nextNavigationId?: string;
     isAdmin?: boolean;
+    interestLevel?: InterestLevel;
 };
 
-const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isAdmin = false }: Props) => {
+const MainEventBig = async ({
+    poolEvent,
+    prevNavigationId,
+    nextNavigationId,
+    isAdmin = false,
+    interestLevel,
+}: Props) => {
     // console.log(typeof window === 'undefined' ? 'server' : 'client');
 
     return (
@@ -27,7 +39,7 @@ const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isA
                 backgroundColor: 'black',
                 '&': {
                     '--image-height': '15.1429rem',
-                    '--slider-interest-width': '19.5714rem',
+                    '--slider-interest-width': '23rem',
                     '--event-margin-left': '4rem',
                     '--event-header-margin-left': 'calc(var(--event-margin-left) - 1rem)',
                     '--event-width': 'min(100%, 1200px)',
@@ -179,7 +191,11 @@ const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isA
                             />
                         ))}
                     </Box>
-                    <InterestSelector poolName={poolEvent.poolName} poolEventId={poolEvent.id} disabled />
+                    <InterestSelector
+                        poolName={poolEvent.poolName}
+                        poolEventId={poolEvent.id}
+                        initialInterestLevel={interestLevel}
+                    />
                 </Box>
                 <MuiMarkdownClient description={poolEvent.description} />
             </Box>
