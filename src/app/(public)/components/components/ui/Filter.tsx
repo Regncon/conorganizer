@@ -2,10 +2,11 @@ import type { IconName } from '$lib/types';
 import { Box, Chip, Skeleton } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { createIconFromString, createIconOptions } from '../../lib/helpers/icons';
-import { useLocalStorage } from '../../lib/hooks/useLocalStorage';
+import { useLocalStorage } from '../../../../../lib/hooks/useLocalStorage';
 import { useRouter } from 'next/router';
 import useSafeRouterReplace from '../../lib/hooks/useSafeRouterReplace';
 import debounce from '$lib/debounce';
+import useReadLocalStorage from '$lib/hooks/useReadLocalStorage';
 
 type Filters =
     | Partial<{
@@ -18,22 +19,19 @@ type Filters =
 type Props = {};
 const Filter = ({}: Props) => {
     const { setQuery } = useSafeRouterReplace();
-    const [filters, setFilters] = useLocalStorage<Filters>('filters', undefined);
+    const [, setFilters] = useLocalStorage<Filters>('filters', undefined);
+    const filters = useReadLocalStorage<Filters>('filters') ?? undefined;
     const [toggleState, setToggleState] = useState<Filters>(filters);
     const chipOptions = createIconOptions().map((option) => ({
         ...option,
         isActive: toggleState?.[option.iconName]?.isActive ?? undefined,
     }));
     const handleClick = useCallback<(option: (typeof chipOptions)[number]) => void>((option) => {
-        console.log(option);
-        console.log({ [option.iconName]: { name: option.iconName, isActive: !option.isActive } });
-        console.log({ ...toggleState, [option.iconName]: { name: option.iconName, isActive: !option.isActive } });
-
         setToggleState((prev) => {
             return { ...prev, [option.iconName]: { name: option.iconName, isActive: !option.isActive } };
         });
     }, []);
-    console.log(chipOptions);
+
     const debounceRouter = useCallback(
         debounce(() => {
             if (toggleState) {
@@ -53,11 +51,18 @@ const Filter = ({}: Props) => {
         if (toggleState) {
             setFilters(toggleState);
 
-            debounceRouter();
+            debounceRouter().catch((e) => console.warn(e));
         }
     }, [toggleState]);
     return (
-        <Box component="form">
+        <Box
+            sx={{
+                display: 'grid',
+                placeContent: 'center',
+                marginBlock: '0.5rem',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(8.78rem, max-content))',
+            }}
+        >
             {chipOptions.map((option) =>
                 option.isActive !== undefined ?
                     <Chip
@@ -67,8 +72,15 @@ const Filter = ({}: Props) => {
                         color="primary"
                         icon={createIconFromString(option.iconName, option.isActive ? 'secondary' : 'primary')}
                         onClick={(e) => handleClick(option)}
+                        sx={{ maxWidth: 'fit-content' }}
                     />
-                :   <Skeleton key={option.label} variant="rounded" width={156} height={32} />
+                :   <Skeleton
+                        key={option.label}
+                        variant="rounded"
+                        width={145}
+                        height={32}
+                        sx={{ marginInline: '0.1rem' }}
+                    />
             )}
         </Box>
     );

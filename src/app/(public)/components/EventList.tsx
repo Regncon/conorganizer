@@ -5,15 +5,18 @@ import NextLink from 'next/link';
 import EventListDay from './components/ui/EventListDay';
 import type { PoolEvents } from './lib/serverAction';
 import { Route } from 'next';
-import type { PoolEvent } from '$lib/types';
+import type { IconName, PoolEvent } from '$lib/types';
 import EventListWrapper from './components/EventListWrapper';
+import Events from './components/Events';
 
 type Props = {
     events: PoolEvents;
+    searchParams: {
+        [key in IconName]: string;
+    };
 };
 
-const removeUnpublishedEventsFilter = (event: PoolEvent) => event.published;
-const EventList = ({ events }: Props) => {
+const EventList = ({ events, searchParams }: Props) => {
     return (
         <Box>
             {[...events.entries()].map(([day, events]) => {
@@ -27,31 +30,7 @@ const EventList = ({ events }: Props) => {
                                 gap: '1rem',
                             }}
                         >
-                            {events.filter(removeUnpublishedEventsFilter).map((event) => (
-                                <Box
-                                    component={NextLink}
-                                    key={event.id}
-                                    sx={{ textDecoration: 'none' }}
-                                    prefetch
-                                    href={`/event/${event.id}` as Route}
-                                >
-                                    {event.isSmallCard ?
-                                        <EventCardSmall
-                                            title={event.title}
-                                            gameMaster={event.gameMaster}
-                                            system={event.system}
-                                            backgroundImage={event.smallImageURL}
-                                        />
-                                    :   <EventCardBig
-                                            title={event.title}
-                                            gameMaster={event.gameMaster}
-                                            shortDescription={event.shortDescription}
-                                            system={event.system}
-                                            backgroundImage={event.smallImageURL}
-                                        />
-                                    }
-                                </Box>
-                            ))}
+                            {/* <Events events={events} searchParams={searchParams} /> */}
                         </Box>
                     </EventListWrapper>
                 );

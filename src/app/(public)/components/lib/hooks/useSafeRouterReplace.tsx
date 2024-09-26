@@ -8,7 +8,6 @@ export const useSafeRouterReplace = () => {
 
     const setQuery = (queryParams: { key: string; value?: string }[]) => {
         const current = new URLSearchParams(Array.from(searchParams.entries()));
-        console.log(current.toString());
 
         queryParams.forEach(({ key, value }) => {
             if (!value) {

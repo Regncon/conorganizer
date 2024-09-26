@@ -35,9 +35,8 @@ const DaysHeader = ({}: Props) => {
                 }}
                 ref={ref}
             >
-                <Box sx={{ display: 'grid', placeContent: 'center', marginInline: '2rem', marginBlock: '0.5rem' }}>
-                    <Filter />
-                </Box>
+                <Filter />
+
                 <Box
                     sx={{
                         display: 'grid',
