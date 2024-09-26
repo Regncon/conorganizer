@@ -29,7 +29,13 @@ const ParticipantSelector = () => {
     const selectedParticipant = participants.find((participant) => participant.isSelected);
 
     if (!participants || participants.length === 0 || selectedParticipant === undefined) {
-        return <Button href="/my-profile/my-tickets">Hent billett</Button>;
+        return (
+            <Box>
+                <Button variant="contained" href="/my-profile/my-tickets">
+                    Hent billett
+                </Button>
+            </Box>
+        );
     }
 
     const handleParticipantSelect = (id: string | undefined) => {

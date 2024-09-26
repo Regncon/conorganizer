@@ -47,12 +47,12 @@ export default function EventDashboardTabs({ id, value }: props) {
                         disabled
                     />
                     <Tab
-                        // component={NextLink}
+                        component={NextLink}
                         sx={tabsSx}
                         icon={<FavoriteIcon />}
                         iconPosition="start"
                         label={<HideLabel>Ønskeliste</HideLabel>}
-                        disabled
+                        href={`/admin/dashboard/events/event-dashboard/${id}/interest` as Route}
                     />
                     <Tab
                         component={NextLink}

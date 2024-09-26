@@ -1,7 +1,5 @@
 'use client';
 import { Box, CircularProgress, Paper, TextField, Typography, useTheme, type SxProps, type Theme } from '@mui/material';
-import Image from 'next/image';
-// import diceSmall from '$public/dice-small.webp';
 import { useEffect, useState } from 'react';
 import { faUserSecret } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -209,7 +207,7 @@ const MainEvent = ({
                             '--slider-interest-width': '100%',
                         }}
                     >
-                        <InterestSelector disabled />
+                        <InterestSelector poolName={data.poolName} poolEventId={id} />
                     </Box>
                 )}
                 {editable ? null : (

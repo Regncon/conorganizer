@@ -24,12 +24,12 @@ export default function EventCardBig({
 }: EventCardProps) {
     const circleCheckOrPencilIcon =
         isAccepted ? faCheckDouble
-        : myEventBarSubmitted ? faCircleCheck
-        : faPencil;
+            : myEventBarSubmitted ? faCircleCheck
+                : faPencil;
     const SuccessOrWarningColor =
         isAccepted ? 'success.dark'
-        : myEventBarSubmitted ? 'success.light'
-        : 'warning.main';
+            : myEventBarSubmitted ? 'success.light'
+                : 'warning.main';
 
     return (
         <Card
@@ -74,15 +74,15 @@ export default function EventCardBig({
                                 <Typography sx={{ color: SuccessOrWarningColor }}>
                                     {isAccepted ?
                                         'Godtatt'
-                                    : myEventBarSubmitted ?
-                                        'Sendt inn'
-                                    :   'Kladd'}
+                                        : myEventBarSubmitted ?
+                                            'Sendt inn'
+                                            : 'Kladd'}
                                 </Typography>
                             </Box>
                             <TrashButton docId={myEventDocId} />
                         </Box>
                     </>
-                :   null}
+                    : null}
 
                 <CardHeader
                     title={title}
@@ -121,10 +121,11 @@ export default function EventCardBig({
                     >
                         <Typography fontSize="1rem"> {system} </Typography>
                         <Box sx={{ display: 'flex', gap: '1rem' }}>
+                            {/*   <Box component={Image} priority src={rook} alt="rook icon" />
                             <Box component={Image} priority src={rook} alt="rook icon" />
                             <Box component={Image} priority src={rook} alt="rook icon" />
                             <Box component={Image} priority src={rook} alt="rook icon" />
-                            <Box component={Image} priority src={rook} alt="rook icon" />
+                            */}
                         </Box>
                     </Box>
                     <Typography

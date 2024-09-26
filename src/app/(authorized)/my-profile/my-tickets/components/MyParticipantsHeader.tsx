@@ -31,8 +31,11 @@ const MyParticipantsHeader = ({ participants }: Props) => {
 
     return (
         <Box>
-            <Typography>En smart hjelpetekst skrevet av en som ikke er meg eller dyslektiker</Typography>
             <Typography variant="h1">Mine billetter</Typography>{' '}
+            <Typography variant="h4">
+                Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett
+                nedanfor, slik at kvar deltakar kan melda seg på arrangement på eiga hand.
+            </Typography>
         </Box>
     );
 };

@@ -74,7 +74,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             <Box sx={{ flexGrow: 1 }} />
             {isLoggedIn ?
                 <>
-                    <ParticipantSelector />
+                    {/*  <ParticipantSelector /> */}
 
                     <IconButton
                         aria-label="more"

@@ -1,5 +1,5 @@
 import { type } from 'os';
-import { PoolName, type RoomName } from './enums';
+import { InterestLevel, PoolName, type RoomName } from './enums';
 
 export type EventCardProps = {
     title: string;
@@ -215,4 +215,16 @@ export type ActionResponse = {
     type: 'info' | 'success' | 'warning' | 'error';
     error?: string;
     message: string;
+};
+export type Interest = {
+    id?: string;
+    interestLevel: InterestLevel;
+    poolEventId: string;
+    participantId: string;
+    pardicipantFirstName: string;
+    participantLastName: string;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
 };

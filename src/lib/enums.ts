@@ -29,3 +29,10 @@ export enum RoomName {
     'AnitrasDans' = 'Anitras Dans',
     'SolveigsSang' = 'Solveigs Sang',
 }
+
+export enum InterestLevel {
+    'NotInterested' = 'Ikke interessert',
+    'Interested' = 'Interessert',
+    'SomwhatInterested' = 'Litt interessert',
+    'VeryInterested' = 'Veldig interessert',
+}
