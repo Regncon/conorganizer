@@ -1,30 +1,17 @@
-import type { IconName } from '$lib/types';
-import { Box, Chip, Skeleton } from '@mui/material';
+import { Box, Chip } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { createIconFromString, createIconOptions } from '../../lib/helpers/icons';
 import { useLocalStorage } from '../../../../../lib/hooks/useLocalStorage';
-import { useRouter } from 'next/router';
-import useSafeRouterReplace from '../../lib/hooks/useSafeRouterReplace';
-import debounce from '$lib/debounce';
-import useReadLocalStorage from '$lib/hooks/useReadLocalStorage';
+import type { Filters } from '../../lib/helpers/types/types';
 
-type Filters =
-    | Partial<{
-          [key in IconName]: {
-              name: IconName;
-              isActive: boolean;
-          };
-      }>
-    | undefined;
 type Props = {};
 const Filter = ({}: Props) => {
-    const { setQuery } = useSafeRouterReplace();
-    const [, setFilters] = useLocalStorage<Filters>('filters', undefined);
-    const filters = useReadLocalStorage<Filters>('filters') ?? undefined;
+    const [filters, setFilters] = useLocalStorage<Filters>('filters', undefined);
+
     const [toggleState, setToggleState] = useState<Filters>(filters);
     const chipOptions = createIconOptions().map((option) => ({
         ...option,
-        isActive: toggleState?.[option.iconName]?.isActive ?? undefined,
+        isActive: toggleState?.[option.iconName]?.isActive ?? false,
     }));
     const handleClick = useCallback<(option: (typeof chipOptions)[number]) => void>((option) => {
         setToggleState((prev) => {
@@ -32,26 +19,9 @@ const Filter = ({}: Props) => {
         });
     }, []);
 
-    const debounceRouter = useCallback(
-        debounce(() => {
-            if (toggleState) {
-                const test = Object.values(toggleState).map((ts) => ({
-                    key: ts.name as string,
-                    value: `${ts.isActive ?? 'false'}`,
-                }));
-                if (!test.every((t) => t.value === 'false')) {
-                    setQuery(test);
-                }
-            }
-        }, 500),
-        [toggleState]
-    );
-
     useEffect(() => {
         if (toggleState) {
             setFilters(toggleState);
-
-            debounceRouter().catch((e) => console.warn(e));
         }
     }, [toggleState]);
     return (
@@ -63,25 +33,17 @@ const Filter = ({}: Props) => {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(8.78rem, max-content))',
             }}
         >
-            {chipOptions.map((option) =>
-                option.isActive !== undefined ?
-                    <Chip
-                        key={option.label}
-                        variant={option.isActive ? 'filled' : 'outlined'}
-                        label={option.label}
-                        color="primary"
-                        icon={createIconFromString(option.iconName, option.isActive ? 'secondary' : 'primary')}
-                        onClick={(e) => handleClick(option)}
-                        sx={{ maxWidth: 'fit-content' }}
-                    />
-                :   <Skeleton
-                        key={option.label}
-                        variant="rounded"
-                        width={145}
-                        height={32}
-                        sx={{ marginInline: '0.1rem' }}
-                    />
-            )}
+            {chipOptions.map((option) => (
+                <Chip
+                    key={option.label}
+                    variant={option.isActive ? 'filled' : 'outlined'}
+                    label={option.label}
+                    color="primary"
+                    icon={createIconFromString(option.iconName, option.isActive ? 'secondary' : 'primary')}
+                    onClick={() => handleClick(option)}
+                    sx={{ maxWidth: 'fit-content' }}
+                />
+            ))}
         </Box>
     );
 };

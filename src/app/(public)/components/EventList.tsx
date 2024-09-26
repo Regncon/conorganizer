@@ -11,12 +11,9 @@ import Events from './components/Events';
 
 type Props = {
     events: PoolEvents;
-    searchParams: {
-        [key in IconName]: string;
-    };
 };
 
-const EventList = ({ events, searchParams }: Props) => {
+const EventList = ({ events }: Props) => {
     return (
         <Box>
             {[...events.entries()].map(([day, events]) => {
@@ -30,7 +27,7 @@ const EventList = ({ events, searchParams }: Props) => {
                                 gap: '1rem',
                             }}
                         >
-                            {/* <Events events={events} searchParams={searchParams} /> */}
+                            <Events events={events} />
                         </Box>
                     </EventListWrapper>
                 );

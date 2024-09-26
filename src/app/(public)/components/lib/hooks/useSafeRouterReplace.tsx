@@ -19,7 +19,6 @@ export const useSafeRouterReplace = () => {
 
         const search = current.toString();
         const query = search ? `?${search}` : '';
-        console.log(query);
         router.replace(`${pathname}${query}` as Route);
     };
     return { setQuery };

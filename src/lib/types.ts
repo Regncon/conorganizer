@@ -210,3 +210,4 @@ export type ActionResponse = {
     error?: string;
     message: string;
 };
+export type LocalStorageNames = 'filters';

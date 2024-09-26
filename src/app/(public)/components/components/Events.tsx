@@ -5,19 +5,16 @@ import type { Route } from 'next';
 import NextLink from 'next/link';
 import EventCardBig from './EventCardBig';
 import EventCardSmall from './EventCardSmall';
-import { filteredEvents } from '../lib/helpers/filtersHelpers';
+import { useFilteredPoolEvents } from '../lib/hooks/useFilteredPoolEvents';
 
 type Props = {
     events: PoolEvent[];
-    searchParams: {
-        [key in IconName]: string;
-    };
 };
 
-const Events = ({ events, searchParams }: Props) => {
-    // const filteredEvents = useFilteredEvents(events, searchParams);
+const Events = ({ events }: Props) => {
+    const filteredEvents = useFilteredPoolEvents(events);
 
-    return filteredEvents(events, searchParams).map((event) => (
+    return filteredEvents.map((event) => (
         <Box
             component={NextLink}
             key={event.id}

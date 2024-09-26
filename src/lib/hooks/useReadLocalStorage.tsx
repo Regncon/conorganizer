@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
+
+import type { LocalStorageNames } from '$lib/types';
 import useEventListener from './useEventListner';
 
 declare global {
@@ -7,14 +9,14 @@ declare global {
     }
 }
 
-function useReadLocalStorage<T>(key: string): T | null {
+function useReadLocalStorage<T>(key: LocalStorageNames): T | null {
     const readValue = useCallback((): T | null => {
         if (typeof window === 'undefined') {
             return null;
         }
 
         try {
-            const item = window.localStorage.getItem(key);
+            const item = localStorage.getItem(key);
             return item ? (JSON.parse(item) as T) : null;
         } catch (error) {
             console.warn(`Error reading localStorage key “${key}”:`, error);

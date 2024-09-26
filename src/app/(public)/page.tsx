@@ -5,12 +5,8 @@ import EventList from './components/EventList';
 import Logo from './components/ui/Logo';
 import RealtimePoolEvents from '$lib/components/RealtimePoolEvents';
 import type { IconName } from '$lib/types';
-type Props = {
-    searchParams: {
-        [key in IconName]: string;
-    };
-};
-export default async function Home({ searchParams }: Props) {
+
+export default async function Home() {
     const poolEvents = await getAllPoolEvents();
 
     return (
@@ -18,7 +14,7 @@ export default async function Home({ searchParams }: Props) {
             <Box>
                 <Logo />
                 <DaysHeader />
-                <EventList events={poolEvents} searchParams={searchParams} />
+                <EventList events={poolEvents} />
             </Box>
             <RealtimePoolEvents />
         </>
