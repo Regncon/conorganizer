@@ -7,6 +7,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { AssignUserToParticipant, generateParticipant, NewTickets } from './Helpers';
 import { InterestLevel } from '$lib/enums';
+import Interest from '$app/(authorized)/admin/dashboard/events/event-dashboard/[id]/[tab]/interest/page';
 
 export type CrmRecord = {
     id: number;
@@ -150,6 +151,26 @@ export const updateInterest = async (participantId: string, poolEventId: string,
             .doc(poolEventId)
             .update(updatedParticipantInterest);
     }
+};
+
+export const getInterest = async (participantId: string, poolEventId: string) => {
+    console.log('getInterest', participantId, poolEventId);
+
+    const { user } = await getAuthorizedAuth();
+    if (user === null || user.email === undefined || user.uid === undefined) {
+        return;
+    }
+
+    const interest = (
+        await adminDb.collection('pool-events').doc(poolEventId).collection('interests').doc(participantId).get()
+    ).data() as Interest;
+
+    console.log('interest', interest);
+
+    if (interest === undefined) {
+        return InterestLevel.NotInterested;
+    }
+    return interest.interestLevel;
 };
 
 export const getParticipantByUser = async () => {

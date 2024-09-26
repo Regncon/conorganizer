@@ -3,7 +3,7 @@
 import { Button, Box, Slider, sliderClasses, Typography } from '@mui/material';
 import Link from 'next/link';
 import HelpIcon from '@mui/icons-material/Help';
-import { useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import Image from 'next/image';
 import AwakeDragons from 'public/interessedragene/2024AwakeDragons1_1.png';
 import HappyDragons from 'public/interessedragene/2024HappyDragons1_1.png';
@@ -12,7 +12,7 @@ import VeryHappyDragons from 'public/interessedragene/2024VeryHappyDragons1_1.pn
 import ParticipantSelector from '$ui/participant/ParticipantSelector';
 import { InterestLevel, PoolName } from '$lib/enums';
 import { ParticipantLocalStorage } from '$lib/types';
-import { updateInterest } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import { getInterest, updateInterest } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
 const poolTitlesWithTime = {
     [PoolName.fridayEvening]: 'Fredag Kveld Kl 18 - 23',
@@ -26,19 +26,33 @@ type Props = {
     disabled: boolean;
 };
 
+const interestLevelMap: { [key: number]: InterestLevel } = {
+    0: InterestLevel.NotInterested,
+    1: InterestLevel.SomwhatInterested,
+    2: InterestLevel.Interested,
+    3: InterestLevel.VeryInterested,
+};
 const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
-    console.log('InterestSelector', poolName, poolEventId, disabled);
+    const [interest, setInterest] = useState<number>(0);
 
     disabled = false;
-    const [interest, setInterest] = useState<number>(0);
+    useEffect(() => {
+        const myParticipants: ParticipantLocalStorage[] = JSON.parse(localStorage.getItem('myParticipants') || '[]');
+        const activeParticipantId = myParticipants.find((participant) => participant.isSelected)?.id;
+
+        if (activeParticipantId && poolEventId) {
+            getInterest(activeParticipantId, poolEventId).then((interestLevel) => {
+                if (interestLevel) {
+                    const interestLevelIndex = Object.values(interestLevelMap).indexOf(interestLevel);
+                    setInterest(interestLevelIndex);
+                    console.log('interestLevel', interestLevel);
+                }
+            });
+        }
+    }, [poolEventId]);
+
     const incrementInterest = () => {
         let interestLevel: InterestLevel = InterestLevel.NotInterested;
-        const interestLevelMap: { [key: number]: InterestLevel } = {
-            0: InterestLevel.NotInterested,
-            1: InterestLevel.SomwhatInterested,
-            2: InterestLevel.Interested,
-            3: InterestLevel.VeryInterested,
-        };
         if (interest === 3) {
             interestLevel = InterestLevel.NotInterested;
             setInterest(0);
