@@ -49,10 +49,7 @@ export const signOutAndDeleteCookie: () => Promise<void> = async () => {
 };
 
 const clearLocalStorage: () => void = () => {
-    const clearLocalStorage: () => void = () => {
-        document.cookie = 'myParticipants=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        localStorage.removeItem('filters');
-    };
+    document.cookie = 'myParticipants=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     localStorage.removeItem('filters');
 };
 

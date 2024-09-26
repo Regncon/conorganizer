@@ -41,7 +41,7 @@ const EventPage = async ({ params: { id } }: Props) => {
 
     const cookie = cookies();
     const activeParticipantsString = cookie.get('myParticipants');
-    const activeParticipants: ParticipantCookie[] = JSON.parse(activeParticipantsString?.value ?? '');
+    const activeParticipants: ParticipantCookie[] = JSON.parse(activeParticipantsString?.value ?? '[]');
     const activeParticipantId = activeParticipants?.find((participant) => participant.isSelected)?.id;
     const interestLevel = (await getInterest(activeParticipantId, poolEvent.id)) as InterestLevel | undefined;
     const activeParticipant = { id: activeParticipantId, interestLevel };
