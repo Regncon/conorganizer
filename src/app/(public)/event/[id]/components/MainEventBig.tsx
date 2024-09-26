@@ -19,7 +19,7 @@ type Props = {
 
 const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isAdmin = false }: Props) => {
     // console.log(typeof window === 'undefined' ? 'server' : 'client');
-    await getParticipantByUser();
+
     return (
         <Paper
             elevation={0}

@@ -3,7 +3,7 @@
 import { Button, Box, Slider, sliderClasses, Typography } from '@mui/material';
 import Link from 'next/link';
 import HelpIcon from '@mui/icons-material/Help';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState, useTransition } from 'react';
 import Image from 'next/image';
 import AwakeDragons from 'public/interessedragene/2024AwakeDragons1_1.png';
 import HappyDragons from 'public/interessedragene/2024HappyDragons1_1.png';
@@ -36,7 +36,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
     const [interest, setInterest] = useState<number>(0);
     const [activeParticipantId, setActiveParticipantId] = useState<string | null>(null);
     const [isDisabled, setIsDisabled] = useState<boolean>(true);
-    
+    const [isPending, startTransition] = useTransition();
 
     disabled = false;
     useEffect(() => {
@@ -71,7 +71,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
         }
 
         if (activeParticipantId && poolEventId) {
-            updateInterest(activeParticipantId, poolEventId, interestLevel);
+            startTransition(async () => await updateInterest(activeParticipantId, poolEventId, interestLevel));
         }
     };
 
@@ -84,7 +84,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
-                            : null}
+                        :   null}
                         <Typography>Ikke interessert</Typography>
                     </Box>
                 </Box>
@@ -98,7 +98,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
-                            : null}
+                        :   null}
                         <Typography>Litt interessert</Typography>
                     </Box>
                 </Box>
@@ -112,7 +112,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
-                            : null}
+                        :   null}
                         <Typography>Interessert</Typography>
                     </Box>
                 </Box>
@@ -126,7 +126,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
-                            : null}
+                        :   null}
                         <Typography>Veldig interessert</Typography>
                     </Box>
                 </Box>
@@ -149,7 +149,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
                     maxWidth: 'var(--slider-interest-width)',
                 }}
                 onClick={incrementInterest}
-                disabled={isDisabled}
+                disabled={isDisabled || isPending}
             >
                 {marks[interest].label}
             </Button>
