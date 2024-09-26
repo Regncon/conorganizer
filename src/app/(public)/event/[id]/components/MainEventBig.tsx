@@ -20,7 +20,7 @@ type Props = {
     prevNavigationId?: string;
     nextNavigationId?: string;
     isAdmin?: boolean;
-    interestLevel?: InterestLevel;
+    activeParticipant?: { id?: string; interestLevel?: InterestLevel };
 };
 
 const MainEventBig = async ({
@@ -28,7 +28,7 @@ const MainEventBig = async ({
     prevNavigationId,
     nextNavigationId,
     isAdmin = false,
-    interestLevel,
+    activeParticipant,
 }: Props) => {
     // console.log(typeof window === 'undefined' ? 'server' : 'client');
 
@@ -194,7 +194,7 @@ const MainEventBig = async ({
                     <InterestSelector
                         poolName={poolEvent.poolName}
                         poolEventId={poolEvent.id}
-                        initialInterestLevel={interestLevel}
+                        activeParticipant={activeParticipant}
                     />
                 </Box>
                 <MuiMarkdownClient description={poolEvent.description} />

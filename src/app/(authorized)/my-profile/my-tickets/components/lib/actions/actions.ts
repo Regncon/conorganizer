@@ -45,11 +45,18 @@ export type EventTicket = {
     };
 };
 
-export const updateInterest = async (participantId: string, poolEventId: string, interestLevel: InterestLevel) => {
+export const updateInterest = async (participantId?: string, poolEventId?: string, interestLevel?: InterestLevel) => {
     console.log('updateInterest', participantId, poolEventId, interestLevel);
 
     const { user } = await getAuthorizedAuth();
-    if (user === null || user.email === undefined || user.uid === undefined) {
+    if (
+        user === null ||
+        user.email === undefined ||
+        user.uid === undefined ||
+        participantId === undefined ||
+        poolEventId === undefined ||
+        interestLevel === undefined
+    ) {
         return;
     }
     // get the participant document

@@ -4,8 +4,13 @@ import { useState, useEffect } from 'react';
 import { Menu, MenuItem, Button, Box } from '@mui/material';
 import ParticipantAvatar from './ParticipantAvatar';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { updateEventById } from '$app/(public)/components/lib/serverAction';
 
-const ParticipantSelector = () => {
+type Props = {
+    poolEventId?: string;
+};
+
+const ParticipantSelector = ({ poolEventId }: Props) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -53,6 +58,7 @@ const ParticipantSelector = () => {
         setParticipants(updatedParticipants);
         document.cookie = `myParticipants=${JSON.stringify(updatedParticipants)}; path=/;`;
         handleClose();
+        updateEventById(poolEventId ?? '');
     };
 
     return (

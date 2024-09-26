@@ -24,11 +24,11 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const id = params.id;
-    const event = await getEventById(id);
+    const poolEvent = await getPoolEventById(id);
 
     return {
-        title: event.title,
-        description: event.shortDescription,
+        title: poolEvent.title,
+        description: poolEvent.shortDescription,
     };
 }
 
@@ -43,7 +43,8 @@ const EventPage = async ({ params: { id } }: Props) => {
     const activeParticipantsString = cookie.get('myParticipants');
     const activeParticipants: ParticipantCookie[] = JSON.parse(activeParticipantsString?.value ?? '');
     const activeParticipantId = activeParticipants?.find((participant) => participant.isSelected)?.id;
-    const interestLevel = await getInterest(activeParticipantId, poolEvent.id);
+    const interestLevel = (await getInterest(activeParticipantId, poolEvent.id)) as InterestLevel | undefined;
+    const activeParticipant = { id: activeParticipantId, interestLevel };
 
     return (
         <>
@@ -53,7 +54,7 @@ const EventPage = async ({ params: { id } }: Props) => {
                     prevNavigationId={prevNavigationId}
                     nextNavigationId={nextNavigationId}
                     isAdmin={isAdmin}
-                    interestLevel={interestLevel}
+                    activeParticipant={activeParticipant}
                 />
             </SmallMediaQueryWrapper>
 
@@ -64,7 +65,7 @@ const EventPage = async ({ params: { id } }: Props) => {
                         prevNavigationId={prevNavigationId}
                         nextNavigationId={nextNavigationId}
                         isAdmin={isAdmin}
-                        interestLevel={interestLevel}
+                        activeParticipant={activeParticipant}
                     />
                 </Box>
             </BigMediaQueryWrapper>

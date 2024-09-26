@@ -25,32 +25,19 @@ type Props = {
     poolName?: PoolName;
     poolEventId?: string;
     disabled?: boolean;
-    initialInterestLevel?: InterestLevel;
+    activeParticipant?: { id?: string; interestLevel?: InterestLevel };
 };
 
-const InterestSelector = ({
-    poolName,
-    poolEventId,
-    disabled = false,
-    initialInterestLevel = InterestLevel.NotInterested,
-}: Props) => {
+const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParticipant }: Props) => {
     const [interest, setInterest] = useState<number>(
-        typeof initialInterestLevel === 'string' ? 0 : initialInterestLevel
+        typeof activeParticipant?.interestLevel === 'string' ? 0 : (activeParticipant?.interestLevel ?? 0)
     );
-    const [activeParticipantId, setActiveParticipantId] = useState<string | null>(null);
-    const [isDisabled, setIsDisabled] = useState<boolean>(true);
+    useEffect(() => {
+        setInterest(typeof activeParticipant?.interestLevel === 'string' ? 0 : (activeParticipant?.interestLevel ?? 0));
+    }, [activeParticipant]);
+
     const [isPending, startTransition] = useTransition();
     const startTransitionDebounced = useCallback(debounce(startTransition, 500), []);
-
-    useEffect(() => {
-        const myParticipants: ParticipantCookie[] = JSON.parse(localStorage.getItem('myParticipants') || '[]');
-        const activeParticipantId = myParticipants.find((participant) => participant.isSelected)?.id;
-
-        if (activeParticipantId && poolEventId) {
-            setActiveParticipantId(activeParticipantId);
-            setIsDisabled(false);
-        }
-    }, [poolEventId]);
 
     const incrementInterestButton = () => {
         let interestLevel: InterestLevel = InterestLevel.NotInterested;
@@ -62,16 +49,16 @@ const InterestSelector = ({
             setInterest(interestLevel);
         }
 
-        if (activeParticipantId && poolEventId) {
+        if (activeParticipant?.id && poolEventId) {
             startTransitionDebounced(async () => {
-                await updateInterest(activeParticipantId, poolEventId, interestLevel);
+                await updateInterest(activeParticipant?.id, poolEventId, interestLevel);
             });
         }
     };
     const incrementInterestSlider = (interest: InterestLevel) => {
-        if (activeParticipantId && poolEventId) {
+        if (activeParticipant?.id && poolEventId) {
             startTransitionDebounced(async () => {
-                await updateInterest(activeParticipantId, poolEventId, interest);
+                await updateInterest(activeParticipant?.id, poolEventId, interest);
             });
         }
     };
@@ -137,7 +124,7 @@ const InterestSelector = ({
 
     return (
         <>
-            <ParticipantSelector />
+            <ParticipantSelector poolEventId={poolEventId} />
             <Button
                 variant="contained"
                 color="primary"
@@ -150,7 +137,7 @@ const InterestSelector = ({
                     maxWidth: 'var(--slider-interest-width)',
                 }}
                 onClick={incrementInterestButton}
-                disabled={isDisabled || isPending}
+                disabled={disabled || isPending}
             >
                 {isPending ? 'lagrer :)' : marks[interest].label}
             </Button>

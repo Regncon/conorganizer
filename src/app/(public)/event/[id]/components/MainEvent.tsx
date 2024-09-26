@@ -29,7 +29,7 @@ type Props = {
     parent?: boolean;
     handleChange?: (data: Partial<ConEvent>) => Promise<void>;
     isAdmin?: boolean;
-    interestLevel?: InterestLevel;
+    activeParticipant?: { id?: string; interestLevel?: InterestLevel };
 };
 
 const MainEvent = ({
@@ -42,7 +42,7 @@ const MainEvent = ({
     nextNavigationId,
     handleChange,
     isAdmin = false,
-    interestLevel,
+    activeParticipant,
 }: Props) => {
     const [data, setData] = useState<PoolEvent | undefined>(eventData);
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
@@ -213,7 +213,7 @@ const MainEvent = ({
                             <InterestSelector
                                 poolName={data.poolName}
                                 poolEventId={id}
-                                initialInterestLevel={interestLevel}
+                                activeParticipant={activeParticipant}
                             />
                         </Box>
                     )}
