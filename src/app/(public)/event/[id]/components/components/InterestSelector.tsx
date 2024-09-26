@@ -24,7 +24,7 @@ const poolTitlesWithTime = {
 type Props = {
     poolName?: PoolName;
     poolEventId?: string;
-    disabled: boolean;
+    disabled?: boolean;
 };
 
 const interestLevelMap: { [key: number]: InterestLevel } = {

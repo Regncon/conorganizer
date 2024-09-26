@@ -207,7 +207,7 @@ const MainEvent = ({
                             '--slider-interest-width': '100%',
                         }}
                     >
-                        <InterestSelector poolName={data.poolName} poolEventId={data.id} disabled />
+                        <InterestSelector poolName={data.poolName} poolEventId={id} />
                     </Box>
                 )}
                 {editable ? null : (
