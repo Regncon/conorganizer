@@ -7,7 +7,6 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { AssignUserToParticipant, generateParticipant, NewTickets } from './Helpers';
 import { InterestLevel } from '$lib/enums';
-import Interest from '$app/(authorized)/admin/dashboard/events/event-dashboard/[id]/[tab]/interest/page';
 
 export type CrmRecord = {
     id: number;
@@ -114,7 +113,7 @@ export const updateInterest = async (participantId: string, poolEventId: string,
     // ckeck if the interest document exists in the participant document supcollection
     // if it does not exist, add it
 
-    const participantInterest = await (
+    const participantInterest = (
         await adminDb.collection('participants').doc(participantId).collection('interests').doc(poolEventId).get()
     ).data();
 
