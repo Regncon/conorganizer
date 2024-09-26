@@ -13,6 +13,7 @@ import ParticipantSelector from '$ui/participant/ParticipantSelector';
 import { InterestLevel, PoolName } from '$lib/enums';
 import { ParticipantLocalStorage } from '$lib/types';
 import { getInterest, updateInterest } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import BuyTicketButton from '$app/(authorized)/my-profile/my-tickets/shared/ui/BuyTicketButton';
 
 const poolTitlesWithTime = {
     [PoolName.fridayEvening]: 'Fredag Kveld Kl 18 - 23',
@@ -34,6 +35,8 @@ const interestLevelMap: { [key: number]: InterestLevel } = {
 };
 const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
     const [interest, setInterest] = useState<number>(0);
+    const [activeParticipantId, setActiveParticipantId] = useState<string | null>(null);
+    const [isDisabled, setIsDisabled] = useState<boolean>(true);
 
     disabled = false;
     useEffect(() => {
@@ -41,6 +44,8 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
         const activeParticipantId = myParticipants.find((participant) => participant.isSelected)?.id;
 
         if (activeParticipantId && poolEventId) {
+            setActiveParticipantId(activeParticipantId);
+            setIsDisabled(false);
             getInterest(activeParticipantId, poolEventId).then((interestLevel) => {
                 if (interestLevel) {
                     const interestLevelIndex = Object.values(interestLevelMap).indexOf(interestLevel);
@@ -60,9 +65,6 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
             interestLevel = interestLevelMap[interest + 1];
             setInterest(interest + 1);
         }
-        const myParticipants: ParticipantLocalStorage[] = JSON.parse(localStorage.getItem('myParticipants') || '[]');
-        const activeParticipantId = myParticipants.find((participant) => participant.isSelected)?.id;
-        console.log('activeParticipantId', activeParticipantId);
 
         if (activeParticipantId && poolEventId) {
             updateInterest(activeParticipantId, poolEventId, interestLevel);
@@ -143,7 +145,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
                     maxWidth: 'var(--slider-interest-width)',
                 }}
                 onClick={incrementInterest}
-                disabled={disabled}
+                disabled={isDisabled}
             >
                 {marks[interest].label}
             </Button>

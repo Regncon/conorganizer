@@ -175,7 +175,7 @@ export const getInterest = async (participantId: string, poolEventId: string) =>
 
 export const getParticipantByUser = async () => {
     const { user } = await getAuthorizedAuth();
-    if (user === null) throw new Error('Failed to get authorized auth');
+    if (user === null) return;
 
     // console.log(
     //     adminDb
