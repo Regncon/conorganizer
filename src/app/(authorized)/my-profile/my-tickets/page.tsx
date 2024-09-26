@@ -4,10 +4,10 @@ import MyParticipants from './components/MyParticipants';
 import { AssignParticipantByEmail } from './components/lib/actions/actions';
 
 const MyTickets = async () => {
-    const { user } = await getAuthorizedAuth();
-    if (user?.emailVerified === false) {
-        redirect('/my-profile/my-tickets/confirm');
-    }
+    // const { user } = await getAuthorizedAuth();
+    // if (user?.emailVerified === false) {
+    //     redirect('/my-profile/my-tickets/confirm');
+    // }
     const participants = await AssignParticipantByEmail();
 
     if (participants?.length === 0 || participants === undefined) {
