@@ -18,7 +18,7 @@ type Props = {
 };
 
 const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isAdmin = false }: Props) => {
-    console.log(typeof window === 'undefined' ? 'server' : 'client');
+    // console.log(typeof window === 'undefined' ? 'server' : 'client');
     await getParticipantByUser();
     return (
         <Paper
@@ -179,7 +179,7 @@ const MainEventBig = async ({ poolEvent, prevNavigationId, nextNavigationId, isA
                             />
                         ))}
                     </Box>
-                    <InterestSelector poolName={poolEvent.poolName} disabled />
+                    <InterestSelector poolName={poolEvent.poolName} poolEventId={poolEvent.id} disabled />
                 </Box>
                 <MuiMarkdownClient description={poolEvent.description} />
             </Box>

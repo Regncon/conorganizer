@@ -10,8 +10,9 @@ import HappyDragons from 'public/interessedragene/2024HappyDragons1_1.png';
 import SleepyDragons from 'public/interessedragene/2024SleepyDragons1_1.png';
 import VeryHappyDragons from 'public/interessedragene/2024VeryHappyDragons1_1.png';
 import ParticipantSelector from '$ui/participant/ParticipantSelector';
-import { DisplaySettings } from '@mui/icons-material';
-import { PoolName } from '$lib/enums';
+import { InterestLevel, PoolName } from '$lib/enums';
+import { ParticipantLocalStorage } from '$lib/types';
+import { updateInterest } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
 const poolTitlesWithTime = {
     [PoolName.fridayEvening]: 'Fredag Kveld Kl 18 - 23',
@@ -21,17 +22,36 @@ const poolTitlesWithTime = {
 };
 type Props = {
     poolName?: PoolName;
+    poolEventId?: string;
     disabled: boolean;
 };
 
-const InterestSelector = ({ poolName, disabled }: Props) => {
+const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
+    console.log('InterestSelector', poolName, poolEventId, disabled);
+
     disabled = false;
     const [interest, setInterest] = useState<number>(0);
     const incrementInterest = () => {
+        let interestLevel: InterestLevel = InterestLevel.NotInterested;
+        const interestLevelMap: { [key: number]: InterestLevel } = {
+            0: InterestLevel.NotInterested,
+            1: InterestLevel.SomwhatInterested,
+            2: InterestLevel.Interested,
+            3: InterestLevel.VeryInterested,
+        };
         if (interest === 3) {
+            interestLevel = InterestLevel.NotInterested;
             setInterest(0);
         } else {
+            interestLevel = interestLevelMap[interest + 1];
             setInterest(interest + 1);
+        }
+        const myParticipants: ParticipantLocalStorage[] = JSON.parse(localStorage.getItem('myParticipants') || '[]');
+        const activeParticipantId = myParticipants.find((participant) => participant.isSelected)?.id;
+        console.log('activeParticipantId', activeParticipantId);
+
+        if (activeParticipantId && poolEventId) {
+            updateInterest(activeParticipantId, poolEventId, interestLevel);
         }
     };
 
@@ -40,7 +60,7 @@ const InterestSelector = ({ poolName, disabled }: Props) => {
             value: 1,
             label: (
                 <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
-                    <Image src={SleepyDragons} alt="Ikke interessert" width={50} height={50} />
+                    <Image src={SleepyDragons} alt="Ikke interessert" width={100} height={60} />
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
@@ -54,7 +74,7 @@ const InterestSelector = ({ poolName, disabled }: Props) => {
             value: 2,
             label: (
                 <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
-                    <Image src={AwakeDragons} alt="Litt interessert" width={50} height={50} />
+                    <Image src={AwakeDragons} alt="Litt interessert" width={100} height={60} />
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
@@ -68,7 +88,7 @@ const InterestSelector = ({ poolName, disabled }: Props) => {
             value: 3,
             label: (
                 <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
-                    <Image src={HappyDragons} alt="Interessert" width={50} height={50} />
+                    <Image src={HappyDragons} alt="Interessert" width={100} height={60} />
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
@@ -82,7 +102,7 @@ const InterestSelector = ({ poolName, disabled }: Props) => {
             value: 4,
             label: (
                 <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
-                    <Image src={VeryHappyDragons} alt="Veldig interessert" width={50} height={50} />
+                    <Image src={VeryHappyDragons} alt="Veldig interessert" width={100} height={50} />
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>

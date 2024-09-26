@@ -2,10 +2,11 @@
 import { getMyUserInfo } from '$app/(authorized)/my-events/lib/actions';
 import { GetAllParticipants } from '$app/(public)/components/lib/serverAction';
 import { adminDb, getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { ActionResponse, Participant } from '$lib/types';
+import { ActionResponse, Interest, Participant } from '$lib/types';
 import { doc, updateDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import { AssignUserToParticipant, generateParticipant, NewTickets } from './Helpers';
+import { InterestLevel } from '$lib/enums';
 
 export type CrmRecord = {
     id: number;
@@ -42,6 +43,113 @@ export type EventTicket = {
         email: string;
         born: string;
     };
+};
+
+export const updateInterest = async (participantId: string, poolEventId: string, interestLevel: InterestLevel) => {
+    console.log('updateInterest', participantId, poolEventId, interestLevel);
+
+    const { user } = await getAuthorizedAuth();
+    if (user === null || user.email === undefined || user.uid === undefined) {
+        return;
+    }
+    // get the participant document
+    const participant = (await adminDb.collection('participants').doc(participantId).get()).data() as Participant;
+    if (participant === undefined) {
+        return;
+    }
+
+    // check if the user has access to the participant
+    if (participant.users?.includes(user.uid) === false) {
+        return;
+    }
+
+    // get the intesest document from the poolEventId
+    // interests is a supbcollection of poolEvents
+    const interest = await adminDb
+        .collection('pool-events')
+        .doc(poolEventId)
+        .collection('interests')
+        .doc(participantId)
+        .get();
+
+    console.log('interest', interest.data());
+
+    // if the interest document does not exist, create it
+    if (interest.data() === undefined) {
+        console.log('interest does not exist adding new');
+
+        const newInterest: Interest = {
+            interestLevel: interestLevel,
+            poolEventId: poolEventId,
+            participantId: participantId,
+            pardicipantFirstName: participant.firstName,
+            participantLastName: participant.lastName,
+            createdAt: new Date().toISOString(),
+            createdBy: user.email || '',
+            updateAt: new Date().toISOString(),
+            updatedBy: user.email || '',
+        };
+        await adminDb
+            .collection('pool-events')
+            .doc(poolEventId)
+            .collection('interests')
+            .doc(participantId)
+            .set(newInterest);
+    } else {
+        // if the interest document exists, update it
+        console.log('interest exists updating');
+        const updatedInterest: Partial<Interest> = {
+            interestLevel: interestLevel,
+            updateAt: new Date().toISOString(),
+            updatedBy: user.email || '',
+        };
+        await adminDb
+            .collection('pool-events')
+            .doc(poolEventId)
+            .collection('interests')
+            .doc(participantId)
+            .update(updatedInterest);
+    }
+    // ckeck if the interest document exists in the participant document supcollection
+    // if it does not exist, add it
+
+    const participantInterest = await (
+        await adminDb.collection('participants').doc(participantId).collection('interests').doc(poolEventId).get()
+    ).data();
+
+    if (participantInterest === undefined) {
+        console.log('participant interest does not exist adding new');
+        const newParticipantInterest: Interest = {
+            interestLevel: interestLevel,
+            poolEventId: poolEventId,
+            participantId: participantId,
+            pardicipantFirstName: participant.firstName,
+            participantLastName: participant.lastName,
+            createdAt: new Date().toISOString(),
+            createdBy: user.email || '',
+            updateAt: new Date().toISOString(),
+            updatedBy: user.email || '',
+        };
+        await adminDb
+            .collection('participants')
+            .doc(participantId)
+            .collection('interests')
+            .doc(poolEventId)
+            .set(newParticipantInterest);
+    } else {
+        console.log('participant interest exists updating');
+        const updatedParticipantInterest: Partial<Interest> = {
+            interestLevel: interestLevel,
+            updateAt: new Date().toISOString(),
+            updatedBy: user.email || '',
+        };
+        await adminDb
+            .collection('participants')
+            .doc(participantId)
+            .collection('interests')
+            .doc(poolEventId)
+            .update(updatedParticipantInterest);
+    }
 };
 
 export const getParticipantByUser = async () => {
