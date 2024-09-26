@@ -25,8 +25,7 @@ const MyParticipantsHeader = ({ participants }: Props) => {
     useEffect(() => {
         const newParticipants = GenerateNewParticipantStorage(participants);
         console.log(newParticipants, 'newParticipants');
-
-        localStorage.setItem('myParticipants', JSON.stringify(newParticipants));
+        document.cookie = `myParticipants=${JSON.stringify(newParticipants)}; path=/;`;
     }, [participants]);
 
     return (

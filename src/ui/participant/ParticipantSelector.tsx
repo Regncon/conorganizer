@@ -5,6 +5,7 @@ import { Menu, MenuItem, Button, Box } from '@mui/material';
 import ParticipantAvatar from './ParticipantAvatar';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
+
 const ParticipantSelector = () => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
@@ -19,10 +20,15 @@ const ParticipantSelector = () => {
 
     const [participants, setParticipants] = useState<ParticipantLocalStorage[]>([]);
 
-    useEffect(() => {
-        const storedParticipants = localStorage.getItem('myParticipants');
-        if (storedParticipants) {
-            setParticipants(JSON.parse(storedParticipants));
+    useEffect(() => {        
+        const myParticipantsCookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('myParticipants='))
+        ?.split('=')[1];
+
+        const myParticipants: ParticipantLocalStorage[] = JSON.parse(myParticipantsCookie || '[]');
+        if (myParticipants) {
+            setParticipants(myParticipants);
         }
     }, []);
 
@@ -46,7 +52,7 @@ const ParticipantSelector = () => {
             participant.id === id ? { ...participant, isSelected: true } : { ...participant, isSelected: false }
         );
         setParticipants(updatedParticipants);
-        localStorage.setItem('myParticipants', JSON.stringify(updatedParticipants));
+        document.cookie = `myParticipants=${JSON.stringify(updatedParticipants)}; path=/;`;
         handleClose();
     };
 

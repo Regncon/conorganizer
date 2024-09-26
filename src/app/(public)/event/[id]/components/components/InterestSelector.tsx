@@ -3,7 +3,7 @@
 import { Button, Box, Slider, sliderClasses, Typography } from '@mui/material';
 import Link from 'next/link';
 import HelpIcon from '@mui/icons-material/Help';
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import AwakeDragons from 'public/interessedragene/2024AwakeDragons1_1.png';
 import HappyDragons from 'public/interessedragene/2024HappyDragons1_1.png';
@@ -13,7 +13,6 @@ import ParticipantSelector from '$ui/participant/ParticipantSelector';
 import { InterestLevel, PoolName } from '$lib/enums';
 import { ParticipantLocalStorage } from '$lib/types';
 import { getInterest, updateInterest } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
-import BuyTicketButton from '$app/(authorized)/my-profile/my-tickets/shared/ui/BuyTicketButton';
 
 const poolTitlesWithTime = {
     [PoolName.fridayEvening]: 'Fredag Kveld Kl 18 - 23',
@@ -37,10 +36,15 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
     const [interest, setInterest] = useState<number>(0);
     const [activeParticipantId, setActiveParticipantId] = useState<string | null>(null);
     const [isDisabled, setIsDisabled] = useState<boolean>(true);
+    
 
     disabled = false;
     useEffect(() => {
-        const myParticipants: ParticipantLocalStorage[] = JSON.parse(localStorage.getItem('myParticipants') || '[]');
+        const myParticipantsCookie = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('myParticipants='))
+            ?.split('=')[1];
+        const myParticipants: ParticipantLocalStorage[] = JSON.parse(myParticipantsCookie || '[]');
         const activeParticipantId = myParticipants.find((participant) => participant.isSelected)?.id;
 
         if (activeParticipantId && poolEventId) {
@@ -54,7 +58,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
                 }
             });
         }
-    }, [poolEventId]);
+    }, []);
 
     const incrementInterest = () => {
         let interestLevel: InterestLevel = InterestLevel.NotInterested;
@@ -118,7 +122,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
             value: 4,
             label: (
                 <Box sx={{ display: 'flex', width: '25rem', alignItems: 'center', gap: '0.5rem' }}>
-                    <Image src={VeryHappyDragons} alt="Veldig interessert" width={100} height={50} />
+                    <Image src={VeryHappyDragons} alt="Veldig interessert" width={100} height={60} />
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
@@ -155,7 +159,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled }: Props) => {
                         const target = e.target as HTMLInputElement;
                         setInterest(Number(target.value));
                     }}
-                    disabled={disabled}
+                    disabled={isDisabled}
                     sx={{
                         color: 'primary.main',
                         [`.${sliderClasses.rail}`]: { backgroundColor: '#3d3b3b', height: '1rem' },
