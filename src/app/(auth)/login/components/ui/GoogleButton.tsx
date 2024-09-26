@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
 import { GetMyParticipants } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
+
 const GoogleIcon = () => (
     <SvgIcon viewBox="0 0 48 48">
         <path
@@ -56,7 +57,7 @@ const GoogleSignInButton = ({ redirectTo = '/', disabled = false }: Props) => {
                 // ...
                 //
                 GetMyParticipants().then((myParticipants) => {
-                    localStorage.setItem('myParticipants', JSON.stringify(myParticipants));
+                    document.cookie = `myParticipants=${JSON.stringify(myParticipants)}; path=/;`;
                     router.replace(redirectTo);
                 });
             })

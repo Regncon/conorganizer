@@ -1,11 +1,16 @@
 'use client';
-import { ParticipantLocalStorage } from '$lib/types';
+import { ParticipantCookie } from '$lib/types';
 import { useState, useEffect } from 'react';
 import { Menu, MenuItem, Button, Box } from '@mui/material';
 import ParticipantAvatar from './ParticipantAvatar';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { updateEventById } from '$app/(public)/components/lib/serverAction';
 
-const ParticipantSelector = () => {
+type Props = {
+    poolEventId?: string;
+};
+
+const ParticipantSelector = ({ poolEventId }: Props) => {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -17,12 +22,17 @@ const ParticipantSelector = () => {
         setAnchorEl(null);
     };
 
-    const [participants, setParticipants] = useState<ParticipantLocalStorage[]>([]);
+    const [participants, setParticipants] = useState<ParticipantCookie[]>([]);
 
     useEffect(() => {
-        const storedParticipants = localStorage.getItem('myParticipants');
-        if (storedParticipants) {
-            setParticipants(JSON.parse(storedParticipants));
+        const myParticipantsCookie = document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('myParticipants='))
+            ?.split('=')[1];
+
+        const myParticipants: ParticipantCookie[] = JSON.parse(myParticipantsCookie || '[]');
+        if (myParticipants) {
+            setParticipants(myParticipants);
         }
     }, []);
 
@@ -46,8 +56,9 @@ const ParticipantSelector = () => {
             participant.id === id ? { ...participant, isSelected: true } : { ...participant, isSelected: false }
         );
         setParticipants(updatedParticipants);
-        localStorage.setItem('myParticipants', JSON.stringify(updatedParticipants));
+        document.cookie = `myParticipants=${JSON.stringify(updatedParticipants)}; path=/;`;
         handleClose();
+        updateEventById(poolEventId ?? '');
     };
 
     return (

@@ -200,7 +200,7 @@ export type Participant = {
     updatedBy: string;
 };
 
-export type ParticipantLocalStorage = Pick<Participant, 'id' | 'firstName' | 'lastName'> & {
+export type ParticipantCookie = Pick<Participant, 'id' | 'firstName' | 'lastName'> & {
     isSelected: boolean;
 };
 
@@ -218,10 +218,10 @@ export type ActionResponse = {
 };
 export type Interest = {
     id?: string;
-    interestLevel: InterestLevel;
+    interestLevel: number;
     poolEventId: string;
     participantId: string;
-    pardicipantFirstName: string;
+    participantFirstName: string;
     participantLastName: string;
     createdAt: string;
     createdBy: string;

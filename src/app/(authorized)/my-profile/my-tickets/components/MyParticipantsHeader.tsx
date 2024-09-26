@@ -1,6 +1,6 @@
 'use client';
 
-import { Participant, ParticipantLocalStorage } from '$lib/types';
+import { Participant, ParticipantCookie } from '$lib/types';
 import { Box, Typography } from '@mui/material';
 import { useEffect } from 'react';
 
@@ -8,7 +8,7 @@ type Props = {
     participants: Participant[];
 };
 
-const GenerateNewParticipantStorage = (participants: Participant[]): ParticipantLocalStorage[] => {
+const GenerateNewParticipantStorage = (participants: Participant[]): ParticipantCookie[] => {
     const newParticipants = participants.map((participant, i) => {
         return {
             id: participant.id,
@@ -25,8 +25,7 @@ const MyParticipantsHeader = ({ participants }: Props) => {
     useEffect(() => {
         const newParticipants = GenerateNewParticipantStorage(participants);
         console.log(newParticipants, 'newParticipants');
-
-        localStorage.setItem('myParticipants', JSON.stringify(newParticipants));
+        document.cookie = `myParticipants=${JSON.stringify(newParticipants)}; path=/;`;
     }, [participants]);
 
     return (

@@ -12,6 +12,7 @@ import { updateSearchParamsWithEmail } from '../../shared/utils';
 import { getRedirectResult, GoogleAuthProvider, onAuthStateChanged, signInWithRedirect, User } from 'firebase/auth';
 import GoogleSignInButton from './ui/GoogleButton';
 import { GetMyParticipants } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import { cookies } from 'next/headers';
 
 const initialLoginFormState = {
     emailError: '',
@@ -30,7 +31,7 @@ const initialSpinnersState = {
 
 const setMyParticipants = async () => {
     const myParticipants = await GetMyParticipants();
-    localStorage.setItem('myParticipants', JSON.stringify(myParticipants));
+    document.cookie = `myParticipants=${JSON.stringify(myParticipants)}; path=/;`;
 };
 
 const LoginPage = () => {

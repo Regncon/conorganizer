@@ -10,9 +10,7 @@ import {
     sendPasswordResetEmail,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import type { FormEvent } from 'react';
 import { firebaseConfig } from './config';
-import { ParticipantLocalStorage } from '$lib/types';
 
 const app = initializeApp(firebaseConfig, 'client');
 
@@ -51,7 +49,10 @@ export const signOutAndDeleteCookie: () => Promise<void> = async () => {
 };
 
 const clearLocalStorage: () => void = () => {
-    localStorage.removeItem('myParticipants');
+    const clearLocalStorage: () => void = () => {
+        document.cookie = 'myParticipants=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        localStorage.removeItem('filters');
+    };
     localStorage.removeItem('filters');
 };
 
