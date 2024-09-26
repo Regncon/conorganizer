@@ -32,6 +32,8 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
     const [interest, setInterest] = useState<number>(
         typeof activeParticipant?.interestLevel === 'string' ? 0 : (activeParticipant?.interestLevel ?? 0)
     );
+    const notLoggedIn = activeParticipant?.id === undefined && activeParticipant?.interestLevel === undefined;
+
     useEffect(() => {
         setInterest(typeof activeParticipant?.interestLevel === 'string' ? 0 : (activeParticipant?.interestLevel ?? 0));
     }, [activeParticipant]);
@@ -137,7 +139,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
                     maxWidth: 'var(--slider-interest-width)',
                 }}
                 onClick={incrementInterestButton}
-                disabled={disabled || isPending}
+                disabled={disabled || isPending || notLoggedIn}
             >
                 {isPending ? 'lagrer :)' : marks[interest].label}
             </Button>
@@ -148,7 +150,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
                         setInterest(Number(target.value));
                         incrementInterestSlider(Number(target.value));
                     }}
-                    disabled={disabled || isPending}
+                    disabled={disabled || isPending || notLoggedIn}
                     sx={{
                         color: 'primary.main',
                         [`.${sliderClasses.rail}`]: { backgroundColor: '#3d3b3b', height: '1rem' },
