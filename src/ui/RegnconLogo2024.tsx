@@ -1,5 +1,4 @@
 'use client';
-
 import React from 'react';
 import { Box } from '@mui/material';
 
@@ -9,8 +8,6 @@ type Props = {
 };
 
 const RegnconLogo2024 = ({ spin = false, size = 'medium' }: Props) => {
-    console.log('RegnconLogo2024', spin, size);
-
     const getSize = () => {
         switch (size) {
             case 'small':
