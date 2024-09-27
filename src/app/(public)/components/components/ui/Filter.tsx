@@ -1,21 +1,22 @@
 import { Box, Chip } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { createIconFromString, createIconOptions } from '../../lib/helpers/icons';
-import { useLocalStorage } from '../../../../../lib/hooks/useLocalStorage';
+import { useLocalStorage } from '$lib/hooks/useLocalStorage';
 import type { Filters } from '../../lib/helpers/types/types';
+import { DEFAULT_FILTERS } from '../../lib/hooks/useFilteredPoolEvents';
 
 type Props = {};
 const Filter = ({}: Props) => {
-    const [filters, setFilters] = useLocalStorage<Filters>('filters', undefined);
-
+    const [filters, setFilters] = useLocalStorage<Filters>('filters', DEFAULT_FILTERS);
     const [toggleState, setToggleState] = useState<Filters>(filters);
+
     const chipOptions = createIconOptions().map((option) => ({
         ...option,
         isActive: toggleState?.[option.iconName]?.isActive ?? false,
     }));
     const handleClick = useCallback<(option: (typeof chipOptions)[number]) => void>((option) => {
         setToggleState((prev) => {
-            return { ...prev, [option.iconName]: { name: option.iconName, isActive: !option.isActive } };
+            return { ...prev, [option.iconName]: { isActive: !option.isActive } };
         });
     }, []);
 
