@@ -6,7 +6,7 @@ import MyParticipantsHeader from './MyParticipantsHeader';
 const MyParticipants = async () => {
     const participants = await AssignParticipantByEmail();
     return (
-        <Box sx={{ display: 'grid', height: 'var(--centering-height)', placeContent: 'center' }}>
+        <Box sx={{ padding: '0.5rem' }}>
             <Box>
                 <MyParticipantsHeader participants={participants} />
                 <Box
