@@ -1,3 +1,4 @@
+import RegnconLogo2024 from '$ui/RegnconLogo2024';
 import { Box } from '@mui/material';
 import Image from 'next/image';
 type Props = {};
@@ -16,7 +17,7 @@ const Logo = ({ }: Props) => {
                 position: 'relative',
             }}
         >
-            <Image src="/BetaTestRegnconLogo.webp" fill alt="logo" priority={true} sizes="100vw" />
+            <RegnconLogo2024 spin={true} size="large" />
         </Box>
     );
 };
