@@ -25,7 +25,9 @@ const MyParticipantsHeader = ({ participants }: Props) => {
     useEffect(() => {
         const newParticipants = GenerateNewParticipantStorage(participants);
         console.log(newParticipants, 'newParticipants');
-        document.cookie = `myParticipants=${JSON.stringify(newParticipants)}; path=/;`;
+        const twoWeekExpire = 14 * 24 * 60 * 60 * 1000;
+        const expirationDate = Date.now() + twoWeekExpire;
+        document.cookie = `myParticipants=${JSON.stringify(newParticipants)}; expires=${new Date(expirationDate).toUTCString()}; path=/`;
     }, [participants]);
 
     return (

@@ -31,7 +31,9 @@ const initialSpinnersState = {
 
 const setMyParticipants = async () => {
     const myParticipants = await GetMyParticipants();
-    document.cookie = `myParticipants=${JSON.stringify(myParticipants)}; path=/;`;
+    const twoWeekExpire = 14 * 24 * 60 * 60 * 1000;
+    const expirationDate = Date.now() + twoWeekExpire;
+    document.cookie = `myParticipants=${JSON.stringify(myParticipants)}; expires=${new Date(expirationDate).toUTCString()}; path=/`;
 };
 
 const LoginPage = () => {
