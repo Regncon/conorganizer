@@ -14,7 +14,7 @@ const EventListDay = ({ poolDay, sx }: Props) => {
     return (
         <Typography
             id={translatedDay}
-            sx={{ scrollMarginTop: 'calc(var(--scroll-margin-top) + var(--app-bar-height))', ...sx }}
+            sx={{ scrollMarginTop: 'calc(var(--scroll-margin-top) + var(--app-bar-height-desktop))', ...sx }}
             variant="h1"
         >
             {translatedDay}

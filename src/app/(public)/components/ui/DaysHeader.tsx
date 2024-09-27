@@ -18,7 +18,7 @@ const sxDayTypography: SxProps = {
 
 type Props = {};
 
-const DaysHeader = ({ }: Props) => {
+const DaysHeader = ({}: Props) => {
     const ref = useSetCustomCssVariable({ '--scroll-margin-top': 'height' });
     const TranslatedPoolNames = [...translatedDays.values()] as [PoolName];
 
@@ -28,7 +28,7 @@ const DaysHeader = ({ }: Props) => {
                 component="header"
                 sx={{
                     position: 'sticky',
-                    top: 'var(--app-bar-height)',
+                    top: 'var(--app-bar-height-desktop)',
                     backgroundColor: 'background.paper',
                     padding: '0.5rem',
                     zIndex: 1,
