@@ -1,8 +1,12 @@
 'use server';
+import { getMyUserInfo } from '$app/(authorized)/my-events/lib/actions';
+import { GetAllParticipants } from '$app/(public)/components/lib/serverAction';
 import { adminDb, getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { ActionResponse, Participant } from '$lib/types';
-import { addDoc, collection, doc, getDocs, query, updateDoc, where } from 'firebase/firestore';
+import { ActionResponse, Interest, Participant } from '$lib/types';
+import { doc, updateDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
+import { AssignUserToParticipant, generateParticipant, NewTickets } from './Helpers';
+import { InterestLevel } from '$lib/enums';
 
 export type CrmRecord = {
     id: number;
@@ -41,15 +45,323 @@ export type EventTicket = {
     };
 };
 
-export const AssignParticipantByEmail = async () => {
-    // Check if the user is authorized
-    // get tickets by email
-    // if tickets matches user email the create participant
-    // get participants by email
-    // assign user to participant
-    // add participant to user
-    // return participant
+export const updateInterest = async (participantId?: string, poolEventId?: string, interestLevel?: InterestLevel) => {
+    console.log('updateInterest', participantId, poolEventId, interestLevel);
+
+    const { user } = await getAuthorizedAuth();
+    if (
+        user === null ||
+        user.email === undefined ||
+        user.uid === undefined ||
+        participantId === undefined ||
+        poolEventId === undefined ||
+        interestLevel === undefined
+    ) {
+        return;
+    }
+    // get the participant document
+    const participant = (await adminDb.collection('participants').doc(participantId).get()).data() as Participant;
+    if (participant === undefined) {
+        return;
+    }
+
+    // check if the user has access to the participant
+    if (participant.users?.includes(user.uid) === false) {
+        return;
+    }
+
+    // get the intesest document from the poolEventId
+    // interests is a supbcollection of poolEvents
+    const interest = await adminDb
+        .collection('pool-events')
+        .doc(poolEventId)
+        .collection('interests')
+        .doc(participantId)
+        .get();
+
+    console.log('current interest', interest.data());
+
+    // if the interest document does not exist, create it
+    if (interest.data() === undefined) {
+        console.log('interest does not exist adding new');
+
+        const newInterest: Interest = {
+            interestLevel: interestLevel,
+            poolEventId: poolEventId,
+            participantId: participantId,
+            participantFirstName: participant.firstName,
+            participantLastName: participant.lastName,
+            createdAt: new Date().toISOString(),
+            createdBy: user.email || '',
+            updateAt: new Date().toISOString(),
+            updatedBy: user.email || '',
+        };
+        await adminDb
+            .collection('pool-events')
+            .doc(poolEventId)
+            .collection('interests')
+            .doc(participantId)
+            .set(newInterest);
+    } else {
+        // if the interest document exists, update it
+        console.log('interest exists updating', interestLevel);
+        const updatedInterest: Partial<Interest> = {
+            interestLevel: interestLevel,
+            updateAt: new Date().toISOString(),
+            updatedBy: user.email || '',
+        };
+        await adminDb
+            .collection('pool-events')
+            .doc(poolEventId)
+            .collection('interests')
+            .doc(participantId)
+            .update(updatedInterest);
+    }
+    // ckeck if the interest document exists in the participant document supcollection
+    // if it does not exist, add it
+
+    const participantInterest = (
+        await adminDb.collection('participants').doc(participantId).collection('interests').doc(poolEventId).get()
+    ).data();
+
+    if (participantInterest === undefined) {
+        console.log('participant interest does not exist adding new');
+        const newParticipantInterest: Interest = {
+            interestLevel: interestLevel,
+            poolEventId: poolEventId,
+            participantId: participantId,
+            participantFirstName: participant.firstName,
+            participantLastName: participant.lastName,
+            createdAt: new Date().toISOString(),
+            createdBy: user.email || '',
+            updateAt: new Date().toISOString(),
+            updatedBy: user.email || '',
+        };
+        await adminDb
+            .collection('participants')
+            .doc(participantId)
+            .collection('interests')
+            .doc(poolEventId)
+            .set(newParticipantInterest);
+    } else {
+        console.log('participant interest exists updating');
+        const updatedParticipantInterest: Partial<Interest> = {
+            interestLevel: interestLevel,
+            updateAt: new Date().toISOString(),
+            updatedBy: user.email || '',
+        };
+        await adminDb
+            .collection('participants')
+            .doc(participantId)
+            .collection('interests')
+            .doc(poolEventId)
+            .update(updatedParticipantInterest);
+    }
 };
+
+export const getInterest = async (participantId?: string, poolEventId?: string) => {
+    console.log('getInterest', participantId, poolEventId);
+
+    const { user } = await getAuthorizedAuth();
+    if (
+        user === null ||
+        user.email === undefined ||
+        user.uid === undefined ||
+        participantId === undefined ||
+        poolEventId === undefined
+    ) {
+        return;
+    }
+
+    const interest = (
+        await adminDb.collection('pool-events').doc(poolEventId).collection('interests').doc(participantId).get()
+    ).data() as Interest;
+
+    console.log('interest', interest);
+
+    if (interest === undefined) {
+        return InterestLevel.NotInterested;
+    }
+    return interest.interestLevel;
+};
+
+export const getParticipantByUser = async () => {
+    const { user } = await getAuthorizedAuth();
+    if (user === null) return;
+
+    // console.log(
+    //     adminDb
+    //         .collection('participants')
+    //         // .where('userId', 'array-contains', user.uid)
+    //         .get()
+    //         .then((querySnapshot) => {
+    //             querySnapshot.forEach((doc) => {
+    //                 console.log(doc.id, ' => ', doc.data());
+    //             });
+    //         })
+    //         .catch((error) => {
+    //             console.error('Error getting documents: ', error);
+    //         })
+    // );
+    const participants = (await GetAllParticipants()) as Participant[];
+    return participants.filter((participant) => participant.users?.includes(user.uid));
+};
+
+export const GetMyParticipants = async () => {
+    const { user } = await getAuthorizedAuth();
+    if (user === null) {
+        throw new Error('Failed to get authorized auth');
+    }
+    const participants = (await GetAllParticipants()) as Participant[];
+    const newParticipants = participants.filter((participant) => participant.users?.includes(user.uid));
+    return newParticipants.map((participant, i) => {
+        return {
+            id: participant.id,
+            firstName: participant.firstName,
+            lastName: participant.lastName,
+            isSelected: i === 0 ? true : false,
+        };
+    });
+};
+
+export const AssignParticipantByEmail = async () => {
+    const { db, user } = await getAuthorizedAuth();
+    if (db === null || user === null) {
+        throw new Error('Failed to get authorized auth');
+    }
+
+    const tickets = await GetTicketsByEmail(user?.email);
+    if (!tickets) {
+        throw new Error('Failed to get tickets from Checkin');
+    }
+
+    const participants = (await GetAllParticipants()) as Participant[];
+
+    const newParticipants = NewTickets(tickets, participants, user);
+
+    let newParticipantIds: string[] = [];
+    newParticipants.forEach(async (newParticipant) => {
+        try {
+            const docRef = await adminDb.collection('participants').add(newParticipant);
+            newParticipantIds.push(docRef.id);
+            console.log('Participant written with ID: ', docRef.id);
+        } catch (e) {
+            throw e;
+        }
+        console.log('newParticipantIds', newParticipantIds);
+    });
+
+    const updatedParticipants = AssignUserToParticipant(participants, user);
+
+    if (newParticipantIds.length === 0 && updatedParticipants.length === 0) {
+        console.log('No participants to update');
+        return participants.filter((participant) => participant.users?.includes(user.uid));
+    }
+
+    updatedParticipants.forEach(async (participant) => {
+        const participantId = participants.find((p) => p.ticketId === participant.ticketId)?.id;
+        try {
+            await adminDb
+                .collection('participants')
+                .doc(participantId as string)
+                .update(participant);
+        } catch (e) {
+            throw e;
+        }
+    });
+
+    const myUserInfo = await getMyUserInfo(db, user);
+    let myUserInfoToBeUpdated = myUserInfo ? { ...myUserInfo } : { admin: false, participantIds: [] };
+
+    if (myUserInfoToBeUpdated.participantIds === undefined) {
+        myUserInfoToBeUpdated.participantIds = [];
+    }
+
+    if (newParticipantIds.length > 0) {
+        myUserInfoToBeUpdated.participantIds = myUserInfoToBeUpdated.participantIds.concat(newParticipantIds);
+    }
+
+    if (updatedParticipants.length > 0) {
+        updatedParticipants.forEach((participant) => {
+            if (myUserInfoToBeUpdated.participantIds?.includes(participant.id as string) === false) {
+                myUserInfoToBeUpdated.participantIds.push(participant.id as string);
+            }
+        });
+    }
+
+    if (myUserInfo) {
+        adminDb.collection('users').doc(user.uid).update(myUserInfoToBeUpdated);
+    }
+    if (!myUserInfo) {
+        adminDb.collection('users').doc(user.uid).set(myUserInfoToBeUpdated);
+    }
+    const participantsBelongingToUser = participants
+        .concat(newParticipants)
+        .concat(participants.filter((p) => updatedParticipants.some((up) => up.id === p.id)));
+
+    return participantsBelongingToUser;
+};
+
+// let newParticipantIds: string[] = [];
+// newTickets.forEach(async (newTicket) => {
+//     let newParticipant = generateParticipant(newTicket.id, tickets, user.email as string);
+//     newParticipant = { ...newParticipant, users: [user.uid] };
+//
+//     try {
+//         const docRef = await adminDb.collection('participants').add(newParticipant);
+//         newParticipantIds.push(docRef.id);
+//         console.log('Participant written with ID: ', docRef.id);
+//     } catch (e) {
+//         throw e;
+//     }
+//     console.log('newParticipantIds', newParticipantIds);
+// });
+//
+// const myParticipants = participants.filter((participant) => participant.users?.includes(user.uid));
+// if (participants.length === myParticipants.length && newParticipantIds.length === 0) {
+//     console.log('ticket connected do user YOU WIN');
+//     return participants;
+// }
+//
+// const myUserInfo = await getMyUserInfo(db, user);
+// let myUserInfoToBeUpdated = myUserInfo ? { ...myUserInfo } : { admin: false, participantIds: [] };
+//
+// if (myUserInfoToBeUpdated.participantIds === undefined) {
+//     myUserInfoToBeUpdated.participantIds = [];
+// }
+//
+// if (newParticipantIds.length > 0) {
+//     myUserInfoToBeUpdated.participantIds = myUserInfoToBeUpdated.participantIds.concat(newParticipantIds);
+// }
+//
+// participants.forEach(async (participant) => {
+//     if (participant.users?.includes(user?.uid)) {
+//         console.log('ticket connected do user YOU WIN');
+//         return;
+//     }
+//
+//     if (participant.users?.includes(user.uid) === false || participant?.users === undefined) {
+//         if (participant.users === undefined) {
+//             participant.users = [];
+//         }
+//
+//         participant.users.push(user.uid);
+//     }
+//
+//     if (myUserInfoToBeUpdated.participantIds?.includes(participant.id) === false) {
+//         myUserInfoToBeUpdated.participantIds.push(participant.id);
+//     }
+// });
+//
+// if (myUserInfo) {
+//     adminDb.collection('users').doc(user.uid).update(myUserInfoToBeUpdated);
+// }
+// if (!myUserInfo) {
+//     adminDb.collection('users').doc(user.uid).set(myUserInfoToBeUpdated);
+// }
+// console.log('completed assignParticipantByEmail');
+// return participants;
+// };
 
 export const GetTicketsByEmail = async (email: string | null | undefined) => {
     if ((typeof email === 'string') == false) {
@@ -66,9 +378,30 @@ export const GetTicketsByEmail = async (email: string | null | undefined) => {
     return ticketsWithOrderNumberFromEmail;
 };
 
+export const GetParticipantsByEmail = async (email: string) => {
+    const allParticipants = (await GetAllParticipants()) as Participant[];
+
+    const participants = allParticipants.filter(
+        (participant) =>
+            participant.ticketEmail === email ||
+            participant.orderEmails.includes(email) ||
+            (participant.connectedEmails && participant.connectedEmails.includes(email))
+    );
+    return participants;
+};
+
 export const ConvertTicketIdToParticipant = async (ticketId: number) => {
     console.log('ConvertTicketToParticipant ', ticketId);
     const tickets = await GetTicketsFromCheckIn();
+
+    if (!tickets) {
+        const response: ActionResponse = {
+            type: 'error',
+            message: 'Checkin feilet',
+        };
+        console.error(response);
+        return response;
+    }
 
     const ticket = tickets?.find((ticket) => ticket.id === ticketId);
     console.log(ticket, 'ticket');
@@ -82,47 +415,13 @@ export const ConvertTicketIdToParticipant = async (ticketId: number) => {
         return response;
     }
 
-    const result = await ConvertTicketToParticipant(ticket, tickets as EventTicket[]);
+    const result = await ConvertTicketToParticipant(ticket.id, tickets);
     return result;
-
-    // const query = `{
-    // eventTickets(customer_id: 13446, id: ${ticketId}, onlyCompleted: true) {
-    //   id
-    //   category
-    //   category_id
-    //   crm {
-    //     first_name
-    //     last_name
-    //     id
-    //     email
-    //   }
-    //   order_id
-    // }
-    // }`;
-    //
-    // const res = await fetch(
-    //     `https://app.checkin.no/graphql?client_id=${process.env.CHECKIN_KEY}&client_secret=${process.env.CHECKIN_SECRET}`,
-    //     {
-    //         method: 'POST',
-    //         body: JSON.stringify({ query }),
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //         },
-    //     }
-    // );
-    // if (res.status !== 200) {
-    //     throw new Error('Failed to fetch tickets');
-    // }
-    // const queryResult: CrmJson | undefined = await res.json();
-    // console.log(queryResult, 'queryResult');
-    //
-    // // const result = await ConvertTicketToParticipant(queryResult?.data.eventTickets[0] as EventTicket);
-    // return result;
 };
 
-const ConvertTicketToParticipant = async (ticket: EventTicket, tickets: EventTicket[]) => {
-    const { db, user } = await getAuthorizedAuth();
-    if (db === null || user === null) {
+const ConvertTicketToParticipant = async (ticketId: number, tickets: EventTicket[]) => {
+    const { user } = await getAuthorizedAuth();
+    if (user === null) {
         // return new ActionResponse = {
         //     type: "error"
         //     , message: 'Ikke autorisert'
@@ -136,9 +435,8 @@ const ConvertTicketToParticipant = async (ticket: EventTicket, tickets: EventTic
         return response;
     }
 
-    const participantRef = collection(db, 'participants');
-    const q = query(participantRef, where('ticketId', '==', ticket.id));
-    const querySnapshot = await getDocs(q);
+    const participantRef = adminDb.collection('participants').where('ticketId', '==', ticketId);
+    const querySnapshot = await participantRef.get();
 
     if (!querySnapshot.empty) {
         console.log('Participant already exists:', querySnapshot.docs[0].data());
@@ -148,34 +446,12 @@ const ConvertTicketToParticipant = async (ticket: EventTicket, tickets: EventTic
         };
         return response;
     }
-    const isOver18 = new Date().getFullYear() - new Date(ticket.crm.born).getFullYear() > 18;
 
-    const orderEmails = tickets
-        .filter((t) => t.order_id === ticket.order_id)
-        .map((t) => t.crm.email)
-        .filter((email) => email !== ticket.crm.email);
+    const participant = generateParticipant(ticketId, tickets, user.email as string);
 
-    let participant: Partial<Participant> = {
-        name: `${ticket.crm.first_name} ${ticket.crm.last_name}`,
-        over18: isOver18,
-        ticketEmail: ticket.crm.email,
-        oredrEmails: orderEmails,
-        ticketId: ticket.id,
-        orderId: ticket.order_id,
-        ticketCategory: ticket.category,
-        ticketCategoryId: ticket.category_id,
-        createdAt: new Date().toISOString(),
-        createdBy: user.email as string,
-        updateAt: new Date().toISOString(),
-        updatedBy: user.email as string,
-    };
-    console.log(participant, 'participant');
-
-    let participantId = '';
     try {
-        const docRef = await addDoc(collection(db, 'participants'), participant);
+        const docRef = await adminDb.collection('participants').add(participant);
         console.log('Document written with ID: ', docRef.id);
-        participantId = docRef.id;
     } catch (e) {
         const response: ActionResponse = {
             type: 'error',
@@ -257,7 +533,7 @@ export const ConnectEmailToParticipant = async (participantId: string, email: st
     if (participant.connectedEmails.includes(email)) {
         const response: ActionResponse = {
             type: 'warning',
-            message: 'Eposten er allerede koblet til deltageren',
+            message: 'E-posten er allerede koblet til deltageren',
         };
         return response;
     }

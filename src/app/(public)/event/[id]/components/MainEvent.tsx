@@ -1,7 +1,5 @@
 'use client';
 import { Box, CircularProgress, Paper, TextField, Typography, useTheme, type SxProps, type Theme } from '@mui/material';
-import Image from 'next/image';
-import diceSmall from '$public/dice-small.webp';
 import { useEffect, useState } from 'react';
 import { faUserSecret } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,6 +15,7 @@ import InterestSelector from './components/InterestSelector';
 import { createIconOptions } from '$app/(public)/components/lib/helpers/icons';
 import ChipCarousel from './ui/ChipCarousel';
 import GoToEventAdministrationButton from './ui/GoToEventAdministrationButton';
+import type { InterestLevel } from '$lib/enums';
 
 export const dynamic = 'force-static';
 
@@ -30,6 +29,7 @@ type Props = {
     parent?: boolean;
     handleChange?: (data: Partial<ConEvent>) => Promise<void>;
     isAdmin?: boolean;
+    activeParticipant?: { id?: string; interestLevel?: InterestLevel };
 };
 
 const MainEvent = ({
@@ -42,6 +42,7 @@ const MainEvent = ({
     nextNavigationId,
     handleChange,
     isAdmin = false,
+    activeParticipant,
 }: Props) => {
     const [data, setData] = useState<PoolEvent | undefined>(eventData);
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
@@ -100,8 +101,8 @@ const MainEvent = ({
                         '& > img': { width: '100%', height: '100%' },
                     }}
                 >
-                    <Image
-                        src={data?.smallImageURL ?? diceSmall}
+                    <img
+                        src={data?.smallImageURL ?? '/dice-small.webp'}
                         width={320}
                         height={273}
                         sizes="100vw"
@@ -209,7 +210,11 @@ const MainEvent = ({
                                 '--slider-interest-width': '100%',
                             }}
                         >
-                            <InterestSelector disabled />
+                            <InterestSelector
+                                poolName={data.poolName}
+                                poolEventId={id}
+                                activeParticipant={activeParticipant}
+                            />
                         </Box>
                     )}
                     {editable ? null : (

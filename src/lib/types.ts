@@ -1,5 +1,6 @@
 import { type } from 'os';
-import { PoolName, type GameType, type RoomName } from './enums';
+import { InterestLevel, PoolName, type RoomName, type GameType } from './enums';
+import { PoolName, type RoomName } from './enums';
 
 export type EventCardProps = {
     title: string;
@@ -184,15 +185,17 @@ export type MyNewEvent = {
     isRead?: boolean;
     isAccepted?: boolean;
 };
+
 export type Participant = {
-    id: string;
-    name: string;
+    id?: string;
+    firstName: string;
+    lastName: string;
     users?: string[];
     over18: boolean;
     orderId: number;
     ticketId: number;
     ticketEmail: string;
-    oredrEmails: string[];
+    orderEmails: string[];
     ticketCategory: string;
     ticketCategoryId: number;
     connectedEmails: string[];
@@ -200,6 +203,10 @@ export type Participant = {
     createdBy: string;
     updateAt: string;
     updatedBy: string;
+};
+
+export type ParticipantCookie = Pick<Participant, 'id' | 'firstName' | 'lastName'> & {
+    isSelected: boolean;
 };
 
 export type ConUser = {
@@ -213,5 +220,17 @@ export type ActionResponse = {
     type: 'info' | 'success' | 'warning' | 'error';
     error?: string;
     message: string;
+};
+export type Interest = {
+    id?: string;
+    interestLevel: number;
+    poolEventId: string;
+    participantId: string;
+    participantFirstName: string;
+    participantLastName: string;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
 };
 export type LocalStorageNames = 'filters';

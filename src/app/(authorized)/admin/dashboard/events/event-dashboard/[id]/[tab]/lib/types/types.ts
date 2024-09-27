@@ -1,1 +1,1 @@
-export type TabNames = 'edit' | 'settings' | 'room';
+export type TabNames = 'edit' | 'settings' | 'interest' | 'room';

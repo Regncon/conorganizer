@@ -30,6 +30,13 @@ export enum RoomName {
     'SolveigsSang' = 'Solveigs Sang',
 }
 
+export enum InterestLevel {
+    'NotInterested',
+    'SomewhatInterested',
+    'Interested',
+    'VeryInterested',
+}
+
 export enum GameType {
     'CardGame' = 'cardGame',
     'BoardGame' = 'boardGame',

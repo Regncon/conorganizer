@@ -23,6 +23,8 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import GroupsIcon from '@mui/icons-material/Groups';
 import Link from 'next/link';
 import { forwardRef, useState, type ComponentProps } from 'react';
+import RegnconLogo2024 from '$ui/RegnconLogo2024';
+
 type Props = {
     sx?: SxProps<Theme>;
     isLoggedIn: boolean;
@@ -44,9 +46,9 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
 
     const desktopBottomContent = (
         <>
-            <Typography variant="h1" sx={{}}>
-                BETA TEST
-            </Typography>
+            <Link href="/">
+                <RegnconLogo2024 size="small" />
+            </Link>
             <Button startIcon={<HomeIcon />} href="/" aria-label="home" component={Link}>
                 <Box sx={{ flexGrow: 1 }} />
                 Hjem
@@ -57,6 +59,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 href="/?filters=favorites"
                 aria-label="favorites"
                 component={Link}
+                disabled
             >
                 Favoritter
             </Button>
@@ -66,22 +69,27 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 href="/?filters=assigned"
                 aria-label="assigned-events"
                 component={Link}
+                disabled
             >
                 Påmeldt
             </Button>
             <Box sx={{ flexGrow: 1 }} />
             {isLoggedIn ?
-                <IconButton
-                    aria-label="more"
-                    id="long-button"
-                    aria-controls={open ? 'long-menu' : undefined}
-                    aria-expanded={open ? 'true' : undefined}
-                    aria-haspopup="true"
-                    onClick={handleClick}
-                >
-                    <MenuIcon />
-                </IconButton>
-            :   null}
+                <>
+                    {/*  <ParticipantSelector /> */}
+
+                    <IconButton
+                        aria-label="more"
+                        id="long-button"
+                        aria-controls={open ? 'long-menu' : undefined}
+                        aria-expanded={open ? 'true' : undefined}
+                        aria-haspopup="true"
+                        onClick={handleClick}
+                    >
+                        <MenuIcon />
+                    </IconButton>
+                </>
+                : null}
         </>
     );
     const mobileBottomContent = (
@@ -90,10 +98,10 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             <IconButton href="/" aria-label="home" component={Link}>
                 <HomeIcon fontSize="large" />
             </IconButton>
-            <IconButton href="/?filters=favorites" aria-label="favorites" component={Link}>
+            <IconButton href="/?filters=favorites" aria-label="favorites" disabled component={Link}>
                 <FavoriteIcon fontSize="large" />
             </IconButton>
-            <IconButton href="/?filters=assigned" aria-label="assigned-events" component={Link}>
+            <IconButton href="/?filters=assigned" aria-label="assigned-events" disabled component={Link}>
                 <GroupsIcon fontSize="large" />
             </IconButton>
             {isLoggedIn ?
@@ -107,7 +115,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 >
                     <MenuIcon fontSize="large" />
                 </IconButton>
-            :   null}
+                : null}
         </>
     );
 
@@ -151,10 +159,10 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                                             Rediger arrangementer
                                         </MenuItem>,
                                     ]
-                                :   null}
+                                    : null}
                             </Menu>
                         </>
-                    :   <Button component={Link} href="/login">
+                        : <Button component={Link} href="/login">
                             <LoginIcon />
                             Logg inn
                         </Button>
@@ -162,7 +170,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 </Box>
                 {mobile ?
                     <Box sx={{ flexGrow: 1 }} />
-                :   null}
+                    : null}
             </Toolbar>
         </AppBar>
     );

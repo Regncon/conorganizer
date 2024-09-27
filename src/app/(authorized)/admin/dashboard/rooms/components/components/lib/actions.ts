@@ -7,64 +7,67 @@ import { ConEvent, PoolEvent, EventRoom } from '$lib/types';
 import { addDoc, collection, deleteDoc, doc, updateDoc, type DocumentReference } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
-export async function removeFromPool(eventId: string, poolName: PoolName) {
-    const { db, user } = await getAuthorizedAuth();
-    if (db === null || user === null) {
-        return;
-    }
-    const conEvent: ConEvent = await getEventById(eventId);
-    if (conEvent.poolIds?.some((pool) => pool.poolName === poolName) === false) {
-        console.error('Event not found');
-        return;
-    }
+//// ******************* Do not delete ****************
+//export async function removeFromPool(eventId: string, poolName: PoolName) {
+//     const { db, user } = await getAuthorizedAuth();
+//     if (db === null || user === null) {
+//         return;
+//     }
+//     const conEvent: ConEvent = await getEventById(eventId);
+//     if (conEvent.poolIds?.some((pool) => pool.poolName === poolName) === false) {
+//         console.error('Event not found');
+//         return;
+//     }
+//
+//     const poolEventId = conEvent.poolIds?.find((pool) => pool.poolName === poolName)?.id;
+//     if (!poolEventId) {
+//         console.error('PoolEvent not found in parent event');
+//         return;
+//     }
+//
+//     const poolEvent: PoolEvent = await getPoolEventById(poolEventId);
+//
+//     if (!poolEvent) {
+//         console.error('PoolEvent not found');
+//         return;
+//     }
+//
+//     try {
+//         await deleteDoc(doc(db, 'pool-events', poolEventId));
+//         console.log('Document deleted', poolEventId);
+//     } catch (e) {
+//         console.error('Error updating document: ', e);
+//     }
+//
+//     const removePoolId = conEvent.poolIds.filter((pool) => pool.id !== poolEventId);
+//     conEvent.poolIds = removePoolId;
+//
+//     if (poolName === PoolName.fridayEvening) {
+//         conEvent.puljeFridayEvening = false;
+//     }
+//     if (poolName === PoolName.saturdayMorning) {
+//         conEvent.puljeSaturdayMorning = false;
+//     }
+//     if (poolName === PoolName.saturdayEvening) {
+//         conEvent.puljeSaturdayEvening = false;
+//     }
+//     if (poolName === PoolName.sundayMorning) {
+//         conEvent.puljeSundayMorning = false;
+//     }
+//
+//     conEvent.updateAt = Date.now().toString();
+//
+//     try {
+//         await updateDoc(doc(db, 'events', eventId), conEvent);
+//         console.log('Document updated', eventId);
+//     } catch (e) {
+//         console.error('Error updating document: ', e);
+//     }
+//
+//     revalidatePath('/admin/dashboard/rooms', 'page');
+// }
+//// ******************* Do not delete ****************
 
-    const poolEventId = conEvent.poolIds?.find((pool) => pool.poolName === poolName)?.id;
-    if (!poolEventId) {
-        console.error('PoolEvent not found in parent event');
-        return;
-    }
-
-    const poolEvent: PoolEvent = await getPoolEventById(poolEventId);
-
-    if (!poolEvent) {
-        console.error('PoolEvent not found');
-        return;
-    }
-
-    try {
-        await deleteDoc(doc(db, 'pool-events', poolEventId));
-        console.log('Document deleted', poolEventId);
-    } catch (e) {
-        console.error('Error updating document: ', e);
-    }
-
-    const removePoolId = conEvent.poolIds.filter((pool) => pool.id !== poolEventId);
-    conEvent.poolIds = removePoolId;
-
-    if (poolName === PoolName.fridayEvening) {
-        conEvent.puljeFridayEvening = false;
-    }
-    if (poolName === PoolName.saturdayMorning) {
-        conEvent.puljeSaturdayMorning = false;
-    }
-    if (poolName === PoolName.saturdayEvening) {
-        conEvent.puljeSaturdayEvening = false;
-    }
-    if (poolName === PoolName.sundayMorning) {
-        conEvent.puljeSundayMorning = false;
-    }
-
-    conEvent.updateAt = Date.now().toString();
-
-    try {
-        await updateDoc(doc(db, 'events', eventId), conEvent);
-        console.log('Document updated', eventId);
-    } catch (e) {
-        console.error('Error updating document: ', e);
-    }
-
-    revalidatePath('/admin/dashboard/rooms', 'page');
-}
 export async function removeFromRoom(eventId: string, roomName: RoomName, poolName: PoolName) {
     const { db, user } = await getAuthorizedAuth();
     if (db === null || user === null) {

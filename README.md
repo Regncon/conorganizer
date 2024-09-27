@@ -26,30 +26,29 @@ of your con schedule, your panels, and your expenses.
 
 ## Todo
 
-### Must haves for publishing events
+### Must haves for opprop
 
-#### Hard launch
-
--   Assign user to participant
--   Fix cookie lifetime
--   Vise hvilken deltaker du er vist du har flere deltakere på samme billett
--   Linke til pool-events vist det finnes i flere pools
--   Filter my signups, events and tags
+-   See favorites in events
+-   See favorites in participant admin
+-   See assigned games in participant admin
+-   See assigned games in events
+-   Manually assign participants to games
+-   Generate assignment suggestions
+-   Lock pool
 -   Add is gm to event
--   Participants can choose favorite events
--   Something that says which participant you're logged in as
-
 
 #### Nice to haves for publishing events
 
--   Picture upload
+-   Fix cookie lifetime?
+-   Filter my signups, events and tags
 -   Check preloading of pages
--   Fix small card layout
 -   Debounce/fix text box, my events
 -   Display label on new or unread events
 
 ## Nice to haves
 
+-   Fix small card layout
+-   Picture upload
 -   Add keyboard navigation
 -   Add command palatte
 -   Add search
@@ -102,3 +101,9 @@ of your con schedule, your panels, and your expenses.
 -   Connect to checkin system
 -   filere ut events som ikke er publisert
 -   add button to redirect to administration page of event
+-   Assign user to participant
+-   Fix race condition in assignParticipantByEmail
+-   Tildel billett til bruker (Super nesten ferdig, "bank i bordet")
+-   Vise hvilken deltaker du er viss du har flere deltakere på samme billett (Nesten ferdig)
+-   Gjør det tydelig hvilke pulje arrangementet er i og om det kjøres i andre puljer også.
+-   Lagre interessene til deltagere i databasen.- Assign user to participant

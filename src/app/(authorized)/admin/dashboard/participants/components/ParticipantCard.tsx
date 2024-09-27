@@ -38,21 +38,24 @@ const ParticipantCard = ({ participant }: Props) => {
 
     const handleConnectToEmail = async () => {
         setLoading(true);
-        const responce = await ConnectEmailToParticipant(participant.id, email);
+        const responce = await ConnectEmailToParticipant(participant.id as string, email);
         setConnectResponce(responce);
         setLoading(false);
     };
 
     const handleDeleteConnected = async (email: string) => {
         setLoading(true);
-        const responce = await DeleteConnectedEmail(participant.id, email);
+        const responce = await DeleteConnectedEmail(participant.id as string, email);
         setConnectResponce(responce);
         setLoading(false);
     };
 
     return (
         <Card sx={{ minWidth: 306, maxWidth: 430 }}>
-            <CardHeader title={participant.name} subheader={participant.ticketCategory} />
+            <CardHeader
+                title={`${participant.firstName} ${participant.lastName}`}
+                subheader={participant.ticketCategory}
+            />
             <CardContent sx={{ paddingTop: 0 }}>
                 <Stack direction="row" spacing={2}>
                     <Typography sx={{ fontWeight: 'bold' }}>Bestilling:</Typography>
@@ -98,7 +101,7 @@ const ParticipantCard = ({ participant }: Props) => {
             </CardActions>
             <CardContent>
                 <Typography>Bilett epost: {participant.ticketEmail}</Typography>
-                {participant.oredrEmails?.map((email, index) => (
+                {participant.orderEmails?.map((email, index) => (
                     <Typography key={index}>
                         Bestillings epost {index + 1}: {email}
                     </Typography>

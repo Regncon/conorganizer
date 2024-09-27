@@ -18,7 +18,7 @@ const sxDayTypography: SxProps = {
 
 type Props = {};
 
-const DaysHeader = ({}: Props) => {
+const DaysHeader = ({ }: Props) => {
     const ref = useSetCustomCssVariable({ '--scroll-margin-top': 'height' });
     const TranslatedPoolNames = [...translatedDays.values()] as [PoolName];
 

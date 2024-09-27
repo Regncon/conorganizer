@@ -6,6 +6,7 @@ import { firebaseAuth } from '$lib/firebase/firebase';
 import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import type { Route } from 'next';
+import { GetMyParticipants } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
 const GoogleIcon = () => (
     <SvgIcon viewBox="0 0 48 48">
@@ -53,7 +54,13 @@ const GoogleSignInButton = ({ redirectTo = '/', disabled = false }: Props) => {
                 const user = result.user;
                 // IdP data available using getAdditionalUserInfo(result)
                 // ...
-                router.replace(redirectTo);
+                //
+                GetMyParticipants().then((myParticipants) => {
+                    const twoWeekExpire = 14 * 24 * 60 * 60 * 1000;
+                    const expirationDate = Date.now() + twoWeekExpire;
+                    document.cookie = `myParticipants=${JSON.stringify(myParticipants)}; expires=${new Date(expirationDate).toUTCString()}; path=/`;
+                    router.replace(redirectTo);
+                });
             })
             .catch((error) => {
                 // Handle Errors here.

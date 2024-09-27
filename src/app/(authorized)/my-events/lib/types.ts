@@ -1,3 +1,4 @@
 export type MyUserInfo = {
-    admin?: boolean;
+    admin: boolean | undefined;
+    participantIds: string[] | undefined;
 };

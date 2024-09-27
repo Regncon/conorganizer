@@ -10,7 +10,6 @@ import {
     sendPasswordResetEmail,
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import type { FormEvent } from 'react';
 import { firebaseConfig } from './config';
 
 const app = initializeApp(firebaseConfig, 'client');
@@ -42,9 +41,16 @@ export const signInAndCreateCookie: (formData: FormData) => Promise<void> = asyn
 
     await setSessionCookie(idToken);
 };
+
 export const signOutAndDeleteCookie: () => Promise<void> = async () => {
+    clearLocalStorage();
     await signOut(firebaseAuth);
     await logout();
+};
+
+const clearLocalStorage: () => void = () => {
+    document.cookie = 'myParticipants=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    localStorage.removeItem('filters');
 };
 
 export const singUpAndCreateCookie: (formData: FormData) => Promise<void> = async (formData) => {

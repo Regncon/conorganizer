@@ -1,8 +1,6 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { Card, CardActionArea, CardContent, CardHeader, type SxProps, type Theme } from '@mui/material';
-import Image from 'next/image';
-import rook from '$lib/image/rook.svg';
 import type { EventCardProps } from '../../../../lib/types';
 import TrashButton from './TrashButton';
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
@@ -23,12 +21,12 @@ export default function EventCardBig({
 }: EventCardProps) {
     const circleCheckOrPencilIcon =
         isAccepted ? faCheckDouble
-        : myEventBarSubmitted ? faCircleCheck
-        : faPencil;
+            : myEventBarSubmitted ? faCircleCheck
+                : faPencil;
     const SuccessOrWarningColor =
         isAccepted ? 'success.dark'
-        : myEventBarSubmitted ? 'success.light'
-        : 'warning.main';
+            : myEventBarSubmitted ? 'success.light'
+                : 'warning.main';
 
     return (
         <Card
@@ -73,25 +71,28 @@ export default function EventCardBig({
                                 <Typography sx={{ color: SuccessOrWarningColor }}>
                                     {isAccepted ?
                                         'Godtatt'
-                                    : myEventBarSubmitted ?
-                                        'Sendt inn'
-                                    :   'Kladd'}
+                                        : myEventBarSubmitted ?
+                                            'Sendt inn'
+                                            : 'Kladd'}
                                 </Typography>
                             </Box>
                             <TrashButton docId={myEventDocId} />
                         </Box>
                     </>
-                :   null}
+                    : null}
 
                 <CardHeader
                     title={title}
-                    titleTypographyProps={{ fontSize: '1.8rem' }}
+                    titleTypographyProps={{
+                        fontSize: '1.8rem',
+                    }}
                     sx={{
                         alignItems: 'flex-end',
                         marginBlockEnd: '1rem',
                         wordBreak: 'break-all',
                         overflow: 'clip',
                         maxHeight: '7rem',
+                        textShadow: '1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000',
                         padding: '0',
                         paddingInlineStart: '1rem',
                         placeSelf: 'end start',
@@ -120,10 +121,11 @@ export default function EventCardBig({
                     >
                         <Typography fontSize="1rem"> {system} </Typography>
                         <Box sx={{ display: 'flex', gap: '1rem' }}>
+                            {/*   <Box component={Image} priority src={rook} alt="rook icon" />
                             <Box component={Image} priority src={rook} alt="rook icon" />
                             <Box component={Image} priority src={rook} alt="rook icon" />
                             <Box component={Image} priority src={rook} alt="rook icon" />
-                            <Box component={Image} priority src={rook} alt="rook icon" />
+                            */}
                         </Box>
                     </Box>
                     <Typography

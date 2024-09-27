@@ -1,31 +1,28 @@
-import { Paper, Typography, Box, Button, TextField } from '@mui/material';
+import { Paper, Typography, Box, Link } from '@mui/material';
 import BuyTicketButton from '../shared/ui/BuyTicketButton';
 
 type Props = {};
 
-const TicketNotFound = ({}: Props) => {
+const TicketNotFound = ({ }: Props) => {
     return (
         <Box sx={{ display: 'grid', height: 'var(--centering-height)', placeContent: 'center' }}>
             <Paper sx={{ marginBottom: '2rem', paddingInline: '1rem', maxWidth: '400px' }}>
-                <Typography variant="h1">Ingen?/Mine billetter</Typography>
-                <Typography variant="h2">Fant ingen billetter.</Typography>
+                <Typography variant="h1">Fant ingen billetter.</Typography>
                 <Typography>
-                    Legge inn en fin hjelpetekst skrevet av en som ikke er meg eller dyslektiker som forklarer at folk
-                    må ta kontakt dersom de trenger hjelp
+                    Vi fann ingen billettar registrert på denne epostadressa. Det betyr at du anten ikkje har kjøpt
+                    billettar endå, eller at du har kjøpt billettane på ei anna anna epostadresse enn den du er logga
+                    inn med her.
                 </Typography>
-                <Box sx={{ display: 'grid', gap: '1rem', marginBlockEnd: '1rem' }}>
+                <Box sx={{ display: 'grid', gap: '1rem', marginBlock: '2rem' }}>
                     <BuyTicketButton />
-                    <Button fullWidth variant="contained">
-                        Har allerede kjøpt billett
-                    </Button>
                 </Box>
-
-                <Box sx={{ display: 'grid', gap: '1rem', marginBlockEnd: '1rem' }}>
-                    <TextField fullWidth label="Skriv inn e-posten du brukte på Checkin" />
-                    <Button fullWidth variant="contained">
-                        Hent billett
-                    </Button>
-                </Box>
+                <Typography sx={{ marginBottom: '1rem' }}>
+                    Kjøp billettar på Checkin, lag ein brukar på riktig mailadresse, eller ta kontakt med
+                    <Typography component="span" sx={{ color: 'primary.main', marginInline: '1ch' }}>
+                        <Link href={'mailto:styret@regncon.no'}>styret@regncon.no</Link>
+                    </Typography>
+                    noko er galt, eller om du ønsker billettane overført til epostadressa du har laga brukar til.
+                </Typography>
             </Paper>
         </Box>
     );
