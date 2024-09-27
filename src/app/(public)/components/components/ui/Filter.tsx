@@ -1,4 +1,4 @@
-import { Box, Chip } from '@mui/material';
+import { Box, Chip, useMediaQuery } from '@mui/material';
 import { useCallback, useEffect, useState } from 'react';
 import { createIconFromString, createIconOptions } from '../../lib/helpers/icons';
 import { useLocalStorage } from '$lib/hooks/useLocalStorage';
@@ -9,6 +9,7 @@ type Props = {};
 const Filter = ({}: Props) => {
     const [filters, setFilters] = useLocalStorage<Filters>('filters', DEFAULT_FILTERS);
     const [toggleState, setToggleState] = useState<Filters>(filters);
+    const isMobile = useMediaQuery('(max-width:633px)');
 
     const chipOptions = createIconOptions().map((option) => ({
         ...option,
@@ -28,21 +29,32 @@ const Filter = ({}: Props) => {
     return (
         <Box
             sx={{
-                display: 'grid',
-                placeContent: 'center',
+                display: 'flex',
+                flexWrap: 'wrap',
                 marginBlock: '0.5rem',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(8.78rem, max-content))',
+                gap: isMobile ? '0.4rem' : '0.5rem',
             }}
         >
             {chipOptions.map((option) => (
                 <Chip
                     key={option.label}
                     variant={option.isActive ? 'filled' : 'outlined'}
-                    label={option.label}
+                    label={isMobile ? undefined : option.label}
                     color="primary"
-                    icon={createIconFromString(option.iconName, option.isActive ? 'secondary' : 'primary')}
+                    icon={createIconFromString(
+                        option.iconName,
+                        option.isActive ? 'black' : 'primary',
+                        undefined,
+                        isMobile ? false : true
+                    )}
                     onClick={() => handleClick(option)}
-                    sx={{ maxWidth: 'fit-content' }}
+                    sx={{
+                        maxWidth: 'fit-content',
+                        '.MuiChip-label': {
+                            display: isMobile ? 'none' : '',
+                        },
+                        paddingInline: isMobile ? '0.5rem' : '',
+                    }}
                 />
             ))}
         </Box>

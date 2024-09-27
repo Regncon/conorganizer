@@ -1,6 +1,4 @@
-import { type } from 'os';
-import { InterestLevel, PoolName, type RoomName, type GameType } from './enums';
-import { PoolName, type RoomName } from './enums';
+import { PoolName, type RoomName, type GameType } from './enums';
 
 export type EventCardProps = {
     title: string;

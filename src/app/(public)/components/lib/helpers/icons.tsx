@@ -8,6 +8,7 @@ import LessHoursIcon from '$lib/components/icons/LessHoursIcon';
 import MiscGameIcon from '$lib/components/icons/MiscGameIcon';
 import MoreHoursIcon from '$lib/components/icons/MoreHoursIcon';
 import RoleplayingGameIcon from '$lib/components/icons/RoleplayingGameIcon';
+import type { SvgSize } from '$lib/components/icons/SvgWrapper';
 import { GameType } from '$lib/enums';
 import type { IconName, IconOption, IconTypes, PoolEvent } from '$lib/types';
 import type { Palette } from '@mui/material';
@@ -73,28 +74,33 @@ export const createIconOptions = (
  * // Returns <ChildFriendlyIcon />
  *
  */
-export const createIconFromString = (iconString: IconName, color: ColorProp = 'primary') => {
+export const createIconFromString = (
+    iconString: IconName,
+    color: ColorProp | 'black' = 'primary',
+    size?: SvgSize,
+    chipMargin?: boolean
+) => {
     switch (iconString) {
         case 'childFriendly':
-            return <ChildFriendlyIcon color={color} />;
+            return <ChildFriendlyIcon color={color} size={size} chipMargin={chipMargin} />;
         case 'possiblyEnglish':
-            return <EnglishIcon color={color} />;
+            return <EnglishIcon color={color} size={size} chipMargin={chipMargin} />;
         case 'adultsOnly':
-            return <AdultsOnlyIcon color={color} />;
+            return <AdultsOnlyIcon color={color} size={size} chipMargin={chipMargin} />;
         case 'lessThanThreeHours':
-            return <LessHoursIcon color={color} />;
+            return <LessHoursIcon color={color} size={size} chipMargin={chipMargin} />;
         case 'moreThanSixHours':
-            return <MoreHoursIcon color={color} />;
+            return <MoreHoursIcon color={color} size={size} chipMargin={chipMargin} />;
         case 'beginnerFriendly':
-            return <BeginnerIcon color={color} />;
+            return <BeginnerIcon color={color} size={size} chipMargin={chipMargin} />;
         case 'cardGame':
-            return <CardGameIcon color={color} />;
+            return <CardGameIcon color={color} size={size} chipMargin={chipMargin} />;
         case 'boardGame':
-            return <BoardGameIcon color={color} />;
+            return <BoardGameIcon color={color} size={size} chipMargin={chipMargin} />;
         case 'rolePlaying':
-            return <RoleplayingGameIcon color={color} />;
+            return <RoleplayingGameIcon color={color} size={size} chipMargin={chipMargin} />;
         case 'other':
-            return <MiscGameIcon color={color} />;
+            return <MiscGameIcon color={color} size={size} chipMargin={chipMargin} />;
         default:
             return undefined;
     }

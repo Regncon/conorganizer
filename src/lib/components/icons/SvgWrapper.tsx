@@ -3,14 +3,15 @@ import type { ColorProp } from '$app/(public)/components/lib/helpers/icons';
 import { SvgIcon, useTheme, type Palette } from '@mui/material';
 import type { PropsWithChildren } from 'react';
 
+export type SvgSize = 'small' | 'medium' | 'large' | 'inherit';
 export type Props = {
-    color?: ColorProp;
-    size?: 'small' | 'medium' | 'large' | 'inherit';
+    color?: ColorProp | 'black';
+    size?: SvgSize;
     chipMargin?: boolean;
 };
-
 const SvgWrapper = ({ children, color = 'primary', size = 'small', chipMargin = true }: PropsWithChildren<Props>) => {
     const theme = useTheme();
+
     return (
         <SvgIcon
             sx={{
@@ -21,7 +22,7 @@ const SvgWrapper = ({ children, color = 'primary', size = 'small', chipMargin = 
                     : size === 'large' ? '3rem'
                     : 'inherit',
                 color: 'inherit',
-                fill: theme.palette[color].main,
+                fill: color === 'black' ? 'black' : theme.palette[color].main,
             }}
         >
             {children}
