@@ -79,7 +79,7 @@ export async function getAdjacentPoolEventsById(id: string, day: PoolName) {
     const getPoolEventsByDay = poolDayEvents.get(day);
 
     if (getPoolEventsByDay) {
-        const poolEvents = getPoolEventsByDay;
+        const poolEvents = getPoolEventsByDay.filter((event) => event.published);
         const eventIndex = poolEvents.findIndex((event) => event.id === id);
         const prevNavigationId = poolEvents[eventIndex - 1]?.id;
         const nextNavigationId = poolEvents[eventIndex + 1]?.id;

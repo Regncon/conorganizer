@@ -1,15 +1,12 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { Card, CardActionArea, CardContent, CardHeader, type SxProps, type Theme } from '@mui/material';
-import Image from 'next/image';
-import rook from '$lib/image/rook.svg';
 import type { EventCardProps } from '../../../../lib/types';
 import TrashButton from './TrashButton';
 import { faCircleCheck } from '@fortawesome/free-solid-svg-icons/faCircleCheck';
 import { faPencil } from '@fortawesome/free-solid-svg-icons/faPencil';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheckDouble } from '@fortawesome/free-solid-svg-icons';
-import { getParticipantByUser } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 
 export default function EventCardBig({
     title,
@@ -86,13 +83,16 @@ export default function EventCardBig({
 
                 <CardHeader
                     title={title}
-                    titleTypographyProps={{ fontSize: '1.8rem' }}
+                    titleTypographyProps={{
+                        fontSize: '1.8rem',
+                    }}
                     sx={{
                         alignItems: 'flex-end',
                         marginBlockEnd: '1rem',
                         wordBreak: 'break-all',
                         overflow: 'clip',
                         maxHeight: '7rem',
+                        textShadow: '1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000',
                         padding: '0',
                         paddingInlineStart: '1rem',
                         placeSelf: 'end start',
