@@ -1,9 +1,14 @@
 import AdultsOnlyIcon from '$lib/components/icons/AdultsOnlyIcon';
 import BeginnerIcon from '$lib/components/icons/BeginnerIcon';
+import BoardGameIcon from '$lib/components/icons/BoardGameIcon';
+import CardGameIcon from '$lib/components/icons/CardGameIcon';
 import ChildFriendlyIcon from '$lib/components/icons/ChildFriendlyIcon';
 import EnglishIcon from '$lib/components/icons/EnglishIcon';
 import LessHoursIcon from '$lib/components/icons/LessHoursIcon';
+import MiscGameIcon from '$lib/components/icons/MiscGameIcon';
 import MoreHoursIcon from '$lib/components/icons/MoreHoursIcon';
+import RoleplayingGameIcon from '$lib/components/icons/RoleplayingGameIcon';
+import { GameType } from '$lib/enums';
 import type { IconName, IconOption, IconTypes, PoolEvent } from '$lib/types';
 import type { Palette } from '@mui/material';
 export type ColorProp = keyof Pick<Palette, 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'>;
@@ -31,7 +36,11 @@ export const createIconOptions = (
     beginnerFriendly = true,
     lessThanThreeHours = true,
     moreThanSixHours = true,
-    possiblyEnglish = true
+    possiblyEnglish = true,
+    cardGame = true,
+    boardGame = true,
+    rolePlaying = true,
+    other = true
 ) => {
     let icons: IconOption[] = [];
     if (childFriendly) icons = [...icons, { label: 'Barnevennlig', iconName: 'childFriendly' }];
@@ -40,6 +49,10 @@ export const createIconOptions = (
     if (lessThanThreeHours) icons = [...icons, { label: 'Mindre enn tre timer', iconName: 'lessThanThreeHours' }];
     if (moreThanSixHours) icons = [...icons, { label: 'Mer enn seks timer', iconName: 'moreThanSixHours' }];
     if (beginnerFriendly) icons = [...icons, { label: 'Nybegynnervennlig', iconName: 'beginnerFriendly' }];
+    if (cardGame) icons = [...icons, { label: 'Kortspel', iconName: 'cardGame' }];
+    if (boardGame) icons = [...icons, { label: 'Brettspel', iconName: 'boardGame' }];
+    if (rolePlaying) icons = [...icons, { label: 'Rollespel', iconName: 'rolePlaying' }];
+    if (other) icons = [...icons, { label: 'Annet', iconName: 'other' }];
     return icons;
 };
 
@@ -74,6 +87,14 @@ export const createIconFromString = (iconString: IconName, color: ColorProp = 'p
             return <MoreHoursIcon color={color} />;
         case 'beginnerFriendly':
             return <BeginnerIcon color={color} />;
+        case 'cardGame':
+            return <CardGameIcon color={color} />;
+        case 'boardGame':
+            return <BoardGameIcon color={color} />;
+        case 'rolePlaying':
+            return <RoleplayingGameIcon color={color} />;
+        case 'other':
+            return <MiscGameIcon color={color} />;
         default:
             return undefined;
     }

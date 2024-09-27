@@ -29,3 +29,10 @@ export enum RoomName {
     'AnitrasDans' = 'Anitras Dans',
     'SolveigsSang' = 'Solveigs Sang',
 }
+
+export enum GameType {
+    'CardGame' = 'cardGame',
+    'BoardGame' = 'boardGame',
+    'RolePlaying' = 'rolePlaying',
+    'Other' = 'other',
+}

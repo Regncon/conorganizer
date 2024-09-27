@@ -1,5 +1,5 @@
 import { type } from 'os';
-import { PoolName, type RoomName } from './enums';
+import { PoolName, type GameType, type RoomName } from './enums';
 
 export type EventCardProps = {
     title: string;
@@ -110,6 +110,10 @@ export type IconTypes = {
     lessThanThreeHours: boolean;
     moreThanSixHours: boolean;
     beginnerFriendly: boolean;
+    cardGame: GameType.CardGame;
+    boardGame: GameType.BoardGame;
+    rolePlaying: GameType.RolePlaying;
+    other: GameType.Other;
 };
 
 export type IconName = keyof IconTypes;
@@ -129,7 +133,7 @@ export type PoolEvent = {
     description: string;
     smallImageURL?: string;
     bigImageURL?: string;
-    gameType: string;
+    gameType: GameType;
     isSmallCard: boolean;
     participants: number;
     childFriendly: boolean;
