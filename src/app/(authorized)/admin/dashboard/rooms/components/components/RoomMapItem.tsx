@@ -54,7 +54,7 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
         setOpenDeleteDialog(false);
         if (roomName !== RoomName.NotSet) {
             removeFromRoom(selectedDeleteEvent?.id ?? '', roomName, poolName);
-        } else removeFromPool(selectedDeleteEvent?.id ?? '', poolName);
+        }
     };
 
     const filteredEvents = events.filter(poolFilters[poolName]);
@@ -116,9 +116,11 @@ const RoomMapItem = ({ roomName, top, left, poolName, events }: Props) => {
                                         imageUri={roomEvent.smallImageURL ?? '/dice-small.webp'}
                                     />
 
-                                    <Button onClick={() => handleClickDeleteOpen(roomEvent.id)}>
-                                        <DeleteIcon sx={{ fontSize: '90px' }} />
-                                    </Button>
+                                    {roomName !== RoomName.NotSet && (
+                                        <Button onClick={() => handleClickDeleteOpen(roomEvent.id)}>
+                                            <DeleteIcon sx={{ fontSize: '90px' }} />
+                                        </Button>
+                                    )}
                                 </Box>
                             );
                         })}
