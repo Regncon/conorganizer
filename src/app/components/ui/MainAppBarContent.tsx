@@ -22,8 +22,8 @@ import EditNoteIcon from '@mui/icons-material/EditNote';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import GroupsIcon from '@mui/icons-material/Groups';
 import Link from 'next/link';
-import { forwardRef, useEffect, useState, type ComponentProps } from 'react';
-import ParticipantSelector from '$ui/participant/ParticipantSelector';
+import { forwardRef, useState, type ComponentProps } from 'react';
+import RegnconLogo2024 from '$ui/RegnconLogo2024';
 
 type Props = {
     sx?: SxProps<Theme>;
@@ -46,9 +46,9 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
 
     const desktopBottomContent = (
         <>
-            <Typography variant="h1" sx={{}}>
-                BETA TEST
-            </Typography>
+            <Link href="/">
+                <RegnconLogo2024 size="small" />
+            </Link>
             <Button startIcon={<HomeIcon />} href="/" aria-label="home" component={Link}>
                 <Box sx={{ flexGrow: 1 }} />
                 Hjem
@@ -59,6 +59,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 href="/?filters=favorites"
                 aria-label="favorites"
                 component={Link}
+                disabled
             >
                 Favoritter
             </Button>
@@ -68,6 +69,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 href="/?filters=assigned"
                 aria-label="assigned-events"
                 component={Link}
+                disabled
             >
                 Påmeldt
             </Button>
@@ -96,10 +98,10 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             <IconButton href="/" aria-label="home" component={Link}>
                 <HomeIcon fontSize="large" />
             </IconButton>
-            <IconButton href="/?filters=favorites" aria-label="favorites" component={Link}>
+            <IconButton href="/?filters=favorites" aria-label="favorites" disabled component={Link}>
                 <FavoriteIcon fontSize="large" />
             </IconButton>
-            <IconButton href="/?filters=assigned" aria-label="assigned-events" component={Link}>
+            <IconButton href="/?filters=assigned" aria-label="assigned-events" disabled component={Link}>
                 <GroupsIcon fontSize="large" />
             </IconButton>
             {isLoggedIn ?
