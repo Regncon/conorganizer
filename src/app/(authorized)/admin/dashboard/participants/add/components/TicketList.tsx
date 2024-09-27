@@ -16,7 +16,7 @@ const TicketList = ({ tickets }: Props) => {
 
     const fuseOptions = {
         keys: ['crm.first_name', 'crm.last_name', 'crm.email', 'order_id'],
-        threshold: 0.5,
+        threshold: 0.3,
     };
 
     useEffect(() => {

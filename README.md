@@ -26,26 +26,23 @@ of your con schedule, your panels, and your expenses.
 
 ## Todo
 
-### Must haves for publishing events
+### Must haves for oppropp
 
-#### Hard launch
-
--   Gjør det tydelig hvilke pulje arrangementet er i og om det kjøres i andre puljer også.
--   Lagre interessene til deltagere i databasen.- Assign user to participant
+-   See favorites in events
 
 #### Nice to haves for publishing events
 
 -   Fix cookie lifetime?
 -   Add is gm to event
 -   Filter my signups, events and tags
--   Picture upload
 -   Check preloading of pages
--   Fix small card layout
 -   Debounce/fix text box, my events
 -   Display label on new or unread events
 
 ## Nice to haves
 
+-   Fix small card layout
+-   Picture upload
 -   Add keyboard navigation
 -   Add command palatte
 -   Add search
@@ -102,3 +99,5 @@ of your con schedule, your panels, and your expenses.
 -   Fix race condition in assignParticipantByEmail
 -   Tildel billett til bruker (Super nesten ferdig, "bank i bordet")
 -   Vise hvilken deltaker du er viss du har flere deltakere på samme billett (Nesten ferdig)
+-   Gjør det tydelig hvilke pulje arrangementet er i og om det kjøres i andre puljer også.
+-   Lagre interessene til deltagere i databasen.- Assign user to participant
