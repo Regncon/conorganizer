@@ -6,7 +6,7 @@ import { useState } from 'react';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RoomAddButton from './components/RoomAddButton';
-import { convertToPoolEvent, removeFromRoom, removeFromPool } from './lib/actions';
+import { convertToPoolEvent, removeFromRoom } from './lib/actions';
 import RoomCard from './ui/RoomCard';
 import RoomSelectDialog from './ui/RoomSelectDialog';
 

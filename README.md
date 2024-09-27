@@ -26,14 +26,20 @@ of your con schedule, your panels, and your expenses.
 
 ## Todo
 
-### Must haves for oppropp
+### Must haves for opprop
 
 -   See favorites in events
+-   See favorites in participant admin
+-   See assigned games in participant admin
+-   See assigned games in events
+-   Manually assign participants to games
+-   Generate assignment suggestions
+-   Lock pool
+-   Add is gm to event
 
 #### Nice to haves for publishing events
 
 -   Fix cookie lifetime?
--   Add is gm to event
 -   Filter my signups, events and tags
 -   Check preloading of pages
 -   Debounce/fix text box, my events
