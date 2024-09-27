@@ -58,7 +58,9 @@ const ParticipantSelector = ({ poolEventId }: Props) => {
             participant.id === id ? { ...participant, isSelected: true } : { ...participant, isSelected: false }
         );
         setParticipants(updatedParticipants);
-        document.cookie = `myParticipants=${JSON.stringify(updatedParticipants)}; path=/;`;
+        const twoWeekExpire = 14 * 24 * 60 * 60 * 1000;
+        const expirationDate = Date.now() + twoWeekExpire;
+        document.cookie = `myParticipants=${JSON.stringify(updatedParticipants)}; expires=${new Date(expirationDate).toUTCString()}; path=/`;
         handleClose();
         updateEventById(poolEventId ?? '');
     };
