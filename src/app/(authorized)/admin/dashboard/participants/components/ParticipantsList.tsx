@@ -17,7 +17,7 @@ const ParticipantsList = ({ participants }: Props) => {
     const [filteredParticipants, setFilteredParticipants] = useState<Participant[]>(participants);
 
     const fuseOptions = {
-        keys: ['name', 'ticketCategory', 'orderId'],
+        keys: ['firstName', 'lastName', 'ticketCategory', 'orderId'],
         threshold: 0.5,
     };
 
