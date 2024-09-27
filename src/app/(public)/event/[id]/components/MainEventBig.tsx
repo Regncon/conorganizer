@@ -82,6 +82,7 @@ const MainEventBig = async ({
                                 marginBlockStart: '1rem',
                                 marginInlineStart: 'var(--event-header-margin-left)',
                                 fontSize: 'clamp(1.7rem, 2.9vw, 3.42857rem)',
+                                textShadow: '1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000',
                                 whiteSpace: 'nowrap',
                                 textOverflow: 'ellipsis',
                                 overflow: 'clip',
@@ -143,6 +144,7 @@ const MainEventBig = async ({
                                 sx={{
                                     overflow: 'clip',
                                     maxHeight: 'var(--image-height)',
+                                    textShadow: '1px 0 0 #000, 0 -1px 0 #000, 0 1px 0 #000, -1px 0 0 #000',
                                 }}
                             >
                                 {poolEvent.shortDescription || 'Kort beskrivelse'}
@@ -204,3 +206,5 @@ const MainEventBig = async ({
 };
 
 export default MainEventBig;
+
+
