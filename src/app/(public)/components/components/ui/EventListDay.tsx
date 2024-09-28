@@ -2,7 +2,7 @@
 
 import type { PoolName } from '$lib/enums';
 import { Typography, type SxProps } from '@mui/material';
-import { getTranslatedDay } from '../../lib/helpers/translation';
+import { getTranslatedDayAndTime } from '../../lib/helpers/translation';
 
 type Props = {
     poolDay: PoolName;
@@ -10,7 +10,7 @@ type Props = {
 };
 
 const EventListDay = ({ poolDay, sx }: Props) => {
-    const translatedDay = getTranslatedDay(poolDay);
+    const translatedDay = getTranslatedDayAndTime(poolDay);
     return (
         <Typography
             id={translatedDay}
