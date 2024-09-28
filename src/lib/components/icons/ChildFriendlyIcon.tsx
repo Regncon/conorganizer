@@ -2,9 +2,9 @@
 import React from 'react';
 import SvgWrapper, { type Props } from './SvgWrapper';
 
-const ChildFriendlyIcon = ({ color, size, chipMargin }: Props) => {
+const ChildFriendlyIcon = (props: Props) => {
     return (
-        <SvgWrapper color={color} size={size} chipMargin={chipMargin}>
+        <SvgWrapper {...props}>
             <svg id="Layer_1" viewBox="0 0 26.856856 39.599998" version="1.1" width="26.856855" height="39.599998">
                 <g id="Layer_7" transform="translate(-26.659989,-49.189999)">
                     <path

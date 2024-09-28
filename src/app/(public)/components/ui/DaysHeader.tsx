@@ -4,6 +4,7 @@ import { useSetCustomCssVariable } from '$lib/hooks/useSetCustomCssVariable';
 import { Box, Typography, Link, type SxProps, Divider } from '@mui/material';
 import { Fragment } from 'react';
 import { translatedDays } from '../lib/helpers/translation';
+import Filter from '../components/ui/Filter';
 
 const sxDayTypography: SxProps = {
     maxWidth: '5.5rem',
@@ -17,7 +18,7 @@ const sxDayTypography: SxProps = {
 
 type Props = {};
 
-const DaysHeader = ({ }: Props) => {
+const DaysHeader = ({}: Props) => {
     const ref = useSetCustomCssVariable({ '--scroll-margin-top': 'height' });
     const TranslatedPoolNames = [...translatedDays.values()] as [PoolName];
 
@@ -27,16 +28,15 @@ const DaysHeader = ({ }: Props) => {
                 component="header"
                 sx={{
                     position: 'sticky',
-                    top: 'var(--app-bar-height)',
+                    top: 'var(--app-bar-height-desktop)',
                     backgroundColor: 'background.paper',
                     padding: '0.5rem',
                     zIndex: 1,
                 }}
                 ref={ref}
             >
-                <Box sx={{ display: 'grid', placeContent: 'center', marginInline: '2rem', marginBlock: '0.5rem' }}>
-                    .
-                </Box>
+                <Filter />
+
                 <Box
                     sx={{
                         display: 'grid',

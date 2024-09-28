@@ -36,3 +36,10 @@ export enum InterestLevel {
     'Interested',
     'VeryInterested',
 }
+
+export enum GameType {
+    'CardGame' = 'cardGame',
+    'BoardGame' = 'boardGame',
+    'RolePlaying' = 'rolePlaying',
+    'Other' = 'other',
+}

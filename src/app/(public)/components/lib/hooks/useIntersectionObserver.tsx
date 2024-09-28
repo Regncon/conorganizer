@@ -24,7 +24,8 @@ export const useIntersectionObserver = () => {
             setIntersectionObserver(
                 new IntersectionObserver(handleIntersectionObserver, {
                     root: null,
-                    threshold: 0.15,
+                    rootMargin: '-75% 0px -5% 0px',
+                    threshold: [0, 1],
                 })
             );
         }

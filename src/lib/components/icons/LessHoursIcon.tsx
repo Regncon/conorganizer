@@ -2,9 +2,9 @@
 import React from 'react';
 import SvgWrapper, { type Props } from './SvgWrapper';
 
-const LessHoursIcon = ({ color, size }: Props) => {
+const LessHoursIcon = (props: Props) => {
     return (
-        <SvgWrapper color={color} size={size}>
+        <SvgWrapper {...props}>
             <svg id="Layer_1" viewBox="0 0 59.111981 39.599998" version="1.1" width="59.11198" height="39.599998">
                 <g id="Layer_6" transform="translate(-117.17232,-94.190002)">
                     <path

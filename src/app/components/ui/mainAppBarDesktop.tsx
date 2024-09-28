@@ -10,7 +10,10 @@ type Props = {
 
 const MainAppBarDesktop = ({ isLoggedIn, admin }: Props) => {
     const isDesktop = useMediaQuery('(min-width: 600px)');
-    const ref = useSetCustomCssVariable({ '--app-bar-height': 'height' }, isDesktop);
+    const ref = useSetCustomCssVariable(
+        { '--app-bar-height': 'height', '--app-bar-height-desktop': 'height' },
+        isDesktop
+    );
 
     return (
         <MainAppBarContent

@@ -2,9 +2,9 @@
 import React from 'react';
 import SvgWrapper, { type Props } from './SvgWrapper';
 
-const CardGameIcon = ({ color, size }: Props) => {
+const CardGameIcon = (props: Props) => {
     return (
-        <SvgWrapper color={color} size={size}>
+        <SvgWrapper {...props}>
             <svg id="Layer_1" viewBox="0 0 48.240246 39.599998" version="1.1" width="48.240246" height="39.599998">
                 <g id="Layer_10" transform="translate(-136.67,-1.02)">
                     <path
