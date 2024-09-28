@@ -55,14 +55,7 @@ const Room = async ({ id }: Props) => {
                                     key={room.id}
                                     sx={{ marginBlockEnd: '1rem', marginInline: '1rem', paddingInline: '1rem' }}
                                 >
-                                    <Typography variant="h3">{`romsnavn: ${room.roomName}`}</Typography>
-                                    <Typography marginBlockEnd={1}>{`DAG: ${room.poolName}`}</Typography>
-                                    <Typography>{`rom ID: ${room.id}`}</Typography>
-                                    <Typography marginBlockEnd={1}>{`DAG ID: ${room.poolId}`}</Typography>
-                                    <Typography>{`oppdatert: ${new Date(Number(room.updateAt)).toLocaleString()}`}</Typography>
-                                    <Typography marginBlockEnd={1}>{`oppdatert Av ID: ${room.updatedBy}`}</Typography>
-                                    <Typography>{`OPPRETTET: ${new Date(Number(room.createdAt)).toLocaleString()}`}</Typography>
-                                    <Typography>{`OPPRETTET AV ID: ${room.createdBy}`}</Typography>
+                                    <Typography variant="h3">{`Rom: ${room.roomName}`}</Typography>
                                 </Paper>
                             );
                         })}

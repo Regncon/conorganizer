@@ -213,6 +213,7 @@ const MainEvent = ({
                             <InterestSelector
                                 poolName={data.poolName}
                                 poolEventId={id}
+                                poolEventTitle={data.title}
                                 activeParticipant={activeParticipant}
                             />
                         </Box>

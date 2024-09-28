@@ -83,7 +83,7 @@ const Settings = ({ id }: Props) => {
         let payload: Partial<ConEvent> = {
             [name]: value,
             updateAt: new Date(Date.now()).toString(),
-            updatedBy: user.email,
+            updatedBy: user.uid,
         };
 
         setIsSnackBarOpen(false);
