@@ -20,7 +20,7 @@ type Props = {
     poolInterest: Interest[];
 };
 
-const InterestLevelToLable = {
+const InterestLevelToLabel = {
     [InterestLevel.VeryInterested]: 'Veldig interessert',
     [InterestLevel.Interested]: 'Interessert',
     [InterestLevel.SomewhatInterested]: 'Litt interessert',
@@ -30,29 +30,33 @@ const InterestLevelToLable = {
 const interestLevelToImage = {
     [InterestLevel.VeryInterested]: VeryHappyDragons,
     [InterestLevel.Interested]: HappyDragons,
-    [InterestLevel.SomewhatInterested]: SleepyDragons,
-    [InterestLevel.NotInterested]: AwakeDragons,
+    [InterestLevel.SomewhatInterested]: AwakeDragons,
+    [InterestLevel.NotInterested]: SleepyDragons,
 };
 
 const PoolInterestLevel = ({ interestLevel, poolInterest }: Props) => {
     return (
-        <Box>
-            <Typography variant="h3">{InterestLevelToLable[interestLevel]}</Typography>
+        <Paper elevation={2} sx={{ paddingBlock: '0.5rem' }}>
+            <Box sx={{ display: 'flex', gap: '1rem' }}>
+                <Image
+                    src={interestLevelToImage[interestLevel]}
+                    alt={InterestLevelToLabel[interestLevel]}
+                    width={100}
+                    height={50}
+                />
+                <Typography variant="h3">{InterestLevelToLabel[interestLevel]}</Typography>
+            </Box>
 
-            <Image
-                src={interestLevelToImage[interestLevel]}
-                alt={InterestLevelToLable[interestLevel]}
-                width={100}
-                height={50}
-            />
             {poolInterest
                 .filter((interest) => interest.interestLevel === interestLevel)
                 .map((veryInterested) => (
-                    <Box>
-                        <Typography variant="h3">{veryInterested.participantFirstName}</Typography>
+                    <Box component="ul" key={veryInterested.id}>
+                        <Typography component="li">
+                            {veryInterested.participantFirstName} {veryInterested.participantLastName}
+                        </Typography>
                     </Box>
                 ))}
-        </Box>
+        </Paper>
     );
 };
 export default PoolInterestLevel;
