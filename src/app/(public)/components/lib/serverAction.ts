@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import type { ConEvent, Participant, PoolEvent, InterestsInPool, Interest } from '$lib/types';
 import { PoolName, InterestLevel } from '$lib/enums';
 import { createIconOptions } from './helpers/icons';
+import { FieldPath, Filter } from 'firebase-admin/firestore';
+import type { MyUserInfo } from '$app/(authorized)/my-events/lib/types';
 
 export async function getAllEvents() {
     const eventRef = await adminDb.collection('events').get();
@@ -130,6 +132,29 @@ export async function getEventInterestById(id: string) {
     return poolInterests;
 }
 
+export async function getUsersInterestById(id: string) {
+    const userData = (await adminDb.collection('users').doc(id).get()).data() as MyUserInfo;
+    if (!userData || userData.participantIds === undefined) {
+        throw new Error(`could not find user ${id}`);
+    }
+
+    const participantIdToFilter = userData.participantIds
+        .map((participantId) => {
+            return Filter.where('participantId', '==', participantId);
+        })
+        .filter((filter) => filter !== undefined);
+
+    const filterForAllParticipants = Filter.or(...participantIdToFilter);
+
+    const userParticipants = (
+        await adminDb.collectionGroup('interests').where(filterForAllParticipants).where('interestLevel', '>', 0).get()
+    ).docs
+        .filter((doc) => doc.ref.path.includes('pool-events'))
+        .map((doc) => ({ id: doc.id, ...doc.data() })) as Interest[];
+
+    return userParticipants;
+}
+
 export async function migrateInterestsToParticipantInterests() {
     console.log('starting migration');
 
@@ -151,7 +176,7 @@ export async function migrateInterestsToParticipantInterests() {
                 const interestLevelToSet =
                     Object.values(InterestLevel).includes(interest.interestLevel) ?
                         interest.interestLevel
-                        : InterestLevel.NotInterested;
+                    :   InterestLevel.NotInterested;
 
                 // console.log('interest: ', interest.id);
                 const newInterest = { ...interest };
