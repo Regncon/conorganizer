@@ -27,7 +27,7 @@ export type ConEvent = {
     email: string;
     name: string;
     phone: string;
-    gameType: string;
+    gameType: GameType;
     isSmallCard: boolean;
     participants: number;
     puljeFridayEvening: boolean;
@@ -164,7 +164,7 @@ export type MyNewEvent = {
     phone: string;
     title: string;
     system: string;
-    gameType: string;
+    gameType: GameType;
     participants: number;
     fridayEvening: boolean;
     saturdayMorning: boolean;
