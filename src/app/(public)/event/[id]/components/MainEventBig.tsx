@@ -1,4 +1,4 @@
-import type { ParticipantCookie, PoolEvent } from '$lib/types';
+import type { PoolEvent } from '$lib/types';
 import { faUserSecret, faScroll } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Paper, Box, Typography, Chip } from '@mui/material';
@@ -8,11 +8,6 @@ import NavigateNextLink from './ui/NavigateNextLink';
 import MuiMarkdownClient from './ui/MuiMarkdownClient';
 import { createIconFromString } from '$app/(public)/components/lib/helpers/icons';
 import GoToEventAdministrationButton from './ui/GoToEventAdministrationButton';
-import {
-    getInterest,
-    getParticipantByUser,
-} from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
-import { cookies } from 'next/headers';
 import type { InterestLevel } from '$lib/enums';
 
 type Props = {
@@ -196,6 +191,7 @@ const MainEventBig = async ({
                     <InterestSelector
                         poolName={poolEvent.poolName}
                         poolEventId={poolEvent.id}
+                        poolEventTitle={poolEvent.title}
                         activeParticipant={activeParticipant}
                     />
                 </Box>
@@ -206,5 +202,3 @@ const MainEventBig = async ({
 };
 
 export default MainEventBig;
-
-

@@ -150,6 +150,12 @@ export type PoolEvent = {
     icons?: IconOption[];
 };
 
+export type InterestsInPool = {
+    poolId: string;
+    poolName: PoolName;
+    interests: Interest[];
+};
+
 export type MyNewEvent = {
     id: string;
     eventDocId?: string;
@@ -223,11 +229,11 @@ export type Interest = {
     id?: string;
     interestLevel: number;
     poolEventId: string;
+    poolEventTitle?: string;
+    poolName?: PoolName;
     participantId: string;
     participantFirstName: string;
     participantLastName: string;
-    createdAt: string;
-    createdBy: string;
     updateAt: string;
     updatedBy: string;
 };

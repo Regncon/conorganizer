@@ -1,8 +1,8 @@
 'use server';
 import { adminDb } from '$lib/firebase/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-import type { ConEvent, Participant, PoolEvent } from '$lib/types';
-import { PoolName } from '$lib/enums';
+import type { ConEvent, Participant, PoolEvent, InterestsInPool, Interest } from '$lib/types';
+import { PoolName, InterestLevel } from '$lib/enums';
 import { createIconOptions } from './helpers/icons';
 
 export async function getAllEvents() {
@@ -100,6 +100,93 @@ export async function getPoolEventById(id: string) {
     );
     poolEvent.icons = icons;
     return { ...poolEvent, id };
+}
+
+export async function getEventInterestById(id: string) {
+    const event = (await adminDb.collection('events').doc(id).get()).data() as ConEvent;
+    if (!event) {
+        return;
+    }
+
+    let poolInterests: InterestsInPool[] = [];
+    event.poolIds.forEach(async (pool) => {
+        /*
+const { collection, getDocs } = require("firebase/firestore");
+// Query a reference to a subcollection
+const querySnapshot = await getDocs(collection(db, "cities", "SF", "landmarks"));
+querySnapshot.forEach((doc) => {
+  // doc.data() is never undefined for query doc snapshots
+  console.log(doc.id, " => ", doc.data());
+});
+    */
+        const interestRef = await adminDb.collection('pool-events').doc(pool.id).collection('interests').get();
+        const interests = interestRef.docs.map((doc) => doc.data()) as Interest[];
+        const poolInterest: InterestsInPool = {
+            poolId: pool.id,
+            poolName: pool.poolName,
+            interests: interests,
+        };
+        poolInterests.push(poolInterest);
+    });
+    return poolInterests;
+}
+export async function migrateInterestsToParticipantInterests() {
+    console.log('starting migration');
+
+    const participantsRef = await adminDb.collection('participants').get();
+    const participants = participantsRef.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Participant[];
+    const allPoolEventsRef = await adminDb.collection('pool-events').get();
+    const allPoolEvents = allPoolEventsRef.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as PoolEvent[];
+    participants.forEach(async (participant) => {
+        if (participant.id === 'FqxDY3CjlGfLqW5PlfSA') {
+            const interestRef = await adminDb
+                .collection('participants')
+                .doc(participant.id as string)
+                .collection('interests')
+                .get();
+            const interests = interestRef.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Interest[];
+
+            interests.forEach(async (interest) => {
+                //if interestLevet is not of type InterestLevel, set it to NotInterested
+                const interestLevelToSet =
+                    Object.values(InterestLevel).includes(interest.interestLevel) ?
+                        interest.interestLevel
+                        : InterestLevel.NotInterested;
+
+                // console.log('interest: ', interest.id);
+                const newInterest = { ...interest };
+                delete newInterest.id;
+                newInterest.interestLevel = interestLevelToSet;
+                newInterest.poolEventTitle = allPoolEvents.find((event) => event.id === interest.poolEventId)?.title;
+                newInterest.poolName = allPoolEvents.find((event) => event.id === interest.poolEventId)?.poolName;
+                newInterest.updateAt = new Date().toISOString();
+                newInterest.updatedBy = 'migrate Interests To Participant Interests';
+
+                // console.log('interestWithouId: ', interestWithouId);
+
+                // await adminDb
+                //     .collection('participants')
+                //     .doc(participant.id as string)
+                //     .collection('interests')
+                //     .doc(interest.poolEventId as string)
+                //     .set(newInterest);
+
+                await adminDb
+                    .collection('participants')
+                    .doc(participant.id as string)
+                    .collection('participant-interests')
+                    .doc(interest.poolEventId as string)
+                    .set(newInterest);
+
+                await adminDb
+                    .collection('pool-events')
+                    .doc(interest.poolEventId)
+                    .collection('interests')
+                    .doc(participant.id as string)
+                    .set(newInterest);
+            });
+        }
+    });
 }
 
 export async function getEventById(id: string) {

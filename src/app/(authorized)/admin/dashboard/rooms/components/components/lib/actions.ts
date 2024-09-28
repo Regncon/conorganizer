@@ -126,7 +126,7 @@ export async function convertToPoolEvent(eventId: string, poolName: PoolName) {
 
     const poolEvent: PoolEvent = {
         poolName: poolName,
-        published: false,
+        published: conEvent.published,
         parentEventId: eventId,
         title: conEvent.title,
         gameMaster: conEvent.gameMaster,

@@ -26,9 +26,9 @@ describe('NewTickets', () => {
                 ticketCategoryId: 0,
                 connectedEmails: [],
                 createdAt: '',
-                createdBy: 'user1@example.com',
+                createdBy: 'user123',
                 updateAt: '',
-                updatedBy: 'user1@example.com',
+                updatedBy: 'user123',
             },
             {
                 ticketId: 2,
@@ -43,9 +43,9 @@ describe('NewTickets', () => {
                 ticketCategoryId: 0,
                 connectedEmails: [],
                 createdAt: '',
-                createdBy: 'user1@example.com',
+                createdBy: 'user123',
                 updateAt: '',
-                updatedBy: 'user1@example.com',
+                updatedBy: 'user123',
             },
             {
                 ticketId: 3,
@@ -60,9 +60,9 @@ describe('NewTickets', () => {
                 ticketCategoryId: 0,
                 connectedEmails: [],
                 createdAt: '',
-                createdBy: 'user1@example.com',
+                createdBy: 'user123',
                 updateAt: '',
-                updatedBy: 'user1@example.com',
+                updatedBy: 'user123',
             },
         ];
 

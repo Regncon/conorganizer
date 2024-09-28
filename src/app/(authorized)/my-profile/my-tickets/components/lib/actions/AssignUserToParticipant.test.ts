@@ -16,13 +16,13 @@ describe('AssignParticipantToUser', () => {
                 {
                     id: '101',
                     users: ['user123'],
-                    updatedBy: 'user1@example.com',
+                    updatedBy: 'user123',
                     updateAt: expect.any(String),
                 },
                 {
                     id: '102',
                     users: ['user456', 'user123'],
-                    updatedBy: 'user1@example.com',
+                    updatedBy: 'user123',
                     updateAt: expect.any(String),
                 },
             ];
@@ -42,9 +42,9 @@ describe('AssignParticipantToUser', () => {
                     connectedEmails: [],
                     users: [],
                     createdAt: '',
-                    createdBy: 'user1@example.com',
+                    createdBy: 'user123',
                     updateAt: '',
-                    updatedBy: 'user1@example.com',
+                    updatedBy: 'user123',
                 },
                 {
                     id: '102',
@@ -60,9 +60,9 @@ describe('AssignParticipantToUser', () => {
                     ticketCategoryId: 0,
                     connectedEmails: ['user1@example.com'],
                     createdAt: '',
-                    createdBy: 'user2@example.com',
+                    createdBy: 'user456',
                     updateAt: '',
-                    updatedBy: 'user2@example.com',
+                    updatedBy: 'user456',
                 },
                 // Existing participants that should not be updated
                 {
@@ -79,9 +79,9 @@ describe('AssignParticipantToUser', () => {
                     ticketCategoryId: 0,
                     connectedEmails: [],
                     createdAt: '',
-                    createdBy: 'user1@example.com',
+                    createdBy: 'user456',
                     updateAt: '',
-                    updatedBy: 'user1@example.com',
+                    updatedBy: 'user456',
                 },
                 {
                     id: '104',
@@ -97,9 +97,9 @@ describe('AssignParticipantToUser', () => {
                     ticketCategoryId: 0,
                     connectedEmails: ['user5@example.com'],
                     createdAt: '',
-                    createdBy: 'user4@example.com',
+                    createdBy: 'user456',
                     updateAt: '',
-                    updatedBy: 'user4@example.com',
+                    updatedBy: 'user456',
                 },
             ];
 

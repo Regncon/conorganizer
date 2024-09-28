@@ -24,11 +24,12 @@ const poolTitlesWithTime = {
 type Props = {
     poolName?: PoolName;
     poolEventId?: string;
+    poolEventTitle?: string;
     disabled?: boolean;
     activeParticipant?: { id?: string; interestLevel?: InterestLevel };
 };
 
-const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParticipant }: Props) => {
+const InterestSelector = ({ poolName, poolEventId, poolEventTitle, disabled = false, activeParticipant }: Props) => {
     const [interest, setInterest] = useState<number>(
         typeof activeParticipant?.interestLevel === 'string' ? 0 : (activeParticipant?.interestLevel ?? 0)
     );
@@ -41,6 +42,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
     };
 
     useEffect(() => {
+        console.log('initial interestLevel: ', activeParticipant?.interestLevel);
         setInterest(typeof activeParticipant?.interestLevel === 'string' ? 0 : (activeParticipant?.interestLevel ?? 0));
     }, [activeParticipant]);
     useEffect(() => {
@@ -65,14 +67,18 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
 
         if (activeParticipant?.id && poolEventId) {
             startTransitionDebounced(async () => {
-                await updateInterest(activeParticipant?.id, poolEventId, interestLevel);
+                console.log('incrementInterestButton: ', interestLevel);
+
+                await updateInterest(activeParticipant?.id, poolEventId, poolName, poolEventTitle, interestLevel);
             });
         }
     };
     const incrementInterestSlider = (interest: InterestLevel) => {
         if (activeParticipant?.id && poolEventId) {
             startTransitionDebounced(async () => {
-                await updateInterest(activeParticipant?.id, poolEventId, interest);
+                console.log('incrementInterestSlider: ', interest);
+
+                await updateInterest(activeParticipant?.id, poolEventId, poolName, poolEventTitle, interest);
             });
         }
     };
@@ -86,7 +92,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
-                        :   null}
+                            : null}
                         <Typography>Ikke interessert</Typography>
                     </Box>
                 </Box>
@@ -100,7 +106,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
-                        :   null}
+                            : null}
                         <Typography>Litt interessert</Typography>
                     </Box>
                 </Box>
@@ -114,7 +120,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
-                        :   null}
+                            : null}
                         <Typography>Interessert</Typography>
                     </Box>
                 </Box>
@@ -128,7 +134,7 @@ const InterestSelector = ({ poolName, poolEventId, disabled = false, activeParti
                     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                         {poolName ?
                             <Typography>{poolTitlesWithTime[poolName]}</Typography>
-                        :   null}
+                            : null}
                         <Typography>Veldig interessert</Typography>
                     </Box>
                 </Box>
