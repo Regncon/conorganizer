@@ -109,27 +109,27 @@ export async function getEventInterestById(id: string) {
     }
 
     let poolInterests: InterestsInPool[] = [];
-    event.poolIds.forEach(async (pool) => {
-        /*
-const { collection, getDocs } = require("firebase/firestore");
-// Query a reference to a subcollection
-const querySnapshot = await getDocs(collection(db, "cities", "SF", "landmarks"));
-querySnapshot.forEach((doc) => {
-  // doc.data() is never undefined for query doc snapshots
-  console.log(doc.id, " => ", doc.data());
-});
-    */
-        const interestRef = await adminDb.collection('pool-events').doc(pool.id).collection('interests').get();
-        const interests = interestRef.docs.map((doc) => doc.data()) as Interest[];
-        const poolInterest: InterestsInPool = {
-            poolId: pool.id,
-            poolName: pool.poolName,
-            interests: interests,
-        };
-        poolInterests.push(poolInterest);
-    });
+
+    await Promise.all(
+        event.poolIds.map(async (pool) => {
+            const interestRef = await adminDb.collection('pool-events').doc(pool.id).collection('interests').get();
+            const interests = interestRef.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Interest[];
+
+            const poolInterest: InterestsInPool = {
+                poolId: pool.id,
+                poolName: pool.poolName,
+                interests: interests,
+            };
+
+            poolInterests.push(poolInterest);
+        })
+    );
+
+    console.log('poolInterests: ', poolInterests);
+
     return poolInterests;
 }
+
 export async function migrateInterestsToParticipantInterests() {
     console.log('starting migration');
 
