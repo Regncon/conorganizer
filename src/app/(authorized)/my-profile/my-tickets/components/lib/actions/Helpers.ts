@@ -14,7 +14,7 @@ export const NewTickets = (tickets: EventTicket[], participants: Participant[], 
 
     const newParticipants: Participant[] = [];
     usersTickets.forEach((ticket) => {
-        const newParticipant = generateParticipant(ticket.id, tickets, user.email as string);
+        const newParticipant = generateParticipant(ticket.id, tickets, user.uid as string);
         newParticipant.users = [user.uid];
         newParticipants.push(newParticipant);
     });
@@ -34,7 +34,7 @@ export const AssignUserToParticipant = (participants: Participant[], user: User)
             id: participant.id,
             ticketId: participant.ticketId,
             users: [...(participant.users || []), user.uid],
-            updatedBy: user.email || '',
+            updatedBy: user.uid || '',
             updateAt: new Date().toISOString(),
         };
         return updatedParticipant;
@@ -53,7 +53,7 @@ const GetTicketsThatBelongToUser = (tickets: EventTicket[], user: User) => {
     return ticketsWithOrderNumberFromEmail;
 };
 
-export const generateParticipant = (ticketId: number, tickets: EventTicket[], userEmail: string) => {
+export const generateParticipant = (ticketId: number, tickets: EventTicket[], userId: string) => {
     const ticket = tickets.find((ticket) => ticket.id === ticketId);
     if (!ticket) throw new Error('ticket not found');
 
@@ -72,9 +72,9 @@ export const generateParticipant = (ticketId: number, tickets: EventTicket[], us
         ticketCategory: ticket.category,
         ticketCategoryId: ticket.category_id,
         createdAt: new Date().toISOString(),
-        createdBy: userEmail,
+        createdBy: userId,
         updateAt: new Date().toISOString(),
-        updatedBy: userEmail,
+        updatedBy: userId,
         connectedEmails: [],
     };
     return participant;
