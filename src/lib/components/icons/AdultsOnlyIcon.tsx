@@ -2,9 +2,9 @@
 import React from 'react';
 import SvgWrapper, { type Props } from './SvgWrapper';
 
-const AdultsOnlyIcon = ({ color, size, chipMargin }: Props) => {
+const AdultsOnlyIcon = (props: Props) => {
     return (
-        <SvgWrapper color={color} size={size} chipMargin={chipMargin}>
+        <SvgWrapper {...props}>
             <svg id="Layer_1" viewBox="0 0 34.102146 39.599998" version="1.1" width="34.102146" height="39.599998">
                 <g id="Layer_3" transform="translate(-169.04578,-52.049999)">
                     <path

@@ -1,9 +1,9 @@
 'use server';
 import { adminDb } from '$lib/firebase/firebaseAdmin';
 import { revalidatePath } from 'next/cache';
-import type { ConEvent, Interest, Participant, PoolEvent, InterestsInPool } from '$lib/types';
-import { InterestLevel, PoolName } from '$lib/enums';
-import { createIconArray } from './helpers/icons';
+import type { ConEvent, Participant, PoolEvent, InterestsInPool, Interest } from '$lib/types';
+import { PoolName, InterestLevel } from '$lib/enums';
+import { createIconOptions } from './helpers/icons';
 
 export async function getAllEvents() {
     const eventRef = await adminDb.collection('events').get();
@@ -90,14 +90,14 @@ export async function getAdjacentPoolEventsById(id: string, day: PoolName) {
 }
 export async function getPoolEventById(id: string) {
     const poolEvent = (await adminDb.collection('pool-events').doc(id).get()).data() as PoolEvent;
-    let icons = createIconArray({
-        adultsOnly: poolEvent.adultsOnly,
-        childFriendly: poolEvent.childFriendly,
-        beginnerFriendly: poolEvent.beginnerFriendly,
-        lessThanThreeHours: poolEvent.lessThanThreeHours,
-        moreThanSixHours: poolEvent.moreThanSixHours,
-        possiblyEnglish: poolEvent.possiblyEnglish,
-    });
+    let icons = createIconOptions(
+        poolEvent.adultsOnly,
+        poolEvent.childFriendly,
+        poolEvent.beginnerFriendly,
+        poolEvent.lessThanThreeHours,
+        poolEvent.moreThanSixHours,
+        poolEvent.possiblyEnglish
+    );
     poolEvent.icons = icons;
     return { ...poolEvent, id };
 }

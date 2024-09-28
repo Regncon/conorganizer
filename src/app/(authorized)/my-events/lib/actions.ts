@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { type User } from 'firebase/auth';
 import type { MyUserInfo } from './types';
 import type { MyNewEvent } from '$lib/types';
+import { GameType } from '$lib/enums';
 
 export const createMyEventDoc = async (docId: string) => {
     const { app, user } = await getAuthorizedAuth();
@@ -23,7 +24,7 @@ export const createMyEventDoc = async (docId: string) => {
             childFriendly: false,
             description: '',
             email: user.email,
-            gameType: '',
+            gameType: GameType.Other,
             lessThanThreeHours: false,
             moduleCompetition: false,
             moreThanSixHours: false,
@@ -60,7 +61,6 @@ export async function geMyEventByRefPath(db: Firestore, id: string, userId: stri
     const docs = await getDoc(ref);
     return docs.data() as MyNewEvent;
 }
-
 
 export async function getMyUserInfo(db: Firestore, user: User) {
     const ref = doc(db, '/users', user.uid);

@@ -184,7 +184,7 @@ const MainEventBig = async ({
                                 key={iconOption.label}
                                 color="primary"
                                 variant="outlined"
-                                icon={createIconFromString(iconOption.icon)}
+                                icon={createIconFromString(iconOption.iconName)}
                             />
                         ))}
                     </Box>

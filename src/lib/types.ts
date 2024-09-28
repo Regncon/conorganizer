@@ -1,5 +1,4 @@
-import { type } from 'os';
-import { InterestLevel, PoolName, type RoomName } from './enums';
+import { PoolName, type RoomName, type GameType } from './enums';
 
 export type EventCardProps = {
     title: string;
@@ -28,7 +27,7 @@ export type ConEvent = {
     email: string;
     name: string;
     phone: string;
-    gameType: string;
+    gameType: GameType;
     isSmallCard: boolean;
     participants: number;
     puljeFridayEvening: boolean;
@@ -110,12 +109,16 @@ export type IconTypes = {
     lessThanThreeHours: boolean;
     moreThanSixHours: boolean;
     beginnerFriendly: boolean;
+    cardGame: GameType.CardGame;
+    boardGame: GameType.BoardGame;
+    rolePlaying: GameType.RolePlaying;
+    other: GameType.Other;
 };
 
 export type IconName = keyof IconTypes;
 export type IconOption = {
     label: string;
-    icon: IconName;
+    iconName: IconName;
 };
 export type PoolEvent = {
     poolName: PoolName;
@@ -129,7 +132,7 @@ export type PoolEvent = {
     description: string;
     smallImageURL?: string;
     bigImageURL?: string;
-    gameType: string;
+    gameType: GameType;
     isSmallCard: boolean;
     participants: number;
     childFriendly: boolean;
@@ -161,7 +164,7 @@ export type MyNewEvent = {
     phone: string;
     title: string;
     system: string;
-    gameType: string;
+    gameType: GameType;
     participants: number;
     fridayEvening: boolean;
     saturdayMorning: boolean;
@@ -234,3 +237,4 @@ export type Interest = {
     updateAt: string;
     updatedBy: string;
 };
+export type LocalStorageNames = 'filters';

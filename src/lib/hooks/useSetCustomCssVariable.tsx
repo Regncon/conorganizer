@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react';
 type BoundingRectProperties = keyof Omit<DOMRect, 'x' | 'y' | 'toJSON'>;
 type RemoveProperty = () => void;
 type PartialRecord<K extends keyof any, T> = Partial<Record<K, T>>;
-type CustomCssVariables = '--scroll-margin-top' | '--app-bar-height';
+type CustomCssVariables = '--scroll-margin-top' | '--app-bar-height' | '--app-bar-height-desktop';
 type PropertyType = PartialRecord<CustomCssVariables, BoundingRectProperties>;
 
 /**

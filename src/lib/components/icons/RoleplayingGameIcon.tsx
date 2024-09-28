@@ -2,9 +2,9 @@
 import React from 'react';
 import SvgWrapper, { type Props } from './SvgWrapper';
 
-const RoleplayingGameIcon = ({ color, size, chipMargin }: Props) => {
+const RoleplayingGameIcon = (props: Props) => {
     return (
-        <SvgWrapper color={color} size={size} chipMargin={chipMargin}>
+        <SvgWrapper {...props}>
             <svg id="Layer_1" viewBox="0 0 38.870175 39.6" version="1.1" width="36.700001" height="39.599998">
                 <path
                     d="m 0.73,29.14 c 0.07,-0.3 0.08,-0.6 0.2,-0.84 1.76,-3.49 3.82,-6.8 6.38,-9.76 1.21,-1.39 1.79,-1.28 2.61,0.34 2.14,4.22 4.24,8.46 7.04,12.3 0.24,0.33 0.43,0.71 0.2,1.11 -0.22,0.38 -0.58,0.31 -0.96,0.24 C 12.14,31.77 8.08,31 3.95,30.61 3.12,30.53 2.34,30.26 1.47,30.33 0.57,30.41 0.98,29.53 0.72,29.13 Z"

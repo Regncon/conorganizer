@@ -32,7 +32,9 @@ const MyParticipantsHeader = ({ participants }: Props) => {
 
     return (
         <Box>
-            <Typography variant="h1">Mine billetter</Typography>{' '}
+            <Typography variant="h1" sx={{ marginBlockStart: '0' }}>
+                Mine billetter
+            </Typography>
             <Typography variant="h4">
                 Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett
                 nedanfor, slik at kvar deltakar kan melda seg på arrangement på eiga hand.
