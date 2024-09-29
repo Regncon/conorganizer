@@ -1,9 +1,12 @@
 import type { PoolEvents } from '$app/(public)/components/lib/serverAction';
-import { PoolName } from '$lib/enums';
+import { PoolName, type InterestLevel } from '$lib/enums';
 import type { Interest, PoolEvent } from '$lib/types';
 
 type ParticipantName = string;
-type ParticipantPoolEventsMap = Map<ParticipantName, PoolEvents>;
+type ParticipantInterestLevel = InterestLevel;
+type PoolEventWithInterestLevel = PoolEvent & { interestLevel: ParticipantInterestLevel };
+type PoolEventsMapWithInterestLevel = Map<PoolName, PoolEventWithInterestLevel[]>;
+type ParticipantPoolEventsMap = Map<ParticipantName, PoolEventsMapWithInterestLevel>;
 
 /**
  * Builds a nested map that associates each participant with their respective pool events.
@@ -43,6 +46,11 @@ type ParticipantPoolEventsMap = Map<ParticipantName, PoolEvents>;
  * ]);
  *
  * const participantMap = buildParticipantPoolEventsMap(interests, poolEventsMap);
+ * [...participantMap.entries()].map(([participantName, poolEvents]) => {
+ *        return [...poolEvents.entries()].map(([poolName, events]) => {
+ *                 return events.map(event => event.id)
+ *               })
+ *        });
  * ```
  */
 export function buildParticipantPoolEventsMap(
@@ -52,7 +60,7 @@ export function buildParticipantPoolEventsMap(
     const participantToPoolsMap: ParticipantPoolEventsMap = new Map();
 
     for (const interest of interests) {
-        const { participantFirstName, participantLastName, poolName, poolEventId } = interest;
+        const { participantFirstName, participantLastName, poolName, poolEventId, interestLevel } = interest;
         const participantFullName = `${participantFirstName} ${participantLastName}`;
 
         if (!poolName) {
@@ -66,7 +74,10 @@ export function buildParticipantPoolEventsMap(
             continue;
         }
 
-        const event = eventsInPool.find((e) => e.id === poolEventId);
+        const event = { ...eventsInPool.find((e) => e.id === poolEventId), interestLevel } as
+            | PoolEventWithInterestLevel
+            | undefined;
+
         if (!event) {
             console.warn(
                 `Event ID "${poolEventId}" not found in pool "${poolName}" for participant "${participantFullName}".`
@@ -76,17 +87,25 @@ export function buildParticipantPoolEventsMap(
 
         let poolsMap = participantToPoolsMap.get(participantFullName);
         if (!poolsMap) {
-            poolsMap = new Map<PoolName, PoolEvent[]>([
+            poolsMap = new Map<PoolName, PoolEventWithInterestLevel[]>([
                 [PoolName.fridayEvening, []],
                 [PoolName.saturdayMorning, []],
+                [PoolName.fridayEvening, []],
                 [PoolName.saturdayEvening, []],
                 [PoolName.sundayMorning, []],
             ]);
+
+            const test = [PoolName.fridayEvening, []];
             participantToPoolsMap.set(participantFullName, poolsMap);
         }
 
         const events = poolsMap.get(poolName) || [];
-        poolsMap.set(poolName, [...events, event]);
+        poolsMap.set(
+            poolName,
+            [...events, event].sort((a, b) => {
+                return a.interestLevel > b.interestLevel ? -1 : 1;
+            })
+        );
     }
 
     return participantToPoolsMap;
