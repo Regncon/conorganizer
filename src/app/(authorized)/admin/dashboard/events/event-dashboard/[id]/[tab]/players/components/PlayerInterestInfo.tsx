@@ -1,13 +1,11 @@
-import { Interest, Participant, PlayerInterest } from '$lib/types';
-import { Box, Divider, Paper, Typography } from '@mui/material';
+import { PlayerInterest } from '$lib/types';
+import { Box, Divider, FormControlLabel, FormGroup, Paper, Switch, Typography } from '@mui/material';
 import Image from 'next/image';
 import { interestLevelToImage, InterestLevelToLabel } from '../../lib/helpers';
-import { getTranslatedDay } from '$app/(public)/components/lib/helpers/translation';
 import PreviousGamesPlayed from './PreviousGamesPlayed';
 import { PoolName } from '$lib/enums';
 import Over18 from '$ui/participant/Over18';
 import ParticipantAvatar from '$ui/participant/ParticipantAvatar';
-import { Padding } from '@mui/icons-material';
 
 type Props = {
     playerInterest: PlayerInterest;
@@ -29,6 +27,10 @@ const PlayerInterestInfo = ({ playerInterest }: Props) => {
                     <Over18 over18={playerInterest.isOver18} />
                 </Box>
             </Box>
+            <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+                <FormControlLabel control={<Switch />} label="Tildel plass" labelPlacement="start" />
+                <FormControlLabel control={<Switch />} label="Gm" labelPlacement="start" />
+            </FormGroup>
             <Typography component={'i'}>{playerInterest.ticketCategory}</Typography>
             <Divider sx={{ paddingBottom: '1rem' }} />
 

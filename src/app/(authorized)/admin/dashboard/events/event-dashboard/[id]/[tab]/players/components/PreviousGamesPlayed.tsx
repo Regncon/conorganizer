@@ -24,7 +24,7 @@ const PreviousGamesPlayed = ({ poolName, conPlayers }: Props) => {
     }
     const playersInPool = filteredConPlayers.filter((conPlayer) => conPlayer.poolName === poolName);
     return (
-        <Box sx={{ backgroundColor: 'rgba(0,0,0,0.1)', marginBlock: '1rem' }}>
+        <Box sx={{ backgroundColor: 'rgba(0,0,0,0.1)', marginBlock: '1rem', paddingBottom: '0.5rem' }}>
             <Typography sx={{ fontWeight: 'bold' }}>{getTranslatedDay(poolName)}: </Typography>
             {playersInPool.map((conPlayer, index) => (
                 <Box
@@ -32,7 +32,7 @@ const PreviousGamesPlayed = ({ poolName, conPlayers }: Props) => {
                         display: 'flex',
                         flexDirection: 'column',
                         backgroundColor: 'rgba(0,0,0,0.2)',
-                        marginBlock: '1rem',
+                        margin: '1rem',
                         gap: '0.5rem',
                     }}
                 >
