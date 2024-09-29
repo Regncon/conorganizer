@@ -148,6 +148,19 @@ describe('NewTickets', () => {
                     category: '',
                     category_id: 0,
                 },
+                {
+                    id: 7,
+                    order_id: 1002,
+                    crm: {
+                        email: 'user1@example.com',
+                        first_name: 'New Participant 7',
+                        last_name: 'Type is dinner, should be ignored',
+                        id: 0,
+                        born: '01-01-1990',
+                    },
+                    category: 'Middag',
+                    category_id: 157059,
+                },
             ];
 
             const existingParticipants: Participant[] = [
