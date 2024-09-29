@@ -28,7 +28,6 @@ of your con schedule, your panels, and your expenses.
 
 ### Must haves for opprop
 
--   See favorites in events
 -   See favorites in participant admin
 -   See assigned games in participant admin
 -   See assigned games in events
@@ -107,3 +106,4 @@ of your con schedule, your panels, and your expenses.
 -   Vise hvilken deltaker du er viss du har flere deltakere på samme billett (Nesten ferdig)
 -   Gjør det tydelig hvilke pulje arrangementet er i og om det kjøres i andre puljer også.
 -   Lagre interessene til deltagere i databasen.- Assign user to participant
+-   See favorites in events
