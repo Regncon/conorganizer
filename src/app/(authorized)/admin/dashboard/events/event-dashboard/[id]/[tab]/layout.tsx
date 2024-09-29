@@ -19,6 +19,9 @@ const Layout = async ({ params: { id, tab }, children }: PropsWithChildren<Props
         case 'interest':
             currentTabValue = 1;
             break;
+        case 'players':
+            currentTabValue = 0;
+            break;
         case 'room':
             currentTabValue = 3;
             break;

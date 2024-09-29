@@ -6,8 +6,7 @@ import {
 } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
 import { useState } from 'react';
 import { ActionResponse } from '$lib/types';
-import AdultsOnlyIcon from '$lib/components/icons/AdultsOnlyIcon';
-import ChildFriendlyIcon from '$lib/components/icons/ChildFriendlyIcon';
+import Over18 from '$ui/participant/Over18';
 
 type Props = {
     ticket: EventTicket;
@@ -41,16 +40,7 @@ const TicketCard = ({ ticket }: Props) => {
                 </Typography>
                 <Typography>{ticket.crm.email}</Typography>
                 <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
-                    {isOver18 ?
-                        <>
-                            <AdultsOnlyIcon chipMargin={false} />
-                            <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Over 18</Typography>
-                        </>
-                        : <>
-                            <ChildFriendlyIcon chipMargin={false} />
-                            <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Under 18</Typography>
-                        </>
-                    }
+                    <Over18 over18={isOver18} />
                 </Box>
                 {loading ?
                     <CircularProgress />

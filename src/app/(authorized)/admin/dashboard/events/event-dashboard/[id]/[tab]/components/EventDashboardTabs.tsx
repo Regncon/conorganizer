@@ -44,7 +44,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                         sx={tabsSx}
                         iconPosition="start"
                         label={<HideLabel>Spillere</HideLabel>}
-                        disabled
+                        href={`/admin/dashboard/events/event-dashboard/${id}/players` as Route}
                     />
                     <Tab
                         component={NextLink}

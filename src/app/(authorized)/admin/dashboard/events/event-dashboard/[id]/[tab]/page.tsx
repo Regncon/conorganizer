@@ -6,6 +6,7 @@ import Settings from './settings/Settings';
 import type { Metadata } from 'next';
 import { getEventById } from '$app/(public)/components/lib/serverAction';
 import InterestPage from './interest/InterestPage';
+import Players from './players/Players';
 
 type Props = {
     params: {
@@ -23,6 +24,9 @@ export async function generateMetadata({ params: { id, tab } }: Props): Promise<
             break;
         case 'interest':
             tabName = 'Ønsker';
+            break;
+        case 'players':
+            tabName = 'Spillere';
             break;
         case 'room':
             tabName = 'Rom';
@@ -49,6 +53,9 @@ const page = ({ params: { id, tab } }: Props) => {
     }
     if (tab === 'interest') {
         return <InterestPage id={id} />;
+    }
+    if (tab === 'players') {
+        return <Players id={id} />;
     }
     if (tab === 'settings') {
         return <Settings id={id} />;

@@ -26,6 +26,7 @@ import {
     ConnectEmailToParticipant,
     DeleteConnectedEmail,
 } from '$app/(authorized)/my-profile/my-tickets/components/lib/actions/actions';
+import Over18 from '$ui/participant/Over18';
 
 type Props = {
     participant: Participant;
@@ -62,16 +63,7 @@ const ParticipantCard = ({ participant }: Props) => {
                     <Typography> {participant.orderId}</Typography>
                 </Stack>
                 <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center' }}>
-                    {participant.over18 ?
-                        <>
-                            <AdultsOnlyIcon chipMargin={false} />
-                            <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Over 18</Typography>
-                        </>
-                        : <>
-                            <ChildFriendlyIcon chipMargin={false} />
-                            <Typography sx={{ paddingLeft: '0.5rem', fontWeight: 'bold' }}>Under 18</Typography>
-                        </>
-                    }
+                    <Over18 over18={participant.over18} />
                 </Box>
             </CardContent>
             <CardContent>
