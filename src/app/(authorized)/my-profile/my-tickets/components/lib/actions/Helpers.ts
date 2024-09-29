@@ -1,12 +1,14 @@
-import { ConUser, Participant } from '$lib/types';
+import { Participant } from '$lib/types';
 import { User } from 'firebase/auth';
 import { EventTicket } from './actions';
-import { Update } from '@mui/icons-material';
 
 export const NewTickets = (tickets: EventTicket[], participants: Participant[], user: User) => {
     console.log('Assigning new tickets to participants');
 
-    const ticketsWithoutParticipants = tickets?.filter(
+    const dinnerTicketCategoryId = 157059;
+    const ticketsWithoutDinner = tickets?.filter((ticket) => ticket.category_id !== dinnerTicketCategoryId);
+
+    const ticketsWithoutParticipants = ticketsWithoutDinner?.filter(
         (ticket) => !participants.some((participant) => participant.ticketId === ticket.id)
     );
 
@@ -14,7 +16,7 @@ export const NewTickets = (tickets: EventTicket[], participants: Participant[], 
 
     const newParticipants: Participant[] = [];
     usersTickets.forEach((ticket) => {
-        const newParticipant = generateParticipant(ticket.id, tickets, user.uid as string);
+        const newParticipant = generateParticipant(ticket.id, ticketsWithoutDinner, user.uid as string);
         newParticipant.users = [user.uid];
         newParticipants.push(newParticipant);
     });
