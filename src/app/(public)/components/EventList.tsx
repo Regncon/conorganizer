@@ -23,7 +23,7 @@ const EventList = ({ events }: Props) => {
                         <Box
                             sx={{
                                 display: 'grid',
-                                gridTemplateColumns: 'repeat(auto-fit,minmax(306px, 1fr))',
+                                gridTemplateColumns: 'repeat(auto-fit,minmax(306px, 345px))',
                                 gap: '1rem',
                             }}
                         >
