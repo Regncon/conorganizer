@@ -53,25 +53,24 @@ type ParticipantPoolEventsMap = Map<ParticipantName, PoolEventsMapWithInterestLe
  *        });
  * ```
  */
-export function buildParticipantPoolEventsMap(
+export async function buildParticipantPoolEventsMap(
     interests: Interest[],
     poolEventsMap: PoolEvents
-): ParticipantPoolEventsMap {
+): Promise<ParticipantPoolEventsMap> {
     const participantToPoolsMap: ParticipantPoolEventsMap = new Map();
 
     for (const interest of interests) {
         const { participantFirstName, participantLastName, poolName, poolEventId, interestLevel } = interest;
         const participantFullName = `${participantFirstName} ${participantLastName}`;
-
         if (!poolName) {
             console.warn(`No pool name specified for participant "${participantFullName}".`);
-            continue;
+            throw new Error(`No pool name specified for participant "${participantFullName}".`);
         }
 
         const eventsInPool = poolEventsMap.get(poolName);
         if (!eventsInPool) {
             console.warn(`Pool "${poolName}" not found for participant "${participantFullName}".`);
-            continue;
+            throw new Error(`Pool "${poolName}" not found for participant "${participantFullName}".`);
         }
 
         const event = { ...eventsInPool.find((e) => e.id === poolEventId), interestLevel } as
