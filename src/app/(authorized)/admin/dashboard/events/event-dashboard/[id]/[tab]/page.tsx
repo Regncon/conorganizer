@@ -22,7 +22,7 @@ export async function generateMetadata({ params: { id, tab } }: Props): Promise<
             tabName = 'Rediger';
             break;
         case 'interest':
-            tabName = 'Favoritter';
+            tabName = 'Ønsker';
             break;
         case 'room':
             tabName = 'Rom';
