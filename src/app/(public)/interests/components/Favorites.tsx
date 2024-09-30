@@ -1,21 +1,23 @@
 import { getAllPoolEvents, getUsersInterestById } from '$app/(public)/components/lib/serverAction';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { Box, Typography } from '@mui/material';
-import { buildParticipantPoolEventsMap } from './lib/helpers/helpers';
+
 import EventCardBig from '$app/(public)/components/components/EventCardBig';
 import { translatedDays } from '$app/(public)/components/lib/helpers/translation';
-import { Fragment } from 'react';
+
 import Link from 'next/link';
 import type { Route } from 'next';
 import ParticipantSelector from '$ui/participant/ParticipantSelector';
 import { cookies } from 'next/headers';
 import type { ParticipantCookie } from '$lib/types';
-import LoadingParticipantWrapper from './ui/LoadingParticipantWrapper';
+
 import {
     interestLevelToImage,
     InterestLevelToLabel,
 } from '$app/(authorized)/admin/dashboard/events/event-dashboard/[id]/[tab]/interest/components/lib/helpers/InterestHelper';
 import Image from 'next/image';
+import { buildParticipantPoolEventsMap } from './lib/helpers/helpers';
+import LoadingParticipantWrapper from './ui/LoadingParticipantWrapper';
 
 type Props = {};
 
@@ -41,9 +43,16 @@ const Favorites = async ({}: Props) => {
         throw new Error('Fant ikkje participant i participantMap');
     }
 
+    const myInterests = myParticipants.length === 1 ? true : false;
+    const participantsInterests = myParticipants.length > 1 ? true : false;
+    const headerText =
+        myInterests ? `Her kan du sjå dine interesser.`
+        : participantsInterests ? `Her kan du sjå interessene til alle deltakarane dine.`
+        : null;
+
     return (
         <>
-            <Typography variant="h1">Her kan du sjå favorittane til alle deltakarane dine.</Typography>
+            <Typography variant="h1">{headerText}</Typography>
             <Box sx={{ display: 'grid', placeContent: 'center' }}>
                 <ParticipantSelector />
             </Box>

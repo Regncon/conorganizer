@@ -58,13 +58,13 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             </Button>
             <Button
                 color={'secondary'}
-                sx={{ color: pathName.includes('/favorites') ? '' : 'white' }}
+                sx={{ color: pathName.includes('/interests') ? '' : 'white' }}
                 startIcon={<FavoriteIcon />}
-                href="/favorites"
-                aria-label="favorites"
+                href="/interests"
+                aria-label="interests"
                 component={Link}
             >
-                Favoritter
+                Interesser
             </Button>
             <Button
                 color={'secondary'}

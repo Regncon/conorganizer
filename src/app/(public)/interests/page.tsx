@@ -6,13 +6,13 @@ import Favorites from './components/Favorites';
 type Props = {};
 
 export const metadata: Metadata = {
-    title: 'Favoritter',
+    title: 'Interesser',
 };
 
 const page = async ({}: Props) => {
     const { user } = await getAuthorizedAuth();
     if (!user) {
-        return <>Du må være logget inn for å se dine favoritter</>;
+        return <>Du må være logget inn for å se dine deltakers interesser.</>;
     }
     return (
         <>
