@@ -99,10 +99,16 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
     const mobileBottomContent = (
         <>
             <Box sx={{ flexGrow: 1 }} />
-            <IconButton href="/" aria-label="home" component={Link}>
+            <IconButton href="/" aria-label="home" color="primary" component={Link}>
                 <HomeIcon fontSize="large" />
             </IconButton>
-            <IconButton href="/?filters=favorites" aria-label="favorites" disabled component={Link}>
+            <IconButton
+                color={'secondary'}
+                sx={{ color: pathName.includes('/interests') ? '' : 'white' }}
+                href="/interests"
+                aria-label="interests"
+                component={Link}
+            >
                 <FavoriteIcon fontSize="large" />
             </IconButton>
             <IconButton href="/?filters=assigned" aria-label="assigned-events" disabled component={Link}>
