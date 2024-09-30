@@ -24,6 +24,7 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import Link from 'next/link';
 import { forwardRef, useState, type ComponentProps } from 'react';
 import RegnconLogo2024 from '$ui/RegnconLogo2024';
+import { useParams, usePathname, useSearchParams } from 'next/navigation';
 
 type Props = {
     sx?: SxProps<Theme>;
@@ -33,6 +34,8 @@ type Props = {
 };
 
 const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admin, mobile }, ref) => {
+    const pathName = usePathname();
+
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
@@ -54,17 +57,18 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 Hjem
             </Button>
             <Button
-                sx={{ color: 'white' }}
+                color={'secondary'}
+                sx={{ color: pathName.includes('/interests') ? '' : 'white' }}
                 startIcon={<FavoriteIcon />}
-                href="/?filters=favorites"
-                aria-label="favorites"
+                href="/interests"
+                aria-label="interests"
                 component={Link}
-                disabled
             >
-                Favoritter
+                Interesser
             </Button>
             <Button
-                sx={{ color: 'white' }}
+                color={'secondary'}
+                sx={{ color: pathName.includes('/--whatever-name-you-choose-here') ? '' : 'white' }}
                 startIcon={<GroupsIcon />}
                 href="/?filters=assigned"
                 aria-label="assigned-events"
@@ -89,16 +93,22 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                         <MenuIcon />
                     </IconButton>
                 </>
-                : null}
+            :   null}
         </>
     );
     const mobileBottomContent = (
         <>
             <Box sx={{ flexGrow: 1 }} />
-            <IconButton href="/" aria-label="home" component={Link}>
+            <IconButton href="/" aria-label="home" color="primary" component={Link}>
                 <HomeIcon fontSize="large" />
             </IconButton>
-            <IconButton href="/?filters=favorites" aria-label="favorites" disabled component={Link}>
+            <IconButton
+                color={'secondary'}
+                sx={{ color: pathName.includes('/interests') ? '' : 'white' }}
+                href="/interests"
+                aria-label="interests"
+                component={Link}
+            >
                 <FavoriteIcon fontSize="large" />
             </IconButton>
             <IconButton href="/?filters=assigned" aria-label="assigned-events" disabled component={Link}>
@@ -115,7 +125,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 >
                     <MenuIcon fontSize="large" />
                 </IconButton>
-                : null}
+            :   null}
         </>
     );
 
@@ -159,10 +169,10 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                                             Rediger arrangementer
                                         </MenuItem>,
                                     ]
-                                    : null}
+                                :   null}
                             </Menu>
                         </>
-                        : <Button component={Link} href="/login">
+                    :   <Button component={Link} href="/login">
                             <LoginIcon />
                             Logg inn
                         </Button>
@@ -170,7 +180,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 </Box>
                 {mobile ?
                     <Box sx={{ flexGrow: 1 }} />
-                    : null}
+                :   null}
             </Toolbar>
         </AppBar>
     );
