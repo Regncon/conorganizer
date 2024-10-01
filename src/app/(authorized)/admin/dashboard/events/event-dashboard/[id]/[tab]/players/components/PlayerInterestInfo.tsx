@@ -8,39 +8,72 @@ import Over18 from '$ui/participant/Over18';
 import ParticipantAvatar from '$ui/participant/ParticipantAvatar';
 
 type Props = {
+    poolName: PoolName;
     playerInterest: PlayerInterest;
 };
 
-const PlayerInterestInfo = ({ playerInterest }: Props) => {
+const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
     return (
         <Paper elevation={2} sx={{ marginTop: '1rem', padding: '1rem' }}>
-            <ParticipantAvatar firstName={playerInterest.firstName} lastName={playerInterest.lastName} header />
-            <Box sx={{ display: 'flex', gap: '1rem' }}>
-                <Image
-                    src={interestLevelToImage[playerInterest.interestLevel]}
-                    alt={InterestLevelToLabel[playerInterest.interestLevel]}
-                    width={100}
-                    height={60}
-                />
+            <Box
+                sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-start',
+                    gap: '1rem',
+                    alignItems: 'center',
+                    flexDirection: 'row',
+                }}
+            >
                 <Box>
-                    <Typography>{InterestLevelToLabel[playerInterest.interestLevel]}</Typography>
-                    <Over18 over18={playerInterest.isOver18} />
+                    <Image
+                        src={interestLevelToImage[playerInterest.interestLevel]}
+                        alt={InterestLevelToLabel[playerInterest.interestLevel]}
+                        width={100}
+                        height={60}
+                    />
+                </Box>
+
+                <Box>
+                    <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem' }}>
+                        <Typography>{InterestLevelToLabel[playerInterest.interestLevel]}</Typography>
+                        <ParticipantAvatar
+                            firstName={playerInterest.firstName}
+                            lastName={playerInterest.lastName}
+                            header
+                        />
+                        <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+                            <FormControlLabel control={<Switch />} label="Tildel plass" labelPlacement="start" />
+                            <FormControlLabel control={<Switch />} label="Gm" labelPlacement="start" />
+                        </FormGroup>
+                        <Over18 over18={playerInterest.isOver18} />
+                        <Typography component={'i'}>{playerInterest.ticketCategory}</Typography>
+                    </Box>
                 </Box>
             </Box>
-            <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
-                <FormControlLabel control={<Switch />} label="Tildel plass" labelPlacement="start" />
-                <FormControlLabel control={<Switch />} label="Gm" labelPlacement="start" />
-            </FormGroup>
-            <Typography component={'i'}>{playerInterest.ticketCategory}</Typography>
-            <Divider sx={{ paddingBottom: '1rem' }} />
-
             <Box>
-                <PreviousGamesPlayed poolName={PoolName.fridayEvening} conPlayers={playerInterest.conPlayers} />
-                <PreviousGamesPlayed poolName={PoolName.saturdayMorning} conPlayers={playerInterest.conPlayers} />
-                <PreviousGamesPlayed poolName={PoolName.saturdayEvening} conPlayers={playerInterest.conPlayers} />
-                <PreviousGamesPlayed poolName={PoolName.sundayMorning} conPlayers={playerInterest.conPlayers} />
+                <PreviousGamesPlayed
+                    currentPoolName={poolName}
+                    previousPoolName={PoolName.fridayEvening}
+                    conPlayers={playerInterest.conPlayers}
+                />
+                <PreviousGamesPlayed
+                    currentPoolName={poolName}
+                    previousPoolName={PoolName.saturdayMorning}
+                    conPlayers={playerInterest.conPlayers}
+                />
+                <PreviousGamesPlayed
+                    currentPoolName={poolName}
+                    previousPoolName={PoolName.saturdayEvening}
+                    conPlayers={playerInterest.conPlayers}
+                />
+                <PreviousGamesPlayed
+                    currentPoolName={poolName}
+                    previousPoolName={PoolName.sundayMorning}
+                    conPlayers={playerInterest.conPlayers}
+                />
             </Box>
         </Paper>
     );
 };
+
 export default PlayerInterestInfo;

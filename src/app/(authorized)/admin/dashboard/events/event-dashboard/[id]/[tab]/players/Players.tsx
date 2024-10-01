@@ -1,11 +1,13 @@
 import {
-    Box,
     Card,
     CardActions,
     CardHeader,
+    FormControl,
     FormControlLabel,
     FormGroup,
-    Link,
+    Input,
+    InputAdornment,
+    InputLabel,
     Paper,
     Switch,
     Typography,
@@ -13,13 +15,17 @@ import {
 import PlayerInterestInfo from './components/PlayerInterestInfo';
 import { PlayerInterest } from '$lib/types';
 import { InterestLevel, PoolName } from '$lib/enums';
+import SearchIcon from '@mui/icons-material/Search';
+import { getEventById, getPoolEventById } from '$app/(public)/components/lib/serverAction';
 
 type Props = {
     id: string;
 };
 
 const Players = async ({ id }: Props) => {
-    console.log('Players', id);
+    // const event = await getEventById(id);
+
+    // console.log('Players', event);
 
     const dummyPlayerInrerestData: PlayerInterest = {
         interestLevel: InterestLevel.VeryInterested,
@@ -82,23 +88,33 @@ const Players = async ({ id }: Props) => {
         ],
     };
     return (
-        <Paper sx={{ paddingBlock: '1rem' }}>
+        <Paper sx={{ padding: '1rem' }}>
             <Typography variant="h1">Spillere:</Typography>
             <Card sx={{ backgroundColor: 'rgb(55, 59, 87)' }}>
                 <CardHeader title="Prioriterg" />
                 <CardActions>
-                    <FormGroup>
+                    <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
                         <FormControlLabel control={<Switch />} label="Under 18" labelPlacement="start" />
                         <FormControlLabel control={<Switch />} label="Over 18" labelPlacement="start" />
-                        <FormControlLabel
-                            control={<Switch />}
-                            label="SØNDAG Dagspass Barn (3-12)"
-                            labelPlacement="start"
-                        />
+                        <FormControlLabel control={<Switch />} label="Søndag Dagspass Barn" labelPlacement="start" />
                     </FormGroup>
                 </CardActions>
             </Card>
-            <PlayerInterestInfo playerInterest={dummyPlayerInrerestData} />
+            <Paper sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
+                <FormControl variant="standard">
+                    <InputLabel htmlFor="input-with-icon-adornment">Søk etter deltager</InputLabel>
+                    <Input
+                        id="input-with-icon-adornment"
+                        endAdornment={
+                            <InputAdornment position="start">
+                                <SearchIcon />
+                            </InputAdornment>
+                        }
+                    />
+                </FormControl>
+            </Paper>
+            <Typography variant="h2">Spillere:</Typography>
+            <PlayerInterestInfo poolName={PoolName.saturdayEvening} playerInterest={dummyPlayerInrerestData} />
         </Paper>
     );
 };
