@@ -188,5 +188,8 @@ export const migrateParticipantAndInterest = async () => {
     //     2: allPoolEvents,
     //     3: allPoolEventsWithPoolEventsInterestsPoolNamesThatArMissing,
     // };
-    // migrate in name from pardicipantFirstName to participantFirstName  (from 'interest' and 'participant-interests')
+
+    // ----------------------------------------------------------------
+    // migrate in participantIds from 'participants' to 'user'
+    // ----------------------------------------------------------------
 };
