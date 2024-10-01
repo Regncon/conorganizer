@@ -42,6 +42,8 @@ const RoomMap = async ({ pool }: Props) => {
         { roomName: RoomName.Dovregubben, top: 500, left: 10 },
         { roomName: RoomName.SolveigsSang, top: 1000, left: 100 },
         { roomName: RoomName.AnitrasDans, top: 750, left: 100 },
+        { roomName: RoomName.Welhaven, top: 150, left: 300 },
+        { roomName: RoomName.Werenskiold, top: 350, left: 300 },
     ];
 
     return (

@@ -28,6 +28,8 @@ export enum RoomName {
     'Dovregubben' = 'Dovregubben',
     'AnitrasDans' = 'Anitras Dans',
     'SolveigsSang' = 'Solveigs Sang',
+    'Werenskiold' = 'Werenskiold',
+    'Welhaven' = 'Welhaven',
 }
 
 export enum InterestLevel {

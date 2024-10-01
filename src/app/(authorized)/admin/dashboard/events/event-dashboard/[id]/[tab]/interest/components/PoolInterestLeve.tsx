@@ -2,7 +2,7 @@ import { InterestLevel } from '$lib/enums';
 import { Interest } from '$lib/types';
 import { Box, Paper, Typography } from '@mui/material';
 import Image from 'next/image';
-import { interestLevelToImage, InterestLevelToLabel } from '../../lib/helpers';
+import { interestLevelToImage, InterestLevelToLabel } from './lib/helpers/InterestHelper';
 
 type Props = {
     interestLevel: InterestLevel;
