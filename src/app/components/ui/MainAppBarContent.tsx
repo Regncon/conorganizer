@@ -58,7 +58,6 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             </Button>
             <Button
                 color={'secondary'}
-                disabled
                 sx={{ color: pathName.includes('/interests') ? '' : 'white' }}
                 startIcon={<FavoriteIcon />}
                 href="/interests"
@@ -105,7 +104,6 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             </IconButton>
             <IconButton
                 color={'secondary'}
-                disabled
                 sx={{ color: pathName.includes('/interests') ? '' : 'white' }}
                 href="/interests"
                 aria-label="interests"

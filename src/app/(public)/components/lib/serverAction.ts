@@ -133,12 +133,11 @@ export async function getEventInterestById(id: string) {
 }
 
 export async function getUsersInterestById(id: string) {
-    const userData = (await adminDb.collection('users').doc(id).get()).data() as MyUserInfo;
-    if (!userData || userData.participantIds === undefined) {
-        throw new Error(`could not find user ${id} or participantIds`);
-    }
+    const participants = (await GetAllParticipants()) as Participant[];
+    const myParticipants = participants.filter((participant) => participant.users?.includes(id));
 
-    const participantIdToFilter = userData.participantIds
+    const participantIdToFilter = myParticipants
+        .map((user) => user.id)
         .map((participantId) => {
             return Filter.where('participantId', '==', participantId);
         })
