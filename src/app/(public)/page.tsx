@@ -4,7 +4,6 @@ import DaysHeader from './components/ui/DaysHeader';
 import EventList from './components/EventList';
 import Logo from './components/ui/Logo';
 import RealtimePoolEvents from '$lib/components/RealtimePoolEvents';
-import type { IconName } from '$lib/types';
 
 export default async function Home() {
     const poolEvents = await getAllPoolEvents();

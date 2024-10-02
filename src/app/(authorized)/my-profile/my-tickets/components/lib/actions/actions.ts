@@ -194,13 +194,12 @@ export const AssignParticipantByEmail = async () => {
     }
 
     const tickets = await GetTicketsByEmail(user?.email);
-    if (!tickets) {
-        throw new Error('Failed to get tickets from Checkin');
-    }
 
     const participants = (await GetAllParticipants()) as Participant[];
-
-    const newParticipants = NewTickets(tickets, participants, user);
+    let newParticipants: Participant[] = [];
+    if (tickets) {
+        newParticipants = NewTickets(tickets, participants, user);
+    }
 
     let newParticipantIds: string[] = [];
     newParticipants.forEach(async (newParticipant) => {
@@ -216,6 +215,7 @@ export const AssignParticipantByEmail = async () => {
 
     const updatedParticipants = AssignUserToParticipant(participants, user);
 
+    console.log('newParticipantIds', newParticipantIds, 'updatedParticipants', updatedParticipants);
     if (newParticipantIds.length === 0 && updatedParticipants.length === 0) {
         console.log('No participants to update');
         return participants.filter((participant) => participant.users?.includes(user.uid));
@@ -224,6 +224,7 @@ export const AssignParticipantByEmail = async () => {
     updatedParticipants.forEach(async (participant) => {
         const participantId = participants.find((p) => p.ticketId === participant.ticketId)?.id;
         try {
+            console.log('adding user to participant', participantId, participant);
             await adminDb
                 .collection('participants')
                 .doc(participantId as string)
@@ -253,9 +254,13 @@ export const AssignParticipantByEmail = async () => {
     }
 
     if (myUserInfo) {
+        console.log('Updating existing user info', myUserInfoToBeUpdated);
+
         adminDb.collection('users').doc(user.uid).update(myUserInfoToBeUpdated);
     }
     if (!myUserInfo) {
+        console.log('Creating new user info', myUserInfoToBeUpdated);
+
         adminDb.collection('users').doc(user.uid).set(myUserInfoToBeUpdated);
     }
     const participantsBelongingToUser = participants
@@ -332,6 +337,9 @@ export const GetTicketsByEmail = async (email: string | null | undefined) => {
     }
 
     const allTickets = await GetTicketsFromCheckIn();
+    if (!allTickets) {
+        throw new Error('Failed to get tickets from Checkin');
+    }
 
     const emailTickets = allTickets?.filter((ticket) => ticket.crm.email === email);
     const ticketsWithOrderNumberFromEmail = allTickets?.filter((ticket) =>
