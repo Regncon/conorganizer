@@ -16,16 +16,20 @@ import { PoolName } from '$lib/enums';
 import SearchIcon from '@mui/icons-material/Search';
 import { generatePoolPlayerInterestById } from './lib/actions';
 import PlayerInterestInfo from './PlayerInterestInfo';
+import { translatedDays } from '$app/(public)/components/lib/helpers/translation';
 
 type Props = {
     id: string;
+    poolName: PoolName;
 };
 
-const PlayerManagement = async ({ id }: Props) => {
+const PlayerManagement = async ({ id, poolName }: Props) => {
     // const event = await getEventById(id);
 
+    //TODO:Må ha puljenavn og hente data relatert til pulje du er i
+    // const poolPlayerInterests = await generatePoolPlayerInterestById(id, poolName);
     const poolPlayerInterests = await generatePoolPlayerInterestById(id);
-    console.log('poolPlayerInterests', poolPlayerInterests);
+    // console.log('poolPlayerInterests', poolPlayerInterests);
 
     // const dummyPlayerInrerestData: PlayerInterest = {
     //     interestLevel: InterestLevel.VeryInterested,
@@ -88,6 +92,7 @@ const PlayerManagement = async ({ id }: Props) => {
 
     return (
         <Paper sx={{ padding: '1rem' }}>
+            <Typography variant="h1">{translatedDays.get(poolName)}</Typography>
             <Card sx={{ backgroundColor: 'rgb(55, 59, 87)' }}>
                 <CardHeader title="Prioriterg" />
                 <CardActions>

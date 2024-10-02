@@ -39,7 +39,7 @@ export default function EventDashboardTabs({ id, value }: props) {
                     allowscrollbuttonsmobilearia-label="Velg side"
                 >
                     <Tab
-                        // component={NextLink}
+                        component={NextLink}
                         icon={<GroupIcon />}
                         sx={tabsSx}
                         iconPosition="start"
