@@ -17,6 +17,7 @@ import { PlayerInterest } from '$lib/types';
 import { InterestLevel, PoolName } from '$lib/enums';
 import SearchIcon from '@mui/icons-material/Search';
 import { getEventById, getPoolEventById } from '$app/(public)/components/lib/serverAction';
+import { generatePoolPlayerInterestById } from './components/lib/actions';
 
 type Props = {
     id: string;
@@ -25,68 +26,68 @@ type Props = {
 const Players = async ({ id }: Props) => {
     // const event = await getEventById(id);
 
-    // console.log('Players', event);
+    const poolPlayerInterests = await generatePoolPlayerInterestById('1AJUD3MiLuvnhf5AcXHD');
+    console.log('poolPlayerInterests', poolPlayerInterests);
 
-    const dummyPlayerInrerestData: PlayerInterest = {
-        interestLevel: InterestLevel.VeryInterested,
-        poolEventId: '',
-        participantId: '',
-        firstName: 'Kari',
-        lastName: 'Nordmann',
-        isOver18: true,
-        ticketCategoryID: 0,
-        ticketCategory: 'Festivalpass Ungdom/student (13-25/30år) Early-bird',
-        conPlayers: [
-            {
-                id: undefined,
-                participantId: '',
-                firstName: '',
-                lastName: '',
-                interestLevel: InterestLevel.VeryInterested,
-                poolEventId: '',
-                poolEventTitle: 'Et gøyalt spill',
-                poolName: PoolName.fridayEvening,
-                isFirstChoice: true,
-                isGameMaster: false,
-                createdAt: '',
-                createdBy: '',
-                updateAt: '',
-                updatedBy: '',
-            },
-            {
-                id: undefined,
-                participantId: '',
-                firstName: '',
-                lastName: '',
-                interestLevel: InterestLevel.SomewhatInterested,
-                poolEventId: '',
-                poolEventTitle: '"Hva f**n skjedde!?!??" -- ghost/echo av John Harper',
-                poolName: PoolName.saturdayMorning,
-                isFirstChoice: false,
-                isGameMaster: true,
-                createdAt: '',
-                createdBy: '',
-                updateAt: '',
-                updatedBy: '',
-            },
-            {
-                id: undefined,
-                participantId: '',
-                firstName: '',
-                lastName: '',
-                interestLevel: InterestLevel.Interested,
-                poolEventId: '',
-                poolEventTitle: 'Random dnd event',
-                poolName: PoolName.saturdayMorning,
-                isFirstChoice: false,
-                isGameMaster: true,
-                createdAt: '',
-                createdBy: '',
-                updateAt: '',
-                updatedBy: '',
-            },
-        ],
-    };
+    // const dummyPlayerInrerestData: PlayerInterest = {
+    //     interestLevel: InterestLevel.VeryInterested,
+    //     poolEventId: '',
+    //     participantId: '',
+    //     firstName: 'Kari',
+    //     lastName: 'Nordmann',
+    //     isOver18: true,
+    //     ticketCategoryID: 0,
+    //     ticketCategory: 'Festivalpass Ungdom/student (13-25/30år) Early-bird',
+    //     conPlayers: [
+    //         {
+    //             id: undefined,
+    //             participantId: '',
+    //             firstName: '',
+    //             lastName: '',
+    //             interestLevel: InterestLevel.VeryInterested,
+    //             poolEventId: '',
+    //             poolEventTitle: 'Et gøyalt spill',
+    //             poolName: PoolName.fridayEvening,
+    //             isFirstChoice: true,
+    //             isGameMaster: false,
+    //             createdAt: '',
+    //             createdBy: '',
+    //             updateAt: '',
+    //             updatedBy: '',
+    //         },
+    //         {
+    //             id: undefined,
+    //             participantId: '',
+    //             firstName: '',
+    //             lastName: '',
+    //             interestLevel: InterestLevel.SomewhatInterested,
+    //             poolEventId: '',
+    //             poolEventTitle: '"Hva f**n skjedde!?!??" -- ghost/echo av John Harper',
+    //             poolName: PoolName.saturdayMorning,
+    //             isFirstChoice: false,
+    //             isGameMaster: true,
+    //             createdAt: '',
+    //             createdBy: '',
+    //             updateAt: '',
+    //             updatedBy: '',
+    //         },
+    //         {
+    //             id: undefined,
+    //             participantId: '',
+    //             firstName: '',
+    //             lastName: '',
+    //             interestLevel: InterestLevel.Interested,
+    //             poolEventId: '',
+    //             poolEventTitle: 'Random dnd event',
+    //             poolName: PoolName.saturdayMorning,
+    //             isFirstChoice: false,
+    //             isGameMaster: true,
+    //             createdAt: '',
+    //             createdBy: '',
+    //             updateAt: '',
+    //             updatedBy: '',
+    //         },
+
     return (
         <Paper sx={{ padding: '1rem' }}>
             <Typography variant="h1">Spillere:</Typography>
@@ -114,7 +115,9 @@ const Players = async ({ id }: Props) => {
                 </FormControl>
             </Paper>
             <Typography variant="h2">Spillere:</Typography>
-            <PlayerInterestInfo poolName={PoolName.saturdayEvening} playerInterest={dummyPlayerInrerestData} />
+            {poolPlayerInterests.map((poolPlayerInterest) => (
+                <PlayerInterestInfo poolName={PoolName.saturdayEvening} playerInterest={poolPlayerInterest} />
+            ))}
         </Paper>
     );
 };
