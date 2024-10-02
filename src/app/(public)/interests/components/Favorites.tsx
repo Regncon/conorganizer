@@ -59,7 +59,6 @@ const Favorites = async ({}: Props) => {
     const poolEvents = await getAllPoolEvents();
     try {
         const participantMap = await buildParticipantPoolEventsMap(usersInterests, poolEvents);
-
         const currentParticipant = participantMap.get(participantName);
 
         if (!currentParticipant) {
@@ -131,9 +130,22 @@ const Favorites = async ({}: Props) => {
             </>
         );
     } catch (error) {
+        const err = error as Error;
+        console.log(err.message);
+        if (err.message === 'Fant ikkje participant i participantMap') {
+            return (
+                <Box sx={{ display: 'grid', marginBlockStart: '1rem' }}>
+                    <Box sx={{ placeSelf: 'center' }}>
+                        <ParticipantSelector />
+                    </Box>
+                    <Typography variant="h1">Denne deltakaren har ikkje valt nokre interesser.</Typography>
+                </Box>
+            );
+        }
+
         return (
             <Typography>
-                Noe gjekk gale kontakt styret <Link href="mailto:styret@regncon.no">styret@regncon.no </Link>
+                Noe gjekk gale kontakt styret <Link href="mailto:styret@regncon.no">styret@regncon.no</Link>
             </Typography>
         );
     }
