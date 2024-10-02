@@ -4,7 +4,7 @@ import type { MyUserInfo } from '$app/(authorized)/my-events/lib/types';
 import { adminDb } from '$lib/firebase/firebaseAdmin';
 import type { Interest, InterestsInPool, Participant, PoolEvent } from '$lib/types';
 
-export const migrateParticipantAndInterest = async () => {
+export const migrateParticipantAndInterestPoolNames = async () => {
     // const allUserData = (await adminDb.collection('users').get()).docs.map((doc) => ({
     //     id: doc.id,
     //     ...doc.data(),
