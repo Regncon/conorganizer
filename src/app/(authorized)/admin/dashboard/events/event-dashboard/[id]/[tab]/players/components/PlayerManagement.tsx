@@ -49,7 +49,7 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
     //     isOver18: true,
     //     ticketCategoryID: 0,
     //     ticketCategory: 'Festivalpass Ungdom/student (13-25/30år) Early-bird',
-    //     conPlayers: [
+    //     poolPlayers: [
     //         {
     //             id: undefined,
     //             participantId: '',

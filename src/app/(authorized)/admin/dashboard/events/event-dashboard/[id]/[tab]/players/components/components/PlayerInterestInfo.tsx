@@ -14,6 +14,8 @@ type Props = {
 };
 
 const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
+    console.log('playerInterest', playerInterest.poolPlayers);
+
     return (
         <Paper elevation={2} sx={{ marginTop: '1rem', padding: '1rem' }}>
             <Box
@@ -57,22 +59,22 @@ const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
                 <PoolPlayer
                     currentPoolName={poolName}
                     previousPoolName={PoolName.fridayEvening}
-                    conPlayers={playerInterest.conPlayers}
+                    poolPlayers={playerInterest.poolPlayers}
                 />
                 <PoolPlayer
                     currentPoolName={poolName}
                     previousPoolName={PoolName.saturdayMorning}
-                    conPlayers={playerInterest.conPlayers}
+                    poolPlayers={playerInterest.poolPlayers}
                 />
                 <PoolPlayer
                     currentPoolName={poolName}
                     previousPoolName={PoolName.saturdayEvening}
-                    conPlayers={playerInterest.conPlayers}
+                    poolPlayers={playerInterest.poolPlayers}
                 />
                 <PoolPlayer
                     currentPoolName={poolName}
                     previousPoolName={PoolName.sundayMorning}
-                    conPlayers={playerInterest.conPlayers}
+                    poolPlayers={playerInterest.poolPlayers}
                 />
             </Box>
         </Paper>

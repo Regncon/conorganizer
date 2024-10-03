@@ -10,24 +10,23 @@ import GamemasterIcon from '$lib/components/icons/GameMasterIcon';
 type Props = {
     previousPoolName: PoolName;
     currentPoolName: PoolName;
-    conPlayers: PoolPlayer[];
+    poolPlayers: PoolPlayer[];
 };
-const PreviousGamesPlayed = ({ previousPoolName, currentPoolName, conPlayers }: Props) => {
-    // console.log('PreviousGamesPlayed', poolName, conPlayers);
-    const filteredConPlayers = conPlayers.filter((conPlayer) => conPlayer.poolName === previousPoolName);
+const PreviousGamesPlayed = ({ previousPoolName, currentPoolName, poolPlayers }: Props) => {
+    const filteredPoolPlayers = poolPlayers.filter((poolPlayer) => poolPlayer.poolName === previousPoolName);
 
     // ckeck if the current pool is earlier than the previous pool
-    if (previousPoolName < currentPoolName && (filteredConPlayers === undefined || filteredConPlayers.length === 0)) {
+    if (previousPoolName < currentPoolName && (filteredPoolPlayers === undefined || filteredPoolPlayers.length === 0)) {
         return (
             <Box>
                 <Typography sx={{ fontWeight: 'bold' }}>{getTranslatedDay(previousPoolName)}: - </Typography>
             </Box>
         );
     }
-    const playersInPool = filteredConPlayers.filter((conPlayer) => conPlayer.poolName === previousPoolName);
+    const playersInPool = filteredPoolPlayers.filter((poolPlayer) => poolPlayer.poolName === previousPoolName);
     return (
         <>
-            {playersInPool.map((conPlayer, index) => (
+            {playersInPool.map((poolPlayer, index) => (
                 <Box
                     key={index}
                     sx={{
@@ -42,21 +41,21 @@ const PreviousGamesPlayed = ({ previousPoolName, currentPoolName, conPlayers }: 
                 >
                     <Typography sx={{ fontWeight: 'bold' }}>{getTranslatedDay(previousPoolName)}: </Typography>
                     <Image
-                        src={interestLevelToImage[conPlayer.interestLevel]}
-                        alt={InterestLevelToLabel[conPlayer.interestLevel]}
+                        src={interestLevelToImage[poolPlayer.interestLevel]}
+                        alt={InterestLevelToLabel[poolPlayer.interestLevel]}
                         width={50}
                         height={25}
                     />
-                    <Typography>{InterestLevelToLabel[conPlayer.interestLevel]}</Typography>
+                    <Typography>{InterestLevelToLabel[poolPlayer.interestLevel]}</Typography>
                     <Box sx={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
-                        <Typography component={'i'}> {conPlayer.poolEventTitle}</Typography>
-                        {conPlayer.isFirstChoice && (
+                        <Typography component={'i'}> {poolPlayer.poolEventTitle}</Typography>
+                        {poolPlayer.isFirstChoice && (
                             <Box sx={{ display: 'flex', gap: '1rem', color: 'warning.main' }}>
                                 <WarningIcon />
                                 <Typography component={'i'}>Fått førstevalg</Typography>
                             </Box>
                         )}
-                        {conPlayer.isGameMaster && (
+                        {poolPlayer.isGameMaster && (
                             <Box sx={{ display: 'flex', gap: '1rem', color: 'success.main' }}>
                                 <GamemasterIcon color="success" />
                                 <Typography>Spilleder! :D</Typography>

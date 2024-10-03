@@ -270,7 +270,7 @@ export type PlayerInterest = {
     isOver18: boolean;
     ticketCategoryID: number;
     ticketCategory: string;
-    conPlayers: PoolPlayer[];
+    poolPlayers: PoolPlayer[];
 };
 
 export type LocalStorageNames = 'filters';
