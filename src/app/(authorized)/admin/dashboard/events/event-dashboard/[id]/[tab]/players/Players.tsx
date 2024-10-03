@@ -1,6 +1,6 @@
 import { Box, Paper, Tab, Tabs, Typography } from '@mui/material';
 import { getEventById } from '$app/(public)/components/lib/serverAction';
-import PoolNameTabs from './components/PoolNameTabs';
+import PoolNameTabs from './ui/PoolNameTabs';
 import PlayerManagement from './components/PlayerManagement';
 import type { PoolName } from '$lib/enums';
 
