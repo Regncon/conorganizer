@@ -26,6 +26,8 @@ export async function generatePoolPlayerInterestById(id: string) {
             ticketCategoryID: participant?.ticketCategoryId ?? 0,
             ticketCategory: participant?.ticketCategory ?? 'FEIL!',
             conPlayers: [],
+            isGameMaster: true,
+            isAssigned: true,
         };
 
         poolInterests.push(playerInterest);

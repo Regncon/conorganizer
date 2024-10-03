@@ -1,4 +1,4 @@
-import { ConPlayer } from '$lib/types';
+import { PoolPlayer } from '$lib/types';
 import { Box, Typography } from '@mui/material';
 import Image from 'next/image';
 import { interestLevelToImage, InterestLevelToLabel } from '../../../../lib/helpers';
@@ -10,7 +10,7 @@ import GamemasterIcon from '$lib/components/icons/GameMasterIcon';
 type Props = {
     previousPoolName: PoolName;
     currentPoolName: PoolName;
-    conPlayers: ConPlayer[];
+    conPlayers: PoolPlayer[];
 };
 const PreviousGamesPlayed = ({ previousPoolName, currentPoolName, conPlayers }: Props) => {
     // console.log('PreviousGamesPlayed', poolName, conPlayers);

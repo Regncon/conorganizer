@@ -37,6 +37,7 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
     //TODO:Må ha puljenavn og hente data relatert til pulje du er i
     // const poolPlayerInterests = await generatePoolPlayerInterestById(id, poolName);
     const poolPlayerInterests = await generatePoolPlayerInterestById(id);
+    const assignedPlayers = poolPlayerInterests.filter((player) => player.isAssigned);
     // console.log('poolPlayerInterests', poolPlayerInterests);
 
     // const dummyPlayerInrerestData: PlayerInterest = {
@@ -111,7 +112,7 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
                 <Typography variant="h3">Max Antall spillere: {maxNumberOfPlayers} </Typography>
             </FormGroup>
             <Paper elevation={2} sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
-                <AssigendPlayers />
+                <AssigendPlayers poolName={poolName} assignedPlayers={assignedPlayers} />
             </Paper>
 
             <Paper sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
@@ -129,7 +130,7 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
             </Paper>
             <Typography variant="h2">Intreserte:</Typography>
             {poolPlayerInterests.map((poolPlayerInterest) => (
-                <PlayerInterestInfo poolName={PoolName.saturdayEvening} playerInterest={poolPlayerInterest} />
+                <PlayerInterestInfo poolName={poolName} playerInterest={poolPlayerInterest} />
             ))}
         </Paper>
     );

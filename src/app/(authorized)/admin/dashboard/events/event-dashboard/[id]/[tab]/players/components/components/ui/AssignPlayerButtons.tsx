@@ -20,12 +20,12 @@ const AssignPlayerButtons = ({ participantId, poolEventId, isAssigned, isGameMas
     return (
         <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
             <FormControlLabel
-                control={<Switch name="isAssigned" onChange={handleChanges} />}
+                control={<Switch defaultChecked={isAssigned} name="isAssigned" onChange={handleChanges} />}
                 label="Tildel plass"
                 labelPlacement="start"
             />
             <FormControlLabel
-                control={<Switch name="isGameMaster" onChange={handleChanges} />}
+                control={<Switch defaultChecked={isGameMaster} name="isGameMaster" onChange={handleChanges} />}
                 label="GM"
                 labelPlacement="start"
             />

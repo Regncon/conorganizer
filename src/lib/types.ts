@@ -239,7 +239,7 @@ export type Interest = {
     updatedBy: string;
 };
 
-export type ConPlayer = {
+export type PoolPlayer = {
     id?: string;
     participantId: string;
     firstName: string;
@@ -263,12 +263,14 @@ export type PlayerInterest = {
     interestLevel: InterestLevel;
     poolEventId: string;
     participantId: string;
+    isGameMaster: boolean;
+    isAssigned: boolean;
     firstName: string;
     lastName: string;
     isOver18: boolean;
     ticketCategoryID: number;
     ticketCategory: string;
-    conPlayers: ConPlayer[];
+    conPlayers: PoolPlayer[];
 };
 
 export type LocalStorageNames = 'filters';
