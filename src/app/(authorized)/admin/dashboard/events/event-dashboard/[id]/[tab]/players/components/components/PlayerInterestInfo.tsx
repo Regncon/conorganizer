@@ -1,8 +1,8 @@
 import { PlayerInterest } from '$lib/types';
 import { Box, Divider, FormControlLabel, FormGroup, Paper, Switch, Typography } from '@mui/material';
 import Image from 'next/image';
-import { interestLevelToImage, InterestLevelToLabel } from '../../lib/helpers';
-import PreviousGamesPlayed from './PreviousGamesPlayed';
+import { interestLevelToImage, InterestLevelToLabel } from '../../../lib/helpers';
+import PreviousGamesPlayed from './components/PreviousGamesPlayed';
 import { PoolName } from '$lib/enums';
 import Over18 from '$ui/participant/Over18';
 import ParticipantAvatar from '$ui/participant/ParticipantAvatar';
@@ -44,8 +44,7 @@ const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
                         />
                         <AssignPlayerButtons
                             participantId={playerInterest.participantId}
-                            poolEventId={playerInterest.poolEventId}
-                        />
+                            poolEventId={playerInterest.poolEventId} isAssigned={false} isGameMaster={false}                        />
                         <Over18 over18={playerInterest.isOver18} />
                         <Typography component={'i'}>{playerInterest.ticketCategory}</Typography>
                     </Box>

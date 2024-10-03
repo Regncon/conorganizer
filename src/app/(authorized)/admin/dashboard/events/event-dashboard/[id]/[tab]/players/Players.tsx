@@ -18,7 +18,7 @@ const Players = async ({ id, activeTab }: Props) => {
             <Typography variant="h1">Spillere:</Typography>
             <Paper sx={{ padding: '1rem' }}>
                 <PoolNameTabs id={id} />
-                <PlayerManagement id={poolId} poolName={activeTab} />
+                <PlayerManagement id={poolId} poolName={activeTab} maxNumberOfPlayers={event.participants} />
             </Paper>
         </Box>
     );

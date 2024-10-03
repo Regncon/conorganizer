@@ -1,7 +1,7 @@
 import { ConPlayer } from '$lib/types';
 import { Box, Typography } from '@mui/material';
 import Image from 'next/image';
-import { interestLevelToImage, InterestLevelToLabel } from '../../lib/helpers';
+import { interestLevelToImage, InterestLevelToLabel } from '../../../../lib/helpers';
 import { getTranslatedDay } from '$app/(public)/components/lib/helpers/translation';
 import { PoolName } from '$lib/enums';
 import WarningIcon from '@mui/icons-material/Warning';

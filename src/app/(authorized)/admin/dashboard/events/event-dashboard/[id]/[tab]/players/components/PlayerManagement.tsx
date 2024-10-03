@@ -12,20 +12,23 @@ import {
     InputLabel,
     Paper,
     Switch,
+    TextField,
     Typography,
 } from '@mui/material';
 import { PoolName } from '$lib/enums';
 import SearchIcon from '@mui/icons-material/Search';
 import { generatePoolPlayerInterestById } from './lib/actions';
-import PlayerInterestInfo from './PlayerInterestInfo';
+import PlayerInterestInfo from './components/PlayerInterestInfo';
 import { translatedDays } from '$app/(public)/components/lib/helpers/translation';
+import AssigendPlayers from './components/AssigendPlayers';
 
 type Props = {
     id: string | undefined;
     poolName: PoolName;
+    maxNumberOfPlayers: number;
 };
 
-const PlayerManagement = async ({ id, poolName }: Props) => {
+const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => {
     if (!id) {
         return <Typography variant="h1">Event ikke satt opp i denne puljen</Typography>;
     }
@@ -105,7 +108,12 @@ const PlayerManagement = async ({ id, poolName }: Props) => {
                 <FormControlLabel control={<Switch />} label="Under 18" labelPlacement="start" />
                 <FormControlLabel control={<Switch />} label="Over 18" labelPlacement="start" />
                 <FormControlLabel control={<Switch />} label="Søndag Dagspass Barn" labelPlacement="start" />
+                <Typography variant="h3">Max Antall spillere: {maxNumberOfPlayers} </Typography>
             </FormGroup>
+            <Paper elevation={2} sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
+                <AssigendPlayers />
+            </Paper>
+
             <Paper sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
                 <FormControl variant="standard">
                     <InputLabel htmlFor="input-with-icon-adornment">Søk etter deltager</InputLabel>
