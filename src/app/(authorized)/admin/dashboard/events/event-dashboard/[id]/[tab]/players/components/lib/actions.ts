@@ -32,7 +32,7 @@ export async function generatePoolPlayerInterestById(id: string) {
             isOver18: participant?.over18 ?? false,
             ticketCategoryID: participant?.ticketCategoryId ?? 0,
             ticketCategory: participant?.ticketCategory ?? 'FEIL!',
-            poolPlayers: participantPoolPlayers ? participantPoolPlayers : [],
+            playerInPools: participantPoolPlayers ? participantPoolPlayers : [],
             isGameMaster: true,
             isAssigned: true,
         };

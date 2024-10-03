@@ -253,6 +253,7 @@ export type PoolPlayer = {
     isPublished: boolean;
     isFirstChoice: boolean;
     isGameMaster: boolean;
+    isAssigned: boolean;
     createdAt: string;
     createdBy: string;
     updateAt: string;
@@ -270,7 +271,7 @@ export type PlayerInterest = {
     isOver18: boolean;
     ticketCategoryID: number;
     ticketCategory: string;
-    poolPlayers: PoolPlayer[];
+    playerInPools: PoolPlayer[];
 };
 
 export type LocalStorageNames = 'filters';
