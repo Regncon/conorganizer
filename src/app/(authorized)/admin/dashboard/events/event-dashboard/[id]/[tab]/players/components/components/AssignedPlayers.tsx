@@ -1,6 +1,5 @@
 import { InterestLevel, PoolName, RoomName } from '$lib/enums';
 import { PlayerInterest } from '$lib/types';
-import { getAssignetPlayers } from './lib/actions';
 import PlayerInterestInfo from './PlayerInterestInfo';
 
 type Props = {
@@ -8,7 +7,7 @@ type Props = {
     poolName: PoolName;
 };
 
-const AssigendPlayers = async ({ assignedPlayers, poolName }: Props) => {
+const AssignedPlayers = async ({ assignedPlayers, poolName }: Props) => {
     return (
         <>
             <h1>Assigned Players</h1>
@@ -23,4 +22,4 @@ const AssigendPlayers = async ({ assignedPlayers, poolName }: Props) => {
     );
 };
 
-export default AssigendPlayers;
+export default AssignedPlayers;

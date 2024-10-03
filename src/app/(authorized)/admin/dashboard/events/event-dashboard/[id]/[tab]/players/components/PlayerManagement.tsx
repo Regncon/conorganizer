@@ -20,7 +20,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { generatePoolPlayerInterestById } from './lib/actions';
 import PlayerInterestInfo from './components/PlayerInterestInfo';
 import { translatedDays } from '$app/(public)/components/lib/helpers/translation';
-import AssigendPlayers from './components/AssigendPlayers';
+import AssignedPlayers from './components/AssignedPlayers';
 
 type Props = {
     id: string | undefined;
@@ -112,7 +112,7 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
                 <Typography variant="h3">Max Antall spillere: {maxNumberOfPlayers} </Typography>
             </FormGroup>
             <Paper elevation={2} sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
-                <AssigendPlayers poolName={poolName} assignedPlayers={assignedPlayers} />
+                <AssignedPlayers poolName={poolName} assignedPlayers={assignedPlayers} />
             </Paper>
 
             <Paper sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
