@@ -1,18 +1,23 @@
 'use client';
 import { FormControlLabel, FormGroup, Switch } from '@mui/material';
 import { useRouter } from 'next/navigation';
+import { assignPlayer } from '../lib/actions';
 
 type Props = {
+    poolPlayerId: string;
     participantId: string;
     poolEventId: string;
     isAssigned: boolean;
     isGameMaster: boolean;
 };
 
-const AssignPlayerButtons = ({ participantId, poolEventId, isAssigned, isGameMaster }: Props) => {
+const AssignPlayerButtons = ({ poolPlayerId, participantId, poolEventId, isAssigned, isGameMaster }: Props) => {
     const router = useRouter();
     const handleChanges = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const { name, checked } = event.target;
+        const isAssigned = name === 'isAssigned' ? checked : false;
+        const isGameMaster = name === 'isGameMaster' ? checked : false;
+        await assignPlayer(poolPlayerId, participantId, poolEventId, isAssigned, isGameMaster);
         console.log('event', event, 'name', name, 'checked', checked);
         router.refresh();
     };
