@@ -6,6 +6,7 @@ import PreviousGamesPlayed from './PreviousGamesPlayed';
 import { PoolName } from '$lib/enums';
 import Over18 from '$ui/participant/Over18';
 import ParticipantAvatar from '$ui/participant/ParticipantAvatar';
+import AssignPlayerButtons from './ui/AssignPlayerButtons';
 
 type Props = {
     poolName: PoolName;
@@ -41,10 +42,10 @@ const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
                             lastName={playerInterest.lastName}
                             header
                         />
-                        <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
-                            <FormControlLabel control={<Switch />} label="Tildel plass" labelPlacement="start" />
-                            <FormControlLabel control={<Switch />} label="Gm" labelPlacement="start" />
-                        </FormGroup>
+                        <AssignPlayerButtons
+                            participantId={playerInterest.participantId}
+                            poolEventId={playerInterest.poolEventId}
+                        />
                         <Over18 over18={playerInterest.isOver18} />
                         <Typography component={'i'}>{playerInterest.ticketCategory}</Typography>
                     </Box>

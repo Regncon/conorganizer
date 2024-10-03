@@ -1,4 +1,6 @@
 import {
+    Box,
+    Button,
     Card,
     CardActions,
     CardHeader,
@@ -95,17 +97,15 @@ const PlayerManagement = async ({ id, poolName }: Props) => {
 
     return (
         <Paper sx={{ padding: '1rem' }}>
-            <Typography variant="h1">{translatedDays.get(poolName)}</Typography>
-            <Card sx={{ backgroundColor: 'rgb(55, 59, 87)' }}>
-                <CardHeader title="Prioriterg" />
-                <CardActions>
-                    <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
-                        <FormControlLabel control={<Switch />} label="Under 18" labelPlacement="start" />
-                        <FormControlLabel control={<Switch />} label="Over 18" labelPlacement="start" />
-                        <FormControlLabel control={<Switch />} label="Søndag Dagspass Barn" labelPlacement="start" />
-                    </FormGroup>
-                </CardActions>
-            </Card>
+            <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem', placeItems: 'center' }}>
+                <Typography variant="h1">{translatedDays.get(poolName)}</Typography>
+                <Button sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }} variant="contained" color="primary">
+                    Algotitme
+                </Button>
+                <FormControlLabel control={<Switch />} label="Under 18" labelPlacement="start" />
+                <FormControlLabel control={<Switch />} label="Over 18" labelPlacement="start" />
+                <FormControlLabel control={<Switch />} label="Søndag Dagspass Barn" labelPlacement="start" />
+            </FormGroup>
             <Paper sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
                 <FormControl variant="standard">
                     <InputLabel htmlFor="input-with-icon-adornment">Søk etter deltager</InputLabel>
@@ -119,7 +119,7 @@ const PlayerManagement = async ({ id, poolName }: Props) => {
                     />
                 </FormControl>
             </Paper>
-            <Typography variant="h2">Spillere:</Typography>
+            <Typography variant="h2">Intreserte:</Typography>
             {poolPlayerInterests.map((poolPlayerInterest) => (
                 <PlayerInterestInfo poolName={PoolName.saturdayEvening} playerInterest={poolPlayerInterest} />
             ))}
