@@ -35,6 +35,8 @@ of your con schedule, your panels, and your expenses.
 -   Generate assignment suggestions
 -   Lock pool
 -   Add is gm to event
+-   Impersonate participants to assign interests
+
 
 #### Nice to haves for publishing events
 
