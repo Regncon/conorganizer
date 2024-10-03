@@ -11,13 +11,14 @@ type Props = {
 
 const Players = async ({ id, activeTab }: Props) => {
     const event = await getEventById(id);
+    const poolId = event.poolIds.find((pool) => pool.poolName === activeTab)?.id;
 
     return (
         <Box>
             <Typography variant="h1">Spillere:</Typography>
             <Paper sx={{ padding: '1rem' }}>
                 <PoolNameTabs id={id} />
-                <PlayerManagement id={id} poolName={activeTab} />
+                <PlayerManagement id={poolId} poolName={activeTab} />
             </Paper>
         </Box>
     );

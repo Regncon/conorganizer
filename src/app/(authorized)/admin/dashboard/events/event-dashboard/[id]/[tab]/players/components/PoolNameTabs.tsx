@@ -18,8 +18,6 @@ type Props = {
 };
 
 const PoolNameTabs = ({ id }: Props) => {
-    console.log('tab', id);
-
     const router = useRouter();
 
     const searchParams = useSearchParams();

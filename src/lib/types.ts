@@ -126,6 +126,7 @@ export type PoolEvent = {
     id?: string;
     parentEventId: string;
     title: string;
+    isInterestChoiceClosed: boolean;
     gameMaster: string;
     system: string;
     shortDescription: string;
@@ -247,6 +248,9 @@ export type ConPlayer = {
     poolEventId: string;
     poolEventTitle: string;
     poolName: PoolName;
+    roomId: string;
+    roomName: RoomName;
+    isPublished: boolean;
     isFirstChoice: boolean;
     isGameMaster: boolean;
     createdAt: string;

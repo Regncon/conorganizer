@@ -19,11 +19,14 @@ import PlayerInterestInfo from './PlayerInterestInfo';
 import { translatedDays } from '$app/(public)/components/lib/helpers/translation';
 
 type Props = {
-    id: string;
+    id: string | undefined;
     poolName: PoolName;
 };
 
 const PlayerManagement = async ({ id, poolName }: Props) => {
+    if (!id) {
+        return <Typography variant="h1">Event ikke satt opp i denne puljen</Typography>;
+    }
     // const event = await getEventById(id);
 
     //TODO:Må ha puljenavn og hente data relatert til pulje du er i
