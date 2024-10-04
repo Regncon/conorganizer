@@ -141,7 +141,10 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
                 <FormControlLabel control={<Switch />} label="Under 18" labelPlacement="start" />
                 <FormControlLabel control={<Switch />} label="Over 18" labelPlacement="start" />
                 <FormControlLabel control={<Switch />} label="Søndag Dagspass Barn" labelPlacement="start" />
-                <Typography variant="h3">Antall tildelte spillere: {assignedPlayers.length}</Typography>
+                <Typography variant="h3">
+                    Antall tildelte spillere:{' '}
+                    {assignedPlayers.filter((assignedPlayer) => !assignedPlayer.isGameMaster).length}
+                </Typography>
                 <Typography variant="h3">Max Antall spillere: {maxNumberOfPlayers} </Typography>
                 <Button sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }} variant="contained" color="primary">
                     Algotitme
