@@ -40,7 +40,7 @@ const PlayerInterestInfo = ({ poolName, playerInterest, hasPlayerInPool }: Props
                             <GamemasterIcon size="large" color="success" />
                             <Typography variant="h2">Spilleder! :D</Typography>
                         </Box>
-                        : <Image
+                    :   <Image
                             src={interestLevelToImage[playerInterest.interestLevel]}
                             alt={InterestLevelToLabel[playerInterest.interestLevel]}
                             width={100}
@@ -51,7 +51,7 @@ const PlayerInterestInfo = ({ poolName, playerInterest, hasPlayerInPool }: Props
 
                 <Box>
                     <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem' }}>
-                        {playerInterest.isGameMaster ?? (
+                        {playerInterest.isGameMaster ? null : (
                             <Typography>{InterestLevelToLabel[playerInterest.interestLevel]}</Typography>
                         )}
                         <ParticipantAvatar
