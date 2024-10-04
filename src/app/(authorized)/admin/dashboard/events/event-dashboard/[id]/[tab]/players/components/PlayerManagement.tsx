@@ -125,16 +125,34 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
     ];
     return (
         <Paper sx={{ padding: '1rem' }}>
-            <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem', placeItems: 'center' }}>
+            <Paper
+                component={FormGroup}
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: '1rem',
+                    placeItems: 'center',
+                    position: 'sticky',
+                    top: 'var(--app-bar-height-desktop)',
+                    zIndex: 1,
+                }}
+            >
                 <Typography variant="h1">{translatedDays.get(poolName)}</Typography>
-                <Button sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }} variant="contained" color="primary">
-                    Algotitme
-                </Button>
                 <FormControlLabel control={<Switch />} label="Under 18" labelPlacement="start" />
                 <FormControlLabel control={<Switch />} label="Over 18" labelPlacement="start" />
                 <FormControlLabel control={<Switch />} label="Søndag Dagspass Barn" labelPlacement="start" />
+                <Typography variant="h3">Antall tildelte spillere: {assignedPlayers.length}</Typography>
                 <Typography variant="h3">Max Antall spillere: {maxNumberOfPlayers} </Typography>
-            </FormGroup>
+                <Button sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }} variant="contained" color="primary">
+                    Algotitme
+                </Button>
+                <Button sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }} variant="contained" color="primary">
+                    Algotitme2
+                </Button>
+                <Button sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }} variant="contained" color="primary">
+                    Algotitme3
+                </Button>
+            </Paper>
             <Paper elevation={2} sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
                 <AssignedPlayers poolName={poolName} assignedPlayers={assignedPlayers} />
             </Paper>
