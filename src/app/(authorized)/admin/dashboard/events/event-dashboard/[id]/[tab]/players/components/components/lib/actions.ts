@@ -2,7 +2,7 @@
 import { FirebaseCollectionNames, InterestLevel, RoomName } from '$lib/enums';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { Interest, Participant, PoolEvent, PoolPlayer } from '$lib/types';
-import { addDoc, collection, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 
 export async function assignPlayer(
     participantId: string,
@@ -36,10 +36,27 @@ async function updatePoolPlayer(
     if (!db || !user) {
         throw new Error('Database is undefined');
     }
-    // Todo: add updated by and updated at
-    // Add or delete pool and participant
+
+    const playerRef = doc(db, FirebaseCollectionNames.players, poolPlayerId);
+
+    const poolEventPoolPlayerRef = doc(
+        db,
+        FirebaseCollectionNames.poolEvents,
+        poolEventId,
+        FirebaseCollectionNames.poolPlayers,
+        poolPlayerId
+    );
+    const participantPoolPlayerRef = doc(
+        db,
+        FirebaseCollectionNames.participants,
+        participantId,
+        FirebaseCollectionNames.particitantPlayers,
+        poolPlayerId
+    );
+
     if (isAssigned || isGameMaster) {
-        const playerRef = doc(db, FirebaseCollectionNames.players, poolPlayerId);
+        console.log('updating player', poolPlayerId);
+
         await updateDoc(playerRef, {
             isAssigned,
             isGameMaster,
@@ -47,13 +64,6 @@ async function updatePoolPlayer(
             updatedBy: user.uid,
         });
 
-        const poolEventPoolPlayerRef = doc(
-            db,
-            FirebaseCollectionNames.poolEvents,
-            poolEventId,
-            FirebaseCollectionNames.poolPlayers,
-            poolPlayerId
-        );
         await updateDoc(poolEventPoolPlayerRef, {
             isAssigned,
             isGameMaster,
@@ -61,19 +71,19 @@ async function updatePoolPlayer(
             updatedBy: user.uid,
         });
 
-        const participantPoolPlayerRef = doc(
-            db,
-            FirebaseCollectionNames.participants,
-            participantId,
-            FirebaseCollectionNames.particitantPlayers,
-            poolPlayerId
-        );
         await updateDoc(participantPoolPlayerRef, {
             isAssigned,
             isGameMaster,
             updateAt: new Date().toISOString(),
             updatedBy: user.uid,
         });
+    }
+    if (isAssigned === false && isGameMaster === false) {
+        console.log('deleteting player', poolPlayerId);
+
+        await deleteDoc(playerRef);
+        await deleteDoc(poolEventPoolPlayerRef);
+        await deleteDoc(participantPoolPlayerRef);
     }
 }
 
@@ -126,7 +136,7 @@ async function createPoolPlayer(
         roomId: rooms.docs[0]?.id ?? '',
         roomName: rooms.docs[0]?.data().name ?? RoomName.NotSet,
         isPublished: isPublished,
-        isAssigned: isAssigned,
+        isAssigned: isAssigned || isGameMaster,
         isFirstChoice: isFistChoice,
         createdAt: new Date().toISOString(),
         createdBy: user.uid,
