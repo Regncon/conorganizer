@@ -1,42 +1,37 @@
 'use server';
 import { FirebaseCollectionNames, InterestLevel, RoomName } from '$lib/enums';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { Interest, Participant, PoolEvent, PoolPlayer } from '$lib/types';
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { Interest, PoolEvent, PoolPlayer } from '$lib/types';
+import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
 
 export async function assignPlayer(
-    poolPlayerId: string,
     participantId: string,
     poolEventId: string,
     isAssigned: boolean,
-    isGameMaster: boolean
+    isGameMaster: boolean,
+    poolPlayerId?: string
 ) {
     console.log('assignPlayer', participantId, poolEventId, isAssigned, isGameMaster);
     if (poolPlayerId) {
-        await updatePoolPlayer(poolPlayerId, isAssigned, isGameMaster);
+        await updatePoolPlayer(poolPlayerId, poolEventId, isAssigned, isGameMaster);
         return;
     }
     await createPoolPlayer(participantId, poolEventId, isAssigned, isGameMaster);
     return;
 }
 
-async function updatePoolPlayer(poolPlayerId: string, isAssigned: boolean, isGameMaster: boolean) {
+async function updatePoolPlayer(poolPlayerId: string, poolEventId: string, isAssigned: boolean, isGameMaster: boolean) {
     if (isGameMaster) {
         isAssigned = true;
     }
 
-    const { db } = await getAuthorizedAuth();
-    if (!db) {
+    const { db, user } = await getAuthorizedAuth();
+    if (!db || !user) {
         throw new Error('Database is undefined');
     }
     // Todo: add updated by and updated at
     // Add or delete pool and participant
     const poolPlayerRef = doc(db, FirebaseCollectionNames.poolPlayers, poolPlayerId);
-    if (isAssigned === false) {
-        await deleteDoc(poolPlayerRef);
-        return;
-    }
-
     await updateDoc(poolPlayerRef, { isAssigned, isGameMaster });
 }
 
@@ -72,9 +67,9 @@ async function createPoolPlayer(
         participantId: participantId,
         poolEventId: poolEventId,
         isGameMaster: isGameMaster,
-        firstName: participant.firstName,
-        lastName: participant.lastName,
-        interestLevel: interest?.interestLevel ?? InterestLevel.NotInterested,
+        firstName: interest.participantFirstName,
+        lastName: interest.participantLastName,
+        interestLevel: interest.interestLevel,
         poolEventTitle: poolEvent.title,
         poolName: poolEvent.poolName,
         roomId: room.id,
@@ -86,6 +81,19 @@ async function createPoolPlayer(
         updateAt: Date.now().toString(),
         updatedBy: user.uid,
     };
+
+    const poolPlayerRef = collection(db, FirebaseCollectionNames.poolPlayers);
+    //TODO: uncomment this line to add the player to the pool players
+    // await addDoc(poolPlayerRef, newPlayer);
+
+    const poolEventPoolPlayerRef = collection(
+        db,
+        FirebaseCollectionNames.poolEvents,
+        poolEventId,
+        FirebaseCollectionNames.poolPlayers
+    );
+    //TODO: uncomment this line to add the player to the pool event pool players
+    // await addDoc(poolEventPoolPlayerRef, newPlayer);
 }
 
 // get participant
