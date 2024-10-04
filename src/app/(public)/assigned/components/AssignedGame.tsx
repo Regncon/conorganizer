@@ -12,7 +12,7 @@ import EventCardBig from '$app/(public)/components/components/EventCardBig';
 
 type Props = {};
 
-const AssignedGame = async ({}: Props) => {
+const AssignedGame = async ({ }: Props) => {
     const { user } = await getAuthorizedAuth();
 
     const cookie = cookies();
@@ -21,10 +21,11 @@ const AssignedGame = async ({}: Props) => {
         console.warn('fant ikke deltakere i cookie for bruker: ', user?.uid ?? 'ingen bruker logget inn');
         return (
             <>
+                <ParticipantSelector />
                 <Typography sx={{ display: 'inline-block' }}>
                     {user ?
                         'Du må ha billett for og se denne sida'
-                    :   'Du må være logget inn for og se dine interesser.'}
+                        : 'Du må være logget inn for og se dine interesser.'}
                 </Typography>{' '}
                 <Link component={NextLink} href={'/my-profile/my-tickets'}>
                     mer info her
@@ -35,6 +36,14 @@ const AssignedGame = async ({}: Props) => {
     const { currentGamesForParticipant, poolName } = await getAssignedGameByDay(
         myParticipants.find((participant) => participant.isSelected)?.id ?? ''
     );
+    if (!currentGamesForParticipant) {
+        return (
+            <>
+                <ParticipantSelector />
+                <Typography>Ingen påmeldinger</Typography>;
+            </>
+        );
+    }
     const poolEvent = await getPoolEventById(currentGamesForParticipant?.poolEventId ?? '');
     console.log(poolEvent, 'poolEvent');
 
@@ -55,9 +64,9 @@ const AssignedGame = async ({}: Props) => {
                     />
                     {JSON.stringify(currentGamesForParticipant)}
                 </Box>
-            : poolName && currentGamesForParticipant ?
-                <Typography>Ingen på meldinger for {translatedDays.get(poolName)}</Typography>
-            :   <Typography>Ingen påmeldinger</Typography>}
+                : poolName && currentGamesForParticipant ?
+                    <Typography>Ingen på meldinger for {translatedDays.get(poolName)}</Typography>
+                    : <Typography>Ingen påmeldinger</Typography>}
         </LoadingAssignedGameWrapper>
     );
 };
