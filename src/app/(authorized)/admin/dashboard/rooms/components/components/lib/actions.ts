@@ -150,6 +150,7 @@ export async function convertToPoolEvent(eventId: string, poolName: PoolName) {
         createdBy: user.uid,
         updateAt: Date.now().toString(),
         updatedBy: user.uid,
+        isInterestChoiceClosed: false
     };
     let poolEventId = '';
     try {

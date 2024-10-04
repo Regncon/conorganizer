@@ -2,7 +2,17 @@
 import { getAllParticipants } from '$app/(public)/components/lib/serverAction';
 import { Participant } from '$lib/types';
 import SearchIcon from '@mui/icons-material/Search';
-import { FormControl, Input, InputAdornment, InputLabel, Paper, Button, Box, Typography } from '@mui/material';
+import {
+    FormControl,
+    Input,
+    InputAdornment,
+    InputLabel,
+    Paper,
+    Button,
+    Box,
+    Typography,
+    CircularProgress,
+} from '@mui/material';
 import { useEffect, useState } from 'react';
 import Fuse from 'fuse.js';
 import { assignPlayer } from './lib/actions';
@@ -15,6 +25,7 @@ const ManuallyAssignPlayer = ({ poolEventId }: Props) => {
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredParticipants, setFilteredParticipants] = useState<Participant[]>([]);
+    const [loading, setLoading] = useState<{ [key: string]: boolean }>({}); // Loading state per participant
 
     // Initialize the participants
     useEffect(() => {
@@ -42,16 +53,22 @@ const ManuallyAssignPlayer = ({ poolEventId }: Props) => {
         }
     };
 
-    const handleAssignPlayer = (participant: Participant) => {
+    // Handle the assignment process with loading state
+    const handleAssign = async (participant: Participant, isGameMaster: boolean) => {
         const participantId = participant.id;
         if (!participantId) return;
-        assignPlayer(participantId, poolEventId, true, false, undefined);
-    };
 
-    const handleAssignGameMaster = (participant: Participant) => {
-        const participantId = participant.id;
-        if (!participantId) return;
-        assignPlayer(participantId, poolEventId, true, true, undefined);
+        // Set loading state for this participant
+        setLoading((prev) => ({ ...prev, [participantId]: true }));
+
+        // Perform the assign action (modify your assignPlayer function as needed)
+        await assignPlayer(participantId, poolEventId, true, isGameMaster, undefined);
+
+        // Clear search query to close the list after assignment
+        setSearchQuery('');
+
+        // Reset loading state after the action is done
+        setLoading((prev) => ({ ...prev, [participantId]: false }));
     };
 
     return (
@@ -92,7 +109,7 @@ const ManuallyAssignPlayer = ({ poolEventId }: Props) => {
                                         variant="contained"
                                         size="small"
                                         color="primary"
-                                        onClick={() => handleAssignPlayer(participant)}
+                                        onClick={() => handleAssign(participant, false)}
                                         sx={{ marginRight: '0.5rem' }}
                                     >
                                         Assign Player
@@ -101,7 +118,7 @@ const ManuallyAssignPlayer = ({ poolEventId }: Props) => {
                                         variant="contained"
                                         size="small"
                                         color="secondary"
-                                        onClick={() => handleAssignGameMaster(participant)}
+                                        onClick={() => handleAssign(participant, true)}
                                     >
                                         Assign Game Master
                                     </Button>
