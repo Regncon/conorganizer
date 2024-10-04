@@ -6,6 +6,7 @@ type props = {
     firstName: string;
     lastName: string;
     small?: boolean;
+    header?: boolean;
 };
 
 function stringToColor(string: string) {
@@ -37,13 +38,13 @@ function stringAvatar(name: string) {
         children: `${name.split(' ')[0][0]}${name.split(' ')[1][0]}`,
     };
 }
-const ParticipantAvatar = ({ firstName, lastName, small }: props) => {
+const ParticipantAvatar = ({ firstName, lastName, small, header }: props) => {
     const name = `${firstName} ${lastName}`;
 
     return (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <Avatar {...stringAvatar(name)} />
-            <Typography>{small ? firstName : name}</Typography>
+            <Typography variant={header ? 'h2' : 'body1'}>{small ? firstName : name}</Typography>
         </Box>
     );
 };

@@ -39,12 +39,12 @@ export default function EventDashboardTabs({ id, value }: props) {
                     allowscrollbuttonsmobilearia-label="Velg side"
                 >
                     <Tab
-                        // component={NextLink}
+                        component={NextLink}
                         icon={<GroupIcon />}
                         sx={tabsSx}
                         iconPosition="start"
                         label={<HideLabel>Spillere</HideLabel>}
-                        disabled
+                        href={`/admin/dashboard/events/event-dashboard/${id}/players` as Route}
                     />
                     <Tab
                         component={NextLink}

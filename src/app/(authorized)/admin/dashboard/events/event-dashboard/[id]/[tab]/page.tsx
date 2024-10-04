@@ -6,11 +6,16 @@ import Settings from './settings/Settings';
 import type { Metadata } from 'next';
 import { getEventById } from '$app/(public)/components/lib/serverAction';
 import InterestPage from './interest/InterestPage';
+import Players from './players/Players';
+import type { PoolName } from '$lib/enums';
 
 type Props = {
     params: {
         id: string;
         tab: TabNames;
+    };
+    searchParams: {
+        'active-tab': PoolName;
     };
 };
 export async function generateMetadata({ params: { id, tab } }: Props): Promise<Metadata> {
@@ -23,6 +28,9 @@ export async function generateMetadata({ params: { id, tab } }: Props): Promise<
             break;
         case 'interest':
             tabName = 'Ønsker';
+            break;
+        case 'players':
+            tabName = 'Spillere';
             break;
         case 'room':
             tabName = 'Rom';
@@ -40,7 +48,7 @@ export async function generateMetadata({ params: { id, tab } }: Props): Promise<
     };
 }
 
-const page = ({ params: { id, tab } }: Props) => {
+const page = ({ params: { id, tab }, searchParams: { 'active-tab': activeTab } }: Props) => {
     if (tab === 'edit') {
         return <Edit id={id} />;
     }
@@ -49,6 +57,9 @@ const page = ({ params: { id, tab } }: Props) => {
     }
     if (tab === 'interest') {
         return <InterestPage id={id} />;
+    }
+    if (tab === 'players') {
+        return <Players id={id} activeTab={activeTab} />;
     }
     if (tab === 'settings') {
         return <Settings id={id} />;

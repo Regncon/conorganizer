@@ -1,13 +1,6 @@
-// 'use client';
-import { poolTitles } from '$app/(authorized)/admin/dashboard/rooms/components/lib/helpers';
-import {
-    getEventById,
-    getEventInterestById,
-    migrateInterestsToParticipantInterests,
-} from '$app/(public)/components/lib/serverAction';
 import { InterestLevel } from '$lib/enums';
 import { Interest } from '$lib/types';
-import { Box, Button, Link, Paper, Typography } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import Image from 'next/image';
 import { interestLevelToImage, InterestLevelToLabel } from './lib/helpers/InterestHelper';
 

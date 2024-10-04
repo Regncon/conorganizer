@@ -45,3 +45,15 @@ export enum GameType {
     'RolePlaying' = 'rolePlaying',
     'Other' = 'other',
 }
+
+export enum FirebaseCollectionNames {
+    'poolEvents' = 'pool-events',
+    'participants' = 'participants',
+    'interests' = 'interests',
+    'players' = 'players',
+    'poolPlayers' = 'pool-players',
+    'particitantPlayers' = 'participant-players',
+    'users' = 'users',
+    'events' = 'events',
+    'rooms' = 'rooms',
+}

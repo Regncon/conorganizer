@@ -1,11 +1,11 @@
-import { PoolName, type RoomName, type GameType } from './enums';
+import { PoolName, type RoomName, type GameType, InterestLevel } from './enums';
 
 export type EventCardProps = {
     title: string;
     gameMaster: string;
     system: string;
     shortDescription: string;
-    icons?: string[];
+    icons?: string[] | IconOption[];
     backgroundImage?: string;
     myEventBar?: boolean;
     myEventBarSubmitted?: boolean;
@@ -126,6 +126,7 @@ export type PoolEvent = {
     id?: string;
     parentEventId: string;
     title: string;
+    isInterestChoiceClosed: boolean;
     gameMaster: string;
     system: string;
     shortDescription: string;
@@ -237,4 +238,42 @@ export type Interest = {
     updateAt: string;
     updatedBy: string;
 };
+
+export type PoolPlayer = {
+    id?: string;
+    participantId: string;
+    firstName: string;
+    lastName: string;
+    interestLevel: InterestLevel;
+    poolEventId: string;
+    poolEventTitle: string;
+    poolName: PoolName;
+    roomId: string;
+    roomName: RoomName;
+    isPublished: boolean;
+    isFirstChoice: boolean;
+    isGameMaster: boolean;
+    isAssigned: boolean;
+    createdAt: string;
+    createdBy: string;
+    updateAt: string;
+    updatedBy: string;
+};
+
+export type PlayerInterest = {
+    interestLevel: InterestLevel;
+    poolEventId: string;
+    participantId: string;
+    currentPoolPlayerId: string | undefined;
+    isGameMaster: boolean;
+    isAssigned: boolean;
+    isAlredyPlayerInPool: boolean;
+    firstName: string;
+    lastName: string;
+    isOver18: boolean;
+    ticketCategoryID: number;
+    ticketCategory: string;
+    playerInPools: PoolPlayer[];
+};
+
 export type LocalStorageNames = 'filters';
