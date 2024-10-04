@@ -267,6 +267,7 @@ export type PlayerInterest = {
     currentPoolPlayerId: string | undefined;
     isGameMaster: boolean;
     isAssigned: boolean;
+    isAlredyPlayerInPool: boolean;
     firstName: string;
     lastName: string;
     isOver18: boolean;

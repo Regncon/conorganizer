@@ -14,14 +14,17 @@ import GamemasterIcon from '$lib/components/icons/GameMasterIcon';
 type Props = {
     poolName: PoolName;
     playerInterest: PlayerInterest;
+    hasPlayerInPool?: boolean;
 };
 
-const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
+const PlayerInterestInfo = ({ poolName, playerInterest, hasPlayerInPool }: Props) => {
     // console.log('playerInterest', playerInterest.playerInPools);
     let playersInPool = generatePlayerInPoolMap(playerInterest.playerInPools);
-
     return (
-        <Paper elevation={2} sx={{ marginTop: '1rem', padding: '1rem' }}>
+        <Paper
+            elevation={2}
+            sx={{ marginTop: '1rem', padding: '1rem', backgroundColor: hasPlayerInPool ? 'rgba(0,0,0,0.4)' : 'none' }}
+        >
             <Box
                 sx={{
                     display: 'flex',

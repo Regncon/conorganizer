@@ -30,6 +30,14 @@ export async function generatePoolPlayerInterestById(id: string) {
 
         const isAssigned = currentPoolPlayer ? currentPoolPlayer.isAssigned : false;
         const isGameMaster = currentPoolPlayer ? currentPoolPlayer.isGameMaster : false;
+        // check if the player is already assigned to another poolievent in this pool
+        const isAssignedInSamePool = poolPlayers.some(
+            (poolPlayer) =>
+                poolPlayer.participantId === interest.participantId &&
+                poolPlayer.poolEventId !== interest.poolEventId &&
+                poolPlayer.poolName === interest.poolName &&
+                poolPlayer.isAssigned
+        );
 
         const playerInterest: PlayerInterest = {
             poolEventId: interest.poolEventId,
@@ -44,6 +52,7 @@ export async function generatePoolPlayerInterestById(id: string) {
             playerInPools: participantPoolPlayers ? participantPoolPlayers : [],
             isAssigned: isAssigned,
             isGameMaster: isGameMaster,
+            isAlredyPlayerInPool: isAssignedInSamePool || isAssigned || isGameMaster,
         };
 
         poolInterests.push(playerInterest);

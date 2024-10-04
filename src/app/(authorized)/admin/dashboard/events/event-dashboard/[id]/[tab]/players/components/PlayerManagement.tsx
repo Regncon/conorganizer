@@ -151,7 +151,12 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
             </Paper>
             <Typography variant="h2">Intreserte:</Typography>
             {poolPlayerInterests.map((poolPlayerInterest, index) => (
-                <PlayerInterestInfo key={index} poolName={poolName} playerInterest={poolPlayerInterest} />
+                <PlayerInterestInfo
+                    key={index}
+                    poolName={poolName}
+                    playerInterest={poolPlayerInterest}
+                    hasPlayerInPool={poolPlayerInterest.isAlredyPlayerInPool}
+                />
             ))}
         </Paper>
     );
