@@ -106,7 +106,7 @@ async function createPoolPlayer(
     if (!poolEvent) {
         throw new Error('Pool event does not exist');
     }
-    const roomsRef = collection(db, FirebaseCollectionNames.poolEvents, poolEventId, FirebaseCollectionNames.rooms);
+    const roomsRef = collection(db, FirebaseCollectionNames.poolEvents, poolEventId, FirebaseCollectionNames.room);
     const rooms = await getDocs(roomsRef);
 
     const participantRef = doc(db, FirebaseCollectionNames.participants, participantId);

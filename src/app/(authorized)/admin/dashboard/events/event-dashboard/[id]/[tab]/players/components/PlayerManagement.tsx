@@ -1,4 +1,5 @@
 import {
+    Box,
     Button,
     FormControl,
     FormControlLabel,
@@ -6,6 +7,7 @@ import {
     Input,
     InputAdornment,
     InputLabel,
+    Link,
     Paper,
     Switch,
     Typography,
@@ -18,6 +20,7 @@ import { translatedDays } from '$app/(public)/components/lib/helpers/translation
 import AssignedPlayers from './components/AssignedPlayers';
 import { PlayerInterest } from '$lib/types';
 import ManuallyAssignPlayer from './components/manuallyAssignPlayer';
+import NextLink from 'next/link';
 
 type Props = {
     id: string | undefined;
@@ -125,30 +128,76 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
     ];
     return (
         <Paper sx={{ padding: '1rem' }}>
-            <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem', placeItems: 'center' }}>
+            <Paper
+                component={FormGroup}
+                sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: '1rem',
+                    placeItems: 'center',
+                    position: 'sticky',
+                    top: 'var(--app-bar-height-desktop)',
+                    zIndex: 1,
+                }}
+            >
                 <Typography variant="h1">{translatedDays.get(poolName)}</Typography>
-                <Button sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }} variant="contained" color="primary">
-                    Algotitme
-                </Button>
                 <FormControlLabel control={<Switch />} label="Under 18" labelPlacement="start" />
                 <FormControlLabel control={<Switch />} label="Over 18" labelPlacement="start" />
                 <FormControlLabel control={<Switch />} label="Søndag Dagspass Barn" labelPlacement="start" />
+                <Typography variant="h3">
+                    Antall tildelte spillere:{' '}
+                    {assignedPlayers.filter((assignedPlayer) => !assignedPlayer.isGameMaster).length}
+                </Typography>
                 <Typography variant="h3">Max Antall spillere: {maxNumberOfPlayers} </Typography>
-            </FormGroup>
+                <Box sx={{ display: 'flex', width: '100%', gap: '1rem', placeItems: 'center', marginBlock: '1rem' }}>
+                    <Button
+                        sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }}
+                        variant="contained"
+                        color="primary"
+                    >
+                        Algotitme
+                    </Button>
+                    <Button
+                        sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }}
+                        variant="contained"
+                        color="primary"
+                    >
+                        Algotitme2
+                    </Button>
+                    <Button
+                        sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }}
+                        variant="contained"
+                        color="primary"
+                    >
+                        Algotitme3
+                    </Button>
+                    <Box sx={{ placeSelf: 'end' }}>
+                        <Link component={NextLink} href={'#assigned-players'} color="secondary">
+                            tilbake til toppen
+                        </Link>
+                    </Box>
+                </Box>
+            </Paper>
             <Paper elevation={2} sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
                 <AssignedPlayers poolName={poolName} assignedPlayers={assignedPlayers} />
             </Paper>
 
             <ManuallyAssignPlayer poolEventId={id} />
             <Typography variant="h2">Intreserte:</Typography>
-            {poolPlayerInterests.map((poolPlayerInterest, index) => (
-                <PlayerInterestInfo
-                    key={index}
-                    poolName={poolName}
-                    playerInterest={poolPlayerInterest}
-                    hasPlayerInPool={poolPlayerInterest.isAlredyPlayerInPool}
-                />
-            ))}
+            {poolPlayerInterests
+                .sort((a, b) =>
+                    a.isGameMaster ? -1
+                    : a.interestLevel > b.interestLevel ? -1
+                    : 1
+                )
+                .map((poolPlayerInterest, index) => (
+                    <PlayerInterestInfo
+                        key={index}
+                        poolName={poolName}
+                        playerInterest={poolPlayerInterest}
+                        hasPlayerInPool={poolPlayerInterest.isAlredyPlayerInPool}
+                    />
+                ))}
         </Paper>
     );
 };

@@ -37,6 +37,12 @@ const PoolNameTabs = ({ id }: Props) => {
         router.prefetch(`/admin/dashboard/events/event-dashboard/${id}/players?active-tab=${PoolName.sundayMorning}`);
     }, []);
 
+    useEffect(() => {
+        const activeTab = searchParams.get('active-tab') as PoolName | undefined;
+        if (!activeTab) {
+            router.replace(`?active-tab=${PoolName.fridayEvening}` as Route);
+        }
+    }, []);
     return (
         <Tabs value={value} onChange={handleChange} aria-label="PoolName selector">
             <Tab label="Fredag Kveld" {...a11yProps(PoolName.fridayEvening)} value={PoolName.fridayEvening} />
