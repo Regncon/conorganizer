@@ -9,6 +9,7 @@ import ParticipantAvatar from '$ui/participant/ParticipantAvatar';
 import AssignPlayerButtons from './ui/AssignPlayerButtons';
 import { generatePlayerInPoolMap } from './lib/playerInPoolHelper';
 import PreviousGamesPlayed from './components/PreviousGamesPlayed';
+import GamemasterIcon from '$lib/components/icons/GameMasterIcon';
 
 type Props = {
     poolName: PoolName;
@@ -31,17 +32,25 @@ const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
                 }}
             >
                 <Box>
-                    <Image
-                        src={interestLevelToImage[playerInterest.interestLevel]}
-                        alt={InterestLevelToLabel[playerInterest.interestLevel]}
-                        width={100}
-                        height={60}
-                    />
+                    {playerInterest.isGameMaster ?
+                        <Box sx={{ display: 'flex', gap: '1rem', color: 'success.main' }}>
+                            <GamemasterIcon size="large" color="success" />
+                            <Typography variant="h2">Spilleder! :D</Typography>
+                        </Box>
+                        : <Image
+                            src={interestLevelToImage[playerInterest.interestLevel]}
+                            alt={InterestLevelToLabel[playerInterest.interestLevel]}
+                            width={100}
+                            height={60}
+                        />
+                    }
                 </Box>
 
                 <Box>
                     <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '1rem' }}>
-                        <Typography>{InterestLevelToLabel[playerInterest.interestLevel]}</Typography>
+                        {playerInterest.isGameMaster ?? (
+                            <Typography>{InterestLevelToLabel[playerInterest.interestLevel]}</Typography>
+                        )}
                         <ParticipantAvatar
                             firstName={playerInterest.firstName}
                             lastName={playerInterest.lastName}

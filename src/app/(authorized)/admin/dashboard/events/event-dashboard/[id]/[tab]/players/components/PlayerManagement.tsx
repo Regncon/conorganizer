@@ -33,7 +33,10 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
     //TODO:Må ha puljenavn og hente data relatert til pulje du er i
     // const poolPlayerInterests = await generatePoolPlayerInterestById(id, poolName);
     const poolPlayerInterests = await generatePoolPlayerInterestById(id);
-    const assignedPlayers = poolPlayerInterests.filter((player) => player.isAssigned);
+    // show isGameMaster at the top of the list
+    const assignedPlayers = poolPlayerInterests
+        .filter((player) => player.isAssigned)
+        .sort((a, b) => (a.isGameMaster ? -1 : 1));
     console.log('assignedPlayers', assignedPlayers);
 
     // console.log('poolPlayerInterests', poolPlayerInterests);
