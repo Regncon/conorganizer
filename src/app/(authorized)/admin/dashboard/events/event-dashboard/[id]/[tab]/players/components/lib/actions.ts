@@ -33,8 +33,8 @@ export async function generatePoolPlayerInterestById(id: string) {
             ticketCategoryID: participant?.ticketCategoryId ?? 0,
             ticketCategory: participant?.ticketCategory ?? 'FEIL!',
             playerInPools: participantPoolPlayers ? participantPoolPlayers : [],
-            isGameMaster: true,
-            isAssigned: true,
+            isGameMaster: false,
+            isAssigned: false,
         };
 
         poolInterests.push(playerInterest);
@@ -47,10 +47,10 @@ export async function getPoolPlayers() {
     if (!db) {
         throw new Error('Database is undefined');
     }
-    const poolPlayersRef = collection(db, FirebaseCollectionNames.poolPlayers);
+    const poolPlayersRef = collection(db, FirebaseCollectionNames.players);
     const poolPlayersSnapshot = await getDocs(poolPlayersRef);
     const poolPlayers = poolPlayersSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as PoolPlayer[];
-    console.log('poolPlayers', poolPlayers);
+    // console.log('poolPlayers', poolPlayers);
 
     return poolPlayers;
 }

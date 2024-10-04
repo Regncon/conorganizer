@@ -52,6 +52,7 @@ export enum FirebaseCollectionNames {
     'interests' = 'interests',
     'players' = 'players',
     'poolPlayers' = 'pool-players',
+    'particitantPlayers' = 'participant-players',
     'users' = 'users',
     'events' = 'events',
     'rooms' = 'rooms',

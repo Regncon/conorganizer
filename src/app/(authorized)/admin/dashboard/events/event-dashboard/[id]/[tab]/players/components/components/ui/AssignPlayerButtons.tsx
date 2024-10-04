@@ -15,6 +15,7 @@ type Props = {
 const AssignPlayerButtons = ({ poolPlayerId, participantId, poolEventId, isAssigned, isGameMaster }: Props) => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
+
     const handleChanges = async (event: React.ChangeEvent<HTMLInputElement>) => {
         startTransition(async () => {
             const { checked } = event.target;
@@ -27,22 +28,22 @@ const AssignPlayerButtons = ({ poolPlayerId, participantId, poolEventId, isAssig
         });
     };
 
-    return isPending ?
-            <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
-                <FormControlLabel
-                    control={<Switch defaultChecked={isAssigned} name="isAssigned" onChange={handleChanges} />}
-                    label="Tildel plass"
-                    labelPlacement="start"
-                />
-                <FormControlLabel
-                    control={<Switch defaultChecked={isGameMaster} name="isGameMaster" onChange={handleChanges} />}
-                    label="GM"
-                    labelPlacement="start"
-                />
-            </FormGroup>
-        :   <>
-                <Typography sx={{ display: 'inline-block' }}>Oppdaterer listen med tildelte</Typography>{' '}
-                <CircularProgress size="1.5rem" />
-            </>;
+    return isPending === false ?
+        <FormGroup sx={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+            <FormControlLabel
+                control={<Switch defaultChecked={isAssigned} name="isAssigned" onChange={handleChanges} />}
+                label="Tildel plass"
+                labelPlacement="start"
+            />
+            <FormControlLabel
+                control={<Switch defaultChecked={isGameMaster} name="isGameMaster" onChange={handleChanges} />}
+                label="GM"
+                labelPlacement="start"
+            />
+        </FormGroup>
+        : <>
+            <Typography sx={{ display: 'inline-block' }}>Oppdaterer listen med tildelte</Typography>{' '}
+            <CircularProgress size="1.5rem" />
+        </>;
 };
 export default AssignPlayerButtons;

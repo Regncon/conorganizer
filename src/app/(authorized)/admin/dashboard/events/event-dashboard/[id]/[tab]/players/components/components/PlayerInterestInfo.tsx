@@ -16,7 +16,7 @@ type Props = {
 };
 
 const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
-    console.log('playerInterest', playerInterest.playerInPools);
+    // console.log('playerInterest', playerInterest.playerInPools);
     let playersInPool = generatePlayerInPoolMap(playerInterest.playerInPools);
 
     return (
@@ -52,7 +52,6 @@ const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
                             poolEventId={playerInterest.poolEventId}
                             isAssigned={playerInterest.isAssigned}
                             isGameMaster={playerInterest.isGameMaster}
-                            poolPlayerId={}
                         />
                         <Over18 over18={playerInterest.isOver18} />
                         <Typography component={'i'}>{playerInterest.ticketCategory}</Typography>

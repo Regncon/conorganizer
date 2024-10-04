@@ -1,8 +1,8 @@
 'use server';
 import { FirebaseCollectionNames, InterestLevel, RoomName } from '$lib/enums';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { Interest, PoolEvent, PoolPlayer } from '$lib/types';
-import { collection, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { Interest, Participant, PoolEvent, PoolPlayer } from '$lib/types';
+import { addDoc, collection, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
 
 export async function assignPlayer(
     participantId: string,
@@ -46,6 +46,7 @@ async function createPoolPlayer(
     if (!db || !user) {
         throw new Error('Database is undefined');
     }
+    console.log('createPoolPlayer', participantId, poolEventId, isAssigned, isGameMaster);
 
     const poolEventRef = doc(db, FirebaseCollectionNames.poolEvents, poolEventId);
     const poolEvent = (await getDoc(poolEventRef)).data() as PoolEvent;
@@ -55,49 +56,63 @@ async function createPoolPlayer(
     }
     const roomsRef = collection(db, FirebaseCollectionNames.poolEvents, poolEventId, FirebaseCollectionNames.rooms);
     const rooms = await getDocs(roomsRef);
-    const room = rooms.docs[0].data();
 
     const participantRef = doc(db, FirebaseCollectionNames.participants, participantId);
     const participant = (await getDoc(participantRef)).data() as Participant;
 
-    const interestRef = doc(db, FirebaseCollectionNames.poolEvents, FirebaseCollectionNames.interests, participantId);
+    const interestRef = doc(
+        db,
+        FirebaseCollectionNames.poolEvents,
+        poolEventId,
+        FirebaseCollectionNames.interests,
+        participantId
+    );
     const interest = (await getDoc(interestRef)).data() as Interest;
+
+    const isFistChoice = isGameMaster ? false : interest?.interestLevel === InterestLevel.VeryInterested;
+    const isPublished = isGameMaster;
 
     const newPlayer: PoolPlayer = {
         participantId: participantId,
         poolEventId: poolEventId,
         isGameMaster: isGameMaster,
-        firstName: interest.participantFirstName,
-        lastName: interest.participantLastName,
-        interestLevel: interest.interestLevel,
+        firstName: participant.firstName,
+        lastName: participant.lastName,
+        interestLevel: interest?.interestLevel ?? InterestLevel.NotInterested,
         poolEventTitle: poolEvent.title,
         poolName: poolEvent.poolName,
-        roomId: room.id,
-        roomName: room.name,
-        isPublished: false,
-        isFirstChoice: interest?.interestLevel === InterestLevel.VeryInterested,
+        roomId: rooms.docs[0]?.id ?? '',
+        roomName: rooms.docs[0]?.data().name ?? RoomName.NotSet,
+        isPublished: isPublished,
+        isAssigned: isAssigned,
+        isFirstChoice: isFistChoice,
         createdAt: Date.now().toString(),
         createdBy: user.uid,
         updateAt: Date.now().toString(),
         updatedBy: user.uid,
     };
+    console.log('newPlayer', newPlayer);
 
-    const poolPlayerRef = collection(db, FirebaseCollectionNames.poolPlayers);
-    //TODO: uncomment this line to add the player to the pool players
-    // await addDoc(poolPlayerRef, newPlayer);
+    const poolPlayerRef = collection(db, FirebaseCollectionNames.players);
+    const addPlayesResponce = await addDoc(poolPlayerRef, newPlayer);
+    const newPoolPlayerId = addPlayesResponce.id;
+    console.log('poolPlayerId', newPoolPlayerId);
 
-    const poolEventPoolPlayerRef = collection(
+    const poolEventPoolPlayerRef = doc(
         db,
         FirebaseCollectionNames.poolEvents,
         poolEventId,
-        FirebaseCollectionNames.poolPlayers
+        FirebaseCollectionNames.poolPlayers,
+        newPoolPlayerId
     );
-    //TODO: uncomment this line to add the player to the pool event pool players
-    // await addDoc(poolEventPoolPlayerRef, newPlayer);
-}
+    await setDoc(poolEventPoolPlayerRef, newPlayer);
 
-// get participant
-// get pool event
-// create pool player
-// add pool player to pool event
-// add pool player to participant
+    const participantPoolPlayerRef = doc(
+        db,
+        FirebaseCollectionNames.participants,
+        participantId,
+        FirebaseCollectionNames.particitantPlayers,
+        newPoolPlayerId
+    );
+    await setDoc(participantPoolPlayerRef, newPlayer);
+}
