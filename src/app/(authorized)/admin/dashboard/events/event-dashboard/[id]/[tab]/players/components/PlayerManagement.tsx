@@ -115,6 +115,8 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
         ],
         isGameMaster: false,
         isAssigned: false,
+        currentPoolPlayerId: undefined,
+        isAlredyPlayerInPool: false,
     };
     const dummyPlayersInrerestData: PlayerInterest[] = [
         dummyPlayerInrerestData,

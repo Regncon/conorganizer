@@ -5,6 +5,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { FormControl, Input, InputAdornment, InputLabel, Paper, Button, Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import Fuse from 'fuse.js';
+import { assignPlayer } from './lib/actions';
 
 type Props = {
     poolEventId: string;
@@ -39,6 +40,18 @@ const ManuallyAssignPlayer = ({ poolEventId }: Props) => {
         } else {
             setFilteredParticipants([]); // Clear the filtered participants if the search is empty
         }
+    };
+
+    const handleAssignPlayer = (participant: Participant) => {
+        const participantId = participant.id;
+        if (!participantId) return;
+        assignPlayer(participantId, poolEventId, true, false, undefined);
+    };
+
+    const handleAssignGameMaster = (participant: Participant) => {
+        const participantId = participant.id;
+        if (!participantId) return;
+        assignPlayer(participantId, poolEventId, true, true, undefined);
     };
 
     return (
