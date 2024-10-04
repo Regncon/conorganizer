@@ -264,6 +264,7 @@ export type PlayerInterest = {
     interestLevel: InterestLevel;
     poolEventId: string;
     participantId: string;
+    currentPoolPlayerId: string | undefined;
     isGameMaster: boolean;
     isAssigned: boolean;
     firstName: string;

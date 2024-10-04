@@ -15,15 +15,27 @@ type Props = {
 const AssignPlayerButtons = ({ poolPlayerId, participantId, poolEventId, isAssigned, isGameMaster }: Props) => {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
+    console.log(
+        'poolPlayerId',
+        poolPlayerId,
+        'participantId',
+        participantId,
+        'poolEventId',
+        poolEventId,
+        'isAssigned',
+        isAssigned,
+        'isGameMaster',
+        isGameMaster
+    );
 
     const handleChanges = async (event: React.ChangeEvent<HTMLInputElement>) => {
         startTransition(async () => {
             const { checked } = event.target;
             const name = event.target.name as 'isAssigned' | 'isGameMaster';
-            const isAssigned = name === 'isAssigned' ? checked : false;
-            const isGameMaster = name === 'isGameMaster' ? checked : false;
+            isAssigned = name === 'isAssigned' ? checked : isAssigned;
+            isGameMaster = name === 'isGameMaster' ? checked : isGameMaster;
             await assignPlayer(participantId, poolEventId, isAssigned, isGameMaster, poolPlayerId);
-            console.log('event', event, 'name', name, 'checked', checked);
+            // console.log('event', event, 'name', name, 'checked', checked);
             router.refresh();
         });
     };

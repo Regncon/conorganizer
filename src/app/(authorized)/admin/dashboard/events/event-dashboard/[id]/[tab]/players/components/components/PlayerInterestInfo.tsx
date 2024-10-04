@@ -48,6 +48,7 @@ const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
                             header
                         />
                         <AssignPlayerButtons
+                            poolPlayerId={playerInterest.currentPoolPlayerId}
                             participantId={playerInterest.participantId}
                             poolEventId={playerInterest.poolEventId}
                             isAssigned={playerInterest.isAssigned}

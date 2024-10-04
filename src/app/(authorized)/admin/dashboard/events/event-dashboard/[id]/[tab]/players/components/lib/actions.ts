@@ -31,12 +31,11 @@ export async function generatePoolPlayerInterestById(id: string) {
         const isAssigned = currentPoolPlayer ? currentPoolPlayer.isAssigned : false;
         const isGameMaster = currentPoolPlayer ? currentPoolPlayer.isGameMaster : false;
 
-        console.log('isAssigned', isAssigned, 'isGameMaster', isGameMaster);
-
         const playerInterest: PlayerInterest = {
             poolEventId: interest.poolEventId,
             interestLevel: interest.interestLevel,
             participantId: interest.participantId,
+            currentPoolPlayerId: currentPoolPlayer?.id,
             firstName: interest.participantFirstName,
             lastName: interest.participantLastName,
             isOver18: participant?.over18 ?? false,

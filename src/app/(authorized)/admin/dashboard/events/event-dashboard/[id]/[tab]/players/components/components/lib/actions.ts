@@ -13,17 +13,24 @@ export async function assignPlayer(
 ) {
     console.log('assignPlayer', participantId, poolEventId, isAssigned, isGameMaster);
     if (poolPlayerId) {
-        await updatePoolPlayer(poolPlayerId, poolEventId, isAssigned, isGameMaster);
+        await updatePoolPlayer(poolPlayerId, poolEventId, participantId, isAssigned, isGameMaster);
         return;
     }
     await createPoolPlayer(participantId, poolEventId, isAssigned, isGameMaster);
     return;
 }
 
-async function updatePoolPlayer(poolPlayerId: string, poolEventId: string, isAssigned: boolean, isGameMaster: boolean) {
+async function updatePoolPlayer(
+    poolPlayerId: string,
+    poolEventId: string,
+    participantId: string,
+    isAssigned: boolean,
+    isGameMaster: boolean
+) {
     if (isGameMaster) {
         isAssigned = true;
     }
+    console.log('updatePoolPlayer', poolPlayerId, poolEventId, isAssigned, isGameMaster);
 
     const { db, user } = await getAuthorizedAuth();
     if (!db || !user) {
@@ -31,8 +38,43 @@ async function updatePoolPlayer(poolPlayerId: string, poolEventId: string, isAss
     }
     // Todo: add updated by and updated at
     // Add or delete pool and participant
-    const poolPlayerRef = doc(db, FirebaseCollectionNames.poolPlayers, poolPlayerId);
-    await updateDoc(poolPlayerRef, { isAssigned, isGameMaster });
+    if (isAssigned || isGameMaster) {
+        const playerRef = doc(db, FirebaseCollectionNames.players, poolPlayerId);
+        await updateDoc(playerRef, {
+            isAssigned,
+            isGameMaster,
+            updateAt: new Date().toISOString(),
+            updatedBy: user.uid,
+        });
+
+        const poolEventPoolPlayerRef = doc(
+            db,
+            FirebaseCollectionNames.poolEvents,
+            poolEventId,
+            FirebaseCollectionNames.poolPlayers,
+            poolPlayerId
+        );
+        await updateDoc(poolEventPoolPlayerRef, {
+            isAssigned,
+            isGameMaster,
+            updateAt: new Date().toISOString(),
+            updatedBy: user.uid,
+        });
+
+        const participantPoolPlayerRef = doc(
+            db,
+            FirebaseCollectionNames.participants,
+            participantId,
+            FirebaseCollectionNames.particitantPlayers,
+            poolPlayerId
+        );
+        await updateDoc(participantPoolPlayerRef, {
+            isAssigned,
+            isGameMaster,
+            updateAt: new Date().toISOString(),
+            updatedBy: user.uid,
+        });
+    }
 }
 
 async function createPoolPlayer(
