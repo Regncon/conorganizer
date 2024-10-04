@@ -23,6 +23,16 @@ export async function generatePoolPlayerInterestById(id: string) {
         const participantPoolPlayers = poolPlayers.filter(
             (poopPlayer) => poopPlayer.participantId === interest.participantId
         );
+        const currentPoolPlayer = poolPlayers.find(
+            (poolPlayer) =>
+                poolPlayer.poolEventId === interest.poolEventId && poolPlayer.participantId === interest.participantId
+        );
+
+        const isAssigned = currentPoolPlayer ? currentPoolPlayer.isAssigned : false;
+        const isGameMaster = currentPoolPlayer ? currentPoolPlayer.isGameMaster : false;
+
+        console.log('isAssigned', isAssigned, 'isGameMaster', isGameMaster);
+
         const playerInterest: PlayerInterest = {
             poolEventId: interest.poolEventId,
             interestLevel: interest.interestLevel,
@@ -33,8 +43,8 @@ export async function generatePoolPlayerInterestById(id: string) {
             ticketCategoryID: participant?.ticketCategoryId ?? 0,
             ticketCategory: participant?.ticketCategory ?? 'FEIL!',
             playerInPools: participantPoolPlayers ? participantPoolPlayers : [],
-            isGameMaster: false,
-            isAssigned: false,
+            isAssigned: isAssigned,
+            isGameMaster: isGameMaster,
         };
 
         poolInterests.push(playerInterest);

@@ -86,9 +86,9 @@ async function createPoolPlayer(
         isPublished: isPublished,
         isAssigned: isAssigned,
         isFirstChoice: isFistChoice,
-        createdAt: Date.now().toString(),
+        createdAt: new Date().toISOString(),
         createdBy: user.uid,
-        updateAt: Date.now().toString(),
+        updateAt: new Date().toISOString(),
         updatedBy: user.uid,
     };
     console.log('newPlayer', newPlayer);

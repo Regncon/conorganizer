@@ -1,9 +1,5 @@
 import {
-    Box,
     Button,
-    Card,
-    CardActions,
-    CardHeader,
     FormControl,
     FormControlLabel,
     FormGroup,
@@ -12,7 +8,6 @@ import {
     InputLabel,
     Paper,
     Switch,
-    TextField,
     Typography,
 } from '@mui/material';
 import { InterestLevel, PoolName, RoomName } from '$lib/enums';
@@ -39,6 +34,8 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
     // const poolPlayerInterests = await generatePoolPlayerInterestById(id, poolName);
     const poolPlayerInterests = await generatePoolPlayerInterestById(id);
     const assignedPlayers = poolPlayerInterests.filter((player) => player.isAssigned);
+    console.log('assignedPlayers', assignedPlayers);
+
     // console.log('poolPlayerInterests', poolPlayerInterests);
 
     const dummyPlayerInrerestData: PlayerInterest = {
@@ -150,8 +147,8 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
                 </FormControl>
             </Paper>
             <Typography variant="h2">Intreserte:</Typography>
-            {poolPlayerInterests.map((poolPlayerInterest) => (
-                <PlayerInterestInfo poolName={poolName} playerInterest={poolPlayerInterest} />
+            {poolPlayerInterests.map((poolPlayerInterest, index) => (
+                <PlayerInterestInfo key={index} poolName={poolName} playerInterest={poolPlayerInterest} />
             ))}
         </Paper>
     );

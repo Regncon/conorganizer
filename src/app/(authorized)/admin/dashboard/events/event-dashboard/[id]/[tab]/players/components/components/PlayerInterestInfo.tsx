@@ -59,10 +59,11 @@ const PlayerInterestInfo = ({ poolName, playerInterest }: Props) => {
                 </Box>
             </Box>
             <Box>
-                {[...playersInPool.entries()].map(([day, poolPlayer]) => {
+                {[...playersInPool.entries()].map(([day, poolPlayer], index) => {
                     const hasNoPlayerOnDay = Object.keys(poolPlayer).length === 0;
                     return (
                         <PreviousGamesPlayed
+                            key={index}
                             poolName={day}
                             poolPlayer={poolPlayer}
                             hasNoPlayerOnDay={hasNoPlayerOnDay}
