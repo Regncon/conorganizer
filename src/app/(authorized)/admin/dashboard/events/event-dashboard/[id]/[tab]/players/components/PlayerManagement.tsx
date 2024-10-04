@@ -1,4 +1,5 @@
 import {
+    Box,
     Button,
     FormControl,
     FormControlLabel,
@@ -6,6 +7,7 @@ import {
     Input,
     InputAdornment,
     InputLabel,
+    Link,
     Paper,
     Switch,
     Typography,
@@ -18,6 +20,7 @@ import { translatedDays } from '$app/(public)/components/lib/helpers/translation
 import AssignedPlayers from './components/AssignedPlayers';
 import { PlayerInterest } from '$lib/types';
 import ManuallyAssignPlayer from './components/manuallyAssignPlayer';
+import NextLink from 'next/link';
 
 type Props = {
     id: string | undefined;
@@ -146,15 +149,34 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
                     {assignedPlayers.filter((assignedPlayer) => !assignedPlayer.isGameMaster).length}
                 </Typography>
                 <Typography variant="h3">Max Antall spillere: {maxNumberOfPlayers} </Typography>
-                <Button sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }} variant="contained" color="primary">
-                    Algotitme
-                </Button>
-                <Button sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }} variant="contained" color="primary">
-                    Algotitme2
-                </Button>
-                <Button sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }} variant="contained" color="primary">
-                    Algotitme3
-                </Button>
+                <Box sx={{ display: 'flex', width: '100%', gap: '1rem', placeItems: 'center', marginBlock: '1rem' }}>
+                    <Button
+                        sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }}
+                        variant="contained"
+                        color="primary"
+                    >
+                        Algotitme
+                    </Button>
+                    <Button
+                        sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }}
+                        variant="contained"
+                        color="primary"
+                    >
+                        Algotitme2
+                    </Button>
+                    <Button
+                        sx={{ maxWidth: 'fit-content', maxHeight: 'fit-content' }}
+                        variant="contained"
+                        color="primary"
+                    >
+                        Algotitme3
+                    </Button>
+                    <Box sx={{ placeSelf: 'end' }}>
+                        <Link component={NextLink} href={'#assigned-players'} color="secondary">
+                            tilbake til toppen
+                        </Link>
+                    </Box>
+                </Box>
             </Paper>
             <Paper elevation={2} sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
                 <AssignedPlayers poolName={poolName} assignedPlayers={assignedPlayers} />
