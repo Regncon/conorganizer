@@ -150,7 +150,7 @@ export const getInterest = async (participantId?: string, poolEventId?: string) 
 
 export const getParticipantByUser = async () => {
     const { user } = await getAuthorizedAuth();
-    if (user === null) return;
+    if (user === null) return [];
 
     // console.log(
     //     adminDb
