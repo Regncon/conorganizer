@@ -17,6 +17,7 @@ import PlayerInterestInfo from './components/PlayerInterestInfo';
 import { translatedDays } from '$app/(public)/components/lib/helpers/translation';
 import AssignedPlayers from './components/AssignedPlayers';
 import { PlayerInterest } from '$lib/types';
+import ManuallyAssignPlayer from './components/manuallyAssignPlayer';
 
 type Props = {
     id: string | undefined;
@@ -136,19 +137,7 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
                 <AssignedPlayers poolName={poolName} assignedPlayers={assignedPlayers} />
             </Paper>
 
-            <Paper sx={{ backgroundColor: 'rgpa(0,0,0,0.1)', padding: '1rem' }}>
-                <FormControl variant="standard">
-                    <InputLabel htmlFor="input-with-icon-adornment">Søk etter deltager</InputLabel>
-                    <Input
-                        id="input-with-icon-adornment"
-                        endAdornment={
-                            <InputAdornment position="start">
-                                <SearchIcon />
-                            </InputAdornment>
-                        }
-                    />
-                </FormControl>
-            </Paper>
+            <ManuallyAssignPlayer poolEventId={id} />
             <Typography variant="h2">Intreserte:</Typography>
             {poolPlayerInterests.map((poolPlayerInterest, index) => (
                 <PlayerInterestInfo
