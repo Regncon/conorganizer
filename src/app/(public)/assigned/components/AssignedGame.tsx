@@ -5,6 +5,9 @@ import { cookies } from 'next/headers';
 import type { ParticipantCookie } from '$lib/types';
 import NextLink from 'next/link';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
+import { getPoolEventById } from '$app/(public)/components/lib/serverAction';
+import LoadingAssignedGameWrapper from './ui/LoadingAssignedGameWrapper';
+import { translatedDays } from '$app/(public)/components/lib/helpers/translation';
 
 type Props = {};
 
@@ -28,14 +31,21 @@ const AssignedGame = async ({}: Props) => {
             </>
         );
     }
-    const test = await getAssignedGameByDay(myParticipants.find((participant) => participant.isSelected)?.id ?? '');
+    const { currentGamesForParticipant, poolName } = await getAssignedGameByDay(
+        myParticipants.find((participant) => participant.isSelected)?.id ?? ''
+    );
+    // const poolEvent = getPoolEventById(test.)
     return (
-        <>
+        <LoadingAssignedGameWrapper>
             <Box sx={{ display: 'grid', placeContent: 'center' }}>
                 <ParticipantSelector />
             </Box>
-            {JSON.stringify(test)}
-        </>
+            {currentGamesForParticipant ?
+                JSON.stringify(currentGamesForParticipant)
+            : poolName && currentGamesForParticipant ?
+                <Typography>Ingen på meldinger for {translatedDays.get(poolName)}</Typography>
+            :   <Typography>Ingen påmeldinger</Typography>}
+        </LoadingAssignedGameWrapper>
     );
 };
 
