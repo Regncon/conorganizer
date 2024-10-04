@@ -2,7 +2,7 @@
 import { getAllParticipants } from '$app/(public)/components/lib/serverAction';
 import { Participant } from '$lib/types';
 import SearchIcon from '@mui/icons-material/Search';
-import { FormControl, Input, InputAdornment, InputLabel, Paper } from '@mui/material';
+import { FormControl, Input, InputAdornment, InputLabel, Paper, Button, Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import Fuse from 'fuse.js';
 
@@ -19,7 +19,6 @@ const ManuallyAssignPlayer = ({ poolEventId }: Props) => {
     useEffect(() => {
         getAllParticipants().then((participants) => {
             setParticipants(participants);
-            setFilteredParticipants(participants); // Initially, all participants are shown
         });
     }, []);
 
@@ -38,7 +37,7 @@ const ManuallyAssignPlayer = ({ poolEventId }: Props) => {
             const results = fuse.search(query);
             setFilteredParticipants(results.map((result) => result.item)); // Get the actual participants
         } else {
-            setFilteredParticipants(participants); // Reset to all participants if the search is cleared
+            setFilteredParticipants([]); // Clear the filtered participants if the search is empty
         }
     };
 
@@ -58,14 +57,47 @@ const ManuallyAssignPlayer = ({ poolEventId }: Props) => {
                 />
             </FormControl>
 
-            {/* Display the filtered participants */}
-            <ul>
-                {filteredParticipants.map((participant) => (
-                    <li key={participant.id}>
-                        {participant.firstName} - {participant.lastName}
-                    </li>
-                ))}
-            </ul>
+            {/* Display the filtered participants only if searchQuery is not empty */}
+            {searchQuery && (
+                <ul>
+                    {filteredParticipants.slice(0, 10).map((participant, index) => (
+                        <li
+                            key={participant.id}
+                            style={{
+                                backgroundColor: index % 2 === 0 ? 'rgba(0, 0, 0, 0.05)' : 'rgba(0, 0, 0, 0.1)',
+                                padding: '0.5rem',
+                                marginBottom: '0.5rem',
+                                borderRadius: '4px',
+                            }}
+                        >
+                            <Box display="flex" alignItems="center" justifyContent="flex-start">
+                                <Typography component={'span'} sx={{ minWidth: '25rem' }}>
+                                    {participant.firstName} {participant.lastName}
+                                </Typography>
+                                <Box>
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        color="primary"
+                                        onClick={() => handleAssignPlayer(participant)}
+                                        sx={{ marginRight: '0.5rem' }}
+                                    >
+                                        Assign Player
+                                    </Button>
+                                    <Button
+                                        variant="contained"
+                                        size="small"
+                                        color="secondary"
+                                        onClick={() => handleAssignGameMaster(participant)}
+                                    >
+                                        Assign Game Master
+                                    </Button>
+                                </Box>
+                            </Box>
+                        </li>
+                    ))}
+                </ul>
+            )}
         </Paper>
     );
 };
