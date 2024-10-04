@@ -19,7 +19,7 @@ export async function generatePoolPlayerInterestById(id: string) {
     const poolPlayers = await getPoolPlayers();
     const filterdInterests = interests.filter((interest) => interest.interestLevel > 0);
     const playerInterestsAsPoolPlayers = filterdInterests.map((interest) => {
-        const test = { 
+        const test = {
             interestLevel: interest.interestLevel,
             poolEventId: interest.poolEventId,
             participantId: interest.participantId,
@@ -37,66 +37,60 @@ export async function generatePoolPlayerInterestById(id: string) {
             updateAt: '',
             updatedBy: '',
             poolEventTitle: '',
-            id: undefined
-
+            id: undefined,
         } as PoolPlayer;
         return test;
-        
     });
 
     const filterdPoolPlayers = poolPlayers.filter((poolPlayer) => poolPlayer.poolEventId === id);
 
-
     let poolPlayersWithInterests = [...filterdPoolPlayers, ...playerInterestsAsPoolPlayers];
-    // remove duplicates
+
     poolPlayersWithInterests = poolPlayersWithInterests.filter(
         (v, i, a) => a.findIndex((t) => t.participantId === v.participantId) === i
     );
 
+    const shuffledPoolPlayersWithInterests = shuffleArray([...poolPlayersWithInterests]);
 
+    shuffledPoolPlayersWithInterests.forEach((interest) => {
+        const participant = participants.find((participant) => participant.id === interest.participantId);
+        const participantPoolPlayers = poolPlayers.filter(
+            (poolPlayer) => poolPlayer.participantId === interest.participantId
+        );
+        const currentPoolPlayer = poolPlayers.find(
+            (poolPlayer) =>
+                poolPlayer.poolEventId === interest.poolEventId && poolPlayer.participantId === interest.participantId
+        );
 
+        const isAssigned = currentPoolPlayer ? currentPoolPlayer.isAssigned : false;
+        const isGameMaster = currentPoolPlayer ? currentPoolPlayer.isGameMaster : false;
+        // check if the player is already assigned to another poolievent in this pool
+        const isAssignedInSamePool = poolPlayers.some(
+            (poolPlayer) =>
+                poolPlayer.participantId === interest.participantId &&
+                poolPlayer.poolEventId !== interest.poolEventId &&
+                poolPlayer.poolName === interest.poolName &&
+                poolPlayer.isAssigned
+        );
 
-    poolPlayersWithInterests
-        .forEach((interest) => {
-            const participant = participants.find((participant) => participant.id === interest.participantId);
-            const participantPoolPlayers = poolPlayers.filter(
-                (poolPlayer) => poolPlayer.participantId === interest.participantId
-            );
-            const currentPoolPlayer = poolPlayers.find(
-                (poolPlayer) =>
-                    poolPlayer.poolEventId === interest.poolEventId &&
-                    poolPlayer.participantId === interest.participantId
-            );
+        const playerInterest: PlayerInterest = {
+            poolEventId: interest.poolEventId,
+            interestLevel: interest.interestLevel,
+            participantId: interest.participantId,
+            currentPoolPlayerId: currentPoolPlayer?.id,
+            firstName: interest.firstName,
+            lastName: interest.lastName,
+            isOver18: participant?.over18 ?? false,
+            ticketCategoryID: participant?.ticketCategoryId ?? 0,
+            ticketCategory: participant?.ticketCategory ?? 'FEIL!',
+            playerInPools: participantPoolPlayers ? participantPoolPlayers : [],
+            isAssigned: isAssigned,
+            isGameMaster: isGameMaster,
+            isAlredyPlayerInPool: isAssignedInSamePool || isAssigned || isGameMaster,
+        };
 
-            const isAssigned = currentPoolPlayer ? currentPoolPlayer.isAssigned : false;
-            const isGameMaster = currentPoolPlayer ? currentPoolPlayer.isGameMaster : false;
-            // check if the player is already assigned to another poolievent in this pool
-            const isAssignedInSamePool = poolPlayers.some(
-                (poolPlayer) =>
-                    poolPlayer.participantId === interest.participantId &&
-                    poolPlayer.poolEventId !== interest.poolEventId &&
-                    poolPlayer.poolName === interest.poolName &&
-                    poolPlayer.isAssigned
-            );
-
-            const playerInterest: PlayerInterest = {
-                poolEventId: interest.poolEventId,
-                interestLevel: interest.interestLevel,
-                participantId: interest.participantId,
-                currentPoolPlayerId: currentPoolPlayer?.id,
-                firstName: interest.firstName,
-                lastName: interest.lastName,
-                isOver18: participant?.over18 ?? false,
-                ticketCategoryID: participant?.ticketCategoryId ?? 0,
-                ticketCategory: participant?.ticketCategory ?? 'FEIL!',
-                playerInPools: participantPoolPlayers ? participantPoolPlayers : [],
-                isAssigned: isAssigned,
-                isGameMaster: isGameMaster,
-                isAlredyPlayerInPool: isAssignedInSamePool || isAssigned || isGameMaster,
-            };
-
-            poolInterests.push(playerInterest);
-        });
+        poolInterests.push(playerInterest);
+    });
 
     return poolInterests;
 }
@@ -111,4 +105,16 @@ export async function getPoolPlayers() {
     // console.log('poolPlayers', poolPlayers);
 
     return poolPlayers;
+}
+/**
+ * Shuffles an array in place using the Fisher-Yates algorithm.
+ * @param array The array to shuffle.
+ * @returns The shuffled array.
+ */
+function shuffleArray<T>(array: T[]): T[] {
+    for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
 }
