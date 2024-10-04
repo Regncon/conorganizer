@@ -5,7 +5,7 @@ export type EventCardProps = {
     gameMaster: string;
     system: string;
     shortDescription: string;
-    icons?: string[];
+    icons?: string[] | IconOption[];
     backgroundImage?: string;
     myEventBar?: boolean;
     myEventBarSubmitted?: boolean;

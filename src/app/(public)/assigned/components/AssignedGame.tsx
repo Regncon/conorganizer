@@ -8,6 +8,7 @@ import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
 import { getPoolEventById } from '$app/(public)/components/lib/serverAction';
 import LoadingAssignedGameWrapper from './ui/LoadingAssignedGameWrapper';
 import { translatedDays } from '$app/(public)/components/lib/helpers/translation';
+import EventCardBig from '$app/(public)/components/components/EventCardBig';
 
 type Props = {};
 
@@ -34,14 +35,26 @@ const AssignedGame = async ({}: Props) => {
     const { currentGamesForParticipant, poolName } = await getAssignedGameByDay(
         myParticipants.find((participant) => participant.isSelected)?.id ?? ''
     );
-    // const poolEvent = getPoolEventById(test.)
+    const poolEvent = await getPoolEventById(currentGamesForParticipant?.poolEventId ?? '');
+    console.log(poolEvent, 'poolEvent');
+
     return (
         <LoadingAssignedGameWrapper>
             <Box sx={{ display: 'grid', placeContent: 'center' }}>
                 <ParticipantSelector />
             </Box>
             {currentGamesForParticipant ?
-                JSON.stringify(currentGamesForParticipant)
+                <Box sx={{ maxWidth: '24.7143rem' }}>
+                    <EventCardBig
+                        gameMaster={poolEvent?.gameMaster}
+                        shortDescription={poolEvent?.shortDescription}
+                        title={poolEvent?.title}
+                        system={poolEvent?.system}
+                        backgroundImage={poolEvent.smallImageURL}
+                        icons={poolEvent?.icons ?? []}
+                    />
+                    {JSON.stringify(currentGamesForParticipant)}
+                </Box>
             : poolName && currentGamesForParticipant ?
                 <Typography>Ingen på meldinger for {translatedDays.get(poolName)}</Typography>
             :   <Typography>Ingen påmeldinger</Typography>}
