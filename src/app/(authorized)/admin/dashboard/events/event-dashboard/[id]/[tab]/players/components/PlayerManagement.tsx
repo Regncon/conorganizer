@@ -159,14 +159,20 @@ const PlayerManagement = async ({ id, poolName, maxNumberOfPlayers }: Props) => 
 
             <ManuallyAssignPlayer poolEventId={id} />
             <Typography variant="h2">Intreserte:</Typography>
-            {poolPlayerInterests.map((poolPlayerInterest, index) => (
-                <PlayerInterestInfo
-                    key={index}
-                    poolName={poolName}
-                    playerInterest={poolPlayerInterest}
-                    hasPlayerInPool={poolPlayerInterest.isAlredyPlayerInPool}
-                />
-            ))}
+            {poolPlayerInterests
+                .sort((a, b) =>
+                    a.isGameMaster ? -1
+                    : a.interestLevel > b.interestLevel ? -1
+                    : 1
+                )
+                .map((poolPlayerInterest, index) => (
+                    <PlayerInterestInfo
+                        key={index}
+                        poolName={poolName}
+                        playerInterest={poolPlayerInterest}
+                        hasPlayerInPool={poolPlayerInterest.isAlredyPlayerInPool}
+                    />
+                ))}
         </Paper>
     );
 };
