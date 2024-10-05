@@ -16,12 +16,15 @@ import {
 import { useEffect, useState } from 'react';
 import Fuse from 'fuse.js';
 import { assignPlayer } from './lib/actions';
+import router from 'next/router';
+import { useRouter } from 'next/navigation';
 
 type Props = {
     poolEventId: string;
 };
 
 const ManuallyAssignPlayer = ({ poolEventId }: Props) => {
+    const router = useRouter();
     const [participants, setParticipants] = useState<Participant[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [filteredParticipants, setFilteredParticipants] = useState<Participant[]>([]);
@@ -69,6 +72,7 @@ const ManuallyAssignPlayer = ({ poolEventId }: Props) => {
 
         // Reset loading state after the action is done
         setLoading((prev) => ({ ...prev, [participantId]: false }));
+        router.refresh();
     };
 
     return (
