@@ -5,37 +5,50 @@ import { cookies } from 'next/headers';
 import type { ParticipantCookie } from '$lib/types';
 import NextLink from 'next/link';
 import { getAuthorizedAuth } from '$lib/firebase/firebaseAdmin';
-import { getPoolEventById } from '$app/(public)/components/lib/serverAction';
+import { getAllPoolEvents, getPoolEventById } from '$app/(public)/components/lib/serverAction';
 import LoadingAssignedGameWrapper from './ui/LoadingAssignedGameWrapper';
 import { translatedDays } from '$app/(public)/components/lib/helpers/translation';
 import EventCardBig from '$app/(public)/components/components/EventCardBig';
 
 type Props = {};
 
-const AssignedGame = async ({ }: Props) => {
+const AssignedGame = async ({}: Props) => {
     const { user } = await getAuthorizedAuth();
 
     const cookie = cookies();
-    const myParticipants = JSON.parse(cookie.get('myParticipants')?.value ?? '') as ParticipantCookie[] | undefined;
+    console.log(cookie);
+
+    let myParticipants;
+    try {
+        myParticipants = JSON.parse(cookie.get('myParticipants')?.value ?? '{}') as ParticipantCookie[] | undefined;
+    } catch (error) {
+        myParticipants = undefined;
+    }
     if (!myParticipants || !user) {
         console.warn('fant ikke deltakere i cookie for bruker: ', user?.uid ?? 'ingen bruker logget inn');
         return (
             <>
-                <ParticipantSelector />
+                {user ?
+                    <ParticipantSelector />
+                :   null}
                 <Typography sx={{ display: 'inline-block' }}>
                     {user ?
                         'Du må ha billett for og se denne sida'
-                        : 'Du må være logget inn for og se dine interesser.'}
+                    :   'Du må være logget inn for og se dine på meldinger.'}
                 </Typography>{' '}
-                <Link component={NextLink} href={'/my-profile/my-tickets'}>
-                    mer info her
-                </Link>
+                {user ?
+                    <Link component={NextLink} href={'/my-profile/my-tickets'}>
+                        mer info her
+                    </Link>
+                :   null}
             </>
         );
     }
-    const { currentGamesForParticipant, poolName } = await getAssignedGameByDay(
+    const currentGamesForParticipant = await getAssignedGameByDay(
         myParticipants.find((participant) => participant.isSelected)?.id ?? ''
     );
+    console.log('myParticipants', myParticipants);
+
     if (!currentGamesForParticipant) {
         return (
             <>
@@ -44,29 +57,40 @@ const AssignedGame = async ({ }: Props) => {
             </>
         );
     }
-    const poolEvent = await getPoolEventById(currentGamesForParticipant?.poolEventId ?? '');
-    console.log(poolEvent, 'poolEvent');
-
+    const poolEvents = await getAllPoolEvents();
     return (
         <LoadingAssignedGameWrapper>
             <Box sx={{ display: 'grid', placeContent: 'center' }}>
                 <ParticipantSelector />
             </Box>
             {currentGamesForParticipant ?
-                <Box sx={{ maxWidth: '24.7143rem' }}>
-                    <EventCardBig
-                        gameMaster={poolEvent?.gameMaster}
-                        shortDescription={poolEvent?.shortDescription}
-                        title={poolEvent?.title}
-                        system={poolEvent?.system}
-                        backgroundImage={poolEvent.smallImageURL}
-                        icons={poolEvent?.icons ?? []}
-                    />
-                    {JSON.stringify(currentGamesForParticipant)}
-                </Box>
-                : poolName && currentGamesForParticipant ?
-                    <Typography>Ingen på meldinger for {translatedDays.get(poolName)}</Typography>
-                    : <Typography>Ingen påmeldinger</Typography>}
+                [...poolEvents.entries()].map(([poolName, poolEvents]) => {
+                    return (
+                        <Box sx={{ maxWidth: '24.7143rem' }} key={poolName}>
+                            <Typography variant="h1">{translatedDays.get(poolName)}</Typography>
+                            {poolEvents
+                                .filter((poolEvent) =>
+                                    currentGamesForParticipant.some((game) => game.poolEventId === poolEvent.id)
+                                )
+                                .map((poolEvent) => {
+                                    return (
+                                        <EventCardBig
+                                            gameMaster={poolEvent?.gameMaster}
+                                            shortDescription={poolEvent?.shortDescription}
+                                            title={poolEvent?.title}
+                                            system={poolEvent?.system}
+                                            backgroundImage={poolEvent.smallImageURL}
+                                            icons={poolEvent?.icons ?? []}
+                                        />
+                                    );
+                                })}
+                            {/* {JSON.stringify(currentGamesForParticipant)} */}
+                        </Box>
+                    );
+                })
+            : currentGamesForParticipant.length === 0 ?
+                <Typography>Ingen påmeldinger for denne puljen</Typography>
+            :   <Typography>Ingen påmeldinger</Typography>}
         </LoadingAssignedGameWrapper>
     );
 };
