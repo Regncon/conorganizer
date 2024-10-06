@@ -8,9 +8,13 @@ export const getAssignedGameByDay = async (participantId: string) => {
     const { user } = await getAuthorizedAuth();
     if (user === null) {
         console.warn('No user logged in');
-        return { poolName: null, currentGamesForParticipant: null };
+        return null;
     }
     const myParticipants = await getParticipantByUser();
+    console.log(myParticipants, 'myParticipants');
+    if (myParticipants.length === 0) {
+        return [];
+    }
 
     const participantFilter = myParticipants
         .filter((participant) => participant.id === participantId)
@@ -22,36 +26,13 @@ export const getAssignedGameByDay = async (participantId: string) => {
             .get()
     ).docs.map((doc) => ({ id: doc.id, ...doc.data() }) as PoolPlayer);
     console.warn(currentGamesForParticipantId, 'found currentGamesForParticipantId');
-    const now = new Date();
-    const day = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 5 = Friday, 6 = Saturday
-    const hours = now.getHours();
-    const isMorning = hours < 12;
 
-    let poolName: PoolName;
-
-    switch (day) {
-        case 5: // Friday
-            poolName = PoolName.fridayEvening;
-            break;
-        case 6: // Saturday
-            poolName = isMorning ? PoolName.saturdayMorning : PoolName.saturdayEvening;
-            break;
-        case 0: // Sunday
-            poolName = isMorning ? PoolName.sundayMorning : PoolName.fridayEvening;
-            break;
-        default:
-            poolName = PoolName.fridayEvening;
-    }
-
-    const findForPoolName = currentGamesForParticipantId.find((player) => player.poolName === poolName);
+    currentGamesForParticipantId;
     console.warn(
-        findForPoolName,
-        findForPoolName ?
+        currentGamesForParticipantId,
+        currentGamesForParticipantId ?
             'found currentGamesForParticipantId for poolName'
         :   'no currentGamesForParticipantId for poolName'
     );
-    return {
-        currentGamesForParticipant: findForPoolName,
-        poolName,
-    };
+    return currentGamesForParticipantId;
 };
