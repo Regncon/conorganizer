@@ -1,15 +1,25 @@
 import { createIconOptions, createIconFromString } from '$app/(public)/components/lib/helpers/icons';
+import { GameType } from '$lib/enums';
 import type { ConEvent, IconName, PoolEvent } from '$lib/types';
-import { Box, Chip, debounce, TextField } from '@mui/material';
-import { useCallback, useEffect, useRef, useState, type PropsWithChildren } from 'react';
+import {
+    Box,
+    Button,
+    Chip,
+    debounce,
+    FormControl,
+    FormControlLabel,
+    Radio,
+    RadioGroup,
+    TextField,
+} from '@mui/material';
+import { useCallback, useEffect, useRef, useState, type FormEventHandler, type PropsWithChildren } from 'react';
 
-type SelectedTags = {
+type SelectedTag = {
     selected: boolean;
     label: string;
     iconName: IconName;
 };
 
-const chipIcons = createIconOptions();
 type Props = {
     data: PoolEvent;
     setData: (data: PoolEvent) => void;
@@ -17,8 +27,17 @@ type Props = {
     handleChange?: (data: Partial<ConEvent>) => Promise<void>;
 };
 const ChipCarousel = ({ data, editable, setData, handleChange }: Props) => {
+    const chipIcons = createIconOptions(
+        data.adultsOnly,
+        data.childFriendly,
+        data.beginnerFriendly,
+        data.lessThanThreeHours,
+        data.moreThanSixHours,
+        data.possiblyEnglish,
+        data.gameType
+    );
     const [isEditingTags, setIsEditingTags] = useState<boolean>(false);
-    const [selectedTags, setSelectedTags] = useState<SelectedTags[]>(
+    const [selectedTags, setSelectedTags] = useState<SelectedTag[]>(
         chipIcons.map((chipIcon) => {
             return { ...chipIcon, selected: data.icons?.some((icon) => icon.iconName === chipIcon.iconName) ?? false };
         })
@@ -37,7 +56,7 @@ const ChipCarousel = ({ data, editable, setData, handleChange }: Props) => {
         }, 1000),
         []
     );
-    const handleChipClick = (clickedChips: SelectedTags) => {
+    const handleChipClick = (clickedChips: SelectedTag) => {
         const selectedTagsToConEventData: Partial<ConEvent> = {
             ...selectedTags.reduce((acc, value) => {
                 return { ...acc, [value.iconName]: value.selected };
@@ -55,21 +74,78 @@ const ChipCarousel = ({ data, editable, setData, handleChange }: Props) => {
             ];
         });
     };
+    const handleChangeGameType: FormEventHandler = (e) => {
+        const target = e.target as HTMLInputElement;
+        const radioName = target.name as GameType;
+        const radioTextContent = target.labels?.[0].textContent;
+        if (radioTextContent) {
+            const deletedGameTypeSelectedTags = selectedTags.filter(
+                (selectedTag) => Object.values(GameType).includes(selectedTag.iconName as GameType) === false
+            );
+
+            setSelectedTags([
+                ...deletedGameTypeSelectedTags,
+                {
+                    iconName: radioName,
+                    label: radioTextContent,
+                    selected: true,
+                },
+            ]);
+        }
+    };
 
     return isEditingTags ?
-            <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
-                {selectedTags.map((iconOption, index) => (
-                    <Chip
-                        onClick={() => {
-                            handleChipClick({ ...iconOption, selected: !iconOption.selected });
-                        }}
-                        label={iconOption.label}
-                        key={`${iconOption.label}-${index}`}
-                        color={iconOption.selected ? 'secondary' : 'primary'}
-                        variant="outlined"
-                        icon={createIconFromString(iconOption.iconName)}
-                    />
-                ))}
+            <Box sx={{ display: 'grid' }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+                    {selectedTags.map((iconOption, index) => {
+                        return (
+                            <Chip
+                                onClick={() => {
+                                    handleChipClick({ ...iconOption, selected: !iconOption.selected });
+                                }}
+                                label={iconOption.label}
+                                key={`${iconOption.label}-${index}`}
+                                color={iconOption.selected ? 'secondary' : 'primary'}
+                                variant="outlined"
+                                icon={createIconFromString(iconOption.iconName)}
+                                disabled={Object.values(GameType).includes(iconOption.iconName as GameType)}
+                            />
+                        );
+                    })}
+                </Box>
+                <FormControl
+                    sx={{ placeItems: 'center' }}
+                    onChange={(e) => {
+                        console.log(e, 'e');
+                        handleChangeGameType(e);
+                    }}
+                >
+                    <RadioGroup
+                        value={
+                            selectedTags.find((selectedTab) =>
+                                Object.values(GameType).includes(selectedTab.iconName as GameType)
+                            )?.iconName
+                        }
+                        aria-labelledby="demo-controlled-radio-buttons-group"
+                        name="controlled-radio-buttons-group"
+                    >
+                        <FormControlLabel
+                            value="rolePlaying"
+                            control={<Radio name="rolePlaying" />}
+                            label="rollespel"
+                        />
+                        <FormControlLabel value="boardGame" control={<Radio name="boardGame" />} label="Brettspel" />
+                        <FormControlLabel value="cardGame" control={<Radio name="cardGame" />} label="Kortspel" />
+                        <FormControlLabel value="other" control={<Radio name="other" />} label="Annet" />
+                    </RadioGroup>
+                </FormControl>
+                <Button
+                    onClick={() => {
+                        setIsEditingTags(false);
+                    }}
+                >
+                    Tilbake til karusell
+                </Button>
             </Box>
         :   <Box
                 sx={{

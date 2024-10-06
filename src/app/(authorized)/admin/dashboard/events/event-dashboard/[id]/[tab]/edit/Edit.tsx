@@ -72,8 +72,9 @@ const Edit = ({ id }: Props) => {
 
     const handleOnChange = useCallback(
         debounce((e: FormEvent<HTMLFormElement>): void => {
-            const { value: inputValue, name: inputName, checked, type } = e.target as HTMLInputElement;
-
+            const target = e.target as HTMLInputElement;
+            const { value: inputValue, name: inputName, checked, type } = target;
+            const radioTextContent = target.labels?.[0].textContent;
             let value: string | boolean = inputValue;
             let name: string = inputName;
 
@@ -81,11 +82,10 @@ const Edit = ({ id }: Props) => {
                 value = checked;
             }
 
-            if (type === 'radio') {
+            if (type === 'radio' && radioTextContent) {
                 name = 'gameType';
-                value = inputName;
+                value = value;
             }
-            console.log(name, value, 'change');
 
             saveToDb(name, value);
         }, 1500),
@@ -126,7 +126,7 @@ const Edit = ({ id }: Props) => {
                     Loading...
                     <CircularProgress />
                 </Typography>
-                : <>
+            :   <>
                     <Box
                         component="form"
                         onChange={(evt) =>

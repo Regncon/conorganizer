@@ -38,10 +38,7 @@ export const createIconOptions = (
     lessThanThreeHours = true,
     moreThanSixHours = true,
     possiblyEnglish = true,
-    cardGame = true,
-    boardGame = true,
-    rolePlaying = true,
-    other = true
+    gameType?: GameType
 ) => {
     let icons: IconOption[] = [];
     if (childFriendly) icons = [...icons, { label: 'Barnevennlig', iconName: 'childFriendly' }];
@@ -50,10 +47,24 @@ export const createIconOptions = (
     if (lessThanThreeHours) icons = [...icons, { label: 'Mindre enn tre timer', iconName: 'lessThanThreeHours' }];
     if (moreThanSixHours) icons = [...icons, { label: 'Mer enn seks timer', iconName: 'moreThanSixHours' }];
     if (beginnerFriendly) icons = [...icons, { label: 'Nybegynnervennlig', iconName: 'beginnerFriendly' }];
-    if (cardGame) icons = [...icons, { label: 'Kortspel', iconName: 'cardGame' }];
-    if (boardGame) icons = [...icons, { label: 'Brettspel', iconName: 'boardGame' }];
-    if (rolePlaying) icons = [...icons, { label: 'Rollespel', iconName: 'rolePlaying' }];
-    if (other) icons = [...icons, { label: 'Annet', iconName: 'other' }];
+
+    switch (gameType) {
+        case GameType.CardGame:
+            icons = [...icons, { label: 'Kortspel', iconName: 'cardGame' }];
+            break;
+        case GameType.BoardGame:
+            icons = [...icons, { label: 'Brettspel', iconName: 'boardGame' }];
+            break;
+        case GameType.RolePlaying:
+            icons = [...icons, { label: 'Rollespel', iconName: 'rolePlaying' }];
+            break;
+        case GameType.Other:
+            icons = [...icons, { label: 'Annet', iconName: 'other' }];
+            break;
+        default:
+            break;
+    }
+
     return icons;
 };
 

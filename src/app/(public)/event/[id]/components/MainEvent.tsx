@@ -61,7 +61,8 @@ const MainEvent = ({
                     poolEvent?.beginnerFriendly ?? false,
                     poolEvent?.lessThanThreeHours ?? false,
                     poolEvent?.moreThanSixHours ?? false,
-                    poolEvent?.possiblyEnglish ?? false
+                    poolEvent?.possiblyEnglish ?? false,
+                    poolEvent?.gameType
                 );
 
                 if (poolEvent) {

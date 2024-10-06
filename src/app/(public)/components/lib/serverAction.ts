@@ -92,13 +92,15 @@ export async function getAdjacentPoolEventsById(id: string, day: PoolName) {
 }
 export async function getPoolEventById(id: string) {
     const poolEvent = (await adminDb.collection('pool-events').doc(id).get()).data() as PoolEvent;
+
     let icons = createIconOptions(
         poolEvent.adultsOnly,
         poolEvent.childFriendly,
         poolEvent.beginnerFriendly,
         poolEvent.lessThanThreeHours,
         poolEvent.moreThanSixHours,
-        poolEvent.possiblyEnglish
+        poolEvent.possiblyEnglish,
+        poolEvent.gameType
     );
     poolEvent.icons = icons;
     return { ...poolEvent, id };
