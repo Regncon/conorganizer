@@ -70,7 +70,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
                 color={'secondary'}
                 sx={{ color: pathName.includes('/assigned') ? '' : 'white' }}
                 startIcon={<GroupsIcon />}
-                href="/?filters=assigned"
+                href="/assigned"
                 aria-label="assigned-events"
                 component={Link}
             >
