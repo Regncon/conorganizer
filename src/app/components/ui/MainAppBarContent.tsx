@@ -68,12 +68,11 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             </Button>
             <Button
                 color={'secondary'}
-                sx={{ color: pathName.includes('/--whatever-name-you-choose-here') ? '' : 'white' }}
+                sx={{ color: pathName.includes('/assigned') ? '' : 'white' }}
                 startIcon={<GroupsIcon />}
                 href="/?filters=assigned"
                 aria-label="assigned-events"
                 component={Link}
-                disabled
             >
                 Påmeldt
             </Button>
@@ -111,7 +110,7 @@ const MainAppBarContent = forwardRef<HTMLElement, Props>(({ sx, isLoggedIn, admi
             >
                 <FavoriteIcon fontSize="large" />
             </IconButton>
-            <IconButton href="/?filters=assigned" aria-label="assigned-events" disabled component={Link}>
+            <IconButton href="/assigned" aria-label="assigned-events" component={Link}>
                 <GroupsIcon fontSize="large" />
             </IconButton>
             {isLoggedIn ?

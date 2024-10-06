@@ -68,28 +68,31 @@ const AssignedGame = async ({}: Props) => {
                     return (
                         <Box sx={{ maxWidth: '24.7143rem' }} key={poolName}>
                             <Typography variant="h1">{translatedDays.get(poolName)}</Typography>
-                            {poolEvents
-                                .filter((poolEvent) =>
+                            {(
+                                poolEvents.filter((poolEvent) =>
                                     currentGamesForParticipant.some((game) => game.poolEventId === poolEvent.id)
-                                )
-                                .map((poolEvent) => {
-                                    return (
-                                        <EventCardBig
-                                            gameMaster={poolEvent?.gameMaster}
-                                            shortDescription={poolEvent?.shortDescription}
-                                            title={poolEvent?.title}
-                                            system={poolEvent?.system}
-                                            backgroundImage={poolEvent.smallImageURL}
-                                            icons={poolEvent?.icons ?? []}
-                                        />
-                                    );
-                                })}
-                            {/* {JSON.stringify(currentGamesForParticipant)} */}
+                                ).length > 0
+                            ) ?
+                                poolEvents
+                                    .filter((poolEvent) =>
+                                        currentGamesForParticipant.some((game) => game.poolEventId === poolEvent.id)
+                                    )
+                                    .map((poolEvent) => {
+                                        return (
+                                            <EventCardBig
+                                                gameMaster={poolEvent?.gameMaster}
+                                                shortDescription={poolEvent?.shortDescription}
+                                                title={poolEvent?.title}
+                                                system={poolEvent?.system}
+                                                backgroundImage={poolEvent.smallImageURL}
+                                                icons={poolEvent?.icons ?? []}
+                                            />
+                                        );
+                                    })
+                            :   <Typography variant="h2">Ingen påmeldinger for denne puljen</Typography>}
                         </Box>
                     );
                 })
-            : currentGamesForParticipant.length === 0 ?
-                <Typography>Ingen påmeldinger for denne puljen</Typography>
             :   <Typography>Ingen påmeldinger</Typography>}
         </LoadingAssignedGameWrapper>
     );
