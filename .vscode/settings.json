@@ -1,3 +1,5 @@
 {
-    "px-to-rem.px-per-rem": 14
+    "spellright.language": ["en"],
+    "spellright.groupDictionaries": true,
+    "spellright.documentTypes": ["latex", "plaintext", "html", "ts", "js"]
 }

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <script type="module" src="/main.ts"></script>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Vite + TS + HTMX + TAILWIND</title>
+        <link href="reset.css" rel="stylesheet" />
+        <link href="style.css" rel="stylesheet" />
+    </head>
+
+    <body>
+        <div id="app"></div>
+        <h1
+            hx-get="/hello.html"
+            hx-target="#greeting"
+            hx-swap="innerHTML"
+            class="bg-red-200 text-gray-800 text-3xl p-4"
+        >
+            Hello World
+        </h1>
+        <h1 hx-trigger="load from:body" hx-get="/hello.html" hx-swap="outerHTML"></h1>
+        <button hx-get="/hello.html" hx-target="#greeting" hx-swap="innerHTML">Test</button>
+        <div id="greeting"></div>
+    </body>
+</html>
