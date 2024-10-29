@@ -16,6 +16,7 @@ import (
 type Test struct {
 	ID        int       `json:"id"`
 	CreatedAt time.Time `json:"created_at"`
+	Note      string    `json:"note"`
 }
 
 func EchoServer() {
@@ -45,6 +46,7 @@ func EchoServer() {
 			"Name":      "Wyndham",
 			"Id":        testRes[0].ID,
 			"CreatedAt": testRes[0].CreatedAt,
+			"Note":      testRes[0].Note,
 		}
 		return c.Render(http.StatusOK, "index", res)
 	})

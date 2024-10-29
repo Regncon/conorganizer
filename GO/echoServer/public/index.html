@@ -18,8 +18,16 @@
         <p>Hello, World!</p>
         <div id="user-info">
             <p>{{.Name}}</p>
+            <h1>FRA SUPABASE!!!!! ⬇️</h1>
             <p>{{.ID}}</p>
             <p>{{.CreatedAt}}</p>
+            <p
+                class="p-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none shadow transition duration-300 ease-in-out"
+                rows="4"
+                placeholder="Enter your text..."
+            >
+                {{.Note}}
+            </p>
             <button
                 class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow-lg transform transition duration-300 ease-in-out hover:scale-105 active:scale-95"
                 hx-get="/echo/get-info"
