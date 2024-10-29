@@ -1,0 +1,6 @@
+{
+    "$schema": "https://json.schemastore.org/nodemon.json",
+    "watch": ["**/*.go", "**/*.html", "**/*.css"],
+    "exec": "go run htmx.go",
+    "ext": "*.go,*.html,*.css"
+}
