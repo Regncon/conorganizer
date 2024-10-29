@@ -3,12 +3,10 @@
     "module": "index.ts",
     "type": "module",
     "scripts": {
-        "start": "concurrently  \"npm run nodemon\" \"npm run compile-tailwind\"",
         "compile-tailwind": "bunx tailwindcss -i ./echoServer/public/main.css -o ./echoServer/dist/tailwind.css",
-        "nodemon": "nodemon"
+        "start": "nodemon"
     },
     "devDependencies": {
-        "concurrently": "^9.0.1",
         "tailwindcss": "^3.4.14"
     },
     "peerDependencies": {},
