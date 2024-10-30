@@ -18,9 +18,14 @@
         <p>Hello, World!</p>
         <div id="user-info">
             <p>{{.Name}}</p>
-            <h1>FRA SUPABASE!!!!! ⬇️</h1>
+            <!-- <h1>FRA SUPABASE!!!!! ⬇️</h1>
             <p>{{.ID}}</p>
-            <p>{{.CreatedAt}}</p>
+            <p>{{.CreatedAt}}</p> -->
+            {{range .PoolEvent}}
+            <p>{{.Id}}</p>
+            <p>{{.AdditionalComments}}</p>
+
+            {{end}}
             <p
                 class="p-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none shadow transition duration-300 ease-in-out"
                 rows="4"

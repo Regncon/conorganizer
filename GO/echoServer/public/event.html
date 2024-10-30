@@ -1,0 +1,111 @@
+{{define "event"}}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{{.Title}}</title>
+        <script
+            src="https://unpkg.com/htmx.org@2.0.3"
+            integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq"
+            crossorigin="anonymous"
+        ></script>
+        <link rel="stylesheet" href="/echo/dist/global.css" />
+        <link rel="stylesheet" href="/echo/dist/tailwind.css" />
+        <link rel="stylesheet" href="/echo/dist/reset.css" />
+    </head>
+    <body>
+        <main>
+            <!-- Event Banner -->
+            <div
+                class="relative bg-cover bg-center h-64"
+                style="background-image: url('https://regncon.no/regncon2024images/Karvi-Big.webp')"
+            >
+                <div class="absolute inset-0 bg-black opacity-50"></div>
+                <div class="relative z-10 p-6">
+                    <h1 class="text-4xl font-bold">Karvi</h1>
+                    <p class="text-gray-200">Strategisk spill med vikinger på tokt</p>
+                </div>
+            </div>
+
+            <!-- Content Container -->
+            <div class="p-6 max-w-4xl mx-auto">
+                <!-- Game Master and System Info -->
+                <div class="flex items-center space-x-4">
+                    <div class="text-red-400 font-semibold">
+                        <p><span class="inline-block text-xl">👤</span> Arrangør</p>
+                        <p>Christian Berge</p>
+                    </div>
+                    <div class="text-red-400 font-semibold">
+                        <p><span class="inline-block text-xl">🎲</span> System</p>
+                        <p>Brettspill</p>
+                    </div>
+                </div>
+
+                <!-- Admin Button -->
+                <div class="mt-6">
+                    <button class="w-full bg-red-400 py-2 font-semibold rounded-md text-black">
+                        ADMINISTRER ARRANGEMENTET
+                    </button>
+                </div>
+
+                <!-- Description Section -->
+                <div class="mt-6 text-gray-300">
+                    <p>
+                        Bli med vikinger på tokt! Spillet er et worker placement/rondel eurospill, der du har arbeidere
+                        som går rundt i en vikinglandsby og gjør ulike handlinger. Samtidig har du skipet ditt, en
+                        "Karvi", som kjører rundt og plyndrer, handler og etablerer kolonier. Du må planlegge godt for å
+                        bygge de riktige runesteinene og score masse poeng. Kjempegøy for alle som liker strategisk
+                        planlegging.
+                    </p>
+                    <p class="mt-4">
+                        Spillet er skapt av Torgeir Tjong fra Voss, og ble utgitt på prestisjetunge Hans im Glück
+                        spillforlag i fjor høst.
+                    </p>
+                </div>
+
+                <!-- Interactive Controls -->
+                <div class="mt-6 flex items-center space-x-4">
+                    <div class="text-red-400 font-semibold border border-red-400 px-4 py-1 rounded">Brettspel</div>
+                    <div class="flex items-center space-x-2">
+                        <div class="bg-red-400 w-6 h-6 rounded-full flex items-center justify-center text-black">
+                            GJ
+                        </div>
+                        <span>Gerhard</span>
+                    </div>
+                </div>
+
+                <!-- Event Time and Interest -->
+                <div class="mt-4 bg-red-400 text-black p-4 rounded-lg flex items-center space-x-4">
+                    <img
+                        src="https://via.placeholder.com/50"
+                        alt="Dragon Icon"
+                        class="h-12 w-12 object-cover rounded-full"
+                    />
+                    <div>
+                        <p>Fredag Kveld KL 18 - 23</p>
+                        <p>Interessert</p>
+                    </div>
+                </div>
+
+                <!-- Slider Control -->
+                <div class="mt-6">
+                    <input
+                        type="range"
+                        class="w-full h-2 bg-red-400 rounded-lg appearance-none cursor-pointer"
+                        min="0"
+                        max="10"
+                        step="1"
+                    />
+                    <p class="text-gray-400 mt-2">Dra baren over for å melde din interesse!</p>
+                </div>
+
+                <!-- FAQ Section -->
+                <div class="mt-4 text-red-400">
+                    <p>❓ <a href="#" class="underline">Forvirret? Les mer om påmeldingssystemet</a></p>
+                </div>
+            </div>
+        </main>
+    </body>
+</html>
+{{end}}
