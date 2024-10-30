@@ -16,12 +16,16 @@
     </head>
     <body class="bg-black text-white">
         <main>
-            <!-- Event Banner -->
-            <div class="relative bg-cover bg-center h-64" style="background-image: url('{{.BigImageURL}}');">
-                <div class="absolute inset-0 bg-black opacity-50"></div>
-                <div class="relative z-10 p-6">
-                    <h1 class="text-4xl font-bold">{{.Title}}</h1>
-                    <p class="text-gray-200">{{.ShortDescription}}</p>
+            <!-- Event Banner with Left-Aligned Centered Text and Gradient Overlay -->
+            <div
+                class="relative h-64 bg-cover bg-center flex items-center justify-start"
+                style="background-image: url('{{.BigImageURL}}');"
+            >
+                <!-- Gradient overlay that fades to black at the bottom -->
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black"></div>
+                <div class="relative z-10 p-6 text-left">
+                    <h1 class="text-4xl font-bold text-white text-outline">{{.Title}}</h1>
+                    <p class="text-gray-200 text-outline">{{.ShortDescription}}</p>
                 </div>
             </div>
 
@@ -29,37 +33,27 @@
             <div class="p-6 max-w-4xl mx-auto">
                 <!-- Game Master and System Info -->
                 <div class="flex items-center space-x-4">
-                    <div class="text-red-400 font-semibold">
+                    <div class="text-red-400 font-semibold text-outline">
                         <p><span class="inline-block text-xl">👤</span> Arrangør</p>
                         <p>{{.GameMaster}}</p>
                     </div>
-                    <div class="text-red-400 font-semibold">
+                    <div class="text-red-400 font-semibold text-outline">
                         <p><span class="inline-block text-xl">🎲</span> System</p>
                         <p>{{.System}}</p>
                     </div>
                 </div>
 
-                <!-- Admin Button -->
-                <div class="mt-6">
-                    <button class="w-full bg-red-400 py-2 font-semibold rounded-md text-black">
-                        ADMINISTRER ARRANGEMENTET
-                    </button>
-                </div>
-
                 <!-- Description Section -->
-                <div class="mt-6 text-gray-300">
+                <div class="mt-6 text-gray-300 text-outline">
                     <p>{{.Description}}</p>
                 </div>
 
                 <!-- Interactive Controls -->
-                <div class="mt-6 flex items-center space-x-4">
-                    <div class="text-red-400 font-semibold border border-red-400 px-4 py-1 rounded">{{.GameType}}</div>
-                    <div class="flex items-center space-x-2">
-                        <div class="bg-red-400 w-6 h-6 rounded-full flex items-center justify-center text-black">
-                            GAMEMASTER
-                            <!-- Initials -->
-                        </div>
-                        <span>{{.GameMaster}}</span>
+                <div class="mt-6">
+                    <div
+                        class="text-red-400 font-semibold text-outline border border-red-400 px-4 py-1 rounded inline-block"
+                    >
+                        {{.GameType}}
                     </div>
                 </div>
 
@@ -71,7 +65,7 @@
                         class="h-12 w-12 object-cover rounded-full"
                     />
                     <div>
-                        <p>{{.PoolName}} KL 18 - 23</p>
+                        <p>Fredag Kveld KL 18 - 23</p>
                         <p>Interessert</p>
                     </div>
                 </div>
@@ -85,11 +79,11 @@
                         max="10"
                         step="1"
                     />
-                    <p class="text-gray-400 mt-2">Dra baren over for å melde din interesse!</p>
+                    <p class="text-gray-400 mt-2 text-outline">Dra baren over for å melde din interesse!</p>
                 </div>
 
                 <!-- FAQ Section -->
-                <div class="mt-4 text-red-400">
+                <div class="mt-4 text-red-400 text-outline">
                     <p>❓ <a href="#" class="underline">Forvirret? Les mer om påmeldingssystemet</a></p>
                 </div>
             </div>
