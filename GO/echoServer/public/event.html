@@ -14,17 +14,14 @@
         <link rel="stylesheet" href="/echo/dist/tailwind.css" />
         <link rel="stylesheet" href="/echo/dist/reset.css" />
     </head>
-    <body>
+    <body class="bg-black text-white">
         <main>
             <!-- Event Banner -->
-            <div
-                class="relative bg-cover bg-center h-64"
-                style="background-image: url('https://regncon.no/regncon2024images/Karvi-Big.webp')"
-            >
+            <div class="relative bg-cover bg-center h-64" style="background-image: url('{{.BigImageURL}}');">
                 <div class="absolute inset-0 bg-black opacity-50"></div>
                 <div class="relative z-10 p-6">
-                    <h1 class="text-4xl font-bold">Karvi</h1>
-                    <p class="text-gray-200">Strategisk spill med vikinger på tokt</p>
+                    <h1 class="text-4xl font-bold">{{.Title}}</h1>
+                    <p class="text-gray-200">{{.ShortDescription}}</p>
                 </div>
             </div>
 
@@ -34,11 +31,11 @@
                 <div class="flex items-center space-x-4">
                     <div class="text-red-400 font-semibold">
                         <p><span class="inline-block text-xl">👤</span> Arrangør</p>
-                        <p>Christian Berge</p>
+                        <p>{{.GameMaster}}</p>
                     </div>
                     <div class="text-red-400 font-semibold">
                         <p><span class="inline-block text-xl">🎲</span> System</p>
-                        <p>Brettspill</p>
+                        <p>{{.System}}</p>
                     </div>
                 </div>
 
@@ -51,27 +48,18 @@
 
                 <!-- Description Section -->
                 <div class="mt-6 text-gray-300">
-                    <p>
-                        Bli med vikinger på tokt! Spillet er et worker placement/rondel eurospill, der du har arbeidere
-                        som går rundt i en vikinglandsby og gjør ulike handlinger. Samtidig har du skipet ditt, en
-                        "Karvi", som kjører rundt og plyndrer, handler og etablerer kolonier. Du må planlegge godt for å
-                        bygge de riktige runesteinene og score masse poeng. Kjempegøy for alle som liker strategisk
-                        planlegging.
-                    </p>
-                    <p class="mt-4">
-                        Spillet er skapt av Torgeir Tjong fra Voss, og ble utgitt på prestisjetunge Hans im Glück
-                        spillforlag i fjor høst.
-                    </p>
+                    <p>{{.Description}}</p>
                 </div>
 
                 <!-- Interactive Controls -->
                 <div class="mt-6 flex items-center space-x-4">
-                    <div class="text-red-400 font-semibold border border-red-400 px-4 py-1 rounded">Brettspel</div>
+                    <div class="text-red-400 font-semibold border border-red-400 px-4 py-1 rounded">{{.GameType}}</div>
                     <div class="flex items-center space-x-2">
                         <div class="bg-red-400 w-6 h-6 rounded-full flex items-center justify-center text-black">
-                            GJ
+                            GAMEMASTER
+                            <!-- Initials -->
                         </div>
-                        <span>Gerhard</span>
+                        <span>{{.GameMaster}}</span>
                     </div>
                 </div>
 
@@ -83,7 +71,7 @@
                         class="h-12 w-12 object-cover rounded-full"
                     />
                     <div>
-                        <p>Fredag Kveld KL 18 - 23</p>
+                        <p>{{.PoolName}} KL 18 - 23</p>
                         <p>Interessert</p>
                     </div>
                 </div>

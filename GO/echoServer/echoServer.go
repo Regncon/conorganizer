@@ -102,35 +102,7 @@ func EchoServer() {
 
 		fmt.Println("testRes", testRes)
 
-		res := PoolEvents{
-			Id:                 testRes[0].Id,
-			AdditionalComments: testRes[0].AdditionalComments,
-			AdultsOnly:         testRes[0].AdultsOnly,
-			BeginnerFriendly:   testRes[0].BeginnerFriendly,
-			BigImageURL:        testRes[0].BigImageURL,
-			ChildFriendly:      testRes[0].ChildFriendly,
-			CreatedAt:          testRes[0].CreatedAt,
-			CreatedBy:          testRes[0].CreatedBy,
-			Description:        testRes[0].Description,
-			GameMaster:         testRes[0].GameMaster,
-			GameType:           testRes[0].GameType,
-			IsSmallCard:        testRes[0].IsSmallCard,
-			LessThanThreeHours: testRes[0].LessThanThreeHours,
-			MoreThanSixHours:   testRes[0].MoreThanSixHours,
-			ParentEventId:      testRes[0].ParentEventId,
-			Participants:       testRes[0].Participants,
-			PoolName:           testRes[0].PoolName,
-			PossiblyEnglish:    testRes[0].PossiblyEnglish,
-			Published:          testRes[0].Published,
-			ShortDescription:   testRes[0].ShortDescription,
-			SmallImageURL:      testRes[0].SmallImageURL,
-			System:             testRes[0].System,
-			Title:              testRes[0].Title,
-			UpdateAt:           testRes[0].UpdateAt,
-			UpdatedBy:          testRes[0].UpdatedBy,
-			VolunteersPossible: testRes[0].VolunteersPossible,
-		}
-		return c.Render(http.StatusOK, "event", res)
+		return c.Render(http.StatusOK, "event", testRes[0])
 	})
 	e.Any("/*", func(e echo.Context) error {
 		c := echo.Context(e)
