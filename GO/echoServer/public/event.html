@@ -15,76 +15,84 @@
         <link rel="stylesheet" href="/echo/dist/reset.css" />
     </head>
     <body class="bg-black text-white">
-        <main>
-            <!-- Event Banner with Left-Aligned Centered Text and Gradient Overlay -->
-            <div
-                class="relative h-64 bg-cover bg-center flex items-center justify-start"
-                style="background-image: url('{{.BigImageURL}}');"
-            >
+        <main class="max-w-[1200px] mx-auto">
+            <!-- Event Banner with Gradient Overlay -->
+            <div class="relative h-64 bg-cover bg-center" style="background-image: url('{{.BigImageURL}}');">
                 <!-- Gradient overlay that fades to black at the bottom -->
                 <div class="absolute inset-0 bg-gradient-to-b from-transparent to-black"></div>
-                <div class="relative z-10 p-6 text-left">
-                    <h1 class="text-4xl font-bold text-white text-outline">{{.Title}}</h1>
-                    <p class="text-gray-200 text-outline">{{.ShortDescription}}</p>
+
+                <!-- Grid layout for left and right alignment -->
+                <div class="relative z-10 p-6 grid grid-cols-2 gap-4 h-full items-center">
+                    <!-- Left Column (Title, Game Master, System) -->
+                    <div>
+                        <h1 class="text-4xl font-bold text-white text-outline">{{.Title}}</h1>
+                        <div class="font-semibold mt-2 text-white text-outline">
+                            <p><span class="inline-block text-xl">👤</span> Arrangør</p>
+                            <p>{{.GameMaster}}</p>
+                        </div>
+                        <div class="font-semibold mt-2 text-white text-outline">
+                            <p><span class="inline-block text-xl">🎲</span> System</p>
+                            <p>{{.System}}</p>
+                        </div>
+                    </div>
+
+                    <!-- Right Column (Short Description) -->
+                    <div class="text-gray-200 text-outline text-right">
+                        <p>{{.ShortDescription}}</p>
+                    </div>
                 </div>
             </div>
 
-            <!-- Content Container -->
-            <div class="p-6 max-w-4xl mx-auto">
-                <!-- Game Master and System Info -->
-                <div class="flex items-center space-x-4">
-                    <div class="text-red-400 font-semibold text-outline">
-                        <p><span class="inline-block text-xl">👤</span> Arrangør</p>
-                        <p>{{.GameMaster}}</p>
+            <!-- Content Container with 2-Column Grid -->
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Left Column for Other Content -->
+                <div class="pl-6">
+                    <!-- Interactive Controls -->
+                    <div class="mt-6">
+                        <div
+                            class="text-red-400 font-semibold text-outline border border-red-400 px-4 py-1 rounded inline-block"
+                        >
+                            {{.GameType}}
+                        </div>
                     </div>
-                    <div class="text-red-400 font-semibold text-outline">
-                        <p><span class="inline-block text-xl">🎲</span> System</p>
-                        <p>{{.System}}</p>
+
+                    <!-- Event Time and Interest Button above Slider -->
+                    <div class="mt-6" style="max-width: 23rem">
+                        <!-- Event Time and Interest Button -->
+                        <button class="bg-red-400 text-black p-4 rounded-lg w-full flex items-center space-x-4">
+                            <img
+                                src="https://via.placeholder.com/50"
+                                alt="Dragon Icon"
+                                class="h-12 w-12 object-cover"
+                            />
+                            <div>
+                                <p>Fredag Kveld KL 18 - 23</p>
+                                <p>Interessert</p>
+                            </div>
+                        </button>
+
+                        <!-- Slider Control with 4 Steps -->
+                        <div class="mt-4">
+                            <input
+                                type="range"
+                                class="w-full h-2 bg-red-400 rounded-lg appearance-none cursor-pointer"
+                                min="0"
+                                max="3"
+                                step="1"
+                            />
+                            <p class="text-gray-400 mt-2 text-outline">Dra baren over for å melde din interesse!</p>
+                        </div>
+                    </div>
+
+                    <!-- FAQ Section -->
+                    <div class="mt-4 text-red-400 text-outline">
+                        <p>❓ <a href="#" class="underline">Forvirret? Les mer om påmeldingssystemet</a></p>
                     </div>
                 </div>
 
-                <!-- Description Section -->
-                <div class="mt-6 text-gray-300 text-outline">
+                <!-- Right Column for Description -->
+                <div class="text-gray-300 text-outline">
                     <p>{{.Description}}</p>
-                </div>
-
-                <!-- Interactive Controls -->
-                <div class="mt-6">
-                    <div
-                        class="text-red-400 font-semibold text-outline border border-red-400 px-4 py-1 rounded inline-block"
-                    >
-                        {{.GameType}}
-                    </div>
-                </div>
-
-                <!-- Event Time and Interest -->
-                <div class="mt-4 bg-red-400 text-black p-4 rounded-lg flex items-center space-x-4">
-                    <img
-                        src="https://via.placeholder.com/50"
-                        alt="Dragon Icon"
-                        class="h-12 w-12 object-cover rounded-full"
-                    />
-                    <div>
-                        <p>Fredag Kveld KL 18 - 23</p>
-                        <p>Interessert</p>
-                    </div>
-                </div>
-
-                <!-- Slider Control -->
-                <div class="mt-6">
-                    <input
-                        type="range"
-                        class="w-full h-2 bg-red-400 rounded-lg appearance-none cursor-pointer"
-                        min="0"
-                        max="10"
-                        step="1"
-                    />
-                    <p class="text-gray-400 mt-2 text-outline">Dra baren over for å melde din interesse!</p>
-                </div>
-
-                <!-- FAQ Section -->
-                <div class="mt-4 text-red-400 text-outline">
-                    <p>❓ <a href="#" class="underline">Forvirret? Les mer om påmeldingssystemet</a></p>
                 </div>
             </div>
         </main>
