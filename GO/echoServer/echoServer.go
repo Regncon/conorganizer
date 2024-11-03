@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -46,21 +47,50 @@ type PoolEvents struct {
 	UpdateAt           string `json:"updateAt"`
 	UpdatedBy          string `json:"updatedBy"`
 	VolunteersPossible bool   `json:"volunteersPossible"`
+	Interest           string `json:"interest"`
+}
+
+var poolTitlesWithTime = map[string]string{
+	"0": "Fredag Kveld Kl 18 - 23",
+	"1": "Lørdag Morgen Kl 10 - 15",
+	"2": "Lørdag Kveld Kl 18 - 23",
+	"3": "Søndag Morgen Kl 10 - 15",
 }
 
 func EchoServer() {
 	e := echo.New()
 	client := supabaseSetup.Client
 
-	// Little bit of middlewares for housekeeping
+	// Middleware for housekeeping
 	e.Pre(middleware.RemoveTrailingSlash())
 	e.Use(middleware.Recover())
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(
 		rate.Limit(20),
 	)))
+	e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			// Call the next handler in the chain
+			err := next(c)
+
+			// If an error occurred
+			if err != nil {
+				// Log the actual error message
+				fmt.Printf("Error: %v\n", err)
+
+				// Return JSON response with the actual error message under "message"
+				errorMessage := map[string]interface{}{
+					"message": err.Error(), // Use "message" as the key
+				}
+
+				return c.JSON(http.StatusInternalServerError, errorMessage)
+			}
+
+			return nil
+		}
+	})
 	e.Static("/echo/dist", "echoServer/dist")
 
-	// This will initiate our template renderer
+	// Template renderer
 	util.NewTemplateRenderer(e, "echoServer/public/*.html")
 
 	e.GET("/echo", func(e echo.Context) error {
@@ -75,9 +105,6 @@ func EchoServer() {
 		res := map[string]interface{}{
 			"Name":      "Wyndham",
 			"PoolEvent": testRes,
-			// "Id":        testRes[0].ID,
-			// "CreatedAt": testRes[0].CreatedAt,
-			// "Note":      testRes[0].Note,
 		}
 		return c.Render(http.StatusOK, "index", res)
 	})
@@ -90,25 +117,82 @@ func EchoServer() {
 		}
 		return c.Render(http.StatusOK, "name_card", res)
 	})
-	e.GET("/echo/:id", func(c echo.Context) error {
+
+	e.GET("/echo/:id", func(e echo.Context) error {
+		c := echo.Context(e)
 		id := c.Param("id")
 		fmt.Println("id", id)
-		var testRes []PoolEvents
-		count, err := client.From("pool-events").Select("*", "exact", false).Eq("id", id).ExecuteTo(&testRes)
+		var testRes PoolEvents
+		count, err := client.From("pool-events").Select("*", "estimated", false).Eq("id", id).Single().ExecuteTo(&testRes)
 
 		if count == 0 && err != nil {
 			fmt.Println("err", err)
 		}
 
-		fmt.Println("testRes", testRes)
+		// Merge PoolEvent fields and PoolTitlesWithTime into one map
+		mergedRes := map[string]interface{}{
+			"PoolTitleWithTime": poolTitlesWithTime[testRes.Interest],
+		}
 
-		return c.Render(http.StatusOK, "event", testRes[0])
+		// Use reflection to add PoolEvent fields to mergedRes
+		poolEventValue := reflect.ValueOf(testRes)
+		poolEventType := reflect.TypeOf(testRes)
+
+		for i := 0; i < poolEventType.NumField(); i++ {
+			field := poolEventType.Field(i)
+			fieldValue := poolEventValue.Field(i).Interface()
+			mergedRes[field.Name] = fieldValue
+		}
+
+		return c.Render(http.StatusOK, "event", mergedRes)
 	})
+
+	// New endpoint to update the interest value
+	e.POST("/echo/update-interest", func(e echo.Context) error {
+		c := echo.Context(e)
+		id := c.FormValue("id")
+		interest := c.FormValue("interest")
+		var interestToUpdate = map[string]interface{}{"interest": interest}
+
+		// Update the interest value in the database
+		result, count, err := client.From("pool-events").
+			Update(interestToUpdate, "representation", "estimated").
+			Eq("id", id).Single().
+			Execute()
+
+		// Convert result to a string for easier reading
+		resultText := string(result)
+
+		// Log the result and count for debugging
+		fmt.Printf("Update Result: %s\n", resultText)
+		fmt.Printf("Rows Affected: %d\n", count)
+
+		if err != nil {
+			// Log and return JSON error response
+			fmt.Println("Database update error:", err)
+			return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
+		}
+
+		// Retrieve the PoolTitleWithTime based on Interest level
+		poolTitleWithTime, ok := poolTitlesWithTime[interest]
+		if !ok {
+			poolTitleWithTime = "Unknown Pool Time"
+		}
+
+		// Render the interest slider with updated values, including Id
+		res := map[string]interface{}{
+			"Id":                id, // Add Id to the response data
+			"PoolTitleWithTime": poolTitleWithTime,
+			"Interest":          interest,
+		}
+		return c.Render(http.StatusOK, "interest_slider", res)
+	})
+
 	e.Any("/*", func(e echo.Context) error {
 		c := echo.Context(e)
 		return c.Render(http.StatusOK, "404", nil)
-
 	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = ":3000"
