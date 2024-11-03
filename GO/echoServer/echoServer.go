@@ -152,36 +152,38 @@ func EchoServer() {
 		c := echo.Context(e)
 		id := c.FormValue("id")
 		interest := c.FormValue("interest")
-		var interestToUpdate = map[string]interface{}{"interest": interest}
 
-		// Update the interest value in the database
-		result, count, err := client.From("pool-events").
-			Update(interestToUpdate, "representation", "estimated").
-			Eq("id", id).Single().
-			Execute()
+		// Log received values for debugging
+		fmt.Printf("Received Id: %s, Interest: %s\n", id, interest)
 
-		// Convert result to a string for easier reading
-		resultText := string(result)
+		// Run the database update asynchronously
+		go func(id, interest string) {
+			interestToUpdate := map[string]interface{}{"interest": interest}
 
-		// Log the result and count for debugging
-		fmt.Printf("Update Result: %s\n", resultText)
-		fmt.Printf("Rows Affected: %d\n", count)
+			// Update the interest value in the database
+			result, count, err := client.From("pool-events").
+				Update(interestToUpdate, "representation", "estimated").
+				Eq("id", id).Single().
+				Execute()
 
-		if err != nil {
-			// Log and return JSON error response
-			fmt.Println("Database update error:", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
-		}
+			resultText := string(result)
+			fmt.Printf("Async Update Result: %s\n", resultText)
+			fmt.Printf("Rows Affected (Async): %d\n", count)
 
-		// Retrieve the PoolTitleWithTime based on Interest level
+			if err != nil {
+				fmt.Printf("Database update error (Async): %v\n", err)
+			}
+		}(id, interest) // Pass values to the goroutine
+
+		// Determine PoolTitleWithTime based on Interest level
 		poolTitleWithTime, ok := poolTitlesWithTime[interest]
 		if !ok {
 			poolTitleWithTime = "Unknown Pool Time"
 		}
 
-		// Render the interest slider with updated values, including Id
+		// Render the interest slider with the known values
 		res := map[string]interface{}{
-			"Id":                id, // Add Id to the response data
+			"Id":                id,
 			"PoolTitleWithTime": poolTitleWithTime,
 			"Interest":          interest,
 		}
