@@ -1,0 +1,37 @@
+{{define "interest_slider"}}
+<div id="slider-container" class="mt-6" hx-target="#slider-container" hx-swap="outerHTML">
+    <!-- Event Time and Interest Button (Clickable, updates interest) -->
+    <button
+        class="bg-red-400 text-black p-4 rounded-lg w-full flex items-center space-x-4"
+        hx-post="/echo/update-interest"
+        hx-vals='js:{"id": "{{.Id}}", "interest": getNextInterest({{.Interest}})}'
+        hx-trigger="click"
+        hx-encoding="json"
+    >
+        <img src="https://via.placeholder.com/50" alt="Icon" class="h-12 w-12 object-cover" />
+        <div>
+            <p>{{.PoolTitleWithTime}}</p>
+            <p>Interest Level: {{.Interest}}</p>
+        </div>
+    </button>
+
+    <!-- Slider Control with htmx -->
+    <div class="mt-4">
+        <input
+            type="range"
+            class="w-full h-2 bg-red-400 rounded-lg appearance-none cursor-pointer"
+            min="0"
+            max="3"
+            step="1"
+            value="{{.Interest}}"
+            hx-post="/echo/update-interest"
+            hx-vals='js:{"id": "{{.Id}}", "interest": getNextInterest({{.Interest}})}'
+            hx-trigger="change"
+            hx-encoding="json"
+            hx-target="#slider-container"
+            hx-swap="outerHTML"
+        />
+        <p class="text-gray-400 mt-2">Dra baren over for å melde din interesse!</p>
+    </div>
+</div>
+{{end}}

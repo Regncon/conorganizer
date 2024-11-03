@@ -13,6 +13,12 @@
         <link rel="stylesheet" href="/echo/dist/global.css" />
         <link rel="stylesheet" href="/echo/dist/tailwind.css" />
         <link rel="stylesheet" href="/echo/dist/reset.css" />
+        <script>
+            // Function to calculate the next interest level, cycling from 0 to 3
+            function getNextInterest(currentInterest) {
+                return String((currentInterest + 1) % 4);
+            }
+        </script>
     </head>
     <body class="bg-black text-white">
         <main class="max-w-[1200px] mx-auto">
@@ -56,34 +62,8 @@
                         </div>
                     </div>
 
-                    <!-- Event Time and Interest Button above Slider -->
-                    <div class="mt-6" style="max-width: 23rem">
-                        <!-- Event Time and Interest Button -->
-                        <button class="bg-red-400 text-black p-4 rounded-lg w-full flex items-center space-x-4">
-                            <img
-                                src="https://via.placeholder.com/50"
-                                alt="Dragon Icon"
-                                class="h-12 w-12 object-cover"
-                            />
-                            <div>
-                                <p>Fredag Kveld KL 18 - 23</p>
-                                <p>Interessert</p>
-                            </div>
-                        </button>
-
-                        <!-- Slider Control with 4 Steps -->
-                        <div class="mt-4">
-                            <input
-                                type="range"
-                                class="w-full h-2 bg-red-400 rounded-lg appearance-none cursor-pointer"
-                                min="0"
-                                max="3"
-                                step="1"
-                            />
-                            <p class="text-gray-400 mt-2 text-outline">Dra baren over for å melde din interesse!</p>
-                        </div>
-                    </div>
-
+                    <!-- Slider Container (with htmx integration) -->
+                    {{template "interest_slider" .}}
                     <!-- FAQ Section -->
                     <div class="mt-4 text-red-400 text-outline">
                         <p>❓ <a href="#" class="underline">Forvirret? Les mer om påmeldingssystemet</a></p>
