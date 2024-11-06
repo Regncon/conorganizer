@@ -214,7 +214,9 @@ func EchoServer() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = ":3000"
+		port = ":3000" // Default port
+	} else if port[0] != ':' {
+		port = ":" + port // Ensure colon prefix
 	}
 	e.Logger.Fatal(e.Start(port))
 }
