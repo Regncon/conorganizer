@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Hello, World!</title>
+        <title>Events</title>
         <script
             src="https://unpkg.com/htmx.org@2.0.3"
             integrity="sha384-0895/pl2MU10Hqc6jd4RvrthNlDiE9U1tWmX7WRESftEDRosgxNsQG/Ze9YMRzHq"
@@ -15,33 +15,44 @@
         <link rel="stylesheet" href="/echo/dist/reset.css" />
     </head>
     <body>
-        <p>Hello, World!</p>
-        <div id="user-info">
-            <p>{{.Name}}</p>
-            <!-- <h1>FRA SUPABASE!!!!! ⬇️</h1>
-            <p>{{.ID}}</p>
-            <p>{{.CreatedAt}}</p> -->
-            {{range .PoolEvent}}
-            <p>{{.Id}}</p>
-            <p>{{.AdditionalComments}}</p>
+        <main class="container mx-auto p-6">
+            <!-- Grid container with minmax width constraints for columns -->
+            <div
+                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+                style="grid-template-columns: repeat(auto-fill, minmax(306px, 345px))"
+            >
+                {{range .EventList}}
+                <!-- Each card as a clickable link -->
+                <a href="/echo/{{.Id}}" class="block">
+                    <div
+                        class="relative rounded-lg overflow-hidden shadow-lg"
+                        style="min-width: 306px; min-height: 207px; max-height: 207px"
+                    >
+                        <!-- Background image covering the entire card -->
+                        <div
+                            class="absolute inset-0 bg-cover bg-center"
+                            style="background-image: url('{{.BigImageURL}}');"
+                        ></div>
 
-            {{end}}
-            <p
-                class="p-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent resize-none shadow transition duration-300 ease-in-out"
-                rows="4"
-                placeholder="Enter your text..."
-            >
-                {{.Note}}
-            </p>
-            <button
-                class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded shadow-lg transform transition duration-300 ease-in-out hover:scale-105 active:scale-95"
-                hx-get="/echo/get-info"
-                hx-target="#user-info"
-                hx-swap="innerHTML"
-            >
-                Reveal Info
-            </button>
-        </div>
+                        <!-- Semi-transparent overlay covering the bottom half -->
+                        <div class="absolute bottom-0 left-0 right-0 h-1/2 bg-black opacity-50"></div>
+
+                        <!-- Title positioned higher above the overlay -->
+                        <div class="absolute bottom-32 left-4 z-10">
+                            <h2 class="font-bold text-white text-outline" style="font-size: 25px">{{.Title}}</h2>
+                        </div>
+
+                        <!-- Text content positioned within the opaque bottom half -->
+                        <div class="absolute bottom-4 left-4 right-4 z-10 text-white" style="font-size: 14px">
+                            <p class="font-semibold" style="font-size: 16px">{{.GameMaster}}</p>
+                            <p class="text-red-400">{{.System}}</p>
+                            <p>{{.ShortDescription}}</p>
+                        </div>
+                    </div>
+                </a>
+                {{end}}
+            </div>
+        </main>
     </body>
 </html>
 {{end}}

@@ -95,17 +95,34 @@ func EchoServer() {
 
 	e.GET("/echo", func(e echo.Context) error {
 		c := echo.Context(e)
-		var testRes []PoolEvents
-		count, err := client.From("pool-events").Select("*", "estimated", false).ExecuteTo(&testRes)
 
+		// Define the fields that are needed in index.html, including Id
+		var eventList []struct {
+			Id               string `json:"id"`
+			Title            string `json:"title"`
+			GameMaster       string `json:"gameMaster"`
+			System           string `json:"system"`
+			ShortDescription string `json:"shortDescription"`
+			BigImageURL      string `json:"bigImageURL"` // Corrected field name to match "bigImageURL"
+		}
+
+		// Query only the necessary fields from the database
+		count, err := client.From("pool-events").
+			Select("id, title, gameMaster, system, shortDescription, bigImageURL", "estimated", false).
+			ExecuteTo(&eventList)
+
+		// Check for errors
 		if count == 0 && err != nil {
-			fmt.Println("err", err)
+			fmt.Println("Error retrieving pool events:", err)
+		} else {
+			fmt.Println("Retrieved pool events:", eventList)
 		}
-		fmt.Println("testRes", testRes)
+
+		// Prepare the data to render in the template
 		res := map[string]interface{}{
-			"Name":      "Wyndham",
-			"PoolEvent": testRes,
+			"EventList": eventList,
 		}
+
 		return c.Render(http.StatusOK, "index", res)
 	})
 
