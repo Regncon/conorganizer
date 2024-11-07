@@ -93,6 +93,9 @@ func EchoServer() {
 	// Template renderer
 	util.NewTemplateRenderer(e, "echoServer/public/*.html")
 
+	e.GET("/echo/healthz", func(e echo.Context) error {
+		return e.String(http.StatusOK, "OK")
+	})
 	e.GET("/echo", func(e echo.Context) error {
 		c := echo.Context(e)
 
