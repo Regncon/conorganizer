@@ -15,6 +15,10 @@
         <link rel="stylesheet" href="/echo/dist/reset.css" />
         <script>
             // Function to calculate the next interest level, cycling from 0 to 3
+            /**
+             * @param {number} currentInterest
+             * @returns {string}
+             */
             function getNextInterest(currentInterest) {
                 return String((currentInterest + 1) % 4);
             }
