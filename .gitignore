@@ -1,4 +1,7 @@
 #gitignore
 
+# Ignore templ build files
+*.tmpl.go
+
 # Temporary build directory
 tmp/
