@@ -1,5 +1,12 @@
 package event
 
+import "github.com/Regncon/conorganizer/components"
+
 templ Page(name string) {
-	<div>This is an even, { name }</div>
+	<html>
+		@components.Header("Event name")
+		<body>
+			<div>This is an even, { name }</div>
+		</body>
+	</html>
 }

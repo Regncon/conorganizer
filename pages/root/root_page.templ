@@ -1,5 +1,13 @@
 package root
 
+import "github.com/Regncon/conorganizer/components"
+
 templ Page(name string) {
-	<div>Hello world, this is the root page input { name }</div>
+	<html>
+		@components.Header("Root Page")
+		<body>
+			<h1>Hello world, this is the root page input { name }</h1>
+			<a href="/event">Go to event page</a>
+		</body>
+	</html>
 }
