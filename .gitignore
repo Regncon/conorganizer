@@ -1,7 +1,13 @@
 #gitignore
 
 # Ignore templ build files
-*.tmpl.go
+#*_templ.go
 
 # Temporary build directory
 tmp/
+
+# Ignore vs code files
+.vscode/
+
+# Ignore jetbrains IDE files
+.idea/
