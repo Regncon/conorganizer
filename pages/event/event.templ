@@ -3,10 +3,174 @@ package event
 import "github.com/Regncon/conorganizer/components"
 
 templ Page(name string) {
-	<html>
+	<!DOCTYPE html>
+	<html lang="en">
 		@components.Header("Event name")
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Cthulhu er nyforelsket</title>
+			<link rel="stylesheet" href="styles.css"/>
+		</head>
+		<style type="text/css">
+
+.container {
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #3b4252;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.header h1 {
+    text-align: center;
+    font-size: 24px;
+    color: #eceff4;
+    margin-bottom: 20px;
+}
+
+.details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.info p {
+    margin: 5px 0;
+}
+
+.tags {
+    margin-top: 10px;
+}
+
+.tag {
+    display: inline-block;
+    margin-right: 5px;
+    padding: 5px 10px;
+    background-color: #bf616a;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #eceff4;
+}
+
+.profile {
+    text-align: center;
+}
+
+.profile-pic {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #d8dee9;
+    margin-bottom: 5px;
+}
+
+.interest {
+    margin-bottom: 20px;
+}
+
+.interest-level {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.level-bar {
+    background-color: #bf616a;
+    padding: 10px;
+    width: 100%;
+    text-align: center;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+input[type="range"] {
+    width: 100%;
+}
+
+.hint {
+    text-align: center;
+    font-size: 14px;
+}
+
+.confused-link {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    color: #88c0d0;
+    text-decoration: none;
+}
+
+.action {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.next-btn, .admin-btn {
+    display: block;
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #5e81ac;
+    border: none;
+    color: #eceff4;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.admin-btn {
+    background-color: #bf616a;
+}
+
+.footer {
+    text-align: center;
+    font-size: 14px;
+    color: #d8dee9;
+}
+</style>
 		<body>
-			<div>This is an even, { name }</div>
+			<div class="container">
+				<header class="header">
+					<h1>Cthulhu er nyforelsket</h1>
+				</header>
+				<section class="details">
+					<div class="info">
+						<p><strong>Gamemaster:</strong> Someone Disturbed</p>
+						<p><strong>System:</strong> Cat Call Of Cthulhu!</p>
+						<div class="tags">
+							<span class="tag">Can be run in English</span>
+							<span class="tag">Kun for voksne (18+)</span>
+							<span class="tag">6+</span>
+						</div>
+					</div>
+					<div class="profile">
+						<img src="/static/images/events/dice-small.webp" alt="Profile" class="profile-pic"/>
+						<p><strong>Gerhard</strong></p>
+					</div>
+				</section>
+				<section class="interest">
+					<div class="interest-level">
+						<div class="level-bar">
+							<span>Fredag Kveld Kl 18 - 23</span>
+							<span>Veldig interessert</span>
+						</div>
+						<input type="range" min="1" max="10" value="7"/>
+					</div>
+					<p class="hint">Dra baren over for å melde din interesse!</p>
+					<a href="#" class="confused-link">Forvirret? Les mer om påmeldingssystemet</a>
+				</section>
+				<section class="action">
+					<button class="next-btn">Neste →</button>
+					<button class="admin-btn">ADMINISTRER ARRANGEMENTET</button>
+				</section>
+				<footer class="footer">
+					<p>For å ødelegge verden starter Cthulhu på high scool i en magisk verden. Der møter han Mui.</p>
+				</footer>
+			</div>
 		</body>
 	</html>
 }

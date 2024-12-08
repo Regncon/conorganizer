@@ -9,8 +9,11 @@ import (
 )
 
 func main() {
-
 	http.Handle("/", templ.Handler(root.Page("Regncon 2025")))
+
+	fs := http.FileServer(http.Dir("static"))
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
 	http.Handle("/event", templ.Handler(event.Page("Regncon 2025")))
 
 	fmt.Println("Listening on :3000")
