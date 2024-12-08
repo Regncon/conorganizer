@@ -6,8 +6,9 @@ templ Page(name string) {
 	<html>
 		@components.Header("Root Page")
 		<body>
-			<h1>Hello world, this is the root page input { name }</h1>
+			<h1>{ name }</h1>
 			<a href="/event">Go to event page</a>
+			@eventCard("Event 1", "System 1", "Game Master 1", "Description 1")
 		</body>
 	</html>
 }
