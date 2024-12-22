@@ -1,0 +1,30 @@
+package add
+
+import (
+	"database/sql"
+	"fmt"
+	"github.com/Regncon/conorganizer/components"
+)
+
+templ Page(db *sql.DB) {
+	{{ fmt.Println("add") }}
+	<html>
+		@components.Header("Add event Page")
+		<body>
+			<h1>Add New Event</h1>
+			<form method="post" action="/event/add/new/">
+				<div>
+					<label for="title">Title:</label>
+					<input type="text" id="title" name="title"/>
+				</div>
+				<div>
+					<label for="description">Description:</label>
+					<textarea id="description" name="description"></textarea>
+				</div>
+				<div>
+					<button type="submit">Add Event</button>
+				</div>
+			</form>
+		</body>
+	</html>
+}

@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/pages/event/add"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service"
 	"github.com/a-h/templ"
@@ -46,18 +47,40 @@ func main() {
 	if err := createEventsTable(db); err != nil {
 		log.Fatalf("Failed to create events table: %v", err)
 	}
-	query := "INSERT INTO events (name, description) VALUES ('Evnt 1', 'This is the first event')"
-	result, err := db.Exec(query)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(result.LastInsertId())
-
-	eventList, err := root.GetEvents(db)
-	fmt.Println(err)
-	fmt.Println(eventList)
+	// query := "INSERT INTO events (name, description) VALUES ('Evnt 1', 'This is the first event')"
+	// result, err := db.Exec(query)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
+	// fmt.Println(result.LastInsertId())
 
 	http.Handle("/", templ.Handler(root.Page("Regncon 2025", db)))
+	http.Handle("/event/add/", templ.Handler(add.Page(db)))
+	//templ EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	/*
+		func NewNowHandler(now func() time.Time) NowHandler {
+			return NowHandler{Now: now}
+		}
+
+		type NowHandler struct {
+			Now func() time.Time
+		}
+
+		func (nh NowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+			timeComponent(nh.Now()).Render(r.Context(), w)
+		}
+
+		func main() {
+			http.Handle("/", NewNowHandler(time.Now))
+
+			http.ListenAndServe(":8080", nil)
+		}
+	*/
+	http.Handle("/event/add/new2/", templ.Handler(add.EventNew2()))
+	http.HandleFunc("/event/add/new/", func(w http.ResponseWriter, r *http.Request) {
+		log.Println("EventNew handler")
+		templ.Handler(add.EventNew(w, r, db)).Component.Render(r.Context(), w)
+	})
 
 	fs := http.FileServer(http.Dir("static"))
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
