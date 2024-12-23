@@ -18,7 +18,7 @@ import (
 
 var validationErrors []string
 
-func EventNew2() templ.Component {
+func EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -40,37 +40,6 @@ func EventNew2() templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 
-		log.Println("EventNew 2 more events")
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<h1>New Event</h1>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return templ_7745c5c3_Err
-	})
-}
-
-func EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var2 == nil {
-			templ_7745c5c3_Var2 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-
 		fmt.Println("EventNew")
 		log.Println("EventNew")
 		if r.Method == http.MethodPost {
@@ -78,7 +47,6 @@ func EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) templ.Componen
 			title := r.FormValue("title")
 			description := r.FormValue("description")
 
-			// Validate input
 			if title == "" {
 				validationErrors = append(validationErrors, "Title is required.")
 			}
@@ -88,15 +56,11 @@ func EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) templ.Componen
 			fmt.Printf("Title: %s, Description: %s\n", title, description)
 
 			if len(validationErrors) == 0 {
-				// Insert into the database
 				_, err := db.Exec("INSERT INTO events (name, description) VALUES (?, ?)", title, description)
 				if err != nil {
 					validationErrors = append(validationErrors, "Failed to save event to the database.")
 				} else {
-					// Redirect to the events list page or success page
-					//http.Redirect(w, r, "/events", http.StatusSeeOther)
-					//return
-					fmt.Fprint(w, "Event added successfully")
+					log.Println(w, "Event added successfully")
 				}
 			}
 		}
@@ -104,7 +68,7 @@ func EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.Header("New Event - Error").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Header("New Event").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -117,12 +81,12 @@ func EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) templ.Componen
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(error)
+			var templ_7745c5c3_Var2 string
+			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(error)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/event/add/new.templ`, Line: 59, Col: 16}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/event/add/new.templ`, Line: 46, Col: 16}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

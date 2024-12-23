@@ -2,42 +2,9 @@ package root
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 )
-
-func init() {
-	fmt.Println("init root")
-	/*
-			events, err := service.EventService.GetEvents()
-			if err != nil {
-				fmt.Printf("Error fetching events: %v\n", err)
-				return
-			}
-			for _, event := range events {
-				fmt.Printf("Event: %s (%s)\n", event.Name, event.Description)
-
-			}
-		}
-	*/
-}
-
-/*
-		service.AddEvent("Event 1", "Description 1")
-		events, err := service.GetEvents()
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		fmt.Println(events)
-	}
-*/
-func SimpleFunction() string {
-	message := "Hello, World! 2 more hello more world"
-	fmt.Println(message)
-	return message
-}
 
 func GetEvents(db *sql.DB) ([]models.Event, error) {
 	query := "SELECT id, name, description FROM events"
@@ -58,15 +25,12 @@ func GetEvents(db *sql.DB) ([]models.Event, error) {
 	return events, nil
 }
 
-var tmp_string = SimpleFunction()
-
-templ Page(name string, db *sql.DB) {
+templ Page(db *sql.DB) {
 	{{ events, err := GetEvents(db) }}
 	<html>
-		@components.Header("Root Page")
+		@components.Header("Regncon Programm 2025")
 		<body>
-			<h1>{ name }</h1>
-			<h2>{ tmp_string } </h2>
+			<h1>Regncon 2025</h1>
 			<a href="/event">Go to event page</a>
 			if err != nil {
 				<p>Error fetching events: { err.Error() }</p>

@@ -10,42 +10,9 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 )
-
-func init() {
-	fmt.Println("init root")
-	/*
-			events, err := service.EventService.GetEvents()
-			if err != nil {
-				fmt.Printf("Error fetching events: %v\n", err)
-				return
-			}
-			for _, event := range events {
-				fmt.Printf("Event: %s (%s)\n", event.Name, event.Description)
-
-			}
-		}
-	*/
-}
-
-/*
-		service.AddEvent("Event 1", "Description 1")
-		events, err := service.GetEvents()
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		fmt.Println(events)
-	}
-*/
-func SimpleFunction() string {
-	message := "Hello, World! 2 more hello more world"
-	fmt.Println(message)
-	return message
-}
 
 func GetEvents(db *sql.DB) ([]models.Event, error) {
 	query := "SELECT id, name, description FROM events"
@@ -66,9 +33,7 @@ func GetEvents(db *sql.DB) ([]models.Event, error) {
 	return events, nil
 }
 
-var tmp_string = SimpleFunction()
-
-func Page(name string, db *sql.DB) templ.Component {
+func Page(db *sql.DB) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -94,37 +59,11 @@ func Page(name string, db *sql.DB) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = components.Header("Root Page").Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Header("Regncon Programm 2025").Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<body><h1>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(name)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/root_page.templ`, Line: 68, Col: 13}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h1><h2>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(tmp_string)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/root_page.templ`, Line: 69, Col: 19}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><a href=\"/event\">Go to event page</a> ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<body><h1>Regncon 2025</h1><a href=\"/event\">Go to event page</a> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -133,12 +72,12 @@ func Page(name string, db *sql.DB) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(err.Error())
+			var templ_7745c5c3_Var2 string
+			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(err.Error())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/root_page.templ`, Line: 72, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/root_page.templ`, Line: 36, Col: 43}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

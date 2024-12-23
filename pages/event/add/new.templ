@@ -10,13 +10,6 @@ import (
 
 var validationErrors []string
 
-templ EventNew2() {
-	{{
-		log.Println("EventNew 2 more events")
-	}}
-	<h1>New Event</h1>
-}
-
 templ EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	{{
 		fmt.Println("EventNew")
@@ -26,7 +19,6 @@ templ EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 			title := r.FormValue("title")
 			description := r.FormValue("description")
 
-			// Validate input
 			if title == "" {
 				validationErrors = append(validationErrors, "Title is required.")
 			}
@@ -36,22 +28,17 @@ templ EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 			fmt.Printf("Title: %s, Description: %s\n", title, description)
 
 			if len(validationErrors) == 0 {
-				// Insert into the database
 				_, err := db.Exec("INSERT INTO events (name, description) VALUES (?, ?)", title, description)
 				if err != nil {
 					validationErrors = append(validationErrors, "Failed to save event to the database.")
 				} else {
-					// Redirect to the events list page or success page
-					//http.Redirect(w, r, "/events", http.StatusSeeOther)
-					//return
-					fmt.Fprint(w, "Event added successfully")
+					log.Println(w, "Event added successfully")
 				}
 			}
 		}
 	}}
-	// Render the form again with errors
 	<html>
-		@components.Header("New Event - Error")
+		@components.Header("New Event")
 		<body>
 			<h1>New Event</h1>
 			<ul>

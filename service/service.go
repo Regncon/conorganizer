@@ -30,7 +30,27 @@ func InitDB(dbPath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to ping DB: %w", err)
 	}
 
+	if err = createEventsTable(db); err != nil {
+		return nil, fmt.Errorf("failed to create events table: %w", err)
+	}
+
 	return db, nil
+}
+
+func createEventsTable(db *sql.DB) error {
+	tableCreationQuery := `
+	CREATE TABLE IF NOT EXISTS events (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		name TEXT NOT NULL,
+		description TEXT NOT NULL
+	)`
+
+	_, err := db.Exec(tableCreationQuery)
+	if err != nil {
+		return fmt.Errorf("failed to create events table: %w", err)
+	}
+
+	return nil
 }
 
 // NewDatabaseService creates a new DatabaseService instance.
