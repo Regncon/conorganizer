@@ -37,10 +37,14 @@ templ Page(db *sql.DB) {
 				<p>Error fetching events: { err.Error() }</p>
 				return
 			}
+			<div style=" display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(350px, 350px));
+    gap: 1rem;">
 			for _, event := range events {
 				@eventCard(event.Name, "System", "Game Master", event.Description)
 			}
 			@eventCard("Event 1", "System 1", "Game Master 1", "Description 1")
+			</div>
 		</body>
 	</html>
 }

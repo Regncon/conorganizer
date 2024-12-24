@@ -89,10 +89,14 @@ func Page(db *sql.DB) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p>return ")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p>return")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div style=\" display: grid;\n    grid-template-columns: repeat(auto-fit,minmax(350px, 350px));\n    gap: 1rem;\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
 		}
 		for _, event := range events {
 			templ_7745c5c3_Err = eventCard(event.Name, "System", "Game Master", event.Description).Render(ctx, templ_7745c5c3_Buffer)
@@ -104,7 +108,7 @@ func Page(db *sql.DB) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
