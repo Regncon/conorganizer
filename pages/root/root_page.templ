@@ -30,6 +30,7 @@ templ Page(db *sql.DB) {
 	<html>
 		@components.Header("Regncon Programm 2025")
 		<body>
+			@components.Menu()
 			<h1>Regncon 2025</h1>
 			<a href="/event">Go to event page</a>
 			if err != nil {

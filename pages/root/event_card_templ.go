@@ -29,53 +29,53 @@ func eventCard(title string, game_master string, system string, short_descriptio
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<style type=\"text/css\">\n.card {\n    width: 350px;\n    border-radius: 15px;\n    overflow: hidden;\n    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);\n    background-color: #3b4252;\n    color: #eceff4;\n}\n\n.card-image {\n    position: relative;\n}\n\n.card-image img {\n    width: 100%;\n    display: block;\n}\n\n.overlay-text {\n    position: absolute;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8));\n    display: flex;\n    justify-content: center;\n    align-items: center;\n    color: #eceff4;\n    text-align: center;\n    padding: 10px;\n    box-sizing: border-box;\n}\n\n.card-content {\n    padding: 15px;\n}\n\n.card-content h2 {\n    margin: 0;\n    font-size: 18px;\n    color: #d08770;\n}\n\n.card-content .system {\n    font-size: 14px;\n    color: #88c0d0;\n    margin: 5px 0 10px;\n}\n\n.card-content .description {\n    font-size: 14px;\n    color: #eceff4;\n}\n</style><div class=\"card\"><div class=\"card-image\"><img src=\"/static/images/events/dice-small.webp\"><div class=\"overlay-text\"><h1>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div style=\"\n\t    width: 350px;\n\t    border-radius: 15px;\n\t    overflow: hidden;\n\t    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);\n\t    background-color: #3b4252;\n\t    color: #eceff4;\"><div style=\"position: relative;\"><img src=\"/static/images/events/dice-small.webp\" style=\"width: 100%; display: block;\"><div style=\"\n\t\t\t    position: absolute;\n\t\t\t    top: 0;\n\t\t\t    left: 0;\n\t\t\t    width: 100%;\n\t\t\t    height: 100%;\n\t\t\t    background: linear-gradient(to bottom, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.8));\n\t\t\t    display: flex;\n\t\t\t    justify-content: center;\n\t\t\t    align-items: center;\n\t\t\t    color: #eceff4;\n\t\t\t    text-align: center;\n\t\t\t    padding: 10px;\n\t\t\t    box-sizing: border-box;\"><h1>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/event_card.templ`, Line: 64, Col: 15}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/event_card.templ`, Line: 34, Col: 15}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h1></div></div><div class=\"card-content\"><h2>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h1></div></div><div style=\"padding: 15px;\"><h2 style=\"margin: 0; font-size: 18px; color: #d08770;\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(game_master)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/event_card.templ`, Line: 68, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/event_card.templ`, Line: 38, Col: 72}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><p class=\"system\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</h2><p style=\"font-size: 14px; color: #88c0d0; margin: 5px 0 10px;\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(system)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/event_card.templ`, Line: 69, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/event_card.templ`, Line: 39, Col: 75}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><p class=\"description\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><p style=\"font-size: 14px; color: #eceff4;\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(short_description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/event_card.templ`, Line: 70, Col: 45}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/event_card.templ`, Line: 40, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {

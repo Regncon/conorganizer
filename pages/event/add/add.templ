@@ -9,6 +9,7 @@ templ Page(db *sql.DB) {
 	<html>
 		@components.Header("Add event Page")
 		<body>
+			@components.Menu()
 			<h1>Add New Event</h1>
 			<form method="post" action="/event/add/new/">
 				<div>

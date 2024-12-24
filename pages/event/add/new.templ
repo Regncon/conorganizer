@@ -40,6 +40,7 @@ templ EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	<html>
 		@components.Header("New Event")
 		<body>
+			@components.Menu()
 			<h1>New Event</h1>
 			<ul>
 				for _, error := range validationErrors {
