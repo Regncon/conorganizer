@@ -2,12 +2,10 @@ package add
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/Regncon/conorganizer/components"
 )
 
 templ Page(db *sql.DB) {
-	{{ fmt.Println("example go command") }}
 	<html>
 		@components.Header("Add event Page")
 		<body>

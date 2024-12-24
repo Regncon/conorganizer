@@ -2,7 +2,7 @@
 
 ## Description
 
-This is a spike exploring using go, htmx and templ with no javascript bundler.
+This is a spike exploring using go, htmx and templ with no JavaScript builder.
 
 ## Running
 

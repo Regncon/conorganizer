@@ -40,10 +40,9 @@ func EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) templ.Componen
 		}
 		ctx = templ.ClearChildren(ctx)
 
-		fmt.Println("EventNew")
-		log.Println("EventNew")
 		if r.Method == http.MethodPost {
-			fmt.Println("EventNew POST")
+			validationErrors = nil
+			log.Println("EventNew")
 			title := r.FormValue("title")
 			description := r.FormValue("description")
 
@@ -58,6 +57,7 @@ func EventNew(w http.ResponseWriter, r *http.Request, db *sql.DB) templ.Componen
 			if len(validationErrors) == 0 {
 				_, err := db.Exec("INSERT INTO events (name, description) VALUES (?, ?)", title, description)
 				if err != nil {
+					log.Println("Failed to save event to the database.", err)
 					validationErrors = append(validationErrors, "Failed to save event to the database.")
 				} else {
 					log.Println(w, "Event added successfully")
