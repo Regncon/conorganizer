@@ -71,7 +71,7 @@ func Page(db *sql.DB) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<h1>Regncon 2025</h1><a href=\"/event\">Go to event page</a> ")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<h1>Regncon 2025</h1>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -83,7 +83,7 @@ func Page(db *sql.DB) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(err.Error())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/root_page.templ`, Line: 37, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/root/root_page.templ`, Line: 36, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -94,19 +94,15 @@ func Page(db *sql.DB) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div style=\" display: grid;\n    grid-template-columns: repeat(auto-fit,minmax(350px, 350px));\n    gap: 1rem;\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div style=\" display: grid;\n\t\t\t\t\tgrid-template-columns: repeat(auto-fit,minmax(350px, 350px));\n\t\t\t\t\tgap: 1rem;\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, event := range events {
-			templ_7745c5c3_Err = eventCard(event.Name, "System", "Game Master", event.Description).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = eventCard(event.ID, event.Name, "System", "Game Master", event.Description).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		}
-		templ_7745c5c3_Err = eventCard("Event 1", "System 1", "Game Master 1", "Description 1").Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</div></body></html>")
 		if templ_7745c5c3_Err != nil {

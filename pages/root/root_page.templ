@@ -32,18 +32,18 @@ templ Page(db *sql.DB) {
 		<body>
 			@components.Menu()
 			<h1>Regncon 2025</h1>
-			<a href="/event">Go to event page</a>
 			if err != nil {
 				<p>Error fetching events: { err.Error() }</p>
 				return
 			}
-			<div style=" display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(350px, 350px));
-    gap: 1rem;">
-			for _, event := range events {
-				@eventCard(event.Name, "System", "Game Master", event.Description)
-			}
-			@eventCard("Event 1", "System 1", "Game Master 1", "Description 1")
+			<div
+				style=" display: grid;
+					grid-template-columns: repeat(auto-fit,minmax(350px, 350px));
+					gap: 1rem;"
+			>
+				for _, event := range events {
+					@eventCard(event.ID, event.Name, "System", "Game Master", event.Description)
+				}
 			</div>
 		</body>
 	</html>
