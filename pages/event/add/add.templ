@@ -1,11 +1,8 @@
 package add
 
-import (
-	"database/sql"
-	"github.com/Regncon/conorganizer/components"
-)
+import "github.com/Regncon/conorganizer/components"
 
-templ Page(db *sql.DB) {
+templ Page() {
 	<html>
 		@components.Header("Add event Page")
 		<body>

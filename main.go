@@ -1,12 +1,15 @@
 package main
 
 import (
+	"log"
+	"net/http"
+	"strings"
+
 	"github.com/Regncon/conorganizer/pages/event/add"
+	"github.com/Regncon/conorganizer/pages/event/edit"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service"
 	"github.com/a-h/templ"
-	"log"
-	"net/http"
 )
 
 func main() {
@@ -18,8 +21,19 @@ func main() {
 	defer db.Close()
 
 	http.Handle("/", templ.Handler(root.Page(db)))
-	http.Handle("/event/add/", templ.Handler(add.Page(db)))
+	http.Handle("/event/add/", templ.Handler(add.Page()))
+	http.HandleFunc("/event/", func(w http.ResponseWriter, r *http.Request) {
+		// Extract the event ID from the URL
+		path := strings.TrimPrefix(r.URL.Path, "/event/")
+		if path == "" || strings.Contains(path, "/") {
+			http.NotFound(w, r)
+			return
+		}
 
+		log.Printf("Event handler for ID: %s", path)
+		// Call the event page handler with the extracted ID
+		templ.Handler(edit.Page(path, db)).Component.Render(r.Context(), w)
+	})
 	http.HandleFunc("/event/add/new/", func(w http.ResponseWriter, r *http.Request) {
 		log.Println("EventNew handler")
 		templ.Handler(add.EventNew(w, r, db)).Component.Render(r.Context(), w)
