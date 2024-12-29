@@ -3,9 +3,26 @@ package edit
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/components"
+	"log"
+	"strconv"
 )
 
+func getEventID(path string) (int64, error) {
+	id := strconv.ParseInt(path, 10, 64)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
+}
+
 templ Page(path string, db *sql.DB) {
+	{{eventID, err := getEventID(path)
+log.Println("Event ID:", eventID)
+	}}
+	if err != nil {
+		<p>Error parsing event ID: { err.Error() }</p>
+		return
+	}
 	<html>
 		@components.Header("Edit event Page")
 		<body>
@@ -13,6 +30,10 @@ templ Page(path string, db *sql.DB) {
 			<h1>Edit Event</h1>
 			<p style="color: red;">Event ID: { path }</p>
 			<form method="post" action="/event/edit/save/">
+				<div>
+					<label for="title">Id:</label>
+					<input type="text" id="id" name="id" value={ path }/>
+				</div>
 				<div>
 					<label for="title">Title:</label>
 					<input type="text" id="title" name="title"/>
@@ -22,7 +43,7 @@ templ Page(path string, db *sql.DB) {
 					<textarea id="description" name="description"></textarea>
 				</div>
 				<div>
-					<button type="submit">Add Event</button>
+					<button type="submit">Save changes</button>
 				</div>
 			</form>
 		</body>

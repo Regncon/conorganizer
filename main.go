@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	log.Println("Staring Regncon 2025")
+	log.Println("Starting Regncon 2025")
 	db, err := service.InitDB("events.db")
 	if err != nil {
 		log.Fatalf("Could not initialize DB: %v", err)
@@ -34,8 +34,10 @@ func main() {
 		// Call the event page handler with the extracted ID
 		templ.Handler(edit.Page(path, db)).Component.Render(r.Context(), w)
 	})
+
+	http.HandleFunc("/event/edit/save/", edit.Save(db))
+
 	http.HandleFunc("/event/add/new/", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("EventNew handler")
 		templ.Handler(add.EventNew(w, r, db)).Component.Render(r.Context(), w)
 	})
 
