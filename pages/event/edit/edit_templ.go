@@ -11,16 +11,27 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/models"
 	"log"
 	"strconv"
 )
 
 func getEventID(path string) (int64, error) {
-	id := strconv.ParseInt(path, 10, 64)
+	id, err := strconv.ParseInt(path, 10, 64)
 	if err != nil {
 		return 0, err
 	}
 	return id, nil
+}
+
+func getEvent(db *sql.DB, id int64) (models.Event, error) {
+	query := "SELECT id, name, description FROM events WHERE id = ?"
+	row := db.QueryRow(query, id)
+	var event models.Event
+	if err := row.Scan(&event.ID, &event.Name, &event.Description); err != nil {
+		return models.Event{}, err
+	}
+	return event, nil
 }
 
 func Page(path string, db *sql.DB) templ.Component {
@@ -46,6 +57,8 @@ func Page(path string, db *sql.DB) templ.Component {
 		ctx = templ.ClearChildren(ctx)
 		eventID, err := getEventID(path)
 		log.Println("Event ID:", eventID)
+		event, err := getEvent(db, eventID)
+		log.Println("Event:", event)
 		if err != nil {
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<p>Error parsing event ID: ")
 			if templ_7745c5c3_Err != nil {
@@ -54,7 +67,7 @@ func Page(path string, db *sql.DB) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(err.Error())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/event/edit/edit.templ`, Line: 23, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/event/edit/edit.templ`, Line: 36, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -88,7 +101,7 @@ func Page(path string, db *sql.DB) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(path)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/event/edit/edit.templ`, Line: 31, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/event/edit/edit.templ`, Line: 44, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -101,13 +114,39 @@ func Page(path string, db *sql.DB) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(path)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/event/edit/edit.templ`, Line: 35, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/event/edit/edit.templ`, Line: 48, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><div><label for=\"title\">Title:</label> <input type=\"text\" id=\"title\" name=\"title\"></div><div><label for=\"description\">Description:</label> <textarea id=\"description\" name=\"description\"></textarea></div><div><button type=\"submit\">Save changes</button></div></form></body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><div><label for=\"title\">Title:</label> <input type=\"text\" id=\"title\" name=\"title\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(event.Name)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/event/edit/edit.templ`, Line: 52, Col: 66}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></div><div><label for=\"description\">Description:</label> <textarea id=\"description\" name=\"description\" vale=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(event.Description)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `pages/event/edit/edit.templ`, Line: 56, Col: 75}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"></textarea></div><div><button type=\"submit\">Save changes</button></div></form></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

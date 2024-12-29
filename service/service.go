@@ -3,13 +3,10 @@ package service
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Regncon/conorganizer/models"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 type EventService interface {
-	AddEvent(name, description string) (int64, error)
-	GetEvents() ([]models.Event, error)
 	InitDB(dbPath string) (*sql.DB, error)
 }
 
