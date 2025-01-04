@@ -1,0 +1,94 @@
+version: "3"
+
+env:
+  STATIC_DIR: "web/static"
+
+tasks:
+  # The `build:` tasks below are used together for "production" builds of your project
+  build:templ:
+    cmds:
+      - go run github.com/a-h/templ/cmd/templ@v0.3.819 generate -v
+
+  build:styles:
+    cmds:
+      - pnpx tailwindcss -c tailwind.config.js -i web/styles/styles.css -o $STATIC_DIR/index.css
+
+  build:esbuild:
+    cmds:
+      - pnpx esbuild web/libs/datastar/index.ts --bundle --outdir=$STATIC_DIR
+
+  build:lit-html:
+    cmds:
+      - pnpm -r --filter=lit-html build
+
+  build:
+    cmds:
+      - go build -o bin/main .
+    deps:
+      - build:styles
+      - build:templ
+      - build:lit-html
+      - build:esbuild
+    parallel: true
+
+  # Use this task to debug your project with the delve debugger
+  debug:
+    cmds:
+      - go run github.com/go-delve/delve/cmd/dlv@v1.23.1 exec ./bin/main
+    deps:
+      - build
+
+  # The `live:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
+  live:templ:
+    cmds:
+      - go run github.com/a-h/templ/cmd/templ@v0.3.819 generate --watch --proxy="http://localhost:8080" --open-browser=false -v
+
+  live:styles:
+    cmds:
+      - pnpx tailwindcss -c tailwind.config.js -i web/styles/styles.css -o $STATIC_DIR/index.css --watch
+
+  live:esbuild:
+    cmds:
+      - pnpx esbuild web/libs/datastar/index.ts --sourcemap --bundle --outdir=$STATIC_DIR --watch
+
+  live:lit-html:
+    cmds:
+      - pnpm -r --filter=lit-html build:dev
+
+  live:server:
+    cmds:
+      - |
+        go run github.com/air-verse/air@v1.52.3 \
+        --build.cmd "go build -tags dev -o tmp/bin/main" \
+        --build.bin "tmp/bin/main" \
+        --build.delay "20" \
+        --build.exclude_dir "node_modules,data,public" \
+        --build.include_ext "go" \
+        --build.stop_on_error "false" \
+        --misc.clean_on_exit true
+
+  live:reload:
+    cmds:
+      - |
+        go run github.com/air-verse/air@v1.52.3 \
+        --build.cmd "go run github.com/a-h/templ/cmd/templ@v0.3.819 generate --notify-proxy" \
+        --build.bin "true" \
+        --build.delay "100" \
+        --build.exclude_dir "" \
+        --build.include_dir "$STATIC_DIR" \
+        --build.include_ext "js,css"
+
+  live:
+    deps:
+      - live:templ
+      - live:styles
+      - live:lit-html
+      - live:esbuild
+      - live:reload
+      - live:server
+
+  run:
+    cmds:
+      - ./bin/main
+    deps:
+      - build

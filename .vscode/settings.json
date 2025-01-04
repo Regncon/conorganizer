@@ -1,5 +1,9 @@
 {
-    "spellright.language": ["en"],
-    "spellright.groupDictionaries": true,
-    "spellright.documentTypes": ["latex", "plaintext", "html", "ts", "js"]
+  "gopls": {
+    "build.buildFlags": ["-tags=dev"]
+  },
+  "go.useLanguageServer": true,
+  "[templ]": {
+    "editor.defaultFormatter": "a-h.templ"
+  }
 }

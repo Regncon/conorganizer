@@ -1,49 +1,80 @@
 package main
 
 import (
-	"log"
+	"context"
+	"fmt"
+	"log/slog"
 	"net/http"
-	"strings"
+	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/Regncon/conorganizer/pages/event/add"
-	"github.com/Regncon/conorganizer/pages/event/edit"
-	"github.com/Regncon/conorganizer/pages/root"
-	"github.com/Regncon/conorganizer/service"
-	"github.com/a-h/templ"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/zangster300/northstar/routes"
+	"golang.org/x/sync/errgroup"
 )
 
 func main() {
-	log.Println("Starting Regncon 2025")
-	db, err := service.InitDB("events.db")
-	if err != nil {
-		log.Fatalf("Could not initialize DB: %v", err)
-	}
-	defer db.Close()
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	http.Handle("/", templ.Handler(root.Page(db)))
-	http.Handle("/event/add/", templ.Handler(add.Page()))
-	http.HandleFunc("/event/", func(w http.ResponseWriter, r *http.Request) {
-		// Extract the event ID from the URL
-		path := strings.TrimPrefix(r.URL.Path, "/event/")
-		if path == "" || strings.Contains(path, "/") {
-			http.NotFound(w, r)
-			return
+	getPort := func() string {
+		if p, ok := os.LookupEnv("PORT"); ok {
+			return p
+		}
+		return "8080"
+	}
+	logger.Info(fmt.Sprintf("Starting Server 0.0.0.0:" + getPort()))
+	defer logger.Info("Stopping Server")
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	if err := run(ctx, logger, getPort()); err != nil {
+		logger.Error("Error running server", slog.Any("err", err))
+		os.Exit(1)
+	}
+}
+
+func run(ctx context.Context, logger *slog.Logger, port string) error {
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(startServer(ctx, logger, port))
+
+	if err := g.Wait(); err != nil {
+		return fmt.Errorf("error running server: %w", err)
+	}
+
+	return nil
+}
+
+func startServer(ctx context.Context, logger *slog.Logger, port string) func() error {
+	return func() error {
+		router := chi.NewMux()
+
+		router.Use(
+			middleware.Logger,
+			middleware.Recoverer,
+		)
+
+		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
+
+		cleanup, err := routes.SetupRoutes(ctx, logger, router)
+		defer cleanup()
+		if err != nil {
+			return fmt.Errorf("error setting up routes: %w", err)
 		}
 
-		log.Printf("Event handler for ID: %s", path)
-		// Call the event page handler with the extracted ID
-		templ.Handler(edit.Page(path, db)).Component.Render(r.Context(), w)
-	})
+		srv := &http.Server{
+			Addr:    "0.0.0.0:" + port,
+			Handler: router,
+		}
 
-	http.HandleFunc("/event/edit/save/", edit.Save(db))
+		go func() {
+			<-ctx.Done()
+			srv.Shutdown(context.Background())
+		}()
 
-	http.HandleFunc("/event/add/new/", func(w http.ResponseWriter, r *http.Request) {
-		templ.Handler(add.EventNew(w, r, db)).Component.Render(r.Context(), w)
-	})
-
-	fs := http.FileServer(http.Dir("static"))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
-
-	log.Println("Listening on :3000")
-	http.ListenAndServe(":3000", nil)
+		return srv.ListenAndServe()
+	}
 }
