@@ -1,4 +1,4 @@
-module github.com/zangster300/northstar
+module github.com/Regncon/conorganizer
 
 go 1.23.3
 

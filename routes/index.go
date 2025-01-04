@@ -10,14 +10,14 @@ import (
 
 	datastar "github.com/starfederation/datastar/sdk/go"
 
+	"github.com/Regncon/conorganizer/web/components"
+	"github.com/Regncon/conorganizer/web/pages"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/samber/lo"
-	"github.com/zangster300/northstar/web/components"
-	"github.com/zangster300/northstar/web/pages"
 )
 
 func setupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server) error {

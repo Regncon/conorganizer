@@ -9,8 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"github.com/Regncon/conorganizer/web/layouts"
 	datastar "github.com/starfederation/datastar/sdk/go"
-	"github.com/zangster300/northstar/web/layouts"
 )
 
 func Index(title string) templ.Component {
