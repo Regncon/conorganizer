@@ -2,20 +2,9 @@
 
 ## Description
 
-This is a spike exploring using go, htmx and templ with no JavaScript builder.
+This is a spike exploring go and datastar using the northstar template.
+
 ## Installation
 
-```bash
-go install github.com/air-verse/air@latest
-go install github.com/a-h/templ/cmd/templ@latest
-```
-
-** Note: ** You main need to add the go bin directory to your path.
+Se the [northstar](https://github.com/zangster300/northstar) README for installation instructions.
  
-## Running
-
-The project uses [air](https://github.com/cosmtrek/air) to run the server.
-
-```bash
-air
-```
