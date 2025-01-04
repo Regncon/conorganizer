@@ -1,4 +1,4 @@
-package routes
+package index
 
 import (
 	"context"
@@ -8,19 +8,17 @@ import (
 	"strconv"
 	"time"
 
-	datastar "github.com/starfederation/datastar/sdk/go"
-
 	"github.com/Regncon/conorganizer/web/components"
-	"github.com/Regncon/conorganizer/web/pages"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/samber/lo"
+	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func setupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server) error {
+func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -92,7 +90,7 @@ func setupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	}
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		pages.Index("HYPERMEDIA RULES").Render(r.Context(), w)
+		index("HYPERMEDIA RULES").Render(r.Context(), w)
 	})
 
 	router.Route("/api", func(apiRouter chi.Router) {

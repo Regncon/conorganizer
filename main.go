@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/Regncon/conorganizer/routes"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"golang.org/x/sync/errgroup"
@@ -59,7 +58,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string) func() e
 
 		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
 
-		cleanup, err := routes.SetupRoutes(ctx, logger, router)
+		cleanup, err := setupRoutes(ctx, logger, router)
 		defer cleanup()
 		if err != nil {
 			return fmt.Errorf("error setting up routes: %w", err)

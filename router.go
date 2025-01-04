@@ -1,4 +1,4 @@
-package routes
+package main
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/Regncon/conorganizer/web/pages/index"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -14,7 +15,7 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 )
 
-func SetupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router) (cleanup func() error, err error) {
+func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router) (cleanup func() error, err error) {
 	natsPort, err := toolbelt.FreePort()
 	if err != nil {
 		return nil, fmt.Errorf("error getting free port: %w", err)
@@ -41,7 +42,7 @@ func SetupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router) (c
 	sessionStore.MaxAge(int(24 * time.Hour / time.Second))
 
 	if err := errors.Join(
-		setupIndexRoute(router, sessionStore, ns),
+		index.SetupIndexRoute(router, sessionStore, ns),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)
 	}
