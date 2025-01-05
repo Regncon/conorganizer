@@ -15,6 +15,12 @@ templ Base(title string) {
 			<link href="/static/index.css" rel="stylesheet" type="text/css"/>
 		</head>
 		<body class="flex flex-col h-screen">
+			<nav class="flex justify-center">
+				<ul class="menu menu-vertical md:menu-horizontal bg-base-200 rounded-box">
+					<li class="hover:text-primary"><a href="/">Home</a></li>
+					<li class="hover:text-primary"><a href="/event/">Event</a></li>
+				</ul>
+			</nav>
 			{ children... }
 		</body>
 	</html>

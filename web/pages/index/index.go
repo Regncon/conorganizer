@@ -2,13 +2,13 @@ package index
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/Regncon/conorganizer/web/components"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -18,7 +18,7 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server) error {
+func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -41,7 +41,7 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return fmt.Errorf("error creating key value: %w", err)
 	}
 
-	saveMVC := func(ctx context.Context, sessionID string, mvc *components.TodoMVC) error {
+	saveMVC := func(ctx context.Context, sessionID string, mvc *TodoMVC) error {
 		b, err := json.Marshal(mvc)
 		if err != nil {
 			return fmt.Errorf("failed to marshal mvc: %w", err)
@@ -52,9 +52,9 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return nil
 	}
 
-	resetMVC := func(mvc *components.TodoMVC) {
-		mvc.Mode = components.TodoViewModeAll
-		mvc.Todos = []*components.Todo{
+	resetMVC := func(mvc *TodoMVC) {
+		mvc.Mode = TodoViewModeAll
+		mvc.Todos = []*Todo{
 			{Text: "Learn a backend language", Completed: true},
 			{Text: "Learn Datastar", Completed: false},
 			{Text: "Create Hypermedia", Completed: false},
@@ -64,14 +64,14 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		mvc.EditingIdx = -1
 	}
 
-	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *components.TodoMVC, error) {
+	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to get session id: %w", err)
 		}
 
-		mvc := &components.TodoMVC{}
+		mvc := &TodoMVC{}
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
@@ -90,7 +90,7 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	}
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		index("HYPERMEDIA RULES").Render(r.Context(), w)
+		index("Regncon programm 2025", db).Render(r.Context(), w)
 	})
 
 	router.Route("/api", func(apiRouter chi.Router) {
@@ -126,7 +126,7 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						c := components.TodosMVCView(mvc)
+						c := todosMVCView(mvc)
 						if err := sse.MergeFragmentTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
@@ -180,8 +180,8 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					return
 				}
 
-				mode := components.TodoViewMode(modeRaw)
-				if mode < components.TodoViewModeAll || mode > components.TodoViewModeCompleted {
+				mode := TodoViewMode(modeRaw)
+				if mode < TodoViewModeAll || mode > TodoViewModeCompleted {
 					http.Error(w, "invalid mode", http.StatusBadRequest)
 					return
 				}
@@ -284,7 +284,7 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						if i >= 0 {
 							mvc.Todos[i].Text = store.Input
 						} else {
-							mvc.Todos = append(mvc.Todos, &components.Todo{
+							mvc.Todos = append(mvc.Todos, &Todo{
 								Text:      store.Input,
 								Completed: false,
 							})
@@ -311,7 +311,7 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					if i >= 0 {
 						mvc.Todos = append(mvc.Todos[:i], mvc.Todos[i+1:]...)
 					} else {
-						mvc.Todos = lo.Filter(mvc.Todos, func(todo *components.Todo, i int) bool {
+						mvc.Todos = lo.Filter(mvc.Todos, func(todo *Todo, i int) bool {
 							return !todo.Completed
 						})
 					}

@@ -8,13 +8,12 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Regncon/conorganizer/web/components"
+	"github.com/Regncon/conorganizer/web/pages/index"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
-	"github.com/samber/lo"
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
@@ -41,7 +40,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return fmt.Errorf("error creating key value: %w", err)
 	}
 
-	saveMVC := func(ctx context.Context, sessionID string, mvc *components.TodoMVC) error {
+	saveMVC := func(ctx context.Context, sessionID string, mvc *index.TodoMVC) error {
 		b, err := json.Marshal(mvc)
 		if err != nil {
 			return fmt.Errorf("failed to marshal mvc: %w", err)
@@ -52,9 +51,9 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return nil
 	}
 
-	resetMVC := func(mvc *components.TodoMVC) {
-		mvc.Mode = components.TodoViewModeAll
-		mvc.Todos = []*components.Todo{
+	resetMVC := func(mvc *index.TodoMVC) {
+		mvc.Mode = index.TodoViewModeAll
+		mvc.Todos = []*index.Todo{
 			{Text: "Learn a backend language", Completed: true},
 			{Text: "Learn Datastar", Completed: false},
 			{Text: "Create Hypermedia", Completed: false},
@@ -64,14 +63,14 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		mvc.EditingIdx = -1
 	}
 
-	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *components.TodoMVC, error) {
+	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *index.TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to get session id: %w", err)
 		}
 
-		mvc := &components.TodoMVC{}
+		mvc := &index.TodoMVC{}
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
@@ -94,8 +93,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	})
 
 	router.Route("/api/event/", func(apiRouter chi.Router) {
-		apiRouter.Route("/todos", func(todosRouter chi.Router) {
-			todosRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		apiRouter.Route("/event", func(eventRouter chi.Router) {
+			eventRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 
 				sessionID, mvc, err := mvcSession(w, r)
 				if err != nil {
@@ -103,7 +102,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					return
 				}
 
-				sse := datastar.NewSSE(w, r)
+				// sse := datastar.NewSSE(w, r)
 
 				// Watch for updates
 				ctx := r.Context()
@@ -126,74 +125,16 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						c := components.TodosMVCView(mvc)
-						if err := sse.MergeFragmentTempl(c); err != nil {
-							sse.ConsoleError(err)
-							return
-						}
+						// c := index.TodosMVCView(mvc)
+						// if err := sse.MergeFragmentTempl(c); err != nil {
+						// 	sse.ConsoleError(err)
+						// 	return
+						// }
 					}
 				}
 			})
 
-			todosRouter.Put("/reset", func(w http.ResponseWriter, r *http.Request) {
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				resetMVC(mvc)
-				if err := saveMVC(r.Context(), sessionID, mvc); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-			})
-
-			todosRouter.Put("/cancel", func(w http.ResponseWriter, r *http.Request) {
-
-				sessionID, mvc, err := mvcSession(w, r)
-				sse := datastar.NewSSE(w, r)
-				if err != nil {
-					sse.ConsoleError(err)
-					return
-				}
-
-				mvc.EditingIdx = -1
-				if err := saveMVC(r.Context(), sessionID, mvc); err != nil {
-					sse.ConsoleError(err)
-					return
-				}
-			})
-
-			todosRouter.Put("/mode/{mode}", func(w http.ResponseWriter, r *http.Request) {
-
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				modeStr := chi.URLParam(r, "mode")
-				modeRaw, err := strconv.Atoi(modeStr)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-
-				mode := components.TodoViewMode(modeRaw)
-				if mode < components.TodoViewModeAll || mode > components.TodoViewModeCompleted {
-					http.Error(w, "invalid mode", http.StatusBadRequest)
-					return
-				}
-
-				mvc.Mode = mode
-				if err := saveMVC(r.Context(), sessionID, mvc); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-			})
-
-			todosRouter.Route("/{idx}", func(todoRouter chi.Router) {
+			eventRouter.Route("/{idx}", func(todoRouter chi.Router) {
 				routeIndex := func(w http.ResponseWriter, r *http.Request) (int, error) {
 					idx := chi.URLParam(r, "idx")
 					i, err := strconv.Atoi(idx)
@@ -240,6 +181,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 
 				todoRouter.Route("/edit", func(editRouter chi.Router) {
 					editRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+
 						sessionID, mvc, err := mvcSession(w, r)
 						if err != nil {
 							http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -256,6 +198,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					})
 
 					editRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+						fmt.Println("editRouter put")
 						type Store struct {
 							Input string `json:"input"`
 						}
@@ -284,7 +227,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						if i >= 0 {
 							mvc.Todos[i].Text = store.Input
 						} else {
-							mvc.Todos = append(mvc.Todos, &components.Todo{
+							mvc.Todos = append(mvc.Todos, &index.Todo{
 								Text:      store.Input,
 								Completed: false,
 							})
@@ -296,27 +239,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					})
 				})
 
-				todoRouter.Delete("/", func(w http.ResponseWriter, r *http.Request) {
-					i, err := routeIndex(w, r)
-					if err != nil {
-						return
-					}
-
-					sessionID, mvc, err := mvcSession(w, r)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-
-					if i >= 0 {
-						mvc.Todos = append(mvc.Todos[:i], mvc.Todos[i+1:]...)
-					} else {
-						mvc.Todos = lo.Filter(mvc.Todos, func(todo *components.Todo, i int) bool {
-							return !todo.Completed
-						})
-					}
-					saveMVC(r.Context(), sessionID, mvc)
-				})
 			})
 		})
 	})

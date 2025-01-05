@@ -12,6 +12,7 @@ require (
 	github.com/benbjohnson/hashfs v0.2.2
 	github.com/delaneyj/toolbelt v0.3.15
 	github.com/gorilla/sessions v1.4.0
+	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/nats-io/nats-server/v2 v2.10.24
 	github.com/nats-io/nats.go v1.38.0
 	github.com/samber/lo v1.47.0
