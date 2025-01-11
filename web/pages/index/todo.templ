@@ -1,6 +1,7 @@
 package index 
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/Regncon/conorganizer/web/components"
 	datastar "github.com/starfederation/datastar/sdk/go"
@@ -28,7 +29,7 @@ type TodoMVC struct {
 	Mode       TodoViewMode `json:"mode"`
 }
 
-templ todosMVCView(mvc *TodoMVC) {
+templ todosMVCView(mvc *TodoMVC, db *sql.DB) {
 	{{
 		hasTodos := len(mvc.Todos) > 0
 		left, completed := 0, 0
@@ -71,6 +72,10 @@ templ todosMVCView(mvc *TodoMVC) {
 					<h2 class="text-center text-sm my-2">
 						The input is bound to a local store, but this is not a single page application.  It is like having <a class="link-primary" href="https://htmx.org" target="_blank">HTMX</a> + <a class="link-primary" href="https://alpinejs.dev/" target="_blank">Alpine.js</a> but with just one API to learn and much easier to extend.
 					</h2>
+					<div>
+						<h1>Event list</h1>
+						@eventList(db)
+					</div>
 					<div class="flex items-center gap-2">
 						if hasTodos {
 							<div class="tooltip" data-tip="toggle all todos">
