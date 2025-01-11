@@ -100,7 +100,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 
 	router.Route("/event/api/{idx}/", func(eventRouter chi.Router) {
 		eventRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			// eventID := chi.URLParam(r, "idx")
+			eventID := chi.URLParam(r, "idx")
 
 			// Example: Render the event ID
 			// w.Write([]byte(fmt.Sprintf("Event ID: %d", eventID)))
@@ -134,7 +134,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
-					c := event_mobile()
+					c := event_mobile(eventID, db)
 					if err := sse.MergeFragmentTempl(c); err != nil {
 						sse.ConsoleError(err)
 						return
