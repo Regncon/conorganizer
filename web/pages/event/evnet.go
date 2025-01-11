@@ -2,6 +2,7 @@ package event
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -14,9 +15,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
+	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server) error {
+func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -87,31 +89,59 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return sessionID, mvc, nil
 	}
 
-	// Helper function to extract event ID from URL
-	getEventID := func(r *http.Request) (int, error) {
-		idStr := chi.URLParam(r, "idx")
-		id, err := strconv.Atoi(idStr)
+	router.Get("/event/{idx}/", func(w http.ResponseWriter, r *http.Request) {
+		eventID := chi.URLParam(r, "idx")
 		if err != nil {
-			return 0, fmt.Errorf("invalid event ID: %w", err)
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
-		return id, nil
-	}
-
-	router.Get("/event/", func(w http.ResponseWriter, r *http.Request) {
-		add("HYPERMEDIA RULES").Render(r.Context(), w)
+		event_index("HYPERMEDIA RULES", eventID, db).Render(r.Context(), w)
 	})
 
-	router.Route("/event/{idx}/", func(eventRouter chi.Router) {
+	router.Route("/event/api/{idx}/", func(eventRouter chi.Router) {
 		eventRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			// Use the helper function to extract the event ID
-			eventID, err := getEventID(r)
+			// eventID := chi.URLParam(r, "idx")
+
+			// Example: Render the event ID
+			// w.Write([]byte(fmt.Sprintf("Event ID: %d", eventID)))
+			// w.Write([]byte(fmt.Sprintf("Hello world!")))
+			sessionID, mvc, err := mvcSession(w, r)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
-			// Example: Render the event ID
-			w.Write([]byte(fmt.Sprintf("Event ID: %d", eventID)))
+			sse := datastar.NewSSE(w, r)
+
+			// Watch for updates
+			ctx := r.Context()
+			watcher, err := kv.Watch(ctx, sessionID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer watcher.Stop()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case entry := <-watcher.Updates():
+					if entry == nil {
+						continue
+					}
+					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					c := event_mobile()
+					if err := sse.MergeFragmentTempl(c); err != nil {
+						sse.ConsoleError(err)
+						return
+					}
+				}
+			}
+
 		})
 
 		eventRouter.Post("/toggle", func(w http.ResponseWriter, r *http.Request) {
@@ -121,8 +151,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 				return
 			}
 
-			// Extract event ID
-			_, err = getEventID(r)
+			_, err = strconv.Atoi(chi.URLParam(r, "idx"))
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
