@@ -14,7 +14,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
-	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
 func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server) error {
@@ -88,174 +87,66 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return sessionID, mvc, nil
 	}
 
+	// Helper function to extract event ID from URL
+	getEventID := func(r *http.Request) (int, error) {
+		idStr := chi.URLParam(r, "idx")
+		id, err := strconv.Atoi(idStr)
+		if err != nil {
+			return 0, fmt.Errorf("invalid event ID: %w", err)
+		}
+		return id, nil
+	}
+
 	router.Get("/event/", func(w http.ResponseWriter, r *http.Request) {
 		add("HYPERMEDIA RULES").Render(r.Context(), w)
 	})
 
-	router.Route("/api/event/", func(apiRouter chi.Router) {
-		apiRouter.Route("/event", func(eventRouter chi.Router) {
-			eventRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Route("/event/{idx}/", func(eventRouter chi.Router) {
+		eventRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			// Use the helper function to extract the event ID
+			eventID, err := getEventID(r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
 
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
+			// Example: Render the event ID
+			w.Write([]byte(fmt.Sprintf("Event ID: %d", eventID)))
+		})
+
+		eventRouter.Post("/toggle", func(w http.ResponseWriter, r *http.Request) {
+			sessionID, mvc, err := mvcSession(w, r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			// Extract event ID
+			_, err = getEventID(r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			setCompletedTo := false
+			for _, todo := range mvc.Todos {
+				if !todo.Completed {
+					setCompletedTo = true
+					break
 				}
+			}
+			for _, todo := range mvc.Todos {
+				todo.Completed = setCompletedTo
+			}
 
-				// sse := datastar.NewSSE(w, r)
-
-				// Watch for updates
-				ctx := r.Context()
-				watcher, err := kv.Watch(ctx, sessionID)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				defer watcher.Stop()
-
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case entry := <-watcher.Updates():
-						if entry == nil {
-							continue
-						}
-						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
-							return
-						}
-						// c := index.TodosMVCView(mvc)
-						// if err := sse.MergeFragmentTempl(c); err != nil {
-						// 	sse.ConsoleError(err)
-						// 	return
-						// }
-					}
-				}
-			})
-
-			eventRouter.Route("/{idx}", func(todoRouter chi.Router) {
-				routeIndex := func(w http.ResponseWriter, r *http.Request) (int, error) {
-					idx := chi.URLParam(r, "idx")
-					i, err := strconv.Atoi(idx)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusBadRequest)
-						return 0, err
-					}
-					return i, nil
-				}
-
-				todoRouter.Post("/toggle", func(w http.ResponseWriter, r *http.Request) {
-					sessionID, mvc, err := mvcSession(w, r)
-
-					sse := datastar.NewSSE(w, r)
-					if err != nil {
-						sse.ConsoleError(err)
-						return
-					}
-
-					i, err := routeIndex(w, r)
-					if err != nil {
-						sse.ConsoleError(err)
-						return
-					}
-
-					if i < 0 {
-						setCompletedTo := false
-						for _, todo := range mvc.Todos {
-							if !todo.Completed {
-								setCompletedTo = true
-								break
-							}
-						}
-						for _, todo := range mvc.Todos {
-							todo.Completed = setCompletedTo
-						}
-					} else {
-						todo := mvc.Todos[i]
-						todo.Completed = !todo.Completed
-					}
-
-					saveMVC(r.Context(), sessionID, mvc)
-				})
-
-				todoRouter.Route("/edit", func(editRouter chi.Router) {
-					editRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-
-						sessionID, mvc, err := mvcSession(w, r)
-						if err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
-							return
-						}
-
-						i, err := routeIndex(w, r)
-						if err != nil {
-							return
-						}
-
-						mvc.EditingIdx = i
-						saveMVC(r.Context(), sessionID, mvc)
-					})
-
-					editRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
-						fmt.Println("editRouter put")
-						type Store struct {
-							Input string `json:"input"`
-						}
-						store := &Store{}
-
-						if err := datastar.ReadSignals(r, store); err != nil {
-							http.Error(w, err.Error(), http.StatusBadRequest)
-							return
-						}
-
-						if store.Input == "" {
-							return
-						}
-
-						sessionID, mvc, err := mvcSession(w, r)
-						if err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
-							return
-						}
-
-						i, err := routeIndex(w, r)
-						if err != nil {
-							return
-						}
-
-						if i >= 0 {
-							mvc.Todos[i].Text = store.Input
-						} else {
-							mvc.Todos = append(mvc.Todos, &index.Todo{
-								Text:      store.Input,
-								Completed: false,
-							})
-						}
-						mvc.EditingIdx = -1
-
-						saveMVC(r.Context(), sessionID, mvc)
-
-					})
-				})
-
-			})
+			saveMVC(r.Context(), sessionID, mvc)
 		})
 	})
 
 	return nil
 }
 
-func MustJSONMarshal(v any) string {
-	b, err := json.MarshalIndent(v, "", " ")
-	if err != nil {
-		panic(err)
-	}
-	return string(b)
-}
-
 func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
-
 	sess, err := store.Get(r, "connections")
 	if err != nil {
 		return "", fmt.Errorf("failed to get session: %w", err)
