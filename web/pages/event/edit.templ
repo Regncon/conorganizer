@@ -1,0 +1,25 @@
+package event
+
+import (
+	"fmt"
+	Modles "github.com/Regncon/conorganizer/models"
+	datastar "github.com/starfederation/datastar/sdk/go"
+)
+
+templ edit(event *Modles.Event) {
+	<div>
+		<h2>Edit { event.Name } </h2>
+		<input
+			id="editNameInput"
+			data-testid="todos_input"
+			placeholder="Event Name"
+			data-bind-input
+			data-on-keydown={ fmt.Sprintf(`
+			if (evt.key !== 'Enter' || !$input.trim().length) return;
+			%s;
+			$input = '';
+		`, datastar.PutSSE("/event/api/%d/edit",event.ID) ) }
+			data-on-click__outside={ datastar.PutSSE("/event/api/%d/cancel", event.ID) }
+		/>
+	</div>
+}

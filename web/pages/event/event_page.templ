@@ -1,0 +1,35 @@
+
+package event
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/models"
+)
+
+func getEventByID(id string, db *sql.DB) (*models.Event, error) {
+	query := "SELECT id, name, description FROM events WHERE id = ?"
+	row := db.QueryRow(query, id)
+
+	var event models.Event
+	if err := row.Scan(&event.ID, &event.Name, &event.Description); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // No event found
+		}
+		return nil, err
+	}
+
+	return &event, nil
+}
+
+templ event_page(eventId string, db *sql.DB) {
+	{{ event, err := getEventByID(eventId, db) }}
+	<div id="event-container">
+		if err != nil {
+			<p>Error fetching event: { err.Error() }</p>
+		}
+		<div style="width: 100%; gap: 2rem; display: flex; justify-content: center;">
+			@event_mobile(event)
+			@edit(event)
+		</div>
+	</div>
+}

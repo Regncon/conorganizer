@@ -101,10 +101,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	router.Route("/event/api/{idx}/", func(eventRouter chi.Router) {
 		eventRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			eventID := chi.URLParam(r, "idx")
-
-			// Example: Render the event ID
-			// w.Write([]byte(fmt.Sprintf("Event ID: %d", eventID)))
-			// w.Write([]byte(fmt.Sprintf("Hello world!")))
 			sessionID, mvc, err := mvcSession(w, r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -134,7 +130,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
-					c := event_mobile(eventID, db)
+					c := event_page(eventID, db)
 					if err := sse.MergeFragmentTempl(c); err != nil {
 						sse.ConsoleError(err)
 						return
@@ -142,6 +138,62 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 				}
 			}
 
+		})
+
+		eventRouter.Put("/edit", func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("edit save")
+			type Store struct {
+				Input string `json:"input"`
+			}
+			store := &Store{}
+
+			if err := datastar.ReadSignals(r, store); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			if store.Input == "" {
+				return
+			}
+			fmt.Println("input", store.Input)
+
+			eventID := chi.URLParam(r, "idx")
+
+			query := `UPDATE events SET name = ? WHERE id = ?`
+			_, err = db.Exec(query, store.Input, eventID)
+			if err != nil {
+				http.Error(w, "Failed to update event in the database", http.StatusInternalServerError)
+				return
+			}
+			sessionID, mvc, err := mvcSession(w, r)
+			sse := datastar.NewSSE(w, r)
+			if err != nil {
+				sse.ConsoleError(err)
+				return
+			}
+
+			mvc.EditingIdx = -1
+			if err := saveMVC(r.Context(), sessionID, mvc); err != nil {
+				sse.ConsoleError(err)
+				return
+			}
+		})
+
+		eventRouter.Put("/cancel", func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("cancel edit")
+
+			sessionID, mvc, err := mvcSession(w, r)
+			sse := datastar.NewSSE(w, r)
+			if err != nil {
+				sse.ConsoleError(err)
+				return
+			}
+
+			mvc.EditingIdx = -1
+			if err := saveMVC(r.Context(), sessionID, mvc); err != nil {
+				sse.ConsoleError(err)
+				return
+			}
 		})
 
 		eventRouter.Post("/toggle", func(w http.ResponseWriter, r *http.Request) {
