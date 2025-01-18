@@ -9,10 +9,67 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	Modles "github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/web/pages/index"
+	"github.com/go-chi/chi/v5"
+	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar/sdk/go"
+	"net/http"
 )
+
+func editRout(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/edit", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("edit save")
+		type Store struct {
+			Input string `json:"input"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if store.Input == "" {
+			return
+		}
+		fmt.Println("input", store.Input)
+
+		eventID := chi.URLParam(r, "idx")
+
+		// Update the event in the database
+		query := `UPDATE events SET title = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		// Broadcast the update to all clients watching the same event
+		ctx := r.Context()
+		allKeys, err := kv.Keys(ctx)
+		if err != nil {
+			http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
+			return
+		}
+
+		for _, sessionID := range allKeys {
+			mvc := &index.TodoMVC{}
+			if entry, err := kv.Get(ctx, sessionID); err == nil {
+				if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+					continue // Ignore unmarshaling errors for other sessions
+				}
+				mvc.EditingIdx = -1
+				if err := SaveMVC(ctx, mvc, sessionID, kv); err != nil {
+					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
+				}
+			}
+		}
+	})
+}
 
 func edit(event *Modles.Event) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -42,7 +99,7 @@ func edit(event *Modles.Event) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(event.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/edit.templ`, Line: 11, Col: 24}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/edit.templ`, Line: 68, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -59,7 +116,7 @@ func edit(event *Modles.Event) templ.Component {
 			$input = '';
 		`, datastar.PutSSE("/event/api/%d/edit", event.ID)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/edit.templ`, Line: 21, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/edit.templ`, Line: 78, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -72,7 +129,7 @@ func edit(event *Modles.Event) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(datastar.PutSSE("/event/api/%d/cancel", event.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/edit.templ`, Line: 22, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/edit.templ`, Line: 79, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {

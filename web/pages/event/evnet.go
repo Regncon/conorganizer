@@ -66,7 +66,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			}
 			resetMVC(mvc)
 
-			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
+			if err := SaveMVC(ctx, mvc, sessionID, kv); err != nil {
 				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
 			}
 		} else {
@@ -140,7 +140,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			}
 
 			mvc.EditingIdx = -1
-			if err := saveMVC(r.Context(), mvc, sessionID, kv); err != nil {
+			if err := SaveMVC(r.Context(), mvc, sessionID, kv); err != nil {
 				sse.ConsoleError(err)
 				return
 			}
@@ -149,58 +149,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 
 	return nil
 }
-func editRout(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/edit", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("edit save")
-		type Store struct {
-			Input string `json:"input"`
-		}
-		store := &Store{}
 
-		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		if store.Input == "" {
-			return
-		}
-		fmt.Println("input", store.Input)
-
-		eventID := chi.URLParam(r, "idx")
-
-		// Update the event in the database
-		query := `UPDATE events SET title = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
-		if err != nil {
-			http.Error(w, "Failed to update event in the database", http.StatusInternalServerError)
-			return
-		}
-
-		// Broadcast the update to all clients watching the same event
-		ctx := r.Context()
-		allKeys, err := kv.Keys(ctx)
-		if err != nil {
-			http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
-			return
-		}
-
-		for _, sessionID := range allKeys {
-			mvc := &index.TodoMVC{}
-			if entry, err := kv.Get(ctx, sessionID); err == nil {
-				if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-					continue // Ignore unmarshaling errors for other sessions
-				}
-				mvc.EditingIdx = -1
-				if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
-				}
-			}
-		}
-	})
-}
-
-func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
+func SaveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
 	b, err := json.Marshal(mvc)
 	if err != nil {
 		return fmt.Errorf("failed to marshal mvc: %w", err)
