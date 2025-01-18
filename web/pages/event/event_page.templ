@@ -7,7 +7,7 @@ import (
 )
 
 func getEventByID(id string, db *sql.DB) (*models.Event, error) {
-	query := "SELECT id, name, description FROM events WHERE id = ?"
+	query := "SELECT id, title, description FROM events WHERE id = ?"
 	row := db.QueryRow(query, id)
 
 	var event models.Event
@@ -22,9 +22,15 @@ func getEventByID(id string, db *sql.DB) (*models.Event, error) {
 }
 
 templ event_page(eventId string, db *sql.DB) {
-	{{ event, err := getEventByID(eventId, db) }}
+	{{
+	event, err := getEventByID(eventId, db)
+	}}
+	if event == nil {
+		<p>Event not found</p>
+		return
+	}
 	<div id="event-container">
-		if err != nil {
+		if err != nil || event == nil {
 			<p>Error fetching event: { err.Error() }</p>
 		}
 		<div style="width: 100%; gap: 2rem; display: flex; justify-content: center;">

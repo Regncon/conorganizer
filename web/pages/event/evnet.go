@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Regncon/conorganizer/web/pages/index"
@@ -41,17 +40,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return fmt.Errorf("error creating key value: %w", err)
 	}
 
-	saveMVC := func(ctx context.Context, sessionID string, mvc *index.TodoMVC) error {
-		b, err := json.Marshal(mvc)
-		if err != nil {
-			return fmt.Errorf("failed to marshal mvc: %w", err)
-		}
-		if _, err := kv.Put(ctx, sessionID, b); err != nil {
-			return fmt.Errorf("failed to put key value: %w", err)
-		}
-		return nil
-	}
-
 	resetMVC := func(mvc *index.TodoMVC) {
 		mvc.Mode = index.TodoViewModeAll
 		mvc.Todos = []*index.Todo{
@@ -66,7 +54,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 
 	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *index.TodoMVC, error) {
 		ctx := r.Context()
-		sessionID, err := upsertSessionID(store, r, w)
+		sessionID, err := UpsertSessionID(store, r, w)
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to get session id: %w", err)
 		}
@@ -78,7 +66,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			}
 			resetMVC(mvc)
 
-			if err := saveMVC(ctx, sessionID, mvc); err != nil {
+			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
 				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
 			}
 		} else {
@@ -139,55 +127,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			}
 
 		})
-
-		eventRouter.Put("/edit", func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println("edit save")
-			type Store struct {
-				Input string `json:"input"`
-			}
-			store := &Store{}
-
-			if err := datastar.ReadSignals(r, store); err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-
-			if store.Input == "" {
-				return
-			}
-			fmt.Println("input", store.Input)
-
-			eventID := chi.URLParam(r, "idx")
-
-			// Update the event in the database
-			query := `UPDATE events SET title = ? WHERE id = ?`
-			_, err := db.Exec(query, store.Input, eventID)
-			if err != nil {
-				http.Error(w, "Failed to update event in the database", http.StatusInternalServerError)
-				return
-			}
-
-			// Broadcast the update to all clients watching the same event
-			ctx := r.Context()
-			allKeys, err := kv.Keys(ctx)
-			if err != nil {
-				http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
-				return
-			}
-
-			for _, key := range allKeys {
-				mvc := &index.TodoMVC{}
-				if entry, err := kv.Get(ctx, key); err == nil {
-					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-						continue // Ignore unmarshaling errors for other sessions
-					}
-					mvc.EditingIdx = -1
-					if err := saveMVC(ctx, key, mvc); err != nil {
-						fmt.Printf("Failed to save MVC for key %s: %v\n", key, err)
-					}
-				}
-			}
-		})
+		editRout(eventRouter, db, kv)
 
 		eventRouter.Put("/cancel", func(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("cancel edit")
@@ -200,44 +140,78 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			}
 
 			mvc.EditingIdx = -1
-			if err := saveMVC(r.Context(), sessionID, mvc); err != nil {
+			if err := saveMVC(r.Context(), mvc, sessionID, kv); err != nil {
 				sse.ConsoleError(err)
 				return
 			}
-		})
-
-		eventRouter.Post("/toggle", func(w http.ResponseWriter, r *http.Request) {
-			sessionID, mvc, err := mvcSession(w, r)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			_, err = strconv.Atoi(chi.URLParam(r, "idx"))
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-
-			setCompletedTo := false
-			for _, todo := range mvc.Todos {
-				if !todo.Completed {
-					setCompletedTo = true
-					break
-				}
-			}
-			for _, todo := range mvc.Todos {
-				todo.Completed = setCompletedTo
-			}
-
-			saveMVC(r.Context(), sessionID, mvc)
 		})
 	})
 
 	return nil
 }
+func editRout(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/edit", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("edit save")
+		type Store struct {
+			Input string `json:"input"`
+		}
+		store := &Store{}
 
-func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if store.Input == "" {
+			return
+		}
+		fmt.Println("input", store.Input)
+
+		eventID := chi.URLParam(r, "idx")
+
+		// Update the event in the database
+		query := `UPDATE events SET title = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		// Broadcast the update to all clients watching the same event
+		ctx := r.Context()
+		allKeys, err := kv.Keys(ctx)
+		if err != nil {
+			http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
+			return
+		}
+
+		for _, sessionID := range allKeys {
+			mvc := &index.TodoMVC{}
+			if entry, err := kv.Get(ctx, sessionID); err == nil {
+				if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+					continue // Ignore unmarshaling errors for other sessions
+				}
+				mvc.EditingIdx = -1
+				if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
+					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
+				}
+			}
+		}
+	})
+}
+
+func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
+	b, err := json.Marshal(mvc)
+	if err != nil {
+		return fmt.Errorf("failed to marshal mvc: %w", err)
+	}
+	if _, err := kv.Put(ctx, sessionID, b); err != nil {
+		return fmt.Errorf("failed to put key value: %w", err)
+	}
+	return nil
+}
+
+func UpsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
 	sess, err := store.Get(r, "connections")
 	if err != nil {
 		return "", fmt.Errorf("failed to get session: %w", err)
