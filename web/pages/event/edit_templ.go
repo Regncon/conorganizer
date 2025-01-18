@@ -63,7 +63,7 @@ func editRout(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 					continue // Ignore unmarshaling errors for other sessions
 				}
 				mvc.EditingIdx = -1
-				if err := SaveMVC(ctx, mvc, sessionID, kv); err != nil {
+				if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
 					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
 				}
 			}

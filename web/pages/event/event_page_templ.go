@@ -9,25 +9,7 @@ package event
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import (
-	"database/sql"
-	"github.com/Regncon/conorganizer/models"
-)
-
-func getEventByID(id string, db *sql.DB) (*models.Event, error) {
-	query := "SELECT id, title, description FROM events WHERE id = ?"
-	row := db.QueryRow(query, id)
-
-	var event models.Event
-	if err := row.Scan(&event.ID, &event.Title, &event.Description); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No event found
-		}
-		return nil, err
-	}
-
-	return &event, nil
-}
+import "database/sql"
 
 func event_page(eventId string, db *sql.DB) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -70,7 +52,7 @@ func event_page(eventId string, db *sql.DB) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(err.Error())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/event_page.templ`, Line: 34, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/event_page.templ`, Line: 16, Col: 41}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {

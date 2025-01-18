@@ -1,15 +1,15 @@
 package event
 
 import (
-	"net/http"
 	"database/sql"
-	"github.com/nats-io/nats.go/jetstream"
-	"github.com/go-chi/chi/v5"
-	"fmt"
 	"encoding/json"
-	"github.com/Regncon/conorganizer/web/pages/index"
+	"fmt"
 	Modles "github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/web/pages/index"
+	"github.com/go-chi/chi/v5"
+	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar/sdk/go"
+	"net/http"
 )
 
 func editRout(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
@@ -55,7 +55,7 @@ func editRout(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 					continue // Ignore unmarshaling errors for other sessions
 				}
 				mvc.EditingIdx = -1
-				if err := SaveMVC(ctx, mvc, sessionID, kv); err != nil {
+				if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
 					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
 				}
 			}

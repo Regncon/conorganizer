@@ -10,11 +10,36 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"database/sql"
+	"net/http"
+
 	"github.com/Regncon/conorganizer/web/layouts"
+	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func event_index(title string, id string, db *sql.DB) templ.Component {
+func eventLayoutRoute(router chi.Router, db *sql.DB, err error) {
+
+	router.Get("/event/{idx}/", func(w http.ResponseWriter, r *http.Request) {
+		eventID := chi.URLParam(r, "idx")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		event, err := getEventByID(eventID, db)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		if event == nil {
+			http.Error(w, "404 Event not found", http.StatusNotFound)
+			return
+		}
+		event_index(event.Title, eventID).Render(r.Context(), w)
+	})
+}
+
+func event_index(title string, id string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -56,7 +81,7 @@ func event_index(title string, id string, db *sql.DB) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(datastar.GetSSE(url))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/event_index.templ`, Line: 15, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/event_index.templ`, Line: 40, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
