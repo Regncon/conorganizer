@@ -159,23 +159,33 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 
 			eventID := chi.URLParam(r, "idx")
 
+			// Update the event in the database
 			query := `UPDATE events SET name = ? WHERE id = ?`
-			_, err = db.Exec(query, store.Input, eventID)
+			_, err := db.Exec(query, store.Input, eventID)
 			if err != nil {
 				http.Error(w, "Failed to update event in the database", http.StatusInternalServerError)
 				return
 			}
-			sessionID, mvc, err := mvcSession(w, r)
-			sse := datastar.NewSSE(w, r)
+
+			// Broadcast the update to all clients watching the same event
+			ctx := r.Context()
+			allKeys, err := kv.Keys(ctx)
 			if err != nil {
-				sse.ConsoleError(err)
+				http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
 				return
 			}
 
-			mvc.EditingIdx = -1
-			if err := saveMVC(r.Context(), sessionID, mvc); err != nil {
-				sse.ConsoleError(err)
-				return
+			for _, key := range allKeys {
+				mvc := &index.TodoMVC{}
+				if entry, err := kv.Get(ctx, key); err == nil {
+					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+						continue // Ignore unmarshaling errors for other sessions
+					}
+					mvc.EditingIdx = -1
+					if err := saveMVC(ctx, key, mvc); err != nil {
+						fmt.Printf("Failed to save MVC for key %s: %v\n", key, err)
+					}
+				}
 			}
 		})
 
