@@ -15,11 +15,11 @@ import (
 )
 
 func getEventByID(id string, db *sql.DB) (*models.Event, error) {
-	query := "SELECT id, name, description FROM events WHERE id = ?"
+	query := "SELECT id, title, description FROM events WHERE id = ?"
 	row := db.QueryRow(query, id)
 
 	var event models.Event
-	if err := row.Scan(&event.ID, &event.Name, &event.Description); err != nil {
+	if err := row.Scan(&event.ID, &event.Title, &event.Description); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // No event found
 		}

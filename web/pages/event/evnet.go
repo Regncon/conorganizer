@@ -160,7 +160,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			eventID := chi.URLParam(r, "idx")
 
 			// Update the event in the database
-			query := `UPDATE events SET name = ? WHERE id = ?`
+			query := `UPDATE events SET title = ? WHERE id = ?`
 			_, err := db.Exec(query, store.Input, eventID)
 			if err != nil {
 				http.Error(w, "Failed to update event in the database", http.StatusInternalServerError)

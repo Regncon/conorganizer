@@ -2,6 +2,6 @@ package models
 
 type Event struct {
 	ID          int64  `json:"id"`
-	Name        string `json:"name"`
+	Title       string `json:"title"`
 	Description string `json:"description"`
 }

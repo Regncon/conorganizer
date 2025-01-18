@@ -40,15 +40,15 @@ func edit(event *Modles.Event) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(event.Name)
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(event.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/edit.templ`, Line: 11, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/event/edit.templ`, Line: 11, Col: 24}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h2><input id=\"editNameInput\" data-testid=\"todos_input\" placeholder=\"Event Name\" data-bind-input data-on-keydown=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</h2><input id=\"editTitleInput\" data-testid=\"todos_input\" placeholder=\"Event Title\" data-bind-input data-on-keydown=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

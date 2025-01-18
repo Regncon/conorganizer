@@ -8,11 +8,11 @@ import (
 
 templ edit(event *Modles.Event) {
 	<div>
-		<h2>Edit { event.Name } </h2>
+		<h2>Edit { event.Title } </h2>
 		<input
-			id="editNameInput"
+			id="editTitleInput"
 			data-testid="todos_input"
-			placeholder="Event Name"
+			placeholder="Event Title"
 			data-bind-input
 			data-on-keydown={ fmt.Sprintf(`
 			if (evt.key !== 'Enter' || !$input.trim().length) return;

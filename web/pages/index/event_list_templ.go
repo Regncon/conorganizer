@@ -14,7 +14,7 @@ import (
 )
 
 func GetEvents(db *sql.DB) ([]models.Event, error) {
-	query := "SELECT id, name, description FROM events"
+	query := "SELECT id, title, description FROM events"
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -24,7 +24,7 @@ func GetEvents(db *sql.DB) ([]models.Event, error) {
 	var events []models.Event
 	for rows.Next() {
 		var event models.Event
-		if err := rows.Scan(&event.ID, &event.Name, &event.Description); err != nil {
+		if err := rows.Scan(&event.ID, &event.Title, &event.Description); err != nil {
 			return nil, err
 		}
 		events = append(events, event)
@@ -82,7 +82,7 @@ func eventList(db *sql.DB) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		for _, event := range events {
-			templ_7745c5c3_Err = eventCard(event.ID, event.Name, "System", "Game Master", event.Description).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = eventCard(event.ID, event.Title, "System", "Game Master", event.Description).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

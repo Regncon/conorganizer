@@ -6,7 +6,7 @@ import (
 )
 
 func GetEvents(db *sql.DB) ([]models.Event, error) {
-	query := "SELECT id, name, description FROM events"
+	query := "SELECT id, title, description FROM events"
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -16,7 +16,7 @@ func GetEvents(db *sql.DB) ([]models.Event, error) {
 	var events []models.Event
 	for rows.Next() {
 		var event models.Event
-		if err := rows.Scan(&event.ID, &event.Name, &event.Description); err != nil {
+		if err := rows.Scan(&event.ID, &event.Title, &event.Description); err != nil {
 			return nil, err
 		}
 		events = append(events, event)
@@ -37,7 +37,7 @@ templ eventList(db *sql.DB) {
 					gap: 1rem;"
 	>
 		for _, event := range events {
-			@eventCard(event.ID, event.Name, "System", "Game Master", event.Description)
+			@eventCard(event.ID, event.Title, "System", "Game Master", event.Description)
 		}
 	</div>
 }

@@ -14,22 +14,25 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/sync/errgroup"
+	"io/ioutil"
 )
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	db, err := initDB("events.db")
+	db, err := initDB("events.db", "initialize.sql")
 	if err != nil {
 		logger.Error("Could not initialize DB: %v", err)
 	}
 	defer db.Close()
+
 	getPort := func() string {
 		if p, ok := os.LookupEnv("PORT"); ok {
 			return p
 		}
 		return "8080"
 	}
+
 	logger.Info(fmt.Sprintf("Starting Server 0.0.0.0:" + getPort()))
 	defer logger.Info("Stopping Server")
 
@@ -85,7 +88,20 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 	}
 }
 
-func initDB(dbPath string) (*sql.DB, error) {
+func initDB(dbPath string, sqlFile string) (*sql.DB, error) {
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		db, err := sql.Open("sqlite3", dbPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open DB: %w", err)
+		}
+
+		if err = initializeDatabase(db, sqlFile); err != nil {
+			return nil, fmt.Errorf("failed to initialize database: %w", err)
+		}
+
+		return db, nil
+	}
+
 	db, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open DB: %w", err)
@@ -95,25 +111,28 @@ func initDB(dbPath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to ping DB: %w", err)
 	}
 
-	if err = createEventsTable(db); err != nil {
-		return nil, fmt.Errorf("failed to create events table: %w", err)
-	}
-
 	return db, nil
 }
 
-func createEventsTable(db *sql.DB) error {
-	tableCreationQuery := `
-	CREATE TABLE IF NOT EXISTS events (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		name TEXT NOT NULL,
-		description TEXT NOT NULL
-	)`
-
-	_, err := db.Exec(tableCreationQuery)
+func initializeDatabase(db *sql.DB, filename string) error {
+	sqlContent, err := loadSQLFile(filename)
 	if err != nil {
-		return fmt.Errorf("failed to create events table: %w", err)
+		return fmt.Errorf("error loading SQL file: %w", err)
+	}
+
+	_, err = db.Exec(sqlContent)
+	if err != nil {
+		return fmt.Errorf("failed to execute SQL commands: %w", err)
 	}
 
 	return nil
 }
+
+func loadSQLFile(filename string) (string, error) {
+	data, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return "", fmt.Errorf("failed to read file %s: %w", filename, err)
+	}
+	return string(data), nil
+}
+
