@@ -14,7 +14,6 @@ tasks:
       - go build -o bin/main .
     deps:
       - build:templ
-      - build:esbuild
     parallel: true
 
   # Use this task to debug your project with the delve debugger
