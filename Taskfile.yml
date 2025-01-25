@@ -9,25 +9,11 @@ tasks:
     cmds:
       - go run github.com/a-h/templ/cmd/templ@v0.3.819 generate -v
 
-  build:styles:
-    cmds:
-      - pnpx tailwindcss -c tailwind.config.js -i web/styles/styles.css -o $STATIC_DIR/index.css
-
-  build:esbuild:
-    cmds:
-      - pnpx esbuild web/libs/datastar/index.ts --bundle --outdir=$STATIC_DIR
-
-  build:lit-html:
-    cmds:
-      - pnpm -r --filter=lit-html build
-
   build:
     cmds:
       - go build -o bin/main .
     deps:
-      - build:styles
       - build:templ
-      - build:lit-html
       - build:esbuild
     parallel: true
 
@@ -43,18 +29,6 @@ tasks:
     cmds:
       - go run github.com/a-h/templ/cmd/templ@v0.3.819 generate --watch --proxy="http://localhost:8080" --open-browser=false -v
 
-  live:styles:
-    cmds:
-      - pnpx tailwindcss -c tailwind.config.js -i web/styles/styles.css -o $STATIC_DIR/index.css --watch
-
-  live:esbuild:
-    cmds:
-      - pnpx esbuild web/libs/datastar/index.ts --sourcemap --bundle --outdir=$STATIC_DIR --watch
-
-  live:lit-html:
-    cmds:
-      - pnpm -r --filter=lit-html build:dev
-
   live:server:
     cmds:
       - |
@@ -62,7 +36,6 @@ tasks:
         --build.cmd "go build -tags dev -o tmp/bin/main" \
         --build.bin "tmp/bin/main" \
         --build.delay "20" \
-        --build.exclude_dir "node_modules,data,public" \
         --build.include_ext "go" \
         --build.stop_on_error "false" \
         --misc.clean_on_exit true
@@ -81,9 +54,6 @@ tasks:
   live:
     deps:
       - live:templ
-      - live:styles
-      - live:lit-html
-      - live:esbuild
       - live:reload
       - live:server
 
