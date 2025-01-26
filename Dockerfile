@@ -1,15 +1,43 @@
-FROM docker.io/golang:1.23.3-alpine AS build
+# Use a base image with Go pre-installed
+FROM docker.io/golang:1.23.5 as my-dev-environment
 
-RUN apk add --no-cache upx
+# Set working directory
+# WORKDIR /app
 
-WORKDIR /src
-COPY . ./
-RUN go mod download
-RUN --mount=type=cache,target=/root/.cache/go-build \
-go build -ldflags="-s" -o /bin/main .
-RUN upx -9 -k /bin/main
+# Install system dependencies and task runner
+RUN apt-get update && apt-get install -y \
+    curl \
+    sudo \
+    git \
+    sqlite3 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-FROM scratch
-ENV PORT=9001
-COPY --from=build /bin/main /
-ENTRYPOINT ["/main"]
+# Install task runner
+# RUN sh -c "$(curl --silent --location https://taskfile.dev/install.sh)" -- -d
+
+# Create a user and group named devuser
+RUN groupadd -g 1000 devuser && \
+    useradd -m -u 1000 -g devuser -s /bin/bash devuser
+
+# Configure passwordless sudo for the devuser user
+RUN echo "devuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/devuser && \
+    chmod 0440 /etc/sudoers.d/devuser
+
+# Switch to the 'devuser' user
+USER devuser
+
+# Set up the working directory for the user
+WORKDIR /home/devuser/app
+
+# Copy go.mod and go.sum and download dependencies
+# COPY go.mod go.sum ./
+# RUN go mod download
+
+# Install templ and air globally
+RUN go install github.com/a-h/templ/cmd/templ@v0.3.819 && \
+    go install github.com/go-task/task/v3/cmd/task@latest && \
+    go install github.com/air-verse/air@latest
+
+# Expose ports used by the application
+EXPOSE 8080 7331
+

@@ -12,9 +12,9 @@ import (
 	"database/sql"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	_ "github.com/mattn/go-sqlite3"
 	"golang.org/x/sync/errgroup"
 	"io/ioutil"
+	_ "modernc.org/sqlite"
 )
 
 func main() {
@@ -90,7 +90,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 
 func initDB(dbPath string, sqlFile string) (*sql.DB, error) {
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		db, err := sql.Open("sqlite3", dbPath)
+		db, err := sql.Open("sqlite", dbPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open DB: %w", err)
 		}
@@ -102,7 +102,7 @@ func initDB(dbPath string, sqlFile string) (*sql.DB, error) {
 		return db, nil
 	}
 
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open DB: %w", err)
 	}
@@ -135,4 +135,3 @@ func loadSQLFile(filename string) (string, error) {
 	}
 	return string(data), nil
 }
-

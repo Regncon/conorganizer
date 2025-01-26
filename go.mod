@@ -12,11 +12,11 @@ require (
 	github.com/benbjohnson/hashfs v0.2.2
 	github.com/delaneyj/toolbelt v0.3.16
 	github.com/gorilla/sessions v1.4.0
-	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/nats-io/nats-server/v2 v2.10.24
 	github.com/nats-io/nats.go v1.38.0
 	github.com/samber/lo v1.47.0
 	github.com/starfederation/datastar v1.0.0-beta.1
+	modernc.org/sqlite v1.34.4
 )
 
 require (
@@ -60,6 +60,5 @@ require (
 	modernc.org/libc v1.61.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.1 // indirect
-	modernc.org/sqlite v1.34.4 // indirect
 	zombiezen.com/go/sqlite v1.4.0 // indirect
 )
