@@ -23,10 +23,6 @@ RUN groupadd -g 1000 devuser && \
 RUN echo "devuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/devuser && \
     chmod 0440 /etc/sudoers.d/devuser
 
-# Create a directory for the application and give the devuser user ownership of the directory
-RUN mkdir -p /home/devuser/app
-RUN chown devuser:devuser -R /home/devuser/app
-
 # Switch to the 'devuser' user
 USER devuser
 
