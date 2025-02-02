@@ -25,4 +25,5 @@ docker run -it --rm `
     -v "${workDir}:${containerWorkDir}" `
     -p 8080:8080 `
     -p 7331:7331 `
+    --user 1000:1000 ` # Run the container as devuser
     $imageName

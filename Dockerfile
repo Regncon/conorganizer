@@ -34,7 +34,7 @@ WORKDIR /home/devuser/app
 # RUN go mod download
 
 # Install templ and air globally
-RUN go install github.com/a-h/templ/cmd/templ@v0.3.819 && \
+RUN go install github.com/a-h/templ/cmd/templ@latest && \
     go install github.com/go-task/task/v3/cmd/task@latest && \
     go install github.com/air-verse/air@latest
 
