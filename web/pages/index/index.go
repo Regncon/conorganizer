@@ -126,7 +126,7 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						c := todosMVCView(mvc, db)
+						c := todosMVCView(db)
 						if err := sse.MergeFragmentTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
