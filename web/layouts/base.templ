@@ -14,11 +14,31 @@ templ Base(title string) {
 			<script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.2/bundles/datastar.js"></script>
 			<link href="/static/index.css" rel="stylesheet" type="text/css"/>
 		</head>
-		<body class="flex flex-col h-screen">
-			<nav class="flex justify-center">
-				<ul class="menu menu-vertical md:menu-horizontal bg-base-200 rounded-box">
-					<li class="hover:text-primary"><a href="/">Home</a></li>
-				</ul>
+		<body>
+			<style>
+			.main-menu-link {
+				display: flex;
+				align-items: center;
+				color: var(--color-secondary);
+				text-decoration: none;
+				text-transform: uppercase;
+				margin-left: 1rem;
+				padding: 0.5rem;
+			}
+			.main-menu-link:hover {
+				background-color: rgba(255, 255, 255, 0.1);
+			}
+			</style>
+			<nav style="display:flex; align-items: center; Background-color: #2d3748; width: 100%; padding: 0.25rem; margin-bottom: 1rem;">
+				<a href="/"><img src="/static/assets/RegnconLogo.svg" alt="logo" style="width: 2rem; height: 2rem;"/></a>
+				<a href="/" class="main-menu-link">
+					<img
+						src="/static/assets/icons/house-solid.svg"
+						alt="hjem"
+						style="width: 1.25rem; height: 1.25rem;	margin-right: 0.25rem;" 
+					/>
+					Hjem
+				</a>
 			</nav>
 			{ children... }
 		</body>

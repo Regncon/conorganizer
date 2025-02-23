@@ -1,5 +1,10 @@
+:root {
+	--color-secondary: #ff7c7c;
+}
+
 body {
 
 	color: white;
 	background: #21243d;
+	margin: 0;
 }
