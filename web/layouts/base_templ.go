@@ -8,6 +8,8 @@ package layouts
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+import "github.com/Regncon/conorganizer/web/components"
+
 func Base(title string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -36,13 +38,17 @@ func Base(title string) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/base.templ`, Line: 7, Col: 17}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/layouts/base.templ`, Line: 9, Col: 17}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0\"><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&amp;family=Inter:wght@100..900&amp;family=Gideon+Roman:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&amp;display=swap\" rel=\"stylesheet\"><script src=\"https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js\"></script><link rel=\"icon\" type=\"image/x-icon\" href=\"/static/assets/favicon.ico\"><script type=\"module\" src=\"https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.2/bundles/datastar.js\"></script><link href=\"/static/index.css\" rel=\"stylesheet\" type=\"text/css\"></head><body><style>\n\t\t\t.main-menu-link {\n\t\t\t\tdisplay: flex;\n\t\t\t\talign-items: center;\n\t\t\t\tcolor: var(--color-secondary);\n\t\t\t\ttext-decoration: none;\n\t\t\t\ttext-transform: uppercase;\n\t\t\t\tmargin-left: 1rem;\n\t\t\t\tpadding: 0.5rem;\n\t\t\t}\n\t\t\t.main-menu-link:hover {\n\t\t\t\tbackground-color: rgba(255, 255, 255, 0.1);\n\t\t\t}\n\t\t\t</style><nav style=\"display:flex; align-items: center; Background-color: #2d3748; width: 100%; padding: 0.25rem; margin-bottom: 1rem;\"><a href=\"/\"><img src=\"/static/assets/RegnconLogo.svg\" alt=\"logo\" style=\"width: 2rem; height: 2rem;\"></a> <a href=\"/\" class=\"main-menu-link\"><img src=\"/static/assets/icons/house-solid.svg\" alt=\"hjem\" style=\"width: 1.25rem; height: 1.25rem;\tmargin-right: 0.25rem;\"> Hjem</a></nav>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0\"><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Fira+Code:wght@300..700&amp;family=Inter:wght@100..900&amp;family=Gideon+Roman:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&amp;display=swap\" rel=\"stylesheet\"><script src=\"https://code.iconify.design/iconify-icon/2.1.0/iconify-icon.min.js\"></script><link rel=\"icon\" type=\"image/x-icon\" href=\"/static/assets/favicon.ico\"><script type=\"module\" src=\"https://cdn.jsdelivr.net/gh/starfederation/datastar@v1.0.0-beta.2/bundles/datastar.js\"></script><link href=\"/static/index.css\" rel=\"stylesheet\" type=\"text/css\"></head><body>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = components.Menu().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
