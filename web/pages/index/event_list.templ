@@ -26,18 +26,49 @@ func GetEvents(db *sql.DB) ([]models.Event, error) {
 
 templ eventList(db *sql.DB) {
 	{{ events, err := GetEvents(db) }}
-	<h1>Regncon 2025</h1>
-	if err != nil {
-		<p>Error fetching events: { err.Error() }</p>
-		return
-	}
-	<div
-		style=" display: grid;
-					grid-template-columns: repeat(auto-fit,minmax(350px, 350px));
-					gap: 1rem;"
-	>
-		for _, event := range events {
-			@eventCard(event.ID, event.Title, "System", "Game Master", event.Description)
+	<div style="margin-right: auto; margin-left: auto; max-width: 1500px;">
+		<style>
+		@keyframes spin {
+			from {
+				transform: rotate(360deg);
+			}
+			to {
+				transform: rotate(0deg);
+			}
 		}
+		</style>
+		<img
+			src="/static/assets/RegnconLogo.svg"
+			alt="logo"
+			style="
+			-webkit-animation: spin 240s linear infinite;
+			animation: spin 240s linear infinite;
+			max-width: 450px;
+			max-height: 450px;
+			margin-top: 2rem;
+			margin-bottom: 2rem;
+			margin-right: auto;
+			margin-left: auto;
+			display: block;
+			"
+		/>
+		<div style="background-color:#31354e; padding: 1rem;">
+			<h1>Regncon program 2025</h1>
+		</div>
+		if err != nil {
+			<p>Error fetching events: { err.Error() }</p>
+			return
+		}
+		<div
+			style=" 
+				margin-top: 1rem;
+				display: grid;
+				grid-template-columns: repeat(auto-fit,minmax(350px, 350px));
+				gap: 1rem;"
+		>
+			for _, event := range events {
+				@eventCard(event.ID, event.Title, "System", "Game Master", event.Description)
+			}
+		</div>
 	</div>
 }
