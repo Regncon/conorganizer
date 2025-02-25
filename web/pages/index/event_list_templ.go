@@ -54,7 +54,7 @@ func eventList(db *sql.DB) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		events, err := GetEvents(db)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div style=\"margin-right: auto; margin-left: auto; max-width: 1500px;\"><style>\n\t\t@keyframes spin {\n\t\t\tfrom {\n\t\t\t\ttransform: rotate(360deg);\n\t\t\t}\n\t\t\tto {\n\t\t\t\ttransform: rotate(0deg);\n\t\t\t}\n\t\t}\n\t\t</style><img src=\"/static/assets/RegnconLogo.svg\" alt=\"logo\" style=\"\n\t\t\t-webkit-animation: spin 240s linear infinite;\n\t\t\tanimation: spin 240s linear infinite;\n\t\t\tmax-width: 450px;\n\t\t\tmax-height: 450px;\n\t\t\tmargin-top: 2rem;\n\t\t\tmargin-bottom: 2rem;\n\t\t\tmargin-right: auto;\n\t\t\tmargin-left: auto;\n\t\t\tdisplay: block;\n\t\t\t\"><div style=\"background-color:#31354e; padding: 1rem;\"><h1>Regncon program 2025</h1></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div style=\"margin-right: auto; margin-left: auto; max-width: 1500px;\"><style>\n\t\t@keyframes spin {\n\t\t\tfrom {\n\t\t\t\ttransform: rotate(360deg);\n\t\t\t}\n\t\t\tto {\n\t\t\t\ttransform: rotate(0deg);\n\t\t\t}\n\t\t}\n\t\t</style><img src=\"/static/assets/RegnconLogo.svg\" alt=\"logo\" style=\"\n\t\t\t-webkit-animation: spin 240s linear infinite;\n\t\t\tanimation: spin 240s linear infinite;\n\t\t\tmax-width: 450px;\n\t\t\tmax-height: 450px;\n\t\t\tmargin: 2rem auto;\n\t\t\tdisplay: block;\n\t\t\t\"><div style=\"background-color:#31354e; padding: 1rem;\"><h1 style=\"text-align: center;\">Regncon program 2025</h1><a href=\"/event/new\" style=\"display: block;\n\t\t\t\ttext-align: center;\n\t\t\t\tfont-size: 1.5rem;\n\t\t\t\tmargin-top: 1rem;\n\t\t\t\tcolor: #aea4f7;\">Meld på nytt arrangement til årets program!</a></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -66,7 +66,7 @@ func eventList(db *sql.DB) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(err.Error())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/index/event_list.templ`, Line: 59, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `web/pages/index/event_list.templ`, Line: 66, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {

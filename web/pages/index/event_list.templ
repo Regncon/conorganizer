@@ -45,15 +45,22 @@ templ eventList(db *sql.DB) {
 			animation: spin 240s linear infinite;
 			max-width: 450px;
 			max-height: 450px;
-			margin-top: 2rem;
-			margin-bottom: 2rem;
-			margin-right: auto;
-			margin-left: auto;
+			margin: 2rem auto;
 			display: block;
 			"
 		/>
 		<div style="background-color:#31354e; padding: 1rem;">
-			<h1>Regncon program 2025</h1>
+			<h1 style="text-align: center;">Regncon program 2025</h1>
+			<a
+				href="/event/new"
+				style="display: block;
+				text-align: center;
+				font-size: 1.5rem;
+				margin-top: 1rem;
+				color: #aea4f7;"
+			>
+				Meld på nytt arrangement til årets program!
+			</a>
 		</div>
 		if err != nil {
 			<p>Error fetching events: { err.Error() }</p>
