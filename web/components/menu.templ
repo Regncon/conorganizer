@@ -15,6 +15,14 @@ templ Menu() {
 			background-color: rgba(255, 255, 255, 0.1);
 		}
 
+		a.disabled {
+			pointer-events: none;
+			color: #999;
+			cursor: not-allowed;
+			text-decoration: none;
+			opacity: 0.6;
+		}
+
 		details {
 			position: relative;
 			display: inline-block;
@@ -36,6 +44,8 @@ templ Menu() {
 
 		.dropdown-panel {
 			position: absolute;
+			right: 0;  
+			left: auto;
 			background-color: #2d3748;
 			min-width: 160px;
 			box-shadow: 0 8px 16px rgba(0,0,0,0.2);
@@ -88,11 +98,11 @@ templ Menu() {
 				/>
 			</summary>
 			<div class="dropdown-panel">
-				<a href="/logout">Logg ut</a>
-				<a href="/mine">Mine arrangementer</a>
-				<a href="/profil">Min profil</a>
-				<a href="/admin">Admin</a>
-				<a href="/arrangementer/edit">Rediger arrangement</a>
+				<a href="/logout" class="disabled">Logg ut</a>
+				<a href="/mine" class="disabled">Mine arrangementer</a>
+				<a href="/profil" class="disabled">Min profil</a>
+				<a href="/admin" class="disabled">Admin</a>
+				<a href="/arrangementer/edit" class="disabled">Rediger arrangement</a>
 			</div>
 		</details>
 	</nav>
