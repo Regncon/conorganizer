@@ -14,24 +14,86 @@ templ Menu() {
 		.main-menu-link:hover {
 			background-color: rgba(255, 255, 255, 0.1);
 		}
+
+		details {
+			position: relative;
+			display: inline-block;
+			padding-right: 2rem;
+		}
+
+		summary {
+			cursor: pointer;
+			list-style: none; /* hide the default disclosure triangle in some browsers */
+			color: var(--color-secondary);
+			text-transform: uppercase;
+			text-decoration: none;
+			margin-left: 1rem;
+			padding: 0.5rem;
+		}
+		summary::-webkit-details-marker {
+			display: none; /* hide default marker in Chrome/Safari */
+		}
+
+		.dropdown-panel {
+			position: absolute;
+			background-color: #2d3748;
+			min-width: 160px;
+			box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+			margin-top: 0.5rem;
+			z-index: 999;
+		}
+		.dropdown-panel a {
+			display: block;
+			color: var(--color-primary-text);
+			padding: 0.5rem 1rem;
+			text-decoration: none;
+			text-transform: uppercase;
+		}
+		.dropdown-panel a:hover {
+			background-color: rgba(255, 255, 255, 0.1);
+		}
 	</style>
 	<nav
 		style="
-		display:flex;
-		align-items: center;
-		Background-color: #2d3748;
+		display: flex;
+		justify-content: space-between;
+		background-color: #2d3748;
 		width: 100%;
 		padding: 0.25rem;
 		margin-bottom: 1rem;"
 	>
-		<a href="/"><img src="/static/assets/RegnconLogo.svg" alt="logo" style="width: 2rem; height: 2rem;"/></a>
-		<a href="/" class="main-menu-link">
-			<img
-				src="/static/assets/icons/house-solid.svg"
-				alt="hjem"
-				style="width: 1.25rem; height: 1.25rem;	margin-right: 0.25rem;"
-			/>
-			Hjem
-		</a>
+		<div
+			style="
+			display:flex;
+			align-items: center;"
+		>
+			<a href="/">
+				<img src="/static/assets/RegnconLogo.svg" alt="logo" style="width: 2rem; height: 2rem;"/>
+			</a>
+			<a href="/" class="main-menu-link">
+				<img
+					src="/static/assets/icons/house-solid.svg"
+					alt="hjem"
+					style="width: 1.25rem; height: 1.25rem; margin-right: 0.25rem;"
+				/>
+				Hjem
+			</a>
+		</div>
+		<details>
+			<summary>
+				<img
+					src="/static/assets/icons/bars-solid.svg"
+					alt="menu"
+					style="width: 1rem; height: 1rem; margin-right: 0.25rem;"
+				/>
+			</summary>
+			<div class="dropdown-panel">
+				<a href="/logout">Logg ut</a>
+				<a href="/mine">Mine arrangementer</a>
+				<a href="/profil">Min profil</a>
+				<a href="/admin">Admin</a>
+				<a href="/arrangementer/edit">Rediger arrangement</a>
+			</div>
+		</details>
 	</nav>
 }
