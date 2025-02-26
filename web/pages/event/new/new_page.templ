@@ -1,0 +1,9 @@
+package newEvent
+
+import "database/sql"
+
+templ NewEventPage(db *sql.DB) {
+	<div id="new-event-container">
+		@eventNew(db)
+	</div>
+}

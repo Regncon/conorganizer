@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/models"
+	newEvent "github.com/Regncon/conorganizer/web/pages/event/new"
 	"github.com/Regncon/conorganizer/web/pages/index"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -78,49 +79,85 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return sessionID, mvc, nil
 	}
 	eventLayoutRoute(router, db, err)
+	newEvent.NewEventLayoutRoute(router, db, err)
 
-	router.Route("/event/api/{idx}/", func(eventRouter chi.Router) {
-		eventRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			eventID := chi.URLParam(r, "idx")
-			sessionID, mvc, err := mvcSession(w, r)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
+	router.Route("/event/api/", func(eventRouter chi.Router) {
+		eventRouter.Route("/new", func(newRouter chi.Router) {
+			newRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				sse := datastar.NewSSE(w, r)
 
-			sse := datastar.NewSSE(w, r)
-
-			// Watch for updates
-			ctx := r.Context()
-			watcher, err := kv.Watch(ctx, sessionID)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer watcher.Stop()
-
-			for {
-				select {
-				case <-ctx.Done():
+				sessionID, mvc, err := mvcSession(w, r)
+				ctx := r.Context()
+				watcher, err := kv.Watch(ctx, sessionID)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
-				case entry := <-watcher.Updates():
-					if entry == nil {
-						continue
-					}
-					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+				defer watcher.Stop()
+
+				for {
+					select {
+					case <-ctx.Done():
 						return
-					}
-					c := event_page(eventID, db)
-					if err := sse.MergeFragmentTempl(c); err != nil {
-						sse.ConsoleError(err)
-						return
+					case entry := <-watcher.Updates():
+						if entry == nil {
+							continue
+						}
+						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+							http.Error(w, err.Error(), http.StatusInternalServerError)
+							return
+						}
+						c := newEvent.NewEventPage(db)
+						if err := sse.MergeFragmentTempl(c); err != nil {
+							sse.ConsoleError(err)
+							return
+						}
 					}
 				}
-			}
-
+			})
 		})
-		editRout(eventRouter, db, kv)
+		eventRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
+			eventIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				eventID := chi.URLParam(r, "idx")
+				sessionID, mvc, err := mvcSession(w, r)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				sse := datastar.NewSSE(w, r)
+
+				// Watch for updates
+				ctx := r.Context()
+				watcher, err := kv.Watch(ctx, sessionID)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				defer watcher.Stop()
+
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case entry := <-watcher.Updates():
+						if entry == nil {
+							continue
+						}
+						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+							http.Error(w, err.Error(), http.StatusInternalServerError)
+							return
+						}
+						c := event_page(eventID, db)
+						if err := sse.MergeFragmentTempl(c); err != nil {
+							sse.ConsoleError(err)
+							return
+						}
+					}
+				}
+			})
+			editRout(eventIdRouter, db, kv)
+		})
 	})
 
 	return nil
