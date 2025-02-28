@@ -1,0 +1,7 @@
+package components
+
+import "fmt"
+
+templ SseIndicator(signalName string) {
+	<div class="loading-dots text-primary" data-class={ fmt.Sprintf("{'loading ml-4': $%s}", signalName) }></div>
+}

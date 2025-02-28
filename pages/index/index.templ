@@ -1,0 +1,16 @@
+package index
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/layouts"
+	datastar "github.com/starfederation/datastar/sdk/go"
+)
+
+templ index(title string, db *sql.DB) {
+	@layouts.Base(title) {
+		<div id="todos-container" data-on-load={ datastar.GetSSE("/api/todos") }>
+			<p>Index</p>
+			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+		</div>
+	}
+}

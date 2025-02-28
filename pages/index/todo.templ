@@ -1,0 +1,31 @@
+package index 
+
+import "database/sql"
+
+type TodoViewMode int
+
+const (
+	TodoViewModeAll TodoViewMode = iota
+	TodoViewModeActive
+	TodoViewModeCompleted
+	TodoViewModeLast
+)
+
+var TodoViewModeStrings = []string{"All", "Active", "Completed"}
+
+type Todo struct {
+	Text      string `json:"text"`
+	Completed bool   `json:"completed"`
+}
+
+type TodoMVC struct {
+	Todos      []*Todo      `json:"todos"`
+	EditingIdx int          `json:"editingIdx"`
+	Mode       TodoViewMode `json:"mode"`
+}
+
+templ todosMVCView(db *sql.DB) {
+	<div id="todos-container">
+		@eventList(db)
+	</div>
+}

@@ -1,0 +1,22 @@
+package event
+
+import "database/sql"
+
+templ event_page(eventId string, db *sql.DB) {
+	{{
+	event, err := getEventByID(eventId, db)
+	}}
+	if event == nil {
+		<p>Event not found</p>
+		return
+	}
+	<div id="event-container">
+		if err != nil || event == nil {
+			<p>Error fetching event: { err.Error() }</p>
+		}
+		<div style="width: 100%; gap: 2rem; display: flex; justify-content: center;">
+			@event_mobile(event)
+			@edit(event)
+		</div>
+	</div>
+}

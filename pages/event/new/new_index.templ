@@ -1,0 +1,25 @@
+package newEvent
+
+import (
+	"database/sql"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/go-chi/chi/v5"
+	datastar "github.com/starfederation/datastar/sdk/go"
+)
+
+func NewEventLayoutRoute(router chi.Router, db *sql.DB, err error) {
+	router.Get("/event/new/", func(w http.ResponseWriter, r *http.Request) {
+		newEventIndex().Render(r.Context(), w)
+	})
+}
+
+templ newEventIndex() {
+	@layouts.Base("Meld på nytt arrangement") {
+		<div id="new-event-container" data-on-load={ datastar.GetSSE("/event/api/new/") }>
+			<p>New Event</p>
+			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+		</div>
+	}
+}

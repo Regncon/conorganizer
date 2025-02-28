@@ -12,9 +12,9 @@ import (
 	hashFS "github.com/benbjohnson/hashfs"
 )
 
-//go:embed web/static/*
+//go:embed static/*
 var staticFS embed.FS
-var staticRootFS, _ = fs.Sub(staticFS, "web/static")
+var staticRootFS, _ = fs.Sub(staticFS, "static")
 
 func static(logger *slog.Logger) http.Handler {
 	logger.Debug("Static assets are embedded")
