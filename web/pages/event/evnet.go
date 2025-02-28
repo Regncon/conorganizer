@@ -115,6 +115,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					}
 				}
 			})
+			newEvent.SetupExampleInlineValidation(newRouter)
 		})
 		eventRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
 			eventIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
