@@ -1,0 +1,26 @@
+package admin
+
+import (
+	"database/sql"
+	"github.com/go-chi/chi/v5"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/layouts"
+	datastar "github.com/starfederation/datastar/sdk/go"
+)
+
+func adminLayoutRoute(router chi.Router, db *sql.DB, err error) {
+
+	router.Get("/admin/", func(w http.ResponseWriter, r *http.Request) {
+		admin_index().Render(r.Context(), w)
+	})
+}
+
+templ admin_index() {
+	@layouts.Base("Meld på nytt arrangement") {
+		<div id="admin-container" data-on-load={ datastar.GetSSE("/admin/api/") }>
+			<p>Admin</p>
+			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+		</div>
+	}
+}
