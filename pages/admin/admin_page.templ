@@ -5,5 +5,24 @@ import "database/sql"
 templ admin_page(db *sql.DB) {
 	<div id="admin-container">
 		<h1>Admin page</h1>
+		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem;">
+			<a
+				href="/admin/bilettholer"
+				style="max-width:430px;
+				background-color: #3b4252;
+				padding: 1rem;
+				border-radius: 1rem;
+				display: flex;
+				flex-direction: column;
+				text-decoration: none;
+				color: white;"
+			>
+				<img
+					src="/static/participants-small.webp"
+					alt="Participants"
+				/>
+				<h2>Bilettholedroversikt</h2>
+			</a>
+		</div>
 	</div>
 }
