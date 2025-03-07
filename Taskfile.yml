@@ -1,70 +1,70 @@
 version: "3"
 
 env:
-    STATIC_DIR: "static"
+  STATIC_DIR: "static"
 
 tasks:
-    tools:
-        cmds:
-            - go install github.com/a-h/templ/cmd/templ@v0.3.833
-            - go install github.com/air-verse/air@v1.61.7
-            - go install github.com/go-delve/delve/cmd/dlv@v1.24.0
-            - go install github.com/go-task/task/v3/cmd/task@latest
+  tools:
+    cmds:
+      - go install github.com/a-h/templ/cmd/templ@v0.3.833
+      - go install github.com/air-verse/air@v1.61.7
+      - go install github.com/go-delve/delve/cmd/dlv@v1.24.0
+      - go install github.com/go-task/task/v3/cmd/task@latest
 
     # The `build:` tasks below are used together for "production" builds of your project
     build:templ:
-        cmds:
-            - go run github.com/a-h/templ/cmd/templ@v0.3.833 generate -v
+      cmds:
+        - go run github.com/a-h/templ/cmd/templ@v0.3.833 generate -v
 
     build:
-        cmds:
-            - go build -o bin/main .
-        deps:
-            - build:templ
-        parallel: true
+      cmds:
+        - go build -o bin/main .
+      deps:
+        - build:templ
+      parallel: true
 
     # Use this task to debug your project with the delve debugger
     debug:
-        cmds:
-            - go run github.com/go-delve/delve/cmd/dlv@v1.23.1 exec ./bin/main
-        deps:
-            - build
+      cmds:
+        - go run github.com/go-delve/delve/cmd/dlv@v1.23.1 exec ./bin/main
+      deps:
+        - build
 
     # The `live:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
     live:templ:
-        cmds:
-            - go run github.com/a-h/templ/cmd/templ@v0.3.833 generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
+      cmds:
+        - go run github.com/a-h/templ/cmd/templ@v0.3.833 generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
 
     live:server:
-        cmds:
-            - |
-                go run github.com/air-verse/air@v1.52.3 \
-                --build.cmd "go build -tags dev -o tmp/bin/main" \
-                --build.bin "tmp/bin/main" \
-                --build.delay "20" \
-                --build.include_ext "go" \
-                --build.stop_on_error "false" \
-                --misc.clean_on_exit true
+      cmds:
+        - |
+          go run github.com/air-verse/air@v1.52.3 \
+          --build.cmd "go build -tags dev -o tmp/bin/main" \
+          --build.bin "tmp/bin/main" \
+          --build.delay "20" \
+          --build.include_ext "go" \
+          --build.stop_on_error "false" \
+          --misc.clean_on_exit true
 
     live:reload:
-        cmds:
-            - |
-                go run github.com/air-verse/air@v1.52.3 \
-                --build.cmd "go run github.com/a-h/templ/cmd/templ@v0.3.833 generate --notify-proxy" \
-                --build.bin "true" \
-                --build.delay "100" \
-                --build.exclude_dir "" \
-                --build.include_dir "$STATIC_DIR" \
-                --build.include_ext "js,css"
+      cmds:
+        - |
+          go run github.com/air-verse/air@v1.52.3 \
+          --build.cmd "go run github.com/a-h/templ/cmd/templ@v0.3.833 generate --notify-proxy" \
+          --build.bin "true" \
+          --build.delay "100" \
+          --build.exclude_dir "" \
+          --build.include_dir "$STATIC_DIR" \
+          --build.include_ext "js,css"
 
     live:
-        deps:
-            - live:templ
-            - live:reload
-            - live:server
+      deps:
+        - live:templ
+        - live:reload
+        - live:server
 
     run:
-        cmds:
-            - ./bin/main
-        deps:
-            - build
+      cmds:
+        - ./bin/main
+      deps:
+        - build
