@@ -1,9 +1,10 @@
 {
-  "gopls": {
-    "build.buildFlags": ["-tags=dev"]
-  },
-  "go.useLanguageServer": true,
-  "[templ]": {
-    "editor.defaultFormatter": "a-h.templ"
-  }
+    "gopls": {
+        "build.buildFlags": ["-tags=dev"]
+    },
+    "go.useLanguageServer": true,
+    "[templ]": {
+        "editor.defaultFormatter": "a-h.templ"
+    },
+    "cSpell.words": ["omitempty"]
 }
