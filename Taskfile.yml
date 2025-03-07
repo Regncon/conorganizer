@@ -8,7 +8,6 @@ tasks:
   build:templ:
     cmds:
       - go run github.com/a-h/templ/cmd/templ@v0.3.833 generate -v
-
   build:
     cmds:
       - go build -o bin/main .
