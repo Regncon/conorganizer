@@ -8,9 +8,9 @@
         "golang.go",
         "lsl.vscode-templ-go-to-definition",
         "editorconfig.editorconfig",
-        "usernamehw.errorlens"
+        "usernamehw.errorlens",
+        "yy0931.vscode-sqlite3-editor"
     ],
     // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
     "unwantedRecommendations": []
 }
-		
