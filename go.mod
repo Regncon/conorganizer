@@ -4,18 +4,18 @@ go 1.23.3
 
 require (
 	github.com/go-chi/chi/v5 v5.2.1
-	golang.org/x/sync v0.11.0
+	golang.org/x/sync v0.12.0
 )
 
 require (
 	github.com/a-h/templ v0.3.833
 	github.com/benbjohnson/hashfs v0.2.2
-	github.com/delaneyj/toolbelt v0.4.1
+	github.com/delaneyj/toolbelt v0.4.2
 	github.com/gorilla/sessions v1.4.0
 	github.com/nats-io/nats-server/v2 v2.10.26
 	github.com/nats-io/nats.go v1.39.1
 	github.com/samber/lo v1.49.1
-	github.com/starfederation/datastar v1.0.0-beta.8
+	github.com/starfederation/datastar v1.0.0-beta.9
 	modernc.org/sqlite v1.36.0
 )
 
@@ -51,11 +51,11 @@ require (
 	github.com/ysmood/gson v0.7.3 // indirect
 	github.com/ysmood/leakless v0.9.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
-	golang.org/x/crypto v0.35.0 // indirect
-	golang.org/x/exp v0.0.0-20250218142911-aa4b98e5adaa // indirect
-	golang.org/x/sys v0.30.0 // indirect
-	golang.org/x/text v0.22.0 // indirect
-	golang.org/x/time v0.10.0 // indirect
+	golang.org/x/crypto v0.36.0 // indirect
+	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
+	golang.org/x/sys v0.31.0 // indirect
+	golang.org/x/text v0.23.0 // indirect
+	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
 	modernc.org/libc v1.61.13 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
