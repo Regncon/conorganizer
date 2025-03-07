@@ -1,82 +1,148 @@
 package eventForm
 
 import (
+	"database/sql"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar/sdk/go"
+	"log/slog"
 	"net/http"
-	"strings"
+	"time"
 )
 
-func SetupExampleInlineValidation(examplesRouter chi.Router) error {
+type EventFormStruct struct {
+	Title             string    `json:"title"`
+	Description       string    `json:"description"`
+	ImageURL          *string   `json:"image_url,omitempty"`
+	System            *string   `json:"system,omitempty"`
+	HostName          string    `json:"host_name"`
+	Host              *string   `json:"host,omitempty"`
+	RoomName          *string   `json:"room_name,omitempty"`
+	PuljeName         *string   `json:"pulje_name,omitempty"`
+	MaxPlayers        int       `json:"max_players"`
+	ChildFriendly     bool      `json:"child_friendly"`
+	AdultsOnly        bool      `json:"adults_only"`
+	BeginnerFriendly  bool      `json:"beginner_friendly"`
+	ExperiencedOnly   bool      `json:"experienced_only"`
+	CanBeRunInEnglish bool      `json:"can_be_run_in_english"`
+	LongRunning       bool      `json:"long_running"`
+	ShortRunning      bool      `json:"short_running"`
+	InsertedTime      time.Time `json:"inserted_time"`
+}
 
-	examplesRouter.Route("/inline_validation/data", func(dataRouter chi.Router) {
-		eventFormValidation := func(eventForm *inlineValidationEventForm) ValidationResult {
+type ValidationResultStruct struct {
+	IsTitleValid             bool
+	IsDescriptionValid       bool
+	IsImageURLValid          bool
+	IsSystemValid            bool
+	IsHostNameValid          bool
+	IsHostValid              bool
+	IsRoomNameValid          bool
+	IsPuljeNameValid         bool
+	IsMaxPlayersValid        bool
+	IsChildFriendlyValid     bool
+	IsAdultsOnlyValid        bool
+	IsBeginnerFriendlyValid  bool
+	IsExperiencedOnlyValid   bool
+	IsCanBeRunInEnglishValid bool
+	IsLongRunningValid       bool
+	IsShortRunningValid      bool
+	IsValid                  bool
+}
+
+func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger *slog.Logger) error {
+	eventFormRouter.Route("/inline_validation/data", func(dataRouter chi.Router) {
+		checkEventFromValidity := func(eventForm *EventFormStruct) ValidationResultStruct {
+
 			isTitleValid := len(eventForm.Title) > 0
-			isSummaryValid := len(eventForm.Summary) > 0
-			isEmailValid := strings.Contains(eventForm.Email, "@") && strings.Contains(eventForm.Email, ".")
-			isOrganizerNameValid := len(eventForm.OrganizerName) > 0
-			isPhoneNumberValid := len(eventForm.PhoneNumber) >= 8
-			isSystemValid := len(eventForm.System) > 0
 			isDescriptionValid := len(eventForm.Description) > 0
-			isGameTypeValid := eventForm.GameType != ""
 			isMaxPlayersValid := eventForm.MaxPlayers > 0
+			isSystemValid := len(*eventForm.System) > 0
+			isHostNameValid := len(eventForm.HostName) > 0
+			isHostValid := len(*eventForm.Host) > 0
+			isRoomNameValid := len(*eventForm.RoomName) > 0
+			isPuljeNameValid := len(*eventForm.PuljeName) > 0
+			isChildFriendlyValid := eventForm.ChildFriendly
+			isAdultsOnlyValid := eventForm.AdultsOnly
+			isBeginnerFriendlyValid := eventForm.BeginnerFriendly
+			isExperiencedOnlyValid := eventForm.ExperiencedOnly
+			isCanBeRunInEnglishValid := eventForm.CanBeRunInEnglish
+			isLongRunningValid := eventForm.LongRunning
+			isShortRunningValid := eventForm.ShortRunning
 
-			isTimeSlotValid := eventForm.FridayEvening || eventForm.SaturdayMorning || eventForm.SaturdayEvening || eventForm.SundayMorning
+			isValid :=
+				isTitleValid &&
+					isDescriptionValid &&
+					isMaxPlayersValid &&
+					isSystemValid &&
+					isHostNameValid &&
+					isHostValid &&
+					isRoomNameValid &&
+					isPuljeNameValid &&
+					isChildFriendlyValid &&
+					isAdultsOnlyValid &&
+					isBeginnerFriendlyValid &&
+					isExperiencedOnlyValid &&
+					isCanBeRunInEnglishValid &&
+					isLongRunningValid &&
+					isShortRunningValid
 
-			isValid := isTitleValid &&
-				isSummaryValid &&
-				isEmailValid &&
-				isOrganizerNameValid &&
-				isPhoneNumberValid &&
-				isSystemValid &&
-				isDescriptionValid &&
-				isGameTypeValid &&
-				isMaxPlayersValid &&
-				isTimeSlotValid
-
-			return ValidationResult{
-				IsTitleValid:         isTitleValid,
-				IsSummaryValid:       isSummaryValid,
-				IsEmailValid:         isEmailValid,
-				IsOrganizerNameValid: isOrganizerNameValid,
-				IsPhoneNumberValid:   isPhoneNumberValid,
-				IsSystemValid:        isSystemValid,
-				IsDescriptionValid:   isDescriptionValid,
-				IsGameTypeValid:      isGameTypeValid,
-				IsMaxPlayersValid:    isMaxPlayersValid,
-				IsTimeSlotValid:      isTimeSlotValid,
-				IsValid:              isValid,
+			return ValidationResultStruct{
+				IsTitleValid:             isTitleValid,
+				IsDescriptionValid:       isDescriptionValid,
+				IsMaxPlayersValid:        isMaxPlayersValid,
+				IsSystemValid:            isSystemValid,
+				IsHostNameValid:          isHostNameValid,
+				IsHostValid:              isHostValid,
+				IsRoomNameValid:          isRoomNameValid,
+				IsPuljeNameValid:         isPuljeNameValid,
+				IsChildFriendlyValid:     isChildFriendlyValid,
+				IsAdultsOnlyValid:        isAdultsOnlyValid,
+				IsBeginnerFriendlyValid:  isBeginnerFriendlyValid,
+				IsExperiencedOnlyValid:   isExperiencedOnlyValid,
+				IsCanBeRunInEnglishValid: isCanBeRunInEnglishValid,
+				IsLongRunningValid:       isLongRunningValid,
+				IsShortRunningValid:      isShortRunningValid,
+				IsValid:                  isValid,
 			}
 		}
 
 		dataRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			eventForm := &inlineValidationEventForm{}
+			eventForm := &EventFormStruct{}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 			sse := datastar.NewSSE(w, r)
-			vr := eventFormValidation(eventForm)
-			sse.MergeFragmentTempl(EventForm(eventForm, vr))
+			eventFormValidationResult := checkEventFromValidity(eventForm)
+			sse.MergeFragmentTempl(EventFromValidation(eventForm, eventFormValidationResult))
 		})
 
-		dataRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
-			eventForm := &inlineValidationEventForm{}
+		dataRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+			eventForm := &EventFormStruct{}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
-			vr := eventFormValidation(eventForm)
-
+			eventFormValidationResult := checkEventFromValidity(eventForm)
 			sse := datastar.NewSSE(w, r)
 			var node templ.Component
-			if !vr.IsValid {
-				node = EventForm(eventForm, vr)
-			} else {
+
+			if !eventFormValidationResult.IsValid {
+				node = EventFromValidation(eventForm, eventFormValidationResult)
+			}
+
+			if eventFormValidationResult.IsValid {
+				_, err := saveNewFormEvent(db, logger, eventForm, w)
+				if err != nil {
+					node = inlineValidationFailedSaving(err)
+				}
 				node = inlineValidationThankYou()
 			}
+
+			fmt.Printf("Validation Result: %+v\n", eventFormValidationResult)
+			fmt.Printf("Submitted Event Form: %+v\n", eventForm)
 
 			sse.MergeFragmentTempl(node)
 		})
@@ -84,40 +150,6 @@ func SetupExampleInlineValidation(examplesRouter chi.Router) error {
 
 	return nil
 }
-
-// ... resten av koden din (inline_validation osv.) ...
-
-// Her definerer vi en struct for datafelt (hvis du ønsker å lese/skrive data via SSE/binding).
-// Du kan justere feltnavnene og typene etter behov:
-type inlineValidationEventForm struct {
-	Title           string `json:"title"`
-	Summary         string `json:"summary"`
-	Email           string `json:"email"`
-	OrganizerName   string `json:"organizerName"`
-	PhoneNumber     string `json:"phoneNumber"`
-	System          string `json:"system"`
-	Description     string `json:"description"`
-	GameType        string `json:"gameType"` // "Rollespel", "Brettspel", "LARP", "Annet"
-	MaxPlayers      int    `json:"maxPlayers"`
-	FridayEvening   bool   `json:"fridayEvening"`
-	SaturdayMorning bool   `json:"saturdayMorning"`
-	SaturdayEvening bool   `json:"saturdayEvening"`
-	SundayMorning   bool   `json:"sundayMorning"`
-}
-
-type ValidationResult struct {
-		IsTitleValid         bool
-		IsSummaryValid       bool
-		IsEmailValid         bool
-		IsOrganizerNameValid bool
-		IsPhoneNumberValid   bool
-		IsSystemValid        bool
-		IsDescriptionValid   bool
-		IsGameTypeValid      bool
-		IsMaxPlayersValid    bool
-		IsTimeSlotValid      bool
-		IsValid              bool
-	}
 
 templ inlineValidationFieldComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
 	<div class="form-control">
@@ -136,7 +168,7 @@ templ inlineValidationFieldComponent(label, field string, isValid bool, isNotVal
 	</div>
 }
 
-templ inlineValidationUserComponent(eventForm *inlineValidationEventForm, isEmailValid, isFirstNameValid, isLastNameValid, isValid bool) {
+templ inlineValidationUserComponent(eventForm *EventFormStruct, isEmailValid, isFirstNameValid, isLastNameValid, isValid bool) {
 	<div
 		id="inline_validation"
 		class="flex flex-col gap-4"
@@ -144,14 +176,14 @@ templ inlineValidationUserComponent(eventForm *inlineValidationEventForm, isEmai
 	>
 		<div class="text-2xl font-bold">Sign Up</div>
 		<div>
-			@inlineValidationFieldComponent("Email Address", "email", isEmailValid, "Email '%s' is already taken or is invalid.  Please enter another email.", eventForm.Email)
-			@inlineValidationFieldComponent("First Name", "firstName", isFirstNameValid, "First name must be at least 2 characters.")
-			@inlineValidationFieldComponent("Last Name", "lastName", isLastNameValid, "Last name must be at least 2 characters.")
+			// @inlineValidationFieldComponent("Email Address", "email", isEmailValid, "Email '%s' is already taken or is invalid.  Please enter another email.", eventForm.Email)
+			// @inlineValidationFieldComponent("First Name", "firstName", isFirstNameValid, "First name must be at least 2 characters.")
+			// @inlineValidationFieldComponent("Last Name", "lastName", isLastNameValid, "Last name must be at least 2 characters.")
 		</div>
 		<button
 			class="btn btn-success"
 			disabled?={ !isValid }
-			data-on-click={ datastar.PostSSE("/event/api/new/inline_validation/data") }
+			data-on-click={ datastar.PutSSE("/event/api/new/inline_validation/data") }
 			data-testid="submit_button"
 		>
 			Add User
@@ -166,9 +198,13 @@ templ inlineValidationThankYou() {
 	</div>
 }
 
-// Dette er en ny templ-komponent som viser skjemaet med alle feltene.
-// Merk at du kan legge til data-on-* attributter, inline validering, etc. etter behov.
-templ EventForm(data *inlineValidationEventForm, vr ValidationResult) {
+templ inlineValidationFailedSaving(err error) {
+	<div id="inline_validation" class="alert alert-error">
+		Failed to save event. Please try again. Error: { fmt.Sprintf("%v", err) }
+	</div>
+}
+
+templ EventFromValidation(data *EventFormStruct, vr ValidationResultStruct) {
 	<form
 		class="flex flex-col gap-4"
 		data-signals__ifmissing={ templ.JSONString(data) }
@@ -351,10 +387,87 @@ templ EventForm(data *inlineValidationEventForm, vr ValidationResult) {
 			<button
 				class="btn btn-primary"
 				type="submit"
-				data-on-click={ datastar.PostSSE("/event/api/new/inline_validation/data") }
+				data-on-click={ datastar.PutSSE("/event/api/new/inline_validation/data") }
 			>
 				Send inn arrangement
 			</button>
 		</div>
 	</form>
+}
+
+// Dette er en ny templ-komponent som viser skjemaet med alle feltene.
+// Merk at du kan legge til data-on-* attributter, inline validering, etc. etter behov.
+templ EventForm() {
+	<div>
+		<h1>Melde på nytt arrangement</h1>
+		@EventFromValidation(&EventFormStruct{}, ValidationResultStruct{})
+	</div>
+}
+
+func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruct, w http.ResponseWriter) (int64, error) {
+	query := `
+		INSERT INTO events (
+			title,
+			description,
+			image_url,
+			system,
+			host_name,
+			host,
+			room_name,
+			pulje_name,
+			max_players,
+			child_friendly,
+			adults_only,
+			beginner_friendly,
+			experienced_only,
+			can_be_run_in_english,
+			long_running,
+			short_running,
+			inserted_time
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+	if eventForm.InsertedTime.IsZero() {
+		eventForm.InsertedTime = time.Now()
+	}
+
+	result, insertError := db.Exec(query,
+		eventForm.Title,
+		eventForm.Description,
+		eventForm.ImageURL,
+		eventForm.System,
+		eventForm.HostName,
+		eventForm.Host,
+		eventForm.RoomName,
+		eventForm.PuljeName,
+		eventForm.MaxPlayers,
+		eventForm.ChildFriendly,
+		eventForm.AdultsOnly,
+		eventForm.BeginnerFriendly,
+		eventForm.ExperiencedOnly,
+		eventForm.CanBeRunInEnglish,
+		eventForm.LongRunning,
+		eventForm.ShortRunning,
+		eventForm.InsertedTime,
+	)
+
+	if insertError != nil {
+		logger.Error("Error updating event", "insertError", insertError)
+		http.Error(w, fmt.Sprintf("Error updating event: %v", insertError), http.StatusBadRequest)
+		return 0, insertError
+	}
+
+	rowsAffected, rowsAffectedErr := result.RowsAffected()
+	if rowsAffectedErr != nil {
+		logger.Error("Error getting rows affected", "rowsAffectedErr", rowsAffectedErr)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return 0, rowsAffectedErr
+	}
+
+	if rowsAffected == 0 {
+		logger.Error("Event not found or no changes made")
+		http.Error(w, "Event not found or no changes made", http.StatusNotFound)
+		return 0, nil
+	}
+	fmt.Printf("Event saved successfully: %v\n", eventForm)
+	return result.LastInsertId()
 }
