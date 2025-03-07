@@ -36,11 +36,17 @@ templ eventList(db *sql.DB) {
 				transform: rotate(0deg);
 			}
 		}
+		.regncon-logo-container {
+				width: 100%;
+				height: 100%;
+				overflow: hidden;
+			}
 		</style>
-		<img
-			src="/static/RegnconLogo.svg"
-			alt="logo"
-			style="
+		<div class="regncon-logo-container">
+			<img
+				src="/static/RegnconLogo.svg"
+				alt="logo"
+				style="
 			-webkit-animation: spin 240s linear infinite;
 			animation: spin 240s linear infinite;
 			max-width: 450px;
@@ -48,7 +54,8 @@ templ eventList(db *sql.DB) {
 			margin: 2rem auto;
 			display: block;
 			"
-		/>
+			/>
+		</div>
 		<div style="background-color:#31354e; padding: 1rem;">
 			<h1 style="text-align: center;">Regncon program 2025</h1>
 			<a
