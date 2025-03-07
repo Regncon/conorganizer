@@ -2,18 +2,52 @@ package components
 
 templ Menu() {
 	<style>
-		.main-menu-link {
+		.main-menu {
 			display: flex;
+			position: sticky;
+			top: 0;
+			left: 0;
+			z-index: 1000;
+			justify-content: flex-start;
 			align-items: center;
-			color: var(--color-secondary);
-			text-decoration: none;
-			text-transform: uppercase;
-			margin-left: 1rem;
-			padding: 0.5rem;
+			background-color: #2d3748;
+			height: 4.5rem;
+		 	padding: 0.5rem;
+			gap: 1rem;
+			font-family: "Fira Code";
+
+			.logo-link {
+				padding: 0rem;
+				img {
+					width: 4rem;
+					height: 4rem;
+				}
+			}
+			
+			.main-menu-link {
+				display: flex;
+				gap: 0.25rem;
+				justify-content: center;
+				align-items:  center;
+				color: var(--color-secondary);
+				text-decoration: none;
+				padding: 0.5rem;
+				height: 100%;
+		
+				img {
+					width: 1rem;
+					
+				}
+			}
+			.main-menu-link:hover {
+				background-color: rgba(255, 255, 255, 0.1);
+			}
+
+			.menu-btn {
+				margin-left: auto;
+			}
 		}
-		.main-menu-link:hover {
-			background-color: rgba(255, 255, 255, 0.1);
-		}
+		
 
 		a.disabled {
 			pointer-events: none;
@@ -64,32 +98,21 @@ templ Menu() {
 		}
 	</style>
 	<nav
-		style="
-		display: flex;
-		justify-content: space-between;
-		background-color: #2d3748;
-		width: 100%;
-		padding: 0.25rem;
-		margin-bottom: 1rem;"
+		class="main-menu"
 	>
-		<div
-			style="
-			display:flex;
-			align-items: center;"
-		>
-			<a href="/">
-				<img src="/static/RegnconLogo.svg" alt="logo" style="width: 2rem; height: 2rem;"/>
-			</a>
-			<a href="/" class="main-menu-link">
+		<a href="/" class="logo-link">
+			<img src="/static/RegnconLogo.svg" alt="logo"/>
+		</a>
+		<a href="/" class="main-menu-link">
+			<span>
 				<img
 					src="/static/icons/house-solid.svg"
 					alt="hjem"
-					style="width: 1.25rem; height: 1.25rem; margin-right: 0.25rem;"
 				/>
 				Hjem
-			</a>
-		</div>
-		<details>
+			</span>
+		</a>
+		<details class="menu-btn">
 			<summary>
 				<img
 					src="/static/icons/bars-solid.svg"
