@@ -3,14 +3,41 @@ package index
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/layouts"
-	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
 templ index(title string, db *sql.DB) {
 	@layouts.Base(title) {
-		<div id="todos-container" data-on-load={ datastar.GetSSE("/api/todos") }>
-			<p>Index</p>
-			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
-		</div>
+		<style>
+		@keyframes spin {
+			from {
+				transform: rotate(360deg);
+			}
+			to {
+				transform: rotate(0deg);
+			}
+		}
+		.regncon-logo-container {
+			width: 100%;
+			height: 100%;
+			overflow: hidden;
+			img {
+				-webkit-animation: spin 240s linear infinite;
+				animation: spin 240s linear infinite;
+				max-width: 450px;
+				max-height: 450px;
+				margin: 2rem auto;
+				display: block;
+			}
+		}
+		</style>
+		<header>
+			<div class="regncon-logo-container">
+				<img
+					src="/static/RegnconLogo.svg"
+					alt="logo"
+				/>
+			</div>
+		</header>
+		@todosMVCView(db)
 	}
 }
