@@ -54,7 +54,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 		checkEventFromValidity := func(eventForm *EventFormStruct) ValidationResultStruct {
 			isTitleValid := len(eventForm.Title) > 3
 			isDescriptionValid := len(eventForm.Description) > 3
-			isMaxPlayersValid := eventForm.MaxPlayers > 0 && eventForm.MaxPlayers < 20
+			isMaxPlayersValid := eventForm.MaxPlayers > 0 && eventForm.MaxPlayers <= 18
 			isSystemValid := eventForm.System != nil && len(*eventForm.System) > 2
 			isHostNameValid := len(eventForm.HostName) > 2
 			isImageURLValid := eventForm.ImageURL != nil && strings.Contains(*eventForm.ImageURL, "imgur.com")
@@ -120,7 +120,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			}
 			sse := datastar.NewSSE(w, r)
 			eventFormValidationResult := checkEventFromValidity(eventForm)
-			sse.MergeFragmentTempl(EventFromValidation(eventForm, eventFormValidationResult))
+			sse.MergeFragmentTempl(inlineValidationFormEventComponent(eventForm, eventFormValidationResult))
 		})
 
 		dataRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
@@ -135,7 +135,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			var node templ.Component
 
 			if !eventFormValidationResult.IsValid {
-				node = EventFromValidation(eventForm, eventFormValidationResult)
+				node = inlineValidationFormEventComponent(eventForm, eventFormValidationResult)
 			}
 
 			if eventFormValidationResult.IsValid {
@@ -210,7 +210,7 @@ templ inlineValidationFieldComponent(label, field string, isValid bool, isNotVal
 	</div>
 }
 
-templ inlineValidationUserComponent(eventForm *EventFormStruct, isEmailValid, isFirstNameValid, isLastNameValid, isValid bool) {
+templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormValidationResult ValidationResultStruct) {
 	<div
 		id="inline_validation"
 		class="flex flex-col gap-4"
@@ -218,19 +218,33 @@ templ inlineValidationUserComponent(eventForm *EventFormStruct, isEmailValid, is
 	>
 		<div class="text-2xl font-bold">Sign Up</div>
 		<div>
-			// @inlineValidationFieldComponent("Email Address", "email", isEmailValid, "Email '%s' is already taken or is invalid.  Please enter another email.", eventForm.Email)
-			// @inlineValidationFieldComponent("First Name", "firstName", isFirstNameValid, "First name must be at least 2 characters.")
-			// @inlineValidationFieldComponent("Last Name", "lastName", isLastNameValid, "Last name must be at least 2 characters.")
+			@inlineValidationFieldComponent("Title", "title", eventFormValidationResult.IsTitleValid, "Title must be at least 3 characters long")
+			@inlineValidationFieldComponent("Description", "description", eventFormValidationResult.IsDescriptionValid, "Description must be at least 3 characters long")
+			@inlineValidationFieldComponent("Image URL", "image_url", eventFormValidationResult.IsImageURLValid, "Image URL must be from imgur.com")
+			@inlineValidationFieldComponent("System", "system", eventFormValidationResult.IsSystemValid, "System must be at least 3 characters long")
+			@inlineValidationFieldComponent("Host Name", "host_name", eventFormValidationResult.IsHostNameValid, "Host Name must be at least 3 characters long")
+			@inlineValidationFieldComponent("Pulje Name", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Pulje Name must be selected")
+			@inlineValidationFieldComponent("Max Players", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Max Players must be between 1 and 18")
+			@inlineValidationFieldComponent("Child Friendly", "child_friendly", eventFormValidationResult.IsChildFriendlyValid, "Child Friendly and Adults Only cannot both be selected")
+			@inlineValidationFieldComponent("Adults Only", "adults_only", eventFormValidationResult.IsAdultsOnlyValid, "Child Friendly and Adults Only cannot both be selected")
+			@inlineValidationFieldComponent("Beginner Friendly", "beginner_friendly", eventFormValidationResult.IsBeginnerFriendlyValid, "Beginner Friendly and Experienced Only cannot both be selected")
+			@inlineValidationFieldComponent("Experienced Only", "experienced_only", eventFormValidationResult.IsExperiencedOnlyValid, "Beginner Friendly and Experienced Only cannot both be selected")
+			@inlineValidationFieldComponent("Can Be Run In English", "can_be_run_in_english", true, "")
+			@inlineValidationFieldComponent("Long Running", "long_running", eventFormValidationResult.IsLongRunningValid, "Long Running and Short Running cannot both be selected")
+			@inlineValidationFieldComponent("Short Running", "short_running", eventFormValidationResult.IsShortRunningValid, "Long Running and Short Running cannot both be selected")
 		</div>
 		<button
 			class="btn btn-success"
-			disabled?={ !isValid }
+			disabled?={ !eventFormValidationResult.IsValid }
 			data-on-click={ datastar.PutSSE("/event/api/new/inline_validation/data") }
 			data-testid="submit_button"
 		>
-			Add User
+			Send inn arrangement
 		</button>
 		<div class="divider"></div>
+		<code>
+			<pre data-text="ctx.signals.JSON()"></pre>
+		</code>
 	</div>
 }
 
@@ -378,7 +392,7 @@ templ EventFromValidation(data *EventFormStruct, vr ValidationResultStruct) {
 templ EventForm() {
 	<div>
 		<h1>Melde på nytt arrangement</h1>
-		@EventFromValidation(&EventFormStruct{}, ValidationResultStruct{})
+		@inlineValidationFormEventComponent(&EventFormStruct{}, ValidationResultStruct{})
 	</div>
 }
 
