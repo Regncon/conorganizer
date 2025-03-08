@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type PuljeNameStruct struct {
@@ -53,6 +54,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			isSystemValid := eventForm.System != nil && len(*eventForm.System) > 2
 			isHostNameValid := len(eventForm.HostName) > 2
 			isHostValid := eventForm.Host != nil && len(*eventForm.Host) > 2
+			isImageURLValid := eventForm.ImageURL != nil && strings.Contains(*eventForm.ImageURL, "imgur.com")
 
 			var isPuljeNameValid = false
 
@@ -75,17 +77,18 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 					isSystemValid &&
 					isHostNameValid &&
 					isHostValid &&
-					isPuljeNameValid &&
+					isPuljeNameValid
 
 			return ValidationResultStruct{
-				IsTitleValid:             isTitleValid,
-				IsDescriptionValid:       isDescriptionValid,
-				IsMaxPlayersValid:        isMaxPlayersValid,
-				IsSystemValid:            isSystemValid,
-				IsHostNameValid:          isHostNameValid,
-				IsHostValid:              isHostValid,
-				IsPuljeNameValid:         isPuljeNameValid,
-				IsValid:                  isValid,
+				IsTitleValid:       isTitleValid,
+				IsDescriptionValid: isDescriptionValid,
+				IsImageURLValid:    isImageURLValid,
+				IsMaxPlayersValid:  isMaxPlayersValid,
+				IsSystemValid:      isSystemValid,
+				IsHostNameValid:    isHostNameValid,
+				IsHostValid:        isHostValid,
+				IsPuljeNameValid:   isPuljeNameValid,
+				IsValid:            isValid,
 			}
 		}
 
@@ -349,7 +352,6 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 		eventForm.System,
 		eventForm.HostName,
 		eventForm.Host,
-		eventForm.RoomName,
 		eventForm.PuljeName,
 		eventForm.MaxPlayers,
 		eventForm.ChildFriendly,
@@ -384,7 +386,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 }
 
 func getPuljeNames(db *sql.DB, logger *slog.Logger) ([]PuljeNameStruct, error) {
-	query := "SELECT asd FROM puljer"
+	query := "SELECT name FROM puljer"
 	rows, queryError := db.Query(query)
 	if queryError != nil {
 		return nil, queryError
