@@ -38,6 +38,11 @@ To build the docker image run the following command:
 
 To run the docker image use the run-docker bash or powershell script.
 
+## Go dependencies 
+```bash
+go install github.com/air-verse/air@latest
+go install github.com/a-h/templ/cmd/templ@latest
+```
 ## Links
 
 Se the [northstar](https://github.com/zangster300/northstar) README for installation instructions.
