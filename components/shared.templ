@@ -5,3 +5,30 @@ import "fmt"
 templ SseIndicator(signalName string) {
 	<div class="loading-dots text-primary" data-class={ fmt.Sprintf("{'loading ml-4': $%s}", signalName) }></div>
 }
+
+type Breadcrumb struct {
+	URL   string
+	Label string
+}
+
+templ BreadcrumbMenu(pathList []Breadcrumb) {
+	<style>
+	.breadcrumb-menu {
+		width: 100%;
+		display: flex;
+		gap: 4px;
+		color: var(--color-primary-text);
+		padding: 0.5rem;
+		a {
+			color: var(--color-primary-text);
+			text-decoration: none;
+		};
+	}
+	</style>
+	<div class="breadcrumb-menu">
+		for _, breadcumb := range pathList {
+			<span>/</span>
+			<a class="breadcrumb" href="{breadcrumb.URL}">{ breadcumb.Label }</a>
+		}
+	</div>
+}
