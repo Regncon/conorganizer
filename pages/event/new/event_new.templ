@@ -7,68 +7,66 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 	"log/slog"
 	"net/http"
-	"time"
+	"strconv"
 )
 
+type PuljeNameStruct struct {
+	Name string `json:"name"`
+}
+
 type EventFormStruct struct {
-	Title             string    `json:"title"`
-	Description       string    `json:"description"`
-	ImageURL          *string   `json:"image_url,omitempty"`
-	System            *string   `json:"system,omitempty"`
-	HostName          string    `json:"host_name"`
-	Host              *string   `json:"host,omitempty"`
-	RoomName          *string   `json:"room_name,omitempty"`
-	PuljeName         *string   `json:"pulje_name,omitempty"`
-	MaxPlayers        int       `json:"max_players"`
-	ChildFriendly     bool      `json:"child_friendly"`
-	AdultsOnly        bool      `json:"adults_only"`
-	BeginnerFriendly  bool      `json:"beginner_friendly"`
-	ExperiencedOnly   bool      `json:"experienced_only"`
-	CanBeRunInEnglish bool      `json:"can_be_run_in_english"`
-	LongRunning       bool      `json:"long_running"`
-	ShortRunning      bool      `json:"short_running"`
-	InsertedTime      time.Time `json:"inserted_time"`
+	Title             string  `json:"title"`
+	Description       string  `json:"description"`
+	ImageURL          *string `json:"image_url,omitempty"`
+	System            *string `json:"system,omitempty"`
+	HostName          string  `json:"host_name"`
+	Host              *string `json:"host,omitempty"`
+	PuljeName         *string `json:"pulje_name,omitempty"`
+	MaxPlayers        int     `json:"max_players"`
+	ChildFriendly     bool    `json:"child_friendly"`
+	AdultsOnly        bool    `json:"adults_only"`
+	BeginnerFriendly  bool    `json:"beginner_friendly"`
+	ExperiencedOnly   bool    `json:"experienced_only"`
+	CanBeRunInEnglish bool    `json:"can_be_run_in_english"`
+	LongRunning       bool    `json:"long_running"`
+	ShortRunning      bool    `json:"short_running"`
 }
 
 type ValidationResultStruct struct {
-	IsTitleValid             bool
-	IsDescriptionValid       bool
-	IsImageURLValid          bool
-	IsSystemValid            bool
-	IsHostNameValid          bool
-	IsHostValid              bool
-	IsRoomNameValid          bool
-	IsPuljeNameValid         bool
-	IsMaxPlayersValid        bool
-	IsChildFriendlyValid     bool
-	IsAdultsOnlyValid        bool
-	IsBeginnerFriendlyValid  bool
-	IsExperiencedOnlyValid   bool
-	IsCanBeRunInEnglishValid bool
-	IsLongRunningValid       bool
-	IsShortRunningValid      bool
-	IsValid                  bool
+	IsTitleValid       bool
+	IsDescriptionValid bool
+	IsImageURLValid    bool
+	IsSystemValid      bool
+	IsHostNameValid    bool
+	IsHostValid        bool
+	IsPuljeNameValid   bool
+	IsMaxPlayersValid  bool
+	IsValid            bool
 }
 
 func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger *slog.Logger) error {
 	eventFormRouter.Route("/inline_validation/data", func(dataRouter chi.Router) {
 		checkEventFromValidity := func(eventForm *EventFormStruct) ValidationResultStruct {
+			isTitleValid := len(eventForm.Title) > 3
+			isDescriptionValid := len(eventForm.Description) > 3
+			isMaxPlayersValid := eventForm.MaxPlayers > 0 && eventForm.MaxPlayers < 20
+			isSystemValid := eventForm.System != nil && len(*eventForm.System) > 2
+			isHostNameValid := len(eventForm.HostName) > 2
+			isHostValid := eventForm.Host != nil && len(*eventForm.Host) > 2
 
-			isTitleValid := len(eventForm.Title) > 0
-			isDescriptionValid := len(eventForm.Description) > 0
-			isMaxPlayersValid := eventForm.MaxPlayers > 0
-			isSystemValid := len(*eventForm.System) > 0
-			isHostNameValid := len(eventForm.HostName) > 0
-			isHostValid := len(*eventForm.Host) > 0
-			isRoomNameValid := len(*eventForm.RoomName) > 0
-			isPuljeNameValid := len(*eventForm.PuljeName) > 0
-			isChildFriendlyValid := eventForm.ChildFriendly
-			isAdultsOnlyValid := eventForm.AdultsOnly
-			isBeginnerFriendlyValid := eventForm.BeginnerFriendly
-			isExperiencedOnlyValid := eventForm.ExperiencedOnly
-			isCanBeRunInEnglishValid := eventForm.CanBeRunInEnglish
-			isLongRunningValid := eventForm.LongRunning
-			isShortRunningValid := eventForm.ShortRunning
+			var isPuljeNameValid = false
+
+			puljeNames, puljeNamesError := getPuljeNames(db, logger)
+			if puljeNamesError != nil {
+				logger.Error("Error getting pulje names", "puljeNamesError", puljeNamesError)
+			}
+
+			puljeNameInt, puljeNameToIntError := strconv.Atoi(*eventForm.PuljeName)
+			if puljeNameToIntError != nil {
+				logger.Error("Invalid pulje name format", "puljeNameToIntError", puljeNameToIntError)
+			}
+
+			isPuljeNameValid = puljeNameInt > 0 && len(puljeNames) > 0 && puljeNameInt <= len(puljeNames)
 
 			isValid :=
 				isTitleValid &&
@@ -77,15 +75,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 					isSystemValid &&
 					isHostNameValid &&
 					isHostValid &&
-					isRoomNameValid &&
 					isPuljeNameValid &&
-					isChildFriendlyValid &&
-					isAdultsOnlyValid &&
-					isBeginnerFriendlyValid &&
-					isExperiencedOnlyValid &&
-					isCanBeRunInEnglishValid &&
-					isLongRunningValid &&
-					isShortRunningValid
 
 			return ValidationResultStruct{
 				IsTitleValid:             isTitleValid,
@@ -94,15 +84,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				IsSystemValid:            isSystemValid,
 				IsHostNameValid:          isHostNameValid,
 				IsHostValid:              isHostValid,
-				IsRoomNameValid:          isRoomNameValid,
 				IsPuljeNameValid:         isPuljeNameValid,
-				IsChildFriendlyValid:     isChildFriendlyValid,
-				IsAdultsOnlyValid:        isAdultsOnlyValid,
-				IsBeginnerFriendlyValid:  isBeginnerFriendlyValid,
-				IsExperiencedOnlyValid:   isExperiencedOnlyValid,
-				IsCanBeRunInEnglishValid: isCanBeRunInEnglishValid,
-				IsLongRunningValid:       isLongRunningValid,
-				IsShortRunningValid:      isShortRunningValid,
 				IsValid:                  isValid,
 			}
 		}
@@ -213,122 +195,58 @@ templ EventFromValidation(data *EventFormStruct, vr ValidationResultStruct) {
 			<label class="label">
 				<span class="label-text">Tittel på spillmodul / arrangement</span>
 			</label>
-			<input
-				class="input input-bordered"
-				type="text"
-				data-bind="title"
-				data-testid="title_input"
-			/>
+			<input class="input input-bordered" type="text" data-bind="title" data-testid="title_input"/>
 		</div>
 		<div class="form-control">
 			<label class="label">
-				<span class="label-text">Kort oppsummering</span>
+				<span class="label-text">Beskrivelse</span>
 			</label>
-			<input
-				class="input input-bordered"
-				type="text"
-				data-bind="summary"
-				data-testid="summary_input"
-			/>
+			<textarea class="textarea textarea-bordered" data-bind="description" data-testid="description_input"></textarea>
 		</div>
 		<div class="form-control">
 			<label class="label">
-				<span class="label-text">E-postadresse</span>
+				<span class="label-text">Bilde URL</span>
 			</label>
-			<input
-				class="input input-bordered"
-				type="email"
-				data-bind="email"
-				data-testid="email_input"
-			/>
+			<input class="input input-bordered" type="text" data-bind="image_url" data-testid="image_url_input"/>
 		</div>
 		<div class="form-control">
 			<label class="label">
-				<span class="label-text">Arrangørens navn</span>
+				<span class="label-text">System</span>
 			</label>
-			<input
-				class="input input-bordered"
-				type="text"
-				data-bind="organizerName"
-				data-testid="organizerName_input"
-			/>
+			<input class="input input-bordered" type="text" data-bind="system" data-testid="system_input"/>
 		</div>
 		<div class="form-control">
 			<label class="label">
-				<span class="label-text">Na telefonnummer kan vi nå deg på?</span>
+				<span class="label-text">Navn på arrangør</span>
 			</label>
-			<input
-				class="input input-bordered"
-				type="text"
-				data-bind="phoneNumber"
-				data-testid="phoneNumber_input"
-			/>
+			<input class="input input-bordered" type="text" data-bind="host_name" data-testid="host_name_input"/>
 		</div>
 		<div class="form-control">
 			<label class="label">
-				<span class="label-text">Spillsystem</span>
+				<span class="label-text">Arrangør</span>
 			</label>
-			<input
-				class="input input-bordered"
-				type="text"
-				data-bind="system"
-				data-testid="system_input"
-			/>
+			<input class="input input-bordered" type="text" data-bind="host" data-testid="host_input"/>
 		</div>
 		<div class="form-control">
 			<label class="label">
-				<span class="label-text">Skildring av modulen (Inkl test i programmet)</span>
+				<span class="label-text">Pulje navn</span>
 			</label>
-			<textarea
-				class="textarea textarea-bordered"
-				data-bind="description"
-				data-testid="description_input"
-			></textarea>
-		</div>
-		<div class="form-control">
-			<label class="label">
-				<span class="label-text">Kva type spel er det?</span>
-			</label>
-			<div class="flex flex-col gap-2 pl-4">
+			<div class="flex flex-col gap-2">
 				<label class="cursor-pointer flex items-center gap-2">
-					<input
-						type="radio"
-						name="gameType"
-						class="radio"
-						value="Rollespel"
-						data-bind="gameType"
-					/>
-					<span>Rollespel</span>
+					<input type="radio" name="pulje_name" value="1" class="radio" data-bind="pulje_name" data-testid="pulje_name_1"/>
+					<span>Fredag kveld</span>
 				</label>
 				<label class="cursor-pointer flex items-center gap-2">
-					<input
-						type="radio"
-						name="gameType"
-						class="radio"
-						value="Brettspel"
-						data-bind="gameType"
-					/>
-					<span>Brettspel</span>
+					<input type="radio" name="pulje_name" value="2" class="radio" data-bind="pulje_name" data-testid="pulje_name_2"/>
+					<span>Lørdag morgen</span>
 				</label>
 				<label class="cursor-pointer flex items-center gap-2">
-					<input
-						type="radio"
-						name="gameType"
-						class="radio"
-						value="LARP"
-						data-bind="gameType"
-					/>
-					<span>LARP</span>
+					<input type="radio" name="pulje_name" value="3" class="radio" data-bind="pulje_name" data-testid="pulje_name_3"/>
+					<span>Lørdag kveld</span>
 				</label>
 				<label class="cursor-pointer flex items-center gap-2">
-					<input
-						type="radio"
-						name="gameType"
-						class="radio"
-						value="Annet"
-						data-bind="gameType"
-					/>
-					<span>Annet</span>
+					<input type="radio" name="pulje_name" value="4" class="radio" data-bind="pulje_name" data-testid="pulje_name_4"/>
+					<span>Søndag morgen</span>
 				</label>
 			</div>
 		</div>
@@ -336,52 +254,49 @@ templ EventFromValidation(data *EventFormStruct, vr ValidationResultStruct) {
 			<label class="label">
 				<span class="label-text">Maks antall spillere</span>
 			</label>
-			<input
-				class="input input-bordered"
-				type="number"
-				min="0"
-				data-bind="maxPlayers"
-				data-testid="maxPlayers_input"
-			/>
+			<input class="input input-bordered" type="number" data-bind="max_players" data-testid="max_players_input"/>
 		</div>
 		<div class="form-control">
-			<label class="label">
-				<span class="label-text">Kan for øvrig kan du arrangere?</span>
+			<label class="cursor-pointer label">
+				<span class="label-text">Barnevennlig</span>
+				<input type="checkbox" class="toggle" data-bind="child_friendly" data-testid="child_friendly_input"/>
 			</label>
-			<div class="flex flex-col gap-2 pl-4">
-				<label class="cursor-pointer flex items-center gap-2">
-					<input
-						type="checkbox"
-						class="checkbox"
-						data-bind="fridayEvening"
-					/>
-					<span>Fredag Kveld</span>
-				</label>
-				<label class="cursor-pointer flex items-center gap-2">
-					<input
-						type="checkbox"
-						class="checkbox"
-						data-bind="saturdayMorning"
-					/>
-					<span>Lørdag Morgen</span>
-				</label>
-				<label class="cursor-pointer flex items-center gap-2">
-					<input
-						type="checkbox"
-						class="checkbox"
-						data-bind="saturdayEvening"
-					/>
-					<span>Lørdag Kveld</span>
-				</label>
-				<label class="cursor-pointer flex items-center gap-2">
-					<input
-						type="checkbox"
-						class="checkbox"
-						data-bind="sundayMorning"
-					/>
-					<span>Søndag Morgen</span>
-				</label>
-			</div>
+		</div>
+		<div class="form-control">
+			<label class="cursor-pointer label">
+				<span class="label-text">Kun for voksne</span>
+				<input type="checkbox" class="toggle" data-bind="adults_only" data-testid="adults_only_input"/>
+			</label>
+		</div>
+		<div class="form-control">
+			<label class="cursor-pointer label">
+				<span class="label-text">Nybegynnervennlig</span>
+				<input type="checkbox" class="toggle" data-bind="beginner_friendly" data-testid="beginner_friendly_input"/>
+			</label>
+		</div>
+		<div class="form-control">
+			<label class="cursor-pointer label">
+				<span class="label-text">Kun for erfarne</span>
+				<input type="checkbox" class="toggle" data-bind="experienced_only" data-testid="experienced_only_input"/>
+			</label>
+		</div>
+		<div class="form-control">
+			<label class="cursor-pointer label">
+				<span class="label-text">Kan kjøres på engelsk</span>
+				<input type="checkbox" class="toggle" data-bind="can_be_run_in_english" data-testid="can_be_run_in_english_input"/>
+			</label>
+		</div>
+		<div class="form-control">
+			<label class="cursor-pointer label">
+				<span class="label-text">Langvarig</span>
+				<input type="checkbox" class="toggle" data-bind="long_running" data-testid="long_running_input"/>
+			</label>
+		</div>
+		<div class="form-control">
+			<label class="cursor-pointer label">
+				<span class="label-text">Kortvarig</span>
+				<input type="checkbox" class="toggle" data-bind="short_running" data-testid="short_running_input"/>
+			</label>
 		</div>
 		<div>
 			<button
@@ -393,6 +308,9 @@ templ EventFromValidation(data *EventFormStruct, vr ValidationResultStruct) {
 			</button>
 		</div>
 	</form>
+	<code>
+		<pre data-text="ctx.signals.JSON()"></pre>
+	</code>
 }
 
 // Dette er en ny templ-komponent som viser skjemaet med alle feltene.
@@ -413,7 +331,6 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 			system,
 			host_name,
 			host,
-			room_name,
 			pulje_name,
 			max_players,
 			child_friendly,
@@ -422,13 +339,8 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 			experienced_only,
 			can_be_run_in_english,
 			long_running,
-			short_running,
-			inserted_time
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-
-	if eventForm.InsertedTime.IsZero() {
-		eventForm.InsertedTime = time.Now()
-	}
+			short_running
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, insertError := db.Exec(query,
 		eventForm.Title,
@@ -447,7 +359,6 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 		eventForm.CanBeRunInEnglish,
 		eventForm.LongRunning,
 		eventForm.ShortRunning,
-		eventForm.InsertedTime,
 	)
 
 	if insertError != nil {
@@ -470,4 +381,32 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 	}
 	fmt.Printf("Event saved successfully: %v\n", eventForm)
 	return result.LastInsertId()
+}
+
+func getPuljeNames(db *sql.DB, logger *slog.Logger) ([]PuljeNameStruct, error) {
+	query := "SELECT asd FROM puljer"
+	rows, queryError := db.Query(query)
+	if queryError != nil {
+		return nil, queryError
+	}
+
+	defer rows.Close()
+
+	var puljer []PuljeNameStruct
+
+	for rows.Next() {
+		var name string
+		if scanError := rows.Scan(&name); scanError != nil {
+			logger.Error("Error scanning pulje name", "scanError", scanError)
+			return nil, scanError
+		}
+		puljer = append(puljer, PuljeNameStruct{Name: name})
+	}
+
+	if rowsError := rows.Err(); rowsError != nil {
+		logger.Error("Error in rows iteration", "rowsError", rowsError)
+		return nil, rowsError
+	}
+
+	return puljer, nil
 }
