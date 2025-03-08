@@ -75,8 +75,16 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 
 			isChildFriendly := eventForm.ChildFriendly && !eventForm.AdultsOnly
 			isAdultsOnly := eventForm.AdultsOnly && !eventForm.ChildFriendly
+
+			println("isChildFriendly", isChildFriendly)
+			println("isAdultsOnly", isAdultsOnly)
+
 			isBeginnerFriendly := eventForm.BeginnerFriendly && !eventForm.ExperiencedOnly
 			isExperiencedOnly := eventForm.ExperiencedOnly && !eventForm.BeginnerFriendly
+
+			println("isBeginnerFriendly", isBeginnerFriendly)
+			println("isExperiencedOnly", isExperiencedOnly)
+
 			isLongRunning := eventForm.LongRunning && !eventForm.ShortRunning
 			isShortRunning := eventForm.ShortRunning && !eventForm.LongRunning
 
@@ -193,16 +201,34 @@ func ptrToString(s *string) string {
 	return *s
 }
 
-templ inlineValidationFieldComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
+type InputType string
+
+const (
+	Text   InputType = "text"
+	Number InputType = "number"
+)
+
+templ inputValidationComponent(label string, inputType InputType, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
 	<div class="form-control">
 		<label class="label">
 			<span class="label-text">{ label }</span>
 		</label>
 		<input
+			if inputType == Number {
+				type="number"
+			} else {
+				type="text"
+			}
 			class={ "input input-bordered", templ.KV("input-error",!isValid) }
 			data-bind={ field }
 			data-on-keydown__debounce.500ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
 			data-testid={ "input_" + field }
+			if inputType == Number {
+				min="1"
+			}
+			if inputType == Number {
+				max="18"
+			}
 		/>
 		if !isValid {
 			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf( isNotValidErrorLabelFmt, labelArgs...) }</label>
@@ -210,33 +236,147 @@ templ inlineValidationFieldComponent(label, field string, isValid bool, isNotVal
 	</div>
 }
 
+templ checkboxValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
+	<div class="form-control">
+		<label class="cursor-pointer label">
+			<span class="label-text">{ label }</span>
+			<input
+				type="checkbox"
+				class="toggle"
+				data-bind={ field }
+				data-on-click={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+				data-testid={ field + "_input" }
+			/>
+		</label>
+		if !isValid {
+			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf( isNotValidErrorLabelFmt, labelArgs...) }</label>
+		}
+	</div>
+}
+
+templ radioValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
+	<div class="form-control">
+		<label class="label">
+			<span class="label-text">{ label }</span>
+		</label>
+		<div class="flex flex-col gap-2">
+			<label class="cursor-pointer flex items-center gap-2">
+				<input
+					type="radio"
+					name={ field }
+					value="1"
+					class="radio"
+					data-bind={ fmt.Sprintf("pulje.%s", field) }
+					data-testid={ field + "_1" }
+					data-on-signals-change={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+				/>
+				<span>Fredag kveld</span>
+			</label>
+			<label class="cursor-pointer flex items-center gap-2">
+				<input
+					type="radio"
+					name={ field }
+					value="2"
+					class="radio"
+					data-bind={ field }
+					data-on-signals-change={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-testid={ field + "_2" }
+				/>
+				<span>Lørdag morgen</span>
+			</label>
+			<label class="cursor-pointer flex items-center gap-2">
+				<input
+					type="radio"
+					name={ field }
+					value="3"
+					class="radio"
+					data-bind={ field }
+					data-on-signals-change={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-testid={ field + "_3" }
+				/>
+				<span>Lørdag kveld</span>
+			</label>
+			<label class="cursor-pointer flex items-center gap-2">
+				<input
+					type="radio"
+					name={ field }
+					value="4"
+					class="radio"
+					data-bind={ field }
+					data-on-signals-change={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-testid={ field + "_4" }
+				/>
+				<span>Søndag morgen</span>
+			</label>
+		</div>
+		if !isValid {
+			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf( isNotValidErrorLabelFmt, labelArgs...) }</label>
+		}
+	</div>
+}
+
 templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormValidationResult ValidationResultStruct) {
+	{{
+	type EventWithoutSensitiveFields struct {
+		Title             string  `json:"title"`
+		Description       string  `json:"description"`
+		ImageURL          *string `json:"image_url,omitempty"`
+		System            *string `json:"system,omitempty"`
+		HostName          string  `json:"host_name"`
+		MaxPlayers        int     `json:"max_players"`
+		ChildFriendly     bool    `json:"child_friendly"`
+		AdultsOnly        bool    `json:"adults_only"`
+		BeginnerFriendly  bool    `json:"beginner_friendly"`
+		ExperiencedOnly   bool    `json:"experienced_only"`
+		CanBeRunInEnglish bool    `json:"can_be_run_in_english"`
+		LongRunning       bool    `json:"long_running"`
+		ShortRunning      bool    `json:"short_running"`
+	}
+
+	// eventFromWithoutPulje := EventWithoutSensitiveFields{
+	// 	Title:             eventForm.Title,
+	// 	Description:       eventForm.Description,
+	// 	ImageURL:          eventForm.ImageURL,
+	// 	System:            eventForm.System,
+	// 	HostName:          eventForm.HostName,
+	// 	MaxPlayers:        eventForm.MaxPlayers,
+	// 	ChildFriendly:     eventForm.ChildFriendly,
+	// 	AdultsOnly:        eventForm.AdultsOnly,
+	// 	BeginnerFriendly:  eventForm.BeginnerFriendly,
+	// 	ExperiencedOnly:   eventForm.ExperiencedOnly,
+	// 	CanBeRunInEnglish: eventForm.CanBeRunInEnglish,
+	// 	LongRunning:       eventForm.LongRunning,
+	// 	ShortRunning:      eventForm.ShortRunning,
+	// }
+	}}
 	<div
 		id="inline_validation"
 		class="flex flex-col gap-4"
 		data-signals__ifmissing={ templ.JSONString(eventForm) }
+		data-signals__ifmissing={ fmt.Sprintf("pulje: { pulje_name: %v }", eventForm.PuljeName) }
 	>
 		<div class="text-2xl font-bold">Sign Up</div>
 		<div>
-			@inlineValidationFieldComponent("Title", "title", eventFormValidationResult.IsTitleValid, "Title must be at least 3 characters long")
-			@inlineValidationFieldComponent("Description", "description", eventFormValidationResult.IsDescriptionValid, "Description must be at least 3 characters long")
-			@inlineValidationFieldComponent("Image URL", "image_url", eventFormValidationResult.IsImageURLValid, "Image URL must be from imgur.com")
-			@inlineValidationFieldComponent("System", "system", eventFormValidationResult.IsSystemValid, "System must be at least 3 characters long")
-			@inlineValidationFieldComponent("Host Name", "host_name", eventFormValidationResult.IsHostNameValid, "Host Name must be at least 3 characters long")
-			@inlineValidationFieldComponent("Pulje Name", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Pulje Name must be selected")
-			@inlineValidationFieldComponent("Max Players", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Max Players must be between 1 and 18")
-			@inlineValidationFieldComponent("Child Friendly", "child_friendly", eventFormValidationResult.IsChildFriendlyValid, "Child Friendly and Adults Only cannot both be selected")
-			@inlineValidationFieldComponent("Adults Only", "adults_only", eventFormValidationResult.IsAdultsOnlyValid, "Child Friendly and Adults Only cannot both be selected")
-			@inlineValidationFieldComponent("Beginner Friendly", "beginner_friendly", eventFormValidationResult.IsBeginnerFriendlyValid, "Beginner Friendly and Experienced Only cannot both be selected")
-			@inlineValidationFieldComponent("Experienced Only", "experienced_only", eventFormValidationResult.IsExperiencedOnlyValid, "Beginner Friendly and Experienced Only cannot both be selected")
-			@inlineValidationFieldComponent("Can Be Run In English", "can_be_run_in_english", true, "")
-			@inlineValidationFieldComponent("Long Running", "long_running", eventFormValidationResult.IsLongRunningValid, "Long Running and Short Running cannot both be selected")
-			@inlineValidationFieldComponent("Short Running", "short_running", eventFormValidationResult.IsShortRunningValid, "Long Running and Short Running cannot both be selected")
+			{ templ.JSONString(eventForm.PuljeName) }
+			@inputValidationComponent("Title", "text", "title", eventFormValidationResult.IsTitleValid, "Title must be at least 3 characters long")
+			@inputValidationComponent("Description", "text", "description", eventFormValidationResult.IsDescriptionValid, "Description must be at least 3 characters long")
+			@inputValidationComponent("Image URL", "text", "image_url", eventFormValidationResult.IsImageURLValid, "Image URL must be from imgur.com")
+			@inputValidationComponent("System", "text", "system", eventFormValidationResult.IsSystemValid, "System must be at least 3 characters long")
+			@inputValidationComponent("Host Name", "text", "host_name", eventFormValidationResult.IsHostNameValid, "Host Name must be at least 3 characters long")
+			@radioValidationComponent("Pulje Name", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Pulje Name must be selected")
+			@inputValidationComponent("Max Players", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Max Players must be between 1 and 18")
+			@checkboxValidationComponent("Child Friendly", "child_friendly", eventFormValidationResult.IsChildFriendlyValid, "Child Friendly and Adults Only cannot both be selected")
+			@checkboxValidationComponent("Adults Only", "adults_only", eventFormValidationResult.IsAdultsOnlyValid, "Child Friendly and Adults Only cannot both be selected")
+			@checkboxValidationComponent("Beginner Friendly", "beginner_friendly", eventFormValidationResult.IsBeginnerFriendlyValid, "Beginner Friendly and Experienced Only cannot both be selected")
+			@checkboxValidationComponent("Experienced Only", "experienced_only", eventFormValidationResult.IsExperiencedOnlyValid, "Beginner Friendly and Experienced Only cannot both be selected")
+			@checkboxValidationComponent("Can Be Run In English", "can_be_run_in_english", true, "")
+			@checkboxValidationComponent("Long Running", "long_running", eventFormValidationResult.IsLongRunningValid, "Long Running and Short Running cannot both be selected")
+			@checkboxValidationComponent("Short Running", "short_running", eventFormValidationResult.IsShortRunningValid, "Long Running and Short Running cannot both be selected")
 		</div>
 		<button
 			class="btn btn-success"
 			disabled?={ !eventFormValidationResult.IsValid }
-			data-on-click={ datastar.PutSSE("/event/api/new/inline_validation/data") }
+			data-on-submit__debounce.500ms={ datastar.PutSSE("/event/api/new/inline_validation/data") }
 			data-testid="submit_button"
 		>
 			Send inn arrangement
