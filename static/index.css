@@ -17,3 +17,13 @@ html {
 *:after {
   box-sizing: inherit;
 }
+
+.flex {
+  display: flex;
+}
+.flex-row {
+  flex-direction: row;
+}
+.flex-col {
+  flex-direction: column;
+}
