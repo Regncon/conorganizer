@@ -21,7 +21,6 @@ type EventFormStruct struct {
 	ImageURL          *string `json:"image_url,omitempty"`
 	System            *string `json:"system,omitempty"`
 	HostName          string  `json:"host_name"`
-	Host              *string `json:"host,omitempty"`
 	PuljeName         *string `json:"pulje_name,omitempty"`
 	MaxPlayers        int     `json:"max_players"`
 	ChildFriendly     bool    `json:"child_friendly"`
@@ -34,15 +33,20 @@ type EventFormStruct struct {
 }
 
 type ValidationResultStruct struct {
-	IsTitleValid       bool
-	IsDescriptionValid bool
-	IsImageURLValid    bool
-	IsSystemValid      bool
-	IsHostNameValid    bool
-	IsHostValid        bool
-	IsPuljeNameValid   bool
-	IsMaxPlayersValid  bool
-	IsValid            bool
+	IsTitleValid            bool
+	IsDescriptionValid      bool
+	IsImageURLValid         bool
+	IsSystemValid           bool
+	IsHostNameValid         bool
+	IsPuljeNameValid        bool
+	IsMaxPlayersValid       bool
+	IsChildFriendlyValid    bool
+	IsAdultsOnlyValid       bool
+	IsBeginnerFriendlyValid bool
+	IsExperiencedOnlyValid  bool
+	IsLongRunningValid      bool
+	IsShortRunningValid     bool
+	IsValid                 bool
 }
 
 func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger *slog.Logger) error {
@@ -53,7 +57,6 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			isMaxPlayersValid := eventForm.MaxPlayers > 0 && eventForm.MaxPlayers < 20
 			isSystemValid := eventForm.System != nil && len(*eventForm.System) > 2
 			isHostNameValid := len(eventForm.HostName) > 2
-			isHostValid := eventForm.Host != nil && len(*eventForm.Host) > 2
 			isImageURLValid := eventForm.ImageURL != nil && strings.Contains(*eventForm.ImageURL, "imgur.com")
 
 			var isPuljeNameValid = false
@@ -70,25 +73,42 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 
 			isPuljeNameValid = puljeNameInt > 0 && len(puljeNames) > 0 && puljeNameInt <= len(puljeNames)
 
+			isChildFriendly := eventForm.ChildFriendly && !eventForm.AdultsOnly
+			isAdultsOnly := eventForm.AdultsOnly && !eventForm.ChildFriendly
+			isBeginnerFriendly := eventForm.BeginnerFriendly && !eventForm.ExperiencedOnly
+			isExperiencedOnly := eventForm.ExperiencedOnly && !eventForm.BeginnerFriendly
+			isLongRunning := eventForm.LongRunning && !eventForm.ShortRunning
+			isShortRunning := eventForm.ShortRunning && !eventForm.LongRunning
+
 			isValid :=
 				isTitleValid &&
 					isDescriptionValid &&
 					isMaxPlayersValid &&
 					isSystemValid &&
 					isHostNameValid &&
-					isHostValid &&
-					isPuljeNameValid
+					isPuljeNameValid &&
+					isChildFriendly &&
+					isAdultsOnly &&
+					isBeginnerFriendly &&
+					isExperiencedOnly &&
+					isLongRunning &&
+					isShortRunning
 
 			return ValidationResultStruct{
-				IsTitleValid:       isTitleValid,
-				IsDescriptionValid: isDescriptionValid,
-				IsImageURLValid:    isImageURLValid,
-				IsMaxPlayersValid:  isMaxPlayersValid,
-				IsSystemValid:      isSystemValid,
-				IsHostNameValid:    isHostNameValid,
-				IsHostValid:        isHostValid,
-				IsPuljeNameValid:   isPuljeNameValid,
-				IsValid:            isValid,
+				IsTitleValid:            isTitleValid,
+				IsDescriptionValid:      isDescriptionValid,
+				IsImageURLValid:         isImageURLValid,
+				IsMaxPlayersValid:       isMaxPlayersValid,
+				IsSystemValid:           isSystemValid,
+				IsHostNameValid:         isHostNameValid,
+				IsPuljeNameValid:        isPuljeNameValid,
+				IsChildFriendlyValid:    eventForm.ChildFriendly,
+				IsAdultsOnlyValid:       eventForm.AdultsOnly,
+				IsBeginnerFriendlyValid: eventForm.BeginnerFriendly,
+				IsExperiencedOnlyValid:  eventForm.ExperiencedOnly,
+				IsLongRunningValid:      eventForm.LongRunning,
+				IsShortRunningValid:     eventForm.ShortRunning,
+				IsValid:                 isValid,
 			}
 		}
 
@@ -149,7 +169,6 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				ptrToString(eventForm.ImageURL),
 				ptrToString(eventForm.System),
 				eventForm.HostName,
-				ptrToString(eventForm.Host),
 				ptrToString(eventForm.PuljeName),
 				eventForm.MaxPlayers,
 				eventForm.ChildFriendly,
@@ -371,7 +390,6 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 			image_url,
 			system,
 			host_name,
-			host,
 			pulje_name,
 			max_players,
 			child_friendly,
@@ -381,7 +399,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 			can_be_run_in_english,
 			long_running,
 			short_running
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, insertError := db.Exec(query,
 		eventForm.Title,
@@ -389,7 +407,6 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 		eventForm.ImageURL,
 		eventForm.System,
 		eventForm.HostName,
-		eventForm.Host,
 		eventForm.PuljeName,
 		eventForm.MaxPlayers,
 		eventForm.ChildFriendly,
