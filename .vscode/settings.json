@@ -6,5 +6,5 @@
     "[templ]": {
         "editor.defaultFormatter": "a-h.templ"
     },
-    "cSpell.words": ["Atoi", "omitempty", "println", "strconv"]
+    "cSpell.words": ["Atoi", "ifmissing", "omitempty", "println", "strconv"]
 }
