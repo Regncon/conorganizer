@@ -5,24 +5,40 @@ import "database/sql"
 templ admin_page(db *sql.DB) {
 	<div id="admin-container">
 		<h1>Admin page</h1>
-		<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem;">
+		<div class="admin-grid">
 			<a
 				href="/admin/bilettholer"
-				style="max-width:430px;
+				style="width: 100%;
+                max-width: var(--mobile-max-column-width);
 				background-color: #3b4252;
-				padding: 1rem;
 				border-radius: 1rem;
 				display: flex;
 				flex-direction: column;
 				text-decoration: none;
-				color: white;"
+				color: white;
+				box-sizing: border-box;"
 			>
 				<img
 					src="/static/participants-small.webp"
 					alt="Participants"
+					style="max-width: 100%; height: auto; object-fit: cover; border-radius: 1rem 1rem 0 0;"
 				/>
-				<h2>Bilettholedroversikt</h2>
+				<div style="padding: 1rem;">
+					<h2>Bilettholedroversikt</h2>
+					<h3>Se oversikt over alle bilettholdere</h3>
+				</div>
 			</a>
 		</div>
+		<style>
+			.admin-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
+				gap: 1rem;
+			}@media (min-width: 600px) {
+				.admin-grid {
+					padding: 1rem;
+				}
+			}
+		</style>
 	</div>
 }
