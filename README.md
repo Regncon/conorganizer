@@ -29,20 +29,20 @@ https://www.youtube.com/watch?v=ALGBuFLzDSA
 https://www.youtube.com/watch?v=NhTPVXP8n7w&t=219s
 
 ## Docker setup
+You have two options when it comes to running this poject, you can either use the bash or powershell script or docker compose cli.
 
-To build the docker image run the following command:
-
-```bash
+### Script method
+First build an image with the following command, then execute either [run-docker.sh](run-docker.sh) or [run-docker.ps1](run-docker.ps1) script depeding on your OS.
+```console
  docker build --rm -t my-dev-environment .
 ```
 
-To run the docker image use the run-docker bash or powershell script.
-
-## Go dependencies 
-```bash
-go install github.com/air-verse/air@latest
-go install github.com/a-h/templ/cmd/templ@latest
+### Compose method
+To build the docker image and mount a container, run the following command:
+```console
+ docker compose up
 ```
+
 ## Links
 
 Se the [northstar](https://github.com/zangster300/northstar) README for installation instructions.
