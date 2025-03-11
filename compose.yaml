@@ -1,0 +1,17 @@
+services:
+  webserver:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: regncon-image
+    # tty required by air when using compose
+    tty: true
+    ports:
+      - 7331:7331
+      - 8080:8080
+    volumes:
+      - type: bind
+        source: ./
+        target: /home/devuser/app
+        read_only: false
+    command: task dev
