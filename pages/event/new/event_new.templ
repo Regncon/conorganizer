@@ -155,13 +155,11 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				System:    &emptySystem,
 				PuljeName: &emptyPulje,
 			}
-			if err := datastar.ReadSignals(r, eventForm); err != nil {
-				fmt.Printf("Debug - ReadSignals error: %v\n", err)
-				fmt.Printf("Debug - Raw form data: %+v\n", r.Form)
-				http.Error(w, err.Error(), http.StatusBadRequest)
+			if readSignalsError := datastar.ReadSignals(r, eventForm); readSignalsError != nil {
+				logger.Error("Error reading signals", "signalsError", readSignalsError)
+				http.Error(w, readSignalsError.Error(), http.StatusBadRequest)
 				return
 			}
-			fmt.Printf("Debug - Form after ReadSignals: %+v\n", eventForm)
 
 			eventFormValidationResult := checkEventFromValidity(eventForm)
 			sse := datastar.NewSSE(w, r)
@@ -179,51 +177,11 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				node = inlineValidationThankYou()
 			}
 
-			fmt.Printf("Validation Result: %+v\n", eventFormValidationResult)
-
-			fmt.Printf("Submitted Event Form:\n"+
-				"Title: %s\n"+
-				"Description: %s\n"+
-				"ImageURL: %s\n"+
-				"System: %s\n"+
-				"HostName: %s\n"+
-				"Host: %s\n"+
-				"PuljeName: %s\n"+
-				"MaxPlayers: %d\n"+
-				"ChildFriendly: %t\n"+
-				"AdultsOnly: %t\n"+
-				"BeginnerFriendly: %t\n"+
-				"ExperiencedOnly: %t\n"+
-				"CanBeRunInEnglish: %t\n"+
-				"LongRunning: %t\n"+
-				"ShortRunning: %t\n",
-				eventForm.Title,
-				eventForm.Description,
-				ptrToString(eventForm.ImageURL),
-				ptrToString(eventForm.System),
-				eventForm.HostName,
-				ptrToString(eventForm.PuljeName),
-				eventForm.MaxPlayers,
-				eventForm.ChildFriendly,
-				eventForm.AdultsOnly,
-				eventForm.BeginnerFriendly,
-				eventForm.ExperiencedOnly,
-				eventForm.CanBeRunInEnglish,
-				eventForm.LongRunning,
-				eventForm.ShortRunning,
-			)
-
 			sse.MergeFragmentTempl(node)
 		})
 	})
 
 	return nil
-}
-func ptrToString(s *string) string {
-	if s == nil {
-		return "nil"
-	}
-	return *s
 }
 
 type InputType string
@@ -482,6 +440,10 @@ templ EventForm() {
 			--input-bg: #1e2030;
 			--success-color: #4ade80;
 			--border-radius: 0.5rem;
+		}
+
+		h1 {
+			text-align: center;
 		}
 
 		#inline_validation {
