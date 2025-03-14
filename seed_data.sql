@@ -9,6 +9,8 @@ INSERT INTO events (
     image_url,
     system,
     host_name,
+    email,
+    phone_number,
     host,
     pulje_name,
     max_players,
@@ -26,6 +28,8 @@ INSERT INTO events (
     'https://imgur.com/example1',
     'D&D 5e',
     'Erik Spilleder',
+    'test.admin@example.com',
+    12345678,
     1, -- refererer til test.admin@example.com
     'Lørdag morgen',
     6,
@@ -44,6 +48,8 @@ INSERT INTO events (
     'https://imgur.com/example2',
     'Vampire: The Masquerade 5th Edition',
     'Maria Storyteller',
+    'test.admin@example.com',
+    12345678,
     1, -- refererer til test.admin@example.com
     'Lørdag kveld',
     4,

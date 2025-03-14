@@ -21,6 +21,8 @@ type EventFormStruct struct {
 	ImageURL          *string `json:"image_url,omitempty"`
 	System            *string `json:"system,omitempty"`
 	HostName          string  `json:"host_name"`
+	Email             string  `json:"email"`
+	PhoneNumber       string  `json:"phone_number"`
 	PuljeName         *string `json:"pulje_name,omitempty"`
 	MaxPlayers        int     `json:"max_players"`
 	ChildFriendly     bool    `json:"child_friendly"`
@@ -38,6 +40,8 @@ type ValidationResultStruct struct {
 	IsImageURLValid         bool
 	IsSystemValid           bool
 	IsHostNameValid         bool
+	IsEmailValid            bool
+	IsPhoneNumberValid      bool
 	IsPuljeNameValid        bool
 	IsMaxPlayersValid       bool
 	IsChildFriendlyValid    bool
@@ -58,6 +62,8 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			isSystemValid := eventForm.System != nil && len(*eventForm.System) > 2
 			isHostNameValid := len(eventForm.HostName) > 2
 			isImageURLValid := eventForm.ImageURL != nil && strings.Contains(*eventForm.ImageURL, "imgur.com")
+			isEmailValid := strings.Contains(eventForm.Email, "@") && len(eventForm.Email) > 5
+			isPhoneNumberValid := len(eventForm.PhoneNumber) >= 8
 
 			var isPuljeNameValid = false
 
@@ -89,6 +95,8 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 					isSystemValid &&
 					isImageURLValid &&
 					isHostNameValid &&
+					isEmailValid &&
+					isPhoneNumberValid &&
 					isPuljeNameValid &&
 					isChildFriendly &&
 					isAdultsOnly &&
@@ -104,6 +112,8 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				IsMaxPlayersValid:       isMaxPlayersValid,
 				IsSystemValid:           isSystemValid,
 				IsHostNameValid:         isHostNameValid,
+				IsEmailValid:            isEmailValid,
+				IsPhoneNumberValid:      isPhoneNumberValid,
 				IsPuljeNameValid:        isPuljeNameValid,
 				IsChildFriendlyValid:    isChildFriendly,
 				IsAdultsOnlyValid:       isAdultsOnly,
@@ -380,22 +390,14 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		data-on-submit={ datastar.PutSSE("/event/api/new/inline_validation/data") }
 	>
 		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
-		<div class="text-sm text-gray-300">
-			<p>Alle felt må fylles ut. For sjekkboksene må du velge ett alternativ fra hvert par:</p>
-			<ul class="list-disc list-inside mt-2 space-y-1">
-				<li>Barnevennlig eller Kun for voksne</li>
-				<li>Nybegynnervennlig eller Kun for erfarne</li>
-				<li>Langvarig eller Kortvarig</li>
-			</ul>
-			<p class="mt-2">Unntaket er "Kan kjøres på engelsk" som er valgfritt.</p>
-		</div>
 		<div>
-			{ templ.JSONString(eventForm) }
 			@inputValidationComponent("Tittel på spillmodul / arrangement", "text", "title", eventFormValidationResult.IsTitleValid, "Tittel må være minst 3 tegn lang")
 			@inputValidationComponent("Beskrivelse", "text", "description", eventFormValidationResult.IsDescriptionValid, "Beskrivelse må være minst 3 tegn lang")
 			@inputValidationComponent("Bilde URL", "text", "image_url", eventFormValidationResult.IsImageURLValid, "Bilde URL må være fra imgur.com")
 			@inputValidationComponent("System", "text", "system", eventFormValidationResult.IsSystemValid, "System må være minst 3 tegn lang")
 			@inputValidationComponent("Navn på arrangør", "text", "host_name", eventFormValidationResult.IsHostNameValid, "Navn på arrangør må være minst 3 tegn lang")
+			@inputValidationComponent("E-postadresse", "text", "email", eventFormValidationResult.IsEmailValid, "E-postadressen må være gyldig")
+			@inputValidationComponent("Telefonnummer", "text", "phone_number", eventFormValidationResult.IsPhoneNumberValid, "Telefonnummeret må være minst 8 siffer")
 			@radioValidationComponent("Pulje navn", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Du må velge en pulje")
 			@inputValidationComponent("Maks antall spillere", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Maks antall spillere må være mellom 1 og 18")
 			@checkboxValidationComponent("Kan kjøres på engelsk", "can_be_run_in_english", true, "", false)
@@ -688,6 +690,8 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 			image_url,
 			system,
 			host_name,
+			email,
+			phone_number,
 			pulje_name,
 			max_players,
 			child_friendly,
@@ -697,7 +701,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 			can_be_run_in_english,
 			long_running,
 			short_running
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, insertError := db.Exec(query,
 		eventForm.Title,
@@ -705,6 +709,8 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 		eventForm.ImageURL,
 		eventForm.System,
 		eventForm.HostName,
+		eventForm.Email,
+		eventForm.PhoneNumber,
 		eventForm.PuljeName,
 		eventForm.MaxPlayers,
 		eventForm.ChildFriendly,

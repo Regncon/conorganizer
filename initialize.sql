@@ -73,6 +73,8 @@ CREATE TABLE IF NOT EXISTS events (
     system TEXT,
     host_name TEXT NOT NULL,
     host INTEGER,
+    email TEXT NOT NULL,
+    phone_number INTEGER NOT NULL,
     room_name INTEGER,
     pulje_name INTEGER,
     max_players INTEGER NOT NULL,
