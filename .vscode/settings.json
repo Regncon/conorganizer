@@ -1,10 +1,18 @@
 {
-    "gopls": {
-        "build.buildFlags": ["-tags=dev"]
-    },
-    "go.useLanguageServer": true,
-    "[templ]": {
-        "editor.defaultFormatter": "a-h.templ"
-    },
-    "cSpell.words": ["Atoi", "ifmissing", "omitempty", "println", "strconv"]
+  "gopls": {
+    "build.buildFlags": ["-tags=dev"]
+  },
+  "go.useLanguageServer": true,
+  "[templ]": {
+    "editor.defaultFormatter": "a-h.templ"
+  },
+  "cSpell.words": [
+    "Atoi",
+    "ifmissing",
+    "omitempty",
+    "println",
+    "strconv",
+    "ticketholder",
+    "ticketholders"
+  ]
 }
