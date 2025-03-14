@@ -52,8 +52,8 @@ type ValidationResultStruct struct {
 func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger *slog.Logger) error {
 	eventFormRouter.Route("/inline_validation/data", func(dataRouter chi.Router) {
 		checkEventFromValidity := func(eventForm *EventFormStruct) ValidationResultStruct {
-			isTitleValid := len(eventForm.Title) > 3
-			isDescriptionValid := len(eventForm.Description) > 3
+			isTitleValid := len(eventForm.Title) >= 3
+			isDescriptionValid := len(eventForm.Description) >= 3
 			isMaxPlayersValid := eventForm.MaxPlayers > 0 && eventForm.MaxPlayers <= 18
 			isSystemValid := eventForm.System != nil && len(*eventForm.System) > 2
 			isHostNameValid := len(eventForm.HostName) > 2
@@ -257,9 +257,9 @@ templ inputValidationComponent(label string, inputType InputType, field string, 
 	</div>
 }
 
-templ checkboxValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
+templ checkboxValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, isDisabled bool, labelArgs ...any) {
 	<div class="form-control">
-		<label class="cursor-pointer label">
+		<label class={ "cursor-pointer label", templ.KV("opacity-50", isDisabled) }>
 			<span class="label-text">{ label }</span>
 			<input
 				type="checkbox"
@@ -267,6 +267,7 @@ templ checkboxValidationComponent(label, field string, isValid bool, isNotValidE
 				data-bind={ field }
 				data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
 				data-testid={ field + "_input" }
+				disabled?={ isDisabled }
 			/>
 		</label>
 		if !isValid {
@@ -344,6 +345,15 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		data-on-submit={ datastar.PutSSE("/event/api/new/inline_validation/data") }
 	>
 		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
+		<div class="text-sm text-gray-300">
+			<p>Alle felt må fylles ut. For sjekkboksene må du velge ett alternativ fra hvert par:</p>
+			<ul class="list-disc list-inside mt-2 space-y-1">
+				<li>Barnevennlig eller Kun for voksne</li>
+				<li>Nybegynnervennlig eller Kun for erfarne</li>
+				<li>Langvarig eller Kortvarig</li>
+			</ul>
+			<p class="mt-2">Unntaket er "Kan kjøres på engelsk" som er valgfritt.</p>
+		</div>
 		<div>
 			{ templ.JSONString(eventForm) }
 			@inputValidationComponent("Tittel på spillmodul / arrangement", "text", "title", eventFormValidationResult.IsTitleValid, "Tittel må være minst 3 tegn lang")
@@ -353,13 +363,30 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 			@inputValidationComponent("Navn på arrangør", "text", "host_name", eventFormValidationResult.IsHostNameValid, "Navn på arrangør må være minst 3 tegn lang")
 			@radioValidationComponent("Pulje navn", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Du må velge en pulje")
 			@inputValidationComponent("Maks antall spillere", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Maks antall spillere må være mellom 1 og 18")
-			@checkboxValidationComponent("Barnevennlig", "child_friendly", eventFormValidationResult.IsChildFriendlyValid, "Barnevennlig og Kun for voksne kan ikke begge være valgt")
-			@checkboxValidationComponent("Kun for voksne", "adults_only", eventFormValidationResult.IsAdultsOnlyValid, "Barnevennlig og Kun for voksne kan ikke begge være valgt")
-			@checkboxValidationComponent("Nybegynnervennlig", "beginner_friendly", eventFormValidationResult.IsBeginnerFriendlyValid, "Nybegynnervennlig og Kun for erfarne kan ikke begge være valgt")
-			@checkboxValidationComponent("Kun for erfarne", "experienced_only", eventFormValidationResult.IsExperiencedOnlyValid, "Nybegynnervennlig og Kun for erfarne kan ikke begge være valgt")
-			@checkboxValidationComponent("Kan kjøres på engelsk", "can_be_run_in_english", true, "")
-			@checkboxValidationComponent("Langvarig", "long_running", eventFormValidationResult.IsLongRunningValid, "Langvarig og Kortvarig kan ikke begge være valgt")
-			@checkboxValidationComponent("Kortvarig", "short_running", eventFormValidationResult.IsShortRunningValid, "Langvarig og Kortvarig kan ikke begge være valgt")
+			@checkboxValidationComponent("Kan kjøres på engelsk", "can_be_run_in_english", true, "", false)
+			<div class="checkbox-groups">
+				<div class="checkbox-group">
+					<div class="group-label">Aldersgruppe:</div>
+					<div class="group-checkboxes">
+						@checkboxValidationComponent("Barnevennlig", "child_friendly", eventFormValidationResult.IsChildFriendlyValid, "Kan ikke velge både barnevennlig og kun for voksne", eventForm.AdultsOnly)
+						@checkboxValidationComponent("Kun for voksne", "adults_only", eventFormValidationResult.IsAdultsOnlyValid, "Kan ikke velge både kun for voksne og barnevennlig", eventForm.ChildFriendly)
+					</div>
+				</div>
+				<div class="checkbox-group">
+					<div class="group-label">Erfaringsnivå:</div>
+					<div class="group-checkboxes">
+						@checkboxValidationComponent("Nybegynnervennlig", "beginner_friendly", eventFormValidationResult.IsBeginnerFriendlyValid, "Kan ikke velge både nybegynnervennlig og kun for erfarne", eventForm.ExperiencedOnly)
+						@checkboxValidationComponent("Kun for erfarne", "experienced_only", eventFormValidationResult.IsExperiencedOnlyValid, "Kan ikke velge både kun for erfarne og nybegynnervennlig", eventForm.BeginnerFriendly)
+					</div>
+				</div>
+				<div class="checkbox-group">
+					<div class="group-label">Varighet:</div>
+					<div class="group-checkboxes">
+						@checkboxValidationComponent("Langvarig", "long_running", eventFormValidationResult.IsLongRunningValid, "Kan ikke velge både langvarig og kortvarig", eventForm.ShortRunning)
+						@checkboxValidationComponent("Kortvarig", "short_running", eventFormValidationResult.IsShortRunningValid, "Kan ikke velge både kortvarig og langvarig", eventForm.LongRunning)
+					</div>
+				</div>
+			</div>
 		</div>
 		<button
 			class="btn btn-success"
@@ -387,148 +414,224 @@ templ inlineValidationFailedSaving(err error) {
 	</div>
 }
 
-templ EventFromValidation(data *EventFormStruct, vr ValidationResultStruct) {
-	<form
-		class="flex flex-col gap-4"
-		data-signals__ifmissing={ templ.JSONString(data) }
-	>
-		<div class="form-control">
-			<label class="label">
-				<span class="label-text">Tittel på spillmodul / arrangement</span>
-			</label>
-			<input class="input input-bordered" type="text" data-bind="title" data-testid="title_input"/>
-		</div>
-		<div class="form-control">
-			<label class="label">
-				<span class="label-text">Beskrivelse</span>
-			</label>
-			<textarea class="textarea textarea-bordered" data-bind="description" data-testid="description_input"></textarea>
-		</div>
-		<div class="form-control">
-			<label class="label">
-				<span class="label-text">Bilde URL</span>
-			</label>
-			<input class="input input-bordered" type="text" data-bind="image_url" data-testid="image_url_input"/>
-		</div>
-		<div class="form-control">
-			<label class="label">
-				<span class="label-text">System</span>
-			</label>
-			<input class="input input-bordered" type="text" data-bind="system" data-testid="system_input"/>
-		</div>
-		<div class="form-control">
-			<label class="label">
-				<span class="label-text">Navn på arrangør</span>
-			</label>
-			<input class="input input-bordered" type="text" data-bind="host_name" data-testid="host_name_input"/>
-		</div>
-		<div class="form-control">
-			<label class="label">
-				<span class="label-text">Arrangør</span>
-			</label>
-			<input class="input input-bordered" type="text" data-bind="host" data-testid="host_input"/>
-		</div>
-		<div class="form-control">
-			<label class="label">
-				<span class="label-text">Pulje navn</span>
-			</label>
-			<div class="flex flex-col gap-2">
-				<label class="cursor-pointer flex items-center gap-2">
-					<input type="radio" name="pulje_name" value="1" class="radio" data-bind="pulje_name" data-testid="pulje_name_1"/>
-					<span>Fredag kveld</span>
-				</label>
-				<label class="cursor-pointer flex items-center gap-2">
-					<input type="radio" name="pulje_name" value="2" class="radio" data-bind="pulje_name" data-testid="pulje_name_2"/>
-					<span>Lørdag morgen</span>
-				</label>
-				<label class="cursor-pointer flex items-center gap-2">
-					<input type="radio" name="pulje_name" value="3" class="radio" data-bind="pulje_name" data-testid="pulje_name_3"/>
-					<span>Lørdag kveld</span>
-				</label>
-				<label class="cursor-pointer flex items-center gap-2">
-					<input type="radio" name="pulje_name" value="4" class="radio" data-bind="pulje_name" data-testid="pulje_name_4"/>
-					<span>Søndag morgen</span>
-				</label>
-			</div>
-		</div>
-		<div class="form-control">
-			<label class="label">
-				<span class="label-text">Maks antall spillere</span>
-			</label>
-			<input class="input input-bordered" type="number" data-bind="max_players" data-testid="max_players_input"/>
-		</div>
-		<div class="form-control">
-			<label class="cursor-pointer label">
-				<span class="label-text">Barnevennlig</span>
-				<input type="checkbox" class="toggle" data-bind="child_friendly" data-testid="child_friendly_input"/>
-			</label>
-		</div>
-		<div class="form-control">
-			<label class="cursor-pointer label">
-				<span class="label-text">Kun for voksne</span>
-				<input type="checkbox" class="toggle" data-bind="adults_only" data-testid="adults_only_input"/>
-			</label>
-		</div>
-		<div class="form-control">
-			<label class="cursor-pointer label">
-				<span class="label-text">Nybegynnervennlig</span>
-				<input type="checkbox" class="toggle" data-bind="beginner_friendly" data-testid="beginner_friendly_input"/>
-			</label>
-		</div>
-		<div class="form-control">
-			<label class="cursor-pointer label">
-				<span class="label-text">Kun for erfarne</span>
-				<input type="checkbox" class="toggle" data-bind="experienced_only" data-testid="experienced_only_input"/>
-			</label>
-		</div>
-		<div class="form-control">
-			<label class="cursor-pointer label">
-				<span class="label-text">Kan kjøres på engelsk</span>
-				<input type="checkbox" class="toggle" data-bind="can_be_run_in_english" data-testid="can_be_run_in_english_input"/>
-			</label>
-		</div>
-		<div class="form-control">
-			<label class="cursor-pointer label">
-				<span class="label-text">Langvarig</span>
-				<input type="checkbox" class="toggle" data-bind="long_running" data-testid="long_running_input"/>
-			</label>
-		</div>
-		<div class="form-control">
-			<label class="cursor-pointer label">
-				<span class="label-text">Kortvarig</span>
-				<input type="checkbox" class="toggle" data-bind="short_running" data-testid="short_running_input"/>
-			</label>
-		</div>
-		<div>
-			<button
-				class="btn btn-primary"
-				type="submit"
-				data-on-click={ datastar.PutSSE("/event/api/new/inline_validation/data") }
-			>
-				Send inn arrangement
-			</button>
-		</div>
-	</form>
-	<code>
-		<pre data-text="ctx.signals.JSON()"></pre>
-	</code>
-}
-
 // Dette er en ny templ-komponent som viser skjemaet med alle feltene.
 // Merk at du kan legge til data-on-* attributter, inline validering, etc. etter behov.
 templ EventForm() {
 	{{
-
-
-			emptyStr := ""
-			initialForm := &EventFormStruct{
-				ImageURL:  &emptyStr,
-				System:    &emptyStr,
-				PuljeName: &emptyStr,
-			}
+		emptyStr := ""
+		initialForm := &EventFormStruct{
+			ImageURL:  &emptyStr,
+			System:    &emptyStr,
+			PuljeName: &emptyStr,
+		}
 	}}
 	<div>
 		<h1>Melde på nytt arrangement</h1>
+		<style>
+		:root {
+			--primary-bg: #2a2d3d;
+			--secondary-bg: #363a4f;
+			--text-color: #e6e9ef;
+			--accent-color: #f87171;
+			--input-bg: #1e2030;
+			--success-color: #4ade80;
+			--border-radius: 0.5rem;
+		}
+
+		#inline_validation {
+			background: var(--primary-bg);
+			color: var(--text-color);
+			padding: 2rem;
+			border-radius: var(--border-radius);
+			max-width: 1200px;
+			margin: 2rem auto;
+			font-family: system-ui, -apple-system, sans-serif;
+		}
+
+		.form-control {
+			background: var(--secondary-bg);
+			padding: 1.25rem;
+			border-radius: var(--border-radius);
+			margin-bottom: 1rem;
+			transition: all 0.2s ease;
+		}
+
+		.form-control:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+		}
+
+		.label-text {
+			font-size: 1rem;
+			font-weight: 500;
+			margin-bottom: 0.5rem;
+			display: block;
+		}
+
+		.input, .textarea {
+			width: 100%;
+			background: var(--input-bg);
+			border: 1px solid transparent;
+			color: var(--text-color);
+			padding: 0.75rem 1rem;
+			border-radius: var(--border-radius);
+			transition: border-color 0.2s ease;
+		}
+
+		.input:focus, .textarea:focus {
+			outline: none;
+			border-color: var(--accent-color);
+		}
+
+		.input-error {
+			border-color: var(--accent-color);
+		}
+
+		.text-error {
+			color: var(--accent-color);
+			font-size: 0.875rem;
+			margin-top: 0.5rem;
+		}
+
+		.toggle {
+			appearance: none;
+			width: 3.5rem;
+			height: 2rem;
+			background: var(--input-bg);
+			border-radius: 999px;
+			position: relative;
+			cursor: pointer;
+			transition: all 0.2s ease;
+		}
+
+		.toggle:checked {
+			background: var(--success-color);
+		}
+
+		.toggle::after {
+			content: '';
+			position: absolute;
+			top: 0.25rem;
+			left: 0.25rem;
+			width: 1.5rem;
+			height: 1.5rem;
+			background: white;
+			border-radius: 50%;
+			transition: transform 0.2s ease;
+		}
+
+		.toggle:checked::after {
+			transform: translateX(1.5rem);
+		}
+
+		.radio {
+			appearance: none;
+			width: 1.5rem;
+			height: 1.5rem;
+			border: 2px solid var(--text-color);
+			border-radius: 50%;
+			position: relative;
+			cursor: pointer;
+		}
+
+		.radio:checked {
+			border-color: var(--success-color);
+		}
+
+		.radio:checked::after {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			width: 0.75rem;
+			height: 0.75rem;
+			background: var(--success-color);
+			border-radius: 50%;
+		}
+
+		.btn {
+			padding: 0.75rem 1.5rem;
+			border-radius: var(--border-radius);
+			font-weight: 500;
+			cursor: pointer;
+			transition: all 0.2s ease;
+		}
+
+		.btn-success {
+			background: var(--success-color);
+			color: var(--primary-bg);
+		}
+
+		.btn-success:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+
+		.divider {
+			height: 1px;
+			background: var(--secondary-bg);
+			margin: 2rem 0;
+		}
+
+		code {
+			background: var(--input-bg);
+			padding: 1rem;
+			border-radius: var(--border-radius);
+			display: block;
+			margin-top: 1rem;
+		}
+
+		.flex-col {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+		}
+
+		.opacity-50 {
+			opacity: 0.5;
+			cursor: not-allowed !important;
+		}
+
+		.checkbox-groups {
+			display: flex;
+			flex-direction: column;
+			gap: 2rem;
+			margin-top: 2rem;
+		}
+
+		.checkbox-group {
+			background: var(--secondary-bg);
+			padding: 1.5rem;
+			border-radius: var(--border-radius);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+		}
+
+		.group-label {
+			font-size: 1.1rem;
+			font-weight: 600;
+			color: var(--text-color);
+			margin-bottom: 1rem;
+			padding-bottom: 0.5rem;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		}
+
+		.group-checkboxes {
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+		}
+
+		.group-checkboxes .form-control {
+			margin-bottom: 0;
+			background: var(--primary-bg);
+		}
+
+		.group-checkboxes .form-control:hover {
+			transform: none;
+			box-shadow: none;
+		}
+		</style>
 		@inlineValidationFormEventComponent(initialForm, ValidationResultStruct{})
 	</div>
 }
