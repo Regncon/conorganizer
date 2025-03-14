@@ -337,6 +337,41 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 	</div>
 }
 
+templ radioGroupValidationComponent(groupLabel string, options [2]string, fields [2]string, values [2]bool, isValid bool, errorMessage string) {
+	<div class="form-control radio-group">
+		<div class="group-label">{ groupLabel }</div>
+		<div class="radio-options">
+			<label class="cursor-pointer radio-label">
+				<input
+					type="radio"
+					name={ groupLabel }
+					class="radio"
+					data-bind={ fields[0] }
+					data-on-click__debounce.100ms={ fmt.Sprintf("$%s = false", fields[1]) }
+					data-on-change__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					checked?={ values[0] }
+				/>
+				<span>{ options[0] }</span>
+			</label>
+			<label class="cursor-pointer radio-label">
+				<input
+					type="radio"
+					name={ groupLabel }
+					class="radio"
+					data-bind={ fields[1] }
+					data-on-click__debounce.100ms={ fmt.Sprintf("$%s = false", fields[0]) }
+					data-on-change__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					checked?={ values[1] }
+				/>
+				<span>{ options[1] }</span>
+			</label>
+		</div>
+		if !isValid {
+			<label class="text-sm font-bold text-error">{ errorMessage }</label>
+		}
+	</div>
+}
+
 templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormValidationResult ValidationResultStruct) {
 	<form
 		id="inline_validation"
@@ -364,27 +399,36 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 			@radioValidationComponent("Pulje navn", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Du må velge en pulje")
 			@inputValidationComponent("Maks antall spillere", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Maks antall spillere må være mellom 1 og 18")
 			@checkboxValidationComponent("Kan kjøres på engelsk", "can_be_run_in_english", true, "", false)
-			<div class="checkbox-groups">
-				<div class="checkbox-group">
-					<div class="group-label">Aldersgruppe:</div>
-					<div class="group-checkboxes">
-						@checkboxValidationComponent("Barnevennlig", "child_friendly", eventFormValidationResult.IsChildFriendlyValid, "Kan ikke velge både barnevennlig og kun for voksne", eventForm.AdultsOnly)
-						@checkboxValidationComponent("Kun for voksne", "adults_only", eventFormValidationResult.IsAdultsOnlyValid, "Kan ikke velge både kun for voksne og barnevennlig", eventForm.ChildFriendly)
-					</div>
+			<div class="radio-groups">
+				<div class="radio-group-container">
+					@radioGroupValidationComponent(
+						"Aldersgruppe",
+						[2]string{"Barnevennlig", "Kun for voksne"},
+						[2]string{"child_friendly", "adults_only"},
+						[2]bool{eventForm.ChildFriendly, eventForm.AdultsOnly},
+						eventFormValidationResult.IsChildFriendlyValid && eventFormValidationResult.IsAdultsOnlyValid,
+						"Du må velge én aldersgruppe",
+					)
 				</div>
-				<div class="checkbox-group">
-					<div class="group-label">Erfaringsnivå:</div>
-					<div class="group-checkboxes">
-						@checkboxValidationComponent("Nybegynnervennlig", "beginner_friendly", eventFormValidationResult.IsBeginnerFriendlyValid, "Kan ikke velge både nybegynnervennlig og kun for erfarne", eventForm.ExperiencedOnly)
-						@checkboxValidationComponent("Kun for erfarne", "experienced_only", eventFormValidationResult.IsExperiencedOnlyValid, "Kan ikke velge både kun for erfarne og nybegynnervennlig", eventForm.BeginnerFriendly)
-					</div>
+				<div class="radio-group-container">
+					@radioGroupValidationComponent(
+						"Erfaringsnivå",
+						[2]string{"Nybegynnervennlig", "Kun for erfarne"},
+						[2]string{"beginner_friendly", "experienced_only"},
+						[2]bool{eventForm.BeginnerFriendly, eventForm.ExperiencedOnly},
+						eventFormValidationResult.IsBeginnerFriendlyValid && eventFormValidationResult.IsExperiencedOnlyValid,
+						"Du må velge ett erfaringsnivå",
+					)
 				</div>
-				<div class="checkbox-group">
-					<div class="group-label">Varighet:</div>
-					<div class="group-checkboxes">
-						@checkboxValidationComponent("Langvarig", "long_running", eventFormValidationResult.IsLongRunningValid, "Kan ikke velge både langvarig og kortvarig", eventForm.ShortRunning)
-						@checkboxValidationComponent("Kortvarig", "short_running", eventFormValidationResult.IsShortRunningValid, "Kan ikke velge både kortvarig og langvarig", eventForm.LongRunning)
-					</div>
+				<div class="radio-group-container">
+					@radioGroupValidationComponent(
+						"Varighet",
+						[2]string{"Langvarig", "Kortvarig"},
+						[2]string{"long_running", "short_running"},
+						[2]bool{eventForm.LongRunning, eventForm.ShortRunning},
+						eventFormValidationResult.IsLongRunningValid && eventFormValidationResult.IsShortRunningValid,
+						"Du må velge én varighet",
+					)
 				</div>
 			</div>
 		</div>
