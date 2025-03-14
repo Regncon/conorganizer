@@ -115,7 +115,12 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 		}
 
 		dataRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			eventForm := &EventFormStruct{}
+			emptyStr := ""
+			eventForm := &EventFormStruct{
+				ImageURL:  &emptyStr,
+				System:    &emptyStr,
+				PuljeName: &emptyStr,
+			}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
@@ -126,7 +131,12 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 		})
 
 		dataRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
-			eventForm := &EventFormStruct{}
+			emptyStr := ""
+			eventForm := &EventFormStruct{
+				ImageURL:  &emptyStr,
+				System:    &emptyStr,
+				PuljeName: &emptyStr,
+			}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
@@ -490,9 +500,19 @@ templ EventFromValidation(data *EventFormStruct, vr ValidationResultStruct) {
 // Dette er en ny templ-komponent som viser skjemaet med alle feltene.
 // Merk at du kan legge til data-on-* attributter, inline validering, etc. etter behov.
 templ EventForm() {
+	{{
+
+
+			emptyStr := ""
+			initialForm := &EventFormStruct{
+				ImageURL:  &emptyStr,
+				System:    &emptyStr,
+				PuljeName: &emptyStr,
+			}
+	}}
 	<div>
 		<h1>Melde på nytt arrangement</h1>
-		@inlineValidationFormEventComponent(&EventFormStruct{}, ValidationResultStruct{})
+		@inlineValidationFormEventComponent(initialForm, ValidationResultStruct{})
 	</div>
 }
 
