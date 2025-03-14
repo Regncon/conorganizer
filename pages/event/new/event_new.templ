@@ -363,6 +363,7 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		</div>
 		<button
 			class="btn btn-success"
+			disabled?={ !eventFormValidationResult.IsValid }
 			data-testid="submit_button"
 		>
 			Send inn arrangement
