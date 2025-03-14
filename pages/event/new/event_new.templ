@@ -315,23 +315,23 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		class="flex flex-col gap-4"
 		data-signals__ifmissing={ templ.JSONString(eventForm) }
 	>
-		<div class="text-2xl font-bold">Sign Up</div>
+		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
 		<div>
 			{ templ.JSONString(eventForm) }
-			@inputValidationComponent("Title", "text", "title", eventFormValidationResult.IsTitleValid, "Title must be at least 3 characters long")
-			@inputValidationComponent("Description", "text", "description", eventFormValidationResult.IsDescriptionValid, "Description must be at least 3 characters long")
-			@inputValidationComponent("Image URL", "text", "image_url", eventFormValidationResult.IsImageURLValid, "Image URL must be from imgur.com")
-			@inputValidationComponent("System", "text", "system", eventFormValidationResult.IsSystemValid, "System must be at least 3 characters long")
-			@inputValidationComponent("Host Name", "text", "host_name", eventFormValidationResult.IsHostNameValid, "Host Name must be at least 3 characters long")
-			@radioValidationComponent("Pulje Name", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Pulje Name must be selected")
-			@inputValidationComponent("Max Players", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Max Players must be between 1 and 18")
-			@checkboxValidationComponent("Child Friendly", "child_friendly", eventFormValidationResult.IsChildFriendlyValid, "Child Friendly and Adults Only cannot both be selected")
-			@checkboxValidationComponent("Adults Only", "adults_only", eventFormValidationResult.IsAdultsOnlyValid, "Child Friendly and Adults Only cannot both be selected")
-			@checkboxValidationComponent("Beginner Friendly", "beginner_friendly", eventFormValidationResult.IsBeginnerFriendlyValid, "Beginner Friendly and Experienced Only cannot both be selected")
-			@checkboxValidationComponent("Experienced Only", "experienced_only", eventFormValidationResult.IsExperiencedOnlyValid, "Beginner Friendly and Experienced Only cannot both be selected")
-			@checkboxValidationComponent("Can Be Run In English", "can_be_run_in_english", true, "")
-			@checkboxValidationComponent("Long Running", "long_running", eventFormValidationResult.IsLongRunningValid, "Long Running and Short Running cannot both be selected")
-			@checkboxValidationComponent("Short Running", "short_running", eventFormValidationResult.IsShortRunningValid, "Long Running and Short Running cannot both be selected")
+			@inputValidationComponent("Tittel på spillmodul / arrangement", "text", "title", eventFormValidationResult.IsTitleValid, "Tittel må være minst 3 tegn lang")
+			@inputValidationComponent("Beskrivelse", "text", "description", eventFormValidationResult.IsDescriptionValid, "Beskrivelse må være minst 3 tegn lang")
+			@inputValidationComponent("Bilde URL", "text", "image_url", eventFormValidationResult.IsImageURLValid, "Bilde URL må være fra imgur.com")
+			@inputValidationComponent("System", "text", "system", eventFormValidationResult.IsSystemValid, "System må være minst 3 tegn lang")
+			@inputValidationComponent("Navn på arrangør", "text", "host_name", eventFormValidationResult.IsHostNameValid, "Navn på arrangør må være minst 3 tegn lang")
+			@radioValidationComponent("Pulje navn", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Du må velge en pulje")
+			@inputValidationComponent("Maks antall spillere", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Maks antall spillere må være mellom 1 og 18")
+			@checkboxValidationComponent("Barnevennlig", "child_friendly", eventFormValidationResult.IsChildFriendlyValid, "Barnevennlig og Kun for voksne kan ikke begge være valgt")
+			@checkboxValidationComponent("Kun for voksne", "adults_only", eventFormValidationResult.IsAdultsOnlyValid, "Barnevennlig og Kun for voksne kan ikke begge være valgt")
+			@checkboxValidationComponent("Nybegynnervennlig", "beginner_friendly", eventFormValidationResult.IsBeginnerFriendlyValid, "Nybegynnervennlig og Kun for erfarne kan ikke begge være valgt")
+			@checkboxValidationComponent("Kun for erfarne", "experienced_only", eventFormValidationResult.IsExperiencedOnlyValid, "Nybegynnervennlig og Kun for erfarne kan ikke begge være valgt")
+			@checkboxValidationComponent("Kan kjøres på engelsk", "can_be_run_in_english", true, "")
+			@checkboxValidationComponent("Langvarig", "long_running", eventFormValidationResult.IsLongRunningValid, "Langvarig og Kortvarig kan ikke begge være valgt")
+			@checkboxValidationComponent("Kortvarig", "short_running", eventFormValidationResult.IsShortRunningValid, "Langvarig og Kortvarig kan ikke begge være valgt")
 		</div>
 		<button
 			class="btn btn-success"
@@ -350,13 +350,13 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 
 templ inlineValidationThankYou() {
 	<div id="inline_validation" class="alert alert-success">
-		Thank you for signing up!
+		Takk for påmeldingen!
 	</div>
 }
 
 templ inlineValidationFailedSaving(err error) {
 	<div id="inline_validation" class="alert alert-error">
-		Failed to save event. Please try again. Error: { fmt.Sprintf("%v", err) }
+		Kunne ikke lagre arrangementet. Vennligst prøv igjen. Feil: { fmt.Sprintf("%v", err) }
 	</div>
 }
 
