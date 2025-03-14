@@ -5,7 +5,6 @@
     // List of extensions which should be recommended for users of this workspace.
     "recommendations": [
         "a-h.templ",
-        "bradlc.vscode-tailwindcss",
         "lsl.vscode-templ-go-to-definition",
         "editorconfig.editorconfig",
         "usernamehw.errorlens"

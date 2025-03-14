@@ -55,39 +55,26 @@ CREATE TABLE IF NOT EXISTS ticketholders_users (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS suggested_event (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	host INTEGER NOT NULL,
-	title TEXT,
-	description TEXT,
-	image_url TEXT,
-	system TEXT,
-	max_players INTEGER,
-    child_friendly BOOLEAN NOT NULL,
-    adults_only BOOLEAN NOT NULL,
-    beginner_friendly BOOLEAN NOT NULL,
-    experienced_only BOOLEAN NOT NULL,
-    can_be_run_in_english BOOLEAN NOT NULL,
-    long_running BOOLEAN NOT NULL,
-    short_running BOOLEAN NOT NULL,
-	submitted_time TIMESTAMP,
-    inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (host) REFERENCES users(id) ON DELETE CASCADE,
-	-- Ensure some flags are mutually exclusive
-    CHECK (child_friendly + adults_only <= 1),
-    CHECK (beginner_friendly + experienced_only <= 1),
-    CHECK (long_running + short_running <= 1)
+CREATE TABLE IF NOT EXISTS event_statuses (
+    status TEXT PRIMARY KEY
 );
+
+INSERT INTO event_statuses (status) VALUES
+('Kladd'),
+('Publisert'),
+('Godkjent'),
+('Avvist');
 
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-	suggested_event_id INTEGER,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
-	image_url TEXT,
-	system TEXT,
+    image_url TEXT,
+    system TEXT,
     host_name TEXT NOT NULL,
     host INTEGER,
+    email TEXT NOT NULL,
+    phone_number INTEGER NOT NULL,
     room_name INTEGER,
     pulje_name INTEGER,
     max_players INTEGER NOT NULL,
@@ -98,12 +85,13 @@ CREATE TABLE IF NOT EXISTS events (
     can_be_run_in_english BOOLEAN NOT NULL,
     long_running BOOLEAN NOT NULL,
     short_running BOOLEAN NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Kladd',
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (suggested_event_id) REFERENCES suggested_event(id) ON DELETE SET NULL,
     FOREIGN KEY (host) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (room_name) REFERENCES rooms(name) ON UPDATE CASCADE,
     FOREIGN KEY (pulje_name) REFERENCES puljer(name) ON UPDATE CASCADE,
-	-- Ensure some flags are mutually exclusive
+    FOREIGN KEY (status) REFERENCES event_statuses(status) ON UPDATE CASCADE,
+    -- Ensure some flags are mutually exclusive
     CHECK (child_friendly + adults_only <= 1),
     CHECK (beginner_friendly + experienced_only <= 1),
     CHECK (long_running + short_running <= 1)

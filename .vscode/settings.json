@@ -5,5 +5,14 @@
   "go.useLanguageServer": true,
   "[templ]": {
     "editor.defaultFormatter": "a-h.templ"
-  }
+  },
+  "cSpell.words": [
+    "Atoi",
+    "ifmissing",
+    "omitempty",
+    "println",
+    "strconv",
+    "ticketholder",
+    "ticketholders"
+  ]
 }
