@@ -244,7 +244,7 @@ templ checkboxValidationComponent(label, field string, isValid bool, isNotValidE
 				type="checkbox"
 				class="toggle"
 				data-bind={ field }
-				data-on-click={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+				data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
 				data-testid={ field + "_input" }
 			/>
 		</label>
@@ -266,9 +266,9 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					name={ field }
 					value="1"
 					class="radio"
-					data-bind={ fmt.Sprintf("pulje.%s", field) }
+					data-bind={ field }
+					data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
 					data-testid={ field + "_1" }
-					data-on-signals-change={ datastar.GetSSE("/event/api/new/inline_validation/data") }
 				/>
 				<span>Fredag kveld</span>
 			</label>
@@ -279,7 +279,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="2"
 					class="radio"
 					data-bind={ field }
-					data-on-signals-change={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
 					data-testid={ field + "_2" }
 				/>
 				<span>Lørdag morgen</span>
@@ -291,7 +291,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="3"
 					class="radio"
 					data-bind={ field }
-					data-on-signals-change={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
 					data-testid={ field + "_3" }
 				/>
 				<span>Lørdag kveld</span>
@@ -303,7 +303,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="4"
 					class="radio"
 					data-bind={ field }
-					data-on-signals-change={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
 					data-testid={ field + "_4" }
 				/>
 				<span>Søndag morgen</span>
@@ -316,48 +316,14 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 }
 
 templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormValidationResult ValidationResultStruct) {
-	{{
-	type EventWithoutSensitiveFields struct {
-		Title             string  `json:"title"`
-		Description       string  `json:"description"`
-		ImageURL          *string `json:"image_url,omitempty"`
-		System            *string `json:"system,omitempty"`
-		HostName          string  `json:"host_name"`
-		MaxPlayers        int     `json:"max_players"`
-		ChildFriendly     bool    `json:"child_friendly"`
-		AdultsOnly        bool    `json:"adults_only"`
-		BeginnerFriendly  bool    `json:"beginner_friendly"`
-		ExperiencedOnly   bool    `json:"experienced_only"`
-		CanBeRunInEnglish bool    `json:"can_be_run_in_english"`
-		LongRunning       bool    `json:"long_running"`
-		ShortRunning      bool    `json:"short_running"`
-	}
-
-	// eventFromWithoutPulje := EventWithoutSensitiveFields{
-	// 	Title:             eventForm.Title,
-	// 	Description:       eventForm.Description,
-	// 	ImageURL:          eventForm.ImageURL,
-	// 	System:            eventForm.System,
-	// 	HostName:          eventForm.HostName,
-	// 	MaxPlayers:        eventForm.MaxPlayers,
-	// 	ChildFriendly:     eventForm.ChildFriendly,
-	// 	AdultsOnly:        eventForm.AdultsOnly,
-	// 	BeginnerFriendly:  eventForm.BeginnerFriendly,
-	// 	ExperiencedOnly:   eventForm.ExperiencedOnly,
-	// 	CanBeRunInEnglish: eventForm.CanBeRunInEnglish,
-	// 	LongRunning:       eventForm.LongRunning,
-	// 	ShortRunning:      eventForm.ShortRunning,
-	// }
-	}}
 	<div
 		id="inline_validation"
 		class="flex flex-col gap-4"
 		data-signals__ifmissing={ templ.JSONString(eventForm) }
-		data-signals__ifmissing={ fmt.Sprintf("pulje: { pulje_name: %v }", eventForm.PuljeName) }
 	>
 		<div class="text-2xl font-bold">Sign Up</div>
 		<div>
-			{ templ.JSONString(eventForm.PuljeName) }
+			{ templ.JSONString(eventForm) }
 			@inputValidationComponent("Title", "text", "title", eventFormValidationResult.IsTitleValid, "Title must be at least 3 characters long")
 			@inputValidationComponent("Description", "text", "description", eventFormValidationResult.IsDescriptionValid, "Description must be at least 3 characters long")
 			@inputValidationComponent("Image URL", "text", "image_url", eventFormValidationResult.IsImageURLValid, "Image URL must be from imgur.com")
