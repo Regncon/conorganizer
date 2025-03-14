@@ -73,20 +73,14 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 
 			isPuljeNameValid = puljeNameInt > 0 && len(puljeNames) > 0 && puljeNameInt <= len(puljeNames)
 
-			isChildFriendly := eventForm.ChildFriendly && !eventForm.AdultsOnly
-			isAdultsOnly := eventForm.AdultsOnly && !eventForm.ChildFriendly
+			isChildFriendly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
+			isAdultsOnly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
 
-			println("isChildFriendly", isChildFriendly)
-			println("isAdultsOnly", isAdultsOnly)
+			isBeginnerFriendly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
+			isExperiencedOnly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
 
-			isBeginnerFriendly := eventForm.BeginnerFriendly && !eventForm.ExperiencedOnly
-			isExperiencedOnly := eventForm.ExperiencedOnly && !eventForm.BeginnerFriendly
-
-			println("isBeginnerFriendly", isBeginnerFriendly)
-			println("isExperiencedOnly", isExperiencedOnly)
-
-			isLongRunning := eventForm.LongRunning && !eventForm.ShortRunning
-			isShortRunning := eventForm.ShortRunning && !eventForm.LongRunning
+			isLongRunning := (eventForm.LongRunning != eventForm.ShortRunning)
+			isShortRunning := (eventForm.LongRunning != eventForm.ShortRunning)
 
 			isValid :=
 				isTitleValid &&
@@ -110,12 +104,12 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				IsSystemValid:           isSystemValid,
 				IsHostNameValid:         isHostNameValid,
 				IsPuljeNameValid:        isPuljeNameValid,
-				IsChildFriendlyValid:    eventForm.ChildFriendly,
-				IsAdultsOnlyValid:       eventForm.AdultsOnly,
-				IsBeginnerFriendlyValid: eventForm.BeginnerFriendly,
-				IsExperiencedOnlyValid:  eventForm.ExperiencedOnly,
-				IsLongRunningValid:      eventForm.LongRunning,
-				IsShortRunningValid:     eventForm.ShortRunning,
+				IsChildFriendlyValid:    isChildFriendly,
+				IsAdultsOnlyValid:       isAdultsOnly,
+				IsBeginnerFriendlyValid: isBeginnerFriendly,
+				IsExperiencedOnlyValid:  isExperiencedOnly,
+				IsLongRunningValid:      isLongRunning,
+				IsShortRunningValid:     isShortRunning,
 				IsValid:                 isValid,
 			}
 		}
