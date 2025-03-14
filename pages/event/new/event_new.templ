@@ -421,17 +421,7 @@ templ inlineValidationFailedSaving(err error) {
 // Dette er en ny templ-komponent som viser skjemaet med alle feltene.
 // Merk at du kan legge til data-on-* attributter, inline validering, etc. etter behov.
 templ EventForm() {
-	{{
-		emptyStr := ""
-		initialForm := &EventFormStruct{
-			ImageURL:  &emptyStr,
-			System:    &emptyStr,
-			PuljeName: &emptyStr,
-		}
-	}}
-	<div>
-		<h1>Melde på nytt arrangement</h1>
-		<style>
+	<style>
 		:root {
 			--primary-bg: #2a2d3d;
 			--secondary-bg: #363a4f;
@@ -640,6 +630,16 @@ templ EventForm() {
 			box-shadow: none;
 		}
 		</style>
+	{{
+		emptyStr := ""
+		initialForm := &EventFormStruct{
+			ImageURL:  &emptyStr,
+			System:    &emptyStr,
+			PuljeName: &emptyStr,
+		}
+	}}
+	<div>
+		<h1>Melde på nytt arrangement</h1>
 		@inlineValidationFormEventComponent(initialForm, ValidationResultStruct{})
 	</div>
 }
