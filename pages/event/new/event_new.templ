@@ -87,6 +87,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 					isDescriptionValid &&
 					isMaxPlayersValid &&
 					isSystemValid &&
+					isImageURLValid &&
 					isHostNameValid &&
 					isPuljeNameValid &&
 					isChildFriendly &&
@@ -336,10 +337,11 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 }
 
 templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormValidationResult ValidationResultStruct) {
-	<div
+	<form
 		id="inline_validation"
 		class="flex flex-col gap-4"
 		data-signals__ifmissing={ templ.JSONString(eventForm) }
+		data-on-submit={ datastar.PutSSE("/event/api/new/inline_validation/data") }
 	>
 		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
 		<div>
@@ -361,8 +363,6 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		</div>
 		<button
 			class="btn btn-success"
-			disabled?={ !eventFormValidationResult.IsValid }
-			data-on-submit__debounce.500ms={ datastar.PutSSE("/event/api/new/inline_validation/data") }
 			data-testid="submit_button"
 		>
 			Send inn arrangement
@@ -371,7 +371,7 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		<code>
 			<pre data-text="ctx.signals.JSON()"></pre>
 		</code>
-	</div>
+	</form>
 }
 
 templ inlineValidationThankYou() {
