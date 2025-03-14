@@ -115,32 +115,42 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 		}
 
 		dataRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			emptyStr := ""
+			emptyImgURL := ""
+			emptySystem := ""
+			emptyPulje := ""
 			eventForm := &EventFormStruct{
-				ImageURL:  &emptyStr,
-				System:    &emptyStr,
-				PuljeName: &emptyStr,
+				ImageURL:  &emptyImgURL,
+				System:    &emptySystem,
+				PuljeName: &emptyPulje,
 			}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
+				fmt.Printf("Debug - ReadSignals error: %v\n", err)
+				fmt.Printf("Debug - Raw form data: %+v\n", r.Form)
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+			fmt.Printf("Debug - Form after ReadSignals: %+v\n", eventForm)
 			sse := datastar.NewSSE(w, r)
 			eventFormValidationResult := checkEventFromValidity(eventForm)
 			sse.MergeFragmentTempl(inlineValidationFormEventComponent(eventForm, eventFormValidationResult))
 		})
 
 		dataRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
-			emptyStr := ""
+			emptyImgURL := ""
+			emptySystem := ""
+			emptyPulje := ""
 			eventForm := &EventFormStruct{
-				ImageURL:  &emptyStr,
-				System:    &emptyStr,
-				PuljeName: &emptyStr,
+				ImageURL:  &emptyImgURL,
+				System:    &emptySystem,
+				PuljeName: &emptyPulje,
 			}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
+				fmt.Printf("Debug - ReadSignals error: %v\n", err)
+				fmt.Printf("Debug - Raw form data: %+v\n", r.Form)
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
+			fmt.Printf("Debug - Form after ReadSignals: %+v\n", eventForm)
 
 			eventFormValidationResult := checkEventFromValidity(eventForm)
 			sse := datastar.NewSSE(w, r)
@@ -227,6 +237,12 @@ templ inputValidationComponent(label string, inputType InputType, field string, 
 			data-bind={ field }
 			data-on-keydown__debounce.500ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
 			data-testid={ "input_" + field }
+			if field == "image_url" {
+				placeholder="f.eks. https://imgur.com/din_bilde_id"
+			}
+			if field == "system" {
+				placeholder="f.eks. D&D 5e, Pathfinder, etc."
+			}
 			if inputType == Number {
 				min="1"
 			}
