@@ -139,20 +139,21 @@ source ~/.zshrc
    task --version
    ```
 
-   > [!TIP]
-   > Each command should return a version number. If any command fails:
-   > 1. Ensure the tool is installed correctly
-   > 2. Verify your PATH includes Go binaries
-   > 3. Try reopening your terminal
+> [!TIP]
+> Each command should return a version number. If any command fails:
+> 1. Ensure the tool is installed correctly
+> 2. Verify your PATH includes Go binaries
+> 3. Try reopening your terminal
 
 2. **Start Development Server**:
    ```bash
    task live
    ```
 
-   > [!NOTE]
-   > This will start the server with hot-reload enabled.
-   > Any code changes will automatically trigger a rebuild.
+> [!NOTE]
+> This will start the server with hot-reload enabled.
+> Any code changes will automatically trigger a rebuild.
+   
 
 3. **Access the Application**:
    ```
