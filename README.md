@@ -16,6 +16,8 @@ For further details about Data-Star, please visit [Data-Star](https://data-star.
 >If you encounter issues with the events.db database—such as crashes, errors during loading, or problems retrieving data from tables—follow these steps:
 > 1. Delete the `events.db` file
 > 2. Run the project using the [Run Project](#run-project) to recreate the database
+> 3. Open terminal and run `sqlite3 "<<path to repo>>\conorganizer\events.db" < seed_data.sql`
+
 
 ## IDE Setup
 For more information on IDE support, see [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-support/).
