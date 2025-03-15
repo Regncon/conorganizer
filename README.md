@@ -1,5 +1,20 @@
 # Con Organizer
 
+## Table of Contents
+1. [Description](#description)
+2. [Quick Start](#quick-start)
+   - [Docker Setup](#docker-setup-recommended-for-windows)
+   - [Direct Installation](#direct-installation)
+3. [Database Issues: events.db Troubleshooting](#database-issues-eventsdb-troubleshooting)
+4. [IDE Setup](#ide-setup)
+   - [NeoVim Configuration](#neovim-configuration)
+5. [Troubleshooting](#troubleshooting)
+6. [Linux/Mac Setup Guide](#linuxmac-setup-guide)
+   - [Prerequisites](#prerequisites)
+   - [Verification and Startup](#verification-and-startup)
+7. [Additional Resources](#additional-resources)
+
+   
 ## Description
 
 This is a spike exploring Go, Data-Star and Templ using the Northstar template.
@@ -12,18 +27,19 @@ For more details, visit:
 
 Choose your preferred method to run the project:
 
-1. **Docker (Recommended for Windows)**:
+### Docker Setup (Recommended for Windows)
    ```bash
    docker compose up
    ```
 
 > [!NOTE]
-> The Docker setup handles all dependencies and environment configuration automatically.
+> Docker is a platform that allows you to run applications in containers. It handles all dependencies and environment configuration automatically, making it ideal for Windows users.
 
-2. **Direct Installation**: Follow the [Linux/Mac Setup Guide](#linuxmac-setup-guide) below.
+### Direct Installation
+Follow the [Linux/Mac Setup Guide](#linuxmac-setup-guide) below.
+
 
 ## Database Issues: events.db Troubleshooting
-
 > [!NOTE]
 > If you encounter database issues (crashes, loading errors, or data retrieval problems):
 > 1. Delete the `events.db` file
@@ -64,30 +80,29 @@ Helpful Dadbod tutorials:
 * [Advanced Features](https://www.youtube.com/watch?v=ALGBuFLzDSA)
 
 ### Troubleshooting
+Common issues and solutions:
 
-> [!TIP]
-> Common issues and solutions:
-> - **Tool not found**: Ensure `$HOME/go/bin` is in your PATH
-> - **Port in use**: Check if another service is using port 7331 or 8080
-> - **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
-> - **Build errors**: Run `go mod tidy` to fix dependencies
+* **Tool not found**: Ensure `$HOME/go/bin` is in your PATH
+* **Port in use**: Check if another service is using port 7331 or 8080
+* **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
+* **Build errors**: Run `go mod tidy` to fix dependencies
 
 
 ## Linux/Mac Setup Guide
 
 > [!NOTE]
-> Windows users should use [Docker Setup](#quick-start) for consistency.
+> Windows users should use [Docker Setup](#docker-setup-recommended-for-windows) for consistency.
 
 ### Prerequisites
 
 #### 1. Required Tools
 
-| Tool | Description | Installation Command | Expected Version |
-|------|-------------|---------------------|------------------|
-| [Go](https://go.dev/doc/install) | Programming language | Follow installation guide | ≥ 1.21 |
-| [Templ](https://templ.guide) | Template engine | `go install github.com/a-h/templ/cmd/templ@latest` | ≥ 0.2.0 |
-| [Air](https://github.com/cosmtrek/air) | Live reload tool | `go install github.com/air-verse/air@latest` | Any |
-| [Task](https://taskfile.dev/installation) | Task runner | Follow installation guide | ≥ 3.0 |
+| Tool | Description | Installation Command |
+|------|-------------|---------------------|
+| [Go](https://go.dev/doc/install) | Programming language | Follow installation guide
+| [Templ](https://templ.guide) | Template engine | `go install github.com/a-h/templ/cmd/templ@latest` 
+| [Air](https://github.com/cosmtrek/air) | Live reload tool | `go install github.com/air-verse/air@latest` 
+| [Task](https://taskfile.dev/installation) | Task runner | Follow installation guide
 
 #### 2. Shell Configuration
 
