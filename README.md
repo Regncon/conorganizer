@@ -14,7 +14,7 @@
    - [Verification and Startup](#verification-and-startup)
 7. [Additional Resources](#additional-resources)
 
-   
+
 ## Description
 
 This is a spike exploring Go, Data-Star and Templ using the Northstar template.
@@ -43,11 +43,7 @@ Follow the [Linux/Mac Setup Guide](#linuxmac-setup-guide) below.
 > [!NOTE]
 > If you encounter database issues (crashes, loading errors, or data retrieval problems):
 > 1. Delete the `events.db` file
-> 2. Restart the project to recreate the database
-> 3. Seed the database:
->    ```bash
->    sqlite3 "<<path to repo>>\conorganizer\events.db" < seed_data.sql
->    ```
+> 2. Restart the project to recreate the database and populate it with seed data
 
 ## IDE Setup
 See [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-support/) for detailed IDE support information.
@@ -100,8 +96,8 @@ Common issues and solutions:
 | Tool | Description | Installation Command |
 |------|-------------|---------------------|
 | [Go](https://go.dev/doc/install) | Programming language | Follow installation guide
-| [Templ](https://templ.guide) | Template engine | `go install github.com/a-h/templ/cmd/templ@latest` 
-| [Air](https://github.com/cosmtrek/air) | Live reload tool | `go install github.com/air-verse/air@latest` 
+| [Templ](https://templ.guide) | Template engine | `go install github.com/a-h/templ/cmd/templ@latest`
+| [Air](https://github.com/cosmtrek/air) | Live reload tool | `go install github.com/air-verse/air@latest`
 | [Task](https://taskfile.dev/installation) | Task runner | Follow installation guide
 
 #### 2. Shell Configuration
@@ -168,7 +164,7 @@ source ~/.zshrc
 > [!NOTE]
 > This will start the server with hot-reload enabled.
 > Any code changes will automatically trigger a rebuild.
-   
+
 
 3. **Access the Application**:
    ```
