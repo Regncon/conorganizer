@@ -1,5 +1,5 @@
 # Use a base image with Go pre-installed
-FROM docker.io/golang:1.23.5 as my-dev-environment
+FROM golang:1.24 AS my-dev-environment
 
 # enable when using lib
 # ENV CGO_ENABLED=1
