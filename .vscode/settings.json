@@ -5,5 +5,21 @@
   "go.useLanguageServer": true,
   "[templ]": {
     "editor.defaultFormatter": "a-h.templ"
-  }
+  },
+  "cSpell.words": [
+    "Atoi",
+    "Dadbod",
+    "dbod",
+    "DBUI",
+    "ifmissing",
+    "joerdav",
+    "keymap",
+    "kristijanhusak",
+    "omitempty",
+    "println",
+    "strconv",
+    "ticketholder",
+    "ticketholders",
+    "tpope"
+  ]
 }

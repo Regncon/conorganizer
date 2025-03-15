@@ -1,9 +1,7 @@
-package newEvent
+package eventForm
 
-import "database/sql"
-
-templ NewEventPage(db *sql.DB) {
+templ NewEventFromPage() {
 	<div id="new-event-container">
-		@eventNew(db)
+		@EventForm()
 	</div>
 }

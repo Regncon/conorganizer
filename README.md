@@ -1,48 +1,178 @@
 # Con Organizer
 
+## Table of Contents
+1. [Description](#description)
+2. [Quick Start](#quick-start)
+   - [Docker Setup](#docker-setup-recommended-for-windows)
+   - [Direct Installation](#direct-installation)
+3. [Database Issues: events.db Troubleshooting](#database-issues-eventsdb-troubleshooting)
+4. [IDE Setup](#ide-setup)
+   - [NeoVim Configuration](#neovim-configuration)
+5. [Troubleshooting](#troubleshooting)
+6. [Linux/Mac Setup Guide](#linuxmac-setup-guide)
+   - [Prerequisites](#prerequisites)
+   - [Verification and Startup](#verification-and-startup)
+7. [Additional Resources](#additional-resources)
+
+
 ## Description
 
-This is a spike exploring go and datastar using the northstar template.
+This is a spike exploring Go, Data-Star and Templ using the Northstar template.
 
-## Ide septup
+For more details, visit:
+- [Templ Documentation](https://templ.guide)
+- [Data-Star Documentation](https://data-star.dev/)
 
-https://templ.guide/developer-tools/ide-support/
-### NeoVim
-#### Templ
+## Quick Start
+
+Choose your preferred method to run the project:
+
+### Docker Setup (Recommended for Windows)
+   ```bash
+   docker compose up
+   ```
+
+> [!NOTE]
+> Docker is a platform that allows you to run applications in containers. It handles all dependencies and environment configuration automatically, making it ideal for Windows users.
+
+### Direct Installation
+Follow the [Linux/Mac Setup Guide](#linuxmac-setup-guide) below.
+
+
+## Database Issues: events.db Troubleshooting
+> [!NOTE]
+> If you encounter database issues (crashes, loading errors, or data retrieval problems):
+> 1. Delete the `events.db` file
+> 2. Restart the project to recreate the database and populate it with seed data
+
+## IDE Setup
+See [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-support/) for detailed IDE support information.
+
+### NeoVim Configuration
+
+#### Templ Support
+
 > [!WARNING]
-> Don't install joerdav/templ.vim.
+> Do not install `joerdav/templ.vim` - it is deprecated.
 
-#### Sql
-Use Dadbod for sql support.
+#### SQL Support with Dadbod
+Add these plugins to your NeoVim configuration:
 
 ```lua
+{
   "tpope/vim-dadbod",
   "kristijanhusak/vim-dadbod-completion",
   {
     "kristijanhusak/vim-dadbod-ui",
     config = function()
-      vim.keymap.set("n", "<leader>td", ":DBUIToggle<CR>", { desc = "Toggle dbod" })
+      vim.keymap.set("n", "<leader>td", ":DBUIToggle<CR>", { desc = "Toggle Dadbod UI" })
     end,
   },
+}
 ```
-https://www.youtube.com/watch?v=ALGBuFLzDSA
-https://www.youtube.com/watch?v=NhTPVXP8n7w&t=219s
 
-## Docker setup
+Helpful Dadbod tutorials:
+* [Basic Setup and Usage](https://www.youtube.com/watch?v=NhTPVXP8n7w)
+* [Advanced Features](https://www.youtube.com/watch?v=ALGBuFLzDSA)
 
-To build the docker image run the following command:
+### Troubleshooting
+Common issues and solutions:
+
+* **Tool not found**: Ensure `$HOME/go/bin` is in your PATH
+* **Port in use**: Check if another service is using port 7331 or 8080
+* **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
+* **Build errors**: Run `go mod tidy` to fix dependencies
+
+
+## Linux/Mac Setup Guide
+
+> [!NOTE]
+> Windows users should use [Docker Setup](#docker-setup-recommended-for-windows) for consistency.
+
+### Prerequisites
+
+#### 1. Required Tools
+
+| Tool | Description | Installation Command |
+|------|-------------|---------------------|
+| [Go](https://go.dev/doc/install) | Programming language | Follow installation guide
+| [Templ](https://templ.guide) | Template engine | `go install github.com/a-h/templ/cmd/templ@latest`
+| [Air](https://github.com/cosmtrek/air) | Live reload tool | `go install github.com/air-verse/air@latest`
+| [Task](https://taskfile.dev/installation) | Task runner | Follow installation guide
+
+#### 2. Shell Configuration
+
+<details>
+<summary>Bash Setup (Linux/macOS)</summary>
 
 ```bash
- docker build --rm -t my-dev-environment .
+# Add to ~/.bashrc (Linux) or ~/.bash_profile (macOS)
+echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc  # or ~/.bash_profile for macOS
+
+# Apply changes
+source ~/.bashrc  # or source ~/.bash_profile for macOS
 ```
+</details>
 
-To run the docker image use the run-docker bash or powershell script.
+<details>
+<summary>Zsh Setup</summary>
 
-## Go dependencies 
 ```bash
-go install github.com/air-verse/air@latest
-go install github.com/a-h/templ/cmd/templ@latest
-```
-## Links
+# Add Go binaries to PATH
+echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
 
-Se the [northstar](https://github.com/zangster300/northstar) README for installation instructions.
+# Apply changes
+source ~/.zshrc
+```
+</details>
+
+### Verification and Startup
+
+1. **Verify Tool Installation**:
+
+   Check Go installation:
+   ```bash
+   go version
+   ```
+
+   Check Templ installation:
+   ```bash
+   templ version
+   ```
+
+   Check Air installation:
+   ```bash
+   air -v
+   ```
+
+   Check Task installation:
+   ```bash
+   task --version
+   ```
+
+> [!TIP]
+> Each command should return a version number. If any command fails:
+> 1. Ensure the tool is installed correctly
+> 2. Verify your PATH includes Go binaries
+> 3. Try reopening your terminal
+
+2. **Start Development Server**:
+   ```bash
+   task live
+   ```
+
+> [!NOTE]
+> This will start the server with hot-reload enabled.
+> Any code changes will automatically trigger a rebuild.
+
+
+3. **Access the Application**:
+   ```
+   http://localhost:7331
+   ```
+
+## Additional Resources
+
+- [Northstar Template Documentation](https://github.com/zangster300/northstar)
+- [Go Documentation](https://go.dev/doc/)
+- [Docker Documentation](https://docs.docker.com/)

@@ -55,39 +55,26 @@ CREATE TABLE IF NOT EXISTS ticketholders_users (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS suggested_event (
-	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	host INTEGER NOT NULL,
-	title TEXT,
-	description TEXT,
-	image_url TEXT,
-	system TEXT,
-	max_players INTEGER,
-    child_friendly BOOLEAN NOT NULL,
-    adults_only BOOLEAN NOT NULL,
-    beginner_friendly BOOLEAN NOT NULL,
-    experienced_only BOOLEAN NOT NULL,
-    can_be_run_in_english BOOLEAN NOT NULL,
-    long_running BOOLEAN NOT NULL,
-    short_running BOOLEAN NOT NULL,
-	submitted_time TIMESTAMP,
-    inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (host) REFERENCES users(id) ON DELETE CASCADE,
-	-- Ensure some flags are mutually exclusive
-    CHECK (child_friendly + adults_only <= 1),
-    CHECK (beginner_friendly + experienced_only <= 1),
-    CHECK (long_running + short_running <= 1)
+CREATE TABLE IF NOT EXISTS event_statuses (
+    status TEXT PRIMARY KEY
 );
+
+INSERT INTO event_statuses (status) VALUES
+('Kladd'),
+('Publisert'),
+('Godkjent'),
+('Avvist');
 
 CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-	suggested_event_id INTEGER,
     title TEXT NOT NULL,
     description TEXT NOT NULL,
-	image_url TEXT,
-	system TEXT,
+    image_url TEXT,
+    system TEXT,
     host_name TEXT NOT NULL,
     host INTEGER,
+    email TEXT NOT NULL,
+    phone_number INTEGER NOT NULL,
     room_name INTEGER,
     pulje_name INTEGER,
     max_players INTEGER NOT NULL,
@@ -98,12 +85,13 @@ CREATE TABLE IF NOT EXISTS events (
     can_be_run_in_english BOOLEAN NOT NULL,
     long_running BOOLEAN NOT NULL,
     short_running BOOLEAN NOT NULL,
+    status TEXT NOT NULL DEFAULT 'Kladd',
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	FOREIGN KEY (suggested_event_id) REFERENCES suggested_event(id) ON DELETE SET NULL,
     FOREIGN KEY (host) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (room_name) REFERENCES rooms(name) ON UPDATE CASCADE,
     FOREIGN KEY (pulje_name) REFERENCES puljer(name) ON UPDATE CASCADE,
-	-- Ensure some flags are mutually exclusive
+    FOREIGN KEY (status) REFERENCES event_statuses(status) ON UPDATE CASCADE,
+    -- Ensure some flags are mutually exclusive
     CHECK (child_friendly + adults_only <= 1),
     CHECK (beginner_friendly + experienced_only <= 1),
     CHECK (long_running + short_running <= 1)
@@ -138,4 +126,71 @@ CREATE TABLE IF NOT EXISTS events_players (
     FOREIGN KEY (event_id) REFERENCES events(id),
     FOREIGN KEY (ticketholder_id) REFERENCES ticketholders(id),
 	FOREIGN KEY (interest_level) REFERENCES interest_levels(interest_level) ON UPDATE CASCADE
+);
+
+-- Add 2 test events and a test user to to database
+
+-- Add a test admin user
+INSERT INTO users (email, is_admin) VALUES
+('test.admin@example.com', true);
+
+-- Add two example events
+INSERT INTO events (
+    title,
+    description,
+    image_url,
+    system,
+    host_name,
+    email,
+    phone_number,
+    host,
+    pulje_name,
+    max_players,
+    child_friendly,
+    adults_only,
+    beginner_friendly,
+    experienced_only,
+    can_be_run_in_english,
+    long_running,
+    short_running,
+    status
+) VALUES (
+    'Dungeons & Dragons: Den Tapte Minen',
+    'Bli med på et spennende eventyr i den klassiske D&D-modulen "Den Tapte Minen av Phandelver". Perfekt for nye spillere!',
+    'https://imgur.com/example1',
+    'D&D 5e',
+    'Erik Spilleder',
+    'test.admin@example.com',
+    12345678,
+    1, -- refererer til test.admin@example.com
+    'Lørdag morgen',
+    6,
+    false,
+    false,
+    true,
+    false,
+    true,
+    false,
+    true,
+    'Publisert'
+),
+(
+    'Vampire: Nattens Barn',
+    'En intens fortelling om intriger og makt i Oslos vampyrsamfunn. Kun for erfarne rollespillere.',
+    'https://imgur.com/example2',
+    'Vampire: The Masquerade 5th Edition',
+    'Maria Storyteller',
+    'test.admin@example.com',
+    12345678,
+    1, -- refererer til test.admin@example.com
+    'Lørdag kveld',
+    4,
+    false,
+    true,
+    false,
+    true,
+    false,
+    true,
+    false,
+    'Publisert'
 );

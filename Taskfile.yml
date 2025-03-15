@@ -27,7 +27,7 @@ tasks:
   live:templ:
     cmds:
       - go run github.com/a-h/templ/cmd/templ@v0.3.833 generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
-      
+
   live:server:
     cmds:
       - |
@@ -56,6 +56,12 @@ tasks:
       - live:reload
       - live:server
 
+  # Start development server
+  dev:
+    cmds:
+      - air -c .air.toml
+
+  # Run current build
   run:
     cmds:
       - ./bin/main

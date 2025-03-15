@@ -1,11 +1,11 @@
-package newEvent
+package eventForm
 
 import (
 	"database/sql"
-	"net/http"
-
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/go-chi/chi/v5"
+	datastar "github.com/starfederation/datastar/sdk/go"
+	"net/http"
 )
 
 func NewEventLayoutRoute(router chi.Router, db *sql.DB, err error) {
@@ -16,158 +16,9 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, err error) {
 
 templ newEventIndex() {
 	@layouts.Base("Meld på nytt arrangement") {
-		<style>
-		.new-event {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			padding: 0 1rem;
-			width: 100%;
-			h1 {
-				width: 100%;
-				max-width: 1500px;
-				
-			}
-			.form {
-				border: 2px solid var(--color-primary-text);
-				border-radius: 5px;
-				max-width: 1500px;
-				width: 100%;
-				padding: 0.5rem;
-			}
-
-			fieldset {
-				border: none;
-			}
-			label {
-				display: flex;
-				flex-direction: column;
-			}
-
-			
-			.gap {
-				gap: 10px;
-			}
-
-			input, textarea {
-				border-radius: 5px;
-				padding: 0.5rem;
-			}
-
-			.intro {
-			textarea {
-				height: 180px;
-				resize: none; 
-			}
-		}
-		}
-
-		.p-0 {
-			padding: 0;
-		}
-
-		.flex-1 {
-			flex: 1;
-		}
-		
-		.image-upload {
-			flex: 1;
-			flex-direction: column;
-			display: flex;
-			
-			label {
-				border: 2px solid var(--color-primary-text);
-				border-radius: 5px;
-				display: flex;
-				flex: 1;
-				width: 100%;
-				height: 100%;
-			}
-			.img-wrapper {
-				height: 300px;
-			}
-			img {
-				width: 100%;
-				height: 100%;
-				object-fit: cover;
-			}
-		}
-
-		
-
-
-		
-		.hidden {
-			display: none;
-		}
-		</style>
-		// @components.BreadcrumbMenu([]components.Breadcrumb{
-		// 	components.Breadcrumb{URL: "/", Label: "Home"},
-		// 	components.Breadcrumb{URL: "/event/new", Label: "Submit Event"},
-		// })
-		<div class="new-event">
-			<h1>New Event</h1>
-			<div class="form">
-				<fieldset class="flex gap">
-					<fieldset class="flex flex-col flex-1 p-0 gap">
-						<label>
-							<span>Title</span>
-							<input name="title" type="text"/>
-						</label>
-						<label>
-							<span>Subtitle</span>
-							<input name="subtitle" type="text"/>
-						</label>
-						<label class="intro">
-							<span>Quick Introduction</span>
-							<textarea name="intro"></textarea>
-						</label>
-					</fieldset>
-					<div class="image-upload">
-						<span>Background Image</span>
-						<label data-signals="{files: [], filesMimes: [], filesNames: [], preview: '' }">
-							<input hidden data-ref="imginput" accept="image/*" type="file" data-bind="$files" data-on-change="$preview = evt.target.files[0] ? URL.createObjectURL(evt.target.files[0]) : ''"/>
-							<div class="img-wrapper">
-								<img data-class-hidden="!$preview" data-attr-src="$preview" alt="your image"/>
-							</div>
-						</label>
-					</div>
-				</fieldset>
-				<fieldset class="flex">
-					<label>
-						<span>Spilltype</span>
-						<select name="gametype">
-							<option>Rollespill</option>
-						</select>
-					</label>
-					<label><span>System</span><input name="system" type="text"/></label>
-				</fieldset>
-				<label>
-					<span>Event Description</span>
-					<textarea name="description"></textarea>
-				</label>
-				<fieldset>
-					<label>
-						<span>Tiltenkt publikum</span>
-						<select name="audience">
-							<option>Passelig lengde for en pulje (4-5 timer)</option>
-						</select>
-					</label>
-					<label>
-						<span>Antall spillere</span>
-						<input name="numberofplayers" type="text"/>
-					</label>
-					<label>
-						<span>Spillet kan holdes på Engelsk</span>
-						<input name="english" type="checkbox"/>
-					</label>
-				</fieldset>
-				<label>
-					<span>Andre merknader - er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?</span>
-					<textarea name="description"></textarea>
-				</label>
-				<button data-on-click="console.log('!')">Send inn</button>
-			</div>
+		<div id="new-event-container" data-on-load={ datastar.GetSSE("/event/api/new/") }>
+			<p>New Event</p>
+			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
 		</div>
 	}
 }

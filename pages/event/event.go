@@ -5,11 +5,13 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/Regncon/conorganizer/models"
-	newEvent "github.com/Regncon/conorganizer/pages/event/new"
+
+	eventForm "github.com/Regncon/conorganizer/pages/event/new"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -19,7 +21,7 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB) error {
+func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -79,7 +81,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return sessionID, mvc, nil
 	}
 	eventLayoutRoute(router, db, err)
-	newEvent.NewEventLayoutRoute(router, db, err)
+	eventForm.NewEventLayoutRoute(router, db, err)
 
 	router.Route("/event/api/", func(eventRouter chi.Router) {
 		eventRouter.Route("/new", func(newRouter chi.Router) {
@@ -107,7 +109,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						c := newEvent.NewEventPage(db)
+						c := eventForm.NewEventFromPage()
 						if err := sse.MergeFragmentTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
@@ -115,7 +117,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					}
 				}
 			})
-			newEvent.SetupExampleInlineValidation(newRouter)
+			eventForm.SetupExampleInlineValidation(db, newRouter, logger)
 		})
 		eventRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
 			eventIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
