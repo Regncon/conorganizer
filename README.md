@@ -30,7 +30,7 @@ Choose your preferred method to run the project:
 > 2. Restart the project to recreate the database
 > 3. Seed the database:
 >    ```bash
->    sqlite3 "./events.db" < seed_data.sql
+>    sqlite3 "<<path to repo>>\conorganizer\events.db" < seed_data.sql
 >    ```
 
 ## IDE Setup
@@ -63,10 +63,20 @@ Helpful Dadbod tutorials:
 * [Basic Setup and Usage](https://www.youtube.com/watch?v=NhTPVXP8n7w)
 * [Advanced Features](https://www.youtube.com/watch?v=ALGBuFLzDSA)
 
+### Troubleshooting
+
+> [!TIP]
+> Common issues and solutions:
+> - **Tool not found**: Ensure `$HOME/go/bin` is in your PATH
+> - **Port in use**: Check if another service is using port 7331 or 8080
+> - **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
+> - **Build errors**: Run `go mod tidy` to fix dependencies
+
+
 ## Linux/Mac Setup Guide
 
 > [!NOTE]
-> Windows users should use [Docker Setup](#docker-setup) for consistency.
+> Windows users should use [Docker Setup](#quick-start) for consistency.
 
 ### Prerequisites
 
@@ -148,15 +158,6 @@ source ~/.zshrc
    ```
    http://localhost:7331
    ```
-
-### Troubleshooting
-
-> [!TIP]
-> Common issues and solutions:
-> - **Tool not found**: Ensure `$HOME/go/bin` is in your PATH
-> - **Port in use**: Check if another service is using port 7331 or 8080
-> - **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
-> - **Build errors**: Run `go mod tidy` to fix dependencies
 
 ## Additional Resources
 
