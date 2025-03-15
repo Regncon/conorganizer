@@ -14,4 +14,4 @@ services:
         source: ./
         target: /home/devuser/app
         read_only: false
-    command: task dev
+    command: air -c .air-dev.toml
