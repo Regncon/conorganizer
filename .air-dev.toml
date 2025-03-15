@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "tmp/main"
-  cmd = "templ generate && go build -buildvcs=false -o tmp/main ."
+  cmd = "templ generate && go build -o tmp/main ."
   delay = 1000
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []
@@ -43,7 +43,7 @@ tmp_dir = "tmp"
   clean_on_exit = false
 
 [proxy]
-  enabled = true
+  enabled = false
   app_port = 8080
   proxy_port = 7331
 
