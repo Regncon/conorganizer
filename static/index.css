@@ -1,6 +1,7 @@
 :root {
     --color-primary-text: black;
     --color-secondary: #ff7c7c;
+    --link-color: #007bff;
     --bg-color: white;
 
     --mobile-min-width: 320px;
@@ -41,4 +42,13 @@ html {
 
 .flex-col {
     flex-direction: column;
+}
+
+.card {
+    max-width: var(--mobile-max-column-width);
+    min-width: var(--mobile-min-width);
+    background: rgb(49, 53, 78);
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
 }

@@ -2,11 +2,25 @@ package addbilettholder
 
 import "database/sql"
 
+/*
+Bestilling: 12583109
+Festivalpass Voksen (26 år +) Early-bird
+Stein Llanos
+steinllanos@gmail.com
+Over 18
+*/
+
 templ AddBilettholderAdminPage(db *sql.DB) {
 	<div id="add-bilettholder-admin-container">
 		<h1>Bilettholdere</h1>
+		<h2>Her kan du legge til en ny bilettholder</h2>
 		<div class="add-bilettholder-admin-grid">
-			<h2>Her kan du legge til en ny bilettholder</h2>
+			@bilettCard()
+			@bilettCard()
+			@bilettCard()
+			@bilettCard()
+			@bilettCard()
+			@bilettCard()
 		</div>
 		<style>
 			.add-bilettholder-admin-grid {
