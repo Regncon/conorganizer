@@ -1,0 +1,26 @@
+package bilettholderadmin
+
+import (
+	"database/sql"
+	"github.com/go-chi/chi/v5"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/layouts"
+	datastar "github.com/starfederation/datastar/sdk/go"
+)
+
+func bilettholedrAdminRoute(router chi.Router, db *sql.DB, err error) {
+
+	router.Get("/admin/bilettholder/", func(w http.ResponseWriter, r *http.Request) {
+		bilettholderAdminIndex().Render(r.Context(), w)
+	})
+}
+
+templ bilettholderAdminIndex() {
+	@layouts.Base("Meld på nytt arrangement") {
+		<div id="bilettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/bilettholderadmin/api/") }>
+			<p>Bilettholder Admin</p>
+			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+		</div>
+	}
+}

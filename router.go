@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/pages/admin"
+	bilettholderadmin "github.com/Regncon/conorganizer/pages/admin/bilettholder_admin"
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/delaneyj/toolbelt"
@@ -47,6 +48,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	if err := errors.Join(
 		index.SetupIndexRoute(router, sessionStore, ns, db),
 		admin.SetupAdminRoute(router, sessionStore, ns, db),
+		bilettholderadmin.SetupBilettholderAdminRoute(router, sessionStore, ns, db),
 		event.SetupEventRoute(router, sessionStore, ns, db, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)
