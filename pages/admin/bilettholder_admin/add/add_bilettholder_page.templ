@@ -1,0 +1,23 @@
+package addbilettholder
+
+import "database/sql"
+
+templ AddBilettholderAdminPage(db *sql.DB) {
+	<div id="add-bilettholder-admin-container">
+		<h1>Bilettholdere</h1>
+		<div class="add-bilettholder-admin-grid">
+			<h2>Her kan du legge til en ny bilettholder</h2>
+		</div>
+		<style>
+			.add-bilettholder-admin-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
+				gap: 1rem;
+			}@media (min-width: 600px) {
+				.add-bilettholder-admin-grid {
+					padding: 1rem;
+				}
+			}
+		</style>
+	</div>
+}

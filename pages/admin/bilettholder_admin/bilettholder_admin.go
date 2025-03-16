@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	addbilettholder "github.com/Regncon/conorganizer/pages/admin/bilettholder_admin/add"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -76,11 +77,9 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 		}
 		return sessionID, mvc, nil
 	}
-	bilettholedrAdminRoute(router, db, err)
-	// eventLayoutRoute(router, db, err)
-	// newEvent.NewEventLayoutRoute(router, db, err)
+	indexRoute(router, db, err)
 
-	router.Route("/admin/bilettholderadmin/api/", func(bilettholderAdminRouter chi.Router) {
+	router.Route("/admin/bilettholder/api/", func(bilettholderAdminRouter chi.Router) {
 		bilettholderAdminRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 
@@ -114,7 +113,43 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 			}
 		})
 	})
+	addbilettholder.AddBilettholderRoute(router, db, err)
 
+	router.Route("/admin/bilettholder/add/api/", func(addBilettholderRouter chi.Router) {
+		addBilettholderRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			sse := datastar.NewSSE(w, r)
+
+			sessionID, mvc, err := mvcSession(w, r)
+			ctx := r.Context()
+			watcher, err := kv.Watch(ctx, sessionID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer watcher.Stop()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case entry := <-watcher.Updates():
+					if entry == nil {
+						continue
+					}
+					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					c := addbilettholder.AddBilettholderAdminPage(db)
+					if err := sse.MergeFragmentTempl(c); err != nil {
+						sse.ConsoleError(err)
+						return
+					}
+				}
+			}
+
+		})
+	})
 	return nil
 }
 

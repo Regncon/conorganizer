@@ -9,16 +9,15 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func bilettholedrAdminRoute(router chi.Router, db *sql.DB, err error) {
-
+func indexRoute(router chi.Router, db *sql.DB, err error) {
 	router.Get("/admin/bilettholder/", func(w http.ResponseWriter, r *http.Request) {
-		bilettholderAdminIndex().Render(r.Context(), w)
+		indexPage().Render(r.Context(), w)
 	})
 }
 
-templ bilettholderAdminIndex() {
+templ indexPage() {
 	@layouts.Base("Meld på nytt arrangement") {
-		<div id="bilettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/bilettholderadmin/api/") }>
+		<div id="bilettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/bilettholder/api/") }>
 			<p>Bilettholder Admin</p>
 			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
 		</div>

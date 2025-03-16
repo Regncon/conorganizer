@@ -1,4 +1,3 @@
-
 package bilettholderadmin
 
 import "database/sql"
@@ -8,6 +7,18 @@ templ BilettholderAdminPage(db *sql.DB) {
 		<h1>Bilettholdere</h1>
 		<div class="bilettholder-admin-grid">
 			<h2>Her kan du se en oversikt over alle bilettholdere</h2>
+			<a
+				href="/admin/bilettholder/add/"
+				style="background-color: rgb(49, 53, 78);
+                    max-width: var(--mobile-max-column-width);
+                    border-radius: 2rem;
+                    font-size: 4rem;
+                    color: white;
+                    text-align: center;
+                    text-decoration: none;
+                    font-weight: bold;
+		        "
+			>+</a>
 		</div>
 		<style>
 			.bilettholder-admin-grid {
