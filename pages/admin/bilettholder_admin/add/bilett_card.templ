@@ -1,23 +1,35 @@
 package addbilettholder
 
-templ bilettCard() {
+type Ticket struct {
+	OrderID string
+	Type    string
+	Name    string
+	Email   string
+	IsAdult bool
+}
+
+templ bilettCard(ticket Ticket) {
 	<div class="card" style="padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
-		<p style="margin:0;"><strong>Bestilling:</strong> 12583109</p>
-		<p style="margin:0;"><strong>Type:</strong> Festivalpass Voksen (26 år +) Early-bird</p>
-		<p style="margin:0;"><strong>Navn:</strong> <em>Ola Congåre Norman</em></p>
+		<p style="margin:0;"><strong>Bestilling:</strong> { ticket.OrderID } </p>
+		<p style="margin:0;"><strong>Type:</strong> { ticket.Type }</p>
+		<p style="margin:0;"><strong>Navn:</strong> <em>{ ticket.Name }</em></p>
 		<a
-			href="mailto:ola@regncon.no"
+			href="mailto:{ticket.Email}"
 			style="color: var(--link-color); text-decoration: underline; display: block; margin-top: 0.5rem;"
-		>ola@regncon.no</a>
-		<img
-			src="/static/icons/adults-only.svg"
-			alt="adults only"
-		/>
-		<img
-			src="/static/icons/child-frendly.svg"
-			alt="child friendly"
-		/>
-		<p><strong>Alder:</strong> Over 18</p>
+		>{ ticket.Email }</a>
+		if ticket.IsAdult {
+			<img
+				src="/static/icons/adults-only.svg"
+				alt="adults only"
+			/>
+			<p><strong>Alder:</strong> Over 18</p>
+		} else {
+			<img
+				src="/static/icons/child-friendly.svg"
+				alt="child friendly"
+			/>
+			<p><strong>Alder:</strong> Under 18</p>
+		}
 		<button>
 			Konverter bilett til deltager
 		</button>

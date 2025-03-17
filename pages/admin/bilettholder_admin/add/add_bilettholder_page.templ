@@ -15,12 +15,27 @@ templ AddBilettholderAdminPage(db *sql.DB) {
 		<h1>Bilettholdere</h1>
 		<h2>Her kan du legge til en ny bilettholder</h2>
 		<div class="add-bilettholder-admin-grid">
-			@bilettCard()
-			@bilettCard()
-			@bilettCard()
-			@bilettCard()
-			@bilettCard()
-			@bilettCard()
+			@bilettCard(Ticket{
+				OrderID: "12345678",
+				Type:    "Festivalpass Voksen",
+				Name:    "Ola Nordmann",
+				Email:   "ola.nordmann@example.com",
+				IsAdult: true,
+			})
+			@bilettCard(Ticket{
+				OrderID: "87654321",
+				Type:    "Festivalpass Barn",
+				Name:    "Kari Nordmann",
+				Email:   "kari.nordmann@example.com",
+				IsAdult: false,
+			})
+			@bilettCard(Ticket{
+				OrderID: "11223344",
+				Type:    "Festivalpass Student",
+				Name:    "Per Hansen",
+				Email:   "per.hansen@example.com",
+				IsAdult: true,
+			})
 		</div>
 		<style>
 			.add-bilettholder-admin-grid {
