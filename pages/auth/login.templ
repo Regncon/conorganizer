@@ -1,0 +1,117 @@
+package auth
+
+templ login() {
+	// <script src=" https://cdn.jsdelivr.net/npm/supertokens-web-js@0.15.0/index.min.js "></script>
+	// <script type="module">
+	// import supertokensWebJs from 'https://cdn.jsdelivr.net/npm/supertokens-web-js@0.15.0/+esm'
+	// if (typeof window !== 'undefined') {
+	//     window.supertokens = supertokensWebJs;
+	//     window.supertokens.init({
+	//         appInfo: {
+	//             appName: "Regncon 2025",
+	//             apiDomain: "http://localhost:7331",
+	//             apiBasePath: "/auth",
+	//         },
+	//         recipeList: [],
+	//     });
+	//     console.log("Supertokens initialized:", supertokensWebJs);
+	// }
+	// </script>
+	<script src="https://cdn.jsdelivr.net/gh/supertokens/supertokens-web-js@v0.15.0/bundle/website.c7860dc40a39421c659b.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/supertokens/supertokens-web-js@v0.15.0/bundle/supertokens.4abf0eaa19c8da149f49.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/supertokens/supertokens-web-js@v0.15.0/bundle/session.a8e0a78f6cb1d6d2e6ab.js"></script>
+	<script src="https://cdn.jsdelivr.net/gh/supertokens/supertokens-web-js@v0.15.0/bundle/emailpassword.09300a805fc84bdd4212.js"></script>
+	<script>
+    supertokens.init({
+        appInfo: {
+            apiDomain: "http://localhost:8080",
+            apiBasePath: "/auth",
+            appName: "Regncon 2025",
+        },
+        recipeList: [
+            supertokensSession.init(),
+            supertokensEmailPassword.init(),
+        ],
+    });
+    console.log("Supertokens initialized successfully.");
+
+
+    async function signUpClicked(email, password) {
+    try {
+        let response = await supertokensEmailPassword.signUp({
+            formFields: [{
+                id: "email",
+                value: email
+            }, {
+                id: "password",
+                value: password
+            }]
+        })
+
+        if (response.status === "FIELD_ERROR") {
+            // one of the input formFields failed validation
+            response.formFields.forEach(formField => {
+                if (formField.id === "email") {
+                    // Email validation failed (for example incorrect email syntax),
+                    // or the email is not unique.
+                    window.alert(formField.error)
+                } else if (formField.id === "password") {
+                    // Password validation failed.
+                    // Maybe it didn't match the password strength
+                    window.alert(formField.error)
+                }
+            })
+        } else if (response.status === "SIGN_UP_NOT_ALLOWED") {
+            // the reason string is a user friendly message
+            // about what went wrong. It can also contain a support code which users
+            // can tell you so you know why their sign in was not allowed.
+            window.alert(response.reason)
+        } else {
+            // sign up successful. The session tokens are automatically handled by
+            // the frontend SDK.
+            window.location.href = "/homepage"
+        }
+    } catch (err) {
+        if (err.isSuperTokensGeneralError === true) {
+            // this may be a custom error message sent from the API by you.
+            window.alert(err.message);
+        } else {
+            window.alert("Oops! Something went wrong.");
+        }
+    }
+}
+	</script>
+	<div class="container">
+		<div class="row">
+			<div class="col-md-6 offset-md-3">
+				<div class="card">
+					<div class="card-header">
+						<h4>Sign Up</h4>
+					</div>
+					<div class="card-body">
+						<form id="signUpForm" onsubmit="return false;">
+							<div class="form-group">
+								<label for="email">Email</label>
+								<input type="email" class="form-control" id="email" name="email" required/>
+								<small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+							</div>
+							<div class="form-group">
+								<label for="password">Password</label>
+								<input type="password" class="form-control" id="password" name="password" required/>
+							</div>
+							<button type="submit" class="btn btn-primary">Sign Up</button>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+		document.getElementById('signUpForm').onsubmit = function(e) {
+			e.preventDefault();
+			const email = document.getElementById('email').value;
+			const password = document.getElementById('password').value;
+			signUpClicked(email, password);
+		};
+	</script>
+}

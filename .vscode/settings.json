@@ -1,25 +1,32 @@
 {
-  "gopls": {
-    "build.buildFlags": ["-tags=dev"]
-  },
-  "go.useLanguageServer": true,
-  "[templ]": {
-    "editor.defaultFormatter": "a-h.templ"
-  },
-  "cSpell.words": [
-    "Atoi",
-    "Dadbod",
-    "dbod",
-    "DBUI",
-    "ifmissing",
-    "joerdav",
-    "keymap",
-    "kristijanhusak",
-    "omitempty",
-    "println",
-    "strconv",
-    "ticketholder",
-    "ticketholders",
-    "tpope"
-  ]
+    "gopls": {
+        "build.buildFlags": ["-tags=dev"]
+    },
+    "go.useLanguageServer": true,
+    "[templ]": {
+        "editor.defaultFormatter": "a-h.templ"
+    },
+    "cSpell.words": [
+        "Atoi",
+        "Dadbod",
+        "dbod",
+        "DBUI",
+        "ifmissing",
+        "joerdav",
+        "keymap",
+        "kristijanhusak",
+        "omitempty",
+        "onclick",
+        "onunload",
+        "println",
+        "starfederation",
+        "strconv",
+        "stylesheet",
+        "supertokens",
+        "ticketholder",
+        "ticketholders",
+        "tpope"
+    ],
+    "spellright.language": [],
+    "spellright.documentTypes": ["latex", "plaintext"]
 }
