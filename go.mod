@@ -11,26 +11,35 @@ require (
 	github.com/a-h/templ v0.3.833
 	github.com/benbjohnson/hashfs v0.2.2
 	github.com/delaneyj/toolbelt v0.4.2
+	github.com/go-chi/cors v1.2.1
 	github.com/gorilla/sessions v1.4.0
 	github.com/nats-io/nats-server/v2 v2.10.26
 	github.com/nats-io/nats.go v1.39.1
 	github.com/samber/lo v1.49.1
 	github.com/starfederation/datastar v1.0.0-beta.9
+	github.com/supertokens/supertokens-golang v0.25.1
 	modernc.org/sqlite v1.36.0
 )
 
 require (
 	github.com/CAFxX/httpcompression v0.0.9 // indirect
+	github.com/MicahParks/keyfunc/v2 v2.1.0 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/chewxy/math32 v1.11.1 // indirect
+	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/delaneyj/gostar v0.8.0 // indirect
 	github.com/denisbrodbeck/machineid v1.0.1 // indirect
+	github.com/derekstavis/go-qs v0.0.0-20180720192143-9eef69e6c4e7 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/go-rod/rod v0.116.2 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
+	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
+	github.com/golang/mock v1.6.0 // indirect
+	github.com/golang/protobuf v1.5.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
+	github.com/h2non/parth v0.0.0-20190131123155-b4df798d6542 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/igrmk/treemap/v2 v2.0.1 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
@@ -41,9 +50,14 @@ require (
 	github.com/nats-io/nkeys v0.4.10 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/ncruces/go-strftime v0.1.9 // indirect
+	github.com/nyaruka/phonenumbers v1.0.73 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rzajac/clock v0.2.0 // indirect
 	github.com/rzajac/zflake v0.8.0 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/twilio/twilio-go v0.26.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/ysmood/fetchup v0.2.4 // indirect
 	github.com/ysmood/goob v0.4.0 // indirect
@@ -53,10 +67,15 @@ require (
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
+	golang.org/x/net v0.35.0 // indirect
 	golang.org/x/sys v0.31.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.11.0 // indirect
 	google.golang.org/protobuf v1.36.5 // indirect
+	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
+	gopkg.in/h2non/gock.v1 v1.1.2 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.61.13 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.8.2 // indirect
