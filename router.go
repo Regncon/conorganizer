@@ -47,8 +47,8 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 
 	if err := errors.Join(
 		index.SetupIndexRoute(router, sessionStore, ns, db),
-		admin.SetupAdminRoute(router, sessionStore, ns, db),
-		bilettholderadmin.SetupBilettholderAdminRoute(router, sessionStore, ns, db),
+		admin.SetupAdminRoute(router, sessionStore, logger, ns, db),
+		bilettholderadmin.SetupBilettholderAdminRoute(router, sessionStore, ns, logger, db),
 		event.SetupEventRoute(router, sessionStore, ns, db, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)

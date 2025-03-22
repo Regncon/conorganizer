@@ -1,13 +1,16 @@
 package addbilettholder
 
-import "database/sql"
+import (
+	"database/sql"
+	"log/slog"
+)
 
-templ AddBilettholderAdminPage(db *sql.DB) {
+templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
+	{{ tickets, err := GetTicketsFromCheckIn(logger) }}
 	<div id="add-bilettholder-admin-container">
 		<h1>Bilettholdere</h1>
 		<h2>Her kan du legge til en ny bilettholder</h2>
 		<div class="add-bilettholder-admin-grid">
-			{{ tickets, err := GetTicketsFromCheckIn() }}
 			if err != nil {
 				<p>Failed to load tickets:</p>
 			} else {

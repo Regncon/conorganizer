@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 )
@@ -39,7 +40,7 @@ type queryResult struct {
 	} `json:"data"`
 }
 
-func GetTicketsFromCheckIn() ([]CheckInTicket, error) {
+func GetTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 	query := `{
 		eventTickets(customer_id: 13446, id: 73685, onlyCompleted: true) {
 			id
@@ -59,6 +60,7 @@ func GetTicketsFromCheckIn() ([]CheckInTicket, error) {
 	clientID := os.Getenv("CHECKIN_KEY")
 	clientSecret := os.Getenv("CHECKIN_SECRET")
 	if clientID == "" || clientSecret == "" {
+		logger.Error("missing CHECKIN_KEY or CHECKIN_SECRET")
 		return nil, fmt.Errorf("missing CHECKIN_KEY or CHECKIN_SECRET")
 	}
 
@@ -66,13 +68,13 @@ func GetTicketsFromCheckIn() ([]CheckInTicket, error) {
 		"query": query,
 	})
 	if err != nil {
-		fmt.Println("Error: ", err)
+		logger.Error("Error", "message", err.Error())
 		return nil, err
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("https://app.checkin.no/graphql?client_id=%s&client_secret=%s", clientID, clientSecret), bytes.NewBuffer(reqBody))
 	if err != nil {
-		fmt.Println("Error: ", err)
+		logger.Error("Error", "message", err.Error())
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -80,20 +82,20 @@ func GetTicketsFromCheckIn() ([]CheckInTicket, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("Error: ", err)
+		logger.Error("Error", "message", err.Error())
 		return nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Error: ", err)
+		logger.Error("Error", "message", err.Error())
 		return nil, err
 	}
 
 	var result queryResult
 	if err := json.Unmarshal(body, &result); err != nil {
-		fmt.Println("Error: ", err)
+		logger.Error("Error", "message", err.Error())
 		return nil, err
 	}
 

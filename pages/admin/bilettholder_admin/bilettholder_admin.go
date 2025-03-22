@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB) error {
+func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, logger *slog.Logger, db *sql.DB) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -140,7 +141,7 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
-					c := addbilettholder.AddBilettholderAdminPage(db)
+					c := addbilettholder.AddBilettholderAdminPage(db, logger)
 					if err := sse.MergeFragmentTempl(c); err != nil {
 						sse.ConsoleError(err)
 						return

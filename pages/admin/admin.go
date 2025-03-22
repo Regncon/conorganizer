@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -17,7 +18,7 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func SetupAdminRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB) error {
+func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
