@@ -14,7 +14,6 @@ templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 			if err != nil {
 				<p>Failed to load tickets:</p>
 			} else {
-				<p>Biletter:</p>
 				for _, ticket := range tickets {
 					@bilettCard(ticket)
 				}

@@ -42,7 +42,7 @@ type queryResult struct {
 
 func GetTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 	query := `{
-		eventTickets(customer_id: 13446, id: 73685, onlyCompleted: true) {
+		eventTickets(customer_id: 13446, id: 109715, onlyCompleted: true) {
 			id
 			category
 			category_id
