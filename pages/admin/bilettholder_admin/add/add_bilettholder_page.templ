@@ -2,40 +2,20 @@ package addbilettholder
 
 import "database/sql"
 
-/*
-Bestilling: 12583109
-Festivalpass Voksen (26 år +) Early-bird
-Stein Llanos
-steinllanos@gmail.com
-Over 18
-*/
-
 templ AddBilettholderAdminPage(db *sql.DB) {
 	<div id="add-bilettholder-admin-container">
 		<h1>Bilettholdere</h1>
 		<h2>Her kan du legge til en ny bilettholder</h2>
 		<div class="add-bilettholder-admin-grid">
-			@bilettCard(Ticket{
-				OrderID: "12345678",
-				Type:    "Festivalpass Voksen",
-				Name:    "Ola Nordmann",
-				Email:   "ola.nordmann@example.com",
-				IsAdult: true,
-			})
-			@bilettCard(Ticket{
-				OrderID: "87654321",
-				Type:    "Festivalpass Barn",
-				Name:    "Kari Nordmann",
-				Email:   "kari.nordmann@example.com",
-				IsAdult: false,
-			})
-			@bilettCard(Ticket{
-				OrderID: "11223344",
-				Type:    "Festivalpass Student",
-				Name:    "Per Hansen",
-				Email:   "per.hansen@example.com",
-				IsAdult: true,
-			})
+			{{ tickets, err := GetTicketsFromCheckIn() }}
+			if err != nil {
+				<p>Failed to load tickets:</p>
+			} else {
+				<p>Biletter:</p>
+				for _, ticket := range tickets {
+					@bilettCard(ticket)
+				}
+			}
 		</div>
 		<style>
 			.add-bilettholder-admin-grid {
