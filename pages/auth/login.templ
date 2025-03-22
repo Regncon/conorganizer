@@ -1,0 +1,44 @@
+package auth
+
+templ loginForm() {
+	<script src="https://descopecdn.com/npm/@descope/web-component@3.21.0/dist/index.js"></script>
+	<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
+	<script src="https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js"></script>
+	<!-- The code below includes your Project ID (P2ufzqahlYUHDIprVXtkuCx8MH5C) -->
+	<descope-wc
+		project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
+		flow-id="sign-up-or-in-passwords-social"
+		theme="dark"
+	></descope-wc>
+	// <descope-user-management-widget
+	// 	tenant="TEST"
+	// 	project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
+	// 	widget-id="user-management-widget"
+	// 	theme="dark"
+	// 	style-id="my-style-id"
+	// 	debug="true"
+	// ></descope-user-management-widget>
+	<script>
+
+    function setCookie(name, value) {
+        const date = new Date();
+        date.setTime(date.getTime() + (1 * 60 * 60 * 1000));
+        const expires = "expires=" + date.toUTCString();
+        document.cookie = name + "=" + encodeURIComponent(value) + "; " + expires + "; path=/";
+    }
+        const wcElement = document.getElementsByTagName('descope-wc')[0];
+
+        const onSuccess = (e) => {
+                console.log(e.detail.user.name)
+                console.log(e.detail.user.email)
+
+                setCookie('session_token', e.detail.sessionJwt);
+                setCookie('refresh_token', e.detail.refreshJwt);
+                window.location.href = '/auth';
+        };
+        const onError = (err) => console.log(err);
+
+        wcElement.addEventListener('success', onSuccess);
+        wcElement.addEventListener('error', onError);
+    </script>
+}

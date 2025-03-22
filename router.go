@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/Regncon/conorganizer/pages/auth"
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/delaneyj/toolbelt"
@@ -46,6 +47,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	if err := errors.Join(
 		index.SetupIndexRoute(router, sessionStore, ns, db),
 		event.SetupEventRoute(router, sessionStore, ns, db, logger),
+		auth.SetupAuthRoute(router, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)
 	}
