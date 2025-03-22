@@ -10,10 +10,20 @@ import (
 	"syscall"
 
 	"database/sql"
+	"io/ioutil"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
+	"github.com/supertokens/supertokens-golang/recipe/dashboard"
+	"github.com/supertokens/supertokens-golang/recipe/dashboard/dashboardmodels"
+	"github.com/supertokens/supertokens-golang/recipe/emailpassword"
+	"github.com/supertokens/supertokens-golang/recipe/session"
+	"github.com/supertokens/supertokens-golang/recipe/thirdparty"
+	"github.com/supertokens/supertokens-golang/recipe/thirdparty/tpmodels"
+	"github.com/supertokens/supertokens-golang/recipe/userroles"
+	"github.com/supertokens/supertokens-golang/supertokens"
 	"golang.org/x/sync/errgroup"
-	"io/ioutil"
 	_ "modernc.org/sqlite"
 )
 
@@ -59,11 +69,21 @@ func run(ctx context.Context, logger *slog.Logger, port string, db *sql.DB) erro
 
 func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.DB) func() error {
 	return func() error {
+		initSupertokens()
 		router := chi.NewMux()
+
+		router.Use(cors.Handler(cors.Options{
+			AllowedOrigins: []string{"http://localhost:8080"},
+			AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+			AllowedHeaders: append([]string{"Content-Type"},
+				supertokens.GetAllCORSHeaders()...),
+			AllowCredentials: true,
+		}))
 
 		router.Use(
 			middleware.Logger,
 			middleware.Recoverer,
+			supertokens.Middleware,
 		)
 
 		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
@@ -85,6 +105,122 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 		}()
 
 		return srv.ListenAndServe()
+	}
+}
+
+func setupThirdParty() supertokens.Recipe {
+	return thirdparty.Init(&tpmodels.TypeInput{
+		SignInAndUpFeature: tpmodels.TypeInputSignInAndUp{
+			Providers: []tpmodels.ProviderInput{
+				{
+					Config: tpmodels.ProviderConfig{
+						ThirdPartyId: "google",
+						Clients: []tpmodels.ProviderClientConfig{
+							{
+								ClientID:     "1060725074195-kmeum4crr01uirfl2op9kd5acmi9jutn.apps.googleusercontent.com",
+								ClientSecret: "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",
+							},
+						},
+					},
+				},
+				{
+					Config: tpmodels.ProviderConfig{
+						ThirdPartyId: "discord",
+						Clients: []tpmodels.ProviderClientConfig{
+							{
+								ClientID:     "TODO:",
+								ClientSecret: "TODO:",
+							},
+						},
+					},
+				},
+				{
+					Config: tpmodels.ProviderConfig{
+						ThirdPartyId: "facebook",
+						Clients: []tpmodels.ProviderClientConfig{
+							{
+								ClientID:     "TODO:",
+								ClientSecret: "TODO:",
+							},
+						},
+					},
+				},
+				{
+					Config: tpmodels.ProviderConfig{
+						ThirdPartyId: "twitter",
+						Clients: []tpmodels.ProviderClientConfig{
+							{
+								ClientID:     "4398792-WXpqVXRiazdRMGNJdEZIa3RVQXc6MTpjaQ",
+								ClientSecret: "BivMbtwmcygbRLNQ0zk45yxvW246tnYnTFFq-LH39NwZMxFpdC",
+							},
+						},
+					},
+				},
+				{
+					Config: tpmodels.ProviderConfig{
+						ThirdPartyId: "active-directory",
+						Clients: []tpmodels.ProviderClientConfig{
+							{
+								ClientID:     "TODO:",
+								ClientSecret: "TODO:",
+							},
+						},
+						OIDCDiscoveryEndpoint: "https://login.microsoftonline.com/<directoryId>/v2.0/.well-known/openid-configuration",
+					},
+				},
+				{
+					Config: tpmodels.ProviderConfig{
+						ThirdPartyId: "apple",
+						Clients: []tpmodels.ProviderClientConfig{
+							{
+								ClientID: "4398792-io.supertokens.example.service",
+								AdditionalConfig: map[string]interface{}{
+									"keyId":      "7M48Y4RYDL",
+									"privateKey": "-----BEGIN PRIVATE KEY-----\nMIGTAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBHkwdwIBAQQgu8gXs+XYkqXD6Ala9Sf/iJXzhbwcoG5dMh1OonpdJUmgCgYIKoZIzj0DAQehRANCAASfrvlFbFCYqn3I2zeknYXLwtH30JuOKestDbSfZYxZNMqhF/OzdZFTV0zc5u5s3eN+oCWbnvl0hM+9IW0UlkdA\n-----END PRIVATE KEY-----",
+									"teamId":     "YWQCXGJRJL",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+}
+
+func initSupertokens() {
+	apiBasePath := "/auth"
+	websiteBasePath := "/auth"
+	err := supertokens.Init(supertokens.TypeInput{
+		Supertokens: &supertokens.ConnectionInfo{
+			// We use try.supertokens for demo purposes.
+			// At the end of the tutorial we will show you how to create
+			// your own SuperTokens core instance and then update your config.
+			ConnectionURI: "https://st-dev-2eb6cde0-0683-11f0-9a7f-5d160be73652.aws.supertokens.io",
+			APIKey:        "01w-Ccsm64UrzH1pjiAU9x=H1V",
+		},
+		AppInfo: supertokens.AppInfo{
+			AppName:         "Regncon 2025",
+			APIDomain:       "http://localhost:8080",
+			WebsiteDomain:   "http://localhost:8080",
+			APIBasePath:     &apiBasePath,
+			WebsiteBasePath: &websiteBasePath,
+		},
+		RecipeList: []supertokens.Recipe{
+			emailpassword.Init(nil),
+			session.Init(nil),
+			setupThirdParty(),
+			dashboard.Init(&dashboardmodels.TypeInput{
+				Admins: &[]string{
+					"coldasice_t@hotmail.com",
+				},
+			}),
+			userroles.Init(nil),
+		},
+	})
+
+	if err != nil {
+		panic(err.Error())
 	}
 }
 

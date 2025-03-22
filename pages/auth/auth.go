@@ -1,10 +1,12 @@
 package auth
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/supertokens/supertokens-golang/recipe/session"
 )
 
 func SetupAuthRoute(router chi.Router, logger *slog.Logger) error {
@@ -17,9 +19,22 @@ func SetupAuthRoute(router chi.Router, logger *slog.Logger) error {
 		})
 
 		authRouter.Get("/logout", func(w http.ResponseWriter, r *http.Request) {
-
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 		})
+
+		authRouter.Get("/test", session.VerifySession(nil, func(w http.ResponseWriter, r *http.Request) {
+			sessionContainer := session.GetSessionFromRequestContext(r.Context())
+
+			userID := sessionContainer.GetUserID()
+
+			fmt.Println(userID)
+			w.Write([]byte("test"))
+		}))
+
+		authRouter.Get("/signin", func(w http.ResponseWriter, r *http.Request) {
+
+		})
+
 		// eventForm.SetupExampleInlineValidation(db, newRouter, logger)
 
 	})
