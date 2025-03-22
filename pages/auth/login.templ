@@ -34,6 +34,8 @@ templ loginForm() {
 
                 setCookie('session_token', e.detail.sessionJwt);
                 setCookie('refresh_token', e.detail.refreshJwt);
+                console.log('session_token', e.detail.sessionJwt);
+                console.log('refresh_token', e.detail.refreshJwt);
                 window.location.href = '/auth';
         };
         const onError = (err) => console.log(err);
