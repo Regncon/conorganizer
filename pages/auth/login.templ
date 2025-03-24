@@ -19,26 +19,51 @@ templ loginForm() {
 	// 	debug="true"
 	// ></descope-user-management-widget>
 	<script>
+        const COOKIE_NAMES = {
+            SESSION: 'session_token',
+            REFRESH: 'refresh_token'
+        };
 
-    function setCookie(name, value) {
-        const date = new Date();
-        date.setTime(date.getTime() + (1 * 60 * 60 * 1000));
-        const expires = "expires=" + date.toUTCString();
-        document.cookie = name + "=" + encodeURIComponent(value) + "; " + expires + "; path=/";
-    }
+        const DURATION = {
+            TEN_MINUTES: 10 * 60 * 1000,
+            ONE_HOUR: 60 * 60 * 1000
+        };
+
+        function setCookie(name, value) {
+            const now = new Date();
+            let expires;
+
+            switch (name) {
+                case COOKIE_NAMES.SESSION:
+                    expires = new Date(now.getTime() + DURATION.TEN_MINUTES);
+                    break;
+                case COOKIE_NAMES.REFRESH:
+                    expires = new Date(now.getTime() + DURATION.ONE_HOUR);
+                    break;
+                default:
+                    console.error('Unknown cookie type:', name);
+                    return;
+            }
+
+            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
+        }
+
         const wcElement = document.getElementsByTagName('descope-wc')[0];
 
         const onSuccess = (e) => {
-                console.log(e.detail.user.name)
-                console.log(e.detail.user.email)
+            console.log('Login successful');
+            console.log('User:', e.detail.user.name);
+            console.log('Email:', e.detail.user.email);
 
-                setCookie('session_token', e.detail.sessionJwt);
-                setCookie('refresh_token', e.detail.refreshJwt);
-                console.log('session_token', e.detail.sessionJwt);
-                console.log('refresh_token', e.detail.refreshJwt);
-                window.location.href = '/auth';
+            setCookie(COOKIE_NAMES.SESSION, e.detail.sessionJwt);
+            setCookie(COOKIE_NAMES.REFRESH, e.detail.refreshJwt);
+
+            window.location.href = '/';
         };
-        const onError = (err) => console.log(err);
+
+        const onError = (err) => {
+            console.error('Login error:', err);
+        };
 
         wcElement.addEventListener('success', onSuccess);
         wcElement.addEventListener('error', onError);

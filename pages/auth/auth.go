@@ -6,39 +6,53 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/service"
-	"github.com/descope/go-sdk/descope"
 	"github.com/go-chi/chi/v5"
 )
 
 func SetupAuthRoute(router chi.Router, logger *slog.Logger) error {
-
-	// extract from request authorization header. The above sample code sends the the session token in authorization header.
-	// sessionToken := r.Header.Get("Authorization")
-
 	router.Route("/auth", func(authRouter chi.Router) {
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			loginForm().Render(r.Context(), w)
 		})
 
-		authRouter.Get("/test", service.ValidateSession(logger, func(w http.ResponseWriter, r *http.Request) {
+		authRouter.Group(func(protectedRoute chi.Router) {
+			protectedRoute.Use(service.AuthMiddleware(logger))
 
-			if errVal := r.Context().Value(service.CtxSessionError); errVal != nil {
-				http.Error(w, fmt.Sprintf("Session error: %v", errVal), http.StatusUnauthorized)
-				return
-			}
+			protectedRoute.Get("/test", func(w http.ResponseWriter, r *http.Request) {
+				userToken, err := service.GetUserTokenFromContext(r.Context())
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusUnauthorized)
+					return
+				}
 
-			userToken, ok := r.Context().Value(service.CtxUserToken).(*descope.Token)
-			fmt.Printf("userToken: %v\n", userToken)
-			fmt.Printf("ok: %v\n", ok)
-			fmt.Printf("userToken.Claims: %v\n", userToken.Claims["email"])
-			if !ok || userToken == nil {
-				http.Error(w, "User token not found", http.StatusUnauthorized)
-				return
-			}
+				w.Write([]byte(fmt.Sprintf("Test successful! Authenticated as: %v", userToken.Claims["email"])))
+			})
 
-			w.Write([]byte(fmt.Sprintf("Test, authorized: true, email: %v", userToken.Claims["email"])))
-		}))
+		})
 
+		authRouter.Get("/logout", func(w http.ResponseWriter, r *http.Request) {
+			http.SetCookie(w, &http.Cookie{
+				Name:     service.SessionCookieName,
+				Value:    "",
+				Path:     "/",
+				MaxAge:   -1,
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteStrictMode,
+			})
+
+			http.SetCookie(w, &http.Cookie{
+				Name:     service.RefreshCookieName,
+				Value:    "",
+				Path:     "/",
+				MaxAge:   -1,
+				HttpOnly: true,
+				Secure:   true,
+				SameSite: http.SameSiteStrictMode,
+			})
+
+			http.Redirect(w, r, "/auth", http.StatusSeeOther)
+		})
 	})
 
 	return nil
