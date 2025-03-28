@@ -76,10 +76,10 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			}
 
 			http.SetCookie(w, &http.Cookie{
-				Name:     " SessionCookieName",
+				Name:     SessionCookieName,
 				Value:    userToken.JWT,
 				Path:     "/",
-				Expires:  time.Unix(userToken.Expiration, 0),
+				Expires:  time.Now().AddDate(1, 0, 0),
 				HttpOnly: true,
 				Secure:   true,
 				SameSite: http.SameSiteStrictMode,

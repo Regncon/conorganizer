@@ -25,8 +25,7 @@ templ loginForm() {
         };
 
         const DURATION = {
-            TEN_MINUTES: 10 * 60 * 1000,
-            ONE_HOUR: 60 * 60 * 1000
+            ONE_YEAR: 365 * 24 * 60 * 60 * 1000
         };
 
         function setCookie(name, value) {
@@ -35,10 +34,10 @@ templ loginForm() {
 
             switch (name) {
                 case COOKIE_NAMES.SESSION:
-                    expires = new Date(now.getTime() + DURATION.TEN_MINUTES);
+                    expires = new Date(now.getTime() + DURATION.ONE_YEAR);
                     break;
                 case COOKIE_NAMES.REFRESH:
-                    expires = new Date(now.getTime() + DURATION.ONE_HOUR);
+                    expires = new Date(now.getTime() + DURATION.ONE_YEAR);
                     break;
                 default:
                     console.error('Unknown cookie type:', name);
