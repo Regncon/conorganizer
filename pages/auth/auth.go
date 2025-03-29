@@ -16,7 +16,7 @@ func SetupAuthRoute(router chi.Router, logger *slog.Logger) error {
 		})
 
 		authRouter.Group(func(protectedRoute chi.Router) {
-			protectedRoute.Use(service.AuthMiddleware)
+			protectedRoute.Use(service.AuthMiddleware(logger))
 
 			protectedRoute.Get("/test", func(w http.ResponseWriter, r *http.Request) {
 				userToken, err := service.GetUserTokenFromContext(r.Context())
@@ -25,7 +25,7 @@ func SetupAuthRoute(router chi.Router, logger *slog.Logger) error {
 					return
 				}
 
-				w.Write(fmt.Appendf(nil, "Test successful! Authenticated as: %v", userToken.Claims["email"]))
+				w.Write([]byte(fmt.Sprintf("Test successful! Authenticated as: %v", userToken.Claims["email"])))
 			})
 
 		})
