@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log/slog"
 	"net/http"
 	"os"
@@ -10,10 +11,11 @@ import (
 	"syscall"
 
 	"database/sql"
+
+	"github.com/Regncon/conorganizer/service"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"golang.org/x/sync/errgroup"
-	"io/ioutil"
 	_ "modernc.org/sqlite"
 )
 
@@ -63,6 +65,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 
 		router.Use(
 			middleware.Logger,
+			service.AddLoggerToContext(logger),
 			middleware.Recoverer,
 		)
 
