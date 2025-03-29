@@ -29,7 +29,7 @@ Choose your preferred method to run the project:
 
 ### Docker Setup (Recommended for Windows)
    ```bash
-   docker compose up
+   docker compose up --build
    ```
 
 > [!NOTE]
@@ -93,12 +93,12 @@ Common issues and solutions:
 
 #### 1. Required Tools
 
-| Tool | Description | Installation Command |
-|------|-------------|---------------------|
-| [Go](https://go.dev/doc/install) | Programming language | Follow installation guide
-| [Templ](https://templ.guide) | Template engine | `go install github.com/a-h/templ/cmd/templ@latest`
-| [Air](https://github.com/cosmtrek/air) | Live reload tool | `go install github.com/air-verse/air@latest`
-| [Task](https://taskfile.dev/installation) | Task runner | Follow installation guide
+| Tool                                      | Description          | Installation Command                               |
+| ----------------------------------------- | -------------------- | -------------------------------------------------- |
+| [Go](https://go.dev/doc/install)          | Programming language | Follow installation guide                          |
+| [Templ](https://templ.guide)              | Template engine      | `go install github.com/a-h/templ/cmd/templ@latest` |
+| [Air](https://github.com/cosmtrek/air)    | Live reload tool     | `go install github.com/air-verse/air@latest`       |
+| [Task](https://taskfile.dev/installation) | Task runner          | Follow installation guide                          |
 
 #### 2. Shell Configuration
 
