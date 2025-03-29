@@ -11,16 +11,20 @@
         "Dadbod",
         "dbod",
         "DBUI",
-        "descope",
+        "devuser",
+        "GOMODCACHE",
         "ifmissing",
         "joerdav",
         "keymap",
         "kristijanhusak",
+        "NOPASSWD",
         "omitempty",
+        "passwordless",
         "println",
         "strconv",
         "ticketholder",
         "ticketholders",
         "tpope"
     ]
+        "descope",
 }
