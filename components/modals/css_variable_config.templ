@@ -29,6 +29,18 @@ templ CssVariableConfigComponent() {
             border-radius: 8px;
             width: fit-content;
         }
+        #css-variable-title {
+            display: flex;
+            flex-flow: column nowrap;
+            padding: 1rem;
+            align-items: center;
+        }
+        #css-variable-title code {
+            background-color: #00000020;
+            border: 1px solid #00000050;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
         #css-variable-sections {
             display: flex;
             flex-flow: column nowrap;
@@ -141,7 +153,11 @@ templ CssVariableConfigComponent() {
     </script>
 	<div id="css-variable-config-container" style="display: flex;">
 		<button onclick="toggleCssVariableConfig()">close</button>
-		<h1>Edit CSS variables</h1>
+		<div id="css-variable-title">
+			<h1>Edit CSS variables</h1>
+			<small>Press <code>shift + s</code> to toggle modal</small>
+		</div>
+        <span style="height: 1px; width: 100%; background-color: black; margin: 1rem 0;"></span>
 		<div id="css-variable-sections">
 			<p>Generating list</p>
 		</div>
