@@ -1,0 +1,149 @@
+package modals
+
+templ CssVariableConfigComponent() {
+	<style>
+        #css-variable-config-container {
+            z-index: 1001;
+            position: fixed;
+            flex-flow: column nowrap;
+            overflow-y: scroll;
+
+            top: 5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: fit-content;
+            height: calc(100svh - 6rem);
+
+            padding: 1rem 3rem;
+            border: 1px solid black;
+            border-radius: 8px;
+
+            background-color: whitesmoke;
+            color: black;
+        }
+        #css-variable-config-container > button {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            border: 1px solid orangered;
+            border-radius: 8px;
+            width: fit-content;
+        }
+        #css-variable-sections {
+            display: flex;
+            flex-flow: column nowrap;
+            gap: 1rem;
+        }
+        #css-variable-sections > span {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        #css-variable-sections label {
+            width: 12rem;
+            text-wrap: "wrap";
+        }
+    </style>
+	<script defer>
+        // Toggle container visibility
+        function toggleCssVariableConfig() {
+            const containerDiv = document.getElementById("css-variable-config-container")
+            containerDiv.style.display === "flex" ? containerDiv.style.display = "none" : containerDiv.style.display = "flex"
+        }
+
+        //  Attach event listener for keypress, toggling visibility. Wrapping in IIFE to avoid leaking var into global
+        ((window, document, undefined) => {
+            window.onload = init
+
+            function init(){
+                document.addEventListener("keydown", function(event) {
+                    if (event.shiftKey && event.key.toLowerCase() === "s") {
+                        toggleCssVariableConfig()
+                    }
+                })
+                getAllCssVariables()
+            }
+        })(window, document, undefined)
+
+        // Generate a list of all css variables on document
+        function getAllCssVariables() {
+            // Create new empty set for uniqueness
+            const cssVars = new Set()
+
+            // Iterate over all attached stylesheets
+            for (const sheet of document.styleSheets) {
+                // Skip broken and outside stylesheets due to CORS
+                if (sheet.href === null || !sheet.href.startsWith(window.location.origin)) continue
+
+                // Iterate over cssRules and extract css variables
+                for (const rule of sheet.cssRules) {
+                    if (rule.style) {
+                        for (const name of rule.style) {
+                            // Only add css variables
+                            if (name.startsWith('--')) {
+                                cssVars.add(name);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Call element writer to populate html :D
+            populateCssVariables(Array.from(cssVars))
+        }
+
+        // Function writes input elements for each css variable
+        function populateCssVariables(cssVariables) {
+            // Get target container for population
+            const containerElement = document.getElementById("css-variable-sections")
+            const rootElement = document.querySelector(':root')
+
+            // Element not found, aborting
+            if (!containerElement) return
+
+            // Empty container before we start
+            while (containerElement.lastElementChild) {
+                containerElement.removeChild(containerElement.lastElementChild)
+            }
+
+            // Create input field for each CSS variable
+            for (const cssVariable of cssVariables) {
+                // Create wrapper
+                const spanElement = document.createElement("span")
+
+                // Create label
+                const nameLabel = document.createElement("label")
+                nameLabel.textContent = cssVariable
+
+                // Create input field
+                const valueInput = document.createElement("input")
+                const valueInputDefault = getComputedStyle(rootElement).getPropertyValue(cssVariable)
+                valueInput.defaultValue = valueInputDefault
+
+                // convert input to color if needed
+                if (valueInputDefault.includes("#") || valueInputDefault.includes("rgb")) {
+                    valueInput.type = "color"
+                }
+
+                // Create event listener
+                valueInput.addEventListener("change", (event) => {
+                    rootElement.style.setProperty(cssVariable, event.currentTarget.value)
+                })
+
+                // Attach elements
+                containerElement.appendChild(spanElement)
+                spanElement.appendChild(nameLabel)
+                spanElement.appendChild(valueInput)
+            }
+
+        }
+
+    </script>
+	<div id="css-variable-config-container" style="display: flex;">
+		<button onclick="toggleCssVariableConfig()">close</button>
+		<h1>Edit CSS variables</h1>
+		<div id="css-variable-sections">
+			<p>Generating list</p>
+		</div>
+	</div>
+}
