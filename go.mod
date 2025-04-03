@@ -62,5 +62,3 @@ require (
 	modernc.org/memory v1.8.2 // indirect
 	zombiezen.com/go/sqlite v1.4.0 // indirect
 )
-
-replace github.com/Regncon/conorganizer => ./
