@@ -121,10 +121,18 @@ templ CssVariableConfigComponent() {
                 }
 
                 const preElement = document.createElement("pre")
-                const cssVariables = getAllCssVariables()
+                const cssVariables = localStorageCssVariablesInit()
                 for (variable of cssVariables) {
                     const preTextNode = document.createTextNode(`${variable.name}: ${variable.value}\n`)
                     preElement.appendChild(preTextNode)
+                }
+
+                const copyButton = document.createElement("button")
+                const copyButtonText = document.createTextNode("copy")
+                copyButton.appendChild(copyButtonText)
+                copyButton.onclick = function () {
+                    navigator.clipboard.writeText(preElement.textContent)
+                    dialogContainer.close()
                 }
 
                 const closeButton = document.createElement("button")
@@ -134,6 +142,7 @@ templ CssVariableConfigComponent() {
                     dialogContainer.close()
                 }
 
+                dialogContainer.appendChild(copyButton)
                 dialogContainer.appendChild(preElement)
                 dialogContainer.appendChild(closeButton)
             }
@@ -171,6 +180,11 @@ templ CssVariableConfigComponent() {
 
                     for (line of lines) {
                         const keyValuePair = line.trim().replace(/\s/g,'').split(":")
+
+                        // Skip empty results, often caused by excess spaces or newlines
+                        if (keyValuePair[0] === "") {
+                            continue
+                        }
 
                         // Check for css variable name conformity
                         if (typeof keyValuePair[0] !== "string" || !keyValuePair[0].includes("--")) {
@@ -256,7 +270,9 @@ templ CssVariableConfigComponent() {
                 console.log("resetted local storage")
 
                 // cleaning up stylesheet changes
-                localStorageCssVariablesInit()
+                const cssVariables = localStorageCssVariablesInit()
+                updateStylesheet(cssVariables)
+                populateCssVariables()
             }
 
             // Update stylesheet variables
