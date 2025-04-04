@@ -167,20 +167,34 @@ templ CssVariableConfigComponent() {
                 openButton.onclick = function () {
                     const lines = textAreaElement.value.split("\n")
                     const cssVariables = []
+                    let isError = false
 
                     for (line of lines) {
                         const keyValuePair = line.trim().replace(/\s/g,'').split(":")
-                        const cssObject = {name: keyValuePair[0], value: keyValuePair[1]}
 
+                        // Check for css variable name conformity
                         if (typeof keyValuePair[0] !== "string" || !keyValuePair[0].includes("--")) {
-                            alert("Import streng er ikke formatert riktig")
+                            alert(`Verdien ${keyValuePair[0]} er ikke formatert riktig`)
+                            isError = true
                             break
                         }
 
+                        // Check if value also exists
+                        if (!keyValuePair[1] || keyValuePair[1] === "") {
+                            alert(`Css variabelen ${keyValuePair[0]} mangler en verdi`)
+                            isError = true
+                            break
+                        }
+
+                        // Css variable is valid and be pushed to css variables array
+                        const cssObject = {name: keyValuePair[0], value: keyValuePair[1]}
                         cssVariables.push(cssObject)
                     }
 
-                    // console.log("Importing:", cssVariables)
+                    // Break operation if earlier loop had errors
+                    if (isError) return
+
+                    console.log("Importing:", cssVariables)
                     localStorage.setItem("cssVariables", JSON.stringify(cssVariables))
                     populateCssVariables()
                     dialogContainer.close()
