@@ -43,6 +43,11 @@ templ CssVariableConfigComponent() {
                 padding: 2px 4px;
                 border-radius: 2px;
             }
+            #css-variable-dialog[open] {
+                display: flex;
+                flex-flow: column nowrap;
+                gap: 1rem;
+            }
             #css-variable-sections {
                 display: flex;
                 flex-flow: column nowrap;
@@ -107,7 +112,7 @@ templ CssVariableConfigComponent() {
 
             // Save current values for export, perhaps open an new frame where they can copy?
             function localStorageCssVariablesExport () {
-                const dialogContainer = document.getElementById("css-variable-export")
+                const dialogContainer = document.getElementById("css-variable-dialog")
                 dialogContainer.open = true
 
                 // Empty container before we start
@@ -135,7 +140,49 @@ templ CssVariableConfigComponent() {
 
             // Save current values for export, perhaps open an new frame where they can copy?
             function localStorageCssVariablesImport () {
-                console.log("Importing")
+                const dialogContainer = document.getElementById("css-variable-dialog")
+                dialogContainer.open = true
+
+                // Empty container before we start
+                while (dialogContainer.lastElementChild) {
+                    dialogContainer.removeChild(dialogContainer.lastElementChild)
+                }
+
+                // Create input area
+                const textAreaElement = document.createElement("textarea")
+                textAreaElement.style.minHeight = "10rem"
+
+                // Close button
+                const closeButton = document.createElement("button")
+                const closeButtonText = document.createTextNode("close")
+                closeButton.appendChild(closeButtonText)
+                closeButton.onclick = function () {
+                    dialogContainer.close()
+                }
+
+                // Open button
+                const openButton = document.createElement("button")
+                const openButtonText = document.createTextNode("Apply")
+                openButton.appendChild(openButtonText)
+                openButton.onclick = function () {
+                    const lines = textAreaElement.value.split("\n")
+                    const cssVariables = []
+
+                    for (line of lines) {
+                        const keyValuePair = line.trim().replace(/\s/g,'').split(":")
+                        const cssObject = {name: keyValuePair[0], value: keyValuePair[1]}
+                        cssVariables.push(cssObject)
+                    }
+
+                    // console.log("Importing:", cssVariables)
+                    localStorage.setItem("cssVariables", JSON.stringify(cssVariables))
+                    populateCssVariables()
+                    dialogContainer.close()
+                }
+
+                dialogContainer.appendChild(textAreaElement)
+                dialogContainer.appendChild(openButton)
+                dialogContainer.appendChild(closeButton)
             }
 
             // Update a single css variable entity
@@ -272,7 +319,7 @@ templ CssVariableConfigComponent() {
 				<button onclick="localStorageCssVariablesExport()">
 					export
 				</button>
-				<button>
+				<button onclick="localStorageCssVariablesImport()">
 					import
 				</button>
 				<button onclick="localStorageCssVariablesReset()">
@@ -280,8 +327,7 @@ templ CssVariableConfigComponent() {
 				</button>
 			</span>
 		</div>
-        <dialog id="css-variable-export" >
-        </dialog>
+		<dialog id="css-variable-dialog"></dialog>
 		<span style="height: 1px; width: 100%; background-color: black; margin: 1rem 0;"></span>
 		<div id="css-variable-sections">
 			<p>Generating list</p>
