@@ -171,6 +171,12 @@ templ CssVariableConfigComponent() {
                     for (line of lines) {
                         const keyValuePair = line.trim().replace(/\s/g,'').split(":")
                         const cssObject = {name: keyValuePair[0], value: keyValuePair[1]}
+
+                        if (typeof keyValuePair[0] !== "string" || !keyValuePair[0].includes("--")) {
+                            alert("Import streng er ikke formatert riktig")
+                            break
+                        }
+
                         cssVariables.push(cssObject)
                     }
 
