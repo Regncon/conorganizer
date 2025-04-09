@@ -6,7 +6,7 @@ import (
 )
 
 templ Redirect(url string) {
-	@layouts.Base("Redirecting...") {
+	@layouts.Base("Redirecting to login") {
 		<style>
 
         .redirect-countdown {
@@ -19,23 +19,27 @@ templ Redirect(url string) {
         </style>
 		<meta http-equiv="refresh" content={ fmt.Sprintf("5;url=%s", templ.URL(url)) }/>
 		<div style="display: flex; place-items: center; flex-direction: column;">
-			<p>You are not logged in. Redirecting to the login page in <span class="redirect-countdown">5</span> seconds...</p>
+			<p>You are not logged in OR session expired. Redirecting to the login page in <span class="redirect-countdown">5</span> seconds...</p>
 			<a href={ templ.URL(url) }>Click here if you are not redirected.</a>
 		</div>
 		<script>
-            let countdown = 5;
             const countdownElement = document.querySelector('.redirect-countdown');
-            countdownElement.textContent = countdown;
 
             const INITIAL_COUNTDOWN = 5;
             const MAX_HUE = 120;
+
+            let countdown = INITIAL_COUNTDOWN;
+            countdownElement.textContent = countdown;
+
             const countdownInterval = setInterval(() => {
                 countdown--;
+
                 if (countdown <= 0) {
                     countdownElement.textContent = '0';
                     clearInterval(countdownInterval);
                     return;
                 }
+
                 countdownElement.textContent = countdown;
                 const elapsedSeconds = INITIAL_COUNTDOWN - countdown;
                 const progressRatio = elapsedSeconds / INITIAL_COUNTDOWN;
