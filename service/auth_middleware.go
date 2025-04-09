@@ -74,7 +74,8 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if validateTokenError != nil {
 				logger.Error("Failed to validate/refresh session", "validateTokenError", validateTokenError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, validateTokenError)
-				next.ServeHTTP(w, r.WithContext(ctx))
+				loginURL := "/auth"
+				redirect.Redirect(loginURL).Render(ctx, w)
 				return
 			}
 
