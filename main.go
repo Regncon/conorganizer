@@ -10,10 +10,11 @@ import (
 	"syscall"
 
 	"database/sql"
+	"io/ioutil"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"golang.org/x/sync/errgroup"
-	"io/ioutil"
 	_ "modernc.org/sqlite"
 )
 
@@ -22,7 +23,7 @@ func main() {
 
 	db, err := initDB("events.db", "initialize.sql")
 	if err != nil {
-		logger.Error("Could not initialize DB: %v", err)
+		logger.Error("Could not initialize DB", "initialize database", err)
 	}
 	defer db.Close()
 
