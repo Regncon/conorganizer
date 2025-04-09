@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service"
 	"github.com/go-chi/chi/v5"
 )
@@ -26,7 +27,7 @@ func SetupAuthRoute(router chi.Router, logger *slog.Logger) error {
 				}
 
 				isAdmin := service.GetAdminFromUserToken(r.Context())
-
+				layouts.Base("Is logged in test").Render(r.Context(), w)
 				w.Write(fmt.Appendf(nil, "Test successful! Authenticated as: %v, and is admin: %v", userToken.Claims["email"], isAdmin))
 			})
 
