@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Regncon/conorganizer/pages/auth/redirect"
 	"github.com/descope/go-sdk/descope"
 	"github.com/descope/go-sdk/descope/client"
 )
@@ -41,10 +42,10 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			//todo: get projectID from env?
 			projectID := "P2ufzqahlYUHDIprVXtkuCx8MH5C"
-			descopeClient, sessionCookieError := client.NewWithConfig(&client.Config{ProjectID: projectID})
-			if sessionCookieError != nil {
-				logger.Error("Failed to create Descope client", slog.String("projectID", projectID), "sessionCookieError", sessionCookieError)
-				ctx := context.WithValue(r.Context(), ctxSessionError, sessionCookieError)
+			descopeClient, descopeClientError := client.NewWithConfig(&client.Config{ProjectID: projectID})
+			if descopeClientError != nil {
+				logger.Error("Failed to create Descope client", slog.String("projectID", projectID), "descopeClientError", descopeClientError)
+				ctx := context.WithValue(r.Context(), ctxSessionError, descopeClientError)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
@@ -54,7 +55,24 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if sessionCookieError != nil {
 				logger.Error("No session cookie found", "sessionCookieError", sessionCookieError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, sessionCookieError)
-				next.ServeHTTP(w, r.WithContext(ctx))
+				queryParam := "error=not_logged_in"
+				loginURL := "/auth?" + queryParam
+
+				// w.Header().Set("Content-Type", "text/html")
+				// w.WriteHeader(http.StatusOK)
+				// fmt.Fprintf(w, `
+				//     <html>
+				//         <head>
+				//             <title>Redirecting...</title>
+				//             <meta http-equiv="refresh" content="5;url=%s" />
+				//         </head>
+				//         <body>
+				//             <p>You are not logged in. Redirecting to the login page in 5 seconds...</p>
+				//             <a href="%s">Click here if you are not redirected.</a>
+				//         </body>
+				//     </html>
+				// `, loginURL, loginURL)
+				redirect.Redirect(loginURL).Render(ctx, w)
 				return
 			}
 
@@ -66,11 +84,11 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				return
 			}
 
-			_, userToken, sessionCookieError := descopeClient.Auth.ValidateAndRefreshSessionWithTokens(
+			_, userToken, validateTokenError := descopeClient.Auth.ValidateAndRefreshSessionWithTokens(
 				r.Context(), sessionCookie.Value, refreshCookie.Value)
-			if sessionCookieError != nil {
-				logger.Error("Failed to validate/refresh session", "sessionCookieError", sessionCookieError)
-				ctx := context.WithValue(r.Context(), ctxSessionError, sessionCookieError)
+			if validateTokenError != nil {
+				logger.Error("Failed to validate/refresh session", "validateTokenError", validateTokenError)
+				ctx := context.WithValue(r.Context(), ctxSessionError, validateTokenError)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
