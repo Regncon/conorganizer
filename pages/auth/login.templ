@@ -1,70 +1,66 @@
 package auth
 
+import "github.com/Regncon/conorganizer/layouts"
+
 templ loginForm() {
-	<script src="https://descopecdn.com/npm/@descope/web-component@3.21.0/dist/index.js"></script>
-	<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
-	<script src="https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js"></script>
-	<!-- The code below includes your Project ID (P2ufzqahlYUHDIprVXtkuCx8MH5C) -->
-	<descope-wc
-		project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
-		flow-id="sign-up-or-in-passwords-social"
-		theme="dark"
-	></descope-wc>
-	// <descope-user-management-widget
-	// 	tenant="TEST"
-	// 	project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
-	// 	widget-id="user-management-widget"
-	// 	theme="dark"
-	// 	style-id="my-style-id"
-	// 	debug="true"
-	// ></descope-user-management-widget>
-	<script>
-        const COOKIE_NAMES = {
-            SESSION: 'session_token',
-            REFRESH: 'refresh_token'
-        };
+	@layouts.Base("Login") {
+		<script src="https://descopecdn.com/npm/@descope/web-component@3.21.0/dist/index.js"></script>
+		<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
+		<script src="https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js"></script>
+		<descope-wc
+			project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
+			flow-id="sign-up-or-in-passwords-social"
+			theme="dark"
+		></descope-wc>
+		<script>
+            const COOKIE_NAMES = {
+                SESSION: 'session_token',
+                REFRESH: 'refresh_token'
+            };
 
-        const DURATION = {
-            ONE_YEAR: 365 * 24 * 60 * 60 * 1000
-        };
+            const DURATION = {
+                ONE_YEAR: 365 * 24 * 60 * 60 * 1000
+            };
 
-        function setCookie(name, value) {
-            const now = new Date();
-            let expires;
+            function setCookie(name, value) {
+                const now = new Date();
+                let expires;
 
-            switch (name) {
-                case COOKIE_NAMES.SESSION:
-                    expires = new Date(now.getTime() + DURATION.ONE_YEAR);
-                    break;
-                case COOKIE_NAMES.REFRESH:
-                    expires = new Date(now.getTime() + DURATION.ONE_YEAR);
-                    break;
-                default:
-                    console.error('Unknown cookie type:', name);
-                    return;
+                switch (name) {
+                    case COOKIE_NAMES.SESSION:
+                    case COOKIE_NAMES.REFRESH:
+                        expires = new Date(now.getTime() + DURATION.ONE_YEAR);
+                        break;
+                    default:
+                        console.error('Unknown cookie type:', name);
+                        return;
+                }
+
+                document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
             }
 
-            document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
-        }
+            const wcElement = document.getElementsByTagName('descope-wc')[0];
 
-        const wcElement = document.getElementsByTagName('descope-wc')[0];
+            const onSuccess = (e) => {
+                console.log('Login successful');
+                console.log('User:', e.detail.user.name);
+                console.log('Email:', e.detail.user.email);
 
-        const onSuccess = (e) => {
-            console.log('Login successful');
-            console.log('User:', e.detail.user.name);
-            console.log('Email:', e.detail.user.email);
+                setCookie(COOKIE_NAMES.SESSION, e.detail.sessionJwt);
+                setCookie(COOKIE_NAMES.REFRESH, e.detail.refreshJwt);
 
-            setCookie(COOKIE_NAMES.SESSION, e.detail.sessionJwt);
-            setCookie(COOKIE_NAMES.REFRESH, e.detail.refreshJwt);
+                wcElement.removeEventListener('success', onSuccess);
+                wcElement.removeEventListener('error', onError);
 
-            window.location.href = '/';
-        };
+                window.location.href = '/';
+            };
 
-        const onError = (err) => {
-            console.error('Login error:', err);
-        };
+            const onError = (err) => {
+                console.error('Login error:', err);
+            };
 
-        wcElement.addEventListener('success', onSuccess);
-        wcElement.addEventListener('error', onError);
-    </script>
+            wcElement.addEventListener('success', onSuccess);
+            wcElement.addEventListener('error', onError);
+        </script>
+	}
 }
