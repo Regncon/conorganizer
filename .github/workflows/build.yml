@@ -27,13 +27,15 @@ jobs:
         with:
             go-version: '1.24'
 
-      - name: Install dependencies
-        run: |
-            go get .
-            go get github.com/a-h/templ/cmd/templ@latest
+
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@latest
 
       - name: Generate template files
         run: templ generate
+
+      - name: Install dependencies
+        run: go get .
 
       - name: Generate binary
         run: go build -v ./...
