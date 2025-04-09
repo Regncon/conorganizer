@@ -37,6 +37,31 @@ func GetUserTokenFromContext(ctx context.Context) (*descope.Token, error) {
 	return userToken, nil
 }
 
+func GetAdminFromUserToken(ctx context.Context) bool {
+	userToken, err := GetUserTokenFromContext(ctx)
+	if err != nil {
+		return false
+	}
+
+	rolesClaim, ok := userToken.Claims["roles"]
+	if !ok {
+		return false
+	}
+
+	roles, ok := rolesClaim.([]any)
+	if !ok {
+		return false
+	}
+
+	for _, role := range roles {
+		if roleStr, ok := role.(string); ok && roleStr == "Admin" {
+			return true
+		}
+	}
+
+	return false
+}
+
 func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

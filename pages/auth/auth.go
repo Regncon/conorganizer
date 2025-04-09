@@ -25,7 +25,9 @@ func SetupAuthRoute(router chi.Router, logger *slog.Logger) error {
 					return
 				}
 
-				w.Write([]byte(fmt.Sprintf("Test successful! Authenticated as: %v", userToken.Claims["email"])))
+				isAdmin := service.GetAdminFromUserToken(r.Context())
+
+				w.Write(fmt.Appendf(nil, "Test successful! Authenticated as: %v, and is admin: %v", userToken.Claims["email"], isAdmin))
 			})
 
 		})
