@@ -55,23 +55,7 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if sessionCookieError != nil {
 				logger.Error("No session cookie found", "sessionCookieError", sessionCookieError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, sessionCookieError)
-				queryParam := "error=not_logged_in"
-				loginURL := "/auth?" + queryParam
-
-				// w.Header().Set("Content-Type", "text/html")
-				// w.WriteHeader(http.StatusOK)
-				// fmt.Fprintf(w, `
-				//     <html>
-				//         <head>
-				//             <title>Redirecting...</title>
-				//             <meta http-equiv="refresh" content="5;url=%s" />
-				//         </head>
-				//         <body>
-				//             <p>You are not logged in. Redirecting to the login page in 5 seconds...</p>
-				//             <a href="%s">Click here if you are not redirected.</a>
-				//         </body>
-				//     </html>
-				// `, loginURL, loginURL)
+				loginURL := "/auth"
 				redirect.Redirect(loginURL).Render(ctx, w)
 				return
 			}
