@@ -64,7 +64,8 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if refreshCookieError != nil {
 				logger.Error("No refresh cookie found", "refreshCookieError", refreshCookieError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, refreshCookieError)
-				next.ServeHTTP(w, r.WithContext(ctx))
+				loginURL := "/auth"
+				redirect.Redirect(loginURL).Render(ctx, w)
 				return
 			}
 
