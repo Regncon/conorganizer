@@ -5,8 +5,8 @@ import (
 	"github.com/Regncon/conorganizer/layouts"
 )
 
-templ Redirect(url string) {
-	@layouts.Base("Redirecting to login") {
+templ Redirect(url string, title string) {
+	@layouts.Base(title) {
 		<style>
 
         .redirect-countdown {

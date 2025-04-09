@@ -80,8 +80,8 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if sessionCookieError != nil {
 				logger.Error("No session cookie found", "sessionCookieError", sessionCookieError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, sessionCookieError)
-				loginURL := "/auth"
-				redirect.Redirect(loginURL).Render(ctx, w)
+				redirectUrl := "/auth"
+				redirect.Redirect(redirectUrl, "Redirecting to login").Render(ctx, w)
 				return
 			}
 
@@ -89,8 +89,8 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if refreshCookieError != nil {
 				logger.Error("No refresh cookie found", "refreshCookieError", refreshCookieError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, refreshCookieError)
-				loginURL := "/auth"
-				redirect.Redirect(loginURL).Render(ctx, w)
+				redirectUrl := "/auth"
+				redirect.Redirect(redirectUrl, "Redirecting to login").Render(ctx, w)
 				return
 			}
 
@@ -99,8 +99,8 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if validateTokenError != nil {
 				logger.Error("Failed to validate/refresh session", "validateTokenError", validateTokenError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, validateTokenError)
-				loginURL := "/auth"
-				redirect.Redirect(loginURL).Render(ctx, w)
+				redirectUrl := "/auth"
+				redirect.Redirect(redirectUrl, "Redirecting to login").Render(ctx, w)
 				return
 			}
 

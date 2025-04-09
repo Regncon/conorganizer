@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/pages/auth/redirect"
 	"github.com/Regncon/conorganizer/service"
 	"github.com/go-chi/chi/v5"
 )
@@ -54,7 +55,8 @@ func SetupAuthRoute(router chi.Router, logger *slog.Logger) error {
 				SameSite: http.SameSiteStrictMode,
 			})
 
-			http.Redirect(w, r, "/auth", http.StatusSeeOther)
+			redirectUrl := "/"
+			redirect.Redirect(redirectUrl, "Logging you out").Render(r.Context(), w)
 		})
 	})
 
