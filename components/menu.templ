@@ -23,7 +23,7 @@ templ Menu() {
 					height: 4rem;
 				}
 			}
-			
+
 			.main-menu-link {
 				display: flex;
 				gap: 0.25rem;
@@ -33,10 +33,10 @@ templ Menu() {
 				text-decoration: none;
 				padding: 0.5rem;
 				height: 100%;
-		
+
 				img {
 					width: 1rem;
-					
+
 				}
 			}
 			.main-menu-link:hover {
@@ -47,7 +47,7 @@ templ Menu() {
 				margin-left: auto;
 			}
 		}
-		
+
 
 		a.disabled {
 			pointer-events: none;
@@ -78,7 +78,7 @@ templ Menu() {
 
 		.dropdown-panel {
 			position: absolute;
-			right: 0;  
+			right: 0;
 			left: auto;
 			background-color: #2d3748;
 			min-width: 160px;
@@ -121,7 +121,7 @@ templ Menu() {
 				/>
 			</summary>
 			<div class="dropdown-panel">
-				<a href="/logout" class="disabled">Logg ut</a>
+				<a href="/auth/logout">Logg ut</a>
 				<a href="/mine" class="disabled">Mine arrangementer</a>
 				<a href="/profil" class="disabled">Min profil</a>
 				<a href="/admin" class="disabled">Admin</a>
