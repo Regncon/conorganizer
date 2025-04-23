@@ -36,17 +36,19 @@ templ Menu() {
                         display: none;
                     }
                 }
+
                 .main-menu-link:hover {
                     background-color: hsla(0, 0%, 100%, 0.1);
                 }
+
             }
 
             details {
                 position: relative;
-                display: inline-block;
+                display: block;
                 place-self: center end;
                 margin-inline-start: 0.7rem;
-		    }
+            }
 
             summary {
                 cursor: pointer;
@@ -62,14 +64,13 @@ templ Menu() {
 
             .dropdown-panel {
                 position: fixed;
-                right: 0;
-                top: auto;
-                left: auto;
+                right: 0.5rem;
                 bottom: calc((var(--nav-height) / 2 + (var(--nav-gap) * 2)));
                 background-color: #2d3748;
                 box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
                 z-index: var(--nav-drop-down-z-index);
             }
+
             .dropdown-panel a {
                 display: block;
                 color: var(--color-primary-text);
@@ -77,6 +78,7 @@ templ Menu() {
                 text-decoration: none;
                 text-transform: uppercase;
             }
+
             .dropdown-panel a:hover {
                 background-color: hsla(0, 0%, 100%, 0.1);
             }
@@ -99,22 +101,33 @@ templ Menu() {
                     }
                 }
 
-                .main-menu-link {
-                    display: flex;
-                    gap: 0.25rem;
-                    justify-content: center;
-                    align-items:  center;
-                    color: var(--color-secondary);
-                    text-decoration: none;
-                    padding: 0.5rem;
-                    height: 100%;
+                .main-menu-links {
+                    place-self: center start;
+                    .main-menu-link {
+                        display: flex;
+                        gap: 0.25rem;
+                        justify-content: center;
+                        align-items:  center;
+                        height: 100%;
 
-                    img {
-                        width: 1rem;
+                        .main-menu-link-text {
+                            display: block;
+                        }
+
                     }
-			    }
+                }
+
+                .menu-btn {
+                    margin-inline-end: 0.5rem;
+                    height: 20px;
+                }
+
                 .dropdown-panel {
+                    right: 0;
                     bottom: unset;
+                    position: absolute;
+                    min-inline-size: max-content;
+                    margin-block-start: 1.1rem;
                 }
             }
         }
