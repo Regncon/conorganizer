@@ -86,15 +86,16 @@ templ Menu() {
 
         @container main (width > 420px) {
             .main-menu {
-                grid-template-columns: 3.75rem 1fr 1fr;
+                grid-template-columns: max-content 1fr 1fr;
                 position: sticky;
                 top: 0;
                 bottom: unset;
                 width: 100%;
 
                 .logo-link {
-                    padding: 0rem;
-                    display: block;
+                    display: flex;
+                    place-items: center;
+                    margin-inline-start: 0.5rem;
                     img {
                         width: 4rem;
                         height: 4rem;
