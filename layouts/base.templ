@@ -17,9 +17,11 @@ templ Base(title string) {
 			<link href="/static/index.css" rel="stylesheet" type="text/css"/>
 		</head>
 		<body>
-            @modals.CssVariableConfigComponent()
-			@components.Menu()
-			{ children... }
+			@modals.CssVariableConfigComponent()
+			<main>
+				@components.Menu()
+				{ children... }
+			</main>
 		</body>
 	</html>
 }
