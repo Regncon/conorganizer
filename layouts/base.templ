@@ -1,6 +1,7 @@
 package layouts
 
 import "github.com/Regncon/conorganizer/components"
+import "github.com/Regncon/conorganizer/components/modals"
 
 templ Base(title string) {
 	<!DOCTYPE html>
@@ -16,8 +17,11 @@ templ Base(title string) {
 			<link href="/static/index.css" rel="stylesheet" type="text/css"/>
 		</head>
 		<body>
-			@components.Menu()
-			{ children... }
+			@modals.CssVariableConfigComponent()
+			<main>
+				@components.Menu()
+				{ children... }
+			</main>
 		</body>
 	</html>
 }

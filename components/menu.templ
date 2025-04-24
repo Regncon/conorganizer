@@ -3,17 +3,14 @@ package components
 templ Menu() {
 	<style>
 		.main-menu {
-			display: flex;
-			position: sticky;
-			top: 0;
-			left: 0;
-			z-index: 1000;
-			justify-content: flex-start;
-			align-items: center;
+			display: grid;
+            grid-template-columns: repeat(2, max-content);
+			position: fixed;
+			bottom: 0;
+			z-index: var(--nav-z-index);
 			background-color: #2d3748;
-			height: 4.5rem;
-		 	padding: 0.5rem;
-			gap: 1rem;
+			height: var(--nav-height);
+			gap: var(--nav-gap);
 			font-family: "Fira Code";
 
 			.logo-link {
@@ -48,33 +45,55 @@ templ Menu() {
 			}
 		}
 
+            width: 100%;
+            place-content: center;
+            place-items: center;
 
-		a.disabled {
-			pointer-events: none;
-			color: #999;
-			cursor: not-allowed;
-			text-decoration: none;
-			opacity: 0.6;
-		}
+            a.disabled {
+                pointer-events: none;
+                color: #999;
+                cursor: not-allowed;
+                text-decoration: none;
+                opacity: 0.6;
+            }
 
-		details {
-			position: relative;
-			display: inline-block;
-			padding-right: 2rem;
-		}
+			.logo-link {
+                display: none;
+			}
 
-		summary {
-			cursor: pointer;
-			list-style: none; /* hide the default disclosure triangle in some browsers */
-			color: var(--color-secondary);
-			text-transform: uppercase;
-			text-decoration: none;
-			margin-left: 1rem;
-			padding: 0.5rem;
-		}
-		summary::-webkit-details-marker {
-			display: none; /* hide default marker in Chrome/Safari */
-		}
+			.main-menu-links {
+                .main-menu-link {
+                    color: var(--color-secondary);
+                    text-decoration: none;
+                    .main-menu-link-text {
+                        display: none;
+                    }
+                }
+
+                .main-menu-link:hover {
+                    background-color: hsla(0, 0%, 100%, 0.1);
+                }
+
+            }
+
+            details {
+                position: relative;
+                display: block;
+                place-self: center end;
+                margin-inline-start: 0.7rem;
+            }
+
+            summary {
+                cursor: pointer;
+                list-style: none; /* hide the default disclosure triangle in some browsers */
+                color: var(--color-secondary);
+                text-transform: uppercase;
+                text-decoration: none;
+            }
+
+            summary::-webkit-details-marker {
+                display: none; /* hide default marker in Chrome/Safari */
+            }
 
 		.dropdown-panel {
 			position: absolute;
@@ -96,6 +115,76 @@ templ Menu() {
 		.dropdown-panel a:hover {
 			background-color: rgba(255, 255, 255, 0.1);
 		}
+            .dropdown-panel {
+                position: fixed;
+                right: 0.5rem;
+                bottom: calc((var(--nav-height) / 2 + (var(--nav-gap) * 2)));
+                background-color: #2d3748;
+                box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
+                z-index: var(--nav-drop-down-z-index);
+            }
+
+            .dropdown-panel a {
+                display: block;
+                color: var(--color-primary-text);
+                padding: 0.5rem 1rem;
+                text-decoration: none;
+                text-transform: uppercase;
+            }
+
+            .dropdown-panel a:hover {
+                background-color: hsla(0, 0%, 100%, 0.1);
+            }
+		}
+
+        @container main (width > 420px) {
+            .main-menu {
+                grid-template-columns: max-content 1fr 1fr;
+                position: sticky;
+                top: 0;
+                bottom: unset;
+                width: 100%;
+
+                .logo-link {
+                    display: flex;
+                    place-items: center;
+                    margin-inline-start: 0.5rem;
+                    img {
+                        width: 4rem;
+                        height: 4rem;
+                    }
+                }
+
+                .main-menu-links {
+                    place-self: center start;
+                    .main-menu-link {
+                        display: flex;
+                        gap: 0.25rem;
+                        justify-content: center;
+                        align-items:  center;
+                        height: 100%;
+
+                        .main-menu-link-text {
+                            display: block;
+                        }
+
+                    }
+                }
+
+                .menu-btn {
+                    margin-inline-end: 0.5rem;
+                    height: 20px;
+                }
+
+                .dropdown-panel {
+                    right: 0;
+                    bottom: unset;
+                    position: absolute;
+                    min-inline-size: max-content;
+                    margin-block-start: 1.1rem;
+                }
+            }
+        }
 	</style>
 	<nav
 		class="main-menu"
@@ -103,21 +192,28 @@ templ Menu() {
 		<a href="/" class="logo-link">
 			<img src="/static/RegnconLogo.svg" alt="logo"/>
 		</a>
-		<a href="/" class="main-menu-link">
-			<span>
+		<section class="main-menu-links">
+			<a href="/" class="main-menu-link">
 				<img
 					src="/static/icons/house-solid.svg"
 					alt="hjem"
+					height="20"
+					width="20"
+					fetchpriority="high"
 				/>
-				Hjem
-			</span>
-		</a>
+				<span class="main-menu-link-text">
+					Hjem
+				</span>
+			</a>
+		</section>
 		<details class="menu-btn">
 			<summary>
 				<img
 					src="/static/icons/bars-solid.svg"
 					alt="menu"
-					style="width: 1rem; height: 1rem; margin-right: 0.25rem;"
+					height="20"
+					width="20"
+					fetchpriority="high"
 				/>
 			</summary>
 			<div class="dropdown-panel">

@@ -1,13 +1,12 @@
 :root {
-    --color-primary-text: black;
-    --color-secondary: #ff7c7c;
-    --link-color: #007bff;
-    --bg-color: white;
-
-    --mobile-min-width: 320px;
-    --mobile-max-column-width: 430px;
-    --mobile-max-width: 600px;
-    --max-single-column-width: 990px;
+  --color-primary-text: black;
+  --color-secondary: #ff7c7c;
+  --bg-color: white;
+  --nav-height: 4.5rem;
+  --nav-gap: 1rem;
+  --nav-z-index: 1000;
+  --nav-drop-down-z-index: 1001;
+  --nav-summary-bottom: calc((var(--nav-height) / 2 + var(--nav-gap)));
 }
 
 [data-theme="dark"] {
@@ -16,10 +15,16 @@
 }
 
 body {
-    color: var(--color-primary-text);
-    background: var(--bg-color);
-    margin: 0;
-    font-family: sans-serif;
+  color: var(--color-primary-text);
+  background: var(--bg-color);
+  margin: 0;
+  font-family: sans-serif;
+
+  main {
+    container-type: inline-size;
+    container-name: main;
+  }
+
 }
 
 html {
