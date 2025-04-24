@@ -10,6 +10,12 @@ templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	<div id="add-bilettholder-admin-container">
 		<h1>Bilettholdere</h1>
 		<h2>Her kan du legge til en ny bilettholder</h2>
+		<input
+			data-bind-search
+			data-on-input__debounce.1000ms="@get('/examples/active_search/data')"
+			placeholder="Search..."
+			type="text"
+		/>
 		<div class="add-bilettholder-admin-grid">
 			if err != nil {
 				<p>Failed to load tickets:</p>
