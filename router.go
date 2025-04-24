@@ -10,7 +10,7 @@ import (
 
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/index"
-	myprofile "github.com/Regncon/conorganizer/pages/my-profile"
+	"github.com/Regncon/conorganizer/pages/myprofile"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
