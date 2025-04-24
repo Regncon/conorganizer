@@ -10,6 +10,7 @@ import (
 
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/index"
+	myprofile "github.com/Regncon/conorganizer/pages/my-profile"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -46,6 +47,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	if err := errors.Join(
 		index.SetupIndexRoute(router, sessionStore, ns, db),
 		event.SetupEventRoute(router, sessionStore, ns, db, logger),
+		myprofile.SetupMyProfileRoute(router, sessionStore, ns, db, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)
 	}
