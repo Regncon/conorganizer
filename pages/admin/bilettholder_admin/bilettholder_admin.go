@@ -150,6 +150,13 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 			}
 
 		})
+		addBilettholderRouter.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
+			fmt.Println("search")
+			// The search string is passed as a query parameter
+			searchString := r.URL.Query().Get("search")
+			fmt.Println("search String", searchString)
+
+		})
 	})
 	return nil
 }
