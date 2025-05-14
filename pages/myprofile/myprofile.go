@@ -19,7 +19,7 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 		})
 
 		ticketRouter.Get("/my-tickets", func(w http.ResponseWriter, r *http.Request) {
-			noTicket().Render(r.Context(), w)
+			myTickets().Render(r.Context(), w)
 		})
 	})
 
