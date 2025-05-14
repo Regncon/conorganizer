@@ -1,0 +1,134 @@
+package myprofile
+
+import "github.com/Regncon/conorganizer/layouts"
+
+templ myTickets() {
+	@layouts.Base("Min billetter") {
+		<style>
+            .content-wrapper {
+                display: grid;
+                grid-template-rows: repeat(3, max-content);
+                gap: 1rem;
+                --card-bg-color: hsl(240, 18%, 29%);
+                padding: 1rem;
+
+                h1 {
+                    margin: 0;
+                }
+
+                p {
+                    margin: 0;
+                    line-height: 1.5;
+                }
+
+                .card-wrapper {
+                    padding-block: 1rem;
+                    padding-inline: 1.5rem;
+                    background-color: var(--card-bg-color);
+                    max-width: fit-content;
+                    button {
+                        background-color: var(--color-secondary);
+                    }
+
+                    .connect-email {
+                        margin-block: 1rem;
+                    }
+
+                    .connected-emails {
+                        display: flex;
+                        gap: 0.5rem;
+                        place-items: center;
+                        p {
+                            margin: 0;
+                        }
+                    }
+                }
+            }
+        </style>
+		<main class="content-wrapper">
+			<h1>Mine Billetter</h1>
+			<i>
+				Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett nedanfor,
+				slik at kvar deltakar kan melda seg på arrangement på eiga hand.
+			</i>
+			<section class="card-wrapper">
+				<p>Spesialpris</p>
+				<p>Sleiv Sleivsogn</p>
+				<p>Bestilling: 12743193</p>
+				<div class="connect-email">
+					<input type="text" placeholder="E-Postadresse"/>
+					<button>Koble til epost</button>
+				</div>
+				<p>Bilett epost: sleiv@sleivsogn.no</p>
+				<p>Bestillings epost 1: skeiv@sleivsogn.no</p>
+				<div class="connected-emails">
+					<p>
+						Kobledt epost 1: sleiv@sleivesein.no
+					</p>
+					<button>🚮</button>
+				</div>
+			</section>
+		</main>
+	}
+}
+
+templ noTicket() {
+	@layouts.Base("Ingen billetter") {
+		<style>
+            .content-wrapper {
+                margin-block-start: 2rem;
+                --card-bg-color: hsl(240, 18%, 29%);
+                display: grid;
+                place-content: center;
+                place-items: center;
+
+                .card-wrapper {
+                    padding-inline: 1rem;
+                    max-width: 25rem;
+                    background-color: var(--card-bg-color);
+
+                    h1 {
+                        font-size: 2rem;
+                        margin-block: 0.7rem;
+                    }
+
+                    .btn-buy-ticket {
+                        display: block;
+                        padding: 0.5rem 1rem;
+                        text-align: center;
+                        background-color: hsl(37 100% 75.49%);
+                        color: black;
+                        border-radius: 0.2rem;
+                        margin-block: 1rem;
+                        text-decoration: none;
+                    }
+
+                    .btn-buy-ticket:hover {
+                        background-color: hsl(37 100% 75.49% / 80%);
+                    }
+
+                    .mailto {
+                        color: var(--color-secondary);
+                        text-decoration: underline;
+                        text-decoration-color: hsl(0deg 100% 74.31% / 40%);
+                    }
+
+                }
+            }
+        </style>
+		<main class="content-wrapper">
+			<section class="card-wrapper">
+				<h1>Fant ingen billetter.</h1>
+				<p>
+					Vi fann ingen billettar registrert på denne epostadressa. Det betyr at du anten ikkje har kjøpt billettar
+					endå, eller at du har kjøpt billettane på ei anna anna epostadresse enn den du er logga inn med her.
+				</p>
+				<a class="btn-buy-ticket" href="https://event.checkin.no/109715/regncon-xxxiii-2025">Kjøp billetter ↗️</a>
+				<p>
+					Kjøp billettar på Checkin, lag ein brukar på riktig mailadresse, eller ta kontakt med <a class="mailto" href="mailto:styret@regncon.no">styret@regncon.no</a> noko
+					er galt, eller om du ønsker billettane overført til epostadressa du har laga brukar til.
+				</p>
+			</section>
+		</main>
+	}
+}
