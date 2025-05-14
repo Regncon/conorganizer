@@ -12,9 +12,15 @@ import (
 
 func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
 
-	router.Get("/my-profile", func(w http.ResponseWriter, r *http.Request) {
-		my_profile("Min profil").Render(r.Context(), w)
-		return
+	router.Route("/my-profile", func(ticketRouter chi.Router) {
+		ticketRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			myProfile().Render(r.Context(), w)
+			return
+		})
+
+		ticketRouter.Get("/my-tickets", func(w http.ResponseWriter, r *http.Request) {
+			noTicket().Render(r.Context(), w)
+		})
 	})
 
 	return nil

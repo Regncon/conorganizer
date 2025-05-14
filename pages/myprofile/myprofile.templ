@@ -2,7 +2,7 @@ package myprofile
 
 import "github.com/Regncon/conorganizer/layouts"
 
-templ my_profile(title string) {
+templ myProfile() {
 	<style>
 	.wrapper {
 		background-color:#31354E;
@@ -57,7 +57,7 @@ templ my_profile(title string) {
         }
 	}
 	</style>
-	@layouts.Base(title) {
+	@layouts.Base("Min profil") {
 		<section class="wrapper">
 			<h1>Min profil</h1>
 			<a href="/my-events">
