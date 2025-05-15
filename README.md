@@ -28,9 +28,12 @@ For more details, visit:
 Choose your preferred method to run the project:
 
 ### Docker Setup (Recommended for Windows)
+  1. **Start the application using Docker Compose**
    ```bash
    docker compose up --build
    ```
+  2. Once the containers are up and running, head over to [Access the Application](#access-the-application) to view the app in your browser.
+
 
 > [!NOTE]
 > Docker is a platform that allows you to run applications in containers. It handles all dependencies and environment configuration automatically, making it ideal for Windows users.
@@ -166,7 +169,7 @@ source ~/.zshrc
 > Any code changes will automatically trigger a rebuild.
 
 
-3. **Access the Application**:
+### Access the Application:
    ```
    http://localhost:7331
    ```
