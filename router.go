@@ -12,6 +12,7 @@ import (
 	bilettholderadmin "github.com/Regncon/conorganizer/pages/admin/bilettholder_admin"
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/index"
+	"github.com/Regncon/conorganizer/pages/myprofile"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -50,6 +51,8 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 		admin.SetupAdminRoute(router, sessionStore, logger, ns, db),
 		bilettholderadmin.SetupBilettholderAdminRoute(router, sessionStore, ns, logger, db),
 		event.SetupEventRoute(router, sessionStore, ns, db, logger),
+		auth.SetupAuthRoute(router, logger),
+		myprofile.SetupMyProfileRoute(router, sessionStore, ns, db, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)
 	}

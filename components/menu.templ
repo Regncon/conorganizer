@@ -138,6 +138,7 @@ templ Menu() {
 		}
 
         @container main (width > 420px) {
+
             .main-menu {
                 grid-template-columns: max-content 1fr 1fr;
                 position: sticky;
@@ -217,7 +218,7 @@ templ Menu() {
 				/>
 			</summary>
 			<div class="dropdown-panel">
-				<a href="/logout" class="disabled">Logg ut</a>
+				<a href="/auth/logout">Logg ut</a>
 				<a href="/mine" class="disabled">Mine arrangementer</a>
 				<a href="/profil" class="disabled">Min profil</a>
 				<a href="/admin/">Admin</a>
