@@ -10,6 +10,7 @@ import (
 
 	"github.com/Regncon/conorganizer/pages/admin"
 	bilettholderadmin "github.com/Regncon/conorganizer/pages/admin/bilettholder_admin"
+	"github.com/Regncon/conorganizer/pages/auth"
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/Regncon/conorganizer/pages/myprofile"

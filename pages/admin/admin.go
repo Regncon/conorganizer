@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/pages/index"
+	"github.com/Regncon/conorganizer/service"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -77,12 +78,16 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		}
 		return sessionID, mvc, nil
 	}
-	adminLayoutRoute(router, db, err)
+
+	adminRouterGroup := router.With(service.AuthMiddleware(logger))
+
 	// eventLayoutRoute(router, db, err)
 	// newEvent.NewEventLayoutRoute(router, db, err)
 
-	router.Route("/admin/api/", func(adminRouter chi.Router) {
-		adminRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	adminRouterGroup.Route("/admin", func(adminRouter chi.Router) {
+		adminRouter.Use(service.AuthMiddleware(logger))
+		adminLayoutRoute(adminRouter, db, err)
+		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 
 			sessionID, mvc, err := mvcSession(w, r)
