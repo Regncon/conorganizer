@@ -1,0 +1,41 @@
+package addbilettholder
+
+import (
+	"database/sql"
+	"log/slog"
+)
+
+templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
+	{{ tickets, err := GetTicketsFromCheckIn(logger) }}
+	<div id="add-bilettholder-admin-container">
+		<h1>Bilettholdere</h1>
+		<h2>Her kan du legge til en ny bilettholder</h2>
+		<input
+			data-bind-search
+			data-on-input__debounce.1000ms="@get('/admin/bilettholder/add/api/search/')"
+			placeholder="Search..."
+			type="text"
+		/>
+		<hr/>
+		<div class="add-bilettholder-admin-grid">
+			if err != nil {
+				<p>Failed to load tickets:</p>
+			} else {
+				for _, ticket := range tickets {
+					@bilettCard(ticket)
+				}
+			}
+		</div>
+		<style>
+			.add-bilettholder-admin-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
+				gap: 1rem;
+			}@media (min-width: 600px) {
+				.add-bilettholder-admin-grid {
+					padding: 1rem;
+				}
+			}
+		</style>
+	</div>
+}
