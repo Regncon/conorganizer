@@ -2,8 +2,37 @@ package addbilettholder
 
 import (
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"log/slog"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
+
+func CheckInTicketsSearchRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+	router.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("search")
+
+		datastarRaw := r.URL.Query().Get("datastar")
+		if datastarRaw == "" {
+			http.Error(w, "missing ?datastar param", http.StatusBadRequest)
+			return
+		}
+
+		var payload struct {
+			Search string `json:"search"`
+		}
+		if err := json.Unmarshal([]byte(datastarRaw), &payload); err != nil {
+			http.Error(w, "invalid ?datastar JSON", http.StatusBadRequest)
+			return
+		}
+
+		searchTerm := payload.Search
+		fmt.Printf("search term is %q\n", searchTerm)
+
+	})
+}
 
 templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	{{ tickets, err := GetTicketsFromCheckIn(logger) }}

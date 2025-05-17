@@ -150,27 +150,9 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 			}
 
 		})
-		addBilettholderRouter.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
-			fmt.Println("search")
 
-			datastarRaw := r.URL.Query().Get("datastar")
-			if datastarRaw == "" {
-				http.Error(w, "missing ?datastar param", http.StatusBadRequest)
-				return
-			}
-
-			var payload struct {
-				Search string `json:"search"`
-			}
-			if err := json.Unmarshal([]byte(datastarRaw), &payload); err != nil {
-				http.Error(w, "invalid ?datastar JSON", http.StatusBadRequest)
-				return
-			}
-
-			searchTerm := payload.Search
-			fmt.Printf("search term is %q\n", searchTerm)
-
-		})
+		// CheckInTicketsSearchRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+		addbilettholder.CheckInTicketsSearchRoute(addBilettholderRouter, db, logger)
 	})
 	return nil
 }
