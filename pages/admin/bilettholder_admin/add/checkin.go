@@ -1,6 +1,7 @@
 package addbilettholder
 
 import (
+	"fmt"
 	"log/slog"
 )
 
@@ -34,6 +35,8 @@ type queryResult struct {
 	} `json:"data"`
 }
 
-func GetTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
+func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {
+
+	fmt.Printf("search term in chechIn %q\n", searchTerm)
 	return ticketCache.Get(logger)
 }

@@ -10,6 +10,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+var searchTerm = ""
+
 func CheckInTicketsSearchRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 	router.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("search")
@@ -28,14 +30,14 @@ func CheckInTicketsSearchRoute(router chi.Router, db *sql.DB, logger *slog.Logge
 			return
 		}
 
-		searchTerm := payload.Search
-		fmt.Printf("search term is %q\n", searchTerm)
+		searchTerm = payload.Search
+        fmt.Println("searchTerm", searchTerm)
 
 	})
 }
 
 templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ tickets, err := GetTicketsFromCheckIn(logger) }}
+	{{ tickets, err := GetTicketsFromCheckIn(logger, searchTerm) }}
 	<div id="add-bilettholder-admin-container">
 		<h1>Bilettholdere</h1>
 		<h2>Her kan du legge til en ny bilettholder</h2>
