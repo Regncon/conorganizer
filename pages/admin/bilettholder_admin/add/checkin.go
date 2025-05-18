@@ -34,6 +34,7 @@ type queryResult struct {
 	} `json:"data"`
 }
 
-func GetTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
-	return ticketCache.Get(logger)
+func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {
+
+	return ticketCache.Get(logger, searchTerm)
 }
