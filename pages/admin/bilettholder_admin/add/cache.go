@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/sahilm/fuzzy"
 	"io"
 	"log/slog"
 	"net/http"
@@ -23,14 +24,15 @@ var ticketCache = &Cache{
 	ttl: 5 * time.Minute, // Cache TTL set to 5 minutes
 }
 
-func (c *Cache) Get(logger *slog.Logger) ([]CheckInTicket, error) {
+func (c *Cache) Get(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {
+	fmt.Printf("search term in cache %q\n", searchTerm)
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	// Check if cache is valid
 	if time.Since(c.lastFetch) < c.ttl {
 		logger.Info("Returning cached tickets")
-		return c.data, nil
+		return filterTickets(c.data, searchTerm), nil
 	}
 
 	// Fetch new data and update cache
@@ -41,7 +43,26 @@ func (c *Cache) Get(logger *slog.Logger) ([]CheckInTicket, error) {
 
 	c.data = tickets
 	c.lastFetch = time.Now()
-	return tickets, nil
+	return filterTickets(tickets, searchTerm), nil
+}
+
+func filterTickets(tickets []CheckInTicket, searchTerm string) []CheckInTicket {
+	if searchTerm == "" {
+		return tickets
+	}
+
+	var ticketNames []string
+	for _, ticket := range tickets {
+		ticketNames = append(ticketNames, ticket.Name)
+	}
+
+	matches := fuzzy.Find(searchTerm, ticketNames)
+	var filteredTickets []CheckInTicket
+	for _, match := range matches {
+		filteredTickets = append(filteredTickets, tickets[match.Index])
+	}
+
+	return filteredTickets
 }
 
 func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {

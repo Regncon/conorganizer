@@ -61,6 +61,7 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rzajac/clock v0.2.0 // indirect
 	github.com/rzajac/zflake v0.8.0 // indirect
+	github.com/sahilm/fuzzy v0.1.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/ysmood/fetchup v0.3.0 // indirect
