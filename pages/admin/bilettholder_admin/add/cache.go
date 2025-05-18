@@ -51,12 +51,14 @@ func filterTickets(tickets []CheckInTicket, searchTerm string) []CheckInTicket {
 		return tickets
 	}
 
-	var ticketNames []string
+	var ticketStrings []string
 	for _, ticket := range tickets {
-		ticketNames = append(ticketNames, ticket.Name)
+		// Combine relevant fields into a single string for fuzzy searching
+		combined := fmt.Sprintf("%s %s %s %s", ticket.OrderID, ticket.Type, ticket.Email, ticket.Name)
+		ticketStrings = append(ticketStrings, combined)
 	}
 
-	matches := fuzzy.Find(searchTerm, ticketNames)
+	matches := fuzzy.Find(searchTerm, ticketStrings)
 	var filteredTickets []CheckInTicket
 	for _, match := range matches {
 		filteredTickets = append(filteredTickets, tickets[match.Index])
