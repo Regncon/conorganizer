@@ -14,11 +14,6 @@ import (
 
 var searchTerm = ""
 
-// addbilettholder/search.go  (or wherever you keep this helper)
-
-// notifyUpdate is the same callback that SetupBilettholderAdminRoute
-// passes in:   func(sessionID string)
-
 func CheckInTicketsSearchRoute(
 	router chi.Router,
 	db *sql.DB,
@@ -47,14 +42,7 @@ func CheckInTicketsSearchRoute(
 		fmt.Println("searchTerm", searchTerm)
 
 		sessionID, _ := upsertSessionID(store, r, w)
-		// ------------------------------------------------------------------
-		// Poke every open tab that watches this session so the page refreshes
-		// ------------------------------------------------------------------
 		if notifyUpdate != nil {
-			// Derive the session-ID however you do it elsewhere:
-			// in the admin route we use the “connections” session cookie.
-			// If you have that helper in scope, great; otherwise pass "" to
-			// broadcast a catch-all or adjust as needed.
 			notifyUpdate(sessionID)
 		}
 	})

@@ -19,19 +19,7 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-// SetupBilettholderAdminRoute wires the admin UI (SSE) + the API routes.
-//
-// The page is refreshed whenever we receive a core‑NATS message on
-//
-//	"bilettholder.<sessionID>.updated".
-//
-// These messages are published by:
-//   - saveMVC – whenever Todo‑state is changed
-//   - the ticket‑check‑in search route (via a callback we pass in)
 func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, logger *slog.Logger, db *sql.DB) error {
-	// --------------------------------------------------------------------------------
-	// NATS set‑up (core client + JetStream for KV snapshots)
-	// --------------------------------------------------------------------------------
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -53,7 +41,6 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 		return fmt.Errorf("error creating key value: %w", err)
 	}
 
-	// Helper that publishes the session‑scoped update poke
 	notifyUpdate := func(sessionID string) {
 		subj := fmt.Sprintf("bilettholder.%s.updated", sessionID)
 		fmt.Println("update bilettholeder subj", subj)
@@ -62,11 +49,6 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 		}
 	}
 
-	// -----------------------------------------------------------------------------
-	// Session helper – identical to the previous version except it no longer needs
-	// the KV watcher to always stay perfectly in‑sync with DB. We persist a JSON
-	// snapshot only because the SSE handlers still expect one.
-	// -----------------------------------------------------------------------------
 	session := func(w http.ResponseWriter, r *http.Request) (string, *index.TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
@@ -91,12 +73,8 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 		return sessionID, mvc, nil
 	}
 
-	// initial index page (non‑SSE)
 	indexRoute(router, db, err)
 
-	// -----------------------------------------------------------------------------
-	// /admin/bilettholder – main admin list UI (SSE)
-	// -----------------------------------------------------------------------------
 	router.Route("/admin/bilettholder/api/", func(bilettholderAdminRouter chi.Router) {
 		bilettholderAdminRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
@@ -133,9 +111,6 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 		})
 	})
 
-	// -----------------------------------------------------------------------------
-	// /admin/bilettholder/add – add/check‑in UI (SSE)
-	// -----------------------------------------------------------------------------
 	addbilettholder.AddBilettholderRoute(router, db, err)
 
 	router.Route("/admin/bilettholder/add/api/", func(addBilettholderRouter chi.Router) {
@@ -174,15 +149,12 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 			}
 		})
 
-		// Register the search/check‑in routes and tell them how to broadcast updates
 		addbilettholder.CheckInTicketsSearchRoute(addBilettholderRouter, db, logger, store, notifyUpdate)
 	})
 
 	return nil
 }
 
-// saveMVC writes the JSON snapshot + pokes subscribers so that any tab listening
-// to "bilettholder.<sessionID>.updated" re‑renders.
 func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue, poke func(string)) error {
 	b, err := json.Marshal(mvc)
 	if err != nil {
