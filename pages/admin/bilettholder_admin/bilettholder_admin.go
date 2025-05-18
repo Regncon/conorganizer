@@ -19,7 +19,19 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
+// SetupBilettholderAdminRoute wires the admin UI (SSE) + the API routes.
+//
+// The page is refreshed whenever we receive a core‑NATS message on
+//
+//	"bilettholder.<sessionID>.updated".
+//
+// These messages are published by:
+//   - saveMVC – whenever Todo‑state is changed
+//   - the ticket‑check‑in search route (via a callback we pass in)
 func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, logger *slog.Logger, db *sql.DB) error {
+	// --------------------------------------------------------------------------------
+	// NATS set‑up (core client + JetStream for KV snapshots)
+	// --------------------------------------------------------------------------------
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -31,30 +43,31 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 	}
 
 	kv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
-		Bucket:      "todos",
-		Description: "Datastar Todos",
+		Bucket:      "bilettholder",
+		Description: "Bilettholder data",
 		Compression: true,
 		TTL:         time.Hour,
 		MaxBytes:    16 * 1024 * 1024,
 	})
-
 	if err != nil {
 		return fmt.Errorf("error creating key value: %w", err)
 	}
 
-	resetMVC := func(mvc *index.TodoMVC) {
-		mvc.Mode = index.TodoViewModeAll
-		mvc.Todos = []*index.Todo{
-			{Text: "Learn a backend language", Completed: true},
-			{Text: "Learn Datastar", Completed: false},
-			{Text: "Create Hypermedia", Completed: false},
-			{Text: "???", Completed: false},
-			{Text: "Profit", Completed: false},
+	// Helper that publishes the session‑scoped update poke
+	notifyUpdate := func(sessionID string) {
+		subj := fmt.Sprintf("bilettholder.%s.updated", sessionID)
+		fmt.Println("update bilettholeder subj", subj)
+		if err := nc.Publish(subj, nil); err != nil {
+			logger.Error("failed to publish page update", "err", err, "session", sessionID)
 		}
-		mvc.EditingIdx = -1
 	}
 
-	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *index.TodoMVC, error) {
+	// -----------------------------------------------------------------------------
+	// Session helper – identical to the previous version except it no longer needs
+	// the KV watcher to always stay perfectly in‑sync with DB. We persist a JSON
+	// snapshot only because the SSE handlers still expect one.
+	// -----------------------------------------------------------------------------
+	session := func(w http.ResponseWriter, r *http.Request) (string, *index.TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
 		if err != nil {
@@ -66,9 +79,8 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 			if err != jetstream.ErrKeyNotFound {
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
 			}
-			resetMVC(mvc)
-
-			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
+			// first visit ⇒ create an empty snapshot so the SSE loop can unmarshal
+			if err := saveMVC(ctx, mvc, sessionID, kv, notifyUpdate); err != nil {
 				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
 			}
 		} else {
@@ -78,91 +90,109 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 		}
 		return sessionID, mvc, nil
 	}
+
+	// initial index page (non‑SSE)
 	indexRoute(router, db, err)
 
+	// -----------------------------------------------------------------------------
+	// /admin/bilettholder – main admin list UI (SSE)
+	// -----------------------------------------------------------------------------
 	router.Route("/admin/bilettholder/api/", func(bilettholderAdminRouter chi.Router) {
 		bilettholderAdminRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
-
-			sessionID, mvc, err := mvcSession(w, r)
-			ctx := r.Context()
-			watcher, err := kv.Watch(ctx, sessionID)
+			sessionID, _, err := session(w, r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			defer watcher.Stop()
+
+			ctx := r.Context()
+			subj := fmt.Sprintf("bilettholder.%s.updated", sessionID)
+			sub, err := nc.SubscribeSync(subj)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer sub.Unsubscribe()
+
+			// send the first render immediately
+			if err := sse.MergeFragmentTempl(BilettholderAdminPage(db)); err != nil {
+				_ = sse.ConsoleError(err)
+				return
+			}
 
 			for {
-				select {
-				case <-ctx.Done():
+				if _, err := sub.NextMsgWithContext(ctx); err != nil {
+					return // context cancelled or sub closed
+				}
+				if err := sse.MergeFragmentTempl(BilettholderAdminPage(db)); err != nil {
+					_ = sse.ConsoleError(err)
 					return
-				case entry := <-watcher.Updates():
-					if entry == nil {
-						continue
-					}
-					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					c := BilettholderAdminPage(db)
-					if err := sse.MergeFragmentTempl(c); err != nil {
-						sse.ConsoleError(err)
-						return
-					}
 				}
 			}
 		})
 	})
+
+	// -----------------------------------------------------------------------------
+	// /admin/bilettholder/add – add/check‑in UI (SSE)
+	// -----------------------------------------------------------------------------
 	addbilettholder.AddBilettholderRoute(router, db, err)
 
 	router.Route("/admin/bilettholder/add/api/", func(addBilettholderRouter chi.Router) {
 		addBilettholderRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
-
-			sessionID, mvc, err := mvcSession(w, r)
-			ctx := r.Context()
-			watcher, err := kv.Watch(ctx, sessionID)
+			sessionID, _, err := session(w, r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			defer watcher.Stop()
 
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case entry := <-watcher.Updates():
-					if entry == nil {
-						continue
-					}
-					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					c := addbilettholder.AddBilettholderAdminPage(db, logger)
-					if err := sse.MergeFragmentTempl(c); err != nil {
-						sse.ConsoleError(err)
-						return
-					}
-				}
+			ctx := r.Context()
+			subj := fmt.Sprintf("bilettholder.%s.updated", sessionID)
+			fmt.Println("add bilettholder page subj", subj)
+			sub, err := nc.SubscribeSync(subj)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer sub.Unsubscribe()
+
+			// initial render
+			if err := sse.MergeFragmentTempl(addbilettholder.AddBilettholderAdminPage(db, logger)); err != nil {
+				_ = sse.ConsoleError(err)
+				return
 			}
 
+			for {
+				if _, err := sub.NextMsgWithContext(ctx); err != nil {
+					return
+				}
+				if err := sse.MergeFragmentTempl(addbilettholder.AddBilettholderAdminPage(db, logger)); err != nil {
+					_ = sse.ConsoleError(err)
+					return
+				}
+			}
 		})
 
-		addbilettholder.CheckInTicketsSearchRoute(addBilettholderRouter, db, logger)
+		// Register the search/check‑in routes and tell them how to broadcast updates
+		addbilettholder.CheckInTicketsSearchRoute(addBilettholderRouter, db, logger, store, notifyUpdate)
 	})
+
 	return nil
 }
 
-func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
+// saveMVC writes the JSON snapshot + pokes subscribers so that any tab listening
+// to "bilettholder.<sessionID>.updated" re‑renders.
+func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue, poke func(string)) error {
 	b, err := json.Marshal(mvc)
 	if err != nil {
 		return fmt.Errorf("failed to marshal mvc: %w", err)
 	}
 	if _, err := kv.Put(ctx, sessionID, b); err != nil {
 		return fmt.Errorf("failed to put key value: %w", err)
+	}
+	if poke != nil {
+		poke(sessionID)
 	}
 	return nil
 }

@@ -7,12 +7,25 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/delaneyj/toolbelt"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
 )
 
 var searchTerm = ""
 
-func CheckInTicketsSearchRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+// addbilettholder/search.go  (or wherever you keep this helper)
+
+// notifyUpdate is the same callback that SetupBilettholderAdminRoute
+// passes in:   func(sessionID string)
+
+func CheckInTicketsSearchRoute(
+	router chi.Router,
+	db *sql.DB,
+	logger *slog.Logger,
+	store sessions.Store,
+	notifyUpdate func(string),
+) {
 	router.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("search")
 
@@ -31,12 +44,40 @@ func CheckInTicketsSearchRoute(router chi.Router, db *sql.DB, logger *slog.Logge
 		}
 
 		searchTerm = payload.Search
-        fmt.Println("searchTerm", searchTerm)
+		fmt.Println("searchTerm", searchTerm)
 
+		sessionID, _ := upsertSessionID(store, r, w)
+		// ------------------------------------------------------------------
+		// Poke every open tab that watches this session so the page refreshes
+		// ------------------------------------------------------------------
+		if notifyUpdate != nil {
+			// Derive the session-ID however you do it elsewhere:
+			// in the admin route we use the “connections” session cookie.
+			// If you have that helper in scope, great; otherwise pass "" to
+			// broadcast a catch-all or adjust as needed.
+			notifyUpdate(sessionID)
+		}
 	})
 }
 
+func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
+	sess, err := store.Get(r, "connections")
+	if err != nil {
+		return "", fmt.Errorf("failed to get session: %w", err)
+	}
+	id, ok := sess.Values["id"].(string)
+	if !ok {
+		id = toolbelt.NextEncodedID()
+		sess.Values["id"] = id
+		if err := sess.Save(r, w); err != nil {
+			return "", fmt.Errorf("failed to save session: %w", err)
+		}
+	}
+	return id, nil
+}
+
 templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
+	{{ fmt.Println("AddBilettholderAdminPage") }}
 	{{ tickets, err := GetTicketsFromCheckIn(logger, searchTerm) }}
 	<div id="add-bilettholder-admin-container">
 		<h1>Bilettholdere</h1>
