@@ -3,14 +3,16 @@ package addbilettholder
 import (
 	"database/sql"
 	"github.com/go-chi/chi/v5"
+	"log/slog"
 	"net/http"
 
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service"
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func AddBilettholderRoute(router chi.Router, db *sql.DB, err error) {
-	router.Get("/admin/bilettholder/add/", func(w http.ResponseWriter, r *http.Request) {
+func AddBilettholderRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
+	router.With(service.RequireAdmin(logger)).Get("/admin/bilettholder/add/", func(w http.ResponseWriter, r *http.Request) {
 		indexPage().Render(r.Context(), w)
 	})
 }

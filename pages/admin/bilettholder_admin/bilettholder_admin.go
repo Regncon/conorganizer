@@ -11,6 +11,7 @@ import (
 
 	addbilettholder "github.com/Regncon/conorganizer/pages/admin/bilettholder_admin/add"
 	"github.com/Regncon/conorganizer/pages/index"
+	"github.com/Regncon/conorganizer/service"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -76,7 +77,7 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 	indexRoute(router, db, err)
 
 	router.Route("/admin/bilettholder/api/", func(bilettholderAdminRouter chi.Router) {
-		bilettholderAdminRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		bilettholderAdminRouter.With(service.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 			sessionID, _, err := session(w, r)
 			if err != nil {
@@ -111,10 +112,10 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 		})
 	})
 
-	addbilettholder.AddBilettholderRoute(router, db, err)
+	addbilettholder.AddBilettholderRoute(router, db, logger, err)
 
 	router.Route("/admin/bilettholder/add/api/", func(addBilettholderRouter chi.Router) {
-		addBilettholderRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		addBilettholderRouter.With(service.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 			sessionID, _, err := session(w, r)
 			if err != nil {

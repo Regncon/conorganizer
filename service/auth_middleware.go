@@ -62,6 +62,20 @@ func GetAdminFromUserToken(ctx context.Context) bool {
 	return false
 }
 
+func RequireAdmin(logger *slog.Logger) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			isAdmin := GetAdminFromUserToken(r.Context())
+			if !isAdmin {
+				logger.Warn("User is not an admin")
+				http.Error(w, "You are not an admin", http.StatusForbidden)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
