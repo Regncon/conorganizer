@@ -14,11 +14,12 @@ require (
 	github.com/descope/go-sdk v1.6.12
 	github.com/gorilla/sessions v1.4.0
 	github.com/joho/godotenv v1.5.1
-	github.com/nats-io/nats-server/v2 v2.11.3
+	github.com/nats-io/nats-server/v2 v2.11.4
 	github.com/nats-io/nats.go v1.42.0
+	github.com/sahilm/fuzzy v0.1.1
 	github.com/samber/lo v1.50.0
 	github.com/starfederation/datastar v1.0.0-beta.11
-	modernc.org/sqlite v1.37.0
+	modernc.org/sqlite v1.37.1
 )
 
 require (
@@ -44,6 +45,7 @@ require (
 	github.com/igrmk/treemap/v2 v2.0.1 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
+	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.3 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.6 // indirect
@@ -61,7 +63,6 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rzajac/clock v0.2.0 // indirect
 	github.com/rzajac/zflake v0.8.0 // indirect
-	github.com/sahilm/fuzzy v0.1.1 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/ysmood/fetchup v0.3.0 // indirect
@@ -79,9 +80,9 @@ require (
 	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
-	modernc.org/libc v1.65.6 // indirect
+	modernc.org/libc v1.65.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.10.0 // indirect
+	modernc.org/memory v1.11.0 // indirect
 	zombiezen.com/go/sqlite v1.4.0 // indirect
 )
 

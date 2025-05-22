@@ -79,15 +79,13 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		return sessionID, mvc, nil
 	}
 
-	adminRouterGroup := router.With(service.AuthMiddleware(logger))
-
 	// eventLayoutRoute(router, db, err)
 	// newEvent.NewEventLayoutRoute(router, db, err)
 
-	adminRouterGroup.Route("/admin", func(adminRouter chi.Router) {
+	router.Route("/admin", func(adminRouter chi.Router) {
 		adminRouter.Use(service.AuthMiddleware(logger))
 		adminLayoutRoute(adminRouter, db, logger, err)
-		adminRouter.With(service.RequireAdmin(logger)).Get("/api/", func(w http.ResponseWriter, r *http.Request) {
+		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 
 			sessionID, mvc, err := mvcSession(w, r)
