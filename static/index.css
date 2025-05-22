@@ -1,14 +1,57 @@
 :root {
+    /* colors */
     --color-primary-text: black;
+    --color-primary: #ff8a15;
+    --color-primary-focus: #feb567;
+    --color-primary-focus-visible: #feb567;
+    --color-primary-hover: #feb567;
+    --color-primary-active: #feb567;
+    --color-primary-strong: #eb4716;
+
+    --color-secondary-text: black;
     --color-secondary: #ff7c7c;
+    --color-secondary-focus: #feb567;
+    --color-secondary-focus-visible: #feb567;
+    --color-secondary-hover: #feb567;
+    --color-secondary-active: #feb567;
+    --color-secondary-strong: #eb4716;
+
+    --color-tertiary-text: black;
+    --color-tertiary: #ff7c7c;
+    --color-tertiary-focus: #feb567;
+    --color-tertiary-focus-visible: #feb567;
+    --color-tertiary-hover: #feb567;
+    --color-tertiary-active: #feb567;
+    --color-tertiary-strong: #eb4716;
+
     --bg-color: white;
-    --nav-height: 4.5rem;
-    --nav-gap: 1rem;
-    --nav-z-index: 1000;
-    --nav-drop-down-z-index: 1001;
-    --nav-summary-bottom: calc((var(--nav-height) / 2 + var(--nav-gap)));
-    --mobile-max-column-width: 430px;
-    --mobile-min-width: 320px;
+    --bg-body-100: #2a2829;
+    --bg-body-90: #383537;
+    --bg-body-80: #474446;
+    --bg-body-70: #575255;
+    --bg-body-60: #666064;
+    --bg-body-50: #756e73;
+
+    /* text & font */
+    --text-body: 16px;
+    --text-heading-1-xl: 52px;
+    --text-heading-1: 40px;
+    --text-heading-2: 32px;
+    --text-heading-3: 16px;
+    --text-heading-4: 12px;
+    --text-article: 20px;
+
+    /* spacings */
+    --spacing-xsmall: 6px;
+    --spacing-small: 8px;
+    --spacing-medium: 10px;
+    --spacing-large: 16px;
+    --spacing-xlarge: 20px;
+
+
+    /* */
+    --border-radius-small: 4px;
+    --border-radius-medium: 8px;
 }
 
 [data-theme="dark"] {
@@ -17,11 +60,11 @@
 }
 
 body {
-    color: var(--color-primary-text);
-    background: var(--bg-color);
-    margin: 0;
+      color: var(--color-primary-text);
+      background: var(--bg-color);
+      margin: 0;
     margin-block-end: calc(var(--nav-height) + var(--nav-gap));
-    font-family: sans-serif;
+      font-family: sans-serif;
 
     @media screen and (width >=420px) {
         margin-block-end: 0;
