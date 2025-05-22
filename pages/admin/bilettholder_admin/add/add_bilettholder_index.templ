@@ -1,0 +1,25 @@
+package addbilettholder
+
+import (
+	"database/sql"
+	"github.com/go-chi/chi/v5"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/layouts"
+	datastar "github.com/starfederation/datastar/sdk/go"
+)
+
+func AddBilettholderRoute(router chi.Router, db *sql.DB, err error) {
+	router.Get("/admin/bilettholder/add/", func(w http.ResponseWriter, r *http.Request) {
+		indexPage().Render(r.Context(), w)
+	})
+}
+
+templ indexPage() {
+	@layouts.Base("Legg til ny bilettholder") {
+		<div id="add-bilettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/bilettholder/add/api/") }>
+			<p>Add Bilettholder Admin</p>
+			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+		</div>
+	}
+}

@@ -1,0 +1,79 @@
+package myprofile
+
+import "github.com/Regncon/conorganizer/layouts"
+
+templ myProfile() {
+	<style>
+	.wrapper {
+		background-color:#31354E;
+		display: grid;
+		grid-template-rows: max-content repeat(2, 1fr);
+		place-content:center;
+		gap: 1rem;
+        margin-inline: 3%;
+        margin-block-start: 1rem;
+        padding-block-end: 1.5rem;
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0;
+            margin-block-start: 1rem;
+        }
+
+		a {
+			box-shadow: 0px 2px 1px -1px hsl(0 0 0 / 0.2), 0px 1px 1px 0px hsl(0 0 0 / 0.14), 0px 1px 3px 0px hsl(0 0 0 / 0.12);
+			text-decoration: none;
+            max-height: 13rem;
+
+            section {
+                padding-inline: 1rem;
+
+                p {
+                    color: white;
+                    text-align: center;
+                    padding-inline: 1rem;
+                    margin-block: 0.5rem;
+                }
+
+                p:last-child {
+                    font-size: 0.8rem;
+                    color: hsl(0 0% 100% / 0.6);
+                }
+
+            }
+
+            img {
+                width: 100%;
+                max-width: 20rem;
+                max-height: 8rem;
+            }
+
+		}
+
+        a:hover {
+            background-color: hsl(0 0% 100% / 0.3);
+
+        }
+	}
+	</style>
+	@layouts.Base("Min profil") {
+		<section class="wrapper">
+			<h1>Min profil</h1>
+			<a href="/my-events">
+				<img src="/static/sobbingtemp.png" alt="mine arrangement"/>
+				<section>
+					<p>Mine arrangement</p>
+					<p>Trykk for å gå til mine arrangement</p>
+				</section>
+			</a>
+			<a href="/my-profile/my-tickets">
+				<img src="/static/sobbingtemp.png" alt="mine billetter"/>
+				<section>
+					<p>Mine billetter</p>
+					<p>Trykk for å gå til mine billetter</p>
+				</section>
+			</a>
+		</section>
+	}
+}

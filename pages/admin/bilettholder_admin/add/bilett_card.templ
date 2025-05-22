@@ -1,0 +1,31 @@
+package addbilettholder
+
+import "strconv"
+
+templ bilettCard(ticket CheckInTicket) {
+	<div class="card" style="padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
+		<p style="margin:0;"><strong>Bestilling:</strong> { strconv.Itoa(ticket.OrderID) } </p>
+		<p style="margin:0;"><strong>Type:</strong> { ticket.Type }</p>
+		<p style="margin:0;"><strong>Navn:</strong> <em>{ ticket.Name }</em></p>
+		<a
+			href="mailto:{ticket.Email}"
+			style="color: var(--link-color); text-decoration: underline; display: block; margin-top: 0.5rem;"
+		>{ ticket.Email }</a>
+		if ticket.IsAdult {
+			<img
+				src="/static/icons/adults-only.svg"
+				alt="adults only"
+			/>
+			<p><strong>Alder:</strong> Over 18</p>
+		} else {
+			<img
+				src="/static/icons/child-friendly.svg"
+				alt="child friendly"
+			/>
+			<p><strong>Alder:</strong> Under 18</p>
+		}
+		<button>
+			Konverter bilett til deltager
+		</button>
+	</div>
+}

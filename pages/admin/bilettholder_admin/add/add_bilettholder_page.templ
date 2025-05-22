@@ -1,0 +1,101 @@
+package addbilettholder
+
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+	"net/http"
+
+	"github.com/delaneyj/toolbelt"
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+)
+
+var searchTerm = ""
+
+func CheckInTicketsSearchRoute(
+	router chi.Router,
+	db *sql.DB,
+	logger *slog.Logger,
+	store sessions.Store,
+	notifyUpdate func(string),
+) {
+	router.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("search")
+
+		datastarRaw := r.URL.Query().Get("datastar")
+		if datastarRaw == "" {
+			http.Error(w, "missing ?datastar param", http.StatusBadRequest)
+			return
+		}
+
+		var payload struct {
+			Search string `json:"search"`
+		}
+		if err := json.Unmarshal([]byte(datastarRaw), &payload); err != nil {
+			http.Error(w, "invalid ?datastar JSON", http.StatusBadRequest)
+			return
+		}
+
+		searchTerm = payload.Search
+		fmt.Println("searchTerm", searchTerm)
+
+		sessionID, _ := upsertSessionID(store, r, w)
+		if notifyUpdate != nil {
+			notifyUpdate(sessionID)
+		}
+	})
+}
+
+func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
+	sess, err := store.Get(r, "connections")
+	if err != nil {
+		return "", fmt.Errorf("failed to get session: %w", err)
+	}
+	id, ok := sess.Values["id"].(string)
+	if !ok {
+		id = toolbelt.NextEncodedID()
+		sess.Values["id"] = id
+		if err := sess.Save(r, w); err != nil {
+			return "", fmt.Errorf("failed to save session: %w", err)
+		}
+	}
+	return id, nil
+}
+
+templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
+	{{ fmt.Println("AddBilettholderAdminPage") }}
+	{{ tickets, err := GetTicketsFromCheckIn(logger, searchTerm) }}
+	<div id="add-bilettholder-admin-container">
+		<h1>Bilettholdere</h1>
+		<h2>Her kan du legge til en ny bilettholder</h2>
+		<input
+			data-bind-search
+			data-on-input__debounce.1000ms="@get('/admin/bilettholder/add/api/search/')"
+			placeholder="Search..."
+			type="text"
+		/>
+		<hr/>
+		<div class="add-bilettholder-admin-grid">
+			if err != nil {
+				<p>Failed to load tickets:</p>
+			} else {
+				for _, ticket := range tickets {
+					@bilettCard(ticket)
+				}
+			}
+		</div>
+		<style>
+			.add-bilettholder-admin-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
+				gap: 1rem;
+			}@media (min-width: 600px) {
+				.add-bilettholder-admin-grid {
+					padding: 1rem;
+				}
+			}
+		</style>
+	</div>
+}
