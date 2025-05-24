@@ -151,6 +151,7 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 		})
 
 		addbilettholder.CheckInTicketsSearchRoute(addBilettholderRouter, db, logger, store, notifyUpdate)
+		addbilettholder.ConvertTicketToBilettholderRoute(addBilettholderRouter, db, logger)
 	})
 
 	return nil

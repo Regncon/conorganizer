@@ -1,8 +1,12 @@
 package addbilettholder
 
 import (
+	"database/sql"
 	"fmt"
+	"github.com/go-chi/chi/v5"
 	"html"
+	"log/slog"
+	"net/http"
 	"strconv"
 	"strings"
 	"unicode"
@@ -32,6 +36,25 @@ func highlightSearchTerm(text, searchTerm string) string {
 	}
 
 	return out.String()
+}
+func ConvertTicketToBilettholderRoute(
+	router chi.Router,
+	db *sql.DB,
+	logger *slog.Logger,
+) {
+	router.Route("/convert/", func(ticketIdRouter chi.Router) {
+		ticketIdRouter.Get("/{ticketID}/", func(w http.ResponseWriter, r *http.Request) {
+			ticketIDStr := chi.URLParam(r, "ticketID")
+			ticketID, err := strconv.Atoi(ticketIDStr)
+			if err != nil {
+				http.Error(w, "invalid ticket ID", http.StatusBadRequest)
+				return
+			}
+
+			logger.Info("Converting ticket to bilettholder", "ticketID", ticketID)
+		})
+
+	})
 }
 
 templ bilettCard(ticket CheckInTicket, searchTerm string) {
