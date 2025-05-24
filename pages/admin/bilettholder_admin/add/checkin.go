@@ -5,6 +5,7 @@ import (
 )
 
 type CheckInTicket struct {
+	ID      int
 	OrderID int
 	Type    string
 	Name    string

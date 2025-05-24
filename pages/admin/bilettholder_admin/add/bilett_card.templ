@@ -1,6 +1,7 @@
 package addbilettholder
 
 import (
+	"fmt"
 	"html"
 	"strconv"
 	"strings"
@@ -33,9 +34,9 @@ func highlightSearchTerm(text, searchTerm string) string {
 	return out.String()
 }
 
-// Seach for id, type, email, and name
 templ bilettCard(ticket CheckInTicket, searchTerm string) {
 	<div class="card" style="padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
+		{ ticket.ID }
 		<p style="margin:0;">
 			<strong>Bestilling:</strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(ticket.OrderID), searchTerm))
 		</p>
@@ -67,7 +68,9 @@ templ bilettCard(ticket CheckInTicket, searchTerm string) {
 			/>
 			<p><strong>Alder:</strong> Under 18</p>
 		}
-		<button>
+		<button
+			data-on-click={ templ.URL(fmt.Sprintf("@get('/admin/bilettholder/add/api/convert/%s/')", strconv.Itoa(ticket.ID))) }
+		>
 			Konverter bilett til deltager
 		</button>
 	</div>

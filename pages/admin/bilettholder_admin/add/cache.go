@@ -128,6 +128,7 @@ func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 	var tickets []CheckInTicket
 	for _, et := range result.Data.EventTickets {
 		tickets = append(tickets, CheckInTicket{
+            ID:      et.ID,
 			OrderID: et.OrderID,
 			Type:    et.Category,
 			Name:    fmt.Sprintf("%s %s", et.Crm.FirstName, et.Crm.LastName),
