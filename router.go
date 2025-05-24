@@ -22,7 +22,7 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 )
 
-func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB) (cleanup func() error, err error) {
+func setupRoutes(ctx context.Context, logger *slog.Logger, publicRouter chi.Router, db *sql.DB) (cleanup func() error, err error) {
 	natsPort, err := toolbelt.FreePort()
 	if err != nil {
 		return nil, fmt.Errorf("error getting free port: %w", err)
@@ -48,15 +48,15 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	sessionStore := sessions.NewCookieStore([]byte("session-secret"))
 	sessionStore.MaxAge(int(24 * time.Hour / time.Second))
 
-	routerAuth := router.With(service.AuthMiddleware(logger))
+	routerAuth := publicRouter.With(service.AuthMiddleware(logger))
 	routerAdmin := routerAuth.With(service.RequireAdmin(logger))
 
 	if err := errors.Join(
-		index.SetupIndexRoute(router, sessionStore, ns, db),
+		index.SetupIndexRoute(publicRouter, sessionStore, ns, db),
 		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db),
 		bilettholderadmin.SetupBilettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
-		event.SetupEventRoute(router, sessionStore, ns, db, logger),
-		auth.SetupAuthRoute(router, logger),
+		event.SetupEventRoute(publicRouter, sessionStore, ns, db, logger),
+		auth.SetupAuthRoute(publicRouter, logger),
 		myprofile.SetupMyProfileRoute(routerAuth, sessionStore, ns, db, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)
