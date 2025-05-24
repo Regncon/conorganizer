@@ -1,16 +1,59 @@
 package addbilettholder
 
-import "strconv"
+import (
+	"html"
+	"strconv"
+	"strings"
+	"unicode"
+)
 
-templ bilettCard(ticket CheckInTicket) {
+func highlightSearchTerm(text, searchTerm string) string {
+	if len(searchTerm) == 0 {
+		return html.EscapeString(text)
+	}
+
+	// Build a quick-lookup set of runes in searchTerm (lower-cased).
+	set := make(map[rune]struct{}, len(searchTerm))
+	for _, r := range searchTerm {
+		set[unicode.ToLower(r)] = struct{}{}
+	}
+
+	var out strings.Builder
+	for _, r := range text {
+		escaped := html.EscapeString(string(r)) // protect any HTML in the input
+		if _, ok := set[unicode.ToLower(r)]; ok {
+			out.WriteString("<b style=\"color: var(--color-primary-strong);\">")
+			out.WriteString(escaped)
+			out.WriteString("</b>")
+		} else {
+			out.WriteString(escaped)
+		}
+	}
+
+	return out.String()
+}
+
+// Seach for id, type, email, and name
+templ bilettCard(ticket CheckInTicket, searchTerm string) {
 	<div class="card" style="padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
-		<p style="margin:0;"><strong>Bestilling:</strong> { strconv.Itoa(ticket.OrderID) } </p>
-		<p style="margin:0;"><strong>Type:</strong> { ticket.Type }</p>
-		<p style="margin:0;"><strong>Navn:</strong> <em>{ ticket.Name }</em></p>
+		<p style="margin:0;">
+			<strong>Bestilling:</strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(ticket.OrderID), searchTerm))
+		</p>
+		<p style="margin:0;">
+			<strong>Type:</strong> @templ.Raw(highlightSearchTerm(ticket.Type, searchTerm))
+		</p>
+		<p style="margin:0;">
+			<strong>Navn:</strong>
+			<em>
+				@templ.Raw(highlightSearchTerm(ticket.Name, searchTerm))
+			</em>
+		</p>
 		<a
 			href="mailto:{ticket.Email}"
 			style="color: var(--link-color); text-decoration: underline; display: block; margin-top: 0.5rem;"
-		>{ ticket.Email }</a>
+		>
+			@templ.Raw(highlightSearchTerm(ticket.Email, searchTerm))
+		</a>
 		if ticket.IsAdult {
 			<img
 				src="/static/icons/adults-only.svg"

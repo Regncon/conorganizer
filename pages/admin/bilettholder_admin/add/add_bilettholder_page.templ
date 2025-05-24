@@ -72,7 +72,7 @@ templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 		<h2>Her kan du legge til en ny bilettholder</h2>
 		<input
 			data-bind-search
-			data-on-input__debounce.1000ms="@get('/admin/bilettholder/add/api/search/')"
+			data-on-input__debounce.50ms="@get('/admin/bilettholder/add/api/search/')"
 			placeholder="Search..."
 			type="text"
 		/>
@@ -82,7 +82,7 @@ templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 				<p>Failed to load tickets:</p>
 			} else {
 				for _, ticket := range tickets {
-					@bilettCard(ticket)
+					@bilettCard(ticket, searchTerm)
 				}
 			}
 		</div>
