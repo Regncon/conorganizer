@@ -65,16 +65,16 @@ func run(ctx context.Context, logger *slog.Logger, port string, db *sql.DB) erro
 
 func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.DB) func() error {
 	return func() error {
-		router := chi.NewMux()
+		publicRouter := chi.NewMux()
 
-		router.Use(
+		publicRouter.Use(
 			middleware.Logger,
 			middleware.Recoverer,
 		)
 
-		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
+		publicRouter.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
 
-		cleanup, err := setupRoutes(ctx, logger, router, db)
+		cleanup, err := setupRoutes(ctx, logger, publicRouter, db)
 		defer cleanup()
 		if err != nil {
 			return fmt.Errorf("error setting up routes: %w", err)
@@ -82,7 +82,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 
 		srv := &http.Server{
 			Addr:    "0.0.0.0:" + port,
-			Handler: router,
+			Handler: publicRouter,
 		}
 
 		go func() {
