@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/delaneyj/toolbelt"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
@@ -66,7 +67,7 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 
 templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	{{ fmt.Println("AddBilettholderAdminPage") }}
-	{{ tickets, err := GetTicketsFromCheckIn(logger, searchTerm) }}
+	{{ tickets, err := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
 	<div id="add-bilettholder-admin-container">
 		<h1>Bilettholdere</h1>
 		<h2>Her kan du legge til en ny bilettholder</h2>

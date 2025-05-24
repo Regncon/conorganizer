@@ -1,6 +1,7 @@
-package addbilettholder
+package checkIn
 
 import (
+	"database/sql"
 	"log/slog"
 )
 
@@ -38,4 +39,20 @@ type queryResult struct {
 func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {
 
 	return ticketCache.Get(logger, searchTerm)
+}
+
+func ConvertTicketToBilettholder(ticketId int, db *sql.DB, logger *slog.Logger) (*CheckInTicket, error) {
+	tickets, err := GetTicketsFromCheckIn(logger, "")
+	if err != nil {
+		return nil, err
+	}
+
+	for _, ticket := range tickets {
+		if ticket.ID == ticketId {
+			return &ticket, nil
+		}
+	}
+
+	logger.Error("ticket not found", "ticketId", ticketId)
+	return nil, nil
 }

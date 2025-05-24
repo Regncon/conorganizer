@@ -3,6 +3,7 @@ package addbilettholder
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/go-chi/chi/v5"
 	"html"
 	"log/slog"
@@ -57,7 +58,7 @@ func ConvertTicketToBilettholderRoute(
 	})
 }
 
-templ bilettCard(ticket CheckInTicket, searchTerm string) {
+templ bilettCard(ticket checkIn.CheckInTicket, searchTerm string) {
 	<div class="card" style="padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		{ ticket.ID }
 		<p style="margin:0;">
