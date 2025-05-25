@@ -11,13 +11,63 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+/*
+	func TestConvertTicketIdToNewBillettholderError(t *testing.T) {
+		// ❶ Arrange
+		expectedError := "billettholder already exists"
+
+		sl := &testutil.StubLogger{}
+
+		tickets := []CheckInTicket{
+			{ID: 42, OrderID: 1, Type: "Adult", Name: "John Doe", Email: "test@test.test", IsAdult: true},
+		}
+		uniqueDatabaseName := "test_convert_ticket_error_" + t.Name() + "_" + uuid.New().String() + ".db"
+		db, err := service.InitDB("../../database/"+uniqueDatabaseName, "../../initialize.sql")
+		if err != nil {
+			t.Fatalf("failed to create test database: %v", err)
+		}
+		defer db.Close()
+
+		// Insert a billettholder with ticketId 42 to simulate the error condition
+		billettholder := models.Billettholder{
+			TicketID: 42,
+		}
+
+		_, err = db.Exec(`
+			INSERT INTO billettholdere (
+	        first_name, last_name, ticket_type,
+	        ticket_id, is_over_18, order_id,
+	        ticket_email, order_email, ticket_category_id
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			billettholder.FirstName, billettholder.LastName, billettholder.TicketType,
+			billettholder.TicketID, billettholder.IsOver18, billettholder.OrderID,
+			billettholder.TicketEmail, billettholder.OrderEmail, billettholder.TicketCategoryID,
+		)
+		if err != nil {
+			t.Fatalf("failed to insert billettholder for test: %v", err)
+		}
+
+		// ❷ Act
+		slogger := testutil.NewSlogAdapter(sl)
+		err = converTicketIdToNewBillettholder(42, tickets, db, slogger)
+		if err == nil {
+			t.Fatalf("expected error but got nil")
+		}
+		if err.Error() != expectedError {
+			t.Errorf("expected error %q, got %q", expectedError, err.Error())
+		}
+
+}
+*/
 func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	// ❶ Arrange
-	sl := &testutil.StubLogger{}
+	ticketId := 42
 
-	// expectedBillettholder := models.Billettholder{
-	// 	TicketID: 42,
-	// }
+	expectedBillettholder := models.Billettholder{
+		ID:        1,
+		FirstName: "John",
+		TicketID:  ticketId,
+	}
 
 	/*
 	   if (!ticket) throw new Error('ticket not found');
@@ -44,8 +94,8 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	   	};
 	*/
 	tickets := []CheckInTicket{
-		{ID: 42, OrderID: 1, Type: "Adult", Name: "John Doe", Email: "test@test.test", IsAdult: true},
-		{ID: 43, OrderID: 1, Type: "Child", Name: "Jane Doe", Email: "test2@test.test", IsAdult: false},
+		{ID: ticketId, OrderID: 1, Type: "Adult", FirstName: "John", LastName: "Doe", Email: "test@test.test", IsAdult: true},
+		{ID: 43, OrderID: 1, Type: "Child", FirstName: "Jane", LastName: "Doe", Email: "test2@test.test", IsAdult: false},
 	}
 
 	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
@@ -56,26 +106,35 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	defer db.Close()
 
 	// ❷ Act
+	sl := &testutil.StubLogger{}
 	slogger := testutil.NewSlogAdapter(sl)
 
-	err = converTicketIdToNewBillettholder(42, tickets, db, slogger)
+	err = converTicketIdToNewBillettholder(ticketId, tickets, db, slogger)
 	if err != nil {
 		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
 	}
 
 	// ❸ Assert
 	var billettholder models.Billettholder
-	err = db.QueryRow("SELECT id, ticket_id FROM billettholdere WHERE ticket_id = ?", 42).Scan(
-		// err = db.QueryRow("SELECT id, ticket_id FROM billettholdere").Scan(
+	err = db.QueryRow("SELECT * FROM billettholdere WHERE ticket_id = ?", ticketId).Scan(
 		&billettholder.ID,
+		&billettholder.FirstName,
+		&billettholder.LastName,
+		&billettholder.TicketType,
+        &billettholder.IsOver18,
+        &billettholder.OrderID,
 		&billettholder.TicketID,
+        &billettholder.TicketEmail,
+        &billettholder.OrderEmail,
+        &billettholder.TicketCategoryID,
+        &billettholder.InsertedTime,
 	)
 
 	if err != nil {
-		t.Fatalf("failed to find billettholder with ticketId 42: %v", err)
+		t.Fatalf("failed to find billettholder with ticketId %d: %v", ticketId, err)
 	}
 
-	if billettholder.TicketID != 42 {
-		t.Errorf("expected billettholder with ticketId 42, got %d", billettholder.TicketID)
+	if billettholder != expectedBillettholder {
+		t.Errorf("expected billettholder %+v, got %+v", expectedBillettholder, billettholder)
 	}
 }

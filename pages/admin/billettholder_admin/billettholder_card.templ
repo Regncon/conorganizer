@@ -4,6 +4,8 @@ import "github.com/Regncon/conorganizer/models"
 
 templ billettholderCard(billettholder models.Billettholder) {
 	<div class="card">
+		<p>{ billettholder.FirstName + " " + billettholder.LastName }</p>
+        <hr/>
 		<p>{ billettholder.ID }</p>
 		<p>{ billettholder.TicketID }</p>
 	</div>

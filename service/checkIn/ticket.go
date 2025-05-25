@@ -6,12 +6,13 @@ import (
 )
 
 type CheckInTicket struct {
-	ID      int
-	OrderID int
-	Type    string
-	Name    string
-	Email   string
-	IsAdult bool
+	ID        int
+	OrderID   int
+	Type      string
+	FirstName string
+	LastName  string
+	Email     string
+	IsAdult   bool
 }
 
 func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {

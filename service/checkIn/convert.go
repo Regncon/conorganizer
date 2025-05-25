@@ -25,7 +25,8 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 	}
 
 	billettholder := models.Billettholder{
-		TicketID: ticket.ID,
+		FirstName: ticket.FirstName,
+		TicketID:  ticket.ID,
 	}
 
 	_, err := db.Exec(`

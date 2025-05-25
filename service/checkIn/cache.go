@@ -78,7 +78,7 @@ func filterTickets(tickets []CheckInTicket, searchTerm string) []CheckInTicket {
 	var ticketStrings []string
 	for _, ticket := range tickets {
 		combinedSearchString :=
-			fmt.Sprintf("%s %s %s %s", strconv.Itoa(ticket.OrderID), ticket.Type, ticket.Email, ticket.Name)
+			fmt.Sprintf("%s %s %s %s", strconv.Itoa(ticket.OrderID), ticket.Type, ticket.Email, ticket.FirstName+" "+ticket.LastName)
 		ticketStrings = append(ticketStrings, combinedSearchString)
 	}
 
@@ -153,12 +153,13 @@ func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 	var tickets []CheckInTicket
 	for _, et := range result.Data.EventTickets {
 		tickets = append(tickets, CheckInTicket{
-			ID:      et.ID,
-			OrderID: et.OrderID,
-			Type:    et.Category,
-			Name:    fmt.Sprintf("%s %s", et.Crm.FirstName, et.Crm.LastName),
-			Email:   et.Crm.Email,
-			IsAdult: et.Crm.Born < "2007-01-01", // Example logic for determining if adult
+			ID:        et.ID,
+			OrderID:   et.OrderID,
+			Type:      et.Category,
+			FirstName: et.Crm.FirstName,
+			LastName:  et.Crm.LastName,
+			Email:     et.Crm.Email,
+			IsAdult:   et.Crm.Born < "2007-01-01", // Example logic for determining if adult
 		})
 	}
 
