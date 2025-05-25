@@ -2,8 +2,11 @@ package checkIn
 
 import (
 	"database/sql"
-	_ "modernc.org/sqlite"
+	"github.com/google/uuid"
 	"testing"
+
+	"github.com/Regncon/conorganizer/service"
+	_ "modernc.org/sqlite"
 )
 
 // ————————————————————————————
@@ -69,9 +72,11 @@ func TestConvertTicketIdToNewBilettholder(t *testing.T) {
 	   	    connectedEmails: [],
 	   	};
 	*/
-	db, err := sql.Open("sqlite", ":memory:") // requires the sqlite driver at build-time only
+
+	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
+	db, err := service.InitDB("../../database/"+uniqueDatabaseName, "../../initialize.sql")
 	if err != nil {
-		t.Fatalf("opening in-memory DB: %v", err)
+		t.Fatalf("failed to create test database: %v", err)
 	}
 	defer db.Close()
 

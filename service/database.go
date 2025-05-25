@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"database/sql"
-
 	_ "modernc.org/sqlite"
 )
 
