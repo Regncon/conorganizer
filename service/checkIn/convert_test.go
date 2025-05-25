@@ -1,86 +1,19 @@
 package checkIn
 
 import (
-	"context"
-	"log/slog"
 	"testing"
 
 	"github.com/google/uuid"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service"
+	"github.com/Regncon/conorganizer/testutil"
 	_ "modernc.org/sqlite"
 )
 
-// ————————————————————————————
-// 1. Define the abstraction used by production code
-// ————————————————————————————
-type Logger interface {
-	Info(msg string, keysAndValues ...interface{})
-}
-
-// ————————————————————————————
-// 2. A lightweight stub that records calls
-// ————————————————————————————
-type stubLogger struct {
-	calls []struct {
-		msg           string
-		keysAndValues []interface{}
-	}
-}
-
-func (s *stubLogger) Info(msg string, keysAndValues ...interface{}) {
-	s.calls = append(s.calls, struct {
-		msg           string
-		keysAndValues []interface{}
-	}{msg, keysAndValues})
-}
-
-// 3. Adapter to make stubLogger compatible with *slog.Logger
-// ————————————————————————————
-type stubLoggerHandler struct {
-	stub *stubLogger
-}
-
-func (h *stubLoggerHandler) Enabled(ctx context.Context, level slog.Level) bool {
-	return true
-}
-
-func (h *stubLoggerHandler) Handle(ctx context.Context, r slog.Record) error {
-	// Extract message
-	msg := r.Message
-
-	// Extract key-value pairs
-	var keyValues []interface{}
-	r.Attrs(func(attr slog.Attr) bool {
-		keyValues = append(keyValues, attr.Key, attr.Value.Any())
-		return true
-	})
-
-	// Forward to stub logger
-	h.stub.Info(msg, keyValues...)
-	return nil
-}
-
-func (h *stubLoggerHandler) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return h
-}
-
-func (h *stubLoggerHandler) WithGroup(name string) slog.Handler {
-	return h
-}
-
-func newSlogAdapter(stub *stubLogger) *slog.Logger {
-	handler := &stubLoggerHandler{stub: stub}
-	return slog.New(handler)
-}
-
-// ————————————————————————————
-// 4. Unit test with only the standard library
-// ————————————————————————————
 func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	// ❶ Arrange
-	sl := &stubLogger{}
+	sl := &testutil.StubLogger{}
 
 	// expectedBillettholder := models.Billettholder{
 	// 	TicketID: 42,
@@ -123,7 +56,7 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	defer db.Close()
 
 	// ❷ Act
-	slogger := newSlogAdapter(sl)
+	slogger := testutil.NewSlogAdapter(sl)
 
 	err = converTicketIdToNewBillettholder(42, tickets, db, slogger)
 	if err != nil {
