@@ -4,13 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/sahilm/fuzzy"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
+
+	"github.com/sahilm/fuzzy"
 )
 
 type Cache struct {
@@ -75,7 +77,8 @@ func filterTickets(tickets []CheckInTicket, searchTerm string) []CheckInTicket {
 
 	var ticketStrings []string
 	for _, ticket := range tickets {
-		combinedSearchString := fmt.Sprintf("%s %s %s %s", ticket.OrderID, ticket.Type, ticket.Email, ticket.Name)
+		combinedSearchString :=
+			fmt.Sprintf("%s %s %s %s", strconv.Itoa(ticket.OrderID), ticket.Type, ticket.Email, ticket.Name)
 		ticketStrings = append(ticketStrings, combinedSearchString)
 	}
 
