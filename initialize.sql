@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS ticketholders (
     ticket_type TEXT NOT NULL,
     is_over_18 BOOLEAN NOT NULL,
     order_id INTEGER NOT NULL,
-    ticket_id INTEGER NOT NULL,
+    ticket_id INTEGER NOT NULL UNIQUE,
     ticket_email TEXT NOT NULL,
     order_email TEXT NOT NULL,
     ticket_category_id TEXT NOT NULL,
