@@ -1,16 +1,18 @@
-package addbilettholder
+package checkIn
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/sahilm/fuzzy"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
+
+	"github.com/sahilm/fuzzy"
 )
 
 type Cache struct {
@@ -18,6 +20,28 @@ type Cache struct {
 	data      []CheckInTicket
 	lastFetch time.Time
 	ttl       time.Duration
+}
+
+type crm struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	ID        int    `json:"id"`
+	Email     string `json:"email"`
+	Born      string `json:"born"`
+}
+
+type eventTicket struct {
+	ID         int    `json:"id"`
+	Category   string `json:"category"`
+	CategoryID int    `json:"category_id"`
+	Crm        crm    `json:"crm"`
+	OrderID    int    `json:"order_id"`
+}
+
+type queryResult struct {
+	Data struct {
+		EventTickets []eventTicket `json:"eventTickets"`
+	} `json:"data"`
 }
 
 var ticketCache = &Cache{
@@ -53,7 +77,8 @@ func filterTickets(tickets []CheckInTicket, searchTerm string) []CheckInTicket {
 
 	var ticketStrings []string
 	for _, ticket := range tickets {
-		combinedSearchString := fmt.Sprintf("%s %s %s %s", ticket.OrderID, ticket.Type, ticket.Email, ticket.Name)
+		combinedSearchString :=
+			fmt.Sprintf("%s %s %s %s", strconv.Itoa(ticket.OrderID), ticket.Type, ticket.Email, ticket.Name)
 		ticketStrings = append(ticketStrings, combinedSearchString)
 	}
 
@@ -128,6 +153,7 @@ func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 	var tickets []CheckInTicket
 	for _, et := range result.Data.EventTickets {
 		tickets = append(tickets, CheckInTicket{
+			ID:      et.ID,
 			OrderID: et.OrderID,
 			Type:    et.Category,
 			Name:    fmt.Sprintf("%s %s", et.Crm.FirstName, et.Crm.LastName),

@@ -1,4 +1,4 @@
-package addbilettholder
+package addbillettholder
 
 import (
 	"database/sql"
@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/delaneyj/toolbelt"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
@@ -64,35 +65,35 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 	return id, nil
 }
 
-templ AddBilettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ fmt.Println("AddBilettholderAdminPage") }}
-	{{ tickets, err := GetTicketsFromCheckIn(logger, searchTerm) }}
-	<div id="add-bilettholder-admin-container">
-		<h1>Bilettholdere</h1>
-		<h2>Her kan du legge til en ny bilettholder</h2>
+templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
+	{{ fmt.Println("AddBillettholderAdminPage") }}
+	{{ tickets, err := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
+	<div id="add-billettholder-admin-container">
+		<h1>Billettholdere</h1>
+		<h2>Her kan du legge til en ny billettholder</h2>
 		<input
 			data-bind-search
-			data-on-input__debounce.50ms="@get('/admin/bilettholder/add/api/search/')"
+			data-on-input__debounce.50ms="@get('/admin/billettholder/add/api/search/')"
 			placeholder="Search..."
 			type="text"
 		/>
 		<hr/>
-		<div class="add-bilettholder-admin-grid">
+		<div class="add-billettholder-admin-grid">
 			if err != nil {
 				<p>Failed to load tickets:</p>
 			} else {
 				for _, ticket := range tickets {
-					@bilettCard(ticket, searchTerm)
+					@ticketCard(ticket, searchTerm)
 				}
 			}
 		</div>
 		<style>
-			.add-bilettholder-admin-grid {
+			.add-billettholder-admin-grid {
 				display: grid;
 				grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
 				gap: 1rem;
 			}@media (min-width: 600px) {
-				.add-bilettholder-admin-grid {
+				.add-billettholder-admin-grid {
 					padding: 1rem;
 				}
 			}

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/pages/admin"
-	bilettholderadmin "github.com/Regncon/conorganizer/pages/admin/bilettholder_admin"
+	"github.com/Regncon/conorganizer/pages/admin/billettholder_admin"
 	"github.com/Regncon/conorganizer/pages/auth"
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/index"
@@ -54,7 +54,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, publicRouter chi.Rout
 	if err := errors.Join(
 		index.SetupIndexRoute(publicRouter, sessionStore, ns, db),
 		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db),
-		bilettholderadmin.SetupBilettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
+		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
 		event.SetupEventRoute(publicRouter, sessionStore, ns, db, logger),
 		auth.SetupAuthRoute(publicRouter, logger),
 		myprofile.SetupMyProfileRoute(routerAuth, sessionStore, ns, db, logger),

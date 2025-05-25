@@ -1,6 +1,7 @@
 # source: https://github.com/github/gitignore/tree/main
 # ------------------------------------------------------------------
 data/*
+database/*
 *_templ.go
 *_templ.txt
 

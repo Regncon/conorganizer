@@ -1,7 +1,13 @@
-package addbilettholder
+package addbillettholder
 
 import (
+	"database/sql"
+	"fmt"
+	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/go-chi/chi/v5"
 	"html"
+	"log/slog"
+	"net/http"
 	"strconv"
 	"strings"
 	"unicode"
@@ -32,10 +38,29 @@ func highlightSearchTerm(text, searchTerm string) string {
 
 	return out.String()
 }
+func ConvertTicketToBillettholderRoute(
+	router chi.Router,
+	db *sql.DB,
+	logger *slog.Logger,
+) {
+	router.Route("/convert/", func(ticketIdRouter chi.Router) {
+		ticketIdRouter.Get("/{ticketID}/", func(w http.ResponseWriter, r *http.Request) {
+			ticketIDStr := chi.URLParam(r, "ticketID")
+			ticketID, err := strconv.Atoi(ticketIDStr)
+			if err != nil {
+				http.Error(w, "invalid ticket ID", http.StatusBadRequest)
+				return
+			}
 
-// Seach for id, type, email, and name
-templ bilettCard(ticket CheckInTicket, searchTerm string) {
+			checkIn.ConvertTicketToBillettholder(ticketID, db, logger)
+		})
+
+	})
+}
+
+templ ticketCard(ticket checkIn.CheckInTicket, searchTerm string) {
 	<div class="card" style="padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
+		{ ticket.ID }
 		<p style="margin:0;">
 			<strong>Bestilling:</strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(ticket.OrderID), searchTerm))
 		</p>
@@ -67,8 +92,10 @@ templ bilettCard(ticket CheckInTicket, searchTerm string) {
 			/>
 			<p><strong>Alder:</strong> Under 18</p>
 		}
-		<button>
-			Konverter bilett til deltager
+		<button
+			data-on-click={ templ.URL(fmt.Sprintf("@get('/admin/billettholder/add/api/convert/%s/')", strconv.Itoa(ticket.ID))) }
+		>
+			Konverter billett til deltager
 		</button>
 	</div>
 }

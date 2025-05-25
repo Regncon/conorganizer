@@ -1,4 +1,4 @@
-package bilettholderadmin
+package billettholderadmin
 
 import (
 	"database/sql"
@@ -10,15 +10,15 @@ import (
 )
 
 func indexRoute(router chi.Router, db *sql.DB, err error) {
-	router.Get("/admin/bilettholder/", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/admin/billettholder/", func(w http.ResponseWriter, r *http.Request) {
 		indexPage().Render(r.Context(), w)
 	})
 }
 
 templ indexPage() {
 	@layouts.Base("Meld på nytt arrangement") {
-		<div id="bilettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/bilettholder/api/") }>
-			<p>Bilettholder Admin</p>
+		<div id="billettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/billettholder/api/") }>
+			<p>Billettholder Admin</p>
 			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
 		</div>
 	}

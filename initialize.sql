@@ -24,14 +24,14 @@ CREATE TABLE IF NOT EXISTS ticket_types (
     name TEXT PRIMARY KEY
 );
 
-CREATE TABLE IF NOT EXISTS ticketholders (
+CREATE TABLE IF NOT EXISTS billettholdere (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     ticket_type TEXT NOT NULL,
     is_over_18 BOOLEAN NOT NULL,
     order_id INTEGER NOT NULL,
-    ticket_id INTEGER NOT NULL,
+    ticket_id INTEGER NOT NULL UNIQUE,
     ticket_email TEXT NOT NULL,
     order_email TEXT NOT NULL,
     ticket_category_id TEXT NOT NULL,
@@ -46,12 +46,12 @@ CREATE TABLE IF NOT EXISTS users (
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS ticketholders_users (
-    ticketholder_id INTEGER NOT NULL,
+CREATE TABLE IF NOT EXISTS billettholdere_users (
+    billettholder_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (ticketholder_id, user_id),
-    FOREIGN KEY (ticketholder_id) REFERENCES ticketholders(id),
+    PRIMARY KEY (billettholder_id, user_id),
+    FOREIGN KEY (billettholder_id) REFERENCES billettholdere(id),
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
@@ -107,24 +107,24 @@ INSERT INTO interest_levels (interest_level) VALUES
 ('Veldig interessert');
 
 CREATE TABLE IF NOT EXISTS interests (
-    ticketholder_id INTEGER NOT NULL,
+    billettholder_id INTEGER NOT NULL,
     event_id INTEGER NOT NULL,
     interest_level TEXT NOT NULL,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (ticketholder_id, event_id),
-    FOREIGN KEY (ticketholder_id) REFERENCES ticketholders(id),
+    PRIMARY KEY (billettholder_id, event_id),
+    FOREIGN KEY (billettholder_id) REFERENCES billettholdere(id),
     FOREIGN KEY (event_id) REFERENCES events(id),
     FOREIGN KEY (interest_level) REFERENCES interest_levels(interest_level) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS events_players (
     event_id INTEGER NOT NULL,
-    ticketholder_id INTEGER NOT NULL,
+    billettholder_id INTEGER NOT NULL,
 	interest_level TEXT NOT NULL,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (event_id, ticketholder_id),
+    PRIMARY KEY (event_id, billettholder_id),
     FOREIGN KEY (event_id) REFERENCES events(id),
-    FOREIGN KEY (ticketholder_id) REFERENCES ticketholders(id),
+    FOREIGN KEY (billettholder_id) REFERENCES billettholdere(id),
 	FOREIGN KEY (interest_level) REFERENCES interest_levels(interest_level) ON UPDATE CASCADE
 );
 

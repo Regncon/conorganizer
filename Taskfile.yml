@@ -67,3 +67,8 @@ tasks:
       - ./bin/main
     deps:
       - build
+
+  # Run all tests in all subdirectories
+  test:
+    cmds:
+      - go test ./...

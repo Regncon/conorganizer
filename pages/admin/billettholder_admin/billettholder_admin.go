@@ -1,4 +1,4 @@
-package bilettholderadmin
+package billettholderadmin
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	addbilettholder "github.com/Regncon/conorganizer/pages/admin/bilettholder_admin/add"
+	addbillettholder "github.com/Regncon/conorganizer/pages/admin/billettholder_admin/add"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/Regncon/conorganizer/service"
 	"github.com/delaneyj/toolbelt"
@@ -20,7 +20,7 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, logger *slog.Logger, db *sql.DB) error {
+func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, logger *slog.Logger, db *sql.DB) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -32,8 +32,8 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 	}
 
 	kv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
-		Bucket:      "bilettholder",
-		Description: "Bilettholder data",
+		Bucket:      "billettholder",
+		Description: "Billettholder data",
 		Compression: true,
 		TTL:         time.Hour,
 		MaxBytes:    16 * 1024 * 1024,
@@ -43,8 +43,8 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 	}
 
 	notifyUpdate := func(sessionID string) {
-		subj := fmt.Sprintf("bilettholder.%s.updated", sessionID)
-		fmt.Println("update bilettholeder subj", subj)
+		subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
+		fmt.Println("update billettholder subj", subj)
 		if err := nc.Publish(subj, nil); err != nil {
 			logger.Error("failed to publish page update", "err", err, "session", sessionID)
 		}
@@ -76,8 +76,8 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 
 	indexRoute(router, db, err)
 
-	router.Route("/admin/bilettholder/api/", func(bilettholderAdminRouter chi.Router) {
-		bilettholderAdminRouter.With(service.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Route("/admin/billettholder/api/", func(billettholderAdminRouter chi.Router) {
+		billettholderAdminRouter.With(service.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 			sessionID, _, err := session(w, r)
 			if err != nil {
@@ -86,7 +86,7 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 			}
 
 			ctx := r.Context()
-			subj := fmt.Sprintf("bilettholder.%s.updated", sessionID)
+			subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
 			sub, err := nc.SubscribeSync(subj)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -95,7 +95,7 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 			defer sub.Unsubscribe()
 
 			// send the first render immediately
-			if err := sse.MergeFragmentTempl(BilettholderAdminPage(db)); err != nil {
+			if err := sse.MergeFragmentTempl(BillettholderAdminPage(db)); err != nil {
 				_ = sse.ConsoleError(err)
 				return
 			}
@@ -104,7 +104,7 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 				if _, err := sub.NextMsgWithContext(ctx); err != nil {
 					return // context cancelled or sub closed
 				}
-				if err := sse.MergeFragmentTempl(BilettholderAdminPage(db)); err != nil {
+				if err := sse.MergeFragmentTempl(BillettholderAdminPage(db)); err != nil {
 					_ = sse.ConsoleError(err)
 					return
 				}
@@ -112,10 +112,10 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 		})
 	})
 
-	addbilettholder.AddBilettholderRoute(router, db, logger, err)
+	addbillettholder.AddBillettholderRoute(router, db, logger, err)
 
-	router.Route("/admin/bilettholder/add/api/", func(addBilettholderRouter chi.Router) {
-		addBilettholderRouter.With(service.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Route("/admin/billettholder/add/api/", func(addBillettholderRouter chi.Router) {
+		addBillettholderRouter.With(service.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 			sessionID, _, err := session(w, r)
 			if err != nil {
@@ -124,8 +124,8 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 			}
 
 			ctx := r.Context()
-			subj := fmt.Sprintf("bilettholder.%s.updated", sessionID)
-			fmt.Println("add bilettholder page subj", subj)
+			subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
+			fmt.Println("add billettholder page subj", subj)
 			sub, err := nc.SubscribeSync(subj)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -134,7 +134,7 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 			defer sub.Unsubscribe()
 
 			// initial render
-			if err := sse.MergeFragmentTempl(addbilettholder.AddBilettholderAdminPage(db, logger)); err != nil {
+			if err := sse.MergeFragmentTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
 				_ = sse.ConsoleError(err)
 				return
 			}
@@ -143,14 +143,15 @@ func SetupBilettholderAdminRoute(router chi.Router, store sessions.Store, ns *em
 				if _, err := sub.NextMsgWithContext(ctx); err != nil {
 					return
 				}
-				if err := sse.MergeFragmentTempl(addbilettholder.AddBilettholderAdminPage(db, logger)); err != nil {
+				if err := sse.MergeFragmentTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
 					_ = sse.ConsoleError(err)
 					return
 				}
 			}
 		})
 
-		addbilettholder.CheckInTicketsSearchRoute(addBilettholderRouter, db, logger, store, notifyUpdate)
+		addbillettholder.CheckInTicketsSearchRoute(addBillettholderRouter, db, logger, store, notifyUpdate)
+		addbillettholder.ConvertTicketToBillettholderRoute(addBillettholderRouter, db, logger)
 	})
 
 	return nil
