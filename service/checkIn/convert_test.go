@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service"
 	_ "modernc.org/sqlite"
 )
@@ -81,6 +82,10 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	// ❶ Arrange
 	sl := &stubLogger{}
 
+	// expectedBillettholder := models.Billettholder{
+	// 	TicketID: 42,
+	// }
+
 	/*
 	   if (!ticket) throw new Error('ticket not found');
 
@@ -120,19 +125,24 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	// ❷ Act
 	slogger := newSlogAdapter(sl)
 
-	converTicketIdToNewBillettholder(42, tickets, db, slogger)
+	err = converTicketIdToNewBillettholder(42, tickets, db, slogger)
+	if err != nil {
+		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
+	}
 
 	// ❸ Assert
-	/*	if got := len(sl.calls); got != 1 {
-			t.Fatalf("expected 1 Info call, got %d", got)
-		}
+	var billettholder models.Billettholder
+	err = db.QueryRow("SELECT id, ticket_id FROM billettholdere WHERE ticket_id = ?", 42).Scan(
+		// err = db.QueryRow("SELECT id, ticket_id FROM billettholdere").Scan(
+		&billettholder.ID,
+		&billettholder.TicketID,
+	)
 
-		call := sl.calls[0]
-		if call.msg != "Converting ticket to billettholder" {
-			t.Errorf("unexpected log message: %q", call.msg)
-		}
-		if len(call.keysAndValues) != 2 || call.keysAndValues[0] != "ticketID" || call.keysAndValues[1] != 42 {
-			t.Errorf("unexpected key/values: %#v", call.keysAndValues)
-		}
-	*/
+	if err != nil {
+		t.Fatalf("failed to find billettholder with ticketId 42: %v", err)
+	}
+
+	if billettholder.TicketID != 42 {
+		t.Errorf("expected billettholder with ticketId 42, got %d", billettholder.TicketID)
+	}
 }
