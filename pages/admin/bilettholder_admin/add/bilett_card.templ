@@ -52,7 +52,7 @@ func ConvertTicketToBilettholderRoute(
 				return
 			}
 
-			logger.Info("Converting ticket to bilettholder", "ticketID", ticketID)
+			checkIn.ConvertTicketToBilettholder(ticketID, db, logger)
 		})
 
 	})
