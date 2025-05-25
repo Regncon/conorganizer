@@ -1,4 +1,4 @@
-package addbilettholder
+package addbillettholder
 
 import (
 	"database/sql"
@@ -38,7 +38,7 @@ func highlightSearchTerm(text, searchTerm string) string {
 
 	return out.String()
 }
-func ConvertTicketToBilettholderRoute(
+func ConvertTicketToBillettholderRoute(
 	router chi.Router,
 	db *sql.DB,
 	logger *slog.Logger,
@@ -52,13 +52,13 @@ func ConvertTicketToBilettholderRoute(
 				return
 			}
 
-			checkIn.ConvertTicketToBilettholder(ticketID, db, logger)
+			checkIn.ConvertTicketToBillettholder(ticketID, db, logger)
 		})
 
 	})
 }
 
-templ bilettCard(ticket checkIn.CheckInTicket, searchTerm string) {
+templ ticketCard(ticket checkIn.CheckInTicket, searchTerm string) {
 	<div class="card" style="padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		{ ticket.ID }
 		<p style="margin:0;">
@@ -93,9 +93,9 @@ templ bilettCard(ticket checkIn.CheckInTicket, searchTerm string) {
 			<p><strong>Alder:</strong> Under 18</p>
 		}
 		<button
-			data-on-click={ templ.URL(fmt.Sprintf("@get('/admin/bilettholder/add/api/convert/%s/')", strconv.Itoa(ticket.ID))) }
+			data-on-click={ templ.URL(fmt.Sprintf("@get('/admin/billettholder/add/api/convert/%s/')", strconv.Itoa(ticket.ID))) }
 		>
-			Konverter bilett til deltager
+			Konverter billett til deltager
 		</button>
 	</div>
 }

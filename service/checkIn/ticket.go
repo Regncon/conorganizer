@@ -19,8 +19,8 @@ func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTic
 	return ticketCache.Get(logger, searchTerm)
 }
 
-func ConvertTicketToBilettholder(ticketId int, db *sql.DB, logger *slog.Logger) (*CheckInTicket, error) {
-	logger.Info("Converting ticket to bilettholder", "ticketID", ticketId)
+func ConvertTicketToBillettholder(ticketId int, db *sql.DB, logger *slog.Logger) (*CheckInTicket, error) {
+	logger.Info("Converting ticket to billettholder", "ticketID", ticketId)
 	tickets, err := GetTicketsFromCheckIn(logger, "")
 	if err != nil {
 		return nil, err

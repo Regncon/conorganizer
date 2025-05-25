@@ -2,9 +2,10 @@ package checkIn
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"log/slog"
 	"testing"
+
+	"github.com/google/uuid"
 
 	"github.com/Regncon/conorganizer/service"
 	_ "modernc.org/sqlite"
@@ -76,7 +77,7 @@ func newSlogAdapter(stub *stubLogger) *slog.Logger {
 // ————————————————————————————
 // 4. Unit test with only the standard library
 // ————————————————————————————
-func TestConvertTicketIdToNewBilettholder(t *testing.T) {
+func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	// ❶ Arrange
 	sl := &stubLogger{}
 
@@ -104,6 +105,10 @@ func TestConvertTicketIdToNewBilettholder(t *testing.T) {
 	   	    connectedEmails: [],
 	   	};
 	*/
+	tickets := []CheckInTicket{
+		{ID: 42, OrderID: 1, Type: "Adult", Name: "John Doe", Email: "test@test.test", IsAdult: true},
+		{ID: 43, OrderID: 1, Type: "Child", Name: "Jane Doe", Email: "test2@test.test", IsAdult: false},
+	}
 
 	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
 	db, err := service.InitDB("../../database/"+uniqueDatabaseName, "../../initialize.sql")
@@ -114,12 +119,8 @@ func TestConvertTicketIdToNewBilettholder(t *testing.T) {
 
 	// ❷ Act
 	slogger := newSlogAdapter(sl)
-	tickets := []CheckInTicket{
-		{ID: 42, OrderID: 1, Type: "Adult", Name: "John Doe", Email: "test@test.test", IsAdult: true},
-		{ID: 43, OrderID: 1, Type: "Child", Name: "Jane Doe", Email: "test2@test.test", IsAdult: false},
-	}
 
-	converTicketIdToNewBilettholder(42, tickets, db, slogger)
+	converTicketIdToNewBillettholder(42, tickets, db, slogger)
 
 	// ❸ Assert
 	/*	if got := len(sl.calls); got != 1 {
@@ -127,7 +128,7 @@ func TestConvertTicketIdToNewBilettholder(t *testing.T) {
 		}
 
 		call := sl.calls[0]
-		if call.msg != "Converting ticket to bilettholder" {
+		if call.msg != "Converting ticket to billettholder" {
 			t.Errorf("unexpected log message: %q", call.msg)
 		}
 		if len(call.keysAndValues) != 2 || call.keysAndValues[0] != "ticketID" || call.keysAndValues[1] != 42 {

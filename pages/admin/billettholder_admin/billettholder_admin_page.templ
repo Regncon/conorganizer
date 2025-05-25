@@ -1,14 +1,14 @@
-package bilettholderadmin
+package billettholderadmin
 
 import "database/sql"
 
-templ BilettholderAdminPage(db *sql.DB) {
-	<div id="bilettholder-admin-container">
-		<h1>Bilettholdere</h1>
-		<div class="bilettholder-admin-grid">
-			<h2>Her kan du se en oversikt over alle bilettholdere</h2>
+templ BillettholderAdminPage(db *sql.DB) {
+	<div id="billettholder-admin-container">
+		<h1>Billettholdere</h1>
+		<div class="billettholder-admin-grid">
+			<h2>Her kan du se en oversikt over alle billettholdere</h2>
 			<a
-				href="/admin/bilettholder/add/"
+				href="/admin/billettholder/add/"
 				style="background-color: rgb(49, 53, 78);
                     max-width: var(--mobile-max-column-width);
                     border-radius: 2rem;
@@ -21,12 +21,12 @@ templ BilettholderAdminPage(db *sql.DB) {
 			>+</a>
 		</div>
 		<style>
-			.bilettholder-admin-grid {
+			.billettholder-admin-grid {
 				display: grid;
 				grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
 				gap: 1rem;
 			}@media (min-width: 600px) {
-				.bilettholder-admin-grid {
+				.billettholder-admin-grid {
 					padding: 1rem;
 				}
 			}
