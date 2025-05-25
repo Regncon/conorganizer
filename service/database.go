@@ -1,28 +1,38 @@
 package service
 
 import (
-	"fmt"
-	"os"
-
 	"database/sql"
+	"fmt"
 	_ "modernc.org/sqlite"
+	"os"
+	"path/filepath"
 )
 
-func InitDB(dbPath string, sqlFile string) (*sql.DB, error) {
-	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
-		db, err := sql.Open("sqlite", dbPath)
+func InitDB(databaseFileName string, sqlFileName string) (*sql.DB, error) {
+	dir := filepath.Dir(databaseFileName)
+	if dir != "." && dir != "" {
+		if _, err := os.Stat(dir); os.IsNotExist(err) {
+			return nil, fmt.Errorf("directory path does not exist: %s", dir)
+		}
+	}
+
+	if _, err := os.Stat(databaseFileName); os.IsNotExist(err) {
+		db, err := sql.Open("sqlite", databaseFileName)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open DB: %w", err)
 		}
+		if err = db.Ping(); err != nil {
+			return nil, fmt.Errorf("failed to ping DB: %w", err)
+		}
 
-		if err = initializeDatabase(db, sqlFile); err != nil {
+		if err = initializeDatabase(db, sqlFileName); err != nil {
 			return nil, fmt.Errorf("failed to initialize database: %w", err)
 		}
 
 		return db, nil
 	}
 
-	db, err := sql.Open("sqlite", dbPath)
+	db, err := sql.Open("sqlite", databaseFileName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open DB: %w", err)
 	}
