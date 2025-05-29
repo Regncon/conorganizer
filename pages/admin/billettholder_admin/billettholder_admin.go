@@ -95,7 +95,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			defer sub.Unsubscribe()
 
 			// send the first render immediately
-			if err := sse.MergeFragmentTempl(BillettholderAdminPage(db)); err != nil {
+			if err := sse.MergeFragmentTempl(BillettholderAdminPage(db,logger)); err != nil {
 				_ = sse.ConsoleError(err)
 				return
 			}
@@ -104,7 +104,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				if _, err := sub.NextMsgWithContext(ctx); err != nil {
 					return // context cancelled or sub closed
 				}
-				if err := sse.MergeFragmentTempl(BillettholderAdminPage(db)); err != nil {
+				if err := sse.MergeFragmentTempl(BillettholderAdminPage(db, logger)); err != nil {
 					_ = sse.ConsoleError(err)
 					return
 				}

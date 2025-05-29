@@ -12,7 +12,7 @@ type CheckInTicket struct {
 	FirstName string
 	LastName  string
 	Email     string
-	IsAdult   bool
+	IsOver18   bool
 }
 
 func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {

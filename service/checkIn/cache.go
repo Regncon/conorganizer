@@ -159,7 +159,7 @@ func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 			FirstName: et.Crm.FirstName,
 			LastName:  et.Crm.LastName,
 			Email:     et.Crm.Email,
-			IsAdult:   et.Crm.Born < "2007-01-01", // Example logic for determining if adult
+			IsOver18:  et.Crm.Born < "2007-01-01", // Example logic for determining if adult
 		})
 	}
 

@@ -3,11 +3,13 @@ package billettholderadmin
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/models"
+	"log/slog"
 )
 
-func getBilettholdere(db *sql.DB) ([]models.Billettholder, error) {
-	rows, err := db.Query("SELECT id, ticket_id FROM billettholdere")
+func getBilettholdere(db *sql.DB, logger *slog.Logger) ([]models.Billettholder, error) {
+	rows, err := db.Query("SELECT id, first_name, last_name, is_over_18, order_id, ticket_email   FROM billettholdere")
 	if err != nil {
+		logger.Error("Failed to query billettholdere", "error", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -15,7 +17,8 @@ func getBilettholdere(db *sql.DB) ([]models.Billettholder, error) {
 	var billettholdere []models.Billettholder
 	for rows.Next() {
 		var b models.Billettholder
-		if err := rows.Scan(&b.ID, &b.TicketID); err != nil {
+		if err := rows.Scan(&b.ID, &b.FirstName, &b.LastName, &b.IsOver18, &b.OrderID, &b.TicketEmail); err != nil {
+			logger.Error("Failed to scan billettholder", "error", err)
 			return nil, err
 		}
 		billettholdere = append(billettholdere, b)
@@ -23,8 +26,8 @@ func getBilettholdere(db *sql.DB) ([]models.Billettholder, error) {
 	return billettholdere, nil
 }
 
-templ BillettholderAdminPage(db *sql.DB) {
-	{{ bilettholdere, err := getBilettholdere(db) }}
+templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
+	{{ bilettholdere, err := getBilettholdere(db, logger) }}
 	<div id="billettholder-admin-container">
 		<h1>Billettholdere</h1>
 		<h2>Her kan du se en oversikt over alle billettholdere</h2>

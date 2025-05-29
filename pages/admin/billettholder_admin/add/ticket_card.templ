@@ -79,7 +79,7 @@ templ ticketCard(ticket checkIn.CheckInTicket, searchTerm string) {
 		>
 			@templ.Raw(highlightSearchTerm(ticket.Email, searchTerm))
 		</a>
-		if ticket.IsAdult {
+		if ticket.IsOver18 {
 			<img
 				src="/static/icons/adults-only.svg"
 				alt="adults only"
