@@ -8,9 +8,11 @@
     },
     "cSpell.words": [
         "Atoi",
+        "billettholderadmin",
         "Dadbod",
         "dbod",
         "DBUI",
+        "descope",
         "devuser",
         "fetchpriority",
         "GOMODCACHE",
@@ -26,8 +28,7 @@
         "strconv",
         "ticketholder",
         "ticketholders",
-        "tpope",
-        "descope"
+        "tpope"
     ]
     // "github.copilot.chat.commitMessageGeneration.instructions": [
     //     {
