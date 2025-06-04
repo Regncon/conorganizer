@@ -135,3 +135,12 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 		})
 	}
 }
+
+func GetUserIDFromToken(ctx context.Context) (string, error) {
+	userToken, err := GetUserTokenFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return userToken.ID, nil
+}
