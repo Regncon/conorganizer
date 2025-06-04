@@ -52,7 +52,7 @@ templ loginForm() {
                 wcElement.removeEventListener('success', onSuccess);
                 wcElement.removeEventListener('error', onError);
 
-                window.location.href = '/';
+                window.location.href = '/auth/post-login';
             };
 
             const onError = (err) => {
