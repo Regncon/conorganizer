@@ -18,18 +18,22 @@
         "fetchpriority",
         "GOMODCACHE",
         "ifmissing",
+        "Itoa",
         "joerdav",
         "keymap",
         "kristijanhusak",
+        "loggedinmw",
         "myprofile",
         "NOPASSWD",
         "omitempty",
         "passwordless",
         "println",
+        "starfederation",
         "strconv",
         "ticketholder",
         "ticketholders",
-        "tpope"
+        "tpope",
+        "userctx"
     ]
     // "github.copilot.chat.commitMessageGeneration.instructions": [
     //     {
