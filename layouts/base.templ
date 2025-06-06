@@ -1,9 +1,20 @@
 package layouts
 
-import "github.com/Regncon/conorganizer/components"
-import "github.com/Regncon/conorganizer/components/modals"
+import (
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/modals"
+)
 
 templ Base(title string) {
+	// {{
+	// userToken, _ := service.GetUserTokenFromContext(ctx)
+	// var isLoggedIn = false
+	// if userToken == nil {
+	// 	isLoggedIn = false
+	// } else {
+	// 	isLoggedIn = true
+	// }
+	// }}
 	<!DOCTYPE html>
 	<html lang="en" data-theme="dark">
 		<head>

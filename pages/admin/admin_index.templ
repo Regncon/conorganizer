@@ -7,13 +7,13 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/layouts"
-	"github.com/Regncon/conorganizer/service"
+	"github.com/Regncon/conorganizer/service/authctx"
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
 func adminLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
 
-	router.With(service.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
+	router.With(authctx.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
 		admin_index().Render(r.Context(), w)
 	})
 }

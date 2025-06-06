@@ -7,12 +7,13 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/layouts"
-	"github.com/Regncon/conorganizer/service"
+
+	"github.com/Regncon/conorganizer/service/authctx"
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
 func AddBillettholderRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
-	router.With(service.RequireAdmin(logger)).Get("/admin/billettholder/add/", func(w http.ResponseWriter, r *http.Request) {
+	router.With(authctx.RequireAdmin(logger)).Get("/admin/billettholder/add/", func(w http.ResponseWriter, r *http.Request) {
 		indexPage().Render(r.Context(), w)
 	})
 }

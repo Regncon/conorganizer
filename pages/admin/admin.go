@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/pages/index"
-	"github.com/Regncon/conorganizer/service"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -83,7 +83,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 	// newEvent.NewEventLayoutRoute(router, db, err)
 
 	router.Route("/admin", func(adminRouter chi.Router) {
-		adminRouter.Use(service.AuthMiddleware(logger))
+		adminRouter.Use(authctx.AuthMiddleware(logger))
 		adminLayoutRoute(adminRouter, db, logger, err)
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)

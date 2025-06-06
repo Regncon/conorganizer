@@ -10,11 +10,11 @@ import (
 
 	"github.com/Regncon/conorganizer/pages/admin"
 	billettholderadmin "github.com/Regncon/conorganizer/pages/admin/billettholder_admin"
-	"github.com/Regncon/conorganizer/pages/auth"
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/index"
+	"github.com/Regncon/conorganizer/pages/login"
 	"github.com/Regncon/conorganizer/pages/myprofile"
-	"github.com/Regncon/conorganizer/service"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -48,15 +48,15 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, routerPublic chi.Rout
 	sessionStore := sessions.NewCookieStore([]byte("session-secret"))
 	sessionStore.MaxAge(int(24 * time.Hour / time.Second))
 
-	routerAuth := routerPublic.With(service.AuthMiddleware(logger))
-	routerAdmin := routerAuth.With(service.RequireAdmin(logger))
+	routerAuth := routerPublic.With(authctx.AuthMiddleware(logger))
+	routerAdmin := routerAuth.With(authctx.RequireAdmin(logger))
 
 	if err := errors.Join(
 		index.SetupIndexRoute(routerPublic, sessionStore, ns, db),
 		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
 		event.SetupEventRoute(routerPublic, sessionStore, ns, db, logger),
-		auth.SetupAuthRoute(routerPublic, db, logger),
+		login.SetupAuthRoute(routerPublic, db, logger),
 		myprofile.SetupMyProfileRoute(routerAuth, sessionStore, ns, db, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)

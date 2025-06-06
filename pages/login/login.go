@@ -1,4 +1,4 @@
-package auth
+package login
 
 import (
 	"database/sql"
@@ -6,9 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components/redirect"
 	"github.com/Regncon/conorganizer/layouts"
-	"github.com/Regncon/conorganizer/pages/auth/redirect"
-	"github.com/Regncon/conorganizer/service"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -19,23 +19,23 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 		})
 
 		authRouter.Group(func(protectedRoute chi.Router) {
-			protectedRoute.Use(service.AuthMiddleware(logger))
+			protectedRoute.Use(authctx.AuthMiddleware(logger))
 
 			protectedRoute.Get("/test", func(w http.ResponseWriter, r *http.Request) {
-				userToken, err := service.GetUserTokenFromContext(r.Context())
+				userToken, err := authctx.GetUserTokenFromContext(r.Context())
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusUnauthorized)
 					return
 				}
 
-				isAdmin := service.GetAdminFromUserToken(r.Context())
+				isAdmin := authctx.GetAdminFromUserToken(r.Context())
 				layouts.Base("Is logged in test").Render(r.Context(), w)
 				w.Write(fmt.Appendf(nil, "Test successful! Authenticated as: %v, and is admin: %v", userToken.Claims["email"], isAdmin))
 			})
 
 			protectedRoute.Get("/post-login", func(w http.ResponseWriter, r *http.Request) {
-				isAdmin := service.GetAdminFromUserToken(r.Context())
-				userToken, userTokenErr := service.GetUserTokenFromContext(r.Context())
+				isAdmin := authctx.GetAdminFromUserToken(r.Context())
+				userToken, userTokenErr := authctx.GetUserTokenFromContext(r.Context())
 				if userTokenErr != nil {
 					logger.Error("Failed to get user token from context", "error", userTokenErr)
 					http.Redirect(w, r, "/auth", http.StatusSeeOther)
@@ -43,7 +43,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				}
 
 				email, emailOk := userToken.Claims["email"].(string)
-				userID, _ := service.GetUserIDFromToken(r.Context())
+				userID, _ := authctx.GetUserIDFromToken(r.Context())
 
 				if emailOk && email != "" && userID != "" {
 					exists, err := userExistsByEmail(db, email)
@@ -64,7 +64,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 
 		authRouter.Get("/logout", func(w http.ResponseWriter, r *http.Request) {
 			http.SetCookie(w, &http.Cookie{
-				Name:     service.SessionCookieName,
+				Name:     authctx.SessionCookieName,
 				Value:    "",
 				Path:     "/",
 				MaxAge:   -1,
@@ -74,7 +74,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 			})
 
 			http.SetCookie(w, &http.Cookie{
-				Name:     service.RefreshCookieName,
+				Name:     authctx.RefreshCookieName,
 				Value:    "",
 				Path:     "/",
 				MaxAge:   -1,
