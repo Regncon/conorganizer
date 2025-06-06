@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/a-h/templ v0.3.894
+	github.com/a-h/templ v0.3.898
 	github.com/benbjohnson/hashfs v0.2.2
 	github.com/delaneyj/toolbelt v0.4.3
 	github.com/descope/go-sdk v1.6.12
