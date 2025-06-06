@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/components/redirect"
+	"github.com/Regncon/conorganizer/layouts"
 	"github.com/descope/go-sdk/descope/client"
 )
 
@@ -15,33 +16,41 @@ const (
 	RefreshCookieName = "refresh_token"
 )
 
-type ctxKey string
+type authctxKey string
 
 const (
-	ctxSessionError ctxKey = "sessionError"
-	ctxUserToken    ctxKey = "userToken"
+	ctxSessionError authctxKey = "sessionError"
+	ctxUserToken    authctxKey = "userToken"
 )
+
+const ProjectID = "P2ufzqahlYUHDIprVXtkuCx8MH5C" // TODO: get from env
+
+func GetDescopeClient() (*client.DescopeClient, error) {
+	return client.NewWithConfig(&client.Config{ProjectID: ProjectID})
+}
 
 func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			//todo: get projectID from env?
-			projectID := "P2ufzqahlYUHDIprVXtkuCx8MH5C"
-			descopeClient, descopeClientError := client.NewWithConfig(&client.Config{ProjectID: projectID})
+			descopeClient, descopeClientError := GetDescopeClient()
 			if descopeClientError != nil {
-				logger.Error("Failed to create Descope client", slog.String("projectID", projectID), "descopeClientError", descopeClientError)
+				logger.Error("Failed to create Descope client", slog.String("projectID", ProjectID), "descopeClientError", descopeClientError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, descopeClientError)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
-
 			// Get session and refresh tokens from cookies
 			sessionCookie, sessionCookieError := r.Cookie(SessionCookieName)
 			if sessionCookieError != nil {
 				logger.Error("No session cookie found", "sessionCookieError", sessionCookieError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, sessionCookieError)
 				redirectUrl := "/auth"
-				redirect.Redirect(redirectUrl, "Redirecting to login").Render(ctx, w)
+				layouts.Base(
+					"Redirecting to login",
+					false,
+					redirect.Redirect(redirectUrl),
+				).Render(ctx, w)
+
 				return
 			}
 
@@ -50,17 +59,26 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				logger.Error("No refresh cookie found", "refreshCookieError", refreshCookieError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, refreshCookieError)
 				redirectUrl := "/auth"
-				redirect.Redirect(redirectUrl, "Redirecting to login").Render(ctx, w)
+				layouts.Base(
+					"Redirecting to login",
+					false,
+					redirect.Redirect(redirectUrl),
+				).Render(ctx, w)
 				return
 			}
 
 			_, userToken, validateTokenError := descopeClient.Auth.ValidateAndRefreshSessionWithTokens(
 				r.Context(), sessionCookie.Value, refreshCookie.Value)
+
 			if validateTokenError != nil {
 				logger.Error("Failed to validate/refresh session", "validateTokenError", validateTokenError)
 				ctx := context.WithValue(r.Context(), ctxSessionError, validateTokenError)
 				redirectUrl := "/auth"
-				redirect.Redirect(redirectUrl, "Redirecting to login").Render(ctx, w)
+				layouts.Base(
+					"Redirecting to login",
+					false,
+					redirect.Redirect(redirectUrl),
+				).Render(ctx, w)
 				return
 			}
 

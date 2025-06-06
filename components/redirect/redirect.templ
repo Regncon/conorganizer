@@ -1,14 +1,9 @@
 package redirect
 
-import (
-	"fmt"
-	"github.com/Regncon/conorganizer/layouts"
-)
+import "fmt"
 
-templ Redirect(url string, title string) {
-	@layouts.Base(title) {
-		<style>
-
+templ Redirect(url string) {
+	<style>
         .redirect-countdown {
             font-weight: bold;
             font-size: 1.5em;
@@ -47,5 +42,4 @@ templ Redirect(url string, title string) {
                 countdownElement.style.color = `hsl(${redToGreenTransitionNumber}, 100%, 50%)`;
             }, 1000);
         </script>
-	}
 }

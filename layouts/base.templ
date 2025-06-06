@@ -5,16 +5,7 @@ import (
 	"github.com/Regncon/conorganizer/components/modals"
 )
 
-templ Base(title string) {
-	// {{
-	// userToken, _ := service.GetUserTokenFromContext(ctx)
-	// var isLoggedIn = false
-	// if userToken == nil {
-	// 	isLoggedIn = false
-	// } else {
-	// 	isLoggedIn = true
-	// }
-	// }}
+templ Base(title string, isLoggedIn bool, children templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en" data-theme="dark">
 		<head>
@@ -30,8 +21,8 @@ templ Base(title string) {
 		<body>
 			@modals.CssVariableConfigComponent()
 			<main>
-				@components.Menu()
-				{ children... }
+				@components.Menu(isLoggedIn)
+				@children
 			</main>
 		</body>
 	</html>

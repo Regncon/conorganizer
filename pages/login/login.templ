@@ -1,18 +1,15 @@
 package login
 
-import "github.com/Regncon/conorganizer/layouts"
-
 templ loginForm() {
-	@layouts.Base("Login") {
-		<script src="https://descopecdn.com/npm/@descope/web-component@3.21.0/dist/index.js"></script>
-		<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
-		<script src="https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js"></script>
-		<descope-wc
-			project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
-			flow-id="sign-up-or-in-passwords-social"
-			theme="dark"
-		></descope-wc>
-		<script>
+	<script src="https://descopecdn.com/npm/@descope/web-component@3.21.0/dist/index.js"></script>
+	<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
+	<script src="https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js"></script>
+	<descope-wc
+		project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
+		flow-id="sign-up-or-in-passwords-social"
+		theme="dark"
+	></descope-wc>
+	<script>
             const COOKIE_NAMES = {
                 SESSION: 'session_token',
                 REFRESH: 'refresh_token'
@@ -62,5 +59,4 @@ templ loginForm() {
             wcElement.addEventListener('success', onSuccess);
             wcElement.addEventListener('error', onError);
         </script>
-	}
 }

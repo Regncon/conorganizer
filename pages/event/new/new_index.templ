@@ -8,17 +8,21 @@ import (
 	"net/http"
 )
 
+// Todo Separate this in to a auth router
 func NewEventLayoutRoute(router chi.Router, db *sql.DB, err error) {
 	router.Get("/event/new/", func(w http.ResponseWriter, r *http.Request) {
-		newEventIndex().Render(r.Context(), w)
+		var ctx = r.Context()
+		layouts.Base(
+			"Meld på nytt arrangement",
+			true,
+			newEventIndex(),
+		).Render(ctx, w)
 	})
 }
 
 templ newEventIndex() {
-	@layouts.Base("Meld på nytt arrangement") {
-		<div id="new-event-container" data-on-load={ datastar.GetSSE("/event/api/new/") }>
-			<p>New Event</p>
-			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
-		</div>
-	}
+	<div id="new-event-container" data-on-load={ datastar.GetSSE("/event/api/new/") }>
+		<p>Meld på nytt arrangement</p>
+		<p>Hvis du ser denne meldingen, vennligst tøm informasjonskapslene og oppdater siden.</p>
+	</div>
 }

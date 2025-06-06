@@ -7,22 +7,19 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/layouts"
-
-	"github.com/Regncon/conorganizer/service/authctx"
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
 func AddBillettholderRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
-	router.With(authctx.RequireAdmin(logger)).Get("/admin/billettholder/add/", func(w http.ResponseWriter, r *http.Request) {
-		indexPage().Render(r.Context(), w)
+	router.Get("/admin/billettholder/add/", func(w http.ResponseWriter, r *http.Request) {
+		var ctx = r.Context()
+		layouts.Base("Add Billettholder Admin", true, indexPage()).Render(ctx, w)
 	})
 }
 
 templ indexPage() {
-	@layouts.Base("Legg til ny billettholder") {
-		<div id="add-billettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/billettholder/add/api/") }>
-			<p>Add Billettholder Admin</p>
-			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
-		</div>
-	}
+	<div id="add-billettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/billettholder/add/api/") }>
+		<p>Add Billettholder Admin</p>
+		<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+	</div>
 }

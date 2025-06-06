@@ -12,6 +12,7 @@ import (
 	"database/sql"
 
 	"github.com/Regncon/conorganizer/service"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -71,6 +72,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 		publicRouter.Use(
 			middleware.Logger,
 			middleware.Recoverer,
+			userctx.IsLoggedInMiddleware(logger),
 		)
 
 		publicRouter.Handle("/static/*", http.StripPrefix("/static/", static(logger)))

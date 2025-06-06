@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -90,7 +92,11 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	}
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		index("Regncon programm 2025", db).Render(r.Context(), w)
+		layouts.Base(
+			"Regncon 2025",
+			userctx.GetUserRequestInfo(r.Context()).IsLoggedIn,
+			index(db),
+		).Render(r.Context(), w)
 	})
 
 	router.Route("/api", func(apiRouter chi.Router) {

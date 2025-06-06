@@ -1,36 +1,54 @@
 package login
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components/redirect"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
 )
 
 func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 	router.Route("/auth", func(authRouter chi.Router) {
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			loginForm().Render(r.Context(), w)
+			var ctx = r.Context()
+			layouts.Base(
+				"Innlogging til Regncon 2025!",
+				userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+				loginForm(),
+			).Render(ctx, w)
 		})
 
 		authRouter.Group(func(protectedRoute chi.Router) {
 			protectedRoute.Use(authctx.AuthMiddleware(logger))
 
 			protectedRoute.Get("/test", func(w http.ResponseWriter, r *http.Request) {
-				userToken, err := authctx.GetUserTokenFromContext(r.Context())
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusUnauthorized)
+				userToken, userTokenErr := authctx.GetUserTokenFromContext(r.Context())
+				if userTokenErr != nil {
+					http.Error(w, userTokenErr.Error(), http.StatusUnauthorized)
 					return
 				}
 
 				isAdmin := authctx.GetAdminFromUserToken(r.Context())
-				layouts.Base("Is logged in test").Render(r.Context(), w)
-				w.Write(fmt.Appendf(nil, "Test successful! Authenticated as: %v, and is admin: %v", userToken.Claims["email"], isAdmin))
+				testComp := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+					_, err := io.WriteString(w, fmt.Sprintf("Test successful! Authenticated as: %v, and is admin: %v", userToken.Claims["email"], isAdmin))
+					return err
+				})
+
+				var ctx = r.Context()
+				layouts.Base(
+					"Is logged in test",
+					userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+					testComp,
+				).Render(ctx, w)
 			})
 
 			protectedRoute.Get("/post-login", func(w http.ResponseWriter, r *http.Request) {
@@ -84,7 +102,11 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 			})
 
 			redirectUrl := "/"
-			redirect.Redirect(redirectUrl, "Logging you out").Render(r.Context(), w)
+			var ctx = r.Context()
+			layouts.Base("Logging you out",
+				userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+				redirect.Redirect(redirectUrl),
+			).Render(ctx, w)
 		})
 	})
 
