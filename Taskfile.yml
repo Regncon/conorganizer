@@ -48,7 +48,7 @@ tasks:
         --build.delay "100" \
         --build.exclude_dir "" \
         --build.include_dir "$STATIC_DIR" \
-        --build.include_ext "js,css"
+        --build.include_ext "js,css,env"
 
   live:
     deps:

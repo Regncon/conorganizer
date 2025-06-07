@@ -7,22 +7,19 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/layouts"
-	"github.com/Regncon/conorganizer/service"
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
 func adminLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
-
-	router.With(service.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
-		admin_index().Render(r.Context(), w)
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		var ctx = r.Context()
+		layouts.Base("Admin Page", true, adminIndex()).Render(ctx, w)
 	})
 }
 
-templ admin_index() {
-	@layouts.Base("Meld på nytt arrangement") {
-		<div id="admin-container" data-on-load={ datastar.GetSSE("/admin/api/") }>
-			<p>Admin page</p>
-			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
-		</div>
-	}
+templ adminIndex() {
+	<div id="admin-container" data-on-load={ datastar.GetSSE("/admin/api/") }>
+		<p>Admin page</p>
+		<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+	</div>
 }

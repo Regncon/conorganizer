@@ -1,9 +1,11 @@
 package layouts
 
-import "github.com/Regncon/conorganizer/components"
-import "github.com/Regncon/conorganizer/components/modals"
+import (
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/modals"
+)
 
-templ Base(title string) {
+templ Base(title string, isLoggedIn bool, children templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en" data-theme="dark">
 		<head>
@@ -19,8 +21,8 @@ templ Base(title string) {
 		<body>
 			@modals.CssVariableConfigComponent()
 			<main>
-				@components.Menu()
-				{ children... }
+				@components.Menu(isLoggedIn)
+				@children
 			</main>
 		</body>
 	</html>

@@ -1,13 +1,9 @@
 package index
 
-import (
-	"database/sql"
-	"github.com/Regncon/conorganizer/layouts"
-)
+import "database/sql"
 
-templ index(title string, db *sql.DB) {
-	@layouts.Base(title) {
-		<style>
+templ index(db *sql.DB) {
+	<style>
 		@keyframes spin {
 			from {
 				transform: rotate(360deg);
@@ -27,30 +23,31 @@ templ index(title string, db *sql.DB) {
 				max-height: 450px;
 				margin: 2rem auto;
 				display: block;
+                position: relative;
+                z-index: -1;
 			}
 		}
 		</style>
-		<header>
-			<div class="regncon-logo-container">
-				<img
-					src="/static/RegnconLogo.svg"
-					alt="logo"
-				/>
-			</div>
-			<div style="background-color:#31354e; padding: 1rem;">
-				<h1 style="text-align: center;">Regncon program 2025</h1>
-				<a
-					href="/event/new/"
-					style="display: block;
+	<header>
+		<div class="regncon-logo-container">
+			<img
+				src="/static/RegnconLogo.svg"
+				alt="logo"
+			/>
+		</div>
+		<div style="background-color:#31354e; padding: 1rem;">
+			<h1 style="text-align: center;">Regncon program 2025</h1>
+			<a
+				href="/event/new/"
+				style="display: block;
 				text-align: center;
 				font-size: 1.5rem;
 				margin-top: 1rem;
 				color: #aea4f7;"
-				>
-					Meld på nytt arrangement til årets program!
-				</a>
-			</div>
-		</header>
-		@todosMVCView(db)
-	}
+			>
+				Meld på nytt arrangement til årets program!
+			</a>
+		</div>
+	</header>
+	@todosMVCView(db)
 }

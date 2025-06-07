@@ -1,7 +1,5 @@
 package myprofile
 
-import "github.com/Regncon/conorganizer/layouts"
-
 templ myProfile() {
 	<style>
 	.wrapper {
@@ -57,23 +55,21 @@ templ myProfile() {
         }
 	}
 	</style>
-	@layouts.Base("Min profil") {
-		<section class="wrapper">
-			<h1>Min profil</h1>
-			<a href="/my-events">
-				<img src="/static/sobbingtemp.png" alt="mine arrangement"/>
-				<section>
-					<p>Mine arrangement</p>
-					<p>Trykk for å gå til mine arrangement</p>
-				</section>
-			</a>
-			<a href="/my-profile/my-tickets">
-				<img src="/static/sobbingtemp.png" alt="mine billetter"/>
-				<section>
-					<p>Mine billetter</p>
-					<p>Trykk for å gå til mine billetter</p>
-				</section>
-			</a>
-		</section>
-	}
+	<section class="wrapper">
+		<h1>Min profil</h1>
+		<a href="/my-events">
+			<img src="/static/sobbingtemp.png" alt="mine arrangement"/>
+			<section>
+				<p>Mine arrangement</p>
+				<p>Trykk for å gå til mine arrangement</p>
+			</section>
+		</a>
+		<a href="/my-profile/my-tickets">
+			<img src="/static/sobbingtemp.png" alt="mine billetter"/>
+			<section>
+				<p>Mine billetter</p>
+				<p>Trykk for å gå til mine billetter</p>
+			</section>
+		</a>
+	</section>
 }

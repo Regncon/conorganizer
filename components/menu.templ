@@ -1,6 +1,6 @@
 package components
 
-templ Menu() {
+templ Menu(isLoggedIn bool) {
 	<style>
 		.main-menu {
 			display: grid;
@@ -154,23 +154,28 @@ templ Menu() {
 				</span>
 			</a>
 		</section>
-		<details class="menu-btn">
-			<summary>
-				<img
-					src="/static/icons/bars-solid.svg"
-					alt="menu"
-					height="20"
-					width="20"
-					fetchpriority="high"
-				/>
-			</summary>
-			<div class="dropdown-panel">
-				<a href="/auth/logout">Logg ut</a>
-				<a href="/mine" class="disabled">Mine arrangementer</a>
-				<a href="/my-profile">Min profil</a>
-				<a href="/admin">Admin</a>
-				<a href="/arrangementer/edit" class="disabled">Rediger arrangement</a>
-			</div>
-		</details>
+		if isLoggedIn {
+			<details class="menu-btn">
+				<summary>
+					<img
+						src="/static/icons/bars-solid.svg"
+						alt="menu"
+						height="20"
+						width="20"
+						fetchpriority="high"
+					/>
+				</summary>
+				<div class="dropdown-panel">
+					<a href="/auth/logout">Logg ut</a>
+					<a href="/my-events/new">Mine arrangementer</a>
+					<a href="/my-profile">Min profil</a>
+					<a href="/admin">Admin</a>
+					<a href="/arrangementer/edit" class="disabled">Rediger arrangement</a>
+				</div>
+			</details>
+		}
+		if !isLoggedIn {
+			<a href="/auth" class="main-menu-link">Logg inn</a>
+		}
 	</nav>
 }

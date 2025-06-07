@@ -8,26 +8,32 @@
     },
     "cSpell.words": [
         "Atoi",
+        "authctx",
+        "billettholderadmin",
         "Dadbod",
         "dbod",
         "DBUI",
+        "descope",
         "devuser",
         "fetchpriority",
         "GOMODCACHE",
         "ifmissing",
+        "Itoa",
         "joerdav",
         "keymap",
         "kristijanhusak",
+        "loggedinmw",
         "myprofile",
         "NOPASSWD",
         "omitempty",
         "passwordless",
         "println",
+        "starfederation",
         "strconv",
         "ticketholder",
         "ticketholders",
         "tpope",
-        "descope"
+        "userctx"
     ]
     // "github.copilot.chat.commitMessageGeneration.instructions": [
     //     {

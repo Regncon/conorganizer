@@ -2,24 +2,23 @@ package billettholderadmin
 
 import (
 	"database/sql"
+	"github.com/Regncon/conorganizer/layouts"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 
-	"github.com/Regncon/conorganizer/layouts"
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
 func indexRoute(router chi.Router, db *sql.DB, err error) {
 	router.Get("/admin/billettholder/", func(w http.ResponseWriter, r *http.Request) {
-		indexPage().Render(r.Context(), w)
+		var ctx = r.Context()
+		layouts.Base("Billettholder Admin", true, indexPage()).Render(ctx, w)
 	})
 }
 
 templ indexPage() {
-	@layouts.Base("Meld på nytt arrangement") {
-		<div id="billettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/billettholder/api/") }>
-			<p>Billettholder Admin</p>
-			<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
-		</div>
-	}
+	<div id="billettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/billettholder/api/") }>
+		<p>Billettholder Admin</p>
+		<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+	</div>
 }

@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS billettholdere (
 
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
     email TEXT NOT NULL,
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -131,8 +132,8 @@ CREATE TABLE IF NOT EXISTS events_players (
 -- Add 2 test events and a test user to to database
 
 -- Add a test admin user
-INSERT INTO users (email, is_admin) VALUES
-('test.admin@example.com', true);
+INSERT INTO users (user_id, email, is_admin) VALUES
+('test-admin-id', 'test.admin@example.com', true);
 
 -- Add two example events
 INSERT INTO events (
