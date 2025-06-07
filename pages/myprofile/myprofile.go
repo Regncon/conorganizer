@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -22,23 +23,40 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 				userctx.GetUserRequestInfo(ctx).IsLoggedIn,
 				myProfile(),
 			).Render(ctx, w)
-			return
+
 		})
 
 		ticketRouter.Get("/my-tickets", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
-			//Todo get tickets and change what page to render
+
+			tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(logger, userctx.GetUserRequestInfo(ctx).Email)
+
+			if ticketsErr != nil {
+				logger.Error("Failed to get tickets from check-in", "ticketsErr", ticketsErr)
+
+				layouts.Base(
+					"Ingen billetter",
+					userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+					noTickets(),
+				).Render(ctx, w)
+				return
+			}
+
+			if len(tickets) == 0 {
+				layouts.Base(
+					"Ingen billetter",
+					userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+					noTickets(),
+				).Render(ctx, w)
+				return
+			}
+
 			layouts.Base(
 				"Mine billetter",
 				userctx.GetUserRequestInfo(ctx).IsLoggedIn,
 				myTickets(),
 			).Render(ctx, w)
 
-			layouts.Base(
-				"Ingen billetter",
-				userctx.GetUserRequestInfo(ctx).IsLoggedIn,
-				noTickets(),
-			).Render(ctx, w)
 		})
 	})
 
