@@ -10,7 +10,7 @@ import (
 
 // Todo Separate this in to a auth router
 func NewEventLayoutRoute(router chi.Router, db *sql.DB, err error) {
-	router.Get("/event/new/", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/my-events/new", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		layouts.Base(
 			"Meld på nytt arrangement",
