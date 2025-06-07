@@ -1,6 +1,8 @@
 package components
 
-templ Menu(isLoggedIn bool) {
+import "github.com/Regncon/conorganizer/service/requestctx"
+
+templ Menu(UserInfo requestctx.UserRequestInfo) {
 	<style>
 		.main-menu {
 			display: grid;
@@ -154,7 +156,7 @@ templ Menu(isLoggedIn bool) {
 				</span>
 			</a>
 		</section>
-		if isLoggedIn {
+		if UserInfo.IsLoggedIn {
 			<details class="menu-btn">
 				<summary>
 					<img
@@ -167,14 +169,19 @@ templ Menu(isLoggedIn bool) {
 				</summary>
 				<div class="dropdown-panel">
 					<a href="/auth/logout">Logg ut</a>
-					<a href="/my-events/new">Mine arrangementer</a>
+					<a href="/my-events">Mine arrangementer</a>
 					<a href="/my-profile">Min profil</a>
-					<a href="/admin">Admin</a>
-					<a href="/arrangementer/edit" class="disabled">Rediger arrangement</a>
+					if UserInfo.IsAdmin {
+						<hr/>
+						<span>Admin</span>
+						<hr/>
+						<a href="/admin">Admin</a>
+						<a href="/arrangementer/edit" class="disabled">Rediger arrangement</a>
+					}
 				</div>
 			</details>
 		}
-		if !isLoggedIn {
+		if !UserInfo.IsLoggedIn {
 			<a href="/auth" class="main-menu-link">Logg inn</a>
 		}
 	</nav>

@@ -94,7 +94,7 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		layouts.Base(
 			"Regncon 2025",
-			userctx.GetUserRequestInfo(r.Context()).IsLoggedIn,
+			userctx.GetUserRequestInfo(r.Context()),
 			index(db),
 		).Render(r.Context(), w)
 	})

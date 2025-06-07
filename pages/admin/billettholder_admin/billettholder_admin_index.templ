@@ -3,6 +3,7 @@ package billettholderadmin
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 
@@ -12,7 +13,14 @@ import (
 func indexRoute(router chi.Router, db *sql.DB, err error) {
 	router.Get("/admin/billettholder/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
-		layouts.Base("Billettholder Admin", true, indexPage()).Render(ctx, w)
+		layouts.Base(
+			"Billettholder Admin",
+			requestctx.UserRequestInfo{
+				IsLoggedIn: true,
+				IsAdmin:    true,
+			},
+			indexPage(),
+		).Render(ctx, w)
 	})
 }
 

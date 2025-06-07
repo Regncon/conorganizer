@@ -1,27 +1,28 @@
-package eventForm
+package formsubmission
 
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar/sdk/go"
 	"net/http"
 )
 
 // Todo Separate this in to a auth router
-func NewEventLayoutRoute(router chi.Router, db *sql.DB, err error) {
-	router.Get("/my-events/new", func(w http.ResponseWriter, r *http.Request) {
+func NewEventLayoutRoute(router chi.Router, db *sql.DB) {
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		layouts.Base(
 			"Meld på nytt arrangement",
-			true,
+			userctx.GetUserRequestInfo(ctx),
 			newEventIndex(),
 		).Render(ctx, w)
 	})
 }
 
 templ newEventIndex() {
-	<div id="new-event-container" data-on-load={ datastar.GetSSE("/event/api/new/") }>
+	<div id="new-event-container" data-on-load={ datastar.GetSSE("/event/api/new") }>
 		<p>Meld på nytt arrangement</p>
 		<p>Hvis du ser denne meldingen, vennligst tøm informasjonskapslene og oppdater siden.</p>
 	</div>

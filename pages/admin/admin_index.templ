@@ -7,13 +7,21 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
 func adminLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
-		layouts.Base("Admin Page", true, adminIndex()).Render(ctx, w)
+		layouts.Base(
+			"Admin Page",
+			requestctx.UserRequestInfo{
+				IsLoggedIn: true,
+				IsAdmin:    true,
+			},
+			adminIndex(),
+		).Render(ctx, w)
 	})
 }
 

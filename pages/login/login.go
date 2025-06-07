@@ -22,7 +22,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 			var ctx = r.Context()
 			layouts.Base(
 				"Innlogging til Regncon 2025!",
-				userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+				userctx.GetUserRequestInfo(ctx),
 				loginForm(),
 			).Render(ctx, w)
 		})
@@ -46,7 +46,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				var ctx = r.Context()
 				layouts.Base(
 					"Is logged in test",
-					userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+					userctx.GetUserRequestInfo(ctx),
 					testComp,
 				).Render(ctx, w)
 			})
@@ -104,7 +104,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 			redirectUrl := "/"
 			var ctx = r.Context()
 			layouts.Base("Logging you out",
-				userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+				userctx.GetUserRequestInfo(ctx),
 				redirect.Redirect(redirectUrl),
 			).Render(ctx, w)
 		})

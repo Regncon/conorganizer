@@ -2,22 +2,18 @@ package userctx
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/descope/go-sdk/descope/client"
 )
 
 type userctxKey struct{}
 
 var userContextKey = userctxKey{}
-
-type UserRequestInfo struct {
-	IsLoggedIn bool
-	Id         string
-	Email      string
-}
 
 func IsLoggedInMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -35,7 +31,7 @@ func IsLoggedInMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				}
 			}
 
-			userInfo := UserRequestInfo{
+			userInfo := requestctx.UserRequestInfo{
 				IsLoggedIn: isLoggedIn,
 			}
 
@@ -45,21 +41,23 @@ func IsLoggedInMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-func GetUserRequestInfo(ctx context.Context) UserRequestInfo {
-	userInfo, ok := ctx.Value(userContextKey).(UserRequestInfo)
+func GetUserRequestInfo(ctx context.Context) requestctx.UserRequestInfo {
+	userInfo, ok := ctx.Value(userContextKey).(requestctx.UserRequestInfo)
 
 	if !ok {
-		return UserRequestInfo{
+		return requestctx.UserRequestInfo{
 			IsLoggedIn: false,
 		}
 	}
 
 	userId, _ := authctx.GetUserIDFromToken(ctx)
 	email, _ := authctx.GetEmailFromToken(ctx)
+	isAdmin := authctx.GetAdminFromUserToken(ctx)
 
-	return UserRequestInfo{
+	return requestctx.UserRequestInfo{
 		IsLoggedIn: userInfo.IsLoggedIn,
 		Id:         userId,
 		Email:      email,
+		IsAdmin:    isAdmin,
 	}
 }
