@@ -8,10 +8,11 @@ require (
 )
 
 require (
-	github.com/a-h/templ v0.3.865
+	github.com/a-h/templ v0.3.887
 	github.com/benbjohnson/hashfs v0.2.2
 	github.com/delaneyj/toolbelt v0.4.3
 	github.com/descope/go-sdk v1.6.12
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/sessions v1.4.0
 	github.com/joho/godotenv v1.5.1
 	github.com/nats-io/nats-server/v2 v2.11.4
@@ -39,7 +40,6 @@ require (
 	github.com/go-rod/rod v0.116.2 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/google/go-tpm v0.9.5 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
 	github.com/igrmk/treemap/v2 v2.0.1 // indirect
@@ -67,12 +67,12 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/ysmood/fetchup v0.3.0 // indirect
 	github.com/ysmood/goob v0.4.0 // indirect
-	github.com/ysmood/got v0.40.0 // indirect
+	github.com/ysmood/got v0.41.0 // indirect
 	github.com/ysmood/gson v0.7.3 // indirect
 	github.com/ysmood/leakless v0.9.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
-	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
+	golang.org/x/exp v0.0.0-20250531010427-b6e5de432a8b // indirect
 	golang.org/x/mod v0.24.0 // indirect
 	golang.org/x/net v0.40.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
@@ -80,10 +80,10 @@ require (
 	golang.org/x/time v0.11.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
-	modernc.org/libc v1.65.7 // indirect
+	modernc.org/libc v1.65.8 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	zombiezen.com/go/sqlite v1.4.0 // indirect
+	zombiezen.com/go/sqlite v1.4.2 // indirect
 )
 
 tool github.com/a-h/templ/cmd/templ
