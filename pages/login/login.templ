@@ -12,7 +12,9 @@ templ loginForm() {
 	<script>
             const COOKIE_NAMES = {
                 SESSION: 'session_token',
-                REFRESH: 'refresh_token'
+                REFRESH: 'refresh_token',
+                DS: 'DS',
+                DSR: 'DSR'
             };
 
             const DURATION = {
@@ -26,6 +28,8 @@ templ loginForm() {
                 switch (name) {
                     case COOKIE_NAMES.SESSION:
                     case COOKIE_NAMES.REFRESH:
+                    case COOKIE_NAMES.DS:
+                    case COOKIE_NAMES.DSR:
                         expires = new Date(now.getTime() + DURATION.ONE_YEAR);
                         break;
                     default:
@@ -45,6 +49,8 @@ templ loginForm() {
 
                 setCookie(COOKIE_NAMES.SESSION, e.detail.sessionJwt);
                 setCookie(COOKIE_NAMES.REFRESH, e.detail.refreshJwt);
+                setCookie(COOKIE_NAMES.DS, e.detail.sessionJwt);
+                setCookie(COOKIE_NAMES.DSR, e.detail.refreshJwt);
 
                 wcElement.removeEventListener('success', onSuccess);
                 wcElement.removeEventListener('error', onError);

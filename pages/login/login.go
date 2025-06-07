@@ -28,7 +28,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 		})
 
 		authRouter.Group(func(protectedRoute chi.Router) {
-			protectedRoute.Use(authctx.AuthMiddleware(logger))
+			protectedRoute.Use(authctx.AuthCookieMiddleware(logger))
 
 			protectedRoute.Get("/test", func(w http.ResponseWriter, r *http.Request) {
 				userToken, userTokenErr := authctx.GetUserTokenFromContext(r.Context())

@@ -48,7 +48,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, routerPublic chi.Rout
 	sessionStore := sessions.NewCookieStore([]byte("session-secret"))
 	sessionStore.MaxAge(int(24 * time.Hour / time.Second))
 
-	routerAuth := routerPublic.With(authctx.AuthMiddleware(logger))
+	routerAuth := routerPublic.With(authctx.AuthCookieMiddleware(logger))
 	routerAdmin := routerAuth.With(authctx.RequireAdmin(logger))
 
 	if err := errors.Join(
