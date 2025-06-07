@@ -14,6 +14,7 @@ import (
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/Regncon/conorganizer/pages/login"
 	"github.com/Regncon/conorganizer/pages/myprofile"
+	"github.com/Regncon/conorganizer/pages/myprofile/myevents"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -56,6 +57,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, routerPublic chi.Rout
 		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
 		event.SetupEventRoute(routerPublic, sessionStore, ns, db, logger),
+		myevents.SetupMyEventsRoute(routerAuth, sessionStore, ns, db, logger),
 		login.SetupAuthRoute(routerPublic, db, logger),
 		myprofile.SetupMyProfileRoute(routerAuth, sessionStore, ns, db, logger),
 	); err != nil {

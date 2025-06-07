@@ -1,4 +1,4 @@
-package event
+package myevents
 
 import (
 	"context"
@@ -7,11 +7,10 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
-
-	"github.com/Regncon/conorganizer/models"
 
 	"github.com/Regncon/conorganizer/pages/index"
+	"github.com/Regncon/conorganizer/pages/myprofile/myevents/formsubmission"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -20,27 +19,10 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
-func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
-	nc, err := ns.Client()
-	if err != nil {
-		return fmt.Errorf("error creating nats client: %w", err)
-	}
-
-	js, err := jetstream.New(nc)
-	if err != nil {
-		return fmt.Errorf("error creating jetstream client: %w", err)
-	}
-
-	kv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
-		Bucket:      "todos",
-		Description: "Datastar Todos",
-		Compression: true,
-		TTL:         time.Hour,
-		MaxBytes:    16 * 1024 * 1024,
-	})
-
-	if err != nil {
-		return fmt.Errorf("error creating key value: %w", err)
+func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+	kv, kvErr := SetupNats(ns)
+	if kvErr != nil {
+		return fmt.Errorf("error setting up nats: %w", kvErr)
 	}
 
 	resetMVC := func(mvc *index.TodoMVC) {
@@ -79,69 +61,57 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		}
 		return sessionID, mvc, nil
 	}
-	eventLayoutRoute(router, db, err)
 
-	router.Route("/event/api", func(eventRouter chi.Router) {
-		eventRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
-			eventIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				eventID := chi.URLParam(r, "idx")
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
+	router.Route("/my-events", func(myeventsRouter chi.Router) {
+		myeventsLayoutRoute(myeventsRouter)
+		myeventsRouter.Get("/api", func(w http.ResponseWriter, r *http.Request) {
+			sessionID, mvc, err := mvcSession(w, r)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
+				return
+			}
+
+			sse := datastar.NewSSE(w, r)
+
+			ctx := r.Context()
+			watcher, err := kv.Watch(ctx, sessionID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer watcher.Stop()
+
+			for {
+				select {
+				case <-ctx.Done():
 					return
-				}
+				case entry := <-watcher.Updates():
 
-				sse := datastar.NewSSE(w, r)
-
-				// Watch for updates
-				ctx := r.Context()
-				watcher, err := kv.Watch(ctx, sessionID)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				defer watcher.Stop()
-
-				for {
-					select {
-					case <-ctx.Done():
+					if entry == nil {
+						continue
+					}
+					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
-					case entry := <-watcher.Updates():
-						if entry == nil {
-							continue
-						}
-						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
-							return
-						}
-						c := event_page(eventID, db)
-						if err := sse.MergeFragmentTempl(c); err != nil {
-							sse.ConsoleError(err)
-							return
-						}
+					}
+
+					c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, logger)
+					if err := sse.MergeFragmentTempl(c); err != nil {
+						sse.ConsoleError(err)
+						return
 					}
 				}
+			}
+		})
+
+		myeventsRouter.Route("/new", func(newRouter chi.Router) {
+			formsubmission.NewEventLayoutRoute(newRouter, db)
+			newRouter.Route("/api", func(formSubmissionRouter chi.Router) {
+				formsubmission.SetupExampleInlineValidation(db, formSubmissionRouter, logger)
 			})
-			editRout(eventIdRouter, db, kv)
 		})
 	})
-
 	return nil
-}
-
-func getEventByID(id string, db *sql.DB) (*models.Event, error) {
-	query := "SELECT id, title, description FROM events WHERE id = ?"
-	row := db.QueryRow(query, id)
-
-	var event models.Event
-	if err := row.Scan(&event.ID, &event.Title, &event.Description); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No event found
-		}
-		return nil, err
-	}
-
-	return &event, nil
 }
 
 func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
@@ -160,7 +130,9 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 	if err != nil {
 		return "", fmt.Errorf("failed to get session: %w", err)
 	}
+
 	id, ok := sess.Values["id"].(string)
+
 	if !ok {
 		id = toolbelt.NextEncodedID()
 		sess.Values["id"] = id

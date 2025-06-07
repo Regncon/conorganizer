@@ -1,8 +1,9 @@
-package eventForm
+package formsubmission
 
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar/sdk/go"
 	"log/slog"
@@ -21,6 +22,7 @@ type EventFormStruct struct {
 	ImageURL          *string `json:"image_url,omitempty"`
 	System            *string `json:"system,omitempty"`
 	HostName          string  `json:"host_name"`
+	Host              int     `json:"host"`
 	Email             string  `json:"email"`
 	PhoneNumber       string  `json:"phone_number"`
 	PuljeName         *string `json:"pulje_name,omitempty"`
@@ -170,7 +172,8 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			}
 
 			if eventFormValidationResult.IsValid {
-				_, err := saveNewFormEvent(db, logger, eventForm, w)
+
+				_, err := saveNewFormEvent(db, logger, eventForm, w, r)
 				if err != nil {
 					node = inlineValidationFailedSaving(err)
 				}
@@ -204,7 +207,7 @@ templ inputValidationComponent(label string, inputType InputType, field string, 
 			}
 			class={ "input input-bordered", templ.KV("input-error",!isValid) }
 			data-bind={ field }
-			data-on-keydown__debounce.500ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+			data-on-keydown__debounce.500ms={ datastar.GetSSE("/my-events/new/api/inline_validation/data") }
 			data-testid={ "input_" + field }
 			if field == "image_url" {
 				placeholder="f.eks. https://imgur.com/din_bilde_id"
@@ -233,7 +236,7 @@ templ checkboxValidationComponent(label, field string, isValid bool, isNotValidE
 				type="checkbox"
 				class="toggle"
 				data-bind={ field }
-				data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+				data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/new/api/inline_validation/data") }
 				data-testid={ field + "_input" }
 				disabled?={ isDisabled }
 			/>
@@ -257,7 +260,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="1"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/new/api/inline_validation/data") }
 					data-testid={ field + "_1" }
 				/>
 				<span>Fredag kveld</span>
@@ -269,7 +272,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="2"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/new/api/inline_validation/data") }
 					data-testid={ field + "_2" }
 				/>
 				<span>Lørdag morgen</span>
@@ -281,7 +284,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="3"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/new/api/inline_validation/data") }
 					data-testid={ field + "_3" }
 				/>
 				<span>Lørdag kveld</span>
@@ -293,7 +296,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="4"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/new/api/inline_validation/data") }
 					data-testid={ field + "_4" }
 				/>
 				<span>Søndag morgen</span>
@@ -316,7 +319,7 @@ templ radioGroupValidationComponent(groupLabel string, options [2]string, fields
 					class="radio"
 					data-bind={ fields[0] }
 					data-on-click__debounce.100ms={ fmt.Sprintf("$%s = false", fields[1]) }
-					data-on-change__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/new/api/inline_validation/data") }
 					checked?={ values[0] }
 				/>
 				<span>{ options[0] }</span>
@@ -328,7 +331,7 @@ templ radioGroupValidationComponent(groupLabel string, options [2]string, fields
 					class="radio"
 					data-bind={ fields[1] }
 					data-on-click__debounce.100ms={ fmt.Sprintf("$%s = false", fields[0]) }
-					data-on-change__debounce.100ms={ datastar.GetSSE("/event/api/new/inline_validation/data") }
+					data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/new/api/inline_validation/data") }
 					checked?={ values[1] }
 				/>
 				<span>{ options[1] }</span>
@@ -345,7 +348,7 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		id="inline_validation"
 		class="flex flex-col gap-4"
 		data-signals__ifmissing={ templ.JSONString(eventForm) }
-		data-on-submit={ datastar.PutSSE("/event/api/new/inline_validation/data") }
+		data-on-submit={ datastar.PutSSE("/my-events/new/api/inline_validation/data") }
 	>
 		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
 		<div>
@@ -644,7 +647,10 @@ templ EventForm() {
 	</div>
 }
 
-func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruct, w http.ResponseWriter) (int64, error) {
+func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruct, w http.ResponseWriter, r *http.Request) (int64, error) {
+	userID, _ := authctx.GetUserIDFromToken(r.Context())
+	hostId, _ := getHostId(db, logger, userID)
+	eventForm.Host = hostId
 	query := `
 		INSERT INTO events (
 			title,
@@ -652,6 +658,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 			image_url,
 			system,
 			host_name,
+            host,
 			email,
 			phone_number,
 			pulje_name,
@@ -663,7 +670,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 			can_be_run_in_english,
 			long_running,
 			short_running
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+		) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, insertError := db.Exec(query,
 		eventForm.Title,
@@ -671,6 +678,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 		eventForm.ImageURL,
 		eventForm.System,
 		eventForm.HostName,
+		eventForm.Host,
 		eventForm.Email,
 		eventForm.PhoneNumber,
 		eventForm.PuljeName,
@@ -732,4 +740,30 @@ func getPuljeNames(db *sql.DB, logger *slog.Logger) ([]PuljeNameStruct, error) {
 	}
 
 	return puljer, nil
+}
+
+func getHostId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
+	query := "SELECT id FROM users where user_id = ?"
+	rows, queryError := db.Query(query, userID)
+	if queryError != nil {
+		return 0, queryError
+	}
+
+	defer rows.Close()
+
+	var userId int
+
+	for rows.Next() {
+		if scanError := rows.Scan(&userId); scanError != nil {
+			logger.Error("Error scanning user id", "scanError", scanError)
+			return 0, scanError
+		}
+	}
+
+	if rowsError := rows.Err(); rowsError != nil {
+		logger.Error("Error in rows iteration", "rowsError", rowsError)
+		return 0, rowsError
+	}
+
+	return userId, nil
 }

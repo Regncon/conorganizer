@@ -1,0 +1,28 @@
+package myevents
+
+import (
+	"github.com/go-chi/chi/v5"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/userctx"
+	datastar "github.com/starfederation/datastar/sdk/go"
+)
+
+func myeventsLayoutRoute(router chi.Router) {
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		var ctx = r.Context()
+		layouts.Base(
+			"My Events",
+			userctx.GetUserRequestInfo(ctx),
+			myeventsIndex(),
+		).Render(ctx, w)
+	})
+}
+
+templ myeventsIndex() {
+	<div id="my-events-wrapper" data-on-load={ datastar.GetSSE("/my-events/api") }>
+		<p>My Events page</p>
+		<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+	</div>
+}
