@@ -69,3 +69,18 @@ func GetUserIDFromToken(ctx context.Context) (string, error) {
 
 	return userToken.ID, nil
 }
+
+func GetEmailFromToken(ctx context.Context) (string, error) {
+	userToken, err := GetUserTokenFromContext(ctx)
+
+	if err != nil {
+		return "", err
+	}
+
+	email, emailOk := userToken.Claims["email"].(string)
+	if !emailOk {
+		return "", fmt.Errorf("email claim not found")
+	}
+
+	return email, nil
+}
