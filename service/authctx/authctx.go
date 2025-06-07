@@ -64,8 +64,12 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				return
 			}
 
-			_, userToken, validateTokenError := descopeClient.Auth.ValidateAndRefreshSessionWithTokens(
+			userOk, userToken, validateTokenError := descopeClient.Auth.ValidateAndRefreshSessionWithTokens(
 				r.Context(), sessionCookie.Value, refreshCookie.Value)
+
+			fmt.Printf("User token: %v\n", userToken.JWT)
+			fmt.Printf("User ERR: %v\n", validateTokenError)
+			fmt.Printf("User OK: %v\n", userOk)
 
 			if validateTokenError != nil {
 				logger.Error("Failed to validate/refresh session", "validateTokenError", validateTokenError)
@@ -91,39 +95,6 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 
 			logger.Info("Successfully validated and refreshed session", "email", userToken.Claims["email"])
 
-			ctx := context.WithValue(r.Context(), ctxUserToken, userToken)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
-
-func AuthCookieMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			descopeClient, descopeClientError := client.NewWithConfig(&client.Config{ProjectID: ProjectID})
-			if descopeClientError != nil {
-				logger.Error("Failed to create Descope client", slog.String("projectID", ProjectID), "descopeClientError", descopeClientError)
-				ctx := context.WithValue(r.Context(), ctxSessionError, descopeClientError)
-				next.ServeHTTP(w, r.WithContext(ctx))
-				return
-			}
-
-			ok, userToken, revalidateRefreshErr := descopeClient.Auth.ValidateAndRefreshSessionWithRequest(r, w)
-			if !ok {
-				logger.Error("Failed to validate and refresh session", "revalidateRefreshErr", revalidateRefreshErr)
-				ctx := context.WithValue(r.Context(), ctxSessionError, revalidateRefreshErr)
-
-				redirectUrl := "/auth"
-				layouts.Base(
-					"Redirecting to login",
-					false,
-					redirect.Redirect(redirectUrl),
-				).Render(ctx, w)
-
-				return
-			}
-
-			logger.Info("Successfully validated and refreshed session", "email", userToken.Claims["email"])
 			ctx := context.WithValue(r.Context(), ctxUserToken, userToken)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
