@@ -37,11 +37,12 @@ RUN apt-get update -y && apt-get install -y ca-certificates sqlite3
 
 # Copy over fly.io configs
 COPY .flyio/litestream.yml /etc/litestream.yml
-COPY .flyio/replication.sh /scripts/replication.sh
+COPY .flyio/replication.sh /usr/local/bin/replication.sh
+RUN chmod +x /usr/local/bin/replication.sh
 
 # Create data directory (although this will likely be mounted too)
-RUN mkdir -p /usr/local/bin/database
+RUN mkdir -p /var/lib/regnconDB
 
 EXPOSE 8080
 
-CMD [ "/scripts/replication.sh" ]
+CMD [ "replication.sh" ]
