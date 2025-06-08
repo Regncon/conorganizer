@@ -1,0 +1,140 @@
+package myevents
+
+import (
+	"database/sql"
+	"fmt"
+	"log/slog"
+)
+
+type EventStatus string
+
+const (
+	EventStatusDraft     EventStatus = "Kladd"
+	EventStatusPublished EventStatus = "Publisert"
+	EventStatusClosed    EventStatus = "Godkjent"
+	EventStatusArchived  EventStatus = "Avist"
+)
+
+type MyEvents struct {
+	Id          int         `json:"id"`
+	Title       string      `json:"title"`
+	Description string      `json:"description"`
+	Status      EventStatus `json:"status"`
+}
+
+templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
+	<div id="my-events-wrapper">
+		<h1>My Events</h1>
+		<div class="my-event-grid">
+			@events(userid, db, logger)
+		</div>
+		<style>
+			.my-event-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(var(--mobile-min-width), 1fr));
+				gap: 1rem;
+			}
+            @media (min-width: 600px) {
+				.my-event-grid {
+					padding: 1rem;
+				}
+			}
+		</style>
+	</div>
+}
+
+templ events(userid string, db *sql.DB, logger *slog.Logger) {
+	{{ events := GetEvents(db, userid, logger) }}
+	if len(events) == 0 {
+		@newEvent()
+	}
+	if len(events) > 0 {
+		for _, event := range events {
+			<a
+				href={ templ.URL(shouldDisableATagUrl(event.Status, event.Id)) }
+				style="
+                    height: 20rem;
+                    min-width: 20rem;
+                    background-color: #3b4252;
+                    border-radius: 1rem;
+                    display: flex;
+                    flex-direction: column;
+                    text-decoration: none;
+                    color: white;
+                    box-sizing: border-box;
+                "
+			>
+				<img
+					src="/static/participants-small.webp"
+					alt="Participants"
+					style="max-width: 100%; height: 45%; object-fit: cover; border-radius: 1rem 1rem 0 0;"
+				/>
+				<div style="padding: 1rem;">
+					<h2>{ event.Title }</h2>
+					<h3>{ event.Description }</h3>
+				</div>
+			</a>
+		}
+		@newEvent()
+	}
+}
+
+func shouldDisableATagUrl(status EventStatus, eventId int) string {
+	if status == EventStatusDraft {
+		return fmt.Sprintf("/event/%d", eventId)
+	}
+	return "#"
+}
+
+templ newEvent() {
+	<a
+		href="/my-events/new"
+		style="
+            width: 100%;
+            height: 20rem;
+            max-width: var(--mobile-max-column-width);
+            background-color: #3b4252;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            color: white;
+            box-sizing: border-box;
+            place-items: center;
+            place-content: center;
+            padding-block: 2rem;
+            "
+	>
+		<h2 style="margin: 0">Legg til nytt arrangement</h2>
+		<h1 style="margin: 0; font-size: 3rem">➕</h1>
+	</a>
+}
+
+func GetEvents(db *sql.DB, userId string, logger *slog.Logger) []MyEvents {
+	var userDbId string
+	var events []MyEvents
+	userQuery := "SELECT id FROM users WHERE user_id = ?"
+	userRow := db.QueryRow(userQuery, userId)
+	if userRowErr := userRow.Scan(&userDbId); userRowErr != nil {
+		logger.Error("Failed to find user", "user_id", userId, "error", userRowErr)
+		return events
+	}
+
+	eventsQuery := "SELECT id, title, description, status FROM events WHERE host = ?"
+	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
+	if eventsQueryErr != nil {
+		logger.Error("Failed to query events", "user_id", userId, "error", eventsQueryErr)
+		return events
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var event MyEvents
+		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Description, &event.Status); scanErr != nil {
+			logger.Error("Failed to scan event row", "user_id", userId, "error", scanErr)
+			return events
+		}
+		events = append(events, event)
+	}
+	return events
+}

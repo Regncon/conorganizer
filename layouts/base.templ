@@ -3,9 +3,10 @@ package layouts
 import (
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/modals"
+	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
-templ Base(title string, isLoggedIn bool, children templ.Component) {
+templ Base(title string, userInfo requestctx.UserRequestInfo, children templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en" data-theme="dark">
 		<head>
@@ -21,7 +22,7 @@ templ Base(title string, isLoggedIn bool, children templ.Component) {
 		<body>
 			@modals.CssVariableConfigComponent()
 			<main>
-				@components.Menu(isLoggedIn)
+				@components.Menu(userInfo)
 				@children
 			</main>
 		</body>

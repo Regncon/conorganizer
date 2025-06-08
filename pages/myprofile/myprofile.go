@@ -20,7 +20,7 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 			var ctx = r.Context()
 			layouts.Base(
 				"Min profil",
-				userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+				userctx.GetUserRequestInfo(ctx),
 				myProfile(),
 			).Render(ctx, w)
 
@@ -36,7 +36,7 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 
 				layouts.Base(
 					"Ingen billetter",
-					userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+					userctx.GetUserRequestInfo(ctx),
 					noTickets(),
 				).Render(ctx, w)
 				return
@@ -45,7 +45,7 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 			if len(tickets) == 0 {
 				layouts.Base(
 					"Ingen billetter",
-					userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+					userctx.GetUserRequestInfo(ctx),
 					noTickets(),
 				).Render(ctx, w)
 				return
@@ -53,7 +53,7 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 
 			layouts.Base(
 				"Mine billetter",
-				userctx.GetUserRequestInfo(ctx).IsLoggedIn,
+				userctx.GetUserRequestInfo(ctx),
 				myTickets(),
 			).Render(ctx, w)
 

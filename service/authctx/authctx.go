@@ -9,6 +9,7 @@ import (
 
 	"github.com/Regncon/conorganizer/components/redirect"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/descope/go-sdk/descope/client"
 )
 
@@ -44,7 +45,7 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				redirectUrl := "/auth"
 				layouts.Base(
 					"Redirecting to login",
-					false,
+					requestctx.UserRequestInfo{},
 					redirect.Redirect(redirectUrl),
 				).Render(ctx, w)
 
@@ -58,7 +59,7 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				redirectUrl := "/auth"
 				layouts.Base(
 					"Redirecting to login",
-					false,
+					requestctx.UserRequestInfo{},
 					redirect.Redirect(redirectUrl),
 				).Render(ctx, w)
 				return
@@ -67,7 +68,7 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			userOk, userToken, validateTokenError := descopeClient.Auth.ValidateAndRefreshSessionWithTokens(
 				r.Context(), sessionCookie.Value, refreshCookie.Value)
 
-			fmt.Printf("User token: %v\n", userToken.JWT)
+			fmt.Printf("User token: %v\n", userToken)
 			fmt.Printf("User ERR: %v\n", validateTokenError)
 			fmt.Printf("User OK: %v\n", userOk)
 
@@ -77,7 +78,7 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				redirectUrl := "/auth"
 				layouts.Base(
 					"Redirecting to login",
-					false,
+					requestctx.UserRequestInfo{},
 					redirect.Redirect(redirectUrl),
 				).Render(ctx, w)
 				return

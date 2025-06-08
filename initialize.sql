@@ -133,7 +133,8 @@ CREATE TABLE IF NOT EXISTS events_players (
 
 -- Add a test admin user
 INSERT INTO users (user_id, email, is_admin) VALUES
-('test-admin-id', 'test.admin@example.com', true);
+('fake-user-id-1', 'test.admin@example.com', true),
+('fake-user-id-2', 'test.admin2@example.com', false);
 
 -- Add two example events
 INSERT INTO events (
@@ -163,7 +164,7 @@ INSERT INTO events (
     'Erik Spilleder',
     'test.admin@example.com',
     12345678,
-    1, -- refererer til test.admin@example.com
+    1,
     'Lørdag morgen',
     6,
     false,
@@ -181,9 +182,9 @@ INSERT INTO events (
     'https://imgur.com/example2',
     'Vampire: The Masquerade 5th Edition',
     'Maria Storyteller',
-    'test.admin@example.com',
+    'test.admin2@example.com',
     12345678,
-    1, -- refererer til test.admin@example.com
+    2,
     'Lørdag kveld',
     4,
     false,
