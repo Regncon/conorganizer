@@ -2,7 +2,6 @@ package userctx
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 
