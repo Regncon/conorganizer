@@ -12,7 +12,7 @@ primary_region = 'arn'
 
 [mounts]
   source = "litestream"
-  destination = "/database"
+  destination = "/var/lib/regnconDB"
 
 [http_service]
   internal_port = 8080
