@@ -18,3 +18,5 @@ fi
 
 # Run litestream with your app as the subprocess.
 exec litestream replicate -exec "/usr/local/bin/chat-app -dsn database/chat.db"
+
+# todo: double check if litestream needs sudo :S
