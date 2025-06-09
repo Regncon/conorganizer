@@ -3,10 +3,12 @@
 # See https://fly.io/docs/reference/configuration/ for information about how to use this file.
 #
 
-app = 'go-example-icy-shape-8609'
+app = 'regncon'
 primary_region = 'arn'
 
 [build]
+  dockerfile = "Dockerfile.flyio"
+  build-target = "server"
 
 [mounts]
   source = "litestream"
