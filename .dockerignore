@@ -1,0 +1,13 @@
+# Flyio
+fly.toml
+
+# Binaries & data
+conorganizer
+*.exe
+*.db
+
+# Secrets
+*.env*
+
+# Scripts
+*.ps1
