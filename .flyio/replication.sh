@@ -9,14 +9,14 @@ else
 fi
 
 # Restore the database if it does not already exist.
-if [ -f /database/chat.db ]; then
+if [ -f /var/lib/regnconDB ]; then
 	echo "Database already exists, skipping restore"
 else
 	echo "No database found, restoring from replica if exists"
-	litestream restore -if-replica-exists /database/chat.db
+	litestream restore -if-replica-exists /var/lib/regnconDB
 fi
 
 # Run litestream with your app as the subprocess.
-exec litestream replicate -exec "/usr/local/bin/chat-app -dsn database/chat.db"
+exec litestream replicate -exec "/usr/local/bin/chat-app -dbp /var/lib/regnconDB"
 
-# todo: double check if litestream needs sudo :S
+# todo: double check if litestream needs sudo with new docker user :S
