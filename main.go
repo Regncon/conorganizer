@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 
 	"database/sql"
@@ -37,12 +36,6 @@ func main() {
 	if *dsn == "" {
 		flag.Usage()
 		logger.Error("required arg: use -dbp to specify database absolute file path")
-	}
-
-	// Validate dbp directory exists
-	dir := filepath.Dir(*dsn)
-	if _, err := os.Stat(dir); os.IsNotExist(err) {
-		logger.Error("Database directory does not exist: %s", dir)
 	}
 
 	// Initialize database
