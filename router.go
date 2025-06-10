@@ -51,6 +51,9 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, routerPublic chi.Rout
 
 	routerAuth := routerPublic.With(authctx.AuthMiddleware(logger))
 	routerAdmin := routerAuth.With(authctx.RequireAdmin(logger))
+	logger.Info("Setting up routes", slog.String("natsPort", fmt.Sprintf("%d", natsPort)))
+	logger.Info("database connection established", "dbStats", fmt.Sprintf("%+v", db.Stats()))
+	logger.Info("session store initialized", "sessionStoreType", fmt.Sprintf("%+v\n", sessionStore))
 
 	if err := errors.Join(
 		index.SetupIndexRoute(routerPublic, sessionStore, ns, db),
