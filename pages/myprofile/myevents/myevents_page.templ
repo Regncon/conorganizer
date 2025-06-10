@@ -51,7 +51,7 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	if len(events) > 0 {
 		for _, event := range events {
 			<a
-				href={ isDisabledATag(event.Status, event.Id) }
+				href={ templ.URL(shouldDisableATagUrl(event.Status, event.Id)) }
 				style="
                     height: 20rem;
                     min-width: 20rem;
@@ -79,7 +79,7 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	}
 }
 
-func isDisabledATag(status EventStatus, eventId int) string {
+func shouldDisableATagUrl(status EventStatus, eventId int) string {
 	if status == EventStatusDraft {
 		return fmt.Sprintf("/event/%d", eventId)
 	}
