@@ -7,7 +7,7 @@ app = 'regncon'
 primary_region = 'arn'
 
 [build]
-  dockerfile = "Dockerfile.flyio"
+  dockerfile = "../Dockerfile.flyio"
   build-target = "server"
 
 #[mounts]
