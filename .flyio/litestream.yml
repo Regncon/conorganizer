@@ -1,8 +1,8 @@
 dbs:
-  - path: /database/chat.db
+  - path: /var/lib/regnconDB
     replicas:
       - type: s3
-        bucket: divine-pine-6451
-        path: chat
+        bucket: regncon
+        path: events
         endpoint: https://fly.storage.tigris.dev
         force-path-style: true
