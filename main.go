@@ -30,16 +30,13 @@ func main() {
 		fmt.Println("No .env file found")
 	}
 
-	// Parse cli flag for setting db path
-	dsn := flag.String("dbp", "", "absolute path to database file")
+	// Parse cli flag for setting db & sql file path
+	dsn := flag.String("dbp", "database/events.db", "absolute path to database file")
+	initSQL := flag.String("init-sql", "initialize.sql", "path to SQL file for initializing the database if missing")
 	flag.Parse()
-	if *dsn == "" {
-		flag.Usage()
-		logger.Error("required arg: use -dbp to specify database absolute file path")
-	}
 
 	// Initialize database
-	db, err := service.InitDB(*dsn, "initialize.sql")
+	db, err := service.InitDB(*dsn, *initSQL)
 	if err != nil {
 		logger.Error("Could not initialize DB", "initialize database", err)
 	}
