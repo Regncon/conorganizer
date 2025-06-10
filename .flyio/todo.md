@@ -1,3 +1,0 @@
-- sitt opp riktig bucket for litestream
-- ligg inn dir flag i main for db pass
-- forbedre entrypoint script
