@@ -41,7 +41,10 @@ COPY --from=builder /usr/local/bin/litestream /usr/local/bin/litestream
 COPY .flyio/litestream.yml /etc/litestream.yml
 COPY .flyio/replication.sh /usr/local/bin/replication.sh
 
-# Set permissions
+# Copy over sql init file
+COPY initialize.sql /usr/local/share/regncon/initialize.sql
+
+# Set server startup script to be executable (todo)
 RUN chmod +x /usr/local/bin/replication.sh
 
 # Create data directory (although this will likely be up for change)

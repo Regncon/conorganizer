@@ -17,6 +17,6 @@ else
 fi
 
 # Run litestream with your app as the subprocess.
-exec litestream replicate -exec "/usr/local/bin/regncon -dbp /var/lib/regncon/events.db"
+exec litestream replicate -exec "/usr/local/bin/regncon -dbp /var/lib/regncon/events.db -init-sql /usr/local/share/regncon/initialize.sql"
 
 # todo: double check if litestream needs sudo with new docker user :S
