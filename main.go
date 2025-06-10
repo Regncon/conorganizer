@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 
 	"database/sql"
@@ -21,14 +23,30 @@ import (
 )
 
 func main() {
+	// Set up logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("No .env file found")
 	}
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	// Parse cli flag for setting db path
+	dsn := flag.String("dbp", "", "absolute path to database file")
+	flag.Parse()
+	if *dsn == "" {
+		flag.Usage()
+		logger.Error("required arg: use -dbp to specify database absolute file path")
+	}
 
-	db, err := service.InitDB("database/events.db", "initialize.sql")
+	// Validate dbp directory exists
+	dir := filepath.Dir(*dsn)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		logger.Error("Database directory does not exist: %s", dir)
+	}
+
+	// Initialize database
+	db, err := service.InitDB(*dsn, "initialize.sql")
 	if err != nil {
 		logger.Error("Could not initialize DB", "initialize database", err)
 	}
