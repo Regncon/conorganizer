@@ -45,8 +45,8 @@ COPY .flyio/replication.sh /usr/local/bin/replication.sh
 RUN chmod +x /usr/local/bin/replication.sh
 
 # Create data directory (although this will likely be up for change)
-RUN mkdir -p /var/lib/regnconDB
-RUN chown -R regncon:regncon /var/lib/regnconDB
+RUN mkdir -p /var/lib/regncon
+RUN chown -R regncon:regncon /var/lib/regncon
 
 # Switch to non-root user
 USER regncon
