@@ -22,7 +22,7 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB) {
 }
 
 templ newEventIndex() {
-	<div id="new-event-container" data-on-load={ datastar.GetSSE("/event/api/new") }>
+	<div id="formsubmission-container" data-on-load={ datastar.GetSSE("/my-events/api/new") }>
 		<p>Meld på nytt arrangement</p>
 		<p>Hvis du ser denne meldingen, vennligst tøm informasjonskapslene og oppdater siden.</p>
 	</div>
