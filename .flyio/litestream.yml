@@ -3,6 +3,6 @@ dbs:
     replicas:
       - type: s3
         bucket: regncon
-        path: events
+        path: eventsdb
         endpoint: https://fly.storage.tigris.dev
         force-path-style: true
