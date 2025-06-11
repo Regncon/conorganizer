@@ -105,46 +105,50 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				}
 			})
 
-			apiRouter.Get("/new", func(w http.ResponseWriter, r *http.Request) {
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
-					return
-				}
-
-				sse := datastar.NewSSE(w, r)
-
-				ctx := r.Context()
-				watcher, err := kv.Watch(ctx, sessionID)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				defer watcher.Stop()
-
-				for {
-					select {
-					case <-ctx.Done():
+			apiRouter.Route("/new", func(newRouter chi.Router) {
+				newRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+					sessionID, mvc, err := mvcSession(w, r)
+					if err != nil {
+						http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
 						return
-					case entry := <-watcher.Updates():
+					}
 
-						if entry == nil {
-							continue
-						}
-						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
-							return
-						}
+					sse := datastar.NewSSE(w, r)
 
-						c := formsubmission.NewEventFormPage()
-						if err := sse.MergeFragmentTempl(c); err != nil {
-							sse.ConsoleError(err)
+					ctx := r.Context()
+					watcher, err := kv.Watch(ctx, sessionID)
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					defer watcher.Stop()
+
+					for {
+						select {
+						case <-ctx.Done():
 							return
+						case entry := <-watcher.Updates():
+
+							if entry == nil {
+								continue
+							}
+							if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+								http.Error(w, err.Error(), http.StatusInternalServerError)
+								return
+							}
+
+							c := formsubmission.NewEventFormPage()
+							if err := sse.MergeFragmentTempl(c); err != nil {
+								sse.ConsoleError(err)
+								return
+							}
 						}
 					}
-				}
+				})
+
+				formsubmission.SetupExampleInlineValidation(db, newRouter, logger)
 			})
-			formsubmission.SetupExampleInlineValidation(db, apiRouter, logger)
+
 		})
 
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
