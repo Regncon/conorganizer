@@ -5,7 +5,7 @@ set -e
 if [ -f /etc/litestream.yml ]; then
 	echo "Configuration file found"
 else
-	echo "No configuration found, using cli arguments"
+	echo "No configuration found, using cli arguments "
 fi
 
 # Restore the database if it does not already exist.
