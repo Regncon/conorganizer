@@ -64,51 +64,91 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 	router.Route("/my-events", func(myeventsRouter chi.Router) {
 		myeventsLayoutRoute(myeventsRouter)
-		myeventsRouter.Get("/api", func(w http.ResponseWriter, r *http.Request) {
-			sessionID, mvc, err := mvcSession(w, r)
-			if err != nil {
-				http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
-				return
-			}
-
-			sse := datastar.NewSSE(w, r)
-
-			ctx := r.Context()
-			watcher, err := kv.Watch(ctx, sessionID)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer watcher.Stop()
-
-			for {
-				select {
-				case <-ctx.Done():
+		myeventsRouter.Route("/api", func(apiRouter chi.Router) {
+			apiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				sessionID, mvc, err := mvcSession(w, r)
+				if err != nil {
+					http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
 					return
-				case entry := <-watcher.Updates():
+				}
 
-					if entry == nil {
-						continue
-					}
-					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
+				sse := datastar.NewSSE(w, r)
 
-					c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, logger)
-					if err := sse.MergeFragmentTempl(c); err != nil {
-						sse.ConsoleError(err)
+				ctx := r.Context()
+				watcher, err := kv.Watch(ctx, sessionID)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				defer watcher.Stop()
+
+				for {
+					select {
+					case <-ctx.Done():
 						return
+					case entry := <-watcher.Updates():
+
+						if entry == nil {
+							continue
+						}
+						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+							http.Error(w, err.Error(), http.StatusInternalServerError)
+							return
+						}
+
+						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, logger)
+						if err := sse.MergeFragmentTempl(c); err != nil {
+							sse.ConsoleError(err)
+							return
+						}
 					}
 				}
-			}
+			})
+
+			apiRouter.Get("/new", func(w http.ResponseWriter, r *http.Request) {
+				sessionID, mvc, err := mvcSession(w, r)
+				if err != nil {
+					http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
+					return
+				}
+
+				sse := datastar.NewSSE(w, r)
+
+				ctx := r.Context()
+				watcher, err := kv.Watch(ctx, sessionID)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				defer watcher.Stop()
+
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case entry := <-watcher.Updates():
+
+						if entry == nil {
+							continue
+						}
+						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+							http.Error(w, err.Error(), http.StatusInternalServerError)
+							return
+						}
+
+						c := formsubmission.NewEventFormPage()
+						if err := sse.MergeFragmentTempl(c); err != nil {
+							sse.ConsoleError(err)
+							return
+						}
+					}
+				}
+			})
+			formsubmission.SetupExampleInlineValidation(db, apiRouter, logger)
 		})
 
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
 			formsubmission.NewEventLayoutRoute(newRouter, db)
-			newRouter.Route("/api", func(formSubmissionRouter chi.Router) {
-				formsubmission.SetupExampleInlineValidation(db, formSubmissionRouter, logger)
-			})
 		})
 	})
 	return nil
