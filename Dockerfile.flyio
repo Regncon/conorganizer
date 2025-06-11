@@ -56,4 +56,4 @@ USER regncon
 
 EXPOSE 8080
 
-CMD [ "replication.sh" ]
+CMD [ "/usr/local/bin/replication.sh" ]
