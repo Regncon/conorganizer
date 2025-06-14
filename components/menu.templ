@@ -16,6 +16,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
         color: var(--color-secondary);
         font-size: 1rem;
         user-select: none;
+        display: none;
     }
 
     .beta-toggle input[type="checkbox"] {
@@ -177,6 +178,10 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
             .menu-btn {
                 margin-inline-end: 0.5rem;
                 height: 20px;
+            }
+
+            .beta-toggle-label {
+                display: block;
             }
 
             .dropdown-panel {
