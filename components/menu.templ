@@ -229,7 +229,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			</div>
 		}
 		if !UserInfo.IsLoggedIn {
-			<a href="/auth" class="main-menu-link">Logg inn</a>
+			<button onclick="window.location.href='/auth'" class="main-menu-button">Logg inn</button>
 		}
 	</nav>
 }
