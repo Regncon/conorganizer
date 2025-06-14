@@ -2,6 +2,8 @@ package components
 
 import "github.com/Regncon/conorganizer/service/requestctx"
 
+var beta = false
+
 templ Menu(UserInfo requestctx.UserRequestInfo) {
 	<style>
     .beta-toggle {
@@ -222,13 +224,15 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 					<div class="dropdown-panel">
 						<a href="/auth/logout">Logg ut</a>
 						<a href="/my-events">Mine arrangementer</a>
-						<a href="/my-profile">Min profil</a>
-						if UserInfo.IsAdmin {
-							<hr/>
-							<span>Admin</span>
-							<hr/>
-							<a href="/admin">Admin</a>
-							<a href="/arrangementer/edit" class="disabled">Rediger arrangement</a>
+						if beta {
+							<a href="/my-profile">Min profil</a>
+							if UserInfo.IsAdmin {
+								<hr/>
+								<span>Admin</span>
+								<hr/>
+								<a href="/admin">Admin</a>
+								<a href="/arrangementer/edit" class="disabled">Rediger arrangement</a>
+							}
 						}
 					</div>
 				</details>

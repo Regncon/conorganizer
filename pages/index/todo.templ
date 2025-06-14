@@ -1,4 +1,4 @@
-package index 
+package index
 
 import "database/sql"
 
@@ -24,8 +24,12 @@ type TodoMVC struct {
 	Mode       TodoViewMode `json:"mode"`
 }
 
+var beta = false
+
 templ todosMVCView(db *sql.DB) {
 	<div id="todos-container">
-		@eventList(db)
+		if beta {
+			@eventList(db)
+		}
 	</div>
 }
