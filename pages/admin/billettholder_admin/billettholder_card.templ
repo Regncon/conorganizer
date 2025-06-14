@@ -1,0 +1,19 @@
+package billettholderadmin
+
+import "github.com/Regncon/conorganizer/models"
+
+templ billettholderCard(billettholder models.Billettholder) {
+	<div class="card">
+		<p>{ billettholder.FirstName + " " + billettholder.LastName }</p>
+		<hr/>
+		<strong>Bestilling:</strong>{ billettholder.OrderID }
+		.
+		<p>{ billettholder.ID }</p>
+		<p>{ billettholder.TicketID }</p>
+		<p>{ billettholder.TicketType }</p>
+		<p>{ billettholder.IsOver18 }</p>
+		<p>{ billettholder.TicketEmail }</p>
+		<p>{ billettholder.OrderEmail }</p>
+		<p>{ billettholder.TicketCategoryID }</p>
+	</div>
+}

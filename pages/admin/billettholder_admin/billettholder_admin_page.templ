@@ -1,15 +1,39 @@
 package billettholderadmin
 
-import "database/sql"
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/models"
+	"log/slog"
+)
 
-templ BillettholderAdminPage(db *sql.DB) {
+func getBilettholdere(db *sql.DB, logger *slog.Logger) ([]models.Billettholder, error) {
+	rows, err := db.Query("SELECT id, first_name, last_name, is_over_18, order_id, ticket_email   FROM billettholdere")
+	if err != nil {
+		logger.Error("Failed to query billettholdere", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var billettholdere []models.Billettholder
+	for rows.Next() {
+		var b models.Billettholder
+		if err := rows.Scan(&b.ID, &b.FirstName, &b.LastName, &b.IsOver18, &b.OrderID, &b.TicketEmail); err != nil {
+			logger.Error("Failed to scan billettholder", "error", err)
+			return nil, err
+		}
+		billettholdere = append(billettholdere, b)
+	}
+	return billettholdere, nil
+}
+
+templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
+	{{ bilettholdere, err := getBilettholdere(db, logger) }}
 	<div id="billettholder-admin-container">
 		<h1>Billettholdere</h1>
-		<div class="billettholder-admin-grid">
-			<h2>Her kan du se en oversikt over alle billettholdere</h2>
-			<a
-				href="/admin/billettholder/add/"
-				style="background-color: rgb(49, 53, 78);
+		<h2>Her kan du se en oversikt over alle billettholdere</h2>
+		<a
+			href="/admin/billettholder/add/"
+			style="background-color: rgb(49, 53, 78);
                     max-width: var(--mobile-max-column-width);
                     border-radius: 2rem;
                     font-size: 4rem;
@@ -18,9 +42,9 @@ templ BillettholderAdminPage(db *sql.DB) {
                     text-decoration: none;
                     font-weight: bold;
 		        "
-			>+</a>
-		</div>
-		<style>
+		>+</a>
+		<div class="billettholder-admin-grid">
+			<style>
 			.billettholder-admin-grid {
 				display: grid;
 				grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
@@ -31,5 +55,13 @@ templ BillettholderAdminPage(db *sql.DB) {
 				}
 			}
 		</style>
+			if err != nil {
+				<p>Failed to load billettholdere.</p>
+			} else {
+				for _, billettholder := range bilettholdere {
+					@billettholderCard(billettholder)
+				}
+			}
+		</div>
 	</div>
 }

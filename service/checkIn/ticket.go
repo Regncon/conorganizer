@@ -6,12 +6,13 @@ import (
 )
 
 type CheckInTicket struct {
-	ID      int
-	OrderID int
-	Type    string
-	Name    string
-	Email   string
-	IsAdult bool
+	ID        int
+	OrderID   int
+	Type      string
+	FirstName string
+	LastName  string
+	Email     string
+	IsOver18   bool
 }
 
 func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {
@@ -20,18 +21,11 @@ func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTic
 }
 
 func ConvertTicketToBillettholder(ticketId int, db *sql.DB, logger *slog.Logger) (*CheckInTicket, error) {
-	logger.Info("Converting ticket to billettholder", "ticketID", ticketId)
 	tickets, err := GetTicketsFromCheckIn(logger, "")
 	if err != nil {
 		return nil, err
 	}
 
-	for _, ticket := range tickets {
-		if ticket.ID == ticketId {
-			return &ticket, nil
-		}
-	}
-
-	logger.Error("ticket not found", "ticketId", ticketId)
+	converTicketIdToNewBillettholder(ticketId, tickets, db, logger)
 	return nil, nil
 }
