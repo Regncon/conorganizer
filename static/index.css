@@ -1,6 +1,9 @@
 :root {
     /* colors */
-    --color-primary-text: black;
+    --color-text: black;
+    --color-text-soft: #CCD1E9;
+
+    --color-primary-text: var(--color-text);
     --color-primary: #ff8a15;
     --color-primary-focus: #feb567;
     --color-primary-focus-visible: #feb567;
@@ -8,7 +11,7 @@
     --color-primary-active: #feb567;
     --color-primary-strong: #eb4716;
 
-    --color-secondary-text: black;
+    --color-secondary-text: var(--color-text);
     --color-secondary: #ff7c7c;
     --color-secondary-focus: #feb567;
     --color-secondary-focus-visible: #feb567;
@@ -16,7 +19,7 @@
     --color-secondary-active: #feb567;
     --color-secondary-strong: #eb4716;
 
-    --color-tertiary-text: black;
+    --color-tertiary-text: var(--color-text);
     --color-tertiary: #ff7c7c;
     --color-tertiary-focus: #feb567;
     --color-tertiary-focus-visible: #feb567;
@@ -24,9 +27,9 @@
     --color-tertiary-active: #feb567;
     --color-tertiary-strong: #eb4716;
 
-    --bg-color: white;
-    --bg-body-100: #2a2829;
-    --bg-body-90: #383537;
+    --bg-color: var(--bg-body-100);
+    --bg-body-100: #1A1B26;
+    --bg-body-90: #252735;
     --bg-body-80: #474446;
     --bg-body-70: #575255;
     --bg-body-60: #666064;
@@ -49,7 +52,7 @@
     --spacing-xlarge: 20px;
 
 
-    /* */
+    /* border */
     --border-radius-small: 4px;
     --border-radius-medium: 8px;
 
@@ -106,7 +109,7 @@
 
 [data-theme="dark"] {
     --color-primary-text: #f5f5f5;
-    --bg-color: #21243d;
+    --bg-color: var(--bg-body-100);
 }
 
 body {
@@ -125,10 +128,24 @@ body {
         container-name: main;
     }
 
+    .formsubmission-css-container {
+        container-type: inline-size;
+        container-name: formsubmission-css-container;
+    }
 }
 
 html {
     box-sizing: border-box;
+}
+
+h3 {
+    font-weight: 700;
+    font-size: 16px;
+}
+
+h4 {
+    font-weight: 400;
+    font-size: 12px;
 }
 
 *,
@@ -153,7 +170,7 @@ html {
     max-width: var(--mobile-max-column-width);
     min-width: var(--mobile-min-width);
     background: rgb(49, 53, 78);
-    border-radius: 5px;
+    border-radius: var(--border-radius-small);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     padding: 1rem;
 }

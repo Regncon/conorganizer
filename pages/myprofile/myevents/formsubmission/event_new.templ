@@ -1,769 +1,631 @@
 package formsubmission
 
 import (
-	"database/sql"
-	"fmt"
-	"github.com/Regncon/conorganizer/service/authctx"
-	"github.com/go-chi/chi/v5"
-	datastar "github.com/starfederation/datastar/sdk/go"
-	"log/slog"
-	"net/http"
-	"strconv"
-	"strings"
+"database/sql"
+"fmt"
+"github.com/Regncon/conorganizer/service/authctx"
+"github.com/go-chi/chi/v5"
+datastar "github.com/starfederation/datastar/sdk/go"
+"log/slog"
+"net/http"
+"strconv"
+"strings"
 )
 
 type PuljeNameStruct struct {
-	Name string `json:"name"`
+Name string `json:"name"`
 }
 
 type EventFormStruct struct {
-	Title             string  `json:"title"`
-	Description       string  `json:"description"`
-	ImageURL          *string `json:"image_url,omitempty"`
-	System            *string `json:"system,omitempty"`
-	HostName          string  `json:"host_name"`
-	Host              int     `json:"host"`
-	Email             string  `json:"email"`
-	PhoneNumber       string  `json:"phone_number"`
-	PuljeName         *string `json:"pulje_name,omitempty"`
-	MaxPlayers        int     `json:"max_players"`
-	ChildFriendly     bool    `json:"child_friendly"`
-	AdultsOnly        bool    `json:"adults_only"`
-	BeginnerFriendly  bool    `json:"beginner_friendly"`
-	ExperiencedOnly   bool    `json:"experienced_only"`
-	CanBeRunInEnglish bool    `json:"can_be_run_in_english"`
-	LongRunning       bool    `json:"long_running"`
-	ShortRunning      bool    `json:"short_running"`
+Title string `json:"title"`
+Description string `json:"description"`
+ImageURL *string `json:"image_url,omitempty"`
+System *string `json:"system,omitempty"`
+HostName string `json:"host_name"`
+Host int `json:"host"`
+Email string `json:"email"`
+PhoneNumber string `json:"phone_number"`
+PuljeName *string `json:"pulje_name,omitempty"`
+MaxPlayers int `json:"max_players"`
+ChildFriendly bool `json:"child_friendly"`
+AdultsOnly bool `json:"adults_only"`
+BeginnerFriendly bool `json:"beginner_friendly"`
+ExperiencedOnly bool `json:"experienced_only"`
+CanBeRunInEnglish bool `json:"can_be_run_in_english"`
+LongRunning bool `json:"long_running"`
+ShortRunning bool `json:"short_running"`
 }
 
 type ValidationResultStruct struct {
-	IsTitleValid            bool
-	IsDescriptionValid      bool
-	IsImageURLValid         bool
-	IsSystemValid           bool
-	IsHostNameValid         bool
-	IsEmailValid            bool
-	IsPhoneNumberValid      bool
-	IsPuljeNameValid        bool
-	IsMaxPlayersValid       bool
-	IsChildFriendlyValid    bool
-	IsAdultsOnlyValid       bool
-	IsBeginnerFriendlyValid bool
-	IsExperiencedOnlyValid  bool
-	IsLongRunningValid      bool
-	IsShortRunningValid     bool
-	IsValid                 bool
+IsTitleValid bool
+IsDescriptionValid bool
+IsImageURLValid bool
+IsSystemValid bool
+IsHostNameValid bool
+IsEmailValid bool
+IsPhoneNumberValid bool
+IsPuljeNameValid bool
+IsMaxPlayersValid bool
+IsChildFriendlyValid bool
+IsAdultsOnlyValid bool
+IsBeginnerFriendlyValid bool
+IsExperiencedOnlyValid bool
+IsLongRunningValid bool
+IsShortRunningValid bool
+IsValid bool
 }
 
 func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger *slog.Logger) error {
-	eventFormRouter.Route("/inline_validation/data", func(dataRouter chi.Router) {
-		checkEventFromValidity := func(eventForm *EventFormStruct) ValidationResultStruct {
-			isTitleValid := len(eventForm.Title) >= 3
-			isDescriptionValid := len(eventForm.Description) >= 3
-			isMaxPlayersValid := eventForm.MaxPlayers > 0 && eventForm.MaxPlayers <= 18
-			isSystemValid := eventForm.System != nil && len(*eventForm.System) > 2
-			isHostNameValid := len(eventForm.HostName) > 2
-			isImageURLValid := eventForm.ImageURL != nil && strings.Contains(*eventForm.ImageURL, "imgur.com")
-			isEmailValid := strings.Contains(eventForm.Email, "@") && len(eventForm.Email) > 5
-			isPhoneNumberValid := len(eventForm.PhoneNumber) >= 8
-
-			var isPuljeNameValid = false
-
-			puljeNames, puljeNamesError := getPuljeNames(db, logger)
-			if puljeNamesError != nil {
-				logger.Error("Error getting pulje names", "puljeNamesError", puljeNamesError)
-			}
-
-			puljeNameInt, puljeNameToIntError := strconv.Atoi(*eventForm.PuljeName)
-			if puljeNameToIntError != nil {
-				logger.Error("Invalid pulje name format", "puljeNameToIntError", puljeNameToIntError)
-			}
-
-			isPuljeNameValid = puljeNameInt > 0 && len(puljeNames) > 0 && puljeNameInt <= len(puljeNames)
-
-			isChildFriendly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
-			isAdultsOnly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
-
-			isBeginnerFriendly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
-			isExperiencedOnly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
-
-			isLongRunning := (eventForm.LongRunning != eventForm.ShortRunning)
-			isShortRunning := (eventForm.LongRunning != eventForm.ShortRunning)
-
-			isValid :=
-				isTitleValid &&
-					isDescriptionValid &&
-					isMaxPlayersValid &&
-					isSystemValid &&
-					isImageURLValid &&
-					isHostNameValid &&
-					isEmailValid &&
-					isPhoneNumberValid &&
-					isPuljeNameValid &&
-					isChildFriendly &&
-					isAdultsOnly &&
-					isBeginnerFriendly &&
-					isExperiencedOnly &&
-					isLongRunning &&
-					isShortRunning
-
-			return ValidationResultStruct{
-				IsTitleValid:            isTitleValid,
-				IsDescriptionValid:      isDescriptionValid,
-				IsImageURLValid:         isImageURLValid,
-				IsMaxPlayersValid:       isMaxPlayersValid,
-				IsSystemValid:           isSystemValid,
-				IsHostNameValid:         isHostNameValid,
-				IsEmailValid:            isEmailValid,
-				IsPhoneNumberValid:      isPhoneNumberValid,
-				IsPuljeNameValid:        isPuljeNameValid,
-				IsChildFriendlyValid:    isChildFriendly,
-				IsAdultsOnlyValid:       isAdultsOnly,
-				IsBeginnerFriendlyValid: isBeginnerFriendly,
-				IsExperiencedOnlyValid:  isExperiencedOnly,
-				IsLongRunningValid:      isLongRunning,
-				IsShortRunningValid:     isShortRunning,
-				IsValid:                 isValid,
-			}
-		}
-
-		dataRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			emptyImgURL := ""
-			emptySystem := ""
-			emptyPulje := ""
-			eventForm := &EventFormStruct{
-				ImageURL:  &emptyImgURL,
-				System:    &emptySystem,
-				PuljeName: &emptyPulje,
-			}
-			if err := datastar.ReadSignals(r, eventForm); err != nil {
-				fmt.Printf("Debug - ReadSignals error: %v\n", err)
-				fmt.Printf("Debug - Raw form data: %+v\n", r.Form)
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			fmt.Printf("Debug - Form after ReadSignals: %+v\n", eventForm)
-			sse := datastar.NewSSE(w, r)
-			eventFormValidationResult := checkEventFromValidity(eventForm)
-			sse.MergeFragmentTempl(inlineValidationFormEventComponent(eventForm, eventFormValidationResult))
-		})
-
-		dataRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
-			emptyImgURL := ""
-			emptySystem := ""
-			emptyPulje := ""
-			eventForm := &EventFormStruct{
-				ImageURL:  &emptyImgURL,
-				System:    &emptySystem,
-				PuljeName: &emptyPulje,
-			}
-			if readSignalsError := datastar.ReadSignals(r, eventForm); readSignalsError != nil {
-				logger.Error("Error reading signals", "signalsError", readSignalsError)
-				http.Error(w, readSignalsError.Error(), http.StatusBadRequest)
-				return
-			}
-
-			eventFormValidationResult := checkEventFromValidity(eventForm)
-			sse := datastar.NewSSE(w, r)
-			var node templ.Component
-
-			if !eventFormValidationResult.IsValid {
-				node = inlineValidationFormEventComponent(eventForm, eventFormValidationResult)
-			}
-
-			if eventFormValidationResult.IsValid {
-
-				_, err := saveNewFormEvent(db, logger, eventForm, w, r)
-				if err != nil {
-					node = inlineValidationFailedSaving(err)
-				}
-				node = inlineValidationThankYou()
-			}
-
-			sse.MergeFragmentTempl(node)
-		})
-	})
-
-	return nil
-}
-
-type InputType string
-
-const (
-	Text   InputType = "text"
-	Number InputType = "number"
-)
-
-templ inputValidationComponent(label string, inputType InputType, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
-	<div class="form-control">
-		<label class="label">
-			<span class="label-text">{ label }</span>
-		</label>
-		<input
-			if inputType == Number {
-				type="number"
-			} else {
-				type="text"
-			}
-			class={ "input input-bordered", templ.KV("input-error",!isValid) }
-			data-bind={ field }
-			data-on-keydown__debounce.500ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
-			data-testid={ "input_" + field }
-			if field == "image_url" {
-				placeholder="f.eks. https://imgur.com/din_bilde_id"
-			}
-			if field == "system" {
-				placeholder="f.eks. D&D 5e, Pathfinder, etc."
-			}
-			if inputType == Number {
-				min="1"
-			}
-			if inputType == Number {
-				max="18"
-			}
-		/>
-		if !isValid {
-			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf( isNotValidErrorLabelFmt, labelArgs...) }</label>
-		}
-	</div>
-}
-
-templ checkboxValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, isDisabled bool, labelArgs ...any) {
-	<div class="form-control">
-		<label class={ "cursor-pointer label", templ.KV("opacity-50", isDisabled) }>
-			<span class="label-text">{ label }</span>
-			<input
-				type="checkbox"
-				class="toggle"
-				data-bind={ field }
-				data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
-				data-testid={ field + "_input" }
-				disabled?={ isDisabled }
-			/>
-		</label>
-		if !isValid {
-			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf( isNotValidErrorLabelFmt, labelArgs...) }</label>
-		}
-	</div>
-}
-
-templ radioValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
-	<div class="form-control">
-		<label class="label">
-			<span class="label-text">{ label }</span>
-		</label>
-		<div class="flex flex-col gap-2">
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="1"
-					class="radio"
-					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
-					data-testid={ field + "_1" }
-				/>
-				<span>Fredag kveld</span>
-			</label>
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="2"
-					class="radio"
-					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
-					data-testid={ field + "_2" }
-				/>
-				<span>Lørdag morgen</span>
-			</label>
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="3"
-					class="radio"
-					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
-					data-testid={ field + "_3" }
-				/>
-				<span>Lørdag kveld</span>
-			</label>
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="4"
-					class="radio"
-					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
-					data-testid={ field + "_4" }
-				/>
-				<span>Søndag morgen</span>
-			</label>
-		</div>
-		if !isValid {
-			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf( isNotValidErrorLabelFmt, labelArgs...) }</label>
-		}
-	</div>
-}
-
-templ radioGroupValidationComponent(groupLabel string, options [2]string, fields [2]string, values [2]bool, isValid bool, errorMessage string) {
-	<div class="form-control radio-group">
-		<div class="group-label">{ groupLabel }</div>
-		<div class="radio-options">
-			<label class="cursor-pointer radio-label">
-				<input
-					type="radio"
-					name={ groupLabel }
-					class="radio"
-					data-bind={ fields[0] }
-					data-on-click__debounce.100ms={ fmt.Sprintf("$%s = false", fields[1]) }
-					data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
-					checked?={ values[0] }
-				/>
-				<span>{ options[0] }</span>
-			</label>
-			<label class="cursor-pointer radio-label">
-				<input
-					type="radio"
-					name={ groupLabel }
-					class="radio"
-					data-bind={ fields[1] }
-					data-on-click__debounce.100ms={ fmt.Sprintf("$%s = false", fields[0]) }
-					data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
-					checked?={ values[1] }
-				/>
-				<span>{ options[1] }</span>
-			</label>
-		</div>
-		if !isValid {
-			<label class="text-sm font-bold text-error">{ errorMessage }</label>
-		}
-	</div>
-}
-
-templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormValidationResult ValidationResultStruct) {
-	<form
-		id="inline_validation"
-		class="flex flex-col gap-4"
-		data-signals__ifmissing={ templ.JSONString(eventForm) }
-		data-on-submit={ datastar.PutSSE("/my-events/api/new/inline_validation/data") }
-	>
-		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
-		<div>
-			@inputValidationComponent("Tittel på spillmodul / arrangement", "text", "title", eventFormValidationResult.IsTitleValid, "Tittel må være minst 3 tegn lang")
-			@inputValidationComponent("Beskrivelse", "text", "description", eventFormValidationResult.IsDescriptionValid, "Beskrivelse må være minst 3 tegn lang")
-			@inputValidationComponent("Bilde URL", "text", "image_url", eventFormValidationResult.IsImageURLValid, "Bilde URL må være fra imgur.com")
-			@inputValidationComponent("System", "text", "system", eventFormValidationResult.IsSystemValid, "System må være minst 3 tegn lang")
-			@inputValidationComponent("Navn på arrangør", "text", "host_name", eventFormValidationResult.IsHostNameValid, "Navn på arrangør må være minst 3 tegn lang")
-			@inputValidationComponent("E-postadresse", "text", "email", eventFormValidationResult.IsEmailValid, "E-postadressen må være gyldig")
-			@inputValidationComponent("Telefonnummer", "text", "phone_number", eventFormValidationResult.IsPhoneNumberValid, "Telefonnummeret må være minst 8 siffer")
-			@radioValidationComponent("Pulje navn", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Du må velge en pulje")
-			@inputValidationComponent("Maks antall spillere", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Maks antall spillere må være mellom 1 og 18")
-			@checkboxValidationComponent("Kan kjøres på engelsk", "can_be_run_in_english", true, "", false)
-			<div class="radio-groups">
-				<div class="radio-group-container">
-					@radioGroupValidationComponent(
-						"Aldersgruppe",
-						[2]string{"Barnevennlig", "Kun for voksne"},
-						[2]string{"child_friendly", "adults_only"},
-						[2]bool{eventForm.ChildFriendly, eventForm.AdultsOnly},
-						eventFormValidationResult.IsChildFriendlyValid && eventFormValidationResult.IsAdultsOnlyValid,
-						"Du må velge én aldersgruppe",
-					)
-				</div>
-				<div class="radio-group-container">
-					@radioGroupValidationComponent(
-						"Erfaringsnivå",
-						[2]string{"Nybegynnervennlig", "Kun for erfarne"},
-						[2]string{"beginner_friendly", "experienced_only"},
-						[2]bool{eventForm.BeginnerFriendly, eventForm.ExperiencedOnly},
-						eventFormValidationResult.IsBeginnerFriendlyValid && eventFormValidationResult.IsExperiencedOnlyValid,
-						"Du må velge ett erfaringsnivå",
-					)
-				</div>
-				<div class="radio-group-container">
-					@radioGroupValidationComponent(
-						"Varighet",
-						[2]string{"Langvarig", "Kortvarig"},
-						[2]string{"long_running", "short_running"},
-						[2]bool{eventForm.LongRunning, eventForm.ShortRunning},
-						eventFormValidationResult.IsLongRunningValid && eventFormValidationResult.IsShortRunningValid,
-						"Du må velge én varighet",
-					)
-				</div>
-			</div>
-		</div>
-		<button
-			class="btn btn-success"
-			disabled?={ !eventFormValidationResult.IsValid }
-			data-testid="submit_button"
-		>
-			Send inn arrangement
-		</button>
-		<div class="divider"></div>
-		<code>
-			<pre data-text="ctx.signals.JSON()"></pre>
-		</code>
-	</form>
-}
-
-templ inlineValidationThankYou() {
-	<div id="inline_validation" class="alert alert-success">
-		Takk for påmeldingen!
-	</div>
-}
-
-templ inlineValidationFailedSaving(err error) {
-	<div id="inline_validation" class="alert alert-error">
-		Kunne ikke lagre arrangementet. Vennligst prøv igjen. Feil: { fmt.Sprintf("%v", err) }
-	</div>
-}
-
-// Dette er en ny templ-komponent som viser skjemaet med alle feltene.
-// Merk at du kan legge til data-on-* attributter, inline validering, etc. etter behov.
-templ formSubmissionPage() {
-	<style>
-		:root {
-			--primary-bg: #2a2d3d;
-			--secondary-bg: #363a4f;
-			--text-color: #e6e9ef;
-			--accent-color: #f87171;
-			--input-bg: #1e2030;
-			--success-color: #4ade80;
-			--border-radius: 0.5rem;
-		}
-
-		h1 {
-			text-align: center;
-		}
-
-		#inline_validation {
-			background: var(--primary-bg);
-			color: var(--text-color);
-			padding: 2rem;
-			border-radius: var(--border-radius);
-			max-width: 1200px;
-			margin: 2rem auto;
-			font-family: system-ui, -apple-system, sans-serif;
-		}
-
-		.form-control {
-			background: var(--secondary-bg);
-			padding: 1.25rem;
-			border-radius: var(--border-radius);
-			margin-bottom: 1rem;
-			transition: all 0.2s ease;
-		}
-
-		.form-control:hover {
-			transform: translateY(-2px);
-			box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-		}
-
-		.label-text {
-			font-size: 1rem;
-			font-weight: 500;
-			margin-bottom: 0.5rem;
-			display: block;
-		}
-
-		.input, .textarea {
-			width: 100%;
-			background: var(--input-bg);
-			border: 1px solid transparent;
-			color: var(--text-color);
-			padding: 0.75rem 1rem;
-			border-radius: var(--border-radius);
-			transition: border-color 0.2s ease;
-		}
-
-		.input:focus, .textarea:focus {
-			outline: none;
-			border-color: var(--accent-color);
-		}
-
-		.input-error {
-			border-color: var(--accent-color);
-		}
-
-		.text-error {
-			color: var(--accent-color);
-			font-size: 0.875rem;
-			margin-top: 0.5rem;
-		}
-
-		.toggle {
-			appearance: none;
-			width: 3.5rem;
-			height: 2rem;
-			background: var(--input-bg);
-			border-radius: 999px;
-			position: relative;
-			cursor: pointer;
-			transition: all 0.2s ease;
-		}
-
-		.toggle:checked {
-			background: var(--success-color);
-		}
-
-		.toggle::after {
-			content: '';
-			position: absolute;
-			top: 0.25rem;
-			left: 0.25rem;
-			width: 1.5rem;
-			height: 1.5rem;
-			background: white;
-			border-radius: 50%;
-			transition: transform 0.2s ease;
-		}
-
-		.toggle:checked::after {
-			transform: translateX(1.5rem);
-		}
-
-		.radio {
-			appearance: none;
-			width: 1.5rem;
-			height: 1.5rem;
-			border: 2px solid var(--text-color);
-			border-radius: 50%;
-			position: relative;
-			cursor: pointer;
-		}
-
-		.radio:checked {
-			border-color: var(--success-color);
-		}
-
-		.radio:checked::after {
-			content: '';
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
-			width: 0.75rem;
-			height: 0.75rem;
-			background: var(--success-color);
-			border-radius: 50%;
-		}
-
-		.btn {
-			padding: 0.75rem 1.5rem;
-			border-radius: var(--border-radius);
-			font-weight: 500;
-			cursor: pointer;
-			transition: all 0.2s ease;
-		}
-
-		.btn-success {
-			background: var(--success-color);
-			color: var(--primary-bg);
-		}
-
-		.btn-success:disabled {
-			opacity: 0.5;
-			cursor: not-allowed;
-		}
-
-		.divider {
-			height: 1px;
-			background: var(--secondary-bg);
-			margin: 2rem 0;
-		}
-
-		code {
-			background: var(--input-bg);
-			padding: 1rem;
-			border-radius: var(--border-radius);
-			display: block;
-			margin-top: 1rem;
-		}
-
-		.flex-col {
-			display: flex;
-			flex-direction: column;
-			gap: 1rem;
-		}
-
-		.opacity-50 {
-			opacity: 0.5;
-			cursor: not-allowed !important;
-		}
-
-		.checkbox-groups {
-			display: flex;
-			flex-direction: column;
-			gap: 2rem;
-			margin-top: 2rem;
-		}
-
-		.checkbox-group {
-			background: var(--secondary-bg);
-			padding: 1.5rem;
-			border-radius: var(--border-radius);
-			border: 1px solid rgba(255, 255, 255, 0.1);
-		}
-
-		.group-label {
-			font-size: 1.1rem;
-			font-weight: 600;
-			color: var(--text-color);
-			margin-bottom: 1rem;
-			padding-bottom: 0.5rem;
-			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-		}
-
-		.group-checkboxes {
-			display: flex;
-			flex-direction: column;
-			gap: 0.5rem;
-		}
-
-		.group-checkboxes .form-control {
-			margin-bottom: 0;
-			background: var(--primary-bg);
-		}
-
-		.group-checkboxes .form-control:hover {
-			transform: none;
-			box-shadow: none;
-		}
-		</style>
-	{{
-		emptyStr := ""
-		initialForm := &EventFormStruct{
-			ImageURL:  &emptyStr,
-			System:    &emptyStr,
-			PuljeName: &emptyStr,
-		}
-	}}
-	<div>
-		<h1>Melde på nytt arrangement</h1>
-		@inlineValidationFormEventComponent(initialForm, ValidationResultStruct{})
-	</div>
-}
-
-func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruct, w http.ResponseWriter, r *http.Request) (int64, error) {
-	userID, _ := authctx.GetUserIDFromToken(r.Context())
-	hostId, _ := getHostId(db, logger, userID)
-	eventForm.Host = hostId
-	query := `
-		INSERT INTO events (
-			title,
-			description,
-			image_url,
-			system,
-			host_name,
-            host,
-			email,
-			phone_number,
-			pulje_name,
-			max_players,
-			child_friendly,
-			adults_only,
-			beginner_friendly,
-			experienced_only,
-			can_be_run_in_english,
-			long_running,
-			short_running
-		) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-
-	result, insertError := db.Exec(query,
-		eventForm.Title,
-		eventForm.Description,
-		eventForm.ImageURL,
-		eventForm.System,
-		eventForm.HostName,
-		eventForm.Host,
-		eventForm.Email,
-		eventForm.PhoneNumber,
-		eventForm.PuljeName,
-		eventForm.MaxPlayers,
-		eventForm.ChildFriendly,
-		eventForm.AdultsOnly,
-		eventForm.BeginnerFriendly,
-		eventForm.ExperiencedOnly,
-		eventForm.CanBeRunInEnglish,
-		eventForm.LongRunning,
-		eventForm.ShortRunning,
-	)
-
-	if insertError != nil {
-		logger.Error("Error updating event", "insertError", insertError)
-		http.Error(w, fmt.Sprintf("Error updating event: %v", insertError), http.StatusBadRequest)
-		return 0, insertError
-	}
-
-	rowsAffected, rowsAffectedErr := result.RowsAffected()
-	if rowsAffectedErr != nil {
-		logger.Error("Error getting rows affected", "rowsAffectedErr", rowsAffectedErr)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return 0, rowsAffectedErr
-	}
-
-	if rowsAffected == 0 {
-		logger.Error("Event not found or no changes made")
-		http.Error(w, "Event not found or no changes made", http.StatusNotFound)
-		return 0, nil
-	}
-	fmt.Printf("Event saved successfully: %v\n", eventForm)
-	return result.LastInsertId()
-}
-
-func getPuljeNames(db *sql.DB, logger *slog.Logger) ([]PuljeNameStruct, error) {
-	query := "SELECT name FROM puljer"
-	rows, queryError := db.Query(query)
-	if queryError != nil {
-		return nil, queryError
-	}
-
-	defer rows.Close()
-
-	var puljer []PuljeNameStruct
-
-	for rows.Next() {
-		var name string
-		if scanError := rows.Scan(&name); scanError != nil {
-			logger.Error("Error scanning pulje name", "scanError", scanError)
-			return nil, scanError
-		}
-		puljer = append(puljer, PuljeNameStruct{Name: name})
-	}
-
-	if rowsError := rows.Err(); rowsError != nil {
-		logger.Error("Error in rows iteration", "rowsError", rowsError)
-		return nil, rowsError
-	}
-
-	return puljer, nil
-}
-
-func getHostId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
-	query := "SELECT id FROM users where user_id = ?"
-	rows, queryError := db.Query(query, userID)
-	if queryError != nil {
-		return 0, queryError
-	}
-
-	defer rows.Close()
-
-	var userId int
-
-	for rows.Next() {
-		if scanError := rows.Scan(&userId); scanError != nil {
-			logger.Error("Error scanning user id", "scanError", scanError)
-			return 0, scanError
-		}
-	}
-
-	if rowsError := rows.Err(); rowsError != nil {
-		logger.Error("Error in rows iteration", "rowsError", rowsError)
-		return 0, rowsError
-	}
-
-	return userId, nil
-}
+eventFormRouter.Route("/inline_validation/data", func(dataRouter chi.Router) {
+checkEventFromValidity := func(eventForm *EventFormStruct) ValidationResultStruct {
+isTitleValid := len(eventForm.Title) >= 3
+isDescriptionValid := len(eventForm.Description) >= 3
+isMaxPlayersValid := eventForm.MaxPlayers > 0 && eventForm.MaxPlayers <= 18 isSystemValid :=eventForm.System !=nil &&
+    len(*eventForm.System)> 2
+    isHostNameValid := len(eventForm.HostName) > 2
+    isImageURLValid := eventForm.ImageURL != nil && strings.Contains(*eventForm.ImageURL, "imgur.com")
+    isEmailValid := strings.Contains(eventForm.Email, "@") && len(eventForm.Email) > 5
+    isPhoneNumberValid := len(eventForm.PhoneNumber) >= 8
+
+    var isPuljeNameValid = false
+
+    puljeNames, puljeNamesError := getPuljeNames(db, logger)
+    if puljeNamesError != nil {
+    logger.Error("Error getting pulje names", "puljeNamesError", puljeNamesError)
+    }
+
+    puljeNameInt, puljeNameToIntError := strconv.Atoi(*eventForm.PuljeName)
+    if puljeNameToIntError != nil {
+    logger.Error("Invalid pulje name format", "puljeNameToIntError", puljeNameToIntError)
+    }
+
+    isPuljeNameValid = puljeNameInt > 0 && len(puljeNames) > 0 && puljeNameInt <= len(puljeNames) isChildFriendly
+        :=(eventForm.ChildFriendly !=eventForm.AdultsOnly) isAdultsOnly :=(eventForm.ChildFriendly
+        !=eventForm.AdultsOnly) isBeginnerFriendly :=(eventForm.BeginnerFriendly !=eventForm.ExperiencedOnly)
+        isExperiencedOnly :=(eventForm.BeginnerFriendly !=eventForm.ExperiencedOnly) isLongRunning
+        :=(eventForm.LongRunning !=eventForm.ShortRunning) isShortRunning :=(eventForm.LongRunning
+        !=eventForm.ShortRunning) isValid :=isTitleValid && isDescriptionValid && isMaxPlayersValid && isSystemValid &&
+        isImageURLValid && isHostNameValid && isEmailValid && isPhoneNumberValid && isPuljeNameValid && isChildFriendly
+        && isAdultsOnly && isBeginnerFriendly && isExperiencedOnly && isLongRunning && isShortRunning return
+        ValidationResultStruct{ IsTitleValid: isTitleValid, IsDescriptionValid: isDescriptionValid, IsImageURLValid:
+        isImageURLValid, IsMaxPlayersValid: isMaxPlayersValid, IsSystemValid: isSystemValid, IsHostNameValid:
+        isHostNameValid, IsEmailValid: isEmailValid, IsPhoneNumberValid: isPhoneNumberValid, IsPuljeNameValid:
+        isPuljeNameValid, IsChildFriendlyValid: isChildFriendly, IsAdultsOnlyValid: isAdultsOnly,
+        IsBeginnerFriendlyValid: isBeginnerFriendly, IsExperiencedOnlyValid: isExperiencedOnly, IsLongRunningValid:
+        isLongRunning, IsShortRunningValid: isShortRunning, IsValid: isValid, } } dataRouter.Get("/", func(w
+        http.ResponseWriter, r *http.Request) { emptyImgURL :="" emptySystem :="" emptyPulje :="" eventForm
+        :=&EventFormStruct{ ImageURL: &emptyImgURL, System: &emptySystem, PuljeName: &emptyPulje, } if err
+        :=datastar.ReadSignals(r, eventForm); err !=nil { fmt.Printf("Debug - ReadSignals error: %v\n", err)
+        fmt.Printf("Debug - Raw form data: %+v\n", r.Form) http.Error(w, err.Error(), http.StatusBadRequest) return }
+        fmt.Printf("Debug - Form after ReadSignals: %+v\n", eventForm) sse :=datastar.NewSSE(w, r)
+        eventFormValidationResult :=checkEventFromValidity(eventForm)
+        sse.MergeFragmentTempl(inlineValidationFormEventComponent(eventForm, eventFormValidationResult)) })
+        dataRouter.Put("/", func(w http.ResponseWriter, r *http.Request) { emptyImgURL :="" emptySystem :="" emptyPulje
+        :="" eventForm :=&EventFormStruct{ ImageURL: &emptyImgURL, System: &emptySystem, PuljeName: &emptyPulje, } if
+        readSignalsError :=datastar.ReadSignals(r, eventForm); readSignalsError !=nil { logger.Error("Error reading
+        signals", "signalsError" , readSignalsError) http.Error(w, readSignalsError.Error(), http.StatusBadRequest)
+        return } eventFormValidationResult :=checkEventFromValidity(eventForm) sse :=datastar.NewSSE(w, r) var node
+        templ.Component if !eventFormValidationResult.IsValid { node=inlineValidationFormEventComponent(eventForm,
+        eventFormValidationResult) } if eventFormValidationResult.IsValid { _, err :=saveNewFormEvent(db, logger,
+        eventForm, w, r) if err !=nil { node=inlineValidationFailedSaving(err) } node=inlineValidationThankYou() }
+        sse.MergeFragmentTempl(node) }) }) return nil } type InputType string const ( Text InputType="text" Number
+        InputType="number" ) templ inputValidationComponent(label string, inputType InputType, field string, isValid
+        bool, isNotValidErrorLabelFmt string, labelArgs ...any) { <div class="form-control">
+        <label class="label">
+            <span class="label-text">{ label }</span>
+        </label>
+        <input if inputType==Number { type="number" } else { type="text" } class={ "input input-bordered" ,
+            templ.KV("input-error",!isValid) } data-bind={ field } data-on-keydown__debounce.500ms={
+            datastar.GetSSE("/my-events/api/new/inline_validation/data") } data-testid={ "input_" + field } if
+            field=="image_url" { placeholder="f.eks. https://imgur.com/din_bilde_id" } if field=="system" {
+            placeholder="f.eks. D&D 5e, Pathfinder, etc." } if inputType==Number { min="1" } if inputType==Number {
+            max="18" } />
+        if !isValid {
+        <label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf(
+            isNotValidErrorLabelFmt, labelArgs...) }</label>
+        }
+        </div>
+        }
+
+        templ checkboxValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, isDisabled
+        bool, labelArgs ...any) {
+        <div class="form-control">
+            <label class={ "cursor-pointer label" , templ.KV("opacity-50", isDisabled) }>
+                <span class="label-text">{ label }</span>
+                <input type="checkbox" class="toggle" data-bind={ field } data-on-click__debounce.100ms={
+                    datastar.GetSSE("/my-events/api/new/inline_validation/data") } data-testid={ field + "_input" }
+                    disabled?={ isDisabled } />
+            </label>
+            if !isValid {
+            <label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf(
+                isNotValidErrorLabelFmt, labelArgs...) }</label>
+            }
+        </div>
+        }
+
+        templ radioValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs
+        ...any) {
+        <div class="form-control">
+            <label class="label">
+                <span class="label-text">{ label }</span>
+            </label>
+            <div class="flex flex-col gap-2">
+                <label class="cursor-pointer flex items-center gap-2">
+                    <input type="radio" name={ field } value="1" class="radio" data-bind={ field }
+                        data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+                        data-testid={ field + "_1" } />
+                    <span>Fredag kveld</span>
+                </label>
+                <label class="cursor-pointer flex items-center gap-2">
+                    <input type="radio" name={ field } value="2" class="radio" data-bind={ field }
+                        data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+                        data-testid={ field + "_2" } />
+                    <span>Lørdag morgen</span>
+                </label>
+                <label class="cursor-pointer flex items-center gap-2">
+                    <input type="radio" name={ field } value="3" class="radio" data-bind={ field }
+                        data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+                        data-testid={ field + "_3" } />
+                    <span>Lørdag kveld</span>
+                </label>
+                <label class="cursor-pointer flex items-center gap-2">
+                    <input type="radio" name={ field } value="4" class="radio" data-bind={ field }
+                        data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+                        data-testid={ field + "_4" } />
+                    <span>Søndag morgen</span>
+                </label>
+            </div>
+            if !isValid {
+            <label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf(
+                isNotValidErrorLabelFmt, labelArgs...) }</label>
+            }
+        </div>
+        }
+
+        templ radioGroupValidationComponent(groupLabel string, options [2]string, fields [2]string, values [2]bool,
+        isValid bool, errorMessage string) {
+        <div class="form-control radio-group">
+            <div class="group-label">{ groupLabel }</div>
+            <div class="radio-options">
+                <label class="cursor-pointer radio-label">
+                    <input type="radio" name={ groupLabel } class="radio" data-bind={ fields[0] }
+                        data-on-click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[1]) }
+                        data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+                        checked?={ values[0] } />
+                    <span>{ options[0] }</span>
+                </label>
+                <label class="cursor-pointer radio-label">
+                    <input type="radio" name={ groupLabel } class="radio" data-bind={ fields[1] }
+                        data-on-click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[0]) }
+                        data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+                        checked?={ values[1] } />
+                    <span>{ options[1] }</span>
+                </label>
+            </div>
+            if !isValid {
+            <label class="text-sm font-bold text-error">{ errorMessage }</label>
+            }
+        </div>
+        }
+
+        templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormValidationResult
+        ValidationResultStruct) {
+        <form id="inline_validation" class="flex flex-col gap-4" data-signals__ifmissing={ templ.JSONString(eventForm) }
+            data-on-submit={ datastar.PutSSE("/my-events/api/new/inline_validation/data") }>
+            <div class="text-2xl font-bold">Meld på nytt arrangement</div>
+            <div>
+                @inputValidationComponent("Tittel på spillmodul / arrangement", "text", "title",
+                eventFormValidationResult.IsTitleValid, "Tittel må være minst 3 tegn lang")
+                @inputValidationComponent("Beskrivelse", "text", "description",
+                eventFormValidationResult.IsDescriptionValid, "Beskrivelse må være minst 3 tegn lang")
+                @inputValidationComponent("Bilde URL", "text", "image_url", eventFormValidationResult.IsImageURLValid,
+                "Bilde URL må være fra imgur.com")
+                @inputValidationComponent("System", "text", "system", eventFormValidationResult.IsSystemValid, "System
+                må være minst 3 tegn lang")
+                @inputValidationComponent("Navn på arrangør", "text", "host_name",
+                eventFormValidationResult.IsHostNameValid, "Navn på arrangør må være minst 3 tegn lang")
+                @inputValidationComponent("E-postadresse", "text", "email", eventFormValidationResult.IsEmailValid,
+                "E-postadressen må være gyldig")
+                @inputValidationComponent("Telefonnummer", "text", "phone_number",
+                eventFormValidationResult.IsPhoneNumberValid, "Telefonnummeret må være minst 8 siffer")
+                @radioValidationComponent("Pulje navn", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Du må
+                velge en pulje")
+                @inputValidationComponent("Maks antall spillere", "number", "max_players",
+                eventFormValidationResult.IsMaxPlayersValid, "Maks antall spillere må være mellom 1 og 18")
+                @checkboxValidationComponent("Kan kjøres på engelsk", "can_be_run_in_english", true, "", false)
+                <div class="radio-groups">
+                    <div class="radio-group-container">
+                        @radioGroupValidationComponent(
+                        "Aldersgruppe",
+                        [2]string{"Barnevennlig", "Kun for voksne"},
+                        [2]string{"child_friendly", "adults_only"},
+                        [2]bool{eventForm.ChildFriendly, eventForm.AdultsOnly},
+                        eventFormValidationResult.IsChildFriendlyValid && eventFormValidationResult.IsAdultsOnlyValid,
+                        "Du må velge én aldersgruppe",
+                        )
+                    </div>
+                    <div class="radio-group-container">
+                        @radioGroupValidationComponent(
+                        "Erfaringsnivå",
+                        [2]string{"Nybegynnervennlig", "Kun for erfarne"},
+                        [2]string{"beginner_friendly", "experienced_only"},
+                        [2]bool{eventForm.BeginnerFriendly, eventForm.ExperiencedOnly},
+                        eventFormValidationResult.IsBeginnerFriendlyValid &&
+                        eventFormValidationResult.IsExperiencedOnlyValid,
+                        "Du må velge ett erfaringsnivå",
+                        )
+                    </div>
+                    <div class="radio-group-container">
+                        @radioGroupValidationComponent(
+                        "Varighet",
+                        [2]string{"Langvarig", "Kortvarig"},
+                        [2]string{"long_running", "short_running"},
+                        [2]bool{eventForm.LongRunning, eventForm.ShortRunning},
+                        eventFormValidationResult.IsLongRunningValid && eventFormValidationResult.IsShortRunningValid,
+                        "Du må velge én varighet",
+                        )
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-success" disabled?={ !eventFormValidationResult.IsValid }
+                data-testid="submit_button">
+                Send inn arrangement
+            </button>
+            <div class="divider"></div>
+            <code>
+                <pre data-text="ctx.signals.JSON()"></pre>
+            </code>
+        </form>
+        }
+
+        templ inlineValidationThankYou() {
+        <div id="inline_validation" class="alert alert-success">
+            Takk for påmeldingen!
+        </div>
+        }
+
+        templ inlineValidationFailedSaving(err error) {
+        <div id="inline_validation" class="alert alert-error">
+            Kunne ikke lagre arrangementet. Vennligst prøv igjen. Feil: { fmt.Sprintf("%v", err) }
+        </div>
+        }
+
+        // Dette er en ny templ-komponent som viser skjemaet med alle feltene.
+        // Merk at du kan legge til data-on-* attributter, inline validering, etc. etter behov.
+        templ formSubmissionPage() {
+        <style>
+            h1 {
+                text-align: center;
+            }
+
+            #inline_validation {
+                background: var(--primary-bg);
+                color: var(--text-color);
+                padding: 2rem;
+                border-radius: var(--border-radius);
+                max-width: 1200px;
+                margin: 2rem auto;
+                font-family: system-ui, -apple-system, sans-serif;
+            }
+
+            .form-control {
+                background: var(--secondary-bg);
+                padding: 1.25rem;
+                border-radius: var(--border-radius);
+                margin-bottom: 1rem;
+                transition: all 0.2s ease;
+            }
+
+            .form-control:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            }
+
+            .label-text {
+                font-size: 1rem;
+                font-weight: 500;
+                margin-bottom: 0.5rem;
+                display: block;
+            }
+
+            .input,
+            .textarea {
+                width: 100%;
+                background: var(--input-bg);
+                border: 1px solid transparent;
+                color: var(--text-color);
+                padding: 0.75rem 1rem;
+                border-radius: var(--border-radius);
+                transition: border-color 0.2s ease;
+            }
+
+            .input:focus,
+            .textarea:focus {
+                outline: none;
+                border-color: var(--accent-color);
+            }
+
+            .input-error {
+                border-color: var(--accent-color);
+            }
+
+            .text-error {
+                color: var(--accent-color);
+                font-size: 0.875rem;
+                margin-top: 0.5rem;
+            }
+
+            .toggle {
+                appearance: none;
+                width: 3.5rem;
+                height: 2rem;
+                background: var(--input-bg);
+                border-radius: 999px;
+                position: relative;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .toggle:checked {
+                background: var(--success-color);
+            }
+
+            .toggle::after {
+                content: '';
+                position: absolute;
+                top: 0.25rem;
+                left: 0.25rem;
+                width: 1.5rem;
+                height: 1.5rem;
+                background: white;
+                border-radius: 50%;
+                transition: transform 0.2s ease;
+            }
+
+            .toggle:checked::after {
+                transform: translateX(1.5rem);
+            }
+
+            .radio {
+                appearance: none;
+                width: 1.5rem;
+                height: 1.5rem;
+                border: 2px solid var(--text-color);
+                border-radius: 50%;
+                position: relative;
+                cursor: pointer;
+            }
+
+            .radio:checked {
+                border-color: var(--success-color);
+            }
+
+            .radio:checked::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 0.75rem;
+                height: 0.75rem;
+                background: var(--success-color);
+                border-radius: 50%;
+            }
+
+            .btn {
+                padding: 0.75rem 1.5rem;
+                border-radius: var(--border-radius);
+                font-weight: 500;
+                cursor: pointer;
+                transition: all 0.2s ease;
+            }
+
+            .btn-success {
+                background: var(--success-color);
+                color: var(--primary-bg);
+            }
+
+            .btn-success:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .divider {
+                height: 1px;
+                background: var(--secondary-bg);
+                margin: 2rem 0;
+            }
+
+            code {
+                background: var(--input-bg);
+                padding: 1rem;
+                border-radius: var(--border-radius);
+                display: block;
+                margin-top: 1rem;
+            }
+
+            .flex-col {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .opacity-50 {
+                opacity: 0.5;
+                cursor: not-allowed !important;
+            }
+
+            .checkbox-groups {
+                display: flex;
+                flex-direction: column;
+                gap: 2rem;
+                margin-top: 2rem;
+            }
+
+            .checkbox-group {
+                background: var(--secondary-bg);
+                padding: 1.5rem;
+                border-radius: var(--border-radius);
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .group-label {
+                font-size: 1.1rem;
+                font-weight: 600;
+                color: var(--text-color);
+                margin-bottom: 1rem;
+                padding-bottom: 0.5rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .group-checkboxes {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .group-checkboxes .form-control {
+                margin-bottom: 0;
+                background: var(--primary-bg);
+            }
+
+            .group-checkboxes .form-control:hover {
+                transform: none;
+                box-shadow: none;
+            }
+        </style>
+        {{
+        emptyStr := ""
+        initialForm := &EventFormStruct{
+        ImageURL: &emptyStr,
+        System: &emptyStr,
+        PuljeName: &emptyStr,
+        }
+        }}
+        <div>
+            <h1>Melde på nytt arrangement</h1>
+            @inlineValidationFormEventComponent(initialForm, ValidationResultStruct{})
+        </div>
+        }
+
+        func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruct, w http.ResponseWriter, r
+        *http.Request) (int64, error) {
+        userID, _ := authctx.GetUserIDFromToken(r.Context())
+        hostId, _ := getHostId(db, logger, userID)
+        eventForm.Host = hostId
+        query := `
+        INSERT INTO events (
+        title,
+        description,
+        image_url,
+        system,
+        host_name,
+        host,
+        email,
+        phone_number,
+        pulje_name,
+        max_players,
+        child_friendly,
+        adults_only,
+        beginner_friendly,
+        experienced_only,
+        can_be_run_in_english,
+        long_running,
+        short_running
+        ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+
+        result, insertError := db.Exec(query,
+        eventForm.Title,
+        eventForm.Description,
+        eventForm.ImageURL,
+        eventForm.System,
+        eventForm.HostName,
+        eventForm.Host,
+        eventForm.Email,
+        eventForm.PhoneNumber,
+        eventForm.PuljeName,
+        eventForm.MaxPlayers,
+        eventForm.ChildFriendly,
+        eventForm.AdultsOnly,
+        eventForm.BeginnerFriendly,
+        eventForm.ExperiencedOnly,
+        eventForm.CanBeRunInEnglish,
+        eventForm.LongRunning,
+        eventForm.ShortRunning,
+        )
+
+        if insertError != nil {
+        logger.Error("Error updating event", "insertError", insertError)
+        http.Error(w, fmt.Sprintf("Error updating event: %v", insertError), http.StatusBadRequest)
+        return 0, insertError
+        }
+
+        rowsAffected, rowsAffectedErr := result.RowsAffected()
+        if rowsAffectedErr != nil {
+        logger.Error("Error getting rows affected", "rowsAffectedErr", rowsAffectedErr)
+        http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+        return 0, rowsAffectedErr
+        }
+
+        if rowsAffected == 0 {
+        logger.Error("Event not found or no changes made")
+        http.Error(w, "Event not found or no changes made", http.StatusNotFound)
+        return 0, nil
+        }
+        fmt.Printf("Event saved successfully: %v\n", eventForm)
+        return result.LastInsertId()
+        }
+
+        func getPuljeNames(db *sql.DB, logger *slog.Logger) ([]PuljeNameStruct, error) {
+        query := "SELECT name FROM puljer"
+        rows, queryError := db.Query(query)
+        if queryError != nil {
+        return nil, queryError
+        }
+
+        defer rows.Close()
+
+        var puljer []PuljeNameStruct
+
+        for rows.Next() {
+        var name string
+        if scanError := rows.Scan(&name); scanError != nil {
+        logger.Error("Error scanning pulje name", "scanError", scanError)
+        return nil, scanError
+        }
+        puljer = append(puljer, PuljeNameStruct{Name: name})
+        }
+
+        if rowsError := rows.Err(); rowsError != nil {
+        logger.Error("Error in rows iteration", "rowsError", rowsError)
+        return nil, rowsError
+        }
+
+        return puljer, nil
+        }
+
+        func getHostId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
+        query := "SELECT id FROM users where user_id = ?"
+        rows, queryError := db.Query(query, userID)
+        if queryError != nil {
+        return 0, queryError
+        }
+
+        defer rows.Close()
+
+        var userId int
+
+        for rows.Next() {
+        if scanError := rows.Scan(&userId); scanError != nil {
+        logger.Error("Error scanning user id", "scanError", scanError)
+        return 0, scanError
+        }
+        }
+
+        if rowsError := rows.Err(); rowsError != nil {
+        logger.Error("Error in rows iteration", "rowsError", rowsError)
+        return 0, rowsError
+        }
+
+        return userId, nil
+        }

@@ -1,7 +1,41 @@
 package formsubmission
 
 templ NewEventFormPage() {
-	<div id="formsubmission-container">
-		@formSubmissionPage()
-	</div>
+<div id="formsubmission-container" class="formsubmission-css-container">
+    <style>
+        .column {
+            .label {
+                font-weight: 700;
+                size: 14px;
+            }
+
+            .text {
+                color: var(--color-text-soft);
+            }
+        }
+
+        .form-card {
+            border-radius: var(--border-radius-medium);
+            background-color: var(--bg-body-90);
+            padding: 1rem;
+
+            h4 {
+                margin: 0;
+            }
+        }
+
+        @container formsubmission-css-container (width > 430px) {
+            .form-card {
+                margin-inline: 1rem;
+            }
+
+            .organizer-section {
+                display: flex;
+                justify-content: space-between;
+            }
+        }
+    </style>
+    <h1 style="text-align:left; ">Nytt Arrangement</h1>
+    @contactInfo()
+</div>
 }
