@@ -12,6 +12,7 @@ import (
 	"database/sql"
 
 	"github.com/Regncon/conorganizer/service"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -72,6 +73,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 		publicRouter.Use(
 			middleware.Logger,
 			middleware.Recoverer,
+			authctx.AuthMiddleware(logger),
 			userctx.IsLoggedInMiddleware(logger),
 		)
 
