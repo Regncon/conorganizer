@@ -14,11 +14,12 @@ const (
 	RefreshCookieName = "refresh_token"
 )
 
-type authctxKey string
+type sessionErrorKey string
+type userTokenKey string
 
 const (
-	ctxSessionError authctxKey = "sessionError"
-	ctxUserToken    authctxKey = "userToken"
+	ctxSessionError sessionErrorKey = "sessionError"
+	ctxUserToken    userTokenKey    = "userToken"
 )
 
 const ProjectID = "P2ufzqahlYUHDIprVXtkuCx8MH5C" // TODO: get from env
@@ -42,24 +43,30 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			refreshCookie, refreshCookieError := r.Cookie(RefreshCookieName)
 
 			if sessionCookieError == nil && refreshCookieError == nil {
-				_, userToken, validateTokenError := descopeClient.Auth.ValidateAndRefreshSessionWithTokens(
+				userOK, userToken, validateTokenError := descopeClient.Auth.ValidateAndRefreshSessionWithTokens(
 					r.Context(), sessionCookie.Value, refreshCookie.Value)
 				if validateTokenError == nil && userToken != nil {
 					ctx = context.WithValue(ctx, ctxUserToken, userToken)
 
-					http.SetCookie(w, &http.Cookie{
-						Name:     SessionCookieName,
-						Value:    userToken.JWT,
-						Path:     "/",
-						Expires:  time.Now().AddDate(1, 0, 0),
-						HttpOnly: true,
-						// Secure:   true,
-						// SameSite: http.SameSiteStrictMode,
-						Secure:   false,
-						SameSite: http.SameSiteLaxMode,
-					})
+					if userOK && userToken.JWT != sessionCookie.Value {
+						http.SetCookie(w, &http.Cookie{
+							Name:     SessionCookieName,
+							Value:    userToken.JWT,
+							Path:     "/",
+							Expires:  time.Now().AddDate(1, 0, 0),
+							HttpOnly: true,
+							// Secure:   true,
+							// SameSite: http.SameSiteStrictMode,
+							Secure:   false,
+							SameSite: http.SameSiteLaxMode,
+						})
 
-					logger.Info("Successfully validated and refreshed session", "email", userToken.Claims["email"])
+						logger.Info("Successfully validated and refreshed session", "email", userToken.Claims["email"])
+					}
+				}
+
+				if validateTokenError != nil {
+					logger.Error("Failed to validate and refresh session", "validateTokenError", validateTokenError)
 				}
 
 			}
