@@ -5,56 +5,41 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/requestctx"
-	"github.com/descope/go-sdk/descope/client"
 )
 
-type userctxKey struct{}
-
-var userContextKey = userctxKey{}
-
-func IsLoggedInMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
+func UserMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			isLoggedIn := false
-
-			sessionCookie, sessionCookieError := r.Cookie(authctx.SessionCookieName)
-			if sessionCookieError == nil {
-				descopeClient, descopeClientError := client.NewWithConfig(&client.Config{ProjectID: authctx.ProjectID})
-				if descopeClientError == nil {
-					_, userToken, validateTokenError := descopeClient.Auth.ValidateSessionWithToken(r.Context(), sessionCookie.Value)
-					if validateTokenError == nil && userToken != nil {
-						isLoggedIn = true
-					}
-				}
+			ctx := r.Context()
+			userInfo := GetUserRequestInfo(ctx)
+			if userInfo.IsLoggedIn {
+				logger.Info("User is logged in")
+				next.ServeHTTP(w, r.WithContext(ctx))
+				return
 			}
 
-			userInfo := requestctx.UserRequestInfo{
-				IsLoggedIn: isLoggedIn,
+			if !userInfo.IsLoggedIn {
+				logger.Warn("User is not logged in")
+				w.WriteHeader(http.StatusUnauthorized)
+				layouts.Base("Unauthorized", requestctx.UserRequestInfo{}, Unauthorized()).Render(r.Context(), w)
+				return
 			}
-
-			ctx := context.WithValue(r.Context(), userContextKey, userInfo)
-			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
 func GetUserRequestInfo(ctx context.Context) requestctx.UserRequestInfo {
-	userInfo, ok := ctx.Value(userContextKey).(requestctx.UserRequestInfo)
 
-	if !ok {
-		return requestctx.UserRequestInfo{
-			IsLoggedIn: false,
-		}
-	}
-
+	userToken, _ := authctx.GetUserTokenFromContext(ctx)
 	userId, _ := authctx.GetUserIDFromToken(ctx)
 	email, _ := authctx.GetEmailFromToken(ctx)
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
 
 	return requestctx.UserRequestInfo{
-		IsLoggedIn: userInfo.IsLoggedIn,
+		IsLoggedIn: userToken != nil,
 		Id:         userId,
 		Email:      email,
 		IsAdmin:    isAdmin,

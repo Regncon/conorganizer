@@ -1,0 +1,37 @@
+package userctx
+
+templ Unauthorized() {
+	<style>
+        .unauthorized {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-block-start: 5rem;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            font-family: "Fira Code", monospace;
+
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 1rem;
+            }
+
+            p {
+                font-size: 1.2rem;
+                margin-bottom: 2rem;
+            }
+
+            a {
+                text-decoration: none;
+                color: var(--color-primary);
+                font-weight: bold;
+            }
+        }
+    </style>
+	<div class="unauthorized">
+		<h1>Du har ikkje tilgang</h1>
+		<p>Du har ikkje tilgang til å sjå denne sida.</p>
+		<a href="/">Gå til arrangement lista</a>
+	</div>
+}
