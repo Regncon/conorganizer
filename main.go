@@ -12,7 +12,7 @@ import (
 	"database/sql"
 
 	"github.com/Regncon/conorganizer/service"
-	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -67,17 +67,17 @@ func run(ctx context.Context, logger *slog.Logger, port string, db *sql.DB) erro
 
 func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.DB) func() error {
 	return func() error {
-		publicRouter := chi.NewMux()
+		router := chi.NewRouter()
 
-		publicRouter.Use(
+		router.Use(
 			middleware.Logger,
 			middleware.Recoverer,
-			userctx.IsLoggedInMiddleware(logger),
+			authctx.AuthMiddleware(logger),
 		)
 
-		publicRouter.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
+		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
 
-		cleanup, err := setupRoutes(ctx, logger, publicRouter, db)
+		cleanup, err := setupRoutes(ctx, logger, router, db)
 		defer cleanup()
 		if err != nil {
 			return fmt.Errorf("error setting up routes: %w", err)
@@ -85,7 +85,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 
 		srv := &http.Server{
 			Addr:    "0.0.0.0:" + port,
-			Handler: publicRouter,
+			Handler: router,
 		}
 
 		go func() {
