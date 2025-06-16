@@ -27,19 +27,20 @@ func UserMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				layouts.Base("Unauthorized", requestctx.UserRequestInfo{}, Unauthorized()).Render(r.Context(), w)
 				return
 			}
+
 		})
 	}
 }
 
 func GetUserRequestInfo(ctx context.Context) requestctx.UserRequestInfo {
 
-	userToken, _ := authctx.GetUserTokenFromContext(ctx)
+	userToken, userTokenErr := authctx.GetUserTokenFromContext(ctx)
 	userId, _ := authctx.GetUserIDFromToken(ctx)
 	email, _ := authctx.GetEmailFromToken(ctx)
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
 
 	return requestctx.UserRequestInfo{
-		IsLoggedIn: userToken != nil,
+		IsLoggedIn: userTokenErr == nil || userToken != nil,
 		Id:         userId,
 		Email:      email,
 		IsAdmin:    isAdmin,
