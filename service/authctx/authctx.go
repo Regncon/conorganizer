@@ -2,14 +2,10 @@ package authctx
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
 
-	"github.com/Regncon/conorganizer/components/redirect"
-	"github.com/Regncon/conorganizer/layouts"
-	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/descope/go-sdk/descope/client"
 )
 
@@ -18,11 +14,12 @@ const (
 	RefreshCookieName = "refresh_token"
 )
 
-type authctxKey string
+type sessionErrorKey string
+type userTokenKey string
 
 const (
-	ctxSessionError authctxKey = "sessionError"
-	ctxUserToken    authctxKey = "userToken"
+	ctxSessionError sessionErrorKey = "sessionError"
+	ctxUserToken    userTokenKey    = "userToken"
 )
 
 const ProjectID = "P2ufzqahlYUHDIprVXtkuCx8MH5C" // TODO: get from env
@@ -37,66 +34,43 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
-			// Get session and refresh tokens from cookies
+
+			ctx := r.Context()
+			ctx = context.WithValue(ctx, ctxSessionError, nil)
+			ctx = context.WithValue(ctx, ctxUserToken, nil)
+
 			sessionCookie, sessionCookieError := r.Cookie(SessionCookieName)
-			if sessionCookieError != nil {
-				logger.Error("No session cookie found", "sessionCookieError", sessionCookieError)
-				ctx := context.WithValue(r.Context(), ctxSessionError, sessionCookieError)
-				redirectUrl := "/auth"
-				layouts.Base(
-					"Redirecting to login",
-					requestctx.UserRequestInfo{},
-					redirect.Redirect(redirectUrl),
-				).Render(ctx, w)
-
-				return
-			}
-
 			refreshCookie, refreshCookieError := r.Cookie(RefreshCookieName)
-			if refreshCookieError != nil {
-				logger.Error("No refresh cookie found", "refreshCookieError", refreshCookieError)
-				ctx := context.WithValue(r.Context(), ctxSessionError, refreshCookieError)
-				redirectUrl := "/auth"
-				layouts.Base(
-					"Redirecting to login",
-					requestctx.UserRequestInfo{},
-					redirect.Redirect(redirectUrl),
-				).Render(ctx, w)
-				return
+
+			if sessionCookieError == nil && refreshCookieError == nil {
+				userOK, userToken, validateTokenError := descopeClient.Auth.ValidateAndRefreshSessionWithTokens(
+					r.Context(), sessionCookie.Value, refreshCookie.Value)
+				if validateTokenError == nil && userToken != nil {
+					ctx = context.WithValue(ctx, ctxUserToken, userToken)
+
+					if userOK && userToken.JWT != sessionCookie.Value {
+						http.SetCookie(w, &http.Cookie{
+							Name:     SessionCookieName,
+							Value:    userToken.JWT,
+							Path:     "/",
+							Expires:  time.Now().AddDate(1, 0, 0),
+							HttpOnly: true,
+							Secure:   true,
+							SameSite: http.SameSiteStrictMode,
+							// Secure:   false,
+							// SameSite: http.SameSiteLaxMode,
+						})
+
+						logger.Info("Successfully validated and refreshed session", "email", userToken.Claims["email"])
+					}
+				}
+
+				if validateTokenError != nil {
+					logger.Error("Failed to validate and refresh session", "validateTokenError", validateTokenError)
+				}
+
 			}
 
-			userOk, userToken, validateTokenError := descopeClient.Auth.ValidateAndRefreshSessionWithTokens(
-				r.Context(), sessionCookie.Value, refreshCookie.Value)
-
-			fmt.Printf("User token: %v\n", userToken)
-			fmt.Printf("User ERR: %v\n", validateTokenError)
-			fmt.Printf("User OK: %v\n", userOk)
-
-			if validateTokenError != nil {
-				logger.Error("Failed to validate/refresh session", "validateTokenError", validateTokenError)
-				ctx := context.WithValue(r.Context(), ctxSessionError, validateTokenError)
-				redirectUrl := "/auth"
-				layouts.Base(
-					"Redirecting to login",
-					requestctx.UserRequestInfo{},
-					redirect.Redirect(redirectUrl),
-				).Render(ctx, w)
-				return
-			}
-
-			http.SetCookie(w, &http.Cookie{
-				Name:     SessionCookieName,
-				Value:    userToken.JWT,
-				Path:     "/",
-				Expires:  time.Now().AddDate(1, 0, 0),
-				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteStrictMode,
-			})
-
-			logger.Info("Successfully validated and refreshed session", "email", userToken.Claims["email"])
-
-			ctx := context.WithValue(r.Context(), ctxUserToken, userToken)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
