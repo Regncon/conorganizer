@@ -55,10 +55,10 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 							Path:     "/",
 							Expires:  time.Now().AddDate(1, 0, 0),
 							HttpOnly: true,
-							// Secure:   true,
-							// SameSite: http.SameSiteStrictMode,
-							Secure:   false,
-							SameSite: http.SameSiteLaxMode,
+							Secure:   true,
+							SameSite: http.SameSiteStrictMode,
+							// Secure:   false,
+							// SameSite: http.SameSiteLaxMode,
 						})
 
 						logger.Info("Successfully validated and refreshed session", "email", userToken.Claims["email"])
