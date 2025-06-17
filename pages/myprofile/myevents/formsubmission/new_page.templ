@@ -1,41 +1,67 @@
 package formsubmission
 
 templ NewEventFormPage() {
-<div id="formsubmission-container" class="formsubmission-css-container">
-    <style>
-        .column {
+	<div id="formsubmission-container" class="formsubmission-css-container">
+		<style>
+            .formsubmission-wrapper {
+                > * + * {
+                    margin-block-start: 1rem;
+                }
+            }
+
             .label {
-                font-weight: 700;
-                size: 14px;
+                font-weight: 600;
+                font-size: 14px;
             }
 
-            .text {
-                color: var(--color-text-soft);
+            .label-small {
+                font-weight: 600;
+                font-size: 12px;
             }
-        }
 
-        .form-card {
-            border-radius: var(--border-radius-medium);
-            background-color: var(--bg-body-90);
-            padding: 1rem;
-
-            h4 {
-                margin: 0;
-            }
-        }
-
-        @container formsubmission-css-container (width > 430px) {
             .form-card {
-                margin-inline: 1rem;
+                border-radius: var(--border-radius-medium);
+                background-color: var(--bg-surface);
+                padding: 1rem;
+
+                h4 {
+                    margin: 0;
+                }
             }
 
-            .organizer-section {
-                display: flex;
-                justify-content: space-between;
+            .about-section {
+                margin-block-start: 1rem;
+                display: grid;
+                grid-template-columns: 50% 50%;
+                gap: 1rem;
+
+                .right {
+                    width: calc(100% - 1rem);
+                }
             }
-        }
-    </style>
-    <h1 style="text-align:left; ">Nytt Arrangement</h1>
-    @contactInfo()
-</div>
+
+            .form-group {
+                display: flex;
+                flex-direction: column;
+            }
+
+            @container formsubmission-css-container (width > 430px) {
+                .form-card {
+                    margin-inline: 1rem;
+                }
+
+                .organizer-section {
+                    display: flex;
+                    justify-content: space-between;
+                }
+            }
+        </style>
+
+		<div class="formsubmission-wrapper">
+            <h1 class="color-strong">Nytt Arrangement</h1>
+            @contactInfo()
+            @aboutEvent()
+        </div>
+
+	</div>
 }
