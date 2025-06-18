@@ -36,7 +36,7 @@ templ NewEventFormPage() {
                     .about-section {
                         margin-block-start: 1rem;
                         display: grid;
-                        grid-template-columns: 50% 50%;
+                        grid-template-columns: 0.5fr 0.5fr;
                         grid-template-areas:
                             "title img"
                             "intro img"
@@ -68,7 +68,6 @@ templ NewEventFormPage() {
                             grid-area: img;
                             display: flex;
                             flex-direction: column;
-                            width: calc(100% - 2rem);
                             gap: 1.2rem;
 
                             img {
