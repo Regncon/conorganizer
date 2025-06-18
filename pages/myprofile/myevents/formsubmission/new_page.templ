@@ -7,61 +7,74 @@ templ NewEventFormPage() {
                 > * + * {
                     margin-block-start: 1rem;
                 }
-            }
 
-            .label {
-                font-weight: 600;
-                font-size: 14px;
-            }
-
-            .label-small {
-                font-weight: 600;
-                font-size: 12px;
-            }
-
-            .form-card {
-                border-radius: var(--border-radius-medium);
-                background-color: var(--bg-surface);
-                padding: 1rem;
-
-                h4 {
-                    margin: 0;
-                }
-            }
-
-            .about-section {
-                margin-block-start: 1rem;
-                display: grid;
-                grid-template-columns: 50% 50%;
-                gap: 1rem;
-
-                .right {
-                    width: calc(100% - 1rem);
-                }
-            }
-
-            .form-group {
-                display: flex;
-                flex-direction: column;
-            }
-
-            @container formsubmission-css-container (width > 430px) {
-                .form-card {
-                    margin-inline: 1rem;
+                .label {
+                    font-weight: 600;
+                    font-size: 14px;
                 }
 
-                .organizer-section {
+                .label-small {
+                    font-weight: 600;
+                    font-size: 12px;
+                }
+
+                .form-group:not(:has(~ img)) {
                     display: flex;
-                    justify-content: space-between;
+                    flex-direction: column;
+                    gap: 0.3rem;
+                    margin-block-end: 2rem;
+                }
+
+                .form-group:has(~ img) {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.3rem;
+                    margin-block-end: 1.2rem;
+                }
+
+                .form-group + img {
+                    margin-block-end: 1.2rem;
+                }
+
+                .form-card {
+                    border-radius: var(--border-radius-medium);
+                    background-color: var(--bg-surface);
+                    padding: 1rem;
+
+                    h4 {
+                        margin: 0;
+                    }
+
+                    .about-section {
+                        margin-block-start: 1rem;
+                        display: grid;
+                        grid-template-columns: 50% 50%;
+                        gap: 1rem;
+
+                        .right {
+                            width: calc(100% - 1rem);
+                        }
+                    }
+                }
+
+                @container formsubmission-css-container (width > 430px) {
+                    .form-card {
+                        margin-inline: 1rem;
+                    }
+
+                    .organizer-section {
+                        display: flex;
+                        justify-content: space-between;
+                    }
                 }
             }
+
+
         </style>
-
 		<div class="formsubmission-wrapper">
-            <h1 class="color-strong">Nytt Arrangement</h1>
-            @contactInfo()
-            @aboutEvent()
-        </div>
-
+			<h1 class="color-strong">Nytt Arrangement</h1>
+			@contactInfo()
+			@aboutEvent()
+		</div>
 	</div>
 }
