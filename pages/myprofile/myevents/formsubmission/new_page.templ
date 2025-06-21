@@ -3,101 +3,102 @@ package formsubmission
 templ NewEventFormPage() {
 	<div id="formsubmission-container" class="formsubmission-css-container">
 		<style>
-            .formsubmission-wrapper {
-                > * + * {
+        .formsubmission-wrapper {
+            >*+* {
+                margin-block-start: 1rem;
+            }
+
+            .label {
+                font-weight: 600;
+                font-size: 14px;
+            }
+
+            .label-small {
+                font-weight: 600;
+                font-size: 12px;
+            }
+
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 0.3rem;
+            }
+
+            .form-card {
+                border-radius: var(--border-radius-medium);
+                background-color: var(--bg-surface);
+                padding: 1rem;
+
+                h4 {
+                    margin: 0;
+                }
+
+                .about-section {
                     margin-block-start: 1rem;
-                }
+                    display: grid;
+                    grid-template-columns: 0.5fr 0.5fr;
+                    grid-template-areas:
+                        "title img"
+                        "intro img"
+                        "type system"
+                        "description description";
+                    gap: 1.25rem;
 
-                .label {
-                    font-weight: 600;
-                    font-size: 14px;
-                }
-
-                .label-small {
-                    font-weight: 600;
-                    font-size: 12px;
-                }
-
-                .form-group {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 0.3rem;
-                }
-
-                .form-card {
-                    border-radius: var(--border-radius-medium);
-                    background-color: var(--bg-surface);
-                    padding: 1rem;
-
-                    h4 {
-                        margin: 0;
+                    .title {
+                        grid-area: title;
                     }
 
-                    .about-section {
-                        margin-block-start: 1rem;
-                        display: grid;
-                        grid-template-columns: 0.5fr 0.5fr;
-                        grid-template-areas:
-                            "title img"
-                            "intro img"
-                            "type system"
-                            "description description";
-                        gap: 1.25rem;
-
-                        .title {
-                            grid-area: title;
-                        }
-
-                        .intro {
-                            grid-area: intro;
-                        }
-
-                        .type {
-                            grid-area: type;
-                        }
-
-                        .system {
-                            grid-area: system;
-                        }
-
-                        .description {
-                            grid-area: description;
-                        }
-
-                        .img {
-                            grid-area: img;
-                            display: flex;
-                            flex-direction: column;
-                            gap: 1.2rem;
-
-                            img {
-                                width: 100%;
-                                height: 100%;
-                                border-radius: var(--border-radius-medium);
-                                object-fit: cover;
-                            }
-                        }
-                    }
-                }
-
-                @container formsubmission-css-container (width > 430px) {
-                    .form-card {
-                        margin-inline: 1rem;
+                    .intro {
+                        grid-area: intro;
                     }
 
-                    .organizer-section {
+                    .type {
+                        grid-area: type;
+                    }
+
+                    .system {
+                        grid-area: system;
+                    }
+
+                    .description {
+                        grid-area: description;
+                    }
+
+                    .img {
+                        grid-area: img;
                         display: flex;
-                        justify-content: space-between;
+                        flex-direction: column;
+                        gap: 1.2rem;
+
+                        img {
+                            width: 100%;
+                            height: 100%;
+                            border-radius: var(--border-radius-medium);
+                            object-fit: cover;
+                        }
                     }
                 }
             }
 
+            @container formsubmission-css-container (width > 430px) {
+                .form-card {
+                    margin-inline: 1rem;
+                }
 
-        </style>
+                .organizer-section {
+                    display: flex;
+                    justify-content: space-between;
+                }
+            }
+        }
+    </style>
 		<div class="formsubmission-wrapper">
 			<h1 class="color-strong">Nytt Arrangement</h1>
-            <h2 class="color-strong">Denne siden er under utvikling</h2>
-            <p> Du må nok vente litt før du kan opprette arrangementer her. All data du sender inn vil bli slettet når vi er ferdig med siden. </p>
+			<h2 class="color-strong" style="color:red">Denne siden er under utvikling</h2>
+			<p style="color:red">
+				Du må nok vente litt før du kan opprette arrangementer her. All data du sender inn vil bli slettet når vi er
+				ferdig med siden.
+			</p>
 			@contactInfo()
 			@aboutEvent()
 		</div>
