@@ -80,32 +80,15 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			}
 
 			isPuljeNameValid = puljeNameInt > 0 && len(puljeNames) > 0 && puljeNameInt <= len(puljeNames)
-
 			isChildFriendly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
 			isAdultsOnly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
-
 			isBeginnerFriendly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
 			isExperiencedOnly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
-
 			isLongRunning := (eventForm.LongRunning != eventForm.ShortRunning)
 			isShortRunning := (eventForm.LongRunning != eventForm.ShortRunning)
-
-			isValid :=
-				isTitleValid &&
-					isDescriptionValid &&
-					isMaxPlayersValid &&
-					isSystemValid &&
-					isImageURLValid &&
-					isHostNameValid &&
-					isEmailValid &&
-					isPhoneNumberValid &&
-					isPuljeNameValid &&
-					isChildFriendly &&
-					isAdultsOnly &&
-					isBeginnerFriendly &&
-					isExperiencedOnly &&
-					isLongRunning &&
-					isShortRunning
+			isValid := isTitleValid && isDescriptionValid && isMaxPlayersValid && isSystemValid &&
+				isImageURLValid && isHostNameValid && isEmailValid && isPhoneNumberValid && isPuljeNameValid && isChildFriendly &&
+				isAdultsOnly && isBeginnerFriendly && isExperiencedOnly && isLongRunning && isShortRunning
 
 			return ValidationResultStruct{
 				IsTitleValid:            isTitleValid,
@@ -162,28 +145,23 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				http.Error(w, readSignalsError.Error(), http.StatusBadRequest)
 				return
 			}
-
 			eventFormValidationResult := checkEventFromValidity(eventForm)
 			sse := datastar.NewSSE(w, r)
 			var node templ.Component
-
 			if !eventFormValidationResult.IsValid {
 				node = inlineValidationFormEventComponent(eventForm, eventFormValidationResult)
 			}
-
 			if eventFormValidationResult.IsValid {
-
 				_, err := saveNewFormEvent(db, logger, eventForm, w, r)
 				if err != nil {
 					node = inlineValidationFailedSaving(err)
 				}
 				node = inlineValidationThankYou()
 			}
-
 			sse.MergeFragmentTempl(node)
 		})
-	})
 
+	})
 	return nil
 }
 
@@ -200,37 +178,42 @@ templ inputValidationComponent(label string, inputType InputType, field string, 
 			<span class="label-text">{ label }</span>
 		</label>
 		<input
-			if inputType == Number {
+			if inputType==Number {
 				type="number"
 			} else {
 				type="text"
 			}
-			class={ "input input-bordered", templ.KV("input-error",!isValid) }
+			class={ "input input-bordered" , templ.KV("input-error",!isValid) }
 			data-bind={ field }
 			data-on-keydown__debounce.500ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
 			data-testid={ "input_" + field }
-			if field == "image_url" {
+			if field=="image_url" {
 				placeholder="f.eks. https://imgur.com/din_bilde_id"
 			}
-			if field == "system" {
+			if field=="system" {
 				placeholder="f.eks. D&D 5e, Pathfinder, etc."
 			}
-			if inputType == Number {
+			if inputType==Number {
 				min="1"
 			}
-			if inputType == Number {
+			if inputType==Number {
 				max="18"
 			}
 		/>
 		if !isValid {
-			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf( isNotValidErrorLabelFmt, labelArgs...) }</label>
+			<label
+				class="text-sm font-bold text-error"
+				data-testid={ "validation_" + field }
+			>
+				{ fmt.Sprintf(isNotValidErrorLabelFmt, labelArgs...) }
+			</label>
 		}
 	</div>
 }
 
 templ checkboxValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, isDisabled bool, labelArgs ...any) {
 	<div class="form-control">
-		<label class={ "cursor-pointer label", templ.KV("opacity-50", isDisabled) }>
+		<label class={ "cursor-pointer label" , templ.KV("opacity-50", isDisabled) }>
 			<span class="label-text">{ label }</span>
 			<input
 				type="checkbox"
@@ -242,7 +225,9 @@ templ checkboxValidationComponent(label, field string, isValid bool, isNotValidE
 			/>
 		</label>
 		if !isValid {
-			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf( isNotValidErrorLabelFmt, labelArgs...) }</label>
+			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>
+				{ fmt.Sprintf(isNotValidErrorLabelFmt, labelArgs...) }
+			</label>
 		}
 	</div>
 }
@@ -303,12 +288,16 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 			</label>
 		</div>
 		if !isValid {
-			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>{ fmt.Sprintf( isNotValidErrorLabelFmt, labelArgs...) }</label>
+			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>
+				{ fmt.Sprintf(
+            isNotValidErrorLabelFmt, labelArgs...) }
+			</label>
 		}
 	</div>
 }
 
-templ radioGroupValidationComponent(groupLabel string, options [2]string, fields [2]string, values [2]bool, isValid bool, errorMessage string) {
+templ radioGroupValidationComponent(groupLabel string, options [2]string, fields [2]string, values [2]bool,
+	isValid bool, errorMessage string) {
 	<div class="form-control radio-group">
 		<div class="group-label">{ groupLabel }</div>
 		<div class="radio-options">
@@ -318,7 +307,7 @@ templ radioGroupValidationComponent(groupLabel string, options [2]string, fields
 					name={ groupLabel }
 					class="radio"
 					data-bind={ fields[0] }
-					data-on-click__debounce.100ms={ fmt.Sprintf("$%s = false", fields[1]) }
+					data-on-click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[1]) }
 					data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
 					checked?={ values[0] }
 				/>
@@ -330,7 +319,7 @@ templ radioGroupValidationComponent(groupLabel string, options [2]string, fields
 					name={ groupLabel }
 					class="radio"
 					data-bind={ fields[1] }
-					data-on-click__debounce.100ms={ fmt.Sprintf("$%s = false", fields[0]) }
+					data-on-click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[0]) }
 					data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
 					checked?={ values[1] }
 				/>
@@ -379,7 +368,8 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 						[2]string{"Nybegynnervennlig", "Kun for erfarne"},
 						[2]string{"beginner_friendly", "experienced_only"},
 						[2]bool{eventForm.BeginnerFriendly, eventForm.ExperiencedOnly},
-						eventFormValidationResult.IsBeginnerFriendlyValid && eventFormValidationResult.IsExperiencedOnlyValid,
+						eventFormValidationResult.IsBeginnerFriendlyValid &&
+							eventFormValidationResult.IsExperiencedOnlyValid,
 						"Du må velge ett erfaringsnivå",
 					)
 				</div>
@@ -425,221 +415,213 @@ templ inlineValidationFailedSaving(err error) {
 // Merk at du kan legge til data-on-* attributter, inline validering, etc. etter behov.
 templ formSubmissionPage() {
 	<style>
-		:root {
-			--primary-bg: #2a2d3d;
-			--secondary-bg: #363a4f;
-			--text-color: #e6e9ef;
-			--accent-color: #f87171;
-			--input-bg: #1e2030;
-			--success-color: #4ade80;
-			--border-radius: 0.5rem;
-		}
+        h1 {
+            text-align: center;
+        }
 
-		h1 {
-			text-align: center;
-		}
+        #inline_validation {
+            background: var(--primary-bg);
+            color: var(--text-color);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            max-width: 1200px;
+            margin: 2rem auto;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
 
-		#inline_validation {
-			background: var(--primary-bg);
-			color: var(--text-color);
-			padding: 2rem;
-			border-radius: var(--border-radius);
-			max-width: 1200px;
-			margin: 2rem auto;
-			font-family: system-ui, -apple-system, sans-serif;
-		}
+        .form-control {
+            background: var(--secondary-bg);
+            padding: 1.25rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            transition: all 0.2s ease;
+        }
 
-		.form-control {
-			background: var(--secondary-bg);
-			padding: 1.25rem;
-			border-radius: var(--border-radius);
-			margin-bottom: 1rem;
-			transition: all 0.2s ease;
-		}
+        .form-control:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
 
-		.form-control:hover {
-			transform: translateY(-2px);
-			box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-		}
+        .label-text {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
 
-		.label-text {
-			font-size: 1rem;
-			font-weight: 500;
-			margin-bottom: 0.5rem;
-			display: block;
-		}
+        .input,
+        .textarea {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid transparent;
+            color: var(--text-color);
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            transition: border-color 0.2s ease;
+        }
 
-		.input, .textarea {
-			width: 100%;
-			background: var(--input-bg);
-			border: 1px solid transparent;
-			color: var(--text-color);
-			padding: 0.75rem 1rem;
-			border-radius: var(--border-radius);
-			transition: border-color 0.2s ease;
-		}
+        .input:focus,
+        .textarea:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
 
-		.input:focus, .textarea:focus {
-			outline: none;
-			border-color: var(--accent-color);
-		}
+        .input-error {
+            border-color: var(--accent-color);
+        }
 
-		.input-error {
-			border-color: var(--accent-color);
-		}
+        .text-error {
+            color: var(--accent-color);
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
 
-		.text-error {
-			color: var(--accent-color);
-			font-size: 0.875rem;
-			margin-top: 0.5rem;
-		}
+        .toggle {
+            appearance: none;
+            width: 3.5rem;
+            height: 2rem;
+            background: var(--input-bg);
+            border-radius: 999px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
 
-		.toggle {
-			appearance: none;
-			width: 3.5rem;
-			height: 2rem;
-			background: var(--input-bg);
-			border-radius: 999px;
-			position: relative;
-			cursor: pointer;
-			transition: all 0.2s ease;
-		}
+        .toggle:checked {
+            background: var(--success-color);
+        }
 
-		.toggle:checked {
-			background: var(--success-color);
-		}
+        .toggle::after {
+            content: '';
+            position: absolute;
+            top: 0.25rem;
+            left: 0.25rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: white;
+            border-radius: 50%;
+            transition: transform 0.2s ease;
+        }
 
-		.toggle::after {
-			content: '';
-			position: absolute;
-			top: 0.25rem;
-			left: 0.25rem;
-			width: 1.5rem;
-			height: 1.5rem;
-			background: white;
-			border-radius: 50%;
-			transition: transform 0.2s ease;
-		}
+        .toggle:checked::after {
+            transform: translateX(1.5rem);
+        }
 
-		.toggle:checked::after {
-			transform: translateX(1.5rem);
-		}
+        .radio {
+            appearance: none;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 2px solid var(--text-color);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+        }
 
-		.radio {
-			appearance: none;
-			width: 1.5rem;
-			height: 1.5rem;
-			border: 2px solid var(--text-color);
-			border-radius: 50%;
-			position: relative;
-			cursor: pointer;
-		}
+        .radio:checked {
+            border-color: var(--success-color);
+        }
 
-		.radio:checked {
-			border-color: var(--success-color);
-		}
+        .radio:checked::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0.75rem;
+            height: 0.75rem;
+            background: var(--success-color);
+            border-radius: 50%;
+        }
 
-		.radio:checked::after {
-			content: '';
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
-			width: 0.75rem;
-			height: 0.75rem;
-			background: var(--success-color);
-			border-radius: 50%;
-		}
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
 
-		.btn {
-			padding: 0.75rem 1.5rem;
-			border-radius: var(--border-radius);
-			font-weight: 500;
-			cursor: pointer;
-			transition: all 0.2s ease;
-		}
+        .btn-success {
+            background: var(--success-color);
+            color: var(--primary-bg);
+        }
 
-		.btn-success {
-			background: var(--success-color);
-			color: var(--primary-bg);
-		}
+        .btn-success:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
 
-		.btn-success:disabled {
-			opacity: 0.5;
-			cursor: not-allowed;
-		}
+        .divider {
+            height: 1px;
+            background: var(--secondary-bg);
+            margin: 2rem 0;
+        }
 
-		.divider {
-			height: 1px;
-			background: var(--secondary-bg);
-			margin: 2rem 0;
-		}
+        code {
+            background: var(--input-bg);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            display: block;
+            margin-top: 1rem;
+        }
 
-		code {
-			background: var(--input-bg);
-			padding: 1rem;
-			border-radius: var(--border-radius);
-			display: block;
-			margin-top: 1rem;
-		}
+        .flex-col {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
 
-		.flex-col {
-			display: flex;
-			flex-direction: column;
-			gap: 1rem;
-		}
+        .opacity-50 {
+            opacity: 0.5;
+            cursor: not-allowed !important;
+        }
 
-		.opacity-50 {
-			opacity: 0.5;
-			cursor: not-allowed !important;
-		}
+        .checkbox-groups {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
 
-		.checkbox-groups {
-			display: flex;
-			flex-direction: column;
-			gap: 2rem;
-			margin-top: 2rem;
-		}
+        .checkbox-group {
+            background: var(--secondary-bg);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-		.checkbox-group {
-			background: var(--secondary-bg);
-			padding: 1.5rem;
-			border-radius: var(--border-radius);
-			border: 1px solid rgba(255, 255, 255, 0.1);
-		}
+        .group-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
-		.group-label {
-			font-size: 1.1rem;
-			font-weight: 600;
-			color: var(--text-color);
-			margin-bottom: 1rem;
-			padding-bottom: 0.5rem;
-			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-		}
+        .group-checkboxes {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
 
-		.group-checkboxes {
-			display: flex;
-			flex-direction: column;
-			gap: 0.5rem;
-		}
+        .group-checkboxes .form-control {
+            margin-bottom: 0;
+            background: var(--primary-bg);
+        }
 
-		.group-checkboxes .form-control {
-			margin-bottom: 0;
-			background: var(--primary-bg);
-		}
-
-		.group-checkboxes .form-control:hover {
-			transform: none;
-			box-shadow: none;
-		}
-		</style>
+        .group-checkboxes .form-control:hover {
+            transform: none;
+            box-shadow: none;
+        }
+    </style>
 	{{
-		emptyStr := ""
-		initialForm := &EventFormStruct{
-			ImageURL:  &emptyStr,
-			System:    &emptyStr,
-			PuljeName: &emptyStr,
-		}
+	emptyStr := ""
+	initialForm := &EventFormStruct{
+		ImageURL:  &emptyStr,
+		System:    &emptyStr,
+		PuljeName: &emptyStr,
+	}
 	}}
 	<div>
 		<h1>Melde på nytt arrangement</h1>
@@ -652,25 +634,25 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 	hostId, _ := getHostId(db, logger, userID)
 	eventForm.Host = hostId
 	query := `
-		INSERT INTO events (
-			title,
-			description,
-			image_url,
-			system,
-			host_name,
+            INSERT INTO events (
+            title,
+            description,
+            image_url,
+            system,
+            host_name,
             host,
-			email,
-			phone_number,
-			pulje_name,
-			max_players,
-			child_friendly,
-			adults_only,
-			beginner_friendly,
-			experienced_only,
-			can_be_run_in_english,
-			long_running,
-			short_running
-		) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            email,
+            phone_number,
+            pulje_name,
+            max_players,
+            child_friendly,
+            adults_only,
+            beginner_friendly,
+            experienced_only,
+            can_be_run_in_english,
+            long_running,
+            short_running
+            ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, insertError := db.Exec(query,
 		eventForm.Title,

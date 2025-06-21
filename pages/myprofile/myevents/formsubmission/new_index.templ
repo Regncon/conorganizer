@@ -14,7 +14,7 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		layouts.Base(
-			"Meld på nytt arrangement",
+			"Nytt arrangement",
 			userctx.GetUserRequestInfo(ctx),
 			newEventIndex(),
 		).Render(ctx, w)
