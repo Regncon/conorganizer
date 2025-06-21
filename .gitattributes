@@ -1,0 +1,5 @@
+# Normalize all text files to LF
+* text=auto
+
+# Explicit overrides
+*.sh text eol=lf

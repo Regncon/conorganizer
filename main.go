@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -21,14 +22,21 @@ import (
 )
 
 func main() {
+	// Set up logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("No .env file found")
 	}
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	// Parse cli flag for setting db & sql file path
+	dsn := flag.String("dbp", "database/events.db", "absolute path to database file")
+	initSQL := flag.String("init-sql", "initialize.sql", "path to SQL file for initializing the database if missing")
+	flag.Parse()
 
-	db, err := service.InitDB("database/events.db", "initialize.sql")
+	// Initialize database
+	db, err := service.InitDB(*dsn, *initSQL)
 	if err != nil {
 		logger.Error("Could not initialize DB", "initialize database", err)
 	}

@@ -1,0 +1,8 @@
+dbs:
+  - path: /var/lib/regncon/events.db
+    replicas:
+      - type: s3
+        bucket: regncon
+        path: eventsdb
+        endpoint: https://fly.storage.tigris.dev
+        force-path-style: true
