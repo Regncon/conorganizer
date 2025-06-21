@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -12,7 +13,7 @@ import (
 	"database/sql"
 
 	"github.com/Regncon/conorganizer/service"
-	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -21,14 +22,21 @@ import (
 )
 
 func main() {
+	// Set up logger
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	// Load environment variables from .env file
 	if err := godotenv.Load(); err != nil {
 		fmt.Println("No .env file found")
 	}
 
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	// Parse cli flag for setting db & sql file path
+	dsn := flag.String("dbp", "database/events.db", "absolute path to database file")
+	initSQL := flag.String("init-sql", "initialize.sql", "path to SQL file for initializing the database if missing")
+	flag.Parse()
 
-	db, err := service.InitDB("database/events.db", "initialize.sql")
+	// Initialize database
+	db, err := service.InitDB(*dsn, *initSQL)
 	if err != nil {
 		logger.Error("Could not initialize DB", "initialize database", err)
 	}
@@ -67,17 +75,17 @@ func run(ctx context.Context, logger *slog.Logger, port string, db *sql.DB) erro
 
 func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.DB) func() error {
 	return func() error {
-		publicRouter := chi.NewMux()
+		router := chi.NewRouter()
 
-		publicRouter.Use(
+		router.Use(
 			middleware.Logger,
 			middleware.Recoverer,
-			userctx.IsLoggedInMiddleware(logger),
+			authctx.AuthMiddleware(logger),
 		)
 
-		publicRouter.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
+		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
 
-		cleanup, err := setupRoutes(ctx, logger, publicRouter, db)
+		cleanup, err := setupRoutes(ctx, logger, router, db)
 		defer cleanup()
 		if err != nil {
 			return fmt.Errorf("error setting up routes: %w", err)
@@ -85,7 +93,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 
 		srv := &http.Server{
 			Addr:    "0.0.0.0:" + port,
-			Handler: publicRouter,
+			Handler: router,
 		}
 
 		go func() {

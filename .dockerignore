@@ -1,0 +1,17 @@
+# Flyio
+fly.toml
+
+# Pregenerated template files
+*_templ.go
+*_templ.txt
+
+# Binaries & data
+conorganizer
+*.exe
+*.db
+
+# Secrets
+*.env*
+
+# Scripts
+*.ps1
