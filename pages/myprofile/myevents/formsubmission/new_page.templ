@@ -79,20 +79,27 @@ templ NewEventFormPage() {
                         }
                     }
                     }
+
                     .details-section {
                     margin-block-start: 1rem;
                     display: grid;
                     grid-template-columns: 0.5fr 0.5fr;
-                    grid-template-rows: auto auto auto auto auto auto;
                     grid-template-areas:
-                        "title img"
-                        "ageGroup img"
-                        "type system"
-                        "description description";
+                        "ageGroup"
+                        "duration"
+                        "beginnerFriendly"
+                        "canBeEnglish"
+                        "players"
+                        "otherNotes";
                     gap: 1.25rem;
 
                     .ageGroup {
                         grid-area: ageGroup;
+                    }
+                    .ageGroupDescription {
+                        grid-area: ageGroupDescription;
+                        font-size: 0.9rem;
+                        color: hsl(0 0% 100% / 0.6);
                     }
                     .duration {
                         grid-area: duration;

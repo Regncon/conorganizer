@@ -14,7 +14,7 @@ templ otherDetails() {
                         <option value="adults">Voksne (18+ år)</option>
                     </select>
                 </div>
-                <section class="form-description">
+                <section class="form-description" id="ageGroupDescription">
                     <p> Arrangementet passer for alle aldre </p>
                     <p> Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. </p>
                 </section>
@@ -37,12 +37,20 @@ templ otherDetails() {
                         Arrangementet er nybegynnervennlig
                     </label>
                 </div>
+                <section class="form-description">
+                    <p> Arrangementet er nybegynnervennlig </p>
+                    <p> Det betyr at alle er velkomne på arrangementet og at det vil være en god opplevelse for folk som ikke har erfaring med denne typen spill. </p>
+                </section>
                 <div class="form-group checkbox english">
                     <label>
                         <input type="checkbox" id="canBeEnglish" name="canBeEnglish" class="checkbox"/>
                         Arrangementet kan holdes på engelsk
                     </label>
                 </div>
+                <section class="form-description">
+                    <p> Arrangementet kan holdes på engelsk </p>
+                    <p> Vi informerer deltakerne under festivalen om at dette arrangementet er et godt valg hvis de ikke snakker norsk. </p>
+                </section>
                 <div class="form-group players">
                     <label for="playerCount" class="label-small color-strong">
                         Antall spillere (utenom arrangør)
@@ -57,6 +65,10 @@ templ otherDetails() {
                         required
                     />
                 </div>
+                <section class="form-description">
+                    <p> Text om antall spillere </p>
+                    <p> Noe infotekst her som hjelper med å velge antall spillere. </p>
+                </section>
                 <div class="form-group notes span2">
                     <label for="otherNotes" class="label-small color-strong">
                         Andre Merknader – Er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
