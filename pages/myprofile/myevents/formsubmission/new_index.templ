@@ -10,7 +10,7 @@ import (
 )
 
 // Todo Separate this in to a auth router
-func NewEventLayoutRoute(router chi.Router, db *sql.DB) {
+func NewEventLayoutRoute(router chi.Router, eventId string, db *sql.DB) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		layouts.Base(

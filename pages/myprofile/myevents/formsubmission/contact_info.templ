@@ -1,29 +1,37 @@
 package formsubmission
 
+import datastar "github.com/starfederation/datastar/sdk/go"
+
 templ contactInfo() {
 	<div class="form-card">
 		<h4>Om arrangøren</h4>
 		<div class="organizer-section">
 			<div class="column">
-				<p>
-					<span class="label color-strong">Arrangør</span>
-					<br/>
-					<span>Gary Garyson</span>
-				</p>
+				<div class="form-group host_name">
+					<label for="title" class="label-small color-strong">Arrangør</label>
+                    <input
+						id="host_name"
+						class="input"
+						name="host_name"
+						type="text"
+						data-bind="host_name"
+						data-on-keydown__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+						placeholder="Navn på arrangør"
+						required
+					/>
+				</div>
 			</div>
 			<div class="column">
-				<p>
-					<span class="label color-strong">E-post</span>
-					<br/>
-					<span>ola@norman.no</span>
-				</p>
+				<div class="form-group email">
+					<label for="email" class="label-small color-strong">E-post</label>
+					<input type="email" id="email" class="input" name="email" placeholder="E-postadresse til arrangør" required/>
+				</div>
 			</div>
 			<div class="column">
-				<p>
-					<span class="label color-strong ">Telefon</span>
-					<br/>
-					<span>+47 123 45 678</span>
-				</p>
+				<div class="form-group phone_number">
+					<label for="phone_number" class="label-small color-strong">Telefon Nr</label>
+					<input type="tel" id="phone_number" class="input" name="phone_number" placeholder="Telefonnummer til arrangør" required/>
+				</div>
 			</div>
 		</div>
 	</div>
