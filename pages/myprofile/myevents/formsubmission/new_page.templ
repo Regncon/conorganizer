@@ -34,7 +34,7 @@ templ NewEventFormPage() {
                     margin: 0;
                 }
 
-                .about-section {
+                    .about-section {
                     margin-block-start: 1rem;
                     display: grid;
                     grid-template-columns: 0.5fr 0.5fr;
@@ -77,6 +77,37 @@ templ NewEventFormPage() {
                             border-radius: var(--border-radius-medium);
                             object-fit: cover;
                         }
+                    }
+                    }
+                    .details-section {
+                    margin-block-start: 1rem;
+                    display: grid;
+                    grid-template-columns: 0.5fr 0.5fr;
+                    grid-template-rows: auto auto auto auto auto auto;
+                    grid-template-areas:
+                        "title img"
+                        "ageGroup img"
+                        "type system"
+                        "description description";
+                    gap: 1.25rem;
+
+                    .ageGroup {
+                        grid-area: ageGroup;
+                    }
+                    .duration {
+                        grid-area: duration;
+                    }
+                    .beginnerFriendly {
+                        grid-area: beginnerFriendly;
+                    }
+                    .canBeEnglish {
+                        grid-area: canBeEnglish;
+                    }
+                    .players {
+                        grid-area: players;
+                    }
+                    .otherNotes {
+                        grid-area: otherNotes;
                     }
                 }
             }

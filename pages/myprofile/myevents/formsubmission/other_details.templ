@@ -4,63 +4,71 @@ templ otherDetails() {
 	<div class="form-card">
 		<h4>Øvrige Detaljer</h4>
 		<div class="details-section">
-			<div class="form-group age-group">
-				<label for="ageGroup" class="label-small color-strong">Aldersgruppe</label>
-				<select id="ageGroup" name="ageGroup" class="input" required>
-					<option value="">Velg aldersgruppe</option>
-					<option value="all">Passer for alle aldre</option>
-					<option value="children">Barn (under 12 år)</option>
-					<option value="teens">Tenåringer (13–17 år)</option>
-					<option value="adults">Voksne (18+ år)</option>
-				</select>
-			</div>
-			<div class="form-group duration">
-				<label for="duration" class="label-small color-strong">Varighet</label>
-				<select id="duration" name="duration" class="input" required>
-					<option value="">Velg varighet</option>
-					<option value="4-5">Passelig lengde for en pulje (4–5 timer)</option>
-					<option value="2-3">Kortere (2–3 timer)</option>
-					<option value="6+">Lengre (6+ timer)</option>
-				</select>
-			</div>
-			<div class="form-group checkbox beginner-friendly">
-				<label>
-					<input type="checkbox" id="beginnerFriendly" name="beginnerFriendly" class="checkbox"/>
-					Arrangementet er nybegynnervennlig
-				</label>
-			</div>
-			<div class="form-group checkbox english">
-				<label>
-					<input type="checkbox" id="canBeEnglish" name="canBeEnglish" class="checkbox"/>
-					Arrangementet kan holdes på engelsk
-				</label>
-			</div>
-			<div class="form-group players">
-				<label for="playerCount" class="label-small color-strong">
-					Antall spillere (utenom arrangør)
-				</label>
-				<input
-					type="number"
-					id="playerCount"
-					name="playerCount"
-					class="input"
-					min="0"
-					placeholder="0"
-					required
-				/>
-			</div>
-			<div class="form-group notes span2">
-				<label for="otherNotes" class="label-small color-strong">
-					Andre Merknader – Er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
-				</label>
-				<textarea
-					id="otherNotes"
-					name="otherNotes"
-					class="input"
-					rows="5"
-					placeholder="Skriv eventuelle merknader her…"
-				></textarea>
-			</div>
-		</div>
-	</div>
-}
+                <div class="form-group age-group">
+                    <label for="ageGroup" class="label-small color-strong">Aldersgruppe</label>
+                    <select id="ageGroup" name="ageGroup" class="input" required>
+                        <option value="">Velg aldersgruppe</option>
+                        <option value="all">Passer for alle aldre</option>
+                        <option value="children">Barn (under 12 år)</option>
+                        <option value="teens">Tenåringer (13–17 år)</option>
+                        <option value="adults">Voksne (18+ år)</option>
+                    </select>
+                </div>
+                <section class="form-description">
+                    <p> Arrangementet passer for alle aldre </p>
+                    <p> Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. </p>
+                </section>
+                <div class="form-group duration">
+                    <label for="duration" class="label-small color-strong">Varighet</label>
+                    <select id="duration" name="duration" class="input" required>
+                        <option value="">Velg varighet</option>
+                        <option value="4-5">Passelig lengde for en pulje (4–5 timer)</option>
+                        <option value="2-3">Kortere (2–3 timer)</option>
+                        <option value="6+">Lengre (6+ timer)</option>
+                    </select>
+                </div>
+                <section class="form-description">
+                    <p> Fire til fem timer </p>
+                    <p> Dette er den vanligste varigheten for arrangementer på Regncon, og det passer fint inn i en pulje. Det er viktig at folk får vite om arrangementet skal vare mye lengre eller kortere enn en pulje. </p>
+                </section>
+                <div class="form-group checkbox beginner-friendly">
+                    <label>
+                        <input type="checkbox" id="beginnerFriendly" name="beginnerFriendly" class="checkbox"/>
+                        Arrangementet er nybegynnervennlig
+                    </label>
+                </div>
+                <div class="form-group checkbox english">
+                    <label>
+                        <input type="checkbox" id="canBeEnglish" name="canBeEnglish" class="checkbox"/>
+                        Arrangementet kan holdes på engelsk
+                    </label>
+                </div>
+                <div class="form-group players">
+                    <label for="playerCount" class="label-small color-strong">
+                        Antall spillere (utenom arrangør)
+                    </label>
+                    <input
+                        type="number"
+                        id="playerCount"
+                        name="playerCount"
+                        class="input"
+                        min="0"
+                        placeholder="0"
+                        required
+                    />
+                </div>
+                <div class="form-group notes span2">
+                    <label for="otherNotes" class="label-small color-strong">
+                        Andre Merknader – Er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
+                    </label>
+                    <textarea
+                        id="otherNotes"
+                        name="otherNotes"
+                        class="input"
+                        rows="5"
+                        placeholder="Skriv eventuelle merknader her…"
+                    ></textarea>
+                </div>
+        </div>
+    </div>
+    }

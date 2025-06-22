@@ -181,6 +181,9 @@ h4 {
     outline: 1px solid var(--color-primary-focus);
 }
 
+input{
+    font-family:monospace;
+}
 
 *,
 *:before,
