@@ -14,8 +14,8 @@ templ otherDetails() {
                         <option value="adults">Voksne (18+ år)</option>
                     </select>
                 </div>
-                <section class="form-description" id="ageGroupDescription">
-                    <p> Arrangementet passer for alle aldre </p>
+                <section class="card form-description" id="ageGroupDescription">
+                    <p style="font-weight: 500;"> Arrangementet passer for alle aldre </p>
                     <p> Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. </p>
                 </section>
                 <div class="form-group duration">
@@ -27,7 +27,7 @@ templ otherDetails() {
                         <option value="6+">Lengre (6+ timer)</option>
                     </select>
                 </div>
-                <section class="form-description">
+                <section class="card form-description" id="durationDescription">
                     <p> Fire til fem timer </p>
                     <p> Dette er den vanligste varigheten for arrangementer på Regncon, og det passer fint inn i en pulje. Det er viktig at folk får vite om arrangementet skal vare mye lengre eller kortere enn en pulje. </p>
                 </section>
@@ -37,7 +37,7 @@ templ otherDetails() {
                         Arrangementet er nybegynnervennlig
                     </label>
                 </div>
-                <section class="form-description">
+                <section class="card form-description" id="beginnerFriendlyDescription">
                     <p> Arrangementet er nybegynnervennlig </p>
                     <p> Det betyr at alle er velkomne på arrangementet og at det vil være en god opplevelse for folk som ikke har erfaring med denne typen spill. </p>
                 </section>
@@ -47,7 +47,7 @@ templ otherDetails() {
                         Arrangementet kan holdes på engelsk
                     </label>
                 </div>
-                <section class="form-description">
+                <section class="card form-description" id="canBeEnglishDescription">
                     <p> Arrangementet kan holdes på engelsk </p>
                     <p> Vi informerer deltakerne under festivalen om at dette arrangementet er et godt valg hvis de ikke snakker norsk. </p>
                 </section>
@@ -65,10 +65,11 @@ templ otherDetails() {
                         required
                     />
                 </div>
-                <section class="form-description">
+                <section class="card form-description" id="playersDescription">
                     <p> Text om antall spillere </p>
                     <p> Noe infotekst her som hjelper med å velge antall spillere. </p>
                 </section>
+                </div>
                 <div class="form-group notes span2">
                     <label for="otherNotes" class="label-small color-strong">
                         Andre Merknader – Er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
@@ -81,6 +82,5 @@ templ otherDetails() {
                         placeholder="Skriv eventuelle merknader her…"
                     ></textarea>
                 </div>
-        </div>
     </div>
     }

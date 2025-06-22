@@ -83,14 +83,14 @@ templ NewEventFormPage() {
                     .details-section {
                     margin-block-start: 1rem;
                     display: grid;
-                    grid-template-columns: 0.5fr 0.5fr;
+                    grid-template-columns: 0.4fr 0.6fr;
                     grid-template-areas:
-                        "ageGroup"
-                        "duration"
-                        "beginnerFriendly"
-                        "canBeEnglish"
-                        "players"
-                        "otherNotes";
+                        "ageGroup ageGroupDescription"
+                        "duration durationDescription"
+                        "beginnerFriendly beginnerFriendlyDescription"
+                        "canBeEnglish canBeEnglishDescription"
+                        "players playersDescription"
+                        "otherNotes otherNotes";
                     gap: 1.25rem;
 
                     .ageGroup {
@@ -98,23 +98,40 @@ templ NewEventFormPage() {
                     }
                     .ageGroupDescription {
                         grid-area: ageGroupDescription;
-                        font-size: 0.9rem;
-                        color: hsl(0 0% 100% / 0.6);
                     }
                     .duration {
                         grid-area: duration;
                     }
+                    .durationDescription {
+                        grid-area: durationDescription;
+                    }
                     .beginnerFriendly {
                         grid-area: beginnerFriendly;
+                    }
+                    .beginnerFriendlyDescription {
+                        grid-area: beginnerFriendlyDescription;
                     }
                     .canBeEnglish {
                         grid-area: canBeEnglish;
                     }
+                    .canBeEnglishDescription {
+                        grid-area: canBeEnglishDescription;
+                    }
                     .players {
                         grid-area: players;
                     }
+                    .playersDescription {
+                        grid-area: playersDescription;
+                    }
                     .otherNotes {
                         grid-area: otherNotes;
+                    }
+                    .form-description {
+                        padding: 0 1rem;
+                        background-color: #35394A;
+                        border-radius: var(--border-radius-medium);
+                        font-size: 0.9rem;
+                        max-width: 520px;
                     }
                 }
             }
