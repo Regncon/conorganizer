@@ -1,8 +1,7 @@
 package formsubmission
 
 templ NewEventFormPage() {
-	<div id="formsubmission-container" class="formsubmission-css-container">
-		<style>
+	<style>
         .formsubmission-wrapper {
             > * + .form-card {
                 margin-block-start: 1rem;
@@ -159,7 +158,8 @@ templ NewEventFormPage() {
             }
         }
     </style>
-		<div class="formsubmission-wrapper">
+	<div id="formsubmission-container" class="formsubmission-css-container">
+		<form class="formsubmission-wrapper">
 			<h1 class="color-strong">Nytt Arrangement</h1>
 			<section>
 				<h2 class="color-strong" style="color:red">Denne siden er under utvikling</h2>
@@ -171,6 +171,6 @@ templ NewEventFormPage() {
 			@contactInfo()
 			@aboutEvent()
 			@otherDetails()
-		</div>
+		</form>
 	</div>
 }
