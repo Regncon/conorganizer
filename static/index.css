@@ -167,6 +167,7 @@ h4 {
     border: 1px solid var(--bg-item-border);
     font-size: 1rem;
     padding-inline-start: 1rem;
+    margin: 0;
 }
 
 :is(textarea).input {
@@ -181,8 +182,30 @@ h4 {
     outline: 1px solid var(--color-primary-focus);
 }
 
-input{
-    font-family:monospace;
+input {
+    font-family: monospace;
+}
+
+.checkbox-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.checkbox-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.checkbox {
+    height: 1rem;
+    width: 1rem;
+}
+
+.checkbox:checked {
+    background-color: var(--color-primary);
+    color: var(--color-text-strong);
 }
 
 *,
@@ -206,8 +229,22 @@ input{
 .card {
     max-width: var(--mobile-max-column-width);
     min-width: var(--mobile-min-width);
-    background: rgb(49, 53, 78);
+    background: #31354e;
     border-radius: var(--border-radius-small);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     padding: 1rem;
+}
+
+.form-card {
+    border-radius: var(--border-radius-medium);
+    background-color: var(--bg-surface);
+    padding: 1rem;
+}
+
+.item-card {
+    padding: 0 1rem;
+    background-color: var(--bg-item);
+    border-radius: var(--border-radius-medium);
+    font-size: 0.9rem;
+    max-width: 520px;
 }

@@ -23,18 +23,23 @@ templ NewEventFormPage() {
                 flex-direction: column;
                 gap: 0.3rem;
             }
+            .form-group-checkbox {
+                display: flex;
+                gap: 0.3rem;
+                place-items: center;
+            }
+
+            .form-card:has(.organizer-section){
+                padding-block-end: 0;
+            }
 
             .form-card {
-                border-radius: var(--border-radius-medium);
-                background-color: var(--bg-surface);
-                padding-inline: 1rem;
-                padding-block-start: 1rem;
 
                 h4 {
                     margin: 0;
                 }
 
-                    .about-section {
+                .about-section {
                     margin-block-start: 1rem;
                     display: grid;
                     grid-template-columns: 0.5fr 0.5fr;
@@ -78,67 +83,66 @@ templ NewEventFormPage() {
                             object-fit: cover;
                         }
                     }
-                    }
+                }
 
-                    .details-section {
+                .details-section {
                     margin-block-start: 1rem;
                     display: grid;
                     grid-template-columns: 0.4fr 0.6fr;
                     grid-template-areas:
-                        "ageGroup ageGroupDescription"
-                        "duration durationDescription"
-                        "beginnerFriendly beginnerFriendlyDescription"
-                        "canBeEnglish canBeEnglishDescription"
-                        "players playersDescription"
-                        "otherNotes otherNotes";
+                        "age-group age-group-description"
+                        "duration duration-description"
+                        "beginner-friendly beginner-friendly-description"
+                        "english english-description"
+                        "player-count player-count-description"
+                        "other-notes other-notes";
                     gap: 1.25rem;
 
-                    .ageGroup {
-                        grid-area: ageGroup;
+                    .age-group {
+                        grid-area: age-group;
                     }
-                    .ageGroupDescription {
-                        grid-area: ageGroupDescription;
+
+                    .age-group-description {
+                        grid-area: age-group-description;
                     }
+
                     .duration {
                         grid-area: duration;
                     }
-                    .durationDescription {
-                        grid-area: durationDescription;
+
+                    .duration-description {
+                        grid-area: duration-description;
                     }
-                    .beginnerFriendly {
-                        grid-area: beginnerFriendly;
+
+                    .beginner-friendly {
+                        grid-area: beginner-friendly;
                     }
-                    .beginnerFriendlyDescription {
-                        grid-area: beginnerFriendlyDescription;
+
+                    .beginner-friendly-description {
+                        grid-area: beginner-friendly-description;
                     }
-                    .canBeEnglish {
-                        grid-area: canBeEnglish;
+
+                    .can-be-english {
+                        grid-area: can-be-english;
                     }
-                    .canBeEnglishDescription {
-                        grid-area: canBeEnglishDescription;
+
+                    .can-be-english-description {
+                        grid-area: can-be-english-description;
                     }
-                    .players {
-                        grid-area: players;
+
+                    .player-count {
+                        grid-area: player-count;
                     }
-                    .playersDescription {
-                        grid-area: playersDescription;
+
+                    .player-count-description {
+                        grid-area: player-count-description;
                     }
-                    .otherNotes {
-                        grid-area: otherNotes;
+
+                    .other-notes {
+                        grid-area: other-notes;
                     }
-                    .form-description {
-                        padding: 0 1rem;
-                        background-color: #35394A;
-                        border-radius: var(--border-radius-medium);
-                        font-size: 0.9rem;
-                        max-width: 520px;
-                    }
-                    .checkbox-label {
-                        display: flex;
-                        justify-content: space-between;
-                        align-items: center;
-                    }
-                    .checkbox-box {
+
+                    .checkbox-background {
                         background-color: var(--bg-item);
                         border: 1px solid var(--bg-item-border);
                         padding: 0.75rem 0.5rem;
@@ -166,7 +170,7 @@ templ NewEventFormPage() {
 			</section>
 			@contactInfo()
 			@aboutEvent()
-            @otherDetails()
+			@otherDetails()
 		</div>
 	</div>
 }
