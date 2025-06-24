@@ -29,14 +29,15 @@ templ NewEventFormPage() {
                     place-items: center;
                 }
 
-                .form-card:has(.organizer-section){
-                    padding-block-end: 0;
-                }
-
                 .form-card {
-
                     h4 {
                         margin: 0;
+                    }
+
+                    .organizer-section {
+                        .form-group {
+                            gap: 0.5rem;
+                        }
                     }
 
                     .about-section {

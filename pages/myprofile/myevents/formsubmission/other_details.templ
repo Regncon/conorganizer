@@ -1,7 +1,7 @@
 package formsubmission
 
 templ otherDetails() {
-	<div class="form-card">
+	<article class="form-card">
 		<h4>Øvrige Detaljer</h4>
 		<section class="details-section">
 			<section class="form-group age-group">
@@ -14,10 +14,10 @@ templ otherDetails() {
 					<option value="adults">Voksne (18+ år)</option>
 				</select>
 			</section>
-			<section class="item-card age-group-description">
+			<article class="item-card age-group-description">
 				<p class="label">Arrangementet passer for alle aldre </p>
 				<p>Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. </p>
-			</section>
+			</article>
 			<section class="form-group duration">
 				<label for="duration" class="label-small color-strong">Varighet</label>
 				<select id="duration" name="duration" class="input" required>
@@ -27,10 +27,10 @@ templ otherDetails() {
 					<option value="6+">Lengre (6+ timer)</option>
 				</select>
 			</section>
-			<section class="item-card duration-description">
+			<article class="item-card duration-description">
 				<p class="label">Fire til fem timer </p>
 				<p>Dette er den vanligste varigheten for arrangementer på Regncon, og det passer fint inn i en pulje. Det er viktig at folk får vite om arrangementet skal vare mye lengre eller kortere enn en pulje. </p>
-			</section>
+			</article>
 			<section class="form-group beginner-friendly">
 				<div class="checkbox-label">
 					<label for="beginner-friendly-label" class="label-small color-strong">Nybegynnervennlig arrangement</label>
@@ -55,10 +55,10 @@ templ otherDetails() {
 					<label for="english">Arrangementet kan holdes på engelsk </label>
 				</div>
 			</section>
-			<section class="item-card" id="english-description">
+			<article class="item-card" id="english-description">
 				<p class="label">Arrangementet kan holdes på engelsk </p>
 				<p>Vi informerer deltakerne under festivalen om at dette arrangementet er et godt valg hvis de ikke snakker norsk. </p>
-			</section>
+			</article>
 			<section class="form-group">
 				<label for="player-count" class="label-small color-strong">
 					Antall spillere (utenom arrangør)
@@ -73,10 +73,10 @@ templ otherDetails() {
 					required
 				/>
 			</section>
-			<section class="item-card" id="player-count-description">
+			<article class="item-card" id="player-count-description">
 				<p class="label">Text om antall spillere </p>
 				<p>Noe infotekst her som hjelper med å velge antall spillere. </p>
-			</section>
+			</article>
 		</section>
 		<section class="form-group span2">
 			<label for="other-notes" class="label-small color-strong">
@@ -90,5 +90,5 @@ templ otherDetails() {
 				placeholder="Skriv eventuelle merknader her…"
 			></textarea>
 		</section>
-	</div>
+	</article>
 }
