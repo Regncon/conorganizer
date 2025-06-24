@@ -245,9 +245,8 @@ input {
 }
 
 .item-card {
-    padding: 0 1rem;
+    padding: 1rem;
     background-color: var(--bg-item);
     border-radius: var(--border-radius-medium);
     font-size: 0.9rem;
-    max-width: 520px;
 }
