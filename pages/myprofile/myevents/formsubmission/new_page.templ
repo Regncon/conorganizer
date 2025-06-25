@@ -73,8 +73,36 @@ templ NewEventFormPage() {
 
                 }
 
+                .submit-section {
+                    display: grid;
+                    grid-template-columns: 0.7fr 0.3fr;
+                    gap: 2rem;
+                    margin-block-start: 1rem;
+                    min-height: 6.125rem;
+                    place-content: center;
+
+                    p {
+                        margin: 0;
+                        place-self: center;
+                    }
+
+                    .btn {
+                        align-self: end;
+                        height: 3.625rem;
+                        width: min(100%, 15rem);
+                    }
+                    /*
+                     //TODO: remove this if button should not be white
+                    */
+                    .btn--outline {
+                        border-width: 3px;
+                        border-color: var(--btn-primary-bg);
+                        color: var(--btn-primary-bg);
+                    }
+                }
+
                 @container formsubmission-css-container (width > 42.31rem) {
-                    .form-card {
+                    .form-card:is(:not(.submit-section)) {
                         display: block;
 
                         .organizer-section {
@@ -193,6 +221,17 @@ templ NewEventFormPage() {
 			@contactInfo()
 			@aboutEvent()
 			@otherDetails()
+			<section class="submit-section form-card">
+				<p>
+					Kladden blir lagret automatisk. Når du er klar til å sende arrangementet inn, trenger du bare å klikke på på knappen her!
+				</p>
+				<button
+					type="submit"
+					class="btn btn--outline"
+				>
+					Send Inn
+				</button>
+			</section>
 		</form>
 	</div>
 }

@@ -119,6 +119,15 @@ html {
     color: var(--primary-text);
     font-size: var(--text-body);
     color: var(--color-primary-text);
+    scroll-behavior: smooth;
+    /*
+    //todo: fix nav then add scroll-margin based on css variable
+    */
+    scroll-margin: 64px;
+
+    @media (prefers-reduced-motion: reduce) {
+        scroll-behavior: auto;
+    }
 }
 
 body {
