@@ -90,6 +90,12 @@ Helpful Dadbod tutorials:
 
 Common issues and solutions:
 
+- **Manual generate templ**: If you encounter issues with Templ, run:
+
+````bash
+    templ generate && go build -buildvcs=false -o tmp/main .
+```
+
 - **Tool not found**: Ensure `$HOME/go/bin` is in your PATH
 - **Port in use**: Check if another service is using port 7331 or 8080
 - **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
@@ -122,7 +128,7 @@ echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc  # or ~/.bash_profile for mac
 
 # Apply changes
 source ~/.bashrc  # or source ~/.bash_profile for macOS
-```
+````
 
 </details>
 
@@ -138,6 +144,10 @@ source ~/.zshrc
 ```
 
 </details>
+### Update templ 
+```bash
+go install github.com/a-h/templ/cmd/templ@latest
+```
 
 ### Update Go Modules
 

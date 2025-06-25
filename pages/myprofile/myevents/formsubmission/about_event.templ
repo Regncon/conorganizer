@@ -1,18 +1,18 @@
 package formsubmission
 
 templ aboutEvent() {
-	<div class="form-card">
+	<article class="form-card">
 		<h4>Om arrangementet</h4>
-		<div class="about-section">
-			<div class="form-group title">
+		<section class="about-section">
+			<section class="form-group title">
 				<label for="title" class="label-small color-strong">Tittel</label>
 				<input type="text" id="title" class="input" name="title" placeholder="Tittel på arrangementet" required/>
-			</div>
-			<div class="form-group intro">
+			</section>
+			<section class="form-group intro">
 				<label for="intro" class="label-small color-strong">Kjapp introduksjon</label>
 				<textarea id="intro" name="intro" class="input" rows="7" placeholder="Kjapp introduksjon til arrangementet" required></textarea>
-			</div>
-			<div class="form-group type">
+			</section>
+			<section class="form-group type">
 				<label for="type" class="label-small color-strong">Spilltype</label>
 				<select id="type" name="type" class="input" required>
 					<option value="">Velg type</option>
@@ -20,22 +20,22 @@ templ aboutEvent() {
 					<option value="boardgame">Brettspill</option>
 					<option value="cardgame">Kortspill</option>
 				</select>
-			</div>
-			<div class="img">
+			</section>
+			<section class="img">
 				<div class="form-group">
 					<label for="image" class="label-small color-strong">Arrangementbilde</label>
-					<input type="text" id="image" name="image" class="input" placeholder="URL til bilde av arrangementet fra imgurl.com" required/>
+					<input type="text" id="image" name="image" class="input" placeholder="Lenke til bilde" required/>
 				</div>
 				<img src="https://placehold.co/480x136" alt="Placeholder for event image"/>
-			</div>
-			<div class="form-group system">
+			</section>
+			<section class="form-group system">
 				<label for="system" class="label-small color-strong">System</label>
 				<input type="text" id="system" name="system" class="input" placeholder="Hva system er det?" required/>
-			</div>
-			<div class="form-group description">
+			</section>
+			<section class="form-group description">
 				<label for="description" class="label-small color-strong">Beskrivelse av Arrangementet</label>
-				<textarea id="description" rows="15" name="description" class="input span2" placeholder="Beskrivelse av Arrangementet" required></textarea>
-			</div>
-		</div>
-	</div>
+				<textarea id="description" rows="15" name="description" class="input" placeholder="Beskrivelse av arrangementet" required></textarea>
+			</section>
+		</section>
+	</article>
 }

@@ -1,30 +1,21 @@
 package formsubmission
 
 templ contactInfo() {
-	<div class="form-card">
+	<article class="form-card">
 		<h4>Om arrangøren</h4>
-		<div class="organizer-section">
-			<div class="column">
-				<p>
-					<span class="label color-strong">Arrangør</span>
-					<br/>
-					<span>Gary Garyson</span>
-				</p>
-			</div>
-			<div class="column">
-				<p>
-					<span class="label color-strong">E-post</span>
-					<br/>
-					<span>ola@norman.no</span>
-				</p>
-			</div>
-			<div class="column">
-				<p>
-					<span class="label color-strong ">Telefon</span>
-					<br/>
-					<span>+47 123 45 678</span>
-				</p>
-			</div>
-		</div>
-	</div>
+		<section class="organizer-section">
+			<section class="form-group">
+				<label for="name" class="label color-strong">Arrangør</label>
+				<input type="text" name="name" id="name" class="input" value="Gary Garyson" placeholder="Ditt navn" required/>
+			</section>
+			<section class="form-group">
+				<label for="email" class="label color-strong">E-post</label>
+				<input type="email" name="email" id="email" class="input" value="ola@norman.no" placeholder="Din e-post" required/>
+			</section>
+			<section class="form-group">
+				<label for="phone" class="label color-strong">Telefon</label>
+				<input type="tel" name="phone" id="phone" class="input" value="+47 123 45 678" placeholder="Ditt telefonnummer" required/>
+			</section>
+		</section>
+	</article>
 }
