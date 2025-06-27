@@ -11,17 +11,24 @@ import (
 
 // Todo Separate this in to a auth router
 func NewEventLayoutRoute(router chi.Router, db *sql.DB) {
-	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+
+		eventId := chi.URLParam(r, "id")
+		if eventId == "" {
+			http.Error(w, "Event ID is required. Got: "+eventId, http.StatusBadRequest)
+			return
+		}
+
 		var ctx = r.Context()
 		layouts.Base(
 			"Nytt arrangement",
 			userctx.GetUserRequestInfo(ctx),
-			newEventIndex(),
+			newEventIndex(eventId),
 		).Render(ctx, w)
 	})
 }
 
-templ newEventIndex() {
+templ newEventIndex(eventId string) {
 	<div id="formsubmission-container" data-on-load={ datastar.GetSSE("/my-events/api/new") }>
 		<p>Meld på nytt arrangement</p>
 		<p>Hvis du ser denne meldingen, vennligst tøm informasjonskapslene og oppdater siden.</p>

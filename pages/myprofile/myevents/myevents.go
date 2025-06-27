@@ -214,5 +214,5 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 		return
 	}
 	logger.Info("New event form submission created", "eventID", eventID)
-	http.Redirect(w, r, fmt.Sprintf("/my-events/%d", eventID), http.StatusSeeOther)
+	http.Redirect(w, r, fmt.Sprintf("/my-events/new/%d", eventID), http.StatusSeeOther)
 }
