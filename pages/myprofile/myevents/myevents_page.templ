@@ -82,7 +82,7 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 
 func shouldDisableATagUrl(status EventStatus, eventId int) string {
 	if status == EventStatusDraft {
-		return fmt.Sprintf("/event/%d", eventId)
+		return fmt.Sprintf("/my-events/new/%d", eventId)
 	}
 	return "#"
 }
