@@ -20,7 +20,7 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, err error) {
 			return
 		}
 
-		event, err := getEventByID(eventID, db)
+		event, err := GetEventByID(eventID, db)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

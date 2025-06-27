@@ -4,7 +4,7 @@ import "database/sql"
 
 templ event_page(eventId string, db *sql.DB) {
 	{{
-	event, err := getEventByID(eventId, db)
+	event, err := GetEventByID(eventId, db)
 	}}
 	if event == nil {
 		<p>Event not found</p>

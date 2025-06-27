@@ -3,24 +3,16 @@ package myevents
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"log/slog"
 )
 
-type EventStatus string
-
-const (
-	EventStatusDraft     EventStatus = "Kladd"
-	EventStatusPublished EventStatus = "Publisert"
-	EventStatusClosed    EventStatus = "Godkjent"
-	EventStatusArchived  EventStatus = "Avist"
-)
-
 type MyEvents struct {
-	Id          int         `json:"id"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	Status      EventStatus `json:"status"`
+	Id          int                `json:"id"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	Status      models.EventStatus `json:"status"`
 }
 
 templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
@@ -45,7 +37,7 @@ templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 }
 
 templ events(userid string, db *sql.DB, logger *slog.Logger) {
-	{{ events := GetEvents(db, userid, logger) }}
+	{{ events := GetEventsByUserId(db, userid, logger) }}
 	if len(events) == 0 {
 		@newEvent()
 	}
@@ -80,8 +72,8 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	}
 }
 
-func shouldDisableATagUrl(status EventStatus, eventId int) string {
-	if status == EventStatusDraft {
+func shouldDisableATagUrl(status models.EventStatus, eventId int) string {
+	if status == models.EventStatusDraft {
 		return fmt.Sprintf("/my-events/new/%d", eventId)
 	}
 	return "#"
@@ -112,7 +104,7 @@ templ newEvent() {
 	</button>
 }
 
-func GetEvents(db *sql.DB, userId string, logger *slog.Logger) []MyEvents {
+func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []MyEvents {
 	var events []MyEvents
 
 	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)

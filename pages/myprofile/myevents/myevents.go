@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/Regncon/conorganizer/pages/myprofile/myevents/formsubmission"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -219,7 +220,7 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 	) RETURNING id`
 
 	var eventID int64
-	insertError = db.QueryRow(query, userDbId, userInfo.Email, EventStatusDraft).Scan(&eventID)
+	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft).Scan(&eventID)
 	if insertError != nil {
 		logger.Error("Failed to create new event form submission", "error", insertError)
 		return

@@ -9,7 +9,6 @@ import (
 	"net/http"
 )
 
-// Todo Separate this in to a auth router
 func NewEventLayoutRoute(router chi.Router, db *sql.DB) {
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 
