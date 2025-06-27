@@ -37,7 +37,7 @@ templ otherDetails() {
 					<p for="beginner-friendly" class="label-small" style="text-align:end; font-weight: 400;">Valgfritt</p>
 				</div>
 				<div class="checkbox-background form-group-checkbox">
-					<input type="checkbox" id="beginner-friendly" name="beginner-friendly" class="checkbox input"/>
+					<input type="checkbox" id="beginner-friendly" name="beginner-friendly" class="checkbox input" required/>
 					<label for="beginner-friendly">Arrangementet er nybegynnervennlig </label>
 				</div>
 			</section>
@@ -51,7 +51,7 @@ templ otherDetails() {
 					<p for="english-label" class="label-small" style="text-align:end; font-weight:400;">Valgfritt</p>
 				</div>
 				<div class="checkbox-background form-group-checkbox">
-					<input type="checkbox" id="english" name="english-label" class="checkbox input"/>
+					<input type="checkbox" id="english" name="english-label" class="checkbox input" required/>
 					<label for="english">Arrangementet kan holdes på engelsk </label>
 				</div>
 			</section>
@@ -87,6 +87,7 @@ templ otherDetails() {
 					class="input"
 					rows="5"
 					placeholder="Skriv eventuelle merknader her…"
+					required
 				></textarea>
 			</section>
 		</section>
