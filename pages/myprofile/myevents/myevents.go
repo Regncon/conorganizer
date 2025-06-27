@@ -11,6 +11,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/Regncon/conorganizer/pages/myprofile/myevents/formsubmission"
+
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -107,10 +108,16 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 			})
 
 			apiRouter.Route("/new", func(newRouter chi.Router) {
-				newRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				newRouter.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 					sessionID, mvc, err := mvcSession(w, r)
 					if err != nil {
 						http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
+						return
+					}
+
+					eventId := chi.URLParam(r, "id")
+					if eventId == "" {
+						http.Error(w, "Event ID is required. Got: "+eventId, http.StatusBadRequest)
 						return
 					}
 
@@ -138,7 +145,9 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 								return
 							}
 
-							c := formsubmission.NewEventFormPage()
+							userId := userctx.GetUserRequestInfo(r.Context()).Id
+
+							c := formsubmission.NewEventFormPage(eventId, userId, db, logger)
 							if err := sse.MergeFragmentTempl(c); err != nil {
 								sse.ConsoleError(err)
 								return
@@ -157,7 +166,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 		})
 
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
-			formsubmission.NewEventLayoutRoute(newRouter, db)
+			formsubmission.NewEventLayoutRoute(newRouter, db, logger)
 		})
 	})
 	return nil

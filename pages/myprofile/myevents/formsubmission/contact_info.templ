@@ -1,21 +1,38 @@
 package formsubmission
 
-templ contactInfo() {
+import "fmt"
+
+templ contactInfo(name string, email string, phone int64) {
+	{ fmt.Printf("name: %s, email: %s, phone: %d\n", name, email, phone) }
 	<article class="form-card">
 		<h4>Om arrangøren</h4>
 		<section class="organizer-section">
 			<section class="form-group">
 				<label for="name" class="label color-strong">Arrangør</label>
-				<input type="text" name="name" id="name" class="input" value="Gary Garyson" placeholder="Ditt navn" required/>
+				<input type="text" name="name" id="name" class="input" value={ shouldShowStringValue(name) } placeholder="Ditt navn" required/>
 			</section>
 			<section class="form-group">
 				<label for="email" class="label color-strong">E-post</label>
-				<input type="email" name="email" id="email" class="input" value="ola@norman.no" placeholder="Din e-post" required/>
+				<input type="email" name="email" id="email" class="input" value={ shouldShowStringValue(email) } placeholder="Din e-post" required/>
 			</section>
 			<section class="form-group">
 				<label for="phone" class="label color-strong">Telefon</label>
-				<input type="tel" name="phone" id="phone" class="input" value="+47 123 45 678" placeholder="Ditt telefonnummer" required/>
+				<input type="tel" name="phone" id="phone" class="input" value={ shouldShowNumberValue(phone) } placeholder="Ditt telefonnummer" required/>
 			</section>
 		</section>
 	</article>
+}
+
+func shouldShowStringValue(value string) string {
+	if value != "" {
+		return value
+	}
+	return ""
+}
+
+func shouldShowNumberValue(value int64) string {
+	if value != 0 {
+		return fmt.Sprintf("%d", value)
+	}
+	return ""
 }

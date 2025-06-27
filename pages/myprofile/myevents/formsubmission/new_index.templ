@@ -6,10 +6,11 @@ import (
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar/sdk/go"
+	"log/slog"
 	"net/http"
 )
 
-func NewEventLayoutRoute(router chi.Router, db *sql.DB) {
+func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 
 		eventId := chi.URLParam(r, "id")
@@ -28,7 +29,7 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB) {
 }
 
 templ newEventIndex(eventId string) {
-	<div id="formsubmission-container" data-on-load={ datastar.GetSSE("/my-events/api/new") }>
+	<div id="formsubmission-container" data-on-load={ datastar.GetSSE("/my-events/api/new/" + eventId) }>
 		<p>Meld på nytt arrangement</p>
 		<p>Hvis du ser denne meldingen, vennligst tøm informasjonskapslene og oppdater siden.</p>
 	</div>
