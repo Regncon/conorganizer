@@ -149,6 +149,10 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				formsubmission.SetupExampleInlineValidation(db, newRouter, logger)
 			})
 
+			apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
+				createNewEventFormSubmission(db, logger, w, r)
+			})
+
 		})
 
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
@@ -185,4 +189,30 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 		}
 	}
 	return id, nil
+}
+
+func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
+	userInfo := userctx.GetUserRequestInfo(r.Context())
+	if userInfo.Id == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	fmt.Printf("Creating new event form submission for user: %s\n, and email: %s\n", userInfo.Id, userInfo.Email)
+	logger.Info("Creating new event form submission")
+	sqlStatement := `
+	INSERT INTO events (
+		host, email, status, title, description, host_name, phone_number, max_players,
+		child_friendly, adults_only, beginner_friendly, experienced_only,
+		can_be_run_in_english, long_running, short_running
+	) VALUES (
+		$1, $2, $3, '', '', '', 0, 0, false, false, false, false, false, false, false
+	) RETURNING id`
+	var eventID int64
+	err := db.QueryRow(sqlStatement, userInfo.Id, userInfo.Email, EventStatusDraft).Scan(&eventID)
+	if err != nil {
+		logger.Error("Failed to create new event form submission", "error", err)
+		return
+	}
+	logger.Info("New event form submission created", "eventID", eventID)
+	http.Redirect(w, r, fmt.Sprintf("/my-events/%d", eventID), http.StatusSeeOther)
 }

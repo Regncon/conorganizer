@@ -88,7 +88,7 @@ func shouldDisableATagUrl(status EventStatus, eventId int) string {
 
 templ newEvent() {
 	<button
-		data-on-click="@get('/my-events/create')"
+		data-on-click="@post('/my-events/api/create')"
 		style="
 		width: 100%;
 		height: 20rem;
