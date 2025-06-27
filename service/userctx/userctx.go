@@ -2,6 +2,7 @@ package userctx
 
 import (
 	"context"
+	"database/sql"
 	"log/slog"
 	"net/http"
 
@@ -45,4 +46,15 @@ func GetUserRequestInfo(ctx context.Context) requestctx.UserRequestInfo {
 		Email:      email,
 		IsAdmin:    isAdmin,
 	}
+}
+
+func GetIdFromUserIdInDb(userId string, db *sql.DB, logger *slog.Logger) (string, error) {
+	var userDbId string
+	userQuery := "SELECT id FROM users WHERE user_id = ?"
+	userRow := db.QueryRow(userQuery, userId)
+	if userRowErr := userRow.Scan(&userDbId); userRowErr != nil {
+		logger.Error("Failed to find user", "user_id", userId, "error", userRowErr)
+		return "", userRowErr
+	}
+	return userDbId, nil
 }

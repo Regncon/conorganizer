@@ -192,14 +192,24 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 }
 
 func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
+	logger.Info("Creating new event form submission")
 	userInfo := userctx.GetUserRequestInfo(r.Context())
 	if userInfo.Id == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-	fmt.Printf("Creating new event form submission for user: %s\n, and email: %s\n", userInfo.Id, userInfo.Email)
-	logger.Info("Creating new event form submission")
-	sqlStatement := `
+
+	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db, logger)
+	if insertError != nil {
+		logger.Error("Failed to get user ID from database", "error", insertError)
+		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("found user info", "userId", userInfo.Id, "dbId", userDbId, "email", userInfo.Email)
+	logger.Info("Inserting new event form submission")
+
+	query := `
 	INSERT INTO events (
 		host, email, status, title, description, host_name, phone_number, max_players,
 		child_friendly, adults_only, beginner_friendly, experienced_only,
@@ -207,12 +217,14 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 	) VALUES (
 		$1, $2, $3, '', '', '', 0, 0, false, false, false, false, false, false, false
 	) RETURNING id`
+
 	var eventID int64
-	err := db.QueryRow(sqlStatement, userInfo.Id, userInfo.Email, EventStatusDraft).Scan(&eventID)
-	if err != nil {
-		logger.Error("Failed to create new event form submission", "error", err)
+	insertError = db.QueryRow(query, userDbId, userInfo.Email, EventStatusDraft).Scan(&eventID)
+	if insertError != nil {
+		logger.Error("Failed to create new event form submission", "error", insertError)
 		return
 	}
+
 	logger.Info("New event form submission created", "eventID", eventID)
 	http.Redirect(w, r, fmt.Sprintf("/my-events/new/%d", eventID), http.StatusSeeOther)
 }

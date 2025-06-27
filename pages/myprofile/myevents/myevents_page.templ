@@ -3,6 +3,7 @@ package myevents
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"log/slog"
 )
 
@@ -112,12 +113,11 @@ templ newEvent() {
 }
 
 func GetEvents(db *sql.DB, userId string, logger *slog.Logger) []MyEvents {
-	var userDbId string
 	var events []MyEvents
-	userQuery := "SELECT id FROM users WHERE user_id = ?"
-	userRow := db.QueryRow(userQuery, userId)
-	if userRowErr := userRow.Scan(&userDbId); userRowErr != nil {
-		logger.Error("Failed to find user", "user_id", userId, "error", userRowErr)
+
+	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
+	if userDbIdErr != nil {
+		logger.Error("userDbIdErr", userDbIdErr)
 		return events
 	}
 
