@@ -58,3 +58,8 @@ func GetIdFromUserIdInDb(userId string, db *sql.DB, logger *slog.Logger) (string
 	}
 	return userDbId, nil
 }
+
+func GetIdFromUserIdInDbFromContext(ctx context.Context, db *sql.DB, logger *slog.Logger) (string, error) {
+	userId := GetUserRequestInfo(ctx).Id
+	return GetIdFromUserIdInDb(userId, db, logger)
+}

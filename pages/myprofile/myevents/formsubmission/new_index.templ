@@ -22,7 +22,13 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 			return
 		}
 
-		selectErr, statusCode := validateEventExists(db, eventId)
+		userId, userIdErr := userctx.GetIdFromUserIdInDbFromContext(r.Context(), db, logger)
+		if userIdErr != nil {
+			http.Error(w, userIdErr.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		selectErr, statusCode := validateEventExists(db, eventId, userId)
 		if selectErr != nil && statusCode == http.StatusInternalServerError {
 			http.Error(w, selectErr.Error(), http.StatusInternalServerError)
 			return
@@ -56,11 +62,11 @@ templ newEventIndex(eventId int) {
 	</div>
 }
 
-func validateEventExists(db *sql.DB, eventId int) (error, int) {
+func validateEventExists(db *sql.DB, eventId int, userId string) (error, int) {
 	var exists bool
-	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM events WHERE id = ?)", eventId).Scan(&exists)
-	if err != nil {
-		return err, http.StatusInternalServerError
+	queryErr := db.QueryRow("SELECT EXISTS(SELECT 1 FROM events WHERE id = ? AND host = ?)", eventId, userId).Scan(&exists)
+	if queryErr != nil {
+		return queryErr, http.StatusInternalServerError
 	}
 
 	if !exists {
