@@ -41,7 +41,6 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 		eventTitle := getEventTitle(db, eventId)
 
 		title := "Lag nytt arrangement"
-
 		if eventTitle != "" {
 			title = eventTitle
 		}
