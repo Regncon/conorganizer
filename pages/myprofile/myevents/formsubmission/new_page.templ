@@ -232,7 +232,16 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 				</p>
 			</section>
 			@contactInfo(event.HostName, event.Email, event.PhoneNumber)
-			@aboutEvent()
+			@aboutEvent(
+				event.Title,
+				//wrong event type here needs to change when db is corrected
+				event.Description,
+				//wrong event type here needs to change when db is corrected
+				event.System.String,
+				event.ImageURL.String,
+				event.System.String,
+				event.Description,
+			)
 			@otherDetails()
 			@submitSection()
 		</form>
@@ -307,4 +316,18 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 	}
 
 	return &event, nil
+}
+
+func shouldShowStringValue(value string) string {
+	if value != "" {
+		return value
+	}
+	return ""
+}
+
+func shouldShowNumberValue(value int64) string {
+	if value != 0 {
+		return fmt.Sprintf("%d", value)
+	}
+	return ""
 }

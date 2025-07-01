@@ -1,7 +1,5 @@
 package formsubmission
 
-import "fmt"
-
 templ contactInfo(name string, email string, phone int64) {
 	<article class="form-card">
 		<h4>Om arrangøren</h4>
@@ -20,18 +18,4 @@ templ contactInfo(name string, email string, phone int64) {
 			</section>
 		</section>
 	</article>
-}
-
-func shouldShowStringValue(value string) string {
-	if value != "" {
-		return value
-	}
-	return ""
-}
-
-func shouldShowNumberValue(value int64) string {
-	if value != 0 {
-		return fmt.Sprintf("%d", value)
-	}
-	return ""
 }
