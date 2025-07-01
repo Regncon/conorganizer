@@ -107,8 +107,8 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				}
 			})
 
-			apiRouter.Route("/new", func(newRouter chi.Router) {
-				newRouter.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
+			apiRouter.Route("/new", func(newApiRouter chi.Router) {
+				newApiRouter.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
 					sessionID, mvc, err := mvcSession(w, r)
 					if err != nil {
 						http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
@@ -156,7 +156,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					}
 				})
 
-				formsubmission.SetupExampleInlineValidation(db, newRouter, logger)
+				formsubmission.SetupExampleInlineValidation(db, newApiRouter, logger)
 			})
 
 			apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
@@ -166,7 +166,9 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 		})
 
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
-			formsubmission.NewEventLayoutRoute(newRouter, db, logger)
+			newRouter.Route("/{id}", func(newIdRoute chi.Router) {
+				formsubmission.NewEventLayoutRoute(newIdRoute, db, logger)
+			})
 		})
 	})
 	return nil

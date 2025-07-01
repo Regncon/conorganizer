@@ -2,6 +2,7 @@ package formsubmission
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
@@ -11,11 +12,22 @@ import (
 )
 
 func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
-	router.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
-
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
+
 		if eventId == "" {
 			http.Error(w, "Event ID is required. Got: "+eventId, http.StatusBadRequest)
+			return
+		}
+
+		hasEventId, selectErr, statusCode := selectEventById(db, eventId)
+		if selectErr != nil && statusCode == http.StatusInternalServerError {
+			http.Error(w, selectErr.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		if selectErr != nil && statusCode == http.StatusNotFound {
+			http.Error(w, selectErr.Error(), http.StatusNotFound)
 			return
 		}
 
@@ -33,4 +45,18 @@ templ newEventIndex(eventId string) {
 		<p>Meld på nytt arrangement</p>
 		<p>Hvis du ser denne meldingen, vennligst tøm informasjonskapslene og oppdater siden.</p>
 	</div>
+}
+
+func selectEventById(db *sql.DB, eventId string) (bool, error, int) {
+	var hasEventId bool
+	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM events WHERE id = ?)", eventId).Scan(&hasEventId)
+	if err != nil {
+		return false, err, http.StatusInternalServerError
+	}
+
+	if !hasEventId {
+		return false, fmt.Errorf("event not found"), http.StatusNotFound
+	}
+
+	return true, nil, http.StatusOK
 }
