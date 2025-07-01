@@ -15,7 +15,6 @@ import (
 func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		id := chi.URLParam(r, "id")
-		// convert id to int
 		eventId, err := strconv.Atoi(id)
 		if err != nil {
 			http.Error(w, "Invalid event ID. Must be a number.", http.StatusBadRequest)
