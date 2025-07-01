@@ -30,10 +30,17 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 			http.Error(w, selectErr.Error(), http.StatusNotFound)
 			return
 		}
+		eventTitle := getEventTitle(db, eventId)
+
+		title := "Lag nytt arrangement"
+
+		if eventTitle != "" {
+			title = eventTitle
+		}
 
 		var ctx = r.Context()
 		layouts.Base(
-			"Nytt arrangement",
+			title,
 			userctx.GetUserRequestInfo(ctx),
 			newEventIndex(eventId),
 		).Render(ctx, w)
@@ -59,4 +66,16 @@ func validateEventExists(db *sql.DB, eventId string) (error, int) {
 	}
 
 	return nil, http.StatusOK
+}
+
+func getEventTitle(db *sql.DB, eventId string) string {
+	var title string
+
+	err := db.QueryRow("SELECT title FROM events WHERE id = ?", eventId).Scan(&title)
+
+	if err != nil {
+		return ""
+	}
+
+	return title
 }
