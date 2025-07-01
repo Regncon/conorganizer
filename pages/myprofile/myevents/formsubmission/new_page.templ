@@ -234,17 +234,7 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 			@contactInfo(event.HostName, event.Email, event.PhoneNumber)
 			@aboutEvent()
 			@otherDetails()
-			<article class="submit-section form-card">
-				<p>
-					Kladden blir lagret automatisk. Når du er klar til å sende arrangementet inn, trenger du bare å klikke på på knappen her!
-				</p>
-				<button
-					type="submit"
-					class="btn btn--outline"
-				>
-					Send Inn
-				</button>
-			</article>
+			@submitSection()
 		</form>
 	</div>
 }
