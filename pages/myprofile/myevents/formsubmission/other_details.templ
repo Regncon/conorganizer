@@ -1,6 +1,8 @@
 package formsubmission
 
-templ otherDetails() {
+import "github.com/Regncon/conorganizer/models"
+
+templ otherDetails(ageGroup models.AgeFlags, duration models.DurationFlags) {
 	<article class="form-card">
 		<h4>Øvrige Detaljer</h4>
 		<section class="details-section">

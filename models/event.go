@@ -14,6 +14,15 @@ const (
 	EventStatusArchived  EventStatus = "Avist"
 )
 
+type AgeGroup struct {
+	ChildFriendly bool
+	AdultsOnly    bool
+}
+type Duration struct {
+	LongRunning  bool
+	ShortRunning bool
+}
+
 type Event struct {
 	ID                int64          `json:"id"`
 	Title             string         `json:"title"`
@@ -36,4 +45,6 @@ type Event struct {
 	ShortRunning      bool           `json:"short_running"`
 	Status            EventStatus    `json:"status"`
 	InsertedTime      time.Time      `json:"inserted_time"`
+	AgeGroup          AgeGroup
+	Duration          Duration
 }

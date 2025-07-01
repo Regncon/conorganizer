@@ -242,7 +242,7 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 				event.System.String,
 				event.Description,
 			)
-			@otherDetails()
+			@otherDetails(event.AgeGroup, event.DurationGroup)
 			@submitSection()
 		</form>
 	</div>
@@ -314,6 +314,10 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		}
 		return nil, err
 	}
+
+	//todo fill out these with missing if we add new fields
+	event.AgeGroup = models.AgeFlags{ChildFriendly: event.ChildFriendly, AdultsOnly: event.AdultsOnly}
+	event.DurationGroup = models.DurationFlags{LongRunning: event.LongRunning, ShortRunning: event.ShortRunning}
 
 	return &event, nil
 }
