@@ -234,9 +234,9 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 			@contactInfo(event.HostName, event.Email, event.PhoneNumber)
 			@aboutEvent(
 				event.Title,
-				//wrong event type here needs to change when db is corrected
+				//TODO:wrong event type here needs to change when db is corrected
 				event.Description,
-				//wrong event type here needs to change when db is corrected
+				//TODO:wrong event type here needs to change when db is corrected
 				event.System.String,
 				event.ImageURL.String,
 				event.System.String,
