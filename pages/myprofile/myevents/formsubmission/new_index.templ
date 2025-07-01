@@ -38,8 +38,8 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 			http.Error(w, selectErr.Error(), http.StatusNotFound)
 			return
 		}
-		eventTitle := getEventTitle(db, eventId)
 
+		eventTitle := getEventTitle(db, eventId)
 		title := "Lag nytt arrangement"
 		if eventTitle != "" {
 			title = eventTitle
