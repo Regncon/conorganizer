@@ -1,0 +1,16 @@
+package formsubmission
+
+templ eventPicture(image string) {
+	<section class="form-group image">
+		<label for="image" class="label-small color-strong">Bilde</label>
+		<input
+			type="file"
+			id="image"
+			name="image"
+			class="input"
+			accept="image/*"
+			value={ shouldShowStringValue(image) }
+			required
+		/>
+	</section>
+}
