@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/userctx"
+	//"github.com/Regncon/conorganizer/service/userctx"
 	"log/slog"
 )
 
@@ -231,7 +231,12 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 					ferdig med siden.
 				</p>
 			</section>
-			@contactInfo(event.HostName, event.Email, event.PhoneNumber)
+			@contactInfo(
+				eventId,
+				event.HostName,
+				event.Email,
+				event.PhoneNumber,
+			)
 			@aboutEvent(
 				event.Title,
 				//TODO:wrong event type here needs to change when db is corrected
@@ -254,11 +259,13 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		return nil, fmt.Errorf("unauthorized access")
 	}
 
-	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
+	/*userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
 	if userDbIdErr != nil {
 		logger.Error("Failed to get user ID from database", "error", userDbIdErr)
 		return nil, fmt.Errorf("failed to get user ID from database: %w", userDbIdErr)
 	}
+	*/
+	fmt.Println("getting eventID", eventID)
 
 	query := `
             SELECT
@@ -284,7 +291,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
                 status
             FROM events WHERE id = ?
             `
-	row := db.QueryRow(query, userDbId)
+	row := db.QueryRow(query, eventID)
 
 	var event models.Event
 	if err := row.Scan(
@@ -315,6 +322,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		return nil, err
 	}
 
+	fmt.Println("event found", event)
 	//todo fill out these with missing if we add new fields
 	event.AgeGroup = models.AgeFlags{ChildFriendly: event.ChildFriendly, AdultsOnly: event.AdultsOnly}
 	event.DurationGroup = models.DurationFlags{LongRunning: event.LongRunning, ShortRunning: event.ShortRunning}

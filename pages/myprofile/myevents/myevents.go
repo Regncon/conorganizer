@@ -108,55 +108,58 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 			})
 
 			apiRouter.Route("/new", func(newApiRouter chi.Router) {
-				newApiRouter.Get("/{id}", func(w http.ResponseWriter, r *http.Request) {
-					sessionID, mvc, err := mvcSession(w, r)
-					if err != nil {
-						http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
-						return
-					}
-
-					eventId := chi.URLParam(r, "id")
-					if eventId == "" {
-						http.Error(w, "Event ID is required. Got: "+eventId, http.StatusBadRequest)
-						return
-					}
-
-					sse := datastar.NewSSE(w, r)
-
-					ctx := r.Context()
-					watcher, err := kv.Watch(ctx, sessionID)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					defer watcher.Stop()
-
-					for {
-						select {
-						case <-ctx.Done():
+				newApiRouter.Route("/{id}", func(newApiIdRouter chi.Router) {
+					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						sessionID, mvc, err := mvcSession(w, r)
+						if err != nil {
+							http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
 							return
-						case entry := <-watcher.Updates():
+						}
 
-							if entry == nil {
-								continue
-							}
-							if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-								http.Error(w, err.Error(), http.StatusInternalServerError)
+						eventId := chi.URLParam(r, "id")
+						if eventId == "" {
+							http.Error(w, "Event ID is required. Got: "+eventId, http.StatusBadRequest)
+							return
+						}
+
+						sse := datastar.NewSSE(w, r)
+
+						ctx := r.Context()
+						watcher, err := kv.Watch(ctx, sessionID)
+						if err != nil {
+							http.Error(w, err.Error(), http.StatusInternalServerError)
+							return
+						}
+						defer watcher.Stop()
+
+						for {
+							select {
+							case <-ctx.Done():
 								return
-							}
+							case entry := <-watcher.Updates():
 
-							userId := userctx.GetUserRequestInfo(r.Context()).Id
+								if entry == nil {
+									continue
+								}
+								if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+									http.Error(w, err.Error(), http.StatusInternalServerError)
+									return
+								}
 
-							c := formsubmission.NewEventFormPage(eventId, userId, db, logger)
-							if err := sse.MergeFragmentTempl(c); err != nil {
-								sse.ConsoleError(err)
-								return
+								userId := userctx.GetUserRequestInfo(r.Context()).Id
+
+								c := formsubmission.NewEventFormPage(eventId, userId, db, logger)
+								if err := sse.MergeFragmentTempl(c); err != nil {
+									sse.ConsoleError(err)
+									return
+								}
 							}
 						}
-					}
+					})
+					formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger)
+					formsubmission.UpdateEmail(newApiIdRouter, db, kv)
 				})
 
-				formsubmission.SetupExampleInlineValidation(db, newApiRouter, logger)
 			})
 
 			apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
