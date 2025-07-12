@@ -4,17 +4,17 @@ import (
 	"net/http"
 	"github.com/go-chi/chi/v5"
 
+	"github.com/Regncon/conorganizer/pages/index"
+	"context"
 	"database/sql"
-	//"encoding/json"
+	"encoding/json"
 	"fmt"
-	//"github.com/Regncon/conorganizer/pages/index"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
 func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	eventRouter.Put("/email", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("save email")
 		type Store struct {
 			Input string `json:"email"`
 		}
@@ -29,14 +29,12 @@ func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			fmt.Println("No input provided for email update")
 			return
 		}
-		fmt.Println("input", store.Input)
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
 			http.Error(w, "Event ID is required", http.StatusBadRequest)
 			return
 		}
-		fmt.Println("eventID", eventID)
 
 		query := `UPDATE events SET email = ? WHERE id = ?`
 		_, err := db.Exec(query, store.Input, eventID)
@@ -44,34 +42,66 @@ func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			http.Error(w, "Failed to update the email for event in the database", http.StatusInternalServerError)
 			return
 		}
-		return
 
-		/*
-			// Broadcast the update to all clients watching the same event
-			ctx := r.Context()
-			allKeys, err := kv.Keys(ctx)
-			if err != nil {
-				http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
-				return
-			}
+		// Broadcast the update to all clients watching the same event
+		ctx := r.Context()
+		allKeys, err := kv.Keys(ctx)
+		if err != nil {
+			http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
+			return
+		}
+		fmt.Printf("All keys in the KeyValue store: %v\n", allKeys)
 
-				for _, sessionID := range allKeys {
-					mvc := &index.TodoMVC{}
-					if entry, err := kv.Get(ctx, sessionID); err == nil {
-						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-							continue // Ignore unmarshaling errors for other sessions
-						}
-						mvc.EditingIdx = -1
-						if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-							fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
-						}
-					}
+		for _, sessionID := range allKeys {
+			mvc := &index.TodoMVC{}
+			fmt.Printf("Processing session ID: %s\n", sessionID)
+			fmt.Printf("mvc is: %+v\n", mvc)
+
+			if entry, err := kv.Get(ctx, sessionID); err == nil {
+				if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+					continue // Ignore unmarshaling errors for other sessions
 				}
-		*/
+				mvc.EditingIdx = -1
+				if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
+					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
+				}
+			}
+		}
 	})
 }
 
+func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
+	b, err := json.Marshal(mvc)
+	if err != nil {
+		return fmt.Errorf("failed to marshal mvc: %w", err)
+	}
+	if _, err := kv.Put(ctx, sessionID, b); err != nil {
+		return fmt.Errorf("failed to put key value: %w", err)
+	}
+	return nil
+}
+
+func getContactInfoFromDb(ctx context.Context, db *sql.DB, eventId string) (string, string, int64, error) {
+	query := `SELECT name, email, phone FROM events WHERE id = ?`
+	row := db.QueryRowContext(ctx, query, eventId)
+
+	var name, email string
+	var phone int64
+	if err := row.Scan(&name, &email, &phone); err != nil {
+		if err == sql.ErrNoRows {
+			return "", "", 0, nil // No contact info found
+		}
+		return "", "", 0, fmt.Errorf("failed to scan contact info: %w", err)
+	}
+
+	return name, email, phone, nil
+}
+
 templ contactInfo(eventId string, name string, email string, phone int64) {
+	<div
+		class="flex flex-col w-full gap-4"
+		data-signals={ fmt.Sprintf("{email:'%s'}", email) }
+	></div>
 	<article class="form-card">
 		<h4>Om arrangøren</h4>
 		<section class="organizer-section">
@@ -88,7 +118,6 @@ templ contactInfo(eventId string, name string, email string, phone int64) {
 					name="email"
 					id="email"
 					class="input"
-					value={ shouldShowStringValue(email) }
 					placeholder="Din e-post"
 					required
 				/>

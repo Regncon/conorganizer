@@ -265,7 +265,6 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		return nil, fmt.Errorf("failed to get user ID from database: %w", userDbIdErr)
 	}
 	*/
-	fmt.Println("getting eventID", eventID)
 
 	query := `
             SELECT
@@ -322,7 +321,6 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		return nil, err
 	}
 
-	fmt.Println("event found", event)
 	//todo fill out these with missing if we add new fields
 	event.AgeGroup = models.AgeFlags{ChildFriendly: event.ChildFriendly, AdultsOnly: event.AdultsOnly}
 	event.DurationGroup = models.DurationFlags{LongRunning: event.LongRunning, ShortRunning: event.ShortRunning}
