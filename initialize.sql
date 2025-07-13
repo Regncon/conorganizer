@@ -130,12 +130,10 @@ CREATE TABLE IF NOT EXISTS events_players (
 	FOREIGN KEY (interest_level) REFERENCES interest_levels(interest_level) ON UPDATE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS user_pulje_exclusions (
-    user_id INTEGER NOT NULL,
+CREATE TABLE IF NOT EXISTS events_puljes_exclusions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
     pulje_name TEXT NOT NULL,
     event_id TEXT NOT NULL,
-    PRIMARY KEY (user_id, pulje_name, event_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (pulje_name) REFERENCES puljer(name),
     FOREIGN KEY (event_id) REFERENCES events(id)
 );
