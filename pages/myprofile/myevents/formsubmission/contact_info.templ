@@ -13,6 +13,62 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 )
 
+func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/name", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"name"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if store.Input == "" {
+			fmt.Println("No input provided for name update")
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET host_name = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the name for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		// Broadcast the update to all clients watching the same event
+		ctx := r.Context()
+		allKeys, err := kv.Keys(ctx)
+		if err != nil {
+			http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
+			return
+		}
+		fmt.Printf("All keys in the KeyValue store: %v\n", allKeys)
+
+		for _, sessionID := range allKeys {
+			mvc := &index.TodoMVC{}
+			fmt.Printf("Processing session ID: %s\n", sessionID)
+			fmt.Printf("mvc is: %+v\n", mvc)
+
+			if entry, err := kv.Get(ctx, sessionID); err == nil {
+				if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+					continue // Ignore unmarshaling errors for other sessions
+				}
+				mvc.EditingIdx = -1
+				if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
+					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
+				}
+			}
+		}
+	})
+}
 func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	eventRouter.Put("/email", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
@@ -69,7 +125,62 @@ func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 		}
 	})
 }
+func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/phone", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"phone"`
+		}
+		store := &Store{}
 
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if store.Input == "" {
+			fmt.Println("No input provided for phone update")
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET phone_number = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the phone for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		// Broadcast the update to all clients watching the same event
+		ctx := r.Context()
+		allKeys, err := kv.Keys(ctx)
+		if err != nil {
+			http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
+			return
+		}
+		fmt.Printf("All keys in the KeyValue store: %v\n", allKeys)
+
+		for _, sessionID := range allKeys {
+			mvc := &index.TodoMVC{}
+			fmt.Printf("Processing session ID: %s\n", sessionID)
+			fmt.Printf("mvc is: %+v\n", mvc)
+
+			if entry, err := kv.Get(ctx, sessionID); err == nil {
+				if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+					continue // Ignore unmarshaling errors for other sessions
+				}
+				mvc.EditingIdx = -1
+				if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
+					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
+				}
+			}
+		}
+	})
+}
 func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
 	b, err := json.Marshal(mvc)
 	if err != nil {
@@ -81,42 +192,31 @@ func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetst
 	return nil
 }
 
-func getContactInfoFromDb(ctx context.Context, db *sql.DB, eventId string) (string, string, int64, error) {
-	query := `SELECT name, email, phone FROM events WHERE id = ?`
-	row := db.QueryRowContext(ctx, query, eventId)
-
-	var name, email string
-	var phone int64
-	if err := row.Scan(&name, &email, &phone); err != nil {
-		if err == sql.ErrNoRows {
-			return "", "", 0, nil // No contact info found
-		}
-		return "", "", 0, fmt.Errorf("failed to scan contact info: %w", err)
-	}
-
-	return name, email, phone, nil
-}
-
 templ contactInfo(eventId string, name string, email string, phone int64) {
-	<div
-		class="flex flex-col w-full gap-4"
-		data-signals={ fmt.Sprintf("{email:'%s'}", email) }
-	></div>
 	<article class="form-card">
 		<h4>Om arrangøren</h4>
 		<section class="organizer-section">
 			<section class="form-group">
 				<label for="name" class="label color-strong">Arrangør</label>
-				<input type="text" name="name" id="name" class="input" value={ shouldShowStringValue(name) } placeholder="Ditt navn" required/>
+				<input
+					data-signals={ fmt.Sprintf("{name:'%s'}", name) }
+					type="text"
+					name="name"
+					data-bind="name"
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/name", eventId) }
+					class="input"
+					placeholder="Ditt navn"
+					required
+				/>
 			</section>
 			<section class="form-group">
 				<label for="email" class="label color-strong">E-post</label>
 				<input
+					data-signals={ fmt.Sprintf("{email:'%s'}", email) }
 					type="email"
 					data-bind="email"
 					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/email", eventId) }
 					name="email"
-					id="email"
 					class="input"
 					placeholder="Din e-post"
 					required
@@ -124,7 +224,16 @@ templ contactInfo(eventId string, name string, email string, phone int64) {
 			</section>
 			<section class="form-group">
 				<label for="phone" class="label color-strong">Telefon</label>
-				<input type="tel" name="phone" id="phone" class="input" value={ shouldShowNumberValue(phone) } placeholder="Ditt telefonnummer" required/>
+				<input
+					type="tel"
+					data-signals={ fmt.Sprintf("{phone:'%d'}", phone) }
+					data-bind="phone"
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/phone", eventId) }
+					name="phone"
+					class="input"
+					placeholder="Ditt telefonnummer"
+					required
+				/>
 			</section>
 		</section>
 	</article>
