@@ -9,7 +9,7 @@ import (
 )
 
 type MyEvents struct {
-	Id          int                `json:"id"`
+	Id          string             `json:"id"`
 	Title       string             `json:"title"`
 	Description string             `json:"description"`
 	Status      models.EventStatus `json:"status"`
@@ -72,9 +72,9 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	}
 }
 
-func shouldDisableATagUrl(status models.EventStatus, eventId int) string {
+func shouldDisableATagUrl(status models.EventStatus, eventId string) string {
 	if status == models.EventStatusDraft {
-		return fmt.Sprintf("/my-events/new/%d", eventId)
+		return fmt.Sprintf("/my-events/new/%s", eventId)
 	}
 	return "#"
 }
@@ -129,5 +129,6 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []MyEvent
 		}
 		events = append(events, event)
 	}
+	fmt.Printf("Found %d events for user %s\n", len(events), userId)
 	return events
 }

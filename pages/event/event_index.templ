@@ -38,7 +38,7 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, err error) {
 	})
 }
 
-templ eventIndex(id int64) {
+templ eventIndex(id string) {
 	{{
 		url := fmt.Sprintf("/event/api/%d", id)
 	}}

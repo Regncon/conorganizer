@@ -9,17 +9,11 @@ import (
 	datastar "github.com/starfederation/datastar/sdk/go"
 	"log/slog"
 	"net/http"
-	"strconv"
 )
 
 func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		id := chi.URLParam(r, "id")
-		eventId, err := strconv.Atoi(id)
-		if err != nil {
-			http.Error(w, "Invalid event ID. Must be a number.", http.StatusBadRequest)
-			return
-		}
+		eventId := chi.URLParam(r, "id")
 
 		userId, userIdErr := userctx.GetIdFromUserIdInDbFromContext(r.Context(), db, logger)
 		if userIdErr != nil {
@@ -53,14 +47,14 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 	})
 }
 
-templ newEventIndex(eventId int) {
-	<div id="formsubmission-container" data-on-load={ datastar.GetSSE("/my-events/api/new/" + strconv.Itoa(eventId)) }>
+templ newEventIndex(eventId string) {
+	<div id="formsubmission-container" data-on-load={ datastar.GetSSE("/my-events/api/new/" + eventId) }>
 		<p>Meld på nytt arrangement</p>
 		<p>Hvis du ser denne meldingen, vennligst tøm informasjonskapslene og oppdater siden.</p>
 	</div>
 }
 
-func validateEventExists(db *sql.DB, eventId int, userId string) (error, int) {
+func validateEventExists(db *sql.DB, eventId string, userId string) (error, int) {
 	var exists bool
 	queryErr := db.QueryRow("SELECT EXISTS(SELECT 1 FROM events WHERE id = ? AND host = ?)", eventId, userId).Scan(&exists)
 	if queryErr != nil {
@@ -74,7 +68,7 @@ func validateEventExists(db *sql.DB, eventId int, userId string) (error, int) {
 	return nil, http.StatusOK
 }
 
-func getEventTitle(db *sql.DB, eventId int) string {
+func getEventTitle(db *sql.DB, eventId string) string {
 	var title string
 
 	err := db.QueryRow("SELECT title FROM events WHERE id = ?", eventId).Scan(&title)

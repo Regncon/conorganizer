@@ -114,7 +114,7 @@ templ contactInfo(eventId string, name string, email string, phone int64) {
 				<input
 					type="email"
 					data-bind="email"
-					data-on-click__debounce.100ms={ datastar.PutSSE("/my-events/api/new/%s/email", eventId) }
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/email", eventId) }
 					name="email"
 					id="email"
 					class="input"

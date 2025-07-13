@@ -233,13 +233,13 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 		$1, $2, $3, '', '', '', 0, 0, false, false, false, false, false, false, false
 	) RETURNING id`
 
-	var eventID int64
-	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft).Scan(&eventID)
+	var eventId string
+	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft).Scan(&eventId)
 	if insertError != nil {
 		logger.Error("Failed to create new event form submission", "error", insertError)
 		return
 	}
 
-	logger.Info("New event form submission created", "eventID", eventID)
-	http.Redirect(w, r, fmt.Sprintf("/my-events/new/%d", eventID), http.StatusSeeOther)
+	logger.Info("New event form submission created", "eventID", eventId)
+	http.Redirect(w, r, fmt.Sprintf("/my-events/new/%d", eventId), http.StatusSeeOther)
 }

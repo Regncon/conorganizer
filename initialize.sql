@@ -67,7 +67,7 @@ INSERT INTO event_statuses (status) VALUES
 ('Avvist');
 
 CREATE TABLE IF NOT EXISTS events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id TEXT PRIMARY KEY NOT NULL DEFAULT ( lower(hex(randomblob(8))) ),
     title TEXT NOT NULL,
     description TEXT NOT NULL,
     image_url TEXT,
@@ -109,7 +109,7 @@ INSERT INTO interest_levels (interest_level) VALUES
 
 CREATE TABLE IF NOT EXISTS interests (
     billettholder_id INTEGER NOT NULL,
-    event_id INTEGER NOT NULL,
+    event_id TEXT NOT NULL,
     interest_level TEXT NOT NULL,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (billettholder_id, event_id),
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS interests (
 );
 
 CREATE TABLE IF NOT EXISTS events_players (
-    event_id INTEGER NOT NULL,
+    event_id TEXT NOT NULL,
     billettholder_id INTEGER NOT NULL,
 	interest_level TEXT NOT NULL,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -132,7 +132,7 @@ CREATE TABLE IF NOT EXISTS events_players (
 CREATE TABLE IF NOT EXISTS user_pulje_exclusions (
     user_id INTEGER NOT NULL,
     pulje_name TEXT NOT NULL,
-    event_id INTEGER NOT NULL,
+    event_id TEXT NOT NULL,
     PRIMARY KEY (user_id, pulje_name, event_id),
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (pulje_name) REFERENCES puljer(name),

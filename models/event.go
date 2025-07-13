@@ -24,7 +24,7 @@ type DurationFlags struct {
 }
 
 type Event struct {
-	ID                int64          `json:"id"`
+	ID                string         `json:"id"`
 	Title             string         `json:"title"`
 	Description       string         `json:"description"`
 	ImageURL          sql.NullString `json:"image_url"`
