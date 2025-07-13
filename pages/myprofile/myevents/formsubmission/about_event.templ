@@ -1,17 +1,60 @@
 package formsubmission
 
-templ aboutEvent(title string, intro string, typeValue string, image string, system string, description string) {
+import (
+	"net/http"
+	"github.com/go-chi/chi/v5"
+	"fmt"
+
+	"github.com/Regncon/conorganizer/service/keyvalue"
+	"database/sql"
+	"github.com/nats-io/nats.go/jetstream"
+	datastar "github.com/starfederation/datastar/sdk/go"
+)
+
+func UpdateTitle(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/title", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"title"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET title = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the title for event in the database", http.StatusInternalServerError)
+			return
+		}
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+templ aboutEvent(eventId string, title string, intro string, typeValue string, image string, system string, description string) {
 	<article class="form-card">
 		<h4>Om arrangementet</h4>
 		<section class="about-section">
 			<section class="form-group title">
 				<label for="title" class="label-small color-strong">Tittel</label>
 				<input
+					data-signals={ fmt.Sprintf("{title:'%s'}", title) }
 					type="text"
-					id="title"
-					class="input"
 					name="title"
-					value={ shouldShowStringValue(title) }
+					data-bind="title"
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/title", eventId) }
+					class="input"
 					placeholder="Tittel på arrangementet"
 					required
 				/>
