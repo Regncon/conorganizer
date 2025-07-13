@@ -4,10 +4,8 @@ import (
 	"net/http"
 	"github.com/go-chi/chi/v5"
 
-	"github.com/Regncon/conorganizer/pages/index"
-	"context"
+	"github.com/Regncon/conorganizer/service/keyvalue"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar/sdk/go"
@@ -37,33 +35,13 @@ func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			http.Error(w, "Failed to update the name for event in the database", http.StatusInternalServerError)
 			return
 		}
-
-		// Broadcast the update to all clients watching the same event
-		ctx := r.Context()
-		allKeys, err := kv.Keys(ctx)
-		if err != nil {
-			http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
-		}
-		fmt.Printf("All keys in the KeyValue store: %v\n", allKeys)
-
-		for _, sessionID := range allKeys {
-			mvc := &index.TodoMVC{}
-			fmt.Printf("Processing session ID: %s\n", sessionID)
-			fmt.Printf("mvc is: %+v\n", mvc)
-
-			if entry, err := kv.Get(ctx, sessionID); err == nil {
-				if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-					continue // Ignore unmarshaling errors for other sessions
-				}
-				mvc.EditingIdx = -1
-				if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
-				}
-			}
 		}
 	})
 }
+
 func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	eventRouter.Put("/email", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
@@ -89,29 +67,9 @@ func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
-		// Broadcast the update to all clients watching the same event
-		ctx := r.Context()
-		allKeys, err := kv.Keys(ctx)
-		if err != nil {
-			http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
-		}
-		fmt.Printf("All keys in the KeyValue store: %v\n", allKeys)
-
-		for _, sessionID := range allKeys {
-			mvc := &index.TodoMVC{}
-			fmt.Printf("Processing session ID: %s\n", sessionID)
-			fmt.Printf("mvc is: %+v\n", mvc)
-
-			if entry, err := kv.Get(ctx, sessionID); err == nil {
-				if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-					continue // Ignore unmarshaling errors for other sessions
-				}
-				mvc.EditingIdx = -1
-				if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
-				}
-			}
 		}
 	})
 }
@@ -140,41 +98,11 @@ func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
-		// Broadcast the update to all clients watching the same event
-		ctx := r.Context()
-		allKeys, err := kv.Keys(ctx)
-		if err != nil {
-			http.Error(w, "Failed to retrieve keys", http.StatusInternalServerError)
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}
-		fmt.Printf("All keys in the KeyValue store: %v\n", allKeys)
-
-		for _, sessionID := range allKeys {
-			mvc := &index.TodoMVC{}
-			fmt.Printf("Processing session ID: %s\n", sessionID)
-			fmt.Printf("mvc is: %+v\n", mvc)
-
-			if entry, err := kv.Get(ctx, sessionID); err == nil {
-				if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-					continue // Ignore unmarshaling errors for other sessions
-				}
-				mvc.EditingIdx = -1
-				if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-					fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
-				}
-			}
-		}
 	})
-}
-func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
-	b, err := json.Marshal(mvc)
-	if err != nil {
-		return fmt.Errorf("failed to marshal mvc: %w", err)
-	}
-	if _, err := kv.Put(ctx, sessionID, b); err != nil {
-		return fmt.Errorf("failed to put key value: %w", err)
-	}
-	return nil
 }
 
 templ contactInfo(eventId string, name string, email string, phone string) {
