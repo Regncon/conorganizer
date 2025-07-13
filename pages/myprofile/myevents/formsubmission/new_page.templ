@@ -19,8 +19,8 @@ func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, logger *slog.Logger)
 		}
 		logger.Info("Submitting event", "eventID", eventID)
 
-		query := `UPDATE events SET status = "Innsendt" WHERE id = ?`
-		_, err := db.Exec(query, eventID)
+		query := `UPDATE events SET status = ? WHERE id = ?`
+		_, err := db.Exec(query, models.EventStatusSubmitted, eventID)
 		if err != nil {
 			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
 			return

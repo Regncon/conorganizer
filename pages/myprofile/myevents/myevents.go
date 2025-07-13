@@ -231,7 +231,7 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 		child_friendly, adults_only, beginner_friendly, experienced_only,
 		can_be_run_in_english, long_running, short_running
 	) VALUES (
-		$1, $2, $3, '', '', '', 0, 0, false, false, false, false, false, false, false
+		$1, $2, $3, 'Nytt Arrangement', 'Kjapp introduksjon til arrangementet', '', 0, 0, false, false, false, false, false, false, false
 	) RETURNING id`
 
 	var eventId string
