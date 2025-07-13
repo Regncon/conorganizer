@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS event_statuses (
 
 INSERT INTO event_statuses (status) VALUES
 ('Kladd'),
+('Innsendt'),
 ('Publisert'),
 ('Godkjent'),
 ('Avvist');

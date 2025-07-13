@@ -1,12 +1,34 @@
 package formsubmission
 
 import (
+	"net/http"
+	"github.com/go-chi/chi/v5"
+
 	"database/sql"
 	"fmt"
 	"github.com/Regncon/conorganizer/models"
-	//"github.com/Regncon/conorganizer/service/userctx"
 	"log/slog"
 )
+
+func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, logger *slog.Logger) {
+	newEventRouter.Post("/submit", func(w http.ResponseWriter, r *http.Request) {
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+		logger.Info("Submitting event", "eventID", eventID)
+
+		query := `UPDATE events SET status = "Innsendt" WHERE id = ?`
+		_, err := db.Exec(query, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, fmt.Sprintf("/my-events/"), http.StatusSeeOther)
+	})
+}
 
 templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.Logger) {
 	<div id="formsubmission-container" class="formsubmission-css-container">
@@ -222,7 +244,11 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 
             }
         </style>
-		<form class="formsubmission-wrapper">
+		<form
+			class="formsubmission-wrapper"
+			action={ "/my-events/api/new/" + eventId + "/submit" }
+			method="post"
+		>
 			<h1 class="color-strong">Nytt Arrangement</h1>
 			<section>
 				<h2 class="color-strong" style="color:red">Denne siden er under utvikling</h2>

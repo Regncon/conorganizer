@@ -158,6 +158,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					})
 					formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger)
 					formsubmission.UpdateEmail(newApiIdRouter, db, kv)
+					formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 				})
 
 			})
