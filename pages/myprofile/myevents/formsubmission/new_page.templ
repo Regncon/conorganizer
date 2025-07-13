@@ -285,6 +285,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		return nil, fmt.Errorf("unauthorized access")
 	}
 
+    fmt.Printf("Fetching event with ID: %s for user: %s\n", eventID, userId)
 	/*userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
 	if userDbIdErr != nil {
 		logger.Error("Failed to get user ID from database", "error", userDbIdErr)
@@ -344,12 +345,14 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		if err == sql.ErrNoRows {
 			return nil, nil // No event found
 		}
+        fmt.Printf("Error scanning event: %v\n", err)
 		return nil, err
 	}
 
 	//todo fill out these with missing if we add new fields
 	event.AgeGroup = models.AgeFlags{ChildFriendly: event.ChildFriendly, AdultsOnly: event.AdultsOnly}
 	event.DurationGroup = models.DurationFlags{LongRunning: event.LongRunning, ShortRunning: event.ShortRunning}
+    fmt.Printf("Fetched event: %+v\n", event)
 
 	return &event, nil
 }

@@ -25,11 +25,6 @@ func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
-		if store.Input == "" {
-			fmt.Println("No input provided for name update")
-			return
-		}
-
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
 			http.Error(w, "Event ID is required", http.StatusBadRequest)
@@ -78,11 +73,6 @@ func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 
 		if err := datastar.ReadSignals(r, store); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		if store.Input == "" {
-			fmt.Println("No input provided for email update")
 			return
 		}
 
@@ -137,11 +127,6 @@ func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
-		if store.Input == "" {
-			fmt.Println("No input provided for phone update")
-			return
-		}
-
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
 			http.Error(w, "Event ID is required", http.StatusBadRequest)
@@ -192,7 +177,7 @@ func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetst
 	return nil
 }
 
-templ contactInfo(eventId string, name string, email string, phone int64) {
+templ contactInfo(eventId string, name string, email string, phone string) {
 	<article class="form-card">
 		<h4>Om arrangøren</h4>
 		<section class="organizer-section">
@@ -226,7 +211,7 @@ templ contactInfo(eventId string, name string, email string, phone int64) {
 				<label for="phone" class="label color-strong">Telefon</label>
 				<input
 					type="tel"
-					data-signals={ fmt.Sprintf("{phone:'%d'}", phone) }
+					data-signals={ fmt.Sprintf("{phone:'%s'}", phone) }
 					data-bind="phone"
 					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/phone", eventId) }
 					name="phone"

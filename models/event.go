@@ -33,7 +33,7 @@ type Event struct {
 	HostName          string         `json:"host_name"`
 	Host              sql.NullInt64  `json:"host"`
 	Email             string         `json:"email"`
-	PhoneNumber       int64          `json:"phone_number"`
+	PhoneNumber       string         `json:"phone_number"`
 	RoomName          sql.NullString `json:"room_name"`
 	PuljeName         sql.NullString `json:"pulje_name"`
 	MaxPlayers        int64          `json:"max_players"`
