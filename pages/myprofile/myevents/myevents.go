@@ -162,10 +162,13 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					formsubmission.UpdateEmail(newApiIdRouter, db, kv)
 					formsubmission.UpdatePhone(newApiIdRouter, db, kv)
 					formsubmission.UpdateTitle(newApiIdRouter, db, kv)
+
 					formsubmission.UpdateIntro(newApiIdRouter, db, kv)
 					formsubmission.UpdateSystem(newApiIdRouter, db, kv)
 					formsubmission.UpdateType(newApiIdRouter, db, kv)
 					formsubmission.UpdateDescription(newApiIdRouter, db, kv)
+
+                    formsubmission.UpdateAgeGroup(newApiIdRouter, db, kv)
 
 					formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 				})
@@ -238,10 +241,10 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 	query := `
 	INSERT INTO events (
 		host, email, status, title, intro, description, host_name, phone_number, max_players,
-		event_type, child_friendly, adults_only, beginner_friendly, experienced_only,
+		event_type, beginner_friendly, experienced_only,
 		can_be_run_in_english, long_running, short_running
 	) VALUES (
-		$1, $2, $3, 'Nytt Arrangement', 'Kjapp introduksjon til arrangementet', '', '', '', 6, 'rollespill', false, false, false, false, false, false, false
+		$1, $2, $3, 'Nytt arrangement', 'Kjapp introduksjon til arrangementet', '', '', '', 6, 'rollespill', false, false, false, false, false
 	) RETURNING id`
 
 	var eventId string

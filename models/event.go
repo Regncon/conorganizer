@@ -7,25 +7,32 @@ import (
 
 type EventStatus string
 
-type EventType string
-
 const (
 	EventStatusDraft     EventStatus = "Kladd"
 	EventStatusSubmitted EventStatus = "Innsendt"
 	EventStatusPublished EventStatus = "Publisert"
 	EventStatusClosed    EventStatus = "Godkjent"
 	EventStatusArchived  EventStatus = "Avist"
+)
 
+type EventType string
+
+const (
 	EventTypeRoleplay  EventType = "roleplay"
 	EventTypeBoardGame EventType = "boardgame"
 	EventTypeCardGame  EventType = "cardgame"
 	EventTypeOther     EventType = "other"
 )
 
-type AgeFlags struct {
-	ChildFriendly bool
-	AdultsOnly    bool
-}
+type AgeGroup string
+
+const (
+	AgeGroupAllAges       AgeGroup = "AllAges"
+	AgeGroupChildFriendly AgeGroup = "ChildFriendly"
+	AgeGroupTeenFriendly  AgeGroup = "TeenFriendly"
+	AgeGroupAdultsOnly    AgeGroup = "AdultsOnly"
+)
+
 type DurationFlags struct {
 	LongRunning  bool
 	ShortRunning bool
@@ -39,15 +46,14 @@ type Event struct {
 	ImageURL          sql.NullString `json:"image_url"`
 	System            sql.NullString `json:"system"`
 	EventType         EventType      `json:"event_type"`
+	AgeGroup          AgeGroup       `json:"age_group"`
 	HostName          string         `json:"host_name"`
 	Host              sql.NullInt64  `json:"host"`
 	Email             string         `json:"email"`
 	PhoneNumber       string         `json:"phone_number"`
-	RoomName          sql.NullString `json:"room_name"`
+	RoomId            sql.NullInt64  `json:"room_id"`
 	PuljeName         sql.NullString `json:"pulje_name"`
 	MaxPlayers        int64          `json:"max_players"`
-	ChildFriendly     bool           `json:"child_friendly"`
-	AdultsOnly        bool           `json:"adults_only"`
 	BeginnerFriendly  bool           `json:"beginner_friendly"`
 	ExperiencedOnly   bool           `json:"experienced_only"`
 	CanBeRunInEnglish bool           `json:"can_be_run_in_english"`
@@ -55,6 +61,5 @@ type Event struct {
 	ShortRunning      bool           `json:"short_running"`
 	Status            EventStatus    `json:"status"`
 	InsertedTime      time.Time      `json:"inserted_time"`
-	AgeGroup          AgeFlags
 	DurationGroup     DurationFlags
 }
