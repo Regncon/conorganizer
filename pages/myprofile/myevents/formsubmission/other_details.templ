@@ -140,8 +140,41 @@ func UpdateCanBeRunInEnglish(eventRouter chi.Router, db *sql.DB, kv jetstream.Ke
 	})
 }
 
+func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/max-players", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input int `json:"maxPlayers"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET max_players = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the max players for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
 templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, experiencedOnly bool, canBeRunInEnglish bool, maxPlayers int, notes string) {
 	<article class="form-card">
+    .
 		<h4>Øvrige Detaljer</h4>
 		<section class="details-section">
 			<section class="form-group age-group">
@@ -243,7 +276,15 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				<label for="player-count" class="label-small color-strong">
 					Antall spillere (utenom arrangør)
 				</label>
-				<input type="number" id="player-count" name="player-count" class="input" min="4" value="6"/>
+				<input
+					name="max-players"
+					class="input"
+					data-signals={ fmt.Sprintf("{maxPlayers:%d}", maxPlayers) }
+					data-bind="maxPlayers"
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/max-players", eventId) }
+					type="number"
+					min="4"
+				/>
 			</section>
 			<article class="item-card" id="player-count-description">
 				<p class="label">Text om antall spillere </p>
