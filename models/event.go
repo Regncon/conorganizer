@@ -47,7 +47,7 @@ type Event struct {
 	Intro             string         `json:"intro"`
 	Description       string         `json:"description"`
 	ImageURL          sql.NullString `json:"image_url"`
-	System            sql.NullString `json:"system"`
+	System            string         `json:"system"`
 	EventType         EventType      `json:"event_type"`
 	AgeGroup          AgeGroup       `json:"age_group"`
 	Runtime           Runtime        `json:"runtime"`
@@ -57,10 +57,11 @@ type Event struct {
 	PhoneNumber       string         `json:"phone_number"`
 	RoomId            sql.NullInt64  `json:"room_id"`
 	PuljeName         sql.NullString `json:"pulje_name"`
-	MaxPlayers        int64          `json:"max_players"`
+	MaxPlayers        int            `json:"max_players"`
 	BeginnerFriendly  bool           `json:"beginner_friendly"`
 	ExperiencedOnly   bool           `json:"experienced_only"`
 	CanBeRunInEnglish bool           `json:"can_be_run_in_english"`
+	Notes             string         `json:"notes"`
 	Status            EventStatus    `json:"status"`
 	InsertedTime      time.Time      `json:"inserted_time"`
 }

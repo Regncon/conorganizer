@@ -263,10 +263,19 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 				event.Intro,
 				event.EventType,
 				event.ImageURL.String,
-				event.System.String,
+				event.System,
 				event.Description,
 			)
-			@otherDetails(eventId, event.AgeGroup, event.Runtime)
+			@otherDetails(
+				eventId,
+				event.AgeGroup,
+				event.Runtime,
+				event.BeginnerFriendly,
+				event.ExperiencedOnly,
+				event.CanBeRunInEnglish,
+				event.MaxPlayers,
+				event.Notes,
+			)
 			@submitSection()
 		</form>
 	</div>

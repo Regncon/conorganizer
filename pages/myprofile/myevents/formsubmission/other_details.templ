@@ -43,6 +43,7 @@ func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 		}
 	})
 }
+
 func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	eventRouter.Put("/runtime", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
@@ -75,9 +76,42 @@ func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 
-templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime) {
+func UpdateBeginnerFriendly(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/beginner-friendly", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input bool `json:"beginnerFriendly"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET beginner_friendly = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the beginner friendly for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, experiencedOnly bool, canBeRunInEnglish bool, maxPlayers int, notes string) {
 	<article class="form-card">
 		<h4>Øvrige Detaljer</h4>
+        .
 		<section class="details-section">
 			<section class="form-group age-group">
 				<label for="age-group" class="label-small color-strong">Aldersgruppe</label>
@@ -131,7 +165,14 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					<p for="beginner-friendly" class="label-small" style="text-align:end; font-weight: 400;">Valgfritt</p>
 				</div>
 				<div class="checkbox-background form-group-checkbox">
-					<input type="checkbox" id="beginner-friendly" name="beginner-friendly" class="checkbox input" checked/>
+					<input
+						name="beginner-friendly"
+						class="checkbox input"
+						data-signals={ fmt.Sprintf("{beginnerFriendly:%t}", beginnerFriendly) }
+						data-bind="beginnerFriendly"
+						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/beginner-friendly", eventId) }
+						type="checkbox"
+					/>
 					<label for="beginner-friendly">Arrangementet er nybegynnervennlig </label>
 				</div>
 			</section>
