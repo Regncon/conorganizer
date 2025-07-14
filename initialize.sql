@@ -67,6 +67,16 @@ INSERT INTO event_statuses (status) VALUES
 ('Godkjent'),
 ('Avvist');
 
+CREATE TABLE IF NOT EXISTS events_types (
+    event_type TEXT PRIMARY KEY
+);
+
+INSERT INTO events_types (event_type) VALUES
+('roleplay'),
+('boardgame'),
+('cardgame'),
+('other');
+
 CREATE TABLE IF NOT EXISTS events (
     id TEXT PRIMARY KEY NOT NULL DEFAULT ( lower(hex(randomblob(8))) ),
     title TEXT NOT NULL,
@@ -74,6 +84,7 @@ CREATE TABLE IF NOT EXISTS events (
     description TEXT NOT NULL,
     image_url TEXT,
     system TEXT,
+    event_type TEXT NOT NULL,
     host_name TEXT NOT NULL,
     host INTEGER,
     email TEXT NOT NULL,
@@ -94,6 +105,7 @@ CREATE TABLE IF NOT EXISTS events (
     FOREIGN KEY (room_name) REFERENCES rooms(name) ON UPDATE CASCADE,
     FOREIGN KEY (pulje_name) REFERENCES puljer(name) ON UPDATE CASCADE,
     FOREIGN KEY (status) REFERENCES event_statuses(status) ON UPDATE CASCADE,
+    FOREIGN KEY (event_type) REFERENCES events_types(event_type) ON UPDATE CASCADE,
     -- Ensure some flags are mutually exclusive
     CHECK (child_friendly + adults_only <= 1),
     CHECK (beginner_friendly + experienced_only <= 1),
@@ -153,6 +165,7 @@ INSERT INTO events (
     description,
     image_url,
     system,
+    event_type,
     host_name,
     email,
     phone_number,
@@ -173,6 +186,7 @@ INSERT INTO events (
     'Bli med på et spennende eventyr i den klassiske D&D-modulen "Den Tapte Minen av Phandelver". Perfekt for nye spillere!',
     'https://imgur.com/example1',
     'D&D 5e',
+    'roleplay',
     'Erik Spilleder',
     'test.admin@example.com',
     12345678,
@@ -194,6 +208,7 @@ INSERT INTO events (
     'En lang og intenst forklarende tekst',
     'https://imgur.com/example2',
     'Vampire: The Masquerade 5th Edition',
+    'roleplay',
     'Maria Storyteller',
     'test.admin2@example.com',
     12345678,

@@ -244,6 +244,7 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 
             }
         </style>
+		.
 		<form
 			class="formsubmission-wrapper"
 			action={ "/my-events/api/new/" + eventId + "/submit" }
@@ -260,7 +261,7 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 				eventId,
 				event.Title,
 				event.Intro,
-				event.System.String,
+				event.EventType,
 				event.ImageURL.String,
 				event.System.String,
 				event.Description,
@@ -292,6 +293,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
                 description,
                 image_url,
                 system,
+                event_type,
                 host_name,
                 host,
                 email,
@@ -319,6 +321,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		&event.Description,
 		&event.ImageURL,
 		&event.System,
+		&event.EventType,
 		&event.HostName,
 		&event.Host,
 		&event.Email,

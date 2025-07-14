@@ -7,12 +7,19 @@ import (
 
 type EventStatus string
 
+type EventType string
+
 const (
 	EventStatusDraft     EventStatus = "Kladd"
 	EventStatusSubmitted EventStatus = "Innsendt"
 	EventStatusPublished EventStatus = "Publisert"
 	EventStatusClosed    EventStatus = "Godkjent"
 	EventStatusArchived  EventStatus = "Avist"
+
+	EventTypeRoleplay  EventType = "roleplay"
+	EventTypeBoardGame EventType = "boardgame"
+	EventTypeCardGame  EventType = "cardgame"
+	EventTypeOther     EventType = "other"
 )
 
 type AgeFlags struct {
@@ -31,6 +38,7 @@ type Event struct {
 	Description       string         `json:"description"`
 	ImageURL          sql.NullString `json:"image_url"`
 	System            sql.NullString `json:"system"`
+	EventType         EventType      `json:"event_type"`
 	HostName          string         `json:"host_name"`
 	Host              sql.NullInt64  `json:"host"`
 	Email             string         `json:"email"`

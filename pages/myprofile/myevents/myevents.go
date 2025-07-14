@@ -164,6 +164,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					formsubmission.UpdateTitle(newApiIdRouter, db, kv)
 					formsubmission.UpdateIntro(newApiIdRouter, db, kv)
 					formsubmission.UpdateSystem(newApiIdRouter, db, kv)
+					formsubmission.UpdateType(newApiIdRouter, db, kv)
 					formsubmission.UpdateDescription(newApiIdRouter, db, kv)
 
 					formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
@@ -233,13 +234,14 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 	logger.Info("found user info", "userId", userInfo.Id, "dbId", userDbId, "email", userInfo.Email)
 	logger.Info("Inserting new event form submission")
 
+	// Todo: Use database relations to get foreign keys, event_type etc.
 	query := `
 	INSERT INTO events (
 		host, email, status, title, intro, description, host_name, phone_number, max_players,
-		child_friendly, adults_only, beginner_friendly, experienced_only,
+		event_type, child_friendly, adults_only, beginner_friendly, experienced_only,
 		can_be_run_in_english, long_running, short_running
 	) VALUES (
-		$1, $2, $3, 'Nytt Arrangement', 'Kjapp introduksjon til arrangementet', '', '', '', 6, false, false, false, false, false, false, false
+		$1, $2, $3, 'Nytt Arrangement', 'Kjapp introduksjon til arrangementet', '', '', '', 6, 'rollespill', false, false, false, false, false, false, false
 	) RETURNING id`
 
 	var eventId string
