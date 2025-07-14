@@ -35,6 +35,14 @@ func UpdateTitle(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			http.Error(w, "Failed to update the title for event in the database", http.StatusInternalServerError)
 			return
 		}
+
+		/*
+			if err := datastar.PatchSignals(store); err != nil {
+				http.Error(w, "Failed to write signals", http.StatusInternalServerError)
+				return
+			}
+		*/
+
 		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
@@ -140,13 +148,15 @@ templ aboutEvent(eventId string, title string, intro string, typeValue string, i
 		<section class="about-section">
 			<section class="form-group title">
 				<label for="title" class="label-small color-strong">Tittel</label>
+				<div
+					data-signals={ fmt.Sprintf("{title:'%s'}", title) }
+				></div>
 				<input
 					name="title"
 					class="input"
 					type="text"
 					data-bind="title"
-					data-signals={ fmt.Sprintf("{title:'%s'}", title) }
-					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/title", eventId) }
+					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/title", eventId) }
 					placeholder="Tittel på arrangementet"
 					required
 				/>
@@ -157,8 +167,7 @@ templ aboutEvent(eventId string, title string, intro string, typeValue string, i
 					name="intro"
 					class="input"
 					data-bind="intro"
-					data-signals={ fmt.Sprintf("{intro:'%s'}", intro) }
-					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/intro", eventId) }
+					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/intro", eventId) }
 					rows="7"
 					placeholder="Kjapp introduksjon til arrangementet"
 					required
@@ -179,13 +188,15 @@ templ aboutEvent(eventId string, title string, intro string, typeValue string, i
 			<div class="image"></div>
 			<section class="form-group system">
 				<label for="system" class="label-small color-strong">System</label>
+				<div
+					data-signals={ fmt.Sprintf("{system:'%s'}", system) }
+				></div>
 				<input
 					name="system"
 					class="input"
 					type="text"
 					data-bind="system"
-					data-signals={ fmt.Sprintf("{system:'%s'}", system) }
-					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/system", eventId) }
+					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/system", eventId) }
 					placeholder="Hva system er det?"
 					required
 				/>
@@ -196,8 +207,7 @@ templ aboutEvent(eventId string, title string, intro string, typeValue string, i
 					name="description"
 					class="input"
 					data-bind="description"
-					data-signals={ fmt.Sprintf("{description:'%s'}", description) }
-					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/description", eventId) }
+					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/description", eventId) }
 					rows="15"
 					placeholder="Beskrivelse av arrangementet"
 					required
