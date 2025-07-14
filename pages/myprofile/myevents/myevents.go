@@ -169,8 +169,9 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					formsubmission.UpdateDescription(newApiIdRouter, db, kv)
 
 					formsubmission.UpdateAgeGroup(newApiIdRouter, db, kv)
-                    formsubmission.UpdateRuntime(newApiIdRouter, db, kv)
-                    formsubmission.UpdateBeginnerFriendly(newApiIdRouter, db, kv)
+					formsubmission.UpdateRuntime(newApiIdRouter, db, kv)
+					formsubmission.UpdateBeginnerFriendly(newApiIdRouter, db, kv)
+					formsubmission.UpdateCanBeRunInEnglish(newApiIdRouter, db, kv)
 
 					formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 				})
