@@ -83,6 +83,15 @@ INSERT INTO age_grups (age_group) VALUES
 ('TeenFriendly'),
 ('AdultsOnly');
 
+CREATE TABLE IF NOT EXISTS event_runtimes (
+    runtime TEXT PRIMARY KEY
+);
+
+INSERT INTO event_runtimes (runtime) VALUES
+('Normal'),
+('ShortRunning'),
+('LongRunning');
+
 CREATE TABLE IF NOT EXISTS events (
     id TEXT PRIMARY KEY NOT NULL DEFAULT ( lower(hex(randomblob(8))) ),
     title TEXT NOT NULL,
@@ -92,6 +101,7 @@ CREATE TABLE IF NOT EXISTS events (
     system TEXT,
     event_type TEXT NOT NULL DEFAULT 'Other',
     age_group TEXT NOT NULL DEFAULT 'AllAges',
+    event_runtime TEXT NOT NULL DEFAULT 'Normal',
     host_name TEXT NOT NULL,
     host INTEGER,
     email TEXT NOT NULL,
@@ -102,8 +112,6 @@ CREATE TABLE IF NOT EXISTS events (
     beginner_friendly BOOLEAN NOT NULL,
     experienced_only BOOLEAN NOT NULL,
     can_be_run_in_english BOOLEAN NOT NULL,
-    long_running BOOLEAN NOT NULL,
-    short_running BOOLEAN NOT NULL,
     status TEXT NOT NULL DEFAULT 'Kladd',
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (host) REFERENCES users(id) ON DELETE SET NULL,
@@ -112,9 +120,9 @@ CREATE TABLE IF NOT EXISTS events (
     FOREIGN KEY (status) REFERENCES event_statuses(status) ON UPDATE CASCADE,
     FOREIGN KEY (event_type) REFERENCES events_types(event_type) ON UPDATE CASCADE,
     FOREIGN KEY (age_group) REFERENCES age_grups(age_group) ON UPDATE CASCADE,
+    FOREIGN KEY (event_runtime) REFERENCES event_runtimes(runtime) ON UPDATE CASCADE,
     -- Ensure some flags are mutually exclusive
-    CHECK (beginner_friendly + experienced_only <= 1),
-    CHECK (long_running + short_running <= 1)
+    CHECK (beginner_friendly + experienced_only <= 1)
 );
 
 CREATE TABLE IF NOT EXISTS interest_levels (

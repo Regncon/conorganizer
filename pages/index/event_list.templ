@@ -21,8 +21,6 @@ func GetEvents(db *sql.DB) ([]models.Event, error) {
                 beginner_friendly,
                 experienced_only,
                 can_be_run_in_english,
-                long_running,
-                short_running,
                 status
             FROM events
             WhERE status = ?
@@ -52,8 +50,6 @@ func GetEvents(db *sql.DB) ([]models.Event, error) {
 			&event.BeginnerFriendly,
 			&event.ExperiencedOnly,
 			&event.CanBeRunInEnglish,
-			&event.LongRunning,
-			&event.ShortRunning,
 			&event.Status,
 		); err != nil {
 			return nil, err

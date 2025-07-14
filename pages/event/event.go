@@ -149,8 +149,6 @@ func GetEventByID(id string, db *sql.DB) (*models.Event, error) {
                 beginner_friendly,
                 experienced_only,
                 can_be_run_in_english,
-                long_running,
-                short_running,
                 status
             FROM events WHERE id = ? AND status = ?
             `
@@ -173,8 +171,6 @@ func GetEventByID(id string, db *sql.DB) (*models.Event, error) {
 		&event.BeginnerFriendly,
 		&event.ExperiencedOnly,
 		&event.CanBeRunInEnglish,
-		&event.LongRunning,
-		&event.ShortRunning,
 		&event.Status,
 	); err != nil {
 		if err == sql.ErrNoRows {

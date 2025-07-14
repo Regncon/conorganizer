@@ -33,10 +33,13 @@ const (
 	AgeGroupAdultsOnly    AgeGroup = "AdultsOnly"
 )
 
-type DurationFlags struct {
-	LongRunning  bool
-	ShortRunning bool
-}
+type Runtime string
+
+const (
+	RunTimeNormal       Runtime = "Normal"
+	RunTimeShortRunning Runtime = "ShortRunning"
+	RunTimeLongRunning  Runtime = "LongRunning"
+)
 
 type Event struct {
 	ID                string         `json:"id"`
@@ -47,6 +50,7 @@ type Event struct {
 	System            sql.NullString `json:"system"`
 	EventType         EventType      `json:"event_type"`
 	AgeGroup          AgeGroup       `json:"age_group"`
+	Runtime           Runtime        `json:"runtime"`
 	HostName          string         `json:"host_name"`
 	Host              sql.NullInt64  `json:"host"`
 	Email             string         `json:"email"`
@@ -57,9 +61,6 @@ type Event struct {
 	BeginnerFriendly  bool           `json:"beginner_friendly"`
 	ExperiencedOnly   bool           `json:"experienced_only"`
 	CanBeRunInEnglish bool           `json:"can_be_run_in_english"`
-	LongRunning       bool           `json:"long_running"`
-	ShortRunning      bool           `json:"short_running"`
 	Status            EventStatus    `json:"status"`
 	InsertedTime      time.Time      `json:"inserted_time"`
-	DurationGroup     DurationFlags
 }

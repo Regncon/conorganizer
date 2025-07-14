@@ -266,7 +266,7 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 				event.System.String,
 				event.Description,
 			)
-			@otherDetails(eventId, event.AgeGroup, event.DurationGroup)
+			@otherDetails(eventId, event.AgeGroup, event.Runtime)
 			@submitSection()
 		</form>
 	</div>
@@ -295,6 +295,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
                 system,
                 event_type,
                 age_group,
+                event_runtime,
                 host_name,
                 host,
                 email,
@@ -305,8 +306,6 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
                 beginner_friendly,
                 experienced_only,
                 can_be_run_in_english,
-                long_running,
-                short_running,
                 status
             FROM events WHERE id = ?
             `
@@ -322,6 +321,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		&event.System,
 		&event.EventType,
 		&event.AgeGroup,
+		&event.Runtime,
 		&event.HostName,
 		&event.Host,
 		&event.Email,
@@ -332,8 +332,6 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		&event.BeginnerFriendly,
 		&event.ExperiencedOnly,
 		&event.CanBeRunInEnglish,
-		&event.LongRunning,
-		&event.ShortRunning,
 		&event.Status,
 	); err != nil {
 		if err == sql.ErrNoRows {
@@ -342,9 +340,6 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		fmt.Printf("Error scanning event: %v\n", err)
 		return nil, err
 	}
-
-	event.DurationGroup = models.DurationFlags{LongRunning: event.LongRunning, ShortRunning: event.ShortRunning}
-
 	return &event, nil
 }
 

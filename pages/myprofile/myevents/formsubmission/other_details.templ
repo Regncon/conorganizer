@@ -43,8 +43,39 @@ func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 		}
 	})
 }
+func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/runtime", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"runtime"`
+		}
+		store := &Store{}
 
-templ otherDetails(eventId string, ageGroup models.AgeGroup, duration models.DurationFlags) {
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET event_runtime = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the runtime for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime) {
 	<article class="form-card">
 		<h4>Øvrige Detaljer</h4>
 		<section class="details-section">
@@ -58,10 +89,6 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, duration models.Dur
 					class="input"
 					required
 				>
-					('AllAges'),
-					('ChildFriendly'),
-					('TeenFriendly'),
-					('AdultsOnly');
 					<option value="AllAges" selected>Passer for alle aldre</option>
 					<option value="ChildFriendly">Barn (under 12 år)</option>
 					<option value="TeenFriendly">Tenåringer (13–17 år)</option>
@@ -72,15 +99,22 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, duration models.Dur
 				<p class="label">Arrangementet passer for alle aldre </p>
 				<p>Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. </p>
 			</article>
-			<section class="form-group duration">
-				<label for="duration" class="label-small color-strong">Varighet</label>
-				<select id="duration" name="duration" class="input" required>
-					<option value="4-5" selected>Vanlig pulje</option>
-					<option value="2-3">Kortere (2–3 timer)</option>
-					<option value="6+">Lengre (6+ timer)</option>
+			<section class="form-group runtime">
+				<label for="runtime" class="label-small color-strong">Varighet</label>
+				<select
+					name="runtime"
+					class="input"
+					data-signals={ fmt.Sprintf("{runtime:'%s'}", runtime) }
+					data-bind="runtime"
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/runtime", eventId) }
+					required
+				>
+					<option value="Normal" selected>Vanlig pulje</option>
+					<option value="ShortRunning">Kortere (2–3 timer)</option>
+					<option value="LongRunning">Lengre (6+ timer)</option>
 				</select>
 			</section>
-			<article class="item-card duration-description">
+			<article class="item-card runtime-description">
 				<p class="label">Fire til fem timer </p>
 				<p>
 					Dette er den vanligste varigheten for arrangementer på Regncon, og det passer fint inn i en pulje. Det
@@ -89,7 +123,6 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, duration models.Dur
 				</p>
 			</article>
 			<section class="form-group beginner-friendly">
-				.
 				<div class="checkbox-label">
 					<label for="beginner-friendly-label" class="label-small color-strong">
 						Nybegynnervennlig
