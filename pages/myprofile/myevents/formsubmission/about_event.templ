@@ -73,6 +73,67 @@ func UpdateIntro(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 
+func UpdateSystem(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/system", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"system"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET system = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the system for event in the database", http.StatusInternalServerError)
+			return
+		}
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+func UpdateDescription(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/description", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"description"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET description = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the description for event in the database", http.StatusInternalServerError)
+			return
+		}
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
 templ aboutEvent(eventId string, title string, intro string, typeValue string, image string, system string, description string) {
 	<article class="form-card">
 		<h4>Om arrangementet</h4>
@@ -119,11 +180,12 @@ templ aboutEvent(eventId string, title string, intro string, typeValue string, i
 			<section class="form-group system">
 				<label for="system" class="label-small color-strong">System</label>
 				<input
-					type="text"
-					id="system"
 					name="system"
 					class="input"
-					value={ shouldShowStringValue(system) }
+					type="text"
+					data-bind="system"
+					data-signals={ fmt.Sprintf("{system:'%s'}", system) }
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/system", eventId) }
 					placeholder="Hva system er det?"
 					required
 				/>
@@ -131,10 +193,12 @@ templ aboutEvent(eventId string, title string, intro string, typeValue string, i
 			<section class="form-group description">
 				<label for="description" class="label-small color-strong">Beskrivelse av Arrangementet</label>
 				<textarea
-					id="description"
-					rows="15"
 					name="description"
 					class="input"
+					data-bind="description"
+					data-signals={ fmt.Sprintf("{description:'%s'}", description) }
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/description", eventId) }
+					rows="15"
 					placeholder="Beskrivelse av arrangementet"
 					required
 				>

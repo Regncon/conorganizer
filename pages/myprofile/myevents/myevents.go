@@ -163,6 +163,8 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					formsubmission.UpdatePhone(newApiIdRouter, db, kv)
 					formsubmission.UpdateTitle(newApiIdRouter, db, kv)
 					formsubmission.UpdateIntro(newApiIdRouter, db, kv)
+					formsubmission.UpdateSystem(newApiIdRouter, db, kv)
+					formsubmission.UpdateDescription(newApiIdRouter, db, kv)
 
 					formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 				})
