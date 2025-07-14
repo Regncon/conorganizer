@@ -70,6 +70,7 @@ INSERT INTO event_statuses (status) VALUES
 CREATE TABLE IF NOT EXISTS events (
     id TEXT PRIMARY KEY NOT NULL DEFAULT ( lower(hex(randomblob(8))) ),
     title TEXT NOT NULL,
+    intro TEXT NOT NULL,
     description TEXT NOT NULL,
     image_url TEXT,
     system TEXT,
@@ -148,6 +149,7 @@ INSERT INTO users (user_id, email, is_admin) VALUES
 -- Add two example events
 INSERT INTO events (
     title,
+    intro,
     description,
     image_url,
     system,
@@ -167,6 +169,7 @@ INSERT INTO events (
     status
 ) VALUES (
     'Dungeons & Dragons: Den Tapte Minen',
+    'En lang forklarend tekest',
     'Bli med på et spennende eventyr i den klassiske D&D-modulen "Den Tapte Minen av Phandelver". Perfekt for nye spillere!',
     'https://imgur.com/example1',
     'D&D 5e',
@@ -188,6 +191,7 @@ INSERT INTO events (
 (
     'Vampire: Nattens Barn',
     'En intens fortelling om intriger og makt i Oslos vampyrsamfunn. Kun for erfarne rollespillere.',
+    'En lang og intenst forklarende tekst',
     'https://imgur.com/example2',
     'Vampire: The Masquerade 5th Edition',
     'Maria Storyteller',

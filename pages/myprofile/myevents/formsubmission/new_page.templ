@@ -250,13 +250,6 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 			method="post"
 		>
 			<h1 class="color-strong">Nytt Arrangement</h1>
-			<section>
-				<h2 class="color-strong" style="color:red">Denne siden er under utvikling</h2>
-				<p style="color:red">
-					Du må nok vente litt før du kan opprette arrangementer her. All data du sender inn vil bli slettet når vi er
-					ferdig med siden.
-				</p>
-			</section>
 			@contactInfo(
 				eventId,
 				event.HostName,
@@ -266,9 +259,7 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 			@aboutEvent(
 				eventId,
 				event.Title,
-				//TODO:wrong event type here needs to change when db is corrected
-				event.Description,
-				//TODO:wrong event type here needs to change when db is corrected
+				event.Intro,
 				event.System.String,
 				event.ImageURL.String,
 				event.System.String,
@@ -297,6 +288,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
             SELECT
                 id,
                 title,
+                intro,
                 description,
                 image_url,
                 system,
@@ -323,6 +315,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 	if err := row.Scan(
 		&event.ID,
 		&event.Title,
+		&event.Intro,
 		&event.Description,
 		&event.ImageURL,
 		&event.System,

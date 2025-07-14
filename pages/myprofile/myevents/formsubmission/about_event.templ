@@ -42,6 +42,37 @@ func UpdateTitle(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 
+func UpdateIntro(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/intro", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"intro"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET intro = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the intro for event in the database", http.StatusInternalServerError)
+			return
+		}
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
 templ aboutEvent(eventId string, title string, intro string, typeValue string, image string, system string, description string) {
 	<article class="form-card">
 		<h4>Om arrangementet</h4>
@@ -49,12 +80,12 @@ templ aboutEvent(eventId string, title string, intro string, typeValue string, i
 			<section class="form-group title">
 				<label for="title" class="label-small color-strong">Tittel</label>
 				<input
-					data-signals={ fmt.Sprintf("{title:'%s'}", title) }
-					type="text"
 					name="title"
-					data-bind="title"
-					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/title", eventId) }
 					class="input"
+					type="text"
+					data-bind="title"
+					data-signals={ fmt.Sprintf("{title:'%s'}", title) }
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/title", eventId) }
 					placeholder="Tittel på arrangementet"
 					required
 				/>
@@ -62,9 +93,11 @@ templ aboutEvent(eventId string, title string, intro string, typeValue string, i
 			<section class="form-group intro">
 				<label for="intro" class="label-small color-strong">Kjapp introduksjon</label>
 				<textarea
-					id="intro"
 					name="intro"
 					class="input"
+					data-bind="intro"
+					data-signals={ fmt.Sprintf("{intro:'%s'}", intro) }
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/intro", eventId) }
 					rows="7"
 					placeholder="Kjapp introduksjon til arrangementet"
 					required
@@ -82,7 +115,7 @@ templ aboutEvent(eventId string, title string, intro string, typeValue string, i
 					<option value="other">Annet</option>
 				</select>
 			</section>
-			@eventPicture(image)
+			<div class="image"></div>
 			<section class="form-group system">
 				<label for="system" class="label-small color-strong">System</label>
 				<input
