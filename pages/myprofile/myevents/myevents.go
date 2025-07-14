@@ -173,6 +173,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					formsubmission.UpdateBeginnerFriendly(newApiIdRouter, db, kv)
 					formsubmission.UpdateCanBeRunInEnglish(newApiIdRouter, db, kv)
 					formsubmission.UpdateMaxPlayers(newApiIdRouter, db, kv)
+                    formsubmission.UpdateNotes(newApiIdRouter, db, kv)
 
 					formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 				})

@@ -315,6 +315,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
                 beginner_friendly,
                 experienced_only,
                 can_be_run_in_english,
+                notes,
                 status
             FROM events WHERE id = ?
             `
@@ -341,6 +342,7 @@ func GetEventByUserAndEventID(userId string, eventID string, db *sql.DB, logger 
 		&event.BeginnerFriendly,
 		&event.ExperiencedOnly,
 		&event.CanBeRunInEnglish,
+		&event.Notes,
 		&event.Status,
 	); err != nil {
 		if err == sql.ErrNoRows {
