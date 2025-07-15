@@ -11,7 +11,7 @@ const (
 	EventStatusDraft     EventStatus = "Kladd"
 	EventStatusSubmitted EventStatus = "Innsendt"
 	EventStatusPublished EventStatus = "Publisert"
-	EventStatusClosed    EventStatus = "Godkjent"
+	EventStatusApproved  EventStatus = "Godkjent"
 	EventStatusArchived  EventStatus = "Avist"
 )
 

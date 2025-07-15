@@ -44,7 +44,7 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	if len(events) > 0 {
 		for _, event := range events {
 			<a
-				href={ templ.URL(shouldDisableATagUrl(event.Status, event.Id)) }
+				href={ templ.URL(fmt.Sprintf("/my-events/new/%s", event.Id)) }
 				style="
                     height: 20rem;
                     min-width: 20rem;
@@ -63,6 +63,11 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 					style="max-width: 100%; height: 45%; object-fit: cover; border-radius: 1rem 1rem 0 0;"
 				/>
 				<div style="padding: 1rem;">
+					if event.Status == models.EventStatusDraft {
+						<span style="color:#C6A0F6">Kladd</span>
+					} else if event.Status == models.EventStatusSubmitted {
+						<span style="color:var(--color-primary)">Innsendt</span>
+					}
 					<h2>{ event.Title }</h2>
 					<h3>{ event.Description }</h3>
 				</div>
@@ -70,13 +75,6 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 		}
 		@newEvent()
 	}
-}
-
-func shouldDisableATagUrl(status models.EventStatus, eventId string) string {
-	if status == models.EventStatusDraft {
-		return fmt.Sprintf("/my-events/new/%s", eventId)
-	}
-	return "#"
 }
 
 templ newEvent() {
