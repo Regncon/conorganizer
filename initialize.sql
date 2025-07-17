@@ -1,10 +1,3 @@
-CREATE TABLE IF NOT EXISTS rooms (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    room_nr INTEGER NOT NULL,
-    floor_nr INTEGER NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS puljer (
     name TEXT PRIMARY KEY,
     start_time DATE NOT NULL
@@ -37,7 +30,7 @@ CREATE TABLE IF NOT EXISTS billettholdere (
 
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT NOT NULL,
+    user_id TEXT NOT NULL UNIQUE,
     email TEXT NOT NULL,
     is_admin BOOLEAN NOT NULL DEFAULT FALSE,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -106,24 +99,19 @@ CREATE TABLE IF NOT EXISTS events (
     host INTEGER,
     email TEXT NOT NULL,
     phone_number TEXT NOT NULL,
-    room_id INTEGER,
     pulje_name INTEGER,
     max_players INTEGER NOT NULL,
     beginner_friendly BOOLEAN NOT NULL,
-    experienced_only BOOLEAN NOT NULL,
     can_be_run_in_english BOOLEAN NOT NULL,
     notes TEXT DEFAULT '',
     status TEXT NOT NULL DEFAULT 'Kladd',
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (host) REFERENCES users(id) ON DELETE SET NULL,
-    FOREIGN KEY (room_id) REFERENCES rooms(id) ON UPDATE CASCADE,
     FOREIGN KEY (pulje_name) REFERENCES puljer(name) ON UPDATE CASCADE,
     FOREIGN KEY (status) REFERENCES event_statuses(status) ON UPDATE CASCADE,
     FOREIGN KEY (event_type) REFERENCES events_types(event_type) ON UPDATE CASCADE,
     FOREIGN KEY (age_group) REFERENCES age_grups(age_group) ON UPDATE CASCADE,
     FOREIGN KEY (event_runtime) REFERENCES event_runtimes(runtime) ON UPDATE CASCADE,
-    -- Ensure some flags are mutually exclusive
-    CHECK (beginner_friendly + experienced_only <= 1)
 );
 
 CREATE TABLE IF NOT EXISTS interest_levels (

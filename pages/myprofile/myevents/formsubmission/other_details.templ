@@ -204,7 +204,7 @@ func UpdateNotes(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 
-templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, experiencedOnly bool, canBeRunInEnglish bool, maxPlayers int, notes string) {
+templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, canBeRunInEnglish bool, maxPlayers int, notes string) {
 	<article class="form-card">
 		<h4>Øvrige Detaljer</h4>
 		<section class="details-section">
@@ -220,7 +220,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				>
 					<option value="AllAges" selected>Passer for alle aldre</option>
 					<option value="ChildFriendly">Barn (under 12 år)</option>
-					<option value="TeenFriendly">Tenåringer (13–17 år)</option>
+					<option value="TeenFriendly">Ungdom og voksne (13+ år)</option>
 					<option value="AdultsOnly">Voksne (18+ år)</option>
 				</select>
 			</section>
@@ -305,7 +305,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 			</article>
 			<section class="form-group player-count">
 				<label for="player-count" class="label-small color-strong">
-					Antall spillere (utenom arrangør)
+					Maks antall spillere (utenom arrangør)
 				</label>
 				<input
 					name="max-players"

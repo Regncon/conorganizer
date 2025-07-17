@@ -59,7 +59,6 @@ type Event struct {
 	PuljeName         sql.NullString `json:"pulje_name"`
 	MaxPlayers        int            `json:"max_players"`
 	BeginnerFriendly  bool           `json:"beginner_friendly"`
-	ExperiencedOnly   bool           `json:"experienced_only"`
 	CanBeRunInEnglish bool           `json:"can_be_run_in_english"`
 	Notes             string         `json:"notes"`
 	Status            EventStatus    `json:"status"`
