@@ -2,7 +2,7 @@ dbs:
   - path: /var/lib/regncon/events.db
     replicas:
       - type: s3
-        bucket: regncon
+        bucket: shy-dream-5275
         path: eventsdb
         endpoint: https://fly.storage.tigris.dev
         force-path-style: true
