@@ -1,12 +1,8 @@
 CREATE TABLE IF NOT EXISTS rooms (
-    name TEXT PRIMARY KEY
-);
-
-CREATE TABLE IF NOT EXISTS rooms_map_data (
-	name TEXT PRIMARY KEY,
-	x INTEGER NOT NULL,
-	y INTEGER NOT NULL,
-	FOREIGN KEY (name) REFERENCES rooms(name) ON DELETE CASCADE
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    room_nr INTEGER NOT NULL,
+    floor_nr INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS puljer (
@@ -62,40 +58,72 @@ CREATE TABLE IF NOT EXISTS event_statuses (
 
 INSERT INTO event_statuses (status) VALUES
 ('Kladd'),
+('Innsendt'),
 ('Publisert'),
 ('Godkjent'),
 ('Avvist');
 
+CREATE TABLE IF NOT EXISTS events_types (
+    event_type TEXT PRIMARY KEY
+);
+
+INSERT INTO events_types (event_type) VALUES
+('Roleplay'),
+('Boardgame'),
+('Cardgame'),
+('Other');
+
+CREATE TABLE IF NOT EXISTS age_grups (
+    age_group TEXT PRIMARY KEY
+);
+
+INSERT INTO age_grups (age_group) VALUES
+('AllAges'),
+('ChildFriendly'),
+('TeenFriendly'),
+('AdultsOnly');
+
+CREATE TABLE IF NOT EXISTS event_runtimes (
+    runtime TEXT PRIMARY KEY
+);
+
+INSERT INTO event_runtimes (runtime) VALUES
+('Normal'),
+('ShortRunning'),
+('LongRunning');
+
 CREATE TABLE IF NOT EXISTS events (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id TEXT PRIMARY KEY NOT NULL DEFAULT ( lower(hex(randomblob(8))) ),
     title TEXT NOT NULL,
+    intro TEXT NOT NULL,
     description TEXT NOT NULL,
-    image_url TEXT,
-    system TEXT,
+    image_url TEXT DEFAULT '',
+    system TEXT DEFAULT '',
+    event_type TEXT NOT NULL DEFAULT 'Other',
+    age_group TEXT NOT NULL DEFAULT 'AllAges',
+    event_runtime TEXT NOT NULL DEFAULT 'Normal',
     host_name TEXT NOT NULL,
     host INTEGER,
     email TEXT NOT NULL,
-    phone_number INTEGER NOT NULL,
-    room_name INTEGER,
+    phone_number TEXT NOT NULL,
+    room_id INTEGER,
     pulje_name INTEGER,
     max_players INTEGER NOT NULL,
-    child_friendly BOOLEAN NOT NULL,
-    adults_only BOOLEAN NOT NULL,
     beginner_friendly BOOLEAN NOT NULL,
     experienced_only BOOLEAN NOT NULL,
     can_be_run_in_english BOOLEAN NOT NULL,
-    long_running BOOLEAN NOT NULL,
-    short_running BOOLEAN NOT NULL,
+    notes TEXT DEFAULT '',
     status TEXT NOT NULL DEFAULT 'Kladd',
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (host) REFERENCES users(id) ON DELETE SET NULL,
-    FOREIGN KEY (room_name) REFERENCES rooms(name) ON UPDATE CASCADE,
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON UPDATE CASCADE,
     FOREIGN KEY (pulje_name) REFERENCES puljer(name) ON UPDATE CASCADE,
     FOREIGN KEY (status) REFERENCES event_statuses(status) ON UPDATE CASCADE,
+    FOREIGN KEY (event_type) REFERENCES events_types(event_type) ON UPDATE CASCADE,
+    FOREIGN KEY (age_group) REFERENCES age_grups(age_group) ON UPDATE CASCADE,
+    FOREIGN KEY (event_runtime) REFERENCES event_runtimes(runtime) ON UPDATE CASCADE,
     -- Ensure some flags are mutually exclusive
-    CHECK (child_friendly + adults_only <= 1),
-    CHECK (beginner_friendly + experienced_only <= 1),
-    CHECK (long_running + short_running <= 1)
+    CHECK (beginner_friendly + experienced_only <= 1)
 );
 
 CREATE TABLE IF NOT EXISTS interest_levels (
@@ -109,7 +137,7 @@ INSERT INTO interest_levels (interest_level) VALUES
 
 CREATE TABLE IF NOT EXISTS interests (
     billettholder_id INTEGER NOT NULL,
-    event_id INTEGER NOT NULL,
+    event_id TEXT NOT NULL,
     interest_level TEXT NOT NULL,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (billettholder_id, event_id),
@@ -119,7 +147,7 @@ CREATE TABLE IF NOT EXISTS interests (
 );
 
 CREATE TABLE IF NOT EXISTS events_players (
-    event_id INTEGER NOT NULL,
+    event_id TEXT NOT NULL,
     billettholder_id INTEGER NOT NULL,
 	interest_level TEXT NOT NULL,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -129,70 +157,11 @@ CREATE TABLE IF NOT EXISTS events_players (
 	FOREIGN KEY (interest_level) REFERENCES interest_levels(interest_level) ON UPDATE CASCADE
 );
 
--- Add 2 test events and a test user to to database
-
--- Add a test admin user
-INSERT INTO users (user_id, email, is_admin) VALUES
-('fake-user-id-1', 'test.admin@example.com', true),
-('fake-user-id-2', 'test.admin2@example.com', false);
-
--- Add two example events
-INSERT INTO events (
-    title,
-    description,
-    image_url,
-    system,
-    host_name,
-    email,
-    phone_number,
-    host,
-    pulje_name,
-    max_players,
-    child_friendly,
-    adults_only,
-    beginner_friendly,
-    experienced_only,
-    can_be_run_in_english,
-    long_running,
-    short_running,
-    status
-) VALUES (
-    'Dungeons & Dragons: Den Tapte Minen',
-    'Bli med på et spennende eventyr i den klassiske D&D-modulen "Den Tapte Minen av Phandelver". Perfekt for nye spillere!',
-    'https://imgur.com/example1',
-    'D&D 5e',
-    'Erik Spilleder',
-    'test.admin@example.com',
-    12345678,
-    1,
-    'Lørdag morgen',
-    6,
-    false,
-    false,
-    true,
-    false,
-    true,
-    false,
-    true,
-    'Publisert'
-),
-(
-    'Vampire: Nattens Barn',
-    'En intens fortelling om intriger og makt i Oslos vampyrsamfunn. Kun for erfarne rollespillere.',
-    'https://imgur.com/example2',
-    'Vampire: The Masquerade 5th Edition',
-    'Maria Storyteller',
-    'test.admin2@example.com',
-    12345678,
-    2,
-    'Lørdag kveld',
-    4,
-    false,
-    true,
-    false,
-    true,
-    false,
-    true,
-    false,
-    'Publisert'
+CREATE TABLE IF NOT EXISTS events_puljes_exclusions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pulje_name TEXT NOT NULL,
+    event_id TEXT NOT NULL,
+    FOREIGN KEY (pulje_name) REFERENCES puljer(name),
+    FOREIGN KEY (event_id) REFERENCES events(id)
 );
+

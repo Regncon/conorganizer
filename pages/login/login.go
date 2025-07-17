@@ -52,6 +52,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 			})
 
 			protectedRoute.Get("/post-login", func(w http.ResponseWriter, r *http.Request) {
+				fmt.Println("Post login handler called")
 				isAdmin := authctx.GetAdminFromUserToken(r.Context())
 				userToken, userTokenErr := authctx.GetUserTokenFromContext(r.Context())
 				if userTokenErr != nil {

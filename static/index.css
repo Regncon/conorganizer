@@ -143,6 +143,14 @@ body {
     main {
         container-type: inline-size;
         container-name: main;
+        padding-bottom: 3rem;
+        /* add 3rem  to avoid menu overlap */
+    }
+
+    @media screen and (width >=420px) {
+        main {
+            padding-bottom: 0;
+        }
     }
 
     .formsubmission-css-container {

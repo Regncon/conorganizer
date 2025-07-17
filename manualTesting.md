@@ -32,3 +32,8 @@
 - [ ] **Opprett arrangement** : Test at en bruker kan opprette et nytt arrangement.
 - [ ] **Rediger arrangement** : Test at en bruker kan redigere et eksisterende arrangement.
 - [ ] **Påkrvde felt** : Test at alle påkrevde felt er riktig validert ved opprettelse og redigering av arrangement.
+- [ ] **Rettigheter** : Test at brukeren kun kan redigere eller slette sine egne arrangementer.
+
+### None happy path
+
+- [ ] **Opprettelse feiler** : Sjekk at brykeren får fornuftig feilmelding ved feil under opprettelse av arrangement.

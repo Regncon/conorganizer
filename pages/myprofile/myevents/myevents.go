@@ -8,8 +8,10 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/Regncon/conorganizer/pages/myprofile/myevents/formsubmission"
+
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -105,54 +107,89 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				}
 			})
 
-			apiRouter.Route("/new", func(newRouter chi.Router) {
-				newRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-					sessionID, mvc, err := mvcSession(w, r)
-					if err != nil {
-						http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
-						return
-					}
-
-					sse := datastar.NewSSE(w, r)
-
-					ctx := r.Context()
-					watcher, err := kv.Watch(ctx, sessionID)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					defer watcher.Stop()
-
-					for {
-						select {
-						case <-ctx.Done():
+			apiRouter.Route("/new", func(newApiRouter chi.Router) {
+				newApiRouter.Route("/{id}", func(newApiIdRouter chi.Router) {
+					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						sessionID, mvc, err := mvcSession(w, r)
+						if err != nil {
+							http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
 							return
-						case entry := <-watcher.Updates():
+						}
 
-							if entry == nil {
-								continue
-							}
-							if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-								http.Error(w, err.Error(), http.StatusInternalServerError)
-								return
-							}
+						eventId := chi.URLParam(r, "id")
+						if eventId == "" {
+							http.Error(w, "Event ID is required. Got: "+eventId, http.StatusBadRequest)
+							return
+						}
 
-							c := formsubmission.NewEventFormPage()
-							if err := sse.MergeFragmentTempl(c); err != nil {
-								sse.ConsoleError(err)
+						sse := datastar.NewSSE(w, r)
+
+						ctx := r.Context()
+						watcher, err := kv.Watch(ctx, sessionID)
+						if err != nil {
+							http.Error(w, err.Error(), http.StatusInternalServerError)
+							return
+						}
+						defer watcher.Stop()
+
+						for {
+							select {
+							case <-ctx.Done():
 								return
+							case entry := <-watcher.Updates():
+
+								if entry == nil {
+									continue
+								}
+								if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+									http.Error(w, err.Error(), http.StatusInternalServerError)
+									return
+								}
+
+								userId := userctx.GetUserRequestInfo(r.Context()).Id
+
+								c := formsubmission.NewEventFormPage(eventId, userId, db, logger)
+								if err := sse.MergeFragmentTempl(c); err != nil {
+									sse.ConsoleError(err)
+									return
+								}
 							}
 						}
-					}
+					})
+					formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger)
+
+					formsubmission.UpdateName(newApiIdRouter, db, kv)
+					formsubmission.UpdateEmail(newApiIdRouter, db, kv)
+					formsubmission.UpdatePhone(newApiIdRouter, db, kv)
+					formsubmission.UpdateTitle(newApiIdRouter, db, kv)
+
+					formsubmission.UpdateIntro(newApiIdRouter, db, kv)
+					formsubmission.UpdateSystem(newApiIdRouter, db, kv)
+					formsubmission.UpdateType(newApiIdRouter, db, kv)
+					formsubmission.UpdateDescription(newApiIdRouter, db, kv)
+
+					formsubmission.UpdateAgeGroup(newApiIdRouter, db, kv)
+					formsubmission.UpdateRuntime(newApiIdRouter, db, kv)
+					formsubmission.UpdateBeginnerFriendly(newApiIdRouter, db, kv)
+					formsubmission.UpdateCanBeRunInEnglish(newApiIdRouter, db, kv)
+					formsubmission.UpdateMaxPlayers(newApiIdRouter, db, kv)
+                    formsubmission.UpdateNotes(newApiIdRouter, db, kv)
+
+					formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 				})
 
-				formsubmission.SetupExampleInlineValidation(db, newRouter, logger)
+			})
+
+			apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
+				createNewEventFormSubmission(db, logger, w, r)
 			})
 
 		})
 
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
-			formsubmission.NewEventLayoutRoute(newRouter, db)
+			newRouter.Route("/{id}", func(newIdRoute chi.Router) {
+				formsubmission.NewEventLayoutRoute(newIdRoute, db, logger)
+			})
 		})
 	})
 	return nil
@@ -185,4 +222,43 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 		}
 	}
 	return id, nil
+}
+
+func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
+	logger.Info("Creating new event form submission")
+	userInfo := userctx.GetUserRequestInfo(r.Context())
+	if userInfo.Id == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db, logger)
+	if insertError != nil {
+		logger.Error("Failed to get user ID from database", "error", insertError)
+		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("found user info", "userId", userInfo.Id, "dbId", userDbId, "email", userInfo.Email)
+	logger.Info("Inserting new event form submission")
+
+	// Todo: Use database relations to get foreign keys, event_type etc.
+	query := `
+	INSERT INTO events (
+		host, email, status, title, intro, description, host_name, phone_number, max_players,
+		event_type, beginner_friendly, experienced_only,
+		can_be_run_in_english
+	) VALUES (
+		$1, $2, $3, 'Nytt arrangement', 'Kjapp introduksjon til arrangementet', '', '', '', 6, 'rollespill', false, false, false
+	) RETURNING id`
+
+	var eventId string
+	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft).Scan(&eventId)
+	if insertError != nil {
+		logger.Error("Failed to create new event form submission", "error", insertError)
+		return
+	}
+
+	logger.Info("New event form submission created", "eventID", eventId)
+	http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s", eventId), http.StatusSeeOther)
 }

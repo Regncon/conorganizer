@@ -79,6 +79,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		}
 		return sessionID, mvc, nil
 	}
+
+	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
 	eventLayoutRoute(router, db, err)
 
 	router.Route("/event/api", func(eventRouter chi.Router) {
@@ -129,12 +131,48 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	return nil
 }
 
-func getEventByID(id string, db *sql.DB) (*models.Event, error) {
-	query := "SELECT id, title, description FROM events WHERE id = ?"
-	row := db.QueryRow(query, id)
+func GetEventByID(id string, db *sql.DB) (*models.Event, error) {
+	query := `
+            SELECT
+                id,
+                title,
+                description,
+                image_url,
+                system,
+                host_name,
+                host,
+                email,
+                phone_number,
+                room_id,
+                pulje_name,
+                max_players,
+                beginner_friendly,
+                experienced_only,
+                can_be_run_in_english,
+                status
+            FROM events WHERE id = ? AND status = ?
+            `
+	row := db.QueryRow(query, id, models.EventStatusPublished)
 
 	var event models.Event
-	if err := row.Scan(&event.ID, &event.Title, &event.Description); err != nil {
+	if err := row.Scan(
+		&event.ID,
+		&event.Title,
+		&event.Description,
+		&event.ImageURL,
+		&event.System,
+		&event.HostName,
+		&event.Host,
+		&event.Email,
+		&event.PhoneNumber,
+		&event.RoomId,
+		&event.PuljeName,
+		&event.MaxPlayers,
+		&event.BeginnerFriendly,
+		&event.ExperiencedOnly,
+		&event.CanBeRunInEnglish,
+		&event.Status,
+	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // No event found
 		}

@@ -1,20 +1,152 @@
 package formsubmission
 
-templ contactInfo() {
+import (
+	"net/http"
+	"github.com/go-chi/chi/v5"
+
+	"github.com/Regncon/conorganizer/service/keyvalue"
+	"database/sql"
+	"fmt"
+	"github.com/nats-io/nats.go/jetstream"
+	datastar "github.com/starfederation/datastar/sdk/go"
+)
+
+func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/name", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"name"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET host_name = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the name for event in the database", http.StatusInternalServerError)
+			return
+		}
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/email", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"email"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET email = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the email for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/phone", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"phone"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET phone_number = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the phone for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+templ contactInfo(eventId string, name string, email string, phone string) {
 	<article class="form-card">
 		<h4>Om arrangøren</h4>
 		<section class="organizer-section">
 			<section class="form-group">
 				<label for="name" class="label color-strong">Arrangør</label>
-				<input type="text" name="name" id="name" class="input" value="Gary Garyson" placeholder="Ditt navn" required/>
+				<input
+					data-signals={ fmt.Sprintf("{name:'%s'}", name) }
+					type="text"
+					name="name"
+					data-bind="name"
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/name", eventId) }
+					class="input"
+					placeholder="Ditt navn"
+					required
+				/>
 			</section>
 			<section class="form-group">
 				<label for="email" class="label color-strong">E-post</label>
-				<input type="email" name="email" id="email" class="input" value="ola@norman.no" placeholder="Din e-post" required/>
+				<input
+					data-signals={ fmt.Sprintf("{email:'%s'}", email) }
+					type="email"
+					data-bind="email"
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/email", eventId) }
+					name="email"
+					class="input"
+					placeholder="Din e-post"
+					required
+				/>
 			</section>
 			<section class="form-group">
 				<label for="phone" class="label color-strong">Telefon</label>
-				<input type="tel" name="phone" id="phone" class="input" value="+47 123 45 678" placeholder="Ditt telefonnummer" required/>
+				<input
+					type="tel"
+					data-signals={ fmt.Sprintf("{phone:'%s'}", phone) }
+					data-bind="phone"
+					data-on-keydown__debounce.500ms={ datastar.PutSSE("/my-events/api/new/%s/phone", eventId) }
+					name="phone"
+					class="input"
+					placeholder="Ditt telefonnummer"
+					required
+				/>
 			</section>
 		</section>
 	</article>

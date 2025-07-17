@@ -1,49 +1,283 @@
 package formsubmission
 
-templ otherDetails() {
+import (
+	"net/http"
+	"github.com/go-chi/chi/v5"
+	"fmt"
+
+	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/models"
+	"database/sql"
+	"github.com/nats-io/nats.go/jetstream"
+	datastar "github.com/starfederation/datastar/sdk/go"
+)
+
+func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/ageGroup", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"ageGroup"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET age_group = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the title for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/runtime", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"runtime"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET event_runtime = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the runtime for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+func UpdateBeginnerFriendly(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/beginner-friendly", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input bool `json:"beginnerFriendly"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET beginner_friendly = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the beginner friendly for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+func UpdateCanBeRunInEnglish(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/can-be-run-in-english", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input bool `json:"canBeRunInEnglish"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET can_be_run_in_english = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the can be run in English for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/max-players", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input int `json:"maxPlayers"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET max_players = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the max players for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+func UpdateNotes(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/notes", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"notes"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET notes = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Input, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the notes for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, experiencedOnly bool, canBeRunInEnglish bool, maxPlayers int, notes string) {
 	<article class="form-card">
 		<h4>Øvrige Detaljer</h4>
 		<section class="details-section">
 			<section class="form-group age-group">
 				<label for="age-group" class="label-small color-strong">Aldersgruppe</label>
-				<select id="age-group" name="age-group" class="input" required>
-					<option value="">Velg aldersgruppe</option>
-					<option value="all">Passer for alle aldre</option>
-					<option value="children">Barn (under 12 år)</option>
-					<option value="teens">Tenåringer (13–17 år)</option>
-					<option value="adults">Voksne (18+ år)</option>
+				<select
+					data-signals={ fmt.Sprintf("{ageGroup:'%s'}", ageGroup) }
+					data-bind="ageGroup"
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/ageGroup", eventId) }
+					name="age-group"
+					class="input"
+					required
+				>
+					<option value="AllAges" selected>Passer for alle aldre</option>
+					<option value="ChildFriendly">Barn (under 12 år)</option>
+					<option value="TeenFriendly">Tenåringer (13–17 år)</option>
+					<option value="AdultsOnly">Voksne (18+ år)</option>
 				</select>
 			</section>
 			<article class="item-card age-group-description">
-				<p class="label">Arrangementet passer for alle aldre </p>
+				<p class="label">Hvilke alder anbefales arrangementet for</p>
 				<p>Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. </p>
 			</article>
-			<section class="form-group duration">
-				<label for="duration" class="label-small color-strong">Varighet</label>
-				<select id="duration" name="duration" class="input" required>
-					<option value="">Velg varighet</option>
-					<option value="4-5">Passelig lengde for en pulje (4–5 timer)</option>
-					<option value="2-3">Kortere (2–3 timer)</option>
-					<option value="6+">Lengre (6+ timer)</option>
+			<section class="form-group runtime">
+				<label for="runtime" class="label-small color-strong">Varighet</label>
+				<select
+					name="runtime"
+					class="input"
+					data-signals={ fmt.Sprintf("{runtime:'%s'}", runtime) }
+					data-bind="runtime"
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/runtime", eventId) }
+					required
+				>
+					<option value="Normal" selected>Vanlig pulje</option>
+					<option value="ShortRunning">Kortere (2–3 timer)</option>
+					<option value="LongRunning">Lengre (6+ timer)</option>
 				</select>
 			</section>
-			<article class="item-card duration-description">
+			<article class="item-card runtime-description">
 				<p class="label">Fire til fem timer </p>
-				<p>Dette er den vanligste varigheten for arrangementer på Regncon, og det passer fint inn i en pulje. Det er viktig at folk får vite om arrangementet skal vare mye lengre eller kortere enn en pulje. </p>
+				<p>
+					Dette er den vanligste varigheten for arrangementer på Regncon, og det passer fint inn i en pulje. Det
+					er
+					viktig at folk får vite om arrangementet skal vare mye lengre eller kortere enn en pulje.
+				</p>
 			</article>
 			<section class="form-group beginner-friendly">
 				<div class="checkbox-label">
-					<label for="beginner-friendly-label" class="label-small color-strong">Nybegynnervennlig arrangement</label>
+					<label for="beginner-friendly-label" class="label-small color-strong">
+						Nybegynnervennlig
+						arrangement
+					</label>
 					<p for="beginner-friendly" class="label-small" style="text-align:end; font-weight: 400;">Valgfritt</p>
 				</div>
 				<div class="checkbox-background form-group-checkbox">
-					<input type="checkbox" id="beginner-friendly" name="beginner-friendly" class="checkbox input"/>
+					<input
+						name="beginner-friendly"
+						class="checkbox input"
+						data-signals={ fmt.Sprintf("{beginnerFriendly:%t}", beginnerFriendly) }
+						data-bind="beginnerFriendly"
+						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/beginner-friendly", eventId) }
+						type="checkbox"
+					/>
 					<label for="beginner-friendly">Arrangementet er nybegynnervennlig </label>
 				</div>
 			</section>
 			<section class="item-card beginner-friendly-description">
 				<p class="label">Arrangementet er nybegynnervennlig </p>
-				<p>Det betyr at alle er velkomne på arrangementet og at det vil være en god opplevelse for folk som ikke har erfaring med denne typen spill. </p>
+				<p>
+					Det betyr at alle er velkomne på arrangementet og at det vil være en god opplevelse for folk som ikke
+					har
+					erfaring med denne typen spill.
+				</p>
 			</section>
 			<section class="form-group english">
 				<div class="checkbox-label">
@@ -51,43 +285,62 @@ templ otherDetails() {
 					<p for="english-label" class="label-small" style="text-align:end; font-weight:400;">Valgfritt</p>
 				</div>
 				<div class="checkbox-background form-group-checkbox">
-					<input type="checkbox" id="english" name="english-label" class="checkbox input"/>
+					<input
+						data-signals={ fmt.Sprintf("{canBeRunInEnglish:%t}", canBeRunInEnglish) }
+						data-bind="canBeRunInEnglish"
+						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/can-be-run-in-english", eventId) }
+						type="checkbox"
+						name="english-label"
+						class="checkbox input"
+					/>
 					<label for="english">Arrangementet kan holdes på engelsk </label>
 				</div>
 			</section>
 			<article class="item-card" id="english-description">
 				<p class="label">Arrangementet kan holdes på engelsk </p>
-				<p>Vi informerer deltakerne under festivalen om at dette arrangementet er et godt valg hvis de ikke snakker norsk. </p>
+				<p>
+					Vi informerer deltakerne under festivalen om at dette arrangementet er et godt valg hvis de ikke snakker
+					norsk.
+				</p>
 			</article>
 			<section class="form-group player-count">
 				<label for="player-count" class="label-small color-strong">
 					Antall spillere (utenom arrangør)
 				</label>
 				<input
-					type="number"
-					id="player-count"
-					name="player-count"
+					name="max-players"
 					class="input"
-					min="0"
-					placeholder="0"
-					required
+					data-signals={ fmt.Sprintf("{maxPlayers:%d}", maxPlayers) }
+					data-bind="maxPlayers"
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/max-players", eventId) }
+					type="number"
+					min="4"
 				/>
 			</section>
 			<article class="item-card" id="player-count-description">
-				<p class="label">Text om antall spillere </p>
-				<p>Noe infotekst her som hjelper med å velge antall spillere. </p>
+				<p class="label">Hvor mange kan være med å spille </p>
+				<p>
+					Har du mulighet til å hjelp dine medspillere?
+					Det er mange som ønsker å spille, men vi har begrenset med rom.
+					Hvis vi har mange rollespill med bare fire spillere så bruker vi fort opp alle rommene.
+					Har du mulighet til å ha litt flere spillere enn du orginalt tenkte?
+				</p>
 			</article>
 			<section class="form-group other-notes">
-				<label for="other-notes" class="label-small color-strong">
+				<label for="notes" class="label-small color-strong">
 					Andre Merknader – Er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
 				</label>
 				<textarea
-					id="other-notes"
-					name="other-notes"
+					name="notes"
+					data-signals={ fmt.Sprintf("{notes:'%s'}", notes) }
+					data-bind="notes"
+					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/notes", eventId) }
 					class="input"
 					rows="5"
 					placeholder="Skriv eventuelle merknader her…"
-				></textarea>
+				>
+					{ shouldShowStringValue(notes) }
+				</textarea>
 			</section>
 		</section>
 	</article>

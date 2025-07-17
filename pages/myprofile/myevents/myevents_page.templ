@@ -3,23 +3,16 @@ package myevents
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"log/slog"
 )
 
-type EventStatus string
-
-const (
-	EventStatusDraft     EventStatus = "Kladd"
-	EventStatusPublished EventStatus = "Publisert"
-	EventStatusClosed    EventStatus = "Godkjent"
-	EventStatusArchived  EventStatus = "Avist"
-)
-
 type MyEvents struct {
-	Id          int         `json:"id"`
-	Title       string      `json:"title"`
-	Description string      `json:"description"`
-	Status      EventStatus `json:"status"`
+	Id          string             `json:"id"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	Status      models.EventStatus `json:"status"`
 }
 
 templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
@@ -44,14 +37,14 @@ templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 }
 
 templ events(userid string, db *sql.DB, logger *slog.Logger) {
-	{{ events := GetEvents(db, userid, logger) }}
+	{{ events := GetEventsByUserId(db, userid, logger) }}
 	if len(events) == 0 {
 		@newEvent()
 	}
 	if len(events) > 0 {
 		for _, event := range events {
 			<a
-				href={ templ.URL(shouldDisableATagUrl(event.Status, event.Id)) }
+				href={ templ.URL(fmt.Sprintf("/my-events/new/%s", event.Id)) }
 				style="
                     height: 20rem;
                     min-width: 20rem;
@@ -65,11 +58,16 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
                 "
 			>
 				<img
-					src="/static/participants-small.webp"
+					src="/static/placeholder-small.webp"
 					alt="Participants"
 					style="max-width: 100%; height: 45%; object-fit: cover; border-radius: 1rem 1rem 0 0;"
 				/>
 				<div style="padding: 1rem;">
+					if event.Status == models.EventStatusDraft {
+						<span style="color:#C6A0F6">Kladd</span>
+					} else if event.Status == models.EventStatusSubmitted {
+						<span style="color:var(--color-primary)">Innsendt</span>
+					}
 					<h2>{ event.Title }</h2>
 					<h3>{ event.Description }</h3>
 				</div>
@@ -79,45 +77,39 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	}
 }
 
-func shouldDisableATagUrl(status EventStatus, eventId int) string {
-	if status == EventStatusDraft {
-		return fmt.Sprintf("/event/%d", eventId)
-	}
-	return "#"
-}
-
 templ newEvent() {
-	<a
-		href="/my-events/new"
-		style="
-            width: 100%;
-            height: 20rem;
-            max-width: var(--mobile-max-column-width);
-            background-color: #3b4252;
-            border-radius: 1rem;
-            display: flex;
-            flex-direction: column;
-            text-decoration: none;
-            color: white;
-            box-sizing: border-box;
-            place-items: center;
-            place-content: center;
-            padding-block: 2rem;
-            text-align: center;
-            "
-	>
-		<h2 style="margin: 0">Legg til nytt arrangement</h2>
-		<h1 style="margin: 0; font-size: 3rem">➕</h1>
-	</a>
+	<form action="/my-events/api/create" method="post">
+		<button
+			type="submit"
+			style="
+		        width: 100%;
+		        height: 20rem;
+		        max-width: var(--mobile-max-column-width);
+		        background-color: #3b4252;
+		        border-radius: 1rem;
+		        display: flex;
+		        flex-direction: column;
+		        text-decoration: none;
+		        color: white;
+		        box-sizing: border-box;
+		        place-items: center;
+		        place-content: center;
+		        padding-block: 2rem;
+		        text-align: center;
+		        "
+		>
+			<h2 style="margin: 0">Legg til nytt arrangement</h2>
+			<h1 style="margin: 0; font-size: 3rem">➕</h1>
+		</button>
+	</form>
 }
 
-func GetEvents(db *sql.DB, userId string, logger *slog.Logger) []MyEvents {
-	var userDbId string
+func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []MyEvents {
 	var events []MyEvents
-	userQuery := "SELECT id FROM users WHERE user_id = ?"
-	userRow := db.QueryRow(userQuery, userId)
-	if userRowErr := userRow.Scan(&userDbId); userRowErr != nil {
-		logger.Error("Failed to find user", "user_id", userId, "error", userRowErr)
+
+	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
+	if userDbIdErr != nil {
+		logger.Error("userDbIdErr", userDbIdErr)
 		return events
 	}
 
@@ -137,5 +129,6 @@ func GetEvents(db *sql.DB, userId string, logger *slog.Logger) []MyEvents {
 		}
 		events = append(events, event)
 	}
+	fmt.Printf("Found %d events for user %s\n", len(events), userId)
 	return events
 }

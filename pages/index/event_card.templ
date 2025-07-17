@@ -2,12 +2,11 @@ package index
 
 import (
 	"fmt"
-	"strconv"
 )
 
-templ eventCard(ID int64, title string, game_master string, system string, short_description string) {
+templ eventCard(id string, title string, game_master string, system string, short_description string) {
 	<a
-		href={ templ.URL(fmt.Sprintf("/event/%s", strconv.FormatInt(ID, 10))) }
+		href={ templ.URL(fmt.Sprintf("/event/%s", id, 10)) }
 		style="text-decoration: none; color: #eceff4;"
 	>
 		<div
