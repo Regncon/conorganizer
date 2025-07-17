@@ -111,7 +111,7 @@ CREATE TABLE IF NOT EXISTS events (
     FOREIGN KEY (status) REFERENCES event_statuses(status) ON UPDATE CASCADE,
     FOREIGN KEY (event_type) REFERENCES events_types(event_type) ON UPDATE CASCADE,
     FOREIGN KEY (age_group) REFERENCES age_grups(age_group) ON UPDATE CASCADE,
-    FOREIGN KEY (event_runtime) REFERENCES event_runtimes(runtime) ON UPDATE CASCADE,
+    FOREIGN KEY (event_runtime) REFERENCES event_runtimes(runtime) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS interest_levels (
