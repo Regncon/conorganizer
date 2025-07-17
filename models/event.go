@@ -55,11 +55,9 @@ type Event struct {
 	Host              sql.NullInt64  `json:"host"`
 	Email             string         `json:"email"`
 	PhoneNumber       string         `json:"phone_number"`
-	RoomId            sql.NullInt64  `json:"room_id"`
 	PuljeName         sql.NullString `json:"pulje_name"`
 	MaxPlayers        int            `json:"max_players"`
 	BeginnerFriendly  bool           `json:"beginner_friendly"`
-	ExperiencedOnly   bool           `json:"experienced_only"`
 	CanBeRunInEnglish bool           `json:"can_be_run_in_english"`
 	Notes             string         `json:"notes"`
 	Status            EventStatus    `json:"status"`
