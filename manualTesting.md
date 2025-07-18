@@ -12,7 +12,7 @@
 ### Menu
 
 - [x] **Navigasjon** : Test at alle menylenker fungerer og leder til riktige sider.
-    * finner ikke noen lenke til profilen, men det funker å gå til /my-profile
+    * ⚠️ finner ikke noen lenke til profilen, men det funker å gå til /my-profile
 - [x] **Responsiv design** : Test at menyen fungerer på forskjellige skjermstørrelser (mobil, nettbrett, desktop).
     * funker, men behøver vi hamburgerknapp på desktop?
 - [x] **Hjem knapp** : Test at "Hjem" knappen leder tilbake til forsiden.
@@ -21,7 +21,7 @@
 ### Authentisering og autorisasjon
 
 - [x] **Registrering** : Test at en ny bruker kan registrere seg uten problemer.
-    * Jeg får helt fint lov til å sette passordet mitt til "password", lurer på om vi kanskje bør legge listen høyere
+    * ⚠️ Jeg får helt fint lov til å sette passordet mitt til "password", lurer på om vi kanskje bør legge listen høyere
 - [x] **Innlogging** : Test at en eksisterende bruker kan logge inn med riktige legitimasjonsbeskrivelser.
 - [x] **Log ut** : Test at brukeren kan logge ut uten problemer.
     * "you are not logged in" bør gjerne erstattes av "you are logged out"?
@@ -48,18 +48,18 @@
     * burde "Om arrangøren" heller være en dropdown av billettholdere tilknyttet kontoen? Har vi kanskje diskutert
     dette allerede?
     * grådig slitsomt med den popupen når jeg forsøker å skrive all-caps med shift
-    * navn og telefonnummer ser ut til å forsvinne av og til? Men så fyller jeg de inn på nytt, så funker det :l
+    * ⚠️ navn og telefonnummer ser ut til å forsvinne av og til? Men så fyller jeg de inn på nytt, så funker det :l
     * placeholder-teksten forsvinner ikke når jeg klikker i boksen, har man brukt "value" i stedet for "placeholder"?
 - [x] **Rediger arrangement** : Test at en bruker kan redigere et eksisterende arrangement.
-    * navn og telefonnummer forsvinner når jeg skal redigere
+    * ⚠️ navn og telefonnummer forsvinner når jeg skal redigere
     * når jeg testet punktet under driver også navnet, tlf og eposten å forsvinner - på ett tidspunkt ble telefonnummeret erstattet med "9", og eposten ble nettopp erstattet med "c" når jeg fylte inn navnet
-    * ser det står "nytt arrangement" som overskrift når jeg redigerer ett arrangement som alt er sendt inn?
+    * ser det står "nytt arrangement" som overskrift når jeg redigerer ett arrangement som alt er sendt inn
 - [ ] **Påkrvde felt** : Test at alle påkrevde felt er riktig validert ved opprettelse og redigering av arrangement.
-    * kan sette telefonnummeret som "9" og navnet som "c"
+    * ⚠️ kan sette telefonnummeret som "9" og navnet som "c"
 - [x] **Rettigheter** : Test at brukeren kun kan redigere eller slette sine egne arrangementer.
     * får forskjellig feilmelding når jeg går inn på urlen til et arrangement når jeg er logget inn som en annen bruker (ustylet side med "event not found") vs når jeg ikke er logget inn: fin stailet side med "du har ikke tillatelse" elns. Samme med admin-siden. Det er gjerne meningen, men nevner det nå likevel.
 ### None happy path
 
 - [ ] **Opprettelse feiler** : Sjekk at brykeren får fornuftig feilmelding ved feil under opprettelse av arrangement.
     * testet å rename databasefilen når jeg opprettet arrangement, fikk "Failed to update the status for event in the database" - så det funker i alle fall som det skal.
-    * OI! Jeg får ingen feilmelding når jeg redigerer et arrangement og databasen er renamet! Jeg trykker "send inn" og den redirekter meg stille og pent til arrangementsiden, og ingenting er lagret!
+    * ⚠️ OI! Jeg får ingen feilmelding når jeg redigerer et arrangement og databasen er renamet! Jeg trykker "send inn" og den redirekter meg stille og pent til arrangementsiden, og ingenting er lagret!
