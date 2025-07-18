@@ -39,7 +39,7 @@
     * symbolet på bossknappen funker ikke i så liten størrelse
     * de gråtende bildene på "Min profil"-siden er gjerne placeholders og bør erstattes
 - [ ] **Administrator** : Test at administratorer har tilgang til administrative funksjoner som brukerhåndtering.
-    * christer vet ikke hvordan han logger inn som admin
+    * ⚠️ christer vet ikke hvordan han logger inn som admin
 
 ### my-events
 
