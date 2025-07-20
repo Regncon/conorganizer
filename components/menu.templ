@@ -62,7 +62,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
         z-index: var(--nav-z-index);
         background-color: #2d3748;
         height: var(--nav-height);
-        gap: 1rem;
+        gap: var(--nav-gap);
         font-family: "Fira Code";
         width: 100%;
         place-content: center;
@@ -118,9 +118,9 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
         }
 
         .dropdown-panel {
-            position: fixed;
+            position: absolute;
             right: 0.5rem;
-            bottom: calc((var(--nav-height) / 2 + (var(--nav-gap) * 2)));
+            bottom: calc(var(--nav-height) + 0.5rem);
             background-color: #2d3748;
             box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
             z-index: var(--nav-drop-down-z-index);
@@ -187,11 +187,8 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
             }
 
             .dropdown-panel {
-                right: 0;
                 bottom: unset;
-                position: absolute;
                 min-inline-size: max-content;
-                margin-block-start: 1.1rem;
             }
         }
     }
