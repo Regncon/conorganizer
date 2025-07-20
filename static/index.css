@@ -111,6 +111,9 @@
     --btn-secondary-disabled-border: #555555;
     --btn-secondary-disabled-text: #767676;
 
+    /* nav */ 
+    --nav-height: 4rem;
+    --nav-gap: 1rem;
 }
 
 html {
