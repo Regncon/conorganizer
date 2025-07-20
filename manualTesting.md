@@ -23,6 +23,7 @@
 - [x] **Registrering** : Test at en ny bruker kan registrere seg uten problemer.
     * ⚠️ Jeg får helt fint lov til å sette passordet mitt til "password", lurer på om vi kanskje bør legge listen høyere
 - [x] **Innlogging** : Test at en eksisterende bruker kan logge inn med riktige legitimasjonsbeskrivelser.
+      * det burde gjerne være tydeligere at man er logget inn
 - [x] **Log ut** : Test at brukeren kan logge ut uten problemer.
     * "you are not logged in" bør gjerne erstattes av "you are logged out"?
 - [x] **Tilgangskontroll** : Test at brukere uten riktig tilgang ikke kan se beskyttede sider.
