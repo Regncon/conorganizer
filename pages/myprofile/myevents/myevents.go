@@ -18,7 +18,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
-	datastar "github.com/starfederation/datastar/sdk/go"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
@@ -99,7 +99,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						}
 
 						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, logger)
-						if err := sse.MergeFragmentTempl(c); err != nil {
+						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
 						}
@@ -149,7 +149,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 								userId := userctx.GetUserRequestInfo(r.Context()).Id
 
 								c := formsubmission.NewEventFormPage(eventId, userId, db, logger)
-								if err := sse.MergeFragmentTempl(c); err != nil {
+								if err := sse.PatchElementTempl(c); err != nil {
 									sse.ConsoleError(err)
 									return
 								}

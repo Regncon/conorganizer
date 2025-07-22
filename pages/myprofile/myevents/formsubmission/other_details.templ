@@ -9,8 +9,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"database/sql"
 	"github.com/nats-io/nats.go/jetstream"
-	datastar "github.com/starfederation/datastar/sdk/go"
-)
+	datastar "github.com/starfederation/datastar-go/datastar")
 
 func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	eventRouter.Put("/ageGroup", func(w http.ResponseWriter, r *http.Request) {

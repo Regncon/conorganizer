@@ -17,7 +17,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/samber/lo"
-	datastar "github.com/starfederation/datastar/sdk/go"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB) error {
@@ -133,7 +133,7 @@ func SetupIndexRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							return
 						}
 						c := todosMVCView(db)
-						if err := sse.MergeFragmentTempl(c); err != nil {
+						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
 						}
