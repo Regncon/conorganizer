@@ -9,7 +9,8 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"database/sql"
 	"github.com/nats-io/nats.go/jetstream"
-	datastar "github.com/starfederation/datastar-go/datastar")
+	datastar "github.com/starfederation/datastar-go/datastar"
+)
 
 func UpdateTitle(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	eventRouter.Put("/title", func(w http.ResponseWriter, r *http.Request) {
@@ -198,7 +199,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					class="input"
 					data-bind="intro"
 					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/intro", eventId) }
-					rows="7"
+					rows="2"
 					placeholder="Kjapp introduksjon til arrangementet"
 					required
 				>

@@ -9,10 +9,10 @@ import (
 )
 
 type MyEvents struct {
-	Id          string             `json:"id"`
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	Status      models.EventStatus `json:"status"`
+	Id     string             `json:"id"`
+	Title  string             `json:"title"`
+	Intro  string             `json:"intro"`
+	Status models.EventStatus `json:"status"`
 }
 
 templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
@@ -68,8 +68,20 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 					} else if event.Status == models.EventStatusSubmitted {
 						<span style="color:var(--color-primary)">Innsendt</span>
 					}
-					<h2>{ event.Title }</h2>
-					<h3>{ event.Description }</h3>
+					<h2>
+						if event.Title != "" {
+							{ event.Title }
+						} else {
+							Nytt arrangement
+						}
+					</h2>
+					<h3>
+						if event.Intro != "" {
+							{ event.Intro }
+						} else {
+							Legg til en kort beskrivelse
+						}
+					</h3>
 				</div>
 			</a>
 		}
@@ -113,7 +125,7 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []MyEvent
 		return events
 	}
 
-	eventsQuery := "SELECT id, title, description, status FROM events WHERE host = ?"
+	eventsQuery := "SELECT id, title, intro, status FROM events WHERE host = ?"
 	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
 	if eventsQueryErr != nil {
 		logger.Error("Failed to query events", "user_id", userId, "error", eventsQueryErr)
@@ -123,7 +135,7 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []MyEvent
 
 	for rows.Next() {
 		var event MyEvents
-		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Description, &event.Status); scanErr != nil {
+		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status); scanErr != nil {
 			logger.Error("Failed to scan event row", "user_id", userId, "error", scanErr)
 			return events
 		}
