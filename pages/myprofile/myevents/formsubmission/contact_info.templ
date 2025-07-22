@@ -8,8 +8,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/nats-io/nats.go/jetstream"
-	datastar "github.com/starfederation/datastar/sdk/go"
-)
+	datastar "github.com/starfederation/datastar-go/datastar")
 
 func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	eventRouter.Put("/name", func(w http.ResponseWriter, r *http.Request) {

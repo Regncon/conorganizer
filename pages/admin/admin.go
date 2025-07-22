@@ -15,7 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
-	datastar "github.com/starfederation/datastar/sdk/go"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB) error {
@@ -108,7 +108,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						return
 					}
 					c := adminPage(db)
-					if err := sse.MergeFragmentTempl(c); err != nil {
+					if err := sse.PatchElementTempl(c); err != nil {
 						sse.ConsoleError(err)
 						return
 					}

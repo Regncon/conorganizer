@@ -17,7 +17,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
-	datastar "github.com/starfederation/datastar/sdk/go"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, logger *slog.Logger, db *sql.DB) error {
@@ -95,7 +95,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			defer sub.Unsubscribe()
 
 			// send the first render immediately
-			if err := sse.MergeFragmentTempl(BillettholderAdminPage(db,logger)); err != nil {
+			if err := sse.PatchElementTempl(BillettholderAdminPage(db, logger)); err != nil {
 				_ = sse.ConsoleError(err)
 				return
 			}
@@ -104,7 +104,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				if _, err := sub.NextMsgWithContext(ctx); err != nil {
 					return // context cancelled or sub closed
 				}
-				if err := sse.MergeFragmentTempl(BillettholderAdminPage(db, logger)); err != nil {
+				if err := sse.PatchElementTempl(BillettholderAdminPage(db, logger)); err != nil {
 					_ = sse.ConsoleError(err)
 					return
 				}
@@ -134,7 +134,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			defer sub.Unsubscribe()
 
 			// initial render
-			if err := sse.MergeFragmentTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
+			if err := sse.PatchElementTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
 				_ = sse.ConsoleError(err)
 				return
 			}
@@ -143,7 +143,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				if _, err := sub.NextMsgWithContext(ctx); err != nil {
 					return
 				}
-				if err := sse.MergeFragmentTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
+				if err := sse.PatchElementTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
 					_ = sse.ConsoleError(err)
 					return
 				}

@@ -8,8 +8,7 @@ import (
 
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/requestctx"
-	datastar "github.com/starfederation/datastar/sdk/go"
-)
+	datastar "github.com/starfederation/datastar-go/datastar")
 
 func adminLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {

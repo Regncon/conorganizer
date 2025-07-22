@@ -1,6 +1,8 @@
 module github.com/Regncon/conorganizer
 
-go 1.23.3
+go 1.24
+
+toolchain go1.24.1
 
 require (
 	github.com/go-chi/chi/v5 v5.2.1
@@ -19,7 +21,7 @@ require (
 	github.com/nats-io/nats.go v1.43.0
 	github.com/sahilm/fuzzy v0.1.1
 	github.com/samber/lo v1.51.0
-	github.com/starfederation/datastar v1.0.0-beta.11
+	github.com/starfederation/datastar-go v1.0.1
 	modernc.org/sqlite v1.38.0
 )
 
@@ -32,7 +34,6 @@ require (
 	github.com/chewxy/math32 v1.11.1 // indirect
 	github.com/cli/browser v1.3.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.4.0 // indirect
-	github.com/delaneyj/gostar v0.8.0 // indirect
 	github.com/denisbrodbeck/machineid v1.0.1 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/fatih/color v1.16.0 // indirect
@@ -42,7 +43,6 @@ require (
 	github.com/google/go-tpm v0.9.5 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/iancoleman/strcase v0.3.0 // indirect
-	github.com/igrmk/treemap/v2 v2.0.1 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
