@@ -186,7 +186,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					class="input"
 					type="text"
 					data-bind="title"
-					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/title", eventId) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/title", eventId) }
 					placeholder="Tittel på arrangementet"
 					required
 				/>
@@ -197,7 +197,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					name="intro"
 					class="input"
 					data-bind="intro"
-					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/intro", eventId) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/intro", eventId) }
 					rows="7"
 					placeholder="Kjapp introduksjon til arrangementet"
 					required
@@ -232,7 +232,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					class="input"
 					type="text"
 					data-bind="system"
-					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/system", eventId) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/system", eventId) }
 					placeholder="Hva system er det?"
 					required
 				/>
@@ -243,7 +243,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					name="description"
 					class="input"
 					data-bind="description"
-					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/description", eventId) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/description", eventId) }
 					rows="15"
 					placeholder="Beskrivelse av arrangementet"
 					required

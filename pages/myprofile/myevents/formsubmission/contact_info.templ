@@ -8,7 +8,8 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/nats-io/nats.go/jetstream"
-	datastar "github.com/starfederation/datastar-go/datastar")
+	datastar "github.com/starfederation/datastar-go/datastar"
+)
 
 func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	eventRouter.Put("/name", func(w http.ResponseWriter, r *http.Request) {
@@ -115,7 +116,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					type="text"
 					name="name"
 					data-bind="name"
-					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/name", eventId) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/name", eventId) }
 					class="input"
 					placeholder="Ditt navn"
 					required
@@ -127,7 +128,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					data-signals={ fmt.Sprintf("{email:'%s'}", email) }
 					type="email"
 					data-bind="email"
-					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/email", eventId) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/email", eventId) }
 					name="email"
 					class="input"
 					placeholder="Din e-post"
@@ -140,7 +141,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					type="tel"
 					data-signals={ fmt.Sprintf("{phone:'%s'}", phone) }
 					data-bind="phone"
-					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/phone", eventId) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/phone", eventId) }
 					name="phone"
 					class="input"
 					placeholder="Ditt telefonnummer"
