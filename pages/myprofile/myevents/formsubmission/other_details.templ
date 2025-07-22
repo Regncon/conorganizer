@@ -338,7 +338,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					name="notes"
 					data-signals={ fmt.Sprintf("{notes:'%s'}", notes) }
 					data-bind="notes"
-					data-on-keydown__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/notes", eventId) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/notes", eventId) }
 					class="input"
 					rows="5"
 					placeholder="Skriv eventuelle merknader her…"
