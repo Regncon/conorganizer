@@ -75,7 +75,12 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 							Nytt arrangement
 						}
 					</h2>
-					<h3>
+					<h3
+						style="display: -webkit-box;
+                            -webkit-box-orient: vertical;
+                            -webkit-line-clamp: 2;
+                            overflow: hidden;"
+					>
 						if event.Intro != "" {
 							{ event.Intro }
 						} else {
