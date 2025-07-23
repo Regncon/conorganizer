@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/userctx"
+    "github.com/Regncon/conorganizer/components"
 	"log/slog"
 )
 
@@ -43,52 +44,7 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	}
 	if len(events) > 0 {
 		for _, event := range events {
-			<a
-				href={ templ.URL(fmt.Sprintf("/my-events/new/%s", event.Id)) }
-				style="
-                    height: 20rem;
-                    min-width: 20rem;
-                    background-color: #3b4252;
-                    border-radius: 1rem;
-                    display: flex;
-                    flex-direction: column;
-                    text-decoration: none;
-                    color: white;
-                    box-sizing: border-box;
-                "
-			>
-				<img
-					src="/static/placeholder-small.webp"
-					alt="Participants"
-					style="max-width: 100%; height: 45%; object-fit: cover; border-radius: 1rem 1rem 0 0;"
-				/>
-				<div style="padding: 1rem;">
-					if event.Status == models.EventStatusDraft {
-						<span style="color:#C6A0F6">Kladd</span>
-					} else if event.Status == models.EventStatusSubmitted {
-						<span style="color:var(--color-primary)">Innsendt</span>
-					}
-					<h2 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-						if event.Title != "" {
-							{ event.Title }
-						} else {
-							Nytt arrangement
-						}
-					</h2>
-					<h3
-						style="display: -webkit-box;
-                            -webkit-box-orient: vertical;
-                            -webkit-line-clamp: 2;
-                            overflow: hidden;"
-					>
-						if event.Intro != "" {
-							{ event.Intro }
-						} else {
-							Legg til en kort beskrivelse
-						}
-					</h3>
-				</div>
-			</a>
+			@components.EventCard(event.Id, event.Title, event.Intro)
 		}
 		@newEvent()
 	}

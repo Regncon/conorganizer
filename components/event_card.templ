@@ -1,0 +1,49 @@
+package components
+
+import (
+    "fmt"
+)
+
+templ EventCard(eventId string, title string, intro string) {
+    <a
+				href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventId)) }
+				style="
+                    height: 20rem;
+                    min-width: 20rem;
+                    background-color: #3b4252;
+                    border-radius: 1rem;
+                    display: flex;
+                    flex-direction: column;
+                    text-decoration: none;
+                    color: white;
+                    box-sizing: border-box;
+                "
+			>
+				<img
+					src="/static/placeholder-small.webp"
+					alt="Participants"
+					style="max-width: 100%; height: 45%; object-fit: cover; border-radius: 1rem 1rem 0 0;"
+				/>
+				<div style="padding: 1rem;">
+					<h2 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+						if title != "" {
+							{ title }
+						} else {
+							Nytt arrangement
+						}
+					</h2>
+					<h3
+						style="display: -webkit-box;
+                            -webkit-box-orient: vertical;
+                            -webkit-line-clamp: 2;
+                            overflow: hidden;"
+					>
+						if intro != "" {
+							{ intro }
+						} else {
+							Legg til en kort beskrivelse
+						}
+					</h3>
+				</div>
+			</a>
+}
