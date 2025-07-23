@@ -68,7 +68,7 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 					} else if event.Status == models.EventStatusSubmitted {
 						<span style="color:var(--color-primary)">Innsendt</span>
 					}
-					<h2>
+					<h2 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
 						if event.Title != "" {
 							{ event.Title }
 						} else {
