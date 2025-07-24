@@ -65,7 +65,7 @@ templ newEvent() {
 		        text-align: center;
 		        "
 		>
-			<h2 style="margin: 0">Legg til nytt arrangementtt</h2>
+			<h2 style="margin: 0">Legg til nytt arrangement</h2>
 			<h1 style="margin: 0; font-size: 3rem">➕</h1>
 		</button>
 	</form>
@@ -80,7 +80,7 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.
 		return events
 	}
 
-	eventsQuery := "SELECT id, title, intro, status FROM events WHERE host = ?"
+	eventsQuery := "SELECT id, title, intro, status, system, host_name FROM events WHERE host = ?"
 	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
 	if eventsQueryErr != nil {
 		logger.Error("Failed to query events", "user_id", userId, "error", eventsQueryErr)
@@ -90,7 +90,7 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.
 
 	for rows.Next() {
 		var event models.EventCardModel
-		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status); scanErr != nil {
+		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName); scanErr != nil {
 			logger.Error("Failed to scan event row", "user_id", userId, "error", scanErr)
 			return events
 		}
