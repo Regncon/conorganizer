@@ -3,18 +3,11 @@ package myevents
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/userctx"
     "github.com/Regncon/conorganizer/components"
+    "github.com/Regncon/conorganizer/models"
 	"log/slog"
 )
-
-type MyEvents struct {
-	Id     string             `json:"id"`
-	Title  string             `json:"title"`
-	Intro  string             `json:"intro"`
-	Status models.EventStatus `json:"status"`
-}
 
 templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 	<div id="my-events-wrapper">
@@ -44,7 +37,7 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	}
 	if len(events) > 0 {
 		for _, event := range events {
-			@components.EventCard(event.Id, event.Title, event.Intro)
+			@components.EventCard(event)
 		}
 		@newEvent()
 	}
@@ -78,8 +71,8 @@ templ newEvent() {
 	</form>
 }
 
-func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []MyEvents {
-	var events []MyEvents
+func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.EventCardModel {
+	var events []models.EventCardModel
 
 	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
 	if userDbIdErr != nil {
@@ -96,7 +89,7 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []MyEvent
 	defer rows.Close()
 
 	for rows.Next() {
-		var event MyEvents
+		var event models.EventCardModel
 		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status); scanErr != nil {
 			logger.Error("Failed to scan event row", "user_id", userId, "error", scanErr)
 			return events

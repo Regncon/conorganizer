@@ -2,11 +2,14 @@ package components
 
 import (
     "fmt"
+    "github.com/Regncon/conorganizer/models"
 )
 
-templ EventCard(eventId string, title string, intro string) {
+
+
+templ EventCard(eventCard models.EventCardModel) {
     <a
-				href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventId)) }
+				href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
 				style="
                     aspect-ratio: 41 / 34;
                     background-color: var(--bg-surface);
@@ -26,8 +29,8 @@ templ EventCard(eventId string, title string, intro string) {
 				/>
 				<div style="padding: 12px;">
 					<h2 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; font-size:16px;">
-						if title != "" {
-							{ title }
+						if eventCard.Title != "" {
+							{ eventCard.Title }
 						} else {
 							Nytt arrangement
 						}
@@ -52,8 +55,8 @@ templ EventCard(eventId string, title string, intro string) {
                             font-size: 14px;
                             height: 32px;"
 					>
-						if intro != "" {
-							{ intro }
+						if eventCard.Intro != "" {
+							{ eventCard.Intro }
 						} else {
 							Legg til en kort beskrivelse
 						}

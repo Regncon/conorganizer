@@ -63,3 +63,10 @@ type Event struct {
 	Status            EventStatus    `json:"status"`
 	InsertedTime      time.Time      `json:"inserted_time"`
 }
+
+type EventCardModel struct {
+	Id     string      `json:"id"`
+	Title  string      `json:"title"`
+	Intro  string      `json:"intro"`
+	Status EventStatus `json:"status"`
+}
