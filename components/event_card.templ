@@ -68,9 +68,7 @@ templ EventCard(eventCard models.EventCardModel) {
                     <hr style="margin-bottom: 2px; color:var(--bg-item-border);">
                     <div style="display: flex; flex-direction: row; justify-content: space-between;">
                         <div style="display: flex; flex-direction:  row; align-items: center; gap: 6px;">
-                            <svg height="24" width="24" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="12" cy="12" r="12" stroke="black" stroke-width="2" fill="#88c0d0"/>
-                            </svg>
+                            <img src="/static/icons/gamemaster.svg" alt="gamemaster" height="24" width="24" fetchpriority="high"/>
                             <p style="font-size: 12px; color: var(--color-text-soft);">
                             if eventCard.HostName != "" {
                                 { eventCard.HostName }
