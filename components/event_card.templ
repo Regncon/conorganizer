@@ -81,29 +81,30 @@ templ EventCard(eventCard models.EventCardModel) {
                         </div>
                         <div style="display: flex; flex-direction: row; justify-content: end; align-items: center; gap: 8px;">
                             if eventCard.EventType == models.EventTypeRoleplay {
-                                <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="10" cy="10" r="10" stroke="black" stroke-width="2" fill="#88c0d0"/>
-                                </svg>
+                                <img src="/static/icons/ttrpg.svg" alt="table top roleplaying game" height="20" width="20" fetchpriority="high"/>
                             } else if eventCard.EventType == models.EventTypeBoardGame {
-                                <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                                    <rect x="2" y="2" width="16" height="16" stroke="black" stroke-width="2" fill="#88c0d0"/>
-                                </svg>
+                                <img src="/static/icons/boardgames.svg" alt="board game" height="20" width="20" fetchpriority="high"/>
                             } else if eventCard.EventType == models.EventTypeCardGame {
-                                <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                                    <polygon points="10,1 19,19 1,19" stroke="black" stroke-width="2" fill="#88c0d0"/>
-                                </svg>
+                                <img src="/static/icons/cardgames.svg" alt="card game" height="20" width="20" fetchpriority="high"/>
+                            } else if eventCard.EventType == models.EventTypeOther {
+                                <img src="/static/icons/other-games.svg" alt="other type of game or event" height="20" width="20" fetchpriority="high"/>
                             }
-                            <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="10" cy="10" r="10" stroke="black" stroke-width="2" fill="#88c0d0"/>
-                            </svg>
-                            <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="10" cy="10" r="10" stroke="black" stroke-width="2" fill="#88c0d0"/>
-                            </svg>
-                            <svg height="20" width="20" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="10" cy="10" r="10" stroke="black" stroke-width="2" fill="#88c0d0"/>
-                            </svg>
+                            if eventCard.AgeGroup == models.AgeGroupAdultsOnly {
+                                <img src="/static/icons/adults-only-event.svg" alt="adults only" height="20" width="20" fetchpriority="high"/>
+                            } else if eventCard.AgeGroup == models.AgeGroupChildFriendly {
+                                <img src="/static/icons/child-friendly-event.svg" alt="child friendly" height="20" width="20" fetchpriority="high"/>
+                            }
+                            if eventCard.Runtime == models.RunTimeLongRunning {
+                                <img src="static/icons/more-than-6-hours.svg" alt="long running event" height="20" width="20" fetchpriority="high"/>
+
+                            } else if eventCard.Runtime == models.RunTimeShortRunning {
+                                <img src="/static/icons/less-than-3-hours.svg" alt="short event" height="20" width="20" fetchpriority="high"/>
+                            }
                             if eventCard.BeginnerFriendly {
                                 <img src="/static/icons/beginner-friendly.svg" alt="beginner friendly" height="20" width="20" fetchpriority="high"/>
+                            }
+                            if eventCard.CanBeRunInEnglish {
+                                <img src="/static/icons/english.svg" alt="can be run in English" height="20" width="20" fetchpriority="high"/>
                             }
                         </div>
                     </div>
