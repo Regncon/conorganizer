@@ -80,7 +80,7 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.
 		return events
 	}
 
-	eventsQuery := "SELECT id, title, intro, status, system, host_name FROM events WHERE host = ?"
+	eventsQuery := "SELECT id, title, intro, status, system, host_name, beginner_friendly, event_type FROM events WHERE host = ?"
 	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
 	if eventsQueryErr != nil {
 		logger.Error("Failed to query events", "user_id", userId, "error", eventsQueryErr)
@@ -90,7 +90,7 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.
 
 	for rows.Next() {
 		var event models.EventCardModel
-		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName); scanErr != nil {
+		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType); scanErr != nil {
 			logger.Error("Failed to scan event row", "user_id", userId, "error", scanErr)
 			return events
 		}
