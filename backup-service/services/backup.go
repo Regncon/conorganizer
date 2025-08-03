@@ -55,7 +55,7 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	}
 
 	// handle storing db backup, overwrite or delete existing as required
-	backupDir := filepath.Join("backup", string(interval))
+	backupDir := filepath.Join("/mnt/regncon/backup", string(interval))
 	finalPath, err := utils.RotateBackups(dbPath, backupDir, retention)
 	if err != nil {
 		b.Logger.Error("Failed to finalize backup", "err", err)
