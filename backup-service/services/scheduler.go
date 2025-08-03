@@ -9,7 +9,7 @@ import (
 
 // StartScheduler initializes and starts the backup scheduler service.
 func StartScheduler(backupService *BackupService, logger *slog.Logger) error {
-	logger.Info("Scheduler is starting.")
+	logger.Info("Scheduler is starting registering jobs...")
 
 	location, _ := time.LoadLocation("Europe/Oslo")
 	scheduler, err := gocron.NewScheduler(
@@ -26,14 +26,13 @@ func StartScheduler(backupService *BackupService, logger *slog.Logger) error {
 
 	// Start background job runner
 	scheduler.Start()
-	logger.Info("Scheduler registered all jobs successfully")
+	logger.Info("Scheduler finished registering all jobs successfully!")
 
 	return nil
 }
 
 // Registers jobs for hourly, daily, weekly and yearly backups
 func registerJobs(scheduler gocron.Scheduler, backupService BackupService, logger slog.Logger) error {
-	logger.Info("Registering scheduled jobs")
 	jobs := []struct {
 		name     string
 		schedule string
