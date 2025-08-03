@@ -88,5 +88,5 @@ func (b *BackupService) Weekly() {
 // Yearly triggers a backup task for the yearly interval.
 func (b *BackupService) Yearly() {
 	ctx := context.Background()
-	b.run(ctx, models.Yearly, -1)
+	b.run(ctx, models.Yearly, 99)
 }
