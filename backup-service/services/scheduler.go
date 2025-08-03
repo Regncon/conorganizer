@@ -9,8 +9,9 @@ import (
 
 // StartScheduler initializes and starts the backup scheduler service.
 func StartScheduler(backupService *BackupService, logger *slog.Logger) error {
-	location, _ := time.LoadLocation("Europe/Oslo")
+	logger.Info("Scheduler is starting.")
 
+	location, _ := time.LoadLocation("Europe/Oslo")
 	scheduler, err := gocron.NewScheduler(
 		gocron.WithLocation(location),
 	)
