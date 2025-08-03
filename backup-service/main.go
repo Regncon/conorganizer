@@ -12,6 +12,7 @@ import (
 
 func main() {
 	// Set up logger
+	os.MkdirAll("/tmp", 0o755)
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	// Load config with params and secrets
