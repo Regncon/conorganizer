@@ -1,0 +1,31 @@
+FROM golang:1.24.5 AS builder
+
+# Set workdir for building application
+WORKDIR /usr/src/codebase
+COPY . .
+
+# Copy over & install required dependencies
+COPY go.mod go.sum ./
+RUN go mod download && go mod verify
+
+# Compile binary for use in next step
+RUN go build -o /usr/local/bin/backup-service .
+
+
+FROM debian:bookworm AS server
+WORKDIR /app
+
+# Install required libs
+RUN apt-get update -y && apt-get install -y ca-certificates sqlite3
+
+# Optional: copy .env file for dev
+COPY .env .env
+
+# Copy compiled binary
+COPY --from=builder /usr/local/bin/backup-service .
+
+# Create runtime folders
+RUN mkdir -p /app/backup /app/database
+
+# Run the app
+CMD ["./backup-service"]
