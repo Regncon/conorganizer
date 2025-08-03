@@ -1,0 +1,27 @@
+# fly.toml app configuration file generated for backup-service on 2025-08-03T20:44:13+02:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = 'backup-service'
+primary_region = 'arn'
+
+[build]
+  dockerfile = "Dockerfile"
+
+[[mounts]]
+  source = "backup"
+  destination = "/mnt/regncon/backup"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ['app']
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1

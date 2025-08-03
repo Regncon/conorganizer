@@ -13,19 +13,27 @@ RUN go build -o /usr/local/bin/backup-service .
 
 
 FROM debian:bookworm AS server
-WORKDIR /app
+# Create user for server
+RUN groupadd -r regncon && useradd -r -g regncon -d /srv/regncon -s /usr/sbin/nologin regncon
 
 # Install required libs
 RUN apt-get update -y && apt-get install -y ca-certificates sqlite3
 
-# Optional: copy .env file for dev
-COPY .env .env
+# Copy compiled binary from previous step
+COPY --from=builder /usr/local/bin/backup-service /home/regncon/backup-service
 
-# Copy compiled binary
-COPY --from=builder /usr/local/bin/backup-service .
+# Copy over sql init file
+COPY database/initialize.sql /usr/local/share/regncon/initialize.sql
 
-# Create runtime folders
-RUN mkdir -p /app/backup /app/database
+# Create required folders if missing
+RUN mkdir -p /mnt/regncon/backup/{logs,database} && \
+    chown -R regncon:regncon /mnt/regncon/backup
+
+# Switch to non-root user
+USER regncon
+
+# Expose port for dashboard
+EXPOSE 8080
 
 # Run the app
-CMD ["./backup-service"]
+CMD ["/home/regncon/backup-service"]
