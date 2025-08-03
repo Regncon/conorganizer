@@ -90,3 +90,9 @@ func (b *BackupService) Yearly() {
 	ctx := context.Background()
 	b.run(ctx, models.Yearly, 99)
 }
+
+// Manual trigger which is not used with gocron. Mostly used for testing
+func (b *BackupService) Manual() {
+	ctx := context.Background()
+	b.run(ctx, models.Manually, 20)
+}

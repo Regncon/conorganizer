@@ -32,6 +32,7 @@ func main() {
 
 	// Define backup service
 	backupService := services.NewBackupService(cfg, s3Client, logger)
+	backupService.Manual()
 
 	// Start scheduler
 	err = services.StartScheduler(backupService, logger)
