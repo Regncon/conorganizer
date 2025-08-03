@@ -9,16 +9,17 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func InitDB(databaseFileName string, sqlFileName string) (*sql.DB, error) {
-	dir := filepath.Dir(databaseFileName)
-	if dir != "." && dir != "" {
-		if _, err := os.Stat(dir); os.IsNotExist(err) {
-			return nil, fmt.Errorf("directory path does not exist: %s", dir)
-		}
+func InitDB() (*sql.DB, error) {
+	dbPath := "/mnt/regncon/backup/database/logs.db"
+	sqlInitPath := "/usr/local/share/regncon/initialize.sql"
+
+	dir := filepath.Dir(dbPath)
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return nil, fmt.Errorf("directory path does not exist: %s", dir)
 	}
 
-	if _, err := os.Stat(databaseFileName); os.IsNotExist(err) {
-		db, err := sql.Open("sqlite", databaseFileName)
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		db, err := sql.Open("sqlite", dbPath)
 		if err != nil {
 			return nil, fmt.Errorf("failed to open DB: %w", err)
 		}
@@ -26,14 +27,14 @@ func InitDB(databaseFileName string, sqlFileName string) (*sql.DB, error) {
 			return nil, fmt.Errorf("failed to ping DB: %w", err)
 		}
 
-		if err = initializeDatabase(db, sqlFileName); err != nil {
+		if err = initializeDatabase(db, sqlInitPath); err != nil {
 			return nil, fmt.Errorf("failed to initialize database: %w", err)
 		}
 
 		return db, nil
 	}
 
-	db, err := sql.Open("sqlite", databaseFileName)
+	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open DB: %w", err)
 	}

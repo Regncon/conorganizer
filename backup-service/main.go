@@ -18,7 +18,7 @@ func main() {
 	cfg := config.Load(logger)
 
 	// Initialize database
-	db, err := services.InitDB("database/logs.db", "database/initialize.sql")
+	db, err := services.InitDB()
 	if err != nil {
 		logger.Error("Could not initialize DB", "error", err)
 	}
