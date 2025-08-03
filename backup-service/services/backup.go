@@ -49,13 +49,13 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	b.Logger.Info("Decompression complete", "db", dbPath)
 
 	// validate snapshot
-	if err := utils.ValidateSnapshot("dbPath"); err != nil {
+	if err := utils.ValidateSnapshot(dbPath); err != nil {
 		b.Logger.Error("Invalid SQLite snapshot", "err", err)
 		return
 	}
 
 	// handle storing db backup, overwrite or delete existing as required
-	backupDir := filepath.Join("/mnt/regncon/backup", string(interval))
+	backupDir := filepath.Join("/data/regncon/backup", string(interval))
 	finalPath, err := utils.RotateBackups(dbPath, backupDir, retention)
 	if err != nil {
 		b.Logger.Error("Failed to finalize backup", "err", err)

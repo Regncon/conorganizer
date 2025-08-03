@@ -11,7 +11,7 @@ primary_region = 'arn'
 
 [[mounts]]
   source = "backup"
-  destination = "/mnt/regncon/backup"
+  destination = "/data"
 
 [http_service]
   internal_port = 8080

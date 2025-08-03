@@ -103,7 +103,7 @@ func DownloadLatestSnapshot(ctx context.Context, s3Client *s3.Client, bucket str
 	defer getOut.Body.Close()
 
 	// Create temp output file for compressed lz4 snapshots
-	tmpFile, err := os.CreateTemp("/tmp", "*.snapshot.lz4")
+	tmpFile, err := os.CreateTemp("/data/regncon/tmp", "*.snapshot.lz4")
 	if err != nil {
 		return "", fmt.Errorf("could not create temporary file: %w", err)
 	}
