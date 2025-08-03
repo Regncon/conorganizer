@@ -54,7 +54,10 @@ func DecompressLZ4(lz4Path string) (string, error) {
 	defer inFile.Close()
 
 	// Create temp output file for decompressed .db
-	outFile, err := os.CreateTemp("", "*.db")
+	tmpDir := "/mnt/regncon/backup/tmp"
+	os.MkdirAll(tmpDir, 0o755)
+
+	outFile, err := os.CreateTemp(tmpDir, "*.db")
 	if err != nil {
 		return "", fmt.Errorf("failed to create temp DB file: %w", err)
 	}
