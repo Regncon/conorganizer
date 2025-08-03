@@ -26,7 +26,7 @@ COPY --from=builder /usr/local/bin/backup-service /home/regncon/backup-service
 COPY database/initialize.sql /usr/local/share/regncon/initialize.sql
 
 # Create required folders if missing
-RUN mkdir -p /mnt/regncon/backup/{logs,database} && \
+RUN mkdir -p /mnt/regncon/backup/logs && \
     chown -R regncon:regncon /mnt/regncon/backup
 
 # Switch to non-root user
