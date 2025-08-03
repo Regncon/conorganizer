@@ -10,7 +10,7 @@ import (
 )
 
 func InitDB() (*sql.DB, error) {
-	dbPath := "/mnt/regncon/backup/database/logs.db"
+	dbPath := "/mnt/regncon/backup/logs/logs.db"
 	sqlInitPath := "/usr/local/share/regncon/initialize.sql"
 
 	dir := filepath.Dir(dbPath)
