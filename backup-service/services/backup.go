@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"log/slog"
+	"os"
 	"path/filepath"
 
 	"github.com/Regncon/conorganizer/backup-service/config"
@@ -62,9 +63,16 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 		return
 	}
 
-	b.Logger.Info("Backup stored successfully", "path", finalPath)
+	// Cleanup temp files after successful backup
+	if err := os.Remove(snapshotPath); err != nil {
+		b.Logger.Warn("Failed to remove snapshot file", "path", snapshotPath, "err", err)
+	}
+	if err := os.Remove(dbPath); err != nil {
+		b.Logger.Warn("Failed to remove decompressed DB file", "path", dbPath, "err", err)
+	}
 
-	// clean up any tmp files created
+	// Backup successful
+	b.Logger.Info("Backup stored successfully", "path", finalPath)
 }
 
 // Hourly triggers a backup task for the hourly interval.
