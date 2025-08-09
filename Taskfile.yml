@@ -7,7 +7,7 @@ tasks:
   # The `build:` tasks below are used together for "production" builds of your project
   build:templ:
     cmds:
-      - go run github.com/a-h/templ/cmd/templ@v0.3.906 generate -v
+      - go run github.com/a-h/templ/cmd/templ@v0.3.924 generate -v
 
   build:
     cmds:
@@ -26,12 +26,12 @@ tasks:
   # The `live:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
   live:templ:
     cmds:
-      - go run github.com/a-h/templ/cmd/templ@v0.3.906 generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
+      - go run github.com/a-h/templ/cmd/templ@v0.3.924 generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
 
   live:server:
     cmds:
       - |
-        go run github.com/air-verse/air@v1.52.3 \
+        go run github.com/air-verse/air@v1.62.0 \
         --build.cmd "go build -tags dev -o tmp/bin/main" \
         --build.bin "tmp/bin/main" \
         --build.delay "20" \
@@ -42,8 +42,8 @@ tasks:
   live:reload:
     cmds:
       - |
-        go run github.com/air-verse/air@v1.52.3 \
-        --build.cmd "go run github.com/a-h/templ/cmd/templ@v0.3.906 generate --notify-proxy" \
+        go run github.com/air-verse/air@v1.62.0 \
+        --build.cmd "go run github.com/a-h/templ/cmd/templ@v0.3.924 generate --notify-proxy" \
         --build.bin "true" \
         --build.delay "100" \
         --build.exclude_dir "" \
