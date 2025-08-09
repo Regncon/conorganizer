@@ -3,9 +3,9 @@ package myevents
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/userctx"
-    "github.com/Regncon/conorganizer/components"
-    "github.com/Regncon/conorganizer/models"
 	"log/slog"
 )
 
@@ -52,17 +52,18 @@ templ newEvent() {
                 height: 100%;
                 aspect-ratio: 41 / 34;
 		        max-width: var(--mobile-max-column-width);
-		        background-color: #3b4252;
+		        background-color: var(--bg-surface);
 		        border-radius: var(--border-radius-small);
 		        display: flex;
 		        flex-direction: column;
 		        text-decoration: none;
-		        color: white;
+		        color: var(--color-primary-text);
 		        box-sizing: border-box;
 		        place-items: center;
 		        place-content: center;
 		        padding-block: 2rem;
 		        text-align: center;
+                border-color: var(--bg-item-border);
 		        "
 		>
 			<h2 style="margin: 0">Legg til nytt arrangement</h2>

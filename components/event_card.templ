@@ -1,111 +1,208 @@
 package components
 
 import (
-    "fmt"
-    "github.com/Regncon/conorganizer/models"
+	"fmt"
+	"github.com/Regncon/conorganizer/models"
 )
 
-
-
 templ EventCard(eventCard models.EventCardModel) {
-    <a
-				href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
-				style="
-                    aspect-ratio: 41 / 34;
-                    background-color: var(--bg-surface);
-                    border-radius: var(--border-radius-small);
-                    display: flex;
-                    flex-direction: column;
-                    text-decoration: none;
-                    color: white;
-                    box-sizing: border-box;
-                    max-width: var(--mobile-max-column-width);
+	<a
+		href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
+		style="
+                background-color: var(--bg-surface);
+                border-radius: var(--border-radius-small);
+                display: grid;
+                grid-template-rows: 11.25rem 110px 3.5rem;
+                grid-template-columns: minmax(var(--mobile-min-width), 1fr);
+                color: var(--color-primary-text);
+                box-sizing: border-box;
+                text-decoration: none;
                 "
-			>
-				<img
-					src="/static/placeholder-small.webp"
-					alt="Participants"
-					style="max-width: 100%; height: 53%; object-fit: cover; border-radius: var(--border-radius-small) var(--border-radius-small) 0 0;"
-				/>
-				<div style="padding: 12px;">
-					<h2 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: 0; font-size:16px;">
-						if eventCard.Title != "" {
-							{ eventCard.Title }
-						} else {
-							Nytt arrangement
-						}
-					</h2>
-                    <h3
-                        style="display: -webkit-box;
-                            -webkit-box-orient: vertical;
-                            -webkit-line-clamp: 1;
+	>
+		<img
+			src="/static/placeholder-small.webp"
+			alt="Participants"
+			style="
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius:
+                        var(--border-radius-small)
+                        var(--border-radius-small)
+                        0
+                        0;
+                "
+		/>
+		<div style="padding: var(--spacing-small);">
+			<div style="">
+				<h2
+					style="
+                            white-space: nowrap;
+                            overflow: clip;
+                            text-overflow: ellipsis;
+                            margin: 0;
+                            font-size:16px;
+                        "
+				>
+					if eventCard.Title != "" {
+						{ eventCard.Title }
+					} else {
+						Nytt arrangement
+					}
+				</h2>
+				<h3
+					style="
+                            white-space: nowrap;
+                            overflow: clip;
+                            text-overflow: ellipsis;
                             margin: 10px 0;
                             color: var(--color-primary);
-                            font-size: 14px;"
-                    >
-                    if eventCard.System != "" {
-                        { eventCard.System }
-                    } else {
-                        Game System
-                    }
-                    </h3>
-					<p
-						style="display: -webkit-box;
-                            -webkit-box-orient: vertical;
-                            -webkit-line-clamp: 2;
-                            overflow: hidden;
-                            color:var(--color-text-soft);
-                            margin-top: 0;
                             font-size: 14px;
-                            height: 32px;"
-					>
-						if eventCard.Intro != "" {
-							{ eventCard.Intro }
+                        "
+				>
+					if eventCard.System != "" {
+						{ eventCard.System }
+					} else {
+						Game System
+					}
+				</h3>
+			</div>
+			<p
+				style="
+                        overflow: clip;
+                        margin-top: 0;
+                        font-size: 14px;
+                        height: 32px;
+                        margin: 0;
+                    "
+			>
+				if eventCard.Intro != "" {
+					{ eventCard.Intro }
+				} else {
+					Legg til en kort beskrivelse
+				}
+			</p>
+		</div>
+		<div style="padding: var(--spacing-small); border-top: 1px solid var(--bg-item-border);">
+			<div
+				style="
+                            display: grid;
+                            grid-template-columns: 0.7fr 0.3fr;
+                        "
+			>
+				<div
+					style="
+                                display: flex;
+                                flex-direction: row;
+                                align-items: center;
+                                gap: 6px;
+                            "
+				>
+					<img src="/static/icons/gamemaster.svg" alt="gamemaster" height="24" width="24" fetchpriority="high"/>
+					<p style="font-size: 12px; margin: 0;">
+						if eventCard.HostName != "" {
+							{ eventCard.HostName }
 						} else {
-							Legg til en kort beskrivelse
+							Arrangør navn
 						}
 					</p>
-                    <hr style="margin-bottom: 2px; color:var(--bg-item-border);">
-                    <div style="display: flex; flex-direction: row; justify-content: space-between;">
-                        <div style="display: flex; flex-direction:  row; align-items: center; gap: 6px;">
-                            <img src="/static/icons/gamemaster.svg" alt="gamemaster" height="24" width="24" fetchpriority="high"/>
-                            <p style="font-size: 12px; color: var(--color-text-soft);">
-                            if eventCard.HostName != "" {
-                                { eventCard.HostName }
-                            } else {
-                                Arrangør navn
-                            }
-                            </p>
-                        </div>
-                        <div style="display: flex; flex-direction: row; justify-content: end; align-items: center; gap: 8px;">
-                            if eventCard.EventType == models.EventTypeRoleplay {
-                                <img src="/static/icons/ttrpg.svg" alt="table top roleplaying game" height="20" width="20" fetchpriority="high"/>
-                            } else if eventCard.EventType == models.EventTypeBoardGame {
-                                <img src="/static/icons/boardgames.svg" alt="board game" height="20" width="20" fetchpriority="high"/>
-                            } else if eventCard.EventType == models.EventTypeCardGame {
-                                <img src="/static/icons/cardgames.svg" alt="card game" height="20" width="20" fetchpriority="high"/>
-                            } else if eventCard.EventType == models.EventTypeOther {
-                                <img src="/static/icons/other-games.svg" alt="other type of game or event" height="20" width="20" fetchpriority="high"/>
-                            }
-                            if eventCard.AgeGroup == models.AgeGroupAdultsOnly {
-                                <img src="/static/icons/adults-only-event.svg" alt="adults only" height="20" width="20" fetchpriority="high"/>
-                            } else if eventCard.AgeGroup == models.AgeGroupChildFriendly {
-                                <img src="/static/icons/child-friendly-event.svg" alt="child friendly" height="20" width="20" fetchpriority="high"/>
-                            }
-                            if eventCard.Runtime == models.RunTimeLongRunning {
-                                <img src="static/icons/more-than-6-hours.svg" alt="long running event" height="20" width="20" fetchpriority="high"/>
-
-                            } else if eventCard.Runtime == models.RunTimeShortRunning {
-                                <img src="/static/icons/less-than-3-hours.svg" alt="short event" height="20" width="20" fetchpriority="high"/>
-                            }
-                            if eventCard.BeginnerFriendly {
-                                <img src="/static/icons/beginner-friendly.svg" alt="beginner friendly" height="20" width="20" fetchpriority="high"/>
-                            }
-                            if eventCard.CanBeRunInEnglish {
-                                <img src="/static/icons/english.svg" alt="can be run in English" height="20" width="20" fetchpriority="high"/>
-                            }
-                        </div>
-                    </div>
 				</div>
-			</a>
+				<div
+					style="
+                            display: flex;
+                            flex-direction: row;
+                            justify-content: end;
+                            align-items: center;
+                            gap: 8px;
+                        "
+				>
+					if eventCard.EventType == models.EventTypeRoleplay {
+						<img
+							src="/static/icons/ttrpg.svg"
+							alt="table top roleplaying game"
+							height="20"
+							width="20"
+							fetchpriority="high"
+						/>
+					} else if eventCard.EventType == models.EventTypeBoardGame {
+						<img
+							src="/static/icons/boardgames.svg"
+							alt="board game"
+							height="20"
+							width="20"
+							fetchpriority="high"
+						/>
+					} else if eventCard.EventType == models.EventTypeCardGame {
+						<img
+							src="/static/icons/cardgames.svg"
+							alt="card game"
+							height="20"
+							width="20"
+							fetchpriority="high"
+						/>
+					} else if eventCard.EventType == models.EventTypeOther {
+						<img
+							src="/static/icons/other-games.svg"
+							alt="other type of game or event"
+							height="20"
+							width="20"
+							fetchpriority="high"
+						/>
+					}
+					if eventCard.AgeGroup == models.AgeGroupAdultsOnly {
+						<img
+							src="/static/icons/adults-only-event.svg"
+							alt="adults only"
+							height="20"
+							width="20"
+							fetchpriority="high"
+						/>
+					} else if eventCard.AgeGroup == models.AgeGroupChildFriendly {
+						<img
+							src="/static/icons/child-friendly-event.svg"
+							alt="child friendly"
+							height="20"
+							width="20"
+							fetchpriority="high"
+						/>
+					}
+					if eventCard.Runtime == models.RunTimeLongRunning {
+						<img
+							src="static/icons/more-than-6-hours.svg"
+							alt="long running event"
+							height="20"
+							width="20"
+							fetchpriority="high"
+						/>
+					} else if eventCard.Runtime == models.RunTimeShortRunning {
+						<img
+							src="/static/icons/less-than-3-hours.svg"
+							alt="short event"
+							height="20"
+							width="20"
+							fetchpriority="high"
+						/>
+					}
+					if eventCard.BeginnerFriendly {
+						<img
+							src="/static/icons/beginner-friendly.svg"
+							alt="beginner friendly"
+							height="20"
+							width="20"
+							fetchpriority="high"
+						/>
+					}
+					if eventCard.CanBeRunInEnglish {
+						<img
+							src="/static/icons/english.svg"
+							alt="can be run in English"
+							height="20"
+							width="20"
+							fetchpriority="high"
+						/>
+					}
+				</div>
+			</div>
+		</div>
+	</a>
 }
