@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Regncon/conorganizer/models"
+    "github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"log/slog"
 )
@@ -17,6 +18,10 @@ type MyEvents struct {
 
 templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 	<div id="my-events-wrapper">
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Mine Arrangementer", Url: ""},
+		})
 		<h1>Mine Arrangementer</h1>
 		<div class="my-event-grid">
 			@events(userid, db, logger)

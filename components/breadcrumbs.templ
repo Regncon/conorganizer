@@ -1,0 +1,37 @@
+package components
+
+import (
+	"fmt"
+)
+
+type BreadcrumbPath struct {
+	Name string
+	Url  string
+}
+
+templ Breadcrumbs(paths []BreadcrumbPath) {
+	<style>
+
+                .breadcrumbs {
+                padding-top: 1rem;
+                    a {
+                        color: var(--color-text-strong);
+                        text-decoration: none;
+                    }
+                    display: flex;
+                    gap: 0.5rem;
+                    margin-block-end: 1rem;
+                }
+    </style>
+	<div class="breadcrumbs">
+		for _, path := range paths {
+			if path.Url != "" {
+				<a href={ templ.URL(fmt.Sprintf("%s", path.Url)) }>{ path.Name }</a>
+				<span class="breadcrumb-separator">/</span>
+			} else {
+				<span style="color:var(--color-text-soft-50)">{ path.Name }</span>
+			}
+		}
+	</div>
+	<hr style="width:100%; height:2px;border-width:0;background-color:var(--color-text-soft-50); margin:0;"/>
+}
