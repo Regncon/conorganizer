@@ -17,7 +17,7 @@ type MyEvents struct {
 
 templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 	<div id="my-events-wrapper">
-		<h1>My Events</h1>
+		<h1>Mine Arrangementer</h1>
 		<div class="my-event-grid">
 			@events(userid, db, logger)
 		</div>
