@@ -1,9 +1,16 @@
 package admin
 
-import "database/sql"
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/components"
+)
 
 templ adminPage(db *sql.DB) {
 	<div id="admin-container">
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Admin", Url: ""},
+		})
 		<h1>Admin page</h1>
 		<div class="admin-grid">
 			<a

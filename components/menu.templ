@@ -221,15 +221,10 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 					<div class="dropdown-panel">
 						<a href="/auth/logout">Logg ut</a>
 						<a href="/my-events">Mine arrangementer</a>
-						if beta {
-							<a href="/my-profile">Min profil</a>
-							if UserInfo.IsAdmin {
-								<hr/>
-								<span>Admin</span>
-								<hr/>
-								<a href="/admin">Admin</a>
-								<a href="/arrangementer/edit" class="disabled">Rediger arrangement</a>
-							}
+						<a href="/my-profile">Min profil</a>
+						if UserInfo.IsAdmin {
+							<hr/>
+							<a href="/admin/approval">Arrangement til godskjenning</a>
 						}
 					</div>
 				</details>

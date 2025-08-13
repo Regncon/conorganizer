@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Regncon/conorganizer/pages/admin/approval"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -115,6 +116,41 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				}
 			}
 		})
+
+		approval.ApprovalLayoutRoute(adminRouter, db, logger, err)
+		adminRouter.Get("/approval/api/", func(w http.ResponseWriter, r *http.Request) {
+			sse := datastar.NewSSE(w, r)
+
+			sessionID, mvc, err := mvcSession(w, r)
+			ctx := r.Context()
+			watcher, err := kv.Watch(ctx, sessionID)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			defer watcher.Stop()
+
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case entry := <-watcher.Updates():
+					if entry == nil {
+						continue
+					}
+					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					c := approval.ApprovalPage(db)
+					if err := sse.PatchElementTempl(c); err != nil {
+						sse.ConsoleError(err)
+						return
+					}
+				}
+			}
+		})
+
 	})
 
 	return nil

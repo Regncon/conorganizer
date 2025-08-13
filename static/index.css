@@ -112,6 +112,7 @@
 
     /* nav */
     --nav-height: 4rem;
+    --nav-z-index: 10;
     --nav-gap: 1rem;
 }
 
