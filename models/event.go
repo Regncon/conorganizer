@@ -63,3 +63,17 @@ type Event struct {
 	Status            EventStatus    `json:"status"`
 	InsertedTime      time.Time      `json:"inserted_time"`
 }
+
+type EventCardModel struct {
+	Id                string      `json:"id"`
+	Title             string      `json:"title"`
+	Intro             string      `json:"intro"`
+	Status            EventStatus `json:"status"`
+	System            string      `json:"system"`
+	HostName          string      `json:"host_name"`
+	EventType         EventType   `json:"event_type"`
+	AgeGroup          AgeGroup    `json:"age_group"`
+	Runtime           Runtime     `json:"runtime"`
+	BeginnerFriendly  bool        `json:"beginner_friendly"`
+	CanBeRunInEnglish bool        `json:"can_be_run_in_english"`
+}

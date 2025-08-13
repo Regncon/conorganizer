@@ -13,6 +13,7 @@
         "billettholderadmin",
         "boardgame",
         "cardgame",
+        "cardgames",
         "Dadbod",
         "dbod",
         "DBUI",
@@ -32,6 +33,7 @@
         "myevents",
         "myprofile",
         "NOPASSWD",
+        "nowrap",
         "omitempty",
         "passwordless",
         "println",
@@ -42,7 +44,10 @@
         "ticketholder",
         "ticketholders",
         "tpope",
-        "userctx"
+        "ttrpg",
+        "userctx",
+        "xlarge",
+        "xsmall"
     ]
     // "github.copilot.chat.commitMessageGeneration.instructions": [
     //     {

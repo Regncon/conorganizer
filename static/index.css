@@ -28,11 +28,11 @@
     --color-tertiary-active: #feb567;
     --color-tertiary-strong: #eb4716;
 
+    --bg-base: var(--bg-body-100);
     --bg-surface: #252735;
-    --bg-item: #35394a;
+    --bg-item: var(--bg-body-90);
     --bg-item-border: #494d62;
 
-    --bg-color: var(--bg-body-100);
     --bg-body-100: #1A1B26;
     --bg-body-90: #35394A;
     --bg-body-80: #474446;
@@ -50,12 +50,11 @@
     --text-article: 20px;
 
     /* spacings */
-    --spacing-xsmall: 6px;
-    --spacing-small: 8px;
-    --spacing-medium: 10px;
-    --spacing-large: 16px;
-    --spacing-xlarge: 20px;
-
+    --spacing-xsmall: 12px;
+    --spacing-small: 16px;
+    --spacing-medium: 20px;
+    --spacing-large: 32px;
+    --spacing-xlarge: 40px;
 
     /* border */
     --border-radius-small: 4px;
@@ -111,9 +110,14 @@
     --btn-secondary-disabled-border: #555555;
     --btn-secondary-disabled-text: #767676;
 
-    /* nav */ 
+    /* nav */
     --nav-height: 4rem;
     --nav-gap: 1rem;
+}
+
+::selection {
+    background-color: var(--color-primary-text);
+    color: var(--bg-base);
 }
 
 html {
@@ -134,7 +138,7 @@ html {
 }
 
 body {
-    background: var(--bg-color);
+    background: var(--bg-base);
     margin: 0;
     font-family: sans-serif;
     margin-block-end: calc(var(--nav-height) + var(--nav-gap));

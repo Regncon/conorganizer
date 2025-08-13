@@ -3,18 +3,11 @@ package myevents
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
-    "github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"log/slog"
 )
-
-type MyEvents struct {
-	Id     string             `json:"id"`
-	Title  string             `json:"title"`
-	Intro  string             `json:"intro"`
-	Status models.EventStatus `json:"status"`
-}
 
 templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 	<div id="my-events-wrapper">
@@ -48,52 +41,7 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	}
 	if len(events) > 0 {
 		for _, event := range events {
-			<a
-				href={ templ.URL(fmt.Sprintf("/my-events/new/%s", event.Id)) }
-				style="
-                    height: 20rem;
-                    min-width: 20rem;
-                    background-color: #3b4252;
-                    border-radius: 1rem;
-                    display: flex;
-                    flex-direction: column;
-                    text-decoration: none;
-                    color: white;
-                    box-sizing: border-box;
-                "
-			>
-				<img
-					src="/static/placeholder-small.webp"
-					alt="Participants"
-					style="max-width: 100%; height: 45%; object-fit: cover; border-radius: 1rem 1rem 0 0;"
-				/>
-				<div style="padding: 1rem;">
-					if event.Status == models.EventStatusDraft {
-						<span style="color:#C6A0F6">Kladd</span>
-					} else if event.Status == models.EventStatusSubmitted {
-						<span style="color:var(--color-primary)">Innsendt</span>
-					}
-					<h2 style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-						if event.Title != "" {
-							{ event.Title }
-						} else {
-							Nytt arrangement
-						}
-					</h2>
-					<h3
-						style="display: -webkit-box;
-                            -webkit-box-orient: vertical;
-                            -webkit-line-clamp: 2;
-                            overflow: hidden;"
-					>
-						if event.Intro != "" {
-							{ event.Intro }
-						} else {
-							Legg til en kort beskrivelse
-						}
-					</h3>
-				</div>
-			</a>
+			@components.EventCard(event, true)
 		}
 		@newEvent()
 	}
@@ -104,20 +52,22 @@ templ newEvent() {
 		<button
 			type="submit"
 			style="
-		        width: 100%;
-		        height: 20rem;
+                width: 100%;
+                height: 100%;
+                aspect-ratio: 41 / 34;
 		        max-width: var(--mobile-max-column-width);
-		        background-color: #3b4252;
-		        border-radius: 1rem;
+		        background-color: var(--bg-surface);
+		        border-radius: var(--border-radius-small);
 		        display: flex;
 		        flex-direction: column;
 		        text-decoration: none;
-		        color: white;
+		        color: var(--color-primary-text);
 		        box-sizing: border-box;
 		        place-items: center;
 		        place-content: center;
 		        padding-block: 2rem;
 		        text-align: center;
+                border-color: var(--bg-item-border);
 		        "
 		>
 			<h2 style="margin: 0">Legg til nytt arrangement</h2>
@@ -126,8 +76,8 @@ templ newEvent() {
 	</form>
 }
 
-func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []MyEvents {
-	var events []MyEvents
+func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.EventCardModel {
+	var events []models.EventCardModel
 
 	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
 	if userDbIdErr != nil {
@@ -135,7 +85,7 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []MyEvent
 		return events
 	}
 
-	eventsQuery := "SELECT id, title, intro, status FROM events WHERE host = ?"
+	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE host = ?"
 	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
 	if eventsQueryErr != nil {
 		logger.Error("Failed to query events", "user_id", userId, "error", eventsQueryErr)
@@ -144,8 +94,8 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []MyEvent
 	defer rows.Close()
 
 	for rows.Next() {
-		var event MyEvents
-		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status); scanErr != nil {
+		var event models.EventCardModel
+		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
 			logger.Error("Failed to scan event row", "user_id", userId, "error", scanErr)
 			return events
 		}
