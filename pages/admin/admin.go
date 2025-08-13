@@ -142,7 +142,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
-					c := approval.ApprovalPage(db)
+					c := approval.ApprovalPage(db, logger)
 					if err := sse.PatchElementTempl(c); err != nil {
 						sse.ConsoleError(err)
 						return

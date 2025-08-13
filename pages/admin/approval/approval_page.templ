@@ -2,16 +2,48 @@ package approval
 
 import (
 	"database/sql"
+	"fmt"
+	"log/slog"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/components"
 )
 
-templ ApprovalPage(db *sql.DB) {
+func getEvents(db *sql.DB, logger *slog.Logger) []models.EventCardModel {
+	var events []models.EventCardModel
+
+	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events"
+	rows, eventsQueryErr := db.Query(eventsQuery)
+	if eventsQueryErr != nil {
+		logger.Error("Failed to query events", "error", eventsQueryErr)
+		return events
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var event models.EventCardModel
+		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
+			logger.Error("Failed to scan event row", "error", scanErr)
+			return events
+		}
+		events = append(events, event)
+	}
+	fmt.Printf("Found %d events", len(events))
+	return events
+}
+
+templ ApprovalPage(db *sql.DB, logger *slog.Logger) {
+	{{ events := getEvents(db, logger) }}
 	<div id="approval-container">
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
-			{Name: "Admin", Url: "admin/"},
+			{Name: "Admin", Url: "/admin/"},
 			{Name: "Godkjenning av Arrangementer", Url: ""},
 		})
 		<h1>Arrangementer til Godkjenning</h1>
+		<ul>
+			for _, event := range events {
+				<li>{ event.Title }</li>
+			}
+		</ul>
 	</div>
 }
