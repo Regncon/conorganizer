@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
-    "github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"log/slog"
 )
@@ -42,7 +41,7 @@ templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	}
 	if len(events) > 0 {
 		for _, event := range events {
-			@components.EventCard(event)
+			@components.EventCard(event, true)
 		}
 		@newEvent()
 	}

@@ -5,7 +5,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-templ EventCard(eventCard models.EventCardModel) {
+templ EventCard(eventCard models.EventCardModel, showStatus bool) {
 	<a
 		href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
 		style="
@@ -17,8 +17,27 @@ templ EventCard(eventCard models.EventCardModel) {
                 color: var(--color-primary-text);
                 box-sizing: border-box;
                 text-decoration: none;
+                position: relative;
                 "
 	>
+		if showStatus {
+			<div
+				style="
+					position: absolute;
+					top: 10px;
+					left: 10px;
+					background-color: rgba(0, 0, 0, 0.7);
+					padding: 5px;
+					border-radius: 5px;
+				"
+			>
+				if eventCard.Status == models.EventStatusDraft {
+					<span style="color:#C6A0F6">Kladd</span>
+				} else if eventCard.Status == models.EventStatusSubmitted {
+					<span style="color:var(--color-primary)">Innsendt</span>
+				}
+			</div>
+		}
 		<img
 			src="/static/placeholder-small.webp"
 			alt="Participants"
