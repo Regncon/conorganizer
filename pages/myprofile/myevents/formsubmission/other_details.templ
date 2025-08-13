@@ -1,13 +1,13 @@
 package formsubmission
 
 import (
-	"net/http"
-	"github.com/go-chi/chi/v5"
 	"fmt"
+	"github.com/go-chi/chi/v5"
+	"net/http"
 
-	"github.com/Regncon/conorganizer/service/keyvalue"
-	"github.com/Regncon/conorganizer/models"
 	"database/sql"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -316,7 +316,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					class="input"
 					data-signals={ fmt.Sprintf("{maxPlayers:%d}", maxPlayers) }
 					data-bind="maxPlayers"
-					data-on-change__debounce.2000ms={ datastar.PutSSE("/my-events/api/new/%s/max-players", eventId) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/max-players", eventId) }
 					type="number"
 					min="4"
 				/>

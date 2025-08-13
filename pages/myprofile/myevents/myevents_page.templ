@@ -5,13 +5,18 @@ import (
 	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
+    "github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"log/slog"
 )
 
 templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 	<div id="my-events-wrapper">
-		<h1>My Events</h1>
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Mine Arrangementer", Url: ""},
+		})
+		<h1>Mine Arrangementer</h1>
 		<div class="my-event-grid">
 			@events(userid, db, logger)
 		</div>

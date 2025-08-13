@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/Regncon/conorganizer/models"
 	"log/slog"
+	"github.com/Regncon/conorganizer/components"
 )
 
 func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, logger *slog.Logger) {
@@ -241,9 +242,13 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
                     }
 
                 }
-
             }
         </style>
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Mine Arrangementer", Url: "/my-events/"},
+			{Name: "Nytt Arrangement", Url: ""},
+		})
 		<form
 			class="formsubmission-wrapper"
 			action={ "/my-events/api/new/" + eventId + "/submit" }
