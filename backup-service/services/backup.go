@@ -67,9 +67,6 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	if err := os.Remove(snapshotPath); err != nil {
 		b.Logger.Warn("Failed to remove snapshot file", "path", snapshotPath, "err", err)
 	}
-	if err := os.Remove(dbPath); err != nil {
-		b.Logger.Warn("Failed to remove decompressed DB file", "path", dbPath, "err", err)
-	}
 
 	// Backup successful
 	b.Logger.Info("Backup stored successfully", "path", finalPath)
