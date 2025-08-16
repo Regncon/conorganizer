@@ -1,0 +1,33 @@
+package approval
+
+import (
+	"database/sql"
+	"github.com/go-chi/chi/v5"
+	"log/slog"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	datastar "github.com/starfederation/datastar-go/datastar"
+)
+
+func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		var ctx = r.Context()
+		layouts.Base(
+			"Godkjenning av Arrangementer",
+			requestctx.UserRequestInfo{
+				IsLoggedIn: true,
+				IsAdmin:    true,
+			},
+			approvalIndex(),
+		).Render(ctx, w)
+	})
+}
+
+templ approvalIndex() {
+	<div id="approval-container" data-on-load={ datastar.GetSSE("/admin/approval/api/") }>
+		<p>Approval page</p>
+		<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+	</div>
+}

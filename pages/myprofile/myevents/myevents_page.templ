@@ -22,10 +22,13 @@ templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 		<style>
 			.my-event-grid {
 				display: grid;
-				grid-template-columns: repeat(auto-fill, minmax(var(--mobile-min-width), 1fr));
+				grid-template-columns: repeat(
+					auto-fill,
+					minmax(var(--mobile-min-width), 1fr)
+				);
 				gap: 1rem;
 			}
-            @media (min-width: 600px) {
+			@media (min-width: 600px) {
 				.my-event-grid {
 					padding: 1rem;
 				}
@@ -37,17 +40,17 @@ templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 templ events(userid string, db *sql.DB, logger *slog.Logger) {
 	{{ events := GetEventsByUserId(db, userid, logger) }}
 	if len(events) == 0 {
-		@newEvent()
+		@createEvent()
 	}
 	if len(events) > 0 {
 		for _, event := range events {
 			@components.EventCard(event, true)
 		}
-		@newEvent()
+		@createEvent()
 	}
 }
 
-templ newEvent() {
+templ createEvent() {
 	<form action="/my-events/api/create" method="post">
 		<button
 			type="submit"

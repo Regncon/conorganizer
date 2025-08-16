@@ -1,0 +1,44 @@
+package formsubmission
+
+import (
+	"net/http"
+	"github.com/go-chi/chi/v5"
+	"database/sql"
+	"fmt"
+	"github.com/Regncon/conorganizer/models"
+	"log/slog"
+)
+
+func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, logger *slog.Logger) {
+	newEventRouter.Post("/submit", func(w http.ResponseWriter, r *http.Request) {
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+		logger.Info("Submitting event", "eventID", eventID)
+
+		query := `UPDATE events SET status = ? WHERE id = ?`
+		_, err := db.Exec(query, models.EventStatusSubmitted, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, fmt.Sprintf("/my-events/"), http.StatusSeeOther)
+	})
+}
+
+templ SubmitSection() {
+	<article class="submit-section form-card">
+		<p>
+			Kladden blir lagret automatisk. Når du er klar til å sende arrangementet inn, trenger du bare å klikke på på knappen her!
+		</p>
+		<button
+			type="submit"
+			class="btn btn--outline"
+		>
+			Send Inn
+		</button>
+	</article>
+}

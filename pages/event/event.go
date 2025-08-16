@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Regncon/conorganizer/models"
-
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -81,7 +79,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	}
 
 	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
-	eventLayoutRoute(router, db, err)
+	eventLayoutRoute(router, db, logger, err)
 
 	router.Route("/event/api", func(eventRouter chi.Router) {
 		eventRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
@@ -116,7 +114,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						c := event_page(eventID, db)
+						c := event_page(eventID, logger, db)
 						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
@@ -129,53 +127,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	})
 
 	return nil
-}
-
-func GetEventByID(id string, db *sql.DB) (*models.Event, error) {
-	query := `
-            SELECT
-                id,
-                title,
-                description,
-                image_url,
-                system,
-                host_name,
-                host,
-                email,
-                phone_number,
-                pulje_name,
-                max_players,
-                beginner_friendly,
-                can_be_run_in_english,
-                status
-            FROM events WHERE id = ? AND status = ?
-            `
-	row := db.QueryRow(query, id, models.EventStatusPublished)
-
-	var event models.Event
-	if err := row.Scan(
-		&event.ID,
-		&event.Title,
-		&event.Description,
-		&event.ImageURL,
-		&event.System,
-		&event.HostName,
-		&event.Host,
-		&event.Email,
-		&event.PhoneNumber,
-		&event.PuljeName,
-		&event.MaxPlayers,
-		&event.BeginnerFriendly,
-		&event.CanBeRunInEnglish,
-		&event.Status,
-	); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No event found
-		}
-		return nil, err
-	}
-
-	return &event, nil
 }
 
 func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {

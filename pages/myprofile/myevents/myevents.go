@@ -8,9 +8,10 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/index"
-	"github.com/Regncon/conorganizer/pages/myprofile/myevents/formsubmission"
+	"github.com/Regncon/conorganizer/pages/myprofile/myevents/newevent"
 
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
@@ -148,7 +149,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 								userId := userctx.GetUserRequestInfo(r.Context()).Id
 
-								c := formsubmission.NewEventFormPage(eventId, userId, db, logger)
+								c := newEvent.NewEventFormPage(eventId, userId, db, logger)
 								if err := sse.PatchElementTempl(c); err != nil {
 									sse.ConsoleError(err)
 									return
@@ -157,6 +158,8 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						}
 					})
 					formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger)
+
+					formsubmission.UpdateStatus(newApiIdRouter, db, kv)
 
 					formsubmission.UpdateName(newApiIdRouter, db, kv)
 					formsubmission.UpdateEmail(newApiIdRouter, db, kv)
@@ -188,7 +191,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
 			newRouter.Route("/{id}", func(newIdRoute chi.Router) {
-				formsubmission.NewEventLayoutRoute(newIdRoute, db, logger)
+				newEvent.NewEventLayoutRoute(newIdRoute, db, logger)
 			})
 		})
 	})

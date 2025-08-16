@@ -9,6 +9,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Regncon/conorganizer/pages/admin/approval"
+	"github.com/Regncon/conorganizer/pages/admin/approval/editForm"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -114,6 +116,95 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					}
 				}
 			}
+		})
+
+		adminRouter.Route("/approval/", func(approvalRouter chi.Router) {
+			approvalRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
+				sse := datastar.NewSSE(w, r)
+
+				sessionID, mvc, err := mvcSession(w, r)
+				ctx := r.Context()
+				watcher, err := kv.Watch(ctx, sessionID)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				defer watcher.Stop()
+
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case entry := <-watcher.Updates():
+						if entry == nil {
+							continue
+						}
+						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+							http.Error(w, err.Error(), http.StatusInternalServerError)
+							return
+						}
+						c := approval.ApprovalPage(db, logger)
+						if err := sse.PatchElementTempl(c); err != nil {
+							sse.ConsoleError(err)
+							return
+						}
+					}
+				}
+			})
+
+			approvalRouter.Route("/edit", func(editEventRouter chi.Router) {
+				editEventRouter.Route("/{id}", func(newIdRoute chi.Router) {
+					edit_form.EditFormLayoutRoute(newIdRoute, db, logger)
+				})
+				editEventRouter.Route("/api/{id}", func(newApiIdRouter chi.Router) {
+					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						sessionID, mvc, err := mvcSession(w, r)
+						if err != nil {
+							http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
+							return
+						}
+
+						eventId := chi.URLParam(r, "id")
+						if eventId == "" {
+							http.Error(w, "Event ID is required. Got: "+eventId, http.StatusBadRequest)
+							return
+						}
+
+						sse := datastar.NewSSE(w, r)
+
+						ctx := r.Context()
+						watcher, err := kv.Watch(ctx, sessionID)
+						if err != nil {
+							http.Error(w, err.Error(), http.StatusInternalServerError)
+							return
+						}
+						defer watcher.Stop()
+
+						for {
+							select {
+							case <-ctx.Done():
+								return
+							case entry := <-watcher.Updates():
+
+								if entry == nil {
+									continue
+								}
+								if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+									http.Error(w, err.Error(), http.StatusInternalServerError)
+									return
+								}
+
+								c := edit_form.EditEventFormPage(eventId, db, logger)
+								if err := sse.PatchElementTempl(c); err != nil {
+									sse.ConsoleError(err)
+									return
+								}
+							}
+						}
+					})
+				})
+			})
+			approval.ApprovalLayoutRoute(approvalRouter, db, logger, err)
 		})
 	})
 

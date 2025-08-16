@@ -1,0 +1,49 @@
+package edit_form
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
+	datastar "github.com/starfederation/datastar-go/datastar"
+	"log/slog"
+	"net/http"
+)
+
+func EditFormLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		eventId := chi.URLParam(r, "id")
+
+		eventTitle := getEventTitle(db, eventId)
+		title := "Rediger arrangement"
+		if eventTitle != "" {
+			title = eventTitle
+		}
+
+		var ctx = r.Context()
+		layouts.Base(
+			title,
+			userctx.GetUserRequestInfo(ctx),
+			editFormIndex(eventId),
+		).Render(ctx, w)
+	})
+}
+
+templ editFormIndex(eventId string) {
+	<div id="edit-form-container" data-on-load={ datastar.GetSSE("/admin/approval/edit/api/" + eventId) }>
+		<p>Rediger arrangement</p>
+		<p>Hvis du ser denne meldingen, vennligst tøm informasjonskapslene og oppdater siden.</p>
+	</div>
+}
+
+func getEventTitle(db *sql.DB, eventId string) string {
+	var title string
+
+	err := db.QueryRow("SELECT title FROM events WHERE id = ?", eventId).Scan(&title)
+
+	if err != nil {
+		return ""
+	}
+
+	return title
+}
