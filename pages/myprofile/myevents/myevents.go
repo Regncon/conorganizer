@@ -159,6 +159,8 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					})
 					formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger)
 
+					formsubmission.UpdateStatus(newApiIdRouter, db, kv)
+
 					formsubmission.UpdateName(newApiIdRouter, db, kv)
 					formsubmission.UpdateEmail(newApiIdRouter, db, kv)
 					formsubmission.UpdatePhone(newApiIdRouter, db, kv)

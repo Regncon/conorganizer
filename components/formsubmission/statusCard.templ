@@ -1,0 +1,64 @@
+
+package formsubmission
+
+import (
+	"net/http"
+	"fmt"
+	"github.com/go-chi/chi/v5"
+	"database/sql"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/nats-io/nats.go/jetstream"
+	datastar "github.com/starfederation/datastar-go/datastar"
+)
+
+func UpdateStatus(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Put("/status", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Status models.EventStatus `json:"status"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		query := `UPDATE events SET status = ? WHERE id = ?`
+		_, err := db.Exec(query, store.Status, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+	})
+}
+
+templ StatusCard(event *models.Event) {
+	<article class="form-card">
+		<section class="form-group">
+			<label for="status" class="label-small color-strong">Status</label>
+			<select
+				name="status"
+				class="input"
+				data-signals={ fmt.Sprintf("{status:'%s'}", event.Status) }
+				data-bind="status"
+				data-on-change={ datastar.PutSSE("/my-events/api/new/%s/status", event.ID) }
+				required
+			>
+				<option value={ models.EventStatusDraft } selected>Kladd</option>
+				<option value={ models.EventStatusSubmitted } selected>Innsendt</option>
+			</select>
+		</section>
+	</article>
+}

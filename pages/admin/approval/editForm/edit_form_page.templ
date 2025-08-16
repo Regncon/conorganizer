@@ -25,6 +25,7 @@ templ EditEventFormPage(eventId string, db *sql.DB, logger *slog.Logger) {
 			class="formsubmission-wrapper"
 		>
 			<h1 class="color-strong">Rediger Arrangement</h1>
+			@formsubmission.StatusCard(event)
 			@formsubmission.FormBody(event)
 		</form>
 	</div>
