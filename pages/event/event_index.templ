@@ -3,15 +3,17 @@ package event
 import (
 	"database/sql"
 	"net/http"
+	"log/slog"
 
 	"fmt"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func eventLayoutRoute(router chi.Router, db *sql.DB, err error) {
+func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
 
 	router.Get("/event/{idx}", func(w http.ResponseWriter, r *http.Request) {
 		eventID := chi.URLParam(r, "idx")
@@ -20,7 +22,7 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, err error) {
 			return
 		}
 
-		event, err := GetEventByID(eventID, db)
+		event, err := eventservice.GetEventById(eventID, db, logger)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

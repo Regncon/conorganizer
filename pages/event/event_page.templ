@@ -1,10 +1,14 @@
 package event
 
-import "database/sql"
+import (
+	"database/sql"
+	"log/slog"
+	"github.com/Regncon/conorganizer/service/eventService"
+)
 
-templ event_page(eventId string, db *sql.DB) {
+templ event_page(eventId string, logger *slog.Logger, db *sql.DB) {
 	{{
-	event, err := GetEventByID(eventId, db)
+	event, err := eventservice.GetEventById(eventId, db, logger)
 	}}
 	if event == nil {
 		<p>Event not found</p>

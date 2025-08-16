@@ -1,4 +1,4 @@
-package formsubmission
+package eventservice
 
 import (
 	"database/sql"
@@ -7,33 +7,7 @@ import (
 	"log/slog"
 )
 
-func shouldShowStringValue(value string) string {
-	if value != "" {
-		return value
-	}
-	return ""
-}
-
-func shouldShowNumberValue(value int64) string {
-	if value != 0 {
-		return fmt.Sprintf("%d", value)
-	}
-	return ""
-}
-
-func GetEventById(userId string, eventID string, db *sql.DB, logger *slog.Logger) (*models.Event, error) {
-	if userId == "" {
-		logger.Error("Unauthorized", "User is not logged in")
-		return nil, fmt.Errorf("unauthorized access")
-	}
-
-	/*userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
-	if userDbIdErr != nil {
-		logger.Error("Failed to get user ID from database", "error", userDbIdErr)
-		return nil, fmt.Errorf("failed to get user ID from database: %w", userDbIdErr)
-	}
-	*/
-
+func GetEventById(eventID string, db *sql.DB, logger *slog.Logger) (*models.Event, error) {
 	query := `
             SELECT
                 id,
@@ -89,3 +63,52 @@ func GetEventById(userId string, eventID string, db *sql.DB, logger *slog.Logger
 	}
 	return &event, nil
 }
+
+/*
+func GetEventByID(id string, db *sql.DB) (*models.Event, error) {
+	query := `
+            SELECT
+                id,
+                title,
+                description,
+                image_url,
+                system,
+                host_name,
+                host,
+                email,
+                phone_number,
+                pulje_name,
+                max_players,
+                beginner_friendly,
+                can_be_run_in_english,
+                status
+            FROM events WHERE id = ? AND status = ?
+            `
+	row := db.QueryRow(query, id, models.EventStatusPublished)
+
+	var event models.Event
+	if err := row.Scan(
+		&event.ID,
+		&event.Title,
+		&event.Description,
+		&event.ImageURL,
+		&event.System,
+		&event.HostName,
+		&event.Host,
+		&event.Email,
+		&event.PhoneNumber,
+		&event.PuljeName,
+		&event.MaxPlayers,
+		&event.BeginnerFriendly,
+		&event.CanBeRunInEnglish,
+		&event.Status,
+	); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // No event found
+		}
+		return nil, err
+	}
+
+	return &event, nil
+}
+*/
