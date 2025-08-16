@@ -1,11 +1,11 @@
 # See https://fly.io/docs/app-guides/continuous-deployment-with-github-actions/
 
-name: Fly Deploy
+name: Fly Deploy Backup-service
 on:
     push:
         branches:
             - main
-        paths-ignore:
+        paths:
             - "backup-service/**"
 jobs:
     deploy:
@@ -16,6 +16,6 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: superfly/flyctl-actions/setup-flyctl@master
-            - run: flyctl -c .flyio/fly.toml deploy --remote-only
+            - run: flyctl -c backup-service/fly.toml deploy --remote-only
               env:
-                  FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+                  FLY_API_TOKEN: ${{ secrets.FLY_BACKUP_API_TOKEN }}
