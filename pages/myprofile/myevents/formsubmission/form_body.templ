@@ -1,0 +1,238 @@
+package formsubmission
+
+import (
+	"github.com/Regncon/conorganizer/models"
+)
+
+templ FormBody(event *models.Event) {
+	<style>
+		.formsubmission-wrapper {
+			> * + .form-card {
+				margin-block-start: 1rem;
+			}
+
+			.label {
+				font-weight: 600;
+				font-size: 14px;
+			}
+
+			.label-small {
+				font-weight: 600;
+				font-size: 12px;
+			}
+
+			.form-group {
+				display: flex;
+				flex-direction: column;
+				gap: 0.3rem;
+			}
+			.form-group-checkbox {
+				display: flex;
+				gap: 0.3rem;
+				place-items: center;
+			}
+
+			.form-card {
+				display: grid;
+
+				h4 {
+					margin: 0;
+				}
+
+				.organizer-section {
+					display: grid;
+					gap: 1.25rem;
+				}
+
+				.about-section {
+					display: grid;
+					gap: 1.25rem;
+
+					.img {
+						display: flex;
+						flex-direction: column;
+						gap: 1.2rem;
+
+						img {
+							width: 100%;
+							height: 100%;
+							border-radius: var(--border-radius-medium);
+							object-fit: cover;
+						}
+					}
+				}
+
+				.details-section {
+					display: grid;
+					gap: 1.25rem;
+
+					.checkbox-background {
+						background-color: var(--bg-item);
+						border: 1px solid var(--bg-item-border);
+						padding: 0.75rem 0.5rem;
+						border-radius: var(--border-radius-medium);
+					}
+				}
+			}
+
+			.submit-section {
+				display: grid;
+				grid-template-columns: 0.7fr 0.3fr;
+				gap: 2rem;
+				margin-block-start: 1rem;
+				min-height: 6.125rem;
+				place-content: center;
+
+				p {
+					margin: 0;
+					place-self: center;
+				}
+
+				.btn {
+					align-self: end;
+					height: 3.625rem;
+					width: min(100%, 15rem);
+				}
+				/*
+                     //TODO: remove this if button should not be white
+                    */
+				.btn--outline {
+					border-width: 3px;
+					border-color: var(--btn-primary-bg);
+					color: var(--btn-primary-bg);
+				}
+			}
+
+			@container formsubmission-css-container (width > 42.31rem) {
+				.form-card:is(:not(.submit-section)) {
+					display: block;
+
+					.organizer-section {
+						display: flex;
+						justify-content: space-between;
+						.form-group {
+							gap: 0.5rem;
+						}
+					}
+
+					.about-section {
+						margin-block-start: 1rem;
+						grid-template-columns: 0.5fr 0.5fr;
+						grid-template-areas:
+							"title img"
+							"intro img"
+							"type system"
+							"description description";
+						.title {
+							grid-area: title;
+						}
+
+						.intro {
+							grid-area: intro;
+						}
+
+						.type {
+							grid-area: type;
+						}
+
+						.img {
+							grid-area: img;
+						}
+
+						.system {
+							grid-area: system;
+						}
+
+						.description {
+							grid-area: description;
+						}
+					}
+
+					.details-section {
+						margin-block-start: 1rem;
+						grid-template-columns: minmax(7.5rem, 0.4fr) minmax(
+								12.5rem,
+								0.6fr
+							);
+						grid-template-areas:
+							"age-group age-group-description"
+							"duration duration-description"
+							"beginner-friendly beginner-friendly-description"
+							"english english-description"
+							"player-count player-count-description"
+							"other-notes other-notes";
+
+						.age-group {
+							grid-area: age-group;
+						}
+
+						.age-group-description {
+							grid-area: age-group-description;
+						}
+
+						.duration {
+							grid-area: duration;
+						}
+
+						.duration-description {
+							grid-area: duration-description;
+						}
+
+						.beginner-friendly {
+							grid-area: beginner-friendly;
+						}
+
+						.beginner-friendly-description {
+							grid-area: beginner-friendly-description;
+						}
+
+						.can-be-english {
+							grid-area: can-be-english;
+						}
+
+						.can-be-english-description {
+							grid-area: can-be-english-description;
+						}
+
+						.player-count {
+							grid-area: player-count;
+						}
+
+						.player-count-description {
+							grid-area: player-count-description;
+						}
+
+						.other-notes {
+							grid-area: other-notes;
+						}
+					}
+				}
+			}
+		}
+	</style>
+	@contactInfo(
+		event.ID,
+		event.HostName,
+		event.Email,
+		event.PhoneNumber,
+	)
+	@aboutEvent(
+		event.ID,
+		event.Title,
+		event.Intro,
+		event.EventType,
+		event.ImageURL.String,
+		event.System,
+		event.Description,
+	)
+	@otherDetails(
+		event.ID,
+		event.AgeGroup,
+		event.Runtime,
+		event.BeginnerFriendly,
+		event.CanBeRunInEnglish,
+		event.MaxPlayers,
+		event.Notes,
+	)
+	@submitSection()
+}
