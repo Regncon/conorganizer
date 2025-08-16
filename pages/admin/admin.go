@@ -119,7 +119,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		})
 
 		adminRouter.Route("/approval/", func(approvalRouter chi.Router) {
-			approval.ApprovalLayoutRoute(approvalRouter, db, logger, err)
 			approvalRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 				sse := datastar.NewSSE(w, r)
 
@@ -205,6 +204,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					})
 				})
 			})
+			approval.ApprovalLayoutRoute(approvalRouter, db, logger, err)
 		})
 	})
 

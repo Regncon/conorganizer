@@ -27,6 +27,7 @@ templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.L
 		>
 			<h1 class="color-strong">Nytt Arrangement</h1>
 			@formsubmission.FormBody(event)
+			@formsubmission.SubmitSection()
 		</form>
 	</div>
 }
