@@ -23,7 +23,7 @@ css eventBarBox() {
 
 templ eventBar(event models.EventCardModel) {
 	<a
-		href={ templ.URL(fmt.Sprintf("/my-events/new/%s", event.Id)) }
+		href={ templ.URL(fmt.Sprintf("/admin/approval/edit/%s", event.Id)) }
 		style="transition: border-color 120ms ease-in-out;"
 		onmouseenter="this.style.borderColor='var(--color-primary)'"
 		onmouseleave="this.style.borderColor='var(--bg-item-border)'"
