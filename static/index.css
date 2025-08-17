@@ -121,6 +121,10 @@
     color: var(--bg-base);
 }
 
+@view-transition {
+    navigation: Auto;
+}
+
 html {
     color-scheme: dark;
     box-sizing: border-box;

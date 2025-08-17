@@ -42,15 +42,18 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 		layouts.Base(
 			title,
 			userctx.GetUserRequestInfo(ctx),
-			newEventIndex(eventId),
+			newEventIndex(eventId, userId, db, logger),
 		).Render(ctx, w)
 	})
 }
 
-templ newEventIndex(eventId string) {
-	<div id="formsubmission-container" data-on-load={ datastar.GetSSE("/my-events/api/new/" + eventId) }>
-		<p>Meld på nytt arrangement</p>
-		<p>Hvis du ser denne meldingen, vennligst tøm informasjonskapslene og oppdater siden.</p>
+templ newEventIndex(eventId string, userId string, db *sql.DB, logger *slog.Logger) {
+	<div
+		id="formsubmission-container"
+		class="formsubmission-css-container"
+		data-on-load={ datastar.GetSSE("/my-events/api/new/" + eventId) }
+	>
+		@NewEventFormPageContent(eventId, userId, db, logger)
 	</div>
 }
 

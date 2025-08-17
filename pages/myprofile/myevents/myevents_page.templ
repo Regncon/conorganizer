@@ -11,30 +11,34 @@ import (
 
 templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 	<div id="my-events-wrapper">
-		@components.Breadcrumbs([]components.BreadcrumbPath{
-			{Name: "Hjem", Url: "/"},
-			{Name: "Mine Arrangementer", Url: ""},
-		})
-		<h1>Mine Arrangementer</h1>
-		<div class="my-event-grid">
-			@events(userid, db, logger)
-		</div>
-		<style>
-			.my-event-grid {
-				display: grid;
-				grid-template-columns: repeat(
-					auto-fill,
-					minmax(var(--mobile-min-width), 1fr)
-				);
-				gap: 1rem;
-			}
-			@media (min-width: 600px) {
-				.my-event-grid {
-					padding: 1rem;
-				}
-			}
-		</style>
+		@myEventsPageContent(userid, db, logger)
 	</div>
+}
+
+templ myEventsPageContent(userid string, db *sql.DB, logger *slog.Logger) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Mine Arrangementer", Url: ""},
+	})
+	<h1>Mine Arrangementer</h1>
+	<div class="my-event-grid">
+		@events(userid, db, logger)
+	</div>
+	<style>
+		.my-event-grid {
+			display: grid;
+			grid-template-columns: repeat(
+				auto-fill,
+				minmax(var(--mobile-min-width), 1fr)
+			);
+			gap: 1rem;
+		}
+		@media (min-width: 600px) {
+			.my-event-grid {
+				padding: 1rem;
+			}
+		}
+	</style>
 }
 
 templ events(userid string, db *sql.DB, logger *slog.Logger) {
