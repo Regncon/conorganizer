@@ -1,6 +1,7 @@
 package edit_form
 
 import (
+	"context"
 	"database/sql"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -24,15 +25,18 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 		layouts.Base(
 			title,
 			userctx.GetUserRequestInfo(ctx),
-			editFormIndex(eventId),
+			editFormIndex(eventId, ctx, db, logger),
 		).Render(ctx, w)
 	})
 }
 
-templ editFormIndex(eventId string) {
-	<div id="edit-form-container" data-on-load={ datastar.GetSSE("/admin/approval/edit/api/" + eventId) }>
-		<p>Rediger arrangement</p>
-		<p>Hvis du ser denne meldingen, vennligst tøm informasjonskapslene og oppdater siden.</p>
+templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, logger *slog.Logger) {
+	<div
+		id="edit-form-container"
+		class="formsubmission-css-container"
+		data-on-load={ datastar.GetSSE("/admin/approval/edit/api/" + eventId) }
+	>
+		@EditEventFormPageContent(ctx, eventId, db, logger)
 	</div>
 }
 

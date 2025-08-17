@@ -10,24 +10,28 @@ import (
 
 templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.Logger) {
 	<div id="formsubmission-container" class="formsubmission-css-container">
-		{{ event, eventErr := eventservice.GetEventById(eventId, db, logger) }}
-		if eventErr != nil {
-			<p>Error fetching events: { eventErr.Error() }</p>
-			return
-		}
-		@components.Breadcrumbs([]components.BreadcrumbPath{
-			{Name: "Hjem", Url: "/"},
-			{Name: "Mine Arrangementer", Url: "/my-events/"},
-			{Name: "Nytt Arrangement", Url: ""},
-		})
-		<form
-			class="formsubmission-wrapper"
-			action={ "/my-events/api/new/" + event.ID + "/submit" }
-			method="post"
-		>
-			<h1 class="color-strong">Nytt Arrangement</h1>
-			@formsubmission.FormBody(event)
-			@formsubmission.SubmitSection()
-		</form>
+		@NewEventFormPageContent(eventId, userId, db, logger)
 	</div>
+}
+
+templ NewEventFormPageContent(eventId string, userId string, db *sql.DB, logger *slog.Logger) {
+	{{ event, eventErr := eventservice.GetEventById(eventId, db, logger) }}
+	if eventErr != nil {
+		<p>Error fetching events: { eventErr.Error() }</p>
+		return
+	}
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Mine Arrangementer", Url: "/my-events/"},
+		{Name: "Nytt Arrangement", Url: ""},
+	})
+	<form
+		class="formsubmission-wrapper"
+		action={ "/my-events/api/new/" + event.ID + "/submit" }
+		method="post"
+	>
+		<h1 class="color-strong">Nytt Arrangement</h1>
+		@formsubmission.FormBody(event)
+		@formsubmission.SubmitSection()
+	</form>
 }
