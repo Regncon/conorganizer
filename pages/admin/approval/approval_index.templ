@@ -20,14 +20,13 @@ func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err
 				IsLoggedIn: true,
 				IsAdmin:    true,
 			},
-			approvalIndex(),
+			approvalIndex(db, logger),
 		).Render(ctx, w)
 	})
 }
 
-templ approvalIndex() {
+templ approvalIndex(db *sql.DB, logger *slog.Logger) {
 	<div id="approval-container" data-on-load={ datastar.GetSSE("/admin/approval/api/") }>
-		<p>Approval page</p>
-		<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
+		@ApprovalPageContent(db, logger)
 	</div>
 }

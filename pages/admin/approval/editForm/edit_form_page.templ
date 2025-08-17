@@ -64,31 +64,35 @@ func nstr(ns sql.NullString) string {
 }
 
 templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, logger *slog.Logger) {
+	<div id="edit-form-container" class="formsubmission-css-container">
+		@EditEventFormPageContent(ctx, eventId, db, logger)
+	</div>
+}
+
+templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, logger *slog.Logger) {
 	{{ previousNextData, err := getPreviousNext(ctx, db, logger, eventId) }}
 	if err != nil {
 		logger.Error("Failed to get previous/next data", "error", err)
 		return
 	}
-	<div id="edit-form-container" class="formsubmission-css-container">
-		{{ event, eventErr := eventservice.GetEventById(eventId, db, logger) }}
-		if eventErr != nil {
-			<p>Error fetching events: { eventErr.Error() }</p>
-			return
-		}
-		@components.Breadcrumbs([]components.BreadcrumbPath{
-			{Name: "Hjem", Url: "/"},
-			{Name: "Admin", Url: "/admin/"},
-			{Name: "Godkjenning av Arrangementer", Url: "/admin/approval/"},
-			{Name: "Rediger Arrangement", Url: ""},
-		})
-		@components.PreviousNextBar(previousNextData)
-		<form
-			class="formsubmission-wrapper"
-		>
-			<h1 class="color-strong">Rediger Arrangement</h1>
-			@formsubmission.StatusCard(event)
-			@formsubmission.FormBody(event)
-		</form>
-		@components.PreviousNextBar(previousNextData)
-	</div>
+	{{ event, eventErr := eventservice.GetEventById(eventId, db, logger) }}
+	if eventErr != nil {
+		<p>Error fetching events: { eventErr.Error() }</p>
+		return
+	}
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Admin", Url: "/admin/"},
+		{Name: "Godkjenning av Arrangementer", Url: "/admin/approval/"},
+		{Name: "Rediger Arrangement", Url: ""},
+	})
+	@components.PreviousNextBar(previousNextData)
+	<form
+		class="formsubmission-wrapper"
+	>
+		<h1 class="color-strong">Rediger Arrangement</h1>
+		@formsubmission.StatusCard(event)
+		@formsubmission.FormBody(event)
+	</form>
+	@components.PreviousNextBar(previousNextData)
 }
