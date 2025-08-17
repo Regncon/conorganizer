@@ -194,7 +194,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 									return
 								}
 
-								c := edit_form.EditEventFormPage(eventId, db, logger)
+								c := edit_form.EditEventFormPage(ctx, eventId, db, logger)
 								if err := sse.PatchElementTempl(c); err != nil {
 									sse.ConsoleError(err)
 									return
