@@ -11,8 +11,8 @@ css previousNextCard() {
 	display: block;
 	margin: 1rem 0;
 	text-decoration: none;
-	width: 20rem;
-	padding: 0 0.5rem 0 0.5rem;
+	width: 400px;
+	padding: 1rem;
 	transition: border-color 120ms ease-in-out;
 }
 
@@ -70,21 +70,21 @@ templ previousButton(title string) {
 			alt="Forrige arrangement"
 		/>
 		<div style="display: flex; flex-direction: column; gap: 0.25rem;">
-			<span>Forrige arrangement</span>
+			<span style="color: var(--color-text-soft); font-size:12px;">Forrige arrangement</span>
 			<strong>{ title }</strong>
 		</div>
 	</div>
 }
 
 templ nextButton(title string) {
-	<div style="display: flex; align-items: center;">
+	<div style="display: flex; flex-direction: row-reverse; align-items: center;">
 		<img
 			style="hight: 2rem; width: 2rem; margin-right: 0.5rem;"
 			src="/static/icons/angle-right-solid-full.svg"
 			alt="Neste arrangement"
 		/>
 		<div style="display: flex; flex-direction: column; gap: 0.25rem;">
-			<span>Neste arrangement</span>
+			<span style="color: var(--color-text-soft); font-size:12px; text-align:right;">Neste arrangement</span>
 			<strong>{ title }</strong>
 		</div>
 	</div>
