@@ -11,7 +11,7 @@ import (
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/index"
-	"github.com/Regncon/conorganizer/pages/myprofile/myevents/newevent"
+	newEvent "github.com/Regncon/conorganizer/pages/myprofile/myevents/newevent"
 
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
@@ -159,32 +159,65 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					})
 					formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger)
 
-					formsubmission.UpdateStatus(newApiIdRouter, db, kv)
+					// refactor to use "update/status etc"
+					newApiIdRouter.Route("/status", func(putStatusRouter chi.Router) {
+						formsubmission.UpdateStatus(putStatusRouter, db, kv)
+					})
+					newApiIdRouter.Route("/name", func(putNameRouter chi.Router) {
+						formsubmission.UpdateName(putNameRouter, db, kv)
+					})
+					newApiIdRouter.Route("/email", func(putEmailRouter chi.Router) {
+						formsubmission.UpdateEmail(putEmailRouter, db, kv)
+					})
+					newApiIdRouter.Route("/phone", func(putPhoneRouter chi.Router) {
+						formsubmission.UpdatePhone(putPhoneRouter, db, kv)
+					})
+					newApiIdRouter.Route("/title", func(putTitleRouter chi.Router) {
+						formsubmission.UpdateTitle(putTitleRouter, db, kv)
+					})
 
-					formsubmission.UpdateName(newApiIdRouter, db, kv)
-					formsubmission.UpdateEmail(newApiIdRouter, db, kv)
-					formsubmission.UpdatePhone(newApiIdRouter, db, kv)
-					formsubmission.UpdateTitle(newApiIdRouter, db, kv)
+					newApiIdRouter.Route("/intro", func(putIntroRouter chi.Router) {
+						formsubmission.UpdateIntro(putIntroRouter, db, kv)
+					})
+					newApiIdRouter.Route("/system", func(putSystemRouter chi.Router) {
+						formsubmission.UpdateSystem(putSystemRouter, db, kv)
+					})
+					newApiIdRouter.Route("/type", func(putTypeRouter chi.Router) {
+						formsubmission.UpdateType(putTypeRouter, db, kv)
+					})
+					newApiIdRouter.Route("/description", func(putDescriptionRouter chi.Router) {
+						formsubmission.UpdateDescription(putDescriptionRouter, db, kv)
+					})
 
-					formsubmission.UpdateIntro(newApiIdRouter, db, kv)
-					formsubmission.UpdateSystem(newApiIdRouter, db, kv)
-					formsubmission.UpdateType(newApiIdRouter, db, kv)
-					formsubmission.UpdateDescription(newApiIdRouter, db, kv)
+					// should be age-group
+					newApiIdRouter.Route("/ageGroup", func(putAgeGroupRouter chi.Router) {
+						formsubmission.UpdateAgeGroup(putAgeGroupRouter, db, kv)
+					})
+					newApiIdRouter.Route("/runtime", func(putRuntimeRouter chi.Router) {
+						formsubmission.UpdateRuntime(putRuntimeRouter, db, kv)
+					})
+					newApiIdRouter.Route("/beginner-friendly", func(putBeginnerFriendlyRouter chi.Router) {
+						formsubmission.UpdateBeginnerFriendly(putBeginnerFriendlyRouter, db, kv)
+					})
+					newApiIdRouter.Route("/can-be-run-in-english", func(putCanBeRunInEnglishRouter chi.Router) {
+						formsubmission.UpdateCanBeRunInEnglish(putCanBeRunInEnglishRouter, db, kv)
+					})
+					newApiIdRouter.Route("/max-players", func(putMaxPlayersRouter chi.Router) {
+						formsubmission.UpdateMaxPlayers(putMaxPlayersRouter, db, kv)
+					})
+					newApiIdRouter.Route("/notes", func(putNotesRouter chi.Router) {
+						formsubmission.UpdateNotes(putNotesRouter, db, kv)
+					})
+					apiRouter.Route("/submit", func(newApiIdRouter chi.Router) {
+						formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
+					})
 
-					formsubmission.UpdateAgeGroup(newApiIdRouter, db, kv)
-					formsubmission.UpdateRuntime(newApiIdRouter, db, kv)
-					formsubmission.UpdateBeginnerFriendly(newApiIdRouter, db, kv)
-					formsubmission.UpdateCanBeRunInEnglish(newApiIdRouter, db, kv)
-					formsubmission.UpdateMaxPlayers(newApiIdRouter, db, kv)
-					formsubmission.UpdateNotes(newApiIdRouter, db, kv)
-
-					formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 				})
 
-			})
+				apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
+					createNewEventFormSubmission(db, logger, w, r)
+				})
 
-			apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
-				createNewEventFormSubmission(db, logger, w, r)
 			})
 
 		})

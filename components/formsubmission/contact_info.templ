@@ -12,7 +12,7 @@ import (
 )
 
 func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/name", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"name"`
 		}
@@ -43,7 +43,7 @@ func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 }
 
 func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/email", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"email"`
 		}
@@ -74,7 +74,7 @@ func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/phone", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"phone"`
 		}

@@ -13,7 +13,7 @@ import (
 )
 
 func UpdateStatus(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/status", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Status models.EventStatus `json:"status"`
 		}

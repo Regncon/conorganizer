@@ -13,7 +13,7 @@ import (
 )
 
 func UpdateTitle(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/title", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"title"`
 		}
@@ -52,7 +52,7 @@ func UpdateTitle(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 }
 
 func UpdateIntro(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/intro", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"intro"`
 		}
@@ -83,7 +83,7 @@ func UpdateIntro(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 }
 
 func UpdateType(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/type", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"type"`
 		}
@@ -113,7 +113,7 @@ func UpdateType(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 func UpdateSystem(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/system", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"system"`
 		}
@@ -143,7 +143,7 @@ func UpdateSystem(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 func UpdateDescription(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/description", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"description"`
 		}

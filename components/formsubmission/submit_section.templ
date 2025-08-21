@@ -10,7 +10,7 @@ import (
 )
 
 func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, logger *slog.Logger) {
-	newEventRouter.Post("/submit", func(w http.ResponseWriter, r *http.Request) {
+	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
 			http.Error(w, "Event ID is required", http.StatusBadRequest)

@@ -13,7 +13,7 @@ import (
 )
 
 func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/ageGroup", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"ageGroup"`
 		}
@@ -45,7 +45,7 @@ func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 }
 
 func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/runtime", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"runtime"`
 		}
@@ -77,7 +77,7 @@ func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 }
 
 func UpdateBeginnerFriendly(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/beginner-friendly", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input bool `json:"beginnerFriendly"`
 		}
@@ -109,7 +109,7 @@ func UpdateBeginnerFriendly(eventRouter chi.Router, db *sql.DB, kv jetstream.Key
 }
 
 func UpdateCanBeRunInEnglish(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/can-be-run-in-english", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input bool `json:"canBeRunInEnglish"`
 		}
@@ -141,7 +141,7 @@ func UpdateCanBeRunInEnglish(eventRouter chi.Router, db *sql.DB, kv jetstream.Ke
 }
 
 func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/max-players", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input int `json:"maxPlayers"`
 		}
@@ -173,7 +173,7 @@ func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue)
 }
 
 func UpdateNotes(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/notes", func(w http.ResponseWriter, r *http.Request) {
+	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"notes"`
 		}
