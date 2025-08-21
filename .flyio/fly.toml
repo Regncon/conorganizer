@@ -11,7 +11,7 @@ dockerfile = "../Dockerfile.flyio"
 build-target = "server"
 
 [[mounts]]
-  source = "backup"
+  source = "uploads"
   destination = "/data"
 
 [http_service]
