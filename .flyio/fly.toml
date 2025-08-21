@@ -10,9 +10,9 @@ primary_region = 'arn'
 dockerfile = "../Dockerfile.flyio"
 build-target = "server"
 
-#[mounts]
-#  source = "litestream"
-#  destination = "/var/lib/regnconDB"
+[[mounts]]
+  source = "uploads"
+  destination = "/data"
 
 [http_service]
 internal_port = 8080

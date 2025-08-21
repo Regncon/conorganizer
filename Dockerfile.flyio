@@ -51,6 +51,10 @@ RUN chmod +x /usr/local/bin/replication.sh
 RUN mkdir -p /var/lib/regncon
 RUN chown -R regncon:regncon /var/lib/regncon
 
+# Create upload dir
+RUN mkdir -p /data/regncon/uploads && \
+    chown -R regncon:regncon /data/regncon/uploads
+
 # Switch to non-root user
 USER regncon
 
