@@ -9,11 +9,19 @@ templ CallToAction() {
 		.call-to-action-avatar {
 			display: none;
 		}
+		.call-to-action-button {
+			place-self: center end;
+			margin: 1rem 1rem 1rem 0px;
+		}
+		@container main (width > 1400px) {
+			.send-inn-cta-button {
+				margin-top: 5rem;
+			}
+		}
 		@container main (width > 1200px) {
 			.call-to-action {
 				max-width: 1400px;
 				margin: 0 auto;
-				height: 305px;
 			}
 		}
 
@@ -24,14 +32,18 @@ templ CallToAction() {
 			}
 		}
 		@container main (width > 700px) {
+			.call-to-action {
+				padding-top: 0px;
+                padding-bottom: 0px;
+                padding-right: 0px;
+			}
 			.call-to-action-avatar {
 				display: block;
 			}
 		}
 
-		@container main (width > 420px) {
+		@container main (width > 430px) {
 			.call-to-action {
-				padding: 0;
 				padding-left: var(--spacing-xlarge);
 			}
 		}
@@ -51,8 +63,7 @@ templ CallToAction() {
 				<a
 					href="/my-events"
 					href="/auth"
-					class="btn btn--cta"
-					style="place-self: center end; margin: 1rem 1rem 1rem 0px;"
+					class="btn btn--cta send-inn-cta-button"
 				>
 					Send inn arrangement
 				</a>
