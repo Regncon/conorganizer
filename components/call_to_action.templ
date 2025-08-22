@@ -1,12 +1,24 @@
 package components
 
 templ CallToAction() {
-	<div
-		style="
-            background-color: black;
-            padding: 1rem;
-        "
-	>
+	<style>
+		.call-to-action {
+			background-color: black;
+			padding: 1rem;
+		}
+		@container main (width > 1200px) {
+			.call-to-action {
+				max-width: 1200px;
+				margin: 0 auto;
+			}
+		}
+		@container main (width > 420px) {
+			.call-to-action {
+				padding-left: var(--spacing-xlarge);
+			}
+		}
+	</style>
+	<div class="call-to-action">
 		<h1>Vil du arrangere noe under Regncon?</h1>
 		<p>
 			Vi har åpnet dørene for registrering av arrangementer.
