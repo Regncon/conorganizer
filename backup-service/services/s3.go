@@ -14,11 +14,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 
-	"github.com/Regncon/conorganizer/backup-service/config"
+	"github.com/Regncon/conorganizer/backup-service/models"
 )
 
 // NewS3Client creates and configures an S3 client from the provided config.
-func NewS3Client(cfg config.Config, logger *slog.Logger) (*s3.Client, error) {
+func NewS3Client(cfg models.Config, logger *slog.Logger) (*s3.Client, error) {
 	logger.Info("Initializing Tigris S3 client", slog.Group("tigris",
 		slog.String("endpoint", cfg.AWS_ENDPOINT_URL_S3),
 		slog.String("region", cfg.AWS_REGION),

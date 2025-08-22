@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS backup_logs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     backup_type TEXT NOT NULL CHECK (backup_type IN ('hourly', 'daily', 'weekly', 'yearly', 'manually')),
     status TEXT NOT NULL CHECK (status IN ('pending', 'error', 'success')),
-    message TEXT NOT NULL,
+    message TEXT NOT NULL DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

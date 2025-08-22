@@ -3,7 +3,7 @@ FROM golang:1.24.5 AS builder
 ENV CGO_ENABLED=1
 
 # Install required libs
-RUN apt-get update -y && apt-get install -y ca-certificates sqlite3
+RUN apt-get update -y && apt-get install -y ca-certificates sqlite3 tzdata
 
 # Set workdir for building application
 WORKDIR /usr/src/codebase
@@ -23,7 +23,7 @@ FROM debian:bookworm AS server
 RUN groupadd -r regncon && useradd -r -g regncon -d /srv/regncon -s /usr/sbin/nologin regncon
 
 # Install required libs
-RUN apt-get update -y && apt-get install -y ca-certificates sqlite3
+RUN apt-get update -y && apt-get install -y ca-certificates sqlite3 tzdata
 
 # Copy compiled binary from previous step
 COPY --from=builder /usr/local/bin/backup-service /home/regncon/backup-service

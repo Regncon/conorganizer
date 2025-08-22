@@ -12,6 +12,9 @@ import (
 )
 
 func main() {
+	// Set timezone
+	os.Setenv("TZ", "Europe/Oslo")
+
 	// Set up logger
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
@@ -38,7 +41,7 @@ func main() {
 	}
 
 	// Define backup service
-	backupService := services.NewBackupService(cfg, s3Client, logger)
+	backupService := services.NewBackupService(cfg, db, s3Client, logger)
 
 	// Start scheduler
 	err = services.StartScheduler(backupService, logger)
