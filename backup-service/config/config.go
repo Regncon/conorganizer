@@ -23,6 +23,5 @@ func Load(logger *slog.Logger) models.Config {
 		BUCKET_NAME:           os.Getenv("BUCKET_NAME"),
 		DB_PREFIX:             os.Getenv("DB_PREFIX"),
 		DISCORD_WEBHOOK_URL:   os.Getenv("DISCORD_WEBHOOK_URL"),
-		DISCORD_SECRET_KEY:    os.Getenv("DISCORD_SECRET_KEY"),
 	}
 }

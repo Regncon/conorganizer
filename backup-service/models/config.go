@@ -8,5 +8,4 @@ type Config struct {
 	BUCKET_NAME           string
 	DB_PREFIX             string
 	DISCORD_WEBHOOK_URL   string
-	DISCORD_SECRET_KEY    string
 }
