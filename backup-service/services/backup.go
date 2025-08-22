@@ -2,11 +2,12 @@ package services
 
 import (
 	"context"
+	"database/sql"
+	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
 
-	"github.com/Regncon/conorganizer/backup-service/config"
 	"github.com/Regncon/conorganizer/backup-service/models"
 	"github.com/Regncon/conorganizer/backup-service/utils"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -14,15 +15,17 @@ import (
 
 // BackupService handles scheduled backup operations and file rotation logic.
 type BackupService struct {
-	Config   config.Config
+	Config   models.Config
+	Db       *sql.DB
 	S3Client *s3.Client
 	Logger   *slog.Logger
 }
 
 // NewBackupService creates a new instance of BackupService with dependencies injected.
-func NewBackupService(cfg config.Config, s3Client *s3.Client, logger *slog.Logger) *BackupService {
+func NewBackupService(cfg models.Config, db *sql.DB, s3Client *s3.Client, logger *slog.Logger) *BackupService {
 	return &BackupService{
 		Config:   cfg,
+		Db:       db,
 		S3Client: s3Client,
 		Logger:   logger,
 	}
@@ -33,9 +36,21 @@ func NewBackupService(cfg config.Config, s3Client *s3.Client, logger *slog.Logge
 func (b *BackupService) run(ctx context.Context, interval models.BackupInterval, retention int) {
 	b.Logger.Info("Scheduled backup job triggered", "interval", interval)
 
+	logID, err := NewLogBackup(b.Db, interval)
+	if err != nil {
+		b.Logger.Error("Failed to log backup", "err", err)
+		return
+	}
+
 	// download snapshot
 	snapshotPath, err := DownloadLatestSnapshot(ctx, b.S3Client, b.Config.BUCKET_NAME, b.Config.DB_PREFIX)
 	if err != nil {
+		_ = SendDiscordMessage(b.Config, fmt.Sprintf("❌ Backup failed!\nType: `%s`\nError: `%s`", interval, err.Error()))
+		_ = UpdateLogBackup(b.Db, models.BackupLogInput{
+			ID:      logID,
+			Status:  "error",
+			Message: err,
+		})
 		b.Logger.Error("Downloading snapshot failed", "err", err)
 		return
 	}
@@ -44,6 +59,11 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	// decompress snapshot
 	dbPath, err := utils.DecompressLZ4(snapshotPath)
 	if err != nil {
+		_ = UpdateLogBackup(b.Db, models.BackupLogInput{
+			ID:      logID,
+			Status:  "error",
+			Message: err,
+		})
 		b.Logger.Error("Decompression failed", "err", err)
 		return
 	}
@@ -59,9 +79,16 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	backupDir := filepath.Join("/data/regncon/backup", string(interval))
 	finalPath, err := utils.RotateBackups(dbPath, backupDir, retention)
 	if err != nil {
+		_ = UpdateLogBackup(b.Db, models.BackupLogInput{
+			ID:      logID,
+			Status:  "error",
+			Message: err,
+		})
 		b.Logger.Error("Failed to finalize backup", "err", err)
 		return
 	}
+
+	// Log entry
 
 	// Cleanup temp files after successful backup
 	if err := os.Remove(snapshotPath); err != nil {
@@ -69,6 +96,10 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	}
 
 	// Backup successful
+	_ = UpdateLogBackup(b.Db, models.BackupLogInput{
+		ID:     logID,
+		Status: "success",
+	})
 	b.Logger.Info("Backup stored successfully", "path", finalPath)
 }
 
