@@ -29,7 +29,7 @@ RUN apt-get update -y && apt-get install -y ca-certificates sqlite3 tzdata
 COPY --from=builder /usr/local/bin/backup-service /home/regncon/backup-service
 
 # Copy over sql init file
-COPY database/initialize.sql /usr/local/share/regncon/initialize.sql
+COPY --from=builder /usr/src/codebase/database/initialize.sql /usr/local/share/regncon/initialize.sql
 
 RUN mkdir -p /data/regncon/{tmp,logs,backup} && \
     chown -R regncon:regncon /data/regncon/{tmp,logs,backup}
