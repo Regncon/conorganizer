@@ -11,7 +11,7 @@ const (
 type BackupLogInput struct {
 	ID      int64
 	Status  BackupLogStatus
-	Message error
+	Message string
 }
 
 type BackupLogMessage struct {
