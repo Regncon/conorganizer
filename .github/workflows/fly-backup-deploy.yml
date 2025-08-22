@@ -16,6 +16,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - uses: superfly/flyctl-actions/setup-flyctl@master
-            - run: flyctl -c backup-service/fly.toml deploy --remote-only
+            - run: flyctl deploy --remote-only
+              working-directory: backup-service
               env:
                   FLY_API_TOKEN: ${{ secrets.FLY_BACKUP_API_TOKEN }}
