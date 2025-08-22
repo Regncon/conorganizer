@@ -7,7 +7,7 @@ RUN apt-get update -y && apt-get install -y ca-certificates sqlite3 tzdata
 
 # Set workdir for building application
 WORKDIR /usr/src/codebase
-COPY . .
+COPY backup-service .
 
 # Copy over & install required dependencies
 COPY go.mod go.sum ./
