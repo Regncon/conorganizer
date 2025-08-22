@@ -20,15 +20,10 @@ func NewLogBackup(db *sql.DB, intervalType models.BackupInterval) (int64, error)
 }
 
 func UpdateLogBackup(db *sql.DB, input models.BackupLogInput) error {
-	msg := ""
-	if input.Message != nil {
-		msg = input.Message.Error()
-	}
-
 	_, err := db.Exec(`
         UPDATE backup_logs
         SET status = ?, message = ?
         WHERE id = ?
-    `, input.Status, msg, input.ID)
+    `, input.Status, input.Message, input.ID)
 	return err
 }
