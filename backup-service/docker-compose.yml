@@ -4,6 +4,8 @@ services:
             context: .
             dockerfile: Dockerfile
         container_name: backup-dev
+        volumes:
+            - .:/data
         env_file:
             - .env
         restart: unless-stopped
