@@ -6,31 +6,64 @@ templ CallToAction() {
 			background-color: black;
 			padding: 1rem;
 		}
+		.call-to-action-avatar {
+			display: none;
+		}
 		@container main (width > 1200px) {
 			.call-to-action {
-				max-width: 1200px;
+				max-width: 1400px;
 				margin: 0 auto;
+				height: 305px;
 			}
 		}
+
+		@container main (width > 950px) {
+			.call-to-action-header {
+				font-size: var(--text-heading-1-xl);
+				margin-bottom: 0px;
+			}
+		}
+		@container main (width > 700px) {
+			.call-to-action-avatar {
+				display: block;
+			}
+		}
+
 		@container main (width > 420px) {
 			.call-to-action {
+				padding: 0;
 				padding-left: var(--spacing-xlarge);
 			}
 		}
 	</style>
 	<div class="call-to-action">
-		<h1>Vil du arrangere noe under Regncon?</h1>
-		<p>
-			Vi har åpnet dørene for registrering av arrangementer.
-			Har du noe du  ønsker å ta med deg til årets festivalhelg?
-		</p>
-		<a
-			href="/my-events"
-			href="/auth"
-			class="btn btn--cta"
-			style="place-self: center end; margin-right:  1rem"
-		>
-			Send inn arrangement
-		</a>
+		<div style="display: flex; justify-content: space-between;">
+			<div>
+				<h1
+					class="call-to-action-header"
+				>
+					Vil du arrangere noe under Regncon?
+				</h1>
+				<p>
+					Vi har åpnet dørene for registrering av arrangementer.
+					Har du noe du  ønsker å ta med deg til årets festivalhelg?
+				</p>
+				<a
+					href="/my-events"
+					href="/auth"
+					class="btn btn--cta"
+					style="place-self: center end; margin: 1rem 1rem 1rem 0px;"
+				>
+					Send inn arrangement
+				</a>
+			</div>
+			<img
+				class="call-to-action-avatar"
+				height="305"
+				width="389"
+				src="/static/call-to-action-avatar.webp"
+				alt="Sent inn arrangement"
+			/>
+		</div>
 	</div>
 }
