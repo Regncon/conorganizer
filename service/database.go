@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-func InitDB(databaseFileName string, sqlFileName string) (*sql.DB, error) {
+func InitDB(databaseFileName string) (*sql.DB, error) {
 	dir := filepath.Dir(databaseFileName)
 	if dir != "." && dir != "" {
 		if _, err := os.Stat(dir); os.IsNotExist(err) {
@@ -23,10 +23,6 @@ func InitDB(databaseFileName string, sqlFileName string) (*sql.DB, error) {
 		}
 		if err = db.Ping(); err != nil {
 			return nil, fmt.Errorf("failed to ping DB: %w", err)
-		}
-
-		if err = initializeDatabase(db, sqlFileName); err != nil {
-			return nil, fmt.Errorf("failed to initialize database: %w", err)
 		}
 
 		return db, nil
