@@ -18,9 +18,6 @@ templ event_page(eventId string, logger *slog.Logger, db *sql.DB) {
 		if err != nil || event == nil {
 			<p>Error fetching event: { err.Error() }</p>
 		}
-		<div style="width: 100%; gap: 2rem; display: flex; justify-content: center;">
-			@event_mobile(event)
-			@edit(event)
-		</div>
+		@event_mobile(event)
 	</div>
 }
