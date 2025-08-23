@@ -2,7 +2,6 @@ package layouts
 
 import (
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/components/modals"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
@@ -24,7 +23,6 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, children templ.Com
 			<link href="/static/buttons.css" rel="stylesheet" type="text/css"/>
 		</head>
 		<body>
-			@modals.CssVariableConfigComponent()
 			<main>
 				@components.Menu(userInfo)
 				@children
