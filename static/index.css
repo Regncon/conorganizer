@@ -173,6 +173,9 @@ body {
     }
 }
 
+h1 {
+    color: var(--color-text-strong);
+}
 
 h3 {
     font-weight: 700;

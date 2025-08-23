@@ -1,6 +1,9 @@
 package index
 
-import "database/sql"
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/components"
+)
 
 templ index(db *sql.DB) {
 	<style>
@@ -23,11 +26,11 @@ templ index(db *sql.DB) {
 				max-height: 450px;
 				margin: 2rem auto;
 				display: block;
-                position: relative;
-                z-index: -1;
+				position: relative;
+				z-index: -1;
 			}
 		}
-		</style>
+	</style>
 	<header>
 		<div class="regncon-logo-container">
 			<img
@@ -35,19 +38,7 @@ templ index(db *sql.DB) {
 				alt="logo"
 			/>
 		</div>
-		<div style="background-color:#31354e; padding: 1rem;">
-			<h1 style="text-align: center;">Regncon program 2025</h1>
-			<a
-				href="/my-events"
-				style="display: block;
-				text-align: center;
-				font-size: 1.5rem;
-				margin-top: 1rem;
-				color: #aea4f7;"
-			>
-				Meld på nytt arrangement til årets program!
-			</a>
-		</div>
+		@components.CallToAction()
 	</header>
 	@todosMVCView(db)
 }
