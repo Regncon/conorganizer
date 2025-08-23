@@ -5,26 +5,12 @@ templ CallToAction() {
 		.call-to-action {
 			background-color: black;
 			padding: 1rem;
+			max-width: 1400px;
+			margin: 0 auto;
 		}
 		.call-to-action-avatar {
 			display: none;
 		}
-		.call-to-action-button {
-			place-self: center end;
-			margin: 1rem 1rem 1rem 0px;
-		}
-		@container main (width > 1400px) {
-			.send-inn-cta-button {
-				margin-top: 5rem;
-			}
-		}
-		@container main (width > 1200px) {
-			.call-to-action {
-				max-width: 1400px;
-				margin: 0 auto;
-			}
-		}
-
 		@container main (width > 950px) {
 			.call-to-action-header {
 				font-size: var(--text-heading-1-xl);
@@ -33,15 +19,12 @@ templ CallToAction() {
 		}
 		@container main (width > 700px) {
 			.call-to-action {
-				padding-top: 0px;
-                padding-bottom: 0px;
-                padding-right: 0px;
+				padding: 0px;
 			}
 			.call-to-action-avatar {
 				display: block;
 			}
 		}
-
 		@container main (width > 430px) {
 			.call-to-action {
 				padding-left: var(--spacing-xlarge);
@@ -50,20 +33,23 @@ templ CallToAction() {
 	</style>
 	<div class="call-to-action">
 		<div style="display: flex; justify-content: space-between;">
-			<div>
-				<h1
-					class="call-to-action-header"
-				>
-					Vil du arrangere noe under Regncon?
-				</h1>
-				<p>
-					Vi har åpnet dørene for registrering av arrangementer.
-					Har du noe du  ønsker å ta med deg til årets festivalhelg?
-				</p>
+			<div style="display: flex; flex-direction: column; justify-content: space-between;">
+				<div>
+					<h1
+						class="call-to-action-header"
+					>
+						Vil du arrangere noe under Regncon?
+					</h1>
+					<p>
+						Vi har åpnet dørene for registrering av arrangementer.
+						Har du noe du  ønsker å ta med deg til årets festivalhelg?
+					</p>
+				</div>
 				<a
 					href="/my-events"
 					href="/auth"
-					class="btn btn--cta send-inn-cta-button"
+					class="btn btn--cta"
+					style="max-width: 260px; margin: 1rem 1rem 2rem 0px;"
 				>
 					Send inn arrangement
 				</a>
