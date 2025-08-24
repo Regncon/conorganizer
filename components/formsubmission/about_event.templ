@@ -177,8 +177,8 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 	<article class="form-card">
 		<h4>Om arrangementet</h4>
 		<section class="about-section">
-			<section class="form-group title">
-				<label for="title" class="label-small color-strong">Tittel</label>
+			<label class="label-small color-strong form-group title">
+				Tittel
 				<div
 					data-signals={ fmt.Sprintf("{title:'%s'}", title) }
 				></div>
@@ -191,9 +191,9 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					placeholder="Tittel på arrangementet"
 					required
 				/>
-			</section>
-			<section class="form-group intro">
-				<label for="intro" class="label-small color-strong">Kjapp introduksjon</label>
+			</label>
+			<label class="label-small color-strong form-group intro">
+				Kjapp introduksjon
 				<textarea
 					name="intro"
 					class="input"
@@ -205,9 +205,9 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				>
 					{ shouldShowStringValue(intro) }
 				</textarea>
-			</section>
-			<section class="form-group type">
-				<label for="type" class="label-small color-strong">Spilltype</label>
+			</label>
+			<label class="label-small color-strong form-group type">
+				Type Arrangement
 				<select
 					data-signals={ fmt.Sprintf("{type:'%s'}", eventType) }
 					data-bind="type"
@@ -218,13 +218,12 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				>
 					<option value="roleplay">Rollespill</option>
 					<option value="boardgame">Brettspill</option>
-					<option value="cardgame">Kortspill</option>
 					<option value="other">Annet</option>
 				</select>
-			</section>
+			</label>
 			<div class="image"></div>
-			<section class="form-group system">
-				<label for="system" class="label-small color-strong">System</label>
+			<label class="label-small color-strong form-group system">
+				System
 				<div
 					data-signals={ fmt.Sprintf("{system:'%s'}", system) }
 				></div>
@@ -237,9 +236,9 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					placeholder="Hva system er det?"
 					required
 				/>
-			</section>
-			<section class="form-group description">
-				<label for="description" class="label-small color-strong">Beskrivelse av Arrangementet</label>
+			</label>
+			<label class="label-small color-strong form-group description">
+				Beskrivelse av Arrangementet
 				<textarea
 					name="description"
 					class="input"
@@ -251,7 +250,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				>
 					{ shouldShowStringValue(description) }
 				</textarea>
-			</section>
+			</label>
 		</section>
 	</article>
 }
