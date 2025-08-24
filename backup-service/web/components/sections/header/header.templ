@@ -4,41 +4,46 @@ import "github.com/Regncon/conorganizer/backup-service/services"
 
 templ Header(stats services.BackupStats) {
 	<header>
-		<div class="header-card">
-			<span class="header-card-icon material-symbols-outlined status-default">database</span>
-			<span class="header-card-text">
-				<p>Total Backups</p>
-				<span>
-					{ stats.Total }
+		<div
+			class="container"
+			style="flex-direction: row; justify-content: space-between; padding: 1rem 0"
+		>
+			<div class="header-card card">
+				<span class="header-card-icon material-symbols-outlined status-default">database</span>
+				<span class="header-card-text">
+					<p>Total Backups</p>
+					<span>
+						{ stats.Total }
+					</span>
 				</span>
-			</span>
-		</div>
-		<div class="header-card">
-			<span class="header-card-icon material-symbols-outlined status-success">check_circle</span>
-			<span class="header-card-text">
-				<p>Successful</p>
-				<span class="status-success">
-					{ stats.Success }
+			</div>
+			<div class="header-card card">
+				<span class="header-card-icon material-symbols-outlined status-success">check_circle</span>
+				<span class="header-card-text">
+					<p>Successful</p>
+					<span class="status-success">
+						{ stats.Success }
+					</span>
 				</span>
-			</span>
-		</div>
-		<div class="header-card">
-			<span class="header-card-icon material-symbols-outlined status-error">error</span>
-			<span class="header-card-text">
-				<p>Failed</p>
-				<span class="status-error">
-					{ stats.Failed }
+			</div>
+			<div class="header-card card">
+				<span class="header-card-icon material-symbols-outlined status-error">error</span>
+				<span class="header-card-text">
+					<p>Failed</p>
+					<span class="status-error">
+						{ stats.Failed }
+					</span>
 				</span>
-			</span>
-		</div>
-		<div class="header-card">
-			<span class="header-card-icon material-symbols-outlined status-pending">percent</span>
-			<span class="header-card-text">
-				<p>Success Rate</p>
-				<span class="status-pending">
-					{ stats.SuccessRate } %
+			</div>
+			<div class="header-card card">
+				<span class="header-card-icon material-symbols-outlined status-pending">percent</span>
+				<span class="header-card-text">
+					<p>Success Rate</p>
+					<span class="status-pending">
+						{ stats.SuccessRate } %
+					</span>
 				</span>
-			</span>
+			</div>
 		</div>
 	</header>
 }

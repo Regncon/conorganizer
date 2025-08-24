@@ -1,6 +1,39 @@
 :root {
     --color-background: #f1f3ff;
     --color-text: #1d1d1d;
+
+    /* Layout */
+    --container-max-width: 100%;
+}
+
+@media (min-width: 640px) {
+    :root {
+        --container-max-width: 640px; /* sm */
+    }
+}
+
+@media (min-width: 768px) {
+    :root {
+        --container-max-width: 768px; /* md */
+    }
+}
+
+@media (min-width: 1024px) {
+    :root {
+        --container-max-width: 1024px; /* lg */
+    }
+}
+
+@media (min-width: 1280px) {
+    :root {
+        --container-max-width: 1280px; /* xl */
+    }
+}
+
+@media (min-width: 1536px) {
+    :root {
+        --container-max-width: 1536px; /* 2xl */
+    }
 }
 
 html {
@@ -12,39 +45,44 @@ html {
     }
 }
 
+*,
+*::before,
+*::after {
+    box-sizing: inherit;
+}
+
 body {
     display: flex;
     flex-flow: column nowrap;
     min-height: 100svh;
     width: 100%;
     margin: 0;
+    gap: 1rem;
     color: var(--color-text);
     background: var(--color-background);
 
     font-family: "Roboto", sans-serif;
 }
 
-header {
-    display: flex;
-    justify-content: center;
-    padding: 1rem;
-    gap: 1rem;
-}
-
-footer {
-    background-color: #f1f3ff;
-}
-
 main {
     flex: 1;
-    width: 100%;
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 2rem;
 }
 
 h1 {
     font-size: 2rem;
+}
+
+/* Layout */
+.container {
+    width: 100%;
+    max-width: var(--container-max-width);
+    margin-left: auto;
+    margin-right: auto;
+
+    display: flex;
+    flex-flow: column nowrap;
+    gap: 1rem;
+    padding: 0 1rem;
 }
 
 /* Material icons */
@@ -70,7 +108,6 @@ h1 {
     grid-template-columns: 2fr 1fr 1fr 5fr 1fr;
     gap: 0.5rem;
     padding: 0.75rem;
-    background-color: #ebedfb;
 }
 
 .log-grid > div {
