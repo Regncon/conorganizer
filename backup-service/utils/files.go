@@ -116,7 +116,7 @@ func RotateBackups(dbPath string, backupPath string, retention int) (string, err
 	}
 
 	// Step 4: Move & rename validated db file
-	timestamp := time.Now().In(time.Local).Format("2006-01-02T15-04")
+	timestamp := time.Now().Format("2006-01-02T15-04")
 	destName := fmt.Sprintf("%s.db", timestamp)
 	destPath := filepath.Join(backupPath, destName)
 

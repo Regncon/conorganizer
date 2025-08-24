@@ -9,7 +9,7 @@ import (
 
 // GenerateBackupFilename returns a string like "hourly-14.bak" based on the provided interval string for a backup filename.
 func GenerateBackupFilename(interval models.BackupInterval) string {
-	t := time.Now().UTC()
+	t := time.Now()
 
 	switch interval {
 	case models.Hourly:
