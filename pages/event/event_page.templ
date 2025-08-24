@@ -4,20 +4,45 @@ import (
 	"database/sql"
 	"log/slog"
 	"github.com/Regncon/conorganizer/service/eventService"
+	"github.com/Regncon/conorganizer/components"
 )
 
 templ event_page(eventId string, logger *slog.Logger, db *sql.DB) {
+	<div id="event-container">
+		@event_page_content(eventId, logger, db)
+	</div>
+}
+
+templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB) {
 	{{
 	event, err := eventservice.GetEventById(eventId, db, logger)
 	}}
+	{{ previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId) }}
+	if err != nil {
+		logger.Error("Failed to get previous/next data", "error", err)
+		return
+	}
 	if event == nil {
 		<p>Event not found</p>
 		return
 	}
-	<div id="event-container">
-		if err != nil || event == nil {
-			<p>Error fetching event: { err.Error() }</p>
-		}
-		@event_mobile(event)
+	if err != nil || event == nil {
+		<p>Error fetching event: { err.Error() }</p>
+	}
+	<div style="display: flex; justify-content: space-between; align-items: center; padding-block:1rem;">
+		<div>
+			<a
+				href={ templ.URL(previousNextData.PreviousUrl) }
+				class="btn btn--ghost"
+				style="max-width:5rem;"
+			>Forrige</a>
+			<a
+				href={ templ.URL(previousNextData.NextUrl) }
+				class="btn btn--ghost"
+				style="max-width:5rem;"
+			>Neste</a>
+		</div>
 	</div>
+	@event_mobile(event)
+	@components.PreviousNextBar(previousNextData)
 }
