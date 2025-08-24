@@ -31,11 +31,17 @@ func main() {
 	dsn := flag.String("dbp", "database/events.db", "absolute path to database file")
 	flag.Parse()
 
-	db, err := service.InitDB(*dsn)
-	if err != nil {
-		logger.Error("Could not initialize DB", "initialize database", err)
+	db, dbErr := service.InitDB(*dsn)
+	if dbErr != nil {
+		// Keep running without a DB. Static assets + error page will still work.
+		logger.Error("Could not initialize DB; starting in degraded mode", "err", dbErr, "dsn", *dsn)
+		db = nil
 	}
-	defer db.Close()
+	defer func() {
+		if db != nil {
+			db.Close()
+		}
+	}()
 
 	getPort := func() string {
 		if p, ok := os.LookupEnv("PORT"); ok {
@@ -50,40 +56,52 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx, logger, getPort(), db); err != nil {
+	if err := run(ctx, logger, getPort(), db, dbErr); err != nil {
 		logger.Error("Error running server", slog.Any("err", err))
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, logger *slog.Logger, port string, db *sql.DB) error {
+func run(ctx context.Context, logger *slog.Logger, port string, db *sql.DB, dbErr error) error {
 	g, ctx := errgroup.WithContext(ctx)
-
-	g.Go(startServer(ctx, logger, port, db))
-
+	g.Go(startServer(ctx, logger, port, db, dbErr))
 	if err := g.Wait(); err != nil {
 		return fmt.Errorf("error running server: %w", err)
 	}
-
 	return nil
 }
 
-func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.DB) func() error {
+func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.DB, dbErr error) func() error {
 	return func() error {
 		router := chi.NewRouter()
 
+		// Always safe middlewares
 		router.Use(
 			middleware.Logger,
 			middleware.Recoverer,
-			authctx.AuthMiddleware(logger),
 		)
 
+		// Only attach auth if DB is available (avoid depending on DB in degraded mode)
+		if dbErr == nil && db != nil {
+			router.Use(authctx.AuthMiddleware(logger))
+		}
+
+		// Static is always served
 		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
 
-		cleanup, err := setupRoutes(ctx, logger, router, db)
-		defer cleanup()
-		if err != nil {
-			return fmt.Errorf("error setting up routes: %w", err)
+		if dbErr == nil && db != nil {
+			// Full app routes
+			cleanup, err := setupRoutes(ctx, logger, router, db)
+			if err != nil {
+				// If routes fail to set up (e.g., migrations), fall back to degraded mode.
+				logger.Error("error setting up routes; falling back to degraded mode", "err", err)
+				mountDBErrorRoutes(router, err)
+			} else if cleanup != nil {
+				defer cleanup()
+			}
+		} else {
+			// Degraded mode: show error page everywhere (except /static)
+			mountDBErrorRoutes(router, dbErr)
 		}
 
 		srv := &http.Server{
@@ -93,9 +111,49 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 
 		go func() {
 			<-ctx.Done()
-			srv.Shutdown(context.Background())
+			_ = srv.Shutdown(context.Background())
 		}()
 
 		return srv.ListenAndServe()
 	}
+}
+
+// mountDBErrorRoutes registers a minimal set of routes that show a friendly error page.
+// Static files remain available via /static/* above.
+func mountDBErrorRoutes(r chi.Router, cause error) {
+	errMsg := "The application database could not be opened."
+	if cause != nil {
+		errMsg = cause.Error()
+	}
+
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+		fmt.Fprintf(w, `<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Database unavailable</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji; margin:0; padding:2rem; }
+  .card { max-width: 56ch; margin: 5vh auto; border: 1px solid rgba(127,127,127,.35); border-radius: .75rem; padding: 1.5rem; }
+  h1 { margin: 0 0 .5rem; }
+  code { padding: .15rem .35rem; border-radius: .35rem; background: rgba(127,127,127,.15); }
+  .muted { opacity: .8; }
+</style>
+<body>
+  <div class="card">
+    <h1>Database unavailable</h1>
+    <p>The server is running, but the database is not available. Please check that the file exists, the directory path is correct, and the process has permission to access it.</p>
+    <p class="muted"><strong>Reason:</strong> <code>%s</code></p>
+  </div>
+</body>
+</html>`, errMsg)
+	})
+
+	// Root shows the page
+	r.Get("/", handler)
+	// Any other app route resolves to this page
+	r.NotFound(handler.ServeHTTP)
+	r.MethodNotAllowed(handler.ServeHTTP)
 }
