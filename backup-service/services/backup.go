@@ -86,17 +86,23 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	backupDir := filepath.Join("/data/regncon/backup", string(interval))
 	finalPath, err := utils.RotateBackups(dbPath, backupDir, retention)
 	if err != nil {
-		b.Logger.Error("Failed to finalize backup", "err", err)
+		output.Status = models.Error
+		output.Stage = models.Moving
+		output.Error = err.Error()
+		HandleBackupResult(output)
 		return
 	}
 
 	// Cleanup temp files after successful backup
 	if err := os.Remove(snapshotPath); err != nil {
-		b.Logger.Warn("Failed to remove snapshot file", "path", snapshotPath, "err", err)
+		output.Error = err.Error()
 	}
 
 	// Backup successful
-	b.Logger.Info("Backup stored successfully", "path", finalPath)
+	output.Status = models.Success
+	output.Stage = models.Finalizing
+	output.FilePath = finalPath
+	HandleBackupResult(output)
 }
 
 // Hourly triggers a backup task for the hourly interval.
@@ -131,25 +137,21 @@ func (b *BackupService) Manual() {
 
 func HandleBackupResult(outcome models.BackupHandlerOptions) {
 	// Update log in DB
-	err := UpdateLogBackup(outcome.DB, models.BackupLogInput{
-		ID:      outcome.Id,
-		Status:  outcome.Status,
-		Message: outcome.Error,
-	})
+	err := UpdateLogBackup(outcome)
 	if err != nil {
 		outcome.Logger.Error("Failed to write to database", "stage", outcome.Stage, "error", err)
 	}
 
 	// Log result
 	if outcome.Status == models.Success {
-		outcome.Logger.Info("Backup stored successfully", "type", outcome.Interval)
+		outcome.Logger.Info("Scheduled backup job finished successfully", "type", outcome.Interval)
 	} else {
-		outcome.Logger.Error("Backup failed", "stage", outcome.Stage, "type", outcome.Interval, "error", outcome.Error)
-	}
+		outcome.Logger.Error("Scheduled backup job failed", "stage", outcome.Stage, "type", outcome.Interval, "error", outcome.Error)
 
-	// Send discord notification
-	err = SendDiscordMessage(outcome)
-	if err != nil {
-		outcome.Logger.Error("Discord notification failed", "stage", outcome.Stage, "error", outcome.Error)
+		// Send discord notification
+		err = SendDiscordMessage(outcome)
+		if err != nil {
+			outcome.Logger.Error("Discord notification failed", "stage", outcome.Stage, "error", outcome.Error)
+		}
 	}
 }
