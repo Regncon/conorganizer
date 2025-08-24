@@ -7,18 +7,23 @@ import (
 
 type BackupInterval string
 type BackupStage string
+type BackupLogStatus string
 
 const (
-	Hourly        BackupInterval = "hourly"
-	Daily         BackupInterval = "daily"
-	Weekly        BackupInterval = "weekly"
-	Yearly        BackupInterval = "yearly"
-	Manually      BackupInterval = "manually"
-	Initializing  BackupStage    = "starting"
-	Downloading   BackupStage    = "downloading"
-	Decompressing BackupStage    = "decompressing"
-	Moving        BackupStage    = "moving"
-	Finalizing    BackupStage    = "finalizing"
+	Hourly        BackupInterval  = "hourly"
+	Daily         BackupInterval  = "daily"
+	Weekly        BackupInterval  = "weekly"
+	Yearly        BackupInterval  = "yearly"
+	Manually      BackupInterval  = "manually"
+	Initializing  BackupStage     = "starting"
+	Downloading   BackupStage     = "downloading"
+	Decompressing BackupStage     = "decompressing"
+	Validating    BackupStage     = "validating"
+	Moving        BackupStage     = "moving"
+	Finalizing    BackupStage     = "completed"
+	Pending       BackupLogStatus = "pending"
+	Success       BackupLogStatus = "success"
+	Error         BackupLogStatus = "error"
 )
 
 type BackupHandlerOptions struct {
@@ -27,8 +32,8 @@ type BackupHandlerOptions struct {
 	Cfg      Config
 	FilePath string
 	Id       int64
+	Interval BackupInterval
 	Stage    BackupStage
 	Status   BackupLogStatus
 	Error    string
-	Interval BackupInterval
 }

@@ -8,8 +8,8 @@ import (
 
 func NewLogBackup(db *sql.DB, intervalType models.BackupInterval) (int64, error) {
 	res, err := db.Exec(`
-        INSERT INTO backup_logs (backup_type, status, message)
-        VALUES (?, 'pending', '')
+        INSERT INTO backup_logs (backup_type, stage, status)
+        VALUES (?, 'starting', 'pending')
     `, intervalType)
 
 	if err != nil {

@@ -1,13 +1,5 @@
 package models
 
-type BackupLogStatus string
-
-const (
-	Pending BackupLogStatus = "pending"
-	Success BackupLogStatus = "success"
-	Error   BackupLogStatus = "error"
-)
-
 type BackupLogInput struct {
 	ID      int64
 	Status  BackupLogStatus

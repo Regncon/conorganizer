@@ -61,18 +61,23 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 		HandleBackupResult(output)
 		return
 	}
-	b.Logger.Info("Snapshot downloaded", "snapshot", snapshotPath)
 
 	// decompress snapshot
 	dbPath, err := utils.DecompressLZ4(snapshotPath)
 	if err != nil {
-		b.Logger.Error("Decompression failed", "err", err)
+		output.Status = models.Error
+		output.Stage = models.Decompressing
+		output.Error = err.Error()
+		HandleBackupResult(output)
 		return
 	}
-	b.Logger.Info("Decompression complete", "db", dbPath)
 
 	// validate snapshot
 	if err := utils.ValidateSnapshot(dbPath); err != nil {
+		output.Status = models.Error
+		output.Stage = models.Validating
+		output.Error = err.Error()
+		HandleBackupResult(output)
 		b.Logger.Error("Invalid SQLite snapshot", "err", err)
 		return
 	}
