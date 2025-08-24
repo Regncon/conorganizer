@@ -122,7 +122,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					}
 				}
 			})
-			editRout(eventIdRouter, db, kv)
 		})
 	})
 
