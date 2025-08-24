@@ -1,14 +1,15 @@
 package layouts
 
-templ Base(children templ.Component) {
+templ Base(header templ.Component, children templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en" data-theme="dark">
 		<head>
 			<title>backup-service</title>
 			<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
+            <link rel="stylesheet" href="/static/styles/global.css" />
 		</head>
 		<body>
-			<header>header</header>
+			@header
 			@children
 			<footer>footer</footer>
 		</body>

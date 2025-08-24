@@ -1,0 +1,35 @@
+:root {
+    --color-background: #f1f3ff;
+    --color-text: #1d1d1d;
+}
+
+html {
+    box-sizing: border-box;
+    scroll-behavior: smooth;
+
+    @media (prefers-reduced-motion: reduce) {
+        scroll-behavior: auto;
+    }
+}
+
+body {
+    display: flex;
+    flex-flow: column nowrap;
+    min-height: 100svh;
+    width: 100%;
+    margin: 0;
+    color: var(--color-text);
+    background: var(--color-background);
+}
+
+header {
+    height: 2rem;
+}
+
+footer {
+    background-color: red;
+}
+
+main {
+    flex: 1
+}

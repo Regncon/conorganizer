@@ -13,10 +13,15 @@ import (
 func NewRouter(ctx context.Context, logger *slog.Logger, db *sql.DB) http.Handler {
 	router := chi.NewRouter()
 
+	// Middleware
 	router.Use(
 		middleware.Logger,
 		middleware.Recoverer,
 	)
+
+	// Static file server
+	fs := http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static")))
+	router.Handle("/static/*", fs)
 
 	// Routes
 	router.Get("/", IndexHandler)
