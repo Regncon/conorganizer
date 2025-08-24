@@ -44,12 +44,12 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	}
 
 	// Create status object for tracking
-	output := models.BackupOutcome{
-		DB:         b.Db,
-		LogID:      logID,
-		Interval:   interval,
-		Logger:     b.Logger,
-		WebhookURL: b.Config.DISCORD_WEBHOOK_URL,
+	output := models.BackupHandlerOptions{
+		DB:       b.Db,
+		Logger:   b.Logger,
+		Cfg:      b.Config,
+		Id:       logID,
+		Interval: interval,
 	}
 
 	// download snapshot
@@ -124,10 +124,10 @@ func (b *BackupService) Manual() {
 	b.run(ctx, models.Manually, 20)
 }
 
-func HandleBackupResult(outcome models.BackupOutcome) {
+func HandleBackupResult(outcome models.BackupHandlerOptions) {
 	// Update log in DB
 	err := UpdateLogBackup(outcome.DB, models.BackupLogInput{
-		ID:      outcome.LogID,
+		ID:      outcome.Id,
 		Status:  outcome.Status,
 		Message: outcome.Error,
 	})

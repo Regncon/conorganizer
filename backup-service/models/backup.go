@@ -21,13 +21,14 @@ const (
 	Finalizing    BackupStage    = "finalizing"
 )
 
-type BackupOutcome struct {
-	DB         *sql.DB
-	LogID      int64
-	Status     BackupLogStatus
-	Error      string
-	Stage      BackupStage
-	Interval   BackupInterval
-	Logger     *slog.Logger
-	WebhookURL string
+type BackupHandlerOptions struct {
+	DB       *sql.DB
+	Logger   *slog.Logger
+	Cfg      Config
+	FilePath string
+	Id       int64
+	Stage    BackupStage
+	Status   BackupLogStatus
+	Error    string
+	Interval BackupInterval
 }
