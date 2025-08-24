@@ -33,7 +33,6 @@ func main() {
 
 	db, dbErr := service.InitDB(*dsn)
 	if dbErr != nil {
-		// Keep running without a DB. Static assets + error page will still work.
 		logger.Error("Could not initialize DB; starting in degraded mode", "err", dbErr, "dsn", *dsn)
 		db = nil
 	}
@@ -75,32 +74,26 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 	return func() error {
 		router := chi.NewRouter()
 
-		// Always safe middlewares
 		router.Use(
 			middleware.Logger,
 			middleware.Recoverer,
 		)
 
-		// Only attach auth if DB is available (avoid depending on DB in degraded mode)
 		if dbErr == nil && db != nil {
 			router.Use(authctx.AuthMiddleware(logger))
 		}
 
-		// Static is always served
 		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
 
 		if dbErr == nil && db != nil {
-			// Full app routes
 			cleanup, err := setupRoutes(ctx, logger, router, db)
 			if err != nil {
-				// If routes fail to set up (e.g., migrations), fall back to degraded mode.
 				logger.Error("error setting up routes; falling back to degraded mode", "err", err)
 				mountDBErrorRoutes(router, err)
 			} else if cleanup != nil {
 				defer cleanup()
 			}
 		} else {
-			// Degraded mode: show error page everywhere (except /static)
 			mountDBErrorRoutes(router, dbErr)
 		}
 
@@ -118,8 +111,6 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 	}
 }
 
-// mountDBErrorRoutes registers a minimal set of routes that show a friendly error page.
-// Static files remain available via /static/* above.
 func mountDBErrorRoutes(r chi.Router, cause error) {
 	errMsg := "The application database could not be opened."
 	if cause != nil {
@@ -151,9 +142,7 @@ func mountDBErrorRoutes(r chi.Router, cause error) {
 </html>`, errMsg)
 	})
 
-	// Root shows the page
 	r.Get("/", handler)
-	// Any other app route resolves to this page
 	r.NotFound(handler.ServeHTTP)
 	r.MethodNotAllowed(handler.ServeHTTP)
 }
