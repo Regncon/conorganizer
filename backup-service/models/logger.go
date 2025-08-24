@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type BackupLogInput struct {
 	ID      int64
 	Status  BackupLogStatus
@@ -11,4 +13,14 @@ type BackupLogMessage struct {
 	Title       string `json:"title"`
 	Intro       string `json:"intro"`
 	Description string `json:"description"`
+}
+
+type BackupLog struct {
+	ID         int
+	BackupType string
+	Stage      string
+	Status     string
+	FilePath   string
+	Message    string
+	CreatedAt  time.Time
 }

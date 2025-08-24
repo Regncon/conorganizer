@@ -75,3 +75,61 @@ func (b *FetchLogRes) Stats() (BackupStats, error) {
 
 	return stats, nil
 }
+
+func (b *FetchLogRes) Logs(interval models.BackupInterval, status models.BackupLogStatus, limit int) ([]models.BackupLog, error) {
+	var logs []models.BackupLog
+	var args []interface{}
+
+	// Base query
+	query := `SELECT id, backup_type, stage, status, file_path, message, created_at FROM backup_logs WHERE 1=1`
+
+	// Optional: filter by interval (backup_type)
+	if interval != "" {
+		query += ` AND backup_type = ?`
+		args = append(args, interval)
+	}
+
+	// Optional: filter by status
+	if status != "" {
+		query += ` AND status = ?`
+		args = append(args, status)
+	}
+
+	// Sort newest first
+	query += ` ORDER BY created_at DESC`
+
+	// Optional: limit number of rows
+	if limit > 0 {
+		query += ` LIMIT ?`
+		args = append(args, limit)
+	}
+
+	// Run query
+	rows, err := b.DB.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query logs: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var log models.BackupLog
+		if err := rows.Scan(
+			&log.ID,
+			&log.BackupType,
+			&log.Stage,
+			&log.Status,
+			&log.FilePath,
+			&log.Message,
+			&log.CreatedAt,
+		); err != nil {
+			return nil, fmt.Errorf("failed to scan row: %w", err)
+		}
+		logs = append(logs, log)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row error: %w", err)
+	}
+
+	return logs, nil
+}

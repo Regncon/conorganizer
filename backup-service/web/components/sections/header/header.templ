@@ -5,39 +5,39 @@ import "github.com/Regncon/conorganizer/backup-service/services"
 templ Header(stats services.BackupStats) {
 	<header>
 		<div class="header-card">
-			<p>⌛</p>
-			<span>
+			<span class="header-card-icon material-symbols-outlined status-default">database</span>
+			<span class="header-card-text">
 				<p>Total Backups</p>
-				<p>
+				<span>
 					{ stats.Total }
-				</p>
+				</span>
 			</span>
 		</div>
 		<div class="header-card">
-			<p>✅</p>
-			<span>
+			<span class="header-card-icon material-symbols-outlined status-success">check_circle</span>
+			<span class="header-card-text">
 				<p>Successful</p>
-				<p style="color: lightgreen;">
+				<span class="status-success">
 					{ stats.Success }
-				</p>
+				</span>
 			</span>
 		</div>
 		<div class="header-card">
-			<p>❌</p>
-			<span>
+			<span class="header-card-icon material-symbols-outlined status-error">error</span>
+			<span class="header-card-text">
 				<p>Failed</p>
-				<p style="color: lightcoral;">
+				<span class="status-error">
 					{ stats.Failed }
-				</p>
+				</span>
 			</span>
 		</div>
 		<div class="header-card">
-			<p>🙏</p>
-			<span>
+			<span class="header-card-icon material-symbols-outlined status-pending">percent</span>
+			<span class="header-card-text">
 				<p>Success Rate</p>
-				<p style="color: lightblue;">
+				<span class="status-pending">
 					{ stats.SuccessRate } %
-				</p>
+				</span>
 			</span>
 		</div>
 	</header>

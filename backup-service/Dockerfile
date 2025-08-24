@@ -9,6 +9,10 @@ RUN apt-get update -y && apt-get install -y ca-certificates sqlite3 tzdata
 WORKDIR /usr/src/codebase
 COPY . .
 
+# Install templ and generate required files
+RUN go install github.com/a-h/templ/cmd/templ@latest
+RUN templ generate
+
 # Copy over & install required dependencies
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify

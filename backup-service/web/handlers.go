@@ -25,7 +25,14 @@ func (h *Handlers) IndexHandler(res http.ResponseWriter, req *http.Request) {
 		stats = services.BackupStats{}
 	}
 
-	templ.Handler(layouts.Base(components.Header(stats), pages.Index())).ServeHTTP(res, req)
+	logs, err := services.FetchLog(h.DB).Logs("", "", 24)
+	if err != nil {
+		h.Logger.Error("failed to fetch hourly logs", "err", err)
+		// optionally return an error page
+		return
+	}
+
+	templ.Handler(layouts.Base(components.Header(stats), pages.Index(logs))).ServeHTTP(res, req)
 }
 
 /* func (h *Handlers) IntervalHandler(res http.ResponseWriter, req *http.Request) {
