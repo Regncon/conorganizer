@@ -1,0 +1,11 @@
+.header-card {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 200px;
+    padding: 1rem;
+    gap: 1rem;
+    border: 1px solid grey;
+    border-radius: 1rem;
+}

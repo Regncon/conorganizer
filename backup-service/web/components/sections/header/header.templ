@@ -1,5 +1,44 @@
 package components
 
-templ Header() {
-	<header>my header</header>
+import "github.com/Regncon/conorganizer/backup-service/services"
+
+templ Header(stats services.BackupStats) {
+	<header>
+		<div class="header-card">
+			<p>⌛</p>
+			<span>
+				<p>Total Backups</p>
+				<p>
+					{ stats.Total }
+				</p>
+			</span>
+		</div>
+		<div class="header-card">
+			<p>✅</p>
+			<span>
+				<p>Successful</p>
+				<p style="color: lightgreen;">
+					{ stats.Success }
+				</p>
+			</span>
+		</div>
+		<div class="header-card">
+			<p>❌</p>
+			<span>
+				<p>Failed</p>
+				<p style="color: lightcoral;">
+					{ stats.Failed }
+				</p>
+			</span>
+		</div>
+		<div class="header-card">
+			<p>🙏</p>
+			<span>
+				<p>Success Rate</p>
+				<p style="color: lightblue;">
+					{ stats.SuccessRate } %
+				</p>
+			</span>
+		</div>
+	</header>
 }
