@@ -39,25 +39,3 @@ func InitDB(databaseFileName string) (*sql.DB, error) {
 
 	return db, nil
 }
-
-func initializeDatabase(db *sql.DB, filename string) error {
-	sqlContent, err := loadSQLFile(filename)
-	if err != nil {
-		return fmt.Errorf("error loading SQL file: %w", err)
-	}
-
-	_, err = db.Exec(sqlContent)
-	if err != nil {
-		return fmt.Errorf("failed to execute SQL commands: %w", err)
-	}
-
-	return nil
-}
-
-func loadSQLFile(filename string) (string, error) {
-	data, err := os.ReadFile(filename)
-	if err != nil {
-		return "", fmt.Errorf("failed to read file %s: %w", filename, err)
-	}
-	return string(data), nil
-}
