@@ -208,9 +208,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 	<article class="form-card">
 		<h4>Øvrige Detaljer</h4>
 		<section class="details-section">
-			<section class="form-group age-group">
-				<label for="age-group" class="label-small color-strong">Aldersgruppe</label>
+			<label class="label-small color-strong form-group age-group">
+				Aldersgruppe
 				<select
+					id="age-group"
 					data-signals={ fmt.Sprintf("{ageGroup:'%s'}", ageGroup) }
 					data-bind="ageGroup"
 					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/ageGroup", eventId) }
@@ -223,14 +224,15 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					<option value="TeenFriendly">Ungdom og voksne (13+ år)</option>
 					<option value="AdultsOnly">Voksne (18+ år)</option>
 				</select>
-			</section>
+			</label>
 			<article class="item-card age-group-description">
 				<p class="label">Hvilke alder anbefales arrangementet for</p>
 				<p>Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. </p>
 			</article>
-			<section class="form-group runtime">
-				<label for="runtime" class="label-small color-strong">Varighet</label>
+			<label for="runtime" class="label-small color-strong form-group runtime">
+				Varighet
 				<select
+					id="runtime"
 					name="runtime"
 					class="input"
 					data-signals={ fmt.Sprintf("{runtime:'%s'}", runtime) }
@@ -242,7 +244,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					<option value="ShortRunning">Kortere (2–3 timer)</option>
 					<option value="LongRunning">Lengre (6+ timer)</option>
 				</select>
-			</section>
+			</label>
 			<article class="item-card runtime-description">
 				<p class="label">Fire til fem timer </p>
 				<p>
@@ -253,13 +255,12 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 			</article>
 			<section class="form-group beginner-friendly">
 				<div class="checkbox-label">
-					<label for="beginner-friendly-label" class="label-small color-strong">
-						Nybegynnervennlig
-						arrangement
-					</label>
-					<p for="beginner-friendly" class="label-small" style="text-align:end; font-weight: 400;">Valgfritt</p>
+					<span class="label-small color-strong">
+						Nybegynnervennlig arrangement
+					</span>
+					<span class="label-small" style="text-align:end; font-weight: 400;">Valgfritt</span>
 				</div>
-				<div class="checkbox-background form-group-checkbox">
+				<label class="checkbox-background form-group-checkbox">
 					<input
 						name="beginner-friendly"
 						class="checkbox input"
@@ -270,8 +271,8 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/beginner-friendly", eventId) }
 						type="checkbox"
 					/>
-					<label for="beginner-friendly">Arrangementet er nybegynnervennlig </label>
-				</div>
+					Arrangementet er nybegynnervennlig
+				</label>
 			</section>
 			<section class="item-card beginner-friendly-description">
 				<p class="label">Arrangementet er nybegynnervennlig </p>
@@ -283,10 +284,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 			</section>
 			<section class="form-group english">
 				<div class="checkbox-label">
-					<p class="label-small color-strong">Kan holdes på Engelsk</p>
-					<p for="english-label" class="label-small" style="text-align:end; font-weight:400;">Valgfritt</p>
+					<span class="label-small color-strong">Kan holdes på Engelsk</span>
+					<span class="label-small" style="text-align:end; font-weight:400;">Valgfritt</span>
 				</div>
-				<div class="checkbox-background form-group-checkbox">
+				<label class="checkbox-background form-group-checkbox">
 					<input
 						if canBeRunInEnglish {
 							checked
@@ -297,8 +298,8 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						name="english-label"
 						class="checkbox input"
 					/>
-					<label for="english">Arrangementet kan holdes på engelsk </label>
-				</div>
+					Arrangementet kan holdes på engelsk
+				</label>
 			</section>
 			<article class="item-card" id="english-description">
 				<p class="label">Arrangementet kan holdes på engelsk </p>
@@ -307,10 +308,8 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					norsk.
 				</p>
 			</article>
-			<section class="form-group player-count">
-				<label for="player-count" class="label-small color-strong">
-					Maks antall spillere (utenom arrangør)
-				</label>
+			<label class="label-small color-strong form-group player-count">
+				Maks antall spillere (utenom arrangør)
 				<input
 					name="max-players"
 					class="input"
@@ -320,7 +319,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					type="number"
 					min="4"
 				/>
-			</section>
+			</label>
 			<article class="item-card" id="player-count-description">
 				<p class="label">Hvor mange kan være med å spille </p>
 				<p>
@@ -330,12 +329,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					Har du mulighet til å ha litt flere spillere enn du orginalt tenkte?
 				</p>
 			</article>
-			<section class="form-group other-notes">
-				<label for="notes" class="label-small color-strong">
-					Andre Merknader – Er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
-				</label>
+			<label class="label-small color-strong form-group other-notes">
+				Andre Merknader – Er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
 				<textarea
-					name="notes"
+					name="other-notes"
 					data-signals={ fmt.Sprintf("{notes:'%s'}", notes) }
 					data-bind="notes"
 					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/notes", eventId) }
@@ -345,7 +342,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				>
 					{ shouldShowStringValue(notes) }
 				</textarea>
-			</section>
+			</label>
 		</section>
 	</article>
 }

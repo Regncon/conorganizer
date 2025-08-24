@@ -109,9 +109,8 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 	<article class="form-card">
 		<h4>Om arrangøren</h4>
 		<section class="organizer-section">
-			<section class="form-group">
-				<label for="name" class="label color-strong">Arrangør</label>
-				<div data-signals={ fmt.Sprintf("{name:'%s'}", name) }></div>
+			<label class="label color-strong form-group">
+				Arrangør
 				<input
 					type="text"
 					name="name"
@@ -120,10 +119,12 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					class="input"
 					placeholder="Ditt navn"
 					required
+					autocomplete="name"
 				/>
-			</section>
-			<section class="form-group">
-				<label for="email" class="label color-strong">E-post</label>
+				<div data-signals={ fmt.Sprintf("{name:'%s'}", name) }></div>
+			</label>
+			<label class="label color-strong form-group">
+				E-post
 				<input
 					data-signals={ fmt.Sprintf("{email:'%s'}", email) }
 					type="email"
@@ -133,10 +134,11 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					class="input"
 					placeholder="Din e-post"
 					required
+					autocomplete="email"
 				/>
-			</section>
-			<section class="form-group">
-				<label for="phone" class="label color-strong">Telefon</label>
+			</label>
+			<label class="label color-strong form-group">
+				Telefon
 				<input
 					type="tel"
 					data-signals={ fmt.Sprintf("{phone:'%s'}", phone) }
@@ -146,8 +148,9 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					class="input"
 					placeholder="Ditt telefonnummer"
 					required
+					autocomplete="tel"
 				/>
-			</section>
+			</label>
 		</section>
 	</article>
 }
