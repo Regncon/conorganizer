@@ -1,14 +1,18 @@
 package main
 
 import (
+	"context"
 	"log/slog"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/Regncon/conorganizer/backup-service/config"
 	"github.com/Regncon/conorganizer/backup-service/services"
 	"github.com/Regncon/conorganizer/backup-service/utils"
+	"github.com/Regncon/conorganizer/backup-service/web"
 )
 
 func main() {
@@ -48,14 +52,44 @@ func main() {
 	if err != nil {
 		logger.Error("Failed to start backup scheduler", "error", err)
 	}
-
-	// Start dashboard web server
-	// todo
-
-	// Block forever, with graceful shutdown support
 	logger.Info("All startup tasks completed, now running server")
-	sig := make(chan os.Signal, 1)
-	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM)
-	<-sig
-	logger.Info("Shutdown signal received. Exiting.")
+
+	// Run once on startup
+	/* backupService.Manual()
+	backupService.Hourly()
+	backupService.Daily()
+	backupService.Weekly()
+	backupService.Yearly() */
+
+	// Create new context for dashboard to avoid polution
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	// Create dashboard web server
+	server := &http.Server{
+		Addr:    ":8080",
+		Handler: web.NewRouter(ctx, logger, db),
+	}
+
+	go func() {
+		// Start server
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			logger.Error("Failed to start webserver", "errorr", err)
+			os.Exit(1)
+		}
+	}()
+
+	// Wait for Ctrl+C
+	<-ctx.Done()
+	logger.Info("Shutting down...")
+
+	// Gracefully shutdown
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		logger.Error("Failed to shutdown server gracefully", "err", err)
+	} else {
+		logger.Info("Server shutdown complete")
+	}
 }

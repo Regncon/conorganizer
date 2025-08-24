@@ -10,7 +10,7 @@ import (
 	"github.com/Regncon/conorganizer/backup-service/models"
 )
 
-func SendDiscordMessage(outcome models.BackupOutcome) error {
+func SendDiscordMessage(outcome models.BackupHandlerOptions) error {
 	payload := models.DiscordWebhookPayload{
 		Content: ":face_with_peeking_eye:",
 		Embeds: []models.DiscordEmbed{
@@ -52,7 +52,11 @@ func SendDiscordMessage(outcome models.BackupOutcome) error {
 		return fmt.Errorf("failed to marshal webhook payload: %w", err)
 	}
 
-	res, err := http.Post(outcome.WebhookURL, "application/json", bytes.NewBuffer(body))
+	if outcome.Cfg.DISCORD_WEBHOOK_URL == "" {
+		return fmt.Errorf("failed to load webhook url from env: %w", err)
+	}
+
+	res, err := http.Post(outcome.Cfg.DISCORD_WEBHOOK_URL, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("failed to send webhook: %w", err)
 	}

@@ -1,12 +1,6 @@
 package models
 
-type BackupLogStatus string
-
-const (
-	Pending BackupLogStatus = "pending"
-	Success BackupLogStatus = "success"
-	Error   BackupLogStatus = "error"
-)
+import "time"
 
 type BackupLogInput struct {
 	ID      int64
@@ -19,4 +13,14 @@ type BackupLogMessage struct {
 	Title       string `json:"title"`
 	Intro       string `json:"intro"`
 	Description string `json:"description"`
+}
+
+type BackupLog struct {
+	ID         int
+	BackupType string
+	Stage      string
+	Status     string
+	FilePath   string
+	Message    string
+	CreatedAt  time.Time
 }
