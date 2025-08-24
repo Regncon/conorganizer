@@ -1,0 +1,22 @@
+package event_components
+
+import "fmt"
+
+css event_propertie_css() {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+templ Event_propertie(text string, icon string) {
+	<div class={event_propertie_css}>
+		<img
+			src={ templ.URL(fmt.Sprintf("/static/icons/%s", icon)) }
+			alt={ text }
+			height="20"
+			width="20"
+			fetchpriority="high"
+		/>
+		<span>{ text }</span>
+	</div>
+}
