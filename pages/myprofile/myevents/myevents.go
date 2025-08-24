@@ -208,7 +208,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					newApiIdRouter.Route("/notes", func(putNotesRouter chi.Router) {
 						formsubmission.UpdateNotes(putNotesRouter, db, kv)
 					})
-					apiRouter.Route("/submit", func(newApiIdRouter chi.Router) {
+					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
 						formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 					})
 
