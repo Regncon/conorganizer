@@ -24,6 +24,6 @@ func UpdateLogBackup(options models.BackupHandlerOptions) error {
         UPDATE backup_logs
         SET stage = ?, status = ?, file_path = ?, message = ?
         WHERE id = ?
-    `, options.Stage, options.Status, options.FilePath, models.Error, options.Id)
+    `, options.Stage, options.Status, options.FilePath, options.Error, options.Id)
 	return err
 }
