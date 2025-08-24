@@ -120,7 +120,7 @@ func (b *BackupService) Daily() {
 // Weekly triggers a backup task for the weekly interval.
 func (b *BackupService) Weekly() {
 	ctx := context.Background()
-	b.run(ctx, models.Weekly, 4)
+	b.run(ctx, models.Weekly, 52)
 }
 
 // Yearly triggers a backup task for the yearly interval.
