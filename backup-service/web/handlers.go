@@ -1,8 +1,11 @@
 package web
 
 import (
+	"database/sql"
+	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/backup-service/services"
 	"github.com/Regncon/conorganizer/backup-service/web/pages"
 	"github.com/a-h/templ"
 
@@ -10,14 +13,25 @@ import (
 	layouts "github.com/Regncon/conorganizer/backup-service/web/layout"
 )
 
-func IndexHandler(res http.ResponseWriter, req *http.Request) {
-	templ.Handler(layouts.Base(components.Header(), pages.Index())).ServeHTTP(res, req)
+type Handlers struct {
+	DB     *sql.DB
+	Logger *slog.Logger
 }
 
-func IntervalHandler(res http.ResponseWriter, req *http.Request) {
-	templ.Handler(layouts.Base(components.Header(), pages.Index())).ServeHTTP(res, req)
+func (h *Handlers) IndexHandler(res http.ResponseWriter, req *http.Request) {
+	stats, err := services.FetchLog(h.DB).Stats()
+	if err != nil {
+		h.Logger.Error("failed to load backup stats", "err", err)
+		stats = services.BackupStats{}
+	}
+
+	templ.Handler(layouts.Base(components.Header(stats), pages.Index())).ServeHTTP(res, req)
 }
 
-func LogSearch(res http.ResponseWriter, req *http.Request) {
-	templ.Handler(layouts.Base(components.Header(), pages.Index())).ServeHTTP(res, req)
-}
+/* func (h *Handlers) IntervalHandler(res http.ResponseWriter, req *http.Request) {
+	templ.Handler(layouts.Base(components.Header(1, 2, 3, 4), pages.Index())).ServeHTTP(res, req)
+} */
+
+/* func (h *Handlers) LogSearch(res http.ResponseWriter, req *http.Request) {
+	templ.Handler(layouts.Base(components.Header(1, 2, 3, 4), pages.Index())).ServeHTTP(res, req)
+} */

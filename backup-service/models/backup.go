@@ -37,3 +37,13 @@ type BackupHandlerOptions struct {
 	Status   BackupLogStatus
 	Error    string
 }
+
+type BackupLogOutput struct {
+	Id        int64  `json:"title"`
+	Interval  string `json:"interval"`
+	Stage     string `json:"stage"`
+	Status    string `json:"status"`
+	FilePath  string `json:"filePath"`
+	Message   string `json:"message"`
+	CreatedAt string `json:"createdAt"`
+}

@@ -24,8 +24,9 @@ func NewRouter(ctx context.Context, logger *slog.Logger, db *sql.DB) http.Handle
 	router.Handle("/static/*", fs)
 
 	// Routes
-	router.Get("/", IndexHandler)
-	router.Get("/{interval}", IntervalHandler)
+	handlers := &Handlers{DB: db, Logger: logger}
+	router.Get("/", handlers.IndexHandler)
+	/* router.Get("/{interval}", handlers.IntervalHandler) */
 
 	return router
 }
