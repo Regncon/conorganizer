@@ -4,6 +4,9 @@ services:
             context: .
             dockerfile: Dockerfile
         container_name: backup-dev
+        ports:
+            - 7331:7331
+            - 8080:8080
         volumes:
             - .:/data
         env_file:
