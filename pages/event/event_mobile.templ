@@ -1,101 +1,178 @@
 package event
 
 import (
-	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/components/event_components"
+	"github.com/Regncon/conorganizer/models"
 )
 
 templ event_mobile(event *models.Event) {
-	<div style="display:flex; flex-direction:column; gap:1rem; max-width:430px; margin:auto;">
-		<img
-			src="/static/placeholder-small.webp"
-			style="height: 150px; display: block;"
-		/>
-		<div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
-			<h1 style="text-align:center; margin:0; ">{ event.Title }</h1>
-			<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ event.Intro }</i>
-		</div>
-		<div style="display: flex; flex-direction: column; gap:0.5rem; padding:0.5rem;">
-			<div
-				class="card"
-				style="
+	<style>
+        .wrapper {
             display:flex;
-            align-items: center;
             flex-direction:column;
             gap:1rem;
-            padding: 1rem;"
-			>
-				<span style="text-align: center;">
+            max-width:430px;
+            margin:auto;
+
+            > img {
+                height: 150px;
+                display: block;
+            }
+
+            .event-header {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+                padding: var(--spacing-4x);
+
+                .title {
+                    text-align:center;
+                    margin:0;
+                }
+                .intro {
+                    overflow: clip;
+                    height: 38px;
+                }
+            }
+
+            .event-information {
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                padding-inline: var(--spacing-2x);
+
+
+                .interest-picker {
+                    display:flex;
+                    align-items: center;
+                    flex-direction:column;
+                    gap:1rem;
+                    padding: var(--spacing-4x);
+
+                    > button {
+                        max-width: 200px;
+                    }
+                }
+
+                .details {
+                    display: flex;
+                    flex-direction: column;
+                    padding: 0;
+
+                    .details-top {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.5rem;
+                        padding: var(--spacing-5x);
+
+                        .event-type {
+                            height: 20px;
+                            width: 20px;
+                            display: flex;
+                            place-items: center;
+                            gap: var(--spacing-1x);
+
+                            img {
+                                height: 15px;
+                                width: 15px;
+                            }
+                            strong {
+                                font-size: 12px;
+                            }
+
+                            .details-header {
+                                font-size: 12px;
+                            }
+                        }
+                    }
+
+                    .details-bottom {
+                        padding: 1rem;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.5rem;
+                    }
+                }
+            }
+        }
+    </style>
+	<div class="wrapper">
+		<img
+			src="/static/placeholder-small.webp"
+		/>
+		<header class="event-header">
+			<h1 class="title">{ event.Title }</h1>
+			<i class="intro">{ event.Intro }</i>
+		</header>
+		<div class="event-information">
+			<div class="card interest-picker">
+				<span>
 					Du kan melde interesse når programmet slippes!
 				</span>
 				<button
 					class="btn btn--cta"
-					style="max-width: 200px;"
 					disabled
 				>
 					Meld interesse
 				</button>
 			</div>
-			<div class="card" style="display: flex; flex-direction: column; padding:0;">
-				<div style="display: flex; flex-direction: column; gap:0.5rem; padding:1rem;">
-					<span>Detaljer om arrangementet</span>
-					<div style="display: flex; flex-direction: column; ">
-						<strong style="font-size:14px;">Arrangør:</strong>
-						<span>{ event.HostName } </span>
+			<div class="card details">
+				<div class="details-top">
+					<span class="details-header color-strong">Detaljer om arrangementet</span>
+					<strong>Arrangør:</strong>
+					<span class="color-strong">{ event.HostName } </span>
+					<div class="event-type">
+						if event.EventType == models.EventTypeRoleplay {
+							<strong>Rollespill</strong>
+							<img
+								src="/static/icons/ttrpg.svg"
+								alt="table top roleplaying game"
+								height="10"
+								width="10"
+								fetchpriority="high"
+							/>
+						} else if event.EventType == models.EventTypeBoardGame {
+							<strong>Brettspill</strong>
+							<img
+								src="/static/icons/boardgames.svg"
+								alt="board game"
+								height="10"
+								width="10"
+								fetchpriority="high"
+							/>
+						} else if event.EventType == models.EventTypeOther {
+							<strong>Annet</strong>
+							<img
+								src="/static/icons/other-games.svg"
+								alt="other type of game or event"
+								height="10"
+								width="10"
+								fetchpriority="high"
+							/>
+						}
 					</div>
-					<div style="display: flex; flex-direction: column; ">
-						<strong style="font-size:14px;">
-							if event.EventType == models.EventTypeRoleplay {
-								Rollespill
-								<img
-									src="/static/icons/ttrpg.svg"
-									alt="table top roleplaying game"
-									height="10"
-									width="10"
-									fetchpriority="high"
-								/>
-							} else if event.EventType == models.EventTypeBoardGame {
-								Brettspill
-								<img
-									src="/static/icons/boardgames.svg"
-									alt="board game"
-									height="10"
-									width="10"
-									fetchpriority="high"
-								/>
-							} else if event.EventType == models.EventTypeOther {
-								Annet
-								<img
-									src="/static/icons/other-games.svg"
-									alt="other type of game or event"
-									height="10"
-									width="10"
-									fetchpriority="high"
-								/>
-							}
-						</strong>
-						<span>{ event.System } </span>
-					</div>
+					<span class="color-strong">{ event.System } </span>
 				</div>
 				<hr/>
-				<div style="padding:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+				<div class="details-bottom">
 					if event.AgeGroup == models.AgeGroupAdultsOnly {
-						@event_components.Event_propertie("Egne for voksne", "adults-only-event.svg")
+						@event_components.Event_property("Egne for voksne", "adults-only-event.svg")
 					}
 					if event.AgeGroup == models.AgeGroupChildFriendly {
-						@event_components.Event_propertie("Barnevennlig", "child-friendly-event.svg")
+						@event_components.Event_property("Barnevennlig", "child-friendly-event.svg")
 					}
 					if event.Runtime == models.RunTimeLongRunning {
-						@event_components.Event_propertie("Varer mer enn 6 timer", "more-than-6-hours.svg")
+						@event_components.Event_property("Varer mer enn 6 timer", "more-than-6-hours.svg")
 					}
 					if event.Runtime == models.RunTimeShortRunning {
-						@event_components.Event_propertie("Varer kortere 3 timer", "less-than-3-hours.svg")
+						@event_components.Event_property("Varer kortere 3 timer", "less-than-3-hours.svg")
 					}
 					if event.BeginnerFriendly {
-						@event_components.Event_propertie("Nybegynnervennlig", "beginner-friendly.svg")
+						@event_components.Event_property("Nybegynnervennlig", "beginner-friendly.svg")
 					}
 					if event.CanBeRunInEnglish {
-						@event_components.Event_propertie("Can be run in English", "english.svg")
+						@event_components.Event_property("Can be run in English", "english.svg")
 					}
 				</div>
 			</div>

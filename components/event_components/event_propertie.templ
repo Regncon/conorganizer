@@ -2,14 +2,14 @@ package event_components
 
 import "fmt"
 
-css event_propertie_css() {
+css event_property_css() {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 }
 
-templ Event_propertie(text string, icon string) {
-	<div class={event_propertie_css}>
+templ Event_property(text string, icon string) {
+	<div class={ event_property_css }>
 		<img
 			src={ templ.URL(fmt.Sprintf("/static/icons/%s", icon)) }
 			alt={ text }
