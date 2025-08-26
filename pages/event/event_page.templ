@@ -2,13 +2,13 @@ package event
 
 import (
 	"database/sql"
-	"log/slog"
-	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/eventService"
+	"log/slog"
 )
 
 templ event_page(eventId string, logger *slog.Logger, db *sql.DB) {
-	<div id="event-container">
+	<div id="event-container" class="event-container">
 		@event_page_content(eventId, logger, db)
 	</div>
 }
@@ -29,7 +29,25 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB) {
 	if err != nil || event == nil {
 		<p>Error fetching event: { err.Error() }</p>
 	}
+	<style>
+    .breadcrumb-wrapper {
+            display: none;
+    }
+
+    @container event-container (width > 26.25rem) {
+        .breadcrumb-wrapper {
+            display: block;
+        }
+    }
+
+    </style>
 	<div style="display: flex; justify-content: space-between; align-items: center; padding-block:1rem;">
+		<div class="breadcrumb-wrapper">
+			@components.Breadcrumbs([]components.BreadcrumbPath{
+				{Name: "Hjem", Url: "/"},
+				{Name: event.Title, Url: ""},
+			})
+		</div>
 		<div>
 			if previousNextData.PreviousUrl != "" {
 				<a

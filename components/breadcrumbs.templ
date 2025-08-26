@@ -7,6 +7,14 @@ type BreadcrumbPath struct {
 
 templ Breadcrumbs(paths []BreadcrumbPath) {
 	<style>
+
+        .ellipsis-overflow {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+            max-width: 33ch;
+        }
+
 		.breadcrumbs {
 			display: flex;
 			gap: 0.5rem;
@@ -30,10 +38,10 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 	<div class="breadcrumbs">
 		for _, path := range paths {
 			if path.Url != "" {
-				<a href={ templ.URL(path.Url) }>{ path.Name }</a>
+				<a href={ templ.URL(path.Url) } class="ellipsis-overflow">{ path.Name }</a>
 				<span class="breadcrumb-separator">/</span>
 			} else {
-				<span class="breadcrumb-end">{ path.Name }</span>
+				<span class="breadcrumb-end ellipsis-overflow" class="ellipsis-overflow">{ path.Name }</span>
 			}
 		}
 	</div>

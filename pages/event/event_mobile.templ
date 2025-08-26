@@ -7,9 +7,7 @@ import (
 
 templ event_mobile(event *models.Event) {
 	<style>
-        .container {
-            container-type: inline-size;
-            container-name: event-container;
+        .wrapper {
             display:flex;
             flex-direction:column;
             max-width:430px;
@@ -118,11 +116,13 @@ templ event_mobile(event *models.Event) {
                 }
             }
             @container event-container (width > 26.25rem) {
-
+                .stack {
+                    color: black !important;
+                }
             }
         }
     </style>
-	<div class="container">
+	<div class="wrapper">
 		<div class="stack">
 			<img
 				src="/static/placeholder-small.webp"

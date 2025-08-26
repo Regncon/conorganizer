@@ -173,6 +173,11 @@ body {
         display: grid;
         place-content: center;
     }
+
+    .event-container {
+        container-type: inline-size;
+        container-name: event-container;
+    }
 }
 
 h1 {
