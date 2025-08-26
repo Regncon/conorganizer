@@ -50,15 +50,17 @@
     --text-article: 20px;
 
     /* spacings */
-    --spacing-xsmall: 12px;
-    --spacing-small: 16px;
-    --spacing-medium: 20px;
-    --spacing-large: 32px;
-    --spacing-xlarge: 40px;
+    --spacing-1x: 4px;
+    --spacing-2x: 8px;
+    --spacing-3x: 12px;
+    --spacing-4x: 16px;
+    --spacing-5x: 20px;
+    --spacing-8x: 32px;
+    --spacing-10x: 40px;
 
     /* border */
-    --border-radius-small: 4px;
-    --border-radius-medium: 8px;
+    --border-radius-1x: 4px;
+    --border-radius-2x: 8px;
 
     /* breakpoints */
     --mobile-min-width: 320px;
@@ -69,10 +71,10 @@
 
     /* sizing */
     --btn-height: 42px;
-    --btn-padding-x: var(--spacing-large);
+    --btn-padding-x: var(--spacing-8x);
     --btn-font-size: 14px;
     --btn-font-weight: 600;
-    --btn-border-radius: var(--border-radius-small);
+    --btn-border-radius: var(--border-radius-1x);
 
     /* animation */
     --btn-transition: background-color 0.2s ease,
@@ -202,7 +204,7 @@ hr {
 .input {
     background-color: var(--bg-item);
     color: var(--color-text-primary);
-    border-radius: var(--border-radius-medium);
+    border-radius: var(--border-radius-2x);
     min-height: 2.6rem;
     border: 1px solid var(--bg-item-border);
     font-size: 1rem;
@@ -273,13 +275,13 @@ input {
     max-width: var(--mobile-max-column-width);
     min-width: var(--mobile-min-width);
     background: #31354e;
-    border-radius: var(--border-radius-small);
+    border-radius: var(--border-radius-1x);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     padding: 1rem;
 }
 
 .form-card {
-    border-radius: var(--border-radius-medium);
+    border-radius: var(--border-radius-2x);
     background-color: var(--bg-surface);
     padding: 1rem;
 }
@@ -287,6 +289,6 @@ input {
 .item-card {
     padding: 1rem;
     background-color: var(--bg-item);
-    border-radius: var(--border-radius-medium);
+    border-radius: var(--border-radius-2x);
     font-size: 0.9rem;
 }
