@@ -10,7 +10,6 @@ templ event_mobile(event *models.Event) {
         .wrapper {
             display:flex;
             flex-direction:column;
-            gap:1rem;
             max-width:430px;
             margin:auto;
 
@@ -55,7 +54,7 @@ templ event_mobile(event *models.Event) {
             .event-information {
                 display: flex;
                 flex-direction: column;
-                gap: 0.5rem;
+                gap: var(--spacing-4x);
                 padding-inline: var(--spacing-2x);
 
 
@@ -109,6 +108,11 @@ templ event_mobile(event *models.Event) {
                         flex-direction: column;
                         gap: 0.5rem;
                     }
+                }
+
+                .description {
+                    margin: 0;
+                    margin-block-start: var(--spacing-2x);
                 }
             }
         }
@@ -194,7 +198,7 @@ templ event_mobile(event *models.Event) {
 					}
 				</div>
 			</div>
-			<p>{ event.Description } </p>
+			<p class="description">{ event.Description } </p>
 		</div>
 	</div>
 }
