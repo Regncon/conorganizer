@@ -65,7 +65,7 @@
 
     /* breakpoints */
     --mobile-min-width: 320px;
-    --mobile-max-column-width: 430px;
+    --mobile-max-width: 430px;
 
     /* Buttons */
     --color-white: #ffffff;
@@ -77,7 +77,7 @@
     --btn-font-weight: 600;
     --btn-border-radius: var(--border-radius-1x);
 
-    --mobile-responsive-min-width: min(var(--mobile-max-column-width), 100%);
+    --mobile-responsive-min-width: min(var(--mobile-max-width), 100%);
 
     /* animation */
     --btn-transition: background-color 0.2s ease,
