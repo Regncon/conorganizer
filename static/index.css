@@ -58,6 +58,7 @@
     --spacing-8x: 32px;
     --spacing-10x: 40px;
 
+
     /* border */
     --border-radius-1x: 4px;
     --border-radius-2x: 8px;
@@ -75,6 +76,8 @@
     --btn-font-size: 14px;
     --btn-font-weight: 600;
     --btn-border-radius: var(--border-radius-1x);
+
+    --mobile-responsive-min-width: min(var(--mobile-max-column-width), 100%);
 
     /* animation */
     --btn-transition: background-color 0.2s ease,
@@ -277,8 +280,7 @@ input {
 }
 
 .card {
-    max-width: var(--mobile-max-column-width);
-    min-width: var(--mobile-min-width);
+    width: var(--mobile-responsive-min-width);
     background: #31354e;
     border-radius: var(--border-radius-1x);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);

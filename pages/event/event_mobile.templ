@@ -10,8 +10,7 @@ templ event_mobile(event *models.Event) {
         .wrapper {
             display:flex;
             flex-direction:column;
-            max-width:430px;
-            margin:auto;
+            width: var(--mobile-responsive-min-width);
 
             > img {
                 height: 150px;
