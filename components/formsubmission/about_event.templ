@@ -221,7 +221,10 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					<option value="other">Annet</option>
 				</select>
 			</label>
-			<div class="image"></div>
+			<div class="image">
+				<script src="/static/web_components/banner_cropper.js"></script>
+				<banner-cropper width="1200" height="400"></banner-cropper>
+			</div>
 			<label class="label-small color-strong form-group system">
 				System
 				<div
