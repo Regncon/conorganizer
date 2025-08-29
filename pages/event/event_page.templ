@@ -69,6 +69,5 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB) {
 			}
 		</div>
 	</div>
-	@event_mobile(event)
-	@components.PreviousNextBar(previousNextData)
+	@event_mobile(event, previousNextData)
 }

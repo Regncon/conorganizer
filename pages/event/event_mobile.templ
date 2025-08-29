@@ -1,11 +1,12 @@
 package event
 
 import (
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/models"
 )
 
-templ event_mobile(event *models.Event) {
+templ event_mobile(event *models.Event, previousNextData components.PreviousNext) {
 	<style>
         .wrapper {
             display:flex;
@@ -260,5 +261,6 @@ templ event_mobile(event *models.Event) {
 			</div>
 			<p class="description">{ event.Description } </p>
 		</div>
+		@components.PreviousNextBar(previousNextData)
 	</div>
 }
