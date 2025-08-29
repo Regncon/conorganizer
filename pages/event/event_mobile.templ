@@ -131,6 +131,7 @@ templ event_mobile(event *models.Event) {
                     display: grid;
                     grid-template-rows: max-content max-content;
                     gap: var(--spacing-10x);
+                    padding: var(--spacing-10x);
                     .stack {
                         --event-banner-height: 25rem;
                         --event-header-height: 10.1875rem;
@@ -156,6 +157,8 @@ templ event_mobile(event *models.Event) {
                         grid-template-areas: "interests details"
                                             "description details"
                                             "description empty";
+                        padding: var(--spacing-10x);
+
                         .interest-picker {
                             width: 100%;
                             grid-area: interests;
