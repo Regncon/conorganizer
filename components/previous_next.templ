@@ -2,6 +2,7 @@ package components
 
 css previousNextCard() {
 	color: var(--color-primary-text);
+	flex-grow: 1;
 	border: solid;
 	background-color: var(--bg-surface);
 	border-radius: var(--border-radius-2x);
@@ -13,7 +14,6 @@ css previousNextCard() {
 	min-width: var(--mobile-responsive-min-width);
 	padding: 1rem;
 	transition: border-color 120ms ease-in-out;
-	margin-block-start: var(--spacing-4x);
 }
 
 type PreviousNext struct {
@@ -26,7 +26,17 @@ type PreviousNext struct {
 }
 
 templ PreviousNextBar(previousNextData PreviousNext) {
-	<div style="display: flex; flex-direction: column; gap: 1rem; place-items: center; margin-block-end: var(--spacing-4x)">
+	<div
+		style="
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: var(--spacing-2x);
+        place-content: center;
+        margin-block-start: var(--spacing-4x);
+        margin-inline: var(--spacing-2x);
+	"
+	>
 		if previousNextData.PreviousUrl != "" {
 			<a
 				href={ templ.URL(previousNextData.PreviousUrl) }
