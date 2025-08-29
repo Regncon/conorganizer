@@ -126,10 +126,26 @@ templ event_mobile(event *models.Event) {
             }
             @container event-container (width > 26.25rem) {
                 &.wrapper {
+                    --event-banner-height: 25rem;
+                    --event-header-height: 10.1875rem;
+                    --event-header-width: 65.5rem;
+                    --event-header-half-height: calc(var(--event-header-height) / 2);
+                    --event-header-overlapp: var(--event-header-half-height);
+
                     width: 100%;
                     display: grid;
                     grid-template-rows: max-content max-content;
+                    gap: var(--spacing-10x);
                     .stack {
+                        grid-template-rows: var(--event-banner-height) var(--event-header-overlapp);
+                        place-items: end center;
+                        img {
+                            grid-row: 1 / 2;
+                        }
+                        .event-header{
+                            grid-row: 1 / 2;
+                            transform: translateY(45%);
+                        }
                     }
                     .event-information {
                         display: grid;
@@ -156,6 +172,7 @@ templ event_mobile(event *models.Event) {
 	<div class="wrapper">
 		<div class="stack">
 			<img
+				alt="Arrangement banner"
 				src="/static/placeholder-small.webp"
 			/>
 			<header class="event-header">
