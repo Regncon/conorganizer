@@ -2,7 +2,6 @@ package components
 
 css previousNextCard() {
 	color: var(--color-primary-text);
-	flex-grow: 1;
 	border: solid;
 	background-color: var(--bg-surface);
 	border-radius: var(--border-radius-2x);
@@ -11,7 +10,7 @@ css previousNextCard() {
 	box-sizing: border-box;
 	display: block;
 	text-decoration: none;
-	min-width: var(--mobile-responsive-min-width);
+	width: calc(var(--mobile-responsive-min-width) - 1.56rem);
 	padding: 1rem;
 	transition: border-color 120ms ease-in-out;
 }
