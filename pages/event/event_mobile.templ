@@ -127,18 +127,17 @@ templ event_mobile(event *models.Event) {
             }
             @container event-container (width > 26.25rem) {
                 &.wrapper {
-                    --event-banner-height: 25rem;
-                    --event-header-height: 10.1875rem;
-                    --event-header-width: 65.5rem;
-                    --event-header-missing-from-translating: 9px;
-                    --event-header-half-height-and-translate: calc(var(--event-header-height) / 2 - var(--event-header-missing-from-translating));
-                    --event-header-overlapp: var(--event-header-half-height-and-translate);
-
                     width: 100%;
                     display: grid;
                     grid-template-rows: max-content max-content;
                     gap: var(--spacing-10x);
                     .stack {
+                        --event-banner-height: 25rem;
+                        --event-header-height: 10.1875rem;
+                        --event-header-width: 65.5rem;
+                        --event-header-missing-from-translating: 9px;
+                        --event-header-half-height-and-translate: calc(var(--event-header-height) / 2 - var(--event-header-missing-from-translating));
+                        --event-header-overlapp: var(--event-header-half-height-and-translate);
 
                         grid-template-rows: var(--event-banner-height) var(--event-header-overlapp);
                         place-items: end center;
