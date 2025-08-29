@@ -130,8 +130,9 @@ templ event_mobile(event *models.Event) {
                     --event-banner-height: 25rem;
                     --event-header-height: 10.1875rem;
                     --event-header-width: 65.5rem;
-                    --event-header-half-height: calc(var(--event-header-height) / 2);
-                    --event-header-overlapp: var(--event-header-half-height);
+                    --event-header-missing-from-translating: 9px;
+                    --event-header-half-height-and-translate: calc(var(--event-header-height) / 2 - var(--event-header-missing-from-translating));
+                    --event-header-overlapp: var(--event-header-half-height-and-translate);
 
                     width: 100%;
                     display: grid;
@@ -148,6 +149,7 @@ templ event_mobile(event *models.Event) {
                             grid-row: 1 / 2;
                             transform: translateY(45%);
                             margin-inline: 13%;
+                            height: var(--event-header-height);
                         }
                     }
                     .event-information {
