@@ -121,6 +121,30 @@ templ event_mobile(event *models.Event) {
                 }
             }
             @container event-container (width > 26.25rem) {
+                &.wrapper {
+                    width: 100%;
+                    display: grid;
+                    grid-template-rows: max-content max-content;
+                    .stack {
+                    }
+                    .event-information {
+                        display: grid;
+                        grid-template-areas: "interests details"
+                                            "description details"
+                                            "description empty";
+                        .interest-picker {
+                            width: 100%;
+                            grid-area: interests;
+                        }
+                        .details {
+                            grid-area: details;
+                            height: fit-content;
+                        }
+                        .description {
+                            grid-area: description;
+                        }
+                    }
+                }
 
             }
         }
