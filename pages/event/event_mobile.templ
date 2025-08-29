@@ -62,6 +62,10 @@ templ event_mobile(event *models.Event) {
                 gap: var(--spacing-4x);
                 padding-inline: var(--spacing-2x);
 
+                /*TODO: remove this if we change .card background color */
+                .card {
+                    background-color: var(--bg-surface);
+                }
 
                 .interest-picker {
                     display:flex;
