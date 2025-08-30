@@ -25,47 +25,59 @@ type PreviousNext struct {
 }
 
 templ PreviousNextBar(previousNextData PreviousNext) {
-	<div
-		style="
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: var(--spacing-2x);
-        place-content: space-between;
-        padding-inline: var(--spacing-10x);
-	"
-	>
+	<style>
+        .prev-next-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-2x);
+            padding-inline: var(--spacing-10x);
+
+            a {
+                border-color: var(--bg-item-border);
+                transition: border-color 250ms ease-in-out;
+            }
+
+            a:hover:not(a[aria-disabled="true"]), a:focus-visible:not(a[aria-disabled="true"]) {
+                border-color: var(--color-primary);
+            }
+
+            a[aria-disabled="true"] {
+                cursor: no-drop;
+                opacity: 0.5;
+            }
+        }
+
+        @container event-container (width > 34.875rem) {
+                & .prev-next-wrapper {
+                    flex-direction: row;
+                    place-content: space-between;
+                }
+        }
+    </style>
+	<div class="prev-next-wrapper">
 		if previousNextData.PreviousUrl != "" {
 			<a
 				href={ templ.URL(previousNextData.PreviousUrl) }
-				onmouseenter="this.style.borderColor='var(--color-primary)'"
-				onmouseleave="this.style.borderColor='var(--bg-item-border)'"
-				onfocus="this.style.borderColor='var(--color-primary)'"
-				onblur="this.style.borderColor='var(--bg-item-border)'"
 				class={ previousNextCard() }
 			>
 				@previousButton(previousNextData.PreviousTitle)
 			</a>
 		} else {
-			<div class={ previousNextCard() } style="pointer-events: none; opacity: 0.5;">
+			<div class={ previousNextCard() } aria-disabled="true">
 				@previousButton(previousNextData.PreviousTitle)
 			</div>
 		}
 		if previousNextData.NextUrl != "" {
 			<a
 				href={ templ.URL(previousNextData.NextUrl) }
-				onmouseenter="this.style.borderColor='var(--color-primary)'"
-				onmouseleave="this.style.borderColor='var(--bg-item-border)'"
-				onfocus="this.style.borderColor='var(--color-primary)'"
-				onblur="this.style.borderColor='var(--bg-item-border)'"
 				class={ previousNextCard() }
 			>
 				@nextButton(previousNextData.NextTitle)
 			</a>
 		} else {
-			<div class={ previousNextCard() } style="pointer-events: none; opacity: 0.5;">
+			<a class={ previousNextCard() } aria-disabled="true">
 				@nextButton(previousNextData.NextTitle)
-			</div>
+			</a>
 		}
 	</div>
 }
