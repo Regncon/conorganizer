@@ -99,6 +99,14 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                         gap: 0.5rem;
                         padding: var(--spacing-5x);
 
+                        p {
+                            margin: 0;
+                            max-width: 11.95rem;
+                            overflow: clip;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                        }
+
                         .event-type {
                             height: 20px;
                             width: 20px;
@@ -218,9 +226,9 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 			</div>
 			<div class="card details">
 				<div class="details-top">
-					<span class="details-header color-strong">Detaljer om arrangementet</span>
+					<p class="details-header color-strong">Detaljer om arrangementet</p>
 					<strong>Arrangør:</strong>
-					<span class="color-strong">{ event.HostName } </span>
+					<p class="color-strong" title={ event.HostName }>{ event.HostName } </p>
 					<div class="event-type">
 						if event.EventType == models.EventTypeRoleplay {
 							<strong>Rollespill</strong>
@@ -251,7 +259,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 							/>
 						}
 					</div>
-					<span class="color-strong">{ event.System } </span>
+					<p class="color-strong" title={ event.System }>{ event.System } </p>
 				</div>
 				<hr/>
 				<div class="details-bottom">
