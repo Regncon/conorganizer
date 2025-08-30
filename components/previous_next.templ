@@ -10,7 +10,6 @@ css previousNextCard() {
 	box-sizing: border-box;
 	display: block;
 	text-decoration: none;
-	width: var(--prev-next-responsive-max-width);
 	padding: 1rem;
 	transition: border-color 120ms ease-in-out;
 }
@@ -32,11 +31,12 @@ templ PreviousNextBar(previousNextData PreviousNext) {
             display: flex;
             flex-direction: column;
             gap: var(--spacing-2x);
-            padding-inline: var(--spacing-10x);
+            padding-inline: var(--spacing-2x);
 
             a {
                 border-color: var(--bg-item-border);
                 transition: border-color 250ms ease-in-out;
+                width: 100%;
             }
 
             a:hover:not(a[aria-disabled="true"]), a:focus-visible:not(a[aria-disabled="true"]) {
@@ -53,6 +53,11 @@ templ PreviousNextBar(previousNextData PreviousNext) {
                 & .prev-next-wrapper {
                     flex-direction: row;
                     place-content: space-between;
+                    padding-inline: var(--spacing-10x);
+
+                    a {
+                        width: var(--prev-next-responsive-max-width);
+                    }
                 }
         }
     </style>
