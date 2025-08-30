@@ -65,7 +65,7 @@
 
     /* breakpoints */
     --mobile-min-width: 320px;
-    --mobile-max-width: 430px;
+    --mobile-max-width: 600px;
 
     /* Buttons */
     --color-white: #ffffff;
