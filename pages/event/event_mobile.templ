@@ -9,6 +9,8 @@ import (
 templ event_mobile(event *models.Event, previousNextData components.PreviousNext) {
 	<style>
         .wrapper {
+            --text-height-two-lines: 2lh;
+
             display:flex;
             flex-direction:column;
             width: var(--mobile-responsive-min-width);
@@ -51,10 +53,13 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                     .title {
                         text-align:center;
                         margin:0;
+                        overflow: clip;
+                        height: var(--text-height-two-lines);
                     }
+
                     .intro {
                         overflow: clip;
-                        height: 38px;
+                        height: var(--text-height-two-lines);
                     }
                 }
             }
@@ -195,8 +200,8 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				src="/static/banner-test.jpg"
 			/>
 			<header class="event-header">
-				<h1 class="title">{ event.Title }</h1>
-				<i class="intro">{ event.Intro }</i>
+				<h1 class="title" title={ event.Title }>{ event.Title }</h1>
+				<i class="intro" title={ event.Intro }>{ event.Intro }</i>
 			</header>
 		</div>
 		<div class="event-information">
