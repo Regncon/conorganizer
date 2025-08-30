@@ -29,10 +29,8 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                 grid-template-rows: auto var(--row-overlapp) auto;
 
                 > img {
-                    aspect-ratio: 16 / 9;
-                    width: 100%;
-                    height: 100%;
-                    object-fit: fill;
+                    aspect-ratio: 20 / 6;
+                    object-fit: cover;
                     grid-row: 1 / 3;
                 }
 
@@ -127,6 +125,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                     margin-block-start: var(--spacing-2x);
                 }
             }
+
             @container event-container (width > 34.875rem) {
                 &.wrapper {
                     width: 100%;
@@ -190,7 +189,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 		<div class="stack">
 			<img
 				alt="Arrangement banner"
-				src="/static/placeholder-small.webp"
+				src="/static/banner-test.jpg"
 			/>
 			<header class="event-header">
 				<h1 class="title">{ event.Title }</h1>
