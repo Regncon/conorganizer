@@ -10,7 +10,7 @@ css previousNextCard() {
 	box-sizing: border-box;
 	display: block;
 	text-decoration: none;
-	width: calc(var(--mobile-responsive-min-width) - 1.56rem);
+	width: var(--prev-next-responsive-max-width);
 	padding: 1rem;
 	transition: border-color 120ms ease-in-out;
 }
@@ -27,6 +27,8 @@ type PreviousNext struct {
 templ PreviousNextBar(previousNextData PreviousNext) {
 	<style>
         .prev-next-wrapper {
+            --prev-next-max-width: 25.3125rem;
+            --prev-next-responsive-max-width: min(100%, var(--prev-next-max-width));
             display: flex;
             flex-direction: column;
             gap: var(--spacing-2x);
