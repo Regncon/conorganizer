@@ -141,62 +141,62 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                     margin-block-start: var(--spacing-2x);
                 }
             }
+        }
+        @container event-container (width > 34.875rem) {
+            .wrapper {
+                width: 100%;
+                display: grid;
+                grid-template-rows: max-content max-content;
+                gap: var(--spacing-10x);
+                padding: var(--spacing-10x);
+                .stack {
+                    --event-banner-height: 25rem;
+                    --event-header-height: 10.1875rem;
+                    --event-header-width: 65.5rem;
+                    --event-header-missing-from-translating: 9px;
+                    --event-header-half-height-and-translate: calc(var(--event-header-height) / 2 - var(--event-header-missing-from-translating));
+                    --event-header-overlapp: var(--event-header-half-height-and-translate);
 
-            @container event-container (width > 34.875rem) {
-                &.wrapper {
-                    width: 100%;
-                    display: grid;
-                    grid-template-rows: max-content max-content;
-                    gap: var(--spacing-10x);
-                    padding: var(--spacing-10x);
-                    .stack {
-                        --event-banner-height: 25rem;
-                        --event-header-height: 10.1875rem;
-                        --event-header-width: 65.5rem;
-                        --event-header-missing-from-translating: 9px;
-                        --event-header-half-height-and-translate: calc(var(--event-header-height) / 2 - var(--event-header-missing-from-translating));
-                        --event-header-overlapp: var(--event-header-half-height-and-translate);
-
-                        grid-template-rows: var(--event-banner-height) var(--event-header-overlapp);
-                        place-items: end center;
-                        img {
-                            grid-row: 1 / 2;
-                        }
-                        .event-header{
-                            grid-row: 1 / 2;
-                            transform: translateY(45%);
-                            margin-inline: 11.5%;
-                            height: var(--event-header-height);
-                        }
+                    grid-template-rows: var(--event-banner-height) var(--event-header-overlapp);
+                    place-items: end center;
+                    img {
+                        grid-row: 1 / 2;
                     }
-                    .event-information {
-                        display: grid;
-                        grid-template-areas: "interests details"
-                                            "description details"
-                                            "description empty";
-                        gap: 0;
-                        column-gap: var(--spacing-8x);
-                        padding-inline: var(--spacing-10x);
-
-                        .interest-picker {
-                            width: 100%;
-                            grid-area: interests;
-                            margin-block-end: var(--spacing-8x);
-                            flex-direction: row;
-                            flex-wrap: wrap;
-                            place-content: center;
-
-                        }
-                        .details {
-                            grid-area: details;
-                            height: fit-content;
-                        }
-                        .description {
-                            margin-block-start: 0;
-
-                        }
+                    .event-header{
+                        grid-row: 1 / 2;
+                        transform: translateY(45%);
+                        margin-inline: 11.5%;
+                        height: var(--event-header-height);
                     }
                 }
+                .event-information {
+                    display: grid;
+                    grid-template-areas: "interests details"
+                                        "description details"
+                                        "description empty";
+                    gap: 0;
+                    column-gap: var(--spacing-8x);
+                    padding-inline: var(--spacing-10x);
+
+                    .interest-picker {
+                        width: 100%;
+                        grid-area: interests;
+                        margin-block-end: var(--spacing-8x);
+                        flex-direction: row;
+                        flex-wrap: wrap;
+                        place-content: center;
+
+                    }
+                    .details {
+                        grid-area: details;
+                        height: fit-content;
+                    }
+                    .description {
+                        margin-block-start: 0;
+
+                    }
+                }
+            }
 
             }
         }
