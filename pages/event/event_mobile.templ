@@ -142,6 +142,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                 }
             }
         }
+
         @container event-container (width > 34.875rem) {
             .wrapper {
                 width: 100%;
@@ -198,8 +199,18 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                 }
             }
 
+        }
+
+        @container event-container (width < 62.5rem) {
+            .wrapper {
+                .stack {
+                    .event-header {
+                        width: 100%;
+                    }
+                }
             }
         }
+
     </style>
 	<div class="wrapper">
 		<div class="stack">
