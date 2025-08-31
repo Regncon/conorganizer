@@ -1,16 +1,33 @@
 package formsubmission
 
-templ eventPicture(image string) {
-	<section class="form-group image">
-		<label for="image" class="label-small color-strong">Bilde</label>
-		<input
-			type="file"
-			id="image"
-			name="image"
-			class="input"
-			accept="image/*"
-			value={ shouldShowStringValue(image) }
-			required
-		/>
+templ eventPicture(eventId string, title string, intro string) {
+	<section class="form-card" style="display: flex; gap: 1rem;">
+		<section class="form-group input">
+			<label class="label-small color-strong">
+				Bilde
+				<input
+					type="file"
+					name="image"
+					class="input"
+					accept="image/*"
+					required
+				/>
+			</label>
+		</section>
+		<section class="form-group input">
+			<script src="/static/web_components/banner_cropper.js"></script>
+			<banner-cropper width="430" height="200"></banner-cropper>
+			<div
+				style="display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 1rem;
+                    background-color: var(--bg-base);"
+				max-width="430px"
+			>
+				<h1 style="text-align:center; margin:0; ">{ title }</h1>
+				<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
+			</div>
+		</section>
 	</section>
 }

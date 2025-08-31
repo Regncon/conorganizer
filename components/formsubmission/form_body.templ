@@ -1,8 +1,6 @@
 package formsubmission
 
-import (
-	"github.com/Regncon/conorganizer/models"
-)
+import "github.com/Regncon/conorganizer/models"
 
 templ FormBody(event *models.Event) {
 	<style>
@@ -225,6 +223,7 @@ templ FormBody(event *models.Event) {
 		event.System,
 		event.Description,
 	)
+	@eventPicture(event.ID, event.Title, event.Intro)
 	@otherDetails(
 		event.ID,
 		event.AgeGroup,

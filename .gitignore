@@ -2,6 +2,7 @@
 # ------------------------------------------------------------------
 data/*
 database/*
+event-images/*
 backup-service/regncon
 *_templ.go
 *_templ.txt

@@ -3,9 +3,7 @@ class BannerCropper extends HTMLElement {
         super();
 
         // Read desired banner size from attributes (fallback to defaults)
-        this.bannerWidth = parseInt(this.getAttribute('width')) || 1200;
-        this.bannerHeight = parseInt(this.getAttribute('height')) || 400;
-
+        this.bannerWidth = parseInt(this.getAttribute('width')) || 430;
         // Shadow DOM with simple markup (no styling)
         this.shadow = this.attachShadow({ mode: 'open' });
         this.shadow.innerHTML = `
@@ -15,14 +13,14 @@ class BannerCropper extends HTMLElement {
           <button id="loadButton">Load Image</button>
         </div>
         <div>
+          <button id="exportButton">Export PNG</button>
+          <a id="downloadLink"></a>
+        </div>
+        <div>
           <label for="zoom">Zoom:</label>
           <input id="zoom" type="range" min="1" max="3" step="0.01" value="1" disabled>
         </div>
         <canvas id="canvas" style="cursor:move" width="${this.bannerWidth}" height="${this.bannerHeight}" aria-label="Banner canvas"></canvas>
-        <div>
-          <button id="exportButton">Export PNG</button>
-          <a id="downloadLink"></a>
-        </div>
       </div>
     `;
 
@@ -123,6 +121,7 @@ class BannerCropper extends HTMLElement {
     }
 
     handleExport() {
+        console.log('Exporting banner as PNG');
         const dataURL = this.canvas.toDataURL('image/png');
         this.downloadLink.href = dataURL;
         this.downloadLink.download = 'banner.png';
