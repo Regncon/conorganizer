@@ -10,7 +10,6 @@ css previousNextCard() {
 	box-sizing: border-box;
 	display: block;
 	text-decoration: none;
-	padding: 1rem;
 	transition: border-color 120ms ease-in-out;
 }
 
@@ -26,8 +25,10 @@ type PreviousNext struct {
 templ PreviousNextBar(previousNextData PreviousNext) {
 	<style>
         .prev-next-wrapper {
+            --linear-gradient-mask: linear-gradient(to left, black 19%, transparent 32%);
             --prev-next-max-width: 25.3125rem;
             --prev-next-responsive-max-width: min(100%, var(--prev-next-max-width));
+
             display: flex;
             flex-direction: column;
             gap: var(--spacing-2x);
@@ -66,53 +67,144 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 			<a
 				href={ templ.URL(previousNextData.PreviousUrl) }
 				class={ previousNextCard() }
+				title={ previousNextData.PreviousTitle }
 			>
-				@previousButton(previousNextData.PreviousTitle)
+				@previousButton(previousNextData.PreviousTitle, false)
 			</a>
 		} else {
-			<div class={ previousNextCard() } aria-disabled="true">
-				@previousButton(previousNextData.PreviousTitle)
-			</div>
+			<a
+				class={ previousNextCard() }
+				aria-disabled="true"
+				title={ previousNextData.PreviousTitle }
+			>
+				@previousButton("Ingen flere arrangementer", true)
+			</a>
 		}
 		if previousNextData.NextUrl != "" {
 			<a
 				href={ templ.URL(previousNextData.NextUrl) }
+				title={ previousNextData.NextTitle }
 				class={ previousNextCard() }
 			>
-				@nextButton(previousNextData.NextTitle)
+				@nextButton(previousNextData.NextTitle, false)
 			</a>
 		} else {
-			<a class={ previousNextCard() } aria-disabled="true">
-				@nextButton(previousNextData.NextTitle)
+			<a
+				class={ previousNextCard() }
+				title={ previousNextData.NextTitle }
+				aria-disabled="true"
+			>
+				@nextButton("Ingen flere arrangementer", true)
 			</a>
 		}
 	</div>
 }
 
-templ previousButton(title string) {
-	<div style="display: flex; align-items: center;">
-		<img
-			style="width: 2rem; margin-right: 0.5rem;"
-			src="/static/icons/angle-left-solid-full.svg"
-			alt="Forrige arrangement"
-		/>
-		<div style="display: flex; flex-direction: column; gap: 0.25rem;">
-			<span style="color: var(--color-text-soft); font-size:12px;">Forrige arrangement</span>
-			<strong>{ title }</strong>
+templ previousButton(title string, disabled bool) {
+	<div style="display: grid; grid-template-rows: 1fr; height: 100%;">
+		<div class="text-container" style="display: flex; align-items: center; grid-row: 1 / 2; grid-column: 1 / 2;">
+			<img
+				style="width: 2rem; margin-right: 0.5rem;"
+				src="/static/icons/angle-left-solid-full.svg"
+				alt="Forrige arrangement"
+			/>
+			<div
+				style="
+                display: flex;
+                flex-direction: column;
+                gap: 0.25rem;
+                overflow: clip;
+                "
+			>
+				if !disabled {
+					<span style="color: var(--color-text-soft); font-size:12px;height: 1lh;">Forrige arrangement</span>
+				}
+				<strong
+					style="
+                        height: 1lh;
+                        word-break: break-all;
+                    "
+				>{ title }</strong>
+			</div>
 		</div>
+		if disabled {
+			<div></div>
+		}
+		if !disabled {
+			<img
+				src="/static/banner-test.jpg"
+				title={ title }
+				height="70px"
+				style="
+                    grid-row: 1 / 2;
+                    grid-column: 1 / 2;
+                    mask-image: var(--linear-gradient-mask);
+                    -webkit-mask-image: var(--linear-gradient-mask);
+                    filter:opacity(0.5);
+                    place-self: end;
+                    border-radius: var(--border-radius-2x);
+                "
+			/>
+		}
 	</div>
 }
 
-templ nextButton(title string) {
-	<div style="display: flex; flex-direction: row-reverse; align-items: center;">
-		<img
-			style="width: 2rem; margin-left: 0.5rem;"
-			src="/static/icons/angle-right-solid-full.svg"
-			alt="Neste arrangement"
-		/>
-		<div style="display: flex; flex-direction: column; gap: 0.25rem;">
-			<span style="color: var(--color-text-soft); font-size:12px; text-align:right;">Neste arrangement</span>
-			<strong>{ title }</strong>
+templ nextButton(title string, disabled bool) {
+	<div style="display: grid; grid-template-rows: 1fr; height: 100%;">
+		if disabled {
+			<div></div>
+		}
+		if !disabled {
+			<img
+				src="/static/banner-test.jpg"
+				title={ title }
+				height="70px"
+				style="
+                transform: scaleX(-1);
+				grid-row: 1 / 2;
+                grid-column: 1 / 2;
+				mask-image: var(--linear-gradient-mask);
+				-webkit-mask-image: var(--linear-gradient-mask);
+                filter:opacity(0.5);
+                place-self: start;
+                border-radius: var(--border-radius-2x);
+			"
+			/>
+		}
+		<div class="text-container" style="display: flex; flex-direction: row-reverse; align-items: center; grid-row: 1 / 2; grid-column: 1 / 2;">
+			<img
+				style="width: 2rem; margin-left: 0.5rem;"
+				src="/static/icons/angle-right-solid-full.svg"
+				alt="Neste arrangement"
+			/>
+			<div
+				style="
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.25rem;
+                    overflow: clip;
+                "
+			>
+				if !disabled {
+					<span
+						style="
+                            color: var(--color-text-soft);
+                            font-size:12px;
+                            text-align:right;
+                            height: 1lh;
+                        "
+					>
+						Neste arrangement
+					</span>
+				}
+				<strong
+					style="
+                        height: 1lh;
+                        text-align: right;
+                        word-break: break-all;
+                    "
+				>{ title }</strong>
+			</div>
 		</div>
 	</div>
 }
