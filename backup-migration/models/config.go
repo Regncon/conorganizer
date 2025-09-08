@@ -28,20 +28,19 @@ type Configs struct {
 	DB_validation_status string
 }
 
-func Config(logger *slog.Logger) (*Configs, error) {
+func Config(logger *slog.Logger) *Configs {
+	// Create new config
 	cfg := &Configs{}
 
-	return cfg, nil
-}
-
-func (c *Configs) Load() {
+	// Check for envrionment variables
 	err := godotenv.Load()
 	if err != nil {
-		c.S3_secrets_isMissing = true
-		return
+		logger.Error("Missing .env file")
+		cfg.S3_secrets_isMissing = true
+		return cfg
 	}
 
-	// Load variables from .env file
+	// Load variables from environment
 	secrets := Secrets{
 		AWS_ENDPOINT_URL_S3:   os.Getenv("AWS_ENDPOINT_URL_S3"),
 		AWS_ACCESS_KEY_ID:     os.Getenv("AWS_ACCESS_KEY_ID"),
@@ -50,10 +49,18 @@ func (c *Configs) Load() {
 		BUCKET_NAME:           os.Getenv("BUCKET_NAME"),
 		DB_PREFIX:             os.Getenv("DB_PREFIX"),
 	}
-	c.S3_secrets = secrets
-	c.S3_secrets_isMissing = false
+
+	// Update config
+	cfg.S3_secrets_isMissing = false
+	cfg.S3_secrets = secrets
+
+	return cfg
 }
 
 func (c *Configs) Update() {
+	// accept keyvalue as arg to update a field on &configs{}
+}
+
+func (c *Configs) CheckMissing() {
 	// accept keyvalue as arg to update a field on &configs{}
 }
