@@ -1,15 +1,23 @@
-package config
+package models
 
 import (
-	"backup-migration/types"
 	"log/slog"
 	"os"
 
 	"github.com/joho/godotenv"
 )
 
+type Secrets struct {
+	AWS_ENDPOINT_URL_S3   string
+	AWS_ACCESS_KEY_ID     string
+	AWS_SECRET_ACCESS_KEY string
+	AWS_REGION            string
+	BUCKET_NAME           string
+	DB_PREFIX             string
+}
+
 type Configs struct {
-	S3_secrets           types.Secrets
+	S3_secrets           Secrets
 	S3_secrets_isMissing bool
 	S3_prefix_old        string
 	S3_prefix_new        string
@@ -34,7 +42,7 @@ func (c *Configs) Load() {
 	}
 
 	// Load variables from .env file
-	secrets := types.Secrets{
+	secrets := Secrets{
 		AWS_ENDPOINT_URL_S3:   os.Getenv("AWS_ENDPOINT_URL_S3"),
 		AWS_ACCESS_KEY_ID:     os.Getenv("AWS_ACCESS_KEY_ID"),
 		AWS_SECRET_ACCESS_KEY: os.Getenv("AWS_SECRET_ACCESS_KEY"),
@@ -47,5 +55,5 @@ func (c *Configs) Load() {
 }
 
 func (c *Configs) Update() {
-
+	// accept keyvalue as arg to update a field on &configs{}
 }
