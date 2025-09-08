@@ -4,21 +4,17 @@ import (
 	"backup-migration/services"
 	"backup-migration/views"
 	"context"
-	"log/slog"
 
 	"fyne.io/fyne/v2/app"
 )
 
-func Run(ctx context.Context, logger *slog.Logger) error {
-	// Create a new dependency container for sharing services
-	reg := services.NewRegistry()
-
+func Run(ctx context.Context, reg *services.Registry) error {
 	// Setup GUI with Fyne
 	fyneApp := app.New()
 	window := fyneApp.NewWindow("RegnCon - Database Migration Tool™")
 
 	// Load root layout / content
-	root := views.NewRoot(window, reg, logger)
+	root := views.NewRoot(ctx, reg, window)
 	window.SetContent(root)
 
 	// Graceful shutdown if ctx is cancelled
