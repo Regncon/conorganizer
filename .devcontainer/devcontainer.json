@@ -7,8 +7,7 @@
 	"features": {
 		"ghcr.io/eitsupi/devcontainer-features/go-task:1": {},
 		"ghcr.io/warrenbuckley/codespace-features/sqlite:1": {}
-		//"ghcr.io/dusansimic/devcontainer-features/templ:0": {}
-	}
+	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
@@ -17,7 +16,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	// "postCreateCommand": "go version",
+	"postCreateCommand": "go get -tool github.com/a-h/templ/cmd/templ@latest & task live"
 
 	// Configure tool-specific properties.
 	// "customizations": {},
