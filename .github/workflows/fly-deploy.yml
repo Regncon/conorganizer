@@ -8,12 +8,8 @@ on:
         paths-ignore:
             - "backup-service/**"
             - "backup-migration/**"
-<<<<<<< HEAD
-=======
             - ".devcontainer/**"
             - ".vscode/**"
-
->>>>>>> 82dbd71 (Adding devcontainer and updating workflows (#154))
 jobs:
     deploy:
         name: Deploy app
