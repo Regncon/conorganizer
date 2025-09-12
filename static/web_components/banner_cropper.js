@@ -9,8 +9,11 @@ class BannerCropper extends HTMLElement {
         this.shadow.innerHTML = `
       <div>
         <div>
-          <input id="fileInput" type="file" accept="image/*">
-          <button id="loadButton">Load Image</button>
+          <span id="cameraIcon" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
+              <path fill="currentColor" d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM4 4h3.2l1.6-2h6.4l1.6 2H20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v12h16V6h-3.2l-1.6 2H8.8L7.2 6H4Z"/>
+            </svg>
+          </span>
         </div>
         <div>
           <button id="exportButton">Export PNG</button>
@@ -27,8 +30,7 @@ class BannerCropper extends HTMLElement {
         // Elements
         this.canvas = this.shadow.getElementById('canvas');
         this.ctx = this.canvas.getContext('2d');
-        this.fileInput = this.shadow.getElementById('fileInput');
-        this.loadButton = this.shadow.getElementById('loadButton');
+        this.cameraIcon = this.shadow.getElementById('cameraIcon');
         this.zoom = this.shadow.getElementById('zoom');
         this.exportButton = this.shadow.getElementById('exportButton');
         this.downloadLink = this.shadow.getElementById('downloadLink');
@@ -49,7 +51,15 @@ class BannerCropper extends HTMLElement {
         this.startDrawY = 0;
 
         // Bind handlers
-        this.handleLoadClick = this.handleLoadClick.bind(this);
+        if (this.getAttribute('imageUrl')) {
+          this.image.src = this.getAttribute('imageUrl');
+          this.image.onload = () => {
+            this.imageLoaded = true;
+            this.setInitialView();
+          };
+        } else {
+          this.cameraIcon.style.display = 'block';
+        }
         this.handleZoomInput = this.handleZoomInput.bind(this);
         this.onPointerDown = this.onPointerDown.bind(this);
         this.onPointerMove = this.onPointerMove.bind(this);

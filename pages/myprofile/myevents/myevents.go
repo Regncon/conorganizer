@@ -189,6 +189,10 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						formsubmission.UpdateDescription(putDescriptionRouter, db, kv)
 					})
 
+					newApiIdRouter.Route("/image/original", func(putImageOriginalRouter chi.Router) {
+						formsubmission.UpdateOriginalImage(putImageOriginalRouter, db, kv)
+					})
+
 					// should be age-group
 					newApiIdRouter.Route("/ageGroup", func(putAgeGroupRouter chi.Router) {
 						formsubmission.UpdateAgeGroup(putAgeGroupRouter, db, kv)

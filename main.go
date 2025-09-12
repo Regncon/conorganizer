@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -29,6 +30,7 @@ func main() {
 	}
 
 	dsn := flag.String("dbp", "database/events.db", "absolute path to database file")
+	eventImageDir := flag.String("event-image-dir", "event-images", "directory to store event images")
 	flag.Parse()
 
 	db, dbErr := service.InitDB(*dsn)
@@ -55,22 +57,21 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx, logger, getPort(), db, dbErr); err != nil {
+	if err := run(ctx, logger, getPort(), eventImageDir, db, dbErr); err != nil {
 		logger.Error("Error running server", slog.Any("err", err))
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, logger *slog.Logger, port string, db *sql.DB, dbErr error) error {
+func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB, dbErr error) error {
 	g, ctx := errgroup.WithContext(ctx)
-	g.Go(startServer(ctx, logger, port, db, dbErr))
+	g.Go(startServer(ctx, logger, port, eventImageDir, db, dbErr))
 	if err := g.Wait(); err != nil {
 		return fmt.Errorf("error running server: %w", err)
 	}
 	return nil
 }
-
-func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.DB, dbErr error) func() error {
+func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB, dbErr error) func() error {
 	return func() error {
 		router := chi.NewRouter()
 
@@ -79,13 +80,30 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 			middleware.Recoverer,
 		)
 
-		if dbErr == nil && db != nil {
+		var imgErr error
+		if eventImageDir != nil && *eventImageDir != "" {
+			if _, statErr := os.Stat(*eventImageDir); os.IsNotExist(statErr) {
+				imgErr = fmt.Errorf("event image directory does not exist: %q", *eventImageDir)
+				logger.Error("Event image directory does not exist; starting in degraded mode", "dir", *eventImageDir)
+			} else if statErr != nil {
+				imgErr = fmt.Errorf("unable to access event image directory %q: %w", *eventImageDir, statErr)
+				logger.Error("Unable to access event image directory; starting in degraded mode", "dir", *eventImageDir, "err", statErr)
+			}
+		} else {
+			imgErr = fmt.Errorf("event image directory path is empty")
+			logger.Error("Event image directory path is empty; starting in degraded mode")
+		}
+
+		degradedErr := errors.Join(dbErr, imgErr)
+		fullMode := degradedErr == nil && db != nil
+
+		if fullMode {
 			router.Use(authctx.AuthMiddleware(logger))
 		}
 
 		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
 
-		if dbErr == nil && db != nil {
+		if fullMode {
 			cleanup, err := setupRoutes(ctx, logger, router, db)
 			if err != nil {
 				logger.Error("error setting up routes; falling back to degraded mode", "err", err)
@@ -94,7 +112,8 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, db *sql.
 				defer cleanup()
 			}
 		} else {
-			mountDBErrorRoutes(router, dbErr)
+			// Show a single degraded page that can list both reasons (DB + images)
+			mountDBErrorRoutes(router, degradedErr)
 		}
 
 		srv := &http.Server{
