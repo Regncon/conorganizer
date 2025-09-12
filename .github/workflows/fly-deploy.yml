@@ -7,6 +7,10 @@ on:
             - main
         paths-ignore:
             - "backup-service/**"
+            - "backup-migration/**"
+            - ".devcontainer/**"
+            - ".vscode/**"
+
 jobs:
     deploy:
         name: Deploy app
