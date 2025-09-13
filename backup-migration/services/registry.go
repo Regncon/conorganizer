@@ -5,6 +5,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"github.com/Regncon/conorganizer/backup-migration/config"
+	"github.com/Regncon/conorganizer/backup-migration/services/db"
 	"github.com/Regncon/conorganizer/backup-migration/services/s3"
 )
 
@@ -14,6 +15,7 @@ type Registry struct {
 	Window fyne.Window
 
 	S3 s3.S3Client
+	DB db.DBClient
 }
 
 func NewRegistry() *Registry {
@@ -27,10 +29,14 @@ func NewRegistry() *Registry {
 	}
 
 	// Init S3 client
-	s3client := s3.NewS3Client()
+	s3Client := s3.NewS3Client()
+
+	// Init DB client
+	dbClient := db.NewDBClient()
 
 	return &Registry{
 		Config: *config,
-		S3:     *s3client,
+		S3:     *s3Client,
+		DB:     *dbClient,
 	}
 }

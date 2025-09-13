@@ -26,8 +26,14 @@ type S3Config struct {
 	Prefix     string
 }
 
+type DBConfig struct {
+	Path      string
+	Validated bool
+}
+
 type Config struct {
 	S3      S3Config
+	DB      DBConfig
 	EnvPath string
 }
 

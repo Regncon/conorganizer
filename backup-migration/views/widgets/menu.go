@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"image/color"
+	"strings"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -46,28 +47,47 @@ func RootMenu(ctx context.Context, reg *services.Registry) fyne.CanvasObject {
 	dbContainer := container.NewBorder(nil, nil, nil, dbButton, dbPath)
 
 	// Prefix section
-	prefixLabel := widget.NewLabel("Database prefix")
+	prefixLabel := widget.NewLabel("Update prefix")
 	prefix := widget.NewEntry()
-	prefix.PlaceHolder = reg.Config.S3.Prefix
+	prefix.PlaceHolder = "Type a new prefix"
 	prefixContainer := container.NewVBox(prefixLabel, prefix)
+
+	// Existing prefix
+	existingPrefixLabel := widget.NewLabel("Existing prefixes")
+	existingPrefixLabel.Hide()
+	existingPrefix := widget.NewTextGrid()
+	existingPrefixContainer := container.NewBorder(existingPrefixLabel, nil, nil, nil, existingPrefix)
 
 	// S3 section
 	s3Activity := widget.NewActivity()
-	s3Label := widget.NewLabel("S3 Storage")
+	s3Label := widget.NewLabel("S3 Storage not connected")
 	s3LabelGroup := container.NewBorder(nil, nil, s3Label, s3Activity)
 	s3ConnectButton := widget.NewButton("Connect", func() {
 		s3Activity.Show()
 		s3Activity.Start()
 
 		go func() {
-			err := reg.S3.Connect(&reg.Config)
+			// Connect to S3
+			err := reg.S3.Connect(&reg.Config.S3)
 			if err != nil {
-				fmt.Println("Attempted to start S3 client without cfg")
+				fmt.Printf("Attempted to start S3 client without cfg: %w", err)
 			}
+
+			// Populate prefixes
+			prefixes, err := reg.S3.ListExistingPrefixes(&reg.Config)
+			strings := strings.Join(*prefixes, "\n")
+			if err != nil {
+				return
+			}
+
 			fyne.Do(func() {
 				s3Activity.Stop()
 				s3Activity.Hide()
 				s3Label.Text = "S3 Storage connected"
+
+				existingPrefixLabel.Show()
+				existingPrefix.SetText(strings)
+
 				s3Label.Refresh()
 			})
 		}()
@@ -92,13 +112,42 @@ func RootMenu(ctx context.Context, reg *services.Registry) fyne.CanvasObject {
 			})
 		}()
 	})
-	s3Container := container.NewVBox(s3LabelGroup, s3ConnectButton, s3LatestButton, s3Latest)
+	s3DownloadText := canvas.NewText("", color.White)
+	s3DownloadText.Hide()
+	s3DownloadButton := widget.NewButton("Download latest", func() {
+		go func() {
+			latest, err := reg.S3.GetLatestBackup(&reg.Config)
+			if err != nil {
+				fmt.Println(err)
+			}
+			path, err := reg.S3.Download(&reg.Config, latest.Key)
+			if err != nil {
+				fmt.Println(err)
+			}
+
+			fyne.Do(func() {
+				s3DownloadText.Text = *path
+				s3DownloadText.Show()
+				s3DownloadText.Refresh()
+			})
+		}()
+	})
+
+	s3Container := container.NewVBox(s3LabelGroup, s3ConnectButton, s3LatestButton, s3Latest, s3DownloadButton, s3DownloadText)
 
 	// Migration section
 	migrationLabel := widget.NewLabel("Migrations")
 	migrationContainer := container.NewVBox(migrationLabel)
 
 	// Combine menu items into one container
-	content := container.NewVBox(menuLabel, envContainer, dbContainer, prefixContainer, s3Container, migrationContainer)
+	content := container.NewVBox(
+		menuLabel,
+		envContainer,
+		dbContainer,
+		prefixContainer,
+		existingPrefixContainer,
+		s3Container,
+		migrationContainer,
+	)
 	return content
 }
