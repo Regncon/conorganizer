@@ -2,7 +2,10 @@ module github.com/Regncon/conorganizer/backup-migration
 
 go 1.24.1
 
-require fyne.io/fyne/v2 v2.6.3
+require (
+	fyne.io/fyne/v2 v2.6.3
+	github.com/joho/godotenv v1.5.1
+)
 
 require (
 	fyne.io/systray v1.11.0 // indirect
