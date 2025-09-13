@@ -11,6 +11,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/Regncon/conorganizer/backup-migration/services"
+	"github.com/Regncon/conorganizer/backup-migration/utils"
 )
 
 func RootMenu(ctx context.Context, reg *services.Registry) fyne.CanvasObject {
@@ -33,9 +34,13 @@ func RootMenu(ctx context.Context, reg *services.Registry) fyne.CanvasObject {
 
 	// DB section
 	dbPath := widget.NewEntry()
-	dbPath.PlaceHolder = reg.Config.EnvPath
+	dbPath.PlaceHolder = "Choose .db to upload it"
 	dbButton := widget.NewButtonWithIcon(".db", theme.FolderOpenIcon(), func() {
-		fmt.Println("loading db")
+		err := reg.DB.Load(reg.Config)
+		if err != nil {
+			dbPath.Text = fmt.Sprint(err)
+		}
+		dbPath.Refresh()
 	})
 	dbButton.Resize(fyne.NewSize(50, 0))
 	dbContainer := container.NewBorder(nil, nil, nil, dbButton, dbPath)
@@ -47,24 +52,47 @@ func RootMenu(ctx context.Context, reg *services.Registry) fyne.CanvasObject {
 	prefixContainer := container.NewVBox(prefixLabel, prefix)
 
 	// S3 section
+	s3Activity := widget.NewActivity()
 	s3Label := widget.NewLabel("S3 Storage")
-	s3ConnectButton := widget.NewButton("connect", func() {
-		err := reg.S3.Connect(&reg.Config)
-		if err != nil {
-			fmt.Println("Attempted to start S3 client without cfg")
-		}
+	s3LabelGroup := container.NewBorder(nil, nil, s3Label, s3Activity)
+	s3ConnectButton := widget.NewButton("Connect", func() {
+		s3Activity.Show()
+		s3Activity.Start()
+
+		go func() {
+			err := reg.S3.Connect(&reg.Config)
+			if err != nil {
+				fmt.Println("Attempted to start S3 client without cfg")
+			}
+			fyne.Do(func() {
+				s3Activity.Stop()
+				s3Activity.Hide()
+				s3Label.Text = "S3 Storage connected"
+				s3Label.Refresh()
+			})
+		}()
 	})
 	s3Latest := canvas.NewText("", color.White)
 	s3Latest.Hide()
 	s3LatestButton := widget.NewButton("Check for latest", func() {
-		obj, err := reg.S3.GetLatestBackup(&reg.Config)
-		if err != nil {
-			fmt.Println("Attempted to start S3 client without cfg")
-		}
-		s3Latest.Text = fmt.Sprintf("Last modified: %s", &obj.LastModified)
-		s3Latest.Show()
+		s3Activity.Show()
+		s3Activity.Start()
+
+		go func() {
+			obj, err := reg.S3.GetLatestBackup(&reg.Config)
+			if err != nil {
+				fmt.Println("Attempted to start S3 client without cfg")
+			}
+			fyne.Do(func() {
+				s3Activity.Stop()
+				s3Activity.Hide()
+
+				s3Latest.Text = utils.TimeAgo(obj.LastModified)
+				s3Latest.Show()
+			})
+		}()
 	})
-	s3Container := container.NewVBox(s3Label, s3ConnectButton, s3LatestButton, s3Latest)
+	s3Container := container.NewVBox(s3LabelGroup, s3ConnectButton, s3LatestButton, s3Latest)
 
 	// Migration section
 	migrationLabel := widget.NewLabel("Migrations")
