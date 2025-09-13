@@ -18,12 +18,12 @@ type Secrets struct {
 }
 
 type S3Config struct {
-	S3_endpoint   string
-	S3_access_id  string
-	S3_access_key string
-	S3_region     string
-	S3_bucket     string
-	S3_prefix     string
+	Endpoint   string
+	Access_id  string
+	Access_key string
+	Region     string
+	Bucket     string
+	Prefix     string
 }
 
 type Config struct {
@@ -55,17 +55,17 @@ func (c *Config) LoadEnv(envPath string) error {
 	}
 
 	// Update S3 config
-	c.S3.S3_access_id = os.Getenv("AWS_ACCESS_KEY_ID")
-	c.S3.S3_access_key = os.Getenv("AWS_SECRET_ACCESS_KEY")
-	c.S3.S3_endpoint = os.Getenv("AWS_ENDPOINT_URL_S3")
-	c.S3.S3_bucket = os.Getenv("BUCKET_NAME ")
-	c.S3.S3_region = os.Getenv("AWS_REGION")
-	c.S3.S3_prefix = os.Getenv("DB_PREFIX")
+	c.S3.Access_id = os.Getenv("AWS_ACCESS_KEY_ID")
+	c.S3.Access_key = os.Getenv("AWS_SECRET_ACCESS_KEY")
+	c.S3.Endpoint = os.Getenv("AWS_ENDPOINT_URL_S3")
+	c.S3.Bucket = os.Getenv("BUCKET_NAME")
+	c.S3.Region = os.Getenv("AWS_REGION")
+	c.S3.Prefix = os.Getenv("DB_PREFIX")
 
 	// Update env path in config
 	test, _ := filepath.Abs(envPath)
 	c.EnvPath = envPath
-	fmt.Printf("Loaded secrets from: %s", test)
+	fmt.Printf("Loaded secrets from: %s\n", test)
 
 	return nil
 }
