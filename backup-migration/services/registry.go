@@ -11,6 +11,7 @@ import (
 type Registry struct {
 	Config config.Config
 	App    fyne.App
+	Window fyne.Window
 
 	S3 s3.S3Client
 }
@@ -27,20 +28,6 @@ func NewRegistry() *Registry {
 
 	// Init S3 client
 	s3client := s3.NewS3Client()
-
-	// Connect to S3
-	err = s3client.Connect(config)
-	if err != nil {
-		fmt.Printf("S3 init failed: %f\n", err)
-	}
-
-	if s3client.Client != nil {
-		name, err := s3client.GetLatestBackup(config)
-		if err != nil {
-			fmt.Printf("S3 Browse failed: %f\n", err)
-		}
-		fmt.Println(name)
-	}
 
 	return &Registry{
 		Config: *config,

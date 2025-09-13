@@ -63,9 +63,9 @@ func (c *Config) LoadEnv(envPath string) error {
 	c.S3.Prefix = os.Getenv("DB_PREFIX")
 
 	// Update env path in config
-	test, _ := filepath.Abs(envPath)
-	c.EnvPath = envPath
-	fmt.Printf("Loaded secrets from: %s\n", test)
+	absPath, _ := filepath.Abs(envPath)
+	c.EnvPath = absPath
+	fmt.Printf("Loaded secrets from: %s\n", absPath)
 
 	return nil
 }
