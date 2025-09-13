@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 	"path"
 	"path/filepath"
@@ -24,7 +23,6 @@ import (
 
 type Client struct {
 	s3     *s3.Client
-	logger *slog.Logger
 	bucket string
 	prefix string
 }
@@ -37,11 +35,8 @@ type Object struct {
 	SnapshotNum  int64
 }
 
-func NewClient(cfg *models.Configs, logger *slog.Logger) (*Client, error) {
-	logger.Info("Starting S3")
-
+func NewClient(cfg *models.Configs) (*Client, error) {
 	if cfg == nil || cfg.S3_secrets_isMissing {
-		logger.Info("S3 Initialized without config")
 		return nil, errors.New("S3 Initialized without config")
 	}
 
@@ -49,7 +44,6 @@ func NewClient(cfg *models.Configs, logger *slog.Logger) (*Client, error) {
 		awsConfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(cfg.S3_secrets.AWS_ACCESS_KEY_ID, cfg.S3_secrets.AWS_SECRET_ACCESS_KEY, "")),
 	)
 	if err != nil {
-		logger.Info("S3 couldn't load default configuration")
 		return nil, fmt.Errorf("couldn't load default configuration. %w", err)
 	}
 
@@ -58,11 +52,8 @@ func NewClient(cfg *models.Configs, logger *slog.Logger) (*Client, error) {
 		options.Region = cfg.S3_secrets.AWS_REGION
 	})
 
-	logger.Info("S3 client running")
-
 	return &Client{
 		s3:     client,
-		logger: logger,
 		prefix: cfg.S3_secrets.DB_PREFIX,
 		bucket: cfg.S3_secrets.BUCKET_NAME,
 	}, nil
@@ -137,7 +128,6 @@ func (c *Client) Browse(ctx context.Context, prefix string, max int32) ([]Object
 // Returns the full local path written.
 func (c *Client) Download(ctx context.Context, key, outDir string) (string, error) {
 	key = c.joinPrefix(key)
-	c.logger.Info(key)
 	getOut, err := c.s3.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: &c.bucket,
 		Key:    &key,
@@ -185,6 +175,11 @@ func (c *Client) Upload(ctx context.Context, key, localPath string) error {
 		return fmt.Errorf("put object %q: %w", key, err)
 	}
 	return nil
+}
+
+func (c *Client) GetExistingPrefixes(ctx context.Context) {
+	start := c.joinPrefix("")
+	fmt.Print(start)
 }
 
 func (c *Client) joinPrefix(key string) string {
