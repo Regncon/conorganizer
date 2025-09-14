@@ -1,7 +1,6 @@
 package formsubmission
 
 import (
-	"fmt"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 
@@ -48,27 +47,6 @@ func UpdateOriginalImage(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyVal
 
 templ eventPicture(eventId string, title string, intro string) {
 	<section class="form-card" style="display: flex; gap: 1rem;">
-		<section class="form-group input">
-			<label class="label-small color-strong">
-				Bilde
-				<input
-					type="file"
-					name="image"
-					class="input"
-					data-bind-files
-					multiple
-					accept="image/*"
-					required
-				/>
-			</label>
-			<button
-				class="btn btn-primary"
-				data-on-click={ fmt.Sprintf("$files.length && @post('/my-events/api/new/%s/image/original')", eventId) }
-				data-attr-aria-disabled="`${!$files.length}`"
-			>
-				Submit
-			</button>
-		</section>
 		<section class="form-group input">
 			<script src="/static/web_components/banner_cropper.js"></script>
 			<banner-cropper width="430" height="200"></banner-cropper>

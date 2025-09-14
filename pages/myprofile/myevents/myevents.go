@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components/formsubmission"
+	"github.com/Regncon/conorganizer/components/formsubmission/event_picture"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/index"
 	newEvent "github.com/Regncon/conorganizer/pages/myprofile/myevents/newevent"
@@ -22,7 +23,7 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
 	kv, kvErr := SetupNats(ns)
 	if kvErr != nil {
 		return fmt.Errorf("error setting up nats: %w", kvErr)
@@ -189,10 +190,6 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						formsubmission.UpdateDescription(putDescriptionRouter, db, kv)
 					})
 
-					newApiIdRouter.Route("/image/original", func(putImageOriginalRouter chi.Router) {
-						formsubmission.UpdateOriginalImage(putImageOriginalRouter, db, kv)
-					})
-
 					// should be age-group
 					newApiIdRouter.Route("/ageGroup", func(putAgeGroupRouter chi.Router) {
 						formsubmission.UpdateAgeGroup(putAgeGroupRouter, db, kv)
@@ -212,6 +209,10 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					newApiIdRouter.Route("/notes", func(putNotesRouter chi.Router) {
 						formsubmission.UpdateNotes(putNotesRouter, db, kv)
 					})
+
+					newApiIdRouter.Route("/upload", func(uploadRouter chi.Router) {
+						eventPicture.EventImageFormSubmission(uploadRouter, db, eventImageDir, logger)
+					})
 					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
 						formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 					})
@@ -221,7 +222,6 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
 					createNewEventFormSubmission(db, logger, w, r)
 				})
-
 			})
 
 		})
@@ -229,6 +229,10 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
 			newRouter.Route("/{id}", func(newIdRoute chi.Router) {
 				newEvent.NewEventLayoutRoute(newIdRoute, db, logger)
+
+				newIdRoute.Route("/image", func(imageRouter chi.Router) {
+					eventPicture.EventPictureRoute(imageRouter)
+				})
 			})
 		})
 	})

@@ -104,7 +104,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
 
 		if fullMode {
-			cleanup, err := setupRoutes(ctx, logger, router, db)
+			cleanup, err := setupRoutes(ctx, logger, router, db, eventImageDir)
 			if err != nil {
 				logger.Error("error setting up routes; falling back to degraded mode", "err", err)
 				mountDBErrorRoutes(router, err)
