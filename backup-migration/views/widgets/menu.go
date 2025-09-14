@@ -32,18 +32,21 @@ func RootMenu(ctx context.Context, reg *services.Registry) fyne.CanvasObject {
 	})
 	envContainer := container.NewBorder(nil, nil, nil, envButton, envPath)
 
-	// S3 section
 	// todo move bindings to reg?
 	prefixList := binding.NewStringList()
 	isConnected := binding.NewBool()
 	isConnected.Set(false)
+	isPrefixValid := binding.NewBool()
+	isPrefixValid.Set(false)
+
+	// S3 section
 	s3menu := menu.MenuWidgetS3(ctx, reg, isConnected, prefixList)
 
 	// Database section
-	dbMenu := menu.MenuWidgetDB(ctx, reg, isConnected)
+	dbMenu := menu.MenuWidgetDB(ctx, reg, isConnected, isPrefixValid)
 
 	// Prefix section
-	prefix := menu.MenuWidgetPrefix(ctx, reg, isConnected, prefixList)
+	prefix := menu.MenuWidgetPrefix(ctx, reg, isConnected, prefixList, isPrefixValid)
 
 	// Application cta
 	exitButton := widget.NewButton("Exit", func() {

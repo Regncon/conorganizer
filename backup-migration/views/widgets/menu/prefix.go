@@ -13,10 +13,7 @@ import (
 	"github.com/Regncon/conorganizer/backup-migration/services"
 )
 
-func MenuWidgetPrefix(ctx context.Context, reg *services.Registry, isConnected binding.Bool, prefixList binding.StringList) fyne.CanvasObject {
-	// Databinds
-	isValidPrefix := binding.NewBool()
-
+func MenuWidgetPrefix(ctx context.Context, reg *services.Registry, isConnected binding.Bool, prefixList binding.StringList, isValidPrefix binding.Bool) fyne.CanvasObject {
 	// Labels
 	newPrefixLabel := widget.NewLabel("Set new prefix")
 	oldPrefixLabel := widget.NewLabel("Existing prefixes")

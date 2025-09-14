@@ -3,6 +3,7 @@ package menu
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -13,7 +14,7 @@ import (
 	"github.com/Regncon/conorganizer/backup-migration/services"
 )
 
-func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected binding.Bool) fyne.CanvasObject {
+func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected binding.Bool, isPrefixValid binding.Bool) fyne.CanvasObject {
 	// Databinds
 	isValidPath := binding.NewBool()
 	isValidated := binding.NewBool()
@@ -56,17 +57,33 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 		}, reg.Window)
 		fileDialog.Show()
 	})
-	validateBtn := widget.NewButton("Validate", func() {
-		// do something
-		// check is S3 is connected
-		isValidated.Set(true)
-	})
-	uploadBtn := widget.NewButton("Upload", func() {
-		// do something
 
+	validateBtn := widget.NewButton("Validate", func() {
 		isWorking.Show()
 		isWorking.Start()
-		isUploaded.Set(true)
+
+		go func() {
+			// do something
+			fyne.Do(func() {
+				isValidated.Set(true)
+				isWorking.Stop()
+				isWorking.Hide()
+			})
+		}()
+	})
+
+	uploadBtn := widget.NewButton("Upload", func() {
+		isWorking.Show()
+		isWorking.Start()
+
+		go func() {
+			// do something
+			fyne.Do(func() {
+				isUploaded.Set(true)
+				isWorking.Stop()
+				isWorking.Hide()
+			})
+		}()
 	})
 
 	// containers
@@ -88,11 +105,30 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 
 	}))
 	isValidated.AddListener(binding.NewDataListener(func() {
-		if val, _ := isValidated.Get(); val {
+		validated, _ := isValidated.Get()
+		prefixed, _ := isPrefixValid.Get()
+
+		fmt.Println("validation changed")
+
+		if validated && prefixed {
 			uploadBtn.Enable()
 		} else {
 			uploadBtn.Disable()
 		}
+
+	}))
+	isPrefixValid.AddListener(binding.NewDataListener(func() {
+		validated, _ := isValidated.Get()
+		prefixed, _ := isPrefixValid.Get()
+
+		fmt.Println("prefix changed")
+
+		if validated && prefixed {
+			uploadBtn.Enable()
+		} else {
+			uploadBtn.Disable()
+		}
+
 	}))
 	isConnected.AddListener(binding.NewDataListener(func() {
 		if val, _ := isConnected.Get(); val {
