@@ -45,11 +45,18 @@ func UpdateOriginalImage(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyVal
 	})
 }
 
-templ eventPicture(eventId string, title string, intro string) {
+templ eventPicture(eventId string, title string, intro string, imageUrl string) {
 	<section class="form-card" style="display: flex; gap: 1rem;">
 		<section class="form-group input">
+			<a
+				href={ "/my-events/new/" + eventId + "/image/" }
+				class="btn btn--primary"
+				style="place-self: center end; margin-right:  1rem"
+			>
+				Last opp bilde
+			</a>
 			<script src="/static/web_components/banner_cropper.js"></script>
-			<banner-cropper width="430" height="200"></banner-cropper>
+			<banner-cropper width="430" height="200" image-url={ "/event-images/" + imageUrl }></banner-cropper>
 			<div
 				style="display: flex;
                     flex-direction: column;

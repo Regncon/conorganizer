@@ -59,7 +59,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 		// Update the event with the image URL/path
 
 		query := `UPDATE events SET image_url = ? WHERE id = ?`
-		_, err = db.Exec(query, imagePath, eventID)
+		_, err = db.Exec(query, eventID+"_"+header.Filename, eventID)
 		if err != nil {
 			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
 			return

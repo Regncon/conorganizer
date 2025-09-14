@@ -101,6 +101,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 			router.Use(authctx.AuthMiddleware(logger))
 		}
 
+		router.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
 		router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
 
 		if fullMode {
