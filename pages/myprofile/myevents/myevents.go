@@ -213,6 +213,9 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					newApiIdRouter.Route("/upload", func(uploadRouter chi.Router) {
 						eventPicture.EventImageFormSubmission(uploadRouter, db, eventImageDir, logger)
 					})
+					newApiIdRouter.Route("/upload-cropped", func(uploadCroppedRouter chi.Router) {
+						eventPicture.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, logger)
+					})
 					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
 						formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 					})

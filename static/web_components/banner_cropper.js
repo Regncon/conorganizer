@@ -1,6 +1,6 @@
 class BannerCropper extends HTMLElement {
     static get observedAttributes() {
-        return ['width', 'height', 'image-url'];
+        return ['width', 'height', 'image-url', 'event-id', 'image-kind', 'upload-url', 'post-method', 'webp-quality'];
     }
 
     constructor() {
@@ -36,8 +36,8 @@ class BannerCropper extends HTMLElement {
         </div>
 
         <div>
-          <button id="exportButton" type="button">Export PNG</button>
-          <a id="downloadLink"></a>
+          <button id="exportButton" type="button">Save</button>
+          <span id="status" aria-live="polite" style="margin-left:8px;"></span>
         </div>
 
         <div>
@@ -55,7 +55,7 @@ class BannerCropper extends HTMLElement {
         this.cameraIcon = root.getElementById('cameraIcon');
         this.zoom = root.getElementById('zoom');
         this.exportButton = root.getElementById('exportButton');
-        this.downloadLink = root.getElementById('downloadLink');
+        this.statusEl = root.getElementById('status');
 
         // Bind handlers once
         this.handleZoomInput = this.handleZoomInput.bind(this);
@@ -99,6 +99,13 @@ class BannerCropper extends HTMLElement {
             const url = this.getAttribute('image-url');
             if (url) this._loadImage(url);
         }
+
+        if (name === 'image-kind') {
+            const k = this._normalizedKind();
+            if (!['card', 'banner'].includes(k)) {
+                console.warn('Invalid image-kind; expected "card" or "banner". Falling back to "banner".');
+            }
+        }
     }
 
     // --- UI handlers ---
@@ -131,11 +138,72 @@ class BannerCropper extends HTMLElement {
         try { this.canvas.releasePointerCapture?.(e.pointerId); } catch { }
     }
 
-    handleExport() {
-        const dataURL = this.canvas.toDataURL('image/png');
-        this.downloadLink.href = dataURL;
-        this.downloadLink.download = 'banner.png';
-        this.downloadLink.textContent = 'Download banner.png';
+    async handleExport() {
+        if (!this.imageLoaded) {
+            this._status('No image to save.', true);
+            return;
+        }
+
+        const eventId = this.getAttribute('event-id');
+        if (!eventId) {
+            this._status('Missing event-id attribute.', true);
+            console.error('BannerCropper: missing event-id attribute.');
+            return;
+        }
+
+        const kind = this._normalizedKind();
+        const filename = `${eventId}-${kind}.webp`;
+        const url = this._computeUploadUrl(eventId, kind);
+        const method = (this.getAttribute('post-method') || 'POST').toUpperCase();
+        const qualityAttr = Number(this.getAttribute('webp-quality'));
+        const quality = Number.isFinite(qualityAttr) ? Math.min(1, Math.max(0, qualityAttr)) : 0.9;
+
+        this.exportButton.disabled = true;
+        this._status('Preparing image...');
+
+        const blob = await this._canvasToWebpBlob(quality);
+        if (!blob) {
+            this._status('Your browser could not create a WebP image.', true);
+            this.exportButton.disabled = false;
+            return;
+        }
+
+        // Prepare form data
+        const form = new FormData();
+        form.append('file', blob, filename);
+        form.append('eventId', eventId);
+        form.append('kind', kind);
+
+        // Give the app a chance to modify or handle upload
+        const detail = { url, method, formData: form, filename, contentType: 'image/webp' };
+        const ev = new CustomEvent('beforeupload', { detail, cancelable: true });
+        if (!this.dispatchEvent(ev)) {
+            // The page will handle the upload
+            this._status('Upload handled externally.');
+            this.exportButton.disabled = false;
+            return;
+        }
+
+        // Do the upload
+        try {
+            this._status('Uploading...');
+            const res = await fetch(detail.url, {
+                method: "POST",
+                body: detail.formData,
+            });
+            if (!res.ok) {
+                const text = await res.text().catch(() => '');
+                throw new Error(`HTTP ${res.status} ${res.statusText}${text ? `: ${text}` : ''}`);
+            }
+            this._status('Uploaded ✓');
+            this.dispatchEvent(new CustomEvent('uploadsuccess', { detail: { url: detail.url, filename } }));
+        } catch (err) {
+            console.error('Upload failed:', err);
+            this._status('Upload failed.', true);
+            this.dispatchEvent(new CustomEvent('uploaderror', { detail: { error: String(err) } }));
+        } finally {
+            this.exportButton.disabled = false;
+        }
     }
 
     // --- Helpers ---
@@ -181,6 +249,40 @@ class BannerCropper extends HTMLElement {
             this.redraw();
         };
         this.image.src = url;
+    }
+
+    async _canvasToWebpBlob(quality) {
+        // Prefer toBlob; fall back to dataURL if needed
+        const canvas = this.canvas;
+        if (canvas.toBlob) {
+            return new Promise((resolve) => {
+                canvas.toBlob(resolve, 'image/webp', quality);
+            });
+        }
+        try {
+            const dataUrl = canvas.toDataURL('image/webp', quality);
+            const res = await fetch(dataUrl);
+            return await res.blob();
+        } catch {
+            return null;
+        }
+    }
+
+    _normalizedKind() {
+        const k = (this.getAttribute('image-kind') || 'banner').toLowerCase();
+        return k === 'card' ? 'card' : 'banner';
+    }
+
+    _computeUploadUrl(eventId, kind) {
+        const attr = this.getAttribute('upload-url');
+        if (attr && attr.trim()) return attr;
+        return `/my-events/api/new/${encodeURIComponent(eventId)}/upload-cropped`;
+    }
+
+    _status(msg, isError = false) {
+        if (!this.statusEl) return;
+        this.statusEl.textContent = msg || '';
+        this.statusEl.style.color = isError ? 'red' : 'inherit';
     }
 
     setInitialView() {

@@ -1,50 +1,5 @@
 package formsubmission
 
-import (
-	"github.com/go-chi/chi/v5"
-	"net/http"
-
-	"database/sql"
-	"github.com/Regncon/conorganizer/service/keyvalue"
-	"github.com/nats-io/nats.go/jetstream"
-	datastar "github.com/starfederation/datastar-go/datastar"
-)
-
-func UpdateOriginalImage(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	//
-	eventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		type Store struct {
-			Input string `json:"original_image"`
-		}
-		store := &Store{}
-
-		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		eventID := chi.URLParam(r, "id")
-		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
-			return
-		}
-
-		/*
-			        query := `UPDATE events SET age_group = ? WHERE id = ?`
-					_, err := db.Exec(query, store.Input, eventID)
-					if err != nil {
-						http.Error(w, "Failed to update the title for event in the database", http.StatusInternalServerError)
-						return
-					}
-
-		*/
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
-			return
-		}
-	})
-}
-
 templ eventPicture(eventId string, title string, intro string, imageUrl string) {
 	<section class="form-card">
 		<a
@@ -56,7 +11,12 @@ templ eventPicture(eventId string, title string, intro string, imageUrl string) 
 		</a>
 		<section class="form-group input">
 			<script src="/static/web_components/banner_cropper.js"></script>
-			<banner-cropper width="430" height="200" image-url={ "/event-images/" + imageUrl }></banner-cropper>
+			<banner-cropper
+				event-id={ eventId }
+				width="430"
+				height="200"
+				image-url={ "/event-images/" + imageUrl }
+			></banner-cropper>
 			<div
 				style="display: flex;
                     flex-direction: column;
@@ -71,7 +31,12 @@ templ eventPicture(eventId string, title string, intro string, imageUrl string) 
 		</section>
 		<section class="form-group input">
 			<script src="/static/web_components/banner_cropper.js"></script>
-			<banner-cropper width="1300" height="200" image-url={ "/event-images/" + imageUrl }></banner-cropper>
+			<banner-cropper
+				event-id={ eventId }
+				width="1300"
+				height="200"
+				image-url={ "/event-images/" + imageUrl }
+			></banner-cropper>
 			<div
 				style="display: flex;
                     flex-direction: column;
