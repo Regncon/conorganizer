@@ -19,6 +19,7 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 	isValidPath := binding.NewBool()
 	isValidated := binding.NewBool()
 	isUploaded := binding.NewBool()
+	validatedError := binding.NewString()
 
 	// Activity status
 	isWorking := widget.NewActivity()
@@ -29,6 +30,8 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 	// Input/output
 	pathInput := widget.NewEntry()
 	pathInput.PlaceHolder = "Choose local .db"
+	validateErrorText := widget.NewRichText()
+	downloadSuccess := widget.NewLabel("Database uploaded!")
 
 	// Buttons
 	fileOpenerBtn := widget.NewButton("Browse", func() {
@@ -48,12 +51,15 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 				return
 			}
 
-			defer reader.Close()
+			// Attempt to load db into config
+			reg.Config.DB.Path = reader.URI().Path()
+			if err = reg.DB.Load(reg.Config); err != nil {
+				dialog.ShowError(err, reg.Window)
+			}
 
 			// Set file path
 			uri := reader.URI()
 			pathInput.SetText(uri.Path())
-
 		}, reg.Window)
 		fileDialog.Show()
 	})
@@ -63,9 +69,27 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 		isWorking.Start()
 
 		go func() {
-			// do something
+			if err := reg.DB.Validate(); err != nil {
+				fyne.Do(func() {
+					dialog.ShowError(err, reg.Window)
+					isValidated.Set(false)
+					validatedError.Set(fmt.Sprint(err))
+					validateErrorText.Show()
+					isWorking.Stop()
+					isWorking.Hide()
+				})
+				return
+			}
+			if err := reg.DB.Close(); err != nil {
+				fyne.Do(func() {
+					dialog.ShowError(err, reg.Window)
+				})
+			}
+
 			fyne.Do(func() {
 				isValidated.Set(true)
+				validatedError.Set("")
+				validateErrorText.Hide()
 				isWorking.Stop()
 				isWorking.Hide()
 			})
@@ -77,9 +101,15 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 		isWorking.Start()
 
 		go func() {
-			// do something
-			fyne.Do(func() {
+			err := reg.S3.Upload(&reg.Config)
+			if err != nil {
+				dialog.ShowError(err, reg.Window)
+				isUploaded.Set(false)
+			} else {
 				isUploaded.Set(true)
+			}
+
+			fyne.Do(func() {
 				isWorking.Stop()
 				isWorking.Hide()
 			})
@@ -89,10 +119,12 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 	// containers
 	labelContainer := container.NewBorder(nil, nil, menuLabel, isWorking)
 	fileOpenContainer := container.NewBorder(nil, nil, nil, fileOpenerBtn, pathInput)
+	validationContainer := container.NewBorder(nil, validateErrorText, nil, nil, validateBtn)
 
 	// Initial gui states
 	validateBtn.Disable()
 	uploadBtn.Disable()
+	validateErrorText.Hide()
 
 	// Watchers
 	isValidPath.AddListener(binding.NewDataListener(func() {
@@ -108,8 +140,6 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 		validated, _ := isValidated.Get()
 		prefixed, _ := isPrefixValid.Get()
 
-		fmt.Println("validation changed")
-
 		if validated && prefixed {
 			uploadBtn.Enable()
 		} else {
@@ -120,8 +150,6 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 	isPrefixValid.AddListener(binding.NewDataListener(func() {
 		validated, _ := isValidated.Get()
 		prefixed, _ := isPrefixValid.Get()
-
-		fmt.Println("prefix changed")
 
 		if validated && prefixed {
 			uploadBtn.Enable()
@@ -135,6 +163,13 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 			uploadBtn.Show()
 		} else {
 			uploadBtn.Hide()
+		}
+	}))
+	isUploaded.AddListener(binding.NewDataListener(func() {
+		if val, _ := isUploaded.Get(); val {
+			downloadSuccess.Show()
+		} else {
+			downloadSuccess.Hide()
 		}
 	}))
 
@@ -153,7 +188,8 @@ func MenuWidgetDB(ctx context.Context, reg *services.Registry, isConnected bindi
 	return container.NewVBox(
 		labelContainer,
 		fileOpenContainer,
-		validateBtn,
+		validationContainer,
 		uploadBtn,
+		downloadSuccess,
 	)
 }

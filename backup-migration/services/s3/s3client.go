@@ -102,6 +102,8 @@ func (c *S3Client) ListExistingPrefixes(cfg *config.Config) (*[]string, error) {
 
 	ctx.Done()
 
+	// todo: convert output to {prefix, last updated}
+
 	return &prefixes, nil
 }
 
@@ -191,7 +193,7 @@ func (c *S3Client) Download(cfg *config.Config, key string) (*string, error) {
 
 	// construct filename
 	lastModified := aws.ToTime(getOut.LastModified)
-	fileTime := lastModified.Format("20060102_0304")
+	fileTime := lastModified.Local().Format("20060102_1504")
 	fileDir := filepath.Dir(ex)
 	fileName := "regncon_" + fileTime + ".db"
 
@@ -202,4 +204,35 @@ func (c *S3Client) Download(cfg *config.Config, key string) (*string, error) {
 	}
 
 	return newFile, nil
+}
+
+func (c *S3Client) Upload(cfg *config.Config) error {
+	// check that S3 client is connected
+	if c.Client == nil {
+		return errors.New("Upload called without an active S3 connection")
+	}
+
+	// Check .db file status
+	// todo: double check validation?
+	if !cfg.DB.Validated {
+		return errors.New("database must be validated before uploading")
+	}
+
+	// Generate S3 key and other required metadata
+
+	// Open file in preparation for conversion
+	/* rawData, err := os.Open(cfg.DB.Path)
+		if err != nil {
+			return err
+		}
+		compressedData, err := utils.CompressDatabase(rawData)
+		if err != nil {
+			return err
+		}
+
+	    c.Client.PutObject() */
+
+	// upload file
+
+	return nil
 }

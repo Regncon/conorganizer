@@ -16,3 +16,8 @@ func DecompressSnapshot(reader io.Reader) ([]byte, error) {
 	}
 	return data, nil
 }
+
+func CompressDatabase(writer io.Writer) ([]byte, error) {
+	var test []byte
+	return test, nil
+}

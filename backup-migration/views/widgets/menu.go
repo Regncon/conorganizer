@@ -50,6 +50,9 @@ func RootMenu(ctx context.Context, reg *services.Registry) fyne.CanvasObject {
 
 	// Application cta
 	exitButton := widget.NewButton("Exit", func() {
+		if reg.DB.DB != nil {
+			reg.DB.Close()
+		}
 		reg.App.Quit()
 	})
 	bottomMenuContainer := container.NewVBox(exitButton)
