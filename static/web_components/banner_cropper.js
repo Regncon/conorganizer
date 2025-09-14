@@ -35,12 +35,6 @@ class BannerCropper extends HTMLElement {
           </span>
         </div>
 
-        <!-- Optional: simple loader for local files -->
-        <div>
-          <input id="fileInput" type="file" accept="image/*">
-          <button id="loadButton" type="button">Load Image</button>
-        </div>
-
         <div>
           <button id="exportButton" type="button">Export PNG</button>
           <a id="downloadLink"></a>
@@ -62,8 +56,6 @@ class BannerCropper extends HTMLElement {
         this.zoom = root.getElementById('zoom');
         this.exportButton = root.getElementById('exportButton');
         this.downloadLink = root.getElementById('downloadLink');
-        this.fileInput = root.getElementById('fileInput');
-        this.loadButton = root.getElementById('loadButton');
 
         // Bind handlers once
         this.handleZoomInput = this.handleZoomInput.bind(this);
@@ -71,11 +63,9 @@ class BannerCropper extends HTMLElement {
         this.onPointerMove = this.onPointerMove.bind(this);
         this.onPointerUp = this.onPointerUp.bind(this);
         this.handleExport = this.handleExport.bind(this);
-        this.handleLoadClick = this.handleLoadClick.bind(this);
     }
 
     connectedCallback() {
-        // Apply initial attributes now that the element is in the DOM
         this._applyInitialAttributes();
 
         // Listeners
@@ -84,9 +74,7 @@ class BannerCropper extends HTMLElement {
         window.addEventListener('pointermove', this.onPointerMove);
         window.addEventListener('pointerup', this.onPointerUp);
         this.exportButton.addEventListener('click', this.handleExport);
-        this.loadButton.addEventListener('click', this.handleLoadClick);
 
-        // First paint
         this.redraw();
     }
 
@@ -96,10 +84,8 @@ class BannerCropper extends HTMLElement {
         window.removeEventListener('pointermove', this.onPointerMove);
         window.removeEventListener('pointerup', this.onPointerUp);
         this.exportButton.removeEventListener('click', this.handleExport);
-        this.loadButton.removeEventListener('click', this.handleLoadClick);
     }
 
-    // React to attribute changes after connection / upgrade
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return;
 
@@ -116,16 +102,6 @@ class BannerCropper extends HTMLElement {
     }
 
     // --- UI handlers ---
-    handleLoadClick() {
-        const f = this.fileInput.files?.[0];
-        if (!f) return;
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            this._loadImage(e.target.result);
-        };
-        reader.readAsDataURL(f);
-    }
-
     handleZoomInput(e) {
         const newScale = parseFloat(e.target.value);
         this.setScale(newScale);
@@ -164,7 +140,6 @@ class BannerCropper extends HTMLElement {
 
     // --- Helpers ---
     _applyInitialAttributes() {
-        // width/height
         if (this.hasAttribute('width')) {
             const w = Number(this.getAttribute('width'));
             if (!Number.isNaN(w) && w > 0) this.bannerWidth = w;
@@ -175,7 +150,6 @@ class BannerCropper extends HTMLElement {
         }
         this.setCanvasSize(this.bannerWidth, this.bannerHeight);
 
-        // image url (kebab-case)
         const url = this.getAttribute('image-url');
         if (url) {
             this._loadImage(url);
@@ -188,7 +162,6 @@ class BannerCropper extends HTMLElement {
     setCanvasSize(w, h) {
         this.bannerWidth = w;
         this.bannerHeight = h;
-        // Use canvas properties (not attributes) for correct sizing
         this.canvas.width = w;
         this.canvas.height = h;
         if (this.imageLoaded) this.setInitialView();
