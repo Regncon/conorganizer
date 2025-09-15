@@ -206,7 +206,7 @@ func UpdateNotes(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 
 templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, canBeRunInEnglish bool, maxPlayers int, notes string) {
 	<article class="form-card">
-		<h4>Øvrige Detaljer</h4>
+		<h4 class="form-card-title">Øvrige Detaljer</h4>
 		<section class="details-section">
 			<label class="label-small color-strong form-group age-group">
 				Aldersgruppe
