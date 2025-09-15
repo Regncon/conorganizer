@@ -35,10 +35,6 @@ templ FormBody(event *models.Event) {
 			.form-card {
 				display: grid;
 
-				h4 {
-					margin: 0;
-				}
-
 				.organizer-section {
 					display: grid;
 					gap: 1.25rem;
@@ -109,9 +105,10 @@ templ FormBody(event *models.Event) {
 
 					.organizer-section {
 						display: flex;
-						justify-content: space-between;
+						gap: var(--spacing-medium);
 						.form-group {
 							gap: 0.5rem;
+							flex-grow: 1;
 						}
 					}
 
@@ -149,7 +146,6 @@ templ FormBody(event *models.Event) {
 					}
 
 					.details-section {
-						margin-block-start: 1rem;
 						grid-template-columns: minmax(7.5rem, 0.4fr) minmax(
 								12.5rem,
 								0.6fr
