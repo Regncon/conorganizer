@@ -60,6 +60,10 @@
     --border-radius-small: 4px;
     --border-radius-medium: 8px;
 
+    /* content width */
+    --page-header-max-width: 1920px;
+    --page-content-max-width: 1440px;
+
     /* breakpoints */
     --mobile-min-width: 320px;
     --mobile-max-column-width: 430px;
@@ -169,7 +173,6 @@ body {
         container-type: inline-size;
         container-name: formsubmission-css-container;
         display: grid;
-        place-content: center;
     }
 }
 
