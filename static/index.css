@@ -176,17 +176,24 @@ body {
     }
 }
 
+.header-content-container {
+    max-width: var(--page-header-max-width);
+    margin: 0 auto;
+    padding: 0 var(--spacing-xlarge);
+}
 .page-content-container {
     max-width: var(--page-content-max-width);
     margin: 0 auto var(--spacing-xlarge);
     padding: 0 var(--spacing-xlarge);
 }
 @media screen and (max-width: 1200px) {
+    .header-content-container,
     .page-content-container {
         padding: 0 var(--spacing-medium);
     }
 }
 @media screen and (max-width: 600px) {
+    .header-content-container,
     .page-content-container {
         padding: 0 8px;
     }
