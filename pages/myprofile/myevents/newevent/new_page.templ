@@ -26,7 +26,7 @@ templ NewEventFormPageContent(eventId string, userId string, db *sql.DB, logger 
 		{Name: "Nytt Arrangement", Url: ""},
 	})
 	<form
-		class="formsubmission-wrapper"
+		class="formsubmission-wrapper page-content-container"
 		action={ "/my-events/api/new/" + event.ID + "/submit" }
 		method="post"
 	>
