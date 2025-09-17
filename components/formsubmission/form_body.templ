@@ -7,6 +7,10 @@ import (
 templ FormBody(event *models.Event) {
 	<style>
 		.formsubmission-wrapper {
+			max-width: var(--page-content-max-width);
+			margin: auto;
+			margin-bottom: var(--spacing-xlarge);
+
 			> * + .form-card {
 				margin-block-start: 1rem;
 			}
