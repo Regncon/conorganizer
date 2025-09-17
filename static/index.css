@@ -179,6 +179,17 @@ body {
 .page-content-container {
     max-width: var(--page-content-max-width);
     margin: 0 auto var(--spacing-xlarge);
+    padding: 0 var(--spacing-xlarge);
+}
+@media screen and (max-width: 1200px) {
+    .page-content-container {
+        padding: 0 var(--spacing-medium);
+    }
+}
+@media screen and (max-width: 600px) {
+    .page-content-container {
+        padding: 0 8px;
+    }
 }
 
 h1 {
