@@ -11,7 +11,10 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			display: flex;
 			gap: 0.5rem;
 			padding-top: 1rem;
-			margin-bottom: 1rem;
+			padding-bottom: 1rem;
+			width: 100%;
+			max-width: var(--page-header-max-width);
+			margin: auto;
 		}
 
 		.breadcrumbs a {
