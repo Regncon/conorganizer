@@ -27,7 +27,7 @@ type PreviousNext struct {
 }
 
 templ PreviousNextBar(previousNextData PreviousNext) {
-	<div style="display: flex; gap: 1rem; justify-content: space-between; ">
+	<div class="page-content-container" style="width: 100%; display: flex; gap: 1rem; justify-content: space-between; ">
 		if previousNextData.PreviousUrl != "" {
 			<a
 				href={ templ.URL(previousNextData.PreviousUrl) }
