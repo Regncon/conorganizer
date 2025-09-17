@@ -176,6 +176,11 @@ body {
     }
 }
 
+.page-content-container {
+    max-width: var(--page-content-max-width);
+    margin: 0 auto var(--spacing-xlarge);
+}
+
 h1 {
     color: var(--color-text-strong);
 }

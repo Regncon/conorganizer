@@ -20,9 +20,11 @@ templ myEventsPageContent(userid string, db *sql.DB, logger *slog.Logger) {
 		{Name: "Hjem", Url: "/"},
 		{Name: "Mine Arrangementer", Url: ""},
 	})
-	<h1>Mine Arrangementer</h1>
-	<div class="my-event-grid">
-		@events(userid, db, logger)
+	<div class="page-content-container">
+		<h1>Mine Arrangementer</h1>
+		<div class="my-event-grid">
+			@events(userid, db, logger)
+		</div>
 	</div>
 	<style>
 		.my-event-grid {
@@ -32,11 +34,6 @@ templ myEventsPageContent(userid string, db *sql.DB, logger *slog.Logger) {
 				minmax(var(--mobile-min-width), 1fr)
 			);
 			gap: 1rem;
-		}
-		@media (min-width: 600px) {
-			.my-event-grid {
-				padding: 1rem;
-			}
 		}
 	</style>
 }
