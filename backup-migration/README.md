@@ -6,10 +6,11 @@ Super enkel gui for å gjøre ned og opplasting av databaser for Regncon 2025.
 
 For best mulig funksjonalitet anbefaler jeg at du bygger programmet. Krever at du har [Go installert](https://go.dev/doc/install)
 ```console
-go build .
+go build . && /.backup-migration
 ```
 
-## Migration med Goose
+
+## Manuel migration med Goose
 > [!TIP]
 > Hvis du ønsker å kjøre Goose via cli kan du finne installasjons veiledning her [link](https://pressly.github.io/goose/installation/)
 
@@ -18,11 +19,12 @@ Backup-migration applikasjonen bruker dette programmet for å gjøre nødvendige
 
 Du kan bruke backup-migration applikasjonen til å laste ned nyeste versjon av regncon databasen. Filen vill lagres i samme mappe som binærfilen kjøres fra og få følgende navn struktur `regncon-<date>.db`
 
-### Goose command line
+
+## Goose command line
 > [!NOTE]
 > Hvis du har en `.env` med [goose variabler](https://pressly.github.io/goose/documentation/environment-variables/) vill cli verktøyet prøve å lese disse
 
-#### Lag ny migrasjon
+### Lag ny migrasjon
 Hvis du ønsker å gjøre en endring i databasen må du først lage migrasjonsfilen, følgende kommando lager en `.sql` fil som du kan skrive inn endringene i.
 Gjerne bruk et forklarende navn med snake_case, f.eks: `events_updating_status_default` eller `users_adding_age`
 
@@ -30,7 +32,9 @@ Gjerne bruk et forklarende navn med snake_case, f.eks: `events_updating_status_d
 goose create <subject> sql
 ```
 
-#### Oppdater database med alle migrasjons steg
+Les mer [her](https://pressly.github.io/goose/documentation/annotations/) for veiledning og eksempler i å skrive migrasjonsfiler i sql
+
+### Oppdater database med alle migrasjons steg
 Følgende kommando går gradvis igjennom alle migrasjonsfiler og gjør nødvendige endringer i databasen
 
 ```console
