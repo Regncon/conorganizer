@@ -6,8 +6,6 @@ import (
 	"io"
 	"os"
 	"strings"
-	//"encoding/json"
-	//	"encoding/base64"
 
 	"database/sql"
 	"github.com/go-chi/chi/v5"
@@ -77,11 +75,6 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 	})
 }
 
-type croppedImagePayload struct {
-	Image string `json:"image"` // base64; may include data:...;base64, prefix
-	Kind  string `json:"kind"`  // "banner" or "card"
-}
-
 func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Received cropped image upload request")
@@ -91,15 +84,22 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 			http.Error(w, "Event ID is required", http.StatusBadRequest)
 			return
 		}
-		logger.Info("Cropped image upload for event", "eventID", eventID)
-		file, header, err := r.FormFile("image")
+		imageKind := r.FormValue("kind")
+		if imageKind != "card" && imageKind != "banner" {
+			logger.Error("Invalid image kind", "imageKind", imageKind)
+			http.Error(w, "Invalid image kind", http.StatusBadRequest)
+			return
+		}
+		logger.Info("Uploading cropped event image", "eventID", eventID, "imageKind", imageKind)
+		file, _, err := r.FormFile("image")
 		if err != nil {
 			logger.Error("Failed to get image from form", "error", err)
 			http.Error(w, "Failed to get image from form", http.StatusBadRequest)
 			return
 		}
 		defer file.Close()
-		imagePath := fmt.Sprintf("%s/%s_%s", *eventImageDir, eventID, header.Filename)
+		filename := fmt.Sprintf("%s_%s.webp", eventID, imageKind)
+		imagePath := fmt.Sprintf("%s/%s", *eventImageDir, filename)
 		out, err := os.Create(imagePath)
 		if err != nil {
 			logger.Error("Failed to create image file", "error", err)
@@ -114,58 +114,6 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
-		/*
-		        var p croppedImagePayload
-				logger.Info("Body:", "body", r.Body)
-				if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-					logger.Error("Invalid JSON payload", "error", err)
-					http.Error(w, "Invalid JSON payload", http.StatusBadRequest)
-					return
-				}
-				logger.Info("Cropped image payload received", "kind", p.Kind, "image_length", len(p.Image))
-
-				/*
-					kind := strings.ToLower(strings.TrimSpace(p.Kind))
-					if kind != "banner" && kind != "card" {
-						logger.Error("Invalid kind; must be 'banner' or 'card'", "kind", p.Kind)
-						http.Error(w, "kind must be 'banner' or 'card'", http.StatusBadRequest)
-						return
-					}
-
-					raw := strings.TrimSpace(p.Image)
-					if raw == "" {
-						logger.Error("Missing image field")
-						http.Error(w, "image (base64) is required", http.StatusBadRequest)
-						return
-					}
-
-					// Optional: strip data URL prefix if present
-					if strings.HasPrefix(raw, "data:") {
-						if comma := strings.IndexByte(raw, ','); comma != -1 {
-							raw = raw[comma+1:]
-						}
-					}
-
-					// Decode base64 (support both padded and raw)
-					data, err := base64.StdEncoding.DecodeString(raw)
-					if err != nil {
-						data, err = base64.RawStdEncoding.DecodeString(raw)
-						if err != nil {
-							logger.Error("Failed to decode base64 image", "error", err)
-							http.Error(w, "Failed to decode base64 image", http.StatusBadRequest)
-							return
-						}
-					}
-
-					filename := fmt.Sprintf("%s-%s.webp", eventID, kind)
-					imagePath := fmt.Sprintf("%s/%s", *eventImageDir, filename)
-					if err := os.WriteFile(imagePath, data, 0644); err != nil {
-						logger.Error("Failed to save image file", "error", err)
-						http.Error(w, "Failed to save image file", http.StatusInternalServerError)
-						return
-					}
-					logger.Info("Cropped image saved successfully", "path", imagePath)
-		*/
 		w.WriteHeader(http.StatusNoContent)
 	})
 }

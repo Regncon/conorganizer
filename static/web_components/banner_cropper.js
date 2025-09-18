@@ -248,7 +248,6 @@ class BannerCropper extends HTMLElement {
     }
 
     async _canvasToWebpBlob(quality) {
-        // Prefer toBlob; fall back to dataURL if needed
         const canvas = this.canvas;
         if (canvas.toBlob) {
             return new Promise((resolve) => {
