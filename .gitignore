@@ -2,9 +2,16 @@
 # ------------------------------------------------------------------
 data/*
 database/*
-backup-service/regncon
 *_templ.go
 *_templ.txt
+
+conorganizer
+
+# Backup services & migrations
+# ------------------------------------------------------------------
+backup-migration/**/*.db
+backup-migration/backup-migration
+backup-service/regncon
 
 # ------------------------------------------------------------------
 # Go
