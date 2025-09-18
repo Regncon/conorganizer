@@ -9,7 +9,7 @@ else
 fi
 
 # Restore the database if it does not already exist.
-if [ -f /var/lib/regnconDB ]; then
+if [ -f /var/lib/regncon/events.db ]; then
 	echo "Database already exists, skipping restore"
 else
 	echo "No database found, restoring from replica if exists"
