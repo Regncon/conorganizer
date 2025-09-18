@@ -107,7 +107,7 @@ func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 
 templ contactInfo(eventId string, name string, email string, phone string) {
 	<article class="form-card">
-		<h4>Om arrangøren</h4>
+		<h4 class="form-card-title">Om arrangøren</h4>
 		<section class="organizer-section">
 			<label class="label color-strong form-group">
 				Arrangør

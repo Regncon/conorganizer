@@ -174,17 +174,27 @@ body {
 }
 
 h1 {
+    margin: 0;
     color: var(--color-text-strong);
 }
 
 h3 {
+    margin: 0;
     font-weight: 700;
     font-size: var(--text-heading-3);
 }
 
 h4 {
+    margin: 0;
     font-weight: 400;
     font-size: var(--text-heading-4);
+}
+
+p {
+    margin: 0;
+}
+p + p {
+    margin-top: 1rem
 }
 
 hr {
@@ -281,7 +291,11 @@ input {
 .form-card {
     border-radius: var(--border-radius-medium);
     background-color: var(--bg-surface);
-    padding: 1rem;
+    padding: var(--spacing-medium);
+}
+
+.form-card-title {
+    margin-bottom: var(--spacing-xsmall);
 }
 
 .item-card {
