@@ -1,6 +1,6 @@
 class BannerCropper extends HTMLElement {
     static get observedAttributes() {
-        return ['width', 'height', 'image-url', 'event-id', 'image-kind', 'upload-url', 'post-method', 'webp-quality'];
+        return ['width', 'height', 'image-url', 'event-id', 'image-kind'];
     }
 
     constructor() {
@@ -95,11 +95,6 @@ class BannerCropper extends HTMLElement {
             this.setCanvasSize(w, h);
         }
 
-        if (name === 'image-url') {
-            const url = this.getAttribute('image-url');
-            if (url) this._loadImage(url);
-        }
-
         if (name === 'image-kind') {
             const k = this._normalizedKind();
             if (!['card', 'banner'].includes(k)) {
@@ -152,15 +147,10 @@ class BannerCropper extends HTMLElement {
         }
 
         const kind = this._normalizedKind();
-        const filename = `${eventId}-${kind}.webp`;
-        const url = this._computeUploadUrl(eventId, kind);
-        const method = (this.getAttribute('post-method') || 'POST').toUpperCase();
-        const qualityAttr = Number(this.getAttribute('webp-quality'));
-        const quality = Number.isFinite(qualityAttr) ? Math.min(1, Math.max(0, qualityAttr)) : 0.9;
-
         this.exportButton.disabled = true;
         this._status('Preparing image...');
 
+        const quality = 0.9;
         const blob = await this._canvasToWebpBlob(quality);
         if (!blob) {
             this._status('Your browser could not create a WebP image.', true);
@@ -169,12 +159,14 @@ class BannerCropper extends HTMLElement {
         }
 
         // Prepare form data
+        const filename = `${eventId}-${kind}.webp`;
         const form = new FormData();
-        form.append('file', blob, filename);
-        form.append('eventId', eventId);
+        form.append('image', blob, filename);
         form.append('kind', kind);
 
         // Give the app a chance to modify or handle upload
+        const method = 'POST';
+        const url = `/my-events/api/new/${encodeURIComponent(eventId)}/upload-cropped`;
         const detail = { url, method, formData: form, filename, contentType: 'image/webp' };
         const ev = new CustomEvent('beforeupload', { detail, cancelable: true });
         if (!this.dispatchEvent(ev)) {
@@ -187,10 +179,13 @@ class BannerCropper extends HTMLElement {
         // Do the upload
         try {
             this._status('Uploading...');
+            console.log('Uploading to', detail.url, 'with method', detail.method);
             const res = await fetch(detail.url, {
-                method: "POST",
-                body: detail.formData,
+                method: detail.method,
+                credentials: "same-origin",
+                body: detail.formData
             });
+            console.log('Upload response', res);
             if (!res.ok) {
                 const text = await res.text().catch(() => '');
                 throw new Error(`HTTP ${res.status} ${res.statusText}${text ? `: ${text}` : ''}`);
@@ -202,6 +197,7 @@ class BannerCropper extends HTMLElement {
             this._status('Upload failed.', true);
             this.dispatchEvent(new CustomEvent('uploaderror', { detail: { error: String(err) } }));
         } finally {
+            console.log('Upload complete');
             this.exportButton.disabled = false;
         }
     }
@@ -269,6 +265,7 @@ class BannerCropper extends HTMLElement {
     }
 
     _normalizedKind() {
+        console.log('kind', this.getAttribute('image-kind'));
         const k = (this.getAttribute('image-kind') || 'banner').toLowerCase();
         return k === 'card' ? 'card' : 'banner';
     }

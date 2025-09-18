@@ -15,6 +15,7 @@ templ eventPicture(eventId string, title string, intro string, imageUrl string) 
 				event-id={ eventId }
 				width="430"
 				height="200"
+				image-kind="card"
 				image-url={ "/event-images/" + imageUrl }
 			></banner-cropper>
 			<div
@@ -35,6 +36,7 @@ templ eventPicture(eventId string, title string, intro string, imageUrl string) 
 				event-id={ eventId }
 				width="1300"
 				height="200"
+				image-kind="banner"
 				image-url={ "/event-images/" + imageUrl }
 			></banner-cropper>
 			<div
