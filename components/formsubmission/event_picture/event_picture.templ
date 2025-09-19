@@ -11,10 +11,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"net/http"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
 )
 
-func EventPictureRoute(router chi.Router) {
+func EventPictureRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 		if eventId == "" {
@@ -25,7 +26,7 @@ func EventPictureRoute(router chi.Router) {
 		layouts.Base(
 			"Last opp blide",
 			userctx.GetUserRequestInfo(ctx),
-			page(eventId),
+			page(eventId, db, logger),
 		).Render(ctx, w)
 	})
 }
@@ -62,7 +63,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
-		// Update the event with the image URL/path
+		// Update the event with the iEventPictureRoutemage URL/path
 
 		query := `UPDATE events SET image_url = ? WHERE id = ?`
 		_, err = db.Exec(query, eventID+"_"+header.Filename, eventID)
@@ -71,7 +72,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			return
 		}
 
-		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s", eventID), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/", eventID), http.StatusSeeOther)
 	})
 }
 
@@ -114,11 +115,23 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
-		w.WriteHeader(http.StatusNoContent)
+		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/", eventID), http.StatusSeeOther)
 	})
 }
 
-templ page(eventId string) {
+templ page(eventId string, db *sql.DB, logger *slog.Logger) {
+	{{event, eventErr := eventservice.GetEventById(eventId, db, logger)
+var title, intro, imageUrl string
+if eventErr == nil {
+	title = event.Title
+	intro = event.Intro
+	imageUrl = event.ImageURL.String
+}
+	}}
+	if eventErr != nil {
+		<p>Error fetching events: { eventErr.Error() }</p>
+		return
+	}
 	<h1>Last opp blide</h1>
 	<p>eventId: { eventId } </p>
 	<form
@@ -137,4 +150,56 @@ templ page(eventId string) {
 		</label>
 		<button type="submit">Upload</button>
 	</form>
+	<section class="form-group input">
+		<script src="/static/web_components/banner_cropper.js"></script>
+		<banner-cropper
+			event-id={ eventId }
+			width="430"
+			height="200"
+			image-kind="card"
+			image-url={ "/event-images/" + imageUrl }
+		></banner-cropper>
+		<img
+			src={ "/event-images/" + eventId + "_card.webp" }
+			alt="Event image"
+			style="max-width: 430px; max-height: 200px;"
+		/>
+		<div
+			style="display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 1rem;
+                    background-color: var(--bg-base);"
+			max-width="430px"
+		>
+			<h1 style="text-align:center; margin:0; ">{ title }</h1>
+			<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
+		</div>
+	</section>
+	<section class="form-group input">
+		<script src="/static/web_components/banner_cropper.js"></script>
+		<banner-cropper
+			event-id={ eventId }
+			width="1300"
+			height="200"
+			image-kind="banner"
+			image-url={ "/event-images/" + imageUrl }
+		></banner-cropper>
+		<img
+			src={ "/event-images/" + eventId + "_banner.webp" }
+			alt="Event image"
+			style="max-width: 1300px; max-height: 200px;"
+		/>
+		<div
+			style="display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 1rem;
+                    background-color: var(--bg-base);"
+			max-width="430px"
+		>
+			<h1 style="text-align:center; margin:0; ">{ title }</h1>
+			<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
+		</div>
+	</section>
 }

@@ -183,7 +183,7 @@ class BannerCropper extends HTMLElement {
             const res = await fetch(detail.url, {
                 method: detail.method,
                 credentials: "same-origin",
-                body: detail.formData
+                body: detail.formData,
             });
             console.log('Upload response', res);
             if (!res.ok) {

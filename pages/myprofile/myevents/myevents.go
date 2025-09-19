@@ -234,7 +234,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				newEvent.NewEventLayoutRoute(newIdRoute, db, logger)
 
 				newIdRoute.Route("/image", func(imageRouter chi.Router) {
-					eventPicture.EventPictureRoute(imageRouter)
+					eventPicture.EventPictureRoute(imageRouter, db, logger)
 				})
 			})
 		})
