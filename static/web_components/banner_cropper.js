@@ -1,3 +1,29 @@
+// ---- shared global styles (loaded once) ------------------------------------
+const GLOBAL_STYLE_URLS = [
+    "/static/index.css",
+    "/static/buttons.css"
+];
+
+const globalSheetsPromise = (async () => {
+    // Feature check for constructable stylesheets
+    const supportsConstructable =
+        !!(Document.prototype && "adoptedStyleSheets" in Document.prototype) &&
+        !!(CSSStyleSheet.prototype && "replace" in CSSStyleSheet.prototype);
+
+    if (!supportsConstructable) return null;
+
+    const sheets = [];
+    for (const url of GLOBAL_STYLE_URLS) {
+        const resp = await fetch(url, { credentials: "same-origin" });
+        const cssText = await resp.text();
+        const sheet = new CSSStyleSheet();
+        await sheet.replace(cssText);
+        sheets.push(sheet);
+    }
+    return sheets;
+})();
+
+// ---- component --------------------------------------------------------------
 class BannerCropper extends HTMLElement {
     static get observedAttributes() {
         return ['width', 'height', 'image-url', 'event-id', 'image-kind'];
@@ -24,9 +50,25 @@ class BannerCropper extends HTMLElement {
         this.startDrawY = 0;
 
         // Shadow DOM
-        const root = this.attachShadow({ mode: 'open' });
+        const root = this.attachShadow({ mode: "open" });
+
+        // Apply global styles (adoptedStyleSheets or <link> fallback)
+        globalSheetsPromise.then((sheets) => {
+            if (sheets) {
+                root.adoptedStyleSheets = [...root.adoptedStyleSheets, ...sheets];
+            } else {
+                // Fallback: inject <link> tags
+                for (const url of GLOBAL_STYLE_URLS) {
+                    const link = document.createElement("link");
+                    link.rel = "stylesheet";
+                    link.href = url;
+                    root.appendChild(link);
+                }
+            }
+        });
+
         root.innerHTML = `
-      <div>
+      <div style="background: var(--color-bg-secondary);">
         <div>
           <span id="cameraIcon" style="display:none">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="32" height="32">
@@ -36,7 +78,11 @@ class BannerCropper extends HTMLElement {
         </div>
 
         <div>
-          <button id="exportButton" type="button">Save</button>
+          <button
+            id="exportButton"
+			class="btn btn--primary"
+            type="button"
+            >Save</button>
           <span id="status" aria-live="polite" style="margin-left:8px;"></span>
         </div>
 
