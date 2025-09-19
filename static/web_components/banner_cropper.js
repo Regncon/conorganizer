@@ -77,6 +77,7 @@ class BannerCropper extends HTMLElement {
           </span>
         </div>
 
+        <div style="display:flex; align-items:center;">
         <div>
           <button
             id="exportButton"
@@ -88,7 +89,8 @@ class BannerCropper extends HTMLElement {
 
         <div>
           <label for="zoom">Zoom:</label>
-          <input id="zoom" type="range" min="1" max="3" step="0.01" value="1" disabled>
+          <input id="zoom" class="slider" type="range" min="1" max="3" step="0.01" value="1" disabled>
+        </div>
         </div>
 
         <canvas id="canvas" style="cursor:move" aria-label="Banner canvas"></canvas>

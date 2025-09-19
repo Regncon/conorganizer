@@ -133,7 +133,7 @@ if eventErr == nil {
 		return
 	}
 	<h1>Last opp blide</h1>
-	<p>eventId: { eventId } </p>
+	<script src="/static/web_components/banner_cropper.js"></script>
 	<form
 		method="post"
 		action={ "/my-events/api/new/" + eventId + "/upload" }
@@ -148,10 +148,12 @@ if eventErr == nil {
 				required
 			/>
 		</label>
-		<button type="submit">Upload</button>
+		<button
+			class="btn btn--primary"
+			type="submit"
+		>Upload</button>
 	</form>
 	<section class="form-group input">
-		<script src="/static/web_components/banner_cropper.js"></script>
 		<banner-cropper
 			event-id={ eventId }
 			width="430"
@@ -177,7 +179,6 @@ if eventErr == nil {
 		</div>
 	</section>
 	<section class="form-group input">
-		<script src="/static/web_components/banner_cropper.js"></script>
 		<banner-cropper
 			event-id={ eventId }
 			width="1300"
