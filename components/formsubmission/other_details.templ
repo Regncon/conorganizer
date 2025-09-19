@@ -206,7 +206,7 @@ func UpdateNotes(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 
 templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, canBeRunInEnglish bool, maxPlayers int, notes string) {
 	<article class="form-card">
-		<h4>Øvrige Detaljer</h4>
+		<h4 class="form-card-title">Øvrige Detaljer</h4>
 		<section class="details-section">
 			<label class="label-small color-strong form-group age-group">
 				Aldersgruppe
@@ -219,9 +219,8 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					class="input"
 					required
 				>
-					<option value="AllAges" selected>Passer for alle aldre</option>
+					<option value="Default" selected>Passer for alle aldre</option>
 					<option value="ChildFriendly">Barn (under 12 år)</option>
-					<option value="TeenFriendly">Ungdom og voksne (13+ år)</option>
 					<option value="AdultsOnly">Voksne (18+ år)</option>
 				</select>
 			</label>

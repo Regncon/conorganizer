@@ -5,6 +5,11 @@ import "github.com/Regncon/conorganizer/models"
 templ FormBody(event *models.Event) {
 	<style>
 		.formsubmission-wrapper {
+
+			h1.color-strong {
+				margin: var(--spacing-xlarge) 0;
+			}
+
 			> * + .form-card {
 				margin-block-start: 1rem;
 			}
@@ -32,10 +37,6 @@ templ FormBody(event *models.Event) {
 
 			.form-card {
 				display: grid;
-
-				h4 {
-					margin: 0;
-				}
 
 				.organizer-section {
 					display: grid;
@@ -107,9 +108,10 @@ templ FormBody(event *models.Event) {
 
 					.organizer-section {
 						display: flex;
-						justify-content: space-between;
+						gap: var(--spacing-medium);
 						.form-group {
 							gap: 0.5rem;
+							flex-grow: 1;
 						}
 					}
 
@@ -147,7 +149,6 @@ templ FormBody(event *models.Event) {
 					}
 
 					.details-section {
-						margin-block-start: 1rem;
 						grid-template-columns: minmax(7.5rem, 0.4fr) minmax(
 								12.5rem,
 								0.6fr
