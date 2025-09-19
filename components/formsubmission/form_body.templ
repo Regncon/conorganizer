@@ -224,7 +224,6 @@ templ FormBody(event *models.Event) {
 		event.System,
 		event.Description,
 	)
-	@eventPicture(event.ID, event.Title, event.Intro, event.ImageURL.String)
 	@otherDetails(
 		event.ID,
 		event.AgeGroup,
