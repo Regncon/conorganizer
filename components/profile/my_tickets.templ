@@ -1,0 +1,66 @@
+package profile
+
+templ ticketHolder(name string, ticket string, email string) {
+	<style>
+        .ticket-holder {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+
+            span {
+                display: flex;
+                gap: var(--spacing-xsmall);
+            }
+
+            img {
+                height: var(--text-body);
+                aspect-ratio: 1;
+            }
+        }
+
+        .ticket-holder > p {
+            font-weight: bold;
+        }
+    </style>
+	<div class="ticket-holder">
+		<p>{ name }</p>
+		<span>
+			<img src="/static/icons/cardgames.svg"/>
+			<p>{ ticket }</p>
+		</span>
+		<span>
+			<img src="/static/icons/other-games.svg"/>
+			<p>{ email }</p>
+		</span>
+	</div>
+}
+
+type holder struct {
+	name   string
+	ticket string
+	email  string
+}
+
+var holders = []holder{
+    holder{name: "Gary Lindgren", ticket: "Early Bird (26+)", email: "gary.cooldude@email.com"},
+    holder{name: "Ana Anderson", ticket: "Early Bird (26+)", email: "ana.awesome@email.com"},
+    holder{name: "Åge Påge", ticket: "Early Bird (26+)", email: "aagep@email.com"},
+}
+
+templ MyTickets() {
+	<style>
+        .my-tickets {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xsmall);
+        }
+    </style>
+	<div class="my-tickets panel">
+		<h2>Biletter</h2>
+		for _, holder := range holders {
+			@ticketHolder(holder.name, holder.ticket, holder.email)
+		}
+		<button class="btn btn--outline" style="width: fit-content; margin-left: auto;">Mine biletter</button>
+	</div>
+}
