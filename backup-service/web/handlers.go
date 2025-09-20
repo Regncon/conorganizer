@@ -25,7 +25,7 @@ func (h *Handlers) IndexHandler(res http.ResponseWriter, req *http.Request) {
 		stats = services.BackupStats{}
 	}
 
-	logs, err := services.FetchLog(h.DB).Logs("", "", 24)
+	logs, err := services.FetchLog(h.DB).Logs("", "", 99)
 	if err != nil {
 		h.Logger.Error("failed to fetch hourly logs", "err", err)
 		// optionally return an error page

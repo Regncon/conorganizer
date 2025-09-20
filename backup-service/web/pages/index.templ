@@ -1,42 +1,22 @@
 package pages
 
-import "github.com/Regncon/conorganizer/backup-service/models"
+import (
+	"github.com/Regncon/conorganizer/backup-service/models"
+	"github.com/Regncon/conorganizer/backup-service/web/components/sections/status"
+	"github.com/Regncon/conorganizer/backup-service/web/components/ui"
+)
 
 templ Index(logs []models.BackupLog) {
+	@status.StatusBar(logs)
 	<main>
-		<div class="container card" style="padding: 1rem;">
+		<div class="container" style="padding: 1rem;">
 			<h1>Backup Logs</h1>
 			if len(logs) == 0 {
 				<p class="empty">No logs found for this interval.</p>
 			} else {
-				<div class="grid-headers">
-					<div>Time</div>
-					<div>Type</div>
-					<div>Stage</div>
-					<div>Message</div>
-					<div>Status</div>
-				</div>
-				<div class="log-grid">
-					for _, log := range logs {
-						<div>{ log.CreatedAt.Format("2006/01/02 15:04") }</div>
-						<div>{ log.BackupType }</div>
-						<div>{ log.Stage }</div>
-						<div>{ log.Message }</div>
-						<div class={ "status-" + log.Status }>
-							<span class="material-symbols-outlined">
-								switch log.Status {
-									case "success":
-										{ "check" }
-									case "error":
-										{ "error" }
-									default:
-										{ "hourglass_top" }
-								}
-							</span>
-							{ log.Status }
-						</div>
-					}
-				</div>
+				for _, log := range logs {
+					@ui.LogEntry(log)
+				}
 			}
 		</div>
 	</main>

@@ -1,0 +1,37 @@
+package ui
+
+import "github.com/Regncon/conorganizer/backup-service/models"
+import "github.com/Regncon/conorganizer/backup-service/utils"
+import "fmt"
+
+templ LogEntry(log models.BackupLog) {
+	<div id={ fmt.Sprintf("log-%d", log.ID) } class="log-entry card">
+		<span class="log-title">
+			<span class={"card", log.BackupType }>{ log.BackupType }</span>
+			if log.Message == "" {
+				<h3>{ log.FilePath }</h3>
+			} else {
+				<h3>{ log.Message }</h3>
+			}
+		</span>
+		<span class="log-description">
+			<p>{ log.CreatedAt.Format("2006/01/02 15:04") }</p>
+			<p>Size: { log.FileSize }KB</p>
+			<p>DB v:{ utils.DBPrefixCleanup(log.DBPrefix) }</p>
+			<p>Stage: { log.Stage }</p>
+		</span>
+		<span class={"log-status card", log.Status}>
+			<span class="material-symbols-outlined">
+				switch log.Status {
+					case "success":
+						{ "check" }
+					case "error":
+						{ "error" }
+					default:
+						{ "hourglass_top" }
+				}
+			</span>
+			<p>{ log.Status }</p>
+		</span>
+	</div>
+}
