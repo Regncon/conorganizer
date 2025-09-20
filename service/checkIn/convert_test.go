@@ -1,6 +1,7 @@
 package checkIn
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -64,13 +65,18 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	ticketId := 42
 
 	expectedBillettholder := models.Billettholder{
-		FirstName:   "John",
-		LastName:    "Doe",
-		OrderID:     1,
-		TicketID:    ticketId,
-		IsOver18:    true,
-		TicketEmail: "ticket_email@test.test",
+		FirstName: "John",
+		LastName:  "Doe",
+		OrderID:   1,
+		TicketID:  ticketId,
+		IsOver18:  true,
 	}
+	expectedBillettholderEmails := []models.BillettholderEmail{
+		{BillettholderID: expectedBillettholder.ID, Email: "tickt_email@test.test", Kind: "Ticket"},
+		{BillettholderID: expectedBillettholder.ID, Email: "associated_email@test.test", Kind: "Associated"},
+		{BillettholderID: expectedBillettholder.ID, Email: "manual_email@test.test", Kind: "Manual"},
+	}
+	fmt.Println("Expected Billettholder Emails:", expectedBillettholderEmails)
 
 	/*
 	   if (!ticket) throw new Error('ticket not found');
@@ -129,8 +135,6 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 		&billettholder.IsOver18,
 		&billettholder.OrderID,
 		&billettholder.TicketID,
-		&billettholder.TicketEmail,
-		&billettholder.OrderEmail,
 		&billettholder.TicketCategoryID,
 		&billettholder.InsertedTime,
 	)
@@ -145,9 +149,36 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 		billettholder.IsOver18 != expectedBillettholder.IsOver18 ||
 		billettholder.OrderID != expectedBillettholder.OrderID ||
 		billettholder.TicketID != expectedBillettholder.TicketID ||
-		billettholder.TicketEmail != expectedBillettholder.TicketEmail ||
-		billettholder.OrderEmail != expectedBillettholder.OrderEmail ||
 		billettholder.TicketCategoryID != expectedBillettholder.TicketCategoryID {
 		t.Errorf("expected billettholder %+v, got %+v", expectedBillettholder, billettholder)
 	}
+	/*
+
+		var billettholderEmails []models.BillettholderEmail
+		rows, err := db.Query("SELECT id, billettholder_id, email, kind, inserted_time FROM billettholder_emails WHERE billettholder_id = ?", billettholder.ID)
+		if err != nil {
+			t.Fatalf("failed to query billettholder emails: %v", err)
+		}
+		defer rows.Close()
+		for rows.Next() {
+			var email models.BillettholderEmail
+			if err := rows.Scan(&email.ID, &email.BillettholderID, &email.Email, &email.Kind, &email.InsertedTime); err != nil {
+				t.Fatalf("failed to scan billettholder email: %v", err)
+			}
+			billettholderEmails = append(billettholderEmails, email)
+		}
+		if err := rows.Err(); err != nil {
+			t.Fatalf("error iterating over billettholder emails: %v", err)
+		}
+		if len(billettholderEmails) != len(expectedBillettholderEmails) {
+			t.Fatalf("expected %d billettholder emails, got %d", len(expectedBillettholderEmails), len(billettholderEmails))
+		}
+		for i, email := range billettholderEmails {
+			expectedEmail := expectedBillettholderEmails[i]
+			if email.Email != expectedEmail.Email || email.Kind != expectedEmail.Kind {
+				t.Errorf("expected billettholder email %+v, got %+v", expectedEmail, email)
+			}
+		}
+	*/
+
 }

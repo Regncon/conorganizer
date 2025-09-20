@@ -21,11 +21,20 @@ CREATE TABLE IF NOT EXISTS billettholdere (
     is_over_18 BOOLEAN NOT NULL,
     order_id INTEGER NOT NULL,
     ticket_id INTEGER NOT NULL UNIQUE,
-    ticket_email TEXT NOT NULL,
-    order_email TEXT NOT NULL,
     ticket_category_id TEXT NOT NULL,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (ticket_type) REFERENCES ticket_types(name)
+);
+
+ALTER TABLE billettholdere DROP COLUMN ticket_email;
+ALTER TABLE billettholdere DROP COLUMN order_email;
+
+CREATE TABLE IF NOT EXISTS billettholder_emails (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    billettholder_id  INTEGER NOT NULL,
+    email             TEXT    NOT NULL COLLATE NOCASE,
+    kind              TEXT    NOT NULL CHECK (kind IN ('Ticket','Associated','Manual')),
+    inserted_time     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS users (
