@@ -14,7 +14,7 @@ templ CallToAction() {
 			flex-direction: column;
 			justify-content: space-between;
 			gap: var(--spacing-xsmall);
-			padding: var(--spacing-medium) var(--spacing-xlarge)
+			padding: var(--spacing-medium);
 		}
 		.call-to-action-header {
 			margin-bottom: var(--spacing-xsmall);
@@ -52,6 +52,11 @@ templ CallToAction() {
 			}
 			.call-to-action-graphic {
 				display: block;
+			}
+		}
+		@container main (width > 600px) {
+			.call-to-action-content {
+				padding: var(--spacing-medium) var(--spacing-xlarge)
 			}
 		}
 	</style>
