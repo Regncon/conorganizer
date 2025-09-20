@@ -102,7 +102,9 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	}
 
 	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
-	db, err := service.InitDB("../../database/" + uniqueDatabaseName)
+	testDBPath := "../../database/" + uniqueDatabaseName
+
+	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
 	if err != nil {
 		t.Fatalf("failed to create test database: %v", err)
 	}
