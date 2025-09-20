@@ -30,7 +30,7 @@ templ NewEventFormPageContent(eventId string, userId string, db *sql.DB, logger 
 		action={ "/my-events/api/new/" + event.ID + "/submit" }
 		method="post"
 	>
-		<h1 class="color-strong">Nytt Arrangement</h1>
+		<h1 class="page-heading">Nytt Arrangement</h1>
 		@formsubmission.FormBody(event)
 		@formsubmission.SubmitSection()
 	</form>

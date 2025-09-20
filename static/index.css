@@ -204,6 +204,22 @@ h1 {
     color: var(--color-text-strong);
 }
 
+h1.page-heading {
+    font-size: 32px;
+    margin: var(--spacing-medium) 0;
+}
+@container main (width > 600px) {
+    h1.page-heading {
+        font-size: 40px;
+        margin: var(--spacing-large) 0;
+    }
+}
+@container main (width > 1000px) {
+    h1.page-heading {
+        margin: var(--spacing-xlarge) 0;
+    }
+}
+
 h3 {
     margin: 0;
     font-weight: 700;
