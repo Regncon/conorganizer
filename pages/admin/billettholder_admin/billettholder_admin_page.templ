@@ -2,6 +2,7 @@ package billettholderadmin
 
 import (
 	"database/sql"
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 	"log/slog"
 )
@@ -29,6 +30,11 @@ func getBilettholdere(db *sql.DB, logger *slog.Logger) ([]models.Billettholder, 
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	{{ bilettholdere, err := getBilettholdere(db, logger) }}
 	<div id="billettholder-admin-container">
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Admin", Url: "/admin/"},
+			{Name: "Bilettholdere", Url: ""},
+		})
 		<h1>Billettholdere</h1>
 		<h2>Her kan du se en oversikt over alle billettholdere</h2>
 		<a
@@ -45,16 +51,20 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 		>+</a>
 		<div class="billettholder-admin-grid">
 			<style>
-			.billettholder-admin-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
-				gap: 1rem;
-			}@media (min-width: 600px) {
 				.billettholder-admin-grid {
-					padding: 1rem;
+					display: grid;
+					grid-template-columns: repeat(
+						auto-fit,
+						minmax(var(--mobile-min-width), 1fr)
+					);
+					gap: 1rem;
 				}
-			}
-		</style>
+				@media (min-width: 600px) {
+					.billettholder-admin-grid {
+						padding: 1rem;
+					}
+				}
+			</style>
 			if err != nil {
 				<p>Failed to load billettholdere.</p>
 			} else {
