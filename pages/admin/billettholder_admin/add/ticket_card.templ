@@ -73,7 +73,7 @@ templ ticketCard(ticket checkIn.CheckInTicket, searchTerm string) {
 			</em>
 		</p>
 		<a
-			href="mailto:{ticket.Email}"
+			href={ "mailto:" + ticket.Email }
 			style="color: var(--link-color); text-decoration: underline; display: block; margin-top: 0.5rem;"
 		>
 			@templ.Raw(highlightSearchTerm(ticket.Email, searchTerm))
@@ -96,6 +96,7 @@ templ ticketCard(ticket checkIn.CheckInTicket, searchTerm string) {
 			}
 		</div>
 		<button
+			class="btn btn--outline"
 			data-on-click={ templ.URL(fmt.Sprintf("@get('/admin/billettholder/add/api/convert/%s/')", strconv.Itoa(ticket.ID))) }
 		>
 			Konverter billett til deltager

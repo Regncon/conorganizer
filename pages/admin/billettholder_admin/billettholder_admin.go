@@ -110,6 +110,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				}
 			}
 		})
+		billettholdereSearchRoute(billettholderAdminRouter, store, notifyUpdate)
 	})
 
 	addbillettholder.AddBillettholderRoute(router, db, logger, err)

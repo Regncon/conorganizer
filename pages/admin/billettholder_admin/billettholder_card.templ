@@ -1,19 +1,89 @@
 package billettholderadmin
 
-import "github.com/Regncon/conorganizer/models"
+import (
+	"github.com/Regncon/conorganizer/models"
+	"html"
+	"strconv"
+	"strings"
+	"unicode"
+)
 
-templ billettholderCard(billettholder models.Billettholder) {
-	<div class="card">
-		<p>{ billettholder.FirstName + " " + billettholder.LastName }</p>
-		<hr/>
-		<strong>Bestilling:</strong>{ billettholder.OrderID }
-		.
-		<p>{ billettholder.ID }</p>
-		<p>{ billettholder.TicketID }</p>
-		<p>{ billettholder.TicketType }</p>
-		<p>{ billettholder.IsOver18 }</p>
-		<p>{ billettholder.TicketEmail }</p>
-		<p>{ billettholder.OrderEmail }</p>
-		<p>{ billettholder.TicketCategoryID }</p>
+func highlightSearchTerm(text, searchTerm string) string {
+	if len(searchTerm) == 0 {
+		return html.EscapeString(text)
+	}
+
+	// Build a quick-lookup set of runes in searchTerm (lower-cased).
+	set := make(map[rune]struct{}, len(searchTerm))
+	for _, r := range searchTerm {
+		set[unicode.ToLower(r)] = struct{}{}
+	}
+
+	var out strings.Builder
+	for _, r := range text {
+		escaped := html.EscapeString(string(r)) // protect any HTML in the input
+		if _, ok := set[unicode.ToLower(r)]; ok {
+			out.WriteString("<b style=\"color: var(--color-primary-strong);\">")
+			out.WriteString(escaped)
+			out.WriteString("</b>")
+		} else {
+			out.WriteString(escaped)
+		}
+	}
+
+	return out.String()
+}
+
+templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
+	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
+		<p style="margin:0;">
+			<strong>Bestilling:</strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
+		</p>
+		<p style="margin:0;">
+			<strong>Type:</strong> @templ.Raw(highlightSearchTerm(billettholder.TicketType, searchTerm))
+		</p>
+		<p style="margin:0;">
+			<strong>Navn:</strong>
+			<em>
+				@templ.Raw(highlightSearchTerm(billettholder.FirstName+""+billettholder.LastName, searchTerm))
+			</em>
+		</p>
+		<span>Bilett epost:</span>
+		<a
+			href={ "mailto:" + billettholder.TicketEmail }
+			style="color: var(--link-color); text-decoration: underline; display: block; margin-top: 0.5rem;"
+		>
+			@templ.Raw(highlightSearchTerm(billettholder.TicketEmail, searchTerm))
+		</a>
+		<span>Bestilling epost:</span>
+		<a
+			href={ "mailto:" + billettholder.OrderEmail }
+			style="color: var(--link-color); text-decoration: underline; display: block; margin-top: 0.5rem;"
+		>
+			@templ.Raw(highlightSearchTerm(billettholder.OrderEmail, searchTerm))
+		</a>
+		<div style="display: flex; align-items: center; gap:0.5rem; ">
+			if billettholder.IsOver18 {
+				<img
+					src="/static/icons/adults-only.svg"
+					alt="adults only"
+				/>
+				<p><strong>Alder:</strong> Over 18</p>
+			} else {
+				<img
+					width="34px"
+					height="34px"
+					src="/static/icons/child-friendly.svg"
+					alt="child friendly"
+				/>
+				<p><strong>Alder:</strong> Under 18</p>
+			}
+		</div>
+		<span>Ekstra epostaddresser:</span>
+		<button
+			class="btn btn--outline"
+		>
+			Legg til epost
+		</button>
 	</div>
 }
