@@ -24,10 +24,10 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		return errors.New("ticket not found")
 	}
 	const TicketTypeMiddag = 193284
-    if ticket.TypeId == TicketTypeMiddag {
-        logger.Error("cannot convert 'Middag' ticket to billettholder", "ticketId", ticketId)
-        return errors.New("cannot convert 'Middag' ticket to billettholder")
-    }
+	if ticket.TypeId == TicketTypeMiddag {
+		logger.Error("cannot convert 'Middag' ticket to billettholder", "ticketId", ticketId)
+		return errors.New("cannot convert 'Middag' ticket to billettholder")
+	}
 
 	billettholder := models.Billettholder{
 		FirstName:    ticket.FirstName,
