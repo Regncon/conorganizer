@@ -27,23 +27,27 @@ const (
 )
 
 type BackupHandlerOptions struct {
-	DB       *sql.DB
-	Logger   *slog.Logger
 	Cfg      Config
+	DB       *sql.DB
+	DBPrefix string
+	Error    string
 	FilePath string
+	FileSize int64
 	Id       int64
 	Interval BackupInterval
+	Logger   *slog.Logger
 	Stage    BackupStage
 	Status   BackupLogStatus
-	Error    string
 }
 
 type BackupLogOutput struct {
+	CreatedAt string `json:"createdAt"`
+	DBPrefix  string `json:"db_prefix"`
+	FilePath  string `json:"filePath"`
+	FileSize  int64  `json:"file_size"`
 	Id        int64  `json:"title"`
 	Interval  string `json:"interval"`
+	Message   string `json:"message"`
 	Stage     string `json:"stage"`
 	Status    string `json:"status"`
-	FilePath  string `json:"filePath"`
-	Message   string `json:"message"`
-	CreatedAt string `json:"createdAt"`
 }
