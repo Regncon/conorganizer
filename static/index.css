@@ -207,16 +207,28 @@ h1 {
 h1.page-heading {
     font-size: 32px;
     margin: var(--spacing-medium) 0;
+    &.has-helptext {
+        margin-bottom: var(--spacing-xsmall);
+    }
+}
+.page-heading-helptext {
+    margin-bottom: var(--spacing-medium);
 }
 @container main (width > 600px) {
     h1.page-heading {
         font-size: 40px;
         margin: var(--spacing-large) 0;
     }
+    .page-heading-helptext {
+        margin-bottom: var(--spacing-large);
+    }
 }
 @container main (width > 1000px) {
     h1.page-heading {
         margin: var(--spacing-xlarge) 0;
+    }
+    .page-heading-helptext {
+        margin-bottom: var(--spacing-xlarge);
     }
 }
 
