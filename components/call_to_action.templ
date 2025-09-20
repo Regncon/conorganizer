@@ -30,20 +30,9 @@ templ CallToAction() {
 				left: 0;
 			}
 		}
-		@container main (width > 1200px) {
-			.call-to-action {
-				grid-template-columns: 3fr minmax(380px, 1fr);
-			}
+		@container main (width > 600px) {
 			.call-to-action-content {
-				padding: var(--spacing-xlarge) 80px;
-			}
-		}
-		@container main (width > 1000px) {
-			.call-to-action-content {
-				gap: var(--spacing-large);
-			}
-			.call-to-action-header {
-				font-size: var(--text-heading-1-xl);
+				padding: var(--spacing-medium) var(--spacing-xlarge)
 			}
 		}
 		@container main (width > 800px) {
@@ -54,9 +43,20 @@ templ CallToAction() {
 				display: block;
 			}
 		}
-		@container main (width > 600px) {
+		@container main (width > 1000px) {
 			.call-to-action-content {
-				padding: var(--spacing-medium) var(--spacing-xlarge)
+				gap: var(--spacing-large);
+			}
+			.call-to-action-header {
+				font-size: var(--text-heading-1-xl);
+			}
+		}
+		@container main (width > 1200px) {
+			.call-to-action {
+				grid-template-columns: 3fr minmax(380px, 1fr);
+			}
+			.call-to-action-content {
+				padding: var(--spacing-xlarge) 80px;
 			}
 		}
 	</style>

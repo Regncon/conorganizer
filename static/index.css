@@ -178,24 +178,24 @@ body {
 
 .header-content-container {
     max-width: var(--page-header-max-width);
-    padding: 0 var(--spacing-xlarge);
+    padding: 0 8px;
     margin: 0 auto;
 }
 .page-content-container {
     max-width: var(--page-content-max-width);
-    padding: 0 var(--spacing-xlarge);
+    padding: 0 8px;
     margin: 0 auto;
 }
-@media screen and (max-width: 1200px) {
+@container main (width > 600px) {
     .header-content-container,
     .page-content-container {
         padding: 0 var(--spacing-medium);
     }
 }
-@media screen and (max-width: 600px) {
+@container main (width > 1200px) {
     .header-content-container,
     .page-content-container {
-        padding: 0 8px;
+        padding: 0 var(--spacing-xlarge);
     }
 }
 
