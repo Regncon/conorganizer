@@ -8,6 +8,7 @@ import (
 type CheckInTicket struct {
 	ID        int
 	OrderID   int
+	TypeId    int
 	Type      string
 	FirstName string
 	LastName  string

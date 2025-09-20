@@ -155,6 +155,7 @@ func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 		tickets = append(tickets, CheckInTicket{
 			ID:        et.ID,
 			OrderID:   et.OrderID,
+			TypeId:    et.CategoryID,
 			Type:      et.Category,
 			FirstName: et.Crm.FirstName,
 			LastName:  et.Crm.LastName,

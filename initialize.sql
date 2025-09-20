@@ -9,25 +9,17 @@ INSERT INTO puljer (name, start_time) VALUES
 ('Lørdag kveld', '2025-09-07T18:00:00Z'),
 ('Søndag morgen', '2025-09-08T10:00:00Z');
 
-CREATE TABLE IF NOT EXISTS ticket_types (
-    name TEXT PRIMARY KEY
-);
-
 CREATE TABLE IF NOT EXISTS billettholdere (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
+    ticket_type_id INTEGER NOT NULL,
     ticket_type TEXT NOT NULL,
     is_over_18 BOOLEAN NOT NULL,
     order_id INTEGER NOT NULL,
     ticket_id INTEGER NOT NULL UNIQUE,
-    ticket_category_id TEXT NOT NULL,
-    inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (ticket_type) REFERENCES ticket_types(name)
+    inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-
-ALTER TABLE billettholdere DROP COLUMN ticket_email;
-ALTER TABLE billettholdere DROP COLUMN order_email;
 
 CREATE TABLE IF NOT EXISTS billettholder_emails (
     id                INTEGER PRIMARY KEY AUTOINCREMENT,

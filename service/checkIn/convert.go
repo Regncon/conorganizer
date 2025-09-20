@@ -25,22 +25,23 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 	}
 
 	billettholder := models.Billettholder{
-		FirstName: ticket.FirstName,
-		LastName:  ticket.LastName,
-		OrderID:   ticket.OrderID,
-		TicketID:  ticket.ID,
-		IsOver18:  ticket.IsOver18,
+		FirstName:    ticket.FirstName,
+		LastName:     ticket.LastName,
+		TicketTypeId: ticket.TypeId,
+		TicketType:   ticket.Type,
+		OrderID:      ticket.OrderID,
+		TicketID:     ticket.ID,
+		IsOver18:     ticket.IsOver18,
 	}
 
 	result, err := db.Exec(`
 		INSERT INTO billettholdere (
-        first_name, last_name, ticket_type,
-        ticket_id, is_over_18, order_id,
-        ticket_category_id
+        first_name, last_name, ticket_type_id, ticket_type,
+        ticket_id, is_over_18, order_id
 		) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-		billettholder.FirstName, billettholder.LastName, billettholder.TicketType,
-		billettholder.TicketID, billettholder.IsOver18, billettholder.OrderID,
-		billettholder.TicketCategoryID,
+		billettholder.FirstName, billettholder.LastName, billettholder.TicketTypeId,
+		billettholder.TicketType, billettholder.TicketID, billettholder.IsOver18,
+		billettholder.OrderID,
 	)
 
 	if err != nil {
@@ -61,18 +62,17 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			Kind:            "Ticket",
 		},
 	}
-    // find associated emails if any. An associated email is any email that is in a ticket with the same order ID but is not the ticket email
-    for _, t := range tickets {
-        if t.OrderID == ticket.OrderID && t.Email != ticket.Email {
-            associatedEmail := models.BillettholderEmail{
-                BillettholderID: int(billettholderID),
-                Email:           t.Email,
-                Kind:            "Associated",
-            }
-            emails = append(emails, associatedEmail)
-        }
-    }
-
+	// find associated emails if any. An associated email is any email that is in a ticket with the same order ID but is not the ticket email
+	for _, t := range tickets {
+		if t.OrderID == ticket.OrderID && t.Email != ticket.Email {
+			associatedEmail := models.BillettholderEmail{
+				BillettholderID: int(billettholderID),
+				Email:           t.Email,
+				Kind:            "Associated",
+			}
+			emails = append(emails, associatedEmail)
+		}
+	}
 
 	for _, email := range emails {
 		_, err := db.Exec(`

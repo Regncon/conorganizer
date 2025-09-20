@@ -66,6 +66,8 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	expectedBillettholder := models.Billettholder{
 		FirstName: "John",
 		LastName:  "Doe",
+        TicketTypeId: 1,
+        TicketType: "Adult",
 		OrderID:   1,
 		TicketID:  ticketId,
 		IsOver18:  true,
@@ -100,9 +102,30 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	   	};
 	*/
 	tickets := []CheckInTicket{
-		{ID: ticketId, OrderID: 1, Type: "Adult", FirstName: "John", LastName: "Doe", Email: "ticket_email@test.test", IsOver18: true},
-		{ID: 43, OrderID: 1, Type: "Child", FirstName: "Jane", LastName: "Doe", Email: "associated_email@test.test", IsOver18: false},
-		{ID: 44, OrderID: 2, Type: "Adult", FirstName: "Not", LastName: "associated", Email: "not_associated_email@test.test", IsOver18: false},
+		{ID: ticketId,
+			OrderID:   1,
+			TypeId:    1,
+			Type:      "Adult",
+			FirstName: "John",
+			LastName:  "Doe",
+			Email:     "ticket_email@test.test",
+			IsOver18:  true},
+		{ID: 43,
+			OrderID:   1,
+			TypeId:    2,
+			Type:      "Child",
+			FirstName: "Jane",
+			LastName:  "Doe",
+			Email:     "associated_email@test.test",
+			IsOver18:  false},
+		{ID: 44,
+			OrderID:   2,
+			TypeId:    1,
+			Type:      "Adult",
+			FirstName: "Not",
+			LastName:  "associated",
+			Email:     "not_associated_email@test.test",
+			IsOver18:  false},
 	}
 
 	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
@@ -129,11 +152,11 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 		&billettholder.ID,
 		&billettholder.FirstName,
 		&billettholder.LastName,
+		&billettholder.TicketTypeId,
 		&billettholder.TicketType,
 		&billettholder.IsOver18,
 		&billettholder.OrderID,
 		&billettholder.TicketID,
-		&billettholder.TicketCategoryID,
 		&billettholder.InsertedTime,
 	)
 
@@ -143,11 +166,11 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 
 	if billettholder.FirstName != expectedBillettholder.FirstName ||
 		billettholder.LastName != expectedBillettholder.LastName ||
+		billettholder.TicketTypeId != expectedBillettholder.TicketTypeId ||
 		billettholder.TicketType != expectedBillettholder.TicketType ||
 		billettholder.IsOver18 != expectedBillettholder.IsOver18 ||
 		billettholder.OrderID != expectedBillettholder.OrderID ||
-		billettholder.TicketID != expectedBillettholder.TicketID ||
-		billettholder.TicketCategoryID != expectedBillettholder.TicketCategoryID {
+		billettholder.TicketID != expectedBillettholder.TicketID {
 		t.Errorf("expected billettholder %+v, got %+v", expectedBillettholder, billettholder)
 	}
 

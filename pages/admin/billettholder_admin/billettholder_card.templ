@@ -40,7 +40,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 			<strong>Bestilling:</strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
 		</p>
 		<p style="margin:0;">
-			<strong>Type:</strong> @templ.Raw(highlightSearchTerm(billettholder.TicketType, searchTerm))
+			<strong>Type: </strong> @templ.Raw(highlightSearchTerm(billettholder.TicketType, searchTerm))
 		</p>
 		<p style="margin:0;">
 			<strong>Navn:</strong>
