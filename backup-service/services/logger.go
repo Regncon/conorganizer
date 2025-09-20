@@ -24,9 +24,9 @@ func NewLogBackup(db *sql.DB, intervalType models.BackupInterval) (int64, error)
 func UpdateLogBackup(options models.BackupHandlerOptions) error {
 	_, err := options.DB.Exec(`
         UPDATE backup_logs
-        SET stage = ?, status = ?, file_path = ?, message = ?
+        SET stage = ?, status = ?, db_prefix = ?, file_path = ?, file_size = ?, message = ?
         WHERE id = ?
-    `, options.Stage, options.Status, options.FilePath, options.Error, options.Id)
+    `, options.Stage, options.Status, options.DBPrefix, options.FilePath, options.FileSize, options.Error, options.Id)
 	return err
 }
 

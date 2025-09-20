@@ -126,3 +126,17 @@ func RotateBackups(dbPath string, backupPath string, retention int) (string, err
 
 	return destPath, nil
 }
+
+// GetFileSize returns the size in kilo bytes, returns 0 if error since this
+// is only used for logging in the last step when a backup is successfull.
+func GetFileSize(filePath string) int64 {
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		return 0
+	}
+
+	fileSize := fileInfo.Size()
+	fileSizeKB := fileSize / 1024
+
+	return fileSizeKB
+}
