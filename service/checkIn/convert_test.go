@@ -64,13 +64,13 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	ticketId := 42
 
 	expectedBillettholder := models.Billettholder{
-		FirstName: "John",
-		LastName:  "Doe",
-        TicketTypeId: 1,
-        TicketType: "Adult",
-		OrderID:   1,
-		TicketID:  ticketId,
-		IsOver18:  true,
+		FirstName:    "John",
+		LastName:     "Doe",
+		TicketTypeId: 1,
+		TicketType:   "Adult",
+		OrderID:      1,
+		TicketID:     ticketId,
+		IsOver18:     true,
 	}
 	expectedBillettholderEmails := []models.BillettholderEmail{
 		{BillettholderID: expectedBillettholder.ID, Email: "ticket_email@test.test", Kind: "Ticket"},
@@ -199,5 +199,37 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 			t.Errorf("expected billettholder email %+v kind %+v, got %+v kind %+v", expectedEmail.Email, expectedEmail.Kind, email.Email, email.Kind)
 		}
 	}
+}
 
+func TestDoNotConvertTicketsOfTypeMiddag(t *testing.T) {
+	// ❶ Arrange
+	expectedError := "cannot convert 'Middag' ticket to billettholder"
+
+	const TicketTypeMiddag = 193284
+
+	ticketId := 42
+	tickets := []CheckInTicket{
+		{ID: ticketId,
+			OrderID:   1,
+			TypeId:    TicketTypeMiddag,
+			Type:      "Middag",
+			FirstName: "John",
+			LastName:  "Doe",
+			Email:     "ticket_email@test.test",
+			IsOver18:  true},
+	}
+
+	// ❷ Act
+	sl := &testutil.StubLogger{}
+	slogger := testutil.NewSlogAdapter(sl)
+
+	err := converTicketIdToNewBillettholder(ticketId, tickets, nil, slogger)
+
+	// ❸ Assert
+	if err == nil {
+		t.Fatalf("expected error but got nil")
+	}
+	if err.Error() != expectedError {
+		t.Errorf("expected error %q, got %q", expectedError, err.Error())
+	}
 }
