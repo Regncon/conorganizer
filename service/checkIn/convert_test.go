@@ -72,9 +72,9 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 		IsOver18:  true,
 	}
 	expectedBillettholderEmails := []models.BillettholderEmail{
-		{BillettholderID: expectedBillettholder.ID, Email: "tickt_email@test.test", Kind: "Ticket"},
-		{BillettholderID: expectedBillettholder.ID, Email: "associated_email@test.test", Kind: "Associated"},
-		{BillettholderID: expectedBillettholder.ID, Email: "manual_email@test.test", Kind: "Manual"},
+		{BillettholderID: expectedBillettholder.ID, Email: "ticket_email@test.test", Kind: "Ticket"},
+		// {BillettholderID: expectedBillettholder.ID, Email: "associated_email@test.test", Kind: "Associated"},
+		// {BillettholderID: expectedBillettholder.ID, Email: "manual_email@test.test", Kind: "Manual"},
 	}
 	fmt.Println("Expected Billettholder Emails:", expectedBillettholderEmails)
 
@@ -152,33 +152,31 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 		billettholder.TicketCategoryID != expectedBillettholder.TicketCategoryID {
 		t.Errorf("expected billettholder %+v, got %+v", expectedBillettholder, billettholder)
 	}
-	/*
 
-		var billettholderEmails []models.BillettholderEmail
-		rows, err := db.Query("SELECT id, billettholder_id, email, kind, inserted_time FROM billettholder_emails WHERE billettholder_id = ?", billettholder.ID)
-		if err != nil {
-			t.Fatalf("failed to query billettholder emails: %v", err)
+	var billettholderEmails []models.BillettholderEmail
+	rows, err := db.Query("SELECT id, billettholder_id, email, kind, inserted_time FROM billettholder_emails WHERE billettholder_id = ?", billettholder.ID)
+	if err != nil {
+		t.Fatalf("failed to query billettholder emails: %v", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var email models.BillettholderEmail
+		if err := rows.Scan(&email.ID, &email.BillettholderID, &email.Email, &email.Kind, &email.InsertedTime); err != nil {
+			t.Fatalf("failed to scan billettholder email: %v", err)
 		}
-		defer rows.Close()
-		for rows.Next() {
-			var email models.BillettholderEmail
-			if err := rows.Scan(&email.ID, &email.BillettholderID, &email.Email, &email.Kind, &email.InsertedTime); err != nil {
-				t.Fatalf("failed to scan billettholder email: %v", err)
-			}
-			billettholderEmails = append(billettholderEmails, email)
+		billettholderEmails = append(billettholderEmails, email)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("error iterating over billettholder emails: %v", err)
+	}
+	if len(billettholderEmails) != len(expectedBillettholderEmails) {
+		t.Fatalf("expected %d billettholder emails, got %d", len(expectedBillettholderEmails), len(billettholderEmails))
+	}
+	for i, email := range billettholderEmails {
+		expectedEmail := expectedBillettholderEmails[i]
+		if email.Email != expectedEmail.Email || email.Kind != expectedEmail.Kind {
+			t.Errorf("expected billettholder email %+v kind %+v, got %+v kind %+v", expectedEmail.Email, expectedEmail.Kind, email.Email, email.Kind)
 		}
-		if err := rows.Err(); err != nil {
-			t.Fatalf("error iterating over billettholder emails: %v", err)
-		}
-		if len(billettholderEmails) != len(expectedBillettholderEmails) {
-			t.Fatalf("expected %d billettholder emails, got %d", len(expectedBillettholderEmails), len(billettholderEmails))
-		}
-		for i, email := range billettholderEmails {
-			expectedEmail := expectedBillettholderEmails[i]
-			if email.Email != expectedEmail.Email || email.Kind != expectedEmail.Kind {
-				t.Errorf("expected billettholder email %+v, got %+v", expectedEmail, email)
-			}
-		}
-	*/
+	}
 
 }

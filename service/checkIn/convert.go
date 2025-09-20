@@ -23,7 +23,6 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		logger.Error("ticket not found", "ticketId", ticketId)
 		return errors.New("ticket not found")
 	}
-	// const orderEmails = tickets.filter((t) => t.order_id === ticket.order_id).map((t) => t.crm.email);
 
 	billettholder := models.Billettholder{
 		FirstName: ticket.FirstName,
@@ -33,7 +32,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		IsOver18:  ticket.IsOver18,
 	}
 
-	_, err := db.Exec(`
+	result, err := db.Exec(`
 		INSERT INTO billettholdere (
         first_name, last_name, ticket_type,
         ticket_id, is_over_18, order_id,
@@ -49,6 +48,32 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		return err
 	}
 
-	logger.Info("successfully inserted billettholder", "ticketId", ticketId)
+	billettholderID, lastIdErr := result.LastInsertId()
+	if lastIdErr != nil {
+		logger.Info("failed to fetch last insert ID", "error", lastIdErr)
+		return lastIdErr
+	}
+
+	emails := []models.BillettholderEmail{
+		{
+			BillettholderID: int(billettholderID),
+			Email:           ticket.Email,
+			Kind:            "Ticket",
+		},
+	}
+
+	for _, email := range emails {
+		_, err := db.Exec(`
+			INSERT INTO billettholder_emails (
+				billettholder_id, email, kind
+			) VALUES (?, ?, ?)
+		`, email.BillettholderID, email.Email, email.Kind)
+		if err != nil {
+			logger.Info("failed to insert billettholder email", "error", err)
+			return err
+		}
+	}
+
+	logger.Info("successfully inserted billettholder", "ticketId", ticketId, "billettholderId", billettholderID)
 	return nil
 }
