@@ -1,7 +1,6 @@
 package checkIn
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
@@ -73,10 +72,8 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	}
 	expectedBillettholderEmails := []models.BillettholderEmail{
 		{BillettholderID: expectedBillettholder.ID, Email: "ticket_email@test.test", Kind: "Ticket"},
-		// {BillettholderID: expectedBillettholder.ID, Email: "associated_email@test.test", Kind: "Associated"},
-		// {BillettholderID: expectedBillettholder.ID, Email: "manual_email@test.test", Kind: "Manual"},
+		{BillettholderID: expectedBillettholder.ID, Email: "associated_email@test.test", Kind: "Associated"},
 	}
-	fmt.Println("Expected Billettholder Emails:", expectedBillettholderEmails)
 
 	/*
 	   if (!ticket) throw new Error('ticket not found');
@@ -104,7 +101,8 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	*/
 	tickets := []CheckInTicket{
 		{ID: ticketId, OrderID: 1, Type: "Adult", FirstName: "John", LastName: "Doe", Email: "ticket_email@test.test", IsOver18: true},
-		{ID: 43, OrderID: 1, Type: "Child", FirstName: "Jane", LastName: "Doe", Email: "test2@test.test", IsOver18: false},
+		{ID: 43, OrderID: 1, Type: "Child", FirstName: "Jane", LastName: "Doe", Email: "associated_email@test.test", IsOver18: false},
+		{ID: 44, OrderID: 2, Type: "Adult", FirstName: "Not", LastName: "associated", Email: "not_associated_email@test.test", IsOver18: false},
 	}
 
 	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"

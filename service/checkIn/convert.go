@@ -61,6 +61,18 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			Kind:            "Ticket",
 		},
 	}
+    // find associated emails if any. An associated email is any email that is in a ticket with the same order ID but is not the ticket email
+    for _, t := range tickets {
+        if t.OrderID == ticket.OrderID && t.Email != ticket.Email {
+            associatedEmail := models.BillettholderEmail{
+                BillettholderID: int(billettholderID),
+                Email:           t.Email,
+                Kind:            "Associated",
+            }
+            emails = append(emails, associatedEmail)
+        }
+    }
+
 
 	for _, email := range emails {
 		_, err := db.Exec(`
