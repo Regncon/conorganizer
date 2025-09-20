@@ -11,7 +11,8 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			display: flex;
 			gap: 0.5rem;
 			padding-top: 1rem;
-			margin-bottom: 1rem;
+			padding-bottom: 1rem;
+			width: 100%;
 		}
 
 		.breadcrumbs a {
@@ -27,7 +28,7 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			color: var(--color-text-soft-50);
 		}
 	</style>
-	<div class="breadcrumbs">
+	<div class="breadcrumbs header-content-container">
 		for _, path := range paths {
 			if path.Url != "" {
 				<a href={ templ.URL(path.Url) }>{ path.Name }</a>
