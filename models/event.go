@@ -12,7 +12,7 @@ const (
 	EventStatusSubmitted EventStatus = "Innsendt"
 	EventStatusPublished EventStatus = "Publisert"
 	EventStatusApproved  EventStatus = "Godkjent"
-	EventStatusArchived  EventStatus = "Avist"
+	EventStatusArchived  EventStatus = "Forkastet"
 )
 
 type EventType string
@@ -27,9 +27,8 @@ const (
 type AgeGroup string
 
 const (
-	AgeGroupAllAges       AgeGroup = "AllAges"
+	AgeGroupDefault       AgeGroup = "Default"
 	AgeGroupChildFriendly AgeGroup = "ChildFriendly"
-	AgeGroupTeenFriendly  AgeGroup = "TeenFriendly"
 	AgeGroupAdultsOnly    AgeGroup = "AdultsOnly"
 )
 

@@ -50,6 +50,7 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 		Cfg:      b.Config,
 		Id:       logID,
 		Interval: interval,
+		DBPrefix: b.Config.DB_PREFIX,
 	}
 
 	// download snapshot
@@ -102,6 +103,11 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	output.Status = models.Success
 	output.Stage = models.Finalizing
 	output.FilePath = finalPath
+
+	// Calculate file size
+	fileSize := utils.GetFileSize(finalPath)
+	output.FileSize = fileSize
+
 	HandleBackupResult(output)
 }
 

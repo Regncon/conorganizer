@@ -108,5 +108,19 @@ func MigrateBackupLogsTable(db *sql.DB) error {
 		}
 	}
 
+	if !columns["file_size"] {
+		_, err := db.Exec(`ALTER TABLE backup_logs ADD COLUMN file_size INTEGER NOT NULL DEFAULT 0`)
+		if err != nil {
+			return fmt.Errorf("failed to add column 'file_size': %w", err)
+		}
+	}
+
+	if !columns["db_prefix"] {
+		_, err := db.Exec(`ALTER TABLE backup_logs ADD COLUMN db_prefix TEXT NOT NULL DEFAULT ''`)
+		if err != nil {
+			return fmt.Errorf("failed to add column 'db_prefix': %w", err)
+		}
+	}
+
 	return nil
 }

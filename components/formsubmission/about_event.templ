@@ -175,7 +175,7 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 
 templ aboutEvent(eventId string, title string, intro string, eventType models.EventType, image string, system string, description string) {
 	<article class="form-card">
-		<h4>Om arrangementet</h4>
+		<h4 class="form-card-title">Om arrangementet</h4>
 		<section class="about-section">
 			<label class="label-small color-strong form-group title">
 				Tittel

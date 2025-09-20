@@ -1,4 +1,4 @@
-FROM golang:1.24.4 AS my-dev-environment
+FROM golang:1.25.1 AS my-dev-environment
 
 # Enable CGO (required for some C-based Go libraries)
 ENV CGO_ENABLED=1
