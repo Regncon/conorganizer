@@ -104,6 +104,7 @@ h1 {
     border-color: #817e7e;
     margin: 4em 0;
     padding: 1em 0.5em;
+    scroll-margin-top: 10em;
 }
 
 .log-title {
