@@ -21,6 +21,8 @@ type BackupLog struct {
 	Stage      string
 	Status     string
 	FilePath   string
+	FileSize   int64
+	DBPrefix   string
 	Message    string
 	CreatedAt  time.Time
 }
