@@ -10,30 +10,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/billettholder"
 )
 
 var searchTerm = ""
-
-func getBilettholdere(db *sql.DB, logger *slog.Logger) ([]models.Billettholder, error) {
-	rows, err := db.Query("SELECT id, first_name,  last_name, ticket_type, ticket_type_id, is_over_18, order_id  FROM billettholdere")
-	if err != nil {
-		logger.Error("Failed to query billettholdere", "error", err)
-		return nil, err
-	}
-	defer rows.Close()
-
-	var billettholdere []models.Billettholder
-	for rows.Next() {
-		var b models.Billettholder
-		if err := rows.Scan(&b.ID, &b.FirstName, &b.LastName, &b.TicketType, &b.TicketTypeId, &b.IsOver18, &b.OrderID); err != nil {
-			logger.Error("Failed to scan billettholder", "error", err)
-			return nil, err
-		}
-		billettholdere = append(billettholdere, b)
-	}
-	return billettholdere, nil
-}
 
 func billettholdereSearchRoute(
 	router chi.Router,
@@ -68,7 +48,7 @@ func billettholdereSearchRoute(
 }
 
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ bilettholdere, err := getBilettholdere(db, logger) }}
+	{{ bilettholdere, err := billettholderService.GetBilettholdere(db, logger) }}
 	<div id="billettholder-admin-container">
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},

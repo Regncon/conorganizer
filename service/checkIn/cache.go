@@ -160,9 +160,22 @@ func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 			FirstName: et.Crm.FirstName,
 			LastName:  et.Crm.LastName,
 			Email:     et.Crm.Email,
-			IsOver18:  et.Crm.Born < "2007-01-01", // Example logic for determining if adult
+			IsOver18:  isOver18(et.Crm.Born),
 		})
 	}
 
 	return tickets, nil
+}
+
+func isOver18(born string) bool {
+	//For some F***ing reason, go time.Parse cant take YYYY-MM-DD like a normal programming language.
+	parseLayout := "2006-01-02"
+	birthDate, err := time.Parse(parseLayout, born)
+	if err != nil {
+		return false
+	}
+
+	regnConDate := time.Date(2025, 10, 10, 0, 0, 0, 0, time.UTC)
+	eighteenth := birthDate.AddDate(18, 0, 0)
+	return !eighteenth.After(regnConDate)
 }

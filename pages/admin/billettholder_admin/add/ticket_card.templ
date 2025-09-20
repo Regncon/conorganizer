@@ -61,7 +61,7 @@ func ConvertTicketToBillettholderRoute(
 // creat a constant for ticket type middag it should have id 193284
 const TicketTypeMiddag = 193284
 
-templ ticketCard(ticket checkIn.CheckInTicket, searchTerm string) {
+templ ticketCard(ticket checkIn.CheckInTicket, isBllettholder bool, searchTerm string) {
 	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		<p style="margin:0;">
 			<strong>Bestilling:</strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(ticket.OrderID), searchTerm))
@@ -101,6 +101,10 @@ templ ticketCard(ticket checkIn.CheckInTicket, searchTerm string) {
 		if ticket.TypeId == TicketTypeMiddag {
 			<p style="margin:0; color: var(--color-accent);">
 				<strong>Merk:</strong> Dette er en middagsbillett.
+			</p>
+		} else if isBllettholder {
+			<p style="margin:0; color: var(--color-accent);">
+				<strong>Merk:</strong> Denne billetten er allerede konvertert til en billettholder.
 			</p>
 		} else {
 			<button

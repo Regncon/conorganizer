@@ -8,7 +8,9 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/delaneyj/toolbelt"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
@@ -66,9 +68,18 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 	return id, nil
 }
 
+func isBillettholder(ticketID int, bilettholdere []models.Billettholder) bool {
+	for _, b := range bilettholdere {
+		if b.TicketID == ticketID {
+			return true
+		}
+	}
+	return false
+}
+
 templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ fmt.Println("AddBillettholderAdminPage") }}
 	{{ tickets, err := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
+	{{ billettholdere, err := billettholderService.GetBilettholdere(db, logger) }}
 	<div id="add-billettholder-admin-container">
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
@@ -92,7 +103,7 @@ templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 					<p>Failed to load tickets:</p>
 				} else {
 					for _, ticket := range tickets {
-						@ticketCard(ticket, searchTerm)
+						@ticketCard(ticket, isBillettholder(ticket.ID, billettholdere), searchTerm)
 					}
 				}
 			</div>
