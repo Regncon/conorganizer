@@ -60,6 +60,10 @@
     --border-radius-small: 4px;
     --border-radius-medium: 8px;
 
+    /* content width */
+    --page-header-max-width: 1920px;
+    --page-content-max-width: 1440px;
+
     /* breakpoints */
     --mobile-min-width: 320px;
     --mobile-max-column-width: 430px;
@@ -169,13 +173,63 @@ body {
         container-type: inline-size;
         container-name: formsubmission-css-container;
         display: grid;
-        place-content: center;
+    }
+}
+
+.header-content-container {
+    max-width: var(--page-header-max-width);
+    padding: 0 8px;
+    margin: 0 auto;
+}
+.page-content-container {
+    max-width: var(--page-content-max-width);
+    padding: 0 8px;
+    margin: 0 auto;
+}
+@container main (width > 600px) {
+    .header-content-container,
+    .page-content-container {
+        padding: 0 var(--spacing-medium);
+    }
+}
+@container main (width > 1200px) {
+    .header-content-container,
+    .page-content-container {
+        padding: 0 var(--spacing-xlarge);
     }
 }
 
 h1 {
     margin: 0;
     color: var(--color-text-strong);
+}
+
+h1.page-heading {
+    font-size: 32px;
+    margin: var(--spacing-medium) 0;
+    &.has-helptext {
+        margin-bottom: var(--spacing-xsmall);
+    }
+}
+.page-heading-helptext {
+    margin-bottom: var(--spacing-medium);
+}
+@container main (width > 600px) {
+    h1.page-heading {
+        font-size: 40px;
+        margin: var(--spacing-large) 0;
+    }
+    .page-heading-helptext {
+        margin-bottom: var(--spacing-large);
+    }
+}
+@container main (width > 1000px) {
+    h1.page-heading {
+        margin: var(--spacing-xlarge) 0;
+    }
+    .page-heading-helptext {
+        margin-bottom: var(--spacing-xlarge);
+    }
 }
 
 h3 {
