@@ -9,7 +9,7 @@
     --color-primary-hover: #E7A96566;
     --color-primary-focus-visible: #feb56780;
     --color-primary-active: #feb56799;
-    --color-primary-strong: #E7A965; /* Deprecated variable, do not use */
+    --color-primary-strong: #E7A965; /* Deprecated variable, use color-primary instead */
 
     --color-secondary-text: var(--color-text-soft);
     --color-secondary: #CCD1E9;
