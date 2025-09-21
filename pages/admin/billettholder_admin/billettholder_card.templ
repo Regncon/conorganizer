@@ -37,7 +37,7 @@ func highlightSearchTerm(text, searchTerm string) string {
 templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		<p style="margin:0;">
-			<strong>Bestilling:</strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
+			<strong>Bestilling: </strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
 		</p>
 		<p style="margin:0;">
 			<strong>Type: </strong> @templ.Raw(highlightSearchTerm(billettholder.TicketType, searchTerm))
@@ -48,15 +48,18 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 				@templ.Raw(highlightSearchTerm(billettholder.FirstName+""+billettholder.LastName, searchTerm))
 			</em>
 		</p>
-		<span>Bilett epost:</span>
-		<a
-			href={ "mailto:" }
-			style="color: var(--link-color); text-decoration: underline; display: block; margin-top: 0.5rem;"
-		></a>
-		<span>Bestilling epost:</span>
-		<a
-			style="color: var(--link-color); text-decoration: underline; display: block; margin-top: 0.5rem;"
-		></a>
+		for _, email := range billettholder.Emails {
+			if email.Kind == "Ticket" {
+				<div style="display: flex; align-items: center; gap:0.5rem; ">
+					<strong>Epost:</strong>
+					<a
+						href={ "mailto:" + email.Email }
+					>
+						{ email.Email }
+					</a>
+				</div>
+			}
+		}
 		<div style="display: flex; align-items: center; gap:0.5rem; ">
 			if billettholder.IsOver18 {
 				<img
@@ -74,7 +77,16 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 				<p><strong>Alder:</strong> Under 18</p>
 			}
 		</div>
-		<span>Ekstra epostaddresser:</span>
+		<span>Andre epostadresser på samme bestilling:</span>
+		for _, email := range billettholder.Emails {
+			if email.Kind == "Associated" {
+				<a
+					href={ "mailto:" + email.Email }
+				>
+					{ email.Email }
+				</a>
+			}
+		}
 		<button
 			class="btn btn--outline"
 		>
