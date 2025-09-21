@@ -9,6 +9,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"encoding/json"
 
 	"github.com/gorilla/sessions"
 	"github.com/go-chi/chi/v5"
@@ -87,11 +88,44 @@ func addEmailToBilettholderRoute(
 			http.Error(w, "New email address is required", http.StatusBadRequest)
 			return
 		}
+
+		var exists int
+		queryCheck := `SELECT COUNT(*) FROM billettholder_emails WHERE billettholder_id = ? AND email = ?`
+		err := db.QueryRow(queryCheck, billettholderID, newEmailAddress).Scan(&exists)
+		if err != nil {
+			logger.Error("Failed to check existing emails in the database", slog.Any("error", err))
+			http.Error(w, "Failed to check existing emails in the database", http.StatusInternalServerError)
+			return
+		}
+		if exists > 0 {
+			logger.Error("Email address already exists for this billettholder", slog.String("email", newEmailAddress))
+			http.Error(w, "Email address already exists for this billettholder", http.StatusConflict)
+			return
+		}
+
 		query := `INSERT INTO billettholder_emails (billettholder_id, email, kind) VALUES (?, ?, 'Manual')`
-		_, err := db.Exec(query, billettholderID, newEmailAddress)
+		_, err = db.Exec(query, billettholderID, newEmailAddress)
 		if err != nil {
 			logger.Error("Failed to insert new email into the database", slog.Any("error", err))
 			http.Error(w, "Failed to add new email to the database", http.StatusInternalServerError)
+			return
+		}
+
+		payload := map[string]any{
+			fmt.Sprintf("newEmail-%s", billettholderID): "",
+		}
+
+		b, err := json.Marshal(payload)
+		if err != nil {
+			logger.Error("Failed to marshal patch signals payload", slog.Any("error", err))
+			http.Error(w, "Failed to encode patch signals", http.StatusInternalServerError)
+			return
+		}
+
+		sse := datastar.NewSSE(w, r)
+		if err := sse.PatchSignals(b); err != nil {
+			logger.Error("Failed to patch signals", slog.Any("error", err))
+			http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
 			return
 		}
 
