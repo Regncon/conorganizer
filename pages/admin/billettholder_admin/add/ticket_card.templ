@@ -75,10 +75,7 @@ templ ticketCard(ticket checkIn.CheckInTicket, isBllettholder bool, searchTerm s
 				@templ.Raw(highlightSearchTerm(ticket.FirstName+""+ticket.LastName, searchTerm))
 			</em>
 		</p>
-		<a
-			href={ "mailto:" + ticket.Email }
-			style="color: var(--link-color); text-decoration: underline; display: block; margin-top: 0.5rem;"
-		>
+		<a href={ "mailto:" + ticket.Email }>
 			@templ.Raw(highlightSearchTerm(ticket.Email, searchTerm))
 		</a>
 		<div style="display: flex; align-items: center; gap:0.5rem; ">

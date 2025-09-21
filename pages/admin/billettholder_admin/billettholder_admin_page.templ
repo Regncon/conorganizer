@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log/slog"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -21,8 +20,6 @@ func billettholdereSearchRoute(
 	notifyUpdate func(string),
 ) {
 	router.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("search")
-
 		datastarRaw := r.URL.Query().Get("datastar")
 		if datastarRaw == "" {
 			http.Error(w, "missing ?datastar param", http.StatusBadRequest)
@@ -38,7 +35,6 @@ func billettholdereSearchRoute(
 		}
 
 		searchTerm = payload.Search
-		fmt.Println("searchTerm", searchTerm)
 
 		sessionID, _ := upsertSessionID(store, r, w)
 		if notifyUpdate != nil {

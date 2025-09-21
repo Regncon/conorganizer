@@ -52,10 +52,8 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 			if email.Kind == "Ticket" {
 				<div style="display: flex; align-items: center; gap:0.5rem; ">
 					<strong>Epost:</strong>
-					<a
-						href={ "mailto:" + email.Email }
-					>
-						{ email.Email }
+					<a href={ "mailto:" + email.Email }>
+						@templ.Raw(highlightSearchTerm(email.Email, searchTerm))
 					</a>
 				</div>
 			}
@@ -80,10 +78,8 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 		<span>Andre epostadresser på samme bestilling:</span>
 		for _, email := range billettholder.Emails {
 			if email.Kind == "Associated" {
-				<a
-					href={ "mailto:" + email.Email }
-				>
-					{ email.Email }
+				<a href={ "mailto:" + email.Email }>
+					@templ.Raw(highlightSearchTerm(email.Email, searchTerm))
 				</a>
 			}
 		}
