@@ -80,6 +80,22 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 	}
 
 	for _, email := range emails {
+		exists := false
+		checkErr := db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM billettholder_emails
+				WHERE billettholder_id = ? AND email = ?
+			)
+		`, email.BillettholderID, email.Email).Scan(&exists)
+		if checkErr != nil {
+			logger.Info("failed to check existing email", "error", checkErr)
+			return checkErr
+		}
+		if exists {
+			logger.Info("email already exists, skipping", "email", email.Email)
+			continue
+		}
+
 		_, err := db.Exec(`
 			INSERT INTO billettholder_emails (
 				billettholder_id, email, kind

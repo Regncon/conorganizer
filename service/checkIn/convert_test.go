@@ -161,3 +161,93 @@ func TestDoNotConvertTicketsOfTypeMiddag(t *testing.T) {
 		t.Errorf("expected error %q, got %q", expectedError, err.Error())
 	}
 }
+
+func TestDontAddDuplicateAssociatedEmails(t *testing.T) {
+	// ❶ Arrange
+	const ticketId = 42
+
+	expectedBillettholderEmails := []models.BillettholderEmail{
+		{BillettholderID: 0, Email: "ticket_email@test.test", Kind: "Ticket"},
+		{BillettholderID: 0, Email: "associated_email@test.test", Kind: "Associated"},
+	}
+
+	tickets := []CheckInTicket{
+		{ID: ticketId,
+			OrderID:   1,
+			TypeId:    1,
+			Type:      "Adult",
+			FirstName: "John",
+			LastName:  "Doe",
+			Email:     "ticket_email@test.test",
+			IsOver18:  true},
+		{ID: 43,
+			OrderID:   1,
+			TypeId:    2,
+			Type:      "Child",
+			FirstName: "Jane",
+			LastName:  "Doe",
+			Email:     "associated_email@test.test",
+			IsOver18:  false},
+		{ID: 44,
+			OrderID:   1,
+			TypeId:    2,
+			Type:      "Child",
+			FirstName: "Same as previous",
+			LastName:  "associated email",
+			Email:     "associated_email@test.test",
+			IsOver18:  false},
+		{ID: 45,
+			OrderID:   2,
+			TypeId:    1,
+			Type:      "Adult",
+			FirstName: "Not",
+			LastName:  "associated",
+			Email:     "not_associated_email@test.test",
+			IsOver18:  false},
+	}
+
+	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
+	testDBPath := "../../database/" + uniqueDatabaseName
+
+	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
+	if err != nil {
+		t.Fatalf("failed to create test database: %v", err)
+	}
+	defer db.Close()
+
+	// ❷ Act
+	sl := &testutil.StubLogger{}
+	slogger := testutil.NewSlogAdapter(sl)
+
+	err = converTicketIdToNewBillettholder(ticketId, tickets, db, slogger)
+	if err != nil {
+		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
+	}
+
+	// ❸ Assert
+	var billettholderEmails []models.BillettholderEmail
+	rows, err := db.Query("SELECT id, billettholder_id, email, kind, inserted_time FROM billettholder_emails")
+	if err != nil {
+		t.Fatalf("failed to query billettholder emails: %v", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var email models.BillettholderEmail
+		if err := rows.Scan(&email.ID, &email.BillettholderID, &email.Email, &email.Kind, &email.InsertedTime); err != nil {
+			t.Fatalf("failed to scan billettholder email: %v", err)
+		}
+		billettholderEmails = append(billettholderEmails, email)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("error iterating over billettholder emails: %v", err)
+	}
+	if len(billettholderEmails) != len(expectedBillettholderEmails) {
+		t.Fatalf("expected %d billettholder emails, got %d", len(expectedBillettholderEmails), len(billettholderEmails))
+	}
+	for i, email := range billettholderEmails {
+		expectedEmail := expectedBillettholderEmails[i]
+		if email.Email != expectedEmail.Email || email.Kind != expectedEmail.Kind {
+			t.Errorf("expected billettholder email %+v kind %+v, got %+v kind %+v", expectedEmail.Email, expectedEmail.Kind, email.Email, email.Kind)
+		}
+	}
+}
