@@ -73,8 +73,8 @@ templ FormBody(event *models.Event) {
 
 			.submit-section {
 				display: grid;
-				grid-template-columns: 0.7fr 0.3fr;
-				gap: 2rem;
+				grid-template-columns: 1fr;
+				gap: 1rem;
 				margin-block-start: 1rem;
 				min-height: 6.125rem;
 				place-content: center;
@@ -83,23 +83,16 @@ templ FormBody(event *models.Event) {
 					margin: 0;
 					place-self: center;
 				}
+			}
 
-				.btn {
-					align-self: end;
-					height: 3.625rem;
-					width: min(100%, 15rem);
-				}
-				/*
-                     //TODO: remove this if button should not be white
-                    */
-				.btn--outline {
-					border-width: 3px;
-					border-color: var(--btn-primary-bg);
-					color: var(--btn-primary-bg);
+			@container formsubmission-css-container (width > 600px) {
+				.submit-section {
+					grid-template-columns: 1fr 240px;
+					gap: 2rem;
 				}
 			}
 
-			@container formsubmission-css-container (width > 42.31rem) {
+			@container formsubmission-css-container (width > 800px) {
 				.form-card:is(:not(.submit-section)) {
 					display: block;
 
