@@ -2,8 +2,11 @@ package myprofile
 
 import "github.com/Regncon/conorganizer/components"
 import "github.com/Regncon/conorganizer/components/profile"
+import "github.com/Regncon/conorganizer/service/requestctx"
+import "database/sql"
+import "log/slog"
 
-templ myProfile() {
+templ myProfile(user requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	<style>
         .wrapper {
             width: 100%;
@@ -45,11 +48,11 @@ templ myProfile() {
 	})
 	<section class="wrapper">
 		<div class="wrapper-main">
-			@profile.MyEvents()
+			@profile.MyEvents(user.Id, db, logger)
 			@profile.MyPropgram()
 		</div>
 		<div class="wrapper-details">
-			@profile.UserDetails()
+			@profile.UserDetails(user)
 			@profile.MyTickets()
 		</div>
 	</section>
