@@ -18,10 +18,12 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 	router.Route("/my-profile", func(ticketRouter chi.Router) {
 		ticketRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
+			var user = userctx.GetUserRequestInfo(ctx)
+
 			layouts.Base(
 				"Min profil",
 				userctx.GetUserRequestInfo(ctx),
-				myProfile(),
+				myProfile(user, db, logger),
 			).Render(ctx, w)
 
 		})

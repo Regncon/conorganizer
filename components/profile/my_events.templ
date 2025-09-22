@@ -1,20 +1,87 @@
 package profile
 
-import "github.com/Regncon/conorganizer/components/modals"
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"log/slog"
+	"strings"
+)
 
+func GetEventsByUserId(userID string, db *sql.DB, logger *slog.Logger) []models.EventCardModel {
+	var events []models.EventCardModel
 
-templ consent() {
-    <div>
-        <p>yes please</p>
-    </div>
+	// Get events where event created id is the same as user
+	userDbId, err := userctx.GetIdFromUserIdInDb(userID, db, logger)
+	if err != nil {
+		logger.Error("userDbIdErr", "error", err)
+		return events
+	}
+
+	// Query for events created by user
+	eventsQuery := "SELECT id, title, intro, status, system, host_name, beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE host = ?"
+	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
+	if eventsQueryErr != nil {
+		logger.Error("Failed to query events", "user_id", userID, "error", eventsQueryErr)
+		return events
+	}
+	defer rows.Close()
+
+	// Validate database query return
+	for rows.Next() {
+		var event models.EventCardModel
+		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
+			logger.Error("Failed to scan event row", "user_id", userID, "error", scanErr)
+			return events
+		}
+		events = append(events, event)
+	}
+
+	return events
 }
 
-templ MyEvents() {
-	<div class="panel">
-		Mine arrangement
-        @modals.ModalWrapper(
-            modals.ModalOptions{Label: "open config", ID: "consent-form"},
-            consent(),
-        )
+templ MyEvents(userID string, db *sql.DB, logger *slog.Logger) {
+	<style>
+        .my-events {
+            display: flex;
+            flex-flow: column nowrap;
+            gap: var(--spacing-xsmall);
+        }
+
+        .my-events-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-xsmall);
+            border-radius: var(--border-radius-small);
+        }
+
+        /* Event statuses */
+        .status-panel {
+            padding: var(--spacing-xsmall);
+            border-radius: var(--border-radius-small);
+        }
+    </style>
+	<div class="my-events panel">
+		<h2>Mine arrangementer</h2>
+		{{ events := GetEventsByUserId(userID, db, logger) }}
+		if len(events) > 0 {
+			for _, event := range events {
+				<span class="my-events-item" style="background-color: var(--bg-item);">
+					<a href={ "my-events/new/" + event.Id }>
+						if event.Title == "" {
+							<h3 style="color: gray; font-style: italic;">Mangler navn</h3>
+						} else {
+							<h3>{ event.Title }</h3>
+						}
+					</a>
+					<span class={ "status-panel", "event-status-" + strings.ToLower(string(event.Status)) }>{ event.Status }</span>
+				</span>
+			}
+		}
+		<form action="/my-events/api/create" method="post" class="my-events-item">
+			<p>Ønsker du  å arrangere noe under festivalen? Dørene er fortsatt åpne for nye arrangementer, la oss høre fra deg!</p>
+			<button type="submit" class="btn btn--outline">Send inn arrangement</button>
+		</form>
 	</div>
 }

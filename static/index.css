@@ -28,6 +28,12 @@
     --color-tertiary-active: #feb567;
     --color-tertiary-strong: #eb4716;
 
+    --color-status-kladd: #5e5e5e;
+    --color-status-innsendt: #286bbe;
+    --color-status-godkjent: #368049;
+    --color-status-publisert: #088b0e;
+    --color-status-forkastet: #a45757;
+
     --bg-base: var(--bg-body-100);
     --bg-surface: #252735;
     --bg-item: var(--bg-body-90);
@@ -303,4 +309,24 @@ input {
     background-color: var(--bg-item);
     border-radius: var(--border-radius-medium);
     font-size: 0.9rem;
+}
+
+/* Event status colors */
+.event-status-kladd {
+    background-color: var(--color-status-kladd);
+}
+.event-status-innsendt {
+    background-color: var(--color-status-innsendt);
+}
+.event-status-godkjent {
+    background-color: var(--color-status-godkjent);
+}
+.event-status-publisert {
+    background-color: var(--color-status-publisert);
+}
+.event-status-avvist {
+    background-color: var(--color-status-forkastet);
+}
+.event-status-forkastet {
+    background-color: var(--color-status-forkastet);
 }
