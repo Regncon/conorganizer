@@ -1,6 +1,8 @@
 package profile
 
-templ UserDetails() {
+import "github.com/Regncon/conorganizer/service/requestctx"
+
+templ UserDetails(user requestctx.UserRequestInfo) {
     <style>
         .my-profile {
             display: flex;
@@ -25,14 +27,14 @@ templ UserDetails() {
     </style>
 	<div class="my-profile panel">
 		<h2>Brukerdetaljer</h2>
-		<p>Gary Lindgren</p>
+		<p>user.Name</p>
 		<span>
 			<img src="/static/icons/boardgames.svg"/>
-			<p>gary.cooldude@email.com</p>
+			<p>{ user.Email }</p>
 		</span>
 		<span>
 			<img src="/static/icons/cardgames.svg"/>
-			<p>+47 123 45 678</p>
+			<p>user.Phone</p>
 		</span>
 	</div>
 }
