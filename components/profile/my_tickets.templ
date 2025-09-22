@@ -69,10 +69,12 @@ templ MyTickets() {
 			@ticketHolder(holder.name, holder.ticket, holder.email)
 		}
         @ui.Button(ui.ButtonOptions{
-            Label: "My button",
+            Label: "Mine biletter",
             ClassName: templ.Class("btn--outline"),
+            Styles: templ.Classes("width: fit-content; margin-left: auto;"),
             ButtonVariant: ui.CallToAction,
+            Href: "/",
         })
-		<button class="btn btn--outline" style="width: fit-content; margin-left: auto;">Mine biletter</button>
+		/* <button class="btn btn--outline" style="width: fit-content; margin-left: auto;">Mine biletter</button> */
 	</div>
 }
