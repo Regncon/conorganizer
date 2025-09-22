@@ -1,5 +1,12 @@
 package profile
 
+import "github.com/Regncon/conorganizer/components/ui"
+
+
+func myTest() {
+    // do something
+}
+
 templ ticketHolder(name string, ticket string, email string) {
 	<style>
         .ticket-holder {
@@ -61,6 +68,11 @@ templ MyTickets() {
 		for _, holder := range holders {
 			@ticketHolder(holder.name, holder.ticket, holder.email)
 		}
+        @ui.Button(ui.ButtonOptions{
+            Label: "My button",
+            ClassName: templ.Class("btn--outline"),
+            ButtonVariant: ui.CallToAction,
+        })
 		<button class="btn btn--outline" style="width: fit-content; margin-left: auto;">Mine biletter</button>
 	</div>
 }

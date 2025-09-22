@@ -1,0 +1,89 @@
+package ui
+
+// This is the button type
+type ButtonType string
+
+const (
+	ButtonButton ButtonType = "button"
+	SubmitButton ButtonType = "submit"
+	ResetButton  ButtonType = "reset"
+)
+
+func getButtonType(buttonType ButtonType) string {
+	switch buttonType {
+	case "submit":
+		return "submit"
+	case "reset":
+		return "reset"
+	default:
+		return "button"
+	}
+}
+
+type ButtonVariant string
+
+const (
+	Primary      ButtonVariant = "primary"
+	Secondary    ButtonVariant = "secondary"
+	CallToAction ButtonVariant = "cta"
+)
+
+func getVariantStyle(variant ButtonVariant) string {
+	switch variant {
+	case "primary":
+		return ".btn--primary"
+	case "secondary":
+		return ".btn--secondary"
+	case "cta":
+		return ".btn--cta"
+	default:
+		return ""
+	}
+}
+
+type ButtonOptions struct {
+	// Label for button
+	Label string
+	// Choose between primary, secondary and ghost
+	ButtonVariant ButtonVariant
+	// Optional override of button type with either submit or reset
+	ButtonType ButtonType
+	// Controll button disabled state
+	Disabled bool
+	// Add extra classes to the button component
+	ClassName templ.CSSClass
+	// Optinal style override
+	Styles templ.CSSClasses
+	// Optional href prop if button should act like a link
+	Href templ.SafeURL
+	// Optional javascript function
+	OnClick *string
+}
+
+templ Button(options ButtonOptions) {
+	if options.Href != "" {
+		<a
+			href={ templ.SafeURL(options.Href) }
+			class={ "btn", getVariantStyle(options.ButtonVariant), options.ClassName }
+			type={ getButtonType(options.ButtonType) }
+			style={ templ.CSSClasses(options.Styles) }
+			role="button"
+
+            if options.Disabled {
+                aria-disabled="true"
+                tabindex="-1"
+            }
+		>
+			{ options.Label }
+		</a>
+	} else {
+		<button
+			class={ "btn", getVariantStyle(options.ButtonVariant), options.ClassName }
+			type={ getButtonType(options.ButtonType) }
+			style={ templ.CSSClasses(options.Styles) }
+			disabled?={ options.Disabled }
+		>
+			{ options.Label }
+		</button>
+	}
+}
