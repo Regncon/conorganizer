@@ -1,7 +1,20 @@
 package profile
 
+import "github.com/Regncon/conorganizer/components/modals"
+
+
+templ consent() {
+    <div>
+        <p>yes please</p>
+    </div>
+}
+
 templ MyEvents() {
 	<div class="panel">
 		Mine arrangement
+        @modals.ModalWrapper(
+            modals.ModalOptions{Label: "open config", ID: "consent-form"},
+            consent(),
+        )
 	</div>
 }

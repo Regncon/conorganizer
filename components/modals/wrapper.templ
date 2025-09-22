@@ -1,0 +1,18 @@
+package modals
+
+type ModalOptions struct {
+	ID      string
+	Label string
+}
+
+templ ModalWrapper(options ModalOptions, content templ.Component) {
+	<style>
+        dialog { display: block; }
+        dialog:not(:target):not([open]) { display: none; }
+    </style>
+	<dialog id={ options.ID } class="" style="background-color: var(--bg-surface);">
+		@content
+		<a href="#" role="button">close</a>
+	</dialog>
+	<a href={ "#" + options.ID } class="btn btn--primary" role="button">{ options.Label }</a>
+}
