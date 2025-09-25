@@ -178,6 +178,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                     gap: 0;
                     column-gap: var(--spacing-8x);
                     padding-inline: var(--spacing-10x);
+                    grid-template-columns: 7fr 3fr;
 
                     .interest-picker {
                         width: 100%;
@@ -186,6 +187,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                         flex-direction: row;
                         flex-wrap: wrap;
                         place-content: center;
+                        height: fit-content;
 
                     }
                     .details {
