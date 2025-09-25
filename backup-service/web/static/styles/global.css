@@ -6,6 +6,17 @@
     --container-max-width: 100%;
 }
 
+* {
+    box-sizing: border-box;
+    margin: 0;
+}
+
+@media (min-width: 375px) {
+    :root {
+        --container-max-width: 375x; /* xs */
+    }
+}
+
 @media (min-width: 640px) {
     :root {
         --container-max-width: 640px; /* sm */
@@ -37,7 +48,7 @@
 }
 
 html {
-    box-sizing: content-box;
+    box-sizing: border-box;
     scroll-behavior: smooth;
 
     @media (prefers-reduced-motion: reduce) {
@@ -117,6 +128,10 @@ h1 {
         text-align: center;
         padding: 0 1em;
         border: none !important;
+    }
+
+    h3 {
+        word-break: break-all;
     }
 }
 
