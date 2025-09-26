@@ -83,8 +83,8 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		var imgErr error
 		if eventImageDir != nil && *eventImageDir != "" {
 			if _, statErr := os.Stat(*eventImageDir); os.IsNotExist(statErr) {
-				imgErr = fmt.Errorf("event image directory does not exist: %q", *eventImageDir)
-				logger.Error("Event image directory does not exist; starting in degraded mode", "dir", *eventImageDir)
+				imgErr = fmt.Errorf("event image directory %q does not exist: %w Create it and run task start again", *eventImageDir, statErr)
+				logger.Error("Event image directory does not exist; Create it and run task start again. Starting in degraded mode", "dir", *eventImageDir)
 			} else if statErr != nil {
 				imgErr = fmt.Errorf("unable to access event image directory %q: %w", *eventImageDir, statErr)
 				logger.Error("Unable to access event image directory; starting in degraded mode", "dir", *eventImageDir, "err", statErr)
