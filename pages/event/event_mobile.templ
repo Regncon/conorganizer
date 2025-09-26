@@ -75,7 +75,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                     display:flex;
                     align-items: center;
                     flex-direction:column;
-                    gap:1rem;
+                    gap: var(--spacing-4x);
                     padding: var(--spacing-4x);
                     text-align: center;
 
@@ -92,7 +92,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                     .details-top {
                         display: flex;
                         flex-direction: column;
-                        gap: 0.5rem;
+                        gap: var(--spacing-3x);
                         padding: var(--spacing-5x);
 
                         p {
@@ -132,7 +132,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                         padding: 1rem;
                         display: flex;
                         flex-direction: column;
-                        gap: 0.5rem;
+                        gap: var(--spacing-4x);
                     }
                 }
 
@@ -187,7 +187,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                         margin-block-end: var(--spacing-8x);
                         flex-direction: row;
                         flex-wrap: wrap;
-                        place-content: center;
+                        place-content: space-between;
                         height: fit-content;
 
                     }
@@ -242,7 +242,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				<div class="details-top">
 					<p class="details-header color-strong">Detaljer om arrangementet</p>
 					<div class="details-host">
-						<strong>Arrangør:</strong>
+						<strong>Arrangør</strong>
 						<p class="color-strong" title={ event.HostName }>{ event.HostName } </p>
 					</div>
 					<div class="details-system">
