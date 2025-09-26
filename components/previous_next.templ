@@ -53,9 +53,10 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 
 
         @container event-container (width > 37.5rem) {
-                & .prev-next-wrapper {
+                .prev-next-wrapper {
                     flex-direction: row;
                     place-content: space-between;
+                    padding: 0;
 
                     a {
                         width: var(--prev-next-responsive-max-width);
@@ -64,7 +65,7 @@ templ PreviousNextBar(previousNextData PreviousNext) {
         }
 
         @container event-container (width > 65.0625rem) {
-                & .prev-next-wrapper {
+                .prev-next-wrapper {
                     flex-direction: row;
                     place-content: space-between;
                     padding-inline: var(--spacing-10x);
