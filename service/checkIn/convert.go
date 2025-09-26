@@ -23,25 +23,30 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		logger.Error("ticket not found", "ticketId", ticketId)
 		return errors.New("ticket not found")
 	}
-
-	billettholder := models.Billettholder{
-		FirstName:   ticket.FirstName,
-		LastName:    ticket.LastName,
-		OrderID:     ticket.OrderID,
-		TicketID:    ticket.ID,
-		IsOver18:    ticket.IsOver18,
-		TicketEmail: ticket.Email,
+	const TicketTypeMiddag = 193284
+	if ticket.TypeId == TicketTypeMiddag {
+		logger.Error("cannot convert 'Middag' ticket to billettholder", "ticketId", ticketId)
+		return errors.New("cannot convert 'Middag' ticket to billettholder")
 	}
 
-	_, err := db.Exec(`
+	billettholder := models.Billettholder{
+		FirstName:    ticket.FirstName,
+		LastName:     ticket.LastName,
+		TicketTypeId: ticket.TypeId,
+		TicketType:   ticket.Type,
+		OrderID:      ticket.OrderID,
+		TicketID:     ticket.ID,
+		IsOver18:     ticket.IsOver18,
+	}
+
+	result, err := db.Exec(`
 		INSERT INTO billettholdere (
-        first_name, last_name, ticket_type,
-        ticket_id, is_over_18, order_id,
-        ticket_email, order_email, ticket_category_id
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-		billettholder.FirstName, billettholder.LastName, billettholder.TicketType,
-		billettholder.TicketID, billettholder.IsOver18, billettholder.OrderID,
-		billettholder.TicketEmail, billettholder.OrderEmail, billettholder.TicketCategoryID,
+        first_name, last_name, ticket_type_id, ticket_type,
+        ticket_id, is_over_18, order_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		billettholder.FirstName, billettholder.LastName, billettholder.TicketTypeId,
+		billettholder.TicketType, billettholder.TicketID, billettholder.IsOver18,
+		billettholder.OrderID,
 	)
 
 	if err != nil {
@@ -49,6 +54,59 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		return err
 	}
 
-	logger.Info("successfully inserted billettholder", "ticketId", ticketId)
+	billettholderID, lastIdErr := result.LastInsertId()
+	if lastIdErr != nil {
+		logger.Info("failed to fetch last insert ID", "error", lastIdErr)
+		return lastIdErr
+	}
+
+	emails := []models.BillettholderEmail{
+		{
+			BillettholderID: int(billettholderID),
+			Email:           ticket.Email,
+			Kind:            "Ticket",
+		},
+	}
+	// find associated emails if any. An associated email is any email that is in a ticket with the same order ID but is not the ticket email
+	for _, t := range tickets {
+		if t.OrderID == ticket.OrderID && t.Email != ticket.Email {
+			associatedEmail := models.BillettholderEmail{
+				BillettholderID: int(billettholderID),
+				Email:           t.Email,
+				Kind:            "Associated",
+			}
+			emails = append(emails, associatedEmail)
+		}
+	}
+
+	for _, email := range emails {
+		exists := false
+		checkErr := db.QueryRow(`
+			SELECT EXISTS(
+				SELECT 1 FROM billettholder_emails
+				WHERE billettholder_id = ? AND email = ?
+			)
+		`, email.BillettholderID, email.Email).Scan(&exists)
+		if checkErr != nil {
+			logger.Info("failed to check existing email", "error", checkErr)
+			return checkErr
+		}
+		if exists {
+			logger.Info("email already exists, skipping", "email", email.Email)
+			continue
+		}
+
+		_, err := db.Exec(`
+			INSERT INTO billettholder_emails (
+				billettholder_id, email, kind
+			) VALUES (?, ?, ?)
+		`, email.BillettholderID, email.Email, email.Kind)
+		if err != nil {
+			logger.Info("failed to insert billettholder email", "error", err)
+			return err
+		}
+	}
+
+	logger.Info("successfully inserted billettholder", "ticketId", ticketId, "billettholderId", billettholderID)
 	return nil
 }

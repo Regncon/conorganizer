@@ -5,8 +5,13 @@ import (
 	"github.com/Regncon/conorganizer/components"
 )
 
-/*
-
+templ adminPage(db *sql.DB) {
+	<div id="admin-container">
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Admin", Url: ""},
+		})
+		<h1>Admin page</h1>
 		<div class="admin-grid">
 			<a
 				href="/admin/billettholder/"
@@ -34,22 +39,17 @@ import (
 		<style>
 			.admin-grid {
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
+				grid-template-columns: repeat(
+					auto-fit,
+					minmax(var(--mobile-min-width), 1fr)
+				);
 				gap: 1rem;
-			}@media (min-width: 600px) {
+			}
+			@media (min-width: 600px) {
 				.admin-grid {
 					padding: 1rem;
 				}
 			}
 		</style>
-*/
-
-templ adminPage(db *sql.DB) {
-	<div id="admin-container">
-		@components.Breadcrumbs([]components.BreadcrumbPath{
-			{Name: "Hjem", Url: "/"},
-			{Name: "Admin", Url: ""},
-		})
-		<h1>Admin page</h1>
 	</div>
 }

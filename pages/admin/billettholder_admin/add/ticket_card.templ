@@ -58,9 +58,11 @@ func ConvertTicketToBillettholderRoute(
 	})
 }
 
-templ ticketCard(ticket checkIn.CheckInTicket, searchTerm string) {
-	<div class="card" style="padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
-		{ ticket.ID }
+// creat a constant for ticket type middag it should have id 193284
+const TicketTypeMiddag = 193284
+
+templ ticketCard(ticket checkIn.CheckInTicket, isBllettholder bool, searchTerm string) {
+	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		<p style="margin:0;">
 			<strong>Bestilling:</strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(ticket.OrderID), searchTerm))
 		</p>
@@ -73,29 +75,41 @@ templ ticketCard(ticket checkIn.CheckInTicket, searchTerm string) {
 				@templ.Raw(highlightSearchTerm(ticket.FirstName+""+ticket.LastName, searchTerm))
 			</em>
 		</p>
-		<a
-			href="mailto:{ticket.Email}"
-			style="color: var(--link-color); text-decoration: underline; display: block; margin-top: 0.5rem;"
-		>
+		<a href={ "mailto:" + ticket.Email }>
 			@templ.Raw(highlightSearchTerm(ticket.Email, searchTerm))
 		</a>
-		if ticket.IsOver18 {
-			<img
-				src="/static/icons/adults-only.svg"
-				alt="adults only"
-			/>
-			<p><strong>Alder:</strong> Over 18</p>
+		<div style="display: flex; align-items: center; gap:0.5rem; ">
+			if ticket.IsOver18 {
+				<img
+					src="/static/icons/adults-only.svg"
+					alt="adults only"
+				/>
+				<p><strong>Alder:</strong> Over 18</p>
+			} else {
+				<img
+					width="34px"
+					height="34px"
+					src="/static/icons/child-friendly.svg"
+					alt="child friendly"
+				/>
+				<p><strong>Alder:</strong> Under 18</p>
+			}
+		</div>
+		if ticket.TypeId == TicketTypeMiddag {
+			<p style="margin:0; color: var(--color-accent);">
+				<strong>Merk:</strong> Dette er en middagsbillett.
+			</p>
+		} else if isBllettholder {
+			<p style="margin:0; color: var(--color-accent);">
+				<strong>Merk:</strong> Denne billetten er allerede konvertert til en billettholder.
+			</p>
 		} else {
-			<img
-				src="/static/icons/child-friendly.svg"
-				alt="child friendly"
-			/>
-			<p><strong>Alder:</strong> Under 18</p>
+			<button
+				class="btn btn--outline"
+				data-on-click={ templ.URL(fmt.Sprintf("@get('/admin/billettholder/add/api/convert/%s/')", strconv.Itoa(ticket.ID))) }
+			>
+				Konverter billett til deltager
+			</button>
 		}
-		<button
-			data-on-click={ templ.URL(fmt.Sprintf("@get('/admin/billettholder/add/api/convert/%s/')", strconv.Itoa(ticket.ID))) }
-		>
-			Konverter billett til deltager
-		</button>
 	</div>
 }

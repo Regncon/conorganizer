@@ -2,8 +2,16 @@ package components
 
 import (
 	"fmt"
+	"os"
 	"github.com/Regncon/conorganizer/models"
 )
+
+func getImageUrl(imageFile string) string {
+	if _, err := os.Stat(imageFile); err == nil {
+		return "/" + imageFile
+	}
+	return "/static/icons/camera-regular-full.svg"
+}
 
 templ EventCard(eventCard models.EventCardModel, showStatus bool) {
 	<a
@@ -39,7 +47,7 @@ templ EventCard(eventCard models.EventCardModel, showStatus bool) {
 			</div>
 		}
 		<img
-			src="/static/placeholder-small.webp"
+			src={ getImageUrl("event-images/" + eventCard.Id + "_card.webp") }
 			alt="Participants"
 			style="
                     width: 100%;
@@ -101,7 +109,6 @@ templ EventCard(eventCard models.EventCardModel, showStatus bool) {
 					Legg til en kort beskrivelse
 				}
 			</p>
-
 		</div>
 		<div style="padding: var(--spacing-small); border-top: 1px solid var(--bg-item-border);">
 			<div
