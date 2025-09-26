@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"context"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/service/eventService"
@@ -24,18 +25,24 @@ event, eventErr := eventservice.GetEventById(eventId, db, logger)
 		<p>Error fetching events: { eventErr.Error() }</p>
 		return
 	}
-	@components.Breadcrumbs([]components.BreadcrumbPath{
-		{Name: "Hjem", Url: "/"},
-		{Name: "Mine Arrangementer", Url: "/my-events/"},
-		{Name: "Nytt Arrangement", Url: ""},
-	})
-	<form
-		class="formsubmission-wrapper page-content-container"
-		action={ "/my-events/api/new/" + event.ID + "/submit" }
-		method="post"
-	>
-		<h1 class="page-heading">Nytt Arrangement</h1>
-		@formsubmission.FormBody(event, isAdmin)
-		@formsubmission.SubmitSection()
-	</form>
+	if event.Status == models.EventStatusApproved || event.Status == models.EventStatusPublished {
+		{{ logger.Error("Attempt to edit an already approved or published event", "eventId", eventId) }}
+		<h1>Arrangementet er allerede godkjent eller publisert</h1>
+		<h2>Ta kontakt med RegnCon styret på Dicord eller via epost om du ønsker å gjøre endringer på arrangementet.</h2>
+	} else {
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Mine Arrangementer", Url: "/my-events/"},
+			{Name: "Nytt Arrangement", Url: ""},
+		})
+		<form
+			class="formsubmission-wrapper page-content-container"
+			action={ "/my-events/api/new/" + event.ID + "/submit" }
+			method="post"
+		>
+			<h1 class="page-heading">Nytt Arrangement</h1>
+			@formsubmission.FormBody(event, isAdmin)
+			@formsubmission.SubmitSection()
+		</form>
+	}
 }
