@@ -169,7 +169,7 @@ if eventErr == nil {
 					/>
 				</label>
 				<button
-					class="btn btn--secondary"
+					class="btn btn--primary"
 					type="submit"
 				>Last opp</button>
 			</form>
@@ -195,19 +195,19 @@ if eventErr == nil {
                     flex-direction: column;
                     align-items: center;
                     gap: 1rem;
-                    background-color: var(--bg-base);"
+                    background-color: hotpink;"
 				max-width="430px"
 			>
 				<h1 style="text-align:center; margin:0; ">{ title }</h1>
 				<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
 			</div>
 		</section>
-		<section class="form-card">
+		<section class="form-card" style="width: 1360px;">
 			<h4 class="form-card-title">Desktop banner</h4>
 			<banner-cropper
 				event-id={ eventId }
-				width="1300"
-				height="200"
+				width="1360"
+				height="400"
 				image-kind="banner"
 				image-url={ "/event-images/" + imageUrl }
 			></banner-cropper>
@@ -223,7 +223,7 @@ if eventErr == nil {
                     flex-direction: column;
                     align-items: center;
                     gap: 1rem;
-                    background-color: var(--bg-base);"
+                    background-color: hotpink;"
 				max-width="430px"
 			>
 				<h1 style="text-align:center; margin:0; ">{ title }</h1>
