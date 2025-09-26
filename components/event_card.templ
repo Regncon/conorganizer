@@ -14,7 +14,7 @@ templ EventCard(eventCard models.EventCardModel, showStatus bool) {
 		}
 		style="
                 background-color: var(--bg-surface);
-                border-radius: var(--border-radius-small);
+                border-radius: var(--border-radius-1x);
                 display: grid;
                 grid-template-rows: 11.25rem 110px 3.5rem;
                 grid-template-columns: minmax(var(--mobile-min-width), 1fr);
@@ -50,13 +50,13 @@ templ EventCard(eventCard models.EventCardModel, showStatus bool) {
                     height: 100%;
                     object-fit: cover;
                     border-radius:
-                        var(--border-radius-small)
-                        var(--border-radius-small)
+                        var(--border-radius-1x)
+                        var(--border-radius-1x)
                         0
                         0;
                 "
 		/>
-		<div style="padding: var(--spacing-small);">
+		<div style="padding: var(--spacing-2x);">
 			<div style="">
 				<h2
 					style="
@@ -106,7 +106,7 @@ templ EventCard(eventCard models.EventCardModel, showStatus bool) {
 				}
 			</p>
 		</div>
-		<div style="padding: var(--spacing-small); border-top: 1px solid var(--bg-item-border);">
+		<div style="padding: var(--spacing-2x); border-top: 1px solid var(--bg-item-border);">
 			<div
 				style="
                             display: grid;
