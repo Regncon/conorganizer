@@ -3,35 +3,46 @@ package newEvent
 import (
 	"database/sql"
 	"log/slog"
+	"context"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/service/eventService"
+	"github.com/Regncon/conorganizer/service/authctx"
 )
 
-templ NewEventFormPage(eventId string, userId string, db *sql.DB, logger *slog.Logger) {
+templ NewEventFormPage(eventId string, userId string, ctx context.Context, db *sql.DB, logger *slog.Logger) {
 	<div id="formsubmission-container" class="formsubmission-css-container">
-		@NewEventFormPageContent(eventId, userId, db, logger)
+		@NewEventFormPageContent(eventId, userId, ctx, db, logger)
 	</div>
 }
 
-templ NewEventFormPageContent(eventId string, userId string, db *sql.DB, logger *slog.Logger) {
-	{{ event, eventErr := eventservice.GetEventById(eventId, db, logger) }}
+templ NewEventFormPageContent(eventId string, userId string, ctx context.Context, db *sql.DB, logger *slog.Logger) {
+	{{isAdmin := authctx.GetAdminFromUserToken(ctx)
+event, eventErr := eventservice.GetEventById(eventId, db, logger)
+	}}
 	if eventErr != nil {
 		<p>Error fetching events: { eventErr.Error() }</p>
 		return
 	}
-	@components.Breadcrumbs([]components.BreadcrumbPath{
-		{Name: "Hjem", Url: "/"},
-		{Name: "Mine Arrangementer", Url: "/my-events/"},
-		{Name: "Nytt Arrangement", Url: ""},
-	})
-	<form
-		class="formsubmission-wrapper"
-		action={ "/my-events/api/new/" + event.ID + "/submit" }
-		method="post"
-	>
-		<h1 class="color-strong">Nytt Arrangement</h1>
-		@formsubmission.FormBody(event)
-		@formsubmission.SubmitSection()
-	</form>
+	if  isAdmin == false && event.Status == models.EventStatusApproved || event.Status == models.EventStatusPublished {
+		{{ logger.Error("Attempt to edit an already approved or published event", "eventId", eventId) }}
+		<h1>Arrangementet er allerede godkjent eller publisert</h1>
+		<h2>Ta kontakt med RegnCon styret på Dicord eller via epost om du ønsker å gjøre endringer på arrangementet.</h2>
+	} else {
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Mine Arrangementer", Url: "/my-events/"},
+			{Name: "Nytt Arrangement", Url: ""},
+		})
+		<form
+			class="formsubmission-wrapper page-content-container"
+			action={ "/my-events/api/new/" + event.ID + "/submit" }
+			method="post"
+		>
+			<h1 class="page-heading">Nytt Arrangement</h1>
+			@formsubmission.FormBody(event, isAdmin)
+			@formsubmission.SubmitSection()
+		</form>
+	}
 }

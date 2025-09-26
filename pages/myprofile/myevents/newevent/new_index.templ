@@ -3,6 +3,8 @@ package newEvent
 import (
 	"database/sql"
 	"fmt"
+	"context"
+
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
@@ -42,18 +44,18 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 		layouts.Base(
 			title,
 			userctx.GetUserRequestInfo(ctx),
-			newEventIndex(eventId, userId, db, logger),
+			newEventIndex(eventId, userId, ctx, db, logger),
 		).Render(ctx, w)
 	})
 }
 
-templ newEventIndex(eventId string, userId string, db *sql.DB, logger *slog.Logger) {
+templ newEventIndex(eventId string, userId string, ctx context.Context, db *sql.DB, logger *slog.Logger) {
 	<div
 		id="formsubmission-container"
 		class="formsubmission-css-container"
 		data-on-load={ datastar.GetSSE("/my-events/api/new/" + eventId) }
 	>
-		@NewEventFormPageContent(eventId, userId, db, logger)
+		@NewEventFormPageContent(eventId, userId, ctx, db, logger)
 	</div>
 }
 

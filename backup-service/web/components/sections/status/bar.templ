@@ -1,0 +1,21 @@
+package status
+
+import "github.com/Regncon/conorganizer/backup-service/models"
+import "fmt"
+
+var statusAmount = 99
+
+templ StatusBar(logs []models.BackupLog) {
+	<div class="container status-container">
+		<h1>Uptime status</h1>
+		<div class="card status-bar">
+			for i := statusAmount; i >= 0; i-- {
+				if i < len(logs) {
+					<a href={ fmt.Sprintf("#log-%d", logs[i].ID)} class={ logs[i].Status }></a>
+				} else {
+					<a style="background-color: lightgray;"></a>
+				}
+			}
+		</div>
+	</div>
+}

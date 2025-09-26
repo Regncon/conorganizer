@@ -150,7 +150,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 								userId := userctx.GetUserRequestInfo(r.Context()).Id
 
-								c := newEvent.NewEventFormPage(eventId, userId, db, logger)
+								c := newEvent.NewEventFormPage(eventId, userId, ctx, db, logger)
 								if err := sse.PatchElementTempl(c); err != nil {
 									sse.ConsoleError(err)
 									return

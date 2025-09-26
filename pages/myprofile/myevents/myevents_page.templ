@@ -9,80 +9,6 @@ import (
 	"log/slog"
 )
 
-templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
-	<div id="my-events-wrapper">
-		@myEventsPageContent(userid, db, logger)
-	</div>
-}
-
-templ myEventsPageContent(userid string, db *sql.DB, logger *slog.Logger) {
-	@components.Breadcrumbs([]components.BreadcrumbPath{
-		{Name: "Hjem", Url: "/"},
-		{Name: "Mine Arrangementer", Url: ""},
-	})
-	<h1>Mine Arrangementer</h1>
-	<div class="my-event-grid">
-		@events(userid, db, logger)
-	</div>
-	<style>
-		.my-event-grid {
-			display: grid;
-			grid-template-columns: repeat(
-				auto-fill,
-				minmax(var(--mobile-min-width), 1fr)
-			);
-			gap: 1rem;
-		}
-		@media (min-width: 600px) {
-			.my-event-grid {
-				padding: 1rem;
-			}
-		}
-	</style>
-}
-
-templ events(userid string, db *sql.DB, logger *slog.Logger) {
-	{{ events := GetEventsByUserId(db, userid, logger) }}
-	if len(events) == 0 {
-		@createEvent()
-	}
-	if len(events) > 0 {
-		for _, event := range events {
-			@components.EventCard(event, true)
-		}
-		@createEvent()
-	}
-}
-
-templ createEvent() {
-	<form action="/my-events/api/create" method="post">
-		<button
-			type="submit"
-			style="
-                width: 100%;
-                height: 100%;
-                aspect-ratio: 41 / 34;
-		        max-width: var(--mobile-max-column-width);
-		        background-color: var(--bg-surface);
-		        border-radius: var(--border-radius-small);
-		        display: flex;
-		        flex-direction: column;
-		        text-decoration: none;
-		        color: var(--color-primary-text);
-		        box-sizing: border-box;
-		        place-items: center;
-		        place-content: center;
-		        padding-block: 2rem;
-		        text-align: center;
-                border-color: var(--bg-item-border);
-		        "
-		>
-			<h2 style="margin: 0">Legg til nytt arrangement</h2>
-			<h1 style="margin: 0; font-size: 3rem">➕</h1>
-		</button>
-	</form>
-}
-
 func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.EventCardModel {
 	var events []models.EventCardModel
 
@@ -110,4 +36,75 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.
 	}
 	fmt.Printf("Found %d events for user %s\n", len(events), userId)
 	return events
+}
+
+templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
+	<div id="my-events-wrapper">
+		@myEventsPageContent(userid, db, logger)
+	</div>
+}
+
+templ myEventsPageContent(userid string, db *sql.DB, logger *slog.Logger) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Mine Arrangementer", Url: ""},
+	})
+	<div class="page-content-container">
+		<h1 class="page-heading">Mine Arrangementer</h1>
+		<div class="my-event-grid">
+			@events(userid, db, logger)
+		</div>
+	</div>
+	<style>
+		.my-event-grid {
+			display: grid;
+			grid-template-columns: repeat(
+				auto-fill,
+				minmax(var(--mobile-min-width), 1fr)
+			);
+			gap: 1rem;
+		}
+	</style>
+}
+
+templ events(userid string, db *sql.DB, logger *slog.Logger) {
+	{{ events := GetEventsByUserId(db, userid, logger) }}
+	if len(events) == 0 {
+		@createEvent()
+	}
+	if len(events) > 0 {
+		for _, event := range events {
+			@components.EventCard(event, true)
+		}
+		@createEvent()
+	}
+}
+
+templ createEvent() {
+	<form action="/my-events/api/create" method="post">
+		<button
+			type="submit"
+			style="
+                width: 100%;
+                height: 100%;
+                aspect-ratio: 41 / 34;
+		        width: var(--mobile-responsive-min-width);
+		        background-color: var(--bg-surface);
+		        border-radius: var(--border-radius-1x);
+		        display: flex;
+		        flex-direction: column;
+		        text-decoration: none;
+		        color: var(--color-primary-text);
+		        box-sizing: border-box;
+		        place-items: center;
+		        place-content: center;
+		        padding-block: 2rem;
+		        text-align: center;
+                border-color: var(--bg-item-border);
+		        "
+		>
+			<h2 style="margin: 0">Legg til nytt arrangement</h2>
+			<h1 style="margin: 0; font-size: 3rem">➕</h1>
+		</button>
+	</form>
 }
