@@ -13,11 +13,11 @@ templ CallToAction() {
 			display: flex;
 			flex-direction: column;
 			justify-content: space-between;
-			gap: var(--spacing-xsmall);
-			padding: var(--spacing-medium);
+			gap: var(--spacing-3x);
+			padding: var(--spacing-5x);
 		}
 		.call-to-action-header {
-			margin-bottom: var(--spacing-xsmall);
+			margin-bottom: var(--spacing-3x);
 		}
 		.call-to-action-graphic {
 			display: none;
@@ -32,7 +32,7 @@ templ CallToAction() {
 		}
 		@container main (width > 600px) {
 			.call-to-action-content {
-				padding: var(--spacing-medium) var(--spacing-xlarge)
+				padding: var(--spacing-5x) var(--spacing-10x)
 			}
 		}
 		@container main (width > 800px) {
@@ -45,7 +45,7 @@ templ CallToAction() {
 		}
 		@container main (width > 1000px) {
 			.call-to-action-content {
-				gap: var(--spacing-large);
+				gap: var(--spacing-8x);
 			}
 			.call-to-action-header {
 				font-size: var(--text-heading-1-xl);
@@ -56,7 +56,7 @@ templ CallToAction() {
 				grid-template-columns: 3fr minmax(380px, 1fr);
 			}
 			.call-to-action-content {
-				padding: var(--spacing-xlarge) 80px;
+				padding: var(--spacing-10x) 80px;
 			}
 		}
 	</style>
