@@ -27,7 +27,7 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 	<style>
         .prev-next-wrapper {
             --linear-gradient-mask: linear-gradient(to left, black 19%, transparent 32%);
-            --prev-next-max-width: 34.9375rem;
+            --prev-next-max-width: 25.3125rem;
             --prev-next-responsive-max-width: min(100%, var(--prev-next-max-width));
 
             display: flex;
@@ -51,15 +51,23 @@ templ PreviousNextBar(previousNextData PreviousNext) {
             }
         }
 
-        @container event-container (width >= 37.5rem) {
+
+        @container event-container (width > 37.5rem) {
                 & .prev-next-wrapper {
                     flex-direction: row;
                     place-content: space-between;
-                    padding-inline: var(--spacing-10x);
 
                     a {
                         width: var(--prev-next-responsive-max-width);
                     }
+                }
+        }
+
+        @container event-container (width > 65.0625rem) {
+                & .prev-next-wrapper {
+                    flex-direction: row;
+                    place-content: space-between;
+                    padding-inline: var(--spacing-10x);
                 }
         }
     </style>
