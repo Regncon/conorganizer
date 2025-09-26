@@ -7,7 +7,11 @@ import (
 
 templ EventCard(eventCard models.EventCardModel, showStatus bool) {
 	<a
-		href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
+		if eventCard.Status == models.EventStatusDraft || eventCard.Status == models.EventStatusSubmitted || eventCard.Status == models.EventStatusArchived {
+			href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
+		} else {
+			href={ templ.URL(fmt.Sprintf("/event/%s", eventCard.Id)) }
+		}
 		style="
                 background-color: var(--bg-surface);
                 border-radius: var(--border-radius-1x);

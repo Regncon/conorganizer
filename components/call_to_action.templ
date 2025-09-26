@@ -4,59 +4,87 @@ templ CallToAction() {
 	<style>
 		.call-to-action {
 			background-color: black;
-			padding: 1rem;
 			max-width: 1400px;
 			margin: 0 auto;
+			display: grid;
+			grid-template-columns: 1fr;
 		}
-		.call-to-action-avatar {
+		.call-to-action-content {
+			display: flex;
+			flex-direction: column;
+			justify-content: space-between;
+			gap: var(--spacing-xsmall);
+			padding: var(--spacing-medium);
+		}
+		.call-to-action-header {
+			margin-bottom: var(--spacing-xsmall);
+		}
+		.call-to-action-graphic {
 			display: none;
-		}
-		@container main (width > 950px) {
-			.call-to-action-header {
-				font-size: var(--text-heading-1-xl);
-				margin-bottom: 0px;
-			}
-		}
-		@container main (width > 700px) {
-			.call-to-action {
-				padding: 0px;
-			}
+			position: relative;
+			overflow: hidden;
 			.call-to-action-avatar {
+				position: absolute;
+				top: 0;
+				bottom: 0;
+				left: 0;
+			}
+		}
+		@container main (width > 600px) {
+			.call-to-action-content {
+				padding: var(--spacing-medium) var(--spacing-xlarge)
+			}
+		}
+		@container main (width > 800px) {
+			.call-to-action {
+				grid-template-columns: 4fr minmax(230px, 1fr);
+			}
+			.call-to-action-graphic {
 				display: block;
 			}
 		}
-		@container main (width > 430px) {
+		@container main (width > 1000px) {
+			.call-to-action-content {
+				gap: var(--spacing-large);
+			}
+			.call-to-action-header {
+				font-size: var(--text-heading-1-xl);
+			}
+		}
+		@container main (width > 1200px) {
 			.call-to-action {
-				padding-left: var(--spacing-10x);
+				grid-template-columns: 3fr minmax(380px, 1fr);
+			}
+			.call-to-action-content {
+				padding: var(--spacing-xlarge) 80px;
 			}
 		}
 	</style>
 	<div class="call-to-action">
-		<div style="display: flex; justify-content: space-between;">
-			<div style="display: flex; flex-direction: column; justify-content: space-between;">
-				<div>
-					<h1
-						class="call-to-action-header"
-					>
-						Vil du arrangere noe under Regncon?
-					</h1>
-					<p>
-						Vi har åpnet dørene for registrering av arrangementer.
-						Har du noe du  ønsker å ta med deg til årets festivalhelg?
-					</p>
-				</div>
-				<a
-					href="/my-events"
-					class="btn btn--cta"
-					style="max-width: 260px; margin: 1rem 1rem 2rem 0px;"
-				>
-					Send inn arrangement
-				</a>
+		<div class="call-to-action-content">
+			<div>
+				<h1 class="call-to-action-header">
+					Vil du arrangere noe under Regncon?
+				</h1>
+				<p>
+					Vi har åpnet dørene for registrering av arrangementer.
+					Har du noe du  ønsker å ta med deg til årets festivalhelg?
+				</p>
 			</div>
+			<a
+				role="button"
+				href="/my-events"
+				class="btn btn--cta"
+				style="max-width: 260px;"
+			>
+				Send inn arrangement
+			</a>
+		</div>
+		<div class="call-to-action-graphic">
 			<img
 				class="call-to-action-avatar"
-				height="305"
-				width="389"
+				height="100%"
+				width="auto"
 				src="/static/call-to-action-avatar.webp"
 				alt="Sent inn arrangement"
 			/>

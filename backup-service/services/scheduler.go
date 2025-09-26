@@ -38,15 +38,15 @@ func registerJobs(scheduler gocron.Scheduler, backupService BackupService, logge
 		schedule string
 		task     func()
 	}{
-		{"hourly", "0 * * * *", backupService.Hourly},
-		{"daily", "15 0 * * *", backupService.Daily},
-		{"weekly", "30 0 * * 0", backupService.Weekly},
-		{"yearly", "45 0 1 1 *", backupService.Yearly},
+		{"hourly", "5 0 * * * *", backupService.Hourly},
+		{"daily", "20 0 0 * * *", backupService.Daily},
+		{"weekly", "35 0 0 * * 0", backupService.Weekly},
+		{"yearly", "50 0 0 1 1 *", backupService.Yearly},
 	}
 
 	for _, job := range jobs {
 		_, err := scheduler.NewJob(
-			gocron.CronJob(job.schedule, false),
+			gocron.CronJob(job.schedule, true),
 			gocron.NewTask(job.task),
 			gocron.WithName(job.name),
 		)

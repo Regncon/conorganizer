@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/Regncon/conorganizer/backup-service/models"
@@ -9,7 +11,7 @@ import (
 
 // GenerateBackupFilename returns a string like "hourly-14.bak" based on the provided interval string for a backup filename.
 func GenerateBackupFilename(interval models.BackupInterval) string {
-	t := time.Now().UTC()
+	t := time.Now()
 
 	switch interval {
 	case models.Hourly:
@@ -24,4 +26,13 @@ func GenerateBackupFilename(interval models.BackupInterval) string {
 	default:
 		return fmt.Sprintf("backup-%d.bak", t.Unix())
 	}
+}
+
+func DBPrefixCleanup(prefix string) string {
+	re := regexp.MustCompile(`(\d+(?:_\d+)+)$`)
+	m := re.FindStringSubmatch(prefix)
+	if m == nil {
+		return "unknown"
+	}
+	return strings.ReplaceAll(m[1], "_", ".")
 }

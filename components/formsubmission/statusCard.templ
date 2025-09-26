@@ -44,7 +44,7 @@ func UpdateStatus(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 
-templ StatusCard(event *models.Event) {
+templ statusCard(event *models.Event, isAdmin bool) {
 	<article class="form-card">
 		<section class="form-group">
 			<label for="status" class="label-small color-strong">Status</label>
@@ -56,8 +56,19 @@ templ StatusCard(event *models.Event) {
 				data-on-change={ datastar.PutSSE("/my-events/api/new/%s/status", event.ID) }
 				required
 			>
-				<option value={ models.EventStatusDraft } selected>Kladd</option>
-				<option value={ models.EventStatusSubmitted } selected>Innsendt</option>
+				if isAdmin {
+					<option value={ models.EventStatusDraft } selected>Kladd</option>
+					<option value={ models.EventStatusSubmitted } selected>Innsendt</option>
+					<option value={ models.EventStatusApproved } selected>Godkjent ( Du er administrator )</option>
+					<option value={ models.EventStatusPublished } selected>Publisert ( Du er administrator )</option>
+					<option value={ models.EventStatusArchived } selected>Arkivert</option>
+				} else {
+					if event.Status == models.EventStatusDraft || event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusArchived {
+						<option value={ models.EventStatusDraft }>Kladd</option>
+						<option value={ models.EventStatusArchived }>Arkivert</option>
+						<option value={ models.EventStatusSubmitted } disabled>Innsendt (Bruk kappen på bunn av skjema) </option>
+					}
+				}
 			</select>
 		</section>
 	</article>

@@ -9,6 +9,35 @@ import (
 	"log/slog"
 )
 
+func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.EventCardModel {
+	var events []models.EventCardModel
+
+	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
+	if userDbIdErr != nil {
+		logger.Error("userDbIdErr", userDbIdErr)
+		return events
+	}
+
+	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE host = ?"
+	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
+	if eventsQueryErr != nil {
+		logger.Error("Failed to query events", "user_id", userId, "error", eventsQueryErr)
+		return events
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var event models.EventCardModel
+		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
+			logger.Error("Failed to scan event row", "user_id", userId, "error", scanErr)
+			return events
+		}
+		events = append(events, event)
+	}
+	fmt.Printf("Found %d events for user %s\n", len(events), userId)
+	return events
+}
+
 templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
 	<div id="my-events-wrapper">
 		@myEventsPageContent(userid, db, logger)
@@ -20,9 +49,11 @@ templ myEventsPageContent(userid string, db *sql.DB, logger *slog.Logger) {
 		{Name: "Hjem", Url: "/"},
 		{Name: "Mine Arrangementer", Url: ""},
 	})
-	<h1>Mine Arrangementer</h1>
-	<div class="my-event-grid">
-		@events(userid, db, logger)
+	<div class="page-content-container">
+		<h1 class="page-heading">Mine Arrangementer</h1>
+		<div class="my-event-grid">
+			@events(userid, db, logger)
+		</div>
 	</div>
 	<style>
 		.my-event-grid {
@@ -32,11 +63,6 @@ templ myEventsPageContent(userid string, db *sql.DB, logger *slog.Logger) {
 				minmax(var(--mobile-min-width), 1fr)
 			);
 			gap: 1rem;
-		}
-		@media (min-width: 600px) {
-			.my-event-grid {
-				padding: 1rem;
-			}
 		}
 	</style>
 }
@@ -81,33 +107,4 @@ templ createEvent() {
 			<h1 style="margin: 0; font-size: 3rem">➕</h1>
 		</button>
 	</form>
-}
-
-func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.EventCardModel {
-	var events []models.EventCardModel
-
-	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
-	if userDbIdErr != nil {
-		logger.Error("userDbIdErr", userDbIdErr)
-		return events
-	}
-
-	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE host = ?"
-	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
-	if eventsQueryErr != nil {
-		logger.Error("Failed to query events", "user_id", userId, "error", eventsQueryErr)
-		return events
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var event models.EventCardModel
-		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
-			logger.Error("Failed to scan event row", "user_id", userId, "error", scanErr)
-			return events
-		}
-		events = append(events, event)
-	}
-	fmt.Printf("Found %d events for user %s\n", len(events), userId)
-	return events
 }

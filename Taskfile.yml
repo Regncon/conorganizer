@@ -23,12 +23,12 @@ tasks:
     deps:
       - build
 
-  # The `live:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
-  live:templ:
+  # The `start:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
+  start:templ:
     cmds:
       - go run github.com/a-h/templ/cmd/templ@v0.3.943 generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
 
-  live:server:
+  start:server:
     cmds:
       - |
         go run github.com/air-verse/air@v1.62.0 \
@@ -39,7 +39,7 @@ tasks:
         --build.stop_on_error "false" \
         --misc.clean_on_exit true
 
-  live:reload:
+  start:reload:
     cmds:
       - |
         go run github.com/air-verse/air@v1.62.0 \
@@ -50,11 +50,11 @@ tasks:
         --build.include_dir "$STATIC_DIR" \
         --build.include_ext "js,css,env"
 
-  live:
+  start:
     deps:
-      - live:templ
-      - live:reload
-      - live:server
+      - start:templ
+      - start:reload
+      - start:server
 
   # Start development server
   dev:
@@ -72,3 +72,10 @@ tasks:
   test:
     cmds:
       - go test ./...
+
+  # Kill all running air, templ and taks processes
+  kill:
+    cmds:
+      - skill air
+      - skill templ
+      - skill task

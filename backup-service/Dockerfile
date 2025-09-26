@@ -9,6 +9,10 @@ RUN apt-get update -y && apt-get install -y ca-certificates sqlite3 tzdata
 WORKDIR /usr/src/codebase
 COPY . .
 
+# Install templ and generate required files
+RUN go install github.com/a-h/templ/cmd/templ@latest
+RUN templ generate
+
 # Copy over & install required dependencies
 COPY go.mod go.sum ./
 RUN go mod download && go mod verify
@@ -31,8 +35,15 @@ COPY --from=builder /usr/local/bin/backup-service /home/regncon/backup-service
 # Copy over sql init file
 COPY --from=builder /usr/src/codebase/database/initialize.sql /usr/local/share/regncon/initialize.sql
 
+# Copy over static files
+COPY --from=builder /usr/src/codebase/web/static /home/regncon/web/static
+
+# Create permanent storage folders if missing
 RUN mkdir -p /data/regncon/{tmp,logs,backup} && \
     chown -R regncon:regncon /data/regncon/{tmp,logs,backup}
+
+# Switch workdir
+WORKDIR /home/regncon
 
 # Switch to non-root user
 USER regncon

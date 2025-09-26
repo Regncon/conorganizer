@@ -1,0 +1,23 @@
+package pages
+
+import (
+	"github.com/Regncon/conorganizer/backup-service/models"
+	"github.com/Regncon/conorganizer/backup-service/web/components/sections/status"
+	"github.com/Regncon/conorganizer/backup-service/web/components/ui"
+)
+
+templ Index(logs []models.BackupLog) {
+	@status.StatusBar(logs)
+	<main>
+		<div class="container" style="padding: 1rem;">
+			<h1>Backup Logs</h1>
+			if len(logs) == 0 {
+				<p class="empty">No logs found for this interval.</p>
+			} else {
+				for _, log := range logs {
+					@ui.LogEntry(log)
+				}
+			}
+		</div>
+	</main>
+}
