@@ -9,6 +9,13 @@ import (
 templ event_mobile(event *models.Event, previousNextData components.PreviousNext) {
 	<style>
         .wrapper {
+            --event-banner-height: 25rem;
+            --event-header-height: 10.1875rem;
+            --event-header-width: 65.5rem;
+            --event-header-missing-from-translating: 9px;
+            --event-header-half-height-and-translate: calc(var(--event-header-height) / 2 - var(--event-header-missing-from-translating));
+            --event-header-overlapp: var(--event-header-half-height-and-translate);
+
             --text-height-two-lines: 2lh;
 
             display:flex;
@@ -137,33 +144,36 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                 }
 
                 .description {
-                    margin: 0;
-                    margin-block-start: var(--spacing-2x);
-                    word-break: break-all;
+                    p {
+                        margin: 0;
+                        margin-block-start: var(--spacing-2x);
+                        word-break: break-all;
+                    }
                 }
             }
         }
 
-        @container event-container (width > 34.875rem) {
+        @container event-container (width >= 37.5rem) {
             .wrapper {
-                inline-size: min(1440px, 100%);
+                inline-size: min(1041px, 100%);
                 place-self: center;
                 display: grid;
                 grid-template-rows: max-content max-content;
-                gap: var(--spacing-10x);
-                padding: var(--spacing-10x);
+                padding: var(--spacing-5x);
+                gap: var(--spacing-8x);
                 .stack {
                     --event-banner-height: 25rem;
                     --event-header-height: 10.1875rem;
-                    --event-header-width: 65.5rem;
+                    --event-header-width: 65.0625rem;
                     --event-header-missing-from-translating: 9px;
-                    --event-header-half-height-and-translate: calc(var(--event-header-height) / 2 - var(--event-header-missing-from-translating));
-                    --event-header-overlapp: var(--event-header-half-height-and-translate);
 
                     grid-template-rows: var(--event-banner-height) var(--event-header-overlapp);
+                    grid-template-columns: 1fr;
                     place-items: end center;
                     img {
                         grid-row: 1 / 2;
+                        aspect-ratio: unset;
+                        height: var(--event-banner-height);
                     }
                     .event-header{
                         grid-row: 1 / 2;
@@ -172,20 +182,16 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                         height: var(--event-header-height);
                     }
                 }
+
                 .event-information {
-                    display: grid;
-                    grid-template-areas: "interests details"
-                                        "description details"
-                                        "description empty";
-                    gap: 0;
-                    column-gap: var(--spacing-8x);
-                    padding-inline: var(--spacing-10x);
-                    grid-template-columns: 7fr 3fr;
+                    display: flex;
+                    flex-direction: column;
+                    gap: var(--spacing-8x);
+                    padding: 0;
 
                     .interest-picker {
+                        order: 1;
                         width: 100%;
-                        grid-area: interests;
-                        margin-block-end: var(--spacing-8x);
                         flex-direction: row;
                         flex-wrap: wrap;
                         place-content: space-between;
@@ -193,26 +199,65 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 
                     }
                     .details {
-                        grid-area: details;
+                        position: relative;
+                        padding-block-start: var(--spacing-5x);
                         height: fit-content;
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+
+                        hr {
+                            display: none;
+                        }
+
+                        .details-top {
+                            .details-header {
+                                position: absolute;
+                                top: 1rem;
+                            }
+                            .details-host {
+                                display: flex;
+                                flex-direction: column;
+                            }
+                        }
                     }
                     .description {
+                        order: 2;
                         margin-block-start: 0;
-                        grid-area: description;
                     }
                 }
             }
 
         }
 
-        @container event-container (width < 56.25rem) {
+        @container event-container (width > 65.0625rem) {
             .wrapper {
-                .stack {
-                    .event-header {
-                        width: 100%;
+                inline-size: min(1440px, 100%);
+                gap: var(--spacing-10x);
+                padding: var(--spacing-10x);
+
+                .event-information {
+                    display: grid;
+                    grid-template-areas: "interests details"
+                    "description details"
+                    "description empty";
+                    gap: 0;
+                    column-gap: var(--spacing-8x);
+                    padding-inline: var(--spacing-10x);
+                    grid-template-columns: 1fr 25.3125rem;
+
+                    .interest-picker {
+                        grid-area: interests;
+                        margin-block-end: var(--spacing-8x);
+                    }
+                    .details {
+                        grid-area: details;
+                    }
+                    .description {
+                        grid-area: description;
                     }
                 }
             }
+
         }
 
     </style>
@@ -302,7 +347,9 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 				</div>
 			</div>
-			<p class="description">{ event.Description } </p>
+			<div class="description">
+				<p>{ event.Description } </p>
+			</div>
 		</div>
 		@components.PreviousNextBar(previousNextData)
 	</div>
