@@ -72,3 +72,10 @@ tasks:
   test:
     cmds:
       - go test ./...
+
+  # Kill all running air, templ and taks processes
+  kill:
+    cmds:
+      - skill air
+      - skill templ
+      - skill task

@@ -4,7 +4,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-templ FormBody(event *models.Event) {
+templ FormBody(event *models.Event, isAdmin bool) {
 	<style>
 		.formsubmission-wrapper {
 			> * + .form-card {
@@ -199,6 +199,7 @@ templ FormBody(event *models.Event) {
 			}
 		}
 	</style>
+	@statusCard(event, isAdmin)
 	@contactInfo(
 		event.ID,
 		event.HostName,
