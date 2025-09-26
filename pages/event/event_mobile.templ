@@ -139,6 +139,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                 .description {
                     margin: 0;
                     margin-block-start: var(--spacing-2x);
+                    word-break: break-all;
                 }
             }
         }
@@ -197,7 +198,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                     }
                     .description {
                         margin-block-start: 0;
-
+                        grid-area: description;
                     }
                 }
             }
