@@ -9,7 +9,8 @@
     --color-primary-hover: #E7A96566;
     --color-primary-focus-visible: #feb56780;
     --color-primary-active: #feb56799;
-    --color-primary-strong: #E7A965; /* Deprecated variable, use color-primary instead */
+    --color-primary-strong: #E7A965;
+    /* Deprecated variable, use color-primary instead */
 
     --color-secondary-text: var(--color-text-soft);
     --color-secondary: #CCD1E9;
@@ -134,21 +135,26 @@ body {
     padding: 0 8px;
     margin: 0 auto;
 }
+
 .page-content-container {
     max-width: var(--page-content-max-width);
     padding: 0 8px;
     margin: 0 auto;
 }
+
 @container main (width > 600px) {
+
     .header-content-container,
     .page-content-container {
-        padding: 0 var(--spacing-medium);
+        padding: 0 var(--spacing-5x);
     }
 }
+
 @container main (width > 1200px) {
+
     .header-content-container,
     .page-content-container {
-        padding: 0 var(--spacing-xlarge);
+        padding: 0 var(--spacing-10x);
     }
 }
 
@@ -159,29 +165,35 @@ h1 {
 
 h1.page-heading {
     font-size: 32px;
-    margin: var(--spacing-medium) 0;
+    margin: var(--spacing-5x) 0;
+
     &.has-helptext {
-        margin-bottom: var(--spacing-xsmall);
+        margin-bottom: var(--spacing-3x);
     }
 }
+
 .page-heading-helptext {
-    margin-bottom: var(--spacing-medium);
+    margin-bottom: var(--spacing-5x);
 }
+
 @container main (width > 600px) {
     h1.page-heading {
         font-size: 40px;
-        margin: var(--spacing-large) 0;
+        margin: var(--spacing-8x) 0;
     }
+
     .page-heading-helptext {
-        margin-bottom: var(--spacing-large);
+        margin-bottom: var(--spacing-8x);
     }
 }
+
 @container main (width > 1000px) {
     h1.page-heading {
-        margin: var(--spacing-xlarge) 0;
+        margin: var(--spacing-10x) 0;
     }
+
     .page-heading-helptext {
-        margin-bottom: var(--spacing-xlarge);
+        margin-bottom: var(--spacing-10x);
     }
 }
 
@@ -320,11 +332,11 @@ input {
 .form-card {
     border-radius: var(--border-radius-2x);
     background-color: var(--bg-surface);
-    padding: var(--spacing-medium);
+    padding: var(--spacing-5x);
 }
 
 .form-card-title {
-    margin-bottom: var(--spacing-xsmall);
+    margin-bottom: var(--spacing-3x);
 }
 
 .item-card {

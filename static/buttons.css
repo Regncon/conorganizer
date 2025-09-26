@@ -2,10 +2,10 @@
     /* sizing */
     --btn-height: 42px;
     --btn-height-cta: 58px;
-    --btn-padding-x: var(--spacing-large);
+    --btn-padding-x: var(--spacing-8x);
     --btn-font-size: 14px;
     --btn-font-weight: 600;
-    --btn-border-radius: var(--border-radius-small);
+    --btn-border-radius: var(--border-radius-1x);
 
     /* animation */
     --btn-transition: background-color 0.2s ease,
