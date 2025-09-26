@@ -7,6 +7,7 @@ import (
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
+	"github.com/Regncon/conorganizer/service/authctx"
 )
 
 templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, logger *slog.Logger) {
@@ -16,7 +17,10 @@ templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, logger 
 }
 
 templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, logger *slog.Logger) {
-	{{ previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId) }}
+	{{
+	isAdmin := authctx.GetAdminFromUserToken(ctx)
+	previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId)
+	}}
 	if err != nil {
 		logger.Error("Failed to get previous/next data", "error", err)
 		return
@@ -37,7 +41,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		class="formsubmission-wrapper page-content-container"
 	>
 		<h1 class="page-heading">Rediger Arrangement</h1>
-		@formsubmission.StatusCard(event)
+		@formsubmission.StatusCard(event, isAdmin)
 		@formsubmission.FormBody(event)
 	</form>
 	@components.PreviousNextBar(previousNextData)
