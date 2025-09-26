@@ -41,8 +41,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		class="formsubmission-wrapper page-content-container"
 	>
 		<h1 class="page-heading">Rediger Arrangement</h1>
-		@formsubmission.StatusCard(event, isAdmin)
-		@formsubmission.FormBody(event)
+		@formsubmission.FormBody(event, isAdmin)
 	</form>
 	@components.PreviousNextBar(previousNextData)
 }
