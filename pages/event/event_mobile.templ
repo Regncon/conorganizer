@@ -42,7 +42,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                 .event-header {
                     display: flex;
                     flex-direction: column;
-                    gap: 1rem;
+                    padding: var(--spacing-4x);
                     background-color: var(--bg-base);
                     grid-row: 2 / 4;
                     text-align: center;
@@ -51,15 +51,11 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                     border-radius: var(--border-radius-2x);
 
                     .title {
-                        text-align:center;
                         margin:0;
-                        overflow: clip;
-                        height: var(--text-height-two-lines);
+                        margin-block-end: 0.4rem;
                     }
-
                     .intro {
-                        overflow: clip;
-                        height: var(--text-height-two-lines);
+                        line-height: 1.4;
                     }
                 }
             }
@@ -107,7 +103,15 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                             white-space: nowrap;
                         }
 
-                        .event-type {
+                        strong {
+                            font-size: 12px;
+                        }
+
+                        .details-header {
+                            font-size: var(--spacing-3x);
+                        }
+
+                        .details-type {
                             height: 20px;
                             width: 20px;
                             display: flex;
@@ -118,10 +122,6 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                                 height: 15px;
                                 width: 15px;
                             }
-                            strong {
-                                font-size: 12px;
-                            }
-
                             .details-header {
                                 font-size: 12px;
                             }
@@ -145,7 +145,8 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 
         @container event-container (width > 34.875rem) {
             .wrapper {
-                width: 100%;
+                inline-size: min(1440px, 100%);
+                place-self: center;
                 display: grid;
                 grid-template-rows: max-content max-content;
                 gap: var(--spacing-10x);
@@ -165,6 +166,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
                     }
                     .event-header{
                         grid-row: 1 / 2;
+                        width: min(var(--event-header-width), 100%);
                         transform: translateY(45%);
                         margin-inline: 11.5%;
                         height: var(--event-header-height);
@@ -240,39 +242,43 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 			<div class="card details">
 				<div class="details-top">
 					<p class="details-header color-strong">Detaljer om arrangementet</p>
-					<strong>Arrangør:</strong>
-					<p class="color-strong" title={ event.HostName }>{ event.HostName } </p>
-					<div class="event-type">
-						if event.EventType == models.EventTypeRoleplay {
-							<strong>Rollespill</strong>
-							<img
-								src="/static/icons/ttrpg.svg"
-								alt="table top roleplaying game"
-								height="10"
-								width="10"
-								fetchpriority="high"
-							/>
-						} else if event.EventType == models.EventTypeBoardGame {
-							<strong>Brettspill</strong>
-							<img
-								src="/static/icons/boardgames.svg"
-								alt="board game"
-								height="10"
-								width="10"
-								fetchpriority="high"
-							/>
-						} else if event.EventType == models.EventTypeOther {
-							<strong>Annet</strong>
-							<img
-								src="/static/icons/other-games.svg"
-								alt="other type of game or event"
-								height="10"
-								width="10"
-								fetchpriority="high"
-							/>
-						}
+					<div class="details-host">
+						<strong>Arrangør:</strong>
+						<p class="color-strong" title={ event.HostName }>{ event.HostName } </p>
 					</div>
-					<p class="color-strong" title={ event.System }>{ event.System } </p>
+					<div class="details-system">
+						<div class="details-type">
+							if event.EventType == models.EventTypeRoleplay {
+								<strong>Rollespill</strong>
+								<img
+									src="/static/icons/ttrpg.svg"
+									alt="table top roleplaying game"
+									height="10"
+									width="10"
+									fetchpriority="high"
+								/>
+							} else if event.EventType == models.EventTypeBoardGame {
+								<strong>Brettspill</strong>
+								<img
+									src="/static/icons/boardgames.svg"
+									alt="board game"
+									height="10"
+									width="10"
+									fetchpriority="high"
+								/>
+							} else if event.EventType == models.EventTypeOther {
+								<strong>Annet</strong>
+								<img
+									src="/static/icons/other-games.svg"
+									alt="other type of game or event"
+									height="10"
+									width="10"
+									fetchpriority="high"
+								/>
+							}
+						</div>
+						<p class="color-strong" title={ event.System }>{ event.System } </p>
+					</div>
 				</div>
 				<hr/>
 				<div class="details-bottom">
