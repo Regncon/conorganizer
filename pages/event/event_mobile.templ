@@ -220,7 +220,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 		<div class="stack">
 			<img
 				alt="Arrangement banner"
-				src="/static/banner-test.jpg"
+				src={ event.ImageURL.String }
 			/>
 			<header class="event-header">
 				<h1 class="title" title={ event.Title }>{ event.Title }</h1>
