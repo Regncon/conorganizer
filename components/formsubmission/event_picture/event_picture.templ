@@ -174,12 +174,12 @@ if eventErr == nil {
 				>Last opp</button>
 			</form>
 		</div>
-		<section class="form-card" style="width: fit-content;">
+		<section class="form-card" style="width: 600px;">
 			<h4 class="form-card-title">Mobil og gruppevisning</h4>
 			<banner-cropper
 				event-id={ eventId }
-				width="430"
-				height="200"
+				width="600"
+				height="350"
 				image-kind="card"
 				image-url={ "/event-images/" + imageUrl }
 			></banner-cropper>
@@ -195,7 +195,7 @@ if eventErr == nil {
                     flex-direction: column;
                     align-items: center;
                     gap: 1rem;
-                    background-color: hotpink;"
+                    background-color: var(--bg-base);"
 				max-width="430px"
 			>
 				<h1 style="text-align:center; margin:0; ">{ title }</h1>
@@ -223,7 +223,7 @@ if eventErr == nil {
                     flex-direction: column;
                     align-items: center;
                     gap: 1rem;
-                    background-color: hotpink;"
+                    background-color: var(--bg-base);"
 				max-width="430px"
 			>
 				<h1 style="text-align:center; margin:0; ">{ title }</h1>
