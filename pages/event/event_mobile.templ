@@ -8,7 +8,8 @@ import (
 )
 
 templ event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
-	{{ imageUrl := eventimage.GetEventImaegeUrl(event.ID, "card", eventImageDir) }}
+	{{ imageCardUrl := eventimage.GetEventImaegeUrl(event.ID, "card", eventImageDir) }}
+	{{ imageBannerUrl := eventimage.GetEventImaegeUrl(event.ID, "banner", eventImageDir) }}
 	<style>
 		.wrapper {
 			--event-banner-height: 25rem;
@@ -51,6 +52,9 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 					/* TODO: width might me set explicitly or we put a container width */
 					width: 100%;
 					height: 100%;
+				}
+				.event-image-banner {
+					display: noen;
 				}
 
 				.event-header {
@@ -184,6 +188,12 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 						aspect-ratio: unset;
 						height: var(--event-banner-height);
 					}
+					.event-image-card {
+						display: none;
+					}
+					.event-image-banner {
+						display: unset;
+					}
 					.event-header {
 						grid-row: 1 / 2;
 						width: min(var(--event-header-width), 100%);
@@ -270,8 +280,14 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 	<div class="wrapper">
 		<div class="stack">
 			<img
+				class="event-image-banner"
 				alt="Arrangement banner"
-				src={ imageUrl }
+				src={ imageBannerUrl }
+			/>
+			<img
+				class="event-image-card"
+				alt="Arrangement bilde"
+				src={ imageCardUrl }
 			/>
 			<header class="event-header">
 				<h1 class="title" title={ event.Title }>{ event.Title }</h1>
