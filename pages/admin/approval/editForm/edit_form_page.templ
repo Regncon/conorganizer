@@ -20,6 +20,7 @@ templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, eventIm
 templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	{{
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
+	isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
 	previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId)
 	}}
 	if err != nil {
@@ -45,7 +46,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		>
 			@formsubmission.FormBody(eventData, isAdmin)
 		</form>
-			@event.Event_mobile(eventData, previousNextData, eventImageDir)
+		@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir)
 	</div>
 	@components.PreviousNextBar(previousNextData)
 }

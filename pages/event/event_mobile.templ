@@ -279,16 +279,18 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 	</style>
 	<div class="wrapper">
 		<div class="stack">
-			<img
-				class="event-image-banner"
-				alt="Arrangement banner"
-				src={ imageBannerUrl }
-			/>
-			<img
-				class="event-image-card"
-				alt="Arrangement bilde"
-				src={ imageCardUrl }
-			/>
+			if previousNextData.IsRemoved == true {
+				<img
+					class="event-image-banner"
+					alt="Arrangement banner"
+					src={ imageBannerUrl }
+				/>
+				<img
+					class="event-image-card"
+					alt="Arrangement bilde"
+					src={ imageCardUrl }
+				/>
+			}
 			<header class="event-header">
 				<h1 class="title" title={ event.Title }>{ event.Title }</h1>
 				<i class="intro" title={ event.Intro }>{ event.Intro }</i>
@@ -371,10 +373,12 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 			</div>
 			<div class="description">
 				<p>
-					@templ.Raw( event.Description )
+					@templ.Raw(event.Description)
 				</p>
 			</div>
 		</div>
-		@components.PreviousNextBar(previousNextData)
+		if previousNextData.IsRemoved == false {
+			@components.PreviousNextBar(previousNextData)
+		}
 	</div>
 }
