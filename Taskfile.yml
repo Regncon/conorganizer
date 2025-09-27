@@ -90,6 +90,10 @@ tasks:
     cmds:
       - '{{ if .NEWEST_DB_PATH }} rm -f {{ .LOCAL_DB_PATH }} {{ .LOCAL_DB_PATH }}-shm {{ .LOCAL_DB_PATH }}-wal {{ end }}'
       - flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp get {{ .NEWEST_DB_PATH }} {{ .LOCAL_DB_PATH }}
+      # Create local-event-images directory if it doesn't exist
+      - mkdir -p ./local-event-images
+      ## Download all event images from https://program.regncon.no/event-images/ and save them to ./local-event-images
+      - wget -r -np -nH --cut-dirs=1 -P ./local-event-images https://program.regncon.no/event-images/
 
   # Kill all running air, templ and taks processes
   kill:
