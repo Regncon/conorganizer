@@ -68,7 +68,7 @@ templ MyEvents(userID string, db *sql.DB, logger *slog.Logger) {
 		if len(events) > 0 {
 			for _, event := range events {
 				<span class="my-events-item" style="background-color: var(--bg-item);">
-					<a href={ "my-events/new/" + event.Id }>
+					<a href={ "profile/events/new/" + event.Id }>
 						if event.Title == "" {
 							<h3 style="color: gray; font-style: italic;">Mangler navn</h3>
 						} else {
@@ -79,7 +79,7 @@ templ MyEvents(userID string, db *sql.DB, logger *slog.Logger) {
 				</span>
 			}
 		}
-		<form action="/my-events/api/create" method="post" class="my-events-item">
+		<form action="/events/api/create" method="post" class="my-events-item">
 			<p>Ønsker du  å arrangere noe under festivalen? Dørene er fortsatt åpne for nye arrangementer, la oss høre fra deg!</p>
 			<button type="submit" class="btn btn--outline">Send inn arrangement</button>
 		</form>

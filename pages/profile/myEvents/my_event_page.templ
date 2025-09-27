@@ -1,0 +1,11 @@
+package myevents
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"log/slog"
+)
+
+templ MyEventsPage(user requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+    <h1>Mine events</h1>
+}

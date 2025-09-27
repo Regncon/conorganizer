@@ -1,0 +1,52 @@
+package mytickets
+
+import (
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/checkIn"
+)
+
+templ MyTicketsPage(tickets []checkIn.CheckInTicket) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Min Side", Url: "/profile"},
+		{Name: "Billetter", Url: ""},
+	})
+	<section class="content-wrapper">
+		<h1>Mine Billetter</h1>
+		if len(tickets) > 0 {
+			<i>
+				Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett nedanfor,
+				slik at kvar deltakar kan melda seg på arrangement på eiga hand.
+			</i>
+		} else {
+			<p>
+				Vi fann ingen billettar registrert på denne epostadressa. Det betyr at du anten ikkje har kjøpt billettar
+				endå, eller at du har kjøpt billettane på ei anna anna epostadresse enn den du er logga inn med her.
+			</p>
+			<p>
+				<a class="btn-buy-ticket" href="https://event.checkin.no/109715/regncon-xxxiii-2025">Kjøp billetter ↗️</a>, lag ein brukar på riktig mailadresse, eller ta kontakt med <a class="mailto" href="mailto:styret@regncon.no">styret@regncon.no</a> noko
+				er galt, eller om du ønsker billettane overført til epostadressa du har laga brukar til.
+			</p>
+		}
+		for thicket,_ := range tickets {
+			<div class="card-wrapper">
+				<p>test: { thicket }</p>
+				<p>Spesialpris</p>
+				<p>Sleiv Sleivsogn</p>
+				<p>Bestilling: 12743193</p>
+				<div class="connect-email">
+					<input type="text" placeholder="E-Postadresse"/>
+					<button>Koble til epost</button>
+				</div>
+				<p>Bilett epost: sleiv@sleivsogn.no</p>
+				<p>Bestillings epost 1: skeiv@sleivsogn.no</p>
+				<div class="connected-emails">
+					<p>
+						Kobledt epost 1: sleiv@sleivesein.no
+					</p>
+					<button>🚮</button>
+				</div>
+			</div>
+		}
+	</section>
+}
