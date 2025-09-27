@@ -51,15 +51,24 @@ templ PreviousNextBar(previousNextData PreviousNext) {
             }
         }
 
-        @container event-container (width > 34.875rem) {
-                & .prev-next-wrapper {
+
+        @container event-container (width > 37.5rem) {
+                .prev-next-wrapper {
                     flex-direction: row;
                     place-content: space-between;
-                    padding-inline: var(--spacing-10x);
+                    padding: 0;
 
                     a {
                         width: var(--prev-next-responsive-max-width);
                     }
+                }
+        }
+
+        @container event-container (width > 65.0625rem) {
+                .prev-next-wrapper {
+                    flex-direction: row;
+                    place-content: space-between;
+                    padding-inline: var(--spacing-10x);
                 }
         }
     </style>
