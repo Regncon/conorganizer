@@ -122,5 +122,12 @@ func MigrateBackupLogsTable(db *sql.DB) error {
 		}
 	}
 
+	if !columns["events"] {
+		_, err := db.Exec(`ALTER TABLE backup_logs ADD COLUMN events INTEGER NOT NULL DEFAULT 0`)
+		if err != nil {
+			return fmt.Errorf("failed to add column 'events': %w", err)
+		}
+	}
+
 	return nil
 }

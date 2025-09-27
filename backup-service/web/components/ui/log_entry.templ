@@ -17,6 +17,7 @@ templ LogEntry(log models.BackupLog) {
 		<span class="log-description">
 			<p>{ log.CreatedAt.Format("2006/01/02 15:04") }</p>
 			<p>Size: { log.FileSize }KB</p>
+            <p>Events: { log.Events }</p>
 			<p>DB v:{ utils.DBPrefixCleanup(log.DBPrefix) }</p>
 			<p>Stage: { log.Stage }</p>
 		</span>

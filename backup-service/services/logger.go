@@ -24,9 +24,9 @@ func NewLogBackup(db *sql.DB, intervalType models.BackupInterval) (int64, error)
 func UpdateLogBackup(options models.BackupHandlerOptions) error {
 	_, err := options.DB.Exec(`
         UPDATE backup_logs
-        SET stage = ?, status = ?, db_prefix = ?, file_path = ?, file_size = ?, message = ?
+        SET stage = ?, status = ?, db_prefix = ?, file_path = ?, file_size = ?, events = ?, message = ?
         WHERE id = ?
-    `, options.Stage, options.Status, options.DBPrefix, options.FilePath, options.FileSize, options.Error, options.Id)
+    `, options.Stage, options.Status, options.DBPrefix, options.FilePath, options.FileSize, options.Events, options.Error, options.Id)
 	return err
 }
 
@@ -81,7 +81,7 @@ func (b *FetchLogRes) Logs(interval models.BackupInterval, status models.BackupL
 	var args []interface{}
 
 	// Base query
-	query := `SELECT id, backup_type, stage, status, db_prefix, file_path, file_size, message, created_at FROM backup_logs WHERE 1=1`
+	query := `SELECT id, backup_type, stage, status, db_prefix, file_path, file_size, events, message, created_at FROM backup_logs WHERE 1=1`
 
 	// Optional: filter by interval (backup_type)
 	if interval != "" {
@@ -121,6 +121,7 @@ func (b *FetchLogRes) Logs(interval models.BackupInterval, status models.BackupL
 			&log.DBPrefix,
 			&log.FilePath,
 			&log.FileSize,
+			&log.Events,
 			&log.Message,
 			&log.CreatedAt,
 		); err != nil {

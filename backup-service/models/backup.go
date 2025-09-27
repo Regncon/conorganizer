@@ -34,6 +34,7 @@ type BackupHandlerOptions struct {
 	FilePath string
 	FileSize int64
 	Id       int64
+	Events   int64
 	Interval BackupInterval
 	Logger   *slog.Logger
 	Stage    BackupStage
@@ -46,6 +47,7 @@ type BackupLogOutput struct {
 	FilePath  string `json:"filePath"`
 	FileSize  int64  `json:"file_size"`
 	Id        int64  `json:"title"`
+	Events    int64  `json:"events"`
 	Interval  string `json:"interval"`
 	Message   string `json:"message"`
 	Stage     string `json:"stage"`
