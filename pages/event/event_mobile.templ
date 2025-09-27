@@ -8,8 +8,8 @@ import (
 )
 
 templ event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
-	{{ imageCardUrl := eventimage.GetEventImaegeUrl(event.ID, "card", eventImageDir) }}
-	{{ imageBannerUrl := eventimage.GetEventImaegeUrl(event.ID, "banner", eventImageDir) }}
+	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
+	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
 	<style>
 		.wrapper {
 			--event-banner-height: 25rem;
@@ -278,6 +278,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 
                         .details-top {
                             padding-block-start: var(--spacing-3x);
+
                             .details-header {
                                 position: unset;
                             }
