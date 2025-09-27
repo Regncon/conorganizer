@@ -41,8 +41,8 @@ COPY --from=builder /usr/local/bin/litestream /usr/local/bin/litestream
 COPY .flyio/litestream.yml /etc/litestream.yml
 COPY .flyio/replication.sh /usr/local/bin/replication.sh
 
-# Copy over sql init file
-COPY initialize.sql /usr/local/share/regncon/initialize.sql
+# Copy over migration database file
+COPY database/events.db /var/lib/regncon/events.db
 
 # Set server startup script to be executable (todo)
 RUN chmod +x /usr/local/bin/replication.sh
@@ -51,6 +51,9 @@ RUN chmod +x /usr/local/bin/replication.sh
 RUN mkdir -p /var/lib/regncon
 RUN chown -R regncon:regncon /var/lib/regncon
 
+# Create upload dir
+RUN mkdir -p /data/regncon/uploads && \
+    chown -R regncon:regncon /data/regncon/uploads
 
 # Switch to non-root user
 USER regncon

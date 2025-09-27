@@ -24,7 +24,7 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 )
 
-func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB) (cleanup func() error, err error) {
+func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB, eventImageDir *string) (cleanup func() error, err error) {
 	natsPort, err := toolbelt.FreePort()
 	if err != nil {
 		return nil, fmt.Errorf("error getting free port: %w", err)
@@ -57,8 +57,8 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 		index.SetupIndexRoute(router, sessionStore, ns, db),
 		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
-		event.SetupEventRoute(router, sessionStore, ns, db, logger),
-		myevents.SetupMyEventsRoute(isLoggedInRouter, sessionStore, ns, db, logger),
+		event.SetupEventRoute(router, sessionStore, ns, db, logger, eventImageDir),
+		myevents.SetupMyEventsRoute(isLoggedInRouter, sessionStore, ns, db, eventImageDir, logger),
 		login.SetupAuthRoute(router, db, logger),
 		myprofile.SetupMyProfileRoute(isLoggedInRouter, sessionStore, ns, db, logger),
 	); err != nil {

@@ -10,6 +10,7 @@ on:
             - "backup-migration/**"
             - ".devcontainer/**"
             - ".vscode/**"
+
 jobs:
     deploy:
         name: Deploy app

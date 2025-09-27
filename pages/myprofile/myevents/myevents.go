@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components/formsubmission"
+	eventPicture "github.com/Regncon/conorganizer/components/formsubmission/event_picture"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/index"
 	newEvent "github.com/Regncon/conorganizer/pages/myprofile/myevents/newevent"
@@ -22,7 +23,7 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
 	kv, kvErr := SetupNats(ns)
 	if kvErr != nil {
 		return fmt.Errorf("error setting up nats: %w", kvErr)
@@ -66,7 +67,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 	}
 
 	router.Route("/my-events", func(myeventsRouter chi.Router) {
-		myeventsLayoutRoute(myeventsRouter, db, logger)
+		myeventsLayoutRoute(myeventsRouter, db, eventImageDir, logger)
 		myeventsRouter.Route("/api", func(apiRouter chi.Router) {
 			apiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				sessionID, mvc, err := mvcSession(w, r)
@@ -99,7 +100,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 							return
 						}
 
-						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, logger)
+						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, eventImageDir, logger)
 						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
@@ -149,7 +150,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 								userId := userctx.GetUserRequestInfo(r.Context()).Id
 
-								c := newEvent.NewEventFormPage(eventId, userId, db, logger)
+								c := newEvent.NewEventFormPage(eventId, userId, ctx, db, logger)
 								if err := sse.PatchElementTempl(c); err != nil {
 									sse.ConsoleError(err)
 									return
@@ -208,6 +209,13 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					newApiIdRouter.Route("/notes", func(putNotesRouter chi.Router) {
 						formsubmission.UpdateNotes(putNotesRouter, db, kv)
 					})
+
+					newApiIdRouter.Route("/upload", func(uploadRouter chi.Router) {
+						eventPicture.EventImageFormSubmission(uploadRouter, db, eventImageDir, logger)
+					})
+					newApiIdRouter.Route("/upload-cropped", func(uploadCroppedRouter chi.Router) {
+						eventPicture.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, logger)
+					})
 					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
 						formsubmission.SubmitFormRoute(newApiIdRouter, db, logger)
 					})
@@ -217,7 +225,6 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
 					createNewEventFormSubmission(db, logger, w, r)
 				})
-
 			})
 
 		})
@@ -225,6 +232,10 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
 			newRouter.Route("/{id}", func(newIdRoute chi.Router) {
 				newEvent.NewEventLayoutRoute(newIdRoute, db, logger)
+
+				newIdRoute.Route("/image", func(imageRouter chi.Router) {
+					eventPicture.EventPictureRoute(imageRouter, db, logger)
+				})
 			})
 		})
 	})

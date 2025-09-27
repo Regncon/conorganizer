@@ -44,9 +44,11 @@ templ ApprovalPageContent(db *sql.DB, logger *slog.Logger) {
 		{Name: "Admin", Url: "/admin/"},
 		{Name: "Godkjenning av Arrangementer", Url: ""},
 	})
-	<div style="max-width: 910px; margin: auto;">
-		<p>Her kan du godkjenne arrangementer som er sendt inn av brukere.</p>
-		<h1>Arrangementer til Godkjenning</h1>
+	<div class="page-content-container">
+		<h1 class="page-heading has-helptext">Arrangementer til Godkjenning</h1>
+		<p class="page-heading-helptext">
+			Her kan du godkjenne arrangementer som er sendt inn av brukere.
+		</p>
 		for _, event := range events {
 			@eventBar(event)
 		}

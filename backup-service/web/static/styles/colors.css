@@ -1,0 +1,37 @@
+/* Interval colors */
+.hourly {
+    background-color: #b7e9fe;
+    color: #00709e;
+}
+
+.daily {
+    background-color: #b1e5b1;
+    color: #006300;
+}
+
+.weekly {
+    background-color: #dcb1dc;
+    color: purple;
+}
+
+.yearly {
+    background-color: #c4d4fe;
+    color: #002995;
+}
+
+/* Status colors */
+.pending {
+    background-color: lightskyblue;
+    color: blue;
+}
+
+.success {
+    background-color: lightgreen;
+    color: green;
+}
+
+.error {
+    background-color: #ff9a9a;
+    color: black;
+    border-color: #ff9a9a;
+}
