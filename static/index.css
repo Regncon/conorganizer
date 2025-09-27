@@ -255,6 +255,28 @@ hr {
     box-shadow: 0 0 0 .25rem hsla(from var(--color-primary-hover) h s l / 0.25);
 }
 
+.slider {
+    accent-color: var(--color-primary);
+}
+
+/* Firefox: lets you color the selected portion explicitly */
+.slider::-moz-range-progress {
+    background: var(--color-primary);
+}
+
+.slider::-moz-range-track {
+    background: var(--color-primary-focus);
+}
+
+/* WebKit (Chrome/Edge/Safari): thumb only; track fill can’t be styled separately with pure CSS */
+.slider::-webkit-slider-thumb {
+    background: var(--color-primary);
+}
+
+.slider::-webkit-slider-runnable-track {
+    background: var(--bg-item-border);
+}
+
 input {
     font-family: monospace;
 }

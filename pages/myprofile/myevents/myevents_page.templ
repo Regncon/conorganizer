@@ -38,13 +38,13 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.
 	return events
 }
 
-templ myEventsPage(userid string, db *sql.DB, logger *slog.Logger) {
+templ myEventsPage(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	<div id="my-events-wrapper">
-		@myEventsPageContent(userid, db, logger)
+		@myEventsPageContent(userid, db, eventImageDir, logger)
 	</div>
 }
 
-templ myEventsPageContent(userid string, db *sql.DB, logger *slog.Logger) {
+templ myEventsPageContent(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Mine Arrangementer", Url: ""},
@@ -52,7 +52,7 @@ templ myEventsPageContent(userid string, db *sql.DB, logger *slog.Logger) {
 	<div class="page-content-container">
 		<h1 class="page-heading">Mine Arrangementer</h1>
 		<div class="my-event-grid">
-			@events(userid, db, logger)
+			@events(userid, db, eventImageDir, logger)
 		</div>
 	</div>
 	<style>
@@ -67,14 +67,14 @@ templ myEventsPageContent(userid string, db *sql.DB, logger *slog.Logger) {
 	</style>
 }
 
-templ events(userid string, db *sql.DB, logger *slog.Logger) {
+templ events(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	{{ events := GetEventsByUserId(db, userid, logger) }}
 	if len(events) == 0 {
 		@createEvent()
 	}
 	if len(events) > 0 {
 		for _, event := range events {
-			@components.EventCard(event, true)
+			@components.EventCard(event, eventImageDir, true)
 		}
 		@createEvent()
 	}

@@ -1,0 +1,234 @@
+package eventPicture
+
+import (
+	"fmt"
+	"log/slog"
+	"io"
+	"os"
+	"strings"
+
+	"database/sql"
+	"github.com/go-chi/chi/v5"
+	"net/http"
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/eventService"
+	"github.com/Regncon/conorganizer/service/userctx"
+)
+
+func EventPictureRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		eventId := chi.URLParam(r, "id")
+		if eventId == "" {
+			http.Error(w, "Event ID is required. Got: "+eventId, http.StatusBadRequest)
+			return
+		}
+		var ctx = r.Context()
+		layouts.Base(
+			"Last opp blide",
+			userctx.GetUserRequestInfo(ctx),
+			page(eventId, db, logger),
+		).Render(ctx, w)
+	})
+}
+
+func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			logger.Error("Event ID is required")
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+		logger.Info("Uploading event imaeg", "eventID", eventID)
+
+		file, header, err := r.FormFile("image")
+		if err != nil {
+			logger.Error("Failed to get image from form", "error", err)
+			http.Error(w, "Failed to get image from form", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+		imagePath := fmt.Sprintf("%s/%s_%s", *eventImageDir, eventID, header.Filename)
+		out, err := os.Create(imagePath)
+		if err != nil {
+			logger.Error("Failed to create image file", "error", err)
+			http.Error(w, "Failed to save image", http.StatusInternalServerError)
+			return
+		}
+		defer out.Close()
+		_, err = io.Copy(out, file)
+		if err != nil {
+			logger.Error("Failed to save image file", "error", err)
+			http.Error(w, "Failed to save image", http.StatusInternalServerError)
+			return
+		}
+		logger.Info("Image uploaded successfully", "path", imagePath)
+		// Update the event with the iEventPictureRoutemage URL/path
+
+		query := `UPDATE events SET image_url = ? WHERE id = ?`
+		_, err = db.Exec(query, eventID+"_"+header.Filename, eventID)
+		if err != nil {
+			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
+			return
+		}
+
+		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/", eventID), http.StatusSeeOther)
+	})
+}
+
+func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("Received cropped image upload request")
+		eventID := chi.URLParam(r, "id")
+		if strings.TrimSpace(eventID) == "" {
+			logger.Error("Event ID is required")
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+		imageKind := r.FormValue("kind")
+		if imageKind != "card" && imageKind != "banner" {
+			logger.Error("Invalid image kind", "imageKind", imageKind)
+			http.Error(w, "Invalid image kind", http.StatusBadRequest)
+			return
+		}
+		logger.Info("Uploading cropped event image", "eventID", eventID, "imageKind", imageKind)
+		file, _, err := r.FormFile("image")
+		if err != nil {
+			logger.Error("Failed to get image from form", "error", err)
+			http.Error(w, "Failed to get image from form", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+		filename := fmt.Sprintf("%s_%s.webp", eventID, imageKind)
+		imagePath := fmt.Sprintf("%s/%s", *eventImageDir, filename)
+		out, err := os.Create(imagePath)
+		if err != nil {
+			logger.Error("Failed to create image file", "error", err)
+			http.Error(w, "Failed to save image", http.StatusInternalServerError)
+			return
+		}
+		defer out.Close()
+		_, err = io.Copy(out, file)
+		if err != nil {
+			logger.Error("Failed to save image file", "error", err)
+			http.Error(w, "Failed to save image", http.StatusInternalServerError)
+			return
+		}
+		logger.Info("Image uploaded successfully", "path", imagePath)
+		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/", eventID), http.StatusSeeOther)
+	})
+}
+
+templ page(eventId string, db *sql.DB, logger *slog.Logger) {
+	{{event, eventErr := eventservice.GetEventById(eventId, db, logger)
+var title, intro, imageUrl string
+if eventErr == nil {
+	title = event.Title
+	intro = event.Intro
+	imageUrl = event.ImageURL.String
+}
+	}}
+	if eventErr != nil {
+		<p>Error fetching events: { eventErr.Error() }</p>
+		return
+	}
+	<script src="/static/web_components/banner_cropper.js"></script>
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Mine Arrangementer", Url: "/my-events/"},
+		{Name: "Nytt Arrangement", Url: "/my-events/new/" + eventId + "/"},
+		{Name: "Last opp biled", Url: ""},
+	})
+	<article style="display: flex; gap: 2rem; padding: 1rem; flex-direction: column;">
+		<h1>Last opp blide</h1>
+		<div class="form-card" style="display: flex; gap: 1rem; align-items: center; ">
+			<a
+				href={ "/my-events/new/" + eventId + "/" }
+				class="btn btn--primary"
+				style="place-self: center end; margin-right:  1rem"
+			>
+				Tilbake
+			</a>
+			<p>
+				Siden Ai/Ki genererter bilder er et betent tema ønsker vi i RegnCon ikke
+				at arrangører skal bruke slike bilder som hovedbilde for arrangementet sitt.
+			</p>
+			<form
+				method="post"
+				action={ "/my-events/api/new/" + eventId + "/upload" }
+				enctype="multipart/form-data"
+			>
+				<label>
+					Velg bilde:
+					<input
+						type="file"
+						name="image"
+						accept="image/*"
+						required
+					/>
+				</label>
+				<button
+					class="btn btn--primary"
+					type="submit"
+				>Last opp</button>
+			</form>
+		</div>
+		<section class="form-card" style="width: 600px;">
+			<h4 class="form-card-title">Mobil og gruppevisning</h4>
+			<banner-cropper
+				event-id={ eventId }
+				width="600"
+				height="350"
+				image-kind="card"
+				image-url={ "/event-images/" + imageUrl }
+			></banner-cropper>
+			{{/*
+	<img
+		src={ "/event-images/" + eventId + "_card.webp" }
+		alt="Event image"
+		style="max-width: 430px; max-height: 200px;"
+	/>*/
+			}}
+			<div
+				style="display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 1rem;
+                    background-color: var(--bg-base);"
+				max-width="430px"
+			>
+				<h1 style="text-align:center; margin:0; ">{ title }</h1>
+				<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
+			</div>
+		</section>
+		<section class="form-card" style="width: 1360px;">
+			<h4 class="form-card-title">Desktop banner</h4>
+			<banner-cropper
+				event-id={ eventId }
+				width="1360"
+				height="400"
+				image-kind="banner"
+				image-url={ "/event-images/" + imageUrl }
+			></banner-cropper>
+			{{/*
+            <img
+				src={ "/event-images/" + eventId + "_banner.webp" }
+				alt="Event image"
+				style="max-width: 1300px; max-height: 200px;"
+			/>*/
+			}}
+			<div
+				style="display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 1rem;
+                    background-color: var(--bg-base);"
+				max-width="430px"
+			>
+				<h1 style="text-align:center; margin:0; ">{ title }</h1>
+				<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
+			</div>
+		</section>
+	</article>
+}

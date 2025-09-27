@@ -18,7 +18,7 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -79,7 +79,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	}
 
 	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
-	eventLayoutRoute(router, db, logger, err)
+	eventLayoutRoute(router, db, logger, eventImageDir, err)
 
 	router.Route("/event/api", func(eventRouter chi.Router) {
 		eventRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
@@ -114,7 +114,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						c := event_page(eventID, logger, db)
+						c := event_page(eventID, logger, db, eventImageDir)
 						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return

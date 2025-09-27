@@ -21,7 +21,15 @@
     --btn-primary-active-text: var(--color-text-strong);
     --btn-primary-focus-shadow: var(--color-primary-focus-visible);
 
-    /* outline */
+    /* secondary */
+    --btn-secondary-bg: transparent;
+    --btn-secondary-border: var(--color-text-soft);
+    --btn-secondary-hover-bg: var(--color-primary-hover);
+    --btn-secondary-active-bg: var(--color-primary-active);
+    --btn-secondary-active-text: var(--color-text-strong);
+    --btn-secondary-focus-shadow: var(--color-primary-focus-visible);
+
+    /* --tline */
     --btn-outline-border: var(--color-secondary);
     --btn-outline-hover-bg: var(--color-secondary-hover);
     --btn-outline-active-bg: var(--color-secondary-active);
@@ -82,6 +90,43 @@
 }
 
 .btn--primary:disabled {
+    background-color: var(--btn-disabled-bg);
+    border-color: var(--btn-disabled-border);
+    color: var(--btn-disabled-text);
+    cursor: not-allowed;
+}
+
+/* — Outline — */
+.btn--outline {
+    border-color: var(--btn-outline-border);
+    color: var(--color-secondary);
+}
+
+/* — Secondary — */
+.btn--secondary {
+    background-color: var(--btn-secondary-bg);
+    border-color: var(--btn-secondary-border);
+    color: var(--color-text-soft);
+}
+
+.btn--secondary:hover {
+    background-color: var(--btn-secondary-hover-bg);
+    color: var(--btn-secondary-active-text);
+}
+
+.btn--secondary:focus-visible {
+    outline: none;
+    background-color: var(--btn-secondary-hover-bg);
+    color: var(--btn-secondary-active-text);
+    box-shadow: 0 0 0 3px var(--btn-secondary-focus-shadow);
+}
+
+.btn--secondary:active {
+    background-color: var(--btn-secondary-active-bg);
+    color: var(--btn-secondary-active-text);
+}
+
+.btn--secondary:disabled {
     background-color: var(--btn-disabled-bg);
     border-color: var(--btn-disabled-border);
     color: var(--btn-disabled-text);

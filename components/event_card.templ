@@ -3,9 +3,11 @@ package components
 import (
 	"fmt"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-templ EventCard(eventCard models.EventCardModel, showStatus bool) {
+templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStatus bool) {
+	{{ imageUrl := eventimage.GetEventImaegeUrl(eventCard.Id, "card", eventImageDir) }}
 	<a
 		if eventCard.Status == models.EventStatusDraft || eventCard.Status == models.EventStatusSubmitted || eventCard.Status == models.EventStatusArchived {
 			href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
@@ -43,7 +45,7 @@ templ EventCard(eventCard models.EventCardModel, showStatus bool) {
 			</div>
 		}
 		<img
-			src="/static/placeholder-small.webp"
+			src={ imageUrl }
 			alt="Participants"
 			style="
                     width: 100%;
