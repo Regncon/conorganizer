@@ -76,7 +76,8 @@ tasks:
     cmds:
       - go test ./...
 
-    # Download a local copy of latest S3 database
+  # Download a local copy of latest S3 database
+  # Requires updated .env file, check discord!
   download:
     vars:
       #Filepaths
