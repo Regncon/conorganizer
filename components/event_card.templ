@@ -2,21 +2,12 @@ package components
 
 import (
 	"fmt"
-	"os"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-func GetEventImaegeUrl(eventId string, kind string, eventImageDir *string) string {
-
-	imageFile := fmt.Sprintf("/%s/%s_%s.webp", *eventImageDir, eventId, kind)
-	if _, err := os.Stat(fmt.Sprintf(".%s", imageFile)); err == nil {
-		return imageFile
-	}
-	return fmt.Sprintf("/static/placeholder_%s.svg", kind)
-}
-
 templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStatus bool) {
-	{{ imageUrl := GetEventImaegeUrl(eventCard.Id, "card", eventImageDir) }}
+	{{ imageUrl := eventimage.GetEventImaegeUrl(eventCard.Id, "card", eventImageDir) }}
 	<a
 		if eventCard.Status == models.EventStatusDraft || eventCard.Status == models.EventStatusSubmitted || eventCard.Status == models.EventStatusArchived {
 			href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
