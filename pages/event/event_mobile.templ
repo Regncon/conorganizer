@@ -24,6 +24,9 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				--event-header-half-height-and-translate
 			);
 
+            --line-height-mobile: 1.4;
+            --line-height: var(--line-height-mobile, 1.4);
+
 			display: flex;
 			flex-direction: column;
 			width: var(--mobile-responsive-min-width);
@@ -54,9 +57,10 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 
 					.title {
 						margin: 0;
+                        line-height: var(--line-height);
 					}
 					.intro {
-						line-height: 1.4;
+                        line-height: var(--line-height);
 					}
 				}
 			}
@@ -89,7 +93,8 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 						display: flex;
 						flex-direction: column;
 						gap: var(--spacing-3x);
-						padding: var(--spacing-5x);
+						padding-inline: var(--spacing-5x);
+						padding-block: var(--spacing-3x);
 
 						p {
 							margin: 0;
@@ -125,7 +130,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 
 					.details-bottom {
-						padding: 1rem;
+						padding: var(--spacing-5x);
 						display: flex;
 						flex-direction: column;
 						gap: var(--spacing-4x);
@@ -133,10 +138,12 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				}
 
 				.description {
+                    padding: var(--spacing-2x);
 					p {
 						margin: 0;
 						margin-block-start: var(--spacing-2x);
 						word-break: break-all;
+                        line-height: var(--line-height);
 					}
 				}
 			}
