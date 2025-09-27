@@ -370,7 +370,9 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				</div>
 			</div>
 			<div class="description">
-				<p>{ event.Description } </p>
+				<p>
+					@templ.Raw( event.Description )
+				</p>
 			</div>
 		</div>
 		@components.PreviousNextBar(previousNextData)
