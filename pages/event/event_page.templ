@@ -7,13 +7,13 @@ import (
 	"log/slog"
 )
 
-templ event_page(eventId string, logger *slog.Logger, db *sql.DB) {
+templ event_page(eventId string, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
 	<div id="event-container" class="event-container">
-		@event_page_content(eventId, logger, db)
+		@event_page_content(eventId, logger, db, eventImageDir)
 	</div>
 }
 
-templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB) {
+templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
 	{{
 	event, err := eventservice.GetEventById(eventId, db, logger)
 	}}
@@ -30,17 +30,16 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB) {
 		<p>Error fetching event: { err.Error() }</p>
 	}
 	<style>
-    .breadcrumb-wrapper {
-            display: none;
-    }
+		.breadcrumb-wrapper {
+			display: none;
+		}
 
-    @container event-container (width >= 37.5rem) {
-        .breadcrumb-wrapper {
-            display: block;
-        }
-    }
-
-    </style>
+		@container event-container (width >= 37.5rem) {
+			.breadcrumb-wrapper {
+				display: block;
+			}
+		}
+	</style>
 	<div style="display: flex; justify-content: space-between; align-items: center; padding-block:1rem;">
 		<div class="breadcrumb-wrapper">
 			@components.Breadcrumbs([]components.BreadcrumbPath{
@@ -69,5 +68,5 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB) {
 			}
 		</div>
 	</div>
-	@event_mobile(event, previousNextData)
+	@event_mobile(event, previousNextData, eventImageDir)
 }

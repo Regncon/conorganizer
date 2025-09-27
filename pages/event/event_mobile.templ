@@ -4,268 +4,274 @@ import (
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-templ event_mobile(event *models.Event, previousNextData components.PreviousNext) {
+templ event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
+	{{ imageUrl := eventimage.GetEventImaegeUrl(event.ID, "card", eventImageDir) }}
 	<style>
-        .wrapper {
-            --event-banner-height: 25rem;
-            --event-header-height: 10.1875rem;
-            --event-header-width: 65.5rem;
-            --event-header-missing-from-translating: 9px;
-            --event-header-half-height-and-translate: calc(var(--event-header-height) / 2 - var(--event-header-missing-from-translating));
-            --event-header-overlapp: var(--event-header-half-height-and-translate);
+		.wrapper {
+			--event-banner-height: 25rem;
+			--event-header-height: 10.1875rem;
+			--event-header-width: 65.5rem;
+			--event-header-missing-from-translating: 9px;
+			--event-header-half-height-and-translate: calc(
+				var(--event-header-height) / 2 -
+					var(--event-header-missing-from-translating)
+			);
+			--event-header-overlapp: var(
+				--event-header-half-height-and-translate
+			);
 
-            --text-height-two-lines: 2lh;
+			--text-height-two-lines: 2lh;
 
-            display:flex;
-            flex-direction:column;
-            width: var(--mobile-responsive-min-width);
-            gap: var(--spacing-4x);
+			display: flex;
+			flex-direction: column;
+			width: var(--mobile-responsive-min-width);
+			gap: var(--spacing-4x);
 
-            > img {
-                height: 150px;
-                display: block;
-            }
+			> img {
+				height: 150px;
+				display: block;
+			}
 
-            .stack > * {
-                grid-column: 1;
-            }
+			.stack > * {
+				grid-column: 1;
+			}
 
-            .stack {
-                --row-overlapp: 3.125rem;
-                display: grid;
-                grid-template-rows: auto var(--row-overlapp) auto;
+			.stack {
+				--row-overlapp: 3.125rem;
+				display: grid;
+				grid-template-rows: auto var(--row-overlapp) auto;
 
-                > img {
-                    aspect-ratio: 20 / 6;
-                    object-fit: cover;
-                    grid-row: 1 / 3;
-                    /* TODO: width might me set explicitly or we put a container width */
-                    width: 100%;
-                    height: 100%;
-                }
+				> img {
+					aspect-ratio: 20 / 6;
+					object-fit: cover;
+					grid-row: 1 / 3;
+					/* TODO: width might me set explicitly or we put a container width */
+					width: 100%;
+					height: 100%;
+				}
 
-                .event-header {
-                    display: flex;
-                    flex-direction: column;
-                    padding: var(--spacing-4x);
-                    background-color: var(--bg-base);
-                    grid-row: 2 / 4;
-                    text-align: center;
-                    padding: var(--spacing-4x);
-                    height: fit-content;
-                    border-radius: var(--border-radius-2x);
+				.event-header {
+					display: flex;
+					flex-direction: column;
+					padding: var(--spacing-4x);
+					background-color: var(--bg-base);
+					grid-row: 2 / 4;
+					text-align: center;
+					padding: var(--spacing-4x);
+					height: fit-content;
+					border-radius: var(--border-radius-2x);
 
-                    .title {
-                        margin:0;
-                        margin-block-end: 0.4rem;
-                    }
-                    .intro {
-                        line-height: 1.4;
-                    }
-                }
-            }
+					.title {
+						margin: 0;
+						margin-block-end: 0.4rem;
+					}
+					.intro {
+						line-height: 1.4;
+					}
+				}
+			}
 
-            .event-information {
-                display: flex;
-                flex-direction: column;
-                gap: var(--spacing-4x);
-                padding-inline: var(--spacing-2x);
+			.event-information {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-4x);
+				padding-inline: var(--spacing-2x);
 
-                /*TODO: remove this if we change .card background color */
-                .card {
-                    background-color: var(--bg-surface);
-                }
+				/*TODO: remove this if we change .card background color */
+				.card {
+					background-color: var(--bg-surface);
+				}
 
-                .interest-picker {
-                    display:flex;
-                    align-items: center;
-                    flex-direction:column;
-                    gap: var(--spacing-4x);
-                    padding: var(--spacing-4x);
-                    text-align: center;
+				.interest-picker {
+					display: flex;
+					align-items: center;
+					flex-direction: column;
+					gap: var(--spacing-4x);
+					padding: var(--spacing-4x);
+					text-align: center;
 
-                    > button {
-                        max-width: 200px;
-                    }
-                }
+					> button {
+						max-width: 200px;
+					}
+				}
 
-                .details {
-                    display: flex;
-                    flex-direction: column;
-                    padding: 0;
+				.details {
+					display: flex;
+					flex-direction: column;
+					padding: 0;
 
-                    .details-top {
-                        display: flex;
-                        flex-direction: column;
-                        gap: var(--spacing-3x);
-                        padding: var(--spacing-5x);
+					.details-top {
+						display: flex;
+						flex-direction: column;
+						gap: var(--spacing-3x);
+						padding: var(--spacing-5x);
 
-                        p {
-                            margin: 0;
-                            max-width: 11.95rem;
-                            overflow: clip;
-                            text-overflow: ellipsis;
-                            white-space: nowrap;
-                        }
+						p {
+							margin: 0;
+							max-width: 11.95rem;
+							overflow: clip;
+							text-overflow: ellipsis;
+							white-space: nowrap;
+						}
 
-                        strong {
-                            font-size: 12px;
-                        }
+						strong {
+							font-size: 12px;
+						}
 
-                        .details-header {
-                            font-size: var(--spacing-3x);
-                        }
+						.details-header {
+							font-size: var(--spacing-3x);
+						}
 
-                        .details-type {
-                            height: 20px;
-                            width: 20px;
-                            display: flex;
-                            place-items: center;
-                            gap: var(--spacing-1x);
+						.details-type {
+							height: 20px;
+							width: 20px;
+							display: flex;
+							place-items: center;
+							gap: var(--spacing-1x);
 
-                            img {
-                                height: 15px;
-                                width: 15px;
-                            }
-                            .details-header {
-                                font-size: 12px;
-                            }
-                        }
-                    }
+							img {
+								height: 15px;
+								width: 15px;
+							}
+							.details-header {
+								font-size: 12px;
+							}
+						}
+					}
 
-                    .details-bottom {
-                        padding: 1rem;
-                        display: flex;
-                        flex-direction: column;
-                        gap: var(--spacing-4x);
-                    }
-                }
+					.details-bottom {
+						padding: 1rem;
+						display: flex;
+						flex-direction: column;
+						gap: var(--spacing-4x);
+					}
+				}
 
-                .description {
-                    p {
-                        margin: 0;
-                        margin-block-start: var(--spacing-2x);
-                        word-break: break-all;
-                    }
-                }
-            }
-        }
+				.description {
+					p {
+						margin: 0;
+						margin-block-start: var(--spacing-2x);
+						word-break: break-all;
+					}
+				}
+			}
+		}
 
-        @container event-container (width >= 37.5rem) {
-            .wrapper {
-                inline-size: min(1041px, 100%);
-                place-self: center;
-                display: grid;
-                grid-template-rows: max-content max-content;
-                padding: var(--spacing-5x);
-                gap: var(--spacing-8x);
-                .stack {
-                    --event-banner-height: 25rem;
-                    --event-header-height: 10.1875rem;
-                    --event-header-width: 65.0625rem;
-                    --event-header-missing-from-translating: 9px;
+		@container event-container (width >= 37.5rem) {
+			.wrapper {
+				inline-size: min(1041px, 100%);
+				place-self: center;
+				display: grid;
+				grid-template-rows: max-content max-content;
+				padding: var(--spacing-5x);
+				gap: var(--spacing-8x);
+				.stack {
+					--event-banner-height: 25rem;
+					--event-header-height: 10.1875rem;
+					--event-header-width: 65.0625rem;
+					--event-header-missing-from-translating: 9px;
 
-                    grid-template-rows: var(--event-banner-height) var(--event-header-overlapp);
-                    grid-template-columns: 1fr;
-                    place-items: end center;
-                    img {
-                        grid-row: 1 / 2;
-                        aspect-ratio: unset;
-                        height: var(--event-banner-height);
-                    }
-                    .event-header{
-                        grid-row: 1 / 2;
-                        width: min(var(--event-header-width), 100%);
-                        transform: translateY(45%);
-                        height: var(--event-header-height);
-                    }
-                }
+					grid-template-rows: var(--event-banner-height) var(
+							--event-header-overlapp
+						);
+					grid-template-columns: 1fr;
+					place-items: end center;
+					img {
+						grid-row: 1 / 2;
+						aspect-ratio: unset;
+						height: var(--event-banner-height);
+					}
+					.event-header {
+						grid-row: 1 / 2;
+						width: min(var(--event-header-width), 100%);
+						transform: translateY(45%);
+						height: var(--event-header-height);
+					}
+				}
 
-                .event-information {
-                    display: flex;
-                    flex-direction: column;
-                    gap: var(--spacing-8x);
-                    padding: 0;
+				.event-information {
+					display: flex;
+					flex-direction: column;
+					gap: var(--spacing-8x);
+					padding: 0;
 
-                    .interest-picker {
-                        order: 1;
-                        width: 100%;
-                        flex-direction: row;
-                        flex-wrap: wrap;
-                        place-content: space-between;
-                        height: fit-content;
+					.interest-picker {
+						order: 1;
+						width: 100%;
+						flex-direction: row;
+						flex-wrap: wrap;
+						place-content: space-between;
+						height: fit-content;
+					}
+					.details {
+						position: relative;
+						padding-block-start: var(--spacing-5x);
+						height: fit-content;
+						display: grid;
+						grid-template-columns: 1fr 1fr;
 
-                    }
-                    .details {
-                        position: relative;
-                        padding-block-start: var(--spacing-5x);
-                        height: fit-content;
-                        display: grid;
-                        grid-template-columns: 1fr 1fr;
+						hr {
+							display: none;
+						}
 
-                        hr {
-                            display: none;
-                        }
+						.details-top {
+							.details-header {
+								position: absolute;
+								top: 1rem;
+							}
+							.details-host {
+								display: flex;
+								flex-direction: column;
+							}
+						}
+					}
+					.description {
+						order: 2;
+						margin-block-start: 0;
+					}
+				}
+			}
+		}
 
-                        .details-top {
-                            .details-header {
-                                position: absolute;
-                                top: 1rem;
-                            }
-                            .details-host {
-                                display: flex;
-                                flex-direction: column;
-                            }
-                        }
-                    }
-                    .description {
-                        order: 2;
-                        margin-block-start: 0;
-                    }
-                }
-            }
+		@container event-container (width > 65.0625rem) {
+			.wrapper {
+				inline-size: min(1440px, 100%);
+				gap: var(--spacing-10x);
+				padding: var(--spacing-10x);
 
-        }
+				.event-information {
+					display: grid;
+					grid-template-areas:
+						"interests details"
+						"description details"
+						"description empty";
+					gap: 0;
+					column-gap: var(--spacing-8x);
+					padding-inline: var(--spacing-10x);
+					grid-template-columns: 1fr 25.3125rem;
 
-        @container event-container (width > 65.0625rem) {
-            .wrapper {
-                inline-size: min(1440px, 100%);
-                gap: var(--spacing-10x);
-                padding: var(--spacing-10x);
-
-                .event-information {
-                    display: grid;
-                    grid-template-areas: "interests details"
-                    "description details"
-                    "description empty";
-                    gap: 0;
-                    column-gap: var(--spacing-8x);
-                    padding-inline: var(--spacing-10x);
-                    grid-template-columns: 1fr 25.3125rem;
-
-                    .interest-picker {
-                        grid-area: interests;
-                        margin-block-end: var(--spacing-8x);
-                    }
-                    .details {
-                        grid-area: details;
-                    }
-                    .description {
-                        grid-area: description;
-                    }
-                }
-            }
-
-        }
-
-    </style>
+					.interest-picker {
+						grid-area: interests;
+						margin-block-end: var(--spacing-8x);
+					}
+					.details {
+						grid-area: details;
+					}
+					.description {
+						grid-area: description;
+					}
+				}
+			}
+		}
+	</style>
 	<div class="wrapper">
 		<div class="stack">
 			<img
 				alt="Arrangement banner"
-				src={ event.ImageURL.String }
+				src={ imageUrl }
 			/>
 			<header class="event-header">
 				<h1 class="title" title={ event.Title }>{ event.Title }</h1>

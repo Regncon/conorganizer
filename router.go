@@ -57,7 +57,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 		index.SetupIndexRoute(router, sessionStore, ns, db),
 		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
-		event.SetupEventRoute(router, sessionStore, ns, db, logger),
+		event.SetupEventRoute(router, sessionStore, ns, db, logger, eventImageDir),
 		myevents.SetupMyEventsRoute(isLoggedInRouter, sessionStore, ns, db, eventImageDir, logger),
 		login.SetupAuthRoute(router, db, logger),
 		myprofile.SetupMyProfileRoute(isLoggedInRouter, sessionStore, ns, db, logger),
