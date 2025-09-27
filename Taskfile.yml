@@ -1,5 +1,8 @@
 version: "3"
 
+dotenv:
+  - '.env'
+
 env:
   STATIC_DIR: "static"
 
@@ -72,6 +75,21 @@ tasks:
   test:
     cmds:
       - go test ./...
+
+  # Download a local copy of latest S3 database
+  # Requires updated .env file, check discord!
+  download:
+    vars:
+      #Filepaths
+      FLY_CONFIG_PATH: "./backup-service/fly.toml"
+      LOCAL_DB_PATH: "./database/events.db"
+      NEWEST_DB_PATH:
+        sh: flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp find /data/regncon/backup/hourly/  | sort | tail -n1
+    status:
+      - test "{{.NEWEST_DB_PATH}}" = ""
+    cmds:
+      - '{{ if .NEWEST_DB_PATH }} rm -f {{ .LOCAL_DB_PATH }} {{ .LOCAL_DB_PATH }}-shm {{ .LOCAL_DB_PATH }}-wal {{ end }}'
+      - flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp get {{ .NEWEST_DB_PATH }} {{ .LOCAL_DB_PATH }}
 
   # Kill all running air, templ and taks processes
   kill:
