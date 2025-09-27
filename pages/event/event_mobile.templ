@@ -190,7 +190,8 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 					.details {
 						position: relative;
-						padding-block-start: var(--spacing-5x);
+                        padding: var(--spacing-5x);
+						padding-block-start: var(--spacing-10x);
 						height: fit-content;
 						display: grid;
 						grid-template-columns: 1fr 1fr;
@@ -200,6 +201,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 						}
 
 						.details-top {
+                            padding: 0;
 							.details-header {
 								position: absolute;
 								top: 1rem;
@@ -209,10 +211,26 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 								flex-direction: column;
 							}
 						}
+
+                        .details-bottom {
+                            padding: 0;
+                        }
 					}
 					.description {
 						order: 2;
-						margin-block-start: 0;
+                        padding: 0;
+
+                        p {
+                            margin-block: 12px;
+                        }
+
+                        p:first-child {
+                            margin-block-start: 0;
+                        }
+                        p:last-child {
+                            margin-block-end: 0;
+                        }
+
 					}
 				}
 			}
@@ -234,16 +252,14 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 					display: grid;
 					grid-template-areas:
 						"interests details"
-						"description details"
-						"description empty";
-					gap: 0;
-					column-gap: var(--spacing-8x);
+						"description details";
+                    grid-template-rows: auto 1fr;
+					gap: var(--spacing-8x);
 					padding-inline: var(--spacing-10x);
 					grid-template-columns: 1fr 25.3125rem;
 
 					.interest-picker {
 						grid-area: interests;
-						margin-block-end: var(--spacing-8x);
 					}
 					.details {
 						grid-area: details;
