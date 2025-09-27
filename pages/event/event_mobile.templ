@@ -54,7 +54,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 					height: 100%;
 				}
 				.event-image-banner {
-					display: noen;
+					display: none;
 				}
 
 				.event-header {
@@ -269,6 +269,23 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 					.details {
 						grid-area: details;
+                        grid-template-columns: unset;
+                        padding-block-start: 0;
+
+                        .details-top, .details-bottom {
+                            padding: var(--spacing-5x);
+                        }
+
+                        .details-top {
+                            padding-block-start: var(--spacing-3x);
+                            .details-header {
+                                position: unset;
+                            }
+                        }
+
+                        hr {
+                            display: block;
+                        }
 					}
 					.description {
 						grid-area: description;
