@@ -7,7 +7,7 @@ import (
 	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-templ event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
+templ Event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
 	{{ imageCardUrl := eventimage.GetEventImaegeUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImaegeUrl(event.ID, "banner", eventImageDir) }}
 	<style>

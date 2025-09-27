@@ -11,7 +11,7 @@ import (
 	"net/http"
 )
 
-func EditFormLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 
@@ -25,18 +25,18 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 		layouts.Base(
 			title,
 			userctx.GetUserRequestInfo(ctx),
-			editFormIndex(eventId, ctx, db, logger),
+			editFormIndex(eventId, ctx, db, eventImageDir, logger),
 		).Render(ctx, w)
 	})
 }
 
-templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, logger *slog.Logger) {
+templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	<div
 		id="edit-form-container"
 		class="formsubmission-css-container"
 		data-on-load={ datastar.GetSSE("/admin/approval/edit/api/" + eventId) }
 	>
-		@EditEventFormPageContent(ctx, eventId, db, logger)
+		@EditEventFormPageContent(ctx, eventId, db, eventImageDir, logger)
 	</div>
 }
 
