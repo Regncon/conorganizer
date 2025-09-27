@@ -30,7 +30,7 @@ func main() {
 	}
 
 	dsn := flag.String("dbp", "database/events.db", "absolute path to database file")
-	eventImageDir := flag.String("event-image-dir", "event-images", "directory to store event images")
+	eventImageDir := flag.String("image-path", "local-event-images", "directory to store event images")
 	flag.Parse()
 
 	db, dbErr := service.InitDB(*dsn)
