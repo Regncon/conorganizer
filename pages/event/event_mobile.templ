@@ -8,7 +8,7 @@ import (
 )
 
 templ event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
-	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
+	// {{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
 	<style>
 		.wrapper {
@@ -24,8 +24,6 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				--event-header-half-height-and-translate
 			);
 
-			--text-height-two-lines: 2lh;
-
 			display: flex;
 			flex-direction: column;
 			width: var(--mobile-responsive-min-width);
@@ -36,15 +34,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				display: block;
 			}
 
-			.stack > * {
-				grid-column: 1;
-			}
-
 			.stack {
-				--row-overlapp: 3.125rem;
-				display: grid;
-				grid-template-rows: auto var(--row-overlapp) auto;
-
 				> img {
 					aspect-ratio: 20 / 6;
 					object-fit: cover;
@@ -60,17 +50,19 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				.event-header {
 					display: flex;
 					flex-direction: column;
-					padding: var(--spacing-4x);
+					padding-block: var(--spacing-10x);
+					padding-inline: var(--spacing-5x);
 					background-color: var(--bg-base);
-					grid-row: 2 / 4;
 					text-align: center;
-					padding: var(--spacing-4x);
 					height: fit-content;
 					border-radius: var(--border-radius-2x);
+					position: relative;
+                    margin-block-start: -5.2rem;
+                    z-index: 4;
+                    gap: var(--spacing-1x);
 
 					.title {
 						margin: 0;
-						margin-block-end: 0.4rem;
 					}
 					.intro {
 						line-height: 1.4;
@@ -172,33 +164,21 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				grid-template-rows: max-content max-content;
 				padding: var(--spacing-5x);
 				gap: var(--spacing-8x);
+
 				.stack {
 					--event-banner-height: 25rem;
 					--event-header-height: 10.1875rem;
 					--event-header-width: 65.0625rem;
 					--event-header-missing-from-translating: 9px;
-
-					grid-template-rows: var(--event-banner-height) var(
-							--event-header-overlapp
-						);
-					grid-template-columns: 1fr;
-					place-items: end center;
 					img {
-						grid-row: 1 / 2;
 						aspect-ratio: unset;
 						height: var(--event-banner-height);
-					}
-					.event-image-card {
-						display: none;
 					}
 					.event-image-banner {
 						display: unset;
 					}
 					.event-header {
-						grid-row: 1 / 2;
-						width: min(var(--event-header-width), 100%);
-						transform: translateY(45%);
-						height: var(--event-header-height);
+                        margin-inline: var(--spacing-5x);
 					}
 				}
 
@@ -252,6 +232,12 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				gap: var(--spacing-10x);
 				padding: var(--spacing-10x);
 
+                .stack {
+                    .event-header {
+                        margin-inline: max(9.75rem, 100%);
+                    }
+                }
+
 				.event-information {
 					display: grid;
 					grid-template-areas:
@@ -302,11 +288,11 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				alt="Arrangement banner"
 				src={ imageBannerUrl }
 			/>
-			<img
+			/** <img
 				class="event-image-card"
 				alt="Arrangement bilde"
 				src={ imageCardUrl }
-			/>
+			/> **/
 			<header class="event-header">
 				<h1 class="title" title={ event.Title }>{ event.Title }</h1>
 				<i class="intro" title={ event.Intro }>{ event.Intro }</i>
