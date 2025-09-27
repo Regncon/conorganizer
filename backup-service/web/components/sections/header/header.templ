@@ -6,12 +6,12 @@ templ Header(stats services.BackupStats) {
 	<header>
 		<div
 			class="container"
-			style="flex-flow: row wrap; justify-content: space-between; padding: 1rem 0"
+			style="flex-flow: row wrap; justify-content: space-between; padding-top: 1rem;"
 		>
 			<div class="header-card card">
 				<span class="header-card-icon material-symbols-outlined status-default">database</span>
 				<span class="header-card-text">
-					<p>Total Backups</p>
+					<p>Attempts</p>
 					<span>
 						{ stats.Total }
 					</span>
@@ -36,7 +36,7 @@ templ Header(stats services.BackupStats) {
 				</span>
 			</div>
 			<div class="header-card card">
-				<span class="header-card-icon material-symbols-outlined status-pending">percent</span>
+				<span class="header-card-icon material-symbols-outlined status-pending">query_stats</span>
 				<span class="header-card-text">
 					<p>Success Rate</p>
 					<span class="status-pending">

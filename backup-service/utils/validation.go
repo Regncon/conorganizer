@@ -26,3 +26,18 @@ func ValidateSnapshot(dbPath string) error {
 
 	return nil
 }
+
+func ValidateEvents(dbPath string) (int64, error) {
+	db, err := sql.Open("sqlite", dbPath)
+	if err != nil {
+		return 0, fmt.Errorf("failed to open SQLite file: %w", err)
+	}
+	defer db.Close()
+
+	var result int64
+	if err := db.QueryRow(`SELECT COUNT(*) FROM events;`).Scan(&result); err != nil {
+		return 0, fmt.Errorf("count events: %w", err)
+	}
+
+	return result, nil
+}
