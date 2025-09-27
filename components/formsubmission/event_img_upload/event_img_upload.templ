@@ -121,6 +121,36 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 }
 
 templ page(eventId string, db *sql.DB, logger *slog.Logger) {
+	<style>
+		.img-upload-form-content {
+			display: flex;
+			flex-direction: column; 
+			gap: var(--responsive-pane-column-spacing);
+		}
+		.back-button-container {
+			display: flex;
+			align-items: flex-start;
+		}
+		.image-upload-container {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-5x);
+		}
+		.image-upload-info-label {
+			font-size: 14px;
+			font-weight: 600;
+		}
+		.image-upload-file-form {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: var(--spacing-5x);
+		}
+		.event-image-thumbnail-display {
+			max-width: 600px;
+			margin: auto;
+		}
+	</style>
 	{{event, eventErr := eventservice.GetEventById(eventId, db, logger)
 var title, intro, imageUrl string
 if eventErr == nil {
@@ -140,81 +170,95 @@ if eventErr == nil {
 		{Name: "Nytt Arrangement", Url: "/my-events/new/" + eventId + "/"},
 		{Name: "Last opp bilde", Url: ""},
 	})
-	<article style="display: flex; gap: 2rem; padding: 1rem; flex-direction: column;">
-		<h1>Last opp bilde</h1>
-		<div class="form-card" style="display: flex; gap: 1rem; align-items: center; ">
-			<a
-				href={ "/my-events/new/" + eventId + "/" }
-				class="btn btn--primary"
-				style="place-self: center end; margin-right:  1rem"
-			>
-				Tilbake
-			</a>
-			<p>
-				Siden Ai/Ki genererte bilder er et betent tema ønsker vi i RegnCon ikke
-				at arrangører skal bruke slike bilder som hovedbilde for arrangementet sitt.
-			</p>
-			<form
-				method="post"
-				action={ "/my-events/api/new/" + eventId + "/upload" }
-				enctype="multipart/form-data"
-			>
-				<label>
-					Velg bilde:
-					<input
-						type="file"
-						name="image"
-						accept="image/*"
-						required
-					/>
-				</label>
-				<button
-					class="btn btn--primary"
-					type="submit"
-				>Last opp</button>
-			</form>
+	<article class="page-content-container">
+		<h1 class="page-heading">Last opp bilde</h1>
+		<div class="img-upload-form-content">
+		<div class="back-button-container">
+				<a
+					href={ "/my-events/new/" + eventId + "/" }
+					class="btn btn--outline"
+				>
+					Tilbake til arrangementside
+				</a>
 		</div>
-		<section class="form-card" style="width: 600px;">
-			<h4 class="form-card-title">Mobil og gruppevisning</h4>
-			<banner-cropper
-				event-id={ eventId }
-				width="600"
-				height="350"
-				image-kind="card"
-				image-url={ "/event-images/" + imageUrl }
-			></banner-cropper>
-			<div
-				style="display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 1rem;
-                    background-color: var(--bg-base);"
-				max-width="430px"
-			>
-				<h1 style="text-align:center; margin:0; ">{ title }</h1>
-				<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
+			<div class="surface-pane image-upload-container">
+				<div class="item-card">
+					<p class="image-upload-info-label">
+						Vennligst ikke bruk AI/KI-genererte bilder
+					</p>
+					<p>
+						Siden AI/KI-genererte bilder er et betent tema, ønsker vi i RegnCon ikke
+						at arrangører skal bruke slike bilder som hovedbilde for arrangementet sitt.
+						Om du er i tvil på bruk av bilder, anbefaler vi å finne bilder som er åpent
+						tilgjengelige for bruk, eller bilder som ellers øvrig brukes for å demonstrere
+						og promotere spillet/systemet du skal bruke på arrangementet.
+					</p>
+				</div>
+				<form
+					method="post"
+					action={ "/my-events/api/new/" + eventId + "/upload" }
+					enctype="multipart/form-data"
+					class="image-upload-file-form"
+				>
+					<label>
+						Velg bilde:
+						<input
+							type="file"
+							name="image"
+							accept="image/*"
+							required
+						/>
+					</label>
+					<button
+						class="btn btn--primary"
+						type="submit"
+					>Last opp</button>
+				</form>
 			</div>
-		</section>
-		<section class="form-card" style="width: 1360px;">
-			<h4 class="form-card-title">Desktop banner</h4>
-			<banner-cropper
-				event-id={ eventId }
-				width="1360"
-				height="400"
-				image-kind="banner"
-				image-url={ "/event-images/" + imageUrl }
-			></banner-cropper>
-			<div
-				style="display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    gap: 1rem;
-                    background-color: var(--bg-base);"
-				max-width="430px"
-			>
-				<h1 style="text-align:center; margin:0; ">{ title }</h1>
-				<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
-			</div>
-		</section>
+			<section class="surface-pane">
+				<h4 class="surface-pane-title">Mobil og gruppevisning</h4>
+				<div class="event-image-thumbnail-display">
+					<banner-cropper
+						event-id={ eventId }
+						width="600"
+						height="350"
+						image-kind="card"
+						image-url={ "/event-images/" + imageUrl }
+					></banner-cropper>
+					<div
+						style="display: flex;
+												flex-direction: column;
+												align-items: center;
+												gap: 1rem;
+												background-color: var(--bg-base);"
+						max-width="430px"
+					>
+						<h1 style="text-align:center; margin:0; ">{ title }</h1>
+						<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
+					</div>
+				</div>
+			</section>
+			<section class="surface-pane" style="width: 1360px;">
+				<h4 class="surface-pane-title">Desktop banner</h4>
+				<banner-cropper
+					event-id={ eventId }
+					width="1360"
+					height="400"
+					image-kind="banner"
+					image-url={ "/event-images/" + imageUrl }
+				></banner-cropper>
+				<div
+					style="display: flex;
+											flex-direction: column;
+											align-items: center;
+											gap: 1rem;
+											background-color: var(--bg-base);"
+					max-width="430px"
+				>
+					<h1 style="text-align:center; margin:0; ">{ title }</h1>
+					<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
+				</div>
+			</section>
+		</div>
 	</article>
 }
