@@ -13,7 +13,7 @@ import (
 	"net/http"
 )
 
-func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 
@@ -44,18 +44,18 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 		layouts.Base(
 			title,
 			userctx.GetUserRequestInfo(ctx),
-			newEventIndex(eventId, userId, ctx, db, logger),
+			newEventIndex(eventId, userId, ctx, db, eventImageDir, logger),
 		).Render(ctx, w)
 	})
 }
 
-templ newEventIndex(eventId string, userId string, ctx context.Context, db *sql.DB, logger *slog.Logger) {
+templ newEventIndex(eventId string, userId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	<div
 		id="formsubmission-container"
 		class="formsubmission-css-container"
 		data-on-load={ datastar.GetSSE("/my-events/api/new/" + eventId) }
 	>
-		@NewEventFormPageContent(eventId, userId, ctx, db, logger)
+		@NewEventFormPageContent(eventId, userId, ctx, db, eventImageDir, logger)
 	</div>
 }
 

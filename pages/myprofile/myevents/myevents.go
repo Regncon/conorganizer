@@ -150,7 +150,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 								userId := userctx.GetUserRequestInfo(r.Context()).Id
 
-								c := newEvent.NewEventFormPage(eventId, userId, ctx, db, logger)
+								c := newEvent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, logger)
 								if err := sse.PatchElementTempl(c); err != nil {
 									sse.ConsoleError(err)
 									return
@@ -231,7 +231,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
 			newRouter.Route("/{id}", func(newIdRoute chi.Router) {
-				newEvent.NewEventLayoutRoute(newIdRoute, db, logger)
+				newEvent.NewEventLayoutRoute(newIdRoute, db, eventImageDir, logger)
 
 				newIdRoute.Route("/image", func(imageRouter chi.Router) {
 					eventPicture.EventPictureRoute(imageRouter, db, logger)
