@@ -16,6 +16,12 @@ else
 	litestream restore -if-replica-exists /var/lib/regncon/events.db
 fi
 
+df -h
+
+# Create upload dir
+mkdir -p /data/regncon/uploads && \
+    chown -R regncon:regncon /data/regncon/uploads
+
 # Check if the image folder exists and we have write permissions to it
 if [ -d /data/regncon/uploads ] && [ -w /data/regncon/uploads ]; then
     echo "Image upload folder exists and is writable"
