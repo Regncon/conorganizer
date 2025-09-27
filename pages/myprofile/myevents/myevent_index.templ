@@ -10,20 +10,20 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func myeventsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+func myeventsLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		userId := userctx.GetUserRequestInfo(r.Context()).Id
 		layouts.Base(
 			"My Events",
 			userctx.GetUserRequestInfo(ctx),
-			myeventsIndex(userId, db, logger),
+			myeventsIndex(userId, db, eventImageDir, logger),
 		).Render(ctx, w)
 	})
 }
 
-templ myeventsIndex(userid string, db *sql.DB, logger *slog.Logger) {
+templ myeventsIndex(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	<div id="my-events-wrapper" data-on-load={ datastar.GetSSE("/my-events/api") }>
-		@myEventsPageContent(userid, db, logger)
+		@myEventsPageContent(userid, db, eventImageDir, logger)
 	</div>
 }

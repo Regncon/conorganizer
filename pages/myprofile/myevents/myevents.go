@@ -67,7 +67,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 	}
 
 	router.Route("/my-events", func(myeventsRouter chi.Router) {
-		myeventsLayoutRoute(myeventsRouter, db, logger)
+		myeventsLayoutRoute(myeventsRouter, db, eventImageDir, logger)
 		myeventsRouter.Route("/api", func(apiRouter chi.Router) {
 			apiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				sessionID, mvc, err := mvcSession(w, r)
@@ -100,7 +100,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 							return
 						}
 
-						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, logger)
+						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, eventImageDir, logger)
 						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
