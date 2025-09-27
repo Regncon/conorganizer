@@ -150,6 +150,27 @@ templ page(eventId string, db *sql.DB, logger *slog.Logger) {
 			max-width: 600px;
 			margin: auto;
 		}
+		.event-image-banner-display {
+			position: relative;
+			border-radius: var(--border-radius-2x);
+		}
+		.event-image-title-preview {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			text-align: center;
+			gap: var(--spacing-4x);
+			padding: var(--spacing-4x);
+			background-color: var(--bg-base);
+			border-bottom-right-radius: var(--border-radius-2x);
+			border-bottom-left-radius: var(--border-radius-2x);
+		}
+		.event-image-title-preview.banner-image {
+			position: relative;
+			margin: -56px 80px 0; /* negative margin here should be updated, probably won't be 100% accurate */
+			border-radius: var(--border-radius-2x);
+			z-index: 2;
+		}
 	</style>
 	{{event, eventErr := eventservice.GetEventById(eventId, db, logger)
 var title, intro, imageUrl string
@@ -225,38 +246,26 @@ if eventErr == nil {
 						image-kind="card"
 						image-url={ "/event-images/" + imageUrl }
 					></banner-cropper>
-					<div
-						style="display: flex;
-												flex-direction: column;
-												align-items: center;
-												gap: 1rem;
-												background-color: var(--bg-base);"
-						max-width="430px"
-					>
-						<h1 style="text-align:center; margin:0; ">{ title }</h1>
-						<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
+					<div class="event-image-title-preview">
+						<h1>{ title }</h1>
+						<i>{ intro }</i>
 					</div>
 				</div>
 			</section>
-			<section class="surface-pane" style="width: 1360px;">
+			<section class="surface-pane">
 				<h4 class="surface-pane-title">Desktop banner</h4>
-				<banner-cropper
-					event-id={ eventId }
-					width="1360"
-					height="400"
-					image-kind="banner"
-					image-url={ "/event-images/" + imageUrl }
-				></banner-cropper>
-				<div
-					style="display: flex;
-											flex-direction: column;
-											align-items: center;
-											gap: 1rem;
-											background-color: var(--bg-base);"
-					max-width="430px"
-				>
-					<h1 style="text-align:center; margin:0; ">{ title }</h1>
-					<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ intro }</i>
+				<div class="event-image-banner-display">
+					<banner-cropper
+						event-id={ eventId }
+						width="1360"
+						height="400"
+						image-kind="banner"
+						image-url={ "/event-images/" + imageUrl }
+					></banner-cropper>
+					<div class="event-image-title-preview banner-image">
+						<h1>{ title }</h1>
+						<i>{ intro }</i>
+					</div>
 				</div>
 			</section>
 		</div>
