@@ -56,16 +56,19 @@ templ FormBody(event *models.Event, isAdmin bool) {
 					}
 				}
 
+				.puljefordeling-section {
+					display: grid;
+					gap: 1.25rem;
+				}
 				.details-section {
 					display: grid;
 					gap: 1.25rem;
-
-					.checkbox-background {
-						background-color: var(--bg-item);
-						border: 1px solid var(--bg-item-border);
-						padding: 0.75rem 0.5rem;
-						border-radius: var(--border-radius-2x);
-					}
+				}
+				.checkbox-background {
+					background-color: var(--bg-item);
+					border: 1px solid var(--bg-item-border);
+					padding: 0.75rem 0.5rem;
+					border-radius: var(--border-radius-2x);
 				}
 			}
 
