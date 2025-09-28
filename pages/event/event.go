@@ -30,8 +30,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	}
 
 	kv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
-		Bucket:      "todos",
-		Description: "Datastar Todos",
+		Bucket:      "events",
+		Description: "Regncon Event Store",
 		Compression: true,
 		TTL:         time.Hour,
 		MaxBytes:    16 * 1024 * 1024,
