@@ -191,39 +191,16 @@ if eventErr == nil {
 		{Name: "Nytt Arrangement", Url: "/my-events/new/" + eventId + "/"},
 		{Name: "Last opp bilde", Url: ""},
 	})
-	<article style="display: flex; gap: 2rem; padding: 1rem; flex-direction: column;">
-		<h1>Last opp bilde</h1>
-		<div class="form-card" style="display: flex; gap: 1rem; align-items: center; ">
-			<a
-				href="javascript:window.history.back();"
-				class="btn btn--primary"
-				style="place-self: center end; margin-right:  1rem"
-			>
-				Tilbake
-			</a>
-			<p>
-				Siden Ai/Ki genererte bilder er et betent tema ønsker vi i RegnCon ikke
-				at arrangører skal bruke slike bilder som hovedbilde for arrangementet sitt.
-			</p>
-			<form
-				method="post"
-				action={ "/my-events/api/new/" + eventId + "/upload" }
-				enctype="multipart/form-data"
-			>
-				<label>
-					Velg bilde:
-					<input
-						type="file"
-						name="image"
-						accept="image/*"
-						required
-					/>
-				</label>
-				<button
-					class="btn btn--primary"
-					type="submit"
-				>Last opp</button>
-			</form>
+	<article class="page-content-container">
+		<h1 class="page-heading">Last opp bilde</h1>
+		<div class="img-upload-form-content">
+		<div class="back-button-container">
+				<a
+					href={ "/my-events/new/" + eventId + "/" }
+					class="btn btn--outline"
+				>
+					Tilbake til arrangementside
+				</a>
 		</div>
 			<div class="surface-pane image-upload-container">
 				<div class="item-card">
