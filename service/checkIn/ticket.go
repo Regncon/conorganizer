@@ -21,12 +21,12 @@ func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTic
 	return ticketCache.Get(logger, searchTerm)
 }
 
-func ConvertTicketToBillettholder(ticketId int, db *sql.DB, logger *slog.Logger) (*CheckInTicket, error) {
+func ConvertTicketToBillettholder(ticketId int, db *sql.DB, logger *slog.Logger) error {
 	tickets, err := GetTicketsFromCheckIn(logger, "")
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	converTicketIdToNewBillettholder(ticketId, tickets, db, logger)
-	return nil, nil
+	err = converTicketIdToNewBillettholder(ticketId, tickets, db, logger)
+	return err
 }

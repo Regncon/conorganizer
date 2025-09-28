@@ -56,7 +56,11 @@ func ConvertTicketToBillettholderRoute(
 				return
 			}
 
-			checkIn.ConvertTicketToBillettholder(ticketID, db, logger)
+			err = checkIn.ConvertTicketToBillettholder(ticketID, db, logger)
+			if err != nil {
+				http.Error(w, fmt.Sprintf("failed to convert ticket to billettholder: %v", err), http.StatusInternalServerError)
+				return
+			}
 
 			sessionID, _ := upsertSessionID(store, r, w)
 			if notifyUpdate != nil {
