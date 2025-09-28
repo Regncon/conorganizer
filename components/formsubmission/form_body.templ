@@ -198,6 +198,9 @@ templ FormBody(event *models.Event, isAdmin bool) {
 		}
 	</style>
 	@statusCard(event, isAdmin)
+	if isAdmin {
+		@puljefordeling(event.ID)
+	}
 	@contactInfo(
 		event.ID,
 		event.HostName,
