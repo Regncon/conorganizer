@@ -183,6 +183,71 @@ func addEmailToBilettholderRoute(
 	})
 }
 
+func deleteEmailFromBillettholderRoute(
+	router chi.Router,
+	db *sql.DB,
+	logger *slog.Logger,
+	store sessions.Store,
+	notifyUpdate func(string),
+) {
+	router.Post("/delete-email/{id}/{emailID}/", func(w http.ResponseWriter, r *http.Request) {
+		responder := Responder{
+			BillettholderID: chi.URLParam(r, "id"),
+			Logger:          logger,
+			Store:           store,
+			w:               w,
+			r:               r,
+			NotifyUpdate:    notifyUpdate,
+		}
+
+		billettholderID := chi.URLParam(r, "id")
+		emailID := chi.URLParam(r, "emailID")
+
+		if billettholderID == "" || emailID == "" {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Missing billettholderID or emailID in delete request")
+			return
+		}
+
+		// Validate the email belongs to this billettholder and fetch kind/email for messages/guard
+		var email string
+		var kind string
+		err := db.QueryRow(`
+			SELECT email, kind
+			FROM billettholder_emails
+			WHERE id = ? AND billettholder_id = ?
+		`, emailID, billettholderID).Scan(&email, &kind)
+		if err == sql.ErrNoRows {
+			handleError(responder, "Fant ikke epostadressen", "Email row not found for given billettholder")
+			return
+		}
+		if err != nil {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to read email before delete: "+err.Error())
+			return
+		}
+		if kind != "Manual" {
+			handleError(responder, "Kun manuelle epostadresser kan slettes", "Attempt to delete non-manual email blocked")
+			return
+		}
+
+		// Don’t allow deleting the ticket email
+		if strings.EqualFold(kind, "Ticket") {
+			handleError(responder, "Kan ikke slette billett-epost", "Attempt to delete Ticket email blocked")
+			return
+		}
+
+		// Delete
+		if _, err := db.Exec(`
+			DELETE FROM billettholder_emails
+			WHERE id = ? AND billettholder_id = ?
+		`, emailID, billettholderID); err != nil {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to delete email: "+err.Error())
+			return
+		}
+
+		handleSuccess(responder, fmt.Sprintf("Epostadressen %s er slettet", email))
+	})
+}
+
 templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		<p style="margin:0;">
@@ -227,9 +292,20 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 		<span>Andre epostadresser på samme bestilling:</span>
 		for _, email := range billettholder.Emails {
 			if email.Kind == "Associated" || email.Kind == "Manual" {
-				<a href={ "mailto:" + email.Email }>
-					@templ.Raw(highlightSearchTerm(email.Email, searchTerm))
-				</a>
+				<div style="display:flex; align-items:center; gap:0.5rem;">
+					<a href={ "mailto:" + email.Email }>
+						@templ.Raw(highlightSearchTerm(email.Email, searchTerm))
+					</a>
+					if email.Kind == "Manual" {
+						<button
+							class="btn btn--ghost"
+							data-on-click={ datastar.PostSSE("/admin/billettholder/api/delete-email/%d/%d/", billettholder.ID, email.ID) }
+							title="Slett epostadresse"
+						>
+							Slett
+						</button>
+					}
+				</div>
 			}
 		}
 		<input

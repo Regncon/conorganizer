@@ -112,6 +112,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 		})
 		billettholdereSearchRoute(billettholderAdminRouter, store, notifyUpdate)
 		addEmailToBilettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
+		deleteEmailFromBillettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
 	})
 
 	addbillettholder.AddBillettholderRoute(router, db, logger, err)
