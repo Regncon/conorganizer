@@ -23,6 +23,7 @@ type BackupLog struct {
 	FilePath   string
 	FileSize   int64
 	DBPrefix   string
+	Events     int64
 	Message    string
 	CreatedAt  time.Time
 }

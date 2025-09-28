@@ -327,7 +327,7 @@ input {
 
 .card {
     width: var(--mobile-responsive-min-width);
-    background: #31354e;
+    background: var(--bg-surface);
     border-radius: var(--border-radius-1x);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     padding: 1rem;

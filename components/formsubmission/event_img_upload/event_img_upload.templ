@@ -1,22 +1,22 @@
-package eventPicture
+package eventimgupload
 
 import (
 	"fmt"
-	"log/slog"
 	"io"
+	"log/slog"
 	"os"
 	"strings"
 
 	"database/sql"
-	"github.com/go-chi/chi/v5"
-	"net/http"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
+	"net/http"
 )
 
-func EventPictureRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+func EventImageRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 		if eventId == "" {
@@ -40,7 +40,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			http.Error(w, "Event ID is required", http.StatusBadRequest)
 			return
 		}
-		logger.Info("Uploading event imaeg", "eventID", eventID)
+		logger.Info("Uploading event image", "eventID", eventID)
 
 		file, header, err := r.FormFile("image")
 		if err != nil {
@@ -64,7 +64,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
-		// Update the event with the iEventPictureRoutemage URL/path
+		// Update the event with the iEventPictureRouteImage URL/path
 
 		query := `UPDATE events SET image_url = ? WHERE id = ?`
 		_, err = db.Exec(query, eventID+"_"+header.Filename, eventID)
@@ -138,10 +138,10 @@ if eventErr == nil {
 		{Name: "Hjem", Url: "/"},
 		{Name: "Mine Arrangementer", Url: "/my-events/"},
 		{Name: "Nytt Arrangement", Url: "/my-events/new/" + eventId + "/"},
-		{Name: "Last opp biled", Url: ""},
+		{Name: "Last opp bilde", Url: ""},
 	})
 	<article style="display: flex; gap: 2rem; padding: 1rem; flex-direction: column;">
-		<h1>Last opp blide</h1>
+		<h1>Last opp bilde</h1>
 		<div class="form-card" style="display: flex; gap: 1rem; align-items: center; ">
 			<a
 				href="javascript:window.history.back();"
@@ -151,7 +151,7 @@ if eventErr == nil {
 				Tilbake
 			</a>
 			<p>
-				Siden Ai/Ki genererter bilder er et betent tema ønsker vi i RegnCon ikke
+				Siden Ai/Ki genererte bilder er et betent tema ønsker vi i RegnCon ikke
 				at arrangører skal bruke slike bilder som hovedbilde for arrangementet sitt.
 			</p>
 			<form
@@ -183,13 +183,6 @@ if eventErr == nil {
 				image-kind="card"
 				image-url={ "/event-images/" + imageUrl }
 			></banner-cropper>
-			{{/*
-	<img
-		src={ "/event-images/" + eventId + "_card.webp" }
-		alt="Event image"
-		style="max-width: 430px; max-height: 200px;"
-	/>*/
-			}}
 			<div
 				style="display: flex;
                     flex-direction: column;
@@ -211,13 +204,6 @@ if eventErr == nil {
 				image-kind="banner"
 				image-url={ "/event-images/" + imageUrl }
 			></banner-cropper>
-			{{/*
-            <img
-				src={ "/event-images/" + eventId + "_banner.webp" }
-				alt="Event image"
-				style="max-width: 1300px; max-height: 200px;"
-			/>*/
-			}}
 			<div
 				style="display: flex;
                     flex-direction: column;

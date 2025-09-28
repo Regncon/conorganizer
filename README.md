@@ -13,7 +13,10 @@
 6. [Linux/Mac Setup Guide](#linuxmac-setup-guide)
     - [Prerequisites](#prerequisites)
     - [Verification and Startup](#verification-and-startup)
-7. [Additional Resources](#additional-resources)
+7. [Migrations](#-Migrations-with-goose)
+    - [Running Goose manually](#running-goose-manually)
+    - [Pushing migrations to prod](#pushing-migrations-to-prod-and-services)
+8. [Additional Resources](#additional-resources)
 
 ## Description
 
@@ -205,6 +208,46 @@ go mod tidy
 ```
 http://localhost:7331
 ```
+
+## Migrations with goose
+> [!NOTE]
+> Goose will try to read some basic variables from `.env`, make sure that this file is updated with the most recent version from discord before running any commands.
+
+We're using [Goose](https://pressly.github.io/goose/) in our migration process for its simplicity and reliability. While Goose is available as a go dependency for programatically migrating databases, we're mostly using its CLI tool for manual updates.
+### Running Goose manually
+> [!WARNING]
+> Before running Goose, run `task download` to fetch the newest version of the database!
+You can install Goose CLI tool from [here](https://pressly.github.io/goose/installation/), afterwards you should have `goose` globally available in your terminal. 
+
+To create a new migration file you can run the following command, read [here](https://pressly.github.io/goose/documentation/annotations/) for more annotation examples.
+```console
+goose create <briefly describe changes> sql
+```
+
+After you've added your migration files you can use the keywords `up` or `down` to handle the migrations
+```console
+goose up
+```
+
+### Pushing migrations to prod and services
+> [!CAUTION]
+> Make sure that you can do all of the following steps before you start. These actions require goose, flyctl and wget be installed.
+
+Since our site and services are linked to S3 it's important that we update all the relevant secrets and variables to point to this new database before we run the manual deployment. These are the steps we need to do when running this manually
+1. Check our S3 bucket for the current active `dbPrefix` -> https://fly.io/dashboard/regncon/tigris
+2. Update the `DB_PREFIX` variable
+  - local `.env` files
+  - litestream config in `.flyio/litestream.yml`
+  - Regncon secret: https://fly.io/apps/regncon/secrets
+  - Backup-service secret: https://fly.io/apps/backup-service/secrets
+3. Take down the website
+4. Run `task download` and apply migrations with `goose up`
+5. Start deployment with `flyctl deploy`
+    ```console
+    flyctl -o regncon -a regncon --dockerfile Dockerfile.migration
+    ```
+6. ???
+7. Profit
 
 ## Additional Resources
 

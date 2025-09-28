@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS backup_logs (
     db_prefix TEXT NOT NULL DEFAULT '',
     file_path TEXT NOT NULL DEFAULT '',
     file_size INTEGER NOT NULL DEFAULT 0,
+    events INTEGER NOT NULL DEFAULT 0,
     message TEXT NOT NULL DEFAULT '',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

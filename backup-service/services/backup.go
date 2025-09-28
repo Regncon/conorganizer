@@ -83,6 +83,17 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 		return
 	}
 
+	// Validate that we can read events #
+	events, err := utils.ValidateEvents(dbPath)
+	if err != nil {
+		output.Status = models.Error
+		output.Stage = models.Validating
+		output.Error = err.Error()
+		HandleBackupResult(output)
+		b.Logger.Error("Unable to read snapshopt", "err", err)
+		return
+	}
+
 	// handle storing db backup, overwrite or delete existing as required
 	backupDir := filepath.Join("/data/regncon/backup", string(interval))
 	finalPath, err := utils.RotateBackups(dbPath, backupDir, retention)
@@ -103,6 +114,7 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	output.Status = models.Success
 	output.Stage = models.Finalizing
 	output.FilePath = finalPath
+	output.Events = events
 
 	// Calculate file size
 	fileSize := utils.GetFileSize(finalPath)

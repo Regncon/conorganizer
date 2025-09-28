@@ -93,7 +93,7 @@ tasks:
       # Create local-event-images directory if it doesn't exist
       - mkdir -p ./local-event-images
       ## Download all event images from https://program.regncon.no/event-images/ and save them to ./local-event-images
-      - wget -r -np -nH --cut-dirs=1 -P ./local-event-images https://program.regncon.no/event-images/
+      - wget -r -np -nH -R html,tmp --cut-dirs=1 -P ./local-event-images https://program.regncon.no/event-images/
 
   # Kill all running air, templ and taks processes
   kill:

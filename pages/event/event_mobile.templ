@@ -7,9 +7,9 @@ import (
 	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-templ Event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
-	{{ imageCardUrl := eventimage.GetEventImaegeUrl(event.ID, "card", eventImageDir) }}
-	{{ imageBannerUrl := eventimage.GetEventImaegeUrl(event.ID, "banner", eventImageDir) }}
+templ event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
+	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
+	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
 	<style>
 		.wrapper {
 			--event-banner-height: 25rem;
@@ -24,56 +24,43 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				--event-header-half-height-and-translate
 			);
 
-			--text-height-two-lines: 2lh;
+            --line-height-mobile: 1.4;
+            --line-height: var(--line-height-mobile, 1.4);
 
 			display: flex;
 			flex-direction: column;
 			width: var(--mobile-responsive-min-width);
 			gap: var(--spacing-4x);
 
-			> img {
+			.event-image {
 				height: 150px;
 				display: block;
 			}
 
-			.stack > * {
-				grid-column: 1;
-			}
-
 			.stack {
-				--row-overlapp: 3.125rem;
-				display: grid;
-				grid-template-rows: auto var(--row-overlapp) auto;
-
-				> img {
-					aspect-ratio: 20 / 6;
-					object-fit: cover;
-					grid-row: 1 / 3;
-					/* TODO: width might me set explicitly or we put a container width */
+                .event-image {
+					object-fit: none;
 					width: 100%;
-					height: 100%;
+					height: 209px;
 				}
-				.event-image-banner {
-					display: noen;
-				}
-
 				.event-header {
 					display: flex;
 					flex-direction: column;
 					padding: var(--spacing-4x);
 					background-color: var(--bg-base);
-					grid-row: 2 / 4;
 					text-align: center;
-					padding: var(--spacing-4x);
 					height: fit-content;
 					border-radius: var(--border-radius-2x);
+					position: relative;
+                    z-index: 4;
+                    gap: var(--spacing-1x);
 
 					.title {
 						margin: 0;
-						margin-block-end: 0.4rem;
+                        line-height: var(--line-height);
 					}
 					.intro {
-						line-height: 1.4;
+                        line-height: var(--line-height);
 					}
 				}
 			}
@@ -83,11 +70,6 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				flex-direction: column;
 				gap: var(--spacing-4x);
 				padding-inline: var(--spacing-2x);
-
-				/*TODO: remove this if we change .card background color */
-				.card {
-					background-color: var(--bg-surface);
-				}
 
 				.interest-picker {
 					display: flex;
@@ -111,7 +93,8 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 						display: flex;
 						flex-direction: column;
 						gap: var(--spacing-3x);
-						padding: var(--spacing-5x);
+						padding-inline: var(--spacing-5x);
+						padding-block: var(--spacing-3x);
 
 						p {
 							margin: 0;
@@ -136,7 +119,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 							place-items: center;
 							gap: var(--spacing-1x);
 
-							img {
+							.details-type-icon {
 								height: 15px;
 								width: 15px;
 							}
@@ -147,7 +130,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 
 					.details-bottom {
-						padding: 1rem;
+						padding: var(--spacing-5x);
 						display: flex;
 						flex-direction: column;
 						gap: var(--spacing-4x);
@@ -155,10 +138,12 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				}
 
 				.description {
+                    padding: var(--spacing-2x);
 					p {
 						margin: 0;
 						margin-block-start: var(--spacing-2x);
 						word-break: break-all;
+                        line-height: var(--line-height);
 					}
 				}
 			}
@@ -172,33 +157,20 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				grid-template-rows: max-content max-content;
 				padding: var(--spacing-5x);
 				gap: var(--spacing-8x);
+
 				.stack {
 					--event-banner-height: 25rem;
 					--event-header-height: 10.1875rem;
 					--event-header-width: 65.0625rem;
 					--event-header-missing-from-translating: 9px;
-
-					grid-template-rows: var(--event-banner-height) var(
-							--event-header-overlapp
-						);
-					grid-template-columns: 1fr;
-					place-items: end center;
-					img {
-						grid-row: 1 / 2;
-						aspect-ratio: unset;
+					.event-image {
 						height: var(--event-banner-height);
 					}
-					.event-image-card {
-						display: none;
-					}
-					.event-image-banner {
-						display: unset;
-					}
 					.event-header {
-						grid-row: 1 / 2;
-						width: min(var(--event-header-width), 100%);
-						transform: translateY(45%);
-						height: var(--event-header-height);
+                        padding-block: var(--spacing-10x);
+                        padding-inline: var(--spacing-5x);
+                        margin-inline: var(--spacing-5x);
+                        margin-block-start: -5.2rem;
 					}
 				}
 
@@ -218,7 +190,8 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 					.details {
 						position: relative;
-						padding-block-start: var(--spacing-5x);
+                        padding: var(--spacing-5x);
+						padding-block-start: var(--spacing-10x);
 						height: fit-content;
 						display: grid;
 						grid-template-columns: 1fr 1fr;
@@ -228,6 +201,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 						}
 
 						.details-top {
+                            padding: 0;
 							.details-header {
 								position: absolute;
 								top: 1rem;
@@ -237,10 +211,26 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 								flex-direction: column;
 							}
 						}
+
+                        .details-bottom {
+                            padding: 0;
+                        }
 					}
 					.description {
 						order: 2;
-						margin-block-start: 0;
+                        padding: 0;
+
+                        p {
+                            margin-block: 12px;
+                        }
+
+                        p:first-child {
+                            margin-block-start: 0;
+                        }
+                        p:last-child {
+                            margin-block-end: 0;
+                        }
+
 					}
 				}
 			}
@@ -252,23 +242,45 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				gap: var(--spacing-10x);
 				padding: var(--spacing-10x);
 
+                .stack {
+                    .event-header {
+                        margin-inline: min(9.75rem, 100%);
+                    }
+                }
+
 				.event-information {
 					display: grid;
 					grid-template-areas:
 						"interests details"
-						"description details"
-						"description empty";
-					gap: 0;
-					column-gap: var(--spacing-8x);
+						"description details";
+                    grid-template-rows: auto 1fr;
+					gap: var(--spacing-8x);
 					padding-inline: var(--spacing-10x);
 					grid-template-columns: 1fr 25.3125rem;
 
 					.interest-picker {
 						grid-area: interests;
-						margin-block-end: var(--spacing-8x);
 					}
 					.details {
 						grid-area: details;
+                        grid-template-columns: unset;
+                        padding-block-start: 0;
+
+                        .details-top, .details-bottom {
+                            padding: var(--spacing-5x);
+                        }
+
+                        .details-top {
+                            padding-block-start: var(--spacing-3x);
+
+                            .details-header {
+                                position: unset;
+                            }
+                        }
+
+                        hr {
+                            display: block;
+                        }
 					}
 					.description {
 						grid-area: description;
@@ -279,18 +291,18 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 	</style>
 	<div class="wrapper">
 		<div class="stack">
-			if previousNextData.IsRemoved == true {
-				<img
-					class="event-image-banner"
-					alt="Arrangement banner"
-					src={ imageBannerUrl }
+			<picture>
+				<source
+					media="(width >= 37.5rem)"
+					srcset={ imageBannerUrl }
+					type="image/webp"
 				/>
 				<img
-					class="event-image-card"
+					class="event-image"
 					alt="Arrangement bilde"
 					src={ imageCardUrl }
 				/>
-			}
+			</picture>
 			<header class="event-header">
 				<h1 class="title" title={ event.Title }>{ event.Title }</h1>
 				<i class="intro" title={ event.Intro }>{ event.Intro }</i>
@@ -320,6 +332,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 							if event.EventType == models.EventTypeRoleplay {
 								<strong>Rollespill</strong>
 								<img
+									class="details-type-icon"
 									src="/static/icons/ttrpg.svg"
 									alt="table top roleplaying game"
 									height="10"
@@ -329,6 +342,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 							} else if event.EventType == models.EventTypeBoardGame {
 								<strong>Brettspill</strong>
 								<img
+									class="details-type-icon"
 									src="/static/icons/boardgames.svg"
 									alt="board game"
 									height="10"
@@ -338,6 +352,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 							} else if event.EventType == models.EventTypeOther {
 								<strong>Annet</strong>
 								<img
+									class="details-type-icon"
 									src="/static/icons/other-games.svg"
 									alt="other type of game or event"
 									height="10"
