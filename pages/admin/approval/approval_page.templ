@@ -11,7 +11,7 @@ import (
 func getEvents(db *sql.DB, logger *slog.Logger) []models.EventCardModel {
 	var events []models.EventCardModel
 
-	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE status = 'Innsendt' ORDER BY inserted_time DESC"
+	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE status IN ('Innsendt', 'Godkjent') ORDER BY inserted_time DESC"
 	rows, eventsQueryErr := db.Query(eventsQuery)
 	if eventsQueryErr != nil {
 		logger.Error("Failed to query events", "error", eventsQueryErr)
