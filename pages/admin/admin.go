@@ -7,41 +7,18 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/Regncon/conorganizer/pages/admin/approval"
 	"github.com/Regncon/conorganizer/pages/admin/approval/editForm"
 	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/delaneyj/toolbelt"
-	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
-	nc, err := ns.Client()
-	if err != nil {
-		return fmt.Errorf("error creating nats client: %w", err)
-	}
-
-	js, err := jetstream.New(nc)
-	if err != nil {
-		return fmt.Errorf("error creating jetstream client: %w", err)
-	}
-
-	kv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
-		Bucket:      "todos",
-		Description: "Datastar Todos",
-		Compression: true,
-		TTL:         time.Hour,
-		MaxBytes:    16 * 1024 * 1024,
-	})
-
-	if err != nil {
-		return fmt.Errorf("error creating key value: %w", err)
-	}
+func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logger, kv jetstream.KeyValueConfig, db *sql.DB, eventImageDir *string) error {
 
 	resetMVC := func(mvc *index.TodoMVC) {
 		mvc.Mode = index.TodoViewModeAll

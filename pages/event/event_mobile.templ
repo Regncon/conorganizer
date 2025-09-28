@@ -7,7 +7,7 @@ import (
 	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-templ event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
+templ Event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
 	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
 	<style>
@@ -24,8 +24,8 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				--event-header-half-height-and-translate
 			);
 
-            --line-height-mobile: 1.4;
-            --line-height: var(--line-height-mobile, 1.4);
+			--line-height-mobile: 1.4;
+			--line-height: var(--line-height-mobile, 1.4);
 
 			display: flex;
 			flex-direction: column;
@@ -38,7 +38,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 			}
 
 			.stack {
-                .event-image {
+				.event-image {
 					object-fit: none;
 					width: 100%;
 					height: 209px;
@@ -52,15 +52,15 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 					height: fit-content;
 					border-radius: var(--border-radius-2x);
 					position: relative;
-                    z-index: 4;
-                    gap: var(--spacing-1x);
+					z-index: 4;
+					gap: var(--spacing-1x);
 
 					.title {
 						margin: 0;
-                        line-height: var(--line-height);
+						line-height: var(--line-height);
 					}
 					.intro {
-                        line-height: var(--line-height);
+						line-height: var(--line-height);
 					}
 				}
 			}
@@ -138,12 +138,12 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				}
 
 				.description {
-                    padding: var(--spacing-2x);
+					padding: var(--spacing-2x);
 					p {
 						margin: 0;
 						margin-block-start: var(--spacing-2x);
 						word-break: break-all;
-                        line-height: var(--line-height);
+						line-height: var(--line-height);
 					}
 				}
 			}
@@ -167,10 +167,10 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 						height: var(--event-banner-height);
 					}
 					.event-header {
-                        padding-block: var(--spacing-10x);
-                        padding-inline: var(--spacing-5x);
-                        margin-inline: var(--spacing-5x);
-                        margin-block-start: -5.2rem;
+						padding-block: var(--spacing-10x);
+						padding-inline: var(--spacing-5x);
+						margin-inline: var(--spacing-5x);
+						margin-block-start: -5.2rem;
 					}
 				}
 
@@ -190,7 +190,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 					.details {
 						position: relative;
-                        padding: var(--spacing-5x);
+						padding: var(--spacing-5x);
 						padding-block-start: var(--spacing-10x);
 						height: fit-content;
 						display: grid;
@@ -201,7 +201,7 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 						}
 
 						.details-top {
-                            padding: 0;
+							padding: 0;
 							.details-header {
 								position: absolute;
 								top: 1rem;
@@ -212,25 +212,24 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 							}
 						}
 
-                        .details-bottom {
-                            padding: 0;
-                        }
+						.details-bottom {
+							padding: 0;
+						}
 					}
 					.description {
 						order: 2;
-                        padding: 0;
+						padding: 0;
 
-                        p {
-                            margin-block: 12px;
-                        }
+						p {
+							margin-block: 12px;
+						}
 
-                        p:first-child {
-                            margin-block-start: 0;
-                        }
-                        p:last-child {
-                            margin-block-end: 0;
-                        }
-
+						p:first-child {
+							margin-block-start: 0;
+						}
+						p:last-child {
+							margin-block-end: 0;
+						}
 					}
 				}
 			}
@@ -242,18 +241,18 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 				gap: var(--spacing-10x);
 				padding: var(--spacing-10x);
 
-                .stack {
-                    .event-header {
-                        margin-inline: min(9.75rem, 100%);
-                    }
-                }
+				.stack {
+					.event-header {
+						margin-inline: min(9.75rem, 100%);
+					}
+				}
 
 				.event-information {
 					display: grid;
 					grid-template-areas:
 						"interests details"
 						"description details";
-                    grid-template-rows: auto 1fr;
+					grid-template-rows: auto 1fr;
 					gap: var(--spacing-8x);
 					padding-inline: var(--spacing-10x);
 					grid-template-columns: 1fr 25.3125rem;
@@ -263,24 +262,25 @@ templ event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 					.details {
 						grid-area: details;
-                        grid-template-columns: unset;
-                        padding-block-start: 0;
+						grid-template-columns: unset;
+						padding-block-start: 0;
 
-                        .details-top, .details-bottom {
-                            padding: var(--spacing-5x);
-                        }
+						.details-top,
+						.details-bottom {
+							padding: var(--spacing-5x);
+						}
 
-                        .details-top {
-                            padding-block-start: var(--spacing-3x);
+						.details-top {
+							padding-block-start: var(--spacing-3x);
 
-                            .details-header {
-                                position: unset;
-                            }
-                        }
+							.details-header {
+								position: unset;
+							}
+						}
 
-                        hr {
-                            display: block;
-                        }
+						hr {
+							display: block;
+						}
 					}
 					.description {
 						grid-area: description;

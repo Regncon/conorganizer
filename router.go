@@ -22,6 +22,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	natsserver "github.com/nats-io/nats-server/v2/server"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
 func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB, eventImageDir *string) (cleanup func() error, err error) {
@@ -53,9 +54,30 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	isLoggedInRouter := router.With(userctx.UserMiddleware(logger))
 	routerAdmin := isLoggedInRouter.With(authctx.RequireAdmin(logger))
 
+	nc, err := ns.Client()
+	if err != nil {
+		return cleanup, fmt.Errorf("error creating nats client: %w", err)
+	}
+
+	js, err := jetstream.New(nc)
+	if err != nil {
+		return cleanup, fmt.Errorf("error creating jetstream context: %w", err)
+	}
+
+	eventKv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
+		Bucket:      "events",
+		Description: "Regncon events",
+		Compression: true,
+		TTL:         time.Hour,
+		MaxBytes:    16 * 1024 * 1024,
+	})
+
+	if err != nil {
+		return cleanup, fmt.Errorf("error creating key value store: %w", err)
+	}
 	if err := errors.Join(
 		index.SetupIndexRoute(router, sessionStore, ns, db),
-		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db, eventImageDir),
+		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, eventKv, db, eventImageDir),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
 		event.SetupEventRoute(router, sessionStore, ns, db, logger, eventImageDir),
 		myevents.SetupMyEventsRoute(isLoggedInRouter, sessionStore, ns, db, eventImageDir, logger),
