@@ -110,6 +110,9 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				}
 			}
 		})
+		billettholdereSearchRoute(billettholderAdminRouter, store, notifyUpdate)
+		addEmailToBilettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
+		deleteEmailFromBillettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
 	})
 
 	addbillettholder.AddBillettholderRoute(router, db, logger, err)
@@ -151,7 +154,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 		})
 
 		addbillettholder.CheckInTicketsSearchRoute(addBillettholderRouter, db, logger, store, notifyUpdate)
-		addbillettholder.ConvertTicketToBillettholderRoute(addBillettholderRouter, db, logger)
+		addbillettholder.ConvertTicketToBillettholderRoute(addBillettholderRouter, db, store, notifyUpdate, logger)
 	})
 
 	return nil

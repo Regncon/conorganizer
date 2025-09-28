@@ -18,6 +18,10 @@
     --color-secondary-focus-visible: #CCD1E980;
     --color-secondary-active: #CCD1E933;
 
+    --color-success: #A6DA95;
+    --color-warning: #EED49F;
+    --color-error: #ED8796;
+
     --color-disabled: #CCD1E980;
 
     --bg-base: var(--bg-body-100);
