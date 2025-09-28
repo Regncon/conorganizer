@@ -37,7 +37,7 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventI
 		@container event-container (width >= 37.5rem) {
 			.breadcrumb-wrapper {
 				display: grid;
-                grid-template-columns: repeat(2, 10fr);
+                grid-template-columns: minmax(0px, 100vw) 11.3rem;
                 grid-template-rows: 17fr 1fr;
 
                 .breadcrumb-prev-next-buttons {
@@ -46,7 +46,7 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventI
                     display: flex;
                     width: min(11.3125rem, 100%);
                     place-content: space-between;
-                    gap: var(--spacing-1x)  ;
+                    gap: var(--spacing-1x);
 
                     a, div {
                         padding: 0;
