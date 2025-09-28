@@ -40,7 +40,7 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventI
                 grid-template-columns: repeat(2, 10fr);
                 grid-template-rows: 17fr 1fr;
 
-                .breadcrumb-prevnext-buttons {
+                .breadcrumb-prev-next-buttons {
                     padding: var(--spacing-5x);
                     place-self: end;
                     display: flex;
@@ -67,7 +67,7 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventI
 			{Name: "Hjem", Url: "/"},
 			{Name: event.Title, Url: ""},
 		})
-		<div class="breadcrumb-prevnext-buttons">
+		<div class="breadcrumb-prev-next-buttons">
 			if previousNextData.PreviousUrl != "" {
 				<a
 					href={ templ.URL(previousNextData.PreviousUrl) }
