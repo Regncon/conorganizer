@@ -236,12 +236,12 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 			data-bind={ "newEmail-" + strconv.Itoa(billettholder.ID) }
 		/>
 		<strong
-			style="color: var(--color-primary-strong);"
+			style="color: var(--color-error);"
 			data-signals={ fmt.Sprintf(`"errorMessage-%d"`, billettholder.ID) }
 			data-text={ fmt.Sprintf(`$errorMessage-%d`, billettholder.ID) }
 		></strong>
 		<strong
-			style="color: green;"
+			style="color: var(--color-success);"
 			data-signals={ fmt.Sprintf(`"successMessage-%d"`, billettholder.ID) }
 			data-text={ fmt.Sprintf(`$successMessage-%d`, billettholder.ID) }
 		></strong>
