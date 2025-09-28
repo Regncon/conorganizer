@@ -21,42 +21,56 @@ type PreviousNext struct {
 	NextUrl          string
 	NextTitle        string
 	NextImageURL     string
+	IsRemoved        bool
 }
 
 templ PreviousNextBar(previousNextData PreviousNext) {
 	<style>
-        .prev-next-wrapper {
-            --linear-gradient-mask: linear-gradient(to left, black 19%, transparent 32%);
-            --prev-next-max-width: 25.3125rem;
-            --prev-next-responsive-max-width: min(100%, var(--prev-next-max-width));
+		.prev-next-wrapper {
+			--linear-gradient-mask: linear-gradient(
+				to left,
+				black 19%,
+				transparent 32%
+			);
+			--prev-next-max-width: 25.3125rem;
+			--prev-next-responsive-max-width: min(
+				100%,
+				var(--prev-next-max-width)
+			);
 
-            display: flex;
-            flex-direction: column;
-            gap: var(--spacing-2x);
-            padding-inline: var(--spacing-2x);
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+			padding-inline: var(--spacing-2x);
 
-            a {
-                border-color: var(--bg-item-border);
-                transition: border-color 250ms ease-in-out;
-                width: 100%;
-            }
+			a {
+				border-color: var(--bg-item-border);
+				transition: border-color 250ms ease-in-out;
+				width: 100%;
+			}
 
-            a:hover:not(a[aria-disabled="true"]), a:focus-visible:not(a[aria-disabled="true"]) {
-                border-color: var(--color-primary);
-            }
+			a:hover:not(a[aria-disabled="true"]),
+			a:focus-visible:not(a[aria-disabled="true"]) {
+				border-color: var(--color-primary);
+			}
 
-            a[aria-disabled="true"] {
-                cursor: no-drop;
-                opacity: 0.5;
-            }
-        }
+			a[aria-disabled="true"] {
+				cursor: no-drop;
+				opacity: 0.5;
+			}
+		}
 
+		@container event-container (width > 37.5rem) {
+			.prev-next-wrapper {
+				flex-direction: row;
+				place-content: space-between;
+				padding: 0;
 
-        @container event-container (width > 37.5rem) {
-                .prev-next-wrapper {
-                    flex-direction: row;
-                    place-content: space-between;
-                    padding: 0;
+				a {
+					width: var(--prev-next-responsive-max-width);
+				}
+			}
+		}
 
                     a {
                         width: var(--prev-next-responsive-max-width);

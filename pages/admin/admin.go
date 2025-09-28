@@ -20,7 +20,7 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB) error {
+func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -32,8 +32,8 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 	}
 
 	kv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
-		Bucket:      "todos",
-		Description: "Datastar Todos",
+		Bucket:      "events",
+		Description: "Regncon Event Store",
 		Compression: true,
 		TTL:         time.Hour,
 		MaxBytes:    16 * 1024 * 1024,
@@ -154,7 +154,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 			approvalRouter.Route("/edit", func(editEventRouter chi.Router) {
 				editEventRouter.Route("/{id}", func(newIdRoute chi.Router) {
-					edit_form.EditFormLayoutRoute(newIdRoute, db, logger)
+					edit_form.EditFormLayoutRoute(newIdRoute, db, eventImageDir, logger)
 				})
 				editEventRouter.Route("/api/{id}", func(newApiIdRouter chi.Router) {
 					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -194,7 +194,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 									return
 								}
 
-								c := edit_form.EditEventFormPage(ctx, eventId, db, logger)
+								c := edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, logger)
 								if err := sse.PatchElementTempl(c); err != nil {
 									sse.ConsoleError(err)
 									return

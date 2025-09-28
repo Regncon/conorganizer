@@ -21,8 +21,8 @@ func SetupNats(ns *embeddednats.Server) (jetstream.KeyValue, error) {
 	}
 
 	kv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
-		Bucket:      "myevents",
-		Description: "Datastar My Events",
+		Bucket:      "events",
+		Description: "Regncon Event Store",
 		Compression: true,
 		TTL:         time.Hour,
 		MaxBytes:    16 * 1024 * 1024,

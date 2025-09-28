@@ -8,24 +8,26 @@ import (
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/pages/event"
 )
 
-templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, logger *slog.Logger) {
+templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	<div id="edit-form-container" class="formsubmission-css-container">
-		@EditEventFormPageContent(ctx, eventId, db, logger)
+		@EditEventFormPageContent(ctx, eventId, db, eventImageDir, logger)
 	</div>
 }
 
-templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, logger *slog.Logger) {
+templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	{{
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
+	isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
 	previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId)
 	}}
 	if err != nil {
 		logger.Error("Failed to get previous/next data", "error", err)
 		return
 	}
-	{{ event, eventErr := eventservice.GetEventById(eventId, db, logger) }}
+	{{ eventData, eventErr := eventservice.GetEventById(eventId, db, logger) }}
 	if eventErr != nil {
 		<p>Error fetching events: { eventErr.Error() }</p>
 		return
@@ -37,11 +39,14 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		{Name: "Rediger Arrangement", Url: ""},
 	})
 	@components.PreviousNextBar(previousNextData)
-	<form
-		class="formsubmission-wrapper page-content-container"
-	>
-		<h1 class="page-heading">Rediger Arrangement</h1>
-		@formsubmission.FormBody(event, isAdmin)
-	</form>
+	<h1 class="page-heading">Rediger Arrangement</h1>
+	<div style="display: flex; gap: 4rem;">
+		<form
+			class="formsubmission-wrapper page-content-container"
+		>
+			@formsubmission.FormBody(eventData, isAdmin)
+		</form>
+		@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir)
+	</div>
 	@components.PreviousNextBar(previousNextData)
 }

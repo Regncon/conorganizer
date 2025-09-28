@@ -2,9 +2,11 @@ package formsubmission
 
 import (
 	"net/http"
+	"html"
 	"github.com/go-chi/chi/v5"
 	"fmt"
 
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/Regncon/conorganizer/models"
 	"database/sql"
@@ -160,8 +162,15 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 			return
 		}
 
+		ctx := r.Context()
+		isAdmin := authctx.GetAdminFromUserToken(ctx)
+		escapedInput := store.Input
+		if isAdmin == false {
+			escapedInput = html.EscapeString(store.Input)
+		}
+
 		query := `UPDATE events SET description = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
+		_, err := db.Exec(query, escapedInput, eventID)
 		if err != nil {
 			http.Error(w, "Failed to update the description for event in the database", http.StatusInternalServerError)
 			return

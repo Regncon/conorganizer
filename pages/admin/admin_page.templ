@@ -11,8 +11,43 @@ templ adminPage(db *sql.DB) {
 			{Name: "Hjem", Url: "/"},
 			{Name: "Admin", Url: ""},
 		})
-		<h1>Admin page</h1>
+		<style>
+			.admin-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, 430px);
+				gap: 1rem;
+				justify-content: start;
+			}
+			@media (min-width: 600px) {
+				.admin-grid {
+					padding-inline: var(--spacing-10x);
+				}
+			}
+		</style>
+		<h1 class="page-heading">Admin page</h1>
 		<div class="admin-grid">
+			<a
+				href="/admin/approval/"
+				style="
+                max-width: 430px;
+				background-color: #3b4252;
+				border-radius: 1rem;
+				display: flex;
+				flex-direction: column;
+				text-decoration: none;
+				color: white;
+				box-sizing: border-box;"
+			>
+				<img
+					src="/static/approve.webp"
+					alt="Participants"
+					style="max-width: 100%; height: auto; object-fit: cover; border-radius: 1rem 1rem 0 0;"
+				/>
+				<div style="padding: 1rem;">
+					<h2>Arrangementer til Godkjenning</h2>
+					<h3>Her kan du godkjenne arrangementer som er sendt inn av brukere.</h3>
+				</div>
+			</a>
 			<a
 				href="/admin/billettholder/"
 				style="
@@ -36,20 +71,5 @@ templ adminPage(db *sql.DB) {
 				</div>
 			</a>
 		</div>
-		<style>
-			.admin-grid {
-				display: grid;
-				grid-template-columns: repeat(
-					auto-fit,
-					minmax(var(--mobile-min-width), 1fr)
-				);
-				gap: 1rem;
-			}
-			@media (min-width: 600px) {
-				.admin-grid {
-					padding: 1rem;
-				}
-			}
-		</style>
 	</div>
 }

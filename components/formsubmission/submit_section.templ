@@ -5,11 +5,14 @@ import (
 	"github.com/go-chi/chi/v5"
 	"database/sql"
 	"fmt"
-	"github.com/Regncon/conorganizer/models"
 	"log/slog"
+
+	"github.com/Regncon/conorganizer/models"
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/Regncon/conorganizer/service/keyvalue"
 )
 
-func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, logger *slog.Logger) {
+func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
@@ -25,6 +28,10 @@ func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, logger *slog.Logger)
 			return
 		}
 
+		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
 		http.Redirect(w, r, fmt.Sprintf("/my-events/"), http.StatusSeeOther)
 	})
 }
