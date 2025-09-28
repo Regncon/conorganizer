@@ -21,7 +21,7 @@ WITH ordered AS (
     LEAD(title)    OVER (ORDER BY inserted_time DESC, id DESC) AS next_title,
     LEAD(image_url)OVER (ORDER BY inserted_time DESC, id DESC) AS next_image_url
   FROM events
-  WHERE status = ?
+  WHERE status IN ('Innsendt', 'Godkjent')
 )
 SELECT previous_id, previous_title, previous_image_url,
        next_id,     next_title,     next_image_url
@@ -33,7 +33,8 @@ WHERE id = ?;`
 		nextID, nextTitle, nextImg sql.NullString
 	)
 
-	err := db.QueryRowContext(ctx, q, "Innsendt", currentID).
+	//eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE status IN ('Innsendt', 'Godkjent') ORDER BY inserted_time DESC"
+	err := db.QueryRowContext(ctx, q, currentID).
 		Scan(&prevID, &prevTitle, &prevImg, &nextID, &nextTitle, &nextImg)
 	if err != nil {
 		if err == sql.ErrNoRows {
