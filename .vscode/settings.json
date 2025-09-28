@@ -41,6 +41,7 @@
         "nowrap",
         "omitempty",
         "passwordless",
+        "prevnext",
         "println",
         "requestctx",
         "roleplay",
