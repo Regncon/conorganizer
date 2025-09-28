@@ -31,7 +31,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 			flex-direction: column;
 			width: var(--mobile-responsive-min-width);
 			gap: var(--spacing-4x);
-
+            margin-inline: auto;
 			.event-image {
 				height: 150px;
 				display: block;
@@ -152,7 +152,6 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 		@container event-container (width >= 37.5rem) {
 			.wrapper {
 				inline-size: min(1041px, 100%);
-				place-self: center;
 				display: grid;
 				grid-template-rows: max-content max-content;
 				padding: var(--spacing-5x);
