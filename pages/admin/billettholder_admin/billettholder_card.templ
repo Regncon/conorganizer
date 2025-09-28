@@ -292,7 +292,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 		<span>Andre epostadresser på samme bestilling:</span>
 		for _, email := range billettholder.Emails {
 			if email.Kind == "Associated" || email.Kind == "Manual" {
-				<div style="display:flex; align-items:center; gap:0.5rem;">
+				<div style="display:flex; align-items:center; gap:0.5rem; justify-content: space-between;">
 					<a href={ "mailto:" + email.Email }>
 						@templ.Raw(highlightSearchTerm(email.Email, searchTerm))
 					</a>
