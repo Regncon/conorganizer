@@ -54,7 +54,6 @@
     --spacing-8x: 32px;
     --spacing-10x: 40px;
 
-
     /* border */
     --border-radius-1x: 4px;
     --border-radius-2x: 8px;
@@ -71,6 +70,15 @@
     --nav-height: 4rem;
     --nav-z-index: 10;
     --nav-gap: 1rem;
+
+    /* responsively size gap between panes in the same column of content */
+    --responsive-pane-column-spacing: var(--spacing-4x);
+}
+
+@media screen and (width > 600px) {
+    :root {
+        --responsive-pane-column-spacing: var(--spacing-8x);
+    }
 }
 
 ::selection {
@@ -333,13 +341,15 @@ input {
     padding: 1rem;
 }
 
-.form-card {
+.form-card, /* deprecate this class, use surface-pane instead */
+.surface-pane {
     border-radius: var(--border-radius-2x);
     background-color: var(--bg-surface);
     padding: var(--spacing-5x);
 }
 
-.form-card-title {
+.form-card-title, /* deprecate this class, use surface-pane instead */
+.surface-pane-title {
     margin-bottom: var(--spacing-3x);
 }
 

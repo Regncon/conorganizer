@@ -76,7 +76,7 @@ class BannerCropper extends HTMLElement {
                   </div>
                   <button
                      id="exportButton"
-                     class="btn btn--secondary"
+                     class="btn btn--outline"
                      type="button"
                      >Lagre</button>
                   <div>
