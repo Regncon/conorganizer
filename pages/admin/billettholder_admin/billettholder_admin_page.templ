@@ -62,8 +62,8 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 			{Name: "Admin", Url: "/admin/"},
 			{Name: "Bilettholdere", Url: ""},
 		})
-		<article style="display:flex; flex-direction:column; gap:1rem; padding: 1rem;">
-			<h1>Billettholdere</h1>
+		<article class="page-content-container">
+			<h1 class="page-heading">Billettholdere</h1>
 			<h2>Her kan du se en oversikt over alle billettholdere</h2>
 			<a
 				href="/admin/billettholder/add/"
