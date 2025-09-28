@@ -67,16 +67,9 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 			<h2>Her kan du se en oversikt over alle billettholdere</h2>
 			<a
 				href="/admin/billettholder/add/"
-				style="background-color: rgb(49, 53, 78);
-                    width: var(--mobile-responsive-min-width);
-                    border-radius: 2rem;
-                    font-size: 4rem;
-                    color: white;
-                    text-align: center;
-                    text-decoration: none;
-                    font-weight: bold;
-		        "
-			>+</a>
+				class="btn btn--cta"
+			>Billetter</a>
+			<hr/>
 			<div class="billettholder-admin-grid">
 				<style>
 					.billettholder-admin-grid {
@@ -86,11 +79,6 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 							minmax(var(--mobile-min-width), 1fr)
 						);
 						gap: 1rem;
-					}
-					@media (min-width: 600px) {
-						.billettholder-admin-grid {
-							padding: 1rem;
-						}
 					}
 				</style>
 				if err != nil {

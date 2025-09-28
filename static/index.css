@@ -62,6 +62,7 @@
     /* breakpoints */
     --mobile-min-width: 320px;
     --mobile-max-width: 600px;
+    --mobile-responsive-min-width: 430px;
 
     /* nav */
     --nav-height: 4rem;
