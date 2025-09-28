@@ -2,66 +2,94 @@ package billettholderadmin
 
 import (
 	"database/sql"
-	"github.com/Regncon/conorganizer/models"
 	"log/slog"
+	"encoding/json"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/billettholder"
 )
 
-func getBilettholdere(db *sql.DB, logger *slog.Logger) ([]models.Billettholder, error) {
-	rows, err := db.Query("SELECT id, first_name, last_name, is_over_18, order_id, ticket_email   FROM billettholdere")
-	if err != nil {
-		logger.Error("Failed to query billettholdere", "error", err)
-		return nil, err
-	}
-	defer rows.Close()
+var searchTerm = ""
 
-	var billettholdere []models.Billettholder
-	for rows.Next() {
-		var b models.Billettholder
-		if err := rows.Scan(&b.ID, &b.FirstName, &b.LastName, &b.IsOver18, &b.OrderID, &b.TicketEmail); err != nil {
-			logger.Error("Failed to scan billettholder", "error", err)
-			return nil, err
+func billettholdereSearchRoute(
+	router chi.Router,
+	store sessions.Store,
+	notifyUpdate func(string),
+) {
+	router.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
+		datastarRaw := r.URL.Query().Get("datastar")
+		if datastarRaw == "" {
+			http.Error(w, "missing ?datastar param", http.StatusBadRequest)
+			return
 		}
-		billettholdere = append(billettholdere, b)
-	}
-	return billettholdere, nil
+
+		var payload struct {
+			Search string `json:"search"`
+		}
+		if err := json.Unmarshal([]byte(datastarRaw), &payload); err != nil {
+			http.Error(w, "invalid ?datastar JSON", http.StatusBadRequest)
+			return
+		}
+
+		searchTerm = payload.Search
+
+		sessionID, _ := upsertSessionID(store, r, w)
+		if notifyUpdate != nil {
+			notifyUpdate(sessionID)
+		}
+	})
 }
 
+/*
+
+	<input
+		style="max-width: 30rem;"
+		data-bind-search
+		data-on-input__debounce.50ms="@get('/admin/billettholder/api/search/')"
+		placeholder="Search..."
+		type="text"
+	/>
+*/
+
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ bilettholdere, err := getBilettholdere(db, logger) }}
+	{{ bilettholdere, err := billettholderService.GetBilettholdere(db, logger) }}
 	<div id="billettholder-admin-container">
-		<h1>Billettholdere</h1>
-		<h2>Her kan du se en oversikt over alle billettholdere</h2>
-		<a
-			href="/admin/billettholder/add/"
-			style="background-color: rgb(49, 53, 78);
-                    width: var(--mobile-responsive-min-width);
-                    border-radius: 2rem;
-                    font-size: 4rem;
-                    color: white;
-                    text-align: center;
-                    text-decoration: none;
-                    font-weight: bold;
-		        "
-		>+</a>
-		<div class="billettholder-admin-grid">
-			<style>
-			.billettholder-admin-grid {
-				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
-				gap: 1rem;
-			}@media (min-width: 600px) {
-				.billettholder-admin-grid {
-					padding: 1rem;
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Admin", Url: "/admin/"},
+			{Name: "Bilettholdere", Url: ""},
+		})
+		<article class="page-content-container">
+        <div style="display: flex; gap: 1rem; align-items: center;">
+			<h1 class="page-heading">Billettholdere</h1>
+			<a
+				href="/admin/billettholder/add/"
+				class="btn btn--cta"
+			>Legg til billetteholder</a>
+            </div>
+			<p class="page-heading-helptext">Her kan du se en oversikt over alle billettholdere</p>
+			<div class="billettholder-admin-grid">
+				<style>
+					.billettholder-admin-grid {
+						display: grid;
+						grid-template-columns: repeat(
+							auto-fit,
+							minmax(var(--mobile-min-width), 1fr)
+						);
+						gap: 1rem;
+					}
+				</style>
+				if err != nil {
+					<p>Failed to load billettholdere.</p>
+				} else {
+					for _, billettholder := range bilettholdere {
+						@billettholderCard(billettholder, searchTerm)
+					}
 				}
-			}
-		</style>
-			if err != nil {
-				<p>Failed to load billettholdere.</p>
-			} else {
-				for _, billettholder := range bilettholdere {
-					@billettholderCard(billettholder)
-				}
-			}
-		</div>
+			</div>
+		</article>
 	</div>
 }

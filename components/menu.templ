@@ -158,7 +158,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				top: 0;
 				bottom: unset;
 			}
-			
+
 			.main-menu {
 				grid-template-columns: max-content 1fr 1fr;
 				gap: 1rem;
@@ -229,6 +229,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 							<a href="/my-events">Mine arrangementer</a>
 							if UserInfo.IsAdmin {
 								<hr/>
+                                <a href="/admin/billettholder/">Billettholderoversikt</a>
 								<a href="/admin/approval/">Arrangement til godskjenning</a>
 							}
 						</div>
