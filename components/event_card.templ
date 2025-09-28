@@ -4,21 +4,20 @@ import (
 	"fmt"
 	"os"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-func getImageUrl(imageFile string) string {
-	if _, err := os.Stat(imageFile); err == nil {
-		return "/" + imageFile
-	}
-	return "/static/icons/camera-regular-full.svg"
-}
-
-templ EventCard(eventCard models.EventCardModel, showStatus bool) {
+templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStatus bool) {
+	{{ imageUrl := eventimage.GetEventImageUrl(eventCard.Id, "card", eventImageDir) }}
 	<a
-		href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
+		if eventCard.Status == models.EventStatusDraft || eventCard.Status == models.EventStatusSubmitted || eventCard.Status == models.EventStatusArchived {
+			href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
+		} else {
+			href={ templ.URL(fmt.Sprintf("/event/%s", eventCard.Id)) }
+		}
 		style="
                 background-color: var(--bg-surface);
-                border-radius: var(--border-radius-small);
+                border-radius: var(--border-radius-1x);
                 display: grid;
                 grid-template-rows: 11.25rem 110px 3.5rem;
                 grid-template-columns: minmax(var(--mobile-min-width), 1fr);
@@ -47,20 +46,20 @@ templ EventCard(eventCard models.EventCardModel, showStatus bool) {
 			</div>
 		}
 		<img
-			src={ getImageUrl("event-images/" + eventCard.Id + "_card.webp") }
+			src={ imageUrl }
 			alt="Participants"
 			style="
                     width: 100%;
                     height: 100%;
                     object-fit: cover;
                     border-radius:
-                        var(--border-radius-small)
-                        var(--border-radius-small)
+                        var(--border-radius-1x)
+                        var(--border-radius-1x)
                         0
                         0;
                 "
 		/>
-		<div style="padding: var(--spacing-small);">
+		<div style="padding: var(--spacing-2x);">
 			<div style="">
 				<h2
 					style="
@@ -110,7 +109,7 @@ templ EventCard(eventCard models.EventCardModel, showStatus bool) {
 				}
 			</p>
 		</div>
-		<div style="padding: var(--spacing-small); border-top: 1px solid var(--bg-item-border);">
+		<div style="padding: var(--spacing-2x); border-top: 1px solid var(--bg-item-border);">
 			<div
 				style="
                             display: grid;

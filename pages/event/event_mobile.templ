@@ -1,53 +1,338 @@
 package event
 
 import (
-	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/event_components"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-templ event_mobile(event *models.Event) {
-	<div style="display:flex; flex-direction:column; gap:1rem; max-width:430px; margin:auto;">
-		<img
-			src="/static/placeholder-small.webp"
-			style="height: 150px; display: block;"
-		/>
-		<div style="display: flex; flex-direction: column; align-items: center; gap: 1rem;">
-			<h1 style="text-align:center; margin:0; ">{ event.Title }</h1>
-			<i style="overflow: clip;height: 38px; padding-inline:1rem;">{ event.Intro }</i>
+templ event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
+	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
+	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
+	<style>
+		.wrapper {
+			--event-banner-height: 25rem;
+			--event-header-height: 10.1875rem;
+			--event-header-width: 65.5rem;
+			--event-header-missing-from-translating: 9px;
+			--event-header-half-height-and-translate: calc(
+				var(--event-header-height) / 2 -
+					var(--event-header-missing-from-translating)
+			);
+			--event-header-overlapp: var(
+				--event-header-half-height-and-translate
+			);
+
+            --line-height-mobile: 1.4;
+            --line-height: var(--line-height-mobile, 1.4);
+
+			display: flex;
+			flex-direction: column;
+			width: var(--mobile-responsive-min-width);
+			gap: var(--spacing-4x);
+
+			.event-image {
+				height: 150px;
+				display: block;
+			}
+
+			.stack {
+                .event-image {
+					object-fit: none;
+					width: 100%;
+					height: 209px;
+				}
+				.event-header {
+					display: flex;
+					flex-direction: column;
+					padding: var(--spacing-4x);
+					background-color: var(--bg-base);
+					text-align: center;
+					height: fit-content;
+					border-radius: var(--border-radius-2x);
+					position: relative;
+                    z-index: 4;
+                    gap: var(--spacing-1x);
+
+					.title {
+						margin: 0;
+                        line-height: var(--line-height);
+					}
+					.intro {
+                        line-height: var(--line-height);
+					}
+				}
+			}
+
+			.event-information {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-4x);
+				padding-inline: var(--spacing-2x);
+
+				.interest-picker {
+					display: flex;
+					align-items: center;
+					flex-direction: column;
+					gap: var(--spacing-4x);
+					padding: var(--spacing-4x);
+					text-align: center;
+
+					> button {
+						max-width: 200px;
+					}
+				}
+
+				.details {
+					display: flex;
+					flex-direction: column;
+					padding: 0;
+
+					.details-top {
+						display: flex;
+						flex-direction: column;
+						gap: var(--spacing-3x);
+						padding-inline: var(--spacing-5x);
+						padding-block: var(--spacing-3x);
+
+						p {
+							margin: 0;
+							max-width: 11.95rem;
+							overflow: clip;
+							text-overflow: ellipsis;
+							white-space: nowrap;
+						}
+
+						strong {
+							font-size: 12px;
+						}
+
+						.details-header {
+							font-size: var(--spacing-3x);
+						}
+
+						.details-type {
+							height: 20px;
+							width: 20px;
+							display: flex;
+							place-items: center;
+							gap: var(--spacing-1x);
+
+							.details-type-icon {
+								height: 15px;
+								width: 15px;
+							}
+							.details-header {
+								font-size: 12px;
+							}
+						}
+					}
+
+					.details-bottom {
+						padding: var(--spacing-5x);
+						display: flex;
+						flex-direction: column;
+						gap: var(--spacing-4x);
+					}
+				}
+
+				.description {
+                    padding: var(--spacing-2x);
+					p {
+						margin: 0;
+						margin-block-start: var(--spacing-2x);
+						word-break: break-all;
+                        line-height: var(--line-height);
+					}
+				}
+			}
+		}
+
+		@container event-container (width >= 37.5rem) {
+			.wrapper {
+				inline-size: min(1041px, 100%);
+				place-self: center;
+				display: grid;
+				grid-template-rows: max-content max-content;
+				padding: var(--spacing-5x);
+				gap: var(--spacing-8x);
+
+				.stack {
+					--event-banner-height: 25rem;
+					--event-header-height: 10.1875rem;
+					--event-header-width: 65.0625rem;
+					--event-header-missing-from-translating: 9px;
+					.event-image {
+						height: var(--event-banner-height);
+					}
+					.event-header {
+                        padding-block: var(--spacing-10x);
+                        padding-inline: var(--spacing-5x);
+                        margin-inline: var(--spacing-5x);
+                        margin-block-start: -5.2rem;
+					}
+				}
+
+				.event-information {
+					display: flex;
+					flex-direction: column;
+					gap: var(--spacing-8x);
+					padding: 0;
+
+					.interest-picker {
+						order: 1;
+						width: 100%;
+						flex-direction: row;
+						flex-wrap: wrap;
+						place-content: space-between;
+						height: fit-content;
+					}
+					.details {
+						position: relative;
+                        padding: var(--spacing-5x);
+						padding-block-start: var(--spacing-10x);
+						height: fit-content;
+						display: grid;
+						grid-template-columns: 1fr 1fr;
+
+						hr {
+							display: none;
+						}
+
+						.details-top {
+                            padding: 0;
+							.details-header {
+								position: absolute;
+								top: 1rem;
+							}
+							.details-host {
+								display: flex;
+								flex-direction: column;
+							}
+						}
+
+                        .details-bottom {
+                            padding: 0;
+                        }
+					}
+					.description {
+						order: 2;
+                        padding: 0;
+
+                        p {
+                            margin-block: 12px;
+                        }
+
+                        p:first-child {
+                            margin-block-start: 0;
+                        }
+                        p:last-child {
+                            margin-block-end: 0;
+                        }
+
+					}
+				}
+			}
+		}
+
+		@container event-container (width > 65.0625rem) {
+			.wrapper {
+				inline-size: min(1440px, 100%);
+				gap: var(--spacing-10x);
+				padding: var(--spacing-10x);
+
+                .stack {
+                    .event-header {
+                        margin-inline: min(9.75rem, 100%);
+                    }
+                }
+
+				.event-information {
+					display: grid;
+					grid-template-areas:
+						"interests details"
+						"description details";
+                    grid-template-rows: auto 1fr;
+					gap: var(--spacing-8x);
+					padding-inline: var(--spacing-10x);
+					grid-template-columns: 1fr 25.3125rem;
+
+					.interest-picker {
+						grid-area: interests;
+					}
+					.details {
+						grid-area: details;
+                        grid-template-columns: unset;
+                        padding-block-start: 0;
+
+                        .details-top, .details-bottom {
+                            padding: var(--spacing-5x);
+                        }
+
+                        .details-top {
+                            padding-block-start: var(--spacing-3x);
+
+                            .details-header {
+                                position: unset;
+                            }
+                        }
+
+                        hr {
+                            display: block;
+                        }
+					}
+					.description {
+						grid-area: description;
+					}
+				}
+			}
+		}
+	</style>
+	<div class="wrapper">
+		<div class="stack">
+			<picture>
+				<source
+					media="(width >= 37.5rem)"
+					srcset={ imageBannerUrl }
+					type="image/webp"
+				/>
+				<img
+					class="event-image"
+					alt="Arrangement bilde"
+					src={ imageCardUrl }
+				/>
+			</picture>
+			<header class="event-header">
+				<h1 class="title" title={ event.Title }>{ event.Title }</h1>
+				<i class="intro" title={ event.Intro }>{ event.Intro }</i>
+			</header>
 		</div>
-		<div style="display: flex; flex-direction: column; gap:0.5rem; padding:0.5rem;">
-			<div
-				class="card"
-				style="
-            display:flex;
-            align-items: center;
-            flex-direction:column;
-            gap:1rem;
-            padding: 1rem;"
-			>
-				<span style="text-align: center;">
+		<div class="event-information">
+			<div class="card interest-picker">
+				<span>
 					Du kan melde interesse når programmet slippes!
 				</span>
 				<button
 					class="btn btn--cta"
-					style="max-width: 200px;"
 					disabled
 				>
 					Meld interesse
 				</button>
 			</div>
-			<div class="card" style="display: flex; flex-direction: column; padding:0;">
-				<div style="display: flex; flex-direction: column; gap:0.5rem; padding:1rem;">
-					<span>Detaljer om arrangementet</span>
-					<div style="display: flex; flex-direction: column; ">
-						<strong style="font-size:14px;">Arrangør:</strong>
-						<span>{ event.HostName } </span>
+			<div class="card details">
+				<div class="details-top">
+					<p class="details-header color-strong">Detaljer om arrangementet</p>
+					<div class="details-host">
+						<strong>Arrangør</strong>
+						<p class="color-strong" title={ event.HostName }>{ event.HostName } </p>
 					</div>
-					<div style="display: flex; flex-direction: column; ">
-						<strong style="font-size:14px;">
+					<div class="details-system">
+						<div class="details-type">
 							if event.EventType == models.EventTypeRoleplay {
-								Rollespill
+								<strong>Rollespill</strong>
 								<img
+									class="details-type-icon"
 									src="/static/icons/ttrpg.svg"
 									alt="table top roleplaying game"
 									height="10"
@@ -55,8 +340,9 @@ templ event_mobile(event *models.Event) {
 									fetchpriority="high"
 								/>
 							} else if event.EventType == models.EventTypeBoardGame {
-								Brettspill
+								<strong>Brettspill</strong>
 								<img
+									class="details-type-icon"
 									src="/static/icons/boardgames.svg"
 									alt="board game"
 									height="10"
@@ -64,8 +350,9 @@ templ event_mobile(event *models.Event) {
 									fetchpriority="high"
 								/>
 							} else if event.EventType == models.EventTypeOther {
-								Annet
+								<strong>Annet</strong>
 								<img
+									class="details-type-icon"
 									src="/static/icons/other-games.svg"
 									alt="other type of game or event"
 									height="10"
@@ -73,33 +360,36 @@ templ event_mobile(event *models.Event) {
 									fetchpriority="high"
 								/>
 							}
-						</strong>
-						<span>{ event.System } </span>
+						</div>
+						<p class="color-strong" title={ event.System }>{ event.System } </p>
 					</div>
 				</div>
 				<hr/>
-				<div style="padding:1rem; display:flex; flex-direction:column; gap:0.5rem;">
+				<div class="details-bottom">
 					if event.AgeGroup == models.AgeGroupAdultsOnly {
-						@event_components.Event_propertie("Egne for voksne", "adults-only-event.svg")
+						@event_components.Event_property("Egne for voksne", "adults-only-event.svg")
 					}
 					if event.AgeGroup == models.AgeGroupChildFriendly {
-						@event_components.Event_propertie("Barnevennlig", "child-friendly-event.svg")
+						@event_components.Event_property("Barnevennlig", "child-friendly-event.svg")
 					}
 					if event.Runtime == models.RunTimeLongRunning {
-						@event_components.Event_propertie("Varer mer enn 6 timer", "more-than-6-hours.svg")
+						@event_components.Event_property("Varer mer enn 6 timer", "more-than-6-hours.svg")
 					}
 					if event.Runtime == models.RunTimeShortRunning {
-						@event_components.Event_propertie("Varer kortere 3 timer", "less-than-3-hours.svg")
+						@event_components.Event_property("Varer kortere 3 timer", "less-than-3-hours.svg")
 					}
 					if event.BeginnerFriendly {
-						@event_components.Event_propertie("Nybegynnervennlig", "beginner-friendly.svg")
+						@event_components.Event_property("Nybegynnervennlig", "beginner-friendly.svg")
 					}
 					if event.CanBeRunInEnglish {
-						@event_components.Event_propertie("Can be run in English", "english.svg")
+						@event_components.Event_property("Can be run in English", "english.svg")
 					}
 				</div>
 			</div>
-			<p>{ event.Description } </p>
+			<div class="description">
+				<p>{ event.Description } </p>
+			</div>
 		</div>
+		@components.PreviousNextBar(previousNextData)
 	</div>
 }

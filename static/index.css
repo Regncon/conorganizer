@@ -9,7 +9,8 @@
     --color-primary-hover: #E7A96566;
     --color-primary-focus-visible: #feb56780;
     --color-primary-active: #feb56799;
-    --color-primary-strong: #E7A965; /* Deprecated variable, use color-primary instead */
+    --color-primary-strong: #E7A965;
+    /* Deprecated variable, use color-primary instead */
 
     --color-secondary-text: var(--color-text-soft);
     --color-secondary: #CCD1E9;
@@ -41,15 +42,18 @@
     --text-article: 20px;
 
     /* spacings */
-    --spacing-xsmall: 12px;
-    --spacing-small: 16px;
-    --spacing-medium: 20px;
-    --spacing-large: 32px;
-    --spacing-xlarge: 40px;
+    --spacing-1x: 4px;
+    --spacing-2x: 8px;
+    --spacing-3x: 12px;
+    --spacing-4x: 16px;
+    --spacing-5x: 20px;
+    --spacing-8x: 32px;
+    --spacing-10x: 40px;
+
 
     /* border */
-    --border-radius-small: 4px;
-    --border-radius-medium: 8px;
+    --border-radius-1x: 4px;
+    --border-radius-2x: 8px;
 
     /* content width */
     --page-header-max-width: 1920px;
@@ -57,7 +61,7 @@
 
     /* breakpoints */
     --mobile-min-width: 320px;
-    --mobile-max-column-width: 430px;
+    --mobile-max-width: 600px;
 
     /* nav */
     --nav-height: 4rem;
@@ -119,6 +123,11 @@ body {
         container-name: formsubmission-css-container;
         display: grid;
     }
+
+    .event-container {
+        container-type: inline-size;
+        container-name: event-container;
+    }
 }
 
 .header-content-container {
@@ -126,21 +135,26 @@ body {
     padding: 0 8px;
     margin: 0 auto;
 }
+
 .page-content-container {
     max-width: var(--page-content-max-width);
     padding: 0 8px;
     margin: 0 auto;
 }
+
 @container main (width > 600px) {
+
     .header-content-container,
     .page-content-container {
-        padding: 0 var(--spacing-medium);
+        padding: 0 var(--spacing-5x);
     }
 }
+
 @container main (width > 1200px) {
+
     .header-content-container,
     .page-content-container {
-        padding: 0 var(--spacing-xlarge);
+        padding: 0 var(--spacing-10x);
     }
 }
 
@@ -151,29 +165,35 @@ h1 {
 
 h1.page-heading {
     font-size: 32px;
-    margin: var(--spacing-medium) 0;
+    margin: var(--spacing-5x) 0;
+
     &.has-helptext {
-        margin-bottom: var(--spacing-xsmall);
+        margin-bottom: var(--spacing-3x);
     }
 }
+
 .page-heading-helptext {
-    margin-bottom: var(--spacing-medium);
+    margin-bottom: var(--spacing-5x);
 }
+
 @container main (width > 600px) {
     h1.page-heading {
         font-size: 40px;
-        margin: var(--spacing-large) 0;
+        margin: var(--spacing-8x) 0;
     }
+
     .page-heading-helptext {
-        margin-bottom: var(--spacing-large);
+        margin-bottom: var(--spacing-8x);
     }
 }
+
 @container main (width > 1000px) {
     h1.page-heading {
-        margin: var(--spacing-xlarge) 0;
+        margin: var(--spacing-10x) 0;
     }
+
     .page-heading-helptext {
-        margin-bottom: var(--spacing-xlarge);
+        margin-bottom: var(--spacing-10x);
     }
 }
 
@@ -192,7 +212,8 @@ h4 {
 p {
     margin: 0;
 }
-p + p {
+
+p+p {
     margin-top: 1rem
 }
 
@@ -211,7 +232,7 @@ hr {
 .input {
     background-color: var(--bg-item);
     color: var(--color-text-primary);
-    border-radius: var(--border-radius-medium);
+    border-radius: var(--border-radius-2x);
     min-height: 2.6rem;
     border: 1px solid var(--bg-item-border);
     font-size: 1rem;
@@ -232,6 +253,28 @@ hr {
     outline: 0;
     border: 1px solid var(--color-primary-hover);
     box-shadow: 0 0 0 .25rem hsla(from var(--color-primary-hover) h s l / 0.25);
+}
+
+.slider {
+    accent-color: var(--color-primary);
+}
+
+/* Firefox: lets you color the selected portion explicitly */
+.slider::-moz-range-progress {
+    background: var(--color-primary);
+}
+
+.slider::-moz-range-track {
+    background: var(--color-primary-focus);
+}
+
+/* WebKit (Chrome/Edge/Safari): thumb only; track fill can’t be styled separately with pure CSS */
+.slider::-webkit-slider-thumb {
+    background: var(--color-primary);
+}
+
+.slider::-webkit-slider-runnable-track {
+    background: var(--bg-item-border);
 }
 
 input {
@@ -279,27 +322,26 @@ input {
 }
 
 .card {
-    max-width: var(--mobile-max-column-width);
-    min-width: var(--mobile-min-width);
-    background: #31354e;
-    border-radius: var(--border-radius-small);
+    width: var(--mobile-responsive-min-width);
+    background: var(--bg-surface);
+    border-radius: var(--border-radius-1x);
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     padding: 1rem;
 }
 
 .form-card {
-    border-radius: var(--border-radius-medium);
+    border-radius: var(--border-radius-2x);
     background-color: var(--bg-surface);
-    padding: var(--spacing-medium);
+    padding: var(--spacing-5x);
 }
 
 .form-card-title {
-    margin-bottom: var(--spacing-xsmall);
+    margin-bottom: var(--spacing-3x);
 }
 
 .item-card {
     padding: 1rem;
     background-color: var(--bg-item);
-    border-radius: var(--border-radius-medium);
+    border-radius: var(--border-radius-2x);
     font-size: 0.9rem;
 }

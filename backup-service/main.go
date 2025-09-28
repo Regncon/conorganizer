@@ -55,11 +55,11 @@ func main() {
 	logger.Info("All startup tasks completed, now running server")
 
 	// Run once on startup
-	/* backupService.Manual()
-	backupService.Hourly()
-	backupService.Daily()
-	backupService.Weekly()
-	backupService.Yearly() */
+	backupService.Manual()
+	// backupService.Hourly()
+	// backupService.Daily()
+	// backupService.Weekly()
+	// backupService.Yearly()
 
 	// Create new context for dashboard to avoid polution
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

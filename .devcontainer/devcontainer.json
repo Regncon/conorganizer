@@ -6,7 +6,8 @@
 	"image": "mcr.microsoft.com/devcontainers/go:1-1.24-bookworm",
 	"features": {
 		"ghcr.io/eitsupi/devcontainer-features/go-task:1": {},
-		"ghcr.io/warrenbuckley/codespace-features/sqlite:1": {}
+		"ghcr.io/warrenbuckley/codespace-features/sqlite:1": {},
+        "ghcr.io/devcontainers-extra/features/wget-homebrew:1": {}
 	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
@@ -16,7 +17,7 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "go get -tool github.com/a-h/templ/cmd/templ@latest & task live"
+	"postCreateCommand": "go get -tool github.com/a-h/templ/cmd/templ@latest & task start"
 
 	// Configure tool-specific properties.
 	// "customizations": {},

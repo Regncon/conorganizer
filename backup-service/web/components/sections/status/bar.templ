@@ -13,7 +13,7 @@ templ StatusBar(logs []models.BackupLog) {
 				if i < len(logs) {
 					<a href={ fmt.Sprintf("#log-%d", logs[i].ID)} class={ logs[i].Status }></a>
 				} else {
-					<a style="background-color: lightgray;"></a>
+					<a style="background-color: var(--color-status-background);"></a>
 				}
 			}
 		</div>
