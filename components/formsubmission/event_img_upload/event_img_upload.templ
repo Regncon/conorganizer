@@ -124,7 +124,7 @@ templ page(eventId string, db *sql.DB, logger *slog.Logger) {
 	<style>
 		.img-upload-form-content {
 			display: flex;
-			flex-direction: column; 
+			flex-direction: column;
 			gap: var(--responsive-pane-column-spacing);
 		}
 		.back-button-container {
@@ -194,14 +194,14 @@ if eventErr == nil {
 	<article class="page-content-container">
 		<h1 class="page-heading">Last opp bilde</h1>
 		<div class="img-upload-form-content">
-		<div class="back-button-container">
+			<div class="back-button-container">
 				<a
-					href={ "/my-events/new/" + eventId + "/" }
+					href="javascript:window.history.back();"
 					class="btn btn--outline"
 				>
 					Tilbake til arrangementside
 				</a>
-		</div>
+			</div>
 			<div class="surface-pane image-upload-container">
 				<div class="item-card">
 					<p class="image-upload-info-label">
