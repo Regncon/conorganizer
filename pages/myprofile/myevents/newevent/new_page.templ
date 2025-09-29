@@ -35,8 +35,8 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 	} else {
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
-			{Name: "Mine Arrangementer", Url: "/my-events/"},
-			{Name: "Nytt Arrangement", Url: ""},
+			{Name: "Mine arrangementer", Url: "/my-events/"},
+			{Name: "Nytt arrangement", Url: ""},
 		})
 		<div style="display: flex; gap: 4rem;">
 			<form
@@ -44,7 +44,7 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 				action={ "/my-events/api/new/" + eventData.ID + "/submit" }
 				method="post"
 			>
-				<h1 class="page-heading">Nytt Arrangement</h1>
+				<h1 class="page-heading">Nytt arrangement</h1>
 				@formsubmission.FormBody(eventData, isAdmin)
 				@formsubmission.SubmitSection()
 			</form>
