@@ -13,17 +13,6 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 	<style>
 		.wrapper {
 			--event-banner-height: 25rem;
-			--event-header-height: 10.1875rem;
-			--event-header-width: 65.5rem;
-			--event-header-missing-from-translating: 9px;
-			--event-header-half-height-and-translate: calc(
-				var(--event-header-height) / 2 -
-					var(--event-header-missing-from-translating)
-			);
-			--event-header-overlapp: var(
-				--event-header-half-height-and-translate
-			);
-
 			--line-height-mobile: 1.4;
 			--line-height: var(--line-height-mobile, 1.4);
 
@@ -32,16 +21,12 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 			width: var(--mobile-responsive-min-width);
 			gap: var(--spacing-4x);
             margin-inline: auto;
-			.event-image {
-				height: 150px;
-				display: block;
-			}
 
 			.stack {
 				.event-image {
 					object-fit: none;
 					width: 100%;
-					height: 209px;
+					height: 13.0625rem;
 				}
 				.event-header {
 					display: flex;
@@ -142,7 +127,6 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					p {
 						margin: 0;
 						margin-block-start: var(--spacing-2x);
-						word-break: break-all;
 						line-height: var(--line-height);
 					}
 				}
@@ -158,10 +142,6 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				gap: var(--spacing-8x);
 
 				.stack {
-					--event-banner-height: 25rem;
-					--event-header-height: 10.1875rem;
-					--event-header-width: 65.0625rem;
-					--event-header-missing-from-translating: 9px;
 					.event-image {
 						height: var(--event-banner-height);
 					}
@@ -286,6 +266,10 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 						grid-area: description;
 					}
 				}
+
+                .prev-next-wrapper {
+                    padding-inline: var(--spacing-10x);
+                }
 			}
 		}
 	</style>
