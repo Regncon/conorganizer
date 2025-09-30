@@ -34,7 +34,7 @@ templ EventInterests() {
                 height: fit-content;
 
                 .btn {
-                    padding-inline-end: var(--spacing-2x);
+                    padding-inline: var(--spacing-2x);
                 }
             }
 
@@ -42,8 +42,17 @@ templ EventInterests() {
                 margin-block-end: var(--spacing-5x);
             }
 
+            .ticket-holder-picker {
+                margin-block-end: var(--spacing-5x);
+            }
+
+            button {
+                place-content: start;
+            }
+
             button .emoji {
-                font-size: 22px;
+                font-size: 25px;
+                margin-inline-end: var(--spacing-5x);
             }
 
         }
@@ -58,11 +67,14 @@ templ EventInterests() {
 			</form>
 		</header>
 		<hr/>
-		<p>Greetings, one and all!</p>
-		<button class="btn btn--cta"><span class="emoji">😑</span> Ikke interessert</button>
-		<button class="btn btn--cta"><span class="emoji">🤨</span> Litt interessert </button>
-		<button class="btn btn--cta"><span class="emoji">🙂</span> Interessert</button>
+		<div class="ticket-holder-picker">
+			<p>Select billettholder</p>
+			<button class="btn btn--secondary">VELG PERSON</button>
+		</div>
 		<button class="btn btn--cta"><span class="emoji">🤩</span> Veldig interessert</button>
+		<button class="btn btn--cta"><span class="emoji">🙂</span> Interessert</button>
+		<button class="btn btn--cta"><span class="emoji">🤨</span> Litt interessert </button>
+		<button class="btn btn--cta"><span class="emoji">😑</span> Ikke interessert</button>
 	</dialog>
 	<script defer>
         const modal = document.querySelector(".interest-dialog");
