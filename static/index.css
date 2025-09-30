@@ -28,6 +28,7 @@
     --bg-surface: #252735;
     --bg-item: var(--bg-body-90);
     --bg-item-border: #494d62;
+    --bg-backdrop: #11111B;
 
     --bg-body-100: #1A1B26;
     --bg-body-90: #35394A;
@@ -57,6 +58,9 @@
     /* border */
     --border-radius-1x: 4px;
     --border-radius-2x: 8px;
+
+    /* shadow */
+    --shadow-dialog: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
 
     /* content width */
     --page-header-max-width: 1920px;
@@ -341,14 +345,16 @@ input {
     padding: 1rem;
 }
 
-.form-card, /* deprecate this class, use surface-pane instead */
+.form-card,
+/* deprecate this class, use surface-pane instead */
 .surface-pane {
     border-radius: var(--border-radius-2x);
     background-color: var(--bg-surface);
     padding: var(--spacing-5x);
 }
 
-.form-card-title, /* deprecate this class, use surface-pane instead */
+.form-card-title,
+/* deprecate this class, use surface-pane instead */
 .surface-pane-title {
     margin-bottom: var(--spacing-3x);
 }
