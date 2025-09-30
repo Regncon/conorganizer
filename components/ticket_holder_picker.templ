@@ -1,6 +1,7 @@
 package components
 
-templ TicketHolderPicker() {
+// Takes a selected parameter to highlight the selected ticket holder
+templ TicketHolderPicker(selected string) {
 	<style>
         .ticket-holder-picker-container  {
             container-type: inline-size;
@@ -11,6 +12,9 @@ templ TicketHolderPicker() {
             .btn {
                 padding: 0;
                 width: 100%;
+                place-content: start;
+                padding-inline: var(--spacing-4x);
+
                 .initials {
                     display: flex;
                     place-content: center;
@@ -25,13 +29,25 @@ templ TicketHolderPicker() {
                     margin-inline-end: var(--spacing-2x);
                 }
             }
+
+            .btn--selected {
+                border-color: var(--color-primary);
+                color: var(--color-primary);
+            }
         }
 
     </style>
 	<div class="ticket-holder-picker ticket-holder-picker-container">
-		<button class="btn btn--outline">
+		<button class={ "btn", "btn--outline", addSelectedClass(selected) }>
 			<span class="initials">TH</span>
 			name here
 		</button>
 	</div>
+}
+
+func addSelectedClass(selected string) string {
+	if selected != "" {
+		return "btn--selected"
+	}
+	return ""
 }
