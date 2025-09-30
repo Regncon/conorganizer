@@ -38,6 +38,10 @@ templ EventInterests() {
                 margin-block-end: var(--spacing-5x);
             }
 
+            button .emoji {
+                font-size: 22px;
+            }
+
         }
 
 
@@ -51,10 +55,10 @@ templ EventInterests() {
 		</header>
 		<hr/>
 		<p>Greetings, one and all!</p>
-		<button class="btn btn--cta">😑 Ikke interessert</button>
-		<button class="btn btn--cta">🤨 Litt interessert </button>
-		<button class="btn btn--cta">🙂 Interessert</button>
-		<button class="btn btn--cta">🤩 Veldig interessert</button>
+		<button class="btn btn--cta"><span class="emoji">😑</span> Ikke interessert</button>
+		<button class="btn btn--cta"><span class="emoji">🤨</span> Litt interessert </button>
+		<button class="btn btn--cta"><span class="emoji">🙂</span> Interessert</button>
+		<button class="btn btn--cta"><span class="emoji">🤩</span> Veldig interessert</button>
 	</dialog>
 	<script defer>
         const modal = document.querySelector(".interest-dialog");
