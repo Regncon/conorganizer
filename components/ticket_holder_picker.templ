@@ -2,14 +2,36 @@ package components
 
 templ TicketHolderPicker() {
 	<style>
+        .ticket-holder-picker-container  {
+            container-type: inline-size;
+            container-name: ticket-holder-picker-container;
+        }
         .ticket-holder-picker {
 
+            .btn {
+                padding: 0;
+                width: 100%;
+                .initials {
+                    display: flex;
+                    place-content: center;
+                    place-items: center;
+                    font-size: 12px;
+                    color: var(--color-text-strong);
+                    background-color: hsl(120 100% 25% / 0.7);
+                    border: 1px solid hsl(120 75% 42% / 0.3);
+                    border-radius: 50%;
+                    width: min(1.5rem, 100%);
+                    height: min(1.5rem, 100%);
+                    margin-inline-end: var(--spacing-2x);
+                }
+            }
         }
+
     </style>
-	<div class="ticket-holder-picker">
-		<button class="btn btn--outline interest-button">
-			<span class="emoji">⭐</span>
-			Meld interesse
+	<div class="ticket-holder-picker ticket-holder-picker-container">
+		<button class="btn btn--outline">
+			<span class="initials">TH</span>
+			name here
 		</button>
 	</div>
 }
