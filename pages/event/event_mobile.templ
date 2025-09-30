@@ -297,12 +297,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				<span>
 					Du kan melde interesse når programmet slippes!
 				</span>
-				<button
-					class="btn btn--cta"
-					disabled
-				>
-					Meld interesse
-				</button>
+				@event_components.EventInterests()
 			</div>
 			<div class="card details">
 				<div class="details-top">
