@@ -143,6 +143,7 @@ body {
 }
 
 .header-content-container {
+    width: 100%;
     max-width: var(--page-header-max-width);
     padding: 0 8px;
     margin: 0 auto;
@@ -152,6 +153,17 @@ body {
     max-width: var(--page-content-max-width);
     padding: 0 8px;
     margin: 0 auto;
+}
+
+/**
+ * Style that controls the container around the breadcrumbs, which renders a
+ * horizontal bar below the elements within.
+ */
+.top-of-page-container {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--bg-item);
+    min-height: 40px;
 }
 
 @container main (width > 600px) {

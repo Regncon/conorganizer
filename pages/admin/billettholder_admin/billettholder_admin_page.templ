@@ -57,11 +57,15 @@ func billettholdereSearchRoute(
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	{{ bilettholdere, err := billettholderService.GetBilettholdere(db, logger) }}
 	<div id="billettholder-admin-container">
-		@components.Breadcrumbs([]components.BreadcrumbPath{
-			{Name: "Hjem", Url: "/"},
-			{Name: "Admin", Url: "/admin/"},
-			{Name: "Bilettholdere", Url: ""},
-		})
+		<div class="top-of-page-container">
+			<div class="header-content-container">
+				@components.Breadcrumbs([]components.BreadcrumbPath{
+					{Name: "Hjem", Url: "/"},
+					{Name: "Admin", Url: "/admin/"},
+					{Name: "Bilettholdere", Url: ""},
+				})
+			</div>
+		</div>
 		<article class="page-content-container">
         <div style="display: flex; gap: 1rem; align-items: center;">
 			<h1 class="page-heading">Billettholdere</h1>

@@ -33,12 +33,16 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 		<h1>Arrangementet er allerede godkjent eller publisert</h1>
 		<h2>Ta kontakt med RegnCon styret på Dicord eller via epost om du ønsker å gjøre endringer på arrangementet.</h2>
 	} else {
-		@components.Breadcrumbs([]components.BreadcrumbPath{
-			{Name: "Hjem", Url: "/"},
-			{Name: "Mine arrangementer", Url: "/my-events/"},
-			{Name: "Nytt arrangement", Url: ""},
-		})
-		<div style="display: flex; gap: 4rem;">
+		<div class="top-of-page-container">
+			<div class="header-content-container">
+				@components.Breadcrumbs([]components.BreadcrumbPath{
+					{Name: "Hjem", Url: "/"},
+					{Name: "Mine arrangementer", Url: "/my-events/"},
+					{Name: "Nytt arrangement", Url: ""},
+				})
+			</div>
+		</div>
+		<div style="display: flex;">
 			<form
 				class="formsubmission-wrapper page-content-container"
 				action={ "/my-events/api/new/" + eventData.ID + "/submit" }
