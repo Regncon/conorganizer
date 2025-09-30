@@ -227,10 +227,12 @@
 }
 
 .btn--interest {
+    --btn-interest-border-text-color: var(--color-text-soft);
+
     font-weight: 400;
     font-size: 20px;
-    color: var(--color-text-soft);
-    border: 1px solid var(--bg-item-border);
+    color: var(--btn-interest-border-text-color);
+    border: 1px solid var(--btn-interest-border-text-color);
     background-color: var(--bg-item);
     height: var(--btn-height-cta);
     place-content: start;
