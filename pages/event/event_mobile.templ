@@ -20,7 +20,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 			flex-direction: column;
 			width: var(--mobile-responsive-min-width);
 			gap: var(--spacing-4x);
-            margin-inline: auto;
+			margin-inline: auto;
 
 			.stack {
 				.event-image {
@@ -241,9 +241,9 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 					.details {
 						grid-area: details;
-                        grid-template-columns: unset;
-                        padding-block-start: 0;
-                        padding: 0;
+						grid-template-columns: unset;
+						padding-block-start: 0;
+						padding: 0;
 
 						.details-top,
 						.details-bottom {
@@ -267,9 +267,9 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 				}
 
-                .prev-next-wrapper {
-                    padding-inline: var(--spacing-10x);
-                }
+				.prev-next-wrapper {
+					padding-inline: var(--spacing-10x);
+				}
 			}
 		}
 	</style>
@@ -351,7 +351,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				<hr/>
 				<div class="details-bottom">
 					if event.AgeGroup == models.AgeGroupAdultsOnly {
-						@event_components.Event_property("Egne for voksne", "adults-only-event.svg")
+						@event_components.Event_property("Egnet for voksne", "adults-only-event.svg")
 					}
 					if event.AgeGroup == models.AgeGroupChildFriendly {
 						@event_components.Event_property("Barnevennlig", "child-friendly-event.svg")
