@@ -27,11 +27,7 @@ type PreviousNext struct {
 templ PreviousNextBar(previousNextData PreviousNext) {
 	<style>
 		.prev-next-wrapper {
-			--linear-gradient-mask: linear-gradient(
-				to left,
-				black 19%,
-				transparent 32%
-			);
+			--linear-gradient-mask: linear-gradient(to left, black 19%, transparent 63%);
 			--prev-next-max-width: 25.3125rem;
 			--prev-next-responsive-max-width: min(
 				100%,
@@ -70,12 +66,6 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 					width: var(--prev-next-responsive-max-width);
 				}
 			}
-		}
-
-                    a {
-                        width: var(--prev-next-responsive-max-width);
-                    }
-                }
         }
 
         @container event-container (width > 65.0625rem) {
@@ -155,7 +145,7 @@ templ previousButton(title string, disabled bool, imgurl string) {
 		if disabled {
 			<div></div>
 		}
-		if !disabled {
+		if !disabled && imgurl != "" {
 			<img
 				src={ imgurl }
 				title={ title }
@@ -179,7 +169,7 @@ templ nextButton(title string, disabled bool, imgurl string) {
 		if disabled {
 			<div></div>
 		}
-		if !disabled {
+		if !disabled && imgurl != "" {
 			<img
 				src={ imgurl }
 				title={ title }

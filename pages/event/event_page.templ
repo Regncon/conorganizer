@@ -17,7 +17,7 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventI
 	{{
 	event, err := eventservice.GetEventById(eventId, db, logger)
 	}}
-	{{ previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId) }}
+	{{ previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId, eventImageDir) }}
 	if err != nil {
 		logger.Error("Failed to get previous/next data", "error", err)
 		return

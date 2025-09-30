@@ -3,11 +3,14 @@ package eventservice
 import (
 	"context"
 	"database/sql"
-	"github.com/Regncon/conorganizer/components"
 	"log/slog"
+	"strings"
+
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-func GetPreviousNext(ctx context.Context, db *sql.DB, logger *slog.Logger, currentID string) (components.PreviousNext, error) {
+func GetPreviousNext(ctx context.Context, db *sql.DB, logger *slog.Logger, currentID string, eventImageDir *string) (components.PreviousNext, error) {
 	const q = `
 WITH ordered AS (
   SELECT
@@ -45,13 +48,23 @@ WHERE id = ?;`
 		return components.PreviousNext{}, err
 	}
 
+	PrevImageBannerUrl := eventimage.GetEventImageUrl(nstr(prevID), "banner", eventImageDir)
+	NextImageBannerUrl := eventimage.GetEventImageUrl(nstr(nextID), "banner", eventImageDir)
+
+	if strings.Contains(PrevImageBannerUrl, "placeholder") {
+		PrevImageBannerUrl = ""
+	}
+	if strings.Contains(NextImageBannerUrl, "placeholder") {
+		NextImageBannerUrl = ""
+	}
+
 	return components.PreviousNext{
 		PreviousUrl:      nstr(prevID),
 		PreviousTitle:    nstr(prevTitle),
-		PreviousImageURL: nstr(prevImg),
+		PreviousImageURL: PrevImageBannerUrl,
 		NextUrl:          nstr(nextID),
 		NextTitle:        nstr(nextTitle),
-		NextImageURL:     nstr(nextImg),
+		NextImageURL:     NextImageBannerUrl,
 	}, nil
 }
 

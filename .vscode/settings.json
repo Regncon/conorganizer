@@ -39,6 +39,7 @@
         "newevent",
         "NOPASSWD",
         "nowrap",
+        "nstr",
         "omitempty",
         "passwordless",
         "prevnext",
