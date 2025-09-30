@@ -6,10 +6,10 @@ templ EventInterests() {
         ::backdrop {
             background-image: linear-gradient(
                 45deg,
-                var(--bg-base)
+                var(--bg-backdrop)
             );
 
-            opacity: 0.75;
+            opacity: 0.60;
         }
 
         .interest-dialog {
@@ -21,9 +21,10 @@ templ EventInterests() {
             visibility: visible;
             display: grid;
             width: var(--dialog-width);
-            background-color: var(--bg-base);
+            background-color: var(--bg-surface);
             border: none;
             padding: var(--spacing-5x);
+            box-shadow: var(--shadow-dialog);
 
             .dialog-header {
                 display: flex;
@@ -53,8 +54,6 @@ templ EventInterests() {
             }
 
         }
-
-
     </style>
 	<dialog class="interest-dialog" closedby="any">
 		<header class="dialog-header">
