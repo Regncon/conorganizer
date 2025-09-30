@@ -3,6 +3,7 @@
 data/*
 database/*
 backup-service/regncon
+local-event-images
 *_templ.go
 *_templ.txt
 
