@@ -15,7 +15,7 @@ func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		layouts.Base(
-			"Godkjenning av Arrangementer",
+			"Godkjenning av arrangementer",
 			requestctx.UserRequestInfo{
 				IsLoggedIn: true,
 				IsAdmin:    true,
