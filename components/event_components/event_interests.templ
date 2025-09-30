@@ -20,34 +20,34 @@ templ EventInterests() {
         }
 
         .interest-dialog[open] {
-            --dialog-width: min(56.25rem, 90%);
+            --dialog-width: min(30rem, 90%);
             visibility: visible;
             display: grid;
             width: var(--dialog-width);
             background-color: var(--bg-base);
             border: none;
+            padding: var(--spacing-5x);
 
             .dialog-header {
                 display: flex;
                 place-content: space-between;
                 place-items: center;
                 height: fit-content;
+                margin-block-end: var(--spacing-5x);
 
                 .btn {
                     padding-inline: var(--spacing-2x);
                 }
             }
 
-            hr {
-                margin-block-end: var(--spacing-5x);
-            }
-
             .ticket-holder-picker {
                 margin-block-end: var(--spacing-5x);
             }
 
-            button {
-                place-content: start;
+            .interest-buttons {
+                display: flex;
+                flex-direction: column;
+                gap: var(--spacing-3x);
             }
 
             button .emoji {
@@ -63,18 +63,19 @@ templ EventInterests() {
 		<header class="dialog-header">
 			<h3>Meld interesse</h3>
 			<form method="dialog">
-				<button autofocus class="btn btn--ghost close">❌</button>
+				<button autofocus class="btn btn--ghost close"><img src="/static/icons/x.svg"/></button>
 			</form>
 		</header>
-		<hr/>
 		<div class="ticket-holder-picker">
 			<p>Select billettholder</p>
 			<button class="btn btn--secondary">VELG PERSON</button>
 		</div>
-		<button class="btn btn--cta"><span class="emoji">🤩</span> Veldig interessert</button>
-		<button class="btn btn--cta"><span class="emoji">🙂</span> Interessert</button>
-		<button class="btn btn--cta"><span class="emoji">🤨</span> Litt interessert </button>
-		<button class="btn btn--cta"><span class="emoji">😑</span> Ikke interessert</button>
+		<div class="interest-buttons">
+			<button class="btn btn--interest"><span class="emoji">🤩</span> Veldig interessert</button>
+			<button class="btn btn--interest"><span class="emoji">🙂</span> Interessert</button>
+			<button class="btn btn--interest"><span class="emoji">🤨</span> Litt interessert </button>
+			<button class="btn btn--interest"><span class="emoji">😑</span> Ikke interessert</button>
+		</div>
 	</dialog>
 	<script defer>
         const modal = document.querySelector(".interest-dialog");

@@ -225,3 +225,24 @@
     color: var(--btn-disabled-text);
     cursor: not-allowed;
 }
+
+.btn--interest {
+    font-weight: 400;
+    font-size: 20px;
+    color: var(--color-text-soft);
+    border: 1px solid var(--bg-item-border);
+    background-color: var(--bg-item);
+    height: var(--btn-height-cta);
+    place-content: start;
+    padding: 0;
+    padding-inline: var(--spacing-4x);
+    padding-block: var(--spacing-3x);
+    width: min(30rem, 100%);
+}
+
+.btn--interest:hover,
+.btn--interest:focus-visible,
+.btn--interest-selected {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
