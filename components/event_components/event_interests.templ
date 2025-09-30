@@ -1,27 +1,54 @@
 package event_components
 
 templ EventInterests() {
-	<style>    ::backdrop {
-        background-image: linear-gradient(
-            45deg,
-            magenta,
-            rebeccapurple,
-            dodgerblue,
-            green
-        );
+	<style>
 
-        opacity: 0.75;
+        ::backdrop {
+            background-image: linear-gradient(
+                45deg,
+                magenta,
+                rebeccapurple,
+                dodgerblue,
+                green
+            );
+
+            opacity: 0.75;
         }
 
         .interest-dialog {
-            z-index: 4;
+            visibility: hidden;
         }
+
+        .interest-dialog[open] {
+            --dialog-width: min(56.25rem, 90%);
+            visibility: visible;
+            display: grid;
+            width: var(--dialog-width);
+            background-color: var(--bg-base);
+            border: none;
+
+            .dialog-header {
+                display: flex;
+                place-content: space-between;
+                place-items: center;
+                height: fit-content;
+            }
+
+            hr {
+                margin-block-end: var(--spacing-5x);
+            }
+        }
+
 
     </style>
 	<dialog class="interest-dialog" closedby="any">
-		<form method="dialog">
-			<button autofocus>Close</button>
-		</form>
+		<header class="dialog-header">
+			<h3>Meld interesse</h3>
+			<form method="dialog">
+				<button autofocus class="btn btn--ghost close">❌</button>
+			</form>
+		</header>
+		<hr/>
 		<p>Greetings, one and all!</p>
 	</dialog>
 	<script defer>
@@ -34,6 +61,6 @@ templ EventInterests() {
             modal.showModal();
         };
 
-        button.addEventListener("click", handleButtonClick);
+        button.addEventListener("click", handleButtonClick, { signal: buttonSignal });
     </script>
 }

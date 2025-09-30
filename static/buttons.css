@@ -29,7 +29,7 @@
     --btn-secondary-active-text: var(--color-text-strong);
     --btn-secondary-focus-shadow: var(--color-primary-focus-visible);
 
-    /* --tline */
+    /* --outline */
     --btn-outline-border: var(--color-secondary);
     --btn-outline-hover-bg: var(--color-secondary-hover);
     --btn-outline-active-bg: var(--color-secondary-active);
