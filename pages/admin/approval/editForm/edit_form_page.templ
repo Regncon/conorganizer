@@ -3,12 +3,12 @@ package edit_form
 import (
 	"context"
 	"database/sql"
-	"log/slog"
-	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
-	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/pages/event"
+	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/eventService"
+	"log/slog"
 )
 
 templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
@@ -21,7 +21,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 	{{
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
 	isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
-	previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId)
+	previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId, eventImageDir)
 	}}
 	if err != nil {
 		logger.Error("Failed to get previous/next data", "error", err)
