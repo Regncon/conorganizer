@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"fmt"
+	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -49,4 +50,5 @@ templ eventIndex(id string, logger *slog.Logger, db *sql.DB, eventImageDir *stri
 			@event_page_content(id, logger, db, eventImageDir)
 		</div>
 	</div>
+	@event_components.EventInterests()
 }

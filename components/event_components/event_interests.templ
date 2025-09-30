@@ -1,10 +1,39 @@
 package event_components
 
 templ EventInterests() {
-	<button
-		class="btn btn--cta"
-		disabled
-	>
-		Meld interesse
-	</button>
+	<style>    ::backdrop {
+        background-image: linear-gradient(
+            45deg,
+            magenta,
+            rebeccapurple,
+            dodgerblue,
+            green
+        );
+
+        opacity: 0.75;
+        }
+
+        .interest-dialog {
+            z-index: 4;
+        }
+
+    </style>
+	<dialog class="interest-dialog" closedby="any">
+		<form method="dialog">
+			<button autofocus>Close</button>
+		</form>
+		<p>Greetings, one and all!</p>
+	</dialog>
+	<script defer>
+        const modal = document.querySelector(".interest-dialog");
+        const button = document.querySelector(".interest-button");
+        const buttonAbortController = new AbortController();
+        const buttonSignal = buttonAbortController.signal;
+
+        const handleButtonClick = () => {
+            modal.showModal();
+        };
+
+        button.addEventListener("click", handleButtonClick);
+    </script>
 }
