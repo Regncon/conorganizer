@@ -161,6 +161,10 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger)
 
 					// refactor to use "update/status etc"
+					newApiIdRouter.Route("/room-name", func(putRoomNameRouter chi.Router) {
+						formsubmission.UpdateRoomName(putRoomNameRouter, db, kv)
+					})
+
 					newApiIdRouter.Route("/status", func(putStatusRouter chi.Router) {
 						formsubmission.UpdateStatus(putStatusRouter, db, kv)
 					})

@@ -6,50 +6,58 @@ import (
 	"fmt"
 
 	"database/sql"
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	//"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func UpdatePulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
-		type Store struct {
-			Input bool `json:"canBeRunInEnglish"`
-		}
-		store := &Store{}
+func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	//router.Route("/event/api", func(eventRouter chi.Router) {
+	//eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+	//	eventRouter.Route("/{pujeId}", func(eventIdRouter chi.Router) {
+	//eventRouter.Put("/{puljeId}", func(w http.ResponseWriter, r *http.Request) {
+	//eventID := chi.URLParam(r, "idx")
+	eventRouter.Route("/{puljeId}", func(punjeIdRouter chi.Router) {
+		punjeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 
-		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+			puljeId := chi.URLParam(r, "puljeId")
+			fmt.Println("Pulje ID:", puljeId)
+			if puljeId == "" {
+				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
+				return
+			}
+			/*
+				type Store struct {
+					Input bool `json:"canBeRunInEnglish"`
+				}
+				store := &Store{}
 
-		eventID := chi.URLParam(r, "id")
-		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
-			return
-		}
+				if err := datastar.ReadSignals(r, store); err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
 
-		query := `UPDATE events SET can_be_run_in_english = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
-		if err != nil {
-			http.Error(w, "Failed to update the can be run in English for event in the database", http.StatusInternalServerError)
-			return
-		}
+				eventID := chi.URLParam(r, "id")
+				if eventID == "" {
+					http.Error(w, "Event ID is required", http.StatusBadRequest)
+					return
+				}
 
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
-			return
-		}
+				query := `UPDATE events SET can_be_run_in_english = ? WHERE id = ?`
+				_, err := db.Exec(query, store.Input, eventID)
+				if err != nil {
+					http.Error(w, "Failed to update the can be run in English for event in the database", http.StatusInternalServerError)
+					return
+				}
+
+				if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+					http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+					return
+				}
+			*/
+		})
 	})
 }
-
-/*
-
-('Fredag kveld', '2025-09-06T18:00:00Z'),
-('Lørdag morgen', '2025-09-07T10:00:00Z'),
-('Lørdag kveld', '2025-09-07T18:00:00Z'),
-('Søndag morgen', '2025-09-08T10:00:00Z');
-*/
 
 templ puljeRow(eventId string, puljeId int, puljeName string, puljeTime string, roomName string, isChecked bool) {
 	<div style="display: grid; grid-template-columns: minmax(120px,250px) 1fr; gap: 2rem; align-items: center; justify-items: start;">
@@ -62,10 +70,10 @@ templ puljeRow(eventId string, puljeId int, puljeName string, puljeTime string, 
 					if isChecked {
 						checked
 					}
-					data-bind="canBeRunInEnglish"
-					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/updat-pulje", eventId) }
+					data-bind={ fmt.Sprintf("puljeId-%d", puljeId) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/updat-pulje/%d", eventId, puljeId) }
 					type="checkbox"
-					name="english-label"
+					name="pulje"
 					class="checkbox input"
 				/>
 				{ puljeName } { puljeTime }
@@ -74,14 +82,14 @@ templ puljeRow(eventId string, puljeId int, puljeName string, puljeTime string, 
 		<label class="label-small color-strong form-group" style="width: 25rem;">
 			Rom { puljeName }
 			<div
-				data-signals={ fmt.Sprintf("{roomPuljeId-%d}", puljeId) }
+				data-signals={ fmt.Sprintf(`"roomPuljeId-%d"`, puljeId) }
 			></div>
 			<input
-				name="title"
+				name="room"
 				class="input"
 				type="text"
 				data-bind={ fmt.Sprintf("roomPuljeId-%d", puljeId) }
-				data-on-change={ datastar.PutSSE("/my-events/api/new/%s/rom-name", eventId) }
+				data-on-change={ datastar.PutSSE("/my-events/api/new/%s/room-name/%d", eventId, puljeId) }
 				placeholder="Rom for arrangementet"
 				required
 			/>
@@ -93,10 +101,10 @@ templ puljefordeling(eventId string) {
 	<article class="form-card">
 		<h4 class="form-card-title">Puljefordeling</h4>
 		<section class="puljefordeling-section">
-			@puljeRow(eventId, 1, "Fredag Kveld", "kl 18-22", "Rom A Storsalen", true)
-			@puljeRow(eventId, 2, "Lørdag Morgen", "kl 10-15", "Rom B Lillesalen", false)
-			@puljeRow(eventId, 3, "Lørdag Kveld", "kl 18-22", "Rom C Storelillesalen", true)
-			@puljeRow(eventId, 4, "Søndag Morgen", "kl 10-15", "Rom D Lillesalen", false)
+			@puljeRow(eventId, 0, "Fredag Kveld", "kl 18-22", "Rom A Storsalen", true)
+			@puljeRow(eventId, 1, "Lørdag Morgen", "kl 10-15", "Rom B Lillesalen", false)
+			@puljeRow(eventId, 2, "Lørdag Kveld", "kl 18-22", "Rom C Storelillesalen", true)
+			@puljeRow(eventId, 3, "Søndag Morgen", "kl 10-15", "Rom D Lillesalen", false)
 		</section>
 	</article>
 }

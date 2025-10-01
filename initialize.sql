@@ -1,13 +1,14 @@
 CREATE TABLE IF NOT EXISTS puljer (
     name TEXT PRIMARY KEY,
-    start_time DATE NOT NULL
+    start_time DATE NOT NULL,
+    end_time DATE NOT NULL
 );
 
-INSERT INTO puljer (name, start_time) VALUES
-('Fredag kveld', '2025-09-06T18:00:00Z'),
-('Lørdag morgen', '2025-09-07T10:00:00Z'),
-('Lørdag kveld', '2025-09-07T18:00:00Z'),
-('Søndag morgen', '2025-09-08T10:00:00Z');
+INSERT INTO puljer (name, start_time, end_time) VALUES
+('Fredag kveld', '2025-10-10T18:00:00Z', '2025-10-10T22:00:00Z'),
+('Lørdag morgen', '2025-10-11T10:00:00Z', '2025-10-11T15:00:00Z'),
+('Lørdag kveld', '2025-10-11T18:00:00Z', '2025-10-11T22:00:00Z'),
+('Søndag morgen', '2025-10-12T10:00:00Z', '2025-10-12T15:00:00Z');
 
 CREATE TABLE IF NOT EXISTS billettholdere (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -113,6 +114,15 @@ CREATE TABLE IF NOT EXISTS events (
     FOREIGN KEY (event_type) REFERENCES events_types(event_type) ON UPDATE CASCADE,
     FOREIGN KEY (age_group) REFERENCES age_grups(age_group) ON UPDATE CASCADE,
     FOREIGN KEY (event_runtime) REFERENCES event_runtimes(runtime) ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS event_pujes (
+    event_id TEXT NOT NULL,
+    pulje_name TEXT NOT NULL,
+    room TEXT DEFAULT '',
+    PRIMARY KEY (event_id, pulje_name),
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    FOREIGN KEY (pulje_name) REFERENCES puljer(name) ON UPDATE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS interest_levels (
