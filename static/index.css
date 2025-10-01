@@ -150,6 +150,7 @@ body {
 }
 
 .page-content-container {
+    width: 100%;
     max-width: var(--page-content-max-width);
     padding: 0 8px;
     margin: 0 auto;

@@ -66,18 +66,18 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 					width: var(--prev-next-responsive-max-width);
 				}
 			}
-        }
+		}
 
-        @container event-container (width > 65.0625rem) {
-                .prev-next-wrapper {
-                    margin-block-start: var(--spacing-10x);
-                    flex-direction: row;
-                    place-content: space-between;
-                    padding-inline: var(--spacing-10x);
-                }
-        }
+		@container event-container (width > 65.0625rem) {
+			.prev-next-wrapper {
+					margin-block-start: var(--spacing-10x);
+					flex-direction: row;
+					place-content: space-between;
+					padding-inline: var(--spacing-10x);
+			}
+		}
     </style>
-	<div class="prev-next-wrapper">
+	<div class="prev-next-wrapper page-content-container">
 		if previousNextData.PreviousUrl != "" {
 			<a
 				href={ templ.URL(previousNextData.PreviousUrl) }
