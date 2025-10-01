@@ -1,0 +1,25 @@
+package components
+
+
+templ BreadcrumbNavButtons(previousNextData PreviousNext) {
+	<div class="breadcrumb-prev-next-buttons">
+		if previousNextData.PreviousUrl != "" {
+			<a
+				href={ templ.URL(previousNextData.PreviousUrl) }
+				class="btn btn--ghost"
+				style="max-width:5rem;"
+			>Forrige</a>
+		} else {
+			<div class="btn btn--ghost" style="max-width:5rem; opacity:0.5; pointer-events:none;">Forrige</div>
+		}
+		if previousNextData.NextUrl != "" {
+			<a
+				href={ templ.URL(previousNextData.NextUrl) }
+				class="btn btn--ghost"
+				style="max-width:5rem;"
+			>Neste</a>
+		} else {
+			<div class="btn btn--ghost" style="max-width:5rem; opacity:0.5; pointer-events:none;">Neste</div>
+		}
+	</div>
+}

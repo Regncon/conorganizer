@@ -44,7 +44,9 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		{Name: "Admin", Url: "/admin/"},
 		{Name: "Godkjenning av arrangementer", Url: "/admin/approval/"},
 		{Name: "Rediger arrangement", Url: ""},
-	})
+	}) {
+		@components.BreadcrumbNavButtons(previousNextData)
+	}
 	// Vet ikke om vi vil ha knappene over innholdet på denne måten, kan bare ha prev/next i breadcrumbs
 	// @components.PreviousNextBar(previousNextData)
 	<div class="page-content-container ultrawide-content">
