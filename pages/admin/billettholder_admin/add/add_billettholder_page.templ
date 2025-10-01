@@ -92,16 +92,12 @@ templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	{{ tickets, err := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
 	{{ billettholdere, err := billettholderService.GetBilettholdere(db, logger) }}
 	<div id="add-billettholder-admin-container">
-		<div class="top-of-page-container">
-			<div class="header-content-container">
-				@components.Breadcrumbs([]components.BreadcrumbPath{
-					{Name: "Hjem", Url: "/"},
-					{Name: "Admin", Url: "/admin/"},
-					{Name: "Bilettholdere", Url: "/admin/billettholder/"},
-					{Name: "Biletter", Url: ""},
-				})
-			</div>
-		</div>
+		@components.BreadcrumbsNoChildren([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Admin", Url: "/admin/"},
+			{Name: "Bilettholdere", Url: "/admin/billettholder/"},
+			{Name: "Biletter", Url: ""},
+		})
 		<article style="display:flex; flex-direction:column; gap:1rem; padding: 1rem;">
 			<h1 class="page-heading">Billetter</h1>
 			<p class="page-heading-helptext">Her kan du legge til en ny billettholder</p>

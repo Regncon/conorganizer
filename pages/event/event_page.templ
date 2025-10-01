@@ -7,6 +7,29 @@ import (
 	"log/slog"
 )
 
+templ event_page_nav_buttons(previousNextData components.PreviousNext) {
+	<div class="breadcrumb-prev-next-buttons">
+		if previousNextData.PreviousUrl != "" {
+			<a
+				href={ templ.URL(previousNextData.PreviousUrl) }
+				class="btn btn--ghost"
+				style="max-width:5rem;"
+			>Forrige</a>
+		} else {
+			<div class="btn btn--ghost" style="max-width:5rem; opacity:0.5; pointer-events:none;">Forrige</div>
+		}
+		if previousNextData.NextUrl != "" {
+			<a
+				href={ templ.URL(previousNextData.NextUrl) }
+				class="btn btn--ghost"
+				style="max-width:5rem;"
+			>Neste</a>
+		} else {
+			<div class="btn btn--ghost" style="max-width:5rem; opacity:0.5; pointer-events:none;">Neste</div>
+		}
+	</div>
+}
+
 templ event_page(eventId string, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
 	<div id="event-container" class="event-container">
 		@event_page_content(eventId, logger, db, eventImageDir)
@@ -36,33 +59,10 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventI
 			align-items: center;
 		}
 	</style>
-	<div class="top-of-page-container">
-		<div class="header-content-container breadcrumbs-with-buttons">
-			@components.Breadcrumbs([]components.BreadcrumbPath{
-				{Name: "Hjem", Url: "/"},
-				{Name: event.Title, Url: ""},
-			})
-			<div class="breadcrumb-prev-next-buttons">
-				if previousNextData.PreviousUrl != "" {
-					<a
-						href={ templ.URL(previousNextData.PreviousUrl) }
-						class="btn btn--ghost"
-						style="max-width:5rem;"
-					>Forrige</a>
-				} else {
-					<div class="btn btn--ghost" style="max-width:5rem; opacity:0.5; pointer-events:none;">Forrige</div>
-				}
-				if previousNextData.NextUrl != "" {
-					<a
-						href={ templ.URL(previousNextData.NextUrl) }
-						class="btn btn--ghost"
-						style="max-width:5rem;"
-					>Neste</a>
-				} else {
-					<div class="btn btn--ghost" style="max-width:5rem; opacity:0.5; pointer-events:none;">Neste</div>
-				}
-			</div>
-		</div>
-	</div>
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: event.Title, Url: ""},
+	},
+	event_page_nav_buttons(previousNextData))
 	@Event_mobile(event, previousNextData, eventImageDir)
 }

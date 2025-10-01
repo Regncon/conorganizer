@@ -39,15 +39,11 @@ templ ApprovalPage(db *sql.DB, logger *slog.Logger) {
 
 templ ApprovalPageContent(db *sql.DB, logger *slog.Logger) {
 	{{ events := getEvents(db, logger) }}
-	<div class="top-of-page-container">
-		<div class="header-content-container">
-			@components.Breadcrumbs([]components.BreadcrumbPath{
-				{Name: "Hjem", Url: "/"},
-				{Name: "Admin", Url: "/admin/"},
-				{Name: "Godkjenning av arrangementer", Url: ""},
-			})
-		</div>
-	</div>
+	@components.BreadcrumbsNoChildren([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Admin", Url: "/admin/"},
+		{Name: "Godkjenning av arrangementer", Url: ""},
+	})
 	<div class="page-content-container">
 		<h1 class="page-heading has-helptext">Arrangementer til godkjenning</h1>
 		<p class="page-heading-helptext">

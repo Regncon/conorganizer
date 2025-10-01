@@ -156,17 +156,6 @@ body {
     margin: 0 auto;
 }
 
-/**
- * Style that controls the container around the breadcrumbs, which renders a
- * horizontal bar below the elements within.
- */
-.top-of-page-container {
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid var(--bg-item);
-    min-height: 40px;
-}
-
 @container main (width > 600px) {
 
     .header-content-container,

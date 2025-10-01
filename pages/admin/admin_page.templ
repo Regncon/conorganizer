@@ -9,7 +9,7 @@ templ adminPage(db *sql.DB) {
 	<div id="admin-container">
 		<div class="top-of-page-container">
 			<div class="header-content-container">
-			@components.Breadcrumbs([]components.BreadcrumbPath{
+			@components.BreadcrumbsNoChildren([]components.BreadcrumbPath{
 				{Name: "Hjem", Url: "/"},
 				{Name: "Admin", Url: ""},
 			})

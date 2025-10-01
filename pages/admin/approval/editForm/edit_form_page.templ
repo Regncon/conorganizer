@@ -39,16 +39,12 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		<p>Error fetching events: { eventErr.Error() }</p>
 		return
 	}
-	<div class="top-of-page-container">
-		<div class="header-content-container">
-			@components.Breadcrumbs([]components.BreadcrumbPath{
-				{Name: "Hjem", Url: "/"},
-				{Name: "Admin", Url: "/admin/"},
-				{Name: "Godkjenning av arrangementer", Url: "/admin/approval/"},
-				{Name: "Rediger arrangement", Url: ""},
-			})
-		</div>
-	</div>
+	@components.BreadcrumbsNoChildren([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Admin", Url: "/admin/"},
+		{Name: "Godkjenning av arrangementer", Url: "/admin/approval/"},
+		{Name: "Rediger arrangement", Url: ""},
+	})
 	@components.PreviousNextBar(previousNextData)
 	<div class="header-content-container">
 		<h1 class="page-heading">Rediger arrangement</h1>

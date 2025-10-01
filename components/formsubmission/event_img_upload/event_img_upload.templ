@@ -185,16 +185,12 @@ if eventErr == nil {
 		return
 	}
 	<script src="/static/web_components/banner_cropper.js"></script>
-	<div class="top-of-page-container">
-		<div class="header-content-container">
-			@components.Breadcrumbs([]components.BreadcrumbPath{
-				{Name: "Hjem", Url: "/"},
-				{Name: "Mine arrangementer", Url: "/my-events/"},
-				{Name: "Nytt arrangement", Url: "/my-events/new/" + eventId + "/"},
-				{Name: "Last opp bilde", Url: ""},
-			})
-		</div>
-	</div>
+	@components.BreadcrumbsNoChildren([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Mine arrangementer", Url: "/my-events/"},
+		{Name: "Nytt arrangement", Url: "/my-events/new/" + eventId + "/"},
+		{Name: "Last opp bilde", Url: ""},
+	})
 	<article class="page-content-container">
 		<h1 class="page-heading">Last opp bilde</h1>
 		<div class="img-upload-form-content">
