@@ -40,6 +40,15 @@ const (
 	RunTimeLongRunning  Runtime = "LongRunning"
 )
 
+type Pulje string
+
+const (
+	PuljeFredagKveld  Pulje = "Fredag Kveld"
+	PuljeLordagMorgen Pulje = "Lørdag Morgen"
+	PuljeLordagKveld  Pulje = "Lørdag Kveld"
+	PuljeSondagMorgen Pulje = "Søndag Morgen"
+)
+
 type Event struct {
 	ID                string         `json:"id"`
 	Title             string         `json:"title"`
