@@ -142,36 +142,6 @@ body {
     }
 }
 
-.header-content-container {
-    width: 100%;
-    max-width: var(--page-header-max-width);
-    padding: 0 8px;
-    margin: 0 auto;
-}
-
-.page-content-container {
-    width: 100%;
-    max-width: var(--page-content-max-width);
-    padding: 0 8px;
-    margin: 0 auto;
-}
-
-@container main (width > 600px) {
-
-    .header-content-container,
-    .page-content-container {
-        padding: 0 var(--spacing-5x);
-    }
-}
-
-@container main (width > 1200px) {
-
-    .header-content-container,
-    .page-content-container {
-        padding: 0 var(--spacing-10x);
-    }
-}
-
 h1 {
     margin: 0;
     color: var(--color-text-strong);
