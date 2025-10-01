@@ -60,9 +60,11 @@ templ Breadcrumbs(paths []BreadcrumbPath, children templ.Component) {
 					}
 				}
 			</div>
-			<div>
-				@children
-			</div>
+			if children != nil {
+				<div>
+					@children
+				</div>
+			}
 		</div>
 	</div>
 }
