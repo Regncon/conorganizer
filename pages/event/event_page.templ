@@ -52,17 +52,11 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventI
 	if err != nil || event == nil {
 		<p>Error fetching event: { err.Error() }</p>
 	}
-	<style>
-		.breadcrumbs-with-buttons {
-			display: flex;
-			justify-content: space-between;
-			align-items: center;
-		}
-	</style>
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: event.Title, Url: ""},
-	},
-	event_page_nav_buttons(previousNextData))
+	}) {
+		@event_page_nav_buttons(previousNextData)
+	}
 	@Event_mobile(event, previousNextData, eventImageDir)
 }

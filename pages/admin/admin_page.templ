@@ -7,7 +7,7 @@ import (
 
 templ adminPage(db *sql.DB) {
 	<div id="admin-container">
-		@components.BreadcrumbsNoChildren([]components.BreadcrumbPath{
+		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
 			{Name: "Admin", Url: ""},
 		})

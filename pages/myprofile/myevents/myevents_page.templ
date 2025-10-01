@@ -45,7 +45,7 @@ templ myEventsPage(userid string, db *sql.DB, eventImageDir *string, logger *slo
 }
 
 templ myEventsPageContent(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
-	@components.BreadcrumbsNoChildren([]components.BreadcrumbPath{
+	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Mine arrangementer", Url: ""},
 	})

@@ -4,7 +4,7 @@ type BreadcrumbPath struct {
 	Name string
 	Url  string
 }
-templ Breadcrumbs(paths []BreadcrumbPath, children templ.Component) {
+templ Breadcrumbs(paths []BreadcrumbPath) {
 	<style>
 		.breadcrumb-container {
 			border-bottom: 1px solid var(--bg-item);
@@ -60,15 +60,9 @@ templ Breadcrumbs(paths []BreadcrumbPath, children templ.Component) {
 					}
 				}
 			</div>
-			if children != nil {
-				<div>
-					@children
-				</div>
-			}
+			<div>
+				{ children... }
+			</div>
 		</div>
 	</div>
-}
-
-templ BreadcrumbsNoChildren(paths []BreadcrumbPath) {
-	@Breadcrumbs(paths, nil)
 }

@@ -92,7 +92,7 @@ templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	{{ tickets, err := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
 	{{ billettholdere, err := billettholderService.GetBilettholdere(db, logger) }}
 	<div id="add-billettholder-admin-container">
-		@components.BreadcrumbsNoChildren([]components.BreadcrumbPath{
+		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
 			{Name: "Admin", Url: "/admin/"},
 			{Name: "Bilettholdere", Url: "/admin/billettholder/"},
