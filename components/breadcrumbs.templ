@@ -28,6 +28,10 @@ templ Breadcrumbs(paths []BreadcrumbPath, children templ.Component) {
 					color: var(--color-text-strong);
 					text-decoration: none;
 			}
+			a:hover,
+			a:focus-visible {
+				text-decoration: underline;
+			}
 
 			.breadcrumb-separator {
 					color: var(--color-text-strong);
