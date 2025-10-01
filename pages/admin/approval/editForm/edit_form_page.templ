@@ -45,8 +45,9 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		{Name: "Godkjenning av arrangementer", Url: "/admin/approval/"},
 		{Name: "Rediger arrangement", Url: ""},
 	})
-	@components.PreviousNextBar(previousNextData)
-	<div class="header-content-container">
+	// Vet ikke om vi vil ha knappene over innholdet på denne måten, kan bare ha prev/next i breadcrumbs
+	// @components.PreviousNextBar(previousNextData)
+	<div class="page-content-container ultrawide-content">
 		<h1 class="page-heading">Rediger arrangement</h1>
 		<div class="edit-form-with-preview">
 			<form class="formsubmission-wrapper">
@@ -55,7 +56,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 			@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir)
 		</div>
 	</div>
-	<div class="header-content-container">
+	<div class="page-content-container wide-content">
 		@components.PreviousNextBar(previousNextData)
 	</div>
 }

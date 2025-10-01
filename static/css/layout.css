@@ -1,36 +1,37 @@
 /* 
-  Wraps around the content of the Header and Breadcrumb bar, centering the content and
-  limiting it to a max 1440px width. With reducing margins as screen size narrows.
- */
-.header-content-container {
-    width: 100%;
-    max-width: var(--page-header-max-width);
-    padding: 0 8px;
-    margin: 0 auto;
-}
-
-/* 
   Wraps around a page's main body content, centering the content and
   limiting it to a max 1440px width. With reducing margins as screen size narrows.
  */
 .page-content-container {
-    width: 100%;
-    max-width: var(--page-content-max-width);
-    padding: 0 8px;
-    margin: 0 auto;
+  width: 100%;
+  max-width: var(--page-content-max-width);
+  padding: 0 8px;
+  margin: 0 auto;
+}
+
+/* 
+  Wraps around the content of the Header and Breadcrumb bar, centering the content and
+  limiting it to a max 1440px width. With reducing margins as screen size narrows.
+ */
+.page-content-container.wide-content {
+  max-width: var(--page-content-wide-max-width);
+}
+
+/*
+  Exceptionally wide page, basically just the admin's view of an event page with
+  event preview enabled renders at this resolution.
+ */
+.page-content-container.ultrawide-content {
+  max-width: var(--page-content-ultrawide-max-width);
 }
 
 @container main (width > 600px) {
-
-    .header-content-container,
     .page-content-container {
         padding: 0 var(--spacing-5x);
     }
 }
 
 @container main (width > 1200px) {
-
-    .header-content-container,
     .page-content-container {
         padding: 0 var(--spacing-10x);
     }

@@ -59,8 +59,9 @@
     --border-radius-2x: 8px;
 
     /* content width */
-    --page-header-max-width: 1920px;
     --page-content-max-width: 1440px;
+    --page-content-wide-max-width: 1920px;
+    --page-content-ultrawide-max-width: 2240px;
 
     /* breakpoints */
     --mobile-min-width: 320px;

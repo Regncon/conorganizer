@@ -7,14 +7,10 @@ import (
 
 templ adminPage(db *sql.DB) {
 	<div id="admin-container">
-		<div class="top-of-page-container">
-			<div class="header-content-container">
-			@components.BreadcrumbsNoChildren([]components.BreadcrumbPath{
-				{Name: "Hjem", Url: "/"},
-				{Name: "Admin", Url: ""},
-			})
-			</div>
-		</div>
+		@components.BreadcrumbsNoChildren([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Admin", Url: ""},
+		})
 		<style>
 			.admin-grid {
 				display: grid;
