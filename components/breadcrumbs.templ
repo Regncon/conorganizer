@@ -4,46 +4,65 @@ type BreadcrumbPath struct {
 	Name string
 	Url  string
 }
-
 templ Breadcrumbs(paths []BreadcrumbPath) {
 	<style>
+		.breadcrumb-container {
+			border-bottom: 1px solid var(--bg-item);
+			min-height: 40px;
+		}
+
+		.breadcrumb-content-justify {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--spacing-8x);
+			width: 100%;
+		}
 
 		.breadcrumbs {
 			display: flex;
 			gap: 0.5rem;
-			padding: var(--spacing-5x);
+			padding: var(--spacing-5x) 0;
 
-            a {
-                color: var(--color-text-strong);
-                text-decoration: none;
-            }
+			a {
+					color: var(--color-text-strong);
+					text-decoration: none;
+			}
+			a:hover,
+			a:focus-visible {
+				text-decoration: underline;
+			}
 
-            .breadcrumb-separator {
-                color: var(--color-text-strong);
-            }
+			.breadcrumb-separator {
+					color: var(--color-text-strong);
+			}
 
-            .breadcrumb-end {
-                color: var(--color-text-soft-50);
-            }
-            .ellipsis-overflow {
-                min-width: 0;
-                overflow: clip;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-		}
-
-
-	</style>
-	<div class="breadcrumbs">
-		for _, path := range paths {
-			if path.Url != "" {
-				<a href={ templ.URL(path.Url) }>{ path.Name }</a>
-				<span class="breadcrumb-separator">/</span>
-			} else {
-				<span class="breadcrumb-end ellipsis-overflow">{ path.Name }</span>
+			.breadcrumb-end {
+					color: var(--color-text-soft-50);
+			}
+			.ellipsis-overflow {
+					min-width: 0;
+					overflow: clip;
+					text-overflow: ellipsis;
+					white-space: nowrap;
 			}
 		}
+	</style>
+	<div class="breadcrumb-container">
+		<div class="page-content-container wide-content breadcrumb-content-justify">
+			<div class="breadcrumbs">
+				for _, path := range paths {
+					if path.Url != "" {
+						<a href={ templ.URL(path.Url) }>{ path.Name }</a>
+						<span class="breadcrumb-separator">/</span>
+					} else {
+						<span class="breadcrumb-end ellipsis-overflow">{ path.Name }</span>
+					}
+				}
+			</div>
+			<div>
+				{ children... }
+			</div>
+		</div>
 	</div>
-	<hr/>
 }
