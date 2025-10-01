@@ -70,7 +70,6 @@
     /* nav */
     --nav-height: 4rem;
     --nav-z-index: 10;
-    --nav-gap: 1rem;
 
     /* responsively size gap between panes in the same column of content */
     --responsive-pane-column-spacing: var(--spacing-4x);
@@ -112,7 +111,7 @@ body {
     background: var(--bg-base);
     margin: 0;
     font-family: sans-serif;
-    margin-block-end: calc(var(--nav-height) + var(--nav-gap));
+    margin-block-end: var(--nav-height);
 
     @media screen and (width >=420px) {
         margin-block-end: 0;
@@ -121,13 +120,18 @@ body {
     main {
         container-type: inline-size;
         container-name: main;
-        padding-bottom: 3rem;
-        /* add 3rem  to avoid menu overlap */
+        padding-bottom: var(--spacing-5x);
     }
 
-    @media screen and (width >=420px) {
+    @media screen and (width > 600px) {
         main {
-            padding-bottom: 0;
+            padding-bottom: var(--spacing-8x);
+        }
+    }
+
+    @media screen and (width > 1200px) {
+        main {
+            padding-bottom: var(--spacing-10x);
         }
     }
 

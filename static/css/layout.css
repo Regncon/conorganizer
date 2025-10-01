@@ -5,7 +5,7 @@
 .page-content-container {
   width: 100%;
   max-width: var(--page-content-max-width);
-  padding: 0 8px;
+  padding: 0 var(--spacing-2x);
   margin: 0 auto;
 }
 
@@ -26,13 +26,13 @@
 }
 
 @container main (width > 600px) {
-    .page-content-container {
-        padding: 0 var(--spacing-5x);
-    }
+  .page-content-container {
+    padding: 0 var(--spacing-5x);
+  }
 }
 
 @container main (width > 1200px) {
-    .page-content-container {
-        padding: 0 var(--spacing-10x);
-    }
+  .page-content-container {
+    padding: 0 var(--spacing-10x);
+  }
 }
