@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/layouts"
+	profileevents "github.com/Regncon/conorganizer/pages/profile/events"
 	ticketspage "github.com/Regncon/conorganizer/pages/profile/tickets"
 	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -27,6 +28,17 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			).Render(ctx, w)
 		})
 
+		profileRouter.Get("/events", func(w http.ResponseWriter, r *http.Request) {
+			var ctx = r.Context()
+			var user = userctx.GetUserRequestInfo(ctx)
+
+			layouts.Base(
+				"Mine Events",
+				user,
+				profileevents.ProfileEventsPage(),
+			).Render(ctx, w)
+		})
+
 		profileRouter.Get("/tickets", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
 			var user = userctx.GetUserRequestInfo(ctx)
@@ -35,7 +47,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			tickets, _ := checkIn.GetTicketsFromCheckIn(logger, user.Email)
 
 			layouts.Base(
-				"Mine biletter",
+				"Mine Biletter",
 				user,
 				ticketspage.ProfileTicketsPage(tickets),
 			).Render(ctx, w)

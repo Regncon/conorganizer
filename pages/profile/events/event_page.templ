@@ -1,0 +1,14 @@
+package profileevents
+
+import "github.com/Regncon/conorganizer/components"
+
+templ ProfileEventsPage() {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Min Side", Url: "/profile"},
+		{Name: "Events", Url: ""},
+	})
+	<section class="page-content-container">
+		<h1>Mine events</h1>
+	</section>
+}
