@@ -1,6 +1,12 @@
 package event_components
 
-templ EventInterests() {
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/components/ticket_holder"
+	"log/slog"
+)
+
+templ EventInterests(db *sql.DB, logger *slog.Logger) {
 	<style>
 
         ::backdrop {
@@ -63,8 +69,8 @@ templ EventInterests() {
 			</form>
 		</header>
 		<div class="ticket-holder-picker">
-			<p>Select billettholder</p>
-			<button class="btn btn--secondary">VELG PERSON</button>
+			@ticketholder.TicketHolderButton("")
+			{{ ticketholder.GetTicketHolders(db, logger) }}
 		</div>
 		<div class="interest-buttons">
 			<button class="btn btn--interest"><span class="emoji">🤩</span> Veldig interessert</button>

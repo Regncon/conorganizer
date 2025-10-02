@@ -1,13 +1,15 @@
 package event
 
 import (
+	"database/sql"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
+	"log/slog"
 )
 
-templ Event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
+templ Event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string, db *sql.DB, logger *slog.Logger) {
 	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
 	<style>

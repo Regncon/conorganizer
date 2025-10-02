@@ -50,5 +50,5 @@ templ eventIndex(id string, logger *slog.Logger, db *sql.DB, eventImageDir *stri
 			@event_page_content(id, logger, db, eventImageDir)
 		</div>
 	</div>
-	@event_components.EventInterests()
+	@event_components.EventInterests(db, logger)
 }

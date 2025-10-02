@@ -88,5 +88,5 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventI
 			}
 		</div>
 	</div>
-	@Event_mobile(event, previousNextData, eventImageDir)
+	@Event_mobile(event, previousNextData, eventImageDir, db, logger)
 }
