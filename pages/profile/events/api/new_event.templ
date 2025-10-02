@@ -1,13 +1,16 @@
 package profileevents
 
-import "github.com/Regncon/conorganizer/components"
+func NewEventRoute(router chi.Router) {
 
-templ ProfileNewEvent() {
-    @components.Breadcrumbs([]components.BreadcrumbPath{
+}
+
+templ NewEventPage() {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: "/profile"},
 		{Name: "Events", Url: "/profile/events"},
         {Name: "New", Url: ""},
+        {Name: "asd11n1n3kjbasd", Url: ""},
 	})
 	<section class="page-content-container">
 		<h1>Mine events</h1>
