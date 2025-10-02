@@ -11,7 +11,7 @@ templ ProfileTicketsPage(tickets []checkIn.CheckInTicket) {
 		{Name: "Min Side", Url: "/profile"},
 		{Name: "Billetter", Url: ""},
 	})
-	<section class="content-wrapper">
+	<section class="page-content-container">
 		<h1>Mine Billetter</h1>
 		if len(tickets) > 0 {
 			<i>
