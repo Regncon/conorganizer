@@ -1,0 +1,61 @@
+package profilepage
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/profile"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"log/slog"
+)
+
+templ ProfilePage(user requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+	<style>
+        .wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            gap: var(--spacing-large);
+            margin-top: var(--spacing-large);
+        }
+        .wrapper-main {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-large);
+
+        }
+        .wrapper-details {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-large);
+        }
+
+        .panel {
+            padding: var(--spacing-large);
+            border-radius: var(--border-radius-medium);
+            background-color: var(--bg-surface);
+            gap: var(--spacing-xsmall);
+        }
+
+        .panel > h2 {
+            margin: 0;
+            font-size: var(--text-heading-4);
+            color: var(--color-text-soft-50);
+        }
+    </style>
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Min Side", Url: ""},
+	})
+	<section class="wrapper">
+		<div class="wrapper-main">
+			@profilecomponent.MyEvents(user.Id, db, logger)
+			@profilecomponent.MyPropgram()
+		</div>
+		<div class="wrapper-details">
+			/* @profilecomponent.UserDetails(user) */
+			@profilecomponent.MyTickets()
+		</div>
+	</section>
+}
