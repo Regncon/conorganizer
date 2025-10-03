@@ -1,11 +1,39 @@
-package ticketspage
+package profileticketspage
 
 import (
+	"database/sql"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/delaneyj/toolbelt/embeddednats"
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+	"log/slog"
+	"net/http"
 )
 
-templ ProfileTicketsPage(tickets []checkIn.CheckInTicket) {
+func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+	router.Route("/tickets", func(profileRouter chi.Router) {
+		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			var ctx = r.Context()
+			var user = userctx.GetUserRequestInfo(ctx)
+
+			// todo: enable error checking
+			tickets, _ := checkIn.GetTicketsFromCheckIn(logger, user.Email)
+
+			layouts.Base(
+				"Mine Biletter",
+				user,
+				profileTicketsPage(tickets),
+			).Render(ctx, w)
+		})
+	})
+
+	return nil
+}
+
+templ profileTicketsPage(tickets []checkIn.CheckInTicket) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: "/profile"},

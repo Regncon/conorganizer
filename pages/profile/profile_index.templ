@@ -1,0 +1,54 @@
+package profilepage
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/profile"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/pages/profile/tickets"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/delaneyj/toolbelt/embeddednats"
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+	"log/slog"
+	"net/http"
+	"github.com/Regncon/conorganizer/pages/profile/events"
+)
+
+func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+	router.Route("/profile", func(profileRouter chi.Router) {
+		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			var ctx = r.Context()
+			var user = userctx.GetUserRequestInfo(ctx)
+
+			layouts.Base(
+				"Min profil side",
+				user,
+				ProfilePage(user, db, logger),
+			).Render(ctx, w)
+		})
+
+        profileeventspage.ProfileEventsRoute(profileRouter, store, ns, db, logger)
+		profileticketspage.ProfileTicketsRoute(profileRouter, store, ns, db, logger)
+	})
+
+	return nil
+}
+
+templ ProfilePage(user requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Min Side", Url: ""},
+	})
+	<section class="page-content-container">
+		<div class="column-left">
+			@profilecomponent.MyEvents(user.Id, db, logger)
+			@profilecomponent.MyPropgram()
+		</div>
+		<div class="column-right">
+			/* @profilecomponent.UserDetails(user) */
+			@profilecomponent.MyTickets()
+		</div>
+	</section>
+}

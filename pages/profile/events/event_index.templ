@@ -1,0 +1,41 @@
+package profileeventspage
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/delaneyj/toolbelt/embeddednats"
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+	"log/slog"
+	"net/http"
+)
+
+func ProfileEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+	router.Route("/events", func(profileRouter chi.Router) {
+		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			var ctx = r.Context()
+			var user = userctx.GetUserRequestInfo(ctx)
+
+			layouts.Base(
+				"Mine Events",
+				user,
+				profileEventsPage(),
+			).Render(ctx, w)
+		})
+	})
+
+	return nil
+}
+
+templ profileEventsPage() {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Min Side", Url: "/profile"},
+		{Name: "Events", Url: "/profile/events"},
+	})
+	<section class="page-content-container">
+		<h1>Mine events </h1>
+	</section>
+}

@@ -1,5 +1,0 @@
-package profileevents
-
-func ProfileEventsRoute() {
-
-}

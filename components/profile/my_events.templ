@@ -63,7 +63,7 @@ templ MyEvents(userID string, db *sql.DB, logger *slog.Logger) {
         }
     </style>
 	<div class="my-events panel">
-		<h2>Mine arrangementer</h2>
+		<h2><a href="/profile/events">Mine arrangementer</a></h2>
 		{{ events := GetEventsByUserId(userID, db, logger) }}
 		if len(events) > 0 {
 			for _, event := range events {
@@ -79,7 +79,7 @@ templ MyEvents(userID string, db *sql.DB, logger *slog.Logger) {
 				</span>
 			}
 		}
-		<form action="/events/api/create" method="post" class="my-events-item">
+		<form action="/events/api/new" method="post" class="my-events-item">
 			<p>Ønsker du  å arrangere noe under festivalen? Dørene er fortsatt åpne for nye arrangementer, la oss høre fra deg!</p>
 			<button type="submit" class="btn btn--outline">Send inn arrangement</button>
 		</form>
