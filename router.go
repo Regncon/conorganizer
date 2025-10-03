@@ -62,7 +62,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 		myevents.SetupMyEventsRoute(isLoggedInRouter, sessionStore, ns, db, eventImageDir, logger),
 		login.SetupAuthRoute(router, db, logger),
 		myprofile.SetupMyProfileRoute(isLoggedInRouter, sessionStore, ns, db, logger),
-		profilepage.SetupProfileRoute(isLoggedInRouter, sessionStore, ns, db, logger),
+		profilepage.SetupProfileRoute(isLoggedInRouter, sessionStore, ns, db, eventImageDir, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)
 	}

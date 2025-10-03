@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -12,16 +13,17 @@ import (
 	"net/http"
 )
 
-func ProfileEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+func ProfileEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
 	router.Route("/events", func(profileRouter chi.Router) {
 		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			var ctx = r.Context()
-			var user = userctx.GetUserRequestInfo(ctx)
+			ctx := r.Context()
+			user := userctx.GetUserRequestInfo(ctx)
+			events := getEventsByUserId(user.Id, db, logger)
 
 			layouts.Base(
 				"Mine Events",
 				user,
-				profileEventsPage(),
+				profileEventsPage(events, eventImageDir),
 			).Render(ctx, w)
 		})
 	})
@@ -29,13 +31,50 @@ func ProfileEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 	return nil
 }
 
-templ profileEventsPage() {
+func getEventsByUserId(userID string, db *sql.DB, logger *slog.Logger) []models.EventCardModel {
+	var events []models.EventCardModel
+
+	// Get events where event created id is the same as user
+	userDbId, err := userctx.GetIdFromUserIdInDb(userID, db, logger)
+	if err != nil {
+		logger.Error("userDbIdErr", "error", err)
+		return events
+	}
+
+	// Query for events created by user
+	eventsQuery := "SELECT id, title, intro, status, system, host_name, beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE host = ?"
+	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
+	if eventsQueryErr != nil {
+		logger.Error("Failed to query events", "user_id", userID, "error", eventsQueryErr)
+		return events
+	}
+	defer rows.Close()
+
+	// Validate database query return
+	for rows.Next() {
+		var event models.EventCardModel
+		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
+			logger.Error("Failed to scan event row", "user_id", userID, "error", scanErr)
+			return events
+		}
+		events = append(events, event)
+	}
+
+	return events
+}
+
+templ profileEventsPage(events []models.EventCardModel, eventImageDir *string) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: "/profile"},
-		{Name: "Events", Url: "/profile/events"},
+		{Name: "Events", Url: ""},
 	})
 	<section class="page-content-container">
 		<h1>Mine events </h1>
+		<div style="display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(var(--mobile-min-width),1fr));">
+			for _,event := range events {
+				@components.EventCard(event, eventImageDir, true)
+			}
+		</div>
 	</section>
 }

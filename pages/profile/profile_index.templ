@@ -16,7 +16,7 @@ import (
 	"github.com/Regncon/conorganizer/pages/profile/events"
 )
 
-func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
 	router.Route("/profile", func(profileRouter chi.Router) {
 		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
@@ -29,7 +29,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			).Render(ctx, w)
 		})
 
-        profileeventspage.ProfileEventsRoute(profileRouter, store, ns, db, logger)
+        profileeventspage.ProfileEventsRoute(profileRouter, store, ns, db, eventImageDir, logger)
 		profileticketspage.ProfileTicketsRoute(profileRouter, store, ns, db, logger)
 	})
 
