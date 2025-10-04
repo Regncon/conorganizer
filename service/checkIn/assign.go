@@ -46,10 +46,10 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 	var lines []string
 
 	for _, billettholderID := range billettholderIDs {
-		lines = append(lines, fmt.Sprintf(`(%d, '%s')`, billettholderID.BillettholderID, user.Email))
+		lines = append(lines, fmt.Sprintf(`(%d, '%s')`, billettholderID.BillettholderID, user.UserID))
 	}
 
-	lines = append(lines, "(1, 'lars@regncon')")
+	lines = append(lines, "(2, 1)")
 
 	var baseQuery = fmt.Sprintf(`
         INSERT INTO billettholdere_users (

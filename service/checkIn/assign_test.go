@@ -29,7 +29,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	// Arrange
 
 	/* Create temp db for testing */
-	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
+	uniqueDatabaseName := "test_associate_billettholders_" + t.Name() + "_" + uuid.New().String() + ".db"
 	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
 	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
@@ -39,20 +39,16 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	defer db.Close()
 
 	/* Add billettholdere test data */
-	expectedBillettholderUser := models.BillettholderUsers{
-		BillettholderID: 1,
-		UserID:          "1",
-	}
-
-	billettholder := models.Billettholder{
-		ID: expectedBillettholderUser.BillettholderID,
+	expectedBillettholders := []models.BillettholderUsers{
+		{BillettholderID: 1, UserID: "1"},
+		{BillettholderID: 2, UserID: "2"},
 	}
 
 	_, err = db.Exec(`
     INSERT INTO billettholdere (
         id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
-		) VALUES (?, "Ola", "Nordmann", 1, "Test", 1, 1, 1)`,
-		billettholder.ID,
+		) VALUES (?, "Ola", "Nordmann", 1, "Test", 1, 1, 1), (2, "kari", "NordVPN", 2, "test", 0, 2, 2)`,
+		expectedBillettholders[0].BillettholderID, expectedBillettholders[1].BillettholderID,
 	)
 	if err != nil {
 		fmt.Println("failed to insert billettholder", "error", err)
@@ -62,7 +58,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	const email = "test@regncon.no"
 	billettholderEmails := []models.BillettholderEmail{
 		{
-			BillettholderID: expectedBillettholderUser.BillettholderID,
+			BillettholderID: expectedBillettholders[0].BillettholderID,
 			Email:           email,
 		},
 	}
@@ -81,7 +77,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 
 	user := models.User{
 		ID:      1,
-		UserID:  expectedBillettholderUser.UserID,
+		UserID:  expectedBillettholders[0].UserID,
 		Email:   email,
 		IsAdmin: true,
 	}
@@ -102,7 +98,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	sl := &testutil.StubLogger{}
 	slogger := testutil.NewSlogAdapter(sl)
 
-	err = AssociateUserWithBillettholder(expectedBillettholderUser.UserID, db, slogger)
+	err = AssociateUserWithBillettholder(expectedBillettholders[0].UserID, db, slogger)
 	if err != nil {
 		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
 	}
