@@ -16,15 +16,12 @@ type TicketHolderResponse struct {
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) (TicketHolderResponse, error) {
-
-	fmt.Println("Fetching ticket holders from the database...")
-
-	email := userInfo.Email
+	logger.Info("Fetching ticket holders from the database...")
 	query := `SELECT email, billettholder_id, first_name, last_name
                 FROM billettholder_emails [be]
                 JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
                 WHERE [be].email = ? `
-	rows, ticketHolderQueryErr := db.Query(query, email)
+	rows, ticketHolderQueryErr := db.Query(query, userInfo.Email)
 	if ticketHolderQueryErr != nil {
 		logger.Error("Failed to query ticket holders", "ticketHolderQueryErr", ticketHolderQueryErr)
 		return TicketHolderResponse{
@@ -34,11 +31,11 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 	}
 	defer rows.Close()
 
-	var emailr, firstName, lastName string
+	var email, firstName, lastName string
 
 	for rows.Next() {
 		var ticketHolderID int
-		if ticketHolderScanErr := rows.Scan(&emailr, &ticketHolderID, &firstName, &lastName); ticketHolderScanErr != nil {
+		if ticketHolderScanErr := rows.Scan(&email, &ticketHolderID, &firstName, &lastName); ticketHolderScanErr != nil {
 			logger.Error("Failed to scan ticket holder row", "ticketHolderScanErr", ticketHolderScanErr)
 			continue
 		}
@@ -48,9 +45,8 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 		logger.Error("Error iterating over ticket holder rows", "ticketHolderRowsErr", ticketHolderRowsErr)
 	}
 
-	fmt.Println("asdfg"[0], "ASDASDG")
 	return TicketHolderResponse{
-			Email: emailr,
+			Email: email,
 			Name:  fmt.Sprintf("%s %s", firstName, lastName),
 		},
 		nil
