@@ -30,7 +30,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 
 	/* Create temp db for testing */
 	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
-	testDBPath := "../../database/" + uniqueDatabaseName
+	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
 	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
 	if err != nil {
@@ -70,7 +70,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	/* Attempt to insert into billettholder_emails */
 	_, err = db.Exec(`
 		INSERT INTO billettholder_emails (
-        billettholder_id, email, kindexpectedBillettholderUser
+        billettholder_id, email, kind
 		) VALUES (?, ?, "Manual")`,
 		billettholderEmails[0].BillettholderID, billettholderEmails[0].Email,
 	)
@@ -108,4 +108,6 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	}
 
 	// Assert
+	// query billettholder_users
+	// valider data mot arrange
 }

@@ -57,7 +57,7 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	}
 
 	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
-	testDBPath := "../../database/" + uniqueDatabaseName
+	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
 	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
 	if err != nil {
@@ -207,7 +207,7 @@ func TestDontAddDuplicateAssociatedEmails(t *testing.T) {
 	}
 
 	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
-	testDBPath := "../../database/" + uniqueDatabaseName
+	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
 	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
 	if err != nil {
