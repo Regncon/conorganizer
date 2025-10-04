@@ -13,7 +13,6 @@ import (
 	"github.com/gorilla/sessions"
 	"log/slog"
 	"net/http"
-	"github.com/Regncon/conorganizer/pages/profile/events"
 )
 
 func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
@@ -29,7 +28,6 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			).Render(ctx, w)
 		})
 
-        profileeventspage.ProfileEventsRoute(profileRouter, store, ns, db, eventImageDir, logger)
 		profileticketspage.ProfileTicketsRoute(profileRouter, store, ns, db, logger)
 	})
 
