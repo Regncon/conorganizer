@@ -27,10 +27,6 @@ return nil, nil
 
 func TestAssociateUserWithBillettholder(t *testing.T) {
 	// Arrange
-	expectedBillettholderUser := models.BillettholderUsers{
-		BillettholderID: 1,
-		UserID:          "1",
-	}
 
 	/* Create temp db for testing */
 	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
@@ -42,16 +38,18 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	}
 	defer db.Close()
 
-	/* Establish test data */
-	const email = "test@regncon.no"
+	/* Add billettholdere test data */
+	expectedBillettholderUser := models.BillettholderUsers{
+		BillettholderID: 1,
+		UserID:          "1",
+	}
 
 	billettholder := models.Billettholder{
 		ID: expectedBillettholderUser.BillettholderID,
 	}
 
-	/* Attempt to insert into billettholdere*/
 	_, err = db.Exec(`
-		INSERT INTO billettholdere (
+    INSERT INTO billettholdere (
         id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
 		) VALUES (?, "Ola", "Nordmann", 1, "Test", 1, 1, 1)`,
 		billettholder.ID,
@@ -61,6 +59,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		return
 	}
 
+	const email = "test@regncon.no"
 	billettholderEmails := []models.BillettholderEmail{
 		{
 			BillettholderID: expectedBillettholderUser.BillettholderID,
@@ -71,7 +70,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	/* Attempt to insert into billettholder_emails */
 	_, err = db.Exec(`
 		INSERT INTO billettholder_emails (
-        billettholder_id, email, kind
+        billettholder_id, email, kindexpectedBillettholderUser
 		) VALUES (?, ?, "Manual")`,
 		billettholderEmails[0].BillettholderID, billettholderEmails[0].Email,
 	)
@@ -103,7 +102,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	sl := &testutil.StubLogger{}
 	slogger := testutil.NewSlogAdapter(sl)
 
-	err = AssociateUserWithBillettholder(expectedBillettholderUser.UserID, slogger)
+	err = AssociateUserWithBillettholder(expectedBillettholderUser.UserID, db, slogger)
 	if err != nil {
 		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
 	}
