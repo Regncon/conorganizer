@@ -2,6 +2,9 @@ package checkIn
 
 import (
 	"fmt"
+	"math/rand"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
@@ -39,60 +42,91 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	defer db.Close()
 
 	/* Add billettholdere test data */
-	expectedBillettholders := []models.BillettholderUsers{
-		{BillettholderID: 1, UserID: "1"},
-		{BillettholderID: 2, UserID: "2"},
+	var expectedGeneratedUsers []testutil.Person
+	var expectedBillettholders []models.Billettholder
+
+	var ammountToGenerate = 99
+	for i := range ammountToGenerate {
+		// Create fake users which billettholders can access (this is done to retain email)
+		var generatedPerson = testutil.GenerateFakePerson()
+		expectedGeneratedUsers = append(expectedGeneratedUsers, generatedPerson)
+
+		// Create billettholders
+		expectedBillettholders = append(expectedBillettholders, models.Billettholder{
+			ID:           i + 1,
+			FirstName:    generatedPerson.FirstName,
+			LastName:     generatedPerson.LastName,
+			TicketTypeId: i + 190001,
+			TicketType:   "Test",
+			IsOver18:     rand.Intn(100) > 20,
+			OrderID:      i + 13200001,
+			TicketID:     i + 4800001,
+		})
 	}
 
-	_, err = db.Exec(`
-    INSERT INTO billettholdere (
+	// construct query for inserting billettholdere
+	var queryBillettholder []string
+	for _, billettholder := range expectedBillettholders {
+		queryBillettholder = append(queryBillettholder, fmt.Sprintf(`(%d, "%s", "%s", %d, "%s", %v, %d, %d)`, billettholder.ID, billettholder.FirstName, billettholder.LastName, billettholder.TicketTypeId, billettholder.TicketType, billettholder.IsOver18, billettholder.OrderID, billettholder.TicketID))
+	}
+
+	var queryBase = fmt.Sprintf(`INSERT INTO billettholdere (
         id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
-		) VALUES (?, "Ola", "Nordmann", 1, "Test", 1, 1, 1), (2, "kari", "NordVPN", 2, "test", 0, 2, 2)`,
-		expectedBillettholders[0].BillettholderID, expectedBillettholders[1].BillettholderID,
-	)
+		) VALUES %s`, strings.Join(queryBillettholder, ", "))
+
+	_, err = db.Exec(queryBase)
 	if err != nil {
 		fmt.Println("failed to insert billettholder", "error", err)
 		return
 	}
 
-	const email = "test@regncon.no"
-	billettholderEmails := []models.BillettholderEmail{
-		{
-			BillettholderID: expectedBillettholders[0].BillettholderID,
-			Email:           email,
-		},
-		{
-			BillettholderID: expectedBillettholders[1].BillettholderID,
-			Email:           email,
-		},
+	/* Attempt to insert into billettholder_emails */
+	var expectedBillettholderEmails []models.BillettholderEmail
+	for _, person := range expectedGeneratedUsers {
+		billettholderEmail := models.BillettholderEmail{
+			BillettholderID: rand.Intn(len(expectedGeneratedUsers)-1) + 1,
+			Email:           person.Email,
+		}
+		expectedBillettholderEmails = append(expectedBillettholderEmails, billettholderEmail)
 	}
 
-	/* Attempt to insert into billettholder_emails */
-	_, err = db.Exec(`
+	var queryBillettholderEmail []string
+	for _, billettholderEmail := range expectedBillettholderEmails {
+		queryBillettholderEmail = append(queryBillettholderEmail, fmt.Sprintf(`(%d, "%s", "%s")`, billettholderEmail.BillettholderID, billettholderEmail.Email, "Manual"))
+	}
+	queryBase = fmt.Sprintf(`
 		INSERT INTO billettholder_emails (
         billettholder_id, email, kind
-		) VALUES (?, ?, "Manual"), (?, ?, "Manual")`,
-		billettholderEmails[0].BillettholderID, billettholderEmails[0].Email, billettholderEmails[1].BillettholderID, billettholderEmails[1].Email,
-	)
+		) VALUES %s`, strings.Join(queryBillettholderEmail, ", "))
+
+	_, err = db.Exec(queryBase)
 	if err != nil {
 		fmt.Println("failed to insert billettholder_emails", "error", err)
 		return
 	}
 
-	user := models.User{
-		ID:      1,
-		UserID:  expectedBillettholders[0].UserID,
-		Email:   email,
-		IsAdmin: true,
+	/* Attempt to insert into expectedUsers */
+	var expectedUsers []models.User
+	for i, holder := range expectedGeneratedUsers {
+		expectedUsers = append(expectedUsers, models.User{
+			ID:      i + 1,
+			UserID:  holder.FirstName + strconv.Itoa(i+1),
+			Email:   holder.Email,
+			IsAdmin: rand.Intn(100) > 10,
+		})
 	}
 
-	/* Attempt to insert into users*/
-	_, err = db.Exec(`
+	var queryUsers []string
+	for _, user := range expectedUsers {
+		queryUsers = append(queryUsers, fmt.Sprintf(`(%d, "%s", "%s", %v)`, user.ID, user.UserID, user.Email, user.IsAdmin))
+	}
+
+	queryBase = fmt.Sprintf(`
 		INSERT INTO users (
         id, user_id, email, is_admin
-		) VALUES (?,?,?,?)`,
-		user.ID, user.UserID, user.Email, user.IsAdmin,
-	)
+		) VALUES %s`, strings.Join(queryUsers, ", "))
+
+	_, err = db.Exec(queryBase)
 	if err != nil {
 		fmt.Println("failed to insert users", "error", err)
 		return
@@ -102,12 +136,27 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	sl := &testutil.StubLogger{}
 	slogger := testutil.NewSlogAdapter(sl)
 
-	err = AssociateUserWithBillettholder(expectedBillettholders[0].UserID, db, slogger)
-	if err != nil {
-		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
+	for _, user := range expectedUsers {
+		// fmt.Printf("Calling AssociateUserWithBillettholder() on: %s (%s)\n", user.UserID, user.Email)
+		err = AssociateUserWithBillettholder(user.UserID, db, slogger)
+		if err != nil {
+			t.Fatalf("failed to convert ticketId to billettholder: %v", err)
+		}
 	}
 
 	// Assert
+	var expectedBillettholderUsers []models.BillettholderUsers
+	for _, expectedUser := range expectedUsers {
+		for _, generatedBilletholder := range expectedBillettholderEmails {
+			if expectedUser.Email == generatedBilletholder.Email {
+				expectedBillettholderUsers = append(expectedBillettholderUsers, models.BillettholderUsers{
+					BillettholderID: generatedBilletholder.BillettholderID,
+					UserID:          expectedUser.UserID,
+				})
+			}
+		}
+	}
+
 	/* Check that billettholder_users got populated */
 	var billettholderUsers []models.BillettholderUsers
 
@@ -128,7 +177,10 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		billettholderUsers = append(billettholderUsers, result)
 	}
 
-	if len(billettholderUsers) != len(expectedBillettholders) {
-		t.Fatalf("expected %d billettholder users, got %d", len(billettholderUsers), len(expectedBillettholders))
+	// compare expected billettholderUsers with billettholderUsers
+	if len(billettholderUsers) != len(expectedBillettholderUsers) {
+		t.Fatalf("expected %d billettholder users, got %d", len(expectedBillettholderUsers), len(billettholderUsers))
 	}
+
+	// Kan det eksistere billettholder_emails med duplicate e-post?
 }
