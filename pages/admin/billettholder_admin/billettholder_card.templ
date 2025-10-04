@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/go-chi/chi/v5"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/components/icons"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -253,7 +254,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 		<p style="margin:0;">
 			<strong>Bestilling: </strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
 		</p>
-		<p style="margin:0;">
+			<p style="margin:0;">
 			<strong>Type: </strong> @templ.Raw(highlightSearchTerm(billettholder.TicketType, searchTerm))
 		</p>
 		<p style="margin:0;">
@@ -274,18 +275,10 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 		}
 		<div style="display: flex; align-items: center; gap:0.5rem; ">
 			if billettholder.IsOver18 {
-				<img
-					src="/static/icons/icon-adults-only-event.svg"
-					alt="adults only"
-				/>
+				@icons.Icon(icons.EventAdultOnly, icons.Size24)
 				<p><strong>Alder:</strong> Over 18</p>
 			} else {
-				<img
-					width="34px"
-					height="34px"
-					src="/static/icons/icon-child-friendly-event.svg"
-					alt="child friendly"
-				/>
+				@icons.Icon(icons.EventChildFriendly, icons.Size24)
 				<p><strong>Alder:</strong> Under 18</p>
 			}
 		</div>

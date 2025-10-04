@@ -87,7 +87,7 @@ class BannerCropper extends HTMLElement {
                </div>
                   <span id="cameraIcon" style="display:none">
                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="200" height="200">
-                        <path fill="#CCD1E9" d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM4 4h3.2l1.6-2h6.4l1.6 2H20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v12h16V6h-3.2l-1.6 2H8.8L7.2 6H4Z"/>
+                        <path fill="currentColor" d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM4 4h3.2l1.6-2h6.4l1.6 2H20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v12h16V6h-3.2l-1.6 2H8.8L7.2 6H4Z"/>
                      </svg>
                   </span>
                <canvas id="canvas" style="cursor:move" aria-label="Banner canvas"></canvas>
