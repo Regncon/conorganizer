@@ -1,0 +1,60 @@
+package components
+
+import (
+  "fmt"
+  "os"
+  "io"
+)
+
+type IconType string
+
+const (
+  IconAdultOnly               IconType = "icon-adult-only-event"
+  IconBeginnerFriendlyEvent   IconType = "icon-beginner-friendly-event"
+  IconBoardgameEvent          IconType = "icon-boardgame-event"
+  IconCardgameEvent           IconType = "icon-cardgame-event"
+  IconChevronDown             IconType = "icon-chevron-down"
+  IconChevronLeft             IconType = "icon-chevron-left"
+  IconChevronRight            IconType = "icon-chevron-right"
+  IconChevronUp               IconType = "icon-chevron-up"
+  IconChildFriendlyEvent      IconType = "icon-child-friendly-event"
+  IconClose                   IconType = "icon-close"
+  IconComment                 IconType = "icon-comment"
+  IconEnglishEvent            IconType = "icon-english-event"
+  IconGamemaster              IconType = "icon-gamemaster"
+  IconHome                    IconType = "icon-home"
+  IconImage                   IconType = "icon-image"
+  IconLessThan3Hours          IconType = "icon-less-than-3-hours"
+  IconMoreThan6Hours          IconType = "icon-more-than-6-hours"
+  IconMenu                    IconType = "icon-menu"
+  IconOtherGamesEvent         IconType = "icon-other-games-event"
+  IconProgress25              IconType = "icon-progress-25"
+  IconProgress50              IconType = "icon-progress-50"
+  IconProgress75              IconType = "icon-progress-75"
+  IconProgressComplete        IconType = "icon-progress-complete"
+  IconProgressRejected        IconType = "icon-progress-rejected"
+  IconShield                  IconType = "icon-shield"
+  IconTtrpgEvent              IconType = "icon-ttrpg-event"
+  IconUser                    IconType = "icon-user "
+)
+
+func getSVGContent(icon IconType) string {
+  path := fmt.Sprintf("static/icons/%s.svg", icon)
+  file, openFileOpenErr := os.Open(path)
+  if openFileOpenErr != nil {
+    return ""
+  }
+  defer file.Close()
+  content, readFileReadErr := io.ReadAll(file)
+  if readFileReadErr != nil {
+    return ""
+  }
+  return string(content)
+}
+
+templ Icon(icon IconType) {
+  {{ svgContent := getSVGContent(icon) }}
+  if svgContent != "" {
+    @templ.Raw(svgContent)
+  }
+}
