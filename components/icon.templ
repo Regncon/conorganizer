@@ -41,8 +41,8 @@ const (
 )
 
 const (
-  IconSize24 IconSize = "24px"
-  IconSize16 IconSize = "16px"
+  IconSize24 IconSize = "24"
+  IconSize16 IconSize = "16"
 )
 
 func getSVGContent(icon IconType) string {
@@ -59,16 +59,14 @@ func getSVGContent(icon IconType) string {
   return string(content)
 }
 
-css icon_container_css(size IconSize) {
-  display: inline-block;
-  width: { size };
-  height: { size };
-}
 
 templ Icon(icon IconType, size IconSize) {
-  {{ svgContent := getSVGContent(icon) }}
+  {{
+     svgContent := getSVGContent(icon) 
+     containerClass := fmt.Sprintf("icon-size-%s", size)
+  }}
   if svgContent != "" {
-    <span class={ icon_container_css(size) }>
+    <span class={containerClass}>
       @templ.Raw(svgContent)
     </span>
   }
