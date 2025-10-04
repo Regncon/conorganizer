@@ -22,3 +22,9 @@ type BillettholderEmail struct {
 	Kind            string    `json:"kind"` // 'Ticket','Associated','Manual'
 	InsertedTime    time.Time `json:"inserted_time"`
 }
+
+type BillettholderUsers struct {
+	BillettholderID int       `json:"billettholder_id"`
+	UserID          string    `json:"user_id"`
+	InsertedTime    time.Time `json:"inserted_time"`
+}
