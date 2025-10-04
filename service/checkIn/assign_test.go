@@ -13,20 +13,26 @@ import (
 	"github.com/google/uuid"
 )
 
-func GetAllBillettHolderByUserEmail() ([]int, error) {
-	// hent ut alle billetter som matcher userID.email fra billettholder_emails, returnerer billettholder(id) array
-	return []int{}, nil
+// hent ut alle billetter som matcher userID.email fra billettholder_emails, returnerer billettholder(id) array
+func GetAllBillettholderByUserEmail(t *testing.T) error {
+	// Arrange
 
-}
+	/* Create temp db for testing */
+	uniqueDatabaseName := "test_associate_billettholders_" + t.Name() + "_" + uuid.New().String() + ".db"
+	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
-func InsertBilletHolderIDSFromUserEmail() error {
+	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
+	if err != nil {
+		t.Fatalf("failed to create test database: %v", err)
+	}
+	defer db.Close()
+
 	return nil
 }
 
-/* func GetTicketsFromEmail() (CheckInTicket, error) {
-
-return nil, nil
-} */
+func InsertBilletHolderIDSFromUserEmail(t *testing.T) error {
+	return nil
+}
 
 func TestAssociateUserWithBillettholder(t *testing.T) {
 	// Arrange
