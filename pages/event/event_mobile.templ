@@ -9,7 +9,13 @@ import (
 	"log/slog"
 )
 
-templ Event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string, db *sql.DB, logger *slog.Logger) {
+templ Event_mobile(
+	event *models.Event,
+	previousNextData components.PreviousNext,
+	eventImageDir *string,
+	db *sql.DB,
+	logger *slog.Logger,
+) {
 	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
 	<style>

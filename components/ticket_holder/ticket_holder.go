@@ -6,6 +6,8 @@ import (
 	"log/slog"
 	"strings"
 	"unicode"
+
+	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
 type TicketHolderResponse struct {
@@ -13,11 +15,11 @@ type TicketHolderResponse struct {
 	Name  string
 }
 
-func GetTicketHolders(db *sql.DB, logger *slog.Logger) (TicketHolderResponse, error) {
+func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) (TicketHolderResponse, error) {
 
 	fmt.Println("Fetching ticket holders from the database...")
 
-	email := "__"
+	email := userInfo.Email
 	query := `SELECT email, billettholder_id, first_name, last_name
                 FROM billettholder_emails [be]
                 JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id

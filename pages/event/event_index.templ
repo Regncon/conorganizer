@@ -9,6 +9,7 @@ import (
 	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/eventService"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -33,15 +34,16 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 			return
 		}
 		var ctx = r.Context()
+		var userInfo = userctx.GetUserRequestInfo(ctx)
 		layouts.Base(
 			event.Title,
-			userctx.GetUserRequestInfo(ctx),
-			eventIndex(event.ID, logger, db, eventImageDir),
+			userInfo,
+			eventIndex(event.ID, logger, db, eventImageDir, userInfo),
 		).Render(ctx, w)
 	})
 }
 
-templ eventIndex(id string, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
+templ eventIndex(id string, logger *slog.Logger, db *sql.DB, eventImageDir *string, userInfo requestctx.UserRequestInfo) {
 	{{
 		url := fmt.Sprintf("/event/api/%s", id)
 	}}
@@ -50,5 +52,5 @@ templ eventIndex(id string, logger *slog.Logger, db *sql.DB, eventImageDir *stri
 			@event_page_content(id, logger, db, eventImageDir)
 		</div>
 	</div>
-	@event_components.EventInterests(db, logger)
+	@event_components.EventInterests(userInfo, db, logger)
 }
