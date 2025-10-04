@@ -1,16 +1,41 @@
 package ticketholder
 
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"log/slog"
+)
+
 // Takes a `selected` parameter to highlight the selected ticket holder
-templ TicketHolderPicker() {
+templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	<style>
         .ticket-holder-picker-container  {
             container-type: inline-size;
             container-name: ticket-holder-picker-container;
 
-         .selected {
-            border-color: black;
-         }
+            .selected {
+                border-color: black;
+            }
         }
 
     </style>
+	{{
+	associatedTicketholders, err := GetTicketHolders(userInfo, db, logger)
+	if err != nil {
+		logger.Error("Failed to get ticket holders", "error", err)
+	}
+	}}
+	if (len(associatedTicketholders) > 1 && len(associatedTicketholders) < 4) {
+		<div class="ticket-holder-picker">
+			for _, th := range associatedTicketholders {
+				@TicketHolderButton(th.Name, TicketHolderUnselected)
+			}
+		</div>
+	}
+	if (len(associatedTicketholders) > 3) {
+		<div class="ticket-holder-picker">
+			missing
+			@TicketHolderDropDown(associatedTicketholders, TicketHolderUnselected)
+		</div>
+	}
 }

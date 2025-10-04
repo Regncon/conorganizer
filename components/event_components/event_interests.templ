@@ -2,13 +2,13 @@ package event_components
 
 import (
 	"database/sql"
-	"github.com/Regncon/conorganizer/components/ticket_holder"
+	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
 )
 
-templ EventInterests(db *sql.DB, logger *slog.Logger) {
+templ EventInterests(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	<style>
-
         ::backdrop {
             background-image: linear-gradient(
                 45deg,
@@ -68,10 +68,7 @@ templ EventInterests(db *sql.DB, logger *slog.Logger) {
 				<button autofocus class="btn btn--ghost close"><img src="/static/icons/close.svg"/></button>
 			</form>
 		</header>
-		<div class="ticket-holder-picker">
-			@ticketholder.TicketHolderButton("")
-			{{ ticketholder.GetTicketHolders(db, logger) }}
-		</div>
+		@ticketholder.TicketHolderPicker(userInfo, db, logger)
 		<div class="interest-buttons">
 			<button class="btn btn--interest"><span class="emoji">🤩</span> Veldig interessert</button>
 			<button class="btn btn--interest"><span class="emoji">🙂</span> Interessert</button>
