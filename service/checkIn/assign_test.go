@@ -61,14 +61,18 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 			BillettholderID: expectedBillettholders[0].BillettholderID,
 			Email:           email,
 		},
+		{
+			BillettholderID: expectedBillettholders[1].BillettholderID,
+			Email:           email,
+		},
 	}
 
 	/* Attempt to insert into billettholder_emails */
 	_, err = db.Exec(`
 		INSERT INTO billettholder_emails (
         billettholder_id, email, kind
-		) VALUES (?, ?, "Manual")`,
-		billettholderEmails[0].BillettholderID, billettholderEmails[0].Email,
+		) VALUES (?, ?, "Manual"), (?, ?, "Manual")`,
+		billettholderEmails[0].BillettholderID, billettholderEmails[0].Email, billettholderEmails[1].BillettholderID, billettholderEmails[1].Email,
 	)
 	if err != nil {
 		fmt.Println("failed to insert billettholder_emails", "error", err)
@@ -104,6 +108,27 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	}
 
 	// Assert
-	// query billettholder_users
-	// valider data mot arrange
+	/* Check that billettholder_users got populated */
+	var billettholderUsers []models.BillettholderUsers
+
+	rows, err := db.Query(`
+        SELECT billettholder_id, user_id FROM billettholdere_users
+    `)
+	if err != nil {
+		t.Fatalf("Failed to get rows from billettholder_users: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var result models.BillettholderUsers
+		err = rows.Scan(&result.BillettholderID, &result.UserID)
+		if err != nil {
+			t.Fatalf("Failed scan rows in billettholder_users: %v", err)
+		}
+		billettholderUsers = append(billettholderUsers, result)
+	}
+
+	if len(billettholderUsers) != len(expectedBillettholders) {
+		t.Fatalf("expected %d billettholder users, got %d", len(billettholderUsers), len(expectedBillettholders))
+	}
 }
