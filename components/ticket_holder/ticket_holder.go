@@ -17,7 +17,7 @@ func GetTicketHolders(db *sql.DB, logger *slog.Logger) (TicketHolderResponse, er
 
 	fmt.Println("Fetching ticket holders from the database...")
 
-	email := "cinmay05@gmail.com"
+	email := "__"
 	query := `SELECT email, billettholder_id, first_name, last_name
                 FROM billettholder_emails [be]
                 JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
