@@ -1,0 +1,28 @@
+package ticketholder
+
+import datastar "github.com/starfederation/datastar-go/datastar"
+
+// Takes a `selected` parameter to highlight the selected ticket holder
+templ TicketHolderDropDown(billettholdere []TicketHolderResponse, selected selected) {
+	<style>
+
+        .ticket-holder-picker {
+
+        }
+
+    </style>
+	<div class="ticket-holder-picker">
+		<select
+			id="billettholder"
+			data-signals={ "billettholder" }
+			data-on-change={ datastar.PutSSE("/my-events/api/new/%s/billettholder", "0000") }
+			name="billettholder"
+			class="input"
+		>
+			for _, bh := range billettholdere {
+				{{ initials := GetInitials(bh.Name) }}
+				<option value={ bh.Name } selected>{ initials }{ bh.Name }</option>
+			}
+		</select>
+	</div>
+}
