@@ -43,10 +43,10 @@ const (
 type Pulje string
 
 const (
-	PuljeFredagKveld  Pulje = "Fredag Kveld"
-	PuljeLordagMorgen Pulje = "Lørdag Morgen"
-	PuljeLordagKveld  Pulje = "Lørdag Kveld"
-	PuljeSondagMorgen Pulje = "Søndag Morgen"
+	PuljeFredagKveld  Pulje = "FredagKveld"
+	PuljeLordagMorgen Pulje = "LordagMorgen"
+	PuljeLordagKveld  Pulje = "LordagKveld"
+	PuljeSondagMorgen Pulje = "SondagMorgen"
 )
 
 type Event struct {

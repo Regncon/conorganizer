@@ -12,14 +12,9 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
-	//router.Route("/event/api", func(eventRouter chi.Router) {
-	//eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
-	//	eventRouter.Route("/{pujeId}", func(eventIdRouter chi.Router) {
-	//eventRouter.Put("/{puljeId}", func(w http.ResponseWriter, r *http.Request) {
-	//eventID := chi.URLParam(r, "idx")
-	eventRouter.Route("/{puljeId}", func(punjeIdRouter chi.Router) {
-		punjeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
+		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 
 			puljeId := chi.URLParam(r, "puljeId")
 			fmt.Println("Pulje ID:", puljeId)
@@ -60,19 +55,79 @@ func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 
-templ puljeRow(eventId string, pulje models.Pulje, roomName string, isChecked bool) {
-	<div style="display: grid; grid-template-columns: minmax(120px,250px) 1fr; gap: 2rem; align-items: center; justify-items: start;">
+func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
+		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+
+			puljeId := chi.URLParam(r, "puljeId")
+			fmt.Println("Pulje ID:", puljeId)
+			if puljeId == "" {
+				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
+				return
+			}
+			/*
+				type Store struct {
+					Input bool `json:"canBeRunInEnglish"`
+				}
+				store := &Store{}
+
+				if err := datastar.ReadSignals(r, store); err != nil {
+					http.Error(w, err.Error(), http.StatusBadRequest)
+					return
+				}
+
+				eventID := chi.URLParam(r, "id")
+				if eventID == "" {
+					http.Error(w, "Event ID is required", http.StatusBadRequest)
+					return
+				}
+
+				query := `UPDATE events SET can_be_run_in_english = ? WHERE id = ?`
+				_, err := db.Exec(query, store.Input, eventID)
+				if err != nil {
+					http.Error(w, "Failed to update the can be run in English for event in the database", http.StatusInternalServerError)
+					return
+				}
+
+				if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+					http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+					return
+				}
+			*/
+		})
+	})
+}
+
+templ puljeRow(eventId string, pulje models.Pulje, puljeName string, roomName string, isPublished bool, isInPulje bool) {
+	<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; align-items: center; justify-items: start;">
 		<div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: start;">
 			<div class="checkbox-label">
-				<span class="label-small color-strong">{ pulje }</span>
+				<span class="label-small color-strong">{ puljeName }</span>
 			</div>
 			<label class="checkbox-background form-group-checkbox">
 				<input
-					if isChecked {
+					if isPublished {
 						checked
 					}
 					data-bind={ fmt.Sprintf("puljeId-%s", pulje) }
-					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/updat-pulje/%s", eventId, pulje) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/event-in-pulje/%s", eventId, pulje) }
+					type="checkbox"
+					name="pulje"
+					class="checkbox input"
+				/>
+			</label>
+		</div>
+		<div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: start;">
+			<div class="checkbox-label">
+				<span class="label-small color-strong">Publisert</span>
+			</div>
+			<label class="checkbox-background form-group-checkbox">
+				<input
+					if isInPulje {
+						checked
+					}
+					data-bind={ fmt.Sprintf("puljeId-%s", pulje) }
+					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/published-in-pulje/%s", eventId, pulje) }
 					type="checkbox"
 					name="pulje"
 					class="checkbox input"
@@ -82,7 +137,7 @@ templ puljeRow(eventId string, pulje models.Pulje, roomName string, isChecked bo
 		<label class="label-small color-strong form-group" style="width: 25rem;">
 			Rom { pulje }
 			<div
-				data-signals={ fmt.Sprintf(`"roomPuljeId-%d"`, pulje) }
+				data-signals={ fmt.Sprintf(`"roomPuljeId-%s"`, pulje) }
 			></div>
 			<input
 				name="room"
@@ -101,10 +156,10 @@ templ puljefordeling(eventId string) {
 	<article class="form-card">
 		<h4 class="form-card-title">Puljefordeling</h4>
 		<section class="puljefordeling-section">
-			@puljeRow(eventId, models.PuljeFredagKveld, "Rom A Storsalen", true)
-			@puljeRow(eventId, models.PuljeLordagMorgen, "Rom B Lille Salen", false)
-			@puljeRow(eventId, models.PuljeLordagKveld, "Rom D Konferanserom 2", false)
-			@puljeRow(eventId, models.PuljeSondagMorgen, "Rom E Festsalen", true)
+			@puljeRow(eventId, models.PuljeFredagKveld, "Fredag Kveld", "Rom A Store Salen", false, true)
+			@puljeRow(eventId, models.PuljeLordagMorgen, "Lørdag Morgen", "Rom B Lille Salen", true, true)
+			@puljeRow(eventId, models.PuljeLordagKveld, "Lørdag Ettermiddag", "Rom C Mellom Salen", true, false)
+			@puljeRow(eventId, models.PuljeSondagMorgen, "Søndag Morgen", "Rom D Liten Salen", false, false)
 		</section>
 	</article>
 }
