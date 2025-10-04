@@ -38,7 +38,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			).Render(ctx, w)
 		})
 
-        // Subroutes
+		// Subroutes
 		profileticketspage.ProfileTicketsRoute(profileRouter, store, ns, db, logger)
 	})
 
@@ -51,11 +51,11 @@ templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.Tic
 		{Name: "Min Side", Url: ""},
 	})
 	<section class="page-content-container profile-container">
-		<div class="flex flex-col" style="flex:1; min-width: fit-content;">
+		<div style="flex:1;">
 			@profilecomponent.MyEvents(events)
 			@profilecomponent.MyPropgram()
 		</div>
-		<div style="width: fit-content;">
+		<div>
 			/* @profilecomponent.UserDetails(user) */
 			@profilecomponent.MyTickets(tickets)
 		</div>
@@ -66,6 +66,13 @@ templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.Tic
             gap: var(--responsive-pane-column-spacing);
             flex-flow: row wrap;
             padding-top: var(--responsive-pane-column-spacing);
+        }
+
+        .profile-container > div {
+            display: flex;
+            flex-direction: column;
+            gap: var(--responsive-pane-column-spacing);
+            min-width: fit-content;
         }
     </style>
 }
