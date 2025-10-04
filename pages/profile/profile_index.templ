@@ -21,10 +21,17 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			var ctx = r.Context()
 			var user = userctx.GetUserRequestInfo(ctx)
 
+			// tmp ticket data
+			var tickets = []profilecomponent.TicketHolder{
+				profilecomponent.TicketHolder{Name: "Gary Lindgren", Ticket: "Early Bird (26+)", Email: "gary.cooldude@email.com"},
+				profilecomponent.TicketHolder{Name: "Ana Anderson", Ticket: "Early Bird (26+)", Email: "ana.awesome@email.com"},
+				profilecomponent.TicketHolder{Name: "Åge Påge", Ticket: "Early Bird (26+)", Email: "aagep@email.com"},
+			}
+
 			layouts.Base(
 				"Min profil side",
 				user,
-				ProfilePage(user, db, logger),
+				ProfilePage(user, db, tickets, logger),
 			).Render(ctx, w)
 		})
 
@@ -34,7 +41,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 	return nil
 }
 
-templ ProfilePage(user requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+templ ProfilePage(user requestctx.UserRequestInfo, db *sql.DB, tickets []profilecomponent.TicketHolder, logger *slog.Logger) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: ""},
@@ -46,13 +53,13 @@ templ ProfilePage(user requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logg
 		</div>
 		<div style="width: fit-content;">
 			/* @profilecomponent.UserDetails(user) */
-			@profilecomponent.MyTickets()
+			@profilecomponent.MyTickets(tickets)
 		</div>
 	</section>
 	<style>
         .profile-container {
             display: flex;
-            gap: var(--spacing-8x);
+            gap: var(--responsive-pane-column-spacing);
             flex-flow: row wrap;
         }
     </style>
