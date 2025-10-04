@@ -1,0 +1,40 @@
+package profilecomponent
+
+import "github.com/Regncon/conorganizer/service/requestctx"
+
+templ UserDetails(user requestctx.UserRequestInfo) {
+    <style>
+        .my-profile {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+
+
+            span {
+                display: flex;
+                gap: var(--spacing-xsmall);
+            }
+
+            img {
+                height: var(--text-body);
+                aspect-ratio: 1;
+            }
+        }
+
+        .my-profile > p {
+            font-weight: bold;
+        }
+    </style>
+	<div class="my-profile panel">
+		<h2>Brukerdetaljer</h2>
+		<p>user.Name</p>
+		<span>
+			<img src="/static/icons/boardgames.svg"/>
+			<p>{ user.Email }</p>
+		</span>
+		<span>
+			<img src="/static/icons/cardgames.svg"/>
+			<p>user.Phone</p>
+		</span>
+	</div>
+}
