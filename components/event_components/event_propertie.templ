@@ -12,7 +12,7 @@ css event_property_css() {
 
 templ Event_property(text string, iconType components.IconType) {
 	<div class={ event_property_css }>
-		@components.Icon(iconType)
+		@components.Icon(iconType, components.IconSize24)
 		<span>{ text }</span>
 	</div>
 }

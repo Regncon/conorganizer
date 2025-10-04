@@ -123,7 +123,7 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
                                 gap: 6px;
                             "
 				>
-					@Icon(IconGamemaster)
+					@Icon(IconGamemaster, IconSize24)
 					<p style="font-size: 12px; margin: 0;">
 						if eventCard.HostName != "" {
 							{ eventCard.HostName }
@@ -142,29 +142,29 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
                         "
 				>
 					if eventCard.EventType == models.EventTypeRoleplay {
-						@Icon(IconEventRoleplay)
+						@Icon(IconEventRoleplay, IconSize24)
 					} else if eventCard.EventType == models.EventTypeBoardGame {
-						@Icon(IconEventBoardgame)
+						@Icon(IconEventBoardgame, IconSize24)
 					} else if eventCard.EventType == models.EventTypeCardGame {
-						@Icon(IconEventCardgame)
+						@Icon(IconEventCardgame, IconSize24)
 					} else if eventCard.EventType == models.EventTypeOther {
-						@Icon(IconEventOtherGames)
+						@Icon(IconEventOtherGames, IconSize24)
 					}
 					if eventCard.AgeGroup == models.AgeGroupAdultsOnly {
-						@Icon(IconEventAdultOnly)
+						@Icon(IconEventAdultOnly, IconSize24)
 					} else if eventCard.AgeGroup == models.AgeGroupChildFriendly {
-						@Icon(IconEventChildFriendly)
+						@Icon(IconEventChildFriendly, IconSize24)
 					}
 					if eventCard.Runtime == models.RunTimeLongRunning {
-						@Icon(IconTimeOver6Hours)
+						@Icon(IconTimeOver6Hours, IconSize24)
 					} else if eventCard.Runtime == models.RunTimeShortRunning {
-						@Icon(IconTimeUnder3Hours)
+						@Icon(IconTimeUnder3Hours, IconSize24)
 					}
 					if eventCard.BeginnerFriendly {
-						@Icon(IconEventBeginnerFriendly)
+						@Icon(IconEventBeginnerFriendly, IconSize24)
 					}
 					if eventCard.CanBeRunInEnglish {
-						@Icon(IconEventEnglish)
+						@Icon(IconEventEnglish, IconSize24)
 					}
 				</div>
 			</div>

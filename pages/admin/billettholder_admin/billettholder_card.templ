@@ -254,7 +254,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 		<p style="margin:0;">
 			<strong>Bestilling: </strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
 		</p>
-		<p style="margin:0;">
+			<p style="margin:0;">
 			<strong>Type: </strong> @templ.Raw(highlightSearchTerm(billettholder.TicketType, searchTerm))
 		</p>
 		<p style="margin:0;">
@@ -275,10 +275,10 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 		}
 		<div style="display: flex; align-items: center; gap:0.5rem; ">
 			if billettholder.IsOver18 {
-				@components.Icon(components.IconEventAdultOnly)
+				@components.Icon(components.IconEventAdultOnly, components.IconSize24)
 				<p><strong>Alder:</strong> Over 18</p>
 			} else {
-				@components.Icon(components.IconEventChildFriendly)
+				@components.Icon(components.IconEventChildFriendly, components.IconSize24)
 				<p><strong>Alder:</strong> Under 18</p>
 			}
 		</div>

@@ -8,6 +8,8 @@ import (
 
 type IconType string
 
+type IconSize string
+
 const (
   IconChevronDown             IconType = "icon-chevron-down"
   IconChevronLeft             IconType = "icon-chevron-left"
@@ -38,6 +40,11 @@ const (
   IconUser                    IconType = "icon-user "
 )
 
+const (
+  IconSize24 IconSize = "24px"
+  IconSize16 IconSize = "16px"
+)
+
 func getSVGContent(icon IconType) string {
   path := fmt.Sprintf("static/icons/%s.svg", icon)
   file, openFileOpenErr := os.Open(path)
@@ -52,9 +59,16 @@ func getSVGContent(icon IconType) string {
   return string(content)
 }
 
-templ Icon(icon IconType) {
+css icon_container_css(size IconSize) {
+  width: { size };
+  height: { size };
+}
+
+templ Icon(icon IconType, size IconSize) {
   {{ svgContent := getSVGContent(icon) }}
   if svgContent != "" {
-    @templ.Raw(svgContent)
+    <span class={ icon_container_css(size) }>
+      @templ.Raw(svgContent)
+    </span>
   }
 }
