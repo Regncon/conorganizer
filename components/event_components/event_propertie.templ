@@ -1,7 +1,7 @@
 package event_components
 
 import (
-	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/icons"
 )
 
 css event_property_css() {
@@ -10,9 +10,9 @@ css event_property_css() {
 	gap: 0.5rem;
 }
 
-templ Event_property(text string, iconType components.IconType) {
+templ Event_property(text string, iconType icons.IconType) {
 	<div class={ event_property_css }>
-		@components.Icon(iconType, components.IconSize24)
+		@icons.Icon(iconType, icons.Size24)
 		<span>{ text }</span>
 	</div>
 }

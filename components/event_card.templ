@@ -3,6 +3,7 @@ package components
 import (
 	"fmt"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
@@ -123,7 +124,7 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
                                 gap: 6px;
                             "
 				>
-					@Icon(IconGamemaster, IconSize24)
+					@icons.Icon(icons.Gamemaster, icons.Size24)
 					<p style="font-size: 12px; margin: 0;">
 						if eventCard.HostName != "" {
 							{ eventCard.HostName }
@@ -142,29 +143,29 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
                         "
 				>
 					if eventCard.EventType == models.EventTypeRoleplay {
-						@Icon(IconEventRoleplay, IconSize24)
+						@icons.Icon(icons.EventRoleplay, icons.Size24)
 					} else if eventCard.EventType == models.EventTypeBoardGame {
-						@Icon(IconEventBoardgame, IconSize24)
+						@icons.Icon(icons.EventBoardgame, icons.Size24)
 					} else if eventCard.EventType == models.EventTypeCardGame {
-						@Icon(IconEventCardgame, IconSize24)
+						@icons.Icon(icons.EventCardgame, icons.Size24)
 					} else if eventCard.EventType == models.EventTypeOther {
-						@Icon(IconEventOtherGames, IconSize24)
+						@icons.Icon(icons.EventOtherGames, icons.Size24)
 					}
 					if eventCard.AgeGroup == models.AgeGroupAdultsOnly {
-						@Icon(IconEventAdultOnly, IconSize24)
+						@icons.Icon(icons.EventAdultOnly, icons.Size24)
 					} else if eventCard.AgeGroup == models.AgeGroupChildFriendly {
-						@Icon(IconEventChildFriendly, IconSize24)
+						@icons.Icon(icons.EventChildFriendly, icons.Size24)
 					}
 					if eventCard.Runtime == models.RunTimeLongRunning {
-						@Icon(IconTimeOver6Hours, IconSize24)
+						@icons.Icon(icons.TimeOver6Hours, icons.Size24)
 					} else if eventCard.Runtime == models.RunTimeShortRunning {
-						@Icon(IconTimeUnder3Hours, IconSize24)
+						@icons.Icon(icons.TimeUnder3Hours, icons.Size24)
 					}
 					if eventCard.BeginnerFriendly {
-						@Icon(IconEventBeginnerFriendly, IconSize24)
+						@icons.Icon(icons.EventBeginnerFriendly, icons.Size24)
 					}
 					if eventCard.CanBeRunInEnglish {
-						@Icon(IconEventEnglish, IconSize24)
+						@icons.Icon(icons.EventEnglish, icons.Size24)
 					}
 				</div>
 			</div>

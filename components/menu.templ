@@ -1,6 +1,9 @@
 package components
 
-import "github.com/Regncon/conorganizer/service/requestctx"
+import (
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/components/icons"
+)
 
 var beta = false
 
@@ -212,7 +215,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			</a>
 			<section class="main-menu-links">
 				<a href="/" class="main-menu-link">
-					@Icon(IconHome, IconSize16)
+					@icons.Icon(icons.Home, icons.Size24)
 					<span class="main-menu-link-text">
 						Hjem
 					</span>
@@ -222,7 +225,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end; margin-right: 1rem;">
 					<details class="menu-btn">
 						<summary>
-							@Icon(IconMenu, IconSize24)
+							@icons.Icon(icons.Menu, icons.Size24)
 						</summary>
 						<div class="dropdown-panel">
 							<a href="/auth/logout">Logg ut</a>
