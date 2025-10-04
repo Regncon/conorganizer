@@ -39,14 +39,21 @@ templ ProfilePage(user requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logg
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: ""},
 	})
-	<section class="page-content-container">
-		<div class="column-left">
+	<section class="page-content-container profile-container">
+		<div style="display: flex; flex:1; min-width: fit-content;">
 			@profilecomponent.MyEvents(user.Id, db, logger)
 			@profilecomponent.MyPropgram()
 		</div>
-		<div class="column-right">
+		<div style="width: fit-content;">
 			/* @profilecomponent.UserDetails(user) */
 			@profilecomponent.MyTickets()
 		</div>
 	</section>
+	<style>
+        .profile-container {
+            display: flex;
+            gap: var(--spacing-8x);
+            flex-flow: row wrap;
+        }
+    </style>
 }
