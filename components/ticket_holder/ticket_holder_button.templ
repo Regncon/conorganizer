@@ -13,17 +13,16 @@ templ TicketHolderButton(name string, selected selected) {
 	initials := GetInitials(name)
 	}}
 	<style>
-        .ticket-holder-picker-container  {
-            container-type: inline-size;
-            container-name: ticket-holder-picker-container;
-        }
+
         .ticket-holder-picker {
+            width: fit-content;
 
             .btn {
                 padding: 0;
-                width: 100%;
+                width: 9.625rem;
                 place-content: start;
                 padding-inline: var(--spacing-4x);
+                gap: 0.5rem;
 
                 .initials {
                     display: flex;
@@ -34,10 +33,17 @@ templ TicketHolderButton(name string, selected selected) {
                     background-color: hsl(120 100% 25% / 0.7);
                     border: 1px solid hsl(120 75% 42% / 0.3);
                     border-radius: 50%;
-                    width: min(1.5rem, 100%);
-                    height: min(1.5rem, 100%);
-                    margin-inline-end: var(--spacing-2x);
+                    min-inline-size: 1.5rem;
+                    min-block-size: 1.5rem;
                 }
+
+                .name {
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    min-width: 0;
+                    overflow: clip;
+                }
+
             }
 
             .btn--selected {
@@ -47,10 +53,10 @@ templ TicketHolderButton(name string, selected selected) {
         }
 
     </style>
-	<div class="ticket-holder-picker ticket-holder-picker-container">
+	<div class="ticket-holder-picker">
 		<button class={ "btn", "btn--outline", addSelectedClass(selected) }>
 			<span class="initials">{ initials }</span>
-			{ name }
+			<p class="name">{ name }</p>
 		</button>
 	</div>
 }
