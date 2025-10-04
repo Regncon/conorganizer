@@ -351,22 +351,22 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				<hr/>
 				<div class="details-bottom">
 					if event.AgeGroup == models.AgeGroupAdultsOnly {
-						@event_components.Event_property("Egnet for voksne", "icon-adults-only-event.svg")
+						@event_components.Event_property("Egnet for voksne", components.IconEventAdultOnly)
 					}
 					if event.AgeGroup == models.AgeGroupChildFriendly {
-						@event_components.Event_property("Barnevennlig", "icon-child-friendly-event.svg")
+						@event_components.Event_property("Barnevennlig", components.IconEventChildFriendly)
 					}
 					if event.Runtime == models.RunTimeLongRunning {
-						@event_components.Event_property("Varer mer enn 6 timer", "icon-more-than-6-hours.svg")
+						@event_components.Event_property("Varer mer enn 6 timer", components.IconTimeOver6Hours)
 					}
 					if event.Runtime == models.RunTimeShortRunning {
-						@event_components.Event_property("Varer kortere 3 timer", "icon-less-than-3-hours.svg")
+						@event_components.Event_property("Varer kortere 3 timer", components.IconTimeUnder3Hours)
 					}
 					if event.BeginnerFriendly {
-						@event_components.Event_property("Nybegynnervennlig", "icon-beginner-friendly-event.svg")
+						@event_components.Event_property("Nybegynnervennlig", components.IconEventBeginnerFriendly)
 					}
 					if event.CanBeRunInEnglish {
-						@event_components.Event_property("Can be run in English", "icon-english-event.svg")
+						@event_components.Event_property("Can be run in English", components.IconEventEnglish)
 					}
 				</div>
 			</div>
