@@ -100,15 +100,10 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 
 						.details-type {
 							height: 20px;
-							width: 20px;
 							display: flex;
 							place-items: center;
 							gap: var(--spacing-1x);
-
-							.details-type-icon {
-								height: 15px;
-								width: 15px;
-							}
+							
 							.details-header {
 								font-size: 12px;
 							}
@@ -316,34 +311,13 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 						<div class="details-type">
 							if event.EventType == models.EventTypeRoleplay {
 								<strong>Rollespill</strong>
-								<img
-									class="details-type-icon"
-									src="/static/icons/icon-ttrpg-event.svg"
-									alt="table top roleplaying game"
-									height="10"
-									width="10"
-									fetchpriority="high"
-								/>
+								@icons.Icon(icons.EventRoleplay, icons.Size16)
 							} else if event.EventType == models.EventTypeBoardGame {
 								<strong>Brettspill</strong>
-								<img
-									class="details-type-icon"
-									src="/static/icons/icon-boardgame-event.svg"
-									alt="board game"
-									height="10"
-									width="10"
-									fetchpriority="high"
-								/>
+								@icons.Icon(icons.EventBoardgame, icons.Size16) 
 							} else if event.EventType == models.EventTypeOther {
 								<strong>Annet</strong>
-								<img
-									class="details-type-icon"
-									src="/static/icons/icon-other-games-event.svg"
-									alt="other type of game or event"
-									height="10"
-									width="10"
-									fetchpriority="high"
-								/>
+								@icons.Icon(icons.EventOtherGames, icons.Size16)
 							}
 						</div>
 						<p class="color-strong" title={ event.System }>{ event.System } </p>

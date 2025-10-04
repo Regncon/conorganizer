@@ -143,29 +143,29 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
                         "
 				>
 					if eventCard.EventType == models.EventTypeRoleplay {
-						@icons.Icon(icons.EventRoleplay, icons.Size24)
+						@icons.Icon(icons.EventRoleplay, icons.Size20)
 					} else if eventCard.EventType == models.EventTypeBoardGame {
-						@icons.Icon(icons.EventBoardgame, icons.Size24)
+						@icons.Icon(icons.EventBoardgame, icons.Size20)
 					} else if eventCard.EventType == models.EventTypeCardGame {
-						@icons.Icon(icons.EventCardgame, icons.Size24)
+						@icons.Icon(icons.EventCardgame, icons.Size20)
 					} else if eventCard.EventType == models.EventTypeOther {
-						@icons.Icon(icons.EventOtherGames, icons.Size24)
+						@icons.Icon(icons.EventOtherGames, icons.Size20)
 					}
 					if eventCard.AgeGroup == models.AgeGroupAdultsOnly {
-						@icons.Icon(icons.EventAdultOnly, icons.Size24)
+						@icons.Icon(icons.EventAdultOnly, icons.Size20)
 					} else if eventCard.AgeGroup == models.AgeGroupChildFriendly {
-						@icons.Icon(icons.EventChildFriendly, icons.Size24)
+						@icons.Icon(icons.EventChildFriendly, icons.Size20)
 					}
 					if eventCard.Runtime == models.RunTimeLongRunning {
-						@icons.Icon(icons.TimeOver6Hours, icons.Size24)
+						@icons.Icon(icons.TimeOver6Hours, icons.Size20)
 					} else if eventCard.Runtime == models.RunTimeShortRunning {
-						@icons.Icon(icons.TimeUnder3Hours, icons.Size24)
+						@icons.Icon(icons.TimeUnder3Hours, icons.Size20)
 					}
 					if eventCard.BeginnerFriendly {
-						@icons.Icon(icons.EventBeginnerFriendly, icons.Size24)
+						@icons.Icon(icons.EventBeginnerFriendly, icons.Size20)
 					}
 					if eventCard.CanBeRunInEnglish {
-						@icons.Icon(icons.EventEnglish, icons.Size24)
+						@icons.Icon(icons.EventEnglish, icons.Size20)
 					}
 				</div>
 			</div>

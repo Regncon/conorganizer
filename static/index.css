@@ -212,6 +212,12 @@ p+p {
     height: 16px;
 }
 
+.icon-size-20 {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+}
+
 .icon-size-24 {
     display: inline-block;
     width: 24px;
