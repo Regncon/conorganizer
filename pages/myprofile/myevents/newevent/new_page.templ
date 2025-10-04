@@ -38,7 +38,7 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 			{Name: "Mine arrangementer", Url: "/my-events/"},
 			{Name: "Nytt arrangement", Url: ""},
 		})
-		<div style="display: flex; gap: 4rem;">
+		<div style="display: flex;">
 			<form
 				class="formsubmission-wrapper page-content-container"
 				action={ "/my-events/api/new/" + eventData.ID + "/submit" }
