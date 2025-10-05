@@ -1,19 +1,20 @@
 package event
 
 import (
+	"fmt"
 	"database/sql"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"log/slog"
 )
 
-templ event_page(eventId string, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
+templ event_page(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
 	<div id="event-container" class="event-container">
-		@event_page_content(eventId, logger, db, eventImageDir)
+		@event_page_content(eventId, isAdmin, logger, db, eventImageDir)
 	</div>
 }
 
-templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
+templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
 	{{
 	event, err := eventservice.GetEventById(eventId, db, logger)
 	}}
@@ -34,6 +35,13 @@ templ event_page_content(eventId string, logger *slog.Logger, db *sql.DB, eventI
 		{Name: event.Title, Url: ""},
 	}) {
 		@components.BreadcrumbNavButtons(previousNextData)
+	}
+	if isAdmin {
+		<a
+			href={ fmt.Sprintf("/admin/approval/edit/%s", event.ID) }
+			class="btn btn--primary"
+			style="margin:1rem;"
+		>Administrator - rediger arrangementer</a>
 	}
 	@Event_mobile(event, previousNextData, eventImageDir)
 }

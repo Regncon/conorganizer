@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+    "github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -114,7 +115,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						c := event_page(eventID, logger, db, eventImageDir)
+						isAdmin := authctx.GetAdminFromUserToken(ctx)
+						c := event_page(eventID, isAdmin, logger, db, eventImageDir)
 						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
