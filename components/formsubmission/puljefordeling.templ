@@ -237,6 +237,20 @@ func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventP
 	}
 	return event, nil
 }
+func getPuljeDisplayName(pulje models.Pulje) string {
+	switch pulje {
+	case models.PuljeFredagKveld:
+		return "Fredag kveld"
+	case models.PuljeLordagMorgen:
+		return "Lørdag morgen"
+	case models.PuljeLordagKveld:
+		return "Lørdag kveld"
+	case models.PuljeSondagMorgen:
+		return "Søndag morgen"
+	default:
+		return "Ukjent pulje"
+	}
+}
 
 templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 	{{ eventPulje, err := getEvenPulje(eventId, pulje, db) }}
@@ -245,43 +259,40 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 		<p>Error fetching event pulje: { err.Error() }</p>
 		return
 	}
-	<div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; align-items: center; justify-items: start;">
-		<div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: start;">
-			<div class="checkbox-label">
-				<span class="label-small color-strong">{ pulje }</span>
+	<div style="display: flex; gap: 1rem; align-items: center;">
+		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
+			<h3>{ getPuljeDisplayName(pulje) }</h3>
+			<div style="display: flex; gap: 1rem;">
+				<label style="display: flex; align-items: center; gap: 0.5rem;">
+					<span>Legg til i pulje </span>
+					<input
+						if eventPulje.IsActive {
+							checked
+						}
+						data-bind={ fmt.Sprintf("isActive%s", pulje) }
+						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/event-in-pulje/%s", eventId, pulje) }
+						type="checkbox"
+						name="pulje"
+						class="checkbox input"
+					/>
+				</label>
+				<label style="display: flex; align-items: center; gap: 0.5rem;">
+					<span>Publisert</span>
+					<input
+						if eventPulje.IsPublished {
+							checked
+						}
+						if eventPulje == (models.EventPulje{}) {
+							disabled
+						}
+						data-bind={ fmt.Sprintf("isPublished%s", pulje) }
+						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/is-published/%s", eventId, pulje) }
+						type="checkbox"
+						name="pulje"
+						class="checkbox input"
+					/>
+				</label>
 			</div>
-			<label class="checkbox-background form-group-checkbox">
-				<input
-					if eventPulje.IsActive {
-						checked
-					}
-					data-bind={ fmt.Sprintf("isActive%s", pulje) }
-					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/event-in-pulje/%s", eventId, pulje) }
-					type="checkbox"
-					name="pulje"
-					class="checkbox input"
-				/>
-			</label>
-		</div>
-		<div style="display: flex; flex-direction: column; gap: 0.5rem; align-items: start;">
-			<div class="checkbox-label">
-				<span class="label-small color-strong">Publisert</span>
-			</div>
-			<label class="checkbox-background form-group-checkbox">
-				<input
-					if eventPulje.IsPublished {
-						checked
-					}
-					if eventPulje == (models.EventPulje{}) {
-						disabled
-					}
-					data-bind={ fmt.Sprintf("isPublished%s", pulje) }
-					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/is-published/%s", eventId, pulje) }
-					type="checkbox"
-					name="pulje"
-					class="checkbox input"
-				/>
-			</label>
 		</div>
 		<label class="label-small color-strong form-group" style="width: 25rem;">
 			Rom { pulje }
