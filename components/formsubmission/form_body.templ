@@ -1,8 +1,11 @@
 package formsubmission
 
-import "github.com/Regncon/conorganizer/models"
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/models"
+)
 
-templ FormBody(event *models.Event, isAdmin bool) {
+templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 	<style>
 		.formsubmission-wrapper {
 			> * + .form-card {
@@ -202,7 +205,7 @@ templ FormBody(event *models.Event, isAdmin bool) {
 	</style>
 	@statusCard(event, isAdmin)
 	if isAdmin {
-		@puljefordeling(event.ID)
+		@puljefordeling(event.ID, db)
 	}
 	@contactInfo(
 		event.ID,

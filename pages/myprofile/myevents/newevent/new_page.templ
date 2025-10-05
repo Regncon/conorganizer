@@ -45,7 +45,7 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 				method="post"
 			>
 				<h1 class="page-heading">Nytt arrangement</h1>
-				@formsubmission.FormBody(eventData, isAdmin)
+				@formsubmission.FormBody(eventData, isAdmin, db)
 				@formsubmission.SubmitSection()
 			</form>
 			if isAdmin {

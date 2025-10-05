@@ -162,9 +162,13 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 					// refactor to use "update/status etc"
 
-					newApiIdRouter.Route("/event-in-punje", func(putRoomNameRouter chi.Router) {
+					newApiIdRouter.Route("/event-in-pulje", func(putRoomNameRouter chi.Router) {
 						formsubmission.UpdateRoomName(putRoomNameRouter, db, kv)
 					})
+					newApiIdRouter.Route("/is-published", func(putIsPublishedRouter chi.Router) {
+						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, kv)
+					})
+
 					newApiIdRouter.Route("/room-name", func(putRoomNameRouter chi.Router) {
 						formsubmission.UpdateRoomName(putRoomNameRouter, db, kv)
 					})

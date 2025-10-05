@@ -53,7 +53,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		<h1 class="page-heading">Rediger arrangement</h1>
 		<div class="edit-form-with-preview">
 			<form class="formsubmission-wrapper">
-				@formsubmission.FormBody(eventData, isAdmin)
+				@formsubmission.FormBody(eventData, isAdmin, db)
 			</form>
 			@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir)
 		</div>
