@@ -50,7 +50,7 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 			</form>
 			if isAdmin {
 				<div style="padding:2rem;">
-					@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir, db, logger)
+					@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir)
 				</div>
 			}
 		</div>

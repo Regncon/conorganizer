@@ -2,6 +2,7 @@ package ticketholder
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
 )
@@ -19,22 +20,23 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 
     </style>
 	{{
-	associatedTicketholders, err := GetTicketHolders(userInfo, db, logger)
+	associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger)
 	if err != nil {
 		logger.Error("Failed to get ticket holders", "error", err)
 	}
+	fmt.Println(len(associatedTicketHolders))
 	}}
-	if (len(associatedTicketholders) > 1 && len(associatedTicketholders) < 4) {
+	if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
 		<div class="ticket-holder-picker">
-			for _, th := range associatedTicketholders {
+			for _, th := range associatedTicketHolders {
 				@TicketHolderButton(th.Name, TicketHolderUnselected)
 			}
 		</div>
 	}
-	if (len(associatedTicketholders) > 3) {
+	if (len(associatedTicketHolders) > 3) {
 		<div class="ticket-holder-picker">
 			missing
-			@TicketHolderDropDown(userInfo, associatedTicketholders, TicketHolderUnselected)
+			@TicketHolderDropDown(userInfo, associatedTicketHolders, TicketHolderUnselected)
 		</div>
 	}
 }

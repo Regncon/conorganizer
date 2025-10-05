@@ -1,0 +1,20 @@
+package ticketholder
+
+templ nameInitials(name string, initials string) {
+	<style>
+
+        .name-initials {
+
+            .name {
+                white-space: nowrap;
+                min-width: 0;
+                overflow: clip;
+            }
+        }
+
+    </style>
+	<div class="name-initials">
+		<span class="initials">{ initials }</span>
+		<p class="name">{ name }</p>
+	</div>
+}

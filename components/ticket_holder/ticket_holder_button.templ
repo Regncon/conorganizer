@@ -36,13 +36,6 @@ templ TicketHolderButton(name string, selected selected) {
                     min-inline-size: 1.5rem;
                     min-block-size: 1.5rem;
                 }
-
-                .name {
-                    white-space: nowrap;
-                    min-width: 0;
-                    overflow: clip;
-                }
-
             }
 
             .btn--selected {
@@ -54,8 +47,7 @@ templ TicketHolderButton(name string, selected selected) {
     </style>
 	<div class="ticket-holder-picker">
 		<button class={ "btn", "btn--outline", addSelectedClass(selected) }>
-			<span class="initials">{ initials }</span>
-			<p class="name">{ name }</p>
+			@nameInitials(name, initials)
 		</button>
 	</div>
 }

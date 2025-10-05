@@ -1,21 +1,17 @@
 package event
 
 import (
-	"database/sql"
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/event_components"
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
-	"log/slog"
 )
 
 templ Event_mobile(
 	event *models.Event,
 	previousNextData components.PreviousNext,
 	eventImageDir *string,
-	db *sql.DB,
-	logger *slog.Logger,
 ) {
 	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
@@ -111,7 +107,7 @@ templ Event_mobile(
 							display: flex;
 							place-items: center;
 							gap: var(--spacing-1x);
-							
+
 							.details-header {
 								font-size: 12px;
 							}
@@ -317,7 +313,7 @@ templ Event_mobile(
 								@icons.Icon(icons.EventRoleplay, icons.Size16)
 							} else if event.EventType == models.EventTypeBoardGame {
 								<strong>Brettspill</strong>
-								@icons.Icon(icons.EventBoardgame, icons.Size16) 
+								@icons.Icon(icons.EventBoardgame, icons.Size16)
 							} else if event.EventType == models.EventTypeOther {
 								<strong>Annet</strong>
 								@icons.Icon(icons.EventOtherGames, icons.Size16)

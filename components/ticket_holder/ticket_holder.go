@@ -4,18 +4,19 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"unicode"
 
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
-type TicketHolderResponse struct {
+type BillettHolder struct {
 	Email string
 	Name  string
 }
 
-func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]TicketHolderResponse, error) {
+func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]BillettHolder, error) {
 	logger.Info("Fetching ticket holders from the database...")
 	query := `SELECT email, billettholder_id, first_name, last_name
                 FROM billettholder_emails [be]
@@ -24,12 +25,12 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 	rows, ticketHolderQueryErr := db.Query(query, userInfo.Email)
 	if ticketHolderQueryErr != nil {
 		logger.Error("Failed to query ticket holders", "ticketHolderQueryErr", ticketHolderQueryErr)
-		return []TicketHolderResponse{}, ticketHolderQueryErr
+		return []BillettHolder{}, ticketHolderQueryErr
 	}
 	defer rows.Close()
 
 	var email, firstName, lastName string
-	var associatedTicketholders []TicketHolderResponse
+	var associatedTicketholders []BillettHolder
 
 	for rows.Next() {
 		var ticketHolderID int
@@ -38,7 +39,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 			logger.Error("Failed to scan ticket holder row", "ticketHolderScanErr", ticketHolderScanErr)
 			continue
 		}
-		associatedTicketholders = append(associatedTicketholders, TicketHolderResponse{
+		associatedTicketholders = append(associatedTicketholders, BillettHolder{
 			Email: email,
 			Name:  fmt.Sprintf("%s %s", firstName, lastName),
 		})
@@ -49,7 +50,30 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 		logger.Error("Error iterating over ticket holder rows", "ticketHolderRowsErr", ticketHolderRowsErr)
 	}
 
+	associatedTicketholders = append(associatedTicketholders, associatedTicketholders...)
+	associatedTicketholders = append(associatedTicketholders, associatedTicketholders...)
+	associatedTicketholders = append(associatedTicketholders, associatedTicketholders...)
+	associatedTicketholders = append(associatedTicketholders, associatedTicketholders...)
+	associatedTicketholders = append(associatedTicketholders, associatedTicketholders...)
+
 	return associatedTicketholders, nil
+
+}
+
+func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders []BillettHolder) BillettHolder {
+	idx := slices.IndexFunc(ticketHolders, func(th BillettHolder) bool {
+		fmt.Printf("Comparing ticket holder email: %s with user email: %s\n", th.Email, userInfo.Email)
+		return th.Email == userInfo.Email
+	})
+
+	if idx == -1 {
+		return BillettHolder{
+			Email: "unknown@example.com",
+			Name:  "Unknown Ticket Holder",
+		}
+	}
+
+	return ticketHolders[idx]
 
 }
 

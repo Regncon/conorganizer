@@ -3,7 +3,7 @@ package ticketholder
 import "github.com/Regncon/conorganizer/service/requestctx"
 
 // Takes a `selected` parameter to highlight the selected ticket holder
-templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere []TicketHolderResponse, selected selected) {
+templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere []BillettHolder, selected selected) {
 	<style>
         .custom-select {
             margin-top: 3rem;
@@ -17,7 +17,6 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                 place-items: center;
                 width: 100%;
                 cursor: pointer;
-
                 .arrow {
                     border-left: 5px solid transparent;
                     border-right: 5px solid transparent;
