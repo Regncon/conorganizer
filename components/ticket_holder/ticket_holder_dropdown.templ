@@ -1,44 +1,139 @@
 package ticketholder
 
-import datastar "github.com/starfederation/datastar-go/datastar"
+import "github.com/Regncon/conorganizer/service/requestctx"
 
 // Takes a `selected` parameter to highlight the selected ticket holder
-templ TicketHolderDropDown(billettholdere []TicketHolderResponse, selected selected) {
+templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere []TicketHolderResponse, selected selected) {
 	<style>
-
-        .ticket-holder-picker {
-            .initials {
-                display: flex;
-                place-content: center;
-                place-items: center;
-                font-size: 12px;
-                color: var(--color-text-strong);
-                background-color: hsl(120 100% 25% / 0.7);
-                border: 1px solid hsl(120 75% 42% / 0.3);
-                border-radius: 50%;
-                min-inline-size: 1.5rem;
-                min-block-size: 1.5rem;
-            }
+        .custom-select {
+            margin-top: 3rem;
+            position: relative;
+            display: inline-block;
+            width: 300px;
+            max-width: 100%;
         }
-
+        .select-button {
+            font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 0.675em 1em;
+            border: 1px solid #caced1;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+        .arrow {
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 6px solid #000;
+            transition: transform ease-in-out 0.3s;
+        }
+        .select-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            border: 1px solid #caced1;
+            border-radius: 0.25rem;
+            list-style: none;
+            padding: 10px;
+            margin: 10px 0 0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .select-dropdown::-webkit-scrollbar {
+            width: 7px;
+        }
+        .select-dropdown::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 25px;
+        }
+        .select-dropdown::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 25px;
+        }
+        .select-dropdown li {
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+            /* Highlight the selected option */
+        .select-dropdown li.selected {
+            background-color: #f2f2f2;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .select-dropdown li:hover,
+        .select-dropdown li:focus {
+            background-color: #f2f2f2;
+            border-radius: 4px;
+        }
+        .select-dropdown.hidden {
+            display: none;
+        }
+        .select-dropdown li.selected {
+            background-color: #f2f2f2;
+            border-radius: 4px;
+            font-weight: bold;
+        }
     </style>
 	<div class="ticket-holder-picker">
-		<select
-			id="billettholder"
-			data-signals={ "billettholder" }
-			data-on-change={ datastar.PutSSE("/my-events/api/new/%s/billettholder", "0000") }
-			name="billettholder"
-			class="input"
-		>
-			for _, bh := range billettholdere {
-				{{ initials := GetInitials(bh.Name) }}
-				<option value={ bh.Name } selected>
-					<span class="initials">
-						{ initials }
-					</span>
-					{ bh.Name }
-				</option>
-			}
-		</select>
+		<div class="custom-select">
+			<button class="select-button">
+				<span class="selected-value">Open this select menu</span>
+				<span class="arrow"></span>
+			</button>
+			<ul class="select-dropdown hidden">
+				<li>GitHub</li>
+				<li>Instagram</li>
+				<li>Facebook</li>
+				<li>LinkedIn</li>
+				<li>Twitter</li>
+				<li>Reddit</li>
+			</ul>
+		</div>
 	</div>
+	<script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const customSelects = document.querySelectorAll(".custom-select");
+            customSelects.forEach((customSelect) => {
+                const selectButton = customSelect.querySelector(".select-button");
+                const dropdown = customSelect.querySelector(".select-dropdown");
+                const toggleDropdown = (expand = null) => {
+                    const isOpen =
+                        expand !== null ? expand : dropdown.classList.contains("hidden");
+                    dropdown.classList.toggle("hidden", !isOpen);
+                    selectButton.setAttribute("aria-expanded", isOpen);
+                };
+                selectButton.addEventListener("click", () => {
+                    toggleDropdown();
+                });
+                const options = dropdown.querySelectorAll("li");
+                const selectedValue = selectButton.querySelector(".selected-value");
+
+                const handleOptionSelect = (option) => {
+                options.forEach((opt) => opt.classList.remove("selected"));
+                    option.classList.add("selected");
+                    selectedValue.textContent = option.textContent.trim(); // Update selected value
+                };
+                options.forEach((option) => {
+                    option.addEventListener("click", () => {
+                        handleOptionSelect(option);
+                        toggleDropdown(false);
+                    });
+                });
+
+                document.addEventListener("click", (event) => {
+                    const isOutsideClick = !customSelect.contains(event.target);
+                    if (isOutsideClick) {
+                        toggleDropdown(false);
+                    }
+                });
+            });
+        });
+    </script>
 }

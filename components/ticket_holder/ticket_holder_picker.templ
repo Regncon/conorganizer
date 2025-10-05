@@ -6,7 +6,6 @@ import (
 	"log/slog"
 )
 
-// Takes a `selected` parameter to highlight the selected ticket holder
 templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	<style>
         .ticket-holder-picker-container  {
@@ -35,7 +34,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 	if (len(associatedTicketholders) > 3) {
 		<div class="ticket-holder-picker">
 			missing
-			@TicketHolderDropDown(associatedTicketholders, TicketHolderUnselected)
+			@TicketHolderDropDown(userInfo, associatedTicketholders, TicketHolderUnselected)
 		</div>
 	}
 }
