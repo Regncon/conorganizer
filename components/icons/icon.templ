@@ -52,7 +52,7 @@ const (
 )
 
 func getSVGContent(icon IconType) string {
-	path := fmt.Sprintf("./assets/%s.svg", icon)
+	path := fmt.Sprintf("assets/%s.svg", icon)
 
 	bytes, err := iconFileSystem.ReadFile(path)
 	if err != nil {
