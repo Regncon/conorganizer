@@ -134,7 +134,10 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
 				aria-expanded="false"
 				aria-controls="dropdown-list"
 			>
-				<span class="selected-value">Åpne denne menyen</span>
+				<span class="selected-value">
+					{{ initials := GetInitials(associatedTicketHolders[0].Name) }}
+					@nameInitials(associatedTicketHolders[0].Name, initials)
+				</span>
 				<div class="select-button-end">
 					<p>Velg billettholder</p>
 					<i class="arrow">
@@ -158,7 +161,30 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
 		</div>
 	</div>
 	<script>
+        const associatedTicketHolders = {{ associatedTicketHolders }};
+        let selectedTicketHolder = {{ associatedTicketHolders[0] }};
+        console.log("test", associatedTicketHolders);
+        console.log("testSelected", selectedTicketHolder);
         document.addEventListener("DOMContentLoaded", () => {
+
+            initDropDown();
+        });
+
+        const initLocalstorage = () => {
+            const savedTicketHolder = localStorage.getItem("selectedTicketHolder");
+            if (savedTicketHolder) {
+                const ticketHolder = JSON.parse(savedTicketHolder);
+                console.log("Restored ticket holder:", ticketHolder);
+
+            }
+
+            const handleSelectedTicketHolder = (ticketHolder) => {
+                selectedTicketHolder = ticketHolder;
+                localStorage.setItem("selectedTicketHolder", JSON.stringify(ticketHolder));
+                console.log("Selected ticket holder:", ticketHolder);
+            };
+        };
+        const initDropDown = () => {
             const customSelects = document.querySelectorAll(".custom-select");
             customSelects.forEach((customSelect) => {
                 const selectButton = customSelect.querySelector(".select-button");
@@ -242,8 +268,6 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
                     options.forEach((opt) => opt.classList.remove("selected"));
                     option.classList.add("selected");
 
-                    console.log(option)
-                    console.log(option.textContent)
                     selectedValue.innerHTML = option.innerHTML;
                 };
 
@@ -261,6 +285,6 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
                     }
                 });
             });
-        });
+        }
     </script>
 }
