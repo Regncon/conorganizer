@@ -44,6 +44,7 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                 box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
                 max-height: 200px;
                 overflow-y: auto;
+                scrollbar-width: thin;
 
                 &.hidden {
                     display: none;
@@ -70,17 +71,7 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                 }
 
             }
-            .dropdown-list::-webkit-scrollbar {
-                width: 7px;
-            }
-            .dropdown-list::-webkit-scrollbar-track {
-                background: #f1f1f1;
-                border-radius: 25px;
-            }
-            .dropdown-list::-webkit-scrollbar-thumb {
-                background: #ccc;
-                border-radius: 25px;
-            }
+
 
         }
 
