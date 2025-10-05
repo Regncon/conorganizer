@@ -136,17 +136,15 @@ CREATE TABLE
     );
 
 CREATE TABLE
-    event_pujes (
-        event_id TEXT NOT NULL,
-        pulje_name TEXT NOT NULL,
-        room TEXT DEFAULT '',
-        PRIMARY KEY (event_id, pulje_name),
-        FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
-        FOREIGN KEY (pulje_name) REFERENCES puljer (name) ON UPDATE CASCADE
+    puljer (
+        id TEXT NOT NULL PRIMARY KEY,
+        name TEXT NOT NULL,
+        start_time DATE NOT NULL,
+        end_time DATE NOT NULL
     );
 
 CREATE TABLE
-    event_pujer (
+    event_puljer (
         event_id TEXT NOT NULL,
         pulje_id TEXT NOT NULL,
         isPublished BOOLEAN NOT NULL DEFAULT FALSE,
@@ -154,12 +152,4 @@ CREATE TABLE
         PRIMARY KEY (event_id, pulje_id),
         FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
         FOREIGN KEY (pulje_id) REFERENCES puljer (id) ON UPDATE CASCADE
-    );
-
-CREATE TABLE
-    puljer (
-        id TEXT NOT NULL PRIMARY KEY,
-        name TEXT NOT NULL,
-        start_time DATE NOT NULL,
-        end_time DATE NOT NULL
     );

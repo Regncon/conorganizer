@@ -28,10 +28,10 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 			}
 
 			type Store struct {
-				IsPublishedFredagKveld  bool `json:"is-published-fredagkveld"`
-				IsPublishedLordagMorgen bool `json:"is-published-lordagmorgen"`
-				IsPublishedLordagKveld  bool `json:"is-published-lordagkveld"`
-				IsPublishedSondagMorgen bool `json:"is-published-sondagmorgen"`
+				IsPublishedFredagKveld  bool `json:"isPublishedFredagKveld"`
+				IsPublishedLordagMorgen bool `json:"isPublishedLordagMorgen"`
+				IsPublishedLordagKveld  bool `json:"isPublishedLordagKveld"`
+				IsPublishedSondagMorgen bool `json:"isPublishedSondagMorgen"`
 			}
 			store := &Store{}
 
@@ -144,10 +144,10 @@ func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			}
 
 			type Store struct {
-				RoomNameFredagKveld  string `json:"room-name-fredagkveld"`
-				RoomNameLordagMorgen string `json:"room-name-lordagmorgen"`
-				RoomNameLordagKveld  string `json:"room-name-lordagkveld"`
-				RoomNameSondagMorgen string `json:"room-name-sondagmorgen"`
+				RoomNameFredagKveld  string `json:"roomNameFredagKveld"`
+				RoomNameLordagMorgen string `json:"roomNameLordagMorgen"`
+				RoomNameLordagKveld  string `json:"roomNameLordagKveld"`
+				RoomNameSondagMorgen string `json:"roomNameSondagMorgen"`
 			}
 			store := &Store{}
 
@@ -229,6 +229,8 @@ func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventP
 
 templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 	{{ eventPulje, err := getEvenPulje(eventId, pulje, db) }}
+	{{ fmt.Println("Rendering puljeRow for pulje:", pulje, "eventPulje:", eventPulje) }}
+	{{ roomSignal := fmt.Sprintf("roomName%s", pulje) }}
 	if err != nil {
 		<p>Error fetching event pulje: { err.Error() }</p>
 		return
@@ -243,7 +245,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 					if eventPulje != (models.EventPulje{}) {
 						checked
 					}
-					data-bind={ fmt.Sprintf("puljeId-%s", pulje) }
+					data-bind={ fmt.Sprintf("puljeId%s", pulje) }
 					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/event-in-pulje/%s", eventId, pulje) }
 					type="checkbox"
 					name="pulje"
@@ -260,7 +262,10 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 					if eventPulje.IsPublished {
 						checked
 					}
-					data-bind={ fmt.Sprintf("is-published-%s", pulje) }
+					if eventPulje == (models.EventPulje{}) {
+						disabled
+					}
+					data-bind={ fmt.Sprintf("isPublished%s", pulje) }
 					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/is-published/%s", eventId, pulje) }
 					type="checkbox"
 					name="pulje"
@@ -271,13 +276,16 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 		<label class="label-small color-strong form-group" style="width: 25rem;">
 			Rom { pulje }
 			<div
-				data-signals={ fmt.Sprintf(`"room-name-%s"`, pulje) }
+				data-signals={ fmt.Sprintf("{%s:'%s'}", roomSignal, eventPulje.Room) }
 			></div>
 			<input
+				if eventPulje == (models.EventPulje{}) {
+					disabled
+				}
 				name="room"
 				class="input"
 				type="text"
-				data-bind={ fmt.Sprintf("room-name-%s", pulje) }
+				data-bind={ roomSignal }
 				data-on-change={ datastar.PutSSE("/my-events/api/new/%s/room-name/%s", eventId, pulje) }
 				placeholder="Rom for arrangementet"
 				required
