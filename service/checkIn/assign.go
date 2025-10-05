@@ -12,8 +12,14 @@ import (
 
 // AssociateBillettholderWithEmail takes a list of tickets and matches with email supplied, returns matches
 func AssociateBillettholderWithEmail(tickets []CheckInTicket, email string) ([]CheckInTicket, error) {
+	var result []CheckInTicket
+	for _, ticket := range tickets {
+		if ticket.Email == email {
+			result = append(result, ticket)
+		}
+	}
 
-	return nil, nil
+	return result, nil
 }
 
 // todo AssociateBillettholderWithEmail should be called and then feed inn result to billettholder table
