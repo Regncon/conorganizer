@@ -16,6 +16,8 @@ func AssociateBillettholderWithEmail(tickets []CheckInTicket, email string) ([]C
 	return nil, nil
 }
 
+// todo AssociateBillettholderWithEmail should be called and then feed inn result to billettholder table
+
 // AssociateUserWithBillettholder uses userID string from users table to match billettholders
 func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logger) error {
 	logger.Info("Associating userID with billettholder", "userID", userID)
