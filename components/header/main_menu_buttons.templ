@@ -8,39 +8,61 @@ import (
 templ MainMenuButtons(UserInfo requestctx.UserRequestInfo) {
 	<style>
     .main-menu-buttons {
-      container: main-menu-buttons;
-      container-type: normal;
-      width: 100%;
-      display: flex;
-      gap: var(--spacing-4x);
+      display: contents;
     }
 
     .main-menu-button {
+        display: flex;
         flex-direction: column;
         font-size: 12px;
-        height: 44px;
-        gap: 2px;
+        height: 48px;
+        padding: 0 var(--spacing-4x);
+        gap: var(--spacing-1x);
+        .menu-button-text {
+          white-space: nowrap;
+      }
+    }
+
+    @container main (width > 600px) {
+      .main-menu-buttons {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: var(--spacing-4x);
+      }
+      .main-menu-button {
+        flex-direction: row;
+        font-size: initial;
+        height: var(--btn-height);
+        padding: 0 var(--btn-padding-x);
+        gap: var(--spacing-2x);
+        .inline-icon {
+          width: 24px;
+          height: 24px;
+        }
+      }
     }
   </style>
 	<section class="main-menu-buttons">
 		<a role="button" href="/" class="main-menu-button btn btn--ghost btn-with-icon">
-			@icons.Icon(icons.Home, icons.Size24)
-			<span>
+			@icons.Icon(icons.Home, icons.Size20)
+			<span class="menu-button-text">
 				Hjem
 			</span>
 		</a>
     if (UserInfo.IsLoggedIn) {
       <a role="button" href="/my-events" class="main-menu-button btn btn--ghost btn-with-icon">
-        @icons.Icon(icons.User, icons.Size24)
-        <span>
+        @icons.Icon(icons.User, icons.Size20)
+        <span class="menu-button-text">
           Min Side
         </span>
       </a>
     }
 		if (UserInfo.IsLoggedIn && UserInfo.IsAdmin) {
 			<a role="button" href="/admin" class="main-menu-button btn btn--ghost btn-with-icon">
-				@icons.Icon(icons.Shield, icons.Size24)
-				<span>
+				@icons.Icon(icons.Shield, icons.Size20)
+				<span class="menu-button-text">
 					Admin
 				</span>
 			</a>

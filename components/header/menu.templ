@@ -76,15 +76,14 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			z-index: var(--nav-z-index);
 		}
 		.main-menu {
-			display: grid;
-			grid-template-areas: 'logo navbuttons usermenu';
-			grid-template-columns: 100px 1fr 100px;
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: space-around;
 			height: var(--nav-height);
 			width: 100%;
-			gap: var(--nav-gap);
+			gap: var(--spacing-4x);
 			font-family: "Fira Code";
-			place-content: center;
-			place-items: center;
 
 			a.disabled {
 				pointer-events: none;
@@ -109,7 +108,6 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				list-style: none;
 				/* hide the default disclosure triangle in some browsers */
 				color: var(--color-secondary);
-				text-transform: uppercase;
 				text-decoration: none;
 			}
 
@@ -118,10 +116,24 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				/* hide default marker in Chrome/Safari */
 			}
 
+			.menu-btn {
+				display: flex;
+        flex-direction: column;
+				justify-content: center;
+				align-items: center;
+        font-size: 12px;
+        height: 48px;
+        padding: 0 var(--spacing-4x);
+        gap: var(--spacing-1x);
+        .menu-btn-text {
+          white-space: nowrap;
+    	  }
+			}
+
 			.dropdown-panel {
 				position: absolute;
-				right: 0.5rem;
-				top: 42px;
+				right: 0;
+				bottom: 52px;
 				background-color: var(--bg-item);
 				border: 1px solid var(--bg-item-border);
 				box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
@@ -142,35 +154,51 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			}
 		}
 
-		@container main (width > 420px) {
+		#main-menu-logo {
+			display: none;
+		}
+
+		#main-menu-navbuttons {
+			display: contents;
+		}
+
+		.main-menu-buttons {
+			display: contents;
+		}
+
+		@container main (width > 600px) {
+			#main-menu-logo {
+				grid-area: logo;
+				display: flex;
+				justify-content: flex-start;
+				width: 100%;
+			}
+
+			#main-menu-navbuttons {
+				display: initial;
+				grid-area: navbuttons;
+				width: 100%;
+			}
+
+			#main-menu-usermenu {
+				grid-area: usermenu;
+				display: flex;
+				justify-content: flex-end;
+				width: 100%;
+			}
+
 			.main-menu-header {
 				position: sticky;
 				top: 0;
 				bottom: unset;
 			}
 
-			#main-menu-logo {
-				display: flex;
-				justify-content: flex-start;
-				width: 100%;
-				grid-area: logo;
-			}
-
-			#main-menu-navbuttons {
-				grid-area: navbuttons
-			}
-
-			#main-menu-usermenu {
-				display: flex;
-				justify-content: flex-end;
-				width: 100%;
-				grid-area: usermenu;
-			}
-
 			.main-menu {
+				display: grid;
 				grid-template-areas: 'logo navbuttons usermenu';
-				grid-template-columns: 120px 1fr 120px;
-
+				grid-template-columns: 50px 1fr 50px;
+				place-content: center;
+				place-items: center;
 				.logo-link {
 					display: flex;
 					place-items: center;
@@ -181,12 +209,29 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 					}
 				}
 
-				.menu-btn {
+				.menu-btn-container {
 					display: flex;
 					align-items: center;
 					justify-content: center;
 					height: 42px;
 					width: 42px;
+					.inline-icon {
+						width: 24px;
+						height: 24px;
+					}
+				}
+
+				.menu-btn {
+					height: var(--btn-height);
+					width: var(--btn-height);
+					padding: 0;
+					.menu-btn-text {
+						display: none;
+					}
+				}
+
+				.btn-login {
+					white-space: nowrap;
 				}
 
 				.beta-toggle-label {
@@ -195,8 +240,14 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 
 				.dropdown-panel {
 					bottom: unset;
-					min-inline-size: max-content;
+					top: 46px;
 				}
+			}
+		}
+
+		@container main (width > 800px) {
+			.main-menu {
+				grid-template-columns: 120px 1fr 120px;
 			}
 		}
 	</style>
@@ -213,9 +264,10 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			<section id="main-menu-usermenu">
 				if UserInfo.IsLoggedIn {
 					<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end;">
-						<details class="menu-btn">
-							<summary>
-								@icons.Icon(icons.Menu, icons.Size24)
+						<details class="menu-btn-container">
+							<summary class="btn btn--ghost menu-btn">
+								@icons.Icon(icons.Menu, icons.Size20)
+								<span class="menu-btn-text">Meny</span>
 							</summary>
 							<div class="dropdown-panel">
 								<a href="/auth/logout">Logg ut</a>
@@ -231,7 +283,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 					</div>
 				}
 				if !UserInfo.IsLoggedIn {
-					<a href="/auth" class="btn btn--primary">
+					<a href="/auth" class="btn btn--primary btn-login">
 						Logg inn
 					</a>
 				}

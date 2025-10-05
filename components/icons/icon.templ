@@ -67,7 +67,7 @@ func getSVGContent(icon IconType) string {
 templ Icon(icon IconType, size IconSize) {
   {{
      svgContent := getSVGContent(icon) 
-     containerClass := fmt.Sprintf("icon-size-%s", size)
+     containerClass := fmt.Sprintf("inline-icon icon-size-%s", size)
   }}
   if svgContent != "" {
     <span class={containerClass}>
