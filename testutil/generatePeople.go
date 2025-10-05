@@ -52,3 +52,14 @@ func GenerateFakePerson() Person {
 		Email:     email,
 	}
 }
+
+func GeneratePeople(ammount int) []Person {
+	var people []Person
+
+	for range ammount {
+		person := GenerateFakePerson()
+		people = append(people, person)
+	}
+
+	return people
+}

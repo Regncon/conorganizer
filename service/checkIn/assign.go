@@ -35,7 +35,7 @@ func AssociateTicketsWithEmail(tickets []CheckInTicket, email string) ([]CheckIn
 
 func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string) error {
 	// Filtrer tickets til de som er registrert på user email
-	myTickets, err := AssociateTicketsWithEmail(tickets, email)
+	_, err := AssociateTicketsWithEmail(tickets, email)
 	if err != nil {
 		return err
 	}
@@ -83,13 +83,16 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 		billettholdere = append(billettholdere, result)
 	}
 
+	if len(billettholdere) < 1 {
+		//return errors.New("no billettholdere found on user: " + userID)
+		return nil
+	}
+
 	// Insert into billettholder_users the new data
 	var lines []string
-
 	for _, billettholder := range billettholdere {
 		lines = append(lines, fmt.Sprintf(`(%d, %d)`, billettholder.BillettholderID, user.ID))
 	}
-
 	var baseQuery = fmt.Sprintf(`
         INSERT INTO billettholdere_users (
             billettholder_id, user_id
@@ -98,15 +101,10 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 
 	_, err = db.Exec(baseQuery)
 	if err != nil {
-		fmt.Printf("UserID: %s has id: %d \n\n\n", userID, user.ID)
-		/* var outputTest []int
-		for _, billetID := range billettholdere {
-			outputTest = append(outputTest, billetID.BillettholderID)
-		} */
+		fmt.Printf("UserID: %s has id: %d \n", userID, user.ID)
 		for _, billet := range billettholdere {
 			fmt.Printf("Billettholdere: %+v \n", billet)
 		}
-		fmt.Print("\n\n\n")
 		fmt.Println(baseQuery)
 		return fmt.Errorf("unable to insert into billettholder_users: %v", err)
 	}
