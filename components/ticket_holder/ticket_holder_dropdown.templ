@@ -66,14 +66,16 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                         font-weight: bold;
                         color: var(--color-primary);
                     }
+
+                    &:hover,
+                    &:focus {
+                        border-color: var(--color-primary);
+                        color: var(--color-primary);
+                        border-radius: 4px;
+                    }
                 }
 
-                li:hover,
-                li:focus {
-                    border-color: var(--color-primary);
-                    color: var(--color-primary);
-                    border-radius: 4px;
-                }
+
 
             }
 
