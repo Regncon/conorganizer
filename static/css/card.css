@@ -1,10 +1,11 @@
 .event-card-container {
-    background-color: var(--bg-surface);
-    border-radius: var(--border-radius-1x);
     display: grid;
     grid-template-rows: 180px minmax(110px, 1fr) min-content;
     grid-template-columns: minmax(var(--mobile-min-width), 1fr);
     color: var(--color-primary-text);
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius-1x);
+    border: 1px solid var(--bg-item-border);
     box-sizing: border-box;
     text-decoration: none;
     position: relative;
