@@ -13,4 +13,3 @@ CREATE TABLE IF NOT EXISTS backup_logs (
 
 CREATE INDEX IF NOT EXISTS idx_backup_logs_type_status_created_at
 ON backup_logs(backup_type, status, created_at DESC);
-

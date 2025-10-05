@@ -6,6 +6,30 @@ import (
 	"github.com/Regncon/conorganizer/components"
 )
 
+/*
+const (
+
+	PuljeFredagKveld  Pulje = "FredagKveld"
+	PuljeLordagMorgen Pulje = "LordagMorgen"
+	PuljeLordagKveld  Pulje = "LordagKveld"
+	PuljeSondagMorgen Pulje = "SondagMorgen"
+
+)
+
+	type PuljeRow struct {
+		ID        Pulje     `json:"id"`
+		Name      string    `json:"name"`
+		StartTime time.Time `json:"start_time"`
+		EndTime   time.Time `json:"end_time"`
+	}
+
+	type EventPulje struct {
+		EventID     string `json:"event_id"`
+		PuljeID     Pulje  `json:"pulje_id"`
+		IsActive    bool   `json:"isActive"`
+		IsPublished bool   `json:"isPublished"`
+		Room        string `json:"room"`
+*/
 func GetEvents(db *sql.DB) ([]models.EventCardModel, error) {
 	query := `
             SELECT
@@ -66,6 +90,19 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 				grid-template-columns: repeat(auto-fit,minmax(350px, 350px));
 				gap: 1rem;"
 		>
+			<h2 id={ models.PuljeFredagKveld }>Fredag Kveld</h2>
+			for _, event := range events {
+				@components.EventCard(event, eventImageDir, isAdmin)
+			}
+			<h2 id={ models.PuljeLordagMorgen }>Lørdag Morgen</h2>
+			for _, event := range events {
+				@components.EventCard(event, eventImageDir, isAdmin)
+			}
+			<h2 id={ models.PuljeLordagKveld }>Lørdag Kveld</h2>
+			for _, event := range events {
+				@components.EventCard(event, eventImageDir, isAdmin)
+			}
+			<h2 id={ models.PuljeSondagMorgen }>Søndag Morgen</h2>
 			for _, event := range events {
 				@components.EventCard(event, eventImageDir, isAdmin)
 			}
