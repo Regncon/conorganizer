@@ -1,11 +1,11 @@
-package index
+package root
 
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/components"
 )
 
-templ index(db *sql.DB) {
+templ rootPageContent(db *sql.DB, isAdmin bool) {
 	<style>
 		@keyframes spin {
 			from {
@@ -31,14 +31,15 @@ templ index(db *sql.DB) {
 			}
 		}
 	</style>
-	<header>
-		<div class="regncon-logo-container">
-			<img
-				src="/static/RegnconLogo.svg"
-				alt="logo"
-			/>
-		</div>
-		@components.CallToAction()
-	</header>
-	@todosMVCView(db)
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: ""},
+	})
+	<div class="regncon-logo-container">
+		<img
+			src="/static/RegnconLogo.svg"
+			alt="logo"
+		/>
+	</div>
+	@components.CallToAction()
+	@eventList(db)
 }
