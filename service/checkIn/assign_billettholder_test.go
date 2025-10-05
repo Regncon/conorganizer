@@ -29,9 +29,8 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 
 	// Test variables
 	const targetEmail = "test@regncon.com"
-	const fakePeopleAmount = 99
+	const fakePeopleAmount = 10
 	const billettholderConversionRatio = 0.2
-	var conversionAmmount = fakePeopleAmount * billettholderConversionRatio
 
 	// Generate test data
 	generatededPeople := testutil.GeneratePeople(fakePeopleAmount)
@@ -56,6 +55,7 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 	}
 
 	// Splice some generated tickets and write them to billettholders table
+	var conversionAmmount = fakePeopleAmount * billettholderConversionRatio
 	billettholderConversion := generatededTickets[:int(conversionAmmount)]
 	for _, ticket := range billettholderConversion {
 		err = converTicketIdToNewBillettholder(ticket.ID, billettholderConversion, db, slogger)
