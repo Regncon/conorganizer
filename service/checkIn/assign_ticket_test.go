@@ -1,48 +1,51 @@
 package checkIn
 
 import (
+	"fmt"
+	"math/rand"
 	"testing"
+
+	"github.com/Regncon/conorganizer/testutil"
 )
 
 func TestAssociateBillettholderWithEmail(t *testing.T) {
 	// Arrange
-	const targetEmail = "ticket_email@test.test"
+	var ammountOfFakeTickets = 99
+	const targetEmail = "test@regncon.no"
 
-	tickets := []CheckInTicket{
-		{ID: 42,
-			OrderID:   1,
-			TypeId:    1,
-			Type:      "Adult",
-			FirstName: "John",
-			LastName:  "Doe",
-			Email:     "ticket_email@test.test",
-			IsOver18:  true},
-		/* {ID: 43,
-			OrderID:   1,
-			TypeId:    2,
-			Type:      "Child",
-			FirstName: "Jane",
-			LastName:  "Doe",
-			Email:     "associated_email@test.test",
-			IsOver18:  false},
-		{ID: 44,
-			OrderID:   2,
-			TypeId:    1,
-			Type:      "Adult",
-			FirstName: "Not",
-			LastName:  "associated",
-			Email:     "not_associated_email@test.test",
-			IsOver18:  false}, */
+	var generatedTickets []CheckInTicket
+	for i := range ammountOfFakeTickets {
+		var generatedPerson = testutil.GenerateFakePerson()
+
+		// Tie 10% of tickets with our target email
+		var emailValue = targetEmail
+		if rand.Intn(10) < 1 {
+			emailValue = generatedPerson.Email
+		}
+
+		generatedTickets = append(generatedTickets, CheckInTicket{
+			OrderID:   i + 1,
+			TypeId:    i + 1,
+			FirstName: generatedPerson.FirstName,
+			LastName:  generatedPerson.LastName,
+			Type:      "Test billet",
+			Email:     emailValue,
+			IsOver18:  rand.Intn(10) > 2,
+		})
 	}
 
 	var matches []CheckInTicket
-	matches = append(matches, tickets[0])
+	for _, generatedTicket := range generatedTickets {
+		if generatedTicket.Email == targetEmail {
+			matches = append(matches, generatedTicket)
+		}
+	}
 
 	// Act
 	/* sl := &testutil.StubLogger{}
 	slogger := testutil.NewSlogAdapter(sl) */
 
-	result, err := AssociateBillettholderWithEmail(tickets, targetEmail)
+	result, err := AssociateBillettholderWithEmail(generatedTickets, targetEmail)
 	if err != nil {
 		t.Fatalf("failed to associate email with billettholder: %v", err)
 	}
@@ -50,5 +53,7 @@ func TestAssociateBillettholderWithEmail(t *testing.T) {
 	// Assert
 	if len(result) != len(matches) {
 		t.Fatalf("expected %d tickets, got %d", len(matches), len(result))
+	} else {
+		fmt.Printf("AssociateBillettholderWithEmail returned %d/%d matches, total tickets: %d\n", len(result), len(matches), len(generatedTickets))
 	}
 }
