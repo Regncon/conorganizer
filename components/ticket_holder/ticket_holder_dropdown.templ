@@ -18,18 +18,15 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                 width: 100%;
                 cursor: pointer;
 
-                .arrow-up {
+                .arrow {
                     border-left: 5px solid transparent;
                     border-right: 5px solid transparent;
                     border-top: 6px solid #000;
                     transition: transform ease-in-out 0.3s;
                 }
 
-                .arrow-down {
-                    border-left: 5px solid transparent;
-                    border-right: 5px solid transparent;
-                    border-bottom: 6px solid #000;
-                    transition: transform ease-in-out 0.3s;
+                &[aria-expanded="true"] .arrow {
+                    transform: rotate(180deg);
                 }
 
             }
@@ -100,7 +97,7 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
 				aria-controls="dropdown-list"
 			>
 				<span class="selected-value">Open this select menu</span>
-				<span class="arrow arrow-up"></span>
+				<span class="arrow"></span>
 			</button>
 			<ul
 				class="dropdown-list hidden"
@@ -122,7 +119,6 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
             const customSelects = document.querySelectorAll(".custom-select");
             customSelects.forEach((customSelect) => {
                 const selectButton = customSelect.querySelector(".select-button");
-                const arrow = customSelect.querySelector(".arrow");
                 const dropdown = customSelect.querySelector(".dropdown-list");
 
                 let focusedIndex = -1;
@@ -131,8 +127,6 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                     const isOpen = expand !== null ? expand : dropdown.classList.contains("hidden");
 
                     dropdown.classList.toggle("hidden", !isOpen);
-                    arrow.classList.toggle("arrow-up", !isOpen);
-                    arrow.classList.toggle("arrow-down", isOpen);
 
                     selectButton.setAttribute("aria-expanded", isOpen);
 
