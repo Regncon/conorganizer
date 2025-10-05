@@ -42,6 +42,10 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
 					<span style="color:#C6A0F6">Kladd</span>
 				} else if eventCard.Status == models.EventStatusSubmitted {
 					<span style="color:var(--color-primary)">Innsendt</span>
+				} else if eventCard.Status == models.EventStatusApproved {
+					<span style="color:var(--color-success)">Godkjent</span>
+				} else if eventCard.Status == models.EventStatusArchived {
+					<span style="color:var(--color-warning)">Arkivert</span>
 				}
 			</div>
 		}
