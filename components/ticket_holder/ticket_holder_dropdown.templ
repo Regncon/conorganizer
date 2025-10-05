@@ -90,17 +90,30 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
     </style>
 	<div class="ticket-holder-picker">
 		<div class="custom-select">
-			<button class="select-button input">
+			<button
+				id="dropdown-button"
+				class="select-button input"
+				role="combobox"
+				aria-label="select button"
+				aria-haspopup="listbox"
+				aria-expanded="false"
+				aria-controls="dropdown-list"
+			>
 				<span class="selected-value">Open this select menu</span>
 				<span class="arrow arrow-up"></span>
 			</button>
-			<ul class="dropdown-list hidden">
-				<li>GitHub</li>
-				<li>Instagram</li>
-				<li>Facebook</li>
-				<li>LinkedIn</li>
-				<li>Twitter</li>
-				<li>Reddit</li>
+			<ul
+				class="dropdown-list hidden"
+				role="listbox"
+				id="dropdown-list"
+				aria-labelledby="dropdown-button"
+			>
+				<li role="option">GitHub</li>
+				<li role="option">Instagram</li>
+				<li role="option">Facebook</li>
+				<li role="option">LinkedIn</li>
+				<li role="option">Twitter</li>
+				<li role="option">Reddit</li>
 			</ul>
 		</div>
 	</div>
