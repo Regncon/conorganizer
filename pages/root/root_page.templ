@@ -44,6 +44,8 @@ templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	}
 	@components.CallToAction()
 	if isAdmin {
+		<h2 style="font-size:xxx-large; place-self:center;">Beta-versjon</h2>
+		<h2 style="font-size:xxx-large; place-self:center;">Du er logget inn som administrator</h2>
 		@eventList(db, isAdmin, eventImageDir)
 	}
 }

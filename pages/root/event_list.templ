@@ -6,106 +6,102 @@ import (
 	"github.com/Regncon/conorganizer/components"
 )
 
-/*
-const (
+type EventsByPulje map[models.Pulje][]models.EventCardModel
 
-	PuljeFredagKveld  Pulje = "FredagKveld"
-	PuljeLordagMorgen Pulje = "LordagMorgen"
-	PuljeLordagKveld  Pulje = "LordagKveld"
-	PuljeSondagMorgen Pulje = "SondagMorgen"
+func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
+	const q = `
+		SELECT
+			e.id,
+			e.title,
+			e.intro,
+			e.status,
+			e.system,
+			e.host_name,
+			e.event_type,
+			e.age_group,
+			e.event_runtime,
+			e.beginner_friendly,
+			e.can_be_run_in_english,
+			ep.pulje_id
+		FROM events e
+		INNER JOIN event_puljer ep ON ep.event_id = e.id
+		INNER JOIN puljer p       ON p.id = ep.pulje_id
+		WHERE e.status = 'Godkjent'
+		ORDER BY p.start_time ASC, e.title COLLATE NOCASE ASC
+	`
 
-)
-
-	type PuljeRow struct {
-		ID        Pulje     `json:"id"`
-		Name      string    `json:"name"`
-		StartTime time.Time `json:"start_time"`
-		EndTime   time.Time `json:"end_time"`
-	}
-
-	type EventPulje struct {
-		EventID     string `json:"event_id"`
-		PuljeID     Pulje  `json:"pulje_id"`
-		IsActive    bool   `json:"isActive"`
-		IsPublished bool   `json:"isPublished"`
-		Room        string `json:"room"`
-*/
-func GetEvents(db *sql.DB) ([]models.EventCardModel, error) {
-	query := `
-            SELECT
-                id,
-                title,
-                intro,
-                status,
-                system,
-                host_name,
-                event_type,
-                age_group,
-                event_runtime,
-                beginner_friendly,
-                can_be_run_in_english
-            FROM events
-            WHERE status = 'Godkjent'
-            `
-	rows, err := db.Query(query)
+	rows, err := db.Query(q)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var events []models.EventCardModel
+	out := make(EventsByPulje)
+
 	for rows.Next() {
-		var event models.EventCardModel
+		var (
+			ev       models.EventCardModel
+			puljeStr string
+		)
 		if err := rows.Scan(
-			&event.Id,
-			&event.Title,
-			&event.Intro,
-			&event.Status,
-			&event.System,
-			&event.HostName,
-			&event.EventType,
-			&event.AgeGroup,
-			&event.Runtime,
-			&event.BeginnerFriendly,
-			&event.CanBeRunInEnglish,
+			&ev.Id,
+			&ev.Title,
+			&ev.Intro,
+			&ev.Status,
+			&ev.System,
+			&ev.HostName,
+			&ev.EventType,
+			&ev.AgeGroup,
+			&ev.Runtime,
+			&ev.BeginnerFriendly,
+			&ev.CanBeRunInEnglish,
+			&puljeStr,
 		); err != nil {
 			return nil, err
 		}
-		events = append(events, event)
+
+		p := models.Pulje(puljeStr)
+		out[p] = append(out[p], ev)
 	}
-	return events, nil
+
+	return out, rows.Err()
+}
+
+/*
+
+	for _, event := range eventsByPulje[models.PuljeLordagMorgen] {
+		@components.EventCard(event, eventImageDir, isAdmin)
+	}
+*/
+
+templ eventPulje(pulje models.Pulje, events EventsByPulje, eventImageDir *string, isAdmin bool) {
+	<h2
+		style="border-radius: var(--border-radius-2x);
+                background-color: var(--bg-surface);
+                padding: var(--spacing-5x);"
+		id={ pulje }
+	>{ pulje }</h2>
+	<div
+		style="
+				margin-top: 1rem;
+				display: grid;
+				grid-template-columns: repeat(auto-fit,minmax(350px, 350px));
+				gap: 1rem;"
+	>
+		for _, event := range events[pulje] {
+			@components.EventCard(event, eventImageDir, isAdmin)
+		}
+	</div>
 }
 
 templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
-	{{ events, err := GetEvents(db) }}
+	{{ eventsByPulje, err := GetEventsByPulje(db) }}
 	<div style="margin-right: auto; margin-left: auto; max-width: 1500px;">
 		if err != nil {
 			<p>Error fetching events: { err.Error() }</p>
 			return
 		}
-		<div
-			style="
-				margin-top: 1rem;
-				display: grid;
-				grid-template-columns: repeat(auto-fit,minmax(350px, 350px));
-				gap: 1rem;"
-		>
-			<h2 id={ models.PuljeFredagKveld }>Fredag Kveld</h2>
-			for _, event := range events {
-				@components.EventCard(event, eventImageDir, isAdmin)
-			}
-			<h2 id={ models.PuljeLordagMorgen }>Lørdag Morgen</h2>
-			for _, event := range events {
-				@components.EventCard(event, eventImageDir, isAdmin)
-			}
-			<h2 id={ models.PuljeLordagKveld }>Lørdag Kveld</h2>
-			for _, event := range events {
-				@components.EventCard(event, eventImageDir, isAdmin)
-			}
-			<h2 id={ models.PuljeSondagMorgen }>Søndag Morgen</h2>
-			for _, event := range events {
-				@components.EventCard(event, eventImageDir, isAdmin)
-			}
-		</div>
+		@eventPulje(models.PuljeFredagKveld, eventsByPulje, eventImageDir, isAdmin)
+		@eventPulje(models.PuljeLordagMorgen, eventsByPulje, eventImageDir, isAdmin)
 	</div>
 }
