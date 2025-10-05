@@ -89,5 +89,16 @@
     flex-direction: row;
     justify-content: end;
     align-items: center;
-    gap: var(--spacing-2x);
+    gap: var(--spacing-1x);
+}
+
+.event-card-tagicon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+}
+.event-card-tagicon-container:hover {
+    color: var(--color-text-strong);
 }
