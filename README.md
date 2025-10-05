@@ -244,10 +244,14 @@ Since our site and services are linked to S3 it's important that we update all t
 4. Run `task download` and apply migrations with `goose up`
 5. Start deployment with `flyctl deploy`
     ```console
-    flyctl -o regncon -a regncon --dockerfile Dockerfile.migration
+    flyctl -c .flyio/migration.toml deploy
     ```
-6. ???
-7. Profit
+6. Update backup-service `DB_PREFIX` value with the new database version
+    ```console
+    fly -a backup-service secrets set DB_PREFIX=eventsdb_1_x_x
+    ```
+7. ???
+8. Profit
 
 ## Additional Resources
 
