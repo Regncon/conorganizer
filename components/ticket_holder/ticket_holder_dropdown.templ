@@ -11,83 +11,87 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
             display: inline-block;
             width: 300px;
             max-width: 100%;
+
+            .select-button {
+                font-size: 15px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                width: 100%;
+                padding: 0.675em 1em;
+                border: 1px solid #caced1;
+                border-radius: 0.25rem;
+                cursor: pointer;
+
+                .select-arrow {
+                    border-left: 5px solid transparent;
+                    border-right: 5px solid transparent;
+                    border-top: 6px solid #000;
+                    transition: transform ease-in-out 0.3s;
+                }
+            }
+
+            .dropdown-list {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                border: 1px solid #caced1;
+                border-radius: 0.25rem;
+                list-style: none;
+                padding: 10px;
+                margin: 10px 0 0;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                max-height: 200px;
+                overflow-y: auto;
+
+                &.hidden {
+                    display: none;
+                }
+
+                li {
+                    padding: 10px;
+                    cursor: pointer;
+                    display: flex;
+                    gap: 0.5rem;
+                    align-items: center;
+
+                    .selected {
+                        background-color: #f2f2f2;
+                        border-radius: 4px;
+                        font-weight: bold;
+                    }
+                }
+
+                li:hover,
+                li:focus {
+                    background-color: #f2f2f2;
+                    border-radius: 4px;
+                }
+
+            }
+            .dropdown-list::-webkit-scrollbar {
+                width: 7px;
+            }
+            .dropdown-list::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 25px;
+            }
+            .dropdown-list::-webkit-scrollbar-thumb {
+                background: #ccc;
+                border-radius: 25px;
+            }
+
         }
-        .select-button {
-            font-size: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            padding: 0.675em 1em;
-            border: 1px solid #caced1;
-            border-radius: 0.25rem;
-            cursor: pointer;
-        }
-        .arrow {
-            border-left: 5px solid transparent;
-            border-right: 5px solid transparent;
-            border-top: 6px solid #000;
-            transition: transform ease-in-out 0.3s;
-        }
-        .select-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            width: 100%;
-            border: 1px solid #caced1;
-            border-radius: 0.25rem;
-            list-style: none;
-            padding: 10px;
-            margin: 10px 0 0;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .select-dropdown::-webkit-scrollbar {
-            width: 7px;
-        }
-        .select-dropdown::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 25px;
-        }
-        .select-dropdown::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 25px;
-        }
-        .select-dropdown li {
-            padding: 10px;
-            cursor: pointer;
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-            /* Highlight the selected option */
-        .select-dropdown li.selected {
-            background-color: #f2f2f2;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .select-dropdown li:hover,
-        .select-dropdown li:focus {
-            background-color: #f2f2f2;
-            border-radius: 4px;
-        }
-        .select-dropdown.hidden {
-            display: none;
-        }
-        .select-dropdown li.selected {
-            background-color: #f2f2f2;
-            border-radius: 4px;
-            font-weight: bold;
-        }
+
     </style>
 	<div class="ticket-holder-picker">
 		<div class="custom-select">
 			<button class="select-button">
 				<span class="selected-value">Open this select menu</span>
-				<span class="arrow"></span>
+				<span class="select-arrow"></span>
 			</button>
-			<ul class="select-dropdown hidden">
+			<ul class="dropdown-list hidden">
 				<li>GitHub</li>
 				<li>Instagram</li>
 				<li>Facebook</li>
@@ -102,7 +106,7 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
             const customSelects = document.querySelectorAll(".custom-select");
             customSelects.forEach((customSelect) => {
                 const selectButton = customSelect.querySelector(".select-button");
-                const dropdown = customSelect.querySelector(".select-dropdown");
+                const dropdown = customSelect.querySelector(".dropdown-list");
                 const toggleDropdown = (expand = null) => {
                     const isOpen =
                         expand !== null ? expand : dropdown.classList.contains("hidden");
