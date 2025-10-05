@@ -1,9 +1,10 @@
 package ticketholder
 
 import "github.com/Regncon/conorganizer/service/requestctx"
+import "github.com/Regncon/conorganizer/components/icons"
 
 // Takes a `selected` parameter to highlight the selected ticket holder
-templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere []BillettHolder, selected selected) {
+templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicketHolders []BillettHolder, selected selected) {
 	<style>
         .custom-select {
             margin-top: 3rem;
@@ -17,15 +18,33 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                 place-items: center;
                 width: 100%;
                 cursor: pointer;
-                .arrow {
-                    border-left: 5px solid transparent;
-                    border-right: 5px solid transparent;
-                    border-top: 6px solid #000;
-                    transition: transform ease-in-out 0.3s;
+                user-select: none;
+                -moz-user-select: none;
+                -khtml-user-select: none;
+                -webkit-user-select: none;
+                -o-user-select: none;
+                padding-inline: var(--spacing-4x);
+                padding-block: var(--spacing-3x);
+
+                .select-button-end {
+                    display: flex;
+                    place-items: center;
+                    gap: 0.5rem;
+                    p {
+                        font-width: 600;
+                    }
+                    .arrow {
+                        display: flex;
+                        transition: transform ease-in-out 0.3s;
+                    }
                 }
 
-                &[aria-expanded="true"] .arrow {
-                    transform: rotate(180deg);
+                &[aria-expanded="true"] {
+                    .select-button-end {
+                        .arrow {
+                            transform: rotate(180deg);
+                        }
+                    }
                 }
 
             }
@@ -90,8 +109,13 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
 				aria-expanded="false"
 				aria-controls="dropdown-list"
 			>
-				<span class="selected-value">Open this select menu</span>
-				<span class="arrow"></span>
+				<span class="selected-value">Åpne denne menyen</span>
+				<div class="select-button-end">
+					<p>Velg billettholder</p>
+					<i class="arrow">
+						@icons.Icon(icons.ChevronDown, icons.Size24)
+					</i>
+				</div>
 			</button>
 			<ul
 				class="dropdown-list hidden"
@@ -99,12 +123,12 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
 				id="dropdown-list"
 				aria-labelledby="dropdown-button"
 			>
-				<li role="option">Test nr 1</li>
-				<li role="option">Test nr 2</li>
-				<li role="option">Test nr 3</li>
-				<li role="option">Test nr 4</li>
-				<li role="option">Test nr 5</li>
-				<li role="option">Test nr 6</li>
+				for _, th := range associatedTicketHolders {
+					{{ initials := GetInitials(th.Name) }}
+					<li role="option">
+						@nameInitials(th.Name, initials)
+					</li>
+				}
 			</ul>
 		</div>
 	</div>
