@@ -12,7 +12,7 @@ func TestAssociateBillettholderWithEmail(t *testing.T) {
 	// Arrange
 	var ammountOfFakeTickets = 99
 	const targetEmail = "test@regncon.no"
-	const targetEmail2 = "Test@regncon.no"
+	const targetEmailUppercase = "Test@regncon.no"
 
 	var generatedTickets []CheckInTicket
 	for i := range ammountOfFakeTickets {
@@ -35,10 +35,21 @@ func TestAssociateBillettholderWithEmail(t *testing.T) {
 		})
 	}
 
-	var matches []CheckInTicket
+	var expectedMatches []CheckInTicket
 	for _, generatedTicket := range generatedTickets {
 		if generatedTicket.Email == targetEmail {
-			matches = append(matches, generatedTicket)
+			expectedMatches = append(expectedMatches, generatedTicket)
+		}
+	}
+
+	var expectedMatchesWithoutDinner []CheckInTicket
+	for _, generatedTicket := range generatedTickets {
+		if generatedTicket.TypeId != TicketTypeMiddag {
+			continue
+		}
+
+		if generatedTicket.Email == targetEmail {
+			expectedMatches = append(expectedMatches, generatedTicket)
 		}
 	}
 
@@ -51,21 +62,23 @@ func TestAssociateBillettholderWithEmail(t *testing.T) {
 		t.Fatalf("failed to associate email with billettholder: %v", err)
 	}
 
-	result2, err := AssociateBillettholderWithEmail(generatedTickets, targetEmail2)
+	// Case sensitivity
+	resultUppercase, err := AssociateBillettholderWithEmail(generatedTickets, targetEmailUppercase)
 	if err != nil {
 		t.Fatalf("failed to associate email with billettholder: %v", err)
 	}
 
 	// Assert
-	if len(result) != len(matches) {
-		t.Fatalf("expected %d tickets, got %d", len(matches), len(result))
+	if len(result) != len(expectedMatches) {
+		t.Fatalf("expected %d tickets, got %d", len(expectedMatches), len(result))
 	} else {
-		fmt.Printf("AssociateBillettholderWithEmail returned %d/%d matches, total tickets: %d\n", len(result), len(matches), len(generatedTickets))
+		fmt.Printf("AssociateBillettholderWithEmail returned %d/%d matches, total tickets: %d\n", len(result), len(expectedMatches), len(generatedTickets))
 	}
 
-	if len(result2) != len(matches) {
-		t.Fatalf("expected %d tickets, got %d", len(matches), len(result2))
+	// Case sensitivity
+	if len(resultUppercase) != len(expectedMatches) {
+		t.Fatalf("expected %d tickets, got %d", len(expectedMatches), len(resultUppercase))
 	} else {
-		fmt.Printf("AssociateBillettholderWithEmail returned %d/%d matches, total tickets: %d\n", len(result2), len(matches), len(generatedTickets))
+		fmt.Printf("AssociateBillettholderWithEmail returned %d/%d matches, total tickets: %d\n", len(resultUppercase), len(expectedMatches), len(generatedTickets))
 	}
 }

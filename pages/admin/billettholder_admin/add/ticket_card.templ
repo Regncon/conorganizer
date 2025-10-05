@@ -71,8 +71,6 @@ func ConvertTicketToBillettholderRoute(
 	})
 }
 
-const TicketTypeMiddag = 193284
-
 templ ticketCard(ticket checkIn.CheckInTicket, isBllettholder bool, searchTerm string) {
 	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		<p style="margin:0;">
@@ -107,7 +105,7 @@ templ ticketCard(ticket checkIn.CheckInTicket, isBllettholder bool, searchTerm s
 				<p><strong>Alder:</strong> Under 18</p>
 			}
 		</div>
-		if ticket.TypeId == TicketTypeMiddag {
+		if ticket.TypeId == checkIn.TicketTypeMiddag {
 			<p style="margin:0; color: var(--color-accent);">
 				<strong>Merk:</strong> Dette er en middagsbillett.
 			</p>

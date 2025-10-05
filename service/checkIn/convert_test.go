@@ -133,8 +133,6 @@ func TestDoNotConvertTicketsOfTypeMiddag(t *testing.T) {
 	// ❶ Arrange
 	expectedError := "cannot convert 'Middag' ticket to billettholder"
 
-	const TicketTypeMiddag = 193284
-
 	ticketId := 42
 	tickets := []CheckInTicket{
 		{ID: ticketId,
