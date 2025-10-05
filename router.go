@@ -11,11 +11,11 @@ import (
 	"github.com/Regncon/conorganizer/pages/admin"
 	billettholderadmin "github.com/Regncon/conorganizer/pages/admin/billettholder_admin"
 	"github.com/Regncon/conorganizer/pages/event"
-	"github.com/Regncon/conorganizer/pages/index"
 	"github.com/Regncon/conorganizer/pages/login"
 	"github.com/Regncon/conorganizer/pages/myprofile"
 	"github.com/Regncon/conorganizer/pages/myprofile/myevents"
 	profilepage "github.com/Regncon/conorganizer/pages/profile"
+	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
@@ -55,7 +55,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	routerAdmin := isLoggedInRouter.With(authctx.RequireAdmin(logger))
 
 	if err := errors.Join(
-		index.SetupIndexRoute(router, sessionStore, ns, db),
+		root.SetupRootRoute(router, sessionStore, logger, ns, db, eventImageDir),
 		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db, eventImageDir),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
 		event.SetupEventRoute(router, sessionStore, ns, db, logger, eventImageDir),

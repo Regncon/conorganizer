@@ -60,7 +60,6 @@ templ statusCard(event *models.Event, isAdmin bool) {
 					<option value={ models.EventStatusDraft } selected>Kladd</option>
 					<option value={ models.EventStatusSubmitted } selected>Innsendt</option>
 					<option value={ models.EventStatusApproved } selected>Godkjent ( Du er administrator )</option>
-					<option value={ models.EventStatusPublished } selected>Publisert ( Du er administrator )</option>
 					<option value={ models.EventStatusArchived } selected>Arkivert</option>
 				} else {
 					if event.Status == models.EventStatusDraft || event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusArchived {

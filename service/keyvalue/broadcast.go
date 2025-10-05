@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Regncon/conorganizer/pages/index"
+	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
@@ -20,7 +20,7 @@ func BroadcastUpdate(kv jetstream.KeyValue, r *http.Request) error {
 	fmt.Printf("All keys in the KeyValue store: %v\n", allKeys)
 
 	for _, sessionID := range allKeys {
-		mvc := &index.TodoMVC{}
+		mvc := &root.TodoMVC{}
 		fmt.Printf("Processing session ID: %s\n", sessionID)
 		fmt.Printf("mvc is: %+v\n", mvc)
 
@@ -37,7 +37,7 @@ func BroadcastUpdate(kv jetstream.KeyValue, r *http.Request) error {
 	return nil
 }
 
-func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
+func saveMVC(ctx context.Context, mvc *root.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
 	b, err := json.Marshal(mvc)
 	if err != nil {
 		return fmt.Errorf("failed to marshal mvc: %w", err)
