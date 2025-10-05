@@ -21,6 +21,10 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
         .interest-dialog {
             visibility: hidden;
         }
+        .dialog-container {
+            container-type: inline-size;
+            container-name: interest-dialog;
+        }
 
         .interest-dialog[open] {
             --dialog-width: min(30rem, 90%);
@@ -32,48 +36,53 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
             padding: var(--spacing-5x);
             box-shadow: var(--shadow-dialog);
 
-            .dialog-header {
-                display: flex;
-                place-content: space-between;
-                place-items: center;
-                height: fit-content;
-                margin-block-end: var(--spacing-5x);
+            .dialog-container {
 
-                .btn {
-                    padding-inline: var(--spacing-2x);
+                .dialog-header {
+                    display: flex;
+                    place-content: space-between;
+                    place-items: center;
+                    height: fit-content;
+                    margin-block-end: var(--spacing-5x);
+
+                    .btn {
+                        padding-inline: var(--spacing-2x);
+                    }
                 }
-            }
 
-            .ticket-holder-picker {
-                margin-block-end: var(--spacing-5x);
-            }
+                .ticket-holder-picker {
+                    margin-block-end: var(--spacing-5x);
+                }
 
-            .interest-buttons {
-                display: flex;
-                flex-direction: column;
-                gap: var(--spacing-3x);
-            }
+                .interest-buttons {
+                    display: flex;
+                    flex-direction: column;
+                    gap: var(--spacing-3x);
+                }
 
-            button .emoji {
-                font-size: 25px;
-                margin-inline-end: var(--spacing-5x);
+                button .emoji {
+                    font-size: 25px;
+                    margin-inline-end: var(--spacing-5x);
+                }
             }
 
         }
     </style>
 	<dialog class="interest-dialog" closedby="any">
-		<header class="dialog-header">
-			<h3>Meld interesse</h3>
-			<form method="dialog">
-				<button autofocus class="btn btn--ghost close"><img src="/static/icons/close.svg"/></button>
-			</form>
-		</header>
-		@ticketholder.TicketHolderPicker(userInfo, db, logger)
-		<div class="interest-buttons">
-			<button class="btn btn--interest"><span class="emoji">🤩</span> Veldig interessert</button>
-			<button class="btn btn--interest"><span class="emoji">🙂</span> Interessert</button>
-			<button class="btn btn--interest"><span class="emoji">🤨</span> Litt interessert </button>
-			<button class="btn btn--interest"><span class="emoji">😑</span> Ikke interessert</button>
+		<div class="dialog-container">
+			<header class="dialog-header">
+				<h3>Meld interesse</h3>
+				<form method="dialog">
+					<button autofocus class="btn btn--ghost close"><img src="/static/icons/close.svg"/></button>
+				</form>
+			</header>
+			@ticketholder.TicketHolderPicker(userInfo, db, logger)
+			<div class="interest-buttons">
+				<button class="btn btn--interest"><span class="emoji">🤩</span> Veldig interessert</button>
+				<button class="btn btn--interest"><span class="emoji">🙂</span> Interessert</button>
+				<button class="btn btn--interest"><span class="emoji">🤨</span> Litt interessert </button>
+				<button class="btn btn--interest"><span class="emoji">😑</span> Ikke interessert</button>
+			</div>
 		</div>
 	</dialog>
 	<script defer>

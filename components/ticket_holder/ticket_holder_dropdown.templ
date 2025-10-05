@@ -38,6 +38,15 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
                     }
                 }
 
+                .selected-value {
+                    .name-initials {
+                        max-width: 12.8rem;
+                        .name {
+                            display: none;
+                        }
+                    }
+                }
+
                 &[aria-expanded="true"] {
                     .select-button-end {
                         .arrow {
@@ -94,7 +103,24 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
                     }
                 }
             }
+
+
         }
+
+        @container interest-dialog (width > 286px) {
+            .custom-select {
+                .select-button {
+                    .selected-value {
+                        .name-initials {
+                            .name {
+                                display: inline;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
 
     </style>
 	<div class="ticket-holder-picker">
@@ -216,7 +242,9 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
                     options.forEach((opt) => opt.classList.remove("selected"));
                     option.classList.add("selected");
 
-                    selectedValue.textContent = option.textContent.trim();
+                    console.log(option)
+                    console.log(option.textContent)
+                    selectedValue.innerHTML = option.innerHTML;
                 };
 
                 options.forEach((option) => {
