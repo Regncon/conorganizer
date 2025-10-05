@@ -69,7 +69,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 
 		.main-menu-header {
 			width: 100%;
-			background-color: #2d3748;
+			background-color: var(--bg-surface);
 			box-shadow: 0 2px 4px hsla(0, 0%, 0%, 0.1);
 			position: fixed;
 			bottom: 0;
@@ -117,7 +117,6 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				position: relative;
 				display: block;
 				place-self: center end;
-				margin-inline-start: 0.7rem;
 			}
 
 			summary {
@@ -137,9 +136,11 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			.dropdown-panel {
 				position: absolute;
 				right: 0.5rem;
-				bottom: calc(var(--nav-height) + 0.5rem);
-				background-color: #2d3748;
+				top: 42px;
+				background-color: var(--bg-item);
+				border: 1px solid var(--bg-item-border);
 				box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
+				border-radius: var(--border-radius-1x);
 				z-index: var(--nav-drop-down-z-index);
 			}
 
@@ -195,8 +196,11 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				}
 
 				.menu-btn {
-					margin-inline-end: 0.5rem;
-					height: 20px;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					height: 42px;
+					width: 42px;
 				}
 
 				.beta-toggle-label {
@@ -222,7 +226,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			</section>
 			<section id="main-menu-usermenu">
 				if UserInfo.IsLoggedIn {
-					<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end; margin-right: 1rem;">
+					<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end;">
 						<details class="menu-btn">
 							<summary>
 								@icons.Icon(icons.Menu, icons.Size24)
