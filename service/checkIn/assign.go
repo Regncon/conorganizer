@@ -14,6 +14,10 @@ import (
 func AssociateBillettholderWithEmail(tickets []CheckInTicket, email string) ([]CheckInTicket, error) {
 	var result []CheckInTicket
 	for _, ticket := range tickets {
+		if ticket.TypeId == TicketTypeMiddag {
+			continue
+		}
+
 		if strings.EqualFold(ticket.Email, email) {
 			result = append(result, ticket)
 		}
@@ -23,6 +27,7 @@ func AssociateBillettholderWithEmail(tickets []CheckInTicket, email string) ([]C
 }
 
 // todo AssociateBillettholderWithEmail should be called and then feed inn result to billettholder table
+// todo etter funksjon er called og data skal føres inn i db. Ikke opprett nye billettholdere som eksisterer fra før, og ikke koblinger (billettholder_users)
 
 // AssociateUserWithBillettholder uses userID string from users table to match billettholders
 func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logger) error {

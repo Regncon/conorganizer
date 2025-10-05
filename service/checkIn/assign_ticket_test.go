@@ -3,6 +3,7 @@ package checkIn
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/testutil"
@@ -37,18 +38,11 @@ func TestAssociateBillettholderWithEmail(t *testing.T) {
 
 	var expectedMatches []CheckInTicket
 	for _, generatedTicket := range generatedTickets {
-		if generatedTicket.Email == targetEmail {
-			expectedMatches = append(expectedMatches, generatedTicket)
-		}
-	}
-
-	var expectedMatchesWithoutDinner []CheckInTicket
-	for _, generatedTicket := range generatedTickets {
-		if generatedTicket.TypeId != TicketTypeMiddag {
+		if generatedTicket.TypeId == TicketTypeMiddag {
 			continue
 		}
 
-		if generatedTicket.Email == targetEmail {
+		if strings.EqualFold(generatedTicket.Email, targetEmail) {
 			expectedMatches = append(expectedMatches, generatedTicket)
 		}
 	}
@@ -77,8 +71,8 @@ func TestAssociateBillettholderWithEmail(t *testing.T) {
 
 	// Case sensitivity
 	if len(resultUppercase) != len(expectedMatches) {
-		t.Fatalf("expected %d tickets, got %d", len(expectedMatches), len(resultUppercase))
+		t.Fatalf("expected %d uppercase tickets, got %d", len(expectedMatches), len(resultUppercase))
 	} else {
-		fmt.Printf("AssociateBillettholderWithEmail returned %d/%d matches, total tickets: %d\n", len(resultUppercase), len(expectedMatches), len(generatedTickets))
+		fmt.Printf("AssociateBillettholderWithEmail returned uppercase %d/%d matches, total tickets: %d\n", len(resultUppercase), len(expectedMatches), len(generatedTickets))
 	}
 }
