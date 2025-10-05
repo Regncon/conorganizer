@@ -1,9 +1,10 @@
 package icons
 
 import (
-  "fmt"
-  "os"
-  "io"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 )
 
 type IconType string
@@ -11,67 +12,73 @@ type IconType string
 type IconSize string
 
 const (
-  ChevronDown             IconType = "icon-chevron-down"
-  ChevronLeft             IconType = "icon-chevron-left"
-  ChevronRight            IconType = "icon-chevron-right"
-  ChevronUp               IconType = "icon-chevron-up"
-  EventAdultOnly          IconType = "icon-event-adult-only"
-  EventBeginnerFriendly   IconType = "icon-event-beginner-friendly"
-  EventBoardgame          IconType = "icon-event-boardgame"
-  EventCardgame           IconType = "icon-event-cardgame"
-  EventChildFriendly      IconType = "icon-event-child-friendly"
-  EventEnglish            IconType = "icon-event-english"
-  EventOtherGames         IconType = "icon-event-other-games"
-  EventRoleplay           IconType = "icon-event-roleplay"
-  Close                   IconType = "icon-close"
-  Comment                 IconType = "icon-comment"
-  Email                   IconType = "icon-email"
-  Gamemaster              IconType = "icon-gamemaster"
-  Home                    IconType = "icon-home"
-  Image                   IconType = "icon-image"
-  Ticket                  IconType = "icon-ticket"
-  TimeUnder3Hours         IconType = "icon-time-under-3-hours"
-  TimeOver6Hours          IconType = "icon-time-over-6-hours"
-  Menu                    IconType = "icon-menu"
-  Progress25              IconType = "icon-progress-25"
-  Progress50              IconType = "icon-progress-50"
-  Progress75              IconType = "icon-progress-75"
-  ProgressComplete        IconType = "icon-progress-complete"
-  ProgressRejected        IconType = "icon-progress-rejected"
-  Shield                  IconType = "icon-shield"
-  User                    IconType = "icon-user"
+	ChevronDown           IconType = "icon-chevron-down"
+	ChevronLeft           IconType = "icon-chevron-left"
+	ChevronRight          IconType = "icon-chevron-right"
+	ChevronUp             IconType = "icon-chevron-up"
+	EventAdultOnly        IconType = "icon-event-adult-only"
+	EventBeginnerFriendly IconType = "icon-event-beginner-friendly"
+	EventBoardgame        IconType = "icon-event-boardgame"
+	EventCardgame         IconType = "icon-event-cardgame"
+	EventChildFriendly    IconType = "icon-event-child-friendly"
+	EventEnglish          IconType = "icon-event-english"
+	EventOtherGames       IconType = "icon-event-other-games"
+	EventRoleplay         IconType = "icon-event-roleplay"
+	Close                 IconType = "icon-close"
+	Comment               IconType = "icon-comment"
+	Email                 IconType = "icon-email"
+	Gamemaster            IconType = "icon-gamemaster"
+	Home                  IconType = "icon-home"
+	Image                 IconType = "icon-image"
+	Ticket                IconType = "icon-ticket"
+	TimeUnder3Hours       IconType = "icon-time-under-3-hours"
+	TimeOver6Hours        IconType = "icon-time-over-6-hours"
+	Menu                  IconType = "icon-menu"
+	Progress25            IconType = "icon-progress-25"
+	Progress50            IconType = "icon-progress-50"
+	Progress75            IconType = "icon-progress-75"
+	ProgressComplete      IconType = "icon-progress-complete"
+	ProgressRejected      IconType = "icon-progress-rejected"
+	Shield                IconType = "icon-shield"
+	User                  IconType = "icon-user"
 )
 
 const (
-  Size32 IconSize = "32"
-  Size24 IconSize = "24"
-  Size20 IconSize = "20"
-  Size16 IconSize = "16"
+	Size32 IconSize = "32"
+	Size24 IconSize = "24"
+	Size20 IconSize = "20"
+	Size16 IconSize = "16"
 )
 
 func getSVGContent(icon IconType) string {
-  path := fmt.Sprintf("static/icons/%s.svg", icon)
-  file, openFileOpenErr := os.Open(path)
-  if openFileOpenErr != nil {
-    return ""
-  }
-  defer file.Close()
-  content, readFileReadErr := io.ReadAll(file)
-  if readFileReadErr != nil {
-    return ""
-  }
-  return string(content)
+	path := fmt.Sprintf("static/icons/%s.svg", icon)
+	filePath, err := filepath.Abs(path)
+	if err != nil {
+		fmt.Println("Unable to get filepath for: " + path)
+	} else {
+		fmt.Println("Loading: " + filePath)
+	}
+
+	file, openFileOpenErr := os.Open(path)
+	if openFileOpenErr != nil {
+		return ""
+	}
+	defer file.Close()
+	content, readFileReadErr := io.ReadAll(file)
+	if readFileReadErr != nil {
+		return ""
+	}
+	return string(content)
 }
 
-
 templ Icon(icon IconType, size IconSize) {
-  {{
-     svgContent := getSVGContent(icon) 
-     containerClass := fmt.Sprintf("inline-icon icon-size-%s", size)
-  }}
-  if svgContent != "" {
-    <span class={containerClass}>
-      @templ.Raw(svgContent)
-    </span>
-  }
+	{{
+	svgContent := getSVGContent(icon)
+	containerClass := fmt.Sprintf("inline-icon icon-size-%s", size)
+	}}
+	if svgContent != "" {
+		<span class={ containerClass }>
+			@templ.Raw(svgContent)
+		</span>
+	}
 }
