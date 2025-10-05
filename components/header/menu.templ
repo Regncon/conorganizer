@@ -77,7 +77,8 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 		}
 		.main-menu {
 			display: grid;
-			grid-template-columns: repeat(2, max-content);
+			grid-template-areas: 'logo navbuttons usermenu';
+			grid-template-columns: 100px 1fr 100px;
 			height: var(--nav-height);
 			width: 100%;
 			gap: var(--nav-gap);
@@ -162,8 +163,25 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				bottom: unset;
 			}
 
+			#main-menu-logo {
+				display: flex;
+				justify-content: flex-start;
+				grid-area: logo;
+			}
+
+			#main-menu-navbuttons {
+				grid-area: navbuttons
+			}
+
+			#main-menu-usermenu {
+				display: flex;
+				justify-content: flex-end;
+				grid-area: usermenu;
+			}
+
 			.main-menu {
-				grid-template-columns: max-content 1fr 1fr;
+				grid-template-areas: 'logo navbuttons usermenu';
+				grid-template-columns: 100px 1fr 100px;
 				gap: 1rem;
 
 				.logo-link {
@@ -173,22 +191,6 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 					img {
 						width: 3rem;
 						height: 3rem;
-					}
-				}
-
-				.main-menu-links {
-					place-self: center start;
-
-					.main-menu-link {
-						display: flex;
-						gap: 0.25rem;
-						justify-content: center;
-						align-items: center;
-						height: 100%;
-
-						.main-menu-link-text {
-							display: block;
-						}
 					}
 				}
 
@@ -210,45 +212,44 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 	</style>
 	<header class="main-menu-header">
 		<nav class="main-menu page-content-container wide-content">
-			<a href="/" class="logo-link">
-				<img src="/static/RegnconLogo.svg" alt="logo"/>
-			</a>
-			<section class="main-menu-links">
-				<a href="/" class="main-menu-link">
-					@icons.Icon(icons.Home, icons.Size24)
-					<span class="main-menu-link-text">
-						Hjem
-					</span>
+			<section id="main-menu-logo">
+				<a href="/" class="logo-link">
+					<img src="/static/RegnconLogo.svg" alt="logo"/>
 				</a>
 			</section>
-			if UserInfo.IsLoggedIn {
-				<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end; margin-right: 1rem;">
-					<details class="menu-btn">
-						<summary>
-							@icons.Icon(icons.Menu, icons.Size24)
-						</summary>
-						<div class="dropdown-panel">
-							<a href="/auth/logout">Logg ut</a>
-							<a href="/my-events">Mine arrangementer</a>
-							if UserInfo.IsAdmin {
-                                <a href="/profile">Min Profil</a>
-								<hr/>
-								<a href="/admin/billettholder/">Billettholderoversikt</a>
-								<a href="/admin/approval/">Arrangement til godkjenning</a>
-							}
-						</div>
-					</details>
-				</div>
-			}
-			if !UserInfo.IsLoggedIn {
-				<a
-					href="/auth"
-					class="btn btn--primary"
-					style="place-self: center end; margin-right:  1rem"
-				>
-					Logg inn
-				</a>
-			}
+			<section id="main-menu-navbuttons">
+				@MainMenuButtons(UserInfo)
+			</section>
+			<section id="main-menu-usermenu">
+				if UserInfo.IsLoggedIn {
+					<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end; margin-right: 1rem;">
+						<details class="menu-btn">
+							<summary>
+								@icons.Icon(icons.Menu, icons.Size24)
+							</summary>
+							<div class="dropdown-panel">
+								<a href="/auth/logout">Logg ut</a>
+								<a href="/my-events">Mine arrangementer</a>
+								if UserInfo.IsAdmin {
+																	<a href="/profile">Min Profil</a>
+									<hr/>
+									<a href="/admin/billettholder/">Billettholderoversikt</a>
+									<a href="/admin/approval/">Arrangement til godkjenning</a>
+								}
+							</div>
+						</details>
+					</div>
+				}
+				if !UserInfo.IsLoggedIn {
+					<a
+						href="/auth"
+						class="btn btn--primary"
+						style="place-self: center end; margin-right:  1rem"
+					>
+						Logg inn
+					</a>
+				}
+			</section>
 		</nav>
 	</header>
 }

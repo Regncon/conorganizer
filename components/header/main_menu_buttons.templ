@@ -1,0 +1,43 @@
+package header
+
+import (
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/components/icons"
+)
+
+templ MainMenuButtons(UserInfo requestctx.UserRequestInfo) {
+  <style>
+    .main-menu-buttons {
+      width: 100%;
+      display: flex;
+      gap: var(--spacing-4x);
+
+      .main-menu-button {
+        color: var(--color-secondary);
+        text-decoration: none;
+      }
+    }
+  </style>
+  <section class="main-menu-buttons">
+    <a role="button" href="/" class="btn btn--ghost btn-with-icon">
+      @icons.Icon(icons.Home, icons.Size24)
+      <span>
+        Hjem
+      </span>
+    </a>
+    <a role="button" href="/" class="btn btn--ghost btn-with-icon">
+      @icons.Icon(icons.User, icons.Size24)
+      <span>
+        Min Side
+      </span>
+    </a>
+    if (UserInfo.IsAdmin) {
+      <a role="button" href="/" class="btn btn--ghost btn-with-icon">
+        @icons.Icon(icons.Shield, icons.Size24)
+        <span>
+          Admin
+        </span>
+      </a>
+    }
+  </section>
+}

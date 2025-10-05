@@ -225,3 +225,7 @@
     color: var(--btn-disabled-text);
     cursor: not-allowed;
 }
+
+.btn-with-icon {
+    gap: var(--spacing-2x);
+}
