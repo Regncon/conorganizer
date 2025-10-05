@@ -152,6 +152,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			#main-menu-logo {
 				display: flex;
 				justify-content: flex-start;
+				width: 100%;
 				grid-area: logo;
 			}
 
@@ -162,12 +163,13 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			#main-menu-usermenu {
 				display: flex;
 				justify-content: flex-end;
+				width: 100%;
 				grid-area: usermenu;
 			}
 
 			.main-menu {
 				grid-template-areas: 'logo navbuttons usermenu';
-				grid-template-columns: 100px 1fr 100px;
+				grid-template-columns: 120px 1fr 120px;
 				gap: 1rem;
 
 				.logo-link {
@@ -230,11 +232,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 					</div>
 				}
 				if !UserInfo.IsLoggedIn {
-					<a
-						href="/auth"
-						class="btn btn--primary"
-						style="place-self: center end; margin-right:  1rem"
-					>
+					<a href="/auth" class="btn btn--primary">
 						Logg inn
 					</a>
 				}
