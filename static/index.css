@@ -200,26 +200,27 @@ p+p {
     margin-top: 1rem
 }
 
-.icon-size-16 {
+.inline-icon {
     display: inline-block;
+    flex-shrink: 0;
+}
+
+.icon-size-16 {
     width: 16px;
     height: 16px;
 }
 
 .icon-size-20 {
-    display: inline-block;
     width: 20px;
     height: 20px;
 }
 
 .icon-size-24 {
-    display: inline-block;
     width: 24px;
     height: 24px;
 }
 
 .icon-size-32 {
-    display: inline-block;
     width: 32px;
     height: 32px;
 }

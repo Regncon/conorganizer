@@ -1,0 +1,93 @@
+.event-card-container {
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius-1x);
+    display: grid;
+    grid-template-rows: 180px minmax(110px, 1fr) min-content;
+    grid-template-columns: minmax(var(--mobile-min-width), 1fr);
+    color: var(--color-primary-text);
+    box-sizing: border-box;
+    text-decoration: none;
+    position: relative;
+}
+
+.event-card-status-tag {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.event-card-thumbnail {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-top-left-radius: var(--border-radius-1x);
+    border-top-right-radius: var(--border-radius-1x);
+}
+
+.event-card-main-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-3x);
+    padding: var(--spacing-3x);
+}
+
+.event-card-title {
+    white-space: nowrap;
+    overflow: clip;
+    text-overflow: ellipsis;
+    margin: 0 0 var(--spacing-1x);
+    color: var(--color-text-strong);
+    font-size: 16px;
+}
+
+.event-card-subtitle {
+    white-space: nowrap;
+    overflow: clip;
+    text-overflow: ellipsis;
+    margin: 0;
+    color: var(--color-primary);
+    font-size: 14px;
+    font-weight: normal;
+}
+
+.event-card-description {
+    overflow: clip;
+    margin-top: 0;
+    font-size: 14px;
+    height: 32px;
+    margin: 0;
+}
+
+.event-card-footer {
+    padding: var(--spacing-3x);
+    border-top: 1px solid var(--bg-item-border);
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--spacing-3x);
+}
+
+.event-card-footer-gamemaster {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--spacing-1x);
+    overflow: hidden;
+    p {
+        font-size: 12px;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.event-card-footer-tagicons {
+    display: flex;
+    flex-direction: row;
+    justify-content: end;
+    align-items: center;
+    gap: var(--spacing-2x);
+}
