@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Regncon/conorganizer/service/authctx"
@@ -16,7 +15,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
-	"github.com/samber/lo"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -92,19 +90,12 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 	}
 	rootLayoutRoute(router, db, logger, eventImageDir, err)
 
-	router.Route("/api", func(apiRouter chi.Router) {
-		apiRouter.Route("/todos", func(todosRouter chi.Router) {
-			todosRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
+	router.Route("/root", func(rootRouter chi.Router) {
+		rootRouter.Route("/api", func(rootApiRouter chi.Router) {
+			rootApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				sse := datastar.NewSSE(w, r)
 
-				// Watch for updates
+				sessionID, mvc, err := mvcSession(w, r)
 				ctx := r.Context()
 				watcher, err := kv.Watch(ctx, sessionID)
 				if err != nil {
@@ -127,197 +118,13 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 						}
 						var ctx = r.Context()
 						isAdmin := authctx.GetAdminFromUserToken(ctx)
-						c := rootPageContent(db, isAdmin, eventImageDir)
+						c := rootPage(db, isAdmin, eventImageDir)
 						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
 						}
 					}
 				}
-			})
-
-			todosRouter.Put("/reset", func(w http.ResponseWriter, r *http.Request) {
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				resetMVC(mvc)
-				if err := saveMVC(r.Context(), sessionID, mvc); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-			})
-
-			todosRouter.Put("/cancel", func(w http.ResponseWriter, r *http.Request) {
-
-				sessionID, mvc, err := mvcSession(w, r)
-				sse := datastar.NewSSE(w, r)
-				if err != nil {
-					sse.ConsoleError(err)
-					return
-				}
-
-				mvc.EditingIdx = -1
-				if err := saveMVC(r.Context(), sessionID, mvc); err != nil {
-					sse.ConsoleError(err)
-					return
-				}
-			})
-
-			todosRouter.Put("/mode/{mode}", func(w http.ResponseWriter, r *http.Request) {
-
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				modeStr := chi.URLParam(r, "mode")
-				modeRaw, err := strconv.Atoi(modeStr)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
-
-				mode := TodoViewMode(modeRaw)
-				if mode < TodoViewModeAll || mode > TodoViewModeCompleted {
-					http.Error(w, "invalid mode", http.StatusBadRequest)
-					return
-				}
-
-				mvc.Mode = mode
-				if err := saveMVC(r.Context(), sessionID, mvc); err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-			})
-
-			todosRouter.Route("/{idx}", func(todoRouter chi.Router) {
-				routeIndex := func(w http.ResponseWriter, r *http.Request) (int, error) {
-					idx := chi.URLParam(r, "idx")
-					i, err := strconv.Atoi(idx)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusBadRequest)
-						return 0, err
-					}
-					return i, nil
-				}
-
-				todoRouter.Post("/toggle", func(w http.ResponseWriter, r *http.Request) {
-					sessionID, mvc, err := mvcSession(w, r)
-
-					sse := datastar.NewSSE(w, r)
-					if err != nil {
-						sse.ConsoleError(err)
-						return
-					}
-
-					i, err := routeIndex(w, r)
-					if err != nil {
-						sse.ConsoleError(err)
-						return
-					}
-
-					if i < 0 {
-						setCompletedTo := false
-						for _, todo := range mvc.Todos {
-							if !todo.Completed {
-								setCompletedTo = true
-								break
-							}
-						}
-						for _, todo := range mvc.Todos {
-							todo.Completed = setCompletedTo
-						}
-					} else {
-						todo := mvc.Todos[i]
-						todo.Completed = !todo.Completed
-					}
-
-					saveMVC(r.Context(), sessionID, mvc)
-				})
-
-				todoRouter.Route("/edit", func(editRouter chi.Router) {
-					editRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-						sessionID, mvc, err := mvcSession(w, r)
-						if err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
-							return
-						}
-
-						i, err := routeIndex(w, r)
-						if err != nil {
-							return
-						}
-
-						mvc.EditingIdx = i
-						saveMVC(r.Context(), sessionID, mvc)
-					})
-
-					editRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
-						type Store struct {
-							Input string `json:"input"`
-						}
-						store := &Store{}
-
-						if err := datastar.ReadSignals(r, store); err != nil {
-							http.Error(w, err.Error(), http.StatusBadRequest)
-							return
-						}
-
-						if store.Input == "" {
-							return
-						}
-
-						sessionID, mvc, err := mvcSession(w, r)
-						if err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
-							return
-						}
-
-						i, err := routeIndex(w, r)
-						if err != nil {
-							return
-						}
-
-						if i >= 0 {
-							mvc.Todos[i].Text = store.Input
-						} else {
-							mvc.Todos = append(mvc.Todos, &Todo{
-								Text:      store.Input,
-								Completed: false,
-							})
-						}
-						mvc.EditingIdx = -1
-
-						saveMVC(r.Context(), sessionID, mvc)
-
-					})
-				})
-
-				todoRouter.Delete("/", func(w http.ResponseWriter, r *http.Request) {
-					i, err := routeIndex(w, r)
-					if err != nil {
-						return
-					}
-
-					sessionID, mvc, err := mvcSession(w, r)
-					if err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-
-					if i >= 0 {
-						mvc.Todos = append(mvc.Todos[:i], mvc.Todos[i+1:]...)
-					} else {
-						mvc.Todos = lo.Filter(mvc.Todos, func(todo *Todo, i int) bool {
-							return !todo.Completed
-						})
-					}
-					saveMVC(r.Context(), sessionID, mvc)
-				})
 			})
 		})
 	})
