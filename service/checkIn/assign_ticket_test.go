@@ -12,6 +12,7 @@ func TestAssociateBillettholderWithEmail(t *testing.T) {
 	// Arrange
 	var ammountOfFakeTickets = 99
 	const targetEmail = "test@regncon.no"
+	const targetEmail2 = "Test@regncon.no"
 
 	var generatedTickets []CheckInTicket
 	for i := range ammountOfFakeTickets {
@@ -19,7 +20,7 @@ func TestAssociateBillettholderWithEmail(t *testing.T) {
 
 		// Tie 10% of tickets with our target email
 		var emailValue = targetEmail
-		if rand.Intn(10) < 1 {
+		if rand.Intn(10) > 1 {
 			emailValue = generatedPerson.Email
 		}
 
@@ -50,10 +51,21 @@ func TestAssociateBillettholderWithEmail(t *testing.T) {
 		t.Fatalf("failed to associate email with billettholder: %v", err)
 	}
 
+	result2, err := AssociateBillettholderWithEmail(generatedTickets, targetEmail2)
+	if err != nil {
+		t.Fatalf("failed to associate email with billettholder: %v", err)
+	}
+
 	// Assert
 	if len(result) != len(matches) {
 		t.Fatalf("expected %d tickets, got %d", len(matches), len(result))
 	} else {
 		fmt.Printf("AssociateBillettholderWithEmail returned %d/%d matches, total tickets: %d\n", len(result), len(matches), len(generatedTickets))
+	}
+
+	if len(result2) != len(matches) {
+		t.Fatalf("expected %d tickets, got %d", len(matches), len(result2))
+	} else {
+		fmt.Printf("AssociateBillettholderWithEmail returned %d/%d matches, total tickets: %d\n", len(result2), len(matches), len(generatedTickets))
 	}
 }

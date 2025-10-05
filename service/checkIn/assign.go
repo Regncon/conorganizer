@@ -14,7 +14,7 @@ import (
 func AssociateBillettholderWithEmail(tickets []CheckInTicket, email string) ([]CheckInTicket, error) {
 	var result []CheckInTicket
 	for _, ticket := range tickets {
-		if ticket.Email == email {
+		if strings.EqualFold(ticket.Email, email) {
 			result = append(result, ticket)
 		}
 	}
