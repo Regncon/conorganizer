@@ -28,7 +28,7 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 		<p>Error fetching events: { eventErr.Error() }</p>
 		return
 	}
-	if  isAdmin == false && eventData.Status == models.EventStatusApproved || eventData.Status == models.EventStatusPublished {
+	if  isAdmin == false && eventData.Status == models.EventStatusApproved {
 		{{ logger.Error("Attempt to edit an already approved or published event", "eventId", eventId) }}
 		<h1>Arrangementet er allerede godkjent eller publisert</h1>
 		<h2>Ta kontakt med RegnCon styret på Dicord eller via epost om du ønsker å gjøre endringer på arrangementet.</h2>
