@@ -10,8 +10,8 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-// AssociateBillettholderWithEmail takes a list of tickets and matches with email supplied, returns matches
-func AssociateBillettholderWithEmail(tickets []CheckInTicket, email string) ([]CheckInTicket, error) {
+// AssociateTicketsWithEmail takes a list of tickets and matches with email supplied, returns matches
+func AssociateTicketsWithEmail(tickets []CheckInTicket, email string) ([]CheckInTicket, error) {
 	var result []CheckInTicket
 	for _, ticket := range tickets {
 		if ticket.TypeId == TicketTypeMiddag {
@@ -23,11 +23,33 @@ func AssociateBillettholderWithEmail(tickets []CheckInTicket, email string) ([]C
 		}
 	}
 
+	if len(result) < 1 {
+		return nil, errors.New("found 0 tickets registered on: " + email)
+	}
+
 	return result, nil
 }
 
 // todo AssociateBillettholderWithEmail should be called and then feed inn result to billettholder table
 // todo etter funksjon er called og data skal føres inn i db. Ikke opprett nye billettholdere som eksisterer fra før, og ikke koblinger (billettholder_users)
+
+func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string) error {
+	// Filtrer tickets til de som er registrert på user email
+	myTickets, err := AssociateTicketsWithEmail(tickets, email)
+	if err != nil {
+		return err
+	}
+
+	// get existing billetterholdere registered to user email
+
+	// Create new array of unique non-existing tickets
+
+	// Enter new array into billettholdere
+
+	// call AssociateUserWithBillettholder
+
+	return nil
+}
 
 // AssociateUserWithBillettholder uses userID string from users table to match billettholders
 func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logger) error {

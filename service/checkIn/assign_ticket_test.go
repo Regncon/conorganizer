@@ -9,7 +9,7 @@ import (
 	"github.com/Regncon/conorganizer/testutil"
 )
 
-func TestAssociateBillettholderWithEmail(t *testing.T) {
+func TestAssociateTicketsWithEmail(t *testing.T) {
 	// Arrange
 	var ammountOfFakeTickets = 99
 	const targetEmail = "test@regncon.no"
@@ -51,13 +51,13 @@ func TestAssociateBillettholderWithEmail(t *testing.T) {
 	/* sl := &testutil.StubLogger{}
 	slogger := testutil.NewSlogAdapter(sl) */
 
-	result, err := AssociateBillettholderWithEmail(generatedTickets, targetEmail)
+	result, err := AssociateTicketsWithEmail(generatedTickets, targetEmail)
 	if err != nil {
 		t.Fatalf("failed to associate email with billettholder: %v", err)
 	}
 
 	// Case sensitivity
-	resultUppercase, err := AssociateBillettholderWithEmail(generatedTickets, targetEmailUppercase)
+	resultUppercase, err := AssociateTicketsWithEmail(generatedTickets, targetEmailUppercase)
 	if err != nil {
 		t.Fatalf("failed to associate email with billettholder: %v", err)
 	}
