@@ -29,7 +29,6 @@ var beta = false
 templ todosMVCView(db *sql.DB) {
 	<div id="todos-container">
 		if beta {
-			@eventList(db)
 		}
 	</div>
 }

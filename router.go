@@ -55,7 +55,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	routerAdmin := isLoggedInRouter.With(authctx.RequireAdmin(logger))
 
 	if err := errors.Join(
-		root.SetupRootRoute(router, sessionStore, logger, ns, db),
+		root.SetupRootRoute(router, sessionStore, logger, ns, db, eventImageDir),
 		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db, eventImageDir),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
 		event.SetupEventRoute(router, sessionStore, ns, db, logger, eventImageDir),

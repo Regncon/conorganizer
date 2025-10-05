@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -19,7 +20,7 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB) error {
+func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -89,7 +90,7 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 		}
 		return sessionID, mvc, nil
 	}
-	rootLayoutRoute(router, db, logger, err)
+	rootLayoutRoute(router, db, logger, eventImageDir, err)
 
 	router.Route("/api", func(apiRouter chi.Router) {
 		apiRouter.Route("/todos", func(todosRouter chi.Router) {
@@ -124,7 +125,9 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						c := todosMVCView(db)
+						var ctx = r.Context()
+						isAdmin := authctx.GetAdminFromUserToken(ctx)
+						c := rootPageContent(db, isAdmin, eventImageDir)
 						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return

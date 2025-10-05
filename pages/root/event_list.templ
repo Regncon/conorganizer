@@ -3,50 +3,47 @@ package root
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/components"
 )
 
-func GetEvents(db *sql.DB) ([]models.Event, error) {
+func GetEvents(db *sql.DB) ([]models.EventCardModel, error) {
 	query := `
             SELECT
                 id,
                 title,
-                description,
-                image_url, system,
+                intro,
+                status,
+                system,
                 host_name,
-                host, email,
-                phone_number,
-                pulje_name,
-                max_players,
+                event_type,
+                age_group,
+                event_runtime,
                 beginner_friendly,
-                can_be_run_in_english,
-                status
+                can_be_run_in_english
             FROM events
-            WhERE status = ?
+            WHERE status = 'Godkjent'
             `
-	rows, err := db.Query(query, models.EventStatusPublished)
+	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var events []models.Event
+	var events []models.EventCardModel
 	for rows.Next() {
-		var event models.Event
+		var event models.EventCardModel
 		if err := rows.Scan(
-			&event.ID,
+			&event.Id,
 			&event.Title,
-			&event.Description,
-			&event.ImageURL,
+			&event.Intro,
+			&event.Status,
 			&event.System,
 			&event.HostName,
-			&event.Host,
-			&event.Email,
-			&event.PhoneNumber,
-			&event.PuljeName,
-			&event.MaxPlayers,
+			&event.EventType,
+			&event.AgeGroup,
+			&event.Runtime,
 			&event.BeginnerFriendly,
 			&event.CanBeRunInEnglish,
-			&event.Status,
 		); err != nil {
 			return nil, err
 		}
@@ -55,7 +52,7 @@ func GetEvents(db *sql.DB) ([]models.Event, error) {
 	return events, nil
 }
 
-templ eventList(db *sql.DB) {
+templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	{{ events, err := GetEvents(db) }}
 	<div style="margin-right: auto; margin-left: auto; max-width: 1500px;">
 		if err != nil {
@@ -70,7 +67,7 @@ templ eventList(db *sql.DB) {
 				gap: 1rem;"
 		>
 			for _, event := range events {
-				@eventCard(event.ID, event.Title, "System", "Game Master", event.Description)
+				@components.EventCard(event, eventImageDir, isAdmin)
 			}
 		</div>
 	</div>

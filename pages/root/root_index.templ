@@ -12,7 +12,7 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
+func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		isAdmin := authctx.GetAdminFromUserToken(ctx)
@@ -22,13 +22,13 @@ func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err err
 				IsLoggedIn: true,
 				IsAdmin:    true,
 			},
-			rootIndex(db, isAdmin),
+			rootIndex(db, isAdmin, eventImageDir),
 		).Render(ctx, w)
 	})
 }
 
-templ rootIndex(db *sql.DB, isAdmin bool) {
+templ rootIndex(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	<div id="root-page-wrapper" data-on-load={ datastar.GetSSE("/my-events/api") }>
-		@rootPageContent(db, isAdmin)
+		@rootPageContent(db, isAdmin, eventImageDir)
 	</div>
 }

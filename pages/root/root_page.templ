@@ -5,7 +5,7 @@ import (
 	"github.com/Regncon/conorganizer/components"
 )
 
-templ rootPageContent(db *sql.DB, isAdmin bool) {
+templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	<style>
 		@keyframes spin {
 			from {
@@ -34,12 +34,16 @@ templ rootPageContent(db *sql.DB, isAdmin bool) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
 	})
-	<div class="regncon-logo-container">
-		<img
-			src="/static/RegnconLogo.svg"
-			alt="logo"
-		/>
-	</div>
+	if isAdmin == false {
+		<div class="regncon-logo-container">
+			<img
+				src="/static/RegnconLogo.svg"
+				alt="logo"
+			/>
+		</div>
+	}
 	@components.CallToAction()
-	@eventList(db)
+	if isAdmin {
+		@eventList(db, isAdmin, eventImageDir)
+	}
 }
