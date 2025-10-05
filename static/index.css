@@ -24,17 +24,10 @@
 
     --color-disabled: #CCD1E980;
 
-    --bg-base: var(--bg-body-100);
+    --bg-base: #1A1B26;
     --bg-surface: #252735;
-    --bg-item: var(--bg-body-90);
-    --bg-item-border: #494d62;
-
-    --bg-body-100: #1A1B26;
-    --bg-body-90: #35394A;
-    --bg-body-80: #474446;
-    --bg-body-70: #575255;
-    --bg-body-60: #666064;
-    --bg-body-50: #756e73;
+    --bg-item: #35394A;
+    --bg-item-border: #494D62;
 
     /* text & font */
     --text-body: 16px;
