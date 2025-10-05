@@ -2,6 +2,7 @@ package event_components
 
 import (
 	"database/sql"
+	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
@@ -73,7 +74,9 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
 				<form method="dialog">
-					<button autofocus class="btn btn--ghost close"><img src="/static/icons/close.svg"/></button>
+					<button autofocus class="btn btn--ghost close">
+						@icons.Icon(icons.Close, icons.Size24)
+					</button>
 				</form>
 			</header>
 			@ticketholder.TicketHolderPicker(userInfo, db, logger)
