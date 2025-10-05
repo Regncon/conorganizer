@@ -1,0 +1,33 @@
+package profilecomponent
+
+type TicketHolder struct {
+	Name   string
+	Ticket string
+	Email  string
+}
+
+// Single ticket holder used in component below
+templ ticketHolder(name string, ticket string, email string) {
+	<div style="width: fit-content;">
+		<p style="font-weight: bold;">{ name }</p>
+		<span class="flex" style="gap: var(--spacing-2x); align-items: center;">
+			<img src="/static/icons/icon-cardgame-event.svg"/>
+			<p>{ ticket }</p>
+		</span>
+		<span class="flex" style="gap: var(--spacing-2x); align-items: center;">
+			<img src="/static/icons/icon-user.svg"/>
+			<p>{ email }</p>
+		</span>
+	</div>
+}
+
+// Combine multiple ticket holders for profile page
+templ MyTickets(tickets []TicketHolder) {
+	<div class="surface-pane flex flex-col" style="gap: var(--spacing-4x);">
+		<h2 class="surface-pane-title">Biletter</h2>
+		for _, ticket := range tickets {
+			@ticketHolder(ticket.Name, ticket.Ticket, ticket.Email)
+		}
+		<a href="/profile/tickets" class="btn btn--outline" style="width: fit-content; margin-left: auto;">Mine biletter</a>
+	</div>
+}

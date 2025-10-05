@@ -1,0 +1,30 @@
+package profilecomponent
+
+import (
+	"github.com/Regncon/conorganizer/models"
+	"strings"
+)
+
+templ MyEvents(events []models.EventCardModel) {
+	<div class="surface-pane flex flex-col" style="gap: var(--spacing-2x)">
+		<h2 class="surface-pane-title"><a href="/profile/events">Mine arrangementer</a></h2>
+		if len(events) > 0 {
+			for _, event := range events {
+				<span class="item-card flex" style="justify-content: space-between; align-items: center;">
+					<a href={ "profile/events/new/" + event.Id }>
+						if event.Title == "" {
+							<h3 style="color: gray; font-style: italic;">Mangler navn</h3>
+						} else {
+							<h3>{ event.Title }</h3>
+						}
+					</a>
+					<span class={ "status-panel", "event-status-" + strings.ToLower(string(event.Status)) }>{ event.Status }</span>
+				</span>
+			}
+		}
+		<form action="/events/api/new" method="post" class="flex" style="width: 100%; padding-top: var(--spacing-2x); gap: var(--spacing-2x); justify-content: space-between; align-items: center;">
+			<p style="flex: 0 1 400px">Ønsker du  å arrangere noe under festivalen? Dørene er fortsatt åpne for nye arrangementer, la oss høre fra deg!</p>
+			<button type="submit" class="btn btn--outline">Send inn arrangement</button>
+		</form>
+	</div>
+}

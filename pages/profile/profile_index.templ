@@ -1,0 +1,79 @@
+package profilepage
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/profile"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/pages/profile/tickets"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/delaneyj/toolbelt/embeddednats"
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+	"log/slog"
+	"net/http"
+)
+
+func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
+	router.Route("/profile", func(profileRouter chi.Router) {
+		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			var ctx = r.Context()
+			var user = userctx.GetUserRequestInfo(ctx)
+
+			// User generated events
+			var events = GetEventsByUserId(user.Id, db, logger)
+
+			// tmp ticket data
+			var tickets = []profilecomponent.TicketHolder{
+				profilecomponent.TicketHolder{Name: "Gary Lindgren", Ticket: "Early Bird (26+)", Email: "gary.cooldude@email.com"},
+				profilecomponent.TicketHolder{Name: "Ana Anderson", Ticket: "Early Bird (26+)", Email: "ana.awesome@email.com"},
+				profilecomponent.TicketHolder{Name: "Åge Påge", Ticket: "Early Bird (26+)", Email: "aagep@email.com"},
+			}
+
+			layouts.Base(
+				"Min profil side",
+				user,
+				ProfilePage(events, tickets),
+			).Render(ctx, w)
+		})
+
+		// Subroutes
+		profileticketspage.ProfileTicketsRoute(profileRouter, store, ns, db, logger)
+	})
+
+	return nil
+}
+
+templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.TicketHolder) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Min Side", Url: ""},
+	})
+	<section class="page-content-container profile-container">
+		<div style="flex-grow: 2;">
+			@profilecomponent.MyEvents(events)
+			@profilecomponent.MyPropgram()
+		</div>
+		<div>
+			/* @profilecomponent.UserDetails(user) */
+			@profilecomponent.MyTickets(tickets)
+		</div>
+	</section>
+	<style>
+        .profile-container {
+            display: flex;
+            gap: var(--responsive-pane-column-spacing);
+            flex-flow: row wrap;
+            padding-top: var(--responsive-pane-column-spacing);
+        }
+
+        .profile-container > div {
+            display: flex;
+            flex-direction: column;
+            gap: var(--responsive-pane-column-spacing);
+            flex: 1 1 fit-content;
+            /* min-width: fit-content; */
+        }
+    </style>
+}
