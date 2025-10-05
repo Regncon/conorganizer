@@ -50,11 +50,26 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 		logger.Error("Error iterating over ticket holder rows", "ticketHolderRowsErr", ticketHolderRowsErr)
 	}
 
-	associatedTicketholders = append(associatedTicketholders, associatedTicketholders...)
-	associatedTicketholders = append(associatedTicketholders, associatedTicketholders...)
-	associatedTicketholders = append(associatedTicketholders, associatedTicketholders...)
-	associatedTicketholders = append(associatedTicketholders, associatedTicketholders...)
-	associatedTicketholders = append(associatedTicketholders, associatedTicketholders...)
+	associatedTicketholders = append(associatedTicketholders, BillettHolder{
+		Email: "lo@najcuksuc.sn",
+		Name:  "Leonard Moreno",
+	})
+	associatedTicketholders = append(associatedTicketholders, BillettHolder{
+		Email: "lacbe@lecuc.my",
+		Name:  "Olive Berry",
+	})
+	associatedTicketholders = append(associatedTicketholders, BillettHolder{
+		Email: "mijinpu@posrik.cz",
+		Name:  "Bobby Silva",
+	})
+	associatedTicketholders = append(associatedTicketholders, BillettHolder{
+		Email: "igkir@mukpunuc.be",
+		Name:  "Bertha Francis",
+	})
+	associatedTicketholders = append(associatedTicketholders, BillettHolder{
+		Email: "ruidavuf@otavig.gy",
+		Name:  "Mario Ross",
+	})
 
 	return associatedTicketholders, nil
 

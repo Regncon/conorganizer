@@ -4,7 +4,7 @@ import "github.com/Regncon/conorganizer/service/requestctx"
 import "github.com/Regncon/conorganizer/components/icons"
 
 // Takes a `selected` parameter to highlight the selected ticket holder
-templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicketHolders []BillettHolder, selected selected) {
+templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder, selected selected) {
 	<style>
         .custom-select {
             position: relative;
@@ -134,10 +134,7 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
 				aria-expanded="false"
 				aria-controls="dropdown-list"
 			>
-				<span class="selected-value">
-					{{ initials := GetInitials(associatedTicketHolders[0].Name) }}
-					@nameInitials(associatedTicketHolders[0].Name, initials)
-				</span>
+				<span class="selected-value"></span>
 				<div class="select-button-end">
 					<p>Velg billettholder</p>
 					<i class="arrow">
@@ -151,7 +148,7 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
 				id="dropdown-list"
 				aria-labelledby="dropdown-button"
 			>
-				for _, th := range associatedTicketHolders {
+				for _, th := range associatedBillettholder {
 					{{ initials := GetInitials(th.Name) }}
 					<li role="option">
 						@nameInitials(th.Name, initials)
@@ -161,29 +158,49 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
 		</div>
 	</div>
 	<script>
-        const associatedTicketHolders = {{ associatedTicketHolders }};
-        let selectedTicketHolder = {{ associatedTicketHolders[0] }};
-        console.log("test", associatedTicketHolders);
-        console.log("testSelected", selectedTicketHolder);
+        const associatedBillettholder = {{ associatedBillettholder }};
+        let selectedBillettholder = {{ associatedBillettholder[0] }};
+        const LSEnum = {
+            SelectedBilletHolder: "selectedBillettHolder"
+        };
+        console.log("test", associatedBillettholder);
+        console.log("testSelected", selectedBillettholder);
         document.addEventListener("DOMContentLoaded", () => {
-
             initDropDown();
+            initLocalstorage();
         });
 
         const initLocalstorage = () => {
-            const savedTicketHolder = localStorage.getItem("selectedTicketHolder");
-            if (savedTicketHolder) {
-                const ticketHolder = JSON.parse(savedTicketHolder);
-                console.log("Restored ticket holder:", ticketHolder);
+            const selectedBillettholderLS = localStorage.getItem(LSEnum.SelectedBilletHolder);
+            const nameInitialsElement = document.querySelector(".selected-value");
 
+            if (!selectedBillettholderLS) {
+                localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(selectedBillettholder));
+                console.log("Selected ticket holder:", selectedBillettholder);
+
+                console.log("name and initials", nameInitialsElement);
+                nameInitialsElement.innerHTML = `
+                    <div class="name-initials">
+                        <span class="initials">${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                        <p class="name">${selectedBillettholder.Name}</p>
+                    </div>
+                `;
             }
 
-            const handleSelectedTicketHolder = (ticketHolder) => {
-                selectedTicketHolder = ticketHolder;
-                localStorage.setItem("selectedTicketHolder", JSON.stringify(ticketHolder));
-                console.log("Selected ticket holder:", ticketHolder);
-            };
+            if (selectedBillettholderLS) {
+                const billetHolder = JSON.parse(selectedBillettholderLS);
+                selectedBillettholder = billetHolder;
+                console.log("Selected ticket holder from localStorage:", billetHolder);
+
+                nameInitialsElement.innerHTML = `
+                    <div class="name-initials">
+                        <span class="initials">${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                        <p class="name">${selectedBillettholder.Name}</p>
+                    </div>
+                `;
+            }
         };
+
         const initDropDown = () => {
             const customSelects = document.querySelectorAll(".custom-select");
             customSelects.forEach((customSelect) => {
@@ -269,6 +286,12 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
                     option.classList.add("selected");
 
                     selectedValue.innerHTML = option.innerHTML;
+
+                    const name = option.querySelector(".name").textContent;
+                    const billetHolder = associatedBillettholder.find(th => th.Name === name);
+                    localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(billetHolder));
+                    selectedBillettholder = billetHolder;
+                    console.log("Selected ticket holder:", billetHolder);
                 };
 
                 options.forEach((option) => {
