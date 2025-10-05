@@ -13,29 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// scenario 1: billettholder -> bruker
-// scenario 2:
-// scenario 3:
-
-// hent ut alle billetter som matcher userID.email fra billettholder_emails, returnerer billettholder(id) array
-/* func GetAllBillettholderByUserEmail(t *testing.T) error {
-	// Arrange
-	uniqueDatabaseName := "test_associate_billettholders_" + t.Name() + "_" + uuid.New().String() + ".db"
-	testDBPath := "../../database/tests/" + uniqueDatabaseName
-
-	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
-	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
-	}
-	defer db.Close()
-
-	return nil
-} */
-
-/* func InsertBilletHolderIDSFromUserEmail(t *testing.T) error {
-	return nil
-} */
-
 func TestAssociateUserWithBillettholder(t *testing.T) {
 	// Arrange
 	uniqueDatabaseName := "test_associate_billettholders_" + t.Name() + "_" + uuid.New().String() + ".db"
@@ -77,8 +54,8 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	}
 
 	var queryBase = fmt.Sprintf(`INSERT INTO billettholdere (
-        id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
-		) VALUES %s`, strings.Join(queryBillettholder, ", "))
+            id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
+            ) VALUES %s`, strings.Join(queryBillettholder, ", "))
 
 	_, err = db.Exec(queryBase)
 	if err != nil {
@@ -101,9 +78,9 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		queryBillettholderEmail = append(queryBillettholderEmail, fmt.Sprintf(`(%d, "%s", "%s")`, billettholderEmail.BillettholderID, billettholderEmail.Email, "Manual"))
 	}
 	queryBase = fmt.Sprintf(`
-		INSERT INTO billettholder_emails (
-        billettholder_id, email, kind
-		) VALUES %s`, strings.Join(queryBillettholderEmail, ", "))
+            INSERT INTO billettholder_emails (
+                billettholder_id, email, kind
+                ) VALUES %s`, strings.Join(queryBillettholderEmail, ", "))
 
 	_, err = db.Exec(queryBase)
 	if err != nil {
@@ -128,9 +105,9 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	}
 
 	queryBase = fmt.Sprintf(`
-		INSERT INTO users (
-        id, user_id, email, is_admin
-		) VALUES %s`, strings.Join(queryUsers, ", "))
+                INSERT INTO users (
+                    id, user_id, email, is_admin
+                    ) VALUES %s`, strings.Join(queryUsers, ", "))
 
 	_, err = db.Exec(queryBase)
 	if err != nil {
@@ -167,8 +144,8 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	var billettholderUsers []models.BillettholderUsers
 
 	rows, err := db.Query(`
-        SELECT billettholder_id, user_id FROM billettholdere_users
-    `)
+                    SELECT billettholder_id, user_id FROM billettholdere_users
+                    `)
 	if err != nil {
 		t.Fatalf("Failed to get rows from billettholder_users: %v", err)
 	}

@@ -10,6 +10,12 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
+// AssociateBillettholderWithEmail takes a list of tickets and matches with email supplied, returns matches
+func AssociateBillettholderWithEmail(tickets []CheckInTicket, email string) ([]CheckInTicket, error) {
+
+	return nil, nil
+}
+
 // AssociateUserWithBillettholder uses userID string from users table to match billettholders
 func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logger) error {
 	logger.Info("Associating userID with billettholder", "userID", userID)
