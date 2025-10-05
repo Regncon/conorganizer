@@ -23,6 +23,7 @@ type PuljeRow struct {
 type EventPulje struct {
 	EventID     string `json:"event_id"`
 	PuljeID     Pulje  `json:"pulje_id"`
+	IsActive    bool   `json:"isActive"`
 	IsPublished bool   `json:"isPublished"`
 	Room        string `json:"room"`
 }

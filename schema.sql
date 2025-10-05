@@ -147,7 +147,8 @@ CREATE TABLE
     event_puljer (
         event_id TEXT NOT NULL,
         pulje_id TEXT NOT NULL,
-        isPublished BOOLEAN NOT NULL DEFAULT FALSE,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        is_published BOOLEAN NOT NULL DEFAULT FALSE,
         room TEXT DEFAULT '',
         PRIMARY KEY (event_id, pulje_id),
         FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
