@@ -124,19 +124,25 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                 const selectButton = customSelect.querySelector(".select-button");
                 const arrow = customSelect.querySelector(".arrow");
                 const dropdown = customSelect.querySelector(".dropdown-list");
+
+                let focusedIndex = -1;
+
                 const toggleDropdown = (expand = null) => {
-                    const isOpen =
-                        expand !== null ? expand : dropdown.classList.contains("hidden");
+                    const isOpen = expand !== null ? expand : dropdown.classList.contains("hidden");
+
                     dropdown.classList.toggle("hidden", !isOpen);
                     arrow.classList.toggle("arrow-up", !isOpen);
                     arrow.classList.toggle("arrow-down", isOpen);
+
                     selectButton.setAttribute("aria-expanded", isOpen);
 
                     if (isOpen) {
                         focusedIndex = [...options].findIndex((option) =>
-                        option.classList.contains("selected")
+                            option.classList.contains("selected")
                         );
+
                         focusedIndex = focusedIndex === -1 ? 0 : focusedIndex;
+
                         updateFocus();
                     } else {
                         focusedIndex = -1;
@@ -146,47 +152,62 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                 const updateFocus = () => {
                     options.forEach((option, index) => {
                         if (option) {
-                        option.setAttribute("tabindex", index === focusedIndex ? "0" : "-1");
-                        if (index === focusedIndex) option.focus();
+                            option.setAttribute("tabindex", index === focusedIndex ? "0" : "-1");
+
+                            if (index === focusedIndex) option.focus();
                         }
                     });
                 };
+
                 selectButton.addEventListener("click", () => {
                     toggleDropdown();
                 });
+
                 selectButton.addEventListener("keydown", (event) => {
                     if (event.key === "ArrowDown") {
                         event.preventDefault();
+
                         toggleDropdown(true);
+
                     } else if (event.key === "Escape") {
                         toggleDropdown(false);
                     }
                 });
+
                 dropdown.addEventListener("keydown", (event) => {
                     if (event.key === "ArrowDown") {
                         event.preventDefault();
+
                         focusedIndex = (focusedIndex + 1) % options.length;
+
                         updateFocus();
                     } else if (event.key === "ArrowUp") {
                         event.preventDefault();
+
                         focusedIndex = (focusedIndex - 1 + options.length) % options.length;
+
                         updateFocus();
                     } else if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
+
                         handleOptionSelect(options[focusedIndex]);
+
                         toggleDropdown(false);
                     } else if (event.key === "Escape") {
                         toggleDropdown(false);
                     }
                 });
+
                 const options = dropdown.querySelectorAll("li");
                 const selectedValue = selectButton.querySelector(".selected-value");
 
                 const handleOptionSelect = (option) => {
                     options.forEach((opt) => opt.classList.remove("selected"));
                     option.classList.add("selected");
+
                     selectedValue.textContent = option.textContent.trim();
                 };
+
                 options.forEach((option) => {
                     option.addEventListener("click", () => {
                         handleOptionSelect(option);
