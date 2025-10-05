@@ -27,6 +27,7 @@
     --bg-base: #1A1B26;
     --bg-surface: #252735;
     --bg-item: #35394A;
+    /* This is a border for surface and item both */
     --bg-item-border: #494D62;
 
     /* text & font */
