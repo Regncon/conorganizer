@@ -13,6 +13,10 @@ import (
 	"github.com/google/uuid"
 )
 
+// scenario 1: billettholder -> bruker
+// scenario 2:
+// scenario 3:
+
 // hent ut alle billetter som matcher userID.email fra billettholder_emails, returnerer billettholder(id) array
 /* func GetAllBillettholderByUserEmail(t *testing.T) error {
 	// Arrange

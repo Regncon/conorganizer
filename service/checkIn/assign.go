@@ -10,7 +10,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-// AssociateUserWithBillettholder uses userID string from
+// AssociateUserWithBillettholder uses userID string from users table to match billettholders
 func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logger) error {
 	logger.Info("Associating userID with billettholder", "userID", userID)
 
