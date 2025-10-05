@@ -122,10 +122,10 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 			}
 
 			const upsert = `
-			INSERT INTO event_puljer (event_id, pulje_id, is_active)
-			VALUES (?, ?, 1)
+			INSERT INTO event_puljer (event_id, pulje_id, is_active, is_published)
+			VALUES (?, ?, 1, 0)
 			ON CONFLICT(event_id, pulje_id) DO UPDATE SET
-			  is_active = ?;
+			  is_active = ?, is_published = 0;
 			`
 			if _, err := db.Exec(upsert, eventID, puljeId, isActive); err != nil {
 				logger.Error("Failed to upsert event_puljer", "error", err)
@@ -282,7 +282,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 						if eventPulje.IsPublished {
 							checked
 						}
-						if eventPulje == (models.EventPulje{}) {
+						if eventPulje.IsActive == false {
 							disabled
 						}
 						data-bind={ fmt.Sprintf("isPublished%s", pulje) }
@@ -300,7 +300,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 				data-signals={ fmt.Sprintf("{%s:'%s'}", roomSignal, eventPulje.Room) }
 			></div>
 			<input
-				if eventPulje == (models.EventPulje{}) {
+				if eventPulje.IsActive == false {
 					disabled
 				}
 				name="room"
