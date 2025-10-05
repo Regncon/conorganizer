@@ -36,12 +36,13 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                 top: 100%;
                 left: 0;
                 width: 100%;
-                border: 1px solid #caced1;
+                background-color: var(--bg-surface);
+                border: 1px solid var(--bg-item-border);
                 border-radius: 0.25rem;
                 list-style: none;
                 padding: 10px;
                 margin: 10px 0 0;
-                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+                box-shadow: var(--shadow-dialog);
                 max-height: 200px;
                 overflow-y: auto;
                 scrollbar-width: thin;
@@ -51,6 +52,8 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                 }
 
                 li {
+                    background-color: var(--bg-item);
+                    border: 1px solid var(--bg-item-border);
                     padding: 10px;
                     cursor: pointer;
                     display: flex;
@@ -58,15 +61,17 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, billettholdere [
                     align-items: center;
 
                     .selected {
-                        background-color: #f2f2f2;
+                        border-color: var(--color-primary);
                         border-radius: 4px;
                         font-weight: bold;
+                        color: var(--color-primary);
                     }
                 }
 
                 li:hover,
                 li:focus {
-                    background-color: #f2f2f2;
+                    border-color: var(--color-primary);
+                    color: var(--color-primary);
                     border-radius: 4px;
                 }
 
