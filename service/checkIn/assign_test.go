@@ -14,10 +14,8 @@ import (
 )
 
 // hent ut alle billetter som matcher userID.email fra billettholder_emails, returnerer billettholder(id) array
-func GetAllBillettholderByUserEmail(t *testing.T) error {
+/* func GetAllBillettholderByUserEmail(t *testing.T) error {
 	// Arrange
-
-	/* Create temp db for testing */
 	uniqueDatabaseName := "test_associate_billettholders_" + t.Name() + "_" + uuid.New().String() + ".db"
 	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
@@ -28,16 +26,14 @@ func GetAllBillettholderByUserEmail(t *testing.T) error {
 	defer db.Close()
 
 	return nil
-}
+} */
 
-func InsertBilletHolderIDSFromUserEmail(t *testing.T) error {
+/* func InsertBilletHolderIDSFromUserEmail(t *testing.T) error {
 	return nil
-}
+} */
 
 func TestAssociateUserWithBillettholder(t *testing.T) {
 	// Arrange
-
-	/* Create temp db for testing */
 	uniqueDatabaseName := "test_associate_billettholders_" + t.Name() + "_" + uuid.New().String() + ".db"
 	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
@@ -47,7 +43,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	}
 	defer db.Close()
 
-	/* Add billettholdere test data */
+	// Add billettholdere test data
 	var expectedGeneratedUsers []testutil.Person
 	var expectedBillettholders []models.Billettholder
 
@@ -86,7 +82,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		return
 	}
 
-	/* Attempt to insert into billettholder_emails */
+	// Attempt to insert into billettholder_emails
 	var expectedBillettholderEmails []models.BillettholderEmail
 	for _, person := range expectedGeneratedUsers {
 		billettholderEmail := models.BillettholderEmail{
@@ -111,7 +107,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		return
 	}
 
-	/* Attempt to insert into expectedUsers */
+	// Attempt to insert into expectedUsers
 	var expectedUsers []models.User
 	for i, holder := range expectedGeneratedUsers {
 		expectedUsers = append(expectedUsers, models.User{
@@ -163,7 +159,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		}
 	}
 
-	/* Check that billettholder_users got populated */
+	// Check that billettholder_users got populated
 	var billettholderUsers []models.BillettholderUsers
 
 	rows, err := db.Query(`
