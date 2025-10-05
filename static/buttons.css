@@ -2,7 +2,7 @@
     /* sizing */
     --btn-height: 42px;
     --btn-height-cta: 58px;
-    --btn-padding-x: var(--spacing-8x);
+    --btn-padding-x: var(--spacing-4x);
     --btn-font-size: 14px;
     --btn-font-weight: 600;
     --btn-border-radius: var(--border-radius-1x);
@@ -224,6 +224,10 @@
     border-color: var(--btn-disabled-border);
     color: var(--btn-disabled-text);
     cursor: not-allowed;
+}
+
+.btn-with-icon {
+    gap: var(--spacing-2x);
 }
 
 .btn--interest {

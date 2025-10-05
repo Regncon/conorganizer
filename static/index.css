@@ -24,18 +24,12 @@
 
     --color-disabled: #CCD1E980;
 
-    --bg-base: var(--bg-body-100);
+    --bg-base: #1A1B26;
     --bg-surface: #252735;
-    --bg-item: var(--bg-body-90);
-    --bg-item-border: #494d62;
+    --bg-item: #35394A;
+    /* This is a border for surface and item both */
+    --bg-item-border: #494D62;
     --bg-backdrop: #11111B;
-
-    --bg-body-100: #1A1B26;
-    --bg-body-90: #35394A;
-    --bg-body-80: #474446;
-    --bg-body-70: #575255;
-    --bg-body-60: #666064;
-    --bg-body-50: #756e73;
 
     /* text & font */
     --text-body: 16px;
@@ -63,8 +57,9 @@
     --shadow-dialog: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
 
     /* content width */
-    --page-header-max-width: 1920px;
     --page-content-max-width: 1440px;
+    --page-content-wide-max-width: 1920px;
+    --page-content-ultrawide-max-width: 2240px;
 
     /* breakpoints */
     --mobile-min-width: 320px;
@@ -73,7 +68,6 @@
     /* nav */
     --nav-height: 4rem;
     --nav-z-index: 10;
-    --nav-gap: 1rem;
 
     /* responsively size gap between panes in the same column of content */
     --responsive-pane-column-spacing: var(--spacing-4x);
@@ -115,7 +109,7 @@ body {
     background: var(--bg-base);
     margin: 0;
     font-family: sans-serif;
-    margin-block-end: calc(var(--nav-height) + var(--nav-gap));
+    margin-block-end: var(--nav-height);
 
     @media screen and (width >=420px) {
         margin-block-end: 0;
@@ -124,13 +118,18 @@ body {
     main {
         container-type: inline-size;
         container-name: main;
-        padding-bottom: 3rem;
-        /* add 3rem  to avoid menu overlap */
+        padding-bottom: var(--spacing-5x);
     }
 
-    @media screen and (width >=420px) {
+    @media screen and (width > 600px) {
         main {
-            padding-bottom: 0;
+            padding-bottom: var(--spacing-8x);
+        }
+    }
+
+    @media screen and (width > 1200px) {
+        main {
+            padding-bottom: var(--spacing-10x);
         }
     }
 
@@ -143,34 +142,6 @@ body {
     .event-container {
         container-type: inline-size;
         container-name: event-container;
-    }
-}
-
-.header-content-container {
-    max-width: var(--page-header-max-width);
-    padding: 0 8px;
-    margin: 0 auto;
-}
-
-.page-content-container {
-    max-width: var(--page-content-max-width);
-    padding: 0 8px;
-    margin: 0 auto;
-}
-
-@container main (width > 600px) {
-
-    .header-content-container,
-    .page-content-container {
-        padding: 0 var(--spacing-5x);
-    }
-}
-
-@container main (width > 1200px) {
-
-    .header-content-container,
-    .page-content-container {
-        padding: 0 var(--spacing-10x);
     }
 }
 
@@ -231,6 +202,30 @@ p {
 
 p+p {
     margin-top: 1rem
+}
+
+.icon-size-16 {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+}
+
+.icon-size-20 {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+}
+
+.icon-size-24 {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+}
+
+.icon-size-32 {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
 }
 
 hr {

@@ -47,10 +47,10 @@ templ myEventsPage(userid string, db *sql.DB, eventImageDir *string, logger *slo
 templ myEventsPageContent(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
-		{Name: "Mine Arrangementer", Url: ""},
+		{Name: "Mine arrangementer", Url: ""},
 	})
 	<div class="page-content-container">
-		<h1 class="page-heading">Mine Arrangementer</h1>
+		<h1 class="page-heading">Mine arrangementer</h1>
 		<div class="my-event-grid">
 			@events(userid, db, eventImageDir, logger)
 		</div>

@@ -1,0 +1,293 @@
+package header
+
+import (
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/service/requestctx"
+)
+
+var beta = false
+
+/*
+	if UserInfo.IsAdmin {
+		<label class=" beta-toggle">
+			<input type="checkbox" id="betaFeatureToggle"/>
+			<span class="slider"></span>
+			<span class="beta-toggle-label">Beta features</span>
+		</label>
+	}
+*/
+
+templ Menu(UserInfo requestctx.UserRequestInfo) {
+	<style>
+		.beta-toggle {
+			display: flex;
+			align-items: center;
+			gap: 0.5rem;
+			margin: 0.6rem 1rem 0.6rem 0.6rem;
+			font-family: "Fira Code";
+		}
+
+		.beta-toggle-label {
+			color: var(--color-secondary);
+			font-size: 1rem;
+			user-select: none;
+			display: none;
+		}
+
+		.beta-toggle input[type="checkbox"] {
+			display: none;
+		}
+
+		.beta-toggle .slider {
+			width: 40px;
+			height: 22px;
+			background: #757575;
+			border-radius: 22px;
+			position: relative;
+			transition: background 0.2s;
+		}
+
+		.beta-toggle .slider::after {
+			content: "";
+			position: absolute;
+			height: 18px;
+			width: 18px;
+			left: 2px;
+			top: 2px;
+			background: #fff;
+			border-radius: 50%;
+			transition: transform 0.2s;
+		}
+
+		.beta-toggle input:checked + .slider {
+			background: #4fd1c5;
+		}
+
+		.beta-toggle input:checked + .slider::after {
+			transform: translateX(18px);
+		}
+
+		.main-menu-header {
+			width: 100%;
+			background-color: var(--bg-surface);
+			box-shadow: 0 2px 4px hsla(0, 0%, 0%, 0.1);
+			position: fixed;
+			bottom: 0;
+			z-index: var(--nav-z-index);
+		}
+		.main-menu {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: space-around;
+			height: var(--nav-height);
+			width: 100%;
+			gap: var(--spacing-4x);
+			font-family: "Fira Code";
+
+			a.disabled {
+				pointer-events: none;
+				color: #999;
+				cursor: not-allowed;
+				text-decoration: none;
+				opacity: 0.6;
+			}
+
+			.logo-link {
+				display: none;
+			}
+
+			details {
+				position: relative;
+				display: block;
+				place-self: center end;
+			}
+
+			summary {
+				cursor: pointer;
+				list-style: none;
+				/* hide the default disclosure triangle in some browsers */
+				color: var(--color-secondary);
+				text-decoration: none;
+			}
+
+			summary::-webkit-details-marker {
+				display: none;
+				/* hide default marker in Chrome/Safari */
+			}
+
+			.menu-btn {
+				display: flex;
+        flex-direction: column;
+				justify-content: center;
+				align-items: center;
+        font-size: 12px;
+        height: 48px;
+        padding: 0 var(--spacing-4x);
+        gap: var(--spacing-1x);
+        .menu-btn-text {
+          white-space: nowrap;
+    	  }
+			}
+
+			.dropdown-panel {
+				position: absolute;
+				right: 0;
+				bottom: 52px;
+				background-color: var(--bg-item);
+				border: 1px solid var(--bg-item-border);
+				box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
+				border-radius: var(--border-radius-1x);
+				z-index: var(--nav-drop-down-z-index);
+			}
+
+			.dropdown-panel a {
+				display: block;
+				color: var(--color-primary-text);
+				padding: 0.5rem 1rem;
+				text-decoration: none;
+				text-transform: uppercase;
+			}
+
+			.dropdown-panel a:hover {
+				background-color: hsla(0, 0%, 100%, 0.1);
+			}
+		}
+
+		#main-menu-logo {
+			display: none;
+		}
+
+		#main-menu-navbuttons {
+			display: contents;
+		}
+
+		.main-menu-buttons {
+			display: contents;
+		}
+
+		@container main (width > 600px) {
+			#main-menu-logo {
+				grid-area: logo;
+				display: flex;
+				justify-content: flex-start;
+				width: 100%;
+			}
+
+			#main-menu-navbuttons {
+				display: initial;
+				grid-area: navbuttons;
+				width: 100%;
+			}
+
+			#main-menu-usermenu {
+				grid-area: usermenu;
+				display: flex;
+				justify-content: flex-end;
+				width: 100%;
+			}
+
+			.main-menu-header {
+				position: sticky;
+				top: 0;
+				bottom: unset;
+			}
+
+			.main-menu {
+				display: grid;
+				grid-template-areas: 'logo navbuttons usermenu';
+				grid-template-columns: 50px 1fr 50px;
+				place-content: center;
+				place-items: center;
+				.logo-link {
+					display: flex;
+					place-items: center;
+
+					img {
+						width: 3rem;
+						height: 3rem;
+					}
+				}
+
+				.menu-btn-container {
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					height: 42px;
+					width: 42px;
+					.inline-icon {
+						width: 24px;
+						height: 24px;
+					}
+				}
+
+				.menu-btn {
+					height: var(--btn-height);
+					width: var(--btn-height);
+					padding: 0;
+					.menu-btn-text {
+						display: none;
+					}
+				}
+
+				.btn-login {
+					white-space: nowrap;
+				}
+
+				.beta-toggle-label {
+					display: block;
+				}
+
+				.dropdown-panel {
+					bottom: unset;
+					top: 46px;
+				}
+			}
+		}
+
+		@container main (width > 800px) {
+			.main-menu {
+				grid-template-columns: 120px 1fr 120px;
+			}
+		}
+	</style>
+	<header class="main-menu-header">
+		<nav class="main-menu page-content-container wide-content">
+			<section id="main-menu-logo">
+				<a href="/" class="logo-link">
+					<img src="/static/RegnconLogo.svg" alt="logo"/>
+				</a>
+			</section>
+			<section id="main-menu-navbuttons">
+				@MainMenuButtons(UserInfo)
+			</section>
+			<section id="main-menu-usermenu">
+				if UserInfo.IsLoggedIn {
+					<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end;">
+						<details class="menu-btn-container">
+							<summary class="btn btn--ghost menu-btn">
+								@icons.Icon(icons.Menu, icons.Size20)
+								<span class="menu-btn-text">Meny</span>
+							</summary>
+							<div class="dropdown-panel">
+								<a href="/auth/logout">Logg ut</a>
+								<a href="/my-events">Mine arrangementer</a>
+								if UserInfo.IsAdmin {
+									<a href="/profile">Min Profil</a>
+									<hr/>
+									<a href="/admin/billettholder/">Billettholderoversikt</a>
+									<a href="/admin/approval/">Arrangement til godkjenning</a>
+								}
+							</div>
+						</details>
+					</div>
+				}
+				if !UserInfo.IsLoggedIn {
+					<a href="/auth" class="btn btn--primary btn-login">
+						Logg inn
+					</a>
+				}
+			</section>
+		</nav>
+	</header>
+}

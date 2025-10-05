@@ -219,14 +219,14 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					class="input"
 					required
 				>
-					<option value="Default" selected>Passer for alle aldre</option>
+					<option value="Default" selected>Sandard</option>
 					<option value="ChildFriendly">Barn (under 12 år)</option>
 					<option value="AdultsOnly">Voksne (18+ år)</option>
 				</select>
 			</label>
 			<article class="item-card age-group-description">
 				<p class="label">Hvilke alder anbefales arrangementet for</p>
-				<p>Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. </p>
+				<p>Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. Standard aldersgrensen på Regncon er 13+. Søndag morgen kjøres barneprogramene.</p>
 			</article>
 			<label for="runtime" class="label-small color-strong form-group runtime">
 				Varighet
@@ -329,7 +329,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				</p>
 			</article>
 			<label class="label-small color-strong form-group other-notes">
-				Andre Merknader – Er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
+				Andre merknader – er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
 				<textarea
 					name="other-notes"
 					data-signals={ fmt.Sprintf("{notes:'%s'}", notes) }

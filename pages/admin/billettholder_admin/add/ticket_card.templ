@@ -12,6 +12,7 @@ import (
 
 	"github.com/gorilla/sessions"
 	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -92,18 +93,10 @@ templ ticketCard(ticket checkIn.CheckInTicket, isBllettholder bool, searchTerm s
 		</a>
 		<div style="display: flex; align-items: center; gap:0.5rem; ">
 			if ticket.IsOver18 {
-				<img
-					src="/static/icons/adults-only.svg"
-					alt="adults only"
-				/>
+				@icons.Icon(icons.EventAdultOnly, icons.Size24)
 				<p><strong>Alder:</strong> Over 18</p>
 			} else {
-				<img
-					width="34px"
-					height="34px"
-					src="/static/icons/child-friendly.svg"
-					alt="child friendly"
-				/>
+				@icons.Icon(icons.EventChildFriendly, icons.Size24)
 				<p><strong>Alder:</strong> Under 18</p>
 			}
 		</div>

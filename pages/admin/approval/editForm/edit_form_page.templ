@@ -18,6 +18,13 @@ templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, eventIm
 }
 
 templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	<style>
+		.edit-form-with-preview {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: var(--spacing-8x);
+		}
+	</style>
 	{{
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
 	isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
@@ -35,20 +42,23 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Admin", Url: "/admin/"},
-		{Name: "Godkjenning av Arrangementer", Url: "/admin/approval/"},
-		{Name: "Rediger Arrangement", Url: ""},
-	})
-	@components.PreviousNextBar(previousNextData)
-	<h1 class="page-heading">Rediger Arrangement</h1>
-	<div style="display: flex; gap: 4rem;">
-		<form
-			class="formsubmission-wrapper page-content-container"
-		>
-			@formsubmission.FormBody(eventData, isAdmin)
-		</form>
-		<div style="padding:2rem;">
-			@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir, db, logger)
+		{Name: "Godkjenning av arrangementer", Url: "/admin/approval/"},
+		{Name: "Rediger arrangement", Url: ""},
+	}) {
+		@components.BreadcrumbNavButtons(previousNextData)
+	}
+	// Vet ikke om vi vil ha knappene over innholdet på denne måten, kan bare ha prev/next i breadcrumbs
+	// @components.PreviousNextBar(previousNextData)
+	<div class="page-content-container ultrawide-content">
+		<h1 class="page-heading">Rediger arrangement</h1>
+		<div class="edit-form-with-preview">
+			<form class="formsubmission-wrapper">
+				@formsubmission.FormBody(eventData, isAdmin)
+			</form>
+			@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir)
 		</div>
 	</div>
-	@components.PreviousNextBar(previousNextData)
+	<div class="page-content-container wide-content">
+		@components.PreviousNextBar(previousNextData)
+	</div>
 }
