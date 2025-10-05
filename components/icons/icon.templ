@@ -1,13 +1,12 @@
 package icons
 
 import (
-	"fmt"
-	"io"
-	"os"
-	"io/fs"
 	"embed"
-	"strings"
+	"fmt"
 )
+
+//go:embed assets/*
+var iconFileSystem embed.FS
 
 type IconType string
 
@@ -52,18 +51,15 @@ const (
 	Size16 IconSize = "16"
 )
 
-//go:embed assets/*
-var iconFileSystem embed.FS
-
 func getSVGContent(icon IconType) string {
 	path := fmt.Sprintf("./assets/%s.svg", icon)
 
-    bytes, err := iconFileSystem.ReadFile(path)
-    if err != nil {
-        return ""
-    }
+	bytes, err := iconFileSystem.ReadFile(path)
+	if err != nil {
+		return ""
+	}
 
-    return string(bytes)
+	return string(bytes)
 }
 
 templ Icon(icon IconType, size IconSize) {
