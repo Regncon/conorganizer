@@ -1,5 +1,9 @@
 package profilecomponent
 
+import(
+	"github.com/Regncon/conorganizer/components/icons"
+)
+
 type TicketHolder struct {
 	Name   string
 	Ticket string
@@ -8,14 +12,14 @@ type TicketHolder struct {
 
 // Single ticket holder used in component below
 templ ticketHolder(name string, ticket string, email string) {
-	<div style="width: fit-content;">
+	<div class="flex flex-col" style="gap: var(--spacing-1x); width: fit-content;">
 		<p style="font-weight: bold;">{ name }</p>
 		<span class="flex" style="gap: var(--spacing-2x); align-items: center;">
-			<img src="/static/icons/icon-cardgame-event.svg"/>
+			@icons.Icon(icons.Ticket, icons.Size24)
 			<p>{ ticket }</p>
 		</span>
 		<span class="flex" style="gap: var(--spacing-2x); align-items: center;">
-			<img src="/static/icons/icon-user.svg"/>
+			@icons.Icon(icons.Email, icons.Size24)
 			<p>{ email }</p>
 		</span>
 	</div>
