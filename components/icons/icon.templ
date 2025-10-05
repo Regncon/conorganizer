@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
+	"io/fs"
+	"embed"
+	"strings"
 )
 
 type IconType string
@@ -50,25 +52,18 @@ const (
 	Size16 IconSize = "16"
 )
 
-func getSVGContent(icon IconType) string {
-	path := fmt.Sprintf("static/icons/%s.svg", icon)
-	filePath, err := filepath.Abs(path)
-	if err != nil {
-		fmt.Println("Unable to get filepath for: " + path)
-	} else {
-		fmt.Println("Loading: " + filePath)
-	}
+//go:embed assets/*
+var iconFileSystem embed.FS
 
-	file, openFileOpenErr := os.Open(path)
-	if openFileOpenErr != nil {
-		return ""
-	}
-	defer file.Close()
-	content, readFileReadErr := io.ReadAll(file)
-	if readFileReadErr != nil {
-		return ""
-	}
-	return string(content)
+func getSVGContent(icon IconType) string {
+	path := fmt.Sprintf("./assets/%s.svg", icon)
+
+    bytes, err := iconFileSystem.ReadFile(path)
+    if err != nil {
+        return ""
+    }
+
+    return string(bytes)
 }
 
 templ Icon(icon IconType, size IconSize) {
