@@ -166,11 +166,11 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						formsubmission.UpdateEventInPulje(putRoomNameRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/is-published", func(putIsPublishedRouter chi.Router) {
-						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, kv)
+						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, kv, logger)
 					})
 
 					newApiIdRouter.Route("/room-name", func(putRoomNameRouter chi.Router) {
-						formsubmission.UpdateRoomName(putRoomNameRouter, db, kv)
+						formsubmission.UpdateRoomName(putRoomNameRouter, db, kv, logger)
 					})
 
 					newApiIdRouter.Route("/status", func(putStatusRouter chi.Router) {

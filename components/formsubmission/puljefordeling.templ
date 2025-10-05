@@ -13,17 +13,19 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
 		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 
 			puljeId := chi.URLParam(r, "puljeId")
 			if puljeId == "" {
+				logger.Warn("Pulje ID is missing in the request")
 				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
 				return
 			}
 			eventID := chi.URLParam(r, "id")
 			if eventID == "" {
+				logger.Warn("Event ID is missing in the request")
 				http.Error(w, "Event ID is required", http.StatusBadRequest)
 				return
 			}
@@ -37,6 +39,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 			store := &Store{}
 
 			if err := datastar.ReadSignals(r, store); err != nil {
+				logger.Error("Failed to read signals from request", "error", err)
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
@@ -50,6 +53,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 			} else if puljeId == string(models.PuljeSondagMorgen) {
 				isPublished = store.IsPublishedSondagMorgen
 			} else {
+				logger.Warn("Invalid pulje ID", "puljeId", puljeId)
 				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
 				return
 			}
@@ -57,11 +61,13 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 			query := `UPDATE event_puljer SET is_published = ? WHERE event_id = ? AND pulje_id = ?;`
 			_, err := db.Exec(query, isPublished, eventID, puljeId)
 			if err != nil {
+				logger.Error("Failed to update publish status in the database", "error", err)
 				http.Error(w, "Failed to update publish status in the database", http.StatusInternalServerError)
 				return
 			}
 
 			if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+				logger.Error("Failed to broadcast update", "error", err)
 				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 				return
 			}
@@ -138,18 +144,20 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 	})
 }
 
-func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
 		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 
 			eventID := chi.URLParam(r, "id")
 			if eventID == "" {
+				logger.Warn("Event ID is missing in the request")
 				http.Error(w, "Event ID is required", http.StatusBadRequest)
 				return
 			}
 
 			puljeId := chi.URLParam(r, "puljeId")
 			if puljeId == "" {
+				logger.Warn("Pulje ID is missing in the request")
 				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
 				return
 			}
@@ -176,6 +184,7 @@ func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			} else if puljeId == string(models.PuljeSondagMorgen) {
 				roomName = store.RoomNameSondagMorgen
 			} else {
+				logger.Warn("Invalid pulje ID", "puljeId", puljeId)
 				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
 				return
 			}
@@ -183,11 +192,13 @@ func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			query := `UPDATE event_puljer SET room = ? WHERE event_id = ? AND pulje_id = ?;`
 			_, err := db.Exec(query, roomName, eventID, puljeId)
 			if err != nil {
+				logger.Error("Failed to update room name in the database", "error", err)
 				http.Error(w, "Failed to update room name in the database", http.StatusInternalServerError)
 				return
 			}
 
 			if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+				logger.Error("Failed to broadcast update", "error", err)
 				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 				return
 			}
