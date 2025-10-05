@@ -11,11 +11,6 @@ templ MainMenuButtons(UserInfo requestctx.UserRequestInfo) {
       width: 100%;
       display: flex;
       gap: var(--spacing-4x);
-
-      .main-menu-button {
-        color: var(--color-secondary);
-        text-decoration: none;
-      }
     }
   </style>
   <section class="main-menu-buttons">
@@ -25,14 +20,14 @@ templ MainMenuButtons(UserInfo requestctx.UserRequestInfo) {
         Hjem
       </span>
     </a>
-    <a role="button" href="/" class="btn btn--ghost btn-with-icon">
+    <a role="button" href="/my-events" class="btn btn--ghost btn-with-icon">
       @icons.Icon(icons.User, icons.Size24)
       <span>
         Min Side
       </span>
     </a>
     if (UserInfo.IsAdmin) {
-      <a role="button" href="/" class="btn btn--ghost btn-with-icon">
+      <a role="button" href="/admin" class="btn btn--ghost btn-with-icon">
         @icons.Icon(icons.Shield, icons.Size24)
         <span>
           Admin
