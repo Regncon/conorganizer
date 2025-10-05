@@ -3,7 +3,6 @@ package root
 import (
 	"database/sql"
 	"time"
-	"fmt"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/components"
@@ -39,7 +38,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 		FROM events e
 		INNER JOIN event_puljer ep ON ep.event_id = e.id
 		INNER JOIN puljer      p  ON p.id = ep.pulje_id
-		WHERE e.status = 'Godkjent'
+		WHERE e.status = 'Godkjent' AND ep.is_active = 1
 		ORDER BY p.start_time ASC, e.title COLLATE NOCASE ASC
 	`
 
@@ -91,7 +90,6 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 		); err != nil {
 			return nil, err
 		}
-		fmt.Println("Event:", ev.Title, "Pulje:", puljeName, "Start:", startStr, "End:", endStr)
 
 		startTime, _ := parseDate(startStr)
 		endTime, _ := parseDate(endStr)

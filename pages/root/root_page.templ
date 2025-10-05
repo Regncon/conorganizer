@@ -5,6 +5,12 @@ import (
 	"github.com/Regncon/conorganizer/components"
 )
 
+templ rootPage(db *sql.DB, isAdmin bool, eventImageDir *string) {
+	<div id="root-page-wrapper">
+		@rootPageContent(db, isAdmin, eventImageDir)
+	</div>
+}
+
 templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	<style>
 		@keyframes spin {
