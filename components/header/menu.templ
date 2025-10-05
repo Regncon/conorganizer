@@ -1,8 +1,8 @@
 package header
 
 import (
-	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
 var beta = false
@@ -231,7 +231,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 								<a href="/auth/logout">Logg ut</a>
 								<a href="/my-events">Mine arrangementer</a>
 								if UserInfo.IsAdmin {
-																	<a href="/profile">Min Profil</a>
+									<a href="/profile">Min Profil</a>
 									<hr/>
 									<a href="/admin/billettholder/">Billettholderoversikt</a>
 									<a href="/admin/approval/">Arrangement til godkjenning</a>
