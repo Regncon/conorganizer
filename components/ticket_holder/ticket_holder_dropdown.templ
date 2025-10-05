@@ -7,7 +7,6 @@ import "github.com/Regncon/conorganizer/components/icons"
 templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicketHolders []BillettHolder, selected selected) {
 	<style>
         .custom-select {
-            margin-top: 3rem;
             position: relative;
             display: inline-block;
             width: 100%;
@@ -29,9 +28,9 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedTicket
                 .select-button-end {
                     display: flex;
                     place-items: center;
-                    gap: 0.5rem;
+                    gap: var(--spacing-3x);
                     p {
-                        font-width: 600;
+                        font-weight: 700;
                     }
                     .arrow {
                         display: flex;

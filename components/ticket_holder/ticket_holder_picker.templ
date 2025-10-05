@@ -2,7 +2,6 @@ package ticketholder
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
 )
@@ -24,7 +23,6 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 	if err != nil {
 		logger.Error("Failed to get ticket holders", "error", err)
 	}
-	fmt.Println(len(associatedTicketHolders))
 	}}
 	if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
 		<div class="ticket-holder-picker">
@@ -35,7 +33,6 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 	}
 	if (len(associatedTicketHolders) > 3) {
 		<div class="ticket-holder-picker">
-			missing
 			@TicketHolderDropDown(userInfo, associatedTicketHolders, TicketHolderUnselected)
 		</div>
 	}
