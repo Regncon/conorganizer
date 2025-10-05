@@ -69,29 +69,49 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
 			</div>
 			<div class="event-card-footer-tagicons">
 				if eventCard.EventType == models.EventTypeRoleplay {
-					@icons.Icon(icons.EventRoleplay, icons.Size20)
+					<div class="event-card-tagicon-container" data-tippy-content="Rollespill">
+						@icons.Icon(icons.EventRoleplay, icons.Size20)
+					</div>
 				} else if eventCard.EventType == models.EventTypeBoardGame {
+					<div class="event-card-tagicon-container" data-tippy-content="Brettspill">
 					@icons.Icon(icons.EventBoardgame, icons.Size20)
+					</div>
 				} else if eventCard.EventType == models.EventTypeCardGame {
+					<div class="event-card-tagicon-container" data-tippy-content="Kortspill">
 					@icons.Icon(icons.EventCardgame, icons.Size20)
+					</div>
 				} else if eventCard.EventType == models.EventTypeOther {
-					@icons.Icon(icons.EventOtherGames, icons.Size20)
+					<div class="event-card-tagicon-container" data-tippy-content="Annet arrangement">
+						@icons.Icon(icons.EventOtherGames, icons.Size20)
+					</div>
 				}
 				if eventCard.AgeGroup == models.AgeGroupAdultsOnly {
-					@icons.Icon(icons.EventAdultOnly, icons.Size20)
+					<div class="event-card-tagicon-container" data-tippy-content="Egnet for voksne">
+						@icons.Icon(icons.EventAdultOnly, icons.Size20)
+					</div>
 				} else if eventCard.AgeGroup == models.AgeGroupChildFriendly {
-					@icons.Icon(icons.EventChildFriendly, icons.Size20)
+					<div class="event-card-tagicon-container" data-tippy-content="Barnevennlig">
+						@icons.Icon(icons.EventChildFriendly, icons.Size20)
+					</div>
 				}
 				if eventCard.Runtime == models.RunTimeLongRunning {
-					@icons.Icon(icons.TimeOver6Hours, icons.Size20)
+					<div class="event-card-tagicon-container" data-tippy-content="Varer over 6 timer">
+						@icons.Icon(icons.TimeOver6Hours, icons.Size20)
+					</div>
 				} else if eventCard.Runtime == models.RunTimeShortRunning {
-					@icons.Icon(icons.TimeUnder3Hours, icons.Size20)
+					<div class="event-card-tagicon-container" data-tippy-content="Varer under 3 timer">
+						@icons.Icon(icons.TimeUnder3Hours, icons.Size20)
+					</div>
 				}
 				if eventCard.BeginnerFriendly {
-					@icons.Icon(icons.EventBeginnerFriendly, icons.Size20)
+					<div class="event-card-tagicon-container" data-tippy-content="Nybegynnervennlig">
+						@icons.Icon(icons.EventBeginnerFriendly, icons.Size20)
+					</div>
 				}
 				if eventCard.CanBeRunInEnglish {
-					@icons.Icon(icons.EventEnglish, icons.Size20)
+					<div class="event-card-tagicon-container" data-tippy-content="Can be run in English">
+						@icons.Icon(icons.EventEnglish, icons.Size20)
+					</div>
 				}
 			</div>
 		</div>

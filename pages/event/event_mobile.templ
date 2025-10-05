@@ -332,10 +332,10 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 						@event_components.Event_property("Barnevennlig", icons.EventChildFriendly)
 					}
 					if event.Runtime == models.RunTimeLongRunning {
-						@event_components.Event_property("Varer mer enn 6 timer", icons.TimeOver6Hours)
+						@event_components.Event_property("Varer over 6 timer", icons.TimeOver6Hours)
 					}
 					if event.Runtime == models.RunTimeShortRunning {
-						@event_components.Event_property("Varer kortere 3 timer", icons.TimeUnder3Hours)
+						@event_components.Event_property("Varer under 3 timer", icons.TimeUnder3Hours)
 					}
 					if event.BeginnerFriendly {
 						@event_components.Event_property("Nybegynnervennlig", icons.EventBeginnerFriendly)

@@ -355,3 +355,20 @@ input {
     border-radius: var(--border-radius-2x);
     font-size: 0.9rem;
 }
+
+.tippy-tooltip {
+    background-color: var(--bg-item);
+    padding: var(--spacing-1x);
+}
+.tippy-tooltip[data-placement^='top'] .tippy-arrow {
+    border-top-color: var(--bg-item);
+}
+.tippy-tooltip[data-placement^='bottom'] .tippy-arrow {
+    border-bottom-color: var(--bg-item);
+}
+.tippy-tooltip[data-placement^='left'] .tippy-arrow {
+    border-left-color: var(--bg-item);
+}
+.tippy-tooltip[data-placement^='right'] .tippy-arrow {
+    border-right-color: var(--bg-item);
+}
