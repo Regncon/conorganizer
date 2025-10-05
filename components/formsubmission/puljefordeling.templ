@@ -263,7 +263,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
 			<h3>{ getPuljeDisplayName(pulje) }</h3>
 			<div style="display: flex; gap: 1rem;">
-				<label style="display: flex; align-items: center; gap: 0.5rem;">
+				<label class="checkbox-background form-group-checkbox">
 					<span>Legg til i pulje </span>
 					<input
 						if eventPulje.IsActive {
@@ -276,7 +276,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 						class="checkbox input"
 					/>
 				</label>
-				<label style="display: flex; align-items: center; gap: 0.5rem;">
+				<label class="checkbox-background form-group-checkbox">
 					<span>Publisert</span>
 					<input
 						if eventPulje.IsPublished {
