@@ -28,7 +28,7 @@ func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventIm
 }
 
 templ rootIndex(db *sql.DB, isAdmin bool, eventImageDir *string) {
-	<div id="root-page-wrapper" data-on-load={ datastar.GetSSE("/my-events/api") }>
+	<div id="root-page-wrapper" data-on-load={ datastar.GetSSE("/api") }>
 		@rootPageContent(db, isAdmin, eventImageDir)
 	</div>
 }
