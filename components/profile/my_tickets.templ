@@ -15,11 +15,11 @@ templ ticketHolder(name string, ticket string, email string) {
 	<div class="flex flex-col" style="gap: var(--spacing-1x); width: fit-content;">
 		<p style="font-weight: bold;">{ name }</p>
 		<span class="flex" style="gap: var(--spacing-2x); align-items: center;">
-			@icons.Icon(icons.EventCardgame, icons.Size24)
+			@icons.Icon(icons.Ticket, icons.Size24)
 			<p>{ ticket }</p>
 		</span>
 		<span class="flex" style="gap: var(--spacing-2x); align-items: center;">
-			@icons.Icon(icons.User, icons.Size24)
+			@icons.Icon(icons.Email, icons.Size24)
 			<p>{ email }</p>
 		</span>
 	</div>
