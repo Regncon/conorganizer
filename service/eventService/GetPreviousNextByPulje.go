@@ -26,7 +26,7 @@ func GetPreviousNextByPulje(
 		pubFilter = ""
 	}
 
-	// 1) Get neighbors within the same pulje.
+	// 1) Get neighbors within the same pulje for currentID.
 	qWithin := fmt.Sprintf(`
 WITH filtered AS (
 	SELECT
@@ -87,8 +87,11 @@ LIMIT 1;
 		return components.PreviousNext{}, err
 	}
 
-	// 2) If there's no "next" in the same pulje, jump to the first event of the next pulje.
+	// Track pulje IDs for neighbors.
 	var nextPuljeID sql.NullString
+	var prevPuljeID sql.NullString
+
+	// 2) If there's no "next" in the same pulje, jump to the FIRST event of the NEXT pulje.
 	if !nextID.Valid {
 		qNextPulje := fmt.Sprintf(`
 WITH filtered AS (
@@ -123,15 +126,51 @@ LIMIT 1;
 			nextID, nextTit, nextImg, nextPuljeID = nid, ntit, nimg, npul
 		}
 	} else {
-		// Next is within the same pulje.
-		nextPuljeID = curPuljeID
+		nextPuljeID = curPuljeID // next within same pulje
 	}
 
-	// 3) Previous pulje should be set ONLY if a previous event exists.
-	var prevPuljeID sql.NullString
-	if prevID.Valid {
-		prevPuljeID = curPuljeID
-	} // else leave as NULL (empty)
+	// 3) If there's no "previous" in the same pulje, jump to the LAST event of the PREVIOUS pulje.
+	if !prevID.Valid {
+		qPrevPulje := fmt.Sprintf(`
+WITH filtered AS (
+	SELECT
+		e.id,
+		e.title,
+		e.image_url,
+		p.id         AS pulje_id,
+		p.start_time AS pulje_start_time,
+		e.inserted_time
+	FROM events e
+	JOIN event_puljer ep ON ep.event_id = e.id
+	JOIN puljer p       ON p.id = ep.pulje_id
+	WHERE e.status = 'Godkjent'
+	  AND ep.is_active = 1
+	  %s
+),
+candidates AS (
+	SELECT *
+	FROM filtered
+	WHERE pulje_start_time < ?
+)
+-- "Last" in the previous pulje relative to our DESC ordering
+-- (i.e., the oldest: inserted_time ASC, id ASC).
+SELECT id, title, image_url, pulje_id
+FROM candidates
+ORDER BY pulje_start_time DESC, inserted_time ASC, id ASC
+LIMIT 1;
+`, pubFilter)
+
+		var pid, ptit, pimg, ppul sql.NullString
+		if err := db.QueryRowContext(ctx, qPrevPulje, curPuljeStart.String).
+			Scan(&pid, &ptit, &pimg, &ppul); err != nil && err != sql.ErrNoRows {
+			logger.Error("GetPreviousNextByPulje: previous pulje lookup failed", "error", err)
+			return components.PreviousNext{}, err
+		} else if err == nil {
+			prevID, prevTit, prevImg, prevPuljeID = pid, ptit, pimg, ppul
+		}
+	} else {
+		prevPuljeID = curPuljeID // previous within same pulje
+	}
 
 	// 4) Resolve images and blank placeholders.
 	prevBanner := ""
@@ -159,6 +198,5 @@ LIMIT 1;
 		NextTitle:        nstr(nextTit),
 		NextImageURL:     nextBanner,
 		NextPulje:        models.Pulje(nstr(nextPuljeID)),
-		// IsRemoved left default false
 	}, nil
 }

@@ -15,10 +15,8 @@ templ event_page(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, 
 }
 
 templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
-	{{
-	event, err := eventservice.GetEventById(eventId, db, logger)
-	}}
-	{{ previousNextData, err := eventservice.GetPreviousNextInnsendtGodkjent(ctx, db, logger, eventId, eventImageDir) }}
+	{{ event, err := eventservice.GetEventById(eventId, db, logger) }}
+	{{ previousNextData, err := eventservice.GetPreviousNextByPulje(ctx, db, logger, eventId, true, eventImageDir) }}
 	if err != nil {
 		logger.Error("Failed to get previous/next data", "error", err)
 		return

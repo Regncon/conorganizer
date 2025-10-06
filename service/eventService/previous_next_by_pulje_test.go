@@ -8,7 +8,8 @@ import (
 	"testing"
 )
 
-// TestGetPreviousNextByPulje verifies pulje-aware navigation with and without admin visibility.
+// TestGetPreviousNextByPulje verifies pulje-aware navigation with and without admin visibility,
+// and that previous at pulje-start points to the last event of the previous pulje (no wrap-around beyond ends).
 func TestGetPreviousNextByPulje(t *testing.T) {
 	// ========== Arrange ==========
 	ctx := context.Background()
@@ -21,17 +22,19 @@ func TestGetPreviousNextByPulje(t *testing.T) {
 	// Make test deterministic: clear link table first, then events.
 	mustExec(t, db, `DELETE FROM event_puljer;`)
 	mustExec(t, db, `DELETE FROM events;`)
-	// Puljer: ensure the two we need exist (INSERT OR REPLACE is safe for re-runs)
+
+	// Puljer: include a third "SondagMorgen" to verify end-of-sequence behavior.
 	mustExec(t, db, `
 		INSERT OR REPLACE INTO puljer (id, name, start_time, end_time) VALUES
 		('FredagKveld',  'Fredag kveld',  '2025-10-10 18:00:00', '2025-10-10 22:00:00'),
-		('LordagMorgen', 'Lørdag morgen', '2025-10-11 09:00:00', '2025-10-11 13:00:00')
+		('LordagMorgen', 'Lørdag morgen', '2025-10-11 09:00:00', '2025-10-11 13:00:00'),
+		('SondagMorgen', 'Søndag morgen', '2025-10-12 09:00:00', '2025-10-12 12:00:00')
 	`)
 
 	// Events:
-	// Ordering inside each pulje should follow inserted_time DESC, id DESC (typical pattern).
 	// FredagKveld: e2 (19:00, published), e6 (18:30, UNPUBLISHED), e1 (18:00, published)
-	// LørdagMorgen: e4 (11:00, UNPUBLISHED), e3 (10:00, published)
+	// LordagMorgen: e4 (11:00, UNPUBLISHED), e3 (10:00, published)
+	// SondagMorgen: e7 (10:00, published)
 	// e5 is Kladd (ignored by status filter).
 	mustExec(t, db, `
 		INSERT INTO events (
@@ -45,7 +48,8 @@ func TestGetPreviousNextByPulje(t *testing.T) {
 		('e3','L-Pub','intro e3','desc e3','/img3','Host Tre','tre@test.test','33333333',6,1,0,'Godkjent','2025-10-11 10:00:00'),
 		('e4','L-Unpub','intro e4','desc e4','',    'Host Four','four@test.test','44444444',3,0,0,'Godkjent','2025-10-11 11:00:00'),
 		('e5','IgnoredByStatus','intro e5','desc e5','', 'Host Five','five@test.test','55555555',2,0,0,'Kladd','2025-10-12 10:00:00'),
-		('e6','F-Unpub','intro e6','desc e6','',    'Host Six','six@test.test','66666666',2,0,0,'Godkjent','2025-10-10 18:30:00')
+		('e6','F-Unpub','intro e6','desc e6','',    'Host Six','six@test.test','66666666',2,0,0,'Godkjent','2025-10-10 18:30:00'),
+		('e7','S-Pub','intro e7','desc e7','',      'Host Seven','seven@test.test','77777777',2,0,0,'Godkjent','2025-10-12 10:00:00')
 	`)
 
 	// Link into puljer with publication flags.
@@ -57,6 +61,8 @@ func TestGetPreviousNextByPulje(t *testing.T) {
 
 		('e3','LordagMorgen', 1, 1, ''),
 		('e4','LordagMorgen', 1, 0, ''),
+
+		('e7','SondagMorgen', 1, 1, ''),
 
 		('e5','LordagMorgen', 1, 1, '') -- status Kladd in events -> ignored anyway
 	`)
@@ -80,7 +86,7 @@ func TestGetPreviousNextByPulje(t *testing.T) {
 			name:      "user:e2_first_in_FredagKveld_has_next_only_within_pulje",
 			currentID: "e2", // first published in FredagKveld (e6 is unpublished so ignored)
 			want: want{
-				prevID: "", prevTit: "", prevPul: "",
+				prevID: "", prevTit: "", prevPul: "", // first pulje -> no previous pulje
 				nextID: "e1", nextTit: "F-Old", nextPul: "FredagKveld",
 			},
 		},
@@ -93,10 +99,18 @@ func TestGetPreviousNextByPulje(t *testing.T) {
 			},
 		},
 		{
-			name:      "user:e3_first_in_LordagMorgen_has_no_previous_and_no_next_if_also_last",
-			currentID: "e3", // in published list for LordagMorgen, it's both first and last (e4 unpublished)
+			name:      "user:e3_first_in_LordagMorgen_prev_is_last_of_FredagKveld_next_is_first_of_SondagMorgen",
+			currentID: "e3",
 			want: want{
-				prevID: "", prevTit: "", prevPul: "",
+				prevID: "e1", prevTit: "F-Old", prevPul: "FredagKveld", // NEW: cross to previous pulje
+				nextID: "e7", nextTit: "S-Pub", nextPul: "SondagMorgen",
+			},
+		},
+		{
+			name:      "user:e7_last_in_SondagMorgen_has_prev_from_LordagMorgen_and_no_next",
+			currentID: "e7",
+			want: want{
+				prevID: "e3", prevTit: "L-Pub", prevPul: "LordagMorgen",
 				nextID: "", nextTit: "", nextPul: "",
 			},
 		},
@@ -112,7 +126,7 @@ func TestGetPreviousNextByPulje(t *testing.T) {
 			name:      "admin:e2_first_in_FredagKveld_next_is_unpublished_e6",
 			currentID: "e2",
 			want: want{
-				prevID: "", prevTit: "", prevPul: "",
+				prevID: "", prevTit: "", prevPul: "", // first pulje -> no previous pulje
 				nextID: "e6", nextTit: "F-Unpub", nextPul: "FredagKveld",
 			},
 		},
@@ -133,11 +147,19 @@ func TestGetPreviousNextByPulje(t *testing.T) {
 			},
 		},
 		{
-			name:      "admin:e4_first_in_LordagMorgen_has_no_previous_no_wrap_to_FredagKveld",
+			name:      "admin:e4_first_in_LordagMorgen_prev_is_last_of_FredagKveld_next_is_L-Pub",
 			currentID: "e4",
 			want: want{
-				prevID: "", prevTit: "", prevPul: "",
+				prevID: "e1", prevTit: "F-Old", prevPul: "FredagKveld", // NEW: cross to previous pulje (includes unpublished within LordagMorgen)
 				nextID: "e3", nextTit: "L-Pub", nextPul: "LordagMorgen",
+			},
+		},
+		{
+			name:      "admin:e7_last_in_SondagMorgen_has_prev_from_LordagMorgen_and_no_next",
+			currentID: "e7",
+			want: want{
+				prevID: "e3", prevTit: "L-Pub", prevPul: "LordagMorgen",
+				nextID: "", nextTit: "", nextPul: "",
 			},
 		},
 	}
