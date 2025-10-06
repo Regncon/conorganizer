@@ -2,7 +2,6 @@ package components
 
 import (
 	"fmt"
-	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/components/icons"
 )
 
@@ -24,11 +23,9 @@ type PreviousNext struct {
 	PreviousUrl      string
 	PreviousTitle    string
 	PreviousImageURL string
-	PreviousPulje    models.Pulje
 	NextUrl          string
 	NextTitle        string
 	NextImageURL     string
-	NextPulje        models.Pulje
 	IsRemoved        bool
 }
 
@@ -103,7 +100,7 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 		<div class="previous-next-buttons">
 			if previousNextData.PreviousUrl != "" {
 				<a
-					href={ fmt.Sprintf("%s?pulje=%s", templ.URL(previousNextData.PreviousUrl), previousNextData.PreviousPulje) }
+					href={ fmt.Sprintf("%s", templ.URL(previousNextData.PreviousUrl)) }
 					class={ previousNextCard() }
 					title={ previousNextData.PreviousTitle }
 				>
@@ -120,7 +117,7 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 			}
 			if previousNextData.NextUrl != "" {
 				<a
-					href={ fmt.Sprintf("%s?pulje=%s", templ.URL(previousNextData.NextUrl), previousNextData.NextPulje) }
+					href={ fmt.Sprintf("%s", templ.URL(previousNextData.NextUrl)) }
 					title={ previousNextData.NextTitle }
 					class={ previousNextCard() }
 				>
