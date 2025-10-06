@@ -33,10 +33,19 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	var happyPathPerson = testutil.GenerateFakePerson()
 	happyPathPerson.Email = happyPathEmail
 
+	var uassociatedPerson = testutil.GenerateFakePerson()
+
 	// Happy path user
 	var happyPathUser = models.User{
 		ID:      expectedBillettholderUser.UserID,
 		UserID:  "testuser",
+		Email:   happyPathEmail,
+		IsAdmin: false,
+	}
+
+	var unassociatedPathUser = models.User{
+		ID:      2,
+		UserID:  "gudrunanita",
 		Email:   happyPathEmail,
 		IsAdmin: false,
 	}
@@ -52,6 +61,18 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		OrderID:      19999999,
 		TicketID:     4999999,
 	}
+
+	var unassociatedBillettholder = models.Billettholder{
+		ID:           unassociatedPathUser.ID,
+		FirstName:    uassociatedPerson.FirstName,
+		LastName:     uassociatedPerson.LastName,
+		TicketTypeId: 199999,
+		TicketType:   "Test",
+		IsOver18:     true,
+		OrderID:      19999999,
+		TicketID:     4999998,
+	}
+
 	// Happy path billettholder_email
 	var happyPathBillettholderEmail = models.BillettholderEmail{
 		BillettholderID: happyPathBillettholder.ID,
@@ -59,14 +80,23 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		Kind:            "Manual",
 	}
 
+	var uassociatedBillettholderEmail = models.BillettholderEmail{
+		BillettholderID: unassociatedBillettholder.ID,
+		Email:           uassociatedPerson.Email,
+		Kind:            "Manual",
+	}
+
 	var testBillettholders []models.Billettholder
 	testBillettholders = append(testBillettholders, happyPathBillettholder)
+	testBillettholders = append(testBillettholders, unassociatedBillettholder)
 
 	var testBillettholderEmails []models.BillettholderEmail
 	testBillettholderEmails = append(testBillettholderEmails, happyPathBillettholderEmail)
+	testBillettholderEmails = append(testBillettholderEmails, uassociatedBillettholderEmail)
 
 	var testUsers []models.User
 	testUsers = append(testUsers, happyPathUser)
+	testUsers = append(testUsers, unassociatedPathUser)
 
 	// construct query for inserting billettholdere
 	var queryBillettholder []string
@@ -129,12 +159,17 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	sl := &testutil.StubLogger{}
 	slogger := testutil.NewSlogAdapter(sl)
 
-	for _, user := range testUsers {
+	/* for _, user := range testUsers {
 		// fmt.Printf("Calling AssociateUserWithBillettholder() on: %s (%s)\n", user.UserID, user.Email)
 		err = AssociateUserWithBillettholder(user.UserID, db, slogger)
 		if err != nil {
 			t.Fatalf("failed to convert ticketId to billettholder: %v", err)
 		}
+	} */
+
+	err = AssociateUserWithBillettholder(happyPathUser.UserID, db, slogger)
+	if err != nil {
+		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
 	}
 
 	// Assert
@@ -152,6 +187,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		}
 		resultBillettholderUsers = append(resultBillettholderUsers, user)
 	}
+
 	if len(resultBillettholderUsers) != 1 {
 		t.Fatalf("expected 1 billettholder_user, got %d", len(resultBillettholderUsers))
 	}
