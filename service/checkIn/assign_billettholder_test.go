@@ -85,7 +85,7 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 	var conversionAmmount = fakePeopleAmount * billettholderConversionRatio
 	billettholderConversion := generatededTickets[:int(conversionAmmount)]
 	for _, ticket := range billettholderConversion {
-		fmt.Printf("Preparing billettholder: %+v\n", ticket)
+		// fmt.Printf("Preparing billettholder: %+v\n", ticket)
 		err = converTicketIdToNewBillettholder(ticket.ID, billettholderConversion, db, slogger)
 		if err != nil {
 			fmt.Println(err)
@@ -142,6 +142,6 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 
 	// Assert
 
-	fmt.Printf("Expected %d targeted emails\n", expectedTargetEmailCount)
+	// fmt.Printf("Expected %d targeted emails\n", expectedTargetEmailCount)
 
 }

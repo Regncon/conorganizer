@@ -43,10 +43,10 @@ func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db
 	associatedTickets, err := AssociateTicketsWithEmail(tickets, email)
 	if err != nil {
 		// No associated tickets found, quitting early
-		fmt.Printf("Found no tickets associated with %s, quitting early\n", email)
+		// fmt.Printf("Found no tickets associated with %s, quitting early\n", email)
 		return nil
 	}
-	fmt.Printf("Found %d/%d tickets associated with %s\n", len(associatedTickets), len(tickets), email)
+	// fmt.Printf("Found %d/%d tickets associated with %s\n", len(associatedTickets), len(tickets), email)
 
 	// get list of ticket ids to exclude when quering billettholder
 
@@ -70,7 +70,7 @@ func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db
 		}
 		billettholdereIDs = append(billettholdereIDs, result)
 	}
-	fmt.Printf("Found %d existing billettholdere with email: %s\n", len(billettholdereIDs), email)
+	// fmt.Printf("Found %d existing billettholdere with email: %s\n", len(billettholdereIDs), email)
 
 	// Create new map of unique non-existing tickets
 	var uniqueNewTicketsMap = map[uniquePair]struct{}{}
@@ -97,20 +97,19 @@ func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db
 
 	// No new unique tickets, quitting early
 	if len(uniqueNewTickets) == 0 {
-		fmt.Println("Found no new unique tickets to add, quitting early")
+		// fmt.Println("Found no new unique tickets to add, quitting early")
 		return nil
 	}
 
 	// Enter new array into billettholdere ... newTicket needs to be unique?
 	for _, ticket := range uniqueNewTickets {
 		err = converTicketIdToNewBillettholder(ticket.ID, uniqueNewTickets, db, logger)
-		fmt.Printf("Adding Ticket: %+v \n", ticket)
 		if err != nil {
 			return err
 		}
 	}
 
-	fmt.Printf("Added %d new billettholdere from %d tickets\n", len(uniqueNewTickets), len(tickets))
+	// fmt.Printf("Added %d new billettholdere from %d tickets\n", len(uniqueNewTickets), len(tickets))
 	return nil
 }
 
