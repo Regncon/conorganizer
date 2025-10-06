@@ -28,45 +28,45 @@ func GetPreviousNextByPulje(
 
 	// 1) Get neighbors within the same pulje for currentID.
 	qWithin := fmt.Sprintf(`
-WITH filtered AS (
-	SELECT
-		e.id,
-		e.title,
-		e.image_url,
-		e.inserted_time,
-		p.id         AS pulje_id,
-		p.start_time AS pulje_start_time
-	FROM events e
-	JOIN event_puljer ep ON ep.event_id = e.id
-	JOIN puljer p       ON p.id = ep.pulje_id
-	WHERE e.status = 'Godkjent'
-	  AND ep.is_active = 1
-	  %s
-),
-ranked AS (
-	SELECT
-		id,
-		title,
-		image_url,
-		pulje_id,
-		pulje_start_time,
-		LAG(id)        OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS prev_id,
-		LAG(title)     OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS prev_title,
-		LAG(image_url) OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS prev_img,
-		LEAD(id)       OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS next_id,
-		LEAD(title)    OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS next_title,
-		LEAD(image_url)OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS next_img
-	FROM filtered
-)
-SELECT
-	pulje_id,
-	pulje_start_time,
-	prev_id,  prev_title,  prev_img,
-	next_id,  next_title,  next_img
-FROM ranked
-WHERE id = ?
-LIMIT 1;
-`, pubFilter)
+        WITH filtered AS (
+            SELECT
+                e.id,
+                e.title,
+                e.image_url,
+                e.inserted_time,
+                p.id         AS pulje_id,
+                p.start_time AS pulje_start_time
+            FROM events e
+            JOIN event_puljer ep ON ep.event_id = e.id
+            JOIN puljer p       ON p.id = ep.pulje_id
+            WHERE e.status = 'Godkjent'
+              AND ep.is_active = 1
+              %s
+        ),
+        ranked AS (
+            SELECT
+                id,
+                title,
+                image_url,
+                pulje_id,
+                pulje_start_time,
+                LAG(id)        OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS prev_id,
+                LAG(title)     OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS prev_title,
+                LAG(image_url) OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS prev_img,
+                LEAD(id)       OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS next_id,
+                LEAD(title)    OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS next_title,
+                LEAD(image_url)OVER (PARTITION BY pulje_id ORDER BY inserted_time DESC, id DESC) AS next_img
+            FROM filtered
+        )
+        SELECT
+            pulje_id,
+            pulje_start_time,
+            prev_id,  prev_title,  prev_img,
+            next_id,  next_title,  next_img
+        FROM ranked
+        WHERE id = ?
+    LIMIT 1;
+    `, pubFilter)
 
 	var (
 		curPuljeID, curPuljeStart sql.NullString
@@ -94,28 +94,28 @@ LIMIT 1;
 	// 2) If there's no "next" in the same pulje, jump to the FIRST event of the NEXT pulje.
 	if !nextID.Valid {
 		qNextPulje := fmt.Sprintf(`
-WITH filtered AS (
-	SELECT
-		e.id,
-		e.title,
-		e.image_url,
-		p.id         AS pulje_id,
-		p.start_time AS pulje_start_time,
-		e.inserted_time
-	FROM events e
-	JOIN event_puljer ep ON ep.event_id = e.id
-	JOIN puljer p       ON p.id = ep.pulje_id
-	WHERE e.status = 'Godkjent'
-	  AND ep.is_active = 1
-	  %s
-)
-SELECT
-	id, title, image_url, pulje_id
-FROM filtered
-WHERE pulje_start_time > ?
-ORDER BY pulje_start_time ASC, inserted_time DESC, id DESC
-LIMIT 1;
-`, pubFilter)
+        WITH filtered AS (
+            SELECT
+                e.id,
+                e.title,
+                e.image_url,
+                p.id         AS pulje_id,
+                p.start_time AS pulje_start_time,
+                e.inserted_time
+            FROM events e
+            JOIN event_puljer ep ON ep.event_id = e.id
+            JOIN puljer p       ON p.id = ep.pulje_id
+            WHERE e.status = 'Godkjent'
+              AND ep.is_active = 1
+              %s
+        )
+        SELECT
+            id, title, image_url, pulje_id
+        FROM filtered
+        WHERE pulje_start_time > ?
+        ORDER BY pulje_start_time ASC, inserted_time DESC, id DESC
+        LIMIT 1;
+    `, pubFilter)
 
 		var nid, ntit, nimg, npul sql.NullString
 		if err := db.QueryRowContext(ctx, qNextPulje, curPuljeStart.String).
@@ -132,33 +132,33 @@ LIMIT 1;
 	// 3) If there's no "previous" in the same pulje, jump to the LAST event of the PREVIOUS pulje.
 	if !prevID.Valid {
 		qPrevPulje := fmt.Sprintf(`
-WITH filtered AS (
-	SELECT
-		e.id,
-		e.title,
-		e.image_url,
-		p.id         AS pulje_id,
-		p.start_time AS pulje_start_time,
-		e.inserted_time
-	FROM events e
-	JOIN event_puljer ep ON ep.event_id = e.id
-	JOIN puljer p       ON p.id = ep.pulje_id
-	WHERE e.status = 'Godkjent'
-	  AND ep.is_active = 1
-	  %s
-),
-candidates AS (
-	SELECT *
-	FROM filtered
-	WHERE pulje_start_time < ?
-)
--- "Last" in the previous pulje relative to our DESC ordering
--- (i.e., the oldest: inserted_time ASC, id ASC).
-SELECT id, title, image_url, pulje_id
-FROM candidates
-ORDER BY pulje_start_time DESC, inserted_time ASC, id ASC
-LIMIT 1;
-`, pubFilter)
+        WITH filtered AS (
+            SELECT
+                e.id,
+                e.title,
+                e.image_url,
+                p.id         AS pulje_id,
+                p.start_time AS pulje_start_time,
+                e.inserted_time
+            FROM events e
+            JOIN event_puljer ep ON ep.event_id = e.id
+            JOIN puljer p       ON p.id = ep.pulje_id
+            WHERE e.status = 'Godkjent'
+              AND ep.is_active = 1
+              %s
+        ),
+        candidates AS (
+            SELECT *
+            FROM filtered
+            WHERE pulje_start_time < ?
+        )
+        -- "Last" in the previous pulje relative to our DESC ordering
+        -- (i.e., the oldest: inserted_time ASC, id ASC).
+        SELECT id, title, image_url, pulje_id
+        FROM candidates
+        ORDER BY pulje_start_time DESC, inserted_time ASC, id ASC
+        LIMIT 1;
+    `, pubFilter)
 
 		var pid, ptit, pimg, ppul sql.NullString
 		if err := db.QueryRowContext(ctx, qPrevPulje, curPuljeStart.String).

@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-// TestGetPreviousNextByPulje verifies pulje-aware navigation with and without admin visibility,
-// and that previous at pulje-start points to the last event of the previous pulje (no wrap-around beyond ends).
 func TestGetPreviousNextByPulje(t *testing.T) {
 	// ========== Arrange ==========
 	ctx := context.Background()
@@ -19,11 +17,9 @@ func TestGetPreviousNextByPulje(t *testing.T) {
 	db := mustInitTestDB(t)
 	defer db.Close()
 
-	// Make test deterministic: clear link table first, then events.
 	mustExec(t, db, `DELETE FROM event_puljer;`)
 	mustExec(t, db, `DELETE FROM events;`)
 
-	// Puljer: include a third "SondagMorgen" to verify end-of-sequence behavior.
 	mustExec(t, db, `
 		INSERT OR REPLACE INTO puljer (id, name, start_time, end_time) VALUES
 		('FredagKveld',  'Fredag kveld',  '2025-10-10 18:00:00', '2025-10-10 22:00:00'),
@@ -31,11 +27,6 @@ func TestGetPreviousNextByPulje(t *testing.T) {
 		('SondagMorgen', 'Søndag morgen', '2025-10-12 09:00:00', '2025-10-12 12:00:00')
 	`)
 
-	// Events:
-	// FredagKveld: e2 (19:00, published), e6 (18:30, UNPUBLISHED), e1 (18:00, published)
-	// LordagMorgen: e4 (11:00, UNPUBLISHED), e3 (10:00, published)
-	// SondagMorgen: e7 (10:00, published)
-	// e5 is Kladd (ignored by status filter).
 	mustExec(t, db, `
 		INSERT INTO events (
 			id, title, intro, description, image_url,
@@ -52,7 +43,6 @@ func TestGetPreviousNextByPulje(t *testing.T) {
 		('e7','S-Pub','intro e7','desc e7','',      'Host Seven','seven@test.test','77777777',2,0,0,'Godkjent','2025-10-12 10:00:00')
 	`)
 
-	// Link into puljer with publication flags.
 	mustExec(t, db, `
 		INSERT INTO event_puljer (event_id, pulje_id, is_active, is_published, room) VALUES
 		('e1','FredagKveld',  1, 1, ''),
