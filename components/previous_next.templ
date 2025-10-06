@@ -1,6 +1,7 @@
 package components
 
-import(
+import (
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/components/icons"
 )
 
@@ -22,9 +23,11 @@ type PreviousNext struct {
 	PreviousUrl      string
 	PreviousTitle    string
 	PreviousImageURL string
+	PreviousPulje    models.Pulje
 	NextUrl          string
 	NextTitle        string
 	NextImageURL     string
+	NextPulje        models.Pulje
 	IsRemoved        bool
 }
 
@@ -35,7 +38,11 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 			container-name: prev-next-button-container;
 		}
 		.previous-next-buttons {
-			--linear-gradient-mask: linear-gradient(to left, black 19%, transparent 63%);
+			--linear-gradient-mask: linear-gradient(
+				to left,
+				black 19%,
+				transparent 63%
+			);
 			--prev-next-max-width: 25.3125rem;
 			--prev-next-responsive-max-width: min(
 				100%,
@@ -84,10 +91,10 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 
 		@container prev-next-button-container (width > 65.0625rem) {
 			.previous-next-buttons {
-					margin-block-start: var(--spacing-10x);
-					flex-direction: row;
-					place-content: space-between;
-					padding-inline: var(--spacing-10x);
+				margin-block-start: var(--spacing-10x);
+				flex-direction: row;
+				place-content: space-between;
+				padding-inline: var(--spacing-10x);
 			}
 		}
 	</style>
