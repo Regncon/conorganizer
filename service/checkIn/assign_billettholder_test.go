@@ -134,4 +134,13 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 
 	// Assert
 
-
+	// Check billettholder contains a certain amount of email: targetEmail
+	var resultTargetEmailCount int
+	resultTargetEmailRow := db.QueryRow("SELECT COUNT(email) FROM billettholder_emails WHERE email = ?", targetEmail)
+	if err := resultTargetEmailRow.Scan(&resultTargetEmailCount); err != nil {
+		t.Fatal(resultTargetEmailRow.Err())
+	}
+	if resultTargetEmailCount != expectedTargetEmailCount {
+		t.Fatalf("expected %d, got %d", expectedTargetEmailCount, resultTargetEmailCount)
+	}
+}
