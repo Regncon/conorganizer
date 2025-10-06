@@ -16,15 +16,14 @@ import (
 )
 
 func TestGetPreviousNext(t *testing.T) {
+	// ========== Arrange ==========
 	ctx := context.Background()
 	logger := slog.New(slog.NewTextHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelError}))
-	imgDir := "" // GetEventImageUrl -> placeholder -> code blanks it
+	imgDir := ""
 
-	// One DB for the whole test
 	db := mustInitTestDB(t)
 	defer db.Close()
 
-	// Seed once (deterministic ordering). We clear events once here, not per subtest.
 	mustExec(t, db, `DELETE FROM events;`)
 	mustExec(t, db, `
 		INSERT INTO events (
@@ -45,12 +44,10 @@ func TestGetPreviousNext(t *testing.T) {
 		('e1','Old','intro e1','desc e1','/img1','Host One','one@test.test','11111111',4,1,1,'Godkjent','2025-10-01 10:00:00'),
 		('e2','Mid','intro e2','desc e2','',     'Host Two','two@test.test','22222222',5,0,1,'Innsendt','2025-10-02 10:00:00'),
 		('e3','New','intro e3','desc e3','/img3','Host Tre','tre@test.test','33333333',6,1,0,'Godkjent','2025-10-03 10:00:00'),
-		-- excluded row: not in ('Innsendt','Godkjent'); use 'Kladd' to satisfy FK
 		('e4','KladdRow','intro e4','desc e4','', 'Host Four','four@test.test','44444444',3,0,0,'Kladd','2025-10-04 10:00:00')
 	`)
 
-	// Subtests run sequentially (no t.Parallel)
-	tests := []struct {
+	cases := []struct {
 		name        string
 		currentID   string
 		wantPrevID  string
@@ -65,13 +62,15 @@ func TestGetPreviousNext(t *testing.T) {
 		{"missing_id_returns_empty_neighbors", "does-not-exist", "", "", "", ""},
 	}
 
-	for _, tc := range tests {
+	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			// ========== Act ==========
 			got, err := GetPreviousNext(ctx, db, logger, tc.currentID, &imgDir)
+
+			// ========== Assert ==========
 			if err != nil {
 				t.Fatalf("GetPreviousNext() error = %v", err)
 			}
-
 			if got.PreviousUrl != tc.wantPrevID {
 				t.Errorf("PreviousUrl = %q, want %q", got.PreviousUrl, tc.wantPrevID)
 			}
@@ -84,8 +83,7 @@ func TestGetPreviousNext(t *testing.T) {
 			if got.NextTitle != tc.wantNextTit {
 				t.Errorf("NextTitle = %q, want %q", got.NextTitle, tc.wantNextTit)
 			}
-
-			// With no banner files present, URLs should be blanked by the function
+			// No images present -> eventimage returns placeholder -> code blanks them
 			if got.PreviousImageURL != "" {
 				t.Errorf("PreviousImageURL = %q, want empty", got.PreviousImageURL)
 			}
@@ -95,6 +93,8 @@ func TestGetPreviousNext(t *testing.T) {
 		})
 	}
 }
+
+// ---------- helpers ----------
 
 func mustInitTestDB(t *testing.T) *sql.DB {
 	t.Helper()
