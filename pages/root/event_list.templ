@@ -126,12 +126,12 @@ templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *strin
 	if block == nil {
 		return
 	}
-	<section>
-		<h2 class="pulje-heading container-inner-padding" id={ pulje }>
+	<section class="event-pulje-with-heading container-inner-padding">
+		<h2 class="pulje-heading" id={ pulje }>
 			{ block.Pulje.Name }
 			<span class="pulje-heading-time">({ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") })</span>
 		</h2>
-		<div class="page-wide-eventcard-grid container-inner-padding">
+		<div class="page-wide-eventcard-grid">
 			for _, event := range block.Events {
 				@components.EventCard(event, eventImageDir, isAdmin)
 			}
@@ -153,9 +153,20 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 			}
 		}
 
+		.event-pulje-with-heading {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+		}
 		.pulje-heading {
+			position: sticky;
+			top: var(--nav-height);
+			/* This is cursed but it gives padding to the heading when sticked without breaking the layout */
+			margin: calc(0px - var(--spacing-2x)) calc(0px - var(--spacing-2x)) 0;
+			padding: var(--spacing-2x) var(--spacing-2x);
 			color: var(--color-text-strong);
-			margin: 0 0 var(--spacing-5x);
+			background-color: var(--bg-base);
+			z-index: var(--pulje-sticky-heading);
 		}
 		.pulje-heading-time {
 			font-size: var(--text-body);
