@@ -28,12 +28,18 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		UserID:          1,
 	}
 
+	var expectedMissMatchBillettholderUser = models.BillettholderUsers{
+		BillettholderID: 8888,
+		UserID:          1,
+	}
+
 	// Happy path person
 	const happyPathEmail = "test@regncon.no"
 	var happyPathPerson = testutil.GenerateFakePerson()
 	happyPathPerson.Email = happyPathEmail
 
 	var uassociatedPerson = testutil.GenerateFakePerson()
+	var missMatchPerson = testutil.GenerateFakePerson()
 
 	// Happy path user
 	var happyPathUser = models.User{
@@ -62,6 +68,17 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		TicketID:     4999999,
 	}
 
+	var missMatchBillettholder = models.Billettholder{
+		ID:           expectedMissMatchBillettholderUser.BillettholderID,
+		FirstName:    missMatchPerson.FirstName,
+		LastName:     missMatchPerson.LastName,
+		TicketTypeId: 199999,
+		TicketType:   "Test",
+		IsOver18:     true,
+		OrderID:      19999999,
+		TicketID:     4999997,
+	}
+
 	var unassociatedBillettholder = models.Billettholder{
 		ID:           unassociatedPathUser.ID,
 		FirstName:    uassociatedPerson.FirstName,
@@ -80,6 +97,12 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		Kind:            "Manual",
 	}
 
+	var missMatchedBillettholderEmail = models.BillettholderEmail{
+		BillettholderID: missMatchBillettholder.ID,
+		Email:           strings.ToUpper(happyPathPerson.Email),
+		Kind:            "Manual",
+	}
+
 	var uassociatedBillettholderEmail = models.BillettholderEmail{
 		BillettholderID: unassociatedBillettholder.ID,
 		Email:           uassociatedPerson.Email,
@@ -88,10 +111,12 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 
 	var testBillettholders []models.Billettholder
 	testBillettholders = append(testBillettholders, happyPathBillettholder)
+	testBillettholders = append(testBillettholders, missMatchBillettholder)
 	testBillettholders = append(testBillettholders, unassociatedBillettholder)
 
 	var testBillettholderEmails []models.BillettholderEmail
 	testBillettholderEmails = append(testBillettholderEmails, happyPathBillettholderEmail)
+	testBillettholderEmails = append(testBillettholderEmails, missMatchedBillettholderEmail)
 	testBillettholderEmails = append(testBillettholderEmails, uassociatedBillettholderEmail)
 
 	var testUsers []models.User
@@ -173,6 +198,9 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	}
 
 	// Assert
+	if happyPathBillettholderEmail.Email == missMatchedBillettholderEmail.Email {
+		t.Fatalf("You did something wrong in var missMatchedBillettholderEmail when copying values")
+	}
 
 	var resultBillettholderUsers []models.BillettholderUsers
 	rows, err := db.Query("SELECT billettholder_id, user_id FROM billettholdere_users")
@@ -180,6 +208,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		t.Fatalf("failed to query billettholder_users: %v", err)
 	}
 	defer rows.Close()
+
 	for rows.Next() {
 		var user models.BillettholderUsers
 		if err := rows.Scan(&user.BillettholderID, &user.UserID); err != nil {
@@ -188,10 +217,15 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		resultBillettholderUsers = append(resultBillettholderUsers, user)
 	}
 
-	if len(resultBillettholderUsers) != 1 {
-		t.Fatalf("expected 1 billettholder_user, got %d", len(resultBillettholderUsers))
+	// Both happyPathBillettholder and missMatchBillettholder should be found
+	if len(resultBillettholderUsers) != 2 {
+		t.Fatalf("expected 2 billettholder_user, got %d", len(resultBillettholderUsers))
 	}
-	if resultBillettholderUsers[0] != expectedBillettholderUser {
-		t.Fatalf("expected billettholder_user %+v, got %+v", expectedBillettholderUser, resultBillettholderUsers[0])
+
+	// Both tickets should map to expected billettholder user
+	for _, billettholderUser := range resultBillettholderUsers {
+		if billettholderUser != expectedBillettholderUser && billettholderUser != expectedMissMatchBillettholderUser {
+			t.Fatalf("expected billettholder_user %+v, got %+v", expectedBillettholderUser, billettholderUser)
+		}
 	}
 }
