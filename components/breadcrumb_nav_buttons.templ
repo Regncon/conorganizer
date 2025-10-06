@@ -1,11 +1,14 @@
 package components
 
+import (
+	"fmt"
+)
 
 templ BreadcrumbNavButtons(previousNextData PreviousNext) {
 	<div class="breadcrumb-prev-next-buttons">
 		if previousNextData.PreviousUrl != "" {
 			<a
-				href={ templ.URL(previousNextData.PreviousUrl) }
+				href={ fmt.Sprintf("%s?pulje=%s", templ.URL(previousNextData.PreviousUrl), previousNextData.PreviousPulje) }
 				class="btn btn--ghost"
 				style="max-width:5rem;"
 			>Forrige</a>
@@ -14,7 +17,7 @@ templ BreadcrumbNavButtons(previousNextData PreviousNext) {
 		}
 		if previousNextData.NextUrl != "" {
 			<a
-				href={ templ.URL(previousNextData.NextUrl) }
+				href={ fmt.Sprintf("%s?pulje=%s", templ.URL(previousNextData.NextUrl), previousNextData.NextPulje) }
 				class="btn btn--ghost"
 				style="max-width:5rem;"
 			>Neste</a>
