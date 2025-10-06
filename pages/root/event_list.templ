@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/models"
 )
 
 type PuljeBlock struct {
@@ -126,25 +126,44 @@ templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *strin
 	if block == nil {
 		return
 	}
-	<h2
-		style="border-radius: var(--border-radius-2x);
-		       background-color: var(--bg-surface);
-		       padding: var(--spacing-5x);"
-		id={ pulje }
-	>
-		{ block.Pulje.Name }
-		{ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") }
-	</h2>
-	<div style="margin-top: 1rem; display: grid; grid-template-columns: repeat(auto-fit,minmax(350px, 350px)); gap: 1rem;">
-		for _, event := range block.Events {
-			@components.EventCard(event, eventImageDir, isAdmin)
-		}
-	</div>
+	<section>
+		<h2 class="pulje-heading container-inner-padding" id={ pulje }>
+			{ block.Pulje.Name }
+			<span class="pulje-heading-time">({ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") })</span>
+		</h2>
+		<div class="page-wide-eventcard-grid container-inner-padding">
+			for _, event := range block.Events {
+				@components.EventCard(event, eventImageDir, isAdmin)
+			}
+		</div>
+	</section>
 }
 
 templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	{{ eventsByPulje, err := GetEventsByPulje(db) }}
-	<div class="page-content-container">
+	<style>
+		.event-pulje-overview {
+			display: flex;
+			flex-direction: column;			
+			gap: var(--spacing-8x);
+		}
+		@container main (width > 600px) {
+			.event-pulje-overview	{
+				gap: var(--spacing-10x);
+			}
+		}
+
+		.pulje-heading {
+			color: var(--color-text-strong);
+			margin: 0 0 var(--spacing-5x);
+		}
+		.pulje-heading-time {
+			font-size: var(--text-body);
+			font-weight: normal;
+			color: var(--color-text-soft);
+		}
+	</style>
+	<div class="page-content-container event-pulje-overview">
 		if err != nil {
 			<p>Error fetching events: { err.Error() }</p>
 			return
