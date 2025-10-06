@@ -23,14 +23,31 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
 	>
 		if showStatus {
 			<div class="event-card-status-tag">
-				if eventCard.Status == models.EventStatusDraft {
-					<span style="color:#C6A0F6">Kladd</span>
+				if eventCard.IsPublished {
+					<div style="color:var(--color-success);display: flex;align-items: center; gap: 0.5rem;">
+						@icons.Icon(icons.ProgressComplete, icons.Size20)
+						<span>Publisert</span>
+					</div>
+				} else if eventCard.Status == models.EventStatusDraft {
+					<div style="color:var(--color-soft-text);display: flex;align-items: center; gap: 0.5rem;">
+						@icons.Icon(icons.Progress25, icons.Size20)
+						<span>Kladd</span>
+					</div>
 				} else if eventCard.Status == models.EventStatusSubmitted {
-					<span style="color:var(--color-primary)">Innsendt</span>
+					<div style="color:var(--color-soft-text);display: flex;align-items: center; gap: 0.5rem;">
+						@icons.Icon(icons.Progress50, icons.Size20)
+						<span>Innsendt</span>
+					</div>
 				} else if eventCard.Status == models.EventStatusApproved {
-					<span style="color:var(--color-success)">Godkjent</span>
+					<div style="color:var(--color-warning);display: flex;align-items: center; gap: 0.5rem;">
+						@icons.Icon(icons.Progress75, icons.Size20)
+						<span>Godkjent</span>
+					</div>
 				} else if eventCard.Status == models.EventStatusArchived {
-					<span style="color:var(--color-warning)">Arkivert</span>
+					<div style="color:var(--color-error);display: flex;align-items: center; gap: 0.5rem;">
+						@icons.Icon(icons.ProgressRejected, icons.Size20)
+						<span>Arkivert</span>
+					</div>
 				}
 			</div>
 		}
@@ -82,11 +99,11 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
 					</div>
 				} else if eventCard.EventType == models.EventTypeBoardGame {
 					<div class="event-card-tagicon-container" data-tippy-content="Brettspill">
-					@icons.Icon(icons.EventBoardgame, icons.Size20)
+						@icons.Icon(icons.EventBoardgame, icons.Size20)
 					</div>
 				} else if eventCard.EventType == models.EventTypeCardGame {
 					<div class="event-card-tagicon-container" data-tippy-content="Kortspill">
-					@icons.Icon(icons.EventCardgame, icons.Size20)
+						@icons.Icon(icons.EventCardgame, icons.Size20)
 					</div>
 				} else if eventCard.EventType == models.EventTypeOther {
 					<div class="event-card-tagicon-container" data-tippy-content="Annet arrangement">

@@ -64,6 +64,7 @@ type Event struct {
 
 type EventCardModel struct {
 	Id                string      `json:"id"`
+	IsPublished       bool        `json:"is_published"`
 	Title             string      `json:"title"`
 	Intro             string      `json:"intro"`
 	Status            EventStatus `json:"status"`
