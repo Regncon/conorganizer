@@ -29,12 +29,26 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 
 	// Test variables
 	const targetEmail = "test@regncon.com"
-	const fakePeopleAmount = 10
-	const billettholderConversionRatio = 0.2
+	const fakePeopleAmount = 100
+	const billettholderConversionRatio = 0.5
+
+	// Happy user will never be included in conversion!
+	var happyPerson = testutil.GenerateFakePerson()
+	happyPerson.Email = targetEmail
+	var happyPersonTicket = CheckInTicket{
+		ID:        1,
+		OrderID:   1,
+		TypeId:    8999,
+		Type:      "Manuell billett",
+		FirstName: happyPerson.FirstName,
+		LastName:  happyPerson.LastName,
+		Email:     happyPerson.Email,
+		IsOver18:  true,
+	}
 
 	// Generate test data
-	generatededPeople := testutil.GeneratePeople(fakePeopleAmount)
 	var generatededTickets []CheckInTicket
+	generatededPeople := testutil.GeneratePeople(fakePeopleAmount)
 	for i, generatedPerson := range generatededPeople {
 		// Tie 10% of tickets with our target email
 		var emailValue = targetEmail
@@ -42,10 +56,11 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 			emailValue = generatedPerson.Email
 		}
 
+		// Start at ID 2+ to allow happy person
 		generatededTickets = append(generatededTickets, CheckInTicket{
-			ID:        i + 1,
-			OrderID:   i + 1,
-			TypeId:    i + 1,
+			ID:        i + 2,
+			OrderID:   i + 2,
+			TypeId:    9000,
 			FirstName: generatedPerson.FirstName,
 			LastName:  generatedPerson.LastName,
 			Type:      "Test billet",
@@ -54,15 +69,40 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 		})
 	}
 
-	// Splice some generated tickets and write them to billettholders table
+	// Add happy ticket to the end of our tickets array
+	generatededTickets = append(generatededTickets, happyPersonTicket)
+
+	// How many tickets have the targetEmail as their email?
+	var expectedTargetEmailCount int
+	for _, targetEmailCount := range generatededTickets {
+		if targetEmailCount.Email == targetEmail {
+			expectedTargetEmailCount++
+		}
+	}
+
+	// Slize generated tickets from begining according to conversion
+	// ammount and write them to billettholders table
 	var conversionAmmount = fakePeopleAmount * billettholderConversionRatio
 	billettholderConversion := generatededTickets[:int(conversionAmmount)]
 	for _, ticket := range billettholderConversion {
+		fmt.Printf("Preparing billettholder: %+v\n", ticket)
 		err = converTicketIdToNewBillettholder(ticket.ID, billettholderConversion, db, slogger)
 		if err != nil {
 			fmt.Println(err)
 		}
 	}
+
+	// How many tickets with targetedEmail was converted to existing billettholdere
+	var expectedConvertedTargetedEmail int
+	for _, billettholderConverted := range billettholderConversion {
+		if billettholderConverted.Email == targetEmail {
+			expectedConvertedTargetedEmail++
+		}
+	}
+
+	// Remaining tickets after conversion
+	// var remainingTickets = generatededTickets[int(conversionAmmount):]
+	// remainingTickets = append(remainingTickets, happyPersonTicket)
 
 	// generate some fake users
 	var expectedUsers []models.User
@@ -95,10 +135,13 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 	}
 
 	// Act
-	err = AssociateTicketsWithBillettholder(generatededTickets, targetEmail)
+	err = AssociateTicketsWithBillettholder(generatededTickets, targetEmail, db, slogger)
 	if err != nil {
 		t.Fatalf("failed to associate ticket with billettholder: %v", err)
 	}
 
 	// Assert
+
+	fmt.Printf("Expected %d targeted emails\n", expectedTargetEmailCount)
+
 }
