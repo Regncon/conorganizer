@@ -9,8 +9,10 @@ import (
 	"net/http"
 	"time"
 
-    "github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/Regncon/conorganizer/service/authctx"
+	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -82,8 +84,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
 	eventLayoutRoute(router, db, logger, eventImageDir, err)
 
-	router.Route("/event/api", func(eventRouter chi.Router) {
-		eventRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
+	router.Route("/event/api", func(eventApiRouter chi.Router) {
+		eventApiRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
 			eventIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				eventID := chi.URLParam(r, "idx")
 				sessionID, mvc, err := mvcSession(w, r)
@@ -125,6 +127,45 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 				}
 			})
 		})
+
+		eventApiRouter.Route("/{id}", func(eventIdRouter chi.Router) {
+			eventIdRouter.Route("/new", func(eventNew chi.Router) {
+				eventNew.Route("/interest", func(eventInterest chi.Router) {
+					eventInterest.Put("/update", func(w http.ResponseWriter, r *http.Request) {
+
+						type Put struct {
+							InterestLevel string `json:"interest_level"`
+							Pulje         string `json:"pulje"`
+						}
+						store := &Put{}
+
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							logger.Error("Failed to read signals", "error", readSignalErr)
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+						ctx := r.Context()
+						userInfo := userctx.GetUserRequestInfo(ctx)
+						billettholderId, billettholderIdErr := billettholderService.GetBillettholderByUserId(db, logger, userInfo.Id)
+
+						if billettholderIdErr != nil {
+							logger.Error("Failed to get billettholder ID", "error", billettholderIdErr)
+							http.Error(w, "Failed to get billettholder ID", http.StatusInternalServerError)
+							return
+						}
+
+						eventID := chi.URLParam(r, "idx")
+						value := r.URL.Query().Get("pulje")
+						sessionID, mvc, mvcErr := mvcSession(w, r)
+						if mvcErr != nil {
+							http.Error(w, mvcErr.Error(), http.StatusInternalServerError)
+							return
+						}
+
+					})
+				})
+			})
+		})
 	})
 
 	return nil
@@ -155,4 +196,65 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 		}
 	}
 	return id, nil
+}
+
+type InterestLevels struct {
+	Low    string `json:"litt_interessert"`
+	Medium string `json:"middels_interessert"`
+	High   string `json:"veldig_interessert"`
+}
+
+func updateInterest(
+	db *sql.DB,
+	logger *slog.Logger,
+	billettholder_id string,
+	eventID string,
+	interest InterestLevels,
+	pulje string,
+) error {
+	puljeQuery := `SELECT EXISTS (SELECT * FROM event_puljer WHERE event_id = $1 AND pulje_id = $2)`
+	_, puljerErr := db.Query(puljeQuery, eventID, pulje)
+	if puljerErr != nil {
+		logger.Info("failed to check if pulje exists", "error", puljerErr)
+		return puljerErr
+	}
+
+	logger.Info(
+		"updating interest",
+		"eventID", eventID,
+		"interest", interest,
+		"pulje", pulje,
+		"billettholder_id", billettholder_id,
+	)
+	updateQuery := `
+                IF EXISTS (SELECT * FROM interests WHERE event_id = $1 AND pulje = $2)
+                BEGIN
+                    UPDATE interests
+                    SET billettholder_id = $3, event_id = $1, interest_level = $4
+                    WHERE event_id = $1 AND pulje = $2 AND billettholder_id = $3
+                END
+                ELSE
+                BEGIN
+                    INSERT INTO interests (billettholder_id, event_id, interest_level)
+                    VALUES ($3, $1, $4)
+                END
+            `
+	updateRows, updateAffectedErr := db.Exec(updateQuery, eventID, pulje, billettholder_id, interest)
+	if updateAffectedErr != nil {
+		logger.Info("failed to update interest", "error", updateAffectedErr)
+		return updateAffectedErr
+	}
+
+	updateAffected, updateAffectedErr := updateRows.RowsAffected()
+	if updateAffectedErr != nil {
+		logger.Info("failed to get affected rows", "error", updateAffectedErr)
+		return updateAffectedErr
+	}
+
+	if updateAffected == 0 {
+		logger.Info("no rows were updated")
+		return nil
+	}
+
+	return nil
 }
