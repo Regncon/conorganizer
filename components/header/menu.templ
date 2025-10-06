@@ -61,6 +61,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			box-shadow: 0 2px 4px hsla(0, 0%, 0%, 0.1);
 			position: fixed;
 			bottom: 0;
+			border-top: 1px solid var(--bg-item-border);
 			z-index: var(--nav-z-index);
 		}
 		.main-menu {
@@ -179,6 +180,8 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				position: sticky;
 				top: 0;
 				bottom: unset;
+				border-top: none;
+				border-bottom: 1px solid var(--bg-item-border);
 			}
 
 			.main-menu {
