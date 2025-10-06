@@ -5,18 +5,6 @@ import (
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
-var beta = false
-
-/*
-	if UserInfo.IsAdmin {
-		<label class=" beta-toggle">
-			<input type="checkbox" id="betaFeatureToggle"/>
-			<span class="slider"></span>
-			<span class="beta-toggle-label">Beta features</span>
-		</label>
-	}
-*/
-
 templ Menu(UserInfo requestctx.UserRequestInfo) {
 	<style>
 		.beta-toggle {
@@ -118,16 +106,16 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 
 			.menu-btn {
 				display: flex;
-        flex-direction: column;
+				flex-direction: column;
 				justify-content: center;
 				align-items: center;
-        font-size: 12px;
-        height: 48px;
-        padding: 0 var(--spacing-4x);
-        gap: var(--spacing-1x);
-        .menu-btn-text {
-          white-space: nowrap;
-    	  }
+				font-size: 12px;
+				height: 48px;
+				padding: 0 var(--spacing-4x);
+				gap: var(--spacing-1x);
+				.menu-btn-text {
+					white-space: nowrap;
+				}
 			}
 
 			.dropdown-panel {
@@ -195,7 +183,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 
 			.main-menu {
 				display: grid;
-				grid-template-areas: 'logo navbuttons usermenu';
+				grid-template-areas: "logo navbuttons usermenu";
 				grid-template-columns: 50px 1fr 50px;
 				place-content: center;
 				place-items: center;
@@ -232,10 +220,6 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 
 				.btn-login {
 					white-space: nowrap;
-				}
-
-				.beta-toggle-label {
-					display: block;
 				}
 
 				.dropdown-panel {

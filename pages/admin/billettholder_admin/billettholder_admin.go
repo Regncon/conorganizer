@@ -10,7 +10,7 @@ import (
 	"time"
 
 	addbillettholder "github.com/Regncon/conorganizer/pages/admin/billettholder_admin/add"
-	"github.com/Regncon/conorganizer/pages/index"
+	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -50,14 +50,14 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 		}
 	}
 
-	session := func(w http.ResponseWriter, r *http.Request) (string, *index.TodoMVC, error) {
+	session := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to get session id: %w", err)
 		}
 
-		mvc := &index.TodoMVC{}
+		mvc := &root.TodoMVC{}
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
@@ -160,7 +160,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 	return nil
 }
 
-func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue, poke func(string)) error {
+func saveMVC(ctx context.Context, mvc *root.TodoMVC, sessionID string, kv jetstream.KeyValue, poke func(string)) error {
 	b, err := json.Marshal(mvc)
 	if err != nil {
 		return fmt.Errorf("failed to marshal mvc: %w", err)
