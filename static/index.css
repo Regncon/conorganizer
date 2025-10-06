@@ -66,8 +66,8 @@
     --nav-height: 4rem;
     
     /* z-index */
-    --pulje-sticky-heading: 10;
     --nav-z-index: 50;
+    --subnav-z-index: 10;
 
     /* responsively size gap between panes in the same column of content */
     --responsive-pane-column-spacing: var(--spacing-4x);
