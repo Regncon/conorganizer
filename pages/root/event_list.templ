@@ -39,7 +39,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 		INNER JOIN event_puljer ep ON ep.event_id = e.id
 		INNER JOIN puljer      p  ON p.id = ep.pulje_id
 		WHERE e.status = 'Godkjent' AND ep.is_active = 1
-        ORDER BY p.start_time DESC, e.inserted_time ASC, e.id ASC
+        ORDER BY p.start_time DESC, e.inserted_time DESC, e.id ASC
 	`
 
 	rows, err := db.Query(q)
