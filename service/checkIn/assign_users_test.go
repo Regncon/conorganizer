@@ -11,9 +11,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestAssociateUserWithBillettholder2(t *testing.T) {
+func TestAssociateUserWithBillettholder(t *testing.T) {
 	// Arrange
-	uniqueDatabaseName := "test_associate_billettholders2_" + t.Name() + "_" + uuid.New().String() + ".db"
+	uniqueDatabaseName := "test_associate_billettholders_" + t.Name() + "_" + uuid.New().String() + ".db"
 	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
 	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
@@ -21,6 +21,7 @@ func TestAssociateUserWithBillettholder2(t *testing.T) {
 		t.Fatalf("failed to create test database: %v", err)
 	}
 	defer db.Close()
+
 	// expected billettholder_user
 	var expectedBillettholderUser = models.BillettholderUsers{
 		BillettholderID: 9999,
@@ -34,7 +35,7 @@ func TestAssociateUserWithBillettholder2(t *testing.T) {
 
 	// Happy path user
 	var happyPathUser = models.User{
-		ID:      1,
+		ID:      expectedBillettholderUser.UserID,
 		UserID:  "testuser",
 		Email:   happyPathEmail,
 		IsAdmin: false,
@@ -42,7 +43,7 @@ func TestAssociateUserWithBillettholder2(t *testing.T) {
 
 	// Happy path billettholder
 	var happyPathBillettholder = models.Billettholder{
-		ID:           9999,
+		ID:           expectedBillettholderUser.BillettholderID,
 		FirstName:    happyPathPerson.FirstName,
 		LastName:     happyPathPerson.LastName,
 		TicketTypeId: 199999,

@@ -13,9 +13,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestAssociateUserWithBillettholder(t *testing.T) {
+func TestAssociateUserWithBillettholderGeneratedData(t *testing.T) {
 	// Arrange
-	uniqueDatabaseName := "test_associate_billettholders_" + t.Name() + "_" + uuid.New().String() + ".db"
+	uniqueDatabaseName := "test_associate_billettholders_generated_" + t.Name() + "_" + uuid.New().String() + ".db"
 	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
 	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
