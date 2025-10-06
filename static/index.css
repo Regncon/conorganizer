@@ -24,6 +24,7 @@
 
     --color-disabled: #CCD1E980;
 
+    --bg-tooltip: #11111b;
     --bg-base: #1A1B26;
     --bg-surface: #252735;
     --bg-item: #35394A;
@@ -357,18 +358,19 @@ input {
 }
 
 .tippy-tooltip {
-    background-color: var(--bg-item);
+    background-color: var(--bg-tooltip);
+    color: var(--color-primary-text);
     padding: var(--spacing-1x);
 }
 .tippy-tooltip[data-placement^='top'] .tippy-arrow {
-    border-top-color: var(--bg-item);
+    border-top-color: var(--bg-tooltip);
 }
 .tippy-tooltip[data-placement^='bottom'] .tippy-arrow {
-    border-bottom-color: var(--bg-item);
+    border-bottom-color: var(--bg-tooltip);
 }
 .tippy-tooltip[data-placement^='left'] .tippy-arrow {
-    border-left-color: var(--bg-item);
+    border-left-color: var(--bg-tooltip);
 }
 .tippy-tooltip[data-placement^='right'] .tippy-arrow {
-    border-right-color: var(--bg-item);
+    border-right-color: var(--bg-tooltip);
 }
