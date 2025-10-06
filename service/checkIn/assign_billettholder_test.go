@@ -85,10 +85,10 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 	}
 
 	// How many tickets with targetedEmail was converted to existing billettholdere
-	var expectedConvertedTargetedEmail int
+	var expectedConvertedTargetedEmailCount int
 	for _, billettholderConverted := range billettholderConversion {
 		if billettholderConverted.Email == targetEmail {
-			expectedConvertedTargetedEmail++
+			expectedConvertedTargetedEmailCount++
 		}
 	}
 
@@ -119,12 +119,12 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 	}
 
 	// Generate some fake billettholder_users
-	for _, expectedUser := range expectedUsers {
+	/* for _, expectedUser := range expectedUsers {
 		err = AssociateUserWithBillettholder(expectedUser.UserID, db, slogger)
 		if err != nil {
 			fmt.Println(err)
 		}
-	}
+	} */
 
 	// Act
 	err = AssociateTicketsWithBillettholder(generatededTickets, targetEmail, db, slogger)
@@ -134,13 +134,25 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 
 	// Assert
 
+	// Check that billettholder contains expected ammount
+	var resultBillettholderCount int
+	resultBillettholderRow := db.QueryRow("SELECT COUNT(id) FROM billettholdere")
+	if err := resultBillettholderRow.Scan(&resultBillettholderCount); err != nil {
+		t.Fatal(resultBillettholderRow.Err())
+	}
+	if resultBillettholderCount != (expectedTargetEmailCount-expectedConvertedTargetedEmailCount)+int(conversionAmmount) {
+		t.Fatalf("expected %d billettholders, got %d", (expectedTargetEmailCount-expectedConvertedTargetedEmailCount)+int(conversionAmmount), resultBillettholderCount)
+	}
+
 	// Check billettholder contains a certain amount of email: targetEmail
 	var resultTargetEmailCount int
 	resultTargetEmailRow := db.QueryRow("SELECT COUNT(email) FROM billettholder_emails WHERE email = ?", targetEmail)
-	if err := resultTargetEmailRow.Scan(&resultTargetEmailCount); err != nil {
+	if err = resultTargetEmailRow.Scan(&resultTargetEmailCount); err != nil {
 		t.Fatal(resultTargetEmailRow.Err())
 	}
 	if resultTargetEmailCount != expectedTargetEmailCount {
-		t.Fatalf("expected %d, got %d", expectedTargetEmailCount, resultTargetEmailCount)
+		t.Fatalf("expected %d billettholders_email with %s, got %d", expectedTargetEmailCount, targetEmail, resultTargetEmailCount)
 	}
+
+	// todo add more checks
 }
