@@ -19,6 +19,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 	const q = `
 		SELECT
 			e.id,
+            ep.is_published,
 			e.title,
 			e.intro,
 			e.status,
@@ -72,6 +73,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 
 		if err := rows.Scan(
 			&ev.Id,
+			&ev.IsPublished,
 			&ev.Title,
 			&ev.Intro,
 			&ev.Status,
