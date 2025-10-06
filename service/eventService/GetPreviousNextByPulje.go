@@ -20,14 +20,13 @@ func GetPreviousNextByPulje(
 	isAdmin bool,
 	eventImageDir *string,
 ) (components.PreviousNext, error) {
-	// ---------- 1) Find current row in the filtered, pulje-partitioned ordering ----------
-	// We compute prev/next *within the same pulje*. If `next` is NULL, we will later
-	// jump to the first event of the next pulje (no wrap to the beginning).
+	// Filter toggles: admins can see unpublished; users cannot.
 	pubFilter := "AND ep.is_published = 1"
 	if isAdmin {
-		pubFilter = "" // admins can see unpublished
+		pubFilter = ""
 	}
 
+	// 1) Get neighbors within the same pulje.
 	qWithin := fmt.Sprintf(`
 WITH filtered AS (
 	SELECT
@@ -35,8 +34,8 @@ WITH filtered AS (
 		e.title,
 		e.image_url,
 		e.inserted_time,
-		p.id          AS pulje_id,
-		p.start_time  AS pulje_start_time
+		p.id         AS pulje_id,
+		p.start_time AS pulje_start_time
 	FROM events e
 	JOIN event_puljer ep ON ep.event_id = e.id
 	JOIN puljer p       ON p.id = ep.pulje_id
@@ -70,12 +69,9 @@ LIMIT 1;
 `, pubFilter)
 
 	var (
-		curPuljeID      sql.NullString
-		curPuljeStart   sql.NullString
-		prevID, prevTit sql.NullString
-		prevImg         sql.NullString
-		nextID, nextTit sql.NullString
-		nextImg         sql.NullString
+		curPuljeID, curPuljeStart sql.NullString
+		prevID, prevTit, prevImg  sql.NullString
+		nextID, nextTit, nextImg  sql.NullString
 	)
 
 	err := db.QueryRowContext(ctx, qWithin, currentID).Scan(
@@ -85,14 +81,13 @@ LIMIT 1;
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// currentID not visible under this filter -> empty neighbors
 			return components.PreviousNext{}, nil
 		}
 		logger.Error("GetPreviousNextByPulje: scan within failed", "error", err)
 		return components.PreviousNext{}, err
 	}
 
-	// ---------- 2) If `next` within pulje is NULL, hop to first event of next pulje ----------
+	// 2) If there's no "next" in the same pulje, jump to the first event of the next pulje.
 	var nextPuljeID sql.NullString
 	if !nextID.Valid {
 		qNextPulje := fmt.Sprintf(`
@@ -128,19 +123,22 @@ LIMIT 1;
 			nextID, nextTit, nextImg, nextPuljeID = nid, ntit, nimg, npul
 		}
 	} else {
-		// next is within the same pulje as current
+		// Next is within the same pulje.
 		nextPuljeID = curPuljeID
 	}
 
-	// ---------- 3) Previous from prior pulje is NOT allowed (no wrap back) ----------
-	prevPuljeID := curPuljeID // previous stays within current pulje (or empty)
+	// 3) Previous pulje should be set ONLY if a previous event exists.
+	var prevPuljeID sql.NullString
+	if prevID.Valid {
+		prevPuljeID = curPuljeID
+	} // else leave as NULL (empty)
 
-	// ---------- 4) Resolve image banners and blank placeholders ----------
+	// 4) Resolve images and blank placeholders.
 	prevBanner := ""
-	nextBanner := ""
 	if prevID.Valid {
 		prevBanner = eventimage.GetEventImageUrl(prevID.String, "banner", eventImageDir)
 	}
+	nextBanner := ""
 	if nextID.Valid {
 		nextBanner = eventimage.GetEventImageUrl(nextID.String, "banner", eventImageDir)
 	}
@@ -151,19 +149,16 @@ LIMIT 1;
 		nextBanner = ""
 	}
 
-	// ---------- 5) Build response ----------
-	out := components.PreviousNext{
+	// 5) Build response.
+	return components.PreviousNext{
 		PreviousUrl:      nstr(prevID),
 		PreviousTitle:    nstr(prevTit),
 		PreviousImageURL: prevBanner,
+		PreviousPulje:    models.Pulje(nstr(prevPuljeID)),
 		NextUrl:          nstr(nextID),
 		NextTitle:        nstr(nextTit),
 		NextImageURL:     nextBanner,
-		// These fields exist on your expanded struct
-		PreviousPulje: models.Pulje(nstr(prevPuljeID)),
-		NextPulje:     models.Pulje(nstr(nextPuljeID)),
-		// IsRemoved: left as default false — set by caller if needed.
-	}
-
-	return out, nil
+		NextPulje:        models.Pulje(nstr(nextPuljeID)),
+		// IsRemoved left default false
+	}, nil
 }
