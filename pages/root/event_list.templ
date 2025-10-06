@@ -137,7 +137,7 @@ templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *strin
 	</h2>
 	<div style="margin-top: 1rem; display: grid; grid-template-columns: repeat(auto-fit,minmax(350px, 350px)); gap: 1rem;">
 		for _, event := range block.Events {
-			@components.EventCard(event, eventImageDir, isAdmin)
+			@components.EventCard(event, eventImageDir, isAdmin, string(pulje))
 		}
 	</div>
 }
