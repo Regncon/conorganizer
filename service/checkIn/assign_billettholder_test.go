@@ -8,22 +8,14 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service"
 	"github.com/Regncon/conorganizer/testutil"
-	"github.com/google/uuid"
 )
 
 func TestAssociateTicketsWithBillettholder(t *testing.T) {
 	// Arrange
-	sl := &testutil.StubLogger{}
-	slogger := testutil.NewSlogAdapter(sl)
-
-	uniqueDatabaseName := "test_associate_tickets_" + t.Name() + "_" + uuid.New().String() + ".db"
-	testDBPath := "../../database/tests/" + uniqueDatabaseName
-
-	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
+	db, slogger, err := testutil.CreateTemporaryDBAndLogger("test_associate_tickets", t)
 	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
+		t.Fatalf("failed to create test database and logger: %v", err)
 	}
 	defer db.Close()
 
@@ -142,6 +134,4 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 
 	// Assert
 
-	// fmt.Printf("Expected %d targeted emails\n", expectedTargetEmailCount)
 
-}
