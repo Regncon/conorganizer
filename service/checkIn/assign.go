@@ -67,7 +67,7 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 	// Get associated billettholdere
 	var billettholdere []models.BillettholderEmail
 	rows, err := db.Query(`
-        SELECT id, billettholder_id, email, kind, inserted_time FROM billettholder_emails WHERE email = ?
+        SELECT id, billettholder_id, email, kind, inserted_time FROM billettholder_emails WHERE email = ? COLLATE NOCASE
     `, user.Email)
 	if err != nil {
 		return fmt.Errorf("unable to query billettholder_emails: %v", err)
