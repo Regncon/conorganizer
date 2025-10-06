@@ -144,7 +144,7 @@ templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *strin
 
 templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	{{ eventsByPulje, err := GetEventsByPulje(db) }}
-	<div style="margin-right: auto; margin-left: auto; max-width: 1500px;">
+	<div class="page-content-container">
 		if err != nil {
 			<p>Error fetching events: { err.Error() }</p>
 			return
