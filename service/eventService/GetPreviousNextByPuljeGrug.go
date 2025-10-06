@@ -13,29 +13,29 @@ import (
 )
 
 func getPreviousPuljeId(currentPuljeId models.Pulje) models.Pulje {
-	if currentPuljeId == models.PuljeLordagMorgen {
+	switch currentPuljeId {
+	case models.PuljeLordagMorgen:
+		return models.PuljeFredagKveld
+	case models.PuljeLordagKveld:
+		return models.PuljeLordagMorgen
+	case models.PuljeSondagMorgen:
+		return models.PuljeLordagKveld
+	default:
 		return models.PuljeFredagKveld
 	}
-	if currentPuljeId == models.PuljeLordagKveld {
-		return models.PuljeLordagMorgen
-	}
-	if currentPuljeId == models.PuljeSondagMorgen {
-		return models.PuljeLordagKveld
-	}
-	return models.PuljeFredagKveld
 }
 
 func getNextPuljeId(currentPuljeId models.Pulje) models.Pulje {
-	if currentPuljeId == models.PuljeFredagKveld {
+	switch currentPuljeId {
+	case models.PuljeFredagKveld:
 		return models.PuljeLordagMorgen
-	}
-	if currentPuljeId == models.PuljeLordagMorgen {
+	case models.PuljeLordagMorgen:
 		return models.PuljeLordagKveld
-	}
-	if currentPuljeId == models.PuljeLordagKveld {
+	case models.PuljeLordagKveld:
+		return models.PuljeSondagMorgen
+	default:
 		return models.PuljeSondagMorgen
 	}
-	return models.PuljeSondagMorgen
 }
 
 func getLastEventInPriviousPulje(eventsByPulje root.EventsByPulje, currentPuljeId models.Pulje) *models.EventCardModel {
