@@ -28,7 +28,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 	{{
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
 	isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
-	previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId, eventImageDir)
+	previousNextData, err := eventservice.GetPreviousNextInnsendtGodkjent(ctx, db, logger, eventId, eventImageDir)
 	}}
 	if err != nil {
 		logger.Error("Failed to get previous/next data", "error", err)

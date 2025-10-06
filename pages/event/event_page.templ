@@ -3,22 +3,23 @@ package event
 import (
 	"fmt"
 	"database/sql"
+	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"log/slog"
+	"net/http"
 )
 
-templ event_page(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
+templ event_page(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
 	<div id="event-container" class="event-container">
-		@event_page_content(eventId, isAdmin, logger, db, eventImageDir)
+		@event_page_content(eventId, isAdmin, logger, db, eventImageDir, r)
 	</div>
 }
 
-templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string) {
-	{{
-	event, err := eventservice.GetEventById(eventId, db, logger)
-	}}
-	{{ previousNextData, err := eventservice.GetPreviousNext(ctx, db, logger, eventId, eventImageDir) }}
+templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
+	{{ event, err := eventservice.GetEventById(eventId, db, logger) }}
+	{{ evnetsByPulje, err := root.GetEventsByPulje(db) }}
+	{{ previousNextData, err := eventservice.GetPreviousNextByPuljeSimple(ctx, evnetsByPulje, logger, eventId, true, r, eventImageDir) }}
 	if err != nil {
 		logger.Error("Failed to get previous/next data", "error", err)
 		return

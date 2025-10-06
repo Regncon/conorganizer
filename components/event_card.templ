@@ -7,13 +7,17 @@ import (
 	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStatus bool) {
+templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStatus bool, pulje string) {
 	{{ imageUrl := eventimage.GetEventImageUrl(eventCard.Id, "card", eventImageDir) }}
 	<a
 		if eventCard.Status == models.EventStatusDraft || eventCard.Status == models.EventStatusSubmitted || eventCard.Status == models.EventStatusArchived {
 			href={ templ.URL(fmt.Sprintf("/my-events/new/%s", eventCard.Id)) }
 		} else {
-			href={ templ.URL(fmt.Sprintf("/event/%s", eventCard.Id)) }
+			if pulje != "" {
+				href={ templ.URL(fmt.Sprintf("/event/%s?pulje=%s", eventCard.Id, pulje)) }
+			} else {
+				href={ templ.URL(fmt.Sprintf("/event/%s", eventCard.Id)) }
+			}
 		}
 		class="event-card-container"
 	>
