@@ -22,7 +22,6 @@ func getPreviousPuljeId(currentPuljeId models.Pulje) models.Pulje {
 	if currentPuljeId == models.PuljeSondagMorgen {
 		return models.PuljeLordagKveld
 	}
-	// If it's the first pulje, return itself
 	return models.PuljeFredagKveld
 }
 
@@ -36,7 +35,6 @@ func getNextPuljeId(currentPuljeId models.Pulje) models.Pulje {
 	if currentPuljeId == models.PuljeLordagKveld {
 		return models.PuljeSondagMorgen
 	}
-	// If it's the last pulje, return itself
 	return models.PuljeSondagMorgen
 }
 
@@ -82,31 +80,14 @@ func GetPreviousNextByPuljeSimple(
 	if !ok {
 		return components.PreviousNext{}, nil
 	}
-	fmt.Println("Current Pulje ID:", currentPunjeId)
-	fmt.Println("Events By Pulje:", eventsByPulje)
-	/*
-
-				type PuljeBlock struct {
-					Pulje  models.PuljeRow
-					Events []models.EventCardModel
-				}
-
-				type EventsByPulje map[models.Pulje]*PuljeBlock
-
-		Events By Pulje: map[FredagKveld:0xc0002ba3f0 LordagKveld:0xc0002ba310 LordagMorgen:0xc0002ba380 SondagMorgen:0xc0002ba150]
-	*/
 
 	var previousId, previousTitle, nextId, nextTitl string
-
 	var previousPuljeID, nextPuljeID models.Pulje
 	for _, ebp := range eventsByPulje {
 		if string(ebp.Pulje.ID) == currentPuljeIdString {
-			fmt.Println("Found matching Pulje:", ebp.Pulje.ID)
 			for i, event := range ebp.Events {
 				if event.Id == currentID {
-					fmt.Println("Found current event at index:", i)
 					if i > 0 {
-						fmt.Println("Getting previous event in the same pulje")
 						previousId = ebp.Events[i-1].Id
 						previousTitle = ebp.Events[i-1].Title
 						previousPuljeID = currentPunjeId
@@ -122,7 +103,6 @@ func GetPreviousNextByPuljeSimple(
 						nextTitl = ebp.Events[i+1].Title
 						nextPuljeID = currentPunjeId
 					} else if ebp.Pulje.ID != models.PuljeSondagMorgen {
-						fmt.Println("Getting first event from next pulje:", nextPuljeID)
 						firstEvent := getFirstEventInPulje(eventsByPulje, currentPunjeId)
 						nextId = firstEvent.Id
 						nextTitl = firstEvent.Title
@@ -134,10 +114,10 @@ func GetPreviousNextByPuljeSimple(
 	}
 
 	prevBanner := ""
-	nextBanner := ""
 	if previousId != "" {
 		prevBanner = eventimage.GetEventImageUrl(previousId, "banner", eventImageDir)
 	}
+	nextBanner := ""
 	if nextId != "" {
 		nextBanner = eventimage.GetEventImageUrl(nextId, "banner", eventImageDir)
 	}
