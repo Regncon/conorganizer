@@ -2,8 +2,6 @@ package checkIn
 
 import (
 	"fmt"
-	"math/rand"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -13,9 +11,9 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestAssociateUserWithBillettholder(t *testing.T) {
+func TestAssociateUserWithBillettholder2(t *testing.T) {
 	// Arrange
-	uniqueDatabaseName := "test_associate_billettholders_" + t.Name() + "_" + uuid.New().String() + ".db"
+	uniqueDatabaseName := "test_associate_billettholders2_" + t.Name() + "_" + uuid.New().String() + ".db"
 	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
 	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
@@ -23,33 +21,55 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		t.Fatalf("failed to create test database: %v", err)
 	}
 	defer db.Close()
-
-	// Add billettholdere test data
-	var expectedGeneratedUsers []testutil.Person
-	var expectedBillettholders []models.Billettholder
-
-	var ammountToGenerate = 99
-	for i := range ammountToGenerate {
-		// Create fake users which billettholders can access (this is done to retain email)
-		var generatedPerson = testutil.GenerateFakePerson()
-		expectedGeneratedUsers = append(expectedGeneratedUsers, generatedPerson)
-
-		// Create billettholders
-		expectedBillettholders = append(expectedBillettholders, models.Billettholder{
-			ID:           i + 1,
-			FirstName:    generatedPerson.FirstName,
-			LastName:     generatedPerson.LastName,
-			TicketTypeId: i + 190001,
-			TicketType:   "Test",
-			IsOver18:     rand.Intn(100) > 20,
-			OrderID:      i + 13200001,
-			TicketID:     i + 4800001,
-		})
+	// expected billettholder_user
+	var expectedBillettholderUser = models.BillettholderUsers{
+		BillettholderID: 9999,
+		UserID:          1,
 	}
+
+	// Happy path person
+	const happyPathEmail = "test@regncon.no"
+	var happyPathPerson = testutil.GenerateFakePerson()
+	happyPathPerson.Email = happyPathEmail
+
+	// Happy path user
+	var happyPathUser = models.User{
+		ID:      1,
+		UserID:  "testuser",
+		Email:   happyPathEmail,
+		IsAdmin: false,
+	}
+
+	// Happy path billettholder
+	var happyPathBillettholder = models.Billettholder{
+		ID:           9999,
+		FirstName:    happyPathPerson.FirstName,
+		LastName:     happyPathPerson.LastName,
+		TicketTypeId: 199999,
+		TicketType:   "Test",
+		IsOver18:     true,
+		OrderID:      19999999,
+		TicketID:     4999999,
+	}
+	// Happy path billettholder_email
+	var happyPathBillettholderEmail = models.BillettholderEmail{
+		BillettholderID: happyPathBillettholder.ID,
+		Email:           happyPathPerson.Email,
+		Kind:            "Manual",
+	}
+
+	var testBillettholders []models.Billettholder
+	testBillettholders = append(testBillettholders, happyPathBillettholder)
+
+	var testBillettholderEmails []models.BillettholderEmail
+	testBillettholderEmails = append(testBillettholderEmails, happyPathBillettholderEmail)
+
+	var testUsers []models.User
+	testUsers = append(testUsers, happyPathUser)
 
 	// construct query for inserting billettholdere
 	var queryBillettholder []string
-	for _, billettholder := range expectedBillettholders {
+	for _, billettholder := range testBillettholders {
 		queryBillettholder = append(queryBillettholder, fmt.Sprintf(`(%d, "%s", "%s", %d, "%s", %v, %d, %d)`, billettholder.ID, billettholder.FirstName, billettholder.LastName, billettholder.TicketTypeId, billettholder.TicketType, billettholder.IsOver18, billettholder.OrderID, billettholder.TicketID))
 	}
 
@@ -65,9 +85,9 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 
 	// Attempt to insert into billettholder_emails
 	var expectedBillettholderEmails []models.BillettholderEmail
-	for _, person := range expectedGeneratedUsers {
+	for _, person := range testBillettholderEmails {
 		billettholderEmail := models.BillettholderEmail{
-			BillettholderID: rand.Intn(len(expectedGeneratedUsers)-1) + 1,
+			BillettholderID: person.BillettholderID,
 			Email:           person.Email,
 		}
 		expectedBillettholderEmails = append(expectedBillettholderEmails, billettholderEmail)
@@ -88,19 +108,8 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		return
 	}
 
-	// Attempt to insert into expectedUsers
-	var expectedUsers []models.User
-	for i, holder := range expectedGeneratedUsers {
-		expectedUsers = append(expectedUsers, models.User{
-			ID:      i + 1,
-			UserID:  holder.FirstName + strconv.Itoa(i+1),
-			Email:   holder.Email,
-			IsAdmin: rand.Intn(100) > 10,
-		})
-	}
-
 	var queryUsers []string
-	for _, user := range expectedUsers {
+	for _, user := range testUsers {
 		queryUsers = append(queryUsers, fmt.Sprintf(`(%d, "%s", "%s", %v)`, user.ID, user.UserID, user.Email, user.IsAdmin))
 	}
 
@@ -119,7 +128,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	sl := &testutil.StubLogger{}
 	slogger := testutil.NewSlogAdapter(sl)
 
-	for _, user := range expectedUsers {
+	for _, user := range testUsers {
 		// fmt.Printf("Calling AssociateUserWithBillettholder() on: %s (%s)\n", user.UserID, user.Email)
 		err = AssociateUserWithBillettholder(user.UserID, db, slogger)
 		if err != nil {
@@ -128,42 +137,24 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	}
 
 	// Assert
-	var expectedBillettholderUsers []models.BillettholderUsers
-	for _, expectedUser := range expectedUsers {
-		for _, generatedBilletholder := range expectedBillettholderEmails {
-			if expectedUser.Email == generatedBilletholder.Email {
-				expectedBillettholderUsers = append(expectedBillettholderUsers, models.BillettholderUsers{
-					BillettholderID: generatedBilletholder.BillettholderID,
-					UserID:          expectedUser.ID,
-				})
-			}
-		}
-	}
 
-	// Check that billettholder_users got populated
-	var billettholderUsers []models.BillettholderUsers
-
-	rows, err := db.Query(`
-                    SELECT billettholder_id, user_id FROM billettholdere_users
-                    `)
+	var resultBillettholderUsers []models.BillettholderUsers
+	rows, err := db.Query("SELECT billettholder_id, user_id FROM billettholdere_users")
 	if err != nil {
-		t.Fatalf("Failed to get rows from billettholder_users: %v", err)
+		t.Fatalf("failed to query billettholder_users: %v", err)
 	}
 	defer rows.Close()
-
 	for rows.Next() {
-		var result models.BillettholderUsers
-		err = rows.Scan(&result.BillettholderID, &result.UserID)
-		if err != nil {
-			t.Fatalf("Failed scan rows in billettholder_users: %v", err)
+		var user models.BillettholderUsers
+		if err := rows.Scan(&user.BillettholderID, &user.UserID); err != nil {
+			t.Fatalf("failed to scan billettholder_user: %v", err)
 		}
-		billettholderUsers = append(billettholderUsers, result)
+		resultBillettholderUsers = append(resultBillettholderUsers, user)
 	}
-
-	// compare expected billettholderUsers with billettholderUsers
-	if len(billettholderUsers) != len(expectedBillettholderUsers) {
-		t.Fatalf("expected %d billettholder users, got %d", len(expectedBillettholderUsers), len(billettholderUsers))
+	if len(resultBillettholderUsers) != 1 {
+		t.Fatalf("expected 1 billettholder_user, got %d", len(resultBillettholderUsers))
 	}
-
-	// Kan det eksistere billettholder_emails med duplicate e-post?
+	if resultBillettholderUsers[0] != expectedBillettholderUser {
+		t.Fatalf("expected billettholder_user %+v, got %+v", expectedBillettholderUser, resultBillettholderUsers[0])
+	}
 }

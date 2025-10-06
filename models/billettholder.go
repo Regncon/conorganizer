@@ -25,6 +25,6 @@ type BillettholderEmail struct {
 
 type BillettholderUsers struct {
 	BillettholderID int       `json:"billettholder_id"`
-	UserID          string    `json:"user_id"`
+	UserID          int       `json:"user_id"`
 	InsertedTime    time.Time `json:"inserted_time"`
 }
