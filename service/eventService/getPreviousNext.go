@@ -10,26 +10,26 @@ import (
 	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-func GetPreviousNext(ctx context.Context, db *sql.DB, logger *slog.Logger, currentID string, eventImageDir *string) (components.PreviousNext, error) {
+func GetPreviousNextInnsendtGodkjent(ctx context.Context, db *sql.DB, logger *slog.Logger, currentID string, eventImageDir *string) (components.PreviousNext, error) {
 	const q = `
-WITH ordered AS (
-  SELECT
-    id,
-    title,
-    image_url,
-    LAG(id)        OVER (ORDER BY inserted_time DESC, id DESC) AS previous_id,
-    LAG(title)     OVER (ORDER BY inserted_time DESC, id DESC) AS previous_title,
-    LAG(image_url) OVER (ORDER BY inserted_time DESC, id DESC) AS previous_image_url,
-    LEAD(id)       OVER (ORDER BY inserted_time DESC, id DESC) AS next_id,
-    LEAD(title)    OVER (ORDER BY inserted_time DESC, id DESC) AS next_title,
-    LEAD(image_url)OVER (ORDER BY inserted_time DESC, id DESC) AS next_image_url
-  FROM events
-  WHERE status IN ('Innsendt', 'Godkjent')
-)
-SELECT previous_id, previous_title, previous_image_url,
-       next_id,     next_title,     next_image_url
-FROM ordered
-WHERE id = ?;`
+        WITH ordered AS (
+            SELECT
+                id,
+                title,
+                image_url,
+                LAG(id)        OVER (ORDER BY inserted_time DESC, id DESC) AS previous_id,
+                LAG(title)     OVER (ORDER BY inserted_time DESC, id DESC) AS previous_title,
+                LAG(image_url) OVER (ORDER BY inserted_time DESC, id DESC) AS previous_image_url,
+                LEAD(id)       OVER (ORDER BY inserted_time DESC, id DESC) AS next_id,
+                LEAD(title)    OVER (ORDER BY inserted_time DESC, id DESC) AS next_title,
+                LEAD(image_url)OVER (ORDER BY inserted_time DESC, id DESC) AS next_image_url
+            FROM events
+            WHERE status IN ('Innsendt', 'Godkjent')
+        )
+        SELECT previous_id, previous_title, previous_image_url,
+               next_id,     next_title,     next_image_url
+        FROM ordered
+        WHERE id = ?;`
 
 	var (
 		prevID, prevTitle, prevImg sql.NullString

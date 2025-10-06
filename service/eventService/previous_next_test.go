@@ -65,7 +65,7 @@ func TestGetPreviousNext(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			// ========== Act ==========
-			got, err := GetPreviousNext(ctx, db, logger, tc.currentID, &imgDir)
+			got, err := GetPreviousNextInnsendtGodkjent(ctx, db, logger, tc.currentID, &imgDir)
 
 			// ========== Assert ==========
 			if err != nil {
