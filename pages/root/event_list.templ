@@ -1,0 +1,157 @@
+package root
+
+import (
+	"database/sql"
+	"time"
+
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/components"
+)
+
+type PuljeBlock struct {
+	Pulje  models.PuljeRow
+	Events []models.EventCardModel
+}
+
+type EventsByPulje map[models.Pulje]*PuljeBlock
+
+func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
+	const q = `
+		SELECT
+			e.id,
+			e.title,
+			e.intro,
+			e.status,
+			e.system,
+			e.host_name,
+			e.event_type,
+			e.age_group,
+			e.event_runtime,
+			e.beginner_friendly,
+			e.can_be_run_in_english,
+
+			-- pulje
+			ep.pulje_id,
+			p.name,
+			p.start_time,
+			p.end_time
+		FROM events e
+		INNER JOIN event_puljer ep ON ep.event_id = e.id
+		INNER JOIN puljer      p  ON p.id = ep.pulje_id
+		WHERE e.status = 'Godkjent' AND ep.is_active = 1
+		ORDER BY p.start_time ASC, e.title COLLATE NOCASE ASC
+	`
+
+	rows, err := db.Query(q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	parseDate := func(s string) (time.Time, error) {
+		// Try common SQLite date encodings; adjust if your data uses another format.
+		// DATE columns are often stored as "YYYY-MM-DD".
+		//  2025-10-10T18:00:00Z
+		if t, err := time.Parse("2006-01-02T15:04:05Z07:00", s); err == nil {
+			return t, nil
+		}
+		// Fallbacks (uncomment if needed):
+		// if t, err := time.Parse(time.RFC3339, s); err == nil { return t, nil }
+		// if t, err := time.Parse("2006-01-02 15:04:05", s); err == nil { return t, nil }
+		return time.Time{}, nil
+	}
+
+	out := make(EventsByPulje)
+
+	for rows.Next() {
+		var (
+			ev                 models.EventCardModel
+			puljeID, puljeName string
+			startStr, endStr   string
+		)
+
+		if err := rows.Scan(
+			&ev.Id,
+			&ev.Title,
+			&ev.Intro,
+			&ev.Status,
+			&ev.System,
+			&ev.HostName,
+			&ev.EventType,
+			&ev.AgeGroup,
+			&ev.Runtime,
+			&ev.BeginnerFriendly,
+			&ev.CanBeRunInEnglish,
+
+			&puljeID,
+			&puljeName,
+			&startStr,
+			&endStr,
+		); err != nil {
+			return nil, err
+		}
+
+		startTime, _ := parseDate(startStr)
+		endTime, _ := parseDate(endStr)
+
+		key := models.Pulje(puljeID)
+		block, ok := out[key]
+		if !ok {
+			block = &PuljeBlock{
+				Pulje: models.PuljeRow{
+					ID:        key,
+					Name:      puljeName,
+					StartTime: startTime,
+					EndTime:   endTime,
+				},
+			}
+			out[key] = block
+		}
+
+		block.Events = append(block.Events, ev)
+	}
+
+	return out, rows.Err()
+}
+
+/*
+
+	for _, event := range eventsByPulje[models.PuljeLordagMorgen] {
+		@components.EventCard(event, eventImageDir, isAdmin)
+	}
+*/
+
+templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *string, isAdmin bool) {
+	{{ block := byPulje[pulje] }}
+	if block == nil {
+		return
+	}
+	<h2
+		style="border-radius: var(--border-radius-2x);
+		       background-color: var(--bg-surface);
+		       padding: var(--spacing-5x);"
+		id={ pulje }
+	>
+		{ block.Pulje.Name }
+		{ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") }
+	</h2>
+	<div style="margin-top: 1rem; display: grid; grid-template-columns: repeat(auto-fit,minmax(350px, 350px)); gap: 1rem;">
+		for _, event := range block.Events {
+			@components.EventCard(event, eventImageDir, isAdmin)
+		}
+	</div>
+}
+
+templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
+	{{ eventsByPulje, err := GetEventsByPulje(db) }}
+	<div style="margin-right: auto; margin-left: auto; max-width: 1500px;">
+		if err != nil {
+			<p>Error fetching events: { err.Error() }</p>
+			return
+		}
+		@eventPulje(models.PuljeFredagKveld, eventsByPulje, eventImageDir, isAdmin)
+		@eventPulje(models.PuljeLordagMorgen, eventsByPulje, eventImageDir, isAdmin)
+		@eventPulje(models.PuljeLordagKveld, eventsByPulje, eventImageDir, isAdmin)
+		@eventPulje(models.PuljeSondagMorgen, eventsByPulje, eventImageDir, isAdmin)
+	</div>
+}

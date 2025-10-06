@@ -1,8 +1,11 @@
 package formsubmission
 
-import "github.com/Regncon/conorganizer/models"
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/models"
+)
 
-templ FormBody(event *models.Event, isAdmin bool) {
+templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 	<style>
 		.formsubmission-wrapper {
 			> * + .form-card {
@@ -56,16 +59,19 @@ templ FormBody(event *models.Event, isAdmin bool) {
 					}
 				}
 
+				.puljefordeling-section {
+					display: grid;
+					gap: 1.25rem;
+				}
 				.details-section {
 					display: grid;
 					gap: 1.25rem;
-
-					.checkbox-background {
-						background-color: var(--bg-item);
-						border: 1px solid var(--bg-item-border);
-						padding: 0.75rem 0.5rem;
-						border-radius: var(--border-radius-2x);
-					}
+				}
+				.checkbox-background {
+					background-color: var(--bg-item);
+					border: 1px solid var(--bg-item-border);
+					padding: 0.75rem 0.5rem;
+					border-radius: var(--border-radius-2x);
 				}
 			}
 
@@ -198,6 +204,9 @@ templ FormBody(event *models.Event, isAdmin bool) {
 		}
 	</style>
 	@statusCard(event, isAdmin)
+	if isAdmin {
+		@puljefordeling(event.ID, db)
+	}
 	@contactInfo(
 		event.ID,
 		event.HostName,

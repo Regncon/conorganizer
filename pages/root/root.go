@@ -1,4 +1,4 @@
-package event
+package root
 
 import (
 	"context"
@@ -9,8 +9,7 @@ import (
 	"net/http"
 	"time"
 
-    "github.com/Regncon/conorganizer/service/authctx"
-	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -19,7 +18,7 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
+func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -42,9 +41,20 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return fmt.Errorf("error creating key value: %w", err)
 	}
 
-	resetMVC := func(mvc *root.TodoMVC) {
-		mvc.Mode = root.TodoViewModeAll
-		mvc.Todos = []*root.Todo{
+	saveMVC := func(ctx context.Context, sessionID string, mvc *TodoMVC) error {
+		b, err := json.Marshal(mvc)
+		if err != nil {
+			return fmt.Errorf("failed to marshal mvc: %w", err)
+		}
+		if _, err := kv.Put(ctx, sessionID, b); err != nil {
+			return fmt.Errorf("failed to put key value: %w", err)
+		}
+		return nil
+	}
+
+	resetMVC := func(mvc *TodoMVC) {
+		mvc.Mode = TodoViewModeAll
+		mvc.Todos = []*Todo{
 			{Text: "Learn a backend language", Completed: true},
 			{Text: "Learn Datastar", Completed: false},
 			{Text: "Create Hypermedia", Completed: false},
@@ -54,21 +64,21 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		mvc.EditingIdx = -1
 	}
 
-	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
+	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to get session id: %w", err)
 		}
 
-		mvc := &root.TodoMVC{}
+		mvc := &TodoMVC{}
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
 			}
 			resetMVC(mvc)
 
-			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
+			if err := saveMVC(ctx, sessionID, mvc); err != nil {
 				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
 			}
 		} else {
@@ -78,23 +88,14 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		}
 		return sessionID, mvc, nil
 	}
+	rootLayoutRoute(router, db, logger, eventImageDir, err)
 
-	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
-	eventLayoutRoute(router, db, logger, eventImageDir, err)
-
-	router.Route("/event/api", func(eventRouter chi.Router) {
-		eventRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
-			eventIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				eventID := chi.URLParam(r, "idx")
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
+	router.Route("/root", func(rootRouter chi.Router) {
+		rootRouter.Route("/api", func(rootApiRouter chi.Router) {
+			rootApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				sse := datastar.NewSSE(w, r)
 
-				// Watch for updates
+				sessionID, mvc, err := mvcSession(w, r)
 				ctx := r.Context()
 				watcher, err := kv.Watch(ctx, sessionID)
 				if err != nil {
@@ -115,8 +116,9 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
+						var ctx = r.Context()
 						isAdmin := authctx.GetAdminFromUserToken(ctx)
-						c := event_page(eventID, isAdmin, logger, db, eventImageDir)
+						c := rootPage(db, isAdmin, eventImageDir)
 						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
@@ -130,18 +132,16 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	return nil
 }
 
-func saveMVC(ctx context.Context, mvc *root.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
-	b, err := json.Marshal(mvc)
+func MustJSONMarshal(v any) string {
+	b, err := json.MarshalIndent(v, "", " ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal mvc: %w", err)
+		panic(err)
 	}
-	if _, err := kv.Put(ctx, sessionID, b); err != nil {
-		return fmt.Errorf("failed to put key value: %w", err)
-	}
-	return nil
+	return string(b)
 }
 
 func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
+
 	sess, err := store.Get(r, "connections")
 	if err != nil {
 		return "", fmt.Errorf("failed to get session: %w", err)

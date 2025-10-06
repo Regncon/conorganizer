@@ -1,30 +1,30 @@
-package approval
+package root
 
 import (
 	"database/sql"
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
-
 	"github.com/Regncon/conorganizer/service/userctx"
+
 	"github.com/Regncon/conorganizer/layouts"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
+func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(r.Context())
 		layouts.Base(
-			"Godkjenning av arrangementer",
+			"Regncon program",
 			userInfo,
-			approvalIndex(db, logger),
+			rootIndex(db, userInfo.IsAdmin, eventImageDir),
 		).Render(ctx, w)
 	})
 }
 
-templ approvalIndex(db *sql.DB, logger *slog.Logger) {
-	<div id="approval-container" data-on-load={ datastar.GetSSE("/admin/approval/api/") }>
-		@ApprovalPageContent(db, logger)
+templ rootIndex(db *sql.DB, isAdmin bool, eventImageDir *string) {
+	<div id="root-page-wrapper" data-on-load={ datastar.GetSSE("/root/api") }>
+		@rootPageContent(db, isAdmin, eventImageDir)
 	</div>
 }

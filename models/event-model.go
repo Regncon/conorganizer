@@ -10,7 +10,6 @@ type EventStatus string
 const (
 	EventStatusDraft     EventStatus = "Kladd"
 	EventStatusSubmitted EventStatus = "Innsendt"
-	EventStatusPublished EventStatus = "Publisert"
 	EventStatusApproved  EventStatus = "Godkjent"
 	EventStatusArchived  EventStatus = "Forkastet"
 )

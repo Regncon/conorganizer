@@ -1,0 +1,328 @@
+package formsubmission
+
+import (
+	"github.com/go-chi/chi/v5"
+	"net/http"
+	"fmt"
+	"log/slog"
+	"database/sql"
+
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/nats-io/nats.go/jetstream"
+	datastar "github.com/starfederation/datastar-go/datastar"
+)
+
+func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
+		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+
+			puljeId := chi.URLParam(r, "puljeId")
+			if puljeId == "" {
+				logger.Warn("Pulje ID is missing in the request")
+				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
+				return
+			}
+			eventID := chi.URLParam(r, "id")
+			if eventID == "" {
+				logger.Warn("Event ID is missing in the request")
+				http.Error(w, "Event ID is required", http.StatusBadRequest)
+				return
+			}
+
+			type Store struct {
+				IsPublishedFredagKveld  bool `json:"isPublishedFredagKveld"`
+				IsPublishedLordagMorgen bool `json:"isPublishedLordagMorgen"`
+				IsPublishedLordagKveld  bool `json:"isPublishedLordagKveld"`
+				IsPublishedSondagMorgen bool `json:"isPublishedSondagMorgen"`
+			}
+			store := &Store{}
+
+			if err := datastar.ReadSignals(r, store); err != nil {
+				logger.Error("Failed to read signals from request", "error", err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			var isPublished bool
+			if puljeId == string(models.PuljeFredagKveld) {
+				isPublished = store.IsPublishedFredagKveld
+			} else if puljeId == string(models.PuljeLordagMorgen) {
+				isPublished = store.IsPublishedLordagMorgen
+			} else if puljeId == string(models.PuljeLordagKveld) {
+				isPublished = store.IsPublishedLordagKveld
+			} else if puljeId == string(models.PuljeSondagMorgen) {
+				isPublished = store.IsPublishedSondagMorgen
+			} else {
+				logger.Warn("Invalid pulje ID", "puljeId", puljeId)
+				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+				return
+			}
+
+			query := `UPDATE event_puljer SET is_published = ? WHERE event_id = ? AND pulje_id = ?;`
+			_, err := db.Exec(query, isPublished, eventID, puljeId)
+			if err != nil {
+				logger.Error("Failed to update publish status in the database", "error", err)
+				http.Error(w, "Failed to update publish status in the database", http.StatusInternalServerError)
+				return
+			}
+
+			if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+				logger.Error("Failed to broadcast update", "error", err)
+				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+				return
+			}
+		})
+	})
+}
+
+func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
+		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+
+			eventID := chi.URLParam(r, "id")
+			if eventID == "" {
+				logger.Warn("Event ID is missing in the request")
+				http.Error(w, "Event ID is required", http.StatusBadRequest)
+				return
+			}
+
+			puljeId := chi.URLParam(r, "puljeId")
+			if puljeId == "" {
+				logger.Warn("Pulje ID is missing in the request")
+				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
+				return
+			}
+
+			type Store struct {
+				IsActiveFredagKveld  bool `json:"isActiveFredagKveld"`
+				IsActiveLordagMorgen bool `json:"isActiveLordagMorgen"`
+				IsActiveLordagKveld  bool `json:"isActiveLordagKveld"`
+				IsActiveSondagMorgen bool `json:"isActiveSondagMorgen"`
+			}
+			store := &Store{}
+
+			if err := datastar.ReadSignals(r, store); err != nil {
+				logger.Error("Failed to read signals from request", "error", err)
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+
+			var isActive bool
+			if puljeId == string(models.PuljeFredagKveld) {
+				isActive = store.IsActiveFredagKveld
+			} else if puljeId == string(models.PuljeLordagMorgen) {
+				isActive = store.IsActiveLordagMorgen
+			} else if puljeId == string(models.PuljeLordagKveld) {
+				isActive = store.IsActiveLordagKveld
+			} else if puljeId == string(models.PuljeSondagMorgen) {
+				isActive = store.IsActiveSondagMorgen
+			} else {
+				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+				return
+			}
+
+			const upsert = `
+			INSERT INTO event_puljer (event_id, pulje_id, is_active, is_published)
+			VALUES (?, ?, 1, 0)
+			ON CONFLICT(event_id, pulje_id) DO UPDATE SET
+			  is_active = ?, is_published = 0;
+			`
+			if _, err := db.Exec(upsert, eventID, puljeId, isActive); err != nil {
+				logger.Error("Failed to upsert event_puljer", "error", err)
+				http.Error(w, "Failed to update event in pulje", http.StatusInternalServerError)
+				return
+			}
+
+			if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+				logger.Error("Failed to broadcast update", "error", err)
+				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+				return
+			}
+
+			w.WriteHeader(http.StatusNoContent) // 204
+		})
+	})
+}
+
+func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
+		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
+
+			eventID := chi.URLParam(r, "id")
+			if eventID == "" {
+				logger.Warn("Event ID is missing in the request")
+				http.Error(w, "Event ID is required", http.StatusBadRequest)
+				return
+			}
+
+			puljeId := chi.URLParam(r, "puljeId")
+			if puljeId == "" {
+				logger.Warn("Pulje ID is missing in the request")
+				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
+				return
+			}
+
+			type Store struct {
+				RoomNameFredagKveld  string `json:"roomNameFredagKveld"`
+				RoomNameLordagMorgen string `json:"roomNameLordagMorgen"`
+				RoomNameLordagKveld  string `json:"roomNameLordagKveld"`
+				RoomNameSondagMorgen string `json:"roomNameSondagMorgen"`
+			}
+			store := &Store{}
+
+			if err := datastar.ReadSignals(r, store); err != nil {
+				http.Error(w, err.Error(), http.StatusBadRequest)
+				return
+			}
+			var roomName string
+			if puljeId == string(models.PuljeFredagKveld) {
+				roomName = store.RoomNameFredagKveld
+			} else if puljeId == string(models.PuljeLordagMorgen) {
+				roomName = store.RoomNameLordagMorgen
+			} else if puljeId == string(models.PuljeLordagKveld) {
+				roomName = store.RoomNameLordagKveld
+			} else if puljeId == string(models.PuljeSondagMorgen) {
+				roomName = store.RoomNameSondagMorgen
+			} else {
+				logger.Warn("Invalid pulje ID", "puljeId", puljeId)
+				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+				return
+			}
+
+			query := `UPDATE event_puljer SET room = ? WHERE event_id = ? AND pulje_id = ?;`
+			_, err := db.Exec(query, roomName, eventID, puljeId)
+			if err != nil {
+				logger.Error("Failed to update room name in the database", "error", err)
+				http.Error(w, "Failed to update room name in the database", http.StatusInternalServerError)
+				return
+			}
+
+			if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+				logger.Error("Failed to broadcast update", "error", err)
+				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+				return
+			}
+		})
+	})
+}
+
+func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventPulje, error) {
+	query := `
+            SELECT
+                event_id,
+                pulje_id,
+                is_active,
+                is_published,
+                room
+            FROM event_puljer
+            WHERE event_id = ? AND pulje_id = ?
+            `
+	rows, err := db.Query(query, eventId, pulje)
+	if err != nil {
+		return models.EventPulje{}, err
+	}
+	defer rows.Close()
+
+	var event models.EventPulje
+	for rows.Next() {
+		if err := rows.Scan(
+			&event.EventID,
+			&event.PuljeID,
+			&event.IsActive,
+			&event.IsPublished,
+			&event.Room,
+		); err != nil {
+			return models.EventPulje{}, err
+		}
+	}
+	return event, nil
+}
+func getPuljeDisplayName(pulje models.Pulje) string {
+	switch pulje {
+	case models.PuljeFredagKveld:
+		return "Fredag kveld"
+	case models.PuljeLordagMorgen:
+		return "Lørdag morgen"
+	case models.PuljeLordagKveld:
+		return "Lørdag kveld"
+	case models.PuljeSondagMorgen:
+		return "Søndag morgen"
+	default:
+		return "Ukjent pulje"
+	}
+}
+
+templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
+	{{ eventPulje, err := getEvenPulje(eventId, pulje, db) }}
+	{{ roomSignal := fmt.Sprintf("roomName%s", pulje) }}
+	if err != nil {
+		<p>Error fetching event pulje: { err.Error() }</p>
+		return
+	}
+	<div style="display: flex; gap: 1rem; align-items: center;">
+		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
+			<h3>{ getPuljeDisplayName(pulje) }</h3>
+			<div style="display: flex; gap: 1rem;">
+				<label class="checkbox-background form-group-checkbox">
+					<span>Legg til i pulje </span>
+					<input
+						if eventPulje.IsActive {
+							checked
+						}
+						data-bind={ fmt.Sprintf("isActive%s", pulje) }
+						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/event-in-pulje/%s", eventId, pulje) }
+						type="checkbox"
+						name="pulje"
+						class="checkbox input"
+					/>
+				</label>
+				<label class="checkbox-background form-group-checkbox">
+					<span>Publisert</span>
+					<input
+						if eventPulje.IsPublished {
+							checked
+						}
+						if eventPulje.IsActive == false {
+							disabled
+						}
+						data-bind={ fmt.Sprintf("isPublished%s", pulje) }
+						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/is-published/%s", eventId, pulje) }
+						type="checkbox"
+						name="pulje"
+						class="checkbox input"
+					/>
+				</label>
+			</div>
+		</div>
+		<label class="label-small color-strong form-group" style="width: 25rem;">
+			Rom { pulje }
+			<div
+				data-signals={ fmt.Sprintf("{%s:'%s'}", roomSignal, eventPulje.Room) }
+			></div>
+			<input
+				if eventPulje.IsActive == false {
+					disabled
+				}
+				name="room"
+				class="input"
+				type="text"
+				data-bind={ roomSignal }
+				data-on-change={ datastar.PutSSE("/my-events/api/new/%s/room-name/%s", eventId, pulje) }
+				placeholder="Rom for arrangementet"
+				required
+			/>
+		</label>
+	</div>
+}
+
+templ puljefordeling(eventId string, db *sql.DB) {
+	<article class="form-card">
+		<h4 class="form-card-title">Puljefordeling</h4>
+		<section class="puljefordeling-section">
+			@puljeRow(eventId, models.PuljeFredagKveld, db)
+			@puljeRow(eventId, models.PuljeLordagMorgen, db)
+			@puljeRow(eventId, models.PuljeLordagKveld, db)
+			@puljeRow(eventId, models.PuljeSondagMorgen, db)
+		</section>
+	</article>
+}

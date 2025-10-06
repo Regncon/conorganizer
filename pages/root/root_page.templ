@@ -1,11 +1,17 @@
-package index
+package root
 
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/components"
 )
 
-templ index(db *sql.DB) {
+templ rootPage(db *sql.DB, isAdmin bool, eventImageDir *string) {
+	<div id="root-page-wrapper">
+		@rootPageContent(db, isAdmin, eventImageDir)
+	</div>
+}
+
+templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	<style>
 		@keyframes spin {
 			from {
@@ -31,14 +37,21 @@ templ index(db *sql.DB) {
 			}
 		}
 	</style>
-	<header>
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: ""},
+	})
+	if isAdmin == false {
 		<div class="regncon-logo-container">
 			<img
 				src="/static/RegnconLogo.svg"
 				alt="logo"
 			/>
 		</div>
-		@components.CallToAction()
-	</header>
-	@todosMVCView(db)
+	}
+	@components.CallToAction()
+	if isAdmin {
+		<h2 style="font-size:xxx-large; place-self:center;">Beta-versjon</h2>
+		<h2 style="font-size:xxx-large; place-self:center;">Du er logget inn som administrator</h2>
+		@eventList(db, isAdmin, eventImageDir)
+	}
 }
