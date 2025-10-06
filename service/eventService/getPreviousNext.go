@@ -36,7 +36,6 @@ WHERE id = ?;`
 		nextID, nextTitle, nextImg sql.NullString
 	)
 
-	//eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE status IN ('Innsendt', 'Godkjent') ORDER BY inserted_time DESC"
 	err := db.QueryRowContext(ctx, q, currentID).
 		Scan(&prevID, &prevTitle, &prevImg, &nextID, &nextTitle, &nextImg)
 	if err != nil {
