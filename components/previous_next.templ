@@ -1,6 +1,7 @@
 package components
 
-import(
+import (
+	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
 )
 
@@ -35,7 +36,11 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 			container-name: prev-next-button-container;
 		}
 		.previous-next-buttons {
-			--linear-gradient-mask: linear-gradient(to left, black 19%, transparent 63%);
+			--linear-gradient-mask: linear-gradient(
+				to left,
+				black 19%,
+				transparent 63%
+			);
 			--prev-next-max-width: 25.3125rem;
 			--prev-next-responsive-max-width: min(
 				100%,
@@ -84,10 +89,10 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 
 		@container prev-next-button-container (width > 65.0625rem) {
 			.previous-next-buttons {
-					margin-block-start: var(--spacing-10x);
-					flex-direction: row;
-					place-content: space-between;
-					padding-inline: var(--spacing-10x);
+				margin-block-start: var(--spacing-10x);
+				flex-direction: row;
+				place-content: space-between;
+				padding-inline: var(--spacing-10x);
 			}
 		}
 	</style>
@@ -95,7 +100,7 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 		<div class="previous-next-buttons">
 			if previousNextData.PreviousUrl != "" {
 				<a
-					href={ templ.URL(previousNextData.PreviousUrl) }
+					href={ fmt.Sprintf("%s", templ.URL(previousNextData.PreviousUrl)) }
 					class={ previousNextCard() }
 					title={ previousNextData.PreviousTitle }
 				>
@@ -112,7 +117,7 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 			}
 			if previousNextData.NextUrl != "" {
 				<a
-					href={ templ.URL(previousNextData.NextUrl) }
+					href={ fmt.Sprintf("%s", templ.URL(previousNextData.NextUrl)) }
 					title={ previousNextData.NextTitle }
 					class={ previousNextCard() }
 				>

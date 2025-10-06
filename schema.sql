@@ -1,7 +1,4 @@
 CREATE TABLE
-    puljer (name TEXT PRIMARY KEY, start_time DATE NOT NULL);
-
-CREATE TABLE
     sqlite_sequence (name, seq);
 
 CREATE TABLE
@@ -136,4 +133,24 @@ CREATE TABLE
         kind TEXT NOT NULL CHECK (kind IN ('Ticket', 'Associated', 'Manual')),
         inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id)
+    );
+
+CREATE TABLE
+    puljer (
+        id TEXT NOT NULL PRIMARY KEY,
+        name TEXT NOT NULL,
+        start_time DATE NOT NULL,
+        end_time DATE NOT NULL
+    );
+
+CREATE TABLE
+    event_puljer (
+        event_id TEXT NOT NULL,
+        pulje_id TEXT NOT NULL,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        is_published BOOLEAN NOT NULL DEFAULT FALSE,
+        room TEXT DEFAULT '',
+        PRIMARY KEY (event_id, pulje_id),
+        FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
+        FOREIGN KEY (pulje_id) REFERENCES puljer (id) ON UPDATE CASCADE
     );

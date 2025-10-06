@@ -19,6 +19,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 	const q = `
 		SELECT
 			e.id,
+            ep.is_published,
 			e.title,
 			e.intro,
 			e.status,
@@ -39,7 +40,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 		INNER JOIN event_puljer ep ON ep.event_id = e.id
 		INNER JOIN puljer      p  ON p.id = ep.pulje_id
 		WHERE e.status = 'Godkjent' AND ep.is_active = 1
-		ORDER BY p.start_time ASC, e.title COLLATE NOCASE ASC
+        ORDER BY p.start_time DESC, e.inserted_time DESC, e.id ASC
 	`
 
 	rows, err := db.Query(q)
@@ -72,6 +73,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 
 		if err := rows.Scan(
 			&ev.Id,
+			&ev.IsPublished,
 			&ev.Title,
 			&ev.Intro,
 			&ev.Status,
@@ -133,7 +135,7 @@ templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *strin
 		</h2>
 		<div class="page-wide-eventcard-grid">
 			for _, event := range block.Events {
-				@components.EventCard(event, eventImageDir, isAdmin)
+				@components.EventCard(event, eventImageDir, isAdmin, string(pulje))
 			}
 		</div>
 	</section>
