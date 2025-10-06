@@ -5,24 +5,20 @@ import (
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
-	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/userctx"
 
 	"github.com/Regncon/conorganizer/layouts"
-	"github.com/Regncon/conorganizer/service/requestctx"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
-		isAdmin := authctx.GetAdminFromUserToken(ctx)
+		userInfo := userctx.GetUserRequestInfo(r.Context())
 		layouts.Base(
 			"Regncon program",
-			requestctx.UserRequestInfo{
-				IsLoggedIn: true,
-				IsAdmin:    true,
-			},
-			rootIndex(db, isAdmin, eventImageDir),
+			userInfo,
+			rootIndex(db, userInfo.IsAdmin, eventImageDir),
 		).Render(ctx, w)
 	})
 }

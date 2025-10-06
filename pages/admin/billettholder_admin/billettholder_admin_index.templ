@@ -3,21 +3,20 @@ package billettholderadmin
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/layouts"
-	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/go-chi/chi/v5"
 	"net/http"
 
-	datastar "github.com/starfederation/datastar-go/datastar")
+	"github.com/Regncon/conorganizer/service/userctx"
+	datastar "github.com/starfederation/datastar-go/datastar"
+)
 
 func indexRoute(router chi.Router, db *sql.DB, err error) {
 	router.Get("/admin/billettholder/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
+		userInfo := userctx.GetUserRequestInfo(r.Context())
 		layouts.Base(
 			"Billettholder Admin",
-			requestctx.UserRequestInfo{
-				IsLoggedIn: true,
-				IsAdmin:    true,
-			},
+			userInfo,
 			indexPage(),
 		).Render(ctx, w)
 	})
