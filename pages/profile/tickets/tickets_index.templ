@@ -1,80 +1,165 @@
 package profileticketspage
 
 import (
-	"database/sql"
-	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/layouts"
-	"github.com/Regncon/conorganizer/service/checkIn"
-	"github.com/Regncon/conorganizer/service/userctx"
-	"github.com/delaneyj/toolbelt/embeddednats"
-	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/sessions"
 	"log/slog"
 	"net/http"
+	"database/sql"
+	"fmt"
+	"time"
+	"context"
+	"encoding/json"
+
+	"github.com/delaneyj/toolbelt"
+	"github.com/delaneyj/toolbelt/embeddednats"
+	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+	"github.com/nats-io/nats.go/jetstream"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/layouts"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+
+	nc, err := ns.Client()
+	if err != nil {
+		return fmt.Errorf("error creating nats client: %w", err)
+	}
+
+	js, err := jetstream.New(nc)
+	if err != nil {
+		return fmt.Errorf("error creating jetstream client: %w", err)
+	}
+
+	kv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
+		Bucket:      "billettholder",
+		Description: "Billettholder data",
+		Compression: true,
+		TTL:         time.Hour,
+		MaxBytes:    16 * 1024 * 1024,
+	})
+	if err != nil {
+		return fmt.Errorf("error creating key value: %w", err)
+	}
+
+	notifyUpdate := func(sessionID string) {
+		subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
+		fmt.Println("update billettholder subj", subj)
+		if err := nc.Publish(subj, nil); err != nil {
+			logger.Error("failed to publish page update", "err", err, "session", sessionID)
+		}
+	}
+
+	session := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
+		ctx := r.Context()
+		sessionID, err := upsertSessionID(store, r, w)
+		if err != nil {
+			return "", nil, fmt.Errorf("failed to get session id: %w", err)
+		}
+
+		mvc := &root.TodoMVC{}
+		if entry, err := kv.Get(ctx, sessionID); err != nil {
+			if err != jetstream.ErrKeyNotFound {
+				return "", nil, fmt.Errorf("failed to get key value: %w", err)
+			}
+			// first visit ⇒ create an empty snapshot so the SSE loop can unmarshal
+			if err := saveMVC(ctx, mvc, sessionID, kv, notifyUpdate); err != nil {
+				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
+			}
+		} else {
+			if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+				return "", nil, fmt.Errorf("failed to unmarshal mvc: %w", err)
+			}
+		}
+		return sessionID, mvc, nil
+	}
 	router.Route("/tickets", func(profileRouter chi.Router) {
 		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
 			var user = userctx.GetUserRequestInfo(ctx)
 
-			// todo: enable error checking
-			tickets, _ := checkIn.GetTicketsFromCheckIn(logger, user.Email)
-
 			layouts.Base(
 				"Mine Biletter",
 				user,
-				profileTicketsPage(tickets),
+				profileTicketsIndex(user.Id, db,logger),
 			).Render(ctx, w)
 		})
-	})
+		profileRouter.Route("/api", func(billettholderAdminRouter chi.Router) {
+			billettholderAdminRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				sse := datastar.NewSSE(w, r)
+				sessionID, _, err := session(w, r)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 
+				ctx := r.Context()
+				subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
+				sub, err := nc.SubscribeSync(subj)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+				defer sub.Unsubscribe()
+
+				var user = userctx.GetUserRequestInfo(ctx)
+				// send the first render immediately
+				if err := sse.PatchElementTempl(profileTicketsPage(user.Id, db, logger)); err != nil {
+					_ = sse.ConsoleError(err)
+					return
+				}
+
+				for {
+					if _, err := sub.NextMsgWithContext(ctx); err != nil {
+						return // context cancelled or sub closed
+					}
+					if err := sse.PatchElementTempl(profileTicketsPage(user.Id, db, logger)); err != nil {
+						_ = sse.ConsoleError(err)
+						return
+					}
+				}
+			})
+			addEmailToBilettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
+			deleteEmailFromBillettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
+			getTicketsRouter(billettholderAdminRouter, db, logger, store, notifyUpdate)
+		})
+	})
 	return nil
 }
 
-templ profileTicketsPage(tickets []checkIn.CheckInTicket) {
-	@components.Breadcrumbs([]components.BreadcrumbPath{
-		{Name: "Hjem", Url: "/"},
-		{Name: "Min Side", Url: "/profile"},
-		{Name: "Billetter", Url: ""},
-	})
-	<section class="page-content-container">
-		<h1 class="page-heading">Mine Billetter</h1>
-		if len(tickets) > 0 {
-			<i>
-				Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett nedanfor,
-				slik at kvar deltakar kan melda seg på arrangement på eiga hand.
-			</i>
-		} else {
-			<p>
-				Vi fann ingen billettar registrert på denne epostadressa. Det betyr at du anten ikkje har kjøpt billettar
-				endå, eller at du har kjøpt billettane på ei anna anna epostadresse enn den du er logga inn med her.
-			</p>
-			<p>
-				<a class="btn-buy-ticket" href="https://event.checkin.no/109715/regncon-xxxiii-2025">Kjøp billetter ↗️</a>, lag ein brukar på riktig mailadresse, eller ta kontakt med <a class="mailto" href="mailto:styret@regncon.no">styret@regncon.no</a> noko
-				er galt, eller om du ønsker billettane overført til epostadressa du har laga brukar til.
-			</p>
+templ profileTicketsIndex(userId string, db *sql.DB, logger *slog.Logger) {
+	<div id="profile-tickets-page-wrapper" data-on-load={ datastar.GetSSE("/profile/tickets/api") }>
+		@profileTicketsPageContent(userId, db, logger)
+	</div>
+}
+
+func saveMVC(ctx context.Context, mvc *root.TodoMVC, sessionID string, kv jetstream.KeyValue, poke func(string)) error {
+	b, err := json.Marshal(mvc)
+	if err != nil {
+		return fmt.Errorf("failed to marshal mvc: %w", err)
+	}
+	if _, err := kv.Put(ctx, sessionID, b); err != nil {
+		return fmt.Errorf("failed to put key value: %w", err)
+	}
+	if poke != nil {
+		poke(sessionID)
+	}
+	return nil
+}
+
+func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
+	sess, err := store.Get(r, "connections")
+	if err != nil {
+		return "", fmt.Errorf("failed to get session: %w", err)
+	}
+	id, ok := sess.Values["id"].(string)
+	if !ok {
+		id = toolbelt.NextEncodedID()
+		sess.Values["id"] = id
+		if err := sess.Save(r, w); err != nil {
+			return "", fmt.Errorf("failed to save session: %w", err)
 		}
-		for thicket,_ := range tickets {
-			<div class="card-wrapper">
-				<p>test: { thicket }</p>
-				<p>Spesialpris</p>
-				<p>Sleiv Sleivsogn</p>
-				<p>Bestilling: 12743193</p>
-				<div class="connect-email">
-					<input type="text" placeholder="E-Postadresse"/>
-					<button>Koble til epost</button>
-				</div>
-				<p>Bilett epost: sleiv@sleivsogn.no</p>
-				<p>Bestillings epost 1: skeiv@sleivsogn.no</p>
-				<div class="connected-emails">
-					<p>
-						Kobledt epost 1: sleiv@sleivesein.no
-					</p>
-					<button>🚮</button>
-				</div>
-			</div>
-		}
-	</section>
+	}
+	return id, nil
 }
