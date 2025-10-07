@@ -108,6 +108,21 @@ func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]mo
 	return puljer, nil
 }
 
+func GetInterestForBillettHolderEventAndPulje(eventId string, db *sql.DB, logger *slog.Logger) (string, error) {
+
+	query := `SELECT interest_level FROM interests WHERE billettholder_id = ? AND event_id = ? AND pulje_id = ?`
+	var interestLevel string
+	err := db.QueryRow(query, "signals.BillettHolderId", eventId, "signals.PuljeId").Scan(&interestLevel)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "Ikke interessert", nil
+		}
+		logger.Error("Failed to query interest level", "err", err)
+		return "", err
+	}
+	return interestLevel, nil
+}
+
 func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders []BillettHolder) BillettHolder {
 	idx := slices.IndexFunc(ticketHolders, func(th BillettHolder) bool {
 		fmt.Printf("Comparing ticket holder email: %s with user email: %s\n", th.Email, userInfo.Email)

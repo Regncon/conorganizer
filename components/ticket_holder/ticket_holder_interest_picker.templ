@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"log/slog"
 	"database/sql"
-    "github.com/starfederation/datastar-go/datastar"
 )
 
-templ TicketHolderInterestPicker(eventId string, billettHolderId int, puljeId string, db *sql.DB, logger *slog.Logger) {
-    {{ currentInterest, _ := GetInterestForBillettHolderEventAndPulje(billettHolderId, eventId, puljeId, db, logger) }}
+templ TicketHolderInterestPicker(eventId string, db *sql.DB, logger *slog.Logger) {
+    {{ currentInterest, _ := GetInterestForBillettHolderEventAndPulje(eventId, db, logger) }}
 	<style>
 
     .interest-buttons {
@@ -22,29 +21,29 @@ templ TicketHolderInterestPicker(eventId string, billettHolderId int, puljeId st
     }
 
     </style>
-    {{fmt.Println(puljer)}}
+    {{fmt.Println(currentInterest)}}
 	<div class="interest-buttons">
         <button
             class="btn btn--interest"
-            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/high", eventId) }
+            data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
         >
             <span class="emoji">🤩</span> Veldig interessert
         </button>
         <button
             class="btn btn--interest"
-            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/medium", eventId) }
+            data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
         >
         <span class="emoji">🙂</span> Interessert
         </button>
         <button
             class="btn btn--interest"
-            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/low", eventId) }
+            data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
         >
         <span class="emoji">🤨</span> Litt interessert
         </button>
         <button
             class="btn btn--interest"
-            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/none", eventId) }
+            data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
         >
             <span class="emoji">😑</span> Ikke interessert
         </button>

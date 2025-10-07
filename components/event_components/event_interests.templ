@@ -5,7 +5,6 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/requestctx"
-	"github.com/starfederation/datastar-go/datastar"
 	"log/slog"
     "fmt"
 )
@@ -103,13 +102,23 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
                 </code>
                 <div>
                     <p class="label">Velg interesse</p>
-                    @ticketholder.TicketHolderInterestPicker(eventId, "getBillettHolderSignal()", "puljeId", db, logger)
+                    @ticketholder.TicketHolderInterestPicker(eventId, db, logger)
                 </div>
                 <p class="auto-save">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
 			</div>
 		</div>
 	</dialog>
 	<script defer>
+
+        function getBillettHolderSignal() {
+            const selectedBillettHolderString = localStorage.getItem(LSEnum.SelectedBilletHolder);
+            if (!selectedBillettHolderString) {
+                return 0;
+            }
+            const selectedBillettHolder = JSON.parse(selectedBillettHolderString);
+            return selectedBillettHolder.Id;
+        }
+
         const modal = document.querySelector(".interest-dialog");
         const button = document.querySelector(".interest-button");
         const buttonAbortController = new AbortController();
