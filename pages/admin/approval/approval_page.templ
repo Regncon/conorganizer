@@ -57,7 +57,22 @@ templ ApprovalPage(db *sql.DB, logger *slog.Logger) {
 }
 
 templ ApprovalPageContent(db *sql.DB, logger *slog.Logger) {
-	{{ 
+	<style>
+		.event-approval-layout {
+			display: flex;
+			flex-direction: column;
+			gap: var(--responsive-page-section-spacing);
+		}
+		.event-approval-section-header {
+			margin-bottom: var(--responsive-h2-margin);
+		}
+		.event-approval-section-layout {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-4x);
+		}
+	</style>
+	{{
 		events := getEvents(db, logger)
 		submittedEvents, approvedEvents := splitEventsByStatusMap(events)
 	}}
@@ -71,17 +86,27 @@ templ ApprovalPageContent(db *sql.DB, logger *slog.Logger) {
 		<p class="page-heading-helptext">
 			Her kan du godkjenne arrangementer som er sendt inn av brukere.
 		</p>
-		if len(submittedEvents) > 0 {
-			<h2>Arrangementer til Godkjenning</h2>
-			for _, e := range submittedEvents {
-				@eventBar(e)
+		<div class="event-approval-layout">
+			if len(submittedEvents) > 0 {
+				<section>
+					<h2 class="event-approval-section-header">Arrangementer til Godkjenning</h2>
+					<div class="event-approval-section-layout">
+						for _, e := range submittedEvents {
+							@eventBar(e)
+						}
+					</div>
+				</section>
 			}
-		}
-		if len(approvedEvents) > 0 {
-			<h2>Godkjente Arrangementer</h2>
-			for _, e := range approvedEvents {
-				@eventBar(e)
+			if len(approvedEvents) > 0 {
+				<section>
+					<h2 class="event-approval-section-header">Godkjente Arrangementer</h2>
+					<div class="event-approval-section-layout">
+						for _, e := range approvedEvents {
+							@eventBar(e)
+						}
+					</div>
+				</section>
 			}
-		}
+		</div>
 	</div>
 }
