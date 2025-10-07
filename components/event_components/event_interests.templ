@@ -70,7 +70,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
 
         }
     </style>
-	<dialog class="interest-dialog" closedby="any" data-signals="{billettHolderId: 0}">
+	<dialog class="interest-dialog" closedby="any" data-signals="{billettHolderId: getBillettHolderSignal()}">
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
