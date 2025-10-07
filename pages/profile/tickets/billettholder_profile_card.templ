@@ -221,7 +221,7 @@ func deleteEmailFromBillettholderRoute(
 	})
 }
 
-templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
+templ billettholderCard(billettholder models.Billettholder) {
 	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		<p style="margin:0;">
 			{ billettholder.OrderID }

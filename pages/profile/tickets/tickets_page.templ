@@ -62,14 +62,15 @@ func getTicketsRouter(
 		var ctx = r.Context()
 		var user = userctx.GetUserRequestInfo(ctx)
 		err := checkIn.AssociateUserWithBillettholder(user.Id, db, logger)
-		var errorMessage = "defalt error message"
+		var errorMessage = ""
 		if err != nil {
-			logger.Error("Failed to associate user with billettholder", slog.Any("error", err))
 			errorMessage = "Feil ved henting av billettar: " + err.Error()
-			return
 		}
 
-		var successMessage = "Billettar henta!"
+		var successMessage = "Billetter hentet!"
+		if errorMessage != "" {
+			successMessage = ""
+		}
 		var singnalJson = fmt.Sprintf(`{"getTicketsErrorMessage": "%s", "getTicketsSuccessMessage": "%s"}`, errorMessage, successMessage)
 		if err = sse.PatchSignals([]byte(singnalJson)); err != nil {
 			logger.Error("Failed to patch signals", slog.Any("error", err))
@@ -77,11 +78,17 @@ func getTicketsRouter(
 			return
 		}
 
+		if errorMessage != "" {
+			logger.Error("Failed to associate user with billettholder", slog.Any("error", err))
+			http.Error(w, "Failed to associate user with billettholder", http.StatusInternalServerError)
+			return
+		}
+
 		sessionID, _ := upsertSessionID(store, r, w)
 		if notifyUpdate != nil {
 			notifyUpdate(sessionID)
 		}
-		http.Error(w, "Not implemented", http.StatusNotImplemented)
+		http.Error(w, "OK", http.StatusOK)
 	})
 }
 
@@ -112,7 +119,21 @@ templ profileTicketsPageContent(userId string, db *sql.DB) {
 				data-text="$getTicketsSuccessMessage"
 			></strong>
 		</div>
-		<p>Fant: { len(billettholders) } billettar</p>
+		<div class="billettholder-admin-grid">
+			<style>
+				.billettholder-admin-grid {
+					display: grid;
+					grid-template-columns: repeat(
+						auto-fit,
+						minmax(var(--mobile-min-width), 430px)
+					);
+					gap: 1rem;
+				}
+			</style>
+			for _, billettholder := range billettholders {
+				@billettholderCard(billettholder)
+			}
+		</div>
 		<i>
 			Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett nedanfor,
 			slik at kvar deltakar kan melda seg på arrangement på eiga hand.
