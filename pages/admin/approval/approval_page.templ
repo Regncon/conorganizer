@@ -3,10 +3,29 @@ package approval
 import (
 	"database/sql"
 	"fmt"
-	"log/slog"
-	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/models"
+	"log/slog"
 )
+
+// TODO: This function does not handle Approved events that are Published
+func splitEventsByStatusMap(events []models.EventCardModel) (submitted, approved []models.EventCardModel) {
+	for _, ev := range events {
+		if ev.Status == models.EventStatusDraft {
+			continue
+		}
+		if ev.Status == models.EventStatusSubmitted {
+			submitted = append(submitted, ev)
+			continue
+		}
+		if ev.Status == models.EventStatusApproved {
+			approved = append(approved, ev)
+			continue
+		}
+	}
+
+	return
+}
 
 func getEvents(db *sql.DB, logger *slog.Logger) []models.EventCardModel {
 	var events []models.EventCardModel
@@ -38,7 +57,10 @@ templ ApprovalPage(db *sql.DB, logger *slog.Logger) {
 }
 
 templ ApprovalPageContent(db *sql.DB, logger *slog.Logger) {
-	{{ events := getEvents(db, logger) }}
+	{{ 
+		events := getEvents(db, logger)
+		submittedEvents, approvedEvents := splitEventsByStatusMap(events)
+	}}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Admin", Url: "/admin/"},
@@ -49,8 +71,17 @@ templ ApprovalPageContent(db *sql.DB, logger *slog.Logger) {
 		<p class="page-heading-helptext">
 			Her kan du godkjenne arrangementer som er sendt inn av brukere.
 		</p>
-		for _, event := range events {
-			@eventBar(event)
+		if len(submittedEvents) > 0 {
+			<h2>Arrangementer til Godkjenning</h2>
+			for _, e := range submittedEvents {
+				@eventBar(e)
+			}
+		}
+		if len(approvedEvents) > 0 {
+			<h2>Godkjente Arrangementer</h2>
+			for _, e := range approvedEvents {
+				@eventBar(e)
+			}
 		}
 	</div>
 }
