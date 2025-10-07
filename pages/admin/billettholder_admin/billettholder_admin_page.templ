@@ -55,7 +55,7 @@ func billettholdereSearchRoute(
 */
 
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ bilettholdere, err := billettholderService.GetBilettholdere(db, logger) }}
+	{{ bilettholdere, err := billettholderService.GetBilettholdere("", db, logger) }}
 	<div id="billettholder-admin-container">
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
@@ -63,13 +63,13 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 			{Name: "Bilettholdere", Url: ""},
 		})
 		<article class="page-content-container">
-        <div style="display: flex; gap: 1rem; align-items: center;">
-			<h1 class="page-heading">Billettholdere</h1>
-			<a
-				href="/admin/billettholder/add/"
-				class="btn btn--cta"
-			>Legg til billetteholder</a>
-            </div>
+			<div style="display: flex; gap: 1rem; align-items: center;">
+				<h1 class="page-heading">Billettholdere</h1>
+				<a
+					href="/admin/billettholder/add/"
+					class="btn btn--cta"
+				>Legg til billetteholder</a>
+			</div>
 			<p class="page-heading-helptext">Her kan du se en oversikt over alle billettholdere</p>
 			<div class="billettholder-admin-grid">
 				<style>

@@ -7,6 +7,7 @@ import (
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/profile/tickets"
+	"github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -24,11 +25,22 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			// User generated events
 			var events = GetEventsByUserId(user.Id, db, logger)
 
-			// tmp ticket data
-			var tickets = []profilecomponent.TicketHolder{
-				profilecomponent.TicketHolder{Name: "Gary Lindgren", Ticket: "Early Bird (26+)", Email: "gary.cooldude@email.com"},
-				profilecomponent.TicketHolder{Name: "Ana Anderson", Ticket: "Early Bird (26+)", Email: "ana.awesome@email.com"},
-				profilecomponent.TicketHolder{Name: "Åge Påge", Ticket: "Early Bird (26+)", Email: "aagep@email.com"},
+			billettholdere, err := billettholderService.GetBilettholdere(user.Id, db, logger)
+			if err != nil {
+				logger.Error("Failed to get billettholdere", slog.Any("error", err))
+			}
+			var tickets = []profilecomponent.TicketHolder{}
+			for _, billettholder := range billettholdere {
+				tickets = append(tickets, profilecomponent.TicketHolder{
+					Name:   billettholder.FirstName + " " + billettholder.LastName,
+					Ticket: billettholder.TicketType,
+					Email: func() string {
+						if len(billettholder.Emails) > 0 {
+							return billettholder.Emails[0].Email
+						}
+						return ""
+					}(),
+				})
 			}
 
 			layouts.Base(
@@ -41,7 +53,6 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 		// Subroutes
 		profileticketspage.ProfileTicketsRoute(profileRouter, store, ns, db, logger)
 	})
-
 	return nil
 }
 
@@ -61,21 +72,19 @@ templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.Tic
 		</div>
 	</section>
 	<style>
-        .profile-container {
-            display: flex;
-            gap: var(--responsive-pane-column-spacing);
-            flex-flow: row wrap;
-            padding-top: var(--responsive-top-of-page-spacing);
-        }
+		.profile-container {
+			display: flex;
+			gap: var(--responsive-pane-column-spacing);
+			flex-flow: row wrap;
+			padding-top: var(--responsive-pane-column-spacing);
+		}
 
-        .profile-container > div {
-            display: flex;
-            flex-direction: column;
-            gap: var(--responsive-pane-column-spacing);
-            flex: 1 1 fit-content;
-            /* min-width: fit-content; */
-        }
-
-				@container main (width > 600px) 
-    </style>
+		.profile-container > div {
+			display: flex;
+			flex-direction: column;
+			gap: var(--responsive-pane-column-spacing);
+			flex: 1 1 fit-content;
+			/* min-width: fit-content; */
+		}
+	</style>
 }
