@@ -2,57 +2,16 @@ package approval
 
 import (
 	"fmt"
-
 	"github.com/Regncon/conorganizer/models"
 )
 
-css eventBarBox() {
-	color: var(--color-primary-text);
-	border: solid;
-	background-color: var(--bg-surface);
-	border-radius: var(--border-radius-2x);
-	border-color: var(--bg-item-border);
-	border-width: 1px;
-	box-sizing: border-box;
-	display: block;
-	margin-bottom: 1rem;
-	text-decoration: none;
-	width: 100%;
-	padding: 0 0.5rem 0 0.5rem;
-}
-
+// TODO: can we add the image thumbnail to this element?
 templ eventBar(event models.EventCardModel) {
-	<a
-		href={ templ.URL(fmt.Sprintf("/admin/approval/edit/%s", event.Id)) }
-		style="transition: border-color 120ms ease-in-out;"
-		onmouseenter="this.style.borderColor='var(--color-primary)'"
-		onmouseleave="this.style.borderColor='var(--bg-item-border)'"
-		onfocus="this.style.borderColor='var(--color-primary)'"
-		onblur="this.style.borderColor='var(--bg-item-border)'"
-		class={ eventBarBox() }
-	>
-		<h2
-			style="
-                            white-space: nowrap;
-                            overflow: clip;
-                            text-overflow: ellipsis;
-                            margin: 10px 0;
-                            color: var(--color-primary-text);
-                            font-size: 19px;
-                            font-weight: 600;
-                        "
-		>{ event.Title }</h2>
-		<h3
-			style="
-                            white-space: nowrap;
-                            overflow: clip;
-                            text-overflow: ellipsis;
-                            margin: 10px 0;
-                            color: var(--color-primary);
-                            font-size: 14px;
-                            font-weight: 500;
-                        "
-		>
+	<a class="event-bar-container" href={ templ.URL(fmt.Sprintf("/admin/approval/edit/%s", event.Id)) }>
+		<h2 class="event-bar-title">
+			{ event.Title }
+		</h2>
+		<h3 class="event-bar-subtitle">
 			{ event.System }
 		</h3>
 	</a>
