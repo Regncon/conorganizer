@@ -90,7 +90,7 @@ func isBillettholder(ticketID int, bilettholdere []models.Billettholder) bool {
 
 templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	{{ tickets, err := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
-	{{ billettholdere, err := billettholderService.GetBilettholdere(db, logger) }}
+	{{ billettholdere, err := billettholderService.GetBilettholdere("", db, logger) }}
 	<div id="add-billettholder-admin-container">
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},

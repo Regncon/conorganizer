@@ -1,0 +1,122 @@
+package profileticketspage
+
+import (
+	"database/sql"
+	"log/slog"
+	"net/http"
+	"fmt"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/checkIn"
+	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
+	datastar "github.com/starfederation/datastar-go/datastar"
+)
+
+templ profileTicketsPage(userId string, db *sql.DB, logger *slog.Logger) {
+	<div id="profile-tickets-page-wrapper">
+		@profileTicketsPageContent(userId, db, logger)
+	</div>
+}
+
+func getTicketsRouter(
+	router chi.Router,
+	db *sql.DB,
+	logger *slog.Logger,
+	store sessions.Store,
+	notifyUpdate func(string),
+) {
+	router.Post("/get-tickets", func(w http.ResponseWriter, r *http.Request) {
+
+		sse := datastar.NewSSE(w, r)
+		var ctx = r.Context()
+		var user = userctx.GetUserRequestInfo(ctx)
+		err := checkIn.AssociateUserWithBillettholder(user.Id, db, logger)
+		var errorMessage = ""
+		if err != nil {
+			errorMessage = "Feil ved henting av billettar: " + err.Error()
+		}
+
+		var successMessage = "Billetter hentet!"
+		if errorMessage != "" {
+			successMessage = ""
+		}
+		var singnalJson = fmt.Sprintf(`{"getTicketsErrorMessage": "%s", "getTicketsSuccessMessage": "%s"}`, errorMessage, successMessage)
+		if err = sse.PatchSignals([]byte(singnalJson)); err != nil {
+			logger.Error("Failed to patch signals", slog.Any("error", err))
+			http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+			return
+		}
+
+		if errorMessage != "" {
+			logger.Error("Failed to associate user with billettholder", slog.Any("error", err))
+			http.Error(w, "Failed to associate user with billettholder", http.StatusInternalServerError)
+			return
+		}
+
+		sessionID, _ := upsertSessionID(store, r, w)
+		if notifyUpdate != nil {
+			notifyUpdate(sessionID)
+		}
+		http.Error(w, "OK", http.StatusOK)
+	})
+}
+
+templ profileTicketsPageContent(userId string, db *sql.DB, logger *slog.Logger) {
+	{{ billettholdere, err := billettholderService.GetBilettholdere(userId, db, logger) }}
+	if err != nil {
+		<p>Feil ved henting av billettar: { err.Error() }</p>
+	}
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Min Side", Url: "/profile"},
+		{Name: "Billetter", Url: ""},
+	})
+	<section class="page-content-container">
+		<h1 class="page-heading">Mine Billetter</h1>
+		<div style="display: flex; gap: 1rem; align-items: center; flex-direction: column;">
+			<button class="btn btn--cta" data-on-click={ datastar.PostSSE("/profile/tickets/api/get-tickets") }>
+				Hent billettar
+			</button>
+			<strong
+				style="color: var(--color-error);"
+				data-signals-getTicketsErrorMessage
+				data-text="$getTicketsErrorMessage"
+			></strong>
+			<strong
+				style="color: var(--color-success);"
+				data-signals-getTicketsSuccessMessage
+				data-text="$getTicketsSuccessMessage"
+			></strong>
+		</div>
+		<div class="billettholder-admin-grid">
+			<style>
+				.billettholder-admin-grid {
+					display: grid;
+					grid-template-columns: repeat(
+						auto-fit,
+						minmax(var(--mobile-min-width), 430px)
+					);
+					gap: 1rem;
+				}
+			</style>
+			for _, billettholder := range billettholdere {
+				@billettholderCard(billettholder)
+			}
+		</div>
+		<i>
+			Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett nedanfor,
+			slik at kvar deltakar kan melda seg på arrangement på eiga hand.
+		</i>
+		<p>
+			Vi fann ingen billettar registrert på denne epostadressa. Det betyr at du anten ikkje har kjøpt billettar
+			endå, eller at du har kjøpt billettane på ei anna anna epostadresse enn den du er logga inn med her.
+		</p>
+		<p>
+			<a class="btn-buy-ticket" href="https://event.checkin.no/109715/regncon-xxxiii-2025">Kjøp billetter ↗️</a>, lag ein brukar på riktig mailadresse, eller ta kontakt med <a class="mailto" href="mailto:styret@regncon.no">styret@regncon.no</a> noko
+			er galt, eller om du ønsker billettane overført til epostadressa du har laga brukar til.
+		</p>
+	</section>
+}

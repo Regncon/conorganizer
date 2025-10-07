@@ -118,7 +118,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							return
 						}
 						isAdmin := authctx.GetAdminFromUserToken(ctx)
-						c := event_page(eventID, isAdmin, logger, db, eventImageDir)
+						c := event_page(eventID, isAdmin, logger, db, eventImageDir, r)
 						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return

@@ -1,0 +1,296 @@
+package profileticketspage
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+	"database/sql"
+	"log/slog"
+	"net/http"
+	"encoding/json"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/components/icons"
+	datastar "github.com/starfederation/datastar-go/datastar"
+)
+
+type Responder struct {
+	BillettholderID string
+	Logger          *slog.Logger
+	Store           sessions.Store
+	w               http.ResponseWriter
+	r               *http.Request
+	NotifyUpdate    func(string)
+}
+
+func handleError(responder Responder, dispalyText string, errorText string) {
+	responder.Logger.Error(errorText)
+
+	payload := map[string]any{
+		fmt.Sprintf("errorMessage-%s", responder.BillettholderID):   dispalyText,
+		fmt.Sprintf("successMessage-%s", responder.BillettholderID): "",
+	}
+
+	b, err := json.Marshal(payload)
+	if err != nil {
+		responder.Logger.Error("Failed to marshal patch signals payload", slog.Any("error", err))
+		http.Error(responder.w, "Failed to encode patch signals", http.StatusInternalServerError)
+		return
+	}
+
+	sse := datastar.NewSSE(responder.w, responder.r)
+	if err := sse.PatchSignals(b); err != nil {
+		responder.Logger.Error("Failed to patch signals", slog.Any("error", err))
+		http.Error(responder.w, "Failed to patch signals", http.StatusInternalServerError)
+		return
+	}
+	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
+	if responder.NotifyUpdate != nil {
+		responder.NotifyUpdate(sessionID)
+	}
+	http.Error(responder.w, "New email address is required", http.StatusBadRequest)
+}
+
+func handleSuccess(responder Responder, successText string) {
+	responder.Logger.Info("Successfully added new email to billettholder", slog.String("billettholder_id", responder.BillettholderID))
+
+	payload := map[string]any{
+		fmt.Sprintf("newEmail-%s", responder.BillettholderID):       "",
+		fmt.Sprintf("errorMessage-%s", responder.BillettholderID):   "",
+		fmt.Sprintf("successMessage-%s", responder.BillettholderID): successText,
+	}
+
+	b, err := json.Marshal(payload)
+	if err != nil {
+		responder.Logger.Error("Failed to marshal patch signals payload", slog.Any("error", err))
+		http.Error(responder.w, "Failed to encode patch signals", http.StatusInternalServerError)
+		return
+	}
+
+	sse := datastar.NewSSE(responder.w, responder.r)
+	if err := sse.PatchSignals(b); err != nil {
+		responder.Logger.Error("Failed to patch signals", slog.Any("error", err))
+		http.Error(responder.w, "Failed to patch signals", http.StatusInternalServerError)
+		return
+	}
+
+	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
+	if responder.NotifyUpdate != nil {
+		responder.NotifyUpdate(sessionID)
+	}
+}
+
+func addEmailToBilettholderRoute(
+	router chi.Router,
+	db *sql.DB,
+	logger *slog.Logger,
+	store sessions.Store,
+	notifyUpdate func(string),
+) {
+	router.Post("/new-email/{id}/", func(w http.ResponseWriter, r *http.Request) {
+		logger.Info("Received request to add new email to billettholder")
+		responder := Responder{
+			BillettholderID: chi.URLParam(r, "id"),
+			Logger:          logger,
+			Store:           store,
+			w:               w,
+			r:               r,
+			NotifyUpdate:    notifyUpdate,
+		}
+
+		billettholderID := chi.URLParam(r, "id")
+		if billettholderID == "" {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Billettholder ID is missing in the request")
+			return
+		}
+		logger.Info("Billettholder ID", slog.String("id", billettholderID))
+		signals := map[string]string{}
+		if err := datastar.ReadSignals(r, &signals); err != nil { /* ... */
+		}
+
+		newEmailAddress := ""
+		for k, v := range signals {
+			fmt.Println("Signal key:", k, "value:", v)
+			if strings.HasPrefix(k, "newEmail-") {
+				idStr := strings.TrimPrefix(k, "newEmail-")
+				id, err := strconv.Atoi(idStr)
+				if err != nil {
+					handleError(responder, "Noe gikk galt, prøv igjen", "Invalid billettholder ID in signal key")
+					return
+				}
+				if strconv.Itoa(id) == billettholderID {
+					newEmailAddress = v
+					break
+				}
+			}
+		}
+		logger.Info("new email added", slog.String("email", newEmailAddress))
+
+		if newEmailAddress == "" {
+			handleError(responder, "Tomt felt for epostadresse", "New email address is missing in the request")
+			return
+		}
+
+		var exists int
+		queryCheck := `SELECT COUNT(*) FROM billettholder_emails WHERE billettholder_id = ? AND email = ?`
+		err := db.QueryRow(queryCheck, billettholderID, newEmailAddress).Scan(&exists)
+		if err != nil {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to check existing emails in the database: "+err.Error())
+			return
+		}
+		if exists > 0 {
+			handleError(responder, fmt.Sprintf("Epostadressen %s finnes allerede for denne bilettholderen", newEmailAddress), "Email address already exists for this billettholder")
+			return
+		}
+
+		query := `INSERT INTO billettholder_emails (billettholder_id, email, kind) VALUES (?, ?, 'Manual')`
+		_, err = db.Exec(query, billettholderID, newEmailAddress)
+		if err != nil {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to insert new email into the database: "+err.Error())
+			return
+		}
+
+		handleSuccess(responder, fmt.Sprintf("Epostadressen %s er lagt til", newEmailAddress))
+	})
+}
+
+func deleteEmailFromBillettholderRoute(
+	router chi.Router,
+	db *sql.DB,
+	logger *slog.Logger,
+	store sessions.Store,
+	notifyUpdate func(string),
+) {
+	router.Post("/delete-email/{id}/{emailID}/", func(w http.ResponseWriter, r *http.Request) {
+		responder := Responder{
+			BillettholderID: chi.URLParam(r, "id"),
+			Logger:          logger,
+			Store:           store,
+			w:               w,
+			r:               r,
+			NotifyUpdate:    notifyUpdate,
+		}
+
+		billettholderID := chi.URLParam(r, "id")
+		emailID := chi.URLParam(r, "emailID")
+
+		if billettholderID == "" || emailID == "" {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Missing billettholderID or emailID in delete request")
+			return
+		}
+
+		// Validate the email belongs to this billettholder and fetch kind/email for messages/guard
+		var email string
+		var kind string
+		err := db.QueryRow(`
+			SELECT email, kind
+			FROM billettholder_emails
+			WHERE id = ? AND billettholder_id = ?
+		`, emailID, billettholderID).Scan(&email, &kind)
+		if err == sql.ErrNoRows {
+			handleError(responder, "Fant ikke epostadressen", "Email row not found for given billettholder")
+			return
+		}
+		if err != nil {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to read email before delete: "+err.Error())
+			return
+		}
+		if kind != "Manual" {
+			handleError(responder, "Kun manuelle epostadresser kan slettes", "Attempt to delete non-manual email blocked")
+			return
+		}
+
+		// Don’t allow deleting the ticket email
+		if strings.EqualFold(kind, "Ticket") {
+			handleError(responder, "Kan ikke slette billett-epost", "Attempt to delete Ticket email blocked")
+			return
+		}
+
+		// Delete
+		if _, err := db.Exec(`
+			DELETE FROM billettholder_emails
+			WHERE id = ? AND billettholder_id = ?
+		`, emailID, billettholderID); err != nil {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to delete email: "+err.Error())
+			return
+		}
+
+		handleSuccess(responder, fmt.Sprintf("Epostadressen %s er slettet", email))
+	})
+}
+
+templ billettholderCard(billettholder models.Billettholder) {
+	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
+		<p style="margin:0;">
+			{ billettholder.OrderID }
+		</p>
+		<p style="margin:0;">
+			<strong>Type: </strong> { billettholder.TicketType }
+		</p>
+		<p style="margin:0;">
+			<strong>Navn:</strong>
+			<em>
+				{ billettholder.FirstName } { billettholder.LastName }
+			</em>
+		</p>
+		for _, email := range billettholder.Emails {
+			if email.Kind == "Ticket" {
+				<div style="display: flex; align-items: center; gap:0.5rem; ">
+					<strong>Epost:</strong>
+					<a href={ "mailto:" + email.Email }>
+						{ email.Email }
+					</a>
+				</div>
+			}
+		}
+		<div style="display: flex; align-items: center; gap:0.5rem; ">
+			if billettholder.IsOver18 {
+				@icons.Icon(icons.EventAdultOnly, icons.Size24)
+				<p><strong>Alder:</strong> Over 18</p>
+			} else {
+				@icons.Icon(icons.EventChildFriendly, icons.Size24)
+				<p><strong>Alder:</strong> Under 18</p>
+			}
+		</div>
+		<span>Andre epostadresser på samme bestilling:</span>
+		for _, email := range billettholder.Emails {
+			if email.Kind == "Associated" || email.Kind == "Manual" {
+				<div style="display:flex; align-items:center; gap:0.5rem; justify-content: space-between;">
+					<a href={ "mailto:" + email.Email }>
+						{ email.Email }
+					</a>
+					if email.Kind == "Manual" {
+						<button
+							class="btn btn--ghost"
+							data-on-click={ datastar.PostSSE("/profile/tickets/api/delete-email/%d/%d/", billettholder.ID, email.ID) }
+							title="Slett epostadresse"
+						>
+							Slett
+						</button>
+					}
+				</div>
+			}
+		}
+		<input
+			data-bind={ "newEmail-" + strconv.Itoa(billettholder.ID) }
+		/>
+		<strong
+			style="color: var(--color-error);"
+			data-signals={ fmt.Sprintf(`"errorMessage-%d"`, billettholder.ID) }
+			data-text={ fmt.Sprintf(`$errorMessage-%d`, billettholder.ID) }
+		></strong>
+		<strong
+			style="color: var(--color-success);"
+			data-signals={ fmt.Sprintf(`"successMessage-%d"`, billettholder.ID) }
+			data-text={ fmt.Sprintf(`$successMessage-%d`, billettholder.ID) }
+		></strong>
+		<button
+			class="btn btn--outline"
+			data-on-click={ datastar.PostSSE("/profile/tickets/api/new-email/%d/", billettholder.ID) }
+		>
+			Legg til epost
+		</button>
+	</div>
+}

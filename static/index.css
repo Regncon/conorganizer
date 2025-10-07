@@ -68,7 +68,10 @@
 
     /* nav */
     --nav-height: 4rem;
-    --nav-z-index: 10;
+    
+    /* z-index */
+    --nav-z-index: 50;
+    --subnav-z-index: 10;
 
     /* responsively size gap between panes in the same column of content */
     --responsive-pane-column-spacing: var(--spacing-4x);

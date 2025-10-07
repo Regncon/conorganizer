@@ -1,7 +1,7 @@
 .event-card-container {
     display: grid;
     grid-template-rows: 180px minmax(110px, 1fr) min-content;
-    grid-template-columns: minmax(var(--mobile-min-width), 1fr);
+    grid-template-columns: minmax(300px, 1fr); /* min-width to fit smallest mobile size */
     color: var(--color-primary-text);
     background-color: var(--bg-surface);
     border-radius: var(--border-radius-1x);

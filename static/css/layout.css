@@ -3,10 +3,10 @@
   limiting it to a max 1440px width. With reducing margins as screen size narrows.
  */
 .page-content-container {
-  width: 100%;
-  max-width: var(--page-content-max-width);
-  padding: 0 var(--spacing-2x);
-  margin: 0 auto;
+    width: 100%;
+    max-width: var(--page-content-max-width);
+    padding: 0 var(--spacing-2x);
+    margin: 0 auto;
 }
 
 /* 
@@ -14,7 +14,7 @@
   limiting it to a max 1440px width. With reducing margins as screen size narrows.
  */
 .page-content-container.wide-content {
-  max-width: var(--page-content-wide-max-width);
+    max-width: var(--page-content-wide-max-width);
 }
 
 /*
@@ -22,17 +22,46 @@
   event preview enabled renders at this resolution.
  */
 .page-content-container.ultrawide-content {
-  max-width: var(--page-content-ultrawide-max-width);
+    max-width: var(--page-content-ultrawide-max-width);
+}
+
+/*
+  Dynamically adds extra padding for containers that should be 80px from the 1400px
+  container edge, scaling down to be 0 for mobile display sizes. Such as the frontpage
+  card grid.
+*/
+.container-inner-padding {
+  padding: 0;
 }
 
 @container main (width > 600px) {
-  .page-content-container {
-    padding: 0 var(--spacing-5x);
+    .page-content-container,
+    .container-inner-padding  {
+        padding: 0 var(--spacing-5x);
+    }
+}
+
+@container main (width > 1200px) {
+    .page-content-container,
+    .container-inner-padding  {
+        padding: 0 var(--spacing-10x);
+    }
+}
+
+.page-wide-eventcard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+@container main (width > 720px) {
+  .page-wide-eventcard-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @container main (width > 1200px) {
-  .page-content-container {
-    padding: 0 var(--spacing-10x);
+  .page-wide-eventcard-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
