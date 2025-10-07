@@ -72,6 +72,7 @@
     --subnav-z-index: 10;
 
     /* responsively size some gap variables so this doesn't have to be redefined */
+    --responsive-top-of-page-spacing: var(--spacing-4x);
     --responsive-pane-column-spacing: var(--spacing-4x);
     --responsive-page-section-spacing: var(--spacing-8x);
     --responsive-h2-margin: var(--spacing-4x);
@@ -79,9 +80,18 @@
 
 @media screen and (width > 600px) {
     :root {
-        --responsive-pane-column-spacing: var(--spacing-8x);
-        --responsive-page-section-spacing: var(--spacing-10x);
+        --responsive-top-of-page-spacing: var(--spacing-5x);
+        --responsive-pane-column-spacing: var(--spacing-5x);
+        --responsive-page-section-spacing: var(--spacing-8x);
         --responsive-h2-margin: var(--spacing-5x);
+    }
+}
+
+@media screen and (width > 1200px) {
+    :root {
+        --responsive-top-of-page-spacing: var(--spacing-10x);
+        --responsive-page-section-spacing: var(--spacing-10x);
+        --responsive-pane-column-spacing: var(--spacing-8x);
     }
 }
 

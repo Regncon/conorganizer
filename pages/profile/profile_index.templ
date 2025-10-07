@@ -65,7 +65,7 @@ templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.Tic
             display: flex;
             gap: var(--responsive-pane-column-spacing);
             flex-flow: row wrap;
-            padding-top: var(--responsive-pane-column-spacing);
+            padding-top: var(--responsive-top-of-page-spacing);
         }
 
         .profile-container > div {
@@ -75,5 +75,7 @@ templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.Tic
             flex: 1 1 fit-content;
             /* min-width: fit-content; */
         }
+
+				@container main (width > 600px) 
     </style>
 }
