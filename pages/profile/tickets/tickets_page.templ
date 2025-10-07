@@ -4,11 +4,14 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"fmt"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/checkIn"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -92,8 +95,19 @@ func getTicketsRouter(
 	router.Post("/get-tickets", func(w http.ResponseWriter, r *http.Request) {
 
 		sse := datastar.NewSSE(w, r)
+		var ctx = r.Context()
+		var user = userctx.GetUserRequestInfo(ctx)
+		err := checkIn.AssociateUserWithBillettholder(user.Id, db, logger)
+		var errorMessage = "defalt error message"
+		if err != nil {
+			logger.Error("Failed to associate user with billettholder", slog.Any("error", err))
+			errorMessage = "Feil ved henting av billettar: " + err.Error()
+			return
+		}
 
-		if err := sse.PatchSignals([]byte(`{"getTicketsErrorMessage": "Dette er en test feilmelding", "getTicketsSuccessMessage": "Funksjonen er ikkje implementert endå. Vi jobbar med saka!"}`)); err != nil {
+		var successMessage = "Billettar henta!"
+		var singnalJson = fmt.Sprintf(`{"getTicketsErrorMessage": "%s", "getTicketsSuccessMessage": "%s"}`, errorMessage, successMessage)
+		if err = sse.PatchSignals([]byte(singnalJson)); err != nil {
 			logger.Error("Failed to patch signals", slog.Any("error", err))
 			http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
 			return
