@@ -52,19 +52,26 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
                     }
                 }
 
-                .ticket-holder-picker {
-                    margin-block-end: var(--spacing-5x);
-                }
-
-                .interest-buttons {
+                .dialog-content {
                     display: flex;
                     flex-direction: column;
-                    gap: var(--spacing-3x);
-                }
+                    gap: var(--spacing-5x);
 
-                button .emoji {
-                    font-size: 25px;
-                    margin-inline-end: var(--spacing-5x);
+                    .interest-buttons {
+                        display: flex;
+                        flex-direction: column;
+                        gap: var(--spacing-3x);
+                    }
+
+                    button .emoji {
+                        font-size: 25px;
+                        margin-inline-end: var(--spacing-5x);
+                    }
+
+                    .auto-save {
+                        color: var(--color-text-soft);
+                        font-size: 12px;
+                    }
                 }
             }
 
@@ -80,38 +87,39 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
 					</button>
 				</form>
 			</header>
-			@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
-            @ticketholder.TicketHolderPuljePicker()
-			<code>
-				<pre data-json-signals></pre>
-			</code>
-			<div
-				class="interest-buttons"
-			>
-				<button
-					class="btn btn--interest"
-					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/high", eventId, puljeId) }
-				>
-					<span class="emoji">🤩</span> Veldig interessert
-				</button>
-				<button
-					class="btn btn--interest"
-					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/medium", eventId, puljeId) }
-				>
-					<span class="emoji">🙂</span> Interessert
-				</button>
-				<button
-					class="btn btn--interest"
-					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/low", eventId, puljeId) }
-				>
-					<span class="emoji">🤨</span> Litt interessert
-				</button>
-				<button
-					class="btn btn--interest"
-					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/none", eventId, puljeId) }
-				>
-					<span class="emoji">😑</span> Ikke interessert
-				</button>
+			<div class="dialog-content">
+                @ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
+                @ticketholder.TicketHolderPuljePicker()
+                <code>
+                    <pre data-json-signals></pre>
+                </code>
+                <div class="interest-buttons">
+    				<button
+    					class="btn btn--interest"
+    					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/high", eventId, puljeId) }
+    				>
+    					<span class="emoji">🤩</span> Veldig interessert
+    				</button>
+    				<button
+    					class="btn btn--interest"
+    					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/medium", eventId, puljeId) }
+    				>
+    					<span class="emoji">🙂</span> Interessert
+    				</button>
+    				<button
+    					class="btn btn--interest"
+    					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/low", eventId, puljeId) }
+    				>
+    					<span class="emoji">🤨</span> Litt interessert
+    				</button>
+    				<button
+    					class="btn btn--interest"
+    					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/none", eventId, puljeId) }
+    				>
+    					<span class="emoji">😑</span> Ikke interessert
+                    </button>
+                </div>
+                <p class="auto-save">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
 			</div>
 		</div>
 	</dialog>
