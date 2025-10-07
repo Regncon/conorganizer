@@ -20,6 +20,13 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
             display: inline-block;
             width: 100%;
 
+            .label {
+                font-size: 12px;
+                font-weight: 700;
+                color: var(--color-text-strong);
+                margin-block-end: var(--spacing-1x);
+            }
+
             .select-button {
                 display: flex;
                 place-content: space-between;
@@ -35,12 +42,6 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
                 padding-block: var(--spacing-3x);
 
                 .select-button-end {
-                    display: flex;
-                    place-items: center;
-                    gap: var(--spacing-3x);
-                    p {
-                        font-weight: 700;
-                    }
                     .arrow {
                         display: flex;
                         transition: transform ease-in-out 0.3s;
@@ -134,6 +135,7 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
     </style>
 	<div class="ticket-holder-picker">
 		<div class="custom-select">
+            <p class="label">Velg billettholder</p>
 			<button
 				id="dropdown-button"
 				class="select-button input"
@@ -145,7 +147,6 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
 			>
 				<span class="selected-value"></span>
 				<div class="select-button-end">
-					<p>Velg billettholder</p>
 					<i class="arrow">
 						@icons.Icon(icons.ChevronDown, icons.Size24)
 					</i>
