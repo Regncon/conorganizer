@@ -14,9 +14,10 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 		.breadcrumb-content-justify {
 			display: flex;
 			align-items: center;
-			justify-content: space-between;
+			justify-content: flex-end;
 			gap: var(--spacing-8x);
 			width: 100%;
+			min-height: 50px;
 		}
 
 		.breadcrumbs {
@@ -49,6 +50,9 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 		@container main (width > 600px) {
 			.breadcrumb-container {
 				border-bottom: 1px solid var(--bg-item);
+			}
+			.breadcrumb-content-justify {
+				justify-content: space-between;
 			}
 			.breadcrumbs {
 				display: flex;
