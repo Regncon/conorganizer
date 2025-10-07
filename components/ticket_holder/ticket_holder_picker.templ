@@ -6,7 +6,7 @@ import (
 	"log/slog"
 )
 
-templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, logger *slog.Logger) {
 	<style>
         .ticket-holder-picker-container  {
             container-type: inline-size;
@@ -33,7 +33,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 	}
 	if (len(associatedTicketHolders) > 3) {
 		<div class="ticket-holder-picker">
-			@TicketHolderDropDown(userInfo, associatedTicketHolders, TicketHolderUnselected)
+			@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders, TicketHolderUnselected)
 		</div>
 	}
 }

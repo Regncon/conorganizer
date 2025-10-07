@@ -1,10 +1,21 @@
 package ticketholder
 
-import "github.com/Regncon/conorganizer/service/requestctx"
-import "github.com/Regncon/conorganizer/components/icons"
+import (
+	"fmt"
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/service/requestctx"
+
+	datastar "github.com/starfederation/datastar-go/datastar"
+)
 
 // Takes a `selected` parameter to highlight the selected ticket holder
-templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder, selected selected) {
+templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder, selected selected) {
+	{{
+	// If no ticket holders, return nothing
+	if len(associatedBillettholder) == 0 {
+		return
+	}
+	}}
 	<style>
         .custom-select {
             position: relative;
@@ -148,10 +159,13 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedBillet
 				id="dropdown-list"
 				aria-labelledby="dropdown-button"
 			>
-				for _, th := range associatedBillettholder {
-					{{ initials := GetInitials(th.Name) }}
-					<li role="option">
-						@nameInitials(th.Name, initials)
+				for _, bh := range associatedBillettholder {
+					{{ initials := GetInitials(bh.Name) }}
+					<li
+						role="option"
+						data-on-click={ datastar.PutSSE(fmt.Sprintf("/event/api/%s/interest/update/%d", eventId, bh.Id)) }
+					>
+						@nameInitials(bh.Name, initials)
 					</li>
 				}
 			</ul>
@@ -159,12 +173,11 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedBillet
 	</div>
 	<script>
         const associatedBillettholder = {{ associatedBillettholder }};
+        console.log(associatedBillettholder);
         let selectedBillettholder = {{ associatedBillettholder[0] }};
         const LSEnum = {
             SelectedBilletHolder: "selectedBillettHolder"
         };
-        console.log("test", associatedBillettholder);
-        console.log("testSelected", selectedBillettholder);
         document.addEventListener("DOMContentLoaded", () => {
             initDropDown();
             initLocalstorage();
@@ -176,9 +189,6 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedBillet
 
             if (!selectedBillettholderLS) {
                 localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(selectedBillettholder));
-                console.log("Selected ticket holder:", selectedBillettholder);
-
-                console.log("name and initials", nameInitialsElement);
                 nameInitialsElement.innerHTML = `
                     <div class="name-initials">
                         <span class="initials">${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
@@ -190,7 +200,6 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedBillet
             if (selectedBillettholderLS) {
                 const billetHolder = JSON.parse(selectedBillettholderLS);
                 selectedBillettholder = billetHolder;
-                console.log("Selected ticket holder from localStorage:", billetHolder);
 
                 nameInitialsElement.innerHTML = `
                     <div class="name-initials">
@@ -291,7 +300,6 @@ templ TicketHolderDropDown(userInfo requestctx.UserRequestInfo, associatedBillet
                     const billetHolder = associatedBillettholder.find(th => th.Name === name);
                     localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(billetHolder));
                     selectedBillettholder = billetHolder;
-                    console.log("Selected ticket holder:", billetHolder);
                 };
 
                 options.forEach((option) => {

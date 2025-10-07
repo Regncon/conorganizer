@@ -5,10 +5,11 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/starfederation/datastar-go/datastar"
 	"log/slog"
 )
 
-templ EventInterests(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, logger *slog.Logger) {
 	<style>
         ::backdrop {
             background-image: linear-gradient(
@@ -79,12 +80,17 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 					</button>
 				</form>
 			</header>
-			@ticketholder.TicketHolderPicker(userInfo, db, logger)
-			<div class="interest-buttons">
-				<button class="btn btn--interest"><span class="emoji">🤩</span> Veldig interessert</button>
-				<button class="btn btn--interest"><span class="emoji">🙂</span> Interessert</button>
-				<button class="btn btn--interest"><span class="emoji">🤨</span> Litt interessert </button>
-				<button class="btn btn--interest"><span class="emoji">😑</span> Ikke interessert</button>
+			@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
+			<code>
+				<pre data-json-signals></pre>
+			</code>
+			<div
+				class="interest-buttons"
+			>
+				<button class="btn btn--interest" data-on-click={ datastar.PutSSE("/event/api/8759e4c87f4f82d5/interest/update/4/fredagKveld/high") }><span class="emoji">🤩</span> Veldig interessert</button>
+				<button class="btn btn--interest" data-on-click={ datastar.PutSSE("/event/api/8759e4c87f4f82d5/interest/update/4/fredagKveld/medium") }><span class="emoji">🙂</span> Interessert</button>
+				<button class="btn btn--interest" data-on-click={ datastar.PutSSE("/event/api/8759e4c87f4f82d5/interest/update/4/fredagKveld/low") }><span class="emoji">🤨</span> Litt interessert </button>
+				<button class="btn btn--interest" data-on-click={ datastar.PutSSE("/event/api/8759e4c87f4f82d5/interest/update/4/fredagKveld/none") }><span class="emoji">😑</span> Ikke interessert</button>
 			</div>
 		</div>
 	</dialog>

@@ -14,6 +14,7 @@ import (
 type BillettHolder struct {
 	Email string
 	Name  string
+	Id    int
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]BillettHolder, error) {
@@ -33,18 +34,19 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 	var associatedTicketholders []BillettHolder
 
 	for rows.Next() {
-		var ticketHolderID int
+		var billettHolderId int
 
-		if ticketHolderScanErr := rows.Scan(&email, &ticketHolderID, &firstName, &lastName); ticketHolderScanErr != nil {
+		if ticketHolderScanErr := rows.Scan(&email, &billettHolderId, &firstName, &lastName); ticketHolderScanErr != nil {
 			logger.Error("Failed to scan ticket holder row", "ticketHolderScanErr", ticketHolderScanErr)
 			continue
 		}
 		associatedTicketholders = append(associatedTicketholders, BillettHolder{
 			Email: email,
 			Name:  fmt.Sprintf("%s %s", firstName, lastName),
+			Id:    billettHolderId,
 		})
 
-		logger.Info("Ticket Holder", "email", email, "id", ticketHolderID, "firstName", firstName, "lastName", lastName)
+		logger.Info("Ticket Holder", "email", email, "id", billettHolderId, "firstName", firstName, "lastName", lastName)
 	}
 	if ticketHolderRowsErr := rows.Err(); ticketHolderRowsErr != nil {
 		logger.Error("Error iterating over ticket holder rows", "ticketHolderRowsErr", ticketHolderRowsErr)
@@ -53,22 +55,27 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 	associatedTicketholders = append(associatedTicketholders, BillettHolder{
 		Email: "lo@najcuksuc.sn",
 		Name:  "Leonard Moreno",
+		Id:    1,
 	})
 	associatedTicketholders = append(associatedTicketholders, BillettHolder{
 		Email: "lacbe@lecuc.my",
 		Name:  "Olive Berry",
+		Id:    2,
 	})
 	associatedTicketholders = append(associatedTicketholders, BillettHolder{
 		Email: "mijinpu@posrik.cz",
 		Name:  "Bobby Silva",
+		Id:    3,
 	})
 	associatedTicketholders = append(associatedTicketholders, BillettHolder{
 		Email: "igkir@mukpunuc.be",
 		Name:  "Bertha Francis",
+		Id:    5,
 	})
 	associatedTicketholders = append(associatedTicketholders, BillettHolder{
 		Email: "ruidavuf@otavig.gy",
 		Name:  "Mario Ross",
+		Id:    6,
 	})
 
 	return associatedTicketholders, nil
@@ -89,7 +96,6 @@ func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders
 	}
 
 	return ticketHolders[idx]
-
 }
 
 func GetInitials(s string) string {
