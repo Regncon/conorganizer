@@ -74,7 +74,7 @@
     /* responsively size some gap variables so this doesn't have to be redefined */
     --responsive-pane-column-spacing: var(--spacing-4x);
     --responsive-page-section-spacing: var(--spacing-8x);
-    --responsive-h2-margin: var(--spacing4x);
+    --responsive-h2-margin: var(--spacing-4x);
 }
 
 @media screen and (width > 600px) {
