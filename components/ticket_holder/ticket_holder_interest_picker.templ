@@ -14,6 +14,11 @@ templ TicketHolderInterestPicker(eventId string, db *sql.DB, logger *slog.Logger
         display: flex;
         flex-direction: column;
         gap: var(--spacing-3x);
+
+        .selected {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
     }
 
     @container interest-dialog (width > 23.9375rem) {
@@ -24,28 +29,35 @@ templ TicketHolderInterestPicker(eventId string, db *sql.DB, logger *slog.Logger
     {{fmt.Println(currentInterest)}}
 	<div class="interest-buttons">
         <button
-            class="btn btn--interest"
+            class={"btn", "btn--interest", addSelectedClass("Veldig interessert", currentInterest)}
             data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
         >
             <span class="emoji">🤩</span> Veldig interessert
         </button>
         <button
-            class="btn btn--interest"
+            class={"btn", "btn--interest" , addSelectedClass("Interessert", currentInterest)}
             data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
         >
         <span class="emoji">🙂</span> Interessert
         </button>
         <button
-            class="btn btn--interest"
+            class={"btn", "btn--interest" , addSelectedClass("Litt interessert", currentInterest)}
             data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
         >
         <span class="emoji">🤨</span> Litt interessert
         </button>
         <button
-            class="btn btn--interest"
+            class={"btn", "btn--interest" , addSelectedClass("Ikke interessert", currentInterest)}
             data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
         >
             <span class="emoji">😑</span> Ikke interessert
         </button>
     </div>
+}
+
+func addSelectedClass(selected string, currentInterest string) string {
+    if selected == currentInterest {
+        return "selected"
+    }
+    return ""
 }
