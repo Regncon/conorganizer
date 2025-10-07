@@ -45,7 +45,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
                     place-content: space-between;
                     place-items: center;
                     height: fit-content;
-                    margin-block-end: var(--spacing-5x);
 
                     .btn {
                         padding-inline: var(--spacing-2x);
@@ -90,7 +89,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
 			</header>
 			<div class="dialog-content">
                 <div>
-                    <p class="label">Velg billettholder</p>
                     @ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
                 </div>
                 <div>
@@ -109,7 +107,9 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
 		</div>
 	</dialog>
 	<script defer>
-
+        const LSEnum = {
+            SelectedBilletHolder: "selectedBillettHolder"
+        };
         function getBillettHolderSignal() {
             const selectedBillettHolderString = localStorage.getItem(LSEnum.SelectedBilletHolder);
             if (!selectedBillettHolderString) {

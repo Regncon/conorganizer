@@ -167,9 +167,6 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
         const associatedBillettholder = {{ associatedBillettholder }};
         console.log(associatedBillettholder);
         let selectedBillettholder = {{ associatedBillettholder[0] }};
-        const LSEnum = {
-            SelectedBilletHolder: "selectedBillettHolder"
-        };
         document.addEventListener("DOMContentLoaded", () => {
             initDropDown();
             initLocalstorage();
