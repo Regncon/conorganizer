@@ -9,7 +9,7 @@ import (
 	"log/slog"
 )
 
-templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, logger *slog.Logger) {
+templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeId string, db *sql.DB, logger *slog.Logger) {
 	<style>
         ::backdrop {
             background-image: linear-gradient(
@@ -70,7 +70,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, db *sq
 
         }
     </style>
-	<dialog class="interest-dialog" closedby="any">
+	<dialog class="interest-dialog" closedby="any" data-signals="{billettHolderId: 0}">
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
@@ -89,25 +89,25 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, db *sq
 			>
 				<button
 					class="btn btn--interest"
-					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/4/%s/high", eventId, "FredagKveld") }
+					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/high", eventId, puljeId) }
 				>
 					<span class="emoji">🤩</span> Veldig interessert
 				</button>
 				<button
 					class="btn btn--interest"
-					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/4/%s/medium", eventId, "FredagKveld") }
+					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/medium", eventId, puljeId) }
 				>
 					<span class="emoji">🙂</span> Interessert
 				</button>
 				<button
 					class="btn btn--interest"
-					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/4/%s/low", eventId, "FredagKveld") }
+					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/low", eventId, puljeId) }
 				>
 					<span class="emoji">🤨</span> Litt interessert
 				</button>
 				<button
 					class="btn btn--interest"
-					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/4/%s/none", eventId, "FredagKveld") }
+					data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/%s/none", eventId, puljeId) }
 				>
 					<span class="emoji">😑</span> Ikke interessert
 				</button>

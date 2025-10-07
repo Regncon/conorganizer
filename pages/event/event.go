@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/Regncon/conorganizer/pages/root"
@@ -130,14 +129,13 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			eventIdRouter.Route("/interest", func(eventInterest chi.Router) {
 				eventInterest.Route("/update", func(updateInterestRouter chi.Router) {
 
-					updateInterestRouter.Put("/{billettholderId}/{pulje}/{interestLevel}", func(w http.ResponseWriter, r *http.Request) {
-						// type Put struct {
-						// 	InterestLevel string `json:"interestLevel"`
-						// 	Pulje         string `json:"pulje"`
-						// }
-						// store := &Put{}
+					updateInterestRouter.Put("/{pulje}/{interestLevel}", func(w http.ResponseWriter, r *http.Request) {
+						type Put struct {
+							BillettHolderId int `json:"billettHolderId"`
+						}
+						signals := &Put{}
 
-						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+						if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
 							logger.Error("Failed to read signals", "error", readSignalErr)
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
@@ -145,12 +143,12 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 
 						ctx := r.Context()
 						userInfo := userctx.GetUserRequestInfo(ctx)
-						billettholderId, err := strconv.Atoi(chi.URLParam(r, "billettholderId"))
-						if err != nil {
-							logger.Error("Failed to convert billettholderId to int", "error", err)
-							http.Error(w, "Failed to convert billettholderId to int", http.StatusBadRequest)
-							return
-						}
+						// billettholderId, err := strconv.Atoi(chi.URLParam(r, "billettholderId"))
+						// if err != nil {
+						// 	logger.Error("Failed to convert billettholderId to int", "error", err)
+						// 	http.Error(w, "Failed to convert billettholderId to int", http.StatusBadRequest)
+						// 	return
+						// }
 
 						eventId := chi.URLParam(r, "idx")
 						pulje := chi.URLParam(r, "pulje")
@@ -174,9 +172,9 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							return
 						}
 
-						updateInterest(userInfo.Id, billettholderId, eventId, interestLevel, pulje, db, logger)
+						updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, pulje, db, logger)
 
-						logger.Info(fmt.Sprintf("%d", billettholderId), eventId, pulje, sessionId, userInfo, fmt.Sprintf("%+v", interestLevel), "ASDFG")
+						logger.Info(fmt.Sprintf("%d", signals.BillettHolderId), eventId, pulje, sessionId, userInfo, fmt.Sprintf("%+v", interestLevel), "ASDFG")
 					})
 
 				})

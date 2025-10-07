@@ -1,11 +1,9 @@
 package ticketholder
 
 import (
-	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/service/requestctx"
-
-	datastar "github.com/starfederation/datastar-go/datastar"
+    "fmt"
 )
 
 // Takes a `selected` parameter to highlight the selected ticket holder
@@ -163,7 +161,8 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
 					{{ initials := GetInitials(bh.Name) }}
 					<li
 						role="option"
-						data-on-click={ datastar.PutSSE(fmt.Sprintf("/event/api/%s/interest/update/%d", eventId, bh.Id)) }
+                        data-bind="billettHolderId"
+                        data-on-click={ fmt.Sprintf("$billettHolderId = %d", bh.Id) }
 					>
 						@nameInitials(bh.Name, initials)
 					</li>
