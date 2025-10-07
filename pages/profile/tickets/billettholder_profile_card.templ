@@ -217,6 +217,18 @@ func deleteEmailFromBillettholderRoute(
 			return
 		}
 
+		if _, err := db.Exec(`
+            DELETE FROM billettholdere_users
+            WHERE billettholder_id = ? AND user_id IN (
+                SELECT u.id FROM users u
+                JOIN billettholdere_users bu ON bu.user_id = u.id
+                WHERE bu.billettholder_id = ? AND u.email = ?
+            )
+        `, billettholderID, billettholderID, email); err != nil {
+			handleError(responder, "Noe gikk galt ved fjerning av bruker-tilknytning", "Failed to delete user association: "+err.Error())
+			return
+		}
+
 		handleSuccess(responder, fmt.Sprintf("Epostadressen %s er slettet", email))
 	})
 }
