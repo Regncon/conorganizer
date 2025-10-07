@@ -8,6 +8,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
@@ -80,6 +81,31 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 
 	return associatedTicketholders, nil
 
+}
+
+func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]models.Pulje, error) {
+	puljerQuery := `SELECT pulje_id FROM event_puljer WHERE event_id = ? AND is_active = 1 AND is_published = 1`
+	rows, puljerErr := db.Query(puljerQuery, eventId)
+	if puljerErr != nil {
+		logger.Error("Failed to query event puljer", "puljerErr", puljerErr)
+		return nil, puljerErr
+	}
+	defer rows.Close()
+
+	var puljer []models.Pulje
+	for rows.Next() {
+		var puljeName models.Pulje
+		if scanErr := rows.Scan(&puljeName); scanErr != nil {
+			logger.Error("Failed to scan pulje row", "scanErr", scanErr)
+			continue
+		}
+		puljer = append(puljer, puljeName)
+	}
+	if rowsErr := rows.Err(); rowsErr != nil {
+		logger.Error("Error iterating over pulje rows", "rowsErr", rowsErr)
+	}
+
+	return puljer, nil
 }
 
 func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders []BillettHolder) BillettHolder {

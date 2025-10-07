@@ -35,13 +35,13 @@ templ TicketHolderButton(name string, selected selected) {
 
     </style>
 	<div class="ticket-holder-picker">
-		<button class={ "btn", "btn--outline", addSelectedClass(selected) }>
+		<button class={ "btn", "btn--outline", addSelectedClass_button(selected) }>
 			@nameInitials(name, initials)
 		</button>
 	</div>
 }
 
-func addSelectedClass(selected selected) string {
+func addSelectedClass_button(selected selected) string {
 	if selected == TicketHolderSelected {
 		return "btn--selected"
 	}

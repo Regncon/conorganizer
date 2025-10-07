@@ -129,9 +129,10 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			eventIdRouter.Route("/interest", func(eventInterest chi.Router) {
 				eventInterest.Route("/update", func(updateInterestRouter chi.Router) {
 
-					updateInterestRouter.Put("/{pulje}/{interestLevel}", func(w http.ResponseWriter, r *http.Request) {
+					updateInterestRouter.Put("/{interestLevel}", func(w http.ResponseWriter, r *http.Request) {
 						type Put struct {
-							BillettHolderId int `json:"billettHolderId"`
+							BillettHolderId int    `json:"billettHolderId"`
+							PuljeId         string `json:"puljeId"`
 						}
 						signals := &Put{}
 
@@ -140,7 +141,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
 						}
-
+						fmt.Printf("Signals: %+v\n", signals)
 						ctx := r.Context()
 						userInfo := userctx.GetUserRequestInfo(ctx)
 						// billettholderId, err := strconv.Atoi(chi.URLParam(r, "billettholderId"))
@@ -151,7 +152,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						// }
 
 						eventId := chi.URLParam(r, "idx")
-						pulje := chi.URLParam(r, "pulje")
 						// convert interestLevel string to InterestLevels struct
 						var interestLevel InterestLevels
 
@@ -172,9 +172,9 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							return
 						}
 
-						updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, pulje, db, logger)
+						updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db, logger)
 
-						logger.Info(fmt.Sprintf("%d", signals.BillettHolderId), eventId, pulje, sessionId, userInfo, fmt.Sprintf("%+v", interestLevel), "ASDFG")
+						logger.Info(fmt.Sprintf("%d", signals.BillettHolderId), eventId, signals.PuljeId, sessionId, userInfo, fmt.Sprintf("%+v", interestLevel), "ASDFG")
 					})
 
 				})
