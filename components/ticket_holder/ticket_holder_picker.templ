@@ -39,4 +39,14 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders, TicketHolderUnselected)
 		</div>
 	}
+
+    <script>
+        const billettHolderButtonPickerButton = document.querySelectorAll(`.billett-holder-picker-button`);
+        billettHolderButtonPickerButton.forEach(button => {
+            button.addEventListener('click', (ev) => {
+                const currentBillettHolder = ev.currentTarget.dataset.currentBillettHolder
+                localStorage.setItem(LSEnum.SelectedBilletHolder, currentBillettHolder);
+            });
+        });
+    </script>
 }
