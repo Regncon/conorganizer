@@ -12,12 +12,13 @@ import (
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/checkIn"
+	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-templ profileTicketsPage(userId string, db *sql.DB) {
+templ profileTicketsPage(userId string, db *sql.DB, logger *slog.Logger) {
 	<div id="profile-tickets-page-wrapper">
-		@profileTicketsPageContent(userId, db)
+		@profileTicketsPageContent(userId, db, logger)
 	</div>
 }
 
@@ -92,8 +93,8 @@ func getTicketsRouter(
 	})
 }
 
-templ profileTicketsPageContent(userId string, db *sql.DB) {
-	{{ billettholders, err := getBillettholdersByUserId(userId, db) }}
+templ profileTicketsPageContent(userId string, db *sql.DB, logger *slog.Logger) {
+	{{ billettholdere, err := billettholderService.GetBilettholdere(userId, db, logger) }}
 	if err != nil {
 		<p>Feil ved henting av billettar: { err.Error() }</p>
 	}
@@ -130,7 +131,7 @@ templ profileTicketsPageContent(userId string, db *sql.DB) {
 					gap: 1rem;
 				}
 			</style>
-			for _, billettholder := range billettholders {
+			for _, billettholder := range billettholdere {
 				@billettholderCard(billettholder)
 			}
 		</div>
