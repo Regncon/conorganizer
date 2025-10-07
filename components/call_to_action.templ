@@ -6,6 +6,7 @@ templ CallToAction() {
 			background-color: black;
 			max-width: 1400px;
 			margin: 0 auto;
+			margin-top: var(--responsive-top-of-page-spacing);
 			display: grid;
 			grid-template-columns: 1fr;
 		}
@@ -32,7 +33,7 @@ templ CallToAction() {
 		}
 		@container main (width > 600px) {
 			.call-to-action-content {
-				padding: var(--spacing-5x) var(--spacing-10x)
+				padding: var(--spacing-5x) var(--spacing-10x);
 			}
 		}
 		@container main (width > 800px) {
