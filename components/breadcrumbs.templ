@@ -8,6 +8,7 @@ type BreadcrumbPath struct {
 templ Breadcrumbs(paths []BreadcrumbPath) {
 	<style>
 		.breadcrumb-container {
+			border-bottom: 1px solid var(--bg-item);
 			min-height: 50px;
 		}
 
@@ -46,11 +47,28 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 					white-space: nowrap;
 			}
 		}
+
+		.breadcrumbs-extra-content {
+			flex-shrink: 0;
+		}
+
+		/* 
+		  Exclusively for mobile sizes, if Breadcrumb has children, sticky to top of page.
+			Otherwise hide the breadcrumb container on mobile.
+		 */
+		@container main (width <= 600px) {
+			.breadcrumb-container:has(.breadcrumbs-extra-content > *) {
+				position: sticky;
+				top: 0;
+				background-color: var(--bg-base);
+				z-index: var(--subnav-z-index);
+			}
+			.breadcrumb-container:not(:has(.breadcrumbs-extra-content > *)) {
+				display: none;
+			}
+		}
 		
 		@container main (width > 600px) {
-			.breadcrumb-container {
-				border-bottom: 1px solid var(--bg-item);
-			}
 			.breadcrumb-content-justify {
 				justify-content: space-between;
 			}
@@ -61,6 +79,7 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 				width: 100%;
 				overflow: hidden;
 			}
+			
 		}
 	</style>
 	<div class="breadcrumb-container">
@@ -75,7 +94,7 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 					}
 				}
 			</div>
-			<div style="flex-shrink: 0;">
+			<div class="breadcrumbs-extra-content">
 				{ children... }
 			</div>
 		</div>
