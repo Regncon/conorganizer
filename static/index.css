@@ -24,17 +24,12 @@
 
     --color-disabled: #CCD1E980;
 
-    --bg-base: var(--bg-body-100);
+    --bg-tooltip: #11111b;
+    --bg-base: #1A1B26;
     --bg-surface: #252735;
-    --bg-item: var(--bg-body-90);
-    --bg-item-border: #494d62;
-
-    --bg-body-100: #1A1B26;
-    --bg-body-90: #35394A;
-    --bg-body-80: #474446;
-    --bg-body-70: #575255;
-    --bg-body-60: #666064;
-    --bg-body-50: #756e73;
+    --bg-item: #35394A;
+    /* This is a border for surface and item both */
+    --bg-item-border: #494D62;
 
     /* text & font */
     --text-body: 16px;
@@ -69,7 +64,10 @@
 
     /* nav */
     --nav-height: 4rem;
-    --nav-z-index: 10;
+    
+    /* z-index */
+    --nav-z-index: 50;
+    --subnav-z-index: 10;
 
     /* responsively size gap between panes in the same column of content */
     --responsive-pane-column-spacing: var(--spacing-4x);
@@ -206,6 +204,31 @@ p+p {
     margin-top: 1rem
 }
 
+.inline-icon {
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+.icon-size-16 {
+    width: 16px;
+    height: 16px;
+}
+
+.icon-size-20 {
+    width: 20px;
+    height: 20px;
+}
+
+.icon-size-24 {
+    width: 24px;
+    height: 24px;
+}
+
+.icon-size-32 {
+    width: 32px;
+    height: 32px;
+}
+
 hr {
     width: 100%;
     height: 2px;
@@ -335,4 +358,22 @@ input {
     background-color: var(--bg-item);
     border-radius: var(--border-radius-2x);
     font-size: 0.9rem;
+}
+
+.tippy-tooltip {
+    background-color: var(--bg-tooltip);
+    color: var(--color-primary-text);
+    padding: var(--spacing-1x);
+}
+.tippy-tooltip[data-placement^='top'] .tippy-arrow {
+    border-top-color: var(--bg-tooltip);
+}
+.tippy-tooltip[data-placement^='bottom'] .tippy-arrow {
+    border-bottom-color: var(--bg-tooltip);
+}
+.tippy-tooltip[data-placement^='left'] .tippy-arrow {
+    border-left-color: var(--bg-tooltip);
+}
+.tippy-tooltip[data-placement^='right'] .tippy-arrow {
+    border-right-color: var(--bg-tooltip);
 }

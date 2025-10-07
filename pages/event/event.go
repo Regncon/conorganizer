@@ -9,7 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Regncon/conorganizer/pages/index"
+	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -41,9 +42,9 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return fmt.Errorf("error creating key value: %w", err)
 	}
 
-	resetMVC := func(mvc *index.TodoMVC) {
-		mvc.Mode = index.TodoViewModeAll
-		mvc.Todos = []*index.Todo{
+	resetMVC := func(mvc *root.TodoMVC) {
+		mvc.Mode = root.TodoViewModeAll
+		mvc.Todos = []*root.Todo{
 			{Text: "Learn a backend language", Completed: true},
 			{Text: "Learn Datastar", Completed: false},
 			{Text: "Create Hypermedia", Completed: false},
@@ -53,14 +54,14 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		mvc.EditingIdx = -1
 	}
 
-	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *index.TodoMVC, error) {
+	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
 		if err != nil {
 			return "", nil, fmt.Errorf("failed to get session id: %w", err)
 		}
 
-		mvc := &index.TodoMVC{}
+		mvc := &root.TodoMVC{}
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
@@ -114,7 +115,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						c := event_page(eventID, logger, db, eventImageDir)
+						isAdmin := authctx.GetAdminFromUserToken(ctx)
+						c := event_page(eventID, isAdmin, logger, db, eventImageDir, r)
 						if err := sse.PatchElementTempl(c); err != nil {
 							sse.ConsoleError(err)
 							return
@@ -128,7 +130,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	return nil
 }
 
-func saveMVC(ctx context.Context, mvc *index.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
+func saveMVC(ctx context.Context, mvc *root.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
 	b, err := json.Marshal(mvc)
 	if err != nil {
 		return fmt.Errorf("failed to marshal mvc: %w", err)

@@ -3,6 +3,6 @@ dbs:
     replicas:
       - type: s3
         bucket: shy-dream-5275
-        path: eventsdb_1_0_2
+        path: eventsdb_1_0_3
         endpoint: https://fly.storage.tigris.dev
         force-path-style: true

@@ -1,7 +1,7 @@
 package layouts
 
 import (
-	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/header"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
@@ -19,13 +19,25 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, children templ.Com
 			/>
 			<link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
 			<script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@main/bundles/datastar.js"></script>
+			<link rel="stylesheet" href="https://unpkg.com/tippy.js@5/dist/backdrop.css"/>
+			<link rel="stylesheet" href="https://unpkg.com/tippy.js@5/animations/scale-subtle.css"/>
 			<link href="/static/index.css" rel="stylesheet" type="text/css"/>
 			<link href="/static/css/layout.css" rel="stylesheet" type="text/css"/>
+			<link href="/static/css/card.css" rel="stylesheet" type="text/css"/>
 			<link href="/static/buttons.css" rel="stylesheet" type="text/css"/>
+			<script src="https://unpkg.com/popper.js@1"></script>
+			<script src="https://unpkg.com/tippy.js@5"></script>
+			<script>
+				window.onload = function() {
+					tippy('[data-tippy-content]', {
+						animation: 'scale-subtle'
+					});
+				}
+			</script>
 		</head>
 		<body>
 			<main>
-				@components.Menu(userInfo)
+				@header.Menu(userInfo)
 				@children
 				<div class="page-footer"></div>
 			</main>

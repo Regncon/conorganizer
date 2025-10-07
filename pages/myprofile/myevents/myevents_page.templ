@@ -74,7 +74,7 @@ templ events(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logg
 	}
 	if len(events) > 0 {
 		for _, event := range events {
-			@components.EventCard(event, eventImageDir, true)
+			@components.EventCard(event, eventImageDir, true, "")
 		}
 		@createEvent()
 	}
