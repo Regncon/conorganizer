@@ -1,16 +1,16 @@
 package profileticketspage
 
 import (
+	"log/slog"
+	"net/http"
 	"database/sql"
-	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/layouts"
-	"github.com/Regncon/conorganizer/service/checkIn"
+
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
-	"log/slog"
-	"net/http"
+	"github.com/Regncon/conorganizer/layouts"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
@@ -19,13 +19,10 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 			var ctx = r.Context()
 			var user = userctx.GetUserRequestInfo(ctx)
 
-			// todo: enable error checking
-			tickets, _ := checkIn.GetTicketsFromCheckIn(logger, user.Email)
-
 			layouts.Base(
 				"Mine Biletter",
 				user,
-				profileTicketsPage(tickets),
+				profileTicketsIndex(db),
 			).Render(ctx, w)
 		})
 	})
@@ -33,48 +30,8 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 	return nil
 }
 
-templ profileTicketsPage(tickets []checkIn.CheckInTicket) {
-	@components.Breadcrumbs([]components.BreadcrumbPath{
-		{Name: "Hjem", Url: "/"},
-		{Name: "Min Side", Url: "/profile"},
-		{Name: "Billetter", Url: ""},
-	})
-	<section class="page-content-container">
-		<h1 class="page-heading">Mine Billetter</h1>
-		if len(tickets) > 0 {
-			<i>
-				Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett nedanfor,
-				slik at kvar deltakar kan melda seg på arrangement på eiga hand.
-			</i>
-		} else {
-			<p>
-				Vi fann ingen billettar registrert på denne epostadressa. Det betyr at du anten ikkje har kjøpt billettar
-				endå, eller at du har kjøpt billettane på ei anna anna epostadresse enn den du er logga inn med her.
-			</p>
-			<p>
-				<a class="btn-buy-ticket" href="https://event.checkin.no/109715/regncon-xxxiii-2025">Kjøp billetter ↗️</a>, lag ein brukar på riktig mailadresse, eller ta kontakt med <a class="mailto" href="mailto:styret@regncon.no">styret@regncon.no</a> noko
-				er galt, eller om du ønsker billettane overført til epostadressa du har laga brukar til.
-			</p>
-		}
-		for thicket,_ := range tickets {
-			<div class="card-wrapper">
-				<p>test: { thicket }</p>
-				<p>Spesialpris</p>
-				<p>Sleiv Sleivsogn</p>
-				<p>Bestilling: 12743193</p>
-				<div class="connect-email">
-					<input type="text" placeholder="E-Postadresse"/>
-					<button>Koble til epost</button>
-				</div>
-				<p>Bilett epost: sleiv@sleivsogn.no</p>
-				<p>Bestillings epost 1: skeiv@sleivsogn.no</p>
-				<div class="connected-emails">
-					<p>
-						Kobledt epost 1: sleiv@sleivesein.no
-					</p>
-					<button>🚮</button>
-				</div>
-			</div>
-		}
-	</section>
+templ profileTicketsIndex(db *sql.DB) {
+	<div id="profile-tickets-page-wrapper" data-on-load={ datastar.GetSSE("/profile/tickets/api") }>
+		@profileTicketsPageContent(db)
+	</div>
 }

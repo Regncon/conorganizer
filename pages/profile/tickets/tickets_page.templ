@@ -1,0 +1,35 @@
+package profileticketspage
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/components"
+)
+
+templ profileTicketsPage(db *sql.DB) {
+	<div id="profile-tickes-page-wrapper">
+		@profileTicketsPageContent(db)
+	</div>
+}
+
+templ profileTicketsPageContent(db *sql.DB) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Min Side", Url: "/profile"},
+		{Name: "Billetter", Url: ""},
+	})
+	<section class="page-content-container">
+		<h1 class="page-heading">Mine Billetter</h1>
+			<i>
+				Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett nedanfor,
+				slik at kvar deltakar kan melda seg på arrangement på eiga hand.
+			</i>
+			<p>
+				Vi fann ingen billettar registrert på denne epostadressa. Det betyr at du anten ikkje har kjøpt billettar
+				endå, eller at du har kjøpt billettane på ei anna anna epostadresse enn den du er logga inn med her.
+			</p>
+			<p>
+				<a class="btn-buy-ticket" href="https://event.checkin.no/109715/regncon-xxxiii-2025">Kjøp billetter ↗️</a>, lag ein brukar på riktig mailadresse, eller ta kontakt med <a class="mailto" href="mailto:styret@regncon.no">styret@regncon.no</a> noko
+				er galt, eller om du ønsker billettane overført til epostadressa du har laga brukar til.
+			</p>
+	</section>
+}
