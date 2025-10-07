@@ -264,7 +264,7 @@ templ billettholderCard(billettholder models.Billettholder) {
 					if email.Kind == "Manual" {
 						<button
 							class="btn btn--ghost"
-							data-on-click={ datastar.PostSSE("/admin/billettholder/api/delete-email/%d/%d/", billettholder.ID, email.ID) }
+							data-on-click={ datastar.PostSSE("/profile/tickets/api/delete-email/%d/%d/", billettholder.ID, email.ID) }
 							title="Slett epostadresse"
 						>
 							Slett
@@ -288,7 +288,7 @@ templ billettholderCard(billettholder models.Billettholder) {
 		></strong>
 		<button
 			class="btn btn--outline"
-			data-on-click={ datastar.PostSSE("/admin/billettholder/api/new-email/%d/", billettholder.ID) }
+			data-on-click={ datastar.PostSSE("/profile/tickets/api/new-email/%d/", billettholder.ID) }
 		>
 			Legg til epost
 		</button>

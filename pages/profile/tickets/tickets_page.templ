@@ -10,7 +10,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/checkIn"
 	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -20,34 +19,6 @@ templ profileTicketsPage(userId string, db *sql.DB, logger *slog.Logger) {
 	<div id="profile-tickets-page-wrapper">
 		@profileTicketsPageContent(userId, db, logger)
 	</div>
-}
-
-func getBillettholdersByUserId(userId string, db *sql.DB) ([]models.Billettholder, error) {
-
-	var billettholders []models.Billettholder
-	rows, err := db.Query(`
-        SELECT b.id, b.first_name, b.last_name, b.ticket_type_id, b.ticket_type, b.is_over_18, b.order_id, b.ticket_id, b.inserted_time
-        FROM billettholdere b
-        JOIN billettholdere_users bu ON b.id = bu.billettholder_id
-        JOIN users u ON bu.user_id = u.id
-        WHERE u.user_id = ?
-    `, userId)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var bh models.Billettholder
-		err := rows.Scan(&bh.ID, &bh.FirstName, &bh.LastName, &bh.TicketTypeId, &bh.TicketType, &bh.IsOver18, &bh.OrderID, &bh.TicketID, &bh.InsertedTime)
-		if err != nil {
-			return nil, err
-		}
-		billettholders = append(billettholders, bh)
-	}
-	if err = rows.Err(); err != nil {
-		return nil, err
-	}
-	return billettholders, nil
 }
 
 func getTicketsRouter(

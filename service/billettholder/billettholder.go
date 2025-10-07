@@ -9,28 +9,6 @@ import (
 )
 
 func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.Billettholder, error) {
-	/* if userId is not empty, get the billettholdere for that user only
-			var billettholders []models.Billettholder
-			rows, err := db.Query(`
-		        SELECT b.id, b.first_name, b.last_name, b.ticket_type_id, b.ticket_type, b.is_over_18, b.order_id, b.ticket_id, b.inserted_time
-		        FROM billettholdere b
-		        JOIN billettholdere_users bu ON b.id = bu.billettholder_id
-		        JOIN users u ON bu.user_id = u.id
-		        WHERE u.user_id = ?
-		    `, userId)
-
-
-	old query:
-			SELECT
-				b.id, b.first_name, b.last_name, b.ticket_type_id, b.ticket_type,
-				b.is_over_18, b.order_id, b.ticket_id, b.inserted_time,
-
-				e.id, e.email, e.kind, e.inserted_time
-			FROM billettholdere AS b
-			LEFT JOIN billettholder_emails AS e
-			  ON b.id = e.billettholder_id
-			ORDER BY b.id, e.id
-	*/
 	var rows *sql.Rows
 	var err error
 	if userId == "" {
