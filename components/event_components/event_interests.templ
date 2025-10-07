@@ -29,7 +29,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
         }
 
         .interest-dialog[open] {
-            --dialog-width: min(30rem, 90%);
+            --dialog-width: min(32.5rem, 90%);
             visibility: visible;
             display: grid;
             width: var(--dialog-width);
@@ -81,6 +81,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
 				</form>
 			</header>
 			@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
+            @ticketholder.TicketHolderPuljePicker()
 			<code>
 				<pre data-json-signals></pre>
 			</code>

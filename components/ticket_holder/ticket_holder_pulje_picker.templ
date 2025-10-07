@@ -1,0 +1,54 @@
+package ticketholder
+
+templ TicketHolderPuljePicker() {
+
+	<style>
+
+    .pulje-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-2x);
+
+        .selected {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .btn {
+            font-size: 12px;
+            border-radius: var(--border-radius-2x);
+            padding: 0;
+            text-align: center;
+            min-height: 3rem;
+        }
+    }
+
+    @container interest-dialog (width > 23.9375rem) {
+        .pulje-wrapper {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+
+            .btn {
+                padding-inline: var(--spacing-4x);
+                font-size: 16px;
+                min-height: 7.125rem;
+                min-height: 4.5rem;
+            }
+        }
+    }
+
+    </style>
+	<div class="pulje-wrapper">
+	    <button class="btn btn--outline item-card selected">
+            Fredag kveld
+        </button>
+    	<button class="btn btn--outline item-card" disabled>
+            Lørdag morgen
+        </button>
+    	<button class="btn btn--outline item-card" disabled>
+            Lørdag kveld
+        </button>
+    	<button class="btn btn--outline item-card">
+            Søndag morgen
+        </button>
+	</div>
+}
