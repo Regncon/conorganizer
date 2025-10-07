@@ -35,7 +35,9 @@
     --text-body: 16px;
     --text-heading-1-xl: 52px;
     --text-heading-1: 40px;
+    --text-heading-1-mobile: 32px;
     --text-heading-2: 32px;
+    --text-heading-2-mobile: 24px;
     --text-heading-3: 16px;
     --text-heading-4: 12px;
     --text-article: 20px;
@@ -69,12 +71,26 @@
     --nav-z-index: 50;
     --subnav-z-index: 10;
 
-    /* responsively size gap between panes in the same column of content */
+    /* responsively size some gap variables so this doesn't have to be redefined */
+    --responsive-top-of-page-spacing: var(--spacing-4x);
     --responsive-pane-column-spacing: var(--spacing-4x);
+    --responsive-page-section-spacing: var(--spacing-8x);
+    --responsive-h2-margin: var(--spacing-4x);
 }
 
 @media screen and (width > 600px) {
     :root {
+        --responsive-top-of-page-spacing: var(--spacing-5x);
+        --responsive-pane-column-spacing: var(--spacing-5x);
+        --responsive-page-section-spacing: var(--spacing-8x);
+        --responsive-h2-margin: var(--spacing-5x);
+    }
+}
+
+@media screen and (width > 1200px) {
+    :root {
+        --responsive-top-of-page-spacing: var(--spacing-10x);
+        --responsive-page-section-spacing: var(--spacing-10x);
         --responsive-pane-column-spacing: var(--spacing-8x);
     }
 }
@@ -146,12 +162,12 @@ body {
 }
 
 h1 {
-    margin: 0;
+    font-size: var(--text-heading-1-mobile);
     color: var(--color-text-strong);
+    margin: 0;
 }
 
 h1.page-heading {
-    font-size: 32px;
     margin: var(--spacing-5x) 0;
 
     &.has-helptext {
@@ -159,14 +175,26 @@ h1.page-heading {
     }
 }
 
+h2 {
+    font-size: var(--text-heading-2-mobile);
+    color: var(--color-text-strong);
+    margin: 0;
+}
+
 .page-heading-helptext {
     margin-bottom: var(--spacing-5x);
 }
 
 @container main (width > 600px) {
+    h1 {
+        font-size: var(--text-heading-1);
+    }
     h1.page-heading {
-        font-size: 40px;
         margin: var(--spacing-8x) 0;
+    }
+
+    h2 {
+        font-size: var(--text-heading-2);
     }
 
     .page-heading-helptext {
@@ -350,6 +378,9 @@ input {
 
 .form-card-title, /* deprecate this class, use surface-pane instead */
 .surface-pane-title {
+    font-size: var(--text-heading-4);
+    font-weight: normal;
+    color: var(--color-text-soft);
     margin-bottom: var(--spacing-3x);
 }
 

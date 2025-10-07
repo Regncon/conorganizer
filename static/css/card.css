@@ -1,7 +1,13 @@
+/*
+  Styles for card-shaped event elements
+*/
 .event-card-container {
     display: grid;
     grid-template-rows: 180px minmax(110px, 1fr) min-content;
-    grid-template-columns: minmax(300px, 1fr); /* min-width to fit smallest mobile size */
+    grid-template-columns: minmax(
+        300px,
+        1fr
+    ); /* min-width to fit smallest mobile size */
     color: var(--color-primary-text);
     background-color: var(--bg-surface);
     border-radius: var(--border-radius-1x);
@@ -102,4 +108,48 @@
 }
 .event-card-tagicon-container:hover {
     color: var(--color-text-strong);
+}
+
+/* 
+  Styles for bar-shaped event elements, primarily on the admin page,
+  can extend to also cover styles for profile event bars (e.g. inside expandable interest list)
+*/
+.event-bar-container {
+    color: var(--color-primary-text);
+    border: solid;
+    background-color: var(--bg-surface);
+    border-radius: var(--border-radius-2x);
+    border-color: var(--bg-item-border);
+    border-width: 1px;
+    box-sizing: border-box;
+    display: block;
+    text-decoration: none;
+    width: 100%;
+    min-height: 70px;
+    padding: var(--spacing-3x) var(--spacing-4x);
+    box-sizing: border-box;
+    transition: border-color 120ms ease-in-out;
+}
+.event-bar-container:hover {
+    border-color: var(--color-primary);
+}
+
+.event-bar-title {
+    white-space: nowrap;
+    overflow: clip;
+    text-overflow: ellipsis;
+    margin: 0 0 var(--spacing-1x);
+    color: var(--color-primary-text);
+    font-size: 19px;
+    font-weight: 600;
+}
+
+.event-bar-subtitle {
+    white-space: nowrap;
+    overflow: clip;
+    text-overflow: ellipsis;
+    margin: 0;
+    color: var(--color-primary);
+    font-size: 14px;
+    font-weight: 500;
 }
