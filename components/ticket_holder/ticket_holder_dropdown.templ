@@ -26,11 +26,7 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
                 place-items: center;
                 width: 100%;
                 cursor: pointer;
-                user-select: none;
-                -moz-user-select: none;
-                -khtml-user-select: none;
-                -webkit-user-select: none;
-                -o-user-select: none;
+
                 padding-inline: var(--spacing-4x);
                 padding-block: var(--spacing-3x);
 
@@ -130,7 +126,7 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
 		<div class="custom-select">
 			<button
 				id="dropdown-button"
-				class="select-button input"
+				class="select-button input no-marking"
 				role="combobox"
 				aria-label="select button"
 				aria-haspopup="listbox"

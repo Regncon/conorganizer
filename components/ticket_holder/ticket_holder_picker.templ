@@ -4,18 +4,17 @@ import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
+    "fmt"
 )
 
 templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, logger *slog.Logger) {
 	<style>
-        .ticket-holder-picker-container  {
-            container-type: inline-size;
-            container-name: ticket-holder-picker-container;
 
-            .selected {
-                border-color: black;
-            }
+        .ticket-holder-picker-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 154px));
         }
+
 
     </style>
 	{{
@@ -23,16 +22,20 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	if err != nil {
 		logger.Error("Failed to get ticket holders", "error", err)
 	}
+    fmt.Println(len(associatedTicketHolders))
 	}}
 	if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
-		<div class="ticket-holder-picker">
-			for _, th := range associatedTicketHolders {
-				@TicketHolderButton(th.Name, TicketHolderUnselected)
+        <p class="label">Velg billettholder</p>
+		<div class="ticket-holder-picker-buttons">
+			for _, billettHolder := range associatedTicketHolders {
+				@TicketHolderButton(billettHolder)
 			}
 		</div>
 	}
+
 	if (len(associatedTicketHolders) > 3) {
-		<div class="ticket-holder-picker">
+        <p class="label">Velg billettholder</p>
+		<div class="ticket-holder-picker-dropdown">
 			@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders, TicketHolderUnselected)
 		</div>
 	}

@@ -1,5 +1,7 @@
 package ticketholder
 
+import "fmt"
+
 type selected string
 
 const (
@@ -8,10 +10,8 @@ const (
 )
 
 // Takes a `selected` parameter to highlight the selected ticket holder
-templ TicketHolderButton(name string, selected selected) {
-	{{
-	initials := GetInitials(name)
-	}}
+templ TicketHolderButton(currentBillettHolder BillettHolder) {
+	{{ initials := GetInitials(currentBillettHolder.Name) }}
 	<style>
 
         .ticket-holder-picker {
@@ -27,7 +27,7 @@ templ TicketHolderButton(name string, selected selected) {
 
             }
 
-            .btn--selected {
+            .selected {
                 border-color: var(--color-primary);
                 color: var(--color-primary);
             }
@@ -35,15 +35,12 @@ templ TicketHolderButton(name string, selected selected) {
 
     </style>
 	<div class="ticket-holder-picker">
-		<button class={ "btn", "btn--outline", addSelectedClass_button(selected) }>
-			@nameInitials(name, initials)
+		<button
+            class="btn btn--outline no-marking billett-holder-picker-button"
+            data-class-selected={ fmt.Sprintf("$billettHolderId == '%d'", currentBillettHolder.Id) }
+            data-on-click={ fmt.Sprintf("$billettHolderId = '%d'", currentBillettHolder.Id) }
+            >
+			@nameInitials(currentBillettHolder.Name, initials)
 		</button>
 	</div>
-}
-
-func addSelectedClass_button(selected selected) string {
-	if selected == TicketHolderSelected {
-		return "btn--selected"
-	}
-	return ""
 }

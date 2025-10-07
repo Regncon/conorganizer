@@ -58,26 +58,26 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 		Name:  "Leonard Moreno",
 		Id:    1,
 	})
-	associatedTicketholders = append(associatedTicketholders, BillettHolder{
-		Email: "lacbe@lecuc.my",
-		Name:  "Olive Berry",
-		Id:    2,
-	})
-	associatedTicketholders = append(associatedTicketholders, BillettHolder{
-		Email: "mijinpu@posrik.cz",
-		Name:  "Bobby Silva",
-		Id:    3,
-	})
-	associatedTicketholders = append(associatedTicketholders, BillettHolder{
-		Email: "igkir@mukpunuc.be",
-		Name:  "Bertha Francis",
-		Id:    5,
-	})
-	associatedTicketholders = append(associatedTicketholders, BillettHolder{
-		Email: "ruidavuf@otavig.gy",
-		Name:  "Mario Ross",
-		Id:    6,
-	})
+	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
+	// 	Email: "lacbe@lecuc.my",
+	// 	Name:  "Olive Berry",
+	// 	Id:    2,
+	// })
+	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
+	// 	Email: "mijinpu@posrik.cz",
+	// 	Name:  "Bobby Silva",
+	// 	Id:    3,
+	// })
+	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
+	// 	Email: "igkir@mukpunuc.be",
+	// 	Name:  "Bertha Francis",
+	// 	Id:    5,
+	// })
+	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
+	// 	Email: "ruidavuf@otavig.gy",
+	// 	Name:  "Mario Ross",
+	// 	Id:    6,
+	// })
 
 	return associatedTicketholders, nil
 
