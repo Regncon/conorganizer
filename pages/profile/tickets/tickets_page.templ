@@ -22,49 +22,14 @@ templ profileTicketsPage(userId string, db *sql.DB) {
 }
 
 func getBillettholdersByUserId(userId string, db *sql.DB) ([]models.Billettholder, error) {
+
 	var billettholders []models.Billettholder
-	/*
-
-				CREATE TABLE
-				    IF NOT EXISTS "billettholdere" (
-				        id INTEGER PRIMARY KEY AUTOINCREMENT,
-				        first_name TEXT NOT NULL,
-				        last_name TEXT NOT NULL,
-				        ticket_type_id INTEGER NOT NULL,
-				        ticket_type TEXT NOT NULL,
-				        is_over_18 BOOLEAN NOT NULL,
-				        order_id INTEGER NOT NULL,
-				        ticket_id INTEGER NOT NULL UNIQUE,
-				        inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-				    );
-					   CREATE TABLE
-					       billettholdere_users (
-					           billettholder_id INTEGER NOT NULL,
-					           user_id INTEGER NOT NULL,
-					           inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-					           PRIMARY KEY (billettholder_id, user_id),
-					           FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
-					           FOREIGN KEY (user_id) REFERENCES users (id)
-					       );
-
-		type Billettholder struct {
-			ID           int                  `json:"id"`
-			FirstName    string               `json:"first_name"`
-			LastName     string               `json:"last_name"`
-			Emails       []BillettholderEmail `json:"emails,omitempty"`
-			TicketTypeId int                  `json:"ticket_type_id"`
-			TicketType   string               `json:"ticket_type"`
-			IsOver18     bool                 `json:"is_over_18"`
-			OrderID      int                  `json:"order_id"`
-			TicketID     int                  `json:"ticket_id"`
-			InsertedTime time.Time            `json:"inserted_time"`
-		}
-	*/
 	rows, err := db.Query(`
         SELECT b.id, b.first_name, b.last_name, b.ticket_type_id, b.ticket_type, b.is_over_18, b.order_id, b.ticket_id, b.inserted_time
         FROM billettholdere b
         JOIN billettholdere_users bu ON b.id = bu.billettholder_id
-        WHERE bu.user_id = ?
+        JOIN users u ON bu.user_id = u.id
+        WHERE u.user_id = ?
     `, userId)
 	if err != nil {
 		return nil, err
@@ -82,7 +47,6 @@ func getBillettholdersByUserId(userId string, db *sql.DB) ([]models.Billettholde
 		return nil, err
 	}
 	return billettholders, nil
-
 }
 
 func getTicketsRouter(
