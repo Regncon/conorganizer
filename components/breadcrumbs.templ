@@ -4,11 +4,11 @@ type BreadcrumbPath struct {
 	Name string
 	Url  string
 }
+
 templ Breadcrumbs(paths []BreadcrumbPath) {
 	<style>
 		.breadcrumb-container {
-			border-bottom: 1px solid var(--bg-item);
-			min-height: 40px;
+			min-height: 50px;
 		}
 
 		.breadcrumb-content-justify {
@@ -20,9 +20,7 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 		}
 
 		.breadcrumbs {
-			display: flex;
-			gap: 0.5rem;
-			padding: var(--spacing-5x) 0;
+				display: none;
 
 			a {
 					color: var(--color-text-strong);
@@ -47,6 +45,19 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 					white-space: nowrap;
 			}
 		}
+		
+		@container main (width > 600px) {
+			.breadcrumb-container {
+				border-bottom: 1px solid var(--bg-item);
+			}
+			.breadcrumbs {
+				display: flex;
+				gap: 0.5rem;
+				padding: var(--spacing-5x) 0;
+				width: 100%;
+				overflow: hidden;
+			}
+		}
 	</style>
 	<div class="breadcrumb-container">
 		<div class="page-content-container wide-content breadcrumb-content-justify">
@@ -60,7 +71,7 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 					}
 				}
 			</div>
-			<div>
+			<div style="flex-shrink: 0;">
 				{ children... }
 			</div>
 		</div>
