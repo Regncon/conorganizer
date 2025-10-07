@@ -87,10 +87,30 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, db *sq
 			<div
 				class="interest-buttons"
 			>
-				<button class="btn btn--interest" data-on-click={ datastar.PutSSE("/event/api/8759e4c87f4f82d5/interest/update/4/fredagKveld/high") }><span class="emoji">🤩</span> Veldig interessert</button>
-				<button class="btn btn--interest" data-on-click={ datastar.PutSSE("/event/api/8759e4c87f4f82d5/interest/update/4/fredagKveld/medium") }><span class="emoji">🙂</span> Interessert</button>
-				<button class="btn btn--interest" data-on-click={ datastar.PutSSE("/event/api/8759e4c87f4f82d5/interest/update/4/fredagKveld/low") }><span class="emoji">🤨</span> Litt interessert </button>
-				<button class="btn btn--interest" data-on-click={ datastar.PutSSE("/event/api/8759e4c87f4f82d5/interest/update/4/fredagKveld/none") }><span class="emoji">😑</span> Ikke interessert</button>
+				<button
+					class="btn btn--interest"
+					data-on-click={ datastar.PutSSE(fmt.Sprintf("/event/api/%s/interest/update/4/%s/high", eventId, pulje)) }
+				>
+					<span class="emoji">🤩</span> Veldig interessert
+				</button>
+				<button
+					class="btn btn--interest"
+					data-on-click={ datastar.PutSSE(fmt.Sprintf("/event/api/%s/interest/update/4/%s/medium", eventId, pulje)) }
+				>
+					<span class="emoji">🙂</span> Interessert
+				</button>
+				<button
+					class="btn btn--interest"
+					data-on-click={ datastar.PutSSE(fmt.Sprintf("/event/api/%s/interest/update/4/%s/low", eventId, pulje)) }
+				>
+					<span class="emoji">🤨</span> Litt interessert
+				</button>
+				<button
+					class="btn btn--interest"
+					data-on-click={ datastar.PutSSE(fmt.Sprintf("/event/api/%s/interest/update/4/%s/none", eventId, pulje)) }
+				>
+					<span class="emoji">😑</span> Ikke interessert
+				</button>
 			</div>
 		</div>
 	</dialog>
