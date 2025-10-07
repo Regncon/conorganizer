@@ -9,29 +9,12 @@ import (
 	"net/http"
 	"encoding/json"
 
-	"github.com/gorilla/sessions"
 	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/delaneyj/toolbelt"
 	"github.com/Regncon/conorganizer/components/icons"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
-
-func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
-	sess, err := store.Get(r, "connections")
-	if err != nil {
-		return "", fmt.Errorf("failed to get session: %w", err)
-	}
-	id, ok := sess.Values["id"].(string)
-	if !ok {
-		id = toolbelt.NextEncodedID()
-		sess.Values["id"] = id
-		if err := sess.Save(r, w); err != nil {
-			return "", fmt.Errorf("failed to save session: %w", err)
-		}
-	}
-	return id, nil
-}
 
 type Responder struct {
 	BillettholderID string
