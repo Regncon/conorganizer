@@ -65,13 +65,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
                         margin-block-end: var(--spacing-1x);
                     }
 
-
-                    .interest-buttons {
-                        display: flex;
-                        flex-direction: column;
-                        gap: var(--spacing-3x);
-                    }
-
                     button .emoji {
                         font-size: 25px;
                         margin-inline-end: var(--spacing-5x);
@@ -110,32 +103,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
                 </code>
                 <div>
                     <p class="label">Velg interesse</p>
-                    <div class="interest-buttons">
-                        <button
-                            class="btn btn--interest"
-                            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/high", eventId) }
-                        >
-                            <span class="emoji">🤩</span> Veldig interessert
-                        </button>
-                        <button
-                            class="btn btn--interest"
-                            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/medium", eventId) }
-                        >
-                        <span class="emoji">🙂</span> Interessert
-                        </button>
-                        <button
-                            class="btn btn--interest"
-                            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/low", eventId) }
-                        >
-                        <span class="emoji">🤨</span> Litt interessert
-                        </button>
-                        <button
-                            class="btn btn--interest"
-                            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/none", eventId) }
-                        >
-                            <span class="emoji">😑</span> Ikke interessert
-                        </button>
-                    </div>
+                    @ticketholder.TicketHolderInterestPicker(eventId, "getBillettHolderSignal()", "puljeId", db, logger)
                 </div>
                 <p class="auto-save">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
 			</div>

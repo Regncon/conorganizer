@@ -1,0 +1,52 @@
+package ticketholder
+
+import (
+	"fmt"
+	"log/slog"
+	"database/sql"
+    "github.com/starfederation/datastar-go/datastar"
+)
+
+templ TicketHolderInterestPicker(eventId string, billettHolderId int, puljeId string, db *sql.DB, logger *slog.Logger) {
+    {{ currentInterest, _ := GetInterestForBillettHolderEventAndPulje(billettHolderId, eventId, puljeId, db, logger) }}
+	<style>
+
+    .interest-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-3x);
+    }
+
+    @container interest-dialog (width > 23.9375rem) {
+
+    }
+
+    </style>
+    {{fmt.Println(puljer)}}
+	<div class="interest-buttons">
+        <button
+            class="btn btn--interest"
+            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/high", eventId) }
+        >
+            <span class="emoji">🤩</span> Veldig interessert
+        </button>
+        <button
+            class="btn btn--interest"
+            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/medium", eventId) }
+        >
+        <span class="emoji">🙂</span> Interessert
+        </button>
+        <button
+            class="btn btn--interest"
+            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/low", eventId) }
+        >
+        <span class="emoji">🤨</span> Litt interessert
+        </button>
+        <button
+            class="btn btn--interest"
+            data-on-click={ datastar.PutSSE("/event/api/%s/interest/update/none", eventId) }
+        >
+            <span class="emoji">😑</span> Ikke interessert
+        </button>
+    </div>
+}
