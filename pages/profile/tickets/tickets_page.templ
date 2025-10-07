@@ -2,16 +2,116 @@ package profileticketspage
 
 import (
 	"database/sql"
+	"log/slog"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/models"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-templ profileTicketsPage(db *sql.DB) {
-	<div id="profile-tickes-page-wrapper">
-		@profileTicketsPageContent(db)
+templ profileTicketsPage(userId string, db *sql.DB) {
+	<div id="profile-tickets-page-wrapper">
+		@profileTicketsPageContent(userId, db)
 	</div>
 }
 
-templ profileTicketsPageContent(db *sql.DB) {
+func getBillettholdersByUserId(userId string, db *sql.DB) ([]models.Billettholder, error) {
+	var billettholders []models.Billettholder
+	/*
+
+				CREATE TABLE
+				    IF NOT EXISTS "billettholdere" (
+				        id INTEGER PRIMARY KEY AUTOINCREMENT,
+				        first_name TEXT NOT NULL,
+				        last_name TEXT NOT NULL,
+				        ticket_type_id INTEGER NOT NULL,
+				        ticket_type TEXT NOT NULL,
+				        is_over_18 BOOLEAN NOT NULL,
+				        order_id INTEGER NOT NULL,
+				        ticket_id INTEGER NOT NULL UNIQUE,
+				        inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+				    );
+					   CREATE TABLE
+					       billettholdere_users (
+					           billettholder_id INTEGER NOT NULL,
+					           user_id INTEGER NOT NULL,
+					           inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+					           PRIMARY KEY (billettholder_id, user_id),
+					           FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
+					           FOREIGN KEY (user_id) REFERENCES users (id)
+					       );
+
+		type Billettholder struct {
+			ID           int                  `json:"id"`
+			FirstName    string               `json:"first_name"`
+			LastName     string               `json:"last_name"`
+			Emails       []BillettholderEmail `json:"emails,omitempty"`
+			TicketTypeId int                  `json:"ticket_type_id"`
+			TicketType   string               `json:"ticket_type"`
+			IsOver18     bool                 `json:"is_over_18"`
+			OrderID      int                  `json:"order_id"`
+			TicketID     int                  `json:"ticket_id"`
+			InsertedTime time.Time            `json:"inserted_time"`
+		}
+	*/
+	rows, err := db.Query(`
+        SELECT b.id, b.first_name, b.last_name, b.ticket_type_id, b.ticket_type, b.is_over_18, b.order_id, b.ticket_id, b.inserted_time
+        FROM billettholdere b
+        JOIN billettholdere_users bu ON b.id = bu.billettholder_id
+        WHERE bu.user_id = ?
+    `, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var bh models.Billettholder
+		err := rows.Scan(&bh.ID, &bh.FirstName, &bh.LastName, &bh.TicketTypeId, &bh.TicketType, &bh.IsOver18, &bh.OrderID, &bh.TicketID, &bh.InsertedTime)
+		if err != nil {
+			return nil, err
+		}
+		billettholders = append(billettholders, bh)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return billettholders, nil
+
+}
+
+func getTicketsRouter(
+	router chi.Router,
+	db *sql.DB,
+	logger *slog.Logger,
+	store sessions.Store,
+	notifyUpdate func(string),
+) {
+	router.Post("/get-tickets", func(w http.ResponseWriter, r *http.Request) {
+
+		sse := datastar.NewSSE(w, r)
+
+		if err := sse.PatchSignals([]byte(`{"getTicketsErrorMessage": "Dette er en test feilmelding", "getTicketsSuccessMessage": "Funksjonen er ikkje implementert endå. Vi jobbar med saka!"}`)); err != nil {
+			logger.Error("Failed to patch signals", slog.Any("error", err))
+			http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+			return
+		}
+
+		sessionID, _ := upsertSessionID(store, r, w)
+		if notifyUpdate != nil {
+			notifyUpdate(sessionID)
+		}
+		http.Error(w, "Not implemented", http.StatusNotImplemented)
+	})
+}
+
+templ profileTicketsPageContent(userId string, db *sql.DB) {
+	{{ billettholders, err := getBillettholdersByUserId(userId, db) }}
+	if err != nil {
+		<p>Feil ved henting av billettar: { err.Error() }</p>
+	}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: "/profile"},
@@ -19,6 +119,22 @@ templ profileTicketsPageContent(db *sql.DB) {
 	})
 	<section class="page-content-container">
 		<h1 class="page-heading">Mine Billetter</h1>
+		<div style="display: flex; gap: 1rem; align-items: center; flex-direction: column;">
+			<button class="btn btn--cta" data-on-click={ datastar.PostSSE("/profile/tickets/api/get-tickets") }>
+				Hent billettar
+			</button>
+			<strong
+				style="color: var(--color-error);"
+				data-signals-getTicketsErrorMessage
+				data-text="$getTicketsErrorMessage"
+			></strong>
+			<strong
+				style="color: var(--color-success);"
+				data-signals-getTicketsSuccessMessage
+				data-text="$getTicketsSuccessMessage"
+			></strong>
+		</div>
+		<p>Fant: { len(billettholders) } billettar</p>
 		<i>
 			Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett nedanfor,
 			slik at kvar deltakar kan melda seg på arrangement på eiga hand.

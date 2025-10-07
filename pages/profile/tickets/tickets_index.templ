@@ -12,7 +12,6 @@ import (
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/Regncon/conorganizer/pages/root"
-	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
@@ -83,11 +82,11 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 			layouts.Base(
 				"Mine Biletter",
 				user,
-				profileTicketsIndex(db),
+				profileTicketsIndex(user.Id, db),
 			).Render(ctx, w)
 		})
 		profileRouter.Route("/api", func(billettholderAdminRouter chi.Router) {
-			billettholderAdminRouter.With(authctx.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
+			billettholderAdminRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				sse := datastar.NewSSE(w, r)
 				sessionID, _, err := session(w, r)
 				if err != nil {
@@ -104,8 +103,9 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 				}
 				defer sub.Unsubscribe()
 
+				var user = userctx.GetUserRequestInfo(ctx)
 				// send the first render immediately
-				if err := sse.PatchElementTempl(profileTicketsPage(db)); err != nil {
+				if err := sse.PatchElementTempl(profileTicketsPage(user.Id, db)); err != nil {
 					_ = sse.ConsoleError(err)
 					return
 				}
@@ -114,7 +114,7 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 					if _, err := sub.NextMsgWithContext(ctx); err != nil {
 						return // context cancelled or sub closed
 					}
-					if err := sse.PatchElementTempl(profileTicketsPage(db)); err != nil {
+					if err := sse.PatchElementTempl(profileTicketsPage(user.Id, db)); err != nil {
 						_ = sse.ConsoleError(err)
 						return
 					}
@@ -122,14 +122,15 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 			})
 			addEmailToBilettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
 			deleteEmailFromBillettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
+			getTicketsRouter(billettholderAdminRouter, db, logger, store, notifyUpdate)
 		})
 	})
 	return nil
 }
 
-templ profileTicketsIndex(db *sql.DB) {
+templ profileTicketsIndex(userId string, db *sql.DB) {
 	<div id="profile-tickets-page-wrapper" data-on-load={ datastar.GetSSE("/profile/tickets/api") }>
-		@profileTicketsPageContent(db)
+		@profileTicketsPageContent(userId, db)
 	</div>
 }
 
