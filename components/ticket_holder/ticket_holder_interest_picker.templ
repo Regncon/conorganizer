@@ -4,56 +4,229 @@ import (
 	"fmt"
 	"log/slog"
 	"database/sql"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/service/userctx"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-templ TicketHolderInterestPicker(eventId string, db *sql.DB, logger *slog.Logger) {
-    {{ currentInterest, _ := GetInterestForBillettHolderEventAndPulje(eventId, db, logger) }}
+type BillettholderInterest struct {
+	BillettholderId int    `json:"billettholderId"`
+	PuljeId         string `json:"puljeId"`
+	InterestLevel   string `json:"interestLevel"`
+}
+
+func getInterestLeveForUser(
+	eventId string,
+	db *sql.DB,
+	r *http.Request,
+	logger *slog.Logger) ([]BillettholderInterest, error) {
+
+	var ctx = r.Context()
+	userInfo := userctx.GetUserRequestInfo(ctx)
+
+	query := `
+        SELECT [I].billettholder_id,[I].pulje_id, [I].interest_level
+        FROM interests [I]
+        JOIN billettholdere_users [BU] ON [I].billettholder_id = [BU].billettholder_id
+        JOIN users [U] ON [BU].user_id = [U].id
+        WHERE [U].user_id = ? AND [I].event_id = ?
+    `
+	rows, err := db.Query(query, userInfo.Id, eventId)
+	if err != nil {
+		logger.Error("failed to query interests", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+	var interests []BillettholderInterest
+	for rows.Next() {
+		var interest BillettholderInterest
+		if err := rows.Scan(&interest.BillettholderId, &interest.PuljeId, &interest.InterestLevel); err != nil {
+			logger.Error("failed to scan row", "error", err)
+			return nil, err
+		}
+		interests = append(interests, interest)
+	}
+	if err := rows.Err(); err != nil {
+		logger.Error("row iteration error", "error", err)
+		return nil, err
+	}
+	return interests, nil
+
+}
+
+func getInterestLeveForBillettholder(
+	eventId string,
+	db *sql.DB,
+	r *http.Request,
+	logger *slog.Logger) (string, error) {
+	/*
+				   {]d
+				     "interestIsOpen": "",
+				     "billettHolderId": 1,
+				     "puljeId": "FredagKveld"
+				   }
+						type Store struct {
+							RoomNameFredagKveld  string `json:"roomNameFredagKveld"`
+							RoomNameLordagMorgen string `json:"roomNameLordagMorgen"`
+							RoomNameLordagKveld  string `json:"roomNameLordagKveld"`
+							RoomNameSondagMorgen string `json:"roomNameSondagMorgen"`
+						}
+						store := &Store{}
+
+						if err := datastar.ReadSignals(r, store); err != nil {
+							http.Error(w, err.Error(), http.StatusBadRequest)
+							return
+						}
+						var roomName string
+						if puljeId == string(models.PuljeFredagKveld) {
+							roomName = store.RoomNameFredagKveld
+						} else if puljeId == string(models.PuljeLordagMorgen) {
+							roomName = store.RoomNameLordagMorgen
+						} else if puljeId == string(models.PuljeLordagKveld) {
+							roomName = store.RoomNameLordagKveld
+						} else if puljeId == string(models.PuljeSondagMorgen) {
+							roomName = store.RoomNameSondagMorgen
+						} else {
+							logger.Warn("Invalid pulje ID", "puljeId", puljeId)
+							http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+							return
+		billettHolderId
+		:
+		1
+		interestIsOpen
+		:
+		""
+		puljeId
+		:
+		"FredagKveld"
+
+	*/
+	type Store struct {
+		InterestIsOpen  string `json:"interestIsOpen"`
+		BillettholderId int    `json:"billettHolderId"`
+		PujleId         string `json:"puljeId"`
+	}
+	store := &Store{}
+
+	if err := datastar.ReadSignals(r, store); err != nil {
+		logger.Error("failed to read signals", "error", err)
+		return "", err
+	}
+	logger.Info("Read signals", "store", store)
+	logger.Info(fmt.Sprintf("Fetching interest level for billettholder %d, event %s, pulje %s", store.BillettholderId, eventId, store.PujleId))
+
+	query := `
+        SELECT [I].billettholder_id, [I].interest_level
+        FROM interests [I]
+        WHERE [I].billettholder_id = ? AND [I].event_id = ? AND [I].pulje_id = ?
+    `
+	row := db.QueryRow(query, store.BillettholderId, eventId, store.PujleId)
+	var interest BillettholderInterest
+	err := row.Scan(&interest.BillettholderId, &interest.InterestLevel)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "none", nil // No interest level set
+		}
+		logger.Error("failed to scan row", "error", err)
+		return "", err
+	}
+	return interest.InterestLevel, nil
+}
+
+templ TicketHolderInterestPicker(
+	eventId string,
+	db *sql.DB,
+	r *http.Request,
+	logger *slog.Logger) {
+	{{ userInterests, err := getInterestLeveForUser(eventId, db, r, logger) }}
+	if err != nil {
+		<p>Error fetching user interests: { err.Error() }</p>
+	}
+	<p>Number of interests found: { len(userInterests) }</p>
+	{{ currentInterest := "none" }}
+	<script>
+		colsole.log("PuljeId:");
+		console.log("User interests:", {{ userInterests }});
+	</script>
+	<pre>User interestrs:{ userInterests[0].InterestLevel }</pre>
+	if err != nil {
+		<p>Error fetching interest levels: { err.Error() }</p>
+	}
+	<p>
+		Interesser for bruker:
+		<strong>{ currentInterest }</strong>
+	</p>
 	<style>
+		.interest-buttons {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
 
-    .interest-buttons {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-3x);
-
-        .selected {
-            border-color: var(--color-primary);
-            color: var(--color-primary);
-        }
-    }
-
-    </style>
-    {{fmt.Println(currentInterest)}}
+			.selected {
+				border-color: var(--color-primary);
+				color: var(--color-primary);
+			}
+		}
+	</style>
+	<div data-signals-result>
+		<input
+			data-bind-foo
+			data-on-input="$result = myfunction($foo)"
+			data-on-input="$currentInterestSignal: getInterestLevel($billettholderId, $puljeId)"
+		/>
+		Here:
+	</div>
+	{{ fmt.Println(currentInterest) }}
 	<div class="interest-buttons">
-        <button
-            class={"btn", "btn--interest", addSelectedClass("Veldig interessert", currentInterest)}
-            data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
-        >
-            <span class="emoji">🤩</span> Veldig interessert
-        </button>
-        <button
-            class={"btn", "btn--interest" , addSelectedClass("Interessert", currentInterest)}
-            data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
-        >
-        <span class="emoji">🙂</span> Interessert
-        </button>
-        <button
-            class={"btn", "btn--interest" , addSelectedClass("Litt interessert", currentInterest)}
-            data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
-        >
-        <span class="emoji">🤨</span> Litt interessert
-        </button>
-        <button
-            class={"btn", "btn--interest" , addSelectedClass("Ikke interessert", currentInterest)}
-            data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
-        >
-            <span class="emoji">😑</span> Ikke interessert
-        </button>
-    </div>
+		<button
+			class={ "btn", "btn--interest", addSelectedClass("Veldig interessert", currentInterest) }
+			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
+		>
+			<span class="emoji">🤩</span> Veldig interessert
+		</button>
+		<button
+			class={ "btn", "btn--interest" , addSelectedClass("Interessert", currentInterest) }
+			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
+		>
+			<span class="emoji">🙂</span> Interessert
+		</button>
+		<button
+			class={ "btn", "btn--interest" , addSelectedClass("Litt interessert", currentInterest) }
+			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
+		>
+			<span class="emoji">🤨</span> Litt interessert
+		</button>
+		<button
+			class={ "btn", "btn--interest" , addSelectedClass("Ikke interessert", currentInterest) }
+			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
+		>
+			<span class="emoji">😑</span> Ikke interessert
+		</button>
+	</div>
+	<script>
+		const interestLeves = {{ userInterests }};
+		     cons .log("Interest levels loaded:", interestLeves);
+		} /**
+		 * @param {Array<{billettholderId:number, puljeId:string, interestLevel:string}>} interests
+		 * @param {number} billettholderId
+		 * @param {string} puljeId
+		 */
+		function getInterestLevel(billettholderId, puljeId) {
+		      console.log("Getting interest level for billettholderId:", billettholderId, "puljeId:", puljeId);
+			const match = interestLeves.find(
+				(i) =>
+					i.billettholderId === billettholderId &&
+					i.puljeId === puljeId,
+			);
+			return match ? match.interestLevel : "Ikke funnet";
+		}
+	</script>
 }
 
 func addSelectedClass(selected string, currentInterest string) string {
-    if selected == currentInterest {
-        return "selected"
-    }
-    return ""
+	if selected == currentInterest {
+		return "selected"
+	}
+	return ""
 }

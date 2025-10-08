@@ -1,15 +1,22 @@
 package event_components
 
 import (
+	"log/slog"
+	"fmt"
+	"net/http"
 	"database/sql"
+
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/requestctx"
-	"log/slog"
-	"fmt"
 )
 
-templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeId string, db *sql.DB, logger *slog.Logger) {
+templ EventInterests(userInfo requestctx.UserRequestInfo,
+	eventId string,
+	puljeId string,
+	db *sql.DB,
+	r *http.Request,
+	logger *slog.Logger) {
 	<style>
 		::backdrop {
 			background-image: linear-gradient(45deg, var(--bg-backdrop));
@@ -112,7 +119,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeI
 				</code>
 				<div>
 					<p class="label">Velg interesse</p>
-					@ticketholder.TicketHolderInterestPicker(eventId, db, logger)
+					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
 				</div>
 				<p class="auto-save">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
 			</div>

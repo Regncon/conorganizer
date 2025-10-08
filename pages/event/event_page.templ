@@ -50,5 +50,5 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		>Administrator - rediger arrangementer</a>
 	}
 	@Event_mobile(event, previousNextData, eventImageDir)
-	@event_components.EventInterests(userInfo, eventId, puljeId, db, logger)
+	@event_components.EventInterests(userInfo, eventId, puljeId, db, r, logger)
 }
