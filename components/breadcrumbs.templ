@@ -1,5 +1,7 @@
 package components
 
+import "github.com/Regncon/conorganizer/components/icons"
+
 type BreadcrumbPath struct {
 	Name string
 	Url  string
@@ -16,14 +18,14 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			gap: var(--spacing-8x);
+			gap: var(--spacing-4x);
 			width: 100%;
 			min-height: 50px;
 		}
 
 		.breadcrumbs {
 			display: flex;
-			gap: 0.5rem;
+			gap: var(--spacing-2x);
 			padding: var(--spacing-5x) 0;
 			width: 100%;
 			overflow: hidden;
@@ -61,6 +63,11 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			display a back-button as the only navigation option.
 		 */
 		@container main (width <= 600px) {
+			.breadcrumbs {
+				align-items: center;
+				gap: var(--spacing-1x);
+				padding: 0;
+			}
 			.breadcrumb-container {
 				position: sticky;
 				top: 0;
@@ -69,6 +76,9 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			}
 			.breadcrumb-step, .breadcrumb-separator {
 				display: none;
+			}
+			.breadcrumb-mobile-return {
+				flex-shrink: 0;
 			}
 		}
 		
@@ -87,7 +97,9 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			<div class="breadcrumbs">
 				for index, path := range paths {
 					if index == stepBack {
-						<a class="breadcrumb-mobile-return" href={ templ.URL(path.Url) }>&lt;</a>
+						<a class="btn btn--ghost btn-icon-only breadcrumb-mobile-return" href={ templ.URL(path.Url) }>
+							@icons.Icon(icons.ChevronLeft, icons.Size24)
+						</a>
 					}
 					if path.Url != "" {
 						<a class="breadcrumb-step" href={ templ.URL(path.Url) }>{ path.Name }</a>
