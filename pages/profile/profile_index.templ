@@ -62,29 +62,40 @@ templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.Tic
 		{Name: "Min Side", Url: ""},
 	})
 	<section class="page-content-container profile-container">
-		<div style="flex-grow: 2;">
+		<div class="profile-content-column">
 			@profilecomponent.MyEvents(events)
 			@profilecomponent.MyPropgram()
 		</div>
-		<div>
+		<div class="profile-content-column">
 			/* @profilecomponent.UserDetails(user) */
 			@profilecomponent.MyTickets(tickets)
 		</div>
 	</section>
 	<style>
 		.profile-container {
-			display: flex;
+			display: grid;
+			grid-template-columns: 1fr;
 			gap: var(--responsive-pane-column-spacing);
-			flex-flow: row wrap;
 			padding-top: var(--responsive-pane-column-spacing);
 		}
 
-		.profile-container > div {
+		.profile-content-column {
 			display: flex;
 			flex-direction: column;
 			gap: var(--responsive-pane-column-spacing);
 			flex: 1 1 fit-content;
-			/* min-width: fit-content; */
+		}
+
+		@container main (width > 1000px) {
+			.profile-container {
+				grid-template-columns: auto 340px;
+			}
+		}
+
+		@container main (width > 1200px) {
+			.profile-container {
+				grid-template-columns: auto 400px;
+			}
 		}
 	</style>
 }

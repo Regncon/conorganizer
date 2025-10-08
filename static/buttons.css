@@ -229,3 +229,13 @@
 .btn-with-icon {
     gap: var(--spacing-2x);
 }
+
+/* Apply as extra style to a .btn element if it only shows icon */
+.btn-icon-only {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: var(--btn-height);
+    width: var(--btn-height);
+    padding: 0;
+}

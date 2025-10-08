@@ -75,6 +75,7 @@
     --responsive-top-of-page-spacing: var(--spacing-4x);
     --responsive-pane-column-spacing: var(--spacing-4x);
     --responsive-page-section-spacing: var(--spacing-8x);
+    --responsive-pane-padding: var(--spacing-4x);
     --responsive-h2-margin: var(--spacing-4x);
 }
 
@@ -83,6 +84,7 @@
         --responsive-top-of-page-spacing: var(--spacing-5x);
         --responsive-pane-column-spacing: var(--spacing-5x);
         --responsive-page-section-spacing: var(--spacing-8x);
+        --responsive-pane-padding: var(--spacing-5x);
         --responsive-h2-margin: var(--spacing-5x);
     }
 }
@@ -373,7 +375,7 @@ input {
 .surface-pane {
     border-radius: var(--border-radius-2x);
     background-color: var(--bg-surface);
-    padding: var(--spacing-5x);
+    padding: var(--responsive-pane-padding);
 }
 
 .form-card-title, /* deprecate this class, use surface-pane instead */
