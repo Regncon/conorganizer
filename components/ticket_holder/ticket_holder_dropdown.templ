@@ -1,9 +1,9 @@
 package ticketholder
 
 import (
+	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/service/requestctx"
-    "fmt"
 )
 
 // Takes a `selected` parameter to highlight the selected ticket holder
@@ -147,12 +147,13 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
         let selectedBillettholder = {{ associatedBillettholder[0] }};
         document.addEventListener("DOMContentLoaded", () => {
             initDropDown();
-            initLocalstorage();
         });
 
         const initLocalstorage = () => {
             const selectedBillettholderLS = localStorage.getItem(LSEnum.SelectedBilletHolder);
             const nameInitialsElement = document.querySelector(".selected-value");
+            const initials = selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase();
+            selectedBillettholder = {...selectedBillettholder, Initials: initials};
 
             if (!selectedBillettholderLS) {
                 localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(selectedBillettholder));
@@ -175,7 +176,6 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
                 const billetHolder = JSON.parse(selectedBillettholderLS);
                 selectedBillettholder = billetHolder;
 
-                //todo: get correct color to put on border and background
                 nameInitialsElement.innerHTML = `
                     <div class="name-initials">
                         <span
@@ -191,6 +191,9 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
                     </div>
                 `;
             }
+            selectedBillettholder = {...selectedBillettholder,  Initials: initials};
+            return selectedBillettholder;
+
         };
 
         const initDropDown = () => {

@@ -1,8 +1,8 @@
 package ticketholder
 
 import (
-    "hash/fnv"
-    "fmt"
+	"fmt"
+	"hash/fnv"
 )
 
 templ nameInitials(name string, initials string) {
@@ -34,37 +34,34 @@ templ nameInitials(name string, initials string) {
     </style>
 	<div class="name-initials">
 		<span
-            class="initials"
-            style={
-            templ.SafeCSS(fmt.Sprintf("background-color: hsl(from %s h s l / 0.5)", ColorForName(name))),
-            templ.SafeCSS(fmt.Sprintf("border: 1px solid %s;", ColorForName(name)))
-            }
-        >
-            { initials }
-        </span>
+			class="initials"
+			style={ templ.SafeCSS(fmt.Sprintf("background-color: hsl(from %s h s l / 0.5)", ColorForName(name))),
+            templ.SafeCSS(fmt.Sprintf("border: 1px solid %s;", ColorForName(name))) }
+		>
+			{ initials }
+		</span>
 		<p class="name">{ name }</p>
 	</div>
 }
 
 var accentColors = []string{
-    "var(--color-accent-blue)",
-    "var(--color-accent-purple)",
-    "var(--color-accent-pink)",
-    "var(--color-accent-red)",
-    "var(--color-accent-orange)",
-    "var(--color-accent-yellow)",
-    "var(--color-accent-green)",
-    "var(--color-accent-teal)",
-    "var(--color-accent-cyan)",
+	"var(--color-accent-blue)",
+	"var(--color-accent-purple)",
+	"var(--color-accent-pink)",
+	"var(--color-accent-red)",
+	"var(--color-accent-orange)",
+	"var(--color-accent-yellow)",
+	"var(--color-accent-green)",
+	"var(--color-accent-teal)",
+	"var(--color-accent-cyan)",
 }
 
 func ColorForName(name string) string {
-    h := fnv.New32a()
-    h.Write([]byte(name))
-    idx := int(h.Sum32()) % len(accentColors)
-    if idx < 0 {
-        idx += len(accentColors)
-    }
-    fmt.Println("Color index for name", name, "is", idx, "color:", accentColors[idx])
-    return accentColors[idx]
+	h := fnv.New32a()
+	h.Write([]byte(name))
+	idx := int(h.Sum32()) % len(accentColors)
+	if idx < 0 {
+		idx += len(accentColors)
+	}
+	return accentColors[idx]
 }

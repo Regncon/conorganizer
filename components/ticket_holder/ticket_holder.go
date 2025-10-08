@@ -16,6 +16,7 @@ type BillettHolder struct {
 	Email string
 	Name  string
 	Id    int
+	Color string
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]BillettHolder, error) {
@@ -45,6 +46,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 			Email: email,
 			Name:  fmt.Sprintf("%s %s", firstName, lastName),
 			Id:    billettHolderId,
+			Color: ColorForName(fmt.Sprintf("%s %s", firstName, lastName)),
 		})
 
 		logger.Info("Ticket Holder", "email", email, "id", billettHolderId, "firstName", firstName, "lastName", lastName)
@@ -53,25 +55,29 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 		logger.Error("Error iterating over ticket holder rows", "ticketHolderRowsErr", ticketHolderRowsErr)
 	}
 
-	associatedTicketholders = append(associatedTicketholders, BillettHolder{
-		Email: "lo@najcuksuc.sn",
-		Name:  "Leonard Moreno",
-		Id:    1,
-	})
-	associatedTicketholders = append(associatedTicketholders, BillettHolder{
-		Email: "lacbe@lecuc.my",
-		Name:  "Olive Berry",
-		Id:    2,
-	})
+	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
+	// 	Email: "lo@najcuksuc.sn",
+	// 	Name:  "Leonard Moreno",
+	// 	Id:    1,
+	// 	Color: ColorForName("Leonard Moreno"),
+	// })
+	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
+	// 	Email: "lacbe@lecuc.my",
+	// 	Name:  "Olive Berry",
+	// 	Id:    2,
+	// 	Color: ColorForName("Olive Berry"),
+	// })
 	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
 	// 	Email: "mijinpu@posrik.cz",
 	// 	Name:  "Bobby Silva",
 	// 	Id:    3,
+	// 	Color: ColorForName("Bobby Silva"),
 	// })
 	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
 	// 	Email: "igkir@mukpunuc.be",
 	// 	Name:  "Bertha Francis",
 	// 	Id:    5,
+	// 	Color: ColorForName("Bertha Francis"),
 	// })
 	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
 	// 	Email: "ruidavuf@otavig.gy",
