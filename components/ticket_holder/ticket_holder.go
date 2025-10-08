@@ -58,11 +58,11 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 		Name:  "Leonard Moreno",
 		Id:    1,
 	})
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "lacbe@lecuc.my",
-	// 	Name:  "Olive Berry",
-	// 	Id:    2,
-	// })
+	associatedTicketholders = append(associatedTicketholders, BillettHolder{
+		Email: "lacbe@lecuc.my",
+		Name:  "Olive Berry",
+		Id:    2,
+	})
 	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
 	// 	Email: "mijinpu@posrik.cz",
 	// 	Name:  "Bobby Silva",

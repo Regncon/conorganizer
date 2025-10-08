@@ -18,6 +18,17 @@
     --color-secondary-focus-visible: #CCD1E980;
     --color-secondary-active: #CCD1E933;
 
+    --color-accent-blue: #8EADEE;
+    --color-accent-purple: #C6A0F6;
+    --color-accent-pink: #F5BDE6;
+    --color-accent-red: var(--color-error);
+    --color-accent-orange: #F5A97F;
+    --color-accent-yellow: var(--color-warning);
+    --color-accent-green: var(--color-success);
+    --color-accent-teal: #8BD5CA;
+    --color-accent-cyan: #83C3E0;
+
+
     --color-success: #A6DA95;
     --color-warning: #EED49F;
     --color-error: #ED8796;
@@ -68,7 +79,7 @@
 
     /* nav */
     --nav-height: 4rem;
-    
+
     /* z-index */
     --nav-z-index: 50;
     --subnav-z-index: 10;
@@ -371,15 +382,19 @@ input {
     color: var(--color-primary-text);
     padding: var(--spacing-1x);
 }
+
 .tippy-tooltip[data-placement^='top'] .tippy-arrow {
     border-top-color: var(--bg-tooltip);
 }
+
 .tippy-tooltip[data-placement^='bottom'] .tippy-arrow {
     border-bottom-color: var(--bg-tooltip);
 }
+
 .tippy-tooltip[data-placement^='left'] .tippy-arrow {
     border-left-color: var(--bg-tooltip);
 }
+
 .tippy-tooltip[data-placement^='right'] .tippy-arrow {
     border-right-color: var(--bg-tooltip);
 }
