@@ -13,7 +13,7 @@ type TicketHolder struct {
 // Single ticket holder used in component below
 templ ticketHolder(name string, ticket string, email string) {
 	<div class="flex flex-col" style="gap: var(--spacing-1x); width: fit-content;">
-		<p style="font-weight: bold;">{ name }</p>
+		<p style="font-weight: bold; text-transform: capitalize;">{ name }</p>
 		<span class="flex" style="gap: var(--spacing-2x); align-items: center;">
 			@icons.Icon(icons.Ticket, icons.Size24)
 			<p>{ ticket }</p>

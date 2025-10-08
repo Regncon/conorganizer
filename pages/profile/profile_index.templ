@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/sessions"
 	"log/slog"
 	"net/http"
+	"sort"
 )
 
 func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
@@ -24,6 +25,10 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 
 			// User generated events
 			var events = GetEventsByUserId(user.Id, db, logger)
+
+			sort.Slice(events, func(i, j int) bool {
+				return events[i].Status > events[j].Status
+			})
 
 			billettholdere, err := billettholderService.GetBilettholdere(user.Id, db, logger)
 			if err != nil {

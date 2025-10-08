@@ -1,0 +1,28 @@
+package button
+
+import (
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
+	"strings"
+)
+
+templ EventStatus(statusRaw models.EventStatus) {
+	{{ var status = strings.ToLower(string(statusRaw)) }}
+	<span class={ "event-status", status }>
+		switch true {
+			case status == "forkastet":
+				@icons.Icon(icons.ProgressRejected, icons.Size16)
+			case status == "kladd":
+				@icons.Icon(icons.Progress25, icons.Size16)
+			case status == "innsendt":
+				@icons.Icon(icons.Progress50, icons.Size16)
+			case status == "godkjent":
+				@icons.Icon(icons.Progress75, icons.Size16)
+			case status == "publisert":
+				@icons.Icon(icons.ProgressComplete, icons.Size16)
+		}
+		<p>
+			{ status }
+		</p>
+	</span>
+}
