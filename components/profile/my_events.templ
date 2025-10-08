@@ -7,7 +7,7 @@ import (
 
 templ MyEvents(events []models.EventCardModel) {
 	<div class="surface-pane flex flex-col" style="gap: var(--spacing-2x)">
-		<h2 class="surface-pane-title"><a href="/profile/events">Mine arrangementer</a></h2>
+		<h2 class="surface-pane-title">Mine arrangementer</h2>
 		if len(events) > 0 {
 			for _, event := range events {
 				<span class="item-card flex" style="justify-content: space-between; align-items: center;">

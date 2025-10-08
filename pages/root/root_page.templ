@@ -12,46 +12,9 @@ templ rootPage(db *sql.DB, isAdmin bool, eventImageDir *string) {
 }
 
 templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
-	<style>
-		@keyframes spin {
-			from {
-				transform: rotate(360deg);
-			}
-			to {
-				transform: rotate(0deg);
-			}
-		}
-		.regncon-logo-container {
-			width: 100%;
-			height: 100%;
-			overflow: hidden;
-			img {
-				-webkit-animation: spin 240s linear infinite;
-				animation: spin 240s linear infinite;
-				max-width: 450px;
-				max-height: 300px;
-				margin: 3rem auto;
-				display: block;
-				position: relative;
-				z-index: -1;
-			}
-		}
-	</style>
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
 	})
-	if isAdmin == false {
-		<div class="regncon-logo-container">
-			<img
-				src="/static/RegnconLogo.svg"
-				alt="logo"
-			/>
-		</div>
-	}
 	@components.CallToAction()
-	if isAdmin {
-		<h2 style="font-size:xxx-large; place-self:center;">Beta-versjon</h2>
-		<h2 style="font-size:xxx-large; place-self:center;">Du er logget inn som administrator</h2>
-		@eventList(db, isAdmin, eventImageDir)
-	}
+	@eventList(db, isAdmin, eventImageDir)
 }

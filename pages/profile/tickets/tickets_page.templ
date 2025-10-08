@@ -2,16 +2,16 @@ package profileticketspage
 
 import (
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net/http"
-	"fmt"
 
+	"github.com/Regncon/conorganizer/components"
+	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
+	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
-	"github.com/Regncon/conorganizer/service/userctx"
-	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/service/checkIn"
-	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -29,11 +29,27 @@ func getTicketsRouter(
 	notifyUpdate func(string),
 ) {
 	router.Post("/get-tickets", func(w http.ResponseWriter, r *http.Request) {
-
 		sse := datastar.NewSSE(w, r)
 		var ctx = r.Context()
 		var user = userctx.GetUserRequestInfo(ctx)
+
+		// finn tickets fra user id?
+		tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(logger, userctx.GetUserRequestInfo(ctx).Email)
+		if ticketsErr != nil {
+			logger.Error("Unable to get tickets", "error", ticketsErr)
+		}
+
+		// ligg til tickets i billettholdere + billettholdere_emmails
+		for _, ticket := range tickets {
+			err := checkIn.ConvertTicketToBillettholder(ticket.ID, db, logger)
+			if err != nil {
+				logger.Error("Unable to convert tickets", "error", ticketsErr)
+			}
+		}
+
+		// Link user + billettholdere to billettholdere_users
 		err := checkIn.AssociateUserWithBillettholder(user.Id, db, logger)
+
 		var errorMessage = ""
 		if err != nil {
 			errorMessage = "Feil ved henting av billettar: " + err.Error()
