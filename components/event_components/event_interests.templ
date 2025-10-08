@@ -33,6 +33,10 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		}
 
 		.interest-dialog[open] {
+			position: fixed; /* take it out of normal flow */
+			inset: 0; /* top/right/bottom/left: 0 */
+			margin: auto; /* center it */
+            z-index: 5;
 			--dialog-width: min(32.5rem, 90%);
 			visibility: visible;
 			display: grid;
