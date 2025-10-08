@@ -258,9 +258,9 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 							</summary>
 							<div class="dropdown-panel">
 								<a href="/auth/logout">Logg ut</a>
-								<a href="/my-events">Mine arrangementer</a>
+								/* <a href="/my-events">Mine arrangementer</a> */
+								<a href="/profile">Min Profil</a>
 								if UserInfo.IsAdmin {
-									<a href="/profile">Min Profil</a>
 									<hr/>
 									<a href="/admin/billettholder/">Billettholderoversikt</a>
 									<a href="/admin/approval/">Arrangement til godkjenning</a>
