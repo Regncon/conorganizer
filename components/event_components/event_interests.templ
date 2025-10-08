@@ -130,10 +130,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			</header>
 			<div class="dialog-content">
 				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
-				<div>
-					<p class="label">Velg pulje for arrangementet</p>
-					@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
-				</div>
+				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
 					<p class="label">Velg interesse</p>
 					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)

@@ -56,7 +56,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	}
 	fmt.Println(len(associatedTicketHolders))
 	}}
-	if (len(associatedTicketHolders) >= 0) {
+	if (len(associatedTicketHolders) > 1) {
 		<div>
 			<p class="label">Velg billettholder</p>
 			<div class="ticket-holder-picker-buttons">
