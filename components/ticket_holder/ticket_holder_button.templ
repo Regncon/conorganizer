@@ -14,13 +14,8 @@ templ TicketHolderButton(currentBillettHolder BillettHolder) {
 	{{ initials := GetInitials(currentBillettHolder.Name) }}
 	<style>
 		.ticket-holder-picker {
-			.btn {
-				padding: 0;
-				width: 100%;
+			.billett-holder-picker-button {
 				place-content: start;
-				padding-inline: var(--spacing-4x);
-				gap: 0.5rem;
-				border-radius: var(--border-radius-2x);
 			}
 
 			.selected {
@@ -31,7 +26,7 @@ templ TicketHolderButton(currentBillettHolder BillettHolder) {
 	</style>
 	<div class="ticket-holder-picker">
 		<button
-			class="btn btn--outline no-marking billett-holder-picker-button"
+			class="btn btn--interest-picker no-marking billett-holder-picker-button"
 			data-current-billett-holder={ fmt.Sprintf("{\"Id\": %d, \"Name\": \"%s\", \"Email\": \"%s\"}", currentBillettHolder.Id, currentBillettHolder.Name, currentBillettHolder.Email) }
 			data-class-selected={ fmt.Sprintf("$billettHolderId == %d", currentBillettHolder.Id) }
 			data-on-click={ fmt.Sprintf("$billettHolderId = %d", currentBillettHolder.Id) }

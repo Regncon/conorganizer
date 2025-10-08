@@ -21,11 +21,10 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
             color: var(--color-primary);
         }
 
-        .btn {
+        .btn--interest-picker {
             font-size: 12px;
-            border-radius: var(--border-radius-2x);
-            padding: 0;
-            text-align: center;
+            border-radius: var(--border-radius-1x);
+            justify-content: center;
             min-height: 3rem;
         }
     }
@@ -34,7 +33,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
         .pulje-wrapper {
             grid-template-columns: 1fr 1fr 1fr 1fr;
 
-            .btn {
+            .btn--interest-picker {
                 padding-inline: var(--spacing-4x);
                 font-size: 16px;
                 min-height: 7.125rem;
@@ -47,7 +46,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
     {{fmt.Println(puljer)}}
 	<div class="pulje-wrapper">
         <button
-            class="btn btn--outline item-card"
+            class="btn btn--interest-picker"
             data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeFredagKveld)) }
             data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeFredagKveld)) }
             { addDisableAttr_pulje(puljer, models.PuljeFredagKveld) }
@@ -55,7 +54,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
             Fredag kveld
         </button>
         <button
-            class="btn btn--outline item-card"
+            class="btn btn--interest-picker"
             data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeLordagMorgen)) }
             data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeLordagMorgen)) }
             { addDisableAttr_pulje(puljer, models.PuljeLordagMorgen) }
@@ -63,7 +62,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
             Lørdag morgen
         </button>
         <button
-            class="btn btn--outline item-card"
+            class="btn btn--interest-picker"
             data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeLordagKveld)) }
             data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeLordagKveld)) }
             { addDisableAttr_pulje(puljer, models.PuljeLordagKveld) }
@@ -71,7 +70,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
             Lørdag kveld
         </button>
         <button
-            class="btn btn--outline item-card"
+            class="btn btn--interest-picker"
             data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeSondagMorgen)) }
             data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeSondagMorgen)) }
             { addDisableAttr_pulje(puljer, models.PuljeSondagMorgen) }

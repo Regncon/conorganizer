@@ -72,7 +72,11 @@ templ TicketHolderInterestPicker(
 		.interest-buttons {
 			display: flex;
 			flex-direction: column;
-			gap: var(--spacing-3x);
+			gap: var(--spacing-2x);
+			
+			.btn--interest-picker {
+				min-height: var(--btn-height-cta);
+			}
 
 			.selected {
 				border-color: var(--color-primary);
@@ -83,28 +87,28 @@ templ TicketHolderInterestPicker(
 	<div></div>
 	<div class="interest-buttons">
 		<button
-			class="btn btn--interest"
+			class="btn btn--interest-picker"
 			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'high')", string(userInterests)) }
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
 		>
 			<span class="emoji">🤩</span> Veldig interessert
 		</button>
 		<button
-			class="btn btn--interest"
+			class="btn btn--interest-picker"
 			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'medium')", string(userInterests)) }
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
 		>
 			<span class="emoji">🙂</span> Interessert
 		</button>
 		<button
-			class="btn btn--interest"
+			class="btn btn--interest-picker"
 			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'low')", string(userInterests)) }
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
 		>
 			<span class="emoji">🤨</span> Litt interessert
 		</button>
 		<button
-			class="btn btn--interest"
+			class="btn btn--interest-picker"
 			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'none')", string(userInterests)) }
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
 		>
