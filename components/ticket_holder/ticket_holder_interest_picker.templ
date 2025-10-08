@@ -105,7 +105,7 @@ templ TicketHolderInterestPicker(
 		</button>
 		<button
 			class="btn btn--interest"
-            data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'none')", string(userInterests)) }
+			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'none')", string(userInterests)) }
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
 		>
 			<span class="emoji">😑</span> Ikke interessert
@@ -118,15 +118,7 @@ templ TicketHolderInterestPicker(
 		 * @param {string} puljeId
 		 */
 		function getInterestLevel(interestLevels, billettholderId, puljeId) {
-			console.log(
-				"Getting interest level for billettholderId:",
-				billettholderId,
-				"puljeId:",
-				puljeId,
-			);
-
 			const match = interestLevels.find((i) => {
-				console.log("Checking interest:", i);
 				return (
 					i.billettholderId === billettholderId &&
 					i.puljeId === puljeId
@@ -140,35 +132,21 @@ templ TicketHolderInterestPicker(
 		 * @param {string} level
 		 */
 		function isSelected(interestLevels, billettholderId, puljeId, level) {
-			console.log(
-				"for billettholderId:",
-				billettholderId,
-				"puljeId:",
-				puljeId,
-				"checking against level:",
-				level,
-			);
-			console.log("Interest levels:", interestLevels);
 			const currentLevel = getInterestLevel(
 				interestLevels,
 				billettholderId,
 				puljeId,
 			);
-			console.log("Current level is:", currentLevel);
 			if (currentLevel === "Litt interessert" && level === "low") {
-				console.log("Matched low interest");
 				return true;
 			}
 			if (currentLevel === "Middels interessert" && level === "medium") {
-				console.log("Matched medium interest");
 				return true;
 			}
 			if (currentLevel === "Veldig interessert" && level === "high") {
-				console.log("Matched high interest");
 				return true;
 			}
 			if (currentLevel === "Ikke funnet" && level === "none") {
-				console.log("Matched no interest");
 				return true;
 			}
 			return false;
