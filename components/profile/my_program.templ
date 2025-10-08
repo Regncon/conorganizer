@@ -3,6 +3,23 @@ package profilecomponent
 import "github.com/Regncon/conorganizer/service/requestctx"
 
 templ MyPropgram(userInfo requestctx.UserRequestInfo) {
+	<style>
+		.program-pulje-container {
+			display: flex;
+			flex-direction: column;
+			gap: var(--responsive-pane-padding);
+		}
+		h3.program-pulje {
+			font-size: var(--text-heading-3);
+			font-weight: bold;
+			color: var(--color-text-strong);
+		}
+		.program-pulje-time {
+			font-weight: normal;
+			font-size: var(--text-heading-4);
+			color: var(--color-text-soft-50);
+		}
+	</style>
 	<div class="surface-pane">
 		<h2 class="surface-pane-title">
 			Mitt festivalprogram
@@ -11,28 +28,39 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo) {
 			<p style="font-style: italic;">kommer snart!</p>
 		}
 		if (userInfo.IsAdmin) {
-			<p style="font-style: italic;">Hello World, Admin</p>
-			<section>
+			<section class="program-pulje-container">
 				<div>
-					<h3>Fredag Kveld <i>(18:00 - 23:00)</i></h3>
+					<h3 class="program-pulje">
+						Fredag Kveld 
+						<span class="program-pulje-time">(18:00 - 23:00)</span>
+					</h3>
 					<div>
 						Her har vi ingenting ...
 					</div>
 				</div>
 				<div>
-					<h3>Lørdag Morgen <i>(10:00 - 15:00)</i></h3>
+					<h3 class="program-pulje">
+						Lørdag Morgen 
+						<span class="program-pulje-time">(10:00 - 15:00)</span>
+					</h3>
 					<div>
 						Her har vi ingenting ...
 					</div>
 				</div>
 				<div>
-					<h3>Lørdag Kveld <i>(18:00 - 23:00)</i></h3>
+					<h3 class="program-pulje">
+						Lørdag Kveld 
+						<span class="program-pulje-time">(18:00 - 23:00)</span>
+					</h3>
 					<div>
 						Her har vi ingenting ...
 					</div>
 				</div>
 				<div>
-					<h3>Søndag Morgen <i>(10:00 - 15:00)</i></h3>
+					<h3 class="program-pulje">
+						Søndag Morgen 
+						<span class="program-pulje-time">(10:00 - 15:00)</span>
+					</h3>
 					<div>
 						Her har vi ingenting ...
 					</div>
