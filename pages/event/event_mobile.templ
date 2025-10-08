@@ -1,6 +1,7 @@
 package event
 
 import (
+	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/components/icons"
@@ -8,7 +9,11 @@ import (
 	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-templ Event_mobile(event *models.Event, previousNextData components.PreviousNext, eventImageDir *string) {
+templ Event_mobile(
+	event *models.Event,
+	previousNextData components.PreviousNext,
+	puljerForEvent []models.PuljeRow,
+	eventImageDir *string) {
 	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
 	<style>
@@ -246,7 +251,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 					.event-details-pane {
 						grid-area: details;
-						height: max-content
+						height: max-content;
 					}
 					.description {
 						grid-area: description;
@@ -317,10 +322,19 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 						</div>
 						<div class="event-detail-group">
 							<span class="label-small color-strong">Pulje(r)</span>
-							<p title="Fredag Kveld (18 - 23)">Fredag Kveld (18 - 23)</p>
-							<p title="Lørdag Morgen (10 - 15)">Lørdag Morgen (10 - 15)</p>
-							<p title="Lørdag Kveld (18 - 23)">Lørdag Kveld (18 - 23)</p>
-							<p title="Søndag Morgen (10 - 15)">Søndag Morgen (10 - 15)</p>
+							for _, pulje := range puljerForEvent {
+								<p
+									title={ fmt.Sprintf("%s (%s – %s)",
+                                        pulje.Name,
+									 pulje.StartTime.Format("15"),
+									 pulje.EndTime.Format("15") ) }
+								>
+									{ fmt.Sprintf("%s ( %s – %s )",
+                                        pulje.Name,
+									 pulje.StartTime.Format("15"),
+									 pulje.EndTime.Format("15") ) }
+								</p>
+							}
 						</div>
 					</div>
 					<hr class="event-details-divider"/>

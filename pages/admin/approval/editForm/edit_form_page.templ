@@ -28,6 +28,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 	{{
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
 	isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
+	puljerForEvent, eventErr := eventservice.GetPujerForEvent(eventId, db, logger)
 	previousNextData, err := eventservice.GetPreviousNextInnsendtGodkjent(ctx, db, logger, eventId, eventImageDir)
 	}}
 	if err != nil {
@@ -55,7 +56,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 			<form class="formsubmission-wrapper">
 				@formsubmission.FormBody(eventData, isAdmin, db)
 			</form>
-			@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir)
+			@event.Event_mobile(eventData, isRemovedPreviousNext, puljerForEvent, eventImageDir)
 		</div>
 	</div>
 	<div class="page-content-container wide-content">

@@ -18,8 +18,9 @@ templ event_page(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, 
 
 templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
 	{{ event, err := eventservice.GetEventById(eventId, db, logger) }}
-	{{ evnetsByPulje, err := root.GetEventsByPulje(db) }}
-	{{ previousNextData, err := eventservice.GetPreviousNextByPuljeSimple(ctx, evnetsByPulje, logger, eventId, true, r, eventImageDir) }}
+	{{ eventsByPulje, err := root.GetEventsByPulje(db) }}
+	{{ puljerForEvent, err := eventservice.GetPujerForEvent(eventId, db, logger) }}
+	{{ previousNextData, err := eventservice.GetPreviousNextByPuljeSimple(ctx, eventsByPulje, logger, eventId, true, r, eventImageDir) }}
 	if err != nil {
 		logger.Error("Failed to get previous/next data", "error", err)
 		return
@@ -44,5 +45,5 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 			style="margin:1rem;"
 		>Administrator - rediger arrangementer</a>
 	}
-	@Event_mobile(event, previousNextData, eventImageDir)
+	@Event_mobile(event, previousNextData, puljerForEvent, eventImageDir)
 }
