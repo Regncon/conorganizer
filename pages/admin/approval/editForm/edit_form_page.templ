@@ -56,7 +56,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 			<form class="formsubmission-wrapper">
 				@formsubmission.FormBody(eventData, isAdmin, db)
 			</form>
-			@event.Event_mobile(eventData, isRemovedPreviousNext, puljerForEvent, eventImageDir)
+			@event.Event_mobile(eventData, isRemovedPreviousNext, puljerForEvent, false, eventImageDir)
 		</div>
 	</div>
 	<div class="page-content-container wide-content">

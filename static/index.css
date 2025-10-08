@@ -17,9 +17,19 @@
     --color-secondary-focus-visible: #ccd1e980;
     --color-secondary-active: #ccd1e933;
 
-    --color-success: #a6da95;
-    --color-warning: #eed49f;
-    --color-error: #ed8796;
+    --color-accent-blue: #8EADEE;
+    --color-accent-purple: #C6A0F6;
+    --color-accent-pink: #F5BDE6;
+    --color-accent-red: var(--color-error);
+    --color-accent-orange: #F5A97F;
+    --color-accent-yellow: var(--color-warning);
+    --color-accent-green: var(--color-success);
+    --color-accent-teal: #8BD5CA;
+    --color-accent-cyan: #83C3E0;
+
+    --color-success: #A6DA95;
+    --color-warning: #EED49F;
+    --color-error: #ED8796;
 
     --color-disabled: #ccd1e980;
 
@@ -28,7 +38,8 @@
     --bg-surface: #252735;
     --bg-item: #35394a;
     /* This is a border for surface and item both */
-    --bg-item-border: #494d62;
+    --bg-item-border: #494D62;
+    --bg-backdrop: #11111B;
 
     /* text & font */
     --text-body: 16px;
@@ -53,6 +64,9 @@
     /* border */
     --border-radius-1x: 4px;
     --border-radius-2x: 8px;
+
+    /* shadow */
+    --shadow-dialog: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
 
     /* content width */
     --page-content-max-width: 1440px;
@@ -381,14 +395,16 @@ input {
     padding: 1rem;
 }
 
-.form-card, /* deprecate this class, use surface-pane instead */
+.form-card,
+/* deprecate this class, use surface-pane instead */
 .surface-pane {
     border-radius: var(--border-radius-2x);
     background-color: var(--bg-surface);
     padding: var(--responsive-pane-padding);
 }
 
-.form-card-title, /* deprecate this class, use surface-pane instead */
+.form-card-title,
+/* deprecate this class, use surface-pane instead */
 .surface-pane-title {
     font-size: var(--text-heading-4);
     font-weight: normal;

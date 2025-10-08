@@ -6,9 +6,10 @@ import (
 	"net/http"
 
 	"fmt"
-	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/eventService"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -34,22 +35,20 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 		}
 		var ctx = r.Context()
 		isAdmin := authctx.GetAdminFromUserToken(ctx)
+		userInfo := userctx.GetUserRequestInfo(ctx)
 		layouts.Base(
 			event.Title,
-			userctx.GetUserRequestInfo(ctx),
-			eventIndex(event.ID, isAdmin, logger, db, eventImageDir, r),
+			userInfo,
+			eventIndex(event.ID, isAdmin, userInfo, logger, db, eventImageDir, r),
 		).Render(ctx, w)
 	})
 }
 
-templ eventIndex(id string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
-	{{
-	// pass along any query parameters from the original request
-	url := fmt.Sprintf("/event/api/%s?%s", id, r.URL.RawQuery)
-	}}
+templ eventIndex(eventId string, isAdmin bool, userInfo requestctx.UserRequestInfo, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
+	{{ url := fmt.Sprintf("/event/api/%s?%s", eventId, r.URL.RawQuery) }}
 	<div class="flex flex-col w-full min-h-screen bg-base-200">
 		<div id="event-container" data-on-load={ datastar.GetSSE(url) } class="event-container">
-			@event_page_content(id, isAdmin, logger, db, eventImageDir, r)
+			@event_page_content(eventId, isAdmin, logger, db, eventImageDir, r)
 		</div>
 	</div>
 }

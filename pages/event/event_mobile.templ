@@ -13,6 +13,7 @@ templ Event_mobile(
 	event *models.Event,
 	previousNextData components.PreviousNext,
 	puljerForEvent []models.PuljeRow,
+	hasTickets bool,
 	eventImageDir *string) {
 	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
@@ -285,15 +286,19 @@ templ Event_mobile(
 		</div>
 		<div class="event-information">
 			<div class="card interest-picker">
-				<span>
-					Muligheten for å melde interesse kommer snart!
-				</span>
-				<button
-					class="btn btn--cta"
-					disabled
-				>
-					Meld interesse
-				</button>
+				if hasTickets {
+					<div></div>
+					<button
+						class="btn btn--cta"
+						data-on-click="$interestIsOpen = true"
+					>Meld interesse</button>
+				} else {
+					<p class="color-strong">Hent billett for å melde interesse</p>
+					<a
+						href="/profile/tickets"
+						class="btn btn--cta"
+					>Hent billett</a>
+				}
 			</div>
 			<section class="surface-pane event-details-pane">
 				<h2 class="surface-pane-title">Detaljer om arrangementet</h2>

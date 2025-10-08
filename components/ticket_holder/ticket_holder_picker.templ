@@ -1,0 +1,84 @@
+package ticketholder
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"log/slog"
+	"fmt"
+)
+
+/*
+
+	if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
+        <p class="label">Velg billettholder</p>
+		<div class="ticket-holder-picker-buttons">
+			for _, billettHolder := range associatedTicketHolders {
+				@TicketHolderButton(billettHolder)
+			}
+            @TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
+		</div>
+	}
+
+	if (len(associatedTicketHolders) > 3) {
+        <p class="label">Velg billettholder</p>
+		<div class="ticket-holder-picker-dropdown">
+			@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
+		</div>
+	}
+*/
+
+templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, logger *slog.Logger) {
+	<style>
+		.ticket-holder-picker-buttons {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+		}
+
+		@container interest-dialog (width > 23.9375rem) {
+			.ticket-holder-picker-buttons {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+				gap: var(--spacing-2x);
+				.ticket-holder-picker:has(.no-marking) {
+					display: block;
+				}
+				.ticket-holder-picker:has(.custom-select) {
+					display: none;
+				}
+			}
+		}
+	</style>
+	{{
+	associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger)
+	if err != nil {
+		logger.Error("Failed to get ticket holders", "error", err)
+	}
+	fmt.Println(len(associatedTicketHolders))
+	}}
+	if (len(associatedTicketHolders) > 1) {
+		<div>
+			<p class="label">Velg billettholder</p>
+			<div class="ticket-holder-picker-buttons">
+				for _, billettHolder := range associatedTicketHolders {
+					@TicketHolderButton(billettHolder)
+				}
+			</div>
+		</div>
+	}
+	<script>
+		const billettHolderButtonPickerButton = document.querySelectorAll(
+			`.billett-holder-picker-button`,
+		);
+		billettHolderButtonPickerButton.forEach((button) => {
+			button.addEventListener("click", (ev) => {
+				const currentBillettHolder =
+					ev.currentTarget.dataset.currentBillettHolder;
+				localStorage.setItem(
+					LSEnum.SelectedBilletHolder,
+					currentBillettHolder,
+				);
+			});
+		});
+	</script>
+}

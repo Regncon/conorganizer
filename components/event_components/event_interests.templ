@@ -1,0 +1,192 @@
+package event_components
+
+import (
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/components/icons"
+	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/service/requestctx"
+)
+
+templ EventInterests(userInfo requestctx.UserRequestInfo,
+	eventId string,
+	puljeId string,
+	db *sql.DB,
+	r *http.Request,
+	logger *slog.Logger) {
+	<style>
+		dialog::backdrop {
+			background-image: linear-gradient(45deg, var(--bg-backdrop));
+			opacity: 0.6;
+		}
+
+		.interest-dialog {
+			visibility: hidden;
+		}
+		.dialog-container {
+			container-type: inline-size;
+			container-name: interest-dialog;
+		}
+
+		.interest-dialog[open] {
+			inset: 0; /* top/right/bottom/left: 0 */
+			z-index: 5;
+			--dialog-width: min(32.5rem, calc(100% - 16px));
+			visibility: visible;
+			width: var(--dialog-width);
+			background-color: var(--bg-surface);
+			border: none;
+			border-radius: var(--border-radius-2x);
+			padding: var(--responsive-pane-padding);
+			box-shadow: var(--shadow-dialog);
+			/* This always centers the dialog on the page */
+			position: fixed;	
+			top: 0;
+			bottom: 0;
+			left: 0;
+			right: 0;
+		
+			.no-marking {
+				user-select: none;
+				-moz-user-select: none;
+				-khtml-user-select: none;
+				-webkit-user-select: none;
+				-o-user-select: none;
+			}
+
+			.dialog-container {
+				.dialog-header {
+					display: flex;
+					place-content: space-between;
+					place-items: center;
+					height: fit-content;
+					color: var(--color-text-soft);
+					padding-bottom: var(--responsive-pane-padding);
+
+					.button-container {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						height: 18px;
+						width: 18px;
+					}
+
+					.btn {
+						padding-inline: var(--spacing-2x);
+					}
+				}
+
+				.dialog-content {
+					display: flex;
+					flex-direction: column;
+					gap: var(--responsive-pane-padding);
+					max-height: calc(100vh - 280px);
+					overflow: auto;
+
+					.label {
+						font-size: 12px;
+						font-weight: 700;
+						color: var(--color-text-strong);
+						margin-block-end: var(--spacing-1x);
+					}
+
+					button .emoji {
+						font-size: 25px;
+						margin-inline-end: var(--spacing-5x);
+					}
+				}
+
+				.dialog-footer {
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					justify-content: space-between;
+					gap: var(--responsive-pane-padding);
+					padding-top: var(--responsive-pane-padding);
+					.auto-save-message {
+						color: var(--color-text-soft);
+						font-size: 12px;
+					}
+				}
+			}
+		}
+	</style>
+	<dialog
+		class="interest-dialog"
+		data-attr-open="isOpen($interestIsOpen)"
+		closedby="any"
+		data-signals={ fmt.Sprintf("{billettHolderId: getBillettHolderFromLocalstorage(), puljeId: '%s'}", puljeId) }
+	>
+		<div class="dialog-container">
+			<header class="dialog-header">
+				<h3>Meld interesse</h3>
+				<form class="button-container" method="dialog">
+					<button
+						autofocus
+						class="btn btn--ghost close"
+						data-on-click="$interestIsOpen = false"
+					>
+						@icons.Icon(icons.Close, icons.Size24)
+					</button>
+				</form>
+			</header>
+			<div class="dialog-content">
+				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
+				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
+				<div>
+					<p class="label">Velg interesse</p>
+					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
+				</div>
+			</div>
+			<div class="dialog-footer">
+				<p class="auto-save-message">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
+				<button class="btn btn--outline" data-on-click="$interestIsOpen = false">
+					Ferdig
+				</button>
+			</div>
+		</div>
+	</dialog>
+	<script>
+		const LSEnum = {
+			SelectedBilletHolder: "selectedBillettHolder",
+		};
+
+		function getBillettHolderFromLocalstorage() {
+			const selectedBillettHolderString = localStorage.getItem(
+				LSEnum.SelectedBilletHolder,
+			);
+			if (!selectedBillettHolderString) {
+				return 0;
+			}
+			const selectedBillettHolder = JSON.parse(
+				selectedBillettHolderString,
+			);
+			return selectedBillettHolder.Id;
+		}
+
+		function isOpen(isOpenData) {
+			// return false if is empty sting or undefined
+			if (!isOpenData || isOpenData === "false") {
+				return false;
+			}
+			return true;
+		}
+		/*
+		const modal = document.querySelector(".interest-dialog");
+		const button = document.querySelector(".interest-button");
+		const buttonAbortController = new AbortController();
+		const buttonSignal = buttonAbortController.signal;
+
+		const handleButtonClick = () => {
+			modal.showModal();
+		};
+
+		button.addEventListener("click", handleButtonClick, {
+			signal: buttonSignal,
+		});
+		      */
+	</script>
+}
