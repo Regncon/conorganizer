@@ -2,8 +2,8 @@ package event
 
 import (
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/event_components"
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
 )
@@ -70,51 +70,58 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 				}
 
-				.details {
+				.event-details {
 					display: flex;
 					flex-direction: column;
-					padding: 0;
+					gap: var(--responsive-pane-padding);
 
-					.details-top {
+					.event-details-section {
 						display: flex;
 						flex-direction: column;
 						gap: var(--spacing-3x);
-						padding-inline: var(--spacing-5x);
-						padding-block: var(--spacing-3x);
+					}
 
+					.event-details-divider {
+						width: calc(100 + (var(--responsive-pane-padding) * 2));
+						margin: 0 calc(0px - var(--responsive-pane-padding));
+					}
+
+					.event-details-top {
 						p {
 							margin: 0;
-							max-width: 11.95rem;
-							overflow: clip;
-							text-overflow: ellipsis;
-							white-space: nowrap;
 						}
 
-						strong {
+						.label-small {
 							font-size: 12px;
+							font-weight: bold;
+							/* lmao hack to make the icon overflow the label */
+							.inline-icon {
+								position: relative;
+								height: 100%;
+								margin-left: var(--spacing-1x);
+								svg {
+									position: absolute;
+									bottom: 0;
+									left: 0;
+									height: 16px;
+								}
+							}
 						}
 
-						.details-header {
+						.event-details-header {
 							font-size: var(--spacing-3x);
 						}
 
-						.details-type {
+						.event-details-type {
 							height: 20px;
 							display: flex;
 							place-items: center;
 							gap: var(--spacing-1x);
 
-							.details-header {
+							.event-details-header {
 								font-size: 12px;
 							}
 						}
-					}
-
-					.details-bottom {
-						padding: var(--spacing-5x);
-						display: flex;
-						flex-direction: column;
-						gap: var(--spacing-4x);
 					}
 				}
 
@@ -129,7 +136,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 			}
 		}
 
-		@container event-container (width >= 37.5rem) {
+		@container event-container (width > 600px) {
 			.wrapper {
 				inline-size: min(1041px, 100%);
 				display: grid;
@@ -163,10 +170,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 						place-content: space-between;
 						height: fit-content;
 					}
-					.details {
-						position: relative;
-						padding: var(--spacing-5x);
-						padding-block-start: var(--spacing-10x);
+					.event-details {
 						height: fit-content;
 						display: grid;
 						grid-template-columns: 1fr 1fr;
@@ -175,20 +179,11 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 							display: none;
 						}
 
-						.details-top {
-							padding: 0;
-							.details-header {
-								position: absolute;
-								top: 1rem;
-							}
-							.details-host {
+						.event-details-top {
+							.event-details-host {
 								display: flex;
 								flex-direction: column;
 							}
-						}
-
-						.details-bottom {
-							padding: 0;
 						}
 					}
 					.description {
@@ -210,7 +205,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 			}
 		}
 
-		@container event-container (width > 65.0625rem) {
+		@container event-container (width > 1100px) {
 			.wrapper {
 				inline-size: min(1440px, 100%);
 				gap: var(--spacing-10x);
@@ -235,24 +230,9 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					.interest-picker {
 						grid-area: interests;
 					}
-					.details {
+					.event-details {
 						grid-area: details;
 						grid-template-columns: unset;
-						padding-block-start: 0;
-						padding: 0;
-
-						.details-top,
-						.details-bottom {
-							padding: var(--spacing-5x);
-						}
-
-						.details-top {
-							padding-block-start: var(--spacing-3x);
-
-							.details-header {
-								position: unset;
-							}
-						}
 
 						hr {
 							display: block;
@@ -300,51 +280,55 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					Meld interesse
 				</button>
 			</div>
-			<div class="card details">
-				<div class="details-top">
-					<p class="details-header color-strong">Detaljer om arrangementet</p>
-					<div class="details-host">
-						<strong>Arrangør</strong>
-						<p class="color-strong" title={ event.HostName }>{ event.HostName } </p>
-					</div>
-					<div class="details-system">
-						<div class="details-type">
-							if event.EventType == models.EventTypeRoleplay {
-								<strong>Rollespill</strong>
-								@icons.Icon(icons.EventRoleplay, icons.Size16)
-							} else if event.EventType == models.EventTypeBoardGame {
-								<strong>Brettspill</strong>
-								@icons.Icon(icons.EventBoardgame, icons.Size16)
-							} else if event.EventType == models.EventTypeOther {
-								<strong>Annet</strong>
-								@icons.Icon(icons.EventOtherGames, icons.Size16)
-							}
+			<section class="surface-pane">
+				<h2 class="surface-pane-title">Detaljer om arrangementet</h2>
+				<div class="event-details">
+					<div class="event-details-section event-details-top">
+						<div class="event-details-host">
+							<span class="label-small">Arrangør</span>
+							<p class="color-strong" title={ event.HostName }>{ event.HostName } </p>
 						</div>
-						<p class="color-strong" title={ event.System }>{ event.System } </p>
+						<div class="event-details-system">
+							<div class="event-details-type">
+								<span class="label-small">
+									if event.EventType == models.EventTypeRoleplay {
+										<span>Rollespill</span>
+										@icons.Icon(icons.EventRoleplay, icons.Size16)
+									} else if event.EventType == models.EventTypeBoardGame {
+										<span>Brettspill</span>
+										@icons.Icon(icons.EventBoardgame, icons.Size16)
+									} else if event.EventType == models.EventTypeOther {
+										<span>Annet</span>
+										@icons.Icon(icons.EventOtherGames, icons.Size16)
+									}
+								</span>
+							</div>
+							<p class="color-strong" title={ event.System }>{ event.System } </p>
+						</div>
+					</div>
+					<hr class="event-details-divider"/>
+					<div class="event-details-section event-details-bottom">
+						if event.AgeGroup == models.AgeGroupAdultsOnly {
+							@event_components.Event_property("Egnet for voksne", icons.EventAdultOnly)
+						}
+						if event.AgeGroup == models.AgeGroupChildFriendly {
+							@event_components.Event_property("Barnevennlig", icons.EventChildFriendly)
+						}
+						if event.Runtime == models.RunTimeLongRunning {
+							@event_components.Event_property("Varer over 6 timer", icons.TimeOver6Hours)
+						}
+						if event.Runtime == models.RunTimeShortRunning {
+							@event_components.Event_property("Varer under 3 timer", icons.TimeUnder3Hours)
+						}
+						if event.BeginnerFriendly {
+							@event_components.Event_property("Nybegynnervennlig", icons.EventBeginnerFriendly)
+						}
+						if event.CanBeRunInEnglish {
+							@event_components.Event_property("Can be run in English", icons.EventEnglish)
+						}
 					</div>
 				</div>
-				<hr/>
-				<div class="details-bottom">
-					if event.AgeGroup == models.AgeGroupAdultsOnly {
-						@event_components.Event_property("Egnet for voksne", icons.EventAdultOnly)
-					}
-					if event.AgeGroup == models.AgeGroupChildFriendly {
-						@event_components.Event_property("Barnevennlig", icons.EventChildFriendly)
-					}
-					if event.Runtime == models.RunTimeLongRunning {
-						@event_components.Event_property("Varer over 6 timer", icons.TimeOver6Hours)
-					}
-					if event.Runtime == models.RunTimeShortRunning {
-						@event_components.Event_property("Varer under 3 timer", icons.TimeUnder3Hours)
-					}
-					if event.BeginnerFriendly {
-						@event_components.Event_property("Nybegynnervennlig", icons.EventBeginnerFriendly)
-					}
-					if event.CanBeRunInEnglish {
-						@event_components.Event_property("Can be run in English", icons.EventEnglish)
-					}
-				</div>
-			</div>
+			</section>
 			<div class="description">
 				<p>
 					@templ.Raw(event.Description)
