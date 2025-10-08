@@ -11,11 +11,27 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	<style>
 
         .ticket-holder-picker-buttons {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0, 154px));
-            gap: var(--spacing-2x);
+            .ticket-holder-picker:has(.billett-holder-picker-button) {
+                    display: none;
+            }
+
         }
 
+        @container interest-dialog (width > 23.9375rem) {
+            .ticket-holder-picker-buttons {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 154px));
+                gap: var(--spacing-2x);
+                .ticket-holder-picker:has(.no-marking) {
+                    display: block;
+                }
+                .ticket-holder-picker:has(.custom-select) {
+                    display: none;
+                }
+
+            }
+
+        }
 
     </style>
 	{{
@@ -31,13 +47,14 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			for _, billettHolder := range associatedTicketHolders {
 				@TicketHolderButton(billettHolder)
 			}
+            @TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
 		</div>
 	}
 
 	if (len(associatedTicketHolders) > 3) {
         <p class="label">Velg billettholder</p>
 		<div class="ticket-holder-picker-dropdown">
-			@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders, TicketHolderUnselected)
+			@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
 		</div>
 	}
 

@@ -7,7 +7,7 @@ import (
 )
 
 // Takes a `selected` parameter to highlight the selected ticket holder
-templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder, selected selected) {
+templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder) {
 	{{
 	// If no ticket holders, return nothing
 	if len(associatedBillettholder) == 0 {
@@ -156,9 +156,16 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
 
             if (!selectedBillettholderLS) {
                 localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(selectedBillettholder));
+
                 nameInitialsElement.innerHTML = `
                     <div class="name-initials">
-                        <span class="initials">${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                        <span
+                        class="initials"
+                        style="
+                                background-color: hsl(from {{ColorForName(associatedBillettholder[0].Name)}} h s l / 0.5);
+                                border: 1px solid {{ColorForName(associatedBillettholder[0].Name)}};"
+
+                        >${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
                         <p class="name">${selectedBillettholder.Name}</p>
                     </div>
                 `;
@@ -168,9 +175,18 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
                 const billetHolder = JSON.parse(selectedBillettholderLS);
                 selectedBillettholder = billetHolder;
 
+                //todo: get correct color to put on border and background
                 nameInitialsElement.innerHTML = `
                     <div class="name-initials">
-                        <span class="initials">${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                        <span
+                            class="initials"
+                            style="
+                                background-color: black;
+                                border: 1px solid black;
+                                "
+                        >
+                            ${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </span>
                         <p class="name">${selectedBillettholder.Name}</p>
                     </div>
                 `;
