@@ -3,11 +3,14 @@ package event
 import (
 	"fmt"
 	"database/sql"
+	"log/slog"
+	"net/http"
+
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/eventService"
-	"log/slog"
-	"net/http"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/components/event_components"
 )
 
 templ event_page(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
@@ -17,6 +20,8 @@ templ event_page(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, 
 }
 
 templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
+	{{ userInfo := userctx.GetUserRequestInfo(r.Context()) }}
+	{{ puljeId := r.URL.Query().Get("pulje") }}
 	{{ event, err := eventservice.GetEventById(eventId, db, logger) }}
 	{{ evnetsByPulje, err := root.GetEventsByPulje(db) }}
 	{{ previousNextData, err := eventservice.GetPreviousNextByPuljeSimple(ctx, evnetsByPulje, logger, eventId, true, r, eventImageDir) }}
@@ -45,4 +50,5 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		>Administrator - rediger arrangementer</a>
 	}
 	@Event_mobile(event, previousNextData, eventImageDir)
+	@event_components.EventInterests(userInfo, eventId, puljeId, db, logger)
 }

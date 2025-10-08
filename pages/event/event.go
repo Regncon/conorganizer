@@ -11,6 +11,7 @@ import (
 
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -175,6 +176,11 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db, logger)
 
 						logger.Info(fmt.Sprintf("%d", signals.BillettHolderId), eventId, signals.PuljeId, sessionId, userInfo, fmt.Sprintf("%+v", interestLevel), "ASDFG")
+
+						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
 					})
 
 				})

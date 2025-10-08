@@ -6,137 +6,148 @@ import (
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
-    "fmt"
+	"fmt"
 )
 
 templ EventInterests(userInfo requestctx.UserRequestInfo, eventId string, puljeId string, db *sql.DB, logger *slog.Logger) {
 	<style>
-        ::backdrop {
-            background-image: linear-gradient(
-                45deg,
-                var(--bg-backdrop)
-            );
+		::backdrop {
+			background-image: linear-gradient(45deg, var(--bg-backdrop));
 
-            opacity: 0.60;
-        }
+			opacity: 0.6;
+		}
 
-        .interest-dialog {
-            visibility: hidden;
-        }
-        .dialog-container {
-            container-type: inline-size;
-            container-name: interest-dialog;
-        }
+		.interest-dialog {
+			visibility: hidden;
+		}
+		.dialog-container {
+			container-type: inline-size;
+			container-name: interest-dialog;
+		}
 
-        .interest-dialog[open] {
-            --dialog-width: min(32.5rem, 90%);
-            visibility: visible;
-            display: grid;
-            width: var(--dialog-width);
-            background-color: var(--bg-surface);
-            border: none;
-            padding: var(--spacing-5x);
-            box-shadow: var(--shadow-dialog);
+		.interest-dialog[open] {
+			--dialog-width: min(32.5rem, 90%);
+			visibility: visible;
+			display: grid;
+			width: var(--dialog-width);
+			background-color: var(--bg-surface);
+			border: none;
+			padding: var(--spacing-5x);
+			box-shadow: var(--shadow-dialog);
 
-            .no-marking {
-                user-select: none;
-                -moz-user-select: none;
-                -khtml-user-select: none;
-                -webkit-user-select: none;
-                -o-user-select: none;
-            }
+			.no-marking {
+				user-select: none;
+				-moz-user-select: none;
+				-khtml-user-select: none;
+				-webkit-user-select: none;
+				-o-user-select: none;
+			}
 
-            .dialog-container {
+			.dialog-container {
+				.dialog-header {
+					display: flex;
+					place-content: space-between;
+					place-items: center;
+					height: fit-content;
 
-                .dialog-header {
-                    display: flex;
-                    place-content: space-between;
-                    place-items: center;
-                    height: fit-content;
+					.btn {
+						padding-inline: var(--spacing-2x);
+					}
+				}
 
-                    .btn {
-                        padding-inline: var(--spacing-2x);
-                    }
-                }
+				.dialog-content {
+					display: flex;
+					flex-direction: column;
+					gap: var(--spacing-5x);
 
-                .dialog-content {
-                    display: flex;
-                    flex-direction: column;
-                    gap: var(--spacing-5x);
+					.label {
+						font-size: 12px;
+						font-weight: 700;
+						color: var(--color-text-strong);
+						margin-block-end: var(--spacing-1x);
+					}
 
-                    .label {
-                        font-size: 12px;
-                        font-weight: 700;
-                        color: var(--color-text-strong);
-                        margin-block-end: var(--spacing-1x);
-                    }
+					button .emoji {
+						font-size: 25px;
+						margin-inline-end: var(--spacing-5x);
+					}
 
-                    button .emoji {
-                        font-size: 25px;
-                        margin-inline-end: var(--spacing-5x);
-                    }
-
-                    .auto-save {
-                        color: var(--color-text-soft);
-                        font-size: 12px;
-                    }
-                }
-            }
-
-        }
-    </style>
-	<dialog class="interest-dialog" closedby="any" data-signals={ fmt.Sprintf("{billettHolderId: getBillettHolderFromLocalstorage(), puljeId: '%s'}", puljeId) }>
+					.auto-save {
+						color: var(--color-text-soft);
+						font-size: 12px;
+					}
+				}
+			}
+		}
+	</style>
+	<dialog
+		class="interest-dialog"
+		data-attr-open="$interestIsOpen"
+		closedby="any"
+		data-signals={ fmt.Sprintf("{billettHolderId: getBillettHolderFromLocalstorage(), puljeId: '%s'}", puljeId) }
+	>
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
 				<form method="dialog">
-					<button autofocus class="btn btn--ghost close">
+					<button
+						autofocus
+						class="btn btn--ghost close"
+						data-on-click="$interestIsOpen = false"
+					>
 						@icons.Icon(icons.Close, icons.Size24)
 					</button>
 				</form>
 			</header>
 			<div class="dialog-content">
-                <div>
-                    @ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
-                </div>
-                <div>
-                    <p class="label">Velg pulje for arrangementet</p>
-                    @ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
-                </div>
-                <code>
-                    <pre data-json-signals></pre>
-                </code>
-                <div>
-                    <p class="label">Velg interesse</p>
-                    @ticketholder.TicketHolderInterestPicker(eventId, db, logger)
-                </div>
-                <p class="auto-save">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
+				<div>
+					@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
+				</div>
+				<div>
+					<p class="label">Velg pulje for arrangementet</p>
+					@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
+				</div>
+				<code>
+					<pre data-json-signals></pre>
+				</code>
+				<div>
+					<p class="label">Velg interesse</p>
+					@ticketholder.TicketHolderInterestPicker(eventId, db, logger)
+				</div>
+				<p class="auto-save">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
 			</div>
 		</div>
 	</dialog>
 	<script>
-        const LSEnum = {
-            SelectedBilletHolder: "selectedBillettHolder"
-        };
+		const LSEnum = {
+			SelectedBilletHolder: "selectedBillettHolder",
+		};
 
-        function getBillettHolderFromLocalstorage() {
-            const selectedBillettHolderString = localStorage.getItem(LSEnum.SelectedBilletHolder);
-            if (!selectedBillettHolderString) {
-                return 0;
-            }
-            const selectedBillettHolder = JSON.parse(selectedBillettHolderString);
-            return selectedBillettHolder.Id;
-        }
+		function getBillettHolderFromLocalstorage() {
+			const selectedBillettHolderString = localStorage.getItem(
+				LSEnum.SelectedBilletHolder,
+			);
+			if (!selectedBillettHolderString) {
+				return 0;
+			}
+			const selectedBillettHolder = JSON.parse(
+				selectedBillettHolderString,
+			);
+			return selectedBillettHolder.Id;
+		}
+		/*
+		const modal = document.querySelector(".interest-dialog");
+		const button = document.querySelector(".interest-button");
+		const buttonAbortController = new AbortController();
+		const buttonSignal = buttonAbortController.signal;
 
-        const modal = document.querySelector(".interest-dialog");
-        const button = document.querySelector(".interest-button");
-        const buttonAbortController = new AbortController();
-        const buttonSignal = buttonAbortController.signal;
+		const handleButtonClick = () => {
+			modal.showModal();
+		};
 
-        const handleButtonClick = () => {
-            modal.showModal();
-        };
-
-        button.addEventListener("click", handleButtonClick, { signal: buttonSignal });
-    </script>
+		button.addEventListener("click", handleButtonClick, {
+			signal: buttonSignal,
+		});
+        */
+	</script>
 }

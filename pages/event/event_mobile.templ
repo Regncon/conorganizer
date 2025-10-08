@@ -297,7 +297,11 @@ templ Event_mobile(
 				<span>
 					Muligheten for å melde interesse kommer snart!
 				</span>
-				<button class="btn btn--cta interest-button">Meld interesse</button>
+				<button
+					class="btn btn--cta"
+					data-on-click="$interestIsOpen = true"
+				>Meld interesse</button>
+				<pre data-json-signals></pre>
 			</div>
 			<div class="card details">
 				<div class="details-top">
