@@ -33,18 +33,16 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		}
 
 		.interest-dialog[open] {
-			position: fixed; /* take it out of normal flow */
 			inset: 0; /* top/right/bottom/left: 0 */
-			margin: auto; /* center it */
 			z-index: 5;
 			--dialog-width: min(32.5rem, 90%);
 			visibility: visible;
-			display: grid;
 			width: var(--dialog-width);
 			background-color: var(--bg-surface);
 			border: none;
 			padding: var(--spacing-5x);
 			box-shadow: var(--shadow-dialog);
+		    margin-top: 300px;
 
 			.no-marking {
 				user-select: none;
@@ -118,8 +116,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					<p class="label">Velg pulje for arrangementet</p>
 					@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				</div>
-				<code>
-				</code>
+				<code></code>
 				<div>
 					<p class="label">Velg interesse</p>
 					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)

@@ -155,6 +155,7 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
             const initials = selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase();
             selectedBillettholder = {...selectedBillettholder, Initials: initials};
 
+
             if (!selectedBillettholderLS) {
                 localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(selectedBillettholder));
 
