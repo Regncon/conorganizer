@@ -78,30 +78,32 @@ templ TicketHolderInterestPicker(
 			}
 		}
 	</style>
-	<div
-		data-signals-myInterest="getInterestLevel($billettHolderId, $puljeId)"
-	></div>
+	<div></div>
 	<div class="interest-buttons">
 		<button
 			class="btn btn--interest"
+			data-class-selected="isSelected($billettHolderId, $puljeId, 'high')"
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
 		>
 			<span class="emoji">🤩</span> Veldig interessert
 		</button>
 		<button
 			class="btn btn--interest"
+			data-class-selected="isSelected($billettHolderId, $puljeId, 'medium')"
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
 		>
 			<span class="emoji">🙂</span> Interessert
 		</button>
 		<button
 			class="btn btn--interest"
+			data-class-selected="isSelected($billettHolderId, $puljeId, 'low')"
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
 		>
 			<span class="emoji">🤨</span> Litt interessert
 		</button>
 		<button
 			class="btn btn--interest"
+			data-class-selected="isSelected($billettHolderId, $puljeId, 'none')"
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
 		>
 			<span class="emoji">😑</span> Ikke interessert
@@ -129,6 +131,40 @@ templ TicketHolderInterestPicker(
 				);
 			});
 			return match ? match.interestLevel : "Ikke funnet";
+		}
+		/**
+		 * @param {number} billettholderId
+		 * @param {string} puljeId
+		 * @param {string} level
+		 */
+		function isSelected(billettholderId, puljeId, level) {
+			console.log(
+				"for billettholderId:",
+				billettholderId,
+				"puljeId:",
+				puljeId,
+				"checking against level:",
+				level,
+			);
+			const currentLevel = getInterestLevel(billettholderId, puljeId);
+			console.log("Current level is:", currentLevel);
+			if (currentLevel === "Litt interessert" && level === "low") {
+				console.log("Matched low interest");
+				return true;
+			}
+			if (currentLevel === "Middels interessert" && level === "medium") {
+				console.log("Matched medium interest");
+				return true;
+			}
+			if (currentLevel === "Veldig interessert" && level === "high") {
+				console.log("Matched high interest");
+				return true;
+			}
+			if (currentLevel === "Ikke funnet" && level === "none") {
+				console.log("Matched no interest");
+				return true;
+			}
+			return false;
 		}
 	</script>
 }
