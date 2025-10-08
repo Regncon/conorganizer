@@ -1,22 +1,21 @@
 :root {
-
-    --color-text-strong: #F1F3F9;
-    --color-text-soft: #CCD1E9;
+    --color-text-strong: #f1f3f9;
+    --color-text-soft: #ccd1e9;
     --color-text-soft-50: hsl(from var(--color-text-soft) h s l / 50%);
 
     --color-primary-text: var(--color-text-soft);
-    --color-primary: #E7A965;
-    --color-primary-hover: #E7A96566;
+    --color-primary: #e7a965;
+    --color-primary-hover: #e7a96566;
     --color-primary-focus-visible: #feb56780;
     --color-primary-active: #feb56799;
-    --color-primary-strong: #E7A965;
+    --color-primary-strong: #e7a965;
     /* Deprecated variable, use color-primary instead */
 
     --color-secondary-text: var(--color-text-soft);
-    --color-secondary: #CCD1E9;
-    --color-secondary-hover: #CCD1E91A;
-    --color-secondary-focus-visible: #CCD1E980;
-    --color-secondary-active: #CCD1E933;
+    --color-secondary: #ccd1e9;
+    --color-secondary-hover: #ccd1e91a;
+    --color-secondary-focus-visible: #ccd1e980;
+    --color-secondary-active: #ccd1e933;
 
     --color-accent-blue: #8EADEE;
     --color-accent-purple: #C6A0F6;
@@ -33,12 +32,12 @@
     --color-warning: #EED49F;
     --color-error: #ED8796;
 
-    --color-disabled: #CCD1E980;
+    --color-disabled: #ccd1e980;
 
     --bg-tooltip: #11111b;
-    --bg-base: #1A1B26;
+    --bg-base: #1a1b26;
     --bg-surface: #252735;
-    --bg-item: #35394A;
+    --bg-item: #35394a;
     /* This is a border for surface and item both */
     --bg-item-border: #494D62;
     --bg-backdrop: #11111B;
@@ -90,6 +89,7 @@
     --responsive-top-of-page-spacing: var(--spacing-4x);
     --responsive-pane-column-spacing: var(--spacing-4x);
     --responsive-page-section-spacing: var(--spacing-8x);
+    --responsive-pane-padding: var(--spacing-4x);
     --responsive-h2-margin: var(--spacing-4x);
 }
 
@@ -98,6 +98,7 @@
         --responsive-top-of-page-spacing: var(--spacing-5x);
         --responsive-pane-column-spacing: var(--spacing-5x);
         --responsive-page-section-spacing: var(--spacing-8x);
+        --responsive-pane-padding: var(--spacing-5x);
         --responsive-h2-margin: var(--spacing-5x);
     }
 }
@@ -243,8 +244,8 @@ p {
     margin: 0;
 }
 
-p+p {
-    margin-top: 1rem
+p + p {
+    margin-top: 1rem;
 }
 
 .inline-icon {
@@ -293,7 +294,7 @@ hr {
     font-size: 1rem;
     padding-inline-start: 1rem;
     margin: 0;
-    transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 :is(textarea).input {
@@ -307,7 +308,7 @@ hr {
 .input:focus-visible {
     outline: 0;
     border: 1px solid var(--color-primary-hover);
-    box-shadow: 0 0 0 .25rem hsla(from var(--color-primary-hover) h s l / 0.25);
+    box-shadow: 0 0 0 0.25rem hsla(from var(--color-primary-hover) h s l / 0.25);
 }
 
 .slider {
@@ -376,6 +377,17 @@ input {
     flex-direction: column;
 }
 
+.flex-responsive {
+    display: flex;
+    flex-direction: row;
+}
+
+@media screen and (width < 600px) {
+    .flex-responsive {
+        flex-direction: column;
+    }
+}
+
 .card {
     width: var(--mobile-responsive-min-width);
     background: var(--bg-surface);
@@ -389,7 +401,7 @@ input {
 .surface-pane {
     border-radius: var(--border-radius-2x);
     background-color: var(--bg-surface);
-    padding: var(--spacing-5x);
+    padding: var(--responsive-pane-padding);
 }
 
 .form-card-title,
@@ -413,19 +425,15 @@ input {
     color: var(--color-primary-text);
     padding: var(--spacing-1x);
 }
-
-.tippy-tooltip[data-placement^='top'] .tippy-arrow {
+.tippy-tooltip[data-placement^="top"] .tippy-arrow {
     border-top-color: var(--bg-tooltip);
 }
-
-.tippy-tooltip[data-placement^='bottom'] .tippy-arrow {
+.tippy-tooltip[data-placement^="bottom"] .tippy-arrow {
     border-bottom-color: var(--bg-tooltip);
 }
-
-.tippy-tooltip[data-placement^='left'] .tippy-arrow {
+.tippy-tooltip[data-placement^="left"] .tippy-arrow {
     border-left-color: var(--bg-tooltip);
 }
-
-.tippy-tooltip[data-placement^='right'] .tippy-arrow {
+.tippy-tooltip[data-placement^="right"] .tippy-arrow {
     border-right-color: var(--bg-tooltip);
 }

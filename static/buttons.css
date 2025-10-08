@@ -8,10 +8,8 @@
     --btn-border-radius: var(--border-radius-1x);
 
     /* animation */
-    --btn-transition: background-color 0.2s ease,
-        border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        color 0.2s ease;
+    --btn-transition: background-color 0.2s ease, border-color 0.2s ease,
+        box-shadow 0.2s ease, color 0.2s ease;
 
     /* primary */
     --btn-primary-bg: transparent;
@@ -251,4 +249,14 @@
 .btn--interest-selected {
     color: var(--color-primary);
     border-color: var(--color-primary);
+}
+
+/* Apply as extra style to a .btn element if it only shows icon */
+.btn-icon-only {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: var(--btn-height);
+    width: var(--btn-height);
+    padding: 0;
 }
