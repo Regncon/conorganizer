@@ -81,17 +81,46 @@ func getTicketsRouter(
 }
 
 templ profileTicketsPageContent(userId string, db *sql.DB, logger *slog.Logger) {
-	{{ billettholdere, err := billettholderService.GetBilettholdere(userId, db, logger) }}
-	if err != nil {
-		<p>Feil ved henting av billettar: { err.Error() }</p>
-	}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: "/profile"},
 		{Name: "Billetter", Url: ""},
 	})
-	<section class="page-content-container">
-		<h1 class="page-heading">Mine Billetter</h1>
+	<section class="flex flex-col page-content-container" style="gap: var(--responsive-page-section-spacing);">
+		<h1 class="page-heading" style="margin-bottom: 0;">Mine Billetter</h1>
+		{{ billettholdere, err := billettholderService.GetBilettholdere(userId, db, logger) }}
+		if err != nil {
+			<p>Feil ved henting av billettar: { err.Error() }</p>
+		}
+		if len(billettholdere) != 0 {
+			<i class="card">
+				Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett nedanfor,
+				slik at kvar deltakar kan melda seg på arrangement på eiga hand. Hvis du opplever noen problemer med billetter kan du ta kontakt med <a class="mailto" href="mailto:styret@regncon.no">styret@regncon.no</a>
+			</i>
+			<div style="display: grid; grid-template-columns: repeat(auto-fit,minmax(var(--mobile-min-width), 430px)); gap: 1rem">
+				for _, billettholder := range billettholdere {
+					@billettholderCard(billettholder)
+				}
+			</div>
+		} else {
+			<div class="flex-responsive card" style="gap: var(--responsive-page-section-spacing);">
+				<div style="flex: 1">
+					<img src="/static/sobbingtemp.png" style="height: 100%; width:100%; border-radius: var(--border-radius-2x);" alt="logo"/>
+				</div>
+				<div class="flex flex-col" style="flex: 2; gap: var(--spacing-4x);">
+					<h2>
+						No tickets
+					</h2>
+					<p>
+						Vi fann ingen billettar registrert på denne epostadressa, det betyr at du anten ikkje har kjøpt billettar endå, eller at du har kjøpt billettane på ei anna anna epostadresse enn den du er logga inn med her.
+					</p>
+					<p>
+						<a class="btn-buy-ticket" href="https://event.checkin.no/109715/regncon-xxxiii-2025">Kjøp billetter ↗️</a>, lag ein brukar på riktig mailadresse, eller ta kontakt med <a class="mailto" href="mailto:styret@regncon.no">styret@regncon.no</a> noko
+						er galt, eller om du ønsker billettane overført til epostadressa du har laga brukar til.
+					</p>
+				</div>
+			</div>
+		}
 		<div style="display: flex; gap: 1rem; align-items: center; flex-direction: column;">
 			<button class="btn btn--cta" data-on-click={ datastar.PostSSE("/profile/tickets/api/get-tickets") }>
 				Hent billettar
@@ -107,32 +136,5 @@ templ profileTicketsPageContent(userId string, db *sql.DB, logger *slog.Logger) 
 				data-text="$getTicketsSuccessMessage"
 			></strong>
 		</div>
-		<div class="billettholder-admin-grid">
-			<style>
-				.billettholder-admin-grid {
-					display: grid;
-					grid-template-columns: repeat(
-						auto-fit,
-						minmax(var(--mobile-min-width), 430px)
-					);
-					gap: 1rem;
-				}
-			</style>
-			for _, billettholder := range billettholdere {
-				@billettholderCard(billettholder)
-			}
-		</div>
-		<i>
-			Vi fann følgande billettar på di bestilling. Du kan legga til eigne epostadresser for kvar billett nedanfor,
-			slik at kvar deltakar kan melda seg på arrangement på eiga hand.
-		</i>
-		<p>
-			Vi fann ingen billettar registrert på denne epostadressa. Det betyr at du anten ikkje har kjøpt billettar
-			endå, eller at du har kjøpt billettane på ei anna anna epostadresse enn den du er logga inn med her.
-		</p>
-		<p>
-			<a class="btn-buy-ticket" href="https://event.checkin.no/109715/regncon-xxxiii-2025">Kjøp billetter ↗️</a>, lag ein brukar på riktig mailadresse, eller ta kontakt med <a class="mailto" href="mailto:styret@regncon.no">styret@regncon.no</a> noko
-			er galt, eller om du ønsker billettane overført til epostadressa du har laga brukar til.
-		</p>
 	</section>
 }

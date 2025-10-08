@@ -157,7 +157,7 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 		lines = append(lines, fmt.Sprintf(`(%d, %d)`, billettholder.BillettholderID, user.ID))
 	}
 	var baseQuery = fmt.Sprintf(`
-        INSERT INTO billettholdere_users (
+        INSERT OR IGNORE INTO billettholdere_users (
             billettholder_id, user_id
         ) VALUES %s
     `, strings.Join(lines, ", "))
@@ -168,7 +168,7 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 		for _, billet := range billettholdere {
 			fmt.Printf("Billettholdere: %+v \n", billet)
 		}
-		fmt.Println(baseQuery)
+
 		return fmt.Errorf("unable to insert into billettholder_users: %v", err)
 	}
 
