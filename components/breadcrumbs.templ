@@ -15,14 +15,18 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 		.breadcrumb-content-justify {
 			display: flex;
 			align-items: center;
-			justify-content: flex-end;
+			justify-content: space-between;
 			gap: var(--spacing-8x);
 			width: 100%;
 			min-height: 50px;
 		}
 
 		.breadcrumbs {
-				display: none;
+			display: flex;
+			gap: 0.5rem;
+			padding: var(--spacing-5x) 0;
+			width: 100%;
+			overflow: hidden;
 
 			a {
 					color: var(--color-text-strong);
@@ -53,41 +57,40 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 		}
 
 		/* 
-		  Exclusively for mobile sizes, if Breadcrumb has children, sticky to top of page.
-			Otherwise hide the breadcrumb container on mobile.
+		  For mobile sizes, sticky breadcrumb to the top of page and
+			display a back-button as the only navigation option.
 		 */
 		@container main (width <= 600px) {
-			.breadcrumb-container:has(.breadcrumbs-extra-content > *) {
+			.breadcrumb-container {
 				position: sticky;
 				top: 0;
 				background-color: var(--bg-base);
 				z-index: var(--subnav-z-index);
 			}
-			.breadcrumb-container:not(:has(.breadcrumbs-extra-content > *)) {
+			.breadcrumb-step, .breadcrumb-separator {
 				display: none;
 			}
 		}
 		
 		@container main (width > 600px) {
-			.breadcrumb-content-justify {
-				justify-content: space-between;
+			.breadcrumb-mobile-return {
+				display: none;
 			}
-			.breadcrumbs {
-				display: flex;
-				gap: 0.5rem;
-				padding: var(--spacing-5x) 0;
-				width: 100%;
-				overflow: hidden;
-			}
-			
 		}
 	</style>
+	{{
+		/* Get the step before the last step as an array point */
+		stepBack := len(paths) - 2
+	}}
 	<div class="breadcrumb-container">
 		<div class="page-content-container wide-content breadcrumb-content-justify">
 			<div class="breadcrumbs">
-				for _, path := range paths {
+				for index, path := range paths {
+					if index == stepBack {
+						<a class="breadcrumb-mobile-return" href={ templ.URL(path.Url) }>&lt;</a>
+					}
 					if path.Url != "" {
-						<a href={ templ.URL(path.Url) }>{ path.Name }</a>
+						<a class="breadcrumb-step" href={ templ.URL(path.Url) }>{ path.Name }</a>
 						<span class="breadcrumb-separator">/</span>
 					} else {
 						<span class="breadcrumb-end ellipsis-overflow">{ path.Name }</span>
