@@ -4,43 +4,11 @@ import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
-    "fmt"
+	"fmt"
 )
 
-templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, logger *slog.Logger) {
-	<style>
+/*
 
-        .ticket-holder-picker-buttons {
-            .ticket-holder-picker:has(.billett-holder-picker-button) {
-                    display: none;
-            }
-
-        }
-
-        @container interest-dialog (width > 23.9375rem) {
-            .ticket-holder-picker-buttons {
-                display: grid;
-                grid-template-columns: repeat(3, minmax(0, 154px));
-                gap: var(--spacing-2x);
-                .ticket-holder-picker:has(.no-marking) {
-                    display: block;
-                }
-                .ticket-holder-picker:has(.custom-select) {
-                    display: none;
-                }
-
-            }
-
-        }
-
-    </style>
-	{{
-	associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger)
-	if err != nil {
-		logger.Error("Failed to get ticket holders", "error", err)
-	}
-    fmt.Println(len(associatedTicketHolders))
-	}}
 	if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
         <p class="label">Velg billettholder</p>
 		<div class="ticket-holder-picker-buttons">
@@ -57,14 +25,56 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
 		</div>
 	}
+*/
 
-    <script>
-        const billettHolderButtonPickerButton = document.querySelectorAll(`.billett-holder-picker-button`);
-        billettHolderButtonPickerButton.forEach(button => {
-            button.addEventListener('click', (ev) => {
-                const currentBillettHolder = ev.currentTarget.dataset.currentBillettHolder
-                localStorage.setItem(LSEnum.SelectedBilletHolder, currentBillettHolder);
-            });
-        });
-    </script>
+templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, logger *slog.Logger) {
+	<style>
+		.ticket-holder-picker-buttons {
+			.ticket-holder-picker:has(.billett-holder-picker-button) {
+            padding-bottom: var(--spacing-4x);
+			}
+		}
+
+		@container interest-dialog (width > 23.9375rem) {
+			.ticket-holder-picker-buttons {
+				display: grid;
+				grid-template-columns: repeat(3, minmax(0, 154px));
+				gap: var(--spacing-2x);
+				.ticket-holder-picker:has(.no-marking) {
+					display: block;
+				}
+				.ticket-holder-picker:has(.custom-select) {
+					display: none;
+				}
+			}
+		}
+	</style>
+	{{
+	associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger)
+	if err != nil {
+		logger.Error("Failed to get ticket holders", "error", err)
+	}
+	fmt.Println(len(associatedTicketHolders))
+	}}
+	<p class="label">Velg billettholder</p>
+	<div class="ticket-holder-picker-buttons">
+		for _, billettHolder := range associatedTicketHolders {
+			@TicketHolderButton(billettHolder)
+		}
+	</div>
+	<script>
+		const billettHolderButtonPickerButton = document.querySelectorAll(
+			`.billett-holder-picker-button`,
+		);
+		billettHolderButtonPickerButton.forEach((button) => {
+			button.addEventListener("click", (ev) => {
+				const currentBillettHolder =
+					ev.currentTarget.dataset.currentBillettHolder;
+				localStorage.setItem(
+					LSEnum.SelectedBilletHolder,
+					currentBillettHolder,
+				);
+			});
+		});
+	</script>
 }
