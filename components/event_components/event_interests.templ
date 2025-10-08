@@ -18,9 +18,8 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	r *http.Request,
 	logger *slog.Logger) {
 	<style>
-		::backdrop {
+		dialog::backdrop {
 			background-image: linear-gradient(45deg, var(--bg-backdrop));
-
 			opacity: 0.6;
 		}
 
@@ -40,10 +39,16 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			width: var(--dialog-width);
 			background-color: var(--bg-surface);
 			border: none;
+			border-radius: var(--border-radius-2x);
 			padding: var(--spacing-5x);
 			box-shadow: var(--shadow-dialog);
-		    margin-top: 300px;
-
+			/* This always centers the dialog on the page */
+			position: fixed;	
+			top: 0;
+			bottom: 0;
+			left: 0;
+			right: 0;
+		
 			.no-marking {
 				user-select: none;
 				-moz-user-select: none;
@@ -58,6 +63,15 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					place-content: space-between;
 					place-items: center;
 					height: fit-content;
+					color: var(--color-text-soft);
+
+					.button-container {
+						display: flex;
+						align-items: center;
+						justify-content: center;
+						height: 18px;
+						width: 18px;
+					}
 
 					.btn {
 						padding-inline: var(--spacing-2x);
@@ -98,7 +112,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
-				<form method="dialog">
+				<form class="button-container" method="dialog">
 					<button
 						autofocus
 						class="btn btn--ghost close"
