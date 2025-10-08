@@ -1,18 +1,29 @@
 package profilecomponent
 
 import (
+	"github.com/Regncon/conorganizer/components/ui/button"
 	"github.com/Regncon/conorganizer/models"
-	"strings"
 )
+
+templ singleEvent(event models.EventCardModel) {
+	<a href={ "my-events/new/" + event.Id } class="item-card profile-event">
+		if event.Title == "" {
+			<h3 style="color: gray; font-style: italic;">Mangler navn</h3>
+		} else {
+			<h3>{ event.Title }</h3>
+		}
+		@button.EventStatus(event.Status)
+	</a>
+}
 
 templ MyEvents(events []models.EventCardModel) {
 	<style>
 		.submit-event-message {
 			display: flex;
-			width: 100%; 
+			width: 100%;
 			flex-direction: column;
-			padding-top: var(--spacing-3x); 
-			gap: var(--responsive-pane-padding); 
+			padding-top: var(--spacing-3x);
+			gap: var(--responsive-pane-padding);
 			justify-content: space-between;
 			button {
 				align-self: flex-end;
@@ -27,24 +38,26 @@ templ MyEvents(events []models.EventCardModel) {
 				}
 			}
 		}
+        .profile-event {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--color-primary-text);
+            text-decoration: none;
+            padding: var(--spacing-2x) var(--spacing-4x);
+        }
+        .profile-event:hover {
+            filter: brightness(110%);
+        }
 	</style>
 	<div class="surface-pane flex flex-col" style="gap: var(--spacing-2x)">
 		<h2 class="surface-pane-title">Mine arrangementer</h2>
 		if len(events) > 0 {
 			for _, event := range events {
-				<span class="item-card flex" style="justify-content: space-between; align-items: center;">
-					<a href={ "profile/events/new/" + event.Id }>
-						if event.Title == "" {
-							<h3 style="color: gray; font-style: italic;">Mangler navn</h3>
-						} else {
-							<h3>{ event.Title }</h3>
-						}
-					</a>
-					<span class={ "status-panel", "event-status-" + strings.ToLower(string(event.Status)) }>{ event.Status }</span>
-				</span>
+				@singleEvent(event)
 			}
 		}
-		<form action="/events/api/new" method="post" class="submit-event-message">
+		<form action="/my-events/api/create" method="post" class="submit-event-message">
 			<p>Ønsker du  å arrangere noe under festivalen? Dørene er fortsatt åpne for nye arrangementer, la oss høre fra deg!</p>
 			<button type="submit" class="btn btn--outline">Send inn arrangement</button>
 		</form>

@@ -420,3 +420,33 @@ input {
 .tippy-tooltip[data-placement^="right"] .tippy-arrow {
     border-right-color: var(--bg-tooltip);
 }
+
+/* Event status card */
+.event-status {
+    display: flex;
+    gap: var(--spacing-2x);
+    padding: var(--border-radius-2x);
+    border: 2px solid;
+    border-radius: 1rem;
+}
+
+.kladd {
+    color: var(--color-soft-text);
+    border-color: var(--color-soft-text);
+}
+.innsendt {
+    color: var(--color-soft-text);
+    border-color: var(--color-soft-text);
+}
+.publisert {
+    color: var(--color-success);
+    border-color: var(--color-success);
+}
+.godkjent {
+    color: var(--color-warning);
+    border-color: var(--color-warning);
+}
+.forkastet {
+    color: var(--color-error);
+    border-color: var(--color-error);
+}
