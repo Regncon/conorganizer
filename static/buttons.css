@@ -246,8 +246,8 @@
 .btn--interest-picker:hover,
 .btn--interest-picker:focus-visible,
 .btn--interest-picker-selected {
-    color: var(--color-primary);
-    border-color: var(--color-primary);
+    color: var(--btn-outline-active-text);
+    border-color: var(--btn-outline-border);
 }
 
 .btn--interest-picker:disabled {
