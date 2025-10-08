@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"database/sql"
 	"net/http"
+	"encoding/json"
 
 	"github.com/Regncon/conorganizer/service/userctx"
 )
@@ -59,7 +60,8 @@ templ TicketHolderInterestPicker(
 	db *sql.DB,
 	r *http.Request,
 	logger *slog.Logger) {
-	{{ userInterests, err := getInterestLeveForUser(eventId, db, r, logger) }}
+	{{ userInterestsObject, err := getInterestLeveForUser(eventId, db, r, logger) }}
+	{{ userInterests, err := json.Marshal(userInterestsObject) }}
 	if err != nil {
 		<p>Error fetching user interests: { err.Error() }</p>
 	}
@@ -82,48 +84,48 @@ templ TicketHolderInterestPicker(
 	<div class="interest-buttons">
 		<button
 			class="btn btn--interest"
-			data-class-selected="isSelected($billettHolderId, $puljeId, 'high')"
+			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'high')", string(userInterests)) }
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
 		>
 			<span class="emoji">🤩</span> Veldig interessert
 		</button>
 		<button
 			class="btn btn--interest"
-			data-class-selected="isSelected($billettHolderId, $puljeId, 'medium')"
+			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'medium')", string(userInterests)) }
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
 		>
 			<span class="emoji">🙂</span> Interessert
 		</button>
 		<button
 			class="btn btn--interest"
-			data-class-selected="isSelected($billettHolderId, $puljeId, 'low')"
+			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'low')", string(userInterests)) }
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
 		>
 			<span class="emoji">🤨</span> Litt interessert
 		</button>
 		<button
 			class="btn btn--interest"
-			data-class-selected="isSelected($billettHolderId, $puljeId, 'none')"
+            data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'none')", string(userInterests)) }
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
 		>
 			<span class="emoji">😑</span> Ikke interessert
 		</button>
 	</div>
+	<div data-signal-valgtInteresse="getInterestLevel($billettHolderId, $puljeId)"></div>
 	<script>
-		const interestLeves = {{ userInterests }};
-		console.log("Interest levels loaded:", interestLeves);
 		/**
 		 * @param {number} billettholderId
 		 * @param {string} puljeId
 		 */
-		function getInterestLevel(billettholderId, puljeId) {
+		function getInterestLevel(interestLevels, billettholderId, puljeId) {
 			console.log(
 				"Getting interest level for billettholderId:",
 				billettholderId,
 				"puljeId:",
 				puljeId,
 			);
-			const match = interestLeves.find((i) => {
+
+			const match = interestLevels.find((i) => {
 				console.log("Checking interest:", i);
 				return (
 					i.billettholderId === billettholderId &&
@@ -137,7 +139,7 @@ templ TicketHolderInterestPicker(
 		 * @param {string} puljeId
 		 * @param {string} level
 		 */
-		function isSelected(billettholderId, puljeId, level) {
+		function isSelected(interestLevels, billettholderId, puljeId, level) {
 			console.log(
 				"for billettholderId:",
 				billettholderId,
@@ -146,7 +148,12 @@ templ TicketHolderInterestPicker(
 				"checking against level:",
 				level,
 			);
-			const currentLevel = getInterestLevel(billettholderId, puljeId);
+			console.log("Interest levels:", interestLevels);
+			const currentLevel = getInterestLevel(
+				interestLevels,
+				billettholderId,
+				puljeId,
+			);
 			console.log("Current level is:", currentLevel);
 			if (currentLevel === "Litt interessert" && level === "low") {
 				console.log("Matched low interest");
