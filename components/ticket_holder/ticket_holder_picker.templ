@@ -38,7 +38,10 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		@container interest-dialog (width > 23.9375rem) {
 			.ticket-holder-picker-buttons {
 				display: grid;
-				grid-template-columns: repeat(auto-fit, minmax(min(120px, 100%), 1fr));
+				grid-template-columns: repeat(
+					auto-fit,
+					minmax(min(120px, 100%), 1fr)
+				);
 				gap: var(--spacing-2x);
 				.ticket-holder-picker:has(.no-marking) {
 					display: block;
@@ -56,6 +59,9 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	}
 	fmt.Println(len(associatedTicketHolders))
 	}}
+	<div
+		data-signals={ fmt.Sprintf("{billettHolderId:%d}", associatedTicketHolders[0].Id) }
+	></div>
 	if (len(associatedTicketHolders) > 1) {
 		<div>
 			<p class="label">Velg billettholder</p>

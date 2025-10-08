@@ -2,7 +2,6 @@ package event_components
 
 import (
 	"database/sql"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -43,12 +42,12 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			padding: var(--responsive-pane-padding);
 			box-shadow: var(--shadow-dialog);
 			/* This always centers the dialog on the page */
-			position: fixed;	
+			position: fixed;
 			top: 0;
 			bottom: 0;
 			left: 0;
 			right: 0;
-		
+
 			.no-marking {
 				user-select: none;
 				-moz-user-select: none;
@@ -118,7 +117,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		class="interest-dialog"
 		data-attr-open="isOpen($interestIsOpen)"
 		closedby="any"
-		data-signals={ fmt.Sprintf("{billettHolderId: getBillettHolderFromLocalstorage(), puljeId: '%s'}", puljeId) }
 	>
 		<div class="dialog-container">
 			<header class="dialog-header">
@@ -133,6 +131,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					</button>
 				</form>
 			</header>
+			<pre data-json-signals></pre>
 			<div class="dialog-content">
 				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
@@ -159,7 +158,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				LSEnum.SelectedBilletHolder,
 			);
 			if (!selectedBillettHolderString) {
-				return 0;
+				return "";
 			}
 			const selectedBillettHolder = JSON.parse(
 				selectedBillettHolderString,
