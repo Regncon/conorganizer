@@ -56,12 +56,16 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	}
 	fmt.Println(len(associatedTicketHolders))
 	}}
-	<p class="label">Velg billettholder</p>
-	<div class="ticket-holder-picker-buttons">
-		for _, billettHolder := range associatedTicketHolders {
-			@TicketHolderButton(billettHolder)
-		}
-	</div>
+	if (len(associatedTicketHolders) > 1) {
+		<div>
+			<p class="label">Velg billettholder</p>
+			<div class="ticket-holder-picker-buttons">
+				for _, billettHolder := range associatedTicketHolders {
+					@TicketHolderButton(billettHolder)
+				}
+			</div>
+		</div>
+	}
 	<script>
 		const billettHolderButtonPickerButton = document.querySelectorAll(
 			`.billett-holder-picker-button`,

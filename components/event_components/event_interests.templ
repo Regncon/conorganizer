@@ -123,9 +123,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				</form>
 			</header>
 			<div class="dialog-content">
-				<div>
-					@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
-				</div>
+				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
 				<div>
 					<p class="label">Velg pulje for arrangementet</p>
 					@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
