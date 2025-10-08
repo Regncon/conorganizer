@@ -118,6 +118,9 @@ templ TicketHolderInterestPicker(
 		 * @param {string} puljeId
 		 */
 		function getInterestLevel(interestLevels, billettholderId, puljeId) {
+			if (!interestLevels || interestLevels.length === 0) {
+				return "Ikke funnet";
+			}
 			const match = interestLevels.find((i) => {
 				return (
 					i.billettholderId === billettholderId &&
