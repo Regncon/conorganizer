@@ -2,12 +2,47 @@ package profilecomponent
 
 import "github.com/Regncon/conorganizer/service/requestctx"
 
+// TODO: Knappen i denne komponenten burde peke til respektiv pulje med #hash i URL'en
+templ ProgramPuljeNoEvents() {
+	<style>
+		.pulje-no-events-container {
+			align-items: center;
+			gap: var(--spacing-4x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-2x);
+			padding: var(--spacing-4x);
+			.btn {
+				flex-shrink: 0;
+			}
+		}
+		@media screen and (width < 600px) {
+			.pulje-no-events-container .btn {
+				align-self: flex-end;
+			}
+		}
+	</style>
+	<div class="pulje-no-events-container flex-responsive">
+		<p>
+			Vi har ingenting å vise her ennå. 
+			Har du sjekket om det finnes noen kule arrangementer du ønsker å delta på?
+		</p>
+		<button class="btn btn--outline">
+			Se arrangementer
+		</button>
+	</div>
+}
+
 templ MyPropgram(userInfo requestctx.UserRequestInfo) {
 	<style>
-		.program-pulje-container {
+		.program-pulje-list {
 			display: flex;
 			flex-direction: column;
 			gap: var(--responsive-pane-padding);
+		}
+		.program-pulje-container {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
 		}
 		h3.program-pulje {
 			font-size: var(--text-heading-3);
@@ -28,42 +63,34 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo) {
 			<p style="font-style: italic;">kommer snart!</p>
 		}
 		if (userInfo.IsAdmin) {
-			<section class="program-pulje-container">
-				<div>
+			<section class="program-pulje-list">
+				<div class="program-pulje-container">
 					<h3 class="program-pulje">
 						Fredag Kveld 
 						<span class="program-pulje-time">(18:00 - 23:00)</span>
 					</h3>
-					<div>
-						Her har vi ingenting ...
-					</div>
+					@ProgramPuljeNoEvents()
 				</div>
-				<div>
+				<div class="program-pulje-container">
 					<h3 class="program-pulje">
 						Lørdag Morgen 
 						<span class="program-pulje-time">(10:00 - 15:00)</span>
 					</h3>
-					<div>
-						Her har vi ingenting ...
-					</div>
+					@ProgramPuljeNoEvents()
 				</div>
-				<div>
+				<div class="program-pulje-container">
 					<h3 class="program-pulje">
 						Lørdag Kveld 
 						<span class="program-pulje-time">(18:00 - 23:00)</span>
 					</h3>
-					<div>
-						Her har vi ingenting ...
-					</div>
+					@ProgramPuljeNoEvents()
 				</div>
-				<div>
+				<div class="program-pulje-container">
 					<h3 class="program-pulje">
 						Søndag Morgen 
 						<span class="program-pulje-time">(10:00 - 15:00)</span>
 					</h3>
-					<div>
-						Her har vi ingenting ...
-					</div>
+					@ProgramPuljeNoEvents()
 				</div>
 			</section>
 		}
