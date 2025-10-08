@@ -95,6 +95,12 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					gap: var(--spacing-3x);
 				}
 
+				.event-detail-group {
+					display: flex;
+					flex-direction: column;
+					gap: var(--spacing-1x);
+				}
+
 				.event-details-divider {
 					width: calc(100 + (var(--responsive-pane-padding) * 2));
 					margin: 0 calc(0px - var(--responsive-pane-padding));
@@ -115,7 +121,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 							margin-left: var(--spacing-1x);
 							svg {
 								position: absolute;
-								bottom: 0;
+								bottom: -2px;
 								left: 0;
 								height: 16px;
 							}
@@ -127,7 +133,6 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 
 					.event-details-type {
-						height: 20px;
 						display: flex;
 						place-items: center;
 						gap: var(--spacing-1x);
@@ -289,13 +294,13 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 				<h2 class="surface-pane-title">Detaljer om arrangementet</h2>
 				<div class="event-details">
 					<div class="event-details-section event-details-top">
-						<div class="event-details-host">
-							<span class="label-small">Arrangør</span>
-							<p class="color-strong" title={ event.HostName }>{ event.HostName } </p>
+						<div class="event-detail-group">
+							<span class="label-small color-strong">Arrangør</span>
+							<p title={ event.HostName }>{ event.HostName } </p>
 						</div>
-						<div class="event-details-system">
+						<div class="event-detail-group">
 							<div class="event-details-type">
-								<span class="label-small">
+								<span class="label-small color-strong">
 									if event.EventType == models.EventTypeRoleplay {
 										<span>Rollespill</span>
 										@icons.Icon(icons.EventRoleplay, icons.Size16)
@@ -308,7 +313,14 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 									}
 								</span>
 							</div>
-							<p class="color-strong" title={ event.System }>{ event.System } </p>
+							<p title={ event.System }>{ event.System } </p>
+						</div>
+						<div class="event-detail-group">
+							<span class="label-small color-strong">Pulje(r)</span>
+							<p title="Fredag Kveld (18 - 23)">Fredag Kveld (18 - 23)</p>
+							<p title="Lørdag Morgen (10 - 15)">Lørdag Morgen (10 - 15)</p>
+							<p title="Lørdag Kveld (18 - 23)">Lørdag Kveld (18 - 23)</p>
+							<p title="Søndag Morgen (10 - 15)">Søndag Morgen (10 - 15)</p>
 						</div>
 					</div>
 					<hr class="event-details-divider"/>
