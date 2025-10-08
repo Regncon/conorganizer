@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/service/userctx"
-	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 type BillettholderInterest struct {
@@ -55,85 +54,6 @@ func getInterestLeveForUser(
 
 }
 
-func getInterestLeveForBillettholder(
-	eventId string,
-	db *sql.DB,
-	r *http.Request,
-	logger *slog.Logger) (string, error) {
-	/*
-				   {]d
-				     "interestIsOpen": "",
-				     "billettHolderId": 1,
-				     "puljeId": "FredagKveld"
-				   }
-						type Store struct {
-							RoomNameFredagKveld  string `json:"roomNameFredagKveld"`
-							RoomNameLordagMorgen string `json:"roomNameLordagMorgen"`
-							RoomNameLordagKveld  string `json:"roomNameLordagKveld"`
-							RoomNameSondagMorgen string `json:"roomNameSondagMorgen"`
-						}
-						store := &Store{}
-
-						if err := datastar.ReadSignals(r, store); err != nil {
-							http.Error(w, err.Error(), http.StatusBadRequest)
-							return
-						}
-						var roomName string
-						if puljeId == string(models.PuljeFredagKveld) {
-							roomName = store.RoomNameFredagKveld
-						} else if puljeId == string(models.PuljeLordagMorgen) {
-							roomName = store.RoomNameLordagMorgen
-						} else if puljeId == string(models.PuljeLordagKveld) {
-							roomName = store.RoomNameLordagKveld
-						} else if puljeId == string(models.PuljeSondagMorgen) {
-							roomName = store.RoomNameSondagMorgen
-						} else {
-							logger.Warn("Invalid pulje ID", "puljeId", puljeId)
-							http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
-							return
-		billettHolderId
-		:
-		1
-		interestIsOpen
-		:
-		""
-		puljeId
-		:
-		"FredagKveld"
-
-	*/
-	type Store struct {
-		InterestIsOpen  string `json:"interestIsOpen"`
-		BillettholderId int    `json:"billettHolderId"`
-		PujleId         string `json:"puljeId"`
-	}
-	store := &Store{}
-
-	if err := datastar.ReadSignals(r, store); err != nil {
-		logger.Error("failed to read signals", "error", err)
-		return "", err
-	}
-	logger.Info("Read signals", "store", store)
-	logger.Info(fmt.Sprintf("Fetching interest level for billettholder %d, event %s, pulje %s", store.BillettholderId, eventId, store.PujleId))
-
-	query := `
-        SELECT [I].billettholder_id, [I].interest_level
-        FROM interests [I]
-        WHERE [I].billettholder_id = ? AND [I].event_id = ? AND [I].pulje_id = ?
-    `
-	row := db.QueryRow(query, store.BillettholderId, eventId, store.PujleId)
-	var interest BillettholderInterest
-	err := row.Scan(&interest.BillettholderId, &interest.InterestLevel)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return "none", nil // No interest level set
-		}
-		logger.Error("failed to scan row", "error", err)
-		return "", err
-	}
-	return interest.InterestLevel, nil
-}
-
 templ TicketHolderInterestPicker(
 	eventId string,
 	db *sql.DB,
@@ -143,20 +63,9 @@ templ TicketHolderInterestPicker(
 	if err != nil {
 		<p>Error fetching user interests: { err.Error() }</p>
 	}
-	<p>Number of interests found: { len(userInterests) }</p>
-	{{ currentInterest := "none" }}
-	<script>
-		colsole.log("PuljeId:");
-		console.log("User interests:", {{ userInterests }});
-	</script>
-	<pre>User interestrs:{ userInterests[0].InterestLevel }</pre>
 	if err != nil {
 		<p>Error fetching interest levels: { err.Error() }</p>
 	}
-	<p>
-		Interesser for bruker:
-		<strong>{ currentInterest }</strong>
-	</p>
 	<style>
 		.interest-buttons {
 			display: flex;
@@ -169,36 +78,30 @@ templ TicketHolderInterestPicker(
 			}
 		}
 	</style>
-	<div data-signals-result>
-		<input
-			data-bind-foo
-			data-on-input="$result = myfunction($foo)"
-			data-on-input="$currentInterestSignal: getInterestLevel($billettholderId, $puljeId)"
-		/>
-		Here:
-	</div>
-	{{ fmt.Println(currentInterest) }}
+	<div
+		data-signals-myInterest="getInterestLevel($billettHolderId, $puljeId)"
+	></div>
 	<div class="interest-buttons">
 		<button
-			class={ "btn", "btn--interest", addSelectedClass("Veldig interessert", currentInterest) }
+			class="btn btn--interest"
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
 		>
 			<span class="emoji">🤩</span> Veldig interessert
 		</button>
 		<button
-			class={ "btn", "btn--interest" , addSelectedClass("Interessert", currentInterest) }
+			class="btn btn--interest"
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
 		>
 			<span class="emoji">🙂</span> Interessert
 		</button>
 		<button
-			class={ "btn", "btn--interest" , addSelectedClass("Litt interessert", currentInterest) }
+			class="btn btn--interest"
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
 		>
 			<span class="emoji">🤨</span> Litt interessert
 		</button>
 		<button
-			class={ "btn", "btn--interest" , addSelectedClass("Ikke interessert", currentInterest) }
+			class="btn btn--interest"
 			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
 		>
 			<span class="emoji">😑</span> Ikke interessert
@@ -206,27 +109,26 @@ templ TicketHolderInterestPicker(
 	</div>
 	<script>
 		const interestLeves = {{ userInterests }};
-		     cons .log("Interest levels loaded:", interestLeves);
-		} /**
-		 * @param {Array<{billettholderId:number, puljeId:string, interestLevel:string}>} interests
+		console.log("Interest levels loaded:", interestLeves);
+		/**
 		 * @param {number} billettholderId
 		 * @param {string} puljeId
 		 */
 		function getInterestLevel(billettholderId, puljeId) {
-		      console.log("Getting interest level for billettholderId:", billettholderId, "puljeId:", puljeId);
-			const match = interestLeves.find(
-				(i) =>
-					i.billettholderId === billettholderId &&
-					i.puljeId === puljeId,
+			console.log(
+				"Getting interest level for billettholderId:",
+				billettholderId,
+				"puljeId:",
+				puljeId,
 			);
+			const match = interestLeves.find((i) => {
+				console.log("Checking interest:", i);
+				return (
+					i.billettholderId === billettholderId &&
+					i.puljeId === puljeId
+				);
+			});
 			return match ? match.interestLevel : "Ikke funnet";
 		}
 	</script>
-}
-
-func addSelectedClass(selected string, currentInterest string) string {
-	if selected == currentInterest {
-		return "selected"
-	}
-	return ""
 }
