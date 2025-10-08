@@ -1,10 +1,43 @@
 package profilecomponent
 
-templ MyPropgram() {
+import "github.com/Regncon/conorganizer/service/requestctx"
+
+templ MyPropgram(userInfo requestctx.UserRequestInfo) {
 	<div class="surface-pane">
 		<h2 class="surface-pane-title">
 			Mitt festivalprogram
 		</h2>
-		<p style="font-style: italic;">kommer snart!</p>
+		if (!userInfo.IsAdmin) {
+			<p style="font-style: italic;">kommer snart!</p>
+		}
+		if (userInfo.IsAdmin) {
+			<p style="font-style: italic;">Hello World, Admin</p>
+			<section>
+				<div>
+					<h3>Fredag Kveld <i>(18:00 - 23:00)</i></h3>
+					<div>
+						Her har vi ingenting ...
+					</div>
+				</div>
+				<div>
+					<h3>Lørdag Morgen <i>(10:00 - 15:00)</i></h3>
+					<div>
+						Her har vi ingenting ...
+					</div>
+				</div>
+				<div>
+					<h3>Lørdag Kveld <i>(18:00 - 23:00)</i></h3>
+					<div>
+						Her har vi ingenting ...
+					</div>
+				</div>
+				<div>
+					<h3>Søndag Morgen <i>(10:00 - 15:00)</i></h3>
+					<div>
+						Her har vi ingenting ...
+					</div>
+				</div>
+			</section>
+		}
 	</div>
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/Regncon/conorganizer/pages/profile/tickets"
 	"github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
@@ -51,7 +52,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			layouts.Base(
 				"Min profil side",
 				user,
-				ProfilePage(events, tickets),
+				ProfilePage(user, events, tickets),
 			).Render(ctx, w)
 		})
 
@@ -61,7 +62,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 	return nil
 }
 
-templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.TicketHolder) {
+templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardModel, tickets []profilecomponent.TicketHolder) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: ""},
@@ -69,7 +70,7 @@ templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.Tic
 	<section class="page-content-container profile-container">
 		<div class="profile-content-column">
 			@profilecomponent.MyEvents(events)
-			@profilecomponent.MyPropgram()
+			@profilecomponent.MyPropgram(user)
 		</div>
 		<div class="profile-content-column">
 			/* @profilecomponent.UserDetails(user) */
