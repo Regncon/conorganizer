@@ -1,0 +1,162 @@
+package ticketholder
+
+import (
+	"fmt"
+	"log/slog"
+	"database/sql"
+	"net/http"
+	"encoding/json"
+
+	"github.com/Regncon/conorganizer/service/userctx"
+)
+
+type BillettholderInterest struct {
+	BillettholderId int    `json:"billettholderId"`
+	PuljeId         string `json:"puljeId"`
+	InterestLevel   string `json:"interestLevel"`
+}
+
+func getInterestLeveForUser(
+	eventId string,
+	db *sql.DB,
+	r *http.Request,
+	logger *slog.Logger) ([]BillettholderInterest, error) {
+
+	var ctx = r.Context()
+	userInfo := userctx.GetUserRequestInfo(ctx)
+
+	query := `
+        SELECT [I].billettholder_id,[I].pulje_id, [I].interest_level
+        FROM interests [I]
+        JOIN billettholdere_users [BU] ON [I].billettholder_id = [BU].billettholder_id
+        JOIN users [U] ON [BU].user_id = [U].id
+        WHERE [U].user_id = ? AND [I].event_id = ?
+    `
+	rows, err := db.Query(query, userInfo.Id, eventId)
+	if err != nil {
+		logger.Error("failed to query interests", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+	var interests []BillettholderInterest
+	for rows.Next() {
+		var interest BillettholderInterest
+		if err := rows.Scan(&interest.BillettholderId, &interest.PuljeId, &interest.InterestLevel); err != nil {
+			logger.Error("failed to scan row", "error", err)
+			return nil, err
+		}
+		interests = append(interests, interest)
+	}
+	if err := rows.Err(); err != nil {
+		logger.Error("row iteration error", "error", err)
+		return nil, err
+	}
+	return interests, nil
+
+}
+
+templ TicketHolderInterestPicker(
+	eventId string,
+	db *sql.DB,
+	r *http.Request,
+	logger *slog.Logger) {
+	{{ userInterestsObject, err := getInterestLeveForUser(eventId, db, r, logger) }}
+	{{ userInterests, err := json.Marshal(userInterestsObject) }}
+	if err != nil {
+		<p>Error fetching user interests: { err.Error() }</p>
+	}
+	if err != nil {
+		<p>Error fetching interest levels: { err.Error() }</p>
+	}
+	<style>
+		.interest-buttons {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+			
+			.btn--interest-picker {
+				min-height: var(--btn-height-cta);
+			}
+
+			.selected {
+				border-color: var(--color-primary);
+				color: var(--color-primary);
+			}
+		}
+	</style>
+	<div></div>
+	<div class="interest-buttons">
+		<button
+			class="btn btn--interest-picker"
+			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'high')", string(userInterests)) }
+			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
+		>
+			<span class="emoji">🤩</span> Veldig interessert
+		</button>
+		<button
+			class="btn btn--interest-picker"
+			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'medium')", string(userInterests)) }
+			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
+		>
+			<span class="emoji">🙂</span> Interessert
+		</button>
+		<button
+			class="btn btn--interest-picker"
+			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'low')", string(userInterests)) }
+			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
+		>
+			<span class="emoji">🤨</span> Litt interessert
+		</button>
+		<button
+			class="btn btn--interest-picker"
+			data-class-selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'none')", string(userInterests)) }
+			data-on-click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
+		>
+			<span class="emoji">😑</span> Ikke interessert
+		</button>
+	</div>
+	<div data-signal-valgtInteresse="getInterestLevel($billettHolderId, $puljeId)"></div>
+	<script>
+		/**
+		 * @param {number} billettholderId
+		 * @param {string} puljeId
+		 */
+		function getInterestLevel(interestLevels, billettholderId, puljeId) {
+			if (!interestLevels || interestLevels.length === 0) {
+				return "Ikke funnet";
+			}
+			const match = interestLevels.find((i) => {
+				return (
+					i.billettholderId === billettholderId &&
+					i.puljeId === puljeId
+				);
+			});
+			return match ? match.interestLevel : "Ikke funnet";
+		}
+		/**
+		 * @param {number} billettholderId
+		 * @param {string} puljeId
+		 * @param {string} level
+		 */
+		function isSelected(interestLevels, billettholderId, puljeId, level) {
+			const currentLevel = getInterestLevel(
+				interestLevels,
+				billettholderId,
+				puljeId,
+			);
+			if (currentLevel === "Litt interessert" && level === "low") {
+				return true;
+			}
+			if (currentLevel === "Middels interessert" && level === "medium") {
+				return true;
+			}
+			if (currentLevel === "Veldig interessert" && level === "high") {
+				return true;
+			}
+			if (currentLevel === "Ikke funnet" && level === "none") {
+				return true;
+			}
+			return false;
+		}
+	</script>
+}

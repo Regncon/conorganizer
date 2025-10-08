@@ -11,8 +11,8 @@ import (
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	eventimgupload "github.com/Regncon/conorganizer/components/formsubmission/event_img_upload"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/pages/root"
 	newEvent "github.com/Regncon/conorganizer/pages/myprofile/myevents/newevent"
+	"github.com/Regncon/conorganizer/pages/root"
 
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
@@ -231,7 +231,6 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
 						formsubmission.SubmitFormRoute(newApiIdRouter, db, kv, logger)
 					})
-
 				})
 
 				apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {

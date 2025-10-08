@@ -1,0 +1,308 @@
+package ticketholder
+
+import (
+	"fmt"
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/service/requestctx"
+)
+
+// Takes a `selected` parameter to highlight the selected ticket holder
+templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder) {
+	{{
+	// If no ticket holders, return nothing
+	if len(associatedBillettholder) == 0 {
+		return
+	}
+	}}
+	<style>
+        .custom-select {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+
+            .select-button {
+                display: flex;
+                place-content: space-between;
+                place-items: center;
+                width: 100%;
+                cursor: pointer;
+
+                padding-inline: var(--spacing-4x);
+                padding-block: var(--spacing-3x);
+
+                .select-button-end {
+                    .arrow {
+                        display: flex;
+                        transition: transform ease-in-out 0.3s;
+                    }
+                }
+
+                .selected-value {
+                    .name-initials {
+                        max-width: 12.8rem;
+                    }
+                }
+
+                &[aria-expanded="true"] {
+                    .select-button-end {
+                        .arrow {
+                            transform: rotate(180deg);
+                        }
+                    }
+                }
+
+            }
+
+            .dropdown-list {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background-color: var(--bg-surface);
+                border: 1px solid var(--bg-item-border);
+                border-radius: 0.25rem;
+                list-style: none;
+                padding: 10px;
+                margin: 10px 0 0;
+                box-shadow: var(--shadow-dialog);
+                max-height: 200px;
+                overflow-y: auto;
+                scrollbar-width: thin;
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+
+                &.hidden {
+                    display: none;
+                }
+
+                li {
+                    background-color: var(--bg-item);
+                    border: 1px solid var(--bg-item-border);
+                    border-radius: var(--border-radius-2x);
+                    padding: 10px;
+                    cursor: pointer;
+                    display: flex;
+                    gap: 0.5rem;
+                    align-items: center;
+
+                    .selected {
+                        border-color: var(--color-primary);
+                        font-weight: bold;
+                        color: var(--color-primary);
+                    }
+
+                    &:hover,
+                    &:focus-visible {
+                        border-color: var(--color-primary);
+                        color: var(--color-primary);
+                    }
+                }
+            }
+
+
+        }
+
+    </style>
+	<div class="ticket-holder-picker">
+		<div class="custom-select">
+			<button
+				id="dropdown-button"
+				class="select-button input no-marking"
+				role="combobox"
+				aria-label="select button"
+				aria-haspopup="listbox"
+				aria-expanded="false"
+				aria-controls="dropdown-list"
+			>
+				<span class="selected-value"></span>
+				<div class="select-button-end">
+					<i class="arrow">
+						@icons.Icon(icons.ChevronDown, icons.Size24)
+					</i>
+				</div>
+			</button>
+			<ul
+				class="dropdown-list hidden"
+				role="listbox"
+				id="dropdown-list"
+				aria-labelledby="dropdown-button"
+			>
+				for _, bh := range associatedBillettholder {
+					{{ initials := GetInitials(bh.Name) }}
+					<li
+						role="option"
+                        data-bind="billettHolderId"
+                        data-on-click={ fmt.Sprintf("$billettHolderId = %d", bh.Id) }
+					>
+						@nameInitials(bh.Name, initials)
+					</li>
+				}
+			</ul>
+		</div>
+	</div>
+	<script>
+        const associatedBillettholder = {{ associatedBillettholder }};
+        console.log(associatedBillettholder);
+        let selectedBillettholder = {{ associatedBillettholder[0] }};
+        document.addEventListener("DOMContentLoaded", () => {
+            initDropDown();
+        });
+
+        const initLocalstorage = () => {
+            const selectedBillettholderLS = localStorage.getItem(LSEnum.SelectedBilletHolder);
+            const nameInitialsElement = document.querySelector(".selected-value");
+            const initials = selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase();
+            selectedBillettholder = {...selectedBillettholder, Initials: initials};
+
+
+            if (!selectedBillettholderLS) {
+                localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(selectedBillettholder));
+
+                nameInitialsElement.innerHTML = `
+                    <div class="name-initials">
+                        <span
+                        class="initials"
+                        style="
+                                background-color: hsl(from {{ColorForName(associatedBillettholder[0].Name)}} h s l / 0.5);
+                                border: 1px solid {{ColorForName(associatedBillettholder[0].Name)}};"
+
+                        >${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                        <p class="name">${selectedBillettholder.Name}</p>
+                    </div>
+                `;
+            }
+
+            if (selectedBillettholderLS) {
+                const billetHolder = JSON.parse(selectedBillettholderLS);
+                selectedBillettholder = billetHolder;
+
+                nameInitialsElement.innerHTML = `
+                    <div class="name-initials">
+                        <span
+                            class="initials"
+                            style="
+                                background-color: black;
+                                border: 1px solid black;
+                                "
+                        >
+                            ${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </span>
+                        <p class="name">${selectedBillettholder.Name}</p>
+                    </div>
+                `;
+            }
+            selectedBillettholder = {...selectedBillettholder,  Initials: initials};
+            return selectedBillettholder;
+
+        };
+
+        const initDropDown = () => {
+            const customSelects = document.querySelectorAll(".custom-select");
+            customSelects.forEach((customSelect) => {
+                const selectButton = customSelect.querySelector(".select-button");
+                const dropdown = customSelect.querySelector(".dropdown-list");
+
+                let focusedIndex = -1;
+
+                const toggleDropdown = (expand = null) => {
+                    const isOpen = expand !== null ? expand : dropdown.classList.contains("hidden");
+
+                    dropdown.classList.toggle("hidden", !isOpen);
+
+                    selectButton.setAttribute("aria-expanded", isOpen);
+
+                    if (isOpen) {
+                        focusedIndex = [...options].findIndex((option) =>
+                            option.classList.contains("selected")
+                        );
+
+                        focusedIndex = focusedIndex === -1 ? 0 : focusedIndex;
+
+                        updateFocus();
+                    } else {
+                        focusedIndex = -1;
+                        selectButton.focus();
+                    }
+                };
+                const updateFocus = () => {
+                    options.forEach((option, index) => {
+                        if (option) {
+                            option.setAttribute("tabindex", index === focusedIndex ? "0" : "-1");
+
+                            if (index === focusedIndex) option.focus();
+                        }
+                    });
+                };
+
+                selectButton.addEventListener("click", () => {
+                    toggleDropdown();
+                });
+
+                selectButton.addEventListener("keydown", (event) => {
+                    if (event.key === "ArrowDown") {
+                        event.preventDefault();
+
+                        toggleDropdown(true);
+
+                    } else if (event.key === "Escape") {
+                        toggleDropdown(false);
+                    }
+                });
+
+                dropdown.addEventListener("keydown", (event) => {
+                    if (event.key === "ArrowDown") {
+                        event.preventDefault();
+
+                        focusedIndex = (focusedIndex + 1) % options.length;
+
+                        updateFocus();
+                    } else if (event.key === "ArrowUp") {
+                        event.preventDefault();
+
+                        focusedIndex = (focusedIndex - 1 + options.length) % options.length;
+
+                        updateFocus();
+                    } else if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+
+                        handleOptionSelect(options[focusedIndex]);
+
+                        toggleDropdown(false);
+                    } else if (event.key === "Escape") {
+                        toggleDropdown(false);
+                    }
+                });
+
+                const options = dropdown.querySelectorAll("li");
+                const selectedValue = selectButton.querySelector(".selected-value");
+
+                const handleOptionSelect = (option) => {
+                    options.forEach((opt) => opt.classList.remove("selected"));
+                    option.classList.add("selected");
+
+                    selectedValue.innerHTML = option.innerHTML;
+
+                    const name = option.querySelector(".name").textContent;
+                    const billetHolder = associatedBillettholder.find(th => th.Name === name);
+                    localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(billetHolder));
+                    selectedBillettholder = billetHolder;
+                };
+
+                options.forEach((option) => {
+                    option.addEventListener("click", () => {
+                        handleOptionSelect(option);
+                        toggleDropdown(false);
+                    });
+                });
+
+                document.addEventListener("click", (event) => {
+                    const isOutsideClick = !customSelect.contains(event.target);
+                    if (isOutsideClick) {
+                        toggleDropdown(false);
+                    }
+                });
+            });
+        }
+    </script>
+}

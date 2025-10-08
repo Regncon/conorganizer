@@ -1,0 +1,67 @@
+package ticketholder
+
+import (
+	"fmt"
+	"hash/fnv"
+)
+
+templ nameInitials(name string, initials string) {
+	<style>
+
+        .name-initials {
+            display: inline-flex;
+            place-items: center;
+            gap: var(--spacing-2x);
+            min-width: 0;
+            overflow: clip;
+
+            .name {
+                white-space: nowrap;
+                overflow: clip;
+            }
+            .initials {
+                display: flex;
+                place-content: center;
+                place-items: center;
+                color: var(--color-text-strong);
+                font-size: 12px;
+                border-radius: 50%;
+                min-inline-size: 1.5rem;
+                min-block-size: 1.5rem;
+            }
+        }
+
+    </style>
+	<div class="name-initials">
+		<span
+			class="initials"
+			style={ templ.SafeCSS(fmt.Sprintf("background-color: hsl(from %s h s l / 0.5)", ColorForName(name))),
+            templ.SafeCSS(fmt.Sprintf("border: 1px solid %s;", ColorForName(name))) }
+		>
+			{ initials }
+		</span>
+		<p class="name">{ name }</p>
+	</div>
+}
+
+var accentColors = []string{
+	"var(--color-accent-blue)",
+	"var(--color-accent-purple)",
+	"var(--color-accent-pink)",
+	"var(--color-accent-red)",
+	"var(--color-accent-orange)",
+	"var(--color-accent-yellow)",
+	"var(--color-accent-green)",
+	"var(--color-accent-teal)",
+	"var(--color-accent-cyan)",
+}
+
+func ColorForName(name string) string {
+	h := fnv.New32a()
+	h.Write([]byte(name))
+	idx := int(h.Sum32()) % len(accentColors)
+	if idx < 0 {
+		idx += len(accentColors)
+	}
+	return accentColors[idx]
+}

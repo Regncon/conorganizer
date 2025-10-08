@@ -3,9 +3,10 @@ package service
 import (
 	"database/sql"
 	"fmt"
-	_ "modernc.org/sqlite"
 	"os"
 	"path/filepath"
+
+	_ "modernc.org/sqlite"
 )
 
 func InitDB(databaseFileName string) (*sql.DB, error) {

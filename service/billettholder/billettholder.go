@@ -109,3 +109,16 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 	}
 	return out, nil
 }
+
+func GetBillettholderByUserId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
+	var billettholderId int
+	row := db.QueryRow(`
+        SELECT id FROM billettholdere WHERE user_id = $1 `, userID)
+
+	if err := row.Scan(&billettholderId); err != nil {
+		logger.Error("Failed to scan row", "error", err)
+		return 0, err
+	}
+
+	return billettholderId, nil
+}

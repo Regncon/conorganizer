@@ -8,10 +8,8 @@
     --btn-border-radius: var(--border-radius-1x);
 
     /* animation */
-    --btn-transition: background-color 0.2s ease,
-        border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        color 0.2s ease;
+    --btn-transition: background-color 0.2s ease, border-color 0.2s ease,
+        box-shadow 0.2s ease, color 0.2s ease;
 
     /* primary */
     --btn-primary-bg: transparent;
@@ -29,7 +27,7 @@
     --btn-secondary-active-text: var(--color-text-strong);
     --btn-secondary-focus-shadow: var(--color-primary-focus-visible);
 
-    /* --tline */
+    /* --outline */
     --btn-outline-border: var(--color-secondary);
     --btn-outline-hover-bg: var(--color-secondary-hover);
     --btn-outline-active-bg: var(--color-secondary-active);
@@ -228,6 +226,36 @@
 
 .btn-with-icon {
     gap: var(--spacing-2x);
+}
+
+.btn--interest-picker {
+    --btn-interest-border-text-color: var(--color-text-soft);
+    font-weight: var(--btn-font-weight);
+    font-size: var(--btn-font-size);
+    color: var(--btn-interest-border-text-color);
+    border: 1px solid var(--bg-item-border);
+    background-color: var(--bg-item);
+    min-height: 48px;
+    place-content: start;
+    padding: 0;
+    padding-inline: var(--spacing-4x);
+    padding-block: var(--spacing-3x);
+    width: min(30rem, 100%);
+}
+
+.btn--interest-picker:hover,
+.btn--interest-picker:focus-visible,
+.btn--interest-picker-selected {
+    color: var(--btn-outline-active-text);
+    border-color: var(--btn-outline-border);
+}
+
+.btn--interest-picker:disabled {
+    background-color: transparent;
+    color: var(--color-text-soft);
+    border-color: var(--bg-item-border);
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 /* Apply as extra style to a .btn element if it only shows icon */

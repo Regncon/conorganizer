@@ -129,9 +129,7 @@ func GetPreviousNextByPuljeSimple(
 	if nextId != "" {
 		nextUrl = fmt.Sprintf("/event/%s?pulje=%s", nextId, nextPuljeID)
 	}
-	fmt.Println("previousId:", previousId, "previousTitle:", previousTitle, "nextId:", nextId, "nextTitle:", nextTitl)
 
-	fmt.Println("previous puljeID:", previousPuljeID)
 	var result = components.PreviousNext{
 		PreviousUrl:      previousUrl,
 		PreviousTitle:    previousTitle,
@@ -140,6 +138,6 @@ func GetPreviousNextByPuljeSimple(
 		NextTitle:        nextTitl,
 		NextImageURL:     nextBanner,
 	}
-	fmt.Println("PreviousNext Result:", result)
+
 	return result, nil
 }

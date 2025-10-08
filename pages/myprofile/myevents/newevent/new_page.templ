@@ -1,15 +1,15 @@
 package newEvent
 
 import (
-	"database/sql"
-	"log/slog"
 	"context"
-	"github.com/Regncon/conorganizer/models"
+	"database/sql"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
-	"github.com/Regncon/conorganizer/service/eventService"
-	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/event"
+	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/eventService"
+	"log/slog"
 )
 
 templ NewEventFormPage(eventId string, userId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
@@ -50,7 +50,7 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 			</form>
 			if isAdmin {
 				<div style="padding:2rem;">
-					@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir)
+					@event.Event_mobile(eventData, isRemovedPreviousNext, eventImageDir, false)
 				</div>
 			}
 		</div>
