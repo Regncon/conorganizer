@@ -40,7 +40,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			background-color: var(--bg-surface);
 			border: none;
 			border-radius: var(--border-radius-2x);
-			padding: var(--spacing-5x);
+			padding: var(--responsive-pane-padding);
 			box-shadow: var(--shadow-dialog);
 			/* This always centers the dialog on the page */
 			position: fixed;	
@@ -81,7 +81,8 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				.dialog-content {
 					display: flex;
 					flex-direction: column;
-					gap: var(--spacing-5x);
+					gap: var(--responsive-pane-padding);
+					padding-top: var(--responsive-pane-padding);
 
 					.label {
 						font-size: 12px;
@@ -128,7 +129,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					<p class="label">Velg pulje for arrangementet</p>
 					@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				</div>
-				<code></code>
 				<div>
 					<p class="label">Velg interesse</p>
 					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
