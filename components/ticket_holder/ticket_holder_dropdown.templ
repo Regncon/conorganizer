@@ -40,9 +40,6 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
                 .selected-value {
                     .name-initials {
                         max-width: 12.8rem;
-                        .name {
-                            display: none;
-                        }
                     }
                 }
 
@@ -105,21 +102,6 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
 
 
         }
-
-        @container interest-dialog (width > 286px) {
-            .custom-select {
-                .select-button {
-                    .selected-value {
-                        .name-initials {
-                            .name {
-                                display: inline;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
 
     </style>
 	<div class="ticket-holder-picker">

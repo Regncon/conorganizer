@@ -7,10 +7,11 @@ templ nameInitials(name string, initials string) {
             display: inline-flex;
             place-items: center;
             gap: var(--spacing-3x);
+            min-width: 0;
+            overflow: clip;
 
             .name {
                 white-space: nowrap;
-                min-width: 0;
                 overflow: clip;
             }
             .initials {
