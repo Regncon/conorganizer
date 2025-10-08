@@ -100,6 +100,11 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				}
 
 				.dialog-footer {
+					display: flex;
+					flex-direction: row;
+					align-items: center;
+					justify-content: space-between;
+					gap: var(--responsive-pane-padding);
 					padding-top: var(--responsive-pane-padding);
 					.auto-save-message {
 						color: var(--color-text-soft);
@@ -138,6 +143,9 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			</div>
 			<div class="dialog-footer">
 				<p class="auto-save-message">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
+				<button class="btn btn--outline" data-on-click="$interestIsOpen = false">
+					Ferdig
+				</button>
 			</div>
 		</div>
 	</dialog>
