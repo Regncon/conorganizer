@@ -12,7 +12,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
 	<style>
-		.wrapper {
+		.event-page-wrapper {
 			--event-banner-height: 25rem;
 			--line-height-mobile: 1.4;
 			--line-height: var(--line-height-mobile, 1.4);
@@ -70,61 +70,6 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					}
 				}
 
-				.event-details {
-					display: flex;
-					flex-direction: column;
-					gap: var(--responsive-pane-padding);
-
-					.event-details-section {
-						display: flex;
-						flex-direction: column;
-						gap: var(--spacing-3x);
-					}
-
-					.event-details-divider {
-						width: calc(100 + (var(--responsive-pane-padding) * 2));
-						margin: 0 calc(0px - var(--responsive-pane-padding));
-					}
-
-					.event-details-top {
-						p {
-							margin: 0;
-						}
-
-						.label-small {
-							font-size: 12px;
-							font-weight: bold;
-							/* lmao hack to make the icon overflow the label */
-							.inline-icon {
-								position: relative;
-								height: 100%;
-								margin-left: var(--spacing-1x);
-								svg {
-									position: absolute;
-									bottom: 0;
-									left: 0;
-									height: 16px;
-								}
-							}
-						}
-
-						.event-details-header {
-							font-size: var(--spacing-3x);
-						}
-
-						.event-details-type {
-							height: 20px;
-							display: flex;
-							place-items: center;
-							gap: var(--spacing-1x);
-
-							.event-details-header {
-								font-size: 12px;
-							}
-						}
-					}
-				}
-
 				.description {
 					padding: var(--spacing-2x);
 					p {
@@ -136,8 +81,88 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 			}
 		}
 
-		@container event-container (width > 600px) {
-			.wrapper {
+		.event-details-pane {
+			container-type: inline-size;
+			container-name: event-details;
+			.event-details {
+				display: flex;
+				flex-direction: column;
+				gap: var(--responsive-pane-padding);
+
+				.event-details-section {
+					display: flex;
+					flex-direction: column;
+					gap: var(--spacing-3x);
+				}
+
+				.event-details-divider {
+					width: calc(100 + (var(--responsive-pane-padding) * 2));
+					margin: 0 calc(0px - var(--responsive-pane-padding));
+				}
+
+				.event-details-top {
+					p {
+						margin: 0;
+					}
+
+					.label-small {
+						font-size: 12px;
+						font-weight: bold;
+						/* lmao hack to make the icon overflow the label */
+						.inline-icon {
+							position: relative;
+							height: 100%;
+							margin-left: var(--spacing-1x);
+							svg {
+								position: absolute;
+								bottom: 0;
+								left: 0;
+								height: 16px;
+							}
+						}
+					}
+
+					.event-details-header {
+						font-size: var(--spacing-3x);
+					}
+
+					.event-details-type {
+						height: 20px;
+						display: flex;
+						place-items: center;
+						gap: var(--spacing-1x);
+
+						.event-details-header {
+							font-size: 12px;
+						}
+					}
+				}
+			}
+		}
+
+		@container event-details (width > 600px) {
+			.event-details-pane {
+				.event-details {
+					height: fit-content;
+					display: grid;
+					grid-template-columns: 1fr 1fr;
+
+					hr {
+						display: none;
+					}
+
+					.event-details-top {
+						.event-details-host {
+							display: flex;
+							flex-direction: column;
+						}
+					}
+				}
+			}
+		}
+
+		@container event-container (width <= 600px) {
+			.event-page-wrapper {
 				inline-size: min(1041px, 100%);
 				display: grid;
 				grid-template-rows: max-content max-content;
@@ -170,22 +195,6 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 						place-content: space-between;
 						height: fit-content;
 					}
-					.event-details {
-						height: fit-content;
-						display: grid;
-						grid-template-columns: 1fr 1fr;
-
-						hr {
-							display: none;
-						}
-
-						.event-details-top {
-							.event-details-host {
-								display: flex;
-								flex-direction: column;
-							}
-						}
-					}
 					.description {
 						order: 2;
 						padding: 0;
@@ -206,7 +215,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 		}
 
 		@container event-container (width > 1100px) {
-			.wrapper {
+			.event-page-wrapper {
 				inline-size: min(1440px, 100%);
 				gap: var(--spacing-10x);
 				padding: var(--spacing-10x);
@@ -230,26 +239,22 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					.interest-picker {
 						grid-area: interests;
 					}
-					.event-details {
+					.event-details-pane {
 						grid-area: details;
-						grid-template-columns: unset;
-
-						hr {
-							display: block;
-						}
+						height: max-content
 					}
 					.description {
 						grid-area: description;
 					}
 				}
 
-				.prev-next-wrapper {
+				.prev-next-event-page-wrapper {
 					padding-inline: var(--spacing-10x);
 				}
 			}
 		}
 	</style>
-	<div class="wrapper">
+	<div class="event-page-wrapper">
 		<div class="stack">
 			<picture>
 				<source
@@ -280,7 +285,7 @@ templ Event_mobile(event *models.Event, previousNextData components.PreviousNext
 					Meld interesse
 				</button>
 			</div>
-			<section class="surface-pane">
+			<section class="surface-pane event-details-pane">
 				<h2 class="surface-pane-title">Detaljer om arrangementet</h2>
 				<div class="event-details">
 					<div class="event-details-section event-details-top">
