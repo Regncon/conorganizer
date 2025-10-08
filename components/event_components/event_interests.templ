@@ -36,7 +36,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			position: fixed; /* take it out of normal flow */
 			inset: 0; /* top/right/bottom/left: 0 */
 			margin: auto; /* center it */
-            z-index: 5;
+			z-index: 5;
 			--dialog-width: min(32.5rem, 90%);
 			visibility: visible;
 			display: grid;
@@ -93,7 +93,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	</style>
 	<dialog
 		class="interest-dialog"
-		data-attr-open="$interestIsOpen"
+		data-attr-open="isOpen($interestIsOpen)"
 		closedby="any"
 		data-signals={ fmt.Sprintf("{billettHolderId: getBillettHolderFromLocalstorage(), puljeId: '%s'}", puljeId) }
 	>
@@ -146,6 +146,14 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			);
 			return selectedBillettHolder.Id;
 		}
+
+		function isOpen(isOpenData) {
+			// return false if is empty sting or undefined
+			if (!isOpenData || isOpenData === "false") {
+				return false;
+			}
+			return true;
+		}
 		/*
 		const modal = document.querySelector(".interest-dialog");
 		const button = document.querySelector(".interest-button");
@@ -159,6 +167,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		button.addEventListener("click", handleButtonClick, {
 			signal: buttonSignal,
 		});
-        */
+		      */
 	</script>
 }
