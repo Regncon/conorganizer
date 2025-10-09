@@ -231,4 +231,7 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 		event.MaxPlayers,
 		event.Notes,
 	)
+	if isAdmin {
+		@interessertePlayers(event.ID, db)
+	}
 }

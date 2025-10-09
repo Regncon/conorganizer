@@ -225,7 +225,7 @@ type InterestLevels struct {
 	None   string `json:"none"`
 }
 
-func convertInterestLevelToDbInterestLevel(interest InterestLevels) string {
+func ConvertInterestLevelToDbInterestLevel(interest InterestLevels) string {
 	switch {
 	case interest.High != "":
 		return "Veldig interessert"
@@ -294,7 +294,7 @@ func updateInterest(
                 ON CONFLICT(billettholder_id, pulje_id, event_id) DO UPDATE SET
                     interest_level = excluded.interest_level
             `
-	updateRows, updateAffectedErr := db.Exec(updateQuery, billettholderId, eventID, puljeId, convertInterestLevelToDbInterestLevel(interest))
+	updateRows, updateAffectedErr := db.Exec(updateQuery, billettholderId, eventID, puljeId, ConvertInterestLevelToDbInterestLevel(interest))
 	if updateAffectedErr != nil {
 		logger.Error("failed to update interest", "error", updateAffectedErr)
 		return updateAffectedErr
