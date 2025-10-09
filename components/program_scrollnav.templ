@@ -15,18 +15,53 @@ templ ProgramScrollnav() {
       justify-content: center;
       gap: var(--spacing-2x);
     }
+    .scrollnav-button {
+      position: relative;
+      transition: color 0.2s ease;
+      .scrollnav-active-bar {
+        position: absolute;
+        bottom: 0px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: transparent;
+        transition: background-color 0.2s ease;
+      }
+      .btn.is-active {
+        color: var(--color-primary);
+      }
+      .btn.btn.is-active ~ .scrollnav-active-bar {
+        background-color: var(--color-primary);
+      }
+    }
+    .scrollnav-button .btn:hover ~ .scrollnav-active-bar {
+      background-color: var(--color-text-soft);
+    }
     @media main (width > 600px) {
       .program-scrollnav-container {
         padding: var(--spacing-5x) 0;
       }  
     }
   </style>
+	<script src="/static/web_components/scroll_highlighter.js"></script>
 	<div class="program-scrollnav-container">
 		<div class="page-content-container program-scrollnav-bar">
-			<a class="btn btn--ghost" href="#FredagKveld">Fredag Kveld</a>
-			<a class="btn btn--ghost" href="#LordagMorgen">Lørdag Morgen</a>
-			<a class="btn btn--ghost" href="#LordagKveld">Lørdag Kveld</a>
-			<a class="btn btn--ghost" href="#SondagMorgen">Søndag Morgen</a>
+			<div class="scrollnav-button">
+				<a class="btn btn--ghost" href="#FredagKveld">Fredag Kveld</a>
+				<span class="scrollnav-active-bar"></span>
+			</div>
+			<div class="scrollnav-button">
+				<a class="btn btn--ghost" href="#LordagMorgen">Lørdag Morgen</a>
+				<span class="scrollnav-active-bar"></span>
+			</div>
+			<div class="scrollnav-button">
+				<a class="btn btn--ghost" href="#LordagKveld">Lørdag Kveld</a>
+				<span class="scrollnav-active-bar"></span>
+			</div>
+			<div class="scrollnav-button">
+				<a class="btn btn--ghost" href="#SondagMorgen">Søndag Morgen</a>
+				<span class="scrollnav-active-bar"></span>
+			</div>
 		</div>
 	</div>
 }
