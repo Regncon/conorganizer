@@ -10,6 +10,9 @@ primary_region = 'arn'
 dockerfile = "../Dockerfile.flyio"
 build-target = "server"
 
+[deploy]
+  strategy = "immediate"
+
 [[mounts]]
   source = "uploads"
   destination = "/data"
