@@ -259,7 +259,7 @@ Since our site and services are linked to S3 it's important that we update all t
 - Regncon secret: https://fly.io/apps/regncon/secrets
 - Backup-service secret: https://fly.io/apps/backup-service/secrets
 
-<!-- 
+<!--
 docker compose -f compose-restore.yaml down && docker image rm regncon-migration
 docker compose -f compose-restore.yaml up
 -->
@@ -282,4 +282,3 @@ docker compose -f compose-restore.yaml up
 - [Northstar Template Documentation](https://github.com/zangster300/northstar)
 - [Go Documentation](https://go.dev/doc/)
 - [Docker Documentation](https://docs.docker.com/)
-  .
