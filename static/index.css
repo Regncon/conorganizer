@@ -416,7 +416,6 @@ input {
     padding: 1rem;
     background-color: var(--bg-item);
     border-radius: var(--border-radius-2x);
-    font-size: 0.9rem;
 }
 
 .tippy-tooltip {

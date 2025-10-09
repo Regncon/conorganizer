@@ -1,36 +1,9 @@
 package profilecomponent
 
-import "github.com/Regncon/conorganizer/service/requestctx"
-
-// TODO: Knappen i denne komponenten burde peke til respektiv pulje med #hash i URL'en
-templ ProgramPuljeNoEvents() {
-	<style>
-		.pulje-no-events-container {
-			align-items: center;
-			gap: var(--spacing-4x);
-			border: 1px solid var(--bg-item-border);
-			border-radius: var(--border-radius-2x);
-			padding: var(--spacing-4x);
-			.btn {
-				flex-shrink: 0;
-			}
-		}
-		@media screen and (width < 600px) {
-			.pulje-no-events-container .btn {
-				align-self: flex-end;
-			}
-		}
-	</style>
-	<div class="pulje-no-events-container flex-responsive">
-		<p>
-			Vi har ingenting å vise her ennå. 
-			Har du sjekket om det finnes noen kule arrangementer du ønsker å delta på?
-		</p>
-		<button class="btn btn--outline">
-			Se arrangementer
-		</button>
-	</div>
-}
+import(
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/components/event_components"
+)
 
 templ MyPropgram(userInfo requestctx.UserRequestInfo) {
 	<style>
@@ -69,28 +42,28 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo) {
 						Fredag Kveld 
 						<span class="program-pulje-time">(18:00 - 23:00)</span>
 					</h3>
-					@ProgramPuljeNoEvents()
+					@event_components.ProgramPuljeNoEvents()
 				</div>
 				<div class="program-pulje-container">
 					<h3 class="program-pulje">
 						Lørdag Morgen 
 						<span class="program-pulje-time">(10:00 - 15:00)</span>
 					</h3>
-					@ProgramPuljeNoEvents()
+					@event_components.ProgramPuljeEvent("/event-images/1b22fb55254b8daa_banner.webp")
 				</div>
 				<div class="program-pulje-container">
 					<h3 class="program-pulje">
 						Lørdag Kveld 
 						<span class="program-pulje-time">(18:00 - 23:00)</span>
 					</h3>
-					@ProgramPuljeNoEvents()
+					@event_components.ProgramPuljeInterests()
 				</div>
 				<div class="program-pulje-container">
 					<h3 class="program-pulje">
 						Søndag Morgen 
 						<span class="program-pulje-time">(10:00 - 15:00)</span>
 					</h3>
-					@ProgramPuljeNoEvents()
+					@event_components.ProgramPuljeInterests()
 				</div>
 			</section>
 		}

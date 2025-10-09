@@ -10,18 +10,18 @@ templ singleEvent(event models.EventCardModel) {
 	if event.Status == "Publisert" || event.Status == "Innsendt" {
 		{{ eventLink = "event/" + event.Id }}
 	}
-	<a href={ eventLink } class="item-card profile-event">
+	<a href={ eventLink } class="item-card profile-event-bar">
 		if event.Title == "" {
-			<h3 style="color: gray; font-style: italic;">Mangler navn</h3>
+			<h3 class="profile-event-bar-title" style="color: gray; font-style: italic;">Mangler navn</h3>
 		} else {
-			<h3>{ event.Title }</h3>
+			<h3 class="profile-event-bar-title">{ event.Title }</h3>
 		}
 		@button.EventStatus(event.Status)
 	</a>
 }
 
 templ MyEvents(events []models.EventCardModel) {
-	<style>
+ <style>
     .submit-event-message {
         display: flex;
         width: 100%;
@@ -45,20 +45,7 @@ templ MyEvents(events []models.EventCardModel) {
             }
         }
     }
-
-    .profile-event {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        color: var(--color-primary-text);
-        text-decoration: none;
-        padding: var(--spacing-2x) var(--spacing-4x);
-    }
-
-    .profile-event:hover {
-        filter: brightness(110%);
-    }
-</style>
+    </style>
 	<div class="surface-pane flex flex-col" style="gap: var(--spacing-2x)">
 		<h2 class="surface-pane-title">Mine arrangementer</h2>
 		if len(events) > 0 {

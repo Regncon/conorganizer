@@ -1,0 +1,123 @@
+package event_components
+
+import "github.com/Regncon/conorganizer/components/icons"
+
+templ ProgramPuljeEvent(imgurl string) {
+	<style>
+		.programpulje-event-container {
+			--linear-gradient-mask: linear-gradient(
+				to left,
+				black 19%,
+				transparent 63%
+			);
+
+      position: relative;
+      padding: 0;
+      overflow: hidden;
+
+			a {
+				border-color: var(--bg-item-border);
+				transition: border-color 250ms ease-in-out;
+				width: 100%;
+			}
+
+			a:hover,
+			a:focus-visible {
+				border-color: var(--color-primary);
+			}
+		}
+
+    .programpulje-event-user-is-gamemaster {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      top: var(--spacing-2x);
+      right: var(--spacing-2x);
+      background-color: var(--bg-tooltip);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      z-index: 2;
+    }
+
+    .programpulje-event-container-text {
+      display: flex; 
+      flex-direction: column;
+      gap: var(--spacing-3x);
+      padding: var(--spacing-4x);
+      z-index: 1;
+      overflow: hidden;
+      width: calc(100% - 120px);
+    }
+
+    .event-container-clip-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .programpulje-event-container-text-title {
+      display: flex; 
+      flex-direction: column;
+      gap: var(--spacing-1x);
+      overflow: hidden;
+      .text-event-name {
+        font-weight: 700;
+        color: var(--color-text-strong);
+      }
+      .text-event-type {
+        color: var(--color-primary);
+        font-size: var(--text-heading-4);
+      }
+    }
+
+		.programpulje-event-container-image {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+				mask-image: var(--linear-gradient-mask);
+				-webkit-mask-image: var(--linear-gradient-mask);
+        filter: opacity(0.5);
+		}
+
+    @container main (width <= 480px) {
+      .programpulje-event-container-text {
+        width: calc(100% - 40px);
+      }
+      .programpulje-event-container-image {
+        right: -80px;
+      }
+    }
+	</style>
+  {{
+    isGamemaster := true; // just swap this with whatever the flag is
+  }}
+	<div class="item-card profile-event-bar programpulje-event-container">
+    if (isGamemaster) {
+      <div class="programpulje-event-user-is-gamemaster" data-tippy-content="Du er arrangøren">
+        @icons.Icon(icons.Gamemaster, icons.Size16)
+      </div>
+    }
+		<div class="programpulje-event-container-text">
+			<div class="programpulje-event-container-text-title">
+				<span class="text-event-name event-container-clip-text">Her kommer navnet på eventet</span>
+				<span class="text-event-type event-container-clip-text">Her kommer event-typen</span>
+			</div>
+			<span class="event-container-clip-text">
+				Her kommer beskrivelsen, som kan være såpass langt avgårde bortover
+        at den til slutt kommer til å croppe av og ut av syne ...
+			</span>
+		</div>
+		if imgurl != "" {
+			<img
+				src={ imgurl }
+				title=""
+				height="100%"
+				width="auto"
+				class="programpulje-event-container-image"
+			/>
+		}
+	</div>
+}
