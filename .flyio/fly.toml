@@ -10,9 +10,6 @@ primary_region = 'arn'
 dockerfile = "../Dockerfile.flyio"
 build-target = "server"
 
-[deploy]
-  strategy = "bluegreen"
-
 [[mounts]]
   source = "uploads"
   destination = "/data"
