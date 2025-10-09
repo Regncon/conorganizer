@@ -47,6 +47,10 @@ templ ProgramPuljeInterests() {
     .pulje-interests-collapse[open] .inline-icon {
       transform: rotate(180deg);
     }
+
+    .pulje-interests-collapse-content {
+      padding: 0 var(--spacing-4x) var(--spacing-4x);
+    }
 	</style>
 	<div class="pulje-interests-container">
 		<p class="pulje-interests-description">
@@ -60,7 +64,9 @@ templ ProgramPuljeInterests() {
 					@icons.Icon(icons.ChevronDown, icons.Size24)
 				</span>
 			</summary>
-			Something small enough to escape casual notice.
+      <div class="pulje-interests-collapse-content">
+			  Her kommer en liste med kort for eventer en er interesert i
+      </div>
 		</details>
 	</div>
 }
