@@ -159,6 +159,8 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 		.pulje-heading {
 			color: var(--color-text-strong);
 			margin: 0 0 var(--spacing-5x);
+			scroll-margin: calc(var(--nav-height) * 2);
+			text-transform: capitalize;
 		}
 		.pulje-heading-time {
 			font-size: var(--text-body);
