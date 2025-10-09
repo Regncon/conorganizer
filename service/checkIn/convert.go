@@ -49,14 +49,14 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 	)
 
 	if err != nil {
-		logger.Info("failed to insert billettholder", "error", err)
-		return err
+		logger.Error("failed to insert billettholder", "error", err)
+		return errors.New("failed to insert billettholder: " + err.Error())
 	}
 
 	billettholderID, lastIdErr := result.LastInsertId()
 	if lastIdErr != nil {
-		logger.Info("failed to fetch last insert ID", "error", lastIdErr)
-		return lastIdErr
+		logger.Error("failed to fetch last insert ID", "error", lastIdErr)
+		return errors.New("failed to fetch last insert ID: " + lastIdErr.Error())
 	}
 
 	emails := []models.BillettholderEmail{
@@ -87,8 +87,8 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			)
 		`, email.BillettholderID, email.Email).Scan(&exists)
 		if checkErr != nil {
-			logger.Info("failed to check existing email", "error", checkErr)
-			return checkErr
+			logger.Error("failed to check existing email", "error", checkErr)
+			return errors.New("failed to check existing email: " + checkErr.Error())
 		}
 		if exists {
 			logger.Info("email already exists, skipping", "email", email.Email)
@@ -101,8 +101,8 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			) VALUES (?, ?, ?)
 		`, email.BillettholderID, email.Email, email.Kind)
 		if err != nil {
-			logger.Info("failed to insert billettholder email", "error", err)
-			return err
+			logger.Error("failed to insert billettholder email", "error", err)
+			return errors.New("failed to insert billettholder email: " + err.Error())
 		}
 	}
 
