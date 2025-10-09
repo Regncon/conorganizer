@@ -5,7 +5,7 @@ templ ProgramScrollnav() {
     .program-scrollnav-container {
       padding: var(--spacing-2x) 0;
       position: sticky;
-      top: var(--nav-height);
+      top: 51px; /* should not be hardcoded but gotta finish */
       background-color: var(--bg-base);
       z-index: var(--subnav-z-index);
     }
@@ -37,9 +37,11 @@ templ ProgramScrollnav() {
     .scrollnav-button .btn:hover ~ .scrollnav-active-bar {
       background-color: var(--color-text-soft);
     }
-    @media main (width > 600px) {
+
+    @container main (width > 600px) {
       .program-scrollnav-container {
-        padding: var(--spacing-5x) 0;
+        margin-top: var(--spacing-3x);
+        top: var(--nav-height);
       }  
     }
   </style>
