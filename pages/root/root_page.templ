@@ -15,6 +15,7 @@ templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
 	})
+	@components.ProgramScrollnav()
 	@components.CallToAction()
 	@eventList(db, isAdmin, eventImageDir)
 }

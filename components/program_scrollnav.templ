@@ -1,0 +1,32 @@
+package components
+
+templ ProgramScrollnav() {
+	<style>
+    .program-scrollnav-container {
+      padding: var(--spacing-2x) 0;
+      position: sticky;
+      top: var(--nav-height);
+      background-color: var(--bg-base);
+      z-index: var(--subnav-z-index);
+    }
+    .program-scrollnav-bar {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: var(--spacing-2x);
+    }
+    @media main (width > 600px) {
+      .program-scrollnav-container {
+        padding: var(--spacing-5x) 0;
+      }  
+    }
+  </style>
+	<div class="program-scrollnav-container">
+		<div class="page-content-container program-scrollnav-bar">
+			<a class="btn btn--ghost" href="#">Fredag Kveld</a>
+			<a class="btn btn--ghost" href="#">Lørdag Morgen</a>
+			<a class="btn btn--ghost" href="#">Lørdag Kveld</a>
+			<a class="btn btn--ghost" href="#">Søndag Morgen</a>
+		</div>
+	</div>
+}
