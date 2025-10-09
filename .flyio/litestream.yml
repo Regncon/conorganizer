@@ -1,8 +1,12 @@
+# Global settings
+access-key-id: ${AWS_ACCESS_KEY_ID}
+secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+
+# Database configurations
 dbs:
   - path: /var/lib/regncon/events.db
-    replicas:
-      - type: s3
-        bucket: shy-dream-5275
-        path: eventsdb_1_0_5
-        endpoint: https://fly.storage.tigris.dev
-        force-path-style: true
+    replica:
+        type: s3
+        endpoint: ${AWS_ENDPOINT_URL_S3}
+        bucket: ${BUCKET_NAME}
+        path: ${DB_PREFIX}
