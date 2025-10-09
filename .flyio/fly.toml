@@ -23,6 +23,6 @@ min_machines_running = 1
 processes = ['app']
 
 [[vm]]
-memory = '4gb'
+memory = '8gb'
 cpu_kind = 'performance'
 cpus = 4
