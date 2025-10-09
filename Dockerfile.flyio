@@ -46,7 +46,7 @@ COPY .flyio/replication.sh /usr/local/bin/replication.sh
 
 # Copy over sql init file or database file
 # COPY initialize.sql /usr/local/share/regncon/initialize.sql
-COPY database/events.db /var/lib/regncon/events.db
+# COPY database/events.db /var/lib/regncon/events.db
 
 # Set server startup script to be executable (todo)
 RUN chmod +x /usr/local/bin/replication.sh
