@@ -229,3 +229,157 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		}
 	}
 }
+
+func TestAssociateUserWithBillettholder_CreateUserIfNotExists(t *testing.T) {
+	// Arrange
+	uniqueDatabaseName := "test_associate_billettholders_createuser_" + t.Name() + "_" + uuid.New().String() + ".db"
+	testDBPath := "../../database/tests/" + uniqueDatabaseName
+
+	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
+	if err != nil {
+		t.Fatalf("failed to create test database: %v", err)
+	}
+	defer db.Close()
+
+	// expected billettholder_user
+	var expectedBillettholderUser = models.BillettholderUsers{
+		BillettholderID: 9999,
+		UserID:          1,
+	}
+
+	const noneExistantUserID = "newuser"
+
+	// none existant user
+	const noneExistantUserEmail = "test@regncon.no"
+	var noneExistantUserPerson = testutil.GenerateFakePerson()
+	noneExistantUserPerson.Email = noneExistantUserEmail
+
+	// Happy path billettholder
+	var happyPathBillettholder = models.Billettholder{
+		ID:           expectedBillettholderUser.BillettholderID,
+		FirstName:    noneExistantUserPerson.FirstName,
+		LastName:     noneExistantUserPerson.LastName,
+		TicketTypeId: 199999,
+		TicketType:   "Test",
+		IsOver18:     true,
+		OrderID:      19999999,
+		TicketID:     4999999,
+	}
+
+	// Happy path billettholder_email
+	var happyPathBillettholderEmail = models.BillettholderEmail{
+		BillettholderID: happyPathBillettholder.ID,
+		Email:           noneExistantUserPerson.Email,
+		Kind:            "Manual",
+	}
+
+	var testBillettholders []models.Billettholder
+	testBillettholders = append(testBillettholders, happyPathBillettholder)
+
+	var testBillettholderEmails []models.BillettholderEmail
+	testBillettholderEmails = append(testBillettholderEmails, happyPathBillettholderEmail)
+
+	// construct query for inserting billettholdere
+	var queryBillettholder []string
+	for _, billettholder := range testBillettholders {
+		queryBillettholder = append(queryBillettholder, fmt.Sprintf(`(%d, "%s", "%s", %d, "%s", %v, %d, %d)`, billettholder.ID, billettholder.FirstName, billettholder.LastName, billettholder.TicketTypeId, billettholder.TicketType, billettholder.IsOver18, billettholder.OrderID, billettholder.TicketID))
+	}
+
+	var queryBase = fmt.Sprintf(`INSERT INTO billettholdere (
+            id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
+            ) VALUES %s`, strings.Join(queryBillettholder, ", "))
+
+	_, err = db.Exec(queryBase)
+	if err != nil {
+		fmt.Println("failed to insert billettholder", "error", err)
+		return
+	}
+
+	// Attempt to insert into billettholder_emails
+	var expectedBillettholderEmails []models.BillettholderEmail
+	for _, person := range testBillettholderEmails {
+		billettholderEmail := models.BillettholderEmail{
+			BillettholderID: person.BillettholderID,
+			Email:           person.Email,
+		}
+		expectedBillettholderEmails = append(expectedBillettholderEmails, billettholderEmail)
+	}
+
+	var queryBillettholderEmail []string
+	for _, billettholderEmail := range expectedBillettholderEmails {
+		queryBillettholderEmail = append(queryBillettholderEmail, fmt.Sprintf(`(%d, "%s", "%s")`, billettholderEmail.BillettholderID, billettholderEmail.Email, "Manual"))
+	}
+	queryBase = fmt.Sprintf(`
+            INSERT INTO billettholder_emails (
+                billettholder_id, email, kind
+                ) VALUES %s`, strings.Join(queryBillettholderEmail, ", "))
+
+	_, err = db.Exec(queryBase)
+	if err != nil {
+		fmt.Println("failed to insert billettholder_emails", "error", err)
+		return
+	}
+
+	// Act
+	sl := &testutil.StubLogger{}
+	slogger := testutil.NewSlogAdapter(sl)
+
+	/* for _, user := range testUsers {
+		// fmt.Printf("Calling AssociateUserWithBillettholder() on: %s (%s)\n", user.UserID, user.Email)
+		err = AssociateUserWithBillettholder(user.UserID, db, slogger)
+		if err != nil {
+			t.Fatalf("failed to convert ticketId to billettholder: %v", err)
+		}
+	} */
+
+	err = AssociateUserWithBillettholder(noneExistantUserID, db, slogger)
+	if err != nil {
+		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
+	}
+
+	// Assert
+	var resultBillettholderUsers []models.BillettholderUsers
+	rows, err := db.Query("SELECT billettholder_id, user_id FROM billettholdere_users")
+	if err != nil {
+		t.Fatalf("failed to query billettholder_users: %v", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user models.BillettholderUsers
+		if err := rows.Scan(&user.BillettholderID, &user.UserID); err != nil {
+			t.Fatalf("failed to scan billettholder_user: %v", err)
+		}
+		resultBillettholderUsers = append(resultBillettholderUsers, user)
+	}
+
+	expedtedNumberOfBillettholderUsers := 1
+	if len(resultBillettholderUsers) != expedtedNumberOfBillettholderUsers {
+		t.Fatalf("expected 2 billettholder_user, got %d", len(resultBillettholderUsers))
+	}
+
+	// assert that the user was created
+	var resultUsers []models.User
+	rows, err = db.Query("SELECT id, user_id, email, is_admin FROM users WHERE user_id = ?", noneExistantUserID)
+	if err != nil {
+		t.Fatalf("failed to query users: %v", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var user models.User
+		if err := rows.Scan(&user.ID, &user.UserID, &user.Email, &user.IsAdmin); err != nil {
+			t.Fatalf("failed to scan user: %v", err)
+		}
+		resultUsers = append(resultUsers, user)
+	}
+	if len(resultUsers) != 1 {
+		t.Fatalf("expected 1 user, got %d", len(resultUsers))
+	}
+
+	// assert that the user was associated with the billettholder
+	for _, billettholderUser := range resultBillettholderUsers {
+		if billettholderUser != expectedBillettholderUser {
+			t.Fatalf("expected billettholder_user %+v, got %+v", expectedBillettholderUser, billettholderUser)
+		}
+	}
+}
