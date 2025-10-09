@@ -1,7 +1,3 @@
-# Global settings
-access-key-id: ${AWS_ACCESS_KEY_ID}
-secret-access-key: ${AWS_SECRET_ACCESS_KEY}
-
 # Database configurations
 dbs:
   - path: /var/lib/regncon/events.db
@@ -10,3 +6,6 @@ dbs:
         endpoint: ${AWS_ENDPOINT_URL_S3}
         bucket: ${BUCKET_NAME}
         path: ${DB_PREFIX}
+        region: ${AWS_REGION}
+        access-key-id: ${AWS_ACCESS_KEY_ID}
+        secret-access-key: ${AWS_SECRET_ACCESS_KEY}
