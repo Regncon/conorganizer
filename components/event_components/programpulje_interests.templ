@@ -1,0 +1,66 @@
+package event_components
+
+import "github.com/Regncon/conorganizer/components/icons"
+
+templ ProgramPuljeInterests() {
+	<style>
+		.pulje-interests-container {
+      display: flex;
+      flex-direction: column;
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-2x);
+			.btn {
+				flex-shrink: 0;
+			}
+		}
+    .pulje-interests-description {
+      padding: var(--spacing-4x);
+    }
+    .pulje-interests-collapse {
+      border-top: 1px solid var(--bg-item-border);
+    }
+  
+    .pulje-interests-summary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--spacing-1x) var(--spacing-4x);
+      min-height: var(--spacing-8x);
+      cursor: pointer;
+      list-style: none;
+      transition: var(--btn-transition);
+    }
+    .pulje-interests-summary:hover {
+        background-color: var(--btn-ghost-hover-bg);
+        color: var(--btn-ghost-active-text);
+    }
+    .pulje-interests-summary:active {
+        background-color: var(--btn-ghost-active-bg);
+        color: var(--btn-ghost-active-text);
+    }
+
+    .pulje-interests-summary-text {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-2x);
+    }
+    .pulje-interests-collapse[open] .inline-icon {
+      transform: rotate(180deg);
+    }
+	</style>
+	<div class="pulje-interests-container">
+		<p class="pulje-interests-description">
+			I denne puljen har du arrangementer du er interessert i.
+			Du kan utvide denne seksjonen for å se disse arrangementene.
+		</p>
+		<details class="pulje-interests-collapse">
+			<summary class="pulje-interests-summary">
+				<span class="pulje-interests-summary-text">
+					Vis interesser (5)
+					@icons.Icon(icons.ChevronDown, icons.Size24)
+				</span>
+			</summary>
+			Something small enough to escape casual notice.
+		</details>
+	</div>
+}
