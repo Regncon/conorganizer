@@ -44,7 +44,7 @@ func getTicketsRouter(
 		for _, ticket := range tickets {
 			err := checkIn.ConvertTicketToBillettholder(ticket.ID, db, logger)
 			if err != nil {
-				logger.Error("Unable to convert tickets", "error", ticketsErr)
+				logger.Error("Unable to convert tickets", "error", err)
 			}
 		}
 
