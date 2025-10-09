@@ -23,6 +23,6 @@ min_machines_running = 1
 processes = ['app']
 
 [[vm]]
-memory = '1gb'
+memory = '4gb'
 cpu_kind = 'shared'
-cpus = 1
+cpus = 2
