@@ -1,18 +1,18 @@
 package profileticketspage
 
 import (
-	"fmt"
-	"strconv"
-	"strings"
 	"database/sql"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
-	"encoding/json"
+	"strconv"
+	"strings"
 
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
-	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/components/icons"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -286,6 +286,7 @@ templ billettholderCard(billettholder models.Billettholder) {
 			}
 		}
 		<input
+			class="input"
 			data-bind={ "newEmail-" + strconv.Itoa(billettholder.ID) }
 		/>
 		<strong

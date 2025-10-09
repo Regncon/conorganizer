@@ -34,10 +34,13 @@ func getTicketsRouter(
 		var ctx = r.Context()
 		var user = userctx.GetUserRequestInfo(ctx)
 
+		var errorMessage = ""
+
 		// finn tickets fra user id?
 		tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(logger, userctx.GetUserRequestInfo(ctx).Email)
 		if ticketsErr != nil {
 			logger.Error("Unable to get tickets", "error", ticketsErr)
+			errorMessage = "Feil ved henting av billettar: " + ticketsErr.Error()
 		}
 
 		// ligg til tickets i billettholdere + billettholdere_emmails
@@ -45,13 +48,13 @@ func getTicketsRouter(
 			err := checkIn.ConvertTicketToBillettholder(ticket.ID, db, logger)
 			if err != nil {
 				logger.Error("Unable to convert tickets", "error", err)
+				errorMessage = "Feil ved henting av billettar: " + err.Error()
 			}
 		}
 
 		// Link user + billettholdere to billettholdere_users
 		err := checkIn.AssociateUserWithBillettholder(user.Id, db, logger)
 
-		var errorMessage = ""
 		if err != nil {
 			errorMessage = "Feil ved henting av billettar: " + err.Error()
 		}
