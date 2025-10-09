@@ -17,12 +17,12 @@ func BroadcastUpdate(kv jetstream.KeyValue, r *http.Request) error {
 	if err != nil {
 		return fmt.Errorf("failed to retrieve keys: %w", err)
 	}
-	fmt.Printf("All keys in the KeyValue store: %v\n", allKeys)
+	/* fmt.Printf("All keys in the KeyValue store: %v\n", allKeys) */
 
 	for _, sessionID := range allKeys {
 		mvc := &root.TodoMVC{}
-		fmt.Printf("Processing session ID: %s\n", sessionID)
-		fmt.Printf("mvc is: %+v\n", mvc)
+		/* fmt.Printf("Processing session ID: %s\n", sessionID)
+		fmt.Printf("mvc is: %+v\n", mvc) */
 
 		if entry, err := kv.Get(ctx, sessionID); err == nil {
 			if err := json.Unmarshal(entry.Value(), mvc); err != nil {
@@ -30,7 +30,7 @@ func BroadcastUpdate(kv jetstream.KeyValue, r *http.Request) error {
 			}
 			mvc.EditingIdx = -1
 			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-				fmt.Printf("Failed to save MVC for key %s: %v\n", sessionID, err)
+				fmt.Printf("Error: Failed to save MVC for key %s: %v\n", sessionID, err)
 			}
 		}
 	}
