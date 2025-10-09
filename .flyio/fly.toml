@@ -17,12 +17,12 @@ build-target = "server"
 [http_service]
 internal_port = 8080
 force_https = true
-auto_stop_machines = false
+auto_stop_machines = true
 auto_start_machines = false
 min_machines_running = 1
 processes = ['app']
 
 [[vm]]
-memory = '1gb'
+memory = '2gb'
 cpu_kind = 'shared'
 cpus = 1
