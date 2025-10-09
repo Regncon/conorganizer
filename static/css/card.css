@@ -153,3 +153,24 @@
     font-size: 14px;
     font-weight: 500;
 }
+
+/*
+  Similar to the above element, this card shows a single event.
+  It is used on the user's profile to show their submitted events and their interests.
+  NB: This element is meant to be clickable.
+ */
+.profile-event-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--color-primary-text);
+    text-decoration: none;
+    padding: var(--spacing-3x) var(--spacing-4x);
+    border-radius: var(--border-radius-1x);
+    border: 1px solid var(--bg-item-border);
+    cursor: pointer;
+}
+
+.profile-event-bar:hover {
+    filter: brightness(110%);
+}

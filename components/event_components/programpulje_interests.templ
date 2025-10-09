@@ -49,6 +49,9 @@ templ ProgramPuljeInterests() {
     }
 
     .pulje-interests-collapse-content {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-2x);
       padding: 0 var(--spacing-4x) var(--spacing-4x);
     }
 	</style>
@@ -64,9 +67,17 @@ templ ProgramPuljeInterests() {
 					@icons.Icon(icons.ChevronDown, icons.Size24)
 				</span>
 			</summary>
-      <div class="pulje-interests-collapse-content">
-			  Her kommer en liste med kort for eventer en er interesert i
-      </div>
+			<div class="pulje-interests-collapse-content">
+				<div class="item-card profile-event-bar">
+					Her lommer litt tekst ...
+				</div>
+				<div class="item-card profile-event-bar">
+					Her lommer litt tekst ...
+				</div>
+				<div class="item-card profile-event-bar">
+					Her lommer litt tekst ...
+				</div>
+			</div>
 		</details>
 	</div>
 }
