@@ -51,16 +51,20 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			}
 		}
 	</style>
-	{{
-	associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger)
+	{{ associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger) }}
 	if err != nil {
-		logger.Error("Failed to get ticket holders", "error", err)
+		<p>Feil ved henting av billettholdere: { err.Error() }</p>
 	}
-	fmt.Println(len(associatedTicketHolders))
-	}}
-	<div
-		data-signals={ fmt.Sprintf("{billettHolderId:%d}", associatedTicketHolders[0].Id) }
-	></div>
+	if len(associatedTicketHolders) == 0 {
+		<div
+			data-signals={ fmt.Sprintf("{billettHolderId:''}") }
+		></div>
+	} else {
+		<div
+			data-signals={ fmt.Sprintf("{billettHolderId:%d}", associatedTicketHolders[0].Id) }
+		></div>
+		<div data-signals-foo="1"></div>
+	}
 	if (len(associatedTicketHolders) > 1) {
 		<div>
 			<p class="label">Velg billettholder</p>
