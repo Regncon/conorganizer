@@ -13,7 +13,7 @@ if [ -f /var/lib/regncon/events.db ]; then
 	echo "Database already exists, skipping restore"
 else
 	echo "No database found, restoring from replica if exists"
-	litestream restore -if-replica-exists /var/lib/regncon/events.db
+	litestream restore /var/lib/regncon/events.db
 fi
 
 # Check if the image folder exists and we have write permissions to it

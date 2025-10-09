@@ -9,6 +9,9 @@ RUN apt-get update -y && apt-get install -y ca-certificates sqlite3
 WORKDIR /usr/src/codebase
 COPY . .
 
+# Install litestream globally
+# RUN go install github.com/benbjohnson/litestream/cmd/litestream@v0.5.0
+
 # Install templ and generate required files
 RUN go install github.com/a-h/templ/cmd/templ@latest
 RUN templ generate
@@ -21,7 +24,7 @@ RUN go mod download && go mod verify
 RUN go build -o /usr/local/bin/regncon .
 
 # Add litestream, this is done in the builder and copied as the chmod doubles the size.
-ADD https://github.com/benbjohnson/litestream/releases/download/v0.3.13/litestream-v0.3.13-linux-amd64.tar.gz /tmp/litestream.tar.gz
+ADD https://github.com/benbjohnson/litestream/releases/download/v0.5.0/litestream-0.5.0-linux-x86_64.tar.gz /tmp/litestream.tar.gz
 RUN tar -C /usr/local/bin -xzf /tmp/litestream.tar.gz
 
 
@@ -41,8 +44,9 @@ COPY --from=builder /usr/local/bin/litestream /usr/local/bin/litestream
 COPY .flyio/litestream.yml /etc/litestream.yml
 COPY .flyio/replication.sh /usr/local/bin/replication.sh
 
-# Copy over sql init file
-COPY initialize.sql /usr/local/share/regncon/initialize.sql
+# Copy over sql init file or database file
+# COPY initialize.sql /usr/local/share/regncon/initialize.sql
+COPY database/events.db /var/lib/regncon/events.db
 
 # Set server startup script to be executable (todo)
 RUN chmod +x /usr/local/bin/replication.sh
@@ -58,3 +62,4 @@ USER regncon
 EXPOSE 8080
 
 CMD [ "/usr/local/bin/replication.sh" ]
+#CMD ["/bin/sh"]
