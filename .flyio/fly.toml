@@ -11,7 +11,7 @@ dockerfile = "../Dockerfile.flyio"
 build-target = "server"
 
 [deploy]
-  strategy = "immediate"
+  strategy = "bluegreen"
 
 [[mounts]]
   source = "uploads"
