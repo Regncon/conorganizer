@@ -27,6 +27,7 @@ templ ProgramScrollnav() {
         background-color: transparent;
         transition: background-color 0.2s ease;
       }
+
       .btn.is-active {
         color: var(--color-primary);
       }
@@ -38,11 +39,18 @@ templ ProgramScrollnav() {
       background-color: var(--color-text-soft);
     }
 
+    @container main (width <= 600px) {
+      .scrollnav-button .btn {
+        text-align: center;
+        font-size: 12px;
+      }
+    }
+
     @container main (width > 600px) {
       .program-scrollnav-container {
         margin-top: var(--spacing-3x);
         top: var(--nav-height);
-      }  
+      }
     }
   </style>
 	<script src="/static/web_components/scroll_highlighter.js"></script>
