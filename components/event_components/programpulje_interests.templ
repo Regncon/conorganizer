@@ -30,11 +30,11 @@ templ ProgramPuljeInterests() {
       list-style: none;
       transition: var(--btn-transition);
     }
-    .pulje-interests-summary:hover {
+    .pulje-interests-summary:hover .pulje-interests-summary-text {
         background-color: var(--btn-ghost-hover-bg);
         color: var(--btn-ghost-active-text);
     }
-    .pulje-interests-summary:active {
+    .pulje-interests-summary:active .pulje-interests-summary-text {
         background-color: var(--btn-ghost-active-bg);
         color: var(--btn-ghost-active-text);
     }
@@ -43,6 +43,11 @@ templ ProgramPuljeInterests() {
       display: flex;
       align-items: center;
       gap: var(--spacing-2x);
+      height: 24px;
+      padding-left: var(--spacing-2x);
+      padding-right: var(--spacing-1x);
+      border-radius: var(--border-radius-1x);
+      transition: var(--btn-transition);
     }
     .pulje-interests-collapse[open] .inline-icon {
       transform: rotate(180deg);
