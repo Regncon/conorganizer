@@ -160,10 +160,13 @@
   NB: This element is meant to be clickable.
  */
 .profile-event-bar {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: auto max-content;
+    gap: var(--spacing-8x);
     align-items: center;
     color: var(--color-primary-text);
+    min-height: 50px;
+    box-sizing: border-box;
     text-decoration: none;
     padding: var(--spacing-3x) var(--spacing-4x);
     border-radius: var(--border-radius-1x);
