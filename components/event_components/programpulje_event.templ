@@ -1,5 +1,7 @@
 package event_components
 
+import "github.com/Regncon/conorganizer/components/icons"
+
 templ ProgramPuljeEvent(imgurl string) {
 	<style>
 		.programpulje-event-container {
@@ -24,6 +26,20 @@ templ ProgramPuljeEvent(imgurl string) {
 				border-color: var(--color-primary);
 			}
 		}
+
+    .programpulje-event-user-is-gamemaster {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      top: var(--spacing-2x);
+      right: var(--spacing-2x);
+      background-color: var(--bg-tooltip);
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      z-index: 2;
+    }
 
     .programpulje-event-container-text {
       display: flex; 
@@ -75,7 +91,15 @@ templ ProgramPuljeEvent(imgurl string) {
       }
     }
 	</style>
+  {{
+    isGamemaster := true; // just swap this with whatever the flag is
+  }}
 	<div class="item-card profile-event-bar programpulje-event-container">
+    if (isGamemaster) {
+      <div class="programpulje-event-user-is-gamemaster" data-tippy-content="Du er arrangøren">
+        @icons.Icon(icons.Gamemaster, icons.Size16)
+      </div>
+    }
 		<div class="programpulje-event-container-text">
 			<div class="programpulje-event-container-text-title">
 				<span class="text-event-name event-container-clip-text">Her kommer navnet på eventet</span>
