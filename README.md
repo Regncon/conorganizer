@@ -260,6 +260,7 @@ Since our site and services are linked to S3 it's important that we update all t
 - Backup-service secret: https://fly.io/apps/backup-service/secrets
 
 <!--
+!!!Dont run this unless you know all caveats, this can affect prod negatively!!!
 docker compose -f compose-restore.yaml down && docker image rm regncon-migration
 docker compose -f compose-restore.yaml up
 -->
