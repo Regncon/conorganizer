@@ -12,7 +12,7 @@ templ singleEvent(event models.EventCardModel) {
 	}
 	<a href={ eventLink } class="item-card profile-event">
 		if event.Title == "" {
-			<h3 style="color: gray; font-style: italic;">Mangler navnn { event.Status } </h3>
+			<h3 style="color: gray; font-style: italic;">Mangler navn</h3>
 		} else {
 			<h3>{ event.Title }</h3>
 		}
