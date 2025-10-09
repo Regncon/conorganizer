@@ -6,9 +6,13 @@ import (
 )
 
 templ singleEvent(event models.EventCardModel) {
-	<a href={ "my-events/new/" + event.Id } class="item-card profile-event">
+	{{ eventLink := "my-events/new/" + event.Id }}
+	if event.Status == "Publisert" || event.Status == "Innsendt" {
+		{{ eventLink = "event/" + event.Id }}
+	}
+	<a href={ eventLink } class="item-card profile-event">
 		if event.Title == "" {
-			<h3 style="color: gray; font-style: italic;">Mangler navn</h3>
+			<h3 style="color: gray; font-style: italic;">Mangler navnn { event.Status } </h3>
 		} else {
 			<h3>{ event.Title }</h3>
 		}
@@ -18,38 +22,43 @@ templ singleEvent(event models.EventCardModel) {
 
 templ MyEvents(events []models.EventCardModel) {
 	<style>
-		.submit-event-message {
-			display: flex;
-			width: 100%;
-			flex-direction: column;
-			padding-top: var(--spacing-3x);
-			gap: var(--responsive-pane-padding);
-			justify-content: space-between;
-			button {
-				align-self: flex-end;
-				flex-shrink: 0;
-			}
-		}
-		@container main (width > 600px) {
-			.submit-event-message {
-				flex-direction: row;
-				button {
-					align-self: initial;
-				}
-			}
-		}
-        .profile-event {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--color-primary-text);
-            text-decoration: none;
-            padding: var(--spacing-2x) var(--spacing-4x);
+    .submit-event-message {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        padding-top: var(--spacing-3x);
+        gap: var(--responsive-pane-padding);
+        justify-content: space-between;
+
+        button {
+            align-self: flex-end;
+            flex-shrink: 0;
         }
-        .profile-event:hover {
-            filter: brightness(110%);
+    }
+
+    @container main (width > 600px) {
+        .submit-event-message {
+            flex-direction: row;
+
+            button {
+                align-self: initial;
+            }
         }
-	</style>
+    }
+
+    .profile-event {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: var(--color-primary-text);
+        text-decoration: none;
+        padding: var(--spacing-2x) var(--spacing-4x);
+    }
+
+    .profile-event:hover {
+        filter: brightness(110%);
+    }
+</style>
 	<div class="surface-pane flex flex-col" style="gap: var(--spacing-2x)">
 		<h2 class="surface-pane-title">Mine arrangementer</h2>
 		if len(events) > 0 {
@@ -58,7 +67,10 @@ templ MyEvents(events []models.EventCardModel) {
 			}
 		}
 		<form action="/my-events/api/create" method="post" class="submit-event-message">
-			<p>Ønsker du  å arrangere noe under festivalen? Dørene er fortsatt åpne for nye arrangementer, la oss høre fra deg!</p>
+			<p>
+				Ønsker du å arrangere noe under festivalen? Dørene er fortsatt åpne for nye arrangementer, la oss høre fra
+				deg!
+			</p>
 			<button type="submit" class="btn btn--outline">Send inn arrangement</button>
 		</form>
 	</div>
