@@ -1,0 +1,120 @@
+package formsubmission
+
+import (
+	"database/sql"
+	"log/slog"
+
+	"github.com/Regncon/conorganizer/models"
+
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/components/ticket_holder"
+)
+
+type InterestWithHolder struct {
+	BillettholderId int    `json:"billettholder_id"`
+	EventId         string `json:"event_id"`
+	PuljeId         string `json:"pulje_id"`
+	InterestLevel   string `json:"interest_level"`
+
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	TicketType string `json:"ticket_type"`
+	IsOver18   bool   `json:"is_over_18"`
+}
+
+func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]InterestWithHolder, error) {
+	const q = `
+        SELECT
+            i.billettholder_id,
+            i.event_id,
+            i.pulje_id,
+            i.interest_level,
+            b.first_name,
+            b.last_name,
+            b.ticket_type,
+            b.is_over_18
+        FROM interests i
+        INNER JOIN billettholdere b ON i.billettholder_id = b.id
+        WHERE i.event_id = ?
+        ORDER BY i.pulje_id, i.interest_level DESC
+    `
+	rows, err := db.Query(q, eventId)
+	if err != nil {
+		logger.Error("Failed to query interests with holders", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+	var interests []InterestWithHolder
+	for rows.Next() {
+		var interest InterestWithHolder
+		if err := rows.Scan(&interest.BillettholderId, &interest.EventId, &interest.PuljeId, &interest.InterestLevel, &interest.FirstName, &interest.LastName, &interest.TicketType, &interest.IsOver18); err != nil {
+			logger.Error("Failed to scan interest with holder", "error", err)
+			return nil, err
+		}
+		interests = append(interests, interest)
+	}
+	if err := rows.Err(); err != nil {
+		logger.Error("Row iteration error", "error", err)
+		return nil, err
+	}
+	return interests, nil
+
+}
+
+templ interestInPulje(puljeId models.Pulje, interests []InterestWithHolder) {
+	for _, interest := range interests {
+		if interest.PuljeId == string(puljeId) {
+			<section
+				class="item-card"
+				style="display:grid;
+                        gap:1rem;
+                        grid-template-columns: auto auto 1fr auto auto;
+                        align-items: center;
+                        margin-bottom:0.5rem;"
+			>
+				<span>{ interest.InterestLevel }</span>
+				@ticketholder.NameInitials(interest.FirstName+" "+interest.LastName, string(interest.FirstName[0])+string(interest.LastName[0]))
+				<span>{ interest.FirstName } { interest.LastName }</span>
+				<div style="display: flex; align-items: center; gap:0.5rem; ">
+					if interest.IsOver18 {
+						@icons.Icon(icons.EventAdultOnly, icons.Size24)
+						<p><strong>Alder:</strong> Over 18</p>
+					} else {
+						@icons.Icon(icons.EventChildFriendly, icons.Size24)
+						<p><strong>Alder:</strong> Under 18</p>
+					}
+				</div>
+				<span>{ interest.TicketType }</span>
+			</section>
+		}
+	}
+}
+
+templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
+	{{ interests, err := GetInterestsForEvent(eventId, db, logger) }}
+	<div style="display: flex; flex-direction: column; gap:1rem; margin-bottom:2rem;">
+		<article class="form-card">
+			if err != nil {
+				<p>Error fetching interests: { err.Error() }</p>
+				return
+			}
+			<h2>Who is interested?</h2>
+		</article>
+		<article class="form-card">
+			<h2 style="margin-bottom:1rem;">Fredag Kveld</h2>
+			@interestInPulje(models.PuljeFredagKveld, interests)
+		</article>
+		<article class="form-card">
+			<h2 style="margin-bottom:1rem;">Lørdag Morgen</h2>
+			@interestInPulje(models.PuljeLordagMorgen, interests)
+		</article>
+		<article class="form-card">
+			<h2 style="margin-bottom:1rem;">Lørdag Kveld</h2>
+			@interestInPulje(models.PuljeLordagKveld, interests)
+		</article>
+		<article class="form-card">
+			<h2 style="margin-bottom:1rem;">Søndag Morgen</h2>
+			@interestInPulje(models.PuljeSondagMorgen, interests)
+		</article>
+	</div>
+}
