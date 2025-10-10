@@ -128,6 +128,8 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
 				border-radius: var(--border-radius-1x);
 				z-index: var(--nav-drop-down-z-index);
+				width: max-content;
+				max-width: 260px;
 			}
 
 			.dropdown-panel a {
@@ -228,6 +230,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				.dropdown-panel {
 					bottom: unset;
 					top: 46px;
+					max-width: 320px;
 				}
 			}
 		}
@@ -260,6 +263,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 								<a href="/auth/logout">Logg ut</a>
 								/* <a href="/my-events">Mine arrangementer</a> */
 								<a href="/profile">Min Profil</a>
+								<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
 								if UserInfo.IsAdmin {
 									<hr/>
 									<a href="/admin/billettholder/">Billettholderoversikt</a>

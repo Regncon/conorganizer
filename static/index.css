@@ -247,6 +247,14 @@ p + p {
     margin-top: 1rem;
 }
 
+a.inline-link {
+    color: var(--color-primary);
+}
+a.inline-link:hover,
+a.inline-link:active {
+    color: var(--color-text-strong);
+}
+
 .inline-icon {
     display: inline-block;
     flex-shrink: 0;

@@ -62,19 +62,6 @@ templ Event_mobile(
 				gap: var(--spacing-4x);
 				padding-inline: var(--spacing-2x);
 
-				.interest-picker {
-					display: flex;
-					align-items: center;
-					flex-direction: column;
-					gap: var(--spacing-4x);
-					padding: var(--spacing-4x);
-					text-align: center;
-
-					> button {
-						max-width: 200px;
-					}
-				}
-
 				.details {
 					display: flex;
 					flex-direction: column;
@@ -160,14 +147,7 @@ templ Event_mobile(
 					gap: var(--spacing-8x);
 					padding: 0;
 
-					.interest-picker {
-						order: 1;
-						width: 100%;
-						flex-direction: row;
-						flex-wrap: wrap;
-						place-content: space-between;
-						height: fit-content;
-					}
+
 					.details {
 						position: relative;
 						padding: var(--spacing-5x);
@@ -237,9 +217,7 @@ templ Event_mobile(
 					padding-inline: var(--spacing-10x);
 					grid-template-columns: 1fr 25.3125rem;
 
-					.interest-picker {
-						grid-area: interests;
-					}
+
 					.details {
 						grid-area: details;
 						grid-template-columns: unset;
@@ -294,21 +272,7 @@ templ Event_mobile(
 			</header>
 		</div>
 		<div class="event-information">
-			<div class="card interest-picker">
-				if hasTickets {
-                <div></div>
-					<button
-						class="btn btn--cta"
-						data-on-click="$interestIsOpen = true"
-					>Meld interesse</button>
-				} else {
-					<p class="color-strong">Hent billett for å melde interesse</p>
-					<a
-						href="/profile/tickets"
-						class="btn btn--cta"
-					>Hent billett</a>
-				}
-			</div>
+			@EventInterestPanel(hasTickets)
 			<div class="card details">
 				<div class="details-top">
 					<p class="details-header color-strong">Detaljer om arrangementet</p>
