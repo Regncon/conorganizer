@@ -1,50 +1,44 @@
 -- +goose Up
 PRAGMA foreign_keys = OFF;
 
-DROP TABLE IF EXISTS puljer_new;
-
-CREATE TABLE puljer_new (
-    id          TEXT    NOT NULL PRIMARY KEY,
-    name        TEXT    NOT NULL,
+DROP TABLE IF EXISTS puljer;
+CREATE TABLE IF NOT EXISTS puljer (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
     is_closed   INTEGER NOT NULL DEFAULT FALSE,
     is_published INTEGER NOT NULL DEFAULT FALSE,
-    start_time  TEXT    NOT NULL,
-    end_time    TEXT    NOT NULL
+    start_time DATE NOT NULL,
+    end_time DATE NOT NULL
 );
 
--- +goose StatementBegin
-INSERT INTO puljer_new (id, name, is_closed, is_published, start_time, end_time)
-SELECT id, name, 0, 0, start_time, end_time
-FROM puljer;
+INSERT INTO puljer (id, name, start_time, end_time) VALUES
+('FredagKveld',  'Fredag kveld', '2025-10-10T18:00:00Z', '2025-10-10T23:00:00Z'),
+('LordagMorgen', 'Lørdag morgen', '2025-10-11T10:00:00Z', '2025-10-11T15:00:00Z'),
+('LordagKveld',  'Lørdag kveld', '2025-10-11T18:00:00Z', '2025-10-11T23:00:00Z'),
+('SondagMorgen', 'Søndag morgen', '2025-10-12T10:00:00Z', '2025-10-12T15:00:00Z');
 
-DROP TABLE puljer;
-ALTER TABLE puljer_new RENAME TO puljer;
--- +goose StatementEnd
 
 PRAGMA foreign_keys = ON;
-PRAGMA foreign_key_check;
 
 
 -- +goose Down
 PRAGMA foreign_keys = OFF;
 
-DROP TABLE IF EXISTS puljer_old;
-
-CREATE TABLE puljer_old (
-    id         TEXT NOT NULL PRIMARY KEY,
-    name       TEXT NOT NULL,
-    start_time TEXT NOT NULL,
-    end_time   TEXT NOT NULL
+DROP TABLE IF EXISTS puljer;
+CREATE TABLE IF NOT EXISTS puljer (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    is_closed   INTEGER NOT NULL DEFAULT FALSE,
+    is_published INTEGER NOT NULL DEFAULT FALSE,
+    start_time DATE NOT NULL,
+    end_time DATE NOT NULL
 );
 
--- +goose StatementBegin
-INSERT INTO puljer_old (id, name, start_time, end_time)
-SELECT id, name, start_time, end_time
-FROM puljer;
-
-DROP TABLE puljer;
-ALTER TABLE puljer_old RENAME TO puljer;
--- +goose StatementEnd
+INSERT INTO puljer (id, name, start_time, end_time) VALUES
+('FredagKveld',  'Fredag kveld', '2025-10-10T18:00:00Z', '2025-10-10T23:00:00Z'),
+('LordagMorgen', 'Lørdag morgen', '2025-10-11T10:00:00Z', '2025-10-11T15:00:00Z'),
+('LordagKveld',  'Lørdag kveld', '2025-10-11T18:00:00Z', '2025-10-11T23:00:00Z'),
+('SondagMorgen', 'Søndag morgen', '2025-10-12T10:00:00Z', '2025-10-12T15:00:00Z');
 
 PRAGMA foreign_keys = ON;
 PRAGMA foreign_key_check;
