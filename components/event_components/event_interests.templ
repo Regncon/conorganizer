@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/requestctx"
@@ -116,6 +117,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		class="interest-dialog"
 		data-attr-open="isOpen($interestIsOpen)"
 		closedby="any"
+		data-signals-pulje-Id={ fmt.Sprintf("'%s'", puljeId) }
 	>
 		<div class="dialog-container">
 			<header class="dialog-header">
