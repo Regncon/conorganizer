@@ -2,6 +2,11 @@ package event
 
 templ EventInterestPanel(hasTickets bool) {
 	<style>
+  .event-interest-picker-container {
+    container-type: inline-size;
+    container-name: event-interest-picker;
+  }
+
   .event-interest-picker {
     display: flex;
     align-items: center;
@@ -10,13 +15,13 @@ templ EventInterestPanel(hasTickets bool) {
     padding: var(--spacing-4x);
 
     > button {
-      max-width: 200px;
-      flex-shrink: 0;
+      width: 100%;
+      align-self: flex-end;
     }
 
     .inline-link {
       display: block;
-      margin-top: 1rem;
+      margin-top: var(--spacing-3x);
       text-decoration: none;
       .link-text {
         text-decoration: underline;
@@ -24,44 +29,59 @@ templ EventInterestPanel(hasTickets bool) {
     }
   }
 
-  @container event-container (width >= 37.5rem) {
+  /* We need some inline sizing to do the flex-layout of this component */
+  @container event-interest-picker (width > 600px) {
     .event-interest-picker {
+      flex-direction: row;
+      > button {
+        align-self: center;
+      }
+    }
+  }
+
+  /* And this could technically be outside of here, it is layouting on the parent component */
+  @container event-container (width >= 37.5rem) {
+    .event-interest-picker-container {
       order: 1;
       width: 100%;
-      flex-direction: row;
-      flex-wrap: wrap;
-      place-content: space-between;
       height: fit-content;
+    }
+    .event-interest-picker {
+      > button {
+        max-width: 200px;
+        flex-shrink: 0;
+      }
     }
   }
 
   @container event-container (width > 65.0625rem) {
-    .event-interest-picker {
+    .event-interest-picker-container {
       grid-area: interests;
-      flex-wrap: nowrap;
     }
   }
 </style>
-	<div class="card event-interest-picker">
-		if hasTickets {
-			<div>
-				Tenker du dette arrangementet ser spennende ut?
-        Husk å melde interesse i god tid, aller senest en time før puljen til arrangementet starter.
-        <a class="inline-link" href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">
-          <span class="link-text">Hvordan fungerer interessevalget?</span>
-          <span class="link-icon">&#9432;</span>
-        </a>
-			</div>
-			<button class="btn btn--cta" data-on-click="$interestIsOpen = true">
-				Meld interesse
-			</button>
-		} else {
-			<p class="color-strong">
-				Før å kunne melde interesse må du først hente billetten din.
-			</p>
-			<a href="/profile/tickets" class="btn btn--cta">
-				Hent billett
-			</a>
-		}
+	<div class="event-interest-picker-container">
+		<div class="card event-interest-picker">
+			if hasTickets {
+				<div>
+					Tenker du dette arrangementet ser spennende ut?
+					Husk å melde interesse i god tid, aller senest en time før puljen til arrangementet starter.
+					<a class="inline-link" href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">
+						<span class="link-text">Hvordan fungerer interessevalget?</span>
+						<span class="link-icon">&#9432;</span>
+					</a>
+				</div>
+				<button class="btn btn--cta" data-on-click="$interestIsOpen = true">
+					Meld interesse
+				</button>
+			} else {
+				<p class="color-strong">
+					Før å kunne melde interesse må du først hente billetten din.
+				</p>
+				<a href="/profile/tickets" class="btn btn--cta">
+					Hent billett
+				</a>
+			}
+		</div>
 	</div>
 }
