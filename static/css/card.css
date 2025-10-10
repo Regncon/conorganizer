@@ -37,7 +37,7 @@
 .event-card-main-body {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-3x);
+    gap: var(--spacing-2x);
     padding: var(--spacing-3x);
 }
 
@@ -47,6 +47,7 @@
     text-overflow: ellipsis;
     margin: 0 0 var(--spacing-1x);
     color: var(--color-text-strong);
+    font-family: var(--font-sans-serif);
     font-size: 16px;
 }
 
@@ -56,15 +57,15 @@
     text-overflow: ellipsis;
     margin: 0;
     color: var(--color-primary);
-    font-size: 14px;
+    font-size: var(--text-body-small);
     font-weight: normal;
 }
 
 .event-card-description {
     overflow: clip;
     margin-top: 0;
-    font-size: 14px;
-    height: 32px;
+    font-size: var(--text-body-small);
+    height: 40px;
     margin: 0;
 }
 
@@ -150,7 +151,7 @@
     text-overflow: ellipsis;
     margin: 0;
     color: var(--color-primary);
-    font-size: 14px;
+    font-size: var(--text-body-small);
     font-weight: 500;
 }
 

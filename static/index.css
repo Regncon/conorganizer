@@ -43,6 +43,7 @@
 
     /* text & font */
     --text-body: 16px;
+    --text-body-small: 14px;
     --text-heading-1-xl: 52px;
     --text-heading-1: 40px;
     --text-heading-1-mobile: 32px;
@@ -200,6 +201,7 @@ h1.page-heading {
 h2 {
     font-family: var(--font-serif);
     font-size: var(--text-heading-2-mobile);
+    line-height: 100%;
     color: var(--color-text-strong);
     margin: 0;
 }
