@@ -25,4 +25,5 @@ else
 fi
 
 # Run litestream with your app as the subprocess.
-exec litestream replicate -exec "/usr/local/bin/regncon -dbp /data/regncon/database/events.db -image-path /data/regncon/uploads"
+#exec litestream replicate -exec "/usr/local/bin/regncon -dbp /data/regncon/database/events.db -image-path /data/regncon/uploads"
+exec "/usr/local/bin/regncon"
