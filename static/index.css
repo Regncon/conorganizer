@@ -43,14 +43,19 @@
 
     /* text & font */
     --text-body: 16px;
+    --text-body-small: 14px;
     --text-heading-1-xl: 52px;
     --text-heading-1: 40px;
-    --text-heading-1-mobile: 32px;
+    --text-heading-1-mobile: 28px;
     --text-heading-2: 32px;
     --text-heading-2-mobile: 24px;
     --text-heading-3: 16px;
     --text-heading-4: 12px;
     --text-article: 20px;
+    
+    --font-sans-serif: "Open Sans", Helvetica, sans-serif;
+    --font-serif: "EB Garamond", Georgia, Times, serif;
+    --font-monospace: "Fira Code", monospace;
 
     /* spacings */
     --spacing-1x: 4px;
@@ -124,6 +129,7 @@ html {
     box-sizing: border-box;
     color: var(--primary-text);
     font-size: var(--text-body);
+    font-family: var(--font-sans-serif);
     color: var(--color-primary-text);
     scroll-behavior: smooth;
     /*
@@ -139,7 +145,7 @@ html {
 body {
     background: var(--bg-base);
     margin: 0;
-    font-family: sans-serif;
+    font-family: var(--font-sans-serif);
     margin-block-end: var(--nav-height);
 
     @media screen and (width >=420px) {
@@ -177,8 +183,10 @@ body {
 }
 
 h1 {
+    font-family: var(--font-serif);
     font-size: var(--text-heading-1-mobile);
     color: var(--color-text-strong);
+    line-height: 100%;
     margin: 0;
 }
 
@@ -191,7 +199,9 @@ h1.page-heading {
 }
 
 h2 {
+    font-family: var(--font-serif);
     font-size: var(--text-heading-2-mobile);
+    line-height: 100%;
     color: var(--color-text-strong);
     margin: 0;
 }
@@ -341,7 +351,7 @@ hr {
 }
 
 input {
-    font-family: monospace;
+    font-family: var(--font-monospace);
 }
 
 .checkbox-label {
@@ -404,7 +414,7 @@ input {
 }
 
 .form-card,
-/* deprecate this class, use surface-pane instead */
+/* deprecate form-card, use surface-pane instead */
 .surface-pane {
     border-radius: var(--border-radius-2x);
     background-color: var(--bg-surface);
@@ -412,9 +422,10 @@ input {
 }
 
 .form-card-title,
-/* deprecate this class, use surface-pane instead */
+/* deprecate form-card, use surface-pane instead */
 .surface-pane-title {
     font-size: var(--text-heading-4);
+    font-family: var(--font-sans-serif);
     font-weight: normal;
     color: var(--color-text-soft);
     margin-bottom: var(--spacing-3x);

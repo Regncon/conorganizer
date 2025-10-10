@@ -12,7 +12,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			align-items: center;
 			gap: 0.5rem;
 			margin: 0.6rem 1rem 0.6rem 0.6rem;
-			font-family: "Fira Code";
+			font-family: var(--font-monospace);
 		}
 
 		.beta-toggle-label {
@@ -72,7 +72,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			height: var(--nav-height);
 			width: 100%;
 			gap: var(--spacing-4x);
-			font-family: "Fira Code";
+			font-family: var(--font-sans-serif);
 
 			a.disabled {
 				pointer-events: none;
@@ -137,7 +137,6 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				color: var(--color-primary-text);
 				padding: 0.5rem 1rem;
 				text-decoration: none;
-				text-transform: uppercase;
 			}
 
 			.dropdown-panel a:hover {
