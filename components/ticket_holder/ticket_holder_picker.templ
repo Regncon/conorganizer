@@ -28,6 +28,9 @@ import (
 
 templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, logger *slog.Logger) {
 	<style>
+		.ticket-holder-container {
+			padding-bottom: var(--responsive-pane-padding);
+		}
 		.ticket-holder-picker-buttons {
 			display: flex;
 			flex-direction: column;
@@ -53,7 +56,9 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	</style>
 	{{ associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger) }}
 	if err != nil {
-		<p>Feil ved henting av billettholdere: { err.Error() }</p>
+		<div class="ticket-holder-container">
+			<p>Feil ved henting av billettholdere: { err.Error() }</p>
+		</div>
 	}
 	if len(associatedTicketHolders) == 0 {
 		<div
@@ -66,7 +71,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		<div data-signals-foo="1"></div>
 	}
 	if (len(associatedTicketHolders) > 1) {
-		<div>
+		<div class="ticket-holder-container">
 			<p class="label">Velg billettholder</p>
 			<div class="ticket-holder-picker-buttons">
 				for _, billettHolder := range associatedTicketHolders {

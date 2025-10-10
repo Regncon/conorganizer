@@ -11,6 +11,9 @@ import (
 templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger *slog.Logger) {
     {{ puljer, _ := GetPuljerFromEventId(eventId, db, logger) }}
 	<style>
+        .pulje-picker-container {
+            padding-bottom: var(--responsive-pane-padding);
+        }
         .pulje-wrapper {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -44,7 +47,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
     </style>
     /* {{fmt.Println(puljer)}} */
     if (len(puljer) > 1) {
-        <div>
+        <div class="pulje-picker-container">
             <p class="label">Velg pulje for arrangementet</p>
             <div class="pulje-wrapper">
                 <button
