@@ -146,10 +146,10 @@ body {
     background: var(--bg-base);
     margin: 0;
     font-family: var(--font-sans-serif);
-    margin-block-end: var(--nav-height);
+    margin-bottom: var(--nav-height);
 
-    @media screen and (width >=420px) {
-        margin-block-end: 0;
+    @media screen and (width >= 600px) {
+        margin-bottom: 0;
     }
 
     main {
