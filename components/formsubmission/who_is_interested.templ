@@ -1,0 +1,67 @@
+package formsubmission
+
+import (
+	"database/sql"
+	"log/slog"
+
+	"github.com/Regncon/conorganizer/models"
+)
+
+func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]models.Interest, error) {
+	/*
+
+
+	   CREATE TABLE
+	       interests (
+	           billettholder_id INTEGER NOT NULL,
+	           event_id TEXT NOT NULL,
+	           pulje_id TEXT NOT NULL,
+	           interest_level TEXT NOT NULL,
+	           inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	           PRIMARY KEY (billettholder_id, event_id, pulje_id),
+	           FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
+	           FOREIGN KEY (event_id) REFERENCES events (id),
+	           FOREIGN KEY (pulje_id) REFERENCES puljer (id),
+	           FOREIGN KEY (interest_level) REFERENCES interest_levels (interest_level) ON UPDATE CASCADE
+	       );
+	*/
+	rows, err := db.Query(`
+        SELECT billettholder_id, event_id, pulje_id, interest_level, inserted_time
+        FROM interests
+        WHERE event_id = ?
+    `, eventId)
+	if err != nil {
+		logger.Error("Failed to query interests", "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+	var interests []models.Interest
+	for rows.Next() {
+		var interest models.Interest
+		if err := rows.Scan(&interest.BillettholderId, &interest.EventId, &interest.PuljeId, &interest.InterestLevel, &interest.InsertedTime); err != nil {
+			logger.Error("Failed to scan interest", "error", err)
+			return nil, err
+		}
+		interests = append(interests, interest)
+	}
+	if err := rows.Err(); err != nil {
+		logger.Error("Row iteration error", "error", err)
+		return nil, err
+	}
+
+	return interests, nil
+
+}
+
+templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
+	{{ interests, err := GetInterestsForEvent(eventId, db, logger) }}
+	if err != nil {
+		<p>Error fetching interests: { err.Error() }</p>
+		return
+	}
+	<h2>Who is interested?</h2>
+	for _, interest := range interests {
+    <p>Pujle ID: { interest.PuljeId }</p>
+		<p>Interest Level: { interest.InterestLevel }</p>
+	}
+}
