@@ -1,6 +1,6 @@
 # Database configurations
 dbs:
-  - path: /var/lib/regncon/events.db
+  - path: /data/regncon/database/events.db
     # How often to perform WAL checkpoints
     checkpoint-interval: 10s
     # Minimum pages before checkpointing
