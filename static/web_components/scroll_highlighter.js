@@ -1,9 +1,9 @@
 let sections = [];
 
-window.onload = function () {
+window.addEventListener('load', function () {
   sections = document.querySelectorAll(".program-pulje-section[id]");
   window.addEventListener("scroll", navHighlighter);
-}
+}, false);
 
 function navHighlighter() {
   let scrollY = window.pageYOffset;
