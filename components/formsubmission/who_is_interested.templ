@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"log/slog"
 
-	"net/http"
 	"github.com/go-chi/chi/v5"
+	"net/http"
+    "fmt"
 
-	"github.com/Regncon/conorganizer/models"
-	"github.com/nats-io/nats.go/jetstream"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -47,6 +48,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 		logger.Error("Failed to query interests with holders", "error", err)
 		return nil, err
 	}
+
 	defer rows.Close()
 	var interests []InterestWithHolder
 	for rows.Next() {
@@ -115,9 +117,9 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 			>
 				<span>{ interest.InterestLevel }</span>
 				@ticketholder.NameInitials(interest.FirstName+" "+interest.LastName, string(interest.FirstName[0])+string(interest.LastName[0]))
-				<button
+                <button
 					class="btn btn--outline"
-					data-on-click={ datastar.PutSSE("/my-events/api/new/{%d}/{%s}/{%s}", eventId, puljeId, interest.BillettholderId) }
+					data-on-click={ datastar.PutSSE("/my-events/api/new/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
 				>
 					toggle GM
 				</button>
