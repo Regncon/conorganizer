@@ -1,0 +1,52 @@
+package event
+
+templ EventInterestPanel(hasTickets bool) {
+	<style>
+    .event-interest-picker {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: var(--spacing-4x);
+    padding: var(--spacing-4x);
+    text-align: center;
+
+    > button {
+      max-width: 200px;
+    }
+  }
+
+  @container event-container (width >= 37.5rem) {
+    .event-interest-picker {
+      order: 1;
+      width: 100%;
+      flex-direction: row;
+      flex-wrap: wrap;
+      place-content: space-between;
+      height: fit-content;
+    }
+  }
+
+  @container event-container (width > 65.0625rem) {
+    .event-interest-picker {
+      grid-area: interests;
+    }
+  }
+</style>
+	<div class="card event-interest-picker">
+		if hasTickets {
+			<div>
+				Hallo Omverden, hvordan her du det i dag?
+			</div>
+			<button class="btn btn--cta" data-on-click="$interestIsOpen = true">
+				Meld interesse
+			</button>
+		} else {
+			<p class="color-strong">
+				Før å kunne melde interesse må du først hente billetten din.
+			</p>
+			<a href="/profile/tickets" class="btn btn--cta">
+				Hent billett
+			</a>
+		}
+	</div>
+}
