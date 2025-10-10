@@ -231,6 +231,9 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
 						formsubmission.SubmitFormRoute(newApiIdRouter, db, kv, logger)
 					})
+					newApiIdRouter.Route("/update-gm", func(updateGMRouter chi.Router) {
+						formsubmission.UpdateGm(updateGMRouter, db, kv, logger)
+					})
 				})
 
 				apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {

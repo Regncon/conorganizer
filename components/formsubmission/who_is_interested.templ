@@ -4,10 +4,14 @@ import (
 	"database/sql"
 	"log/slog"
 
-	"github.com/Regncon/conorganizer/models"
+	"net/http"
+	"github.com/go-chi/chi/v5"
 
+	"github.com/Regncon/conorganizer/models"
+	"github.com/nats-io/nats.go/jetstream"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 type InterestWithHolder struct {
@@ -61,6 +65,42 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 
 }
 
+// /my-events/api/new/07c98ad2480cdbbc/name
+func UpdateGm(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+	eventRouter.Put("/{puljeId}/{billettholderId}", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			Input string `json:"title"`
+		}
+		store := &Store{}
+
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			logger.Error("Event ID is missing in URL parameters")
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+		puljeId := chi.URLParam(r, "puljeId")
+		if puljeId == "" {
+			logger.Error("Pulje ID is missing in URL parameters")
+			http.Error(w, "Pulje ID is required", http.StatusBadRequest)
+			return
+		}
+		billettholderId := chi.URLParam(r, "billettholderId")
+		if billettholderId == "" {
+			logger.Error("Billettholder ID is missing in URL parameters")
+			http.Error(w, "Billettholder ID is required", http.StatusBadRequest)
+			return
+		}
+		logger.Info("Updating GM status", "eventID", eventID, "puljeId", puljeId, "billettholderId", billettholderId, "isGM", store.Input)
+
+	})
+}
+
 templ interestInPulje(puljeId models.Pulje, interests []InterestWithHolder) {
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
@@ -74,6 +114,9 @@ templ interestInPulje(puljeId models.Pulje, interests []InterestWithHolder) {
 			>
 				<span>{ interest.InterestLevel }</span>
 				@ticketholder.NameInitials(interest.FirstName+" "+interest.LastName, string(interest.FirstName[0])+string(interest.LastName[0]))
+				<button class="btn btn--outline" data-on-click="@put('/my-events/api/new/{eventId}/{puljeId}/{billettholderId}', { title: 'GM' })">
+					toggle GM
+				</button>
 				<span>{ interest.FirstName } { interest.LastName }</span>
 				<div style="display: flex; align-items: center; gap:0.5rem; ">
 					if interest.IsOver18 {
