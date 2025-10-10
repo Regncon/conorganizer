@@ -406,7 +406,7 @@ input {
 }
 
 .form-card,
-/* deprecate this class, use surface-pane instead */
+/* deprecate form-card, use surface-pane instead */
 .surface-pane {
     border-radius: var(--border-radius-2x);
     background-color: var(--bg-surface);
@@ -414,9 +414,10 @@ input {
 }
 
 .form-card-title,
-/* deprecate this class, use surface-pane instead */
+/* deprecate form-card, use surface-pane instead */
 .surface-pane-title {
     font-size: var(--text-heading-4);
+    font-family: var(--font-sans-serif);
     font-weight: normal;
     color: var(--color-text-soft);
     margin-bottom: var(--spacing-3x);
