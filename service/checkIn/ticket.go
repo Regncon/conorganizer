@@ -2,6 +2,7 @@ package checkIn
 
 import (
 	"database/sql"
+	"errors"
 	"log/slog"
 )
 
@@ -26,7 +27,7 @@ func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTic
 func ConvertTicketToBillettholder(ticketId int, db *sql.DB, logger *slog.Logger) error {
 	tickets, err := GetTicketsFromCheckIn(logger, "")
 	if err != nil {
-		return err
+		return errors.New("failed to fetch tickets from check-in: " + err.Error())
 	}
 
 	err = converTicketIdToNewBillettholder(ticketId, tickets, db, logger)

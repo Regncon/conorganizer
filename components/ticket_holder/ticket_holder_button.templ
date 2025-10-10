@@ -31,7 +31,7 @@ templ TicketHolderButton(currentBillettHolder BillettHolder) {
 			data-class-selected={ fmt.Sprintf("$billettHolderId == %d", currentBillettHolder.Id) }
 			data-on-click={ fmt.Sprintf("$billettHolderId = %d", currentBillettHolder.Id) }
 		>
-			@nameInitials(currentBillettHolder.Name, initials)
+			@NameInitials(currentBillettHolder.Name, initials)
 		</button>
 	</div>
 }

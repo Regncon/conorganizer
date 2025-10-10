@@ -1,22 +1,22 @@
 package profileticketspage
 
 import (
+	"context"
+	"database/sql"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
-	"database/sql"
-	"fmt"
 	"time"
-	"context"
-	"encoding/json"
 
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
-	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
-	"github.com/Regncon/conorganizer/service/userctx"
-	"github.com/Regncon/conorganizer/layouts"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -80,9 +80,9 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 			var user = userctx.GetUserRequestInfo(ctx)
 
 			layouts.Base(
-				"Mine Biletter",
+				"Mine Billetter",
 				user,
-				profileTicketsIndex(user.Id, db,logger),
+				profileTicketsIndex(user.Id, db, logger),
 			).Render(ctx, w)
 		})
 		profileRouter.Route("/api", func(billettholderAdminRouter chi.Router) {

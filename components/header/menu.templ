@@ -12,7 +12,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			align-items: center;
 			gap: 0.5rem;
 			margin: 0.6rem 1rem 0.6rem 0.6rem;
-			font-family: "Fira Code";
+			font-family: var(--font-monospace);
 		}
 
 		.beta-toggle-label {
@@ -72,7 +72,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			height: var(--nav-height);
 			width: 100%;
 			gap: var(--spacing-4x);
-			font-family: "Fira Code";
+			font-family: var(--font-sans-serif);
 
 			a.disabled {
 				pointer-events: none;
@@ -128,6 +128,8 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
 				border-radius: var(--border-radius-1x);
 				z-index: var(--nav-drop-down-z-index);
+				width: max-content;
+				max-width: 260px;
 			}
 
 			.dropdown-panel a {
@@ -135,7 +137,6 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				color: var(--color-primary-text);
 				padding: 0.5rem 1rem;
 				text-decoration: none;
-				text-transform: uppercase;
 			}
 
 			.dropdown-panel a:hover {
@@ -228,6 +229,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				.dropdown-panel {
 					bottom: unset;
 					top: 46px;
+					max-width: 320px;
 				}
 			}
 		}
@@ -260,6 +262,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 								<a href="/auth/logout">Logg ut</a>
 								/* <a href="/my-events">Mine arrangementer</a> */
 								<a href="/profile">Min Profil</a>
+								<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
 								if UserInfo.IsAdmin {
 									<hr/>
 									<a href="/admin/billettholder/">Billettholderoversikt</a>

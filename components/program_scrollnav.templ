@@ -1,0 +1,77 @@
+package components
+
+templ ProgramScrollnav() {
+	<style>
+    .program-scrollnav-container {
+      padding: var(--spacing-2x) 0;
+      position: sticky;
+      top: 51px; /* should not be hardcoded but gotta finish */
+      background-color: var(--bg-base);
+      z-index: var(--subnav-z-index);
+    }
+    .program-scrollnav-bar {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: var(--spacing-2x);
+    }
+    .scrollnav-button {
+      position: relative;
+      transition: color 0.2s ease;
+      .scrollnav-active-bar {
+        position: absolute;
+        bottom: 0px;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background-color: transparent;
+        transition: background-color 0.2s ease;
+      }
+
+      .btn.is-active {
+        color: var(--color-primary);
+      }
+      .btn.btn.is-active ~ .scrollnav-active-bar {
+        background-color: var(--color-primary);
+      }
+    }
+    .scrollnav-button .btn:hover ~ .scrollnav-active-bar {
+      background-color: var(--color-text-soft);
+    }
+
+    @container main (width <= 600px) {
+      .scrollnav-button .btn {
+        text-align: center;
+        font-size: 12px;
+      }
+    }
+
+    @container main (width > 600px) {
+      .program-scrollnav-container {
+        margin-top: var(--spacing-3x);
+        top: var(--nav-height);
+      }
+    }
+  </style>
+	<script src="/static/web_components/scroll_highlighter.js"></script>
+	<div class="program-scrollnav-container">
+		<div class="page-content-container program-scrollnav-bar">
+			<div class="scrollnav-button">
+				<a class="btn btn--ghost" href="#FredagKveld">Fredag Kveld</a>
+				<span class="scrollnav-active-bar"></span>
+			</div>
+			<div class="scrollnav-button">
+				<a class="btn btn--ghost" href="#LordagMorgen">Lørdag Morgen</a>
+				<span class="scrollnav-active-bar"></span>
+			</div>
+			<div class="scrollnav-button">
+				<a class="btn btn--ghost" href="#LordagKveld">Lørdag Kveld</a>
+				<span class="scrollnav-active-bar"></span>
+			</div>
+			<div class="scrollnav-button">
+				<a class="btn btn--ghost" href="#SondagMorgen">Søndag Morgen</a>
+				<span class="scrollnav-active-bar"></span>
+			</div>
+		</div>
+	</div>
+}

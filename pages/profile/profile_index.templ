@@ -9,12 +9,12 @@ import (
 	"github.com/Regncon/conorganizer/pages/profile/tickets"
 	"github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	"log/slog"
 	"net/http"
-	"sort"
 )
 
 func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
@@ -26,9 +26,9 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			// User generated events
 			var events = GetEventsByUserId(user.Id, db, logger)
 
-			sort.Slice(events, func(i, j int) bool {
+			/* sort.Slice(events, func(i, j int) bool {
 				return events[i].Status > events[j].Status
-			})
+			}) */
 
 			billettholdere, err := billettholderService.GetBilettholdere(user.Id, db, logger)
 			if err != nil {
@@ -51,7 +51,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			layouts.Base(
 				"Min profil side",
 				user,
-				ProfilePage(events, tickets),
+				ProfilePage(user, events, tickets),
 			).Render(ctx, w)
 		})
 
@@ -61,7 +61,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 	return nil
 }
 
-templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.TicketHolder) {
+templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardModel, tickets []profilecomponent.TicketHolder) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: ""},
@@ -69,7 +69,7 @@ templ ProfilePage(events []models.EventCardModel, tickets []profilecomponent.Tic
 	<section class="page-content-container profile-container">
 		<div class="profile-content-column">
 			@profilecomponent.MyEvents(events)
-			@profilecomponent.MyPropgram()
+			@profilecomponent.MyPropgram(user)
 		</div>
 		<div class="profile-content-column">
 			/* @profilecomponent.UserDetails(user) */

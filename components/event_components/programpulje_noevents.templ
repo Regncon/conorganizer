@@ -1,0 +1,31 @@
+package event_components
+
+// TODO: Knappen i denne komponenten burde peke til respektiv pulje med #hash i URL'en
+templ ProgramPuljeNoEvents() {
+	<style>
+		.pulje-no-events-container {
+			align-items: center;
+			gap: var(--spacing-4x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-2x);
+			padding: var(--spacing-4x);
+			.btn {
+				flex-shrink: 0;
+			}
+		}
+		@media screen and (width < 600px) {
+			.pulje-no-events-container .btn {
+				align-self: flex-end;
+			}
+		}
+	</style>
+	<div class="pulje-no-events-container flex-responsive">
+		<p>
+			Vi har ingenting å vise her ennå. 
+			Har du sjekket om det finnes noen kule arrangementer du ønsker å delta på?
+		</p>
+		<button class="btn btn--outline">
+			Se arrangementer
+		</button>
+	</div>
+}

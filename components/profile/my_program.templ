@@ -1,10 +1,71 @@
 package profilecomponent
 
-templ MyPropgram() {
+import(
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/components/event_components"
+)
+
+templ MyPropgram(userInfo requestctx.UserRequestInfo) {
+	<style>
+		.program-pulje-list {
+			display: flex;
+			flex-direction: column;
+			gap: var(--responsive-pane-padding);
+		}
+		.program-pulje-container {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+		}
+		h3.program-pulje {
+			font-size: var(--text-heading-3);
+			font-weight: bold;
+			color: var(--color-text-strong);
+		}
+		.program-pulje-time {
+			font-weight: normal;
+			font-size: var(--text-heading-4);
+			color: var(--color-text-soft-50);
+		}
+	</style>
 	<div class="surface-pane">
 		<h2 class="surface-pane-title">
 			Mitt festivalprogram
 		</h2>
-		<p style="font-style: italic;">kommer snart!</p>
+		if (!userInfo.IsAdmin) {
+			<p style="font-style: italic;">kommer snart!</p>
+		}
+		if (userInfo.IsAdmin) {
+			<section class="program-pulje-list">
+				<div class="program-pulje-container">
+					<h3 class="program-pulje">
+						Fredag Kveld 
+						<span class="program-pulje-time">(18:00 - 23:00)</span>
+					</h3>
+					@event_components.ProgramPuljeNoEvents()
+				</div>
+				<div class="program-pulje-container">
+					<h3 class="program-pulje">
+						Lørdag Morgen 
+						<span class="program-pulje-time">(10:00 - 15:00)</span>
+					</h3>
+					@event_components.ProgramPuljeEvent("/event-images/1b22fb55254b8daa_banner.webp")
+				</div>
+				<div class="program-pulje-container">
+					<h3 class="program-pulje">
+						Lørdag Kveld 
+						<span class="program-pulje-time">(18:00 - 23:00)</span>
+					</h3>
+					@event_components.ProgramPuljeInterests()
+				</div>
+				<div class="program-pulje-container">
+					<h3 class="program-pulje">
+						Søndag Morgen 
+						<span class="program-pulje-time">(10:00 - 15:00)</span>
+					</h3>
+					@event_components.ProgramPuljeInterests()
+				</div>
+			</section>
+		}
 	</div>
 }

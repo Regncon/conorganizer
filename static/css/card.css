@@ -37,7 +37,7 @@
 .event-card-main-body {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-3x);
+    gap: var(--spacing-2x);
     padding: var(--spacing-3x);
 }
 
@@ -47,6 +47,7 @@
     text-overflow: ellipsis;
     margin: 0 0 var(--spacing-1x);
     color: var(--color-text-strong);
+    font-family: var(--font-sans-serif);
     font-size: 16px;
 }
 
@@ -56,15 +57,15 @@
     text-overflow: ellipsis;
     margin: 0;
     color: var(--color-primary);
-    font-size: 14px;
+    font-size: var(--text-body-small);
     font-weight: normal;
 }
 
 .event-card-description {
     overflow: clip;
     margin-top: 0;
-    font-size: 14px;
-    height: 32px;
+    font-size: var(--text-body-small);
+    height: 40px;
     margin: 0;
 }
 
@@ -140,7 +141,8 @@
     text-overflow: ellipsis;
     margin: 0 0 var(--spacing-1x);
     color: var(--color-primary-text);
-    font-size: 19px;
+    font-size: var(--text-body);
+    font-family: var(--font-sans-serif);
     font-weight: 600;
 }
 
@@ -150,6 +152,38 @@
     text-overflow: ellipsis;
     margin: 0;
     color: var(--color-primary);
-    font-size: 14px;
-    font-weight: 500;
+    font-size: var(--text-body-small);
+    font-weight: 400;
+}
+
+/*
+  Similar to the above element, this card shows a single event.
+  It is used on the user's profile to show their submitted events and their interests.
+  NB: This element is meant to be clickable.
+ */
+.profile-event-bar {
+    display: grid;
+    grid-template-columns: auto max-content;
+    gap: var(--spacing-8x);
+    align-items: center;
+    color: var(--color-primary-text);
+    min-height: 50px;
+    box-sizing: border-box;
+    text-decoration: none;
+    padding: var(--spacing-3x) var(--spacing-4x);
+    border-radius: var(--border-radius-1x);
+    border: 1px solid var(--bg-item-border);
+    cursor: pointer;
+    font-size: var(--text-body-small);
+    .profile-event-bar-title {
+        font-weight: normal;
+        font-size: var(--text-body-small);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.profile-event-bar:hover {
+    filter: brightness(110%);
 }

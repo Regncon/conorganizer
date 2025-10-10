@@ -128,8 +128,8 @@ templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *strin
 	if block == nil {
 		return
 	}
-	<section class="container-inner-padding">
-		<h2 class="pulje-heading" id={ pulje }>
+	<section class="container-inner-padding program-pulje-section" id={ pulje }>
+		<h2 class="pulje-heading">
 			{ block.Pulje.Name }
 			<span class="pulje-heading-time">({ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") })</span>
 		</h2>
@@ -147,20 +147,30 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 		.event-pulje-overview {
 			display: flex;
 			flex-direction: column;			
-			gap: var(--spacing-8x);
-            margin-top: var(--responsive-top-of-page-spacing);
+			margin-top: var(--responsive-top-of-page-spacing);
+			/* Using padding here so the space between counts as in the scroll context of the one above */
+			.program-pulje-section:not(:first-child) {
+				padding-top: var(--spacing-8x);
+			}
 		}
 		@container main (width > 600px) {
 			.event-pulje-overview	{
-				gap: var(--spacing-10x);
+				.program-pulje-section:not(:first-child) {
+					padding-top: var(--spacing-8x);
+				}
 			}
 		}
 
 		.pulje-heading {
 			color: var(--color-text-strong);
 			margin: 0 0 var(--spacing-5x);
+			text-transform: capitalize;
+		}
+		.program-pulje-section {
+			scroll-margin: calc(var(--nav-height) * 2);
 		}
 		.pulje-heading-time {
+			font-family: var(--font-sans-serif);
 			font-size: var(--text-body);
 			font-weight: normal;
 			color: var(--color-text-soft);

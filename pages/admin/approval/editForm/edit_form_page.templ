@@ -61,5 +61,6 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 	</div>
 	<div class="page-content-container wide-content">
 		@components.PreviousNextBar(previousNextData)
+		@formsubmission.WhoIsInterested(eventId, db, logger)
 	</div>
 }

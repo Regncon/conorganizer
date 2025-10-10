@@ -79,17 +79,17 @@ tasks:
   # Download a local copy of latest S3 database
   # Requires updated .env file, check discord!
   download:
-    vars:
+    #vars:
       #Filepaths
-      FLY_CONFIG_PATH: "./backup-service/fly.toml"
-      LOCAL_DB_PATH: "./database/events.db"
-      NEWEST_DB_PATH:
-        sh: flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp find /data/regncon/backup/hourly/  | sort | tail -n1
-    status:
-      - test "{{.NEWEST_DB_PATH}}" = ""
+      #FLY_CONFIG_PATH: "./backup-service/fly.toml"
+      #LOCAL_DB_PATH: "./database/events.db"
+      #NEWEST_DB_PATH:
+      #  sh: flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp find /data/regncon/backup/hourly/  | sort | tail -n1
+    #status:
+    #  - test "{{.NEWEST_DB_PATH}}" = ""
     cmds:
-      - '{{ if .NEWEST_DB_PATH }} rm -f {{ .LOCAL_DB_PATH }} {{ .LOCAL_DB_PATH }}-shm {{ .LOCAL_DB_PATH }}-wal {{ end }}'
-      - flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp get {{ .NEWEST_DB_PATH }} {{ .LOCAL_DB_PATH }}
+    #  - '{{ if .NEWEST_DB_PATH }} rm -f {{ .LOCAL_DB_PATH }} {{ .LOCAL_DB_PATH }}-shm {{ .LOCAL_DB_PATH }}-wal {{ end }}'
+      #- flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp get {{ .NEWEST_DB_PATH }} {{ .LOCAL_DB_PATH }}
       # Create local-event-images directory if it doesn't exist
       - mkdir -p ./local-event-images
       ## Download all event images from https://program.regncon.no/event-images/ and save them to ./local-event-images
@@ -98,6 +98,7 @@ tasks:
   # Kill all running air, templ and taks processes
   kill:
     cmds:
-      - skill air
-      - skill templ
-      - skill task
+      - killall -q main
+      - killall -q templ
+      - killall -q air
+      - killall -q task

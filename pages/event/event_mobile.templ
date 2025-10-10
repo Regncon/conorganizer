@@ -20,8 +20,8 @@ templ Event_mobile(
 	<style>
 		.event-page-wrapper {
 			--event-banner-height: 25rem;
-			--line-height-mobile: 1.4;
-			--line-height: var(--line-height-mobile, 1.4);
+			--line-height-mobile: 1.2;
+			--line-height: var(--line-height-mobile, 1.2);
 
 			display: flex;
 			flex-direction: column;
@@ -45,7 +45,7 @@ templ Event_mobile(
 					border-radius: var(--border-radius-2x);
 					position: relative;
 					z-index: 4;
-					gap: var(--spacing-1x);
+					gap: var(--spacing-2x);
 
 					.title {
 						margin: 0;
@@ -63,16 +63,51 @@ templ Event_mobile(
 				gap: var(--spacing-4x);
 				padding-inline: var(--spacing-2x);
 
-				.interest-picker {
+				.details {
 					display: flex;
-					align-items: center;
 					flex-direction: column;
-					gap: var(--spacing-4x);
-					padding: var(--spacing-4x);
-					text-align: center;
+					padding: 0;
 
-					> button {
-						max-width: 200px;
+					.details-top {
+						display: flex;
+						flex-direction: column;
+						gap: var(--spacing-3x);
+						padding-inline: var(--spacing-5x);
+						padding-block: var(--spacing-3x);
+
+						p {
+							margin: 0;
+							max-width: 11.95rem;
+							overflow: clip;
+							text-overflow: ellipsis;
+							white-space: nowrap;
+						}
+
+						strong {
+							font-size: 12px;
+						}
+
+						.details-header {
+							font-size: var(--spacing-3x);
+						}
+
+						.details-type {
+							height: 20px;
+							display: flex;
+							place-items: center;
+							gap: var(--spacing-1x);
+
+							.details-header {
+								font-size: 12px;
+							}
+						}
+					}
+
+					.details-bottom {
+						padding: var(--spacing-5x);
+						display: flex;
+						flex-direction: column;
+						gap: var(--spacing-4x);
 					}
 				}
 
@@ -198,13 +233,34 @@ templ Event_mobile(
 					gap: var(--spacing-8x);
 					padding: 0;
 
-					.interest-picker {
-						order: 1;
-						width: 100%;
-						flex-direction: row;
-						flex-wrap: wrap;
-						place-content: space-between;
+
+					.details {
+						position: relative;
+						padding: var(--spacing-5x);
+						padding-block-start: var(--spacing-10x);
 						height: fit-content;
+						display: grid;
+						grid-template-columns: 1fr 1fr;
+
+						hr {
+							display: none;
+						}
+
+						.details-top {
+							padding: 0;
+							.details-header {
+								position: absolute;
+								top: 1rem;
+							}
+							.details-host {
+								display: flex;
+								flex-direction: column;
+							}
+						}
+
+						.details-bottom {
+							padding: 0;
+						}
 					}
 					.description {
 						order: 2;
@@ -247,10 +303,8 @@ templ Event_mobile(
 					padding-inline: var(--spacing-10x);
 					grid-template-columns: 1fr 25.3125rem;
 
-					.interest-picker {
-						grid-area: interests;
-					}
-					.event-details-pane {
+
+					.details {
 						grid-area: details;
 						height: max-content;
 					}
@@ -285,21 +339,7 @@ templ Event_mobile(
 			</header>
 		</div>
 		<div class="event-information">
-			<div class="card interest-picker">
-				if hasTickets {
-					<div></div>
-					<button
-						class="btn btn--cta"
-						data-on-click="$interestIsOpen = true"
-					>Meld interesse</button>
-				} else {
-					<p class="color-strong">Hent billett for å melde interesse</p>
-					<a
-						href="/profile/tickets"
-						class="btn btn--cta"
-					>Hent billett</a>
-				}
-			</div>
+			@EventInterestPanel(hasTickets)
 			<section class="surface-pane event-details-pane">
 				<h2 class="surface-pane-title">Detaljer om arrangementet</h2>
 				<div class="event-details">
