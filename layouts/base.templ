@@ -41,7 +41,7 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, children templ.Com
 			<main>
 				if userInfo.IsAdmin {
 					@header.Menu(userInfo)
-					<h1>Siden er kun tilgængelig for administratorer </h1>
+					<h1>Siden er kun tilgængelig for administratorer V2</h1>
 					@children
 					<div class="page-footer"></div>
 				} else {
