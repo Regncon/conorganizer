@@ -272,7 +272,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 		<p style="margin:0;">
 			<strong>Navn:</strong>
 			<em>
-				@templ.Raw(highlightSearchTerm(billettholder.FirstName+""+billettholder.LastName, searchTerm))
+				@templ.Raw(highlightSearchTerm(billettholder.FirstName+" "+billettholder.LastName, searchTerm))
 			</em>
 		</p>
 		for _, email := range billettholder.Emails {
