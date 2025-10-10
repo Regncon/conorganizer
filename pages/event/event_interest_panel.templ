@@ -2,16 +2,25 @@ package event
 
 templ EventInterestPanel(hasTickets bool) {
 	<style>
-    .event-interest-picker {
+  .event-interest-picker {
     display: flex;
     align-items: center;
     flex-direction: column;
     gap: var(--spacing-4x);
     padding: var(--spacing-4x);
-    text-align: center;
 
     > button {
       max-width: 200px;
+      flex-shrink: 0;
+    }
+
+    .inline-link {
+      display: block;
+      margin-top: 1rem;
+      text-decoration: none;
+      .link-text {
+        text-decoration: underline;
+      }
     }
   }
 
@@ -29,13 +38,19 @@ templ EventInterestPanel(hasTickets bool) {
   @container event-container (width > 65.0625rem) {
     .event-interest-picker {
       grid-area: interests;
+      flex-wrap: nowrap;
     }
   }
 </style>
 	<div class="card event-interest-picker">
 		if hasTickets {
 			<div>
-				Hallo Omverden, hvordan her du det i dag?
+				Tenker du dette arrangementet ser spennende ut?
+        Husk å melde interesse i god tid, aller senest en time før puljen til arrangementet starter.
+        <a class="inline-link" href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">
+          <span class="link-text">Hvordan fungerer interessevalget?</span>
+          <span class="link-icon">&#9432;</span>
+        </a>
 			</div>
 			<button class="btn btn--cta" data-on-click="$interestIsOpen = true">
 				Meld interesse
