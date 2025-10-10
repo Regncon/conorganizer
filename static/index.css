@@ -51,6 +51,10 @@
     --text-heading-3: 16px;
     --text-heading-4: 12px;
     --text-article: 20px;
+    
+    --font-sans-serif: "Open Sans", Helvetica, sans-serif;
+    --font-serif: "EB Garamond", Georgia, Times, serif;
+    --font-monospace: "Fira Code", monospace;
 
     /* spacings */
     --spacing-1x: 4px;
@@ -124,6 +128,7 @@ html {
     box-sizing: border-box;
     color: var(--primary-text);
     font-size: var(--text-body);
+    font-family: var(--font-sans-serif);
     color: var(--color-primary-text);
     scroll-behavior: smooth;
     /*
@@ -139,7 +144,7 @@ html {
 body {
     background: var(--bg-base);
     margin: 0;
-    font-family: sans-serif;
+    font-family: var(--font-sans-serif);
     margin-block-end: var(--nav-height);
 
     @media screen and (width >=420px) {
@@ -333,7 +338,7 @@ hr {
 }
 
 input {
-    font-family: monospace;
+    font-family: var(--font-monospace);
 }
 
 .checkbox-label {
