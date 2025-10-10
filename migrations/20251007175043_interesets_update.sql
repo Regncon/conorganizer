@@ -1,8 +1,6 @@
 -- +goose Up
 PRAGMA foreign_keys = ON;
 
-DROP TABLE interests;
-
 CREATE TABLE IF NOT EXISTS interests (
     billettholder_id INTEGER NOT NULL,
     event_id TEXT NOT NULL,
