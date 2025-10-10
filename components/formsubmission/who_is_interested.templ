@@ -7,39 +7,108 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]models.Interest, error) {
+type InterestWithHolder struct {
+	BillettholderId int    `json:"billettholder_id"`
+	EventId         string `json:"event_id"`
+	PuljeId         string `json:"pulje_id"`
+	InterestLevel   string `json:"interest_level"`
+
+	// Billettholder fields (from billettholdere)
+	FirstName  string `json:"first_name"`
+	LastName   string `json:"last_name"`
+	TicketType string `json:"ticket_type"`
+	IsOver18   bool   `json:"is_over_18"`
+}
+
+func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]InterestWithHolder, error) {
 	/*
 
 
-	   CREATE TABLE
-	       interests (
-	           billettholder_id INTEGER NOT NULL,
-	           event_id TEXT NOT NULL,
-	           pulje_id TEXT NOT NULL,
-	           interest_level TEXT NOT NULL,
-	           inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	           PRIMARY KEY (billettholder_id, event_id, pulje_id),
-	           FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
-	           FOREIGN KEY (event_id) REFERENCES events (id),
-	           FOREIGN KEY (pulje_id) REFERENCES puljer (id),
-	           FOREIGN KEY (interest_level) REFERENCES interest_levels (interest_level) ON UPDATE CASCADE
-	       );
+						   CREATE TABLE
+						       interests (
+						           billettholder_id INTEGER NOT NULL,
+						           event_id TEXT NOT NULL,
+						           pulje_id TEXT NOT NULL,
+						           interest_level TEXT NOT NULL,
+						           inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+						           PRIMARY KEY (billettholder_id, event_id, pulje_id),
+						           FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
+						           FOREIGN KEY (event_id) REFERENCES events (id),
+						           FOREIGN KEY (pulje_id) REFERENCES puljer (id),
+						           FOREIGN KEY (interest_level) REFERENCES interest_levels (interest_level) ON UPDATE CASCADE
+						       );
+
+				type Interest struct {
+					BillettholderId int       `json:"billettholder_id"`
+					EventId         string    `json:"event_id"`
+					PuljeId         string    `json:"pulje_id"`
+					InterestLevel   string    `json:"interest_level"`
+					InsertedTime    time.Time `json:"inserted_time"`
+				}
+					type Billettholder struct {
+						ID           int                  `json:"id"`
+						FirstName    string               `json:"first_name"`
+						LastName     string               `json:"last_name"`
+						Emails       []BillettholderEmail `json:"emails,omitempty"`
+						TicketTypeId int                  `json:"ticket_type_id"`
+						TicketType   string               `json:"ticket_type"`
+						IsOver18     bool                 `json:"is_over_18"`
+						OrderID      int                  `json:"order_id"`
+						TicketID     int                  `json:"ticket_id"`
+						InsertedTime time.Time            `json:"inserted_time"`
+					}
+			rows, err := db.Query(`
+		        SELECT billettholder_id, event_id, pulje_id, interest_level, inserted_time
+		        FROM interests
+		        WHERE event_id = ?
+		    `, eventId)
+			if err != nil {
+				logger.Error("Failed to query interests", "error", err)
+				return nil, err
+			}
+			defer rows.Close()
+			var interests []models.Interest
+			for rows.Next() {
+				var interest models.Interest
+				if err := rows.Scan(&interest.BillettholderId, &interest.EventId, &interest.PuljeId, &interest.InterestLevel, &interest.InsertedTime); err != nil {
+					logger.Error("Failed to scan interest", "error", err)
+					return nil, err
+				}
+				interests = append(interests, interest)
+			}
+			if err := rows.Err(); err != nil {
+				logger.Error("Row iteration error", "error", err)
+				return nil, err
+			}
+
+			return interests, nil
 	*/
-	rows, err := db.Query(`
-        SELECT billettholder_id, event_id, pulje_id, interest_level, inserted_time
-        FROM interests
-        WHERE event_id = ?
-    `, eventId)
+	const q = `
+        SELECT
+            i.billettholder_id,
+            i.event_id,
+            i.pulje_id,
+            i.interest_level,
+            b.first_name,
+            b.last_name,
+            b.ticket_type,
+            b.is_over_18
+        FROM interests i
+        INNER JOIN billettholdere b ON i.billettholder_id = b.id
+        WHERE i.event_id = ?
+        ORDER BY i.pulje_id, i.interest_level DESC
+    `
+	rows, err := db.Query(q, eventId)
 	if err != nil {
-		logger.Error("Failed to query interests", "error", err)
+		logger.Error("Failed to query interests with holders", "error", err)
 		return nil, err
 	}
 	defer rows.Close()
-	var interests []models.Interest
+	var interests []InterestWithHolder
 	for rows.Next() {
-		var interest models.Interest
-		if err := rows.Scan(&interest.BillettholderId, &interest.EventId, &interest.PuljeId, &interest.InterestLevel, &interest.InsertedTime); err != nil {
-			logger.Error("Failed to scan interest", "error", err)
+		var interest InterestWithHolder
+		if err := rows.Scan(&interest.BillettholderId, &interest.EventId, &interest.PuljeId, &interest.InterestLevel, &interest.FirstName, &interest.LastName, &interest.TicketType, &interest.IsOver18); err != nil {
+			logger.Error("Failed to scan interest with holder", "error", err)
 			return nil, err
 		}
 		interests = append(interests, interest)
@@ -48,9 +117,21 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]mo
 		logger.Error("Row iteration error", "error", err)
 		return nil, err
 	}
-
 	return interests, nil
 
+}
+
+templ interestInPulje(puljeId models.Pulje, interests []InterestWithHolder) {
+	for _, interest := range interests {
+		if interest.PuljeId == string(puljeId) {
+			<div style="display:flex; gap:1rem;">
+				<span>{ interest.InterestLevel }</span>
+				<span>Navn: { interest.FirstName } { interest.LastName }</span>
+				<span>Ticket Type: { interest.TicketType }</span>
+				<span>Is Over 18: { interest.IsOver18 }</span>
+			</div>
+		}
+	}
 }
 
 templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
@@ -60,8 +141,12 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 		return
 	}
 	<h2>Who is interested?</h2>
-	for _, interest := range interests {
-    <p>Pujle ID: { interest.PuljeId }</p>
-		<p>Interest Level: { interest.InterestLevel }</p>
-	}
+	<h3>Fredag Kveld</h3>
+	@interestInPulje(models.PuljeFredagKveld, interests)
+    <h3>Lørdag Morgen</h3>
+    @interestInPulje(models.PuljeLordagMorgen, interests)
+    <h3>Lørdag Kveld</h3>
+    @interestInPulje(models.PuljeLordagKveld, interests)
+    <h3>Søndag Morgen</h3>
+    @interestInPulje(models.PuljeSondagMorgen, interests)
 }
