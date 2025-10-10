@@ -173,8 +173,10 @@
     border-radius: var(--border-radius-1x);
     border: 1px solid var(--bg-item-border);
     cursor: pointer;
+    font-size: var(--text-body-small);
     .profile-event-bar-title {
         font-weight: normal;
+        font-size: var(--text-body-small);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
