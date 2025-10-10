@@ -9,11 +9,11 @@ else
 fi
 
 # Restore the database if it does not already exist.
-if [ -f /var/lib/regncon/events.db ]; then
+if [ -f /data/regncon/database/events.db ]; then
 	echo "Database already exists, skipping restore"
 else
 	echo "No database found, restoring from replica if exists"
-	litestream restore /var/lib/regncon/events.db
+	litestream restore /data/regncon/database/events.db
 fi
 
 # Check if the image folder exists and we have write permissions to it
@@ -25,4 +25,4 @@ else
 fi
 
 # Run litestream with your app as the subprocess.
-exec litestream replicate -exec "/usr/local/bin/regncon -dbp /var/lib/regncon/events.db -image-path /data/regncon/uploads"
+exec litestream replicate -exec "/usr/local/bin/regncon -dbp /data/regncon/database/events.db -image-path /data/regncon/uploads"
