@@ -39,8 +39,16 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, children templ.Com
 		</head>
 		<body>
 			<main>
-				@header.Menu(userInfo)
-				@children
+				if userInfo.IsAdmin {
+					@header.Menu(userInfo)
+					<h1>Siden er kun tilgængelig for administratorer V3</h1>
+					@children
+					<div class="page-footer"></div>
+				} else {
+					<div style="text-align: center; margin-top: 50px;">
+						<h1>Beklager, siden er under vedligehold</h1>
+					</div>
+				}
 			</main>
 		</body>
 	</html>
