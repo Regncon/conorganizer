@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"net/http"
-    "fmt"
 
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
@@ -117,7 +116,7 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 			>
 				<span>{ interest.InterestLevel }</span>
 				@ticketholder.NameInitials(interest.FirstName+" "+interest.LastName, string(interest.FirstName[0])+string(interest.LastName[0]))
-                <button
+				<button
 					class="btn btn--outline"
 					data-on-click={ datastar.PutSSE("/my-events/api/new/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
 				>
