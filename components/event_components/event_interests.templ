@@ -9,7 +9,15 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/models"
 )
+
+func getDefalutPuljeId(puljeId string) string {
+	if puljeId == string(models.PuljeFredagKveld) || puljeId == string(models.PuljeLordagMorgen) {
+		return string(models.PuljeLordagKveld)
+	}
+	return puljeId
+}
 
 templ EventInterests(userInfo requestctx.UserRequestInfo,
 	eventId string,
@@ -17,6 +25,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	db *sql.DB,
 	r *http.Request,
 	logger *slog.Logger) {
+	{{ defaltPuljeId := getDefalutPuljeId(puljeId) }}
 	<style>
 		dialog::backdrop {
 			background-image: linear-gradient(45deg, var(--bg-backdrop));
@@ -81,7 +90,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 
 				.dialog-content {
 					display: flex;
-					flex-direction: column;					
+					flex-direction: column;
 					max-height: calc(100vh - 280px);
 					overflow: auto;
 
@@ -117,7 +126,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		class="interest-dialog"
 		data-attr-open="isOpen($interestIsOpen)"
 		closedby="any"
-		data-signals-pulje-Id={ fmt.Sprintf("'%s'", puljeId) }
+		data-signals-pulje-Id={ fmt.Sprintf("'%s'", defaltPuljeId) }
 	>
 		<div class="dialog-container">
 			<header class="dialog-header">
