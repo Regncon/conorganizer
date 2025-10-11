@@ -79,17 +79,22 @@ tasks:
   # Download a local copy of latest S3 database
   # Requires updated .env file, check discord!
   download:
-    #vars:
+    vars:
       #Filepaths
-      #FLY_CONFIG_PATH: "./backup-service/fly.toml"
-      #LOCAL_DB_PATH: "./database/events.db"
-      #NEWEST_DB_PATH:
-      #  sh: flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp find /data/regncon/backup/hourly/  | sort | tail -n1
-    #status:
-    #  - test "{{.NEWEST_DB_PATH}}" = ""
+      FLY_CONFIG_PATH: "./backup-service/fly.toml"
+      LOCAL_DB_PATH: "./database/"
+
+
     cmds:
-    #  - '{{ if .NEWEST_DB_PATH }} rm -f {{ .LOCAL_DB_PATH }} {{ .LOCAL_DB_PATH }}-shm {{ .LOCAL_DB_PATH }}-wal {{ end }}'
-      #- flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp get {{ .NEWEST_DB_PATH }} {{ .LOCAL_DB_PATH }}
+      # Download latest db from prod with flyctl
+      - mkdir -p "{{ .LOCAL_DB_PATH }}"
+      - rm -f -- "{{ .LOCAL_DB_PATH }}events.db" \
+                 "{{ .LOCAL_DB_PATH }}events.db-wal" \
+                 "{{ .LOCAL_DB_PATH }}events.db-shm"
+      - fly -a regncon ssh sftp get /data/regncon/database/events.db "{{ .LOCAL_DB_PATH }}events.db"
+      - fly -a regncon ssh sftp get /data/regncon/database/events.db-wal "{{ .LOCAL_DB_PATH }}events.db-wal"
+      - fly -a regncon ssh sftp get /data/regncon/database/events.db-shm "{{ .LOCAL_DB_PATH }}events.db-shm"
+
       # Create local-event-images directory if it doesn't exist
       - mkdir -p ./local-event-images
       ## Download all event images from https://program.regncon.no/event-images/ and save them to ./local-event-images
