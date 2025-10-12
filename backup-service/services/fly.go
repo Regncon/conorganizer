@@ -56,7 +56,7 @@ func (flyctl *Flyctl) exec(ctx context.Context, cmdString string) (string, error
 func (flyctl *Flyctl) DownloadDatabaseFromVolume(ctx context.Context) (string, error) {
 	// Construct tmp folder name based on date
 	var tmpDirName = time.Now().Format("20060102T150405")
-	var tmpDir = filepath.Join(os.TempDir(), tmpDirName)
+	var tmpDir = filepath.Join("/data/regncon/tmp", tmpDirName)
 	if err := os.MkdirAll(tmpDir, 0o700); err != nil {
 		return "", fmt.Errorf("unable to create tmp dir: %w", err)
 	}
