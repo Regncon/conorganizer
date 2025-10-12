@@ -21,10 +21,13 @@ RUN go mod download && go mod verify
 RUN go build -o /usr/local/bin/backup-service .
 
 
+# Compile flyctl binary from official image
+FROM ghcr.io/superfly/flyctl:latest AS flyctl
+
 
 FROM debian:bookworm AS server
 # Create user for server
-RUN groupadd -r regncon && useradd -r -g regncon -d /srv/regncon -s /usr/sbin/nologin regncon
+RUN groupadd -r regncon && useradd -r -g regncon -d /home/regncon -s /usr/sbin/nologin regncon
 
 # Install required libs
 RUN apt-get update -y && apt-get install -y ca-certificates sqlite3 tzdata
@@ -32,21 +35,27 @@ RUN apt-get update -y && apt-get install -y ca-certificates sqlite3 tzdata
 # Copy compiled binary from previous step
 COPY --from=builder /usr/local/bin/backup-service /home/regncon/backup-service
 
-# Copy over sql init file
+# Copy over sql init file & static files
 COPY --from=builder /usr/src/codebase/database/initialize.sql /usr/local/share/regncon/initialize.sql
-
-# Copy over static files
 COPY --from=builder /usr/src/codebase/web/static /home/regncon/web/static
 
-# Create permanent storage folders if missing
-RUN mkdir -p /data/regncon/{tmp,logs,backup} && \
-    chown -R regncon:regncon /data/regncon/{tmp,logs,backup}
+# Copy flyctl binary
+COPY --from=flyctl /flyctl /usr/local/bin/flyctl
+RUN chmod 0755 /usr/local/bin/flyctl
+
+# Create and set permissions for folders
+RUN mkdir -p /home/regncon/.fly /home/regncon/.cache/flyctl /data/regncon/{tmp,logs,backup} \
+    && chown -R regncon:regncon /home/regncon /data/regncon \
+    # Optional: setgid so new files/dirs inherit the group
+    && chmod 700 /home/regncon/.fly /home/regncon/.cache /home/regncon/.cache/flyctl \
+    && chmod 2775 /data/regncon /data/regncon/{tmp,logs,backup}
 
 # Switch workdir
 WORKDIR /home/regncon
 
 # Switch to non-root user
 USER regncon
+ENV HOME=/home/regncon
 
 # Expose port for dashboard
 EXPOSE 8080
