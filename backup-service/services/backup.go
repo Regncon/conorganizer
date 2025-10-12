@@ -17,15 +17,17 @@ type BackupService struct {
 	Config   models.Config
 	Db       *sql.DB
 	S3Client *s3.Client
+	Flyctl   *Flyctl
 	Logger   *slog.Logger
 }
 
 // NewBackupService creates a new instance of BackupService with dependencies injected.
-func NewBackupService(cfg models.Config, db *sql.DB, s3Client *s3.Client, logger *slog.Logger) *BackupService {
+func NewBackupService(cfg models.Config, db *sql.DB, s3Client *s3.Client, flyclt *Flyctl, logger *slog.Logger) *BackupService {
 	return &BackupService{
 		Config:   cfg,
 		Db:       db,
 		S3Client: s3Client,
+		Flyctl:   flyclt,
 		Logger:   logger,
 	}
 }
@@ -53,28 +55,36 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 		DBPrefix: b.Config.DB_PREFIX,
 	}
 
-	// download snapshot
-	snapshotPath, err := DownloadLatestSnapshot(ctx, b.S3Client, b.Config.BUCKET_NAME, b.Config.DB_PREFIX)
+	// Depricated: download snapshot
+	/* snapshotPath, err := DownloadLatestSnapshot(ctx, b.S3Client, b.Config.BUCKET_NAME, b.Config.DB_PREFIX)
 	if err != nil {
 		output.Status = models.Error
 		output.Stage = models.Downloading
 		output.Error = err.Error()
 		HandleBackupResult(output)
 		return
-	}
+	} */
 
-	// decompress snapshot
-	dbPath, err := utils.DecompressLZ4(snapshotPath)
+	// Depricated: decompress snapshot
+	/* dbPath, err := utils.DecompressLZ4(snapshotPath)
 	if err != nil {
 		output.Status = models.Error
 		output.Stage = models.Decompressing
 		output.Error = err.Error()
 		HandleBackupResult(output)
 		return
+	} */
+
+	// Download from prod volume
+	tmpDir, err := b.Flyctl.DownloadDatabaseFromVolume(ctx)
+	if err != nil {
+		b.Logger.Error("Could not download from prod", "error", err)
+		os.Exit(1)
 	}
 
-	// validate snapshot
-	if err := utils.ValidateSnapshot(dbPath); err != nil {
+	// validate journals
+	dbPath, err := utils.ValidateJournals(tmpDir)
+	if err != nil {
 		output.Status = models.Error
 		output.Stage = models.Validating
 		output.Error = err.Error()
@@ -106,7 +116,7 @@ func (b *BackupService) run(ctx context.Context, interval models.BackupInterval,
 	}
 
 	// Cleanup temp files after successful backup
-	if err := os.Remove(snapshotPath); err != nil {
+	if err := os.RemoveAll(tmpDir); err != nil {
 		output.Error = err.Error()
 	}
 
