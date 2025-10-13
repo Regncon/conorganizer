@@ -14,6 +14,7 @@ import (
 	"github.com/Regncon/conorganizer/pages/login"
 	"github.com/Regncon/conorganizer/pages/myprofile"
 	"github.com/Regncon/conorganizer/pages/myprofile/myevents"
+	"github.com/Regncon/conorganizer/pages/print-friendly"
 	profilepage "github.com/Regncon/conorganizer/pages/profile"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/authctx"
@@ -56,6 +57,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 
 	if err := errors.Join(
 		root.SetupRootRoute(router, sessionStore, logger, ns, db, eventImageDir),
+		printfriendly.PrintFriendlyRoute(router, db, eventImageDir, logger),
 		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db, eventImageDir),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
 		event.SetupEventRoute(router, sessionStore, ns, db, logger, eventImageDir),

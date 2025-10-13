@@ -1,0 +1,31 @@
+package printfriendly
+
+import (
+	"database/sql"
+	"log/slog"
+	"net/http"
+	"github.com/go-chi/chi/v5"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/layouts"
+)
+
+// func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
+// func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
+func PrintFriendlyRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
+
+	router.Get("/print", func(w http.ResponseWriter, r *http.Request) {
+		var ctx = r.Context()
+		userInfo := userctx.GetUserRequestInfo(r.Context())
+		layouts.Base(
+			"Regncon program uttriftsvennlig",
+			userInfo,
+			printFriendlyPage(db, eventImageDir, logger),
+		).Render(ctx, w)
+	})
+	return nil
+}
+
+//@Event_mobile(event, previousNextData, puljerForEvent, hasTickets, eventImageDir)
+templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	<h1>Print Friendly Page</h1>
+}
