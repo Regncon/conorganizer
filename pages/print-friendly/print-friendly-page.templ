@@ -128,23 +128,22 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 			&ev.ID,
 			&ev.Title,
 			&ev.Intro,
-            &ev.Description,
-            &ev.ImageURL,
-            &ev.System,
-            &ev.EventType,
-            &ev.AgeGroup,
-            &ev.Runtime,
-            &ev.HostName,
-            &ev.Host,
-            &ev.Email,
-            &ev.PhoneNumber,
-            &ev.PuljeName,
-            &ev.MaxPlayers,
-            &ev.BeginnerFriendly,
-            &ev.CanBeRunInEnglish,
-            &ev.Notes,
-            &ev.Status,
-
+			&ev.Description,
+			&ev.ImageURL,
+			&ev.System,
+			&ev.EventType,
+			&ev.AgeGroup,
+			&ev.Runtime,
+			&ev.HostName,
+			&ev.Host,
+			&ev.Email,
+			&ev.PhoneNumber,
+			&ev.PuljeName,
+			&ev.MaxPlayers,
+			&ev.BeginnerFriendly,
+			&ev.CanBeRunInEnglish,
+			&ev.Notes,
+			&ev.Status,
 
 			&puljeID,
 			&puljeName,
@@ -182,20 +181,29 @@ templ eventPulje(pulje models.Pulje, byPulje EventsPrintByPulje, eventImageDir *
 	if block == nil {
 		return
 	}
-	<section class="container-inner-padding program-pulje-section" id={ pulje }>
-		<h2 class="pulje-heading">
-			{ block.Pulje.Name }
-			<span class="pulje-heading-time">({ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") })</span>
-		</h2>
-		<div class="page-wide-eventcard-grid">
+	<section id={ pulje }>
+		<div>
 			for _, blockEvent := range block.Events {
+				<h2 class="pulje-heading">
+					{ block.Pulje.Name }
+					<span class="pulje-heading-time">({ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") })</span>
+				</h2>
+				<hr style="margin-block: 1rem;"/>
 				@event.Event_mobile(&blockEvent, components.PreviousNext{}, nil, true, eventImageDir)
+				<div class="pagebreak"></div>
 			}
 		</div>
 	</section>
 }
 
 templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	<style>
+		@media print {
+			.pagebreak {
+				page-break-after: always;
+			}
+		}
+	</style>
 	<h1>Print Friendly Page</h1>
 	{{ eventsByPulje, err := getEventsByPuljeForPrint(db) }}
 	if err != nil {
