@@ -1,0 +1,218 @@
+package printfriendly
+
+import (
+	"database/sql"
+	"log/slog"
+	"net/http"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/pages/event"
+	"github.com/Regncon/conorganizer/components"
+)
+
+// func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
+// func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
+func PrintFriendlyRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
+
+	router.Get("/print", func(w http.ResponseWriter, r *http.Request) {
+		var ctx = r.Context()
+		userInfo := userctx.GetUserRequestInfo(r.Context())
+		layouts.Base(
+			"Regncon program uttriftsvennlig",
+			userInfo,
+			printFriendlyPage(db, eventImageDir, logger),
+		).Render(ctx, w)
+	})
+	return nil
+}
+
+type PuljePrintBlock struct {
+	Pulje  models.PuljeRow
+	Events []models.Event
+}
+
+type EventsPrintByPulje map[models.Pulje]*PuljePrintBlock
+
+/*
+SELECT
+
+		id,
+		title,
+		intro,
+		description,
+		image_url,
+		system,
+		event_type,
+		age_group,
+		event_runtime,
+		host_name,
+		host,
+		email,
+		phone_number,
+		pulje_name,
+		max_players,
+		beginner_friendly,
+		can_be_run_in_english,
+		notes,
+		status
+	    FROM events WHERE id = ?
+*/
+func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
+	const q = `
+		SELECT
+			e.id,
+			e.title,
+            e.intro,
+            e.description,
+            e.image_url,
+            e.system,
+            e.event_type,
+            e.age_group,
+            e.event_runtime,
+            e.host_name,
+            e.host,
+            e.email,
+            e.phone_number,
+            e.pulje_name,
+            e.max_players,
+            e.beginner_friendly,
+            e.can_be_run_in_english,
+            e.notes,
+            e.status,
+
+			-- pulje
+			ep.pulje_id,
+			p.name,
+			p.start_time,
+			p.end_time
+		FROM events e
+		INNER JOIN event_puljer ep ON ep.event_id = e.id
+		INNER JOIN puljer      p  ON p.id = ep.pulje_id
+		WHERE e.status = 'Godkjent' AND ep.is_active = 1
+        ORDER BY p.start_time DESC, e.inserted_time DESC, e.id ASC
+	`
+
+	rows, err := db.Query(q)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	parseDate := func(s string) (time.Time, error) {
+		// Try common SQLite date encodings; adjust if your data uses another format.
+		// DATE columns are often stored as "YYYY-MM-DD".
+		//  2025-10-10T18:00:00Z
+		if t, err := time.Parse("2006-01-02T15:04:05Z07:00", s); err == nil {
+			return t, nil
+		}
+		// Fallbacks (uncomment if needed):
+		// if t, err := time.Parse(time.RFC3339, s); err == nil { return t, nil }
+		// if t, err := time.Parse("2006-01-02 15:04:05", s); err == nil { return t, nil }
+		return time.Time{}, nil
+	}
+
+	out := make(EventsPrintByPulje)
+
+	for rows.Next() {
+		var (
+			ev                 models.Event
+			puljeID, puljeName string
+			startStr, endStr   string
+		)
+
+		if err := rows.Scan(
+			&ev.ID,
+			&ev.Title,
+			&ev.Intro,
+			&ev.Description,
+			&ev.ImageURL,
+			&ev.System,
+			&ev.EventType,
+			&ev.AgeGroup,
+			&ev.Runtime,
+			&ev.HostName,
+			&ev.Host,
+			&ev.Email,
+			&ev.PhoneNumber,
+			&ev.PuljeName,
+			&ev.MaxPlayers,
+			&ev.BeginnerFriendly,
+			&ev.CanBeRunInEnglish,
+			&ev.Notes,
+			&ev.Status,
+
+			&puljeID,
+			&puljeName,
+			&startStr,
+			&endStr,
+		); err != nil {
+			return nil, err
+		}
+
+		startTime, _ := parseDate(startStr)
+		endTime, _ := parseDate(endStr)
+
+		key := models.Pulje(puljeID)
+		block, ok := out[key]
+		if !ok {
+			block = &PuljePrintBlock{
+				Pulje: models.PuljeRow{
+					ID:        key,
+					Name:      puljeName,
+					StartTime: startTime,
+					EndTime:   endTime,
+				},
+			}
+			out[key] = block
+		}
+
+		block.Events = append(block.Events, ev)
+	}
+
+	return out, rows.Err()
+}
+
+templ eventPulje(pulje models.Pulje, byPulje EventsPrintByPulje, eventImageDir *string) {
+	{{ block := byPulje[pulje] }}
+	if block == nil {
+		return
+	}
+	<section id={ pulje }>
+		<div>
+			for _, blockEvent := range block.Events {
+				<h2 class="pulje-heading">
+					{ block.Pulje.Name }
+					<span class="pulje-heading-time">({ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") })</span>
+				</h2>
+				<hr style="margin-block: 1rem;"/>
+				@event.Event_mobile(&blockEvent, components.PreviousNext{}, nil, true, eventImageDir)
+				<div class="pagebreak"></div>
+			}
+		</div>
+	</section>
+}
+
+templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	<style>
+		@media print {
+			.pagebreak {
+				page-break-after: always;
+			}
+		}
+	</style>
+	<h1>Print Friendly Page</h1>
+	{{ eventsByPulje, err := getEventsByPuljeForPrint(db) }}
+	if err != nil {
+		logger.Error("Failed to get events for print", "error", err)
+		<p>Error fetching events: { err.Error() }</p>
+		return
+	}
+	@eventPulje(models.PuljeFredagKveld, eventsByPulje, eventImageDir)
+	@eventPulje(models.PuljeLordagMorgen, eventsByPulje, eventImageDir)
+	@eventPulje(models.PuljeLordagKveld, eventsByPulje, eventImageDir)
+	@eventPulje(models.PuljeSondagMorgen, eventsByPulje, eventImageDir)
+}
