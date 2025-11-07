@@ -104,6 +104,17 @@ func UpdateGm(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger 
 }
 
 templ interestInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder) {
+	<style>
+        .pickers {
+            place-self: center;
+            display: flex;
+            gap: var(--spacing-8x);
+        }
+        .button-size {
+            inline-size: fit-content;
+
+        }
+    </style>
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
 			<section
@@ -116,13 +127,20 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 			>
 				<span>{ interest.InterestLevel }</span>
 				@ticketholder.NameInitials(interest.FirstName+" "+interest.LastName, string(interest.FirstName[0])+string(interest.LastName[0]))
-				<button
-					class="btn btn--outline"
-					data-on-click={ datastar.PutSSE("/my-events/api/new/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
-				>
-					toggle GM
-				</button>
-				<span>{ interest.FirstName } { interest.LastName }</span>
+				<div class="pickers">
+					<button
+						class="btn btn--outline button-size"
+						data-on-click={ datastar.PutSSE("/my-events/api/new/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
+					>
+						Tildel GM
+					</button>
+					<button
+						class="btn btn--outline button-size"
+						data-on-click={ datastar.PutSSE("/my-events/api/new/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
+					>
+						Tildel spiller
+					</button>
+				</div>
 				<div style="display: flex; align-items: center; gap:0.5rem; ">
 					if interest.IsOver18 {
 						@icons.Icon(icons.EventAdultOnly, icons.Size24)
