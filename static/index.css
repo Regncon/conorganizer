@@ -52,7 +52,7 @@
     --text-heading-3: 16px;
     --text-heading-4: 12px;
     --text-article: 20px;
-    
+
     --font-sans-serif: "Open Sans", Helvetica, sans-serif;
     --font-serif: "EB Garamond", Georgia, Times, serif;
     --font-monospace: "Fira Code", monospace;
@@ -146,10 +146,10 @@ body {
     background: var(--bg-base);
     margin: 0;
     font-family: var(--font-sans-serif);
-    margin-block-end: var(--nav-height);
+    margin-bottom: var(--nav-height);
 
-    @media screen and (width >=420px) {
-        margin-block-end: 0;
+    @media screen and (width >=600px) {
+        margin-bottom: 0;
     }
 
     main {
@@ -214,6 +214,7 @@ h2 {
     h1 {
         font-size: var(--text-heading-1);
     }
+
     h1.page-heading {
         margin: var(--spacing-8x) 0;
     }
@@ -253,13 +254,14 @@ p {
     margin: 0;
 }
 
-p + p {
+p+p {
     margin-top: 1rem;
 }
 
 a.inline-link {
     color: var(--color-primary);
 }
+
 a.inline-link:hover,
 a.inline-link:active {
     color: var(--color-text-strong);
@@ -442,15 +444,19 @@ input {
     color: var(--color-primary-text);
     padding: var(--spacing-1x);
 }
+
 .tippy-tooltip[data-placement^="top"] .tippy-arrow {
     border-top-color: var(--bg-tooltip);
 }
+
 .tippy-tooltip[data-placement^="bottom"] .tippy-arrow {
     border-bottom-color: var(--bg-tooltip);
 }
+
 .tippy-tooltip[data-placement^="left"] .tippy-arrow {
     border-left-color: var(--bg-tooltip);
 }
+
 .tippy-tooltip[data-placement^="right"] .tippy-arrow {
     border-right-color: var(--bg-tooltip);
 }
@@ -468,19 +474,31 @@ input {
     color: var(--color-soft-text);
     border-color: var(--color-soft-text);
 }
+
 .innsendt {
     color: var(--color-soft-text);
     border-color: var(--color-soft-text);
 }
+
 .publisert {
     color: var(--color-success);
     border-color: var(--color-success);
 }
+
 .godkjent {
     color: var(--color-warning);
     border-color: var(--color-warning);
 }
+
 .forkastet {
     color: var(--color-error);
     border-color: var(--color-error);
+}
+
+@media print {
+
+    .no-print,
+    .no-print * {
+        display: none !important;
+    }
 }

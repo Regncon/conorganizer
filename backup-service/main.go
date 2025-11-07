@@ -44,8 +44,15 @@ func main() {
 		logger.Error("Failed to initialize S3 client", "error", err)
 	}
 
+	// Start flyctl wrapper
+	flyctl, err := services.FlyCommands(cfg, logger)
+	if err != nil {
+		logger.Error("Could not initialize flyctl binary", "error", err)
+		os.Exit(1)
+	}
+
 	// Define backup service
-	backupService := services.NewBackupService(cfg, db, s3Client, logger)
+	backupService := services.NewBackupService(cfg, db, s3Client, flyctl, logger)
 
 	// Start scheduler
 	err = services.StartScheduler(backupService, logger)

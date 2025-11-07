@@ -39,8 +39,8 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
             b.is_over_18
         FROM interests i
         INNER JOIN billettholdere b ON i.billettholder_id = b.id
-        WHERE i.event_id = ?
-        ORDER BY i.pulje_id, i.interest_level DESC
+        WHERE i.event_id = ? AND i.pulje_id != ''
+        ORDER BY i.interest_level DESC
     `
 	rows, err := db.Query(q, eventId)
 	if err != nil {

@@ -55,6 +55,8 @@ RUN chmod +x /usr/local/bin/replication.sh
 RUN mkdir -p /var/lib/regncon
 RUN chown -R regncon:regncon /var/lib/regncon
 
+RUN mkdir -p /data/regncon/database && \
+    chown -R regncon:regncon /data/regncon/database
 
 # Switch to non-root user
 USER regncon

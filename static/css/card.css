@@ -126,7 +126,7 @@
     display: block;
     text-decoration: none;
     width: 100%;
-    min-height: 70px;
+    min-height: 65px;
     padding: var(--spacing-3x) var(--spacing-4x);
     box-sizing: border-box;
     transition: border-color 120ms ease-in-out;

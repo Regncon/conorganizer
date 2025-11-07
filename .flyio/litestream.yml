@@ -1,11 +1,23 @@
 # Database configurations
 dbs:
-  - path: /var/lib/regncon/events.db
+  - path: /data/regncon/database/events.db
+    # How often to perform WAL checkpoints
+    checkpoint-interval: 10s
+    # Minimum pages before checkpointing
+    min-checkpoint-page-count: 10
+    # Maximum pages before forcing checkpoint
+    max-checkpoint-page-count: 1000
     replica:
+        # Credentials
+        access-key-id: ${AWS_ACCESS_KEY_ID}
+        secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+        # s3 config
         type: s3
         endpoint: ${AWS_ENDPOINT_URL_S3}
         bucket: ${BUCKET_NAME}
         path: ${DB_PREFIX}
         region: ${AWS_REGION}
-        access-key-id: ${AWS_ACCESS_KEY_ID}
-        secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+        # Specifies how often new snapshots will be created
+        snapshot-interval: 10m
+        # Frequency in which frames are pushed to the replica
+        sync-interval: 1s
