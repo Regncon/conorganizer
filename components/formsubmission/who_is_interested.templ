@@ -103,7 +103,7 @@ func UpdateGm(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger 
 	})
 }
 
-templ interestInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder) {
+templ interestInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder, picked bool) {
 	<style>
         .pickers {
             place-self: center;
@@ -119,28 +119,32 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 		if interest.PuljeId == string(puljeId) {
 			<section
 				class="item-card"
-				style="display:grid;
-                        gap:1rem;
-                        grid-template-columns: auto auto 1fr auto auto;
-                        align-items: center;
-                        margin-bottom:0.5rem;"
+				style={ "display: grid",
+                        "gap: 1rem",
+                        getGridTemplateColumnsStyle(picked),
+                        "align-items: center",
+                        "margin-bottom: 0.5rem" }
 			>
-				<span>{ interest.InterestLevel }</span>
+				if !picked {
+					<span>{ interest.InterestLevel }</span>
+				}
 				@ticketholder.NameInitials(interest.FirstName+" "+interest.LastName, string(interest.FirstName[0])+string(interest.LastName[0]))
-				<div class="pickers">
-					<button
-						class="btn btn--outline button-size"
-						data-on-click={ datastar.PutSSE("/my-events/api/new/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
-					>
-						Tildel GM
-					</button>
-					<button
-						class="btn btn--outline button-size"
-						data-on-click={ datastar.PutSSE("/my-events/api/new/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
-					>
-						Tildel spiller
-					</button>
-				</div>
+				if !picked {
+					<div class="pickers">
+						<button
+							class="btn btn--outline button-size"
+							data-on-click={ datastar.PutSSE("/my-events/api/new/event-player/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
+						>
+							Tildel GM
+						</button>
+						<button
+							class="btn btn--outline button-size"
+							data-on-click={ datastar.PutSSE("/my-events/api/new/event-player/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
+						>
+							Tildel spiller
+						</button>
+					</div>
+				}
 				<div style="display: flex; align-items: center; gap:0.5rem; ">
 					if interest.IsOver18 {
 						@icons.Icon(icons.EventAdultOnly, icons.Size24)
@@ -156,6 +160,10 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 	}
 }
 
+templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder) {
+	@interestInPulje(eventId, puljeId, interests, true)
+}
+
 templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 	{{ interests, err := GetInterestsForEvent(eventId, db, logger) }}
 	<div style="display: flex; flex-direction: column; gap:1rem; margin-bottom:2rem;">
@@ -164,23 +172,39 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 				<p>Error fetching interests: { err.Error() }</p>
 				return
 			}
-			<h2>Who is interested?</h2>
+			<h2>Spillere</h2>
 		</article>
 		<article class="form-card">
 			<h2 style="margin-bottom:1rem;">Fredag Kveld</h2>
-			@interestInPulje(eventId, models.PuljeFredagKveld, interests)
+			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
+			@interestInPulje(eventId, models.PuljeFredagKveld, interests, false)
 		</article>
 		<article class="form-card">
 			<h2 style="margin-bottom:1rem;">Lørdag Morgen</h2>
-			@interestInPulje(eventId, models.PuljeLordagMorgen, interests)
+			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
+			@interestInPulje(eventId, models.PuljeLordagMorgen, interests, false)
 		</article>
 		<article class="form-card">
 			<h2 style="margin-bottom:1rem;">Lørdag Kveld</h2>
-			@interestInPulje(eventId, models.PuljeLordagKveld, interests)
+			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
+			@interestInPulje(eventId, models.PuljeLordagKveld, interests, false)
 		</article>
 		<article class="form-card">
 			<h2 style="margin-bottom:1rem;">Søndag Morgen</h2>
-			@interestInPulje(eventId, models.PuljeSondagMorgen, interests)
+			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
+			@interestInPulje(eventId, models.PuljeSondagMorgen, interests, false)
 		</article>
 	</div>
+}
+
+func getGridTemplateColumnsStyle(picked bool) string {
+
+	if !picked {
+		return "grid-template-columns: auto auto 1fr auto auto"
+	}
+	return "grid-template-columns: auto 1fr auto auto"
 }
