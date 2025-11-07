@@ -29,27 +29,39 @@ type InterestWithHolder struct {
 
 func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]InterestWithHolder, error) {
 	const q = `
-        SELECT
-            i.billettholder_id,
-            i.event_id,
-            i.pulje_id,
-            i.interest_level,
-            CASE
-                WHEN EXISTS (
-                SELECT 1
-                FROM events_players ep
-                WHERE ep.billettholder_id = i.billettholder_id
-                    AND ep.is_player = TRUE
-                ) THEN TRUE ELSE FALSE
-            END AS first_choice,
-            b.first_name,
-            b.last_name,
-            b.ticket_type,
-            b.is_over_18
-        FROM interests i
-        INNER JOIN billettholdere b ON i.billettholder_id = b.id
-        WHERE i.event_id = ? AND i.pulje_id <> ''
-        ORDER BY i.interest_level DESC
+            SELECT
+                i.billettholder_id,
+                i.event_id,
+                i.pulje_id,
+                i.interest_level,
+                EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        interests i2
+                        JOIN events_players ep ON ep.billettholder_id = i.billettholder_id
+                    WHERE
+                        i2.billettholder_id = i.billettholder_id
+                        AND i2.interest_level = 'Veldig interessert'
+                        AND (
+                            ep.is_player = 1
+                            OR ep.is_gm = 1
+                        )
+                    LIMIT
+                        1
+                ) AS first_choice,
+                b.first_name,
+                b.last_name,
+                b.ticket_type,
+                b.is_over_18
+            FROM
+                interests i
+                JOIN billettholdere b ON b.id = i.billettholder_id
+            WHERE
+                i.event_id = ?
+                AND i.pulje_id <> ''
+            ORDER BY
+                i.interest_level DESC
     `
 	rows, err := db.Query(q, eventId)
 	if err != nil {
