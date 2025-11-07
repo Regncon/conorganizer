@@ -19,6 +19,7 @@ type InterestWithHolder struct {
 	EventId         string `json:"event_id"`
 	PuljeId         string `json:"pulje_id"`
 	InterestLevel   string `json:"interest_level"`
+	FirstChoice     bool   `json:"first_choice"`
 
 	FirstName  string `json:"first_name"`
 	LastName   string `json:"last_name"`
@@ -33,13 +34,21 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
             i.event_id,
             i.pulje_id,
             i.interest_level,
+            CASE
+                WHEN EXISTS (
+                SELECT 1
+                FROM events_players ep
+                WHERE ep.billettholder_id = i.billettholder_id
+                    AND ep.is_player = TRUE
+                ) THEN TRUE ELSE FALSE
+            END AS first_choice,
             b.first_name,
             b.last_name,
             b.ticket_type,
             b.is_over_18
         FROM interests i
         INNER JOIN billettholdere b ON i.billettholder_id = b.id
-        WHERE i.event_id = ? AND i.pulje_id != ''
+        WHERE i.event_id = ? AND i.pulje_id <> ''
         ORDER BY i.interest_level DESC
     `
 	rows, err := db.Query(q, eventId)
@@ -52,12 +61,23 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 	var interests []InterestWithHolder
 	for rows.Next() {
 		var interest InterestWithHolder
-		if err := rows.Scan(&interest.BillettholderId, &interest.EventId, &interest.PuljeId, &interest.InterestLevel, &interest.FirstName, &interest.LastName, &interest.TicketType, &interest.IsOver18); err != nil {
+		if err := rows.Scan(
+			&interest.BillettholderId,
+			&interest.EventId,
+			&interest.PuljeId,
+			&interest.InterestLevel,
+			&interest.FirstChoice,
+			&interest.FirstName,
+			&interest.LastName,
+			&interest.TicketType,
+			&interest.IsOver18,
+		); err != nil {
 			logger.Error("Failed to scan interest with holder", "error", err)
 			return nil, err
 		}
 		interests = append(interests, interest)
 	}
+
 	if err := rows.Err(); err != nil {
 		logger.Error("Row iteration error", "error", err)
 		return nil, err
@@ -150,7 +170,10 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 						<span>{ interest.InterestLevel }</span>
 					}
 					@ticketholder.NameInitials(interest.FirstName+" "+interest.LastName, string(interest.FirstName[0])+string(interest.LastName[0]))
-					<p class="first-choice">Fått førstevalg</p>
+					// todo: incomplete first choice logic
+					if interest.FirstChoice {
+						<p class="first-choice">Fått førstevalg</p>
+					}
 					<div style="display: flex; align-items: center; gap:0.5rem; ">
 						if interest.IsOver18 {
 							@icons.Icon(icons.EventAdultOnly, icons.Size24)
