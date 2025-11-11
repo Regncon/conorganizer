@@ -28,6 +28,7 @@ type InterestWithHolder struct {
 
 type AssignmentWithHolder = InterestWithHolder
 
+// todo still some bugs with this query. (works sometimes and sometimes not) and i think there is some logic missing
 var queryFirstChoice = `
                 EXISTS (
                     SELECT
