@@ -4,11 +4,13 @@ import (
 	"database/sql"
 	"log/slog"
 
+	"github.com/Regncon/conorganizer/models"
+
 	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
-func getAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]UserEvent, error) {
+func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]models.UserEvent, error) {
 	logger.Info("Fetching events for user", "userId", userInfo.Id)
 
 	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db, logger)
@@ -19,7 +21,7 @@ func getAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 
 	if len(billettholdere) == 0 {
 		logger.Info("User has no billettholdere")
-		return []UserEvent{}, nil
+		return []models.UserEvent{}, nil
 	}
 
 	billettholderID := billettholdere[0].ID
@@ -52,10 +54,10 @@ func getAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 	}
 	defer rows.Close()
 
-	var events []UserEvent
+	var events []models.UserEvent
 
 	for rows.Next() {
-		var event UserEvent
+		var event models.UserEvent
 
 		scanErr := rows.Scan(
 			&event.EventID,

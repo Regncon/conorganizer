@@ -4,37 +4,21 @@ import(
 	"database/sql"
 	"log/slog"
 	"strconv"
-	"time"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/components/event_components"
-	"github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/eventimage"
+	"github.com/Regncon/conorganizer/service/userProgram"
+	"github.com/Regncon/conorganizer/models"
 )
 
-type UserEvent struct {
-	EventID      string
-	Title        string
-	Intro        string
-	Description  string
-	ImageURL     string
-	Host         int
-	EventType    string
-	PuljeID      string
-	PuljeName    string
-	StartTime    time.Time
-	EndTime      time.Time
-}
-
-
-
 templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
-	{{ events, err := getAllEventsForUser(userInfo, db, logger) }}
+	{{ events, err := userProgram.GetAllEventsForUser(userInfo, db, logger) }}
 	{{ _, _ = events, err }}
-	{{ var fredagKveldEvent UserEvent }}
-	{{ var lordagMorgenEvent UserEvent }}
-	{{ var lordagKveldEvent UserEvent }}
-	{{ var sondagMorgenEvent UserEvent }}
-	{{ var sondagKveldEvent UserEvent }}
+	{{ var fredagKveldEvent models.UserEvent }}
+	{{ var lordagMorgenEvent models.UserEvent }}
+	{{ var lordagKveldEvent models.UserEvent }}
+	{{ var sondagMorgenEvent models.UserEvent }}
+	{{ var sondagKveldEvent models.UserEvent }}
 
 for _, event := range events {
 	if event.PuljeName == "Fredag kveld" {

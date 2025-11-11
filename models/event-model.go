@@ -76,3 +76,17 @@ type EventCardModel struct {
 	BeginnerFriendly  bool        `json:"beginner_friendly"`
 	CanBeRunInEnglish bool        `json:"can_be_run_in_english"`
 }
+
+type UserEvent struct {
+	EventID     string
+	Title       string
+	Intro       string
+	Description string
+	ImageURL    string
+	Host        int
+	EventType   string
+	PuljeID     string
+	PuljeName   string
+	StartTime   time.Time
+	EndTime     time.Time
+}
