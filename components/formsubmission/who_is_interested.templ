@@ -188,7 +188,7 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 					<div class="pickers">
 						<button
 							class="btn btn--outline button-size"
-							data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
+							data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
 						>
 							if picked {
 								Fjern som GM
@@ -198,7 +198,7 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 						</button>
 						<button
 							class="btn btn--outline button-size"
-							data-on-click={ datastar.PutSSE("/my-events/api/new/event-player/%s/%s/%d", eventId, puljeId, interest.BillettholderId) }
+							data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
 						>
 							if picked {
 								Fjern som spiller
