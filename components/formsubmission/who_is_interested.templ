@@ -190,7 +190,7 @@ func UpdatePlayerStatus(eventId string,
 	return nil
 }
 
-templ interestInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder, picked bool) {
+templ interestInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder, isAssigned bool) {
 	<style>
 
         .section {
@@ -233,7 +233,7 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 				class="item-card section "
 			>
 				<div class="start">
-					if !picked {
+					if !isAssigned {
 						<span>{ interest.InterestLevel }</span>
 					}
 					@ticketholder.NameInitials(interest.FirstName+" "+interest.LastName, string(interest.FirstName[0])+string(interest.LastName[0]))
@@ -256,21 +256,33 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 					<div class="pickers">
 						<button
 							class="btn btn--outline button-size"
-							data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
+							if isAssigned {
+								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
+							}
+							if !isAssigned {
+								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
+							}
 						>
-							if picked {
+							if isAssigned {
 								Fjern som GM
-							} else {
+							}
+							if !isAssigned {
 								Tildel som GM
 							}
 						</button>
 						<button
 							class="btn btn--outline button-size"
-							data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
+							if isAssigned {
+								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
+							}
+							if !isAssigned {
+								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
+							}
 						>
-							if picked {
+							if isAssigned {
 								Fjern som spiller
-							} else {
+							}
+							if !isAssigned {
 								Tildel som spiller
 							}
 						</button>
