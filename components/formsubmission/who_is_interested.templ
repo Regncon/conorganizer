@@ -70,10 +70,10 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
             ORDER BY
                 i.interest_level DESC
     `
-	rows, err := db.Query(q, eventId)
-	if err != nil {
-		logger.Error("Failed to query interests with holders", "error", err)
-		return nil, err
+	rows, queryErr := db.Query(q, eventId)
+	if queryErr != nil {
+		logger.Error("Failed to query interests with holders", "queryErr", queryErr)
+		return nil, queryErr
 	}
 
 	defer rows.Close()
@@ -90,16 +90,16 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&interest.LastName,
 			&interest.TicketType,
 			&interest.IsOver18,
-		); err != nil {
-			logger.Error("Failed to scan interest with holder", "error", err)
-			return nil, err
+		); scanErr != nil {
+			logger.Error("Failed to scan interest with holder", "scanErr", scanErr)
+			return nil, scanErr
 		}
 		interests = append(interests, interest)
 	}
 
-	if err := rows.Err(); err != nil {
-		logger.Error("Row iteration error", "error", err)
-		return nil, err
+	if rowErr := rows.Err(); rowErr != nil {
+		logger.Error("Row iteration error", "rowErr", rowErr)
+		return nil, rowErr
 	}
 	return interests, nil
 }
