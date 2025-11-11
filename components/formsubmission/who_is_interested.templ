@@ -28,7 +28,8 @@ type InterestWithHolder struct {
 
 type AssignmentWithHolder = InterestWithHolder
 
-var queryFirstChoice = `EXISTS (
+var queryFirstChoice = `
+                EXISTS (
                     SELECT
                         1
                     FROM
@@ -36,6 +37,7 @@ var queryFirstChoice = `EXISTS (
                         JOIN events_players ep ON ep.billettholder_id = i.billettholder_id
                     WHERE
                         i2.billettholder_id = i.billettholder_id
+                        AND i2.event_id = i.event_id
                         AND i2.interest_level = 'Veldig interessert'
                         AND (
                             ep.is_player = 1
@@ -43,7 +45,8 @@ var queryFirstChoice = `EXISTS (
                         )
                     LIMIT
                         1
-                ) AS first_choice`
+                ) AS first_choice
+`
 
 func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]InterestWithHolder, error) {
 	var query = `
