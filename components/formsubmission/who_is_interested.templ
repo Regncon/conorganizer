@@ -265,22 +265,6 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
 							}
 							if !isAssigned {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
-							}
-						>
-							if isAssigned {
-								Fjern som GM
-							}
-							if !isAssigned {
-								Tildel som GM
-							}
-						</button>
-						<button
-							class="btn btn--outline button-size"
-							if isAssigned {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
-							}
-							if !isAssigned {
 								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
 							}
 						>
@@ -289,6 +273,22 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 							}
 							if !isAssigned {
 								Tildel som spiller
+							}
+						</button>
+						<button
+							class="btn btn--outline button-size"
+							if isAssigned {
+								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
+							}
+							if !isAssigned {
+								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
+							}
+						>
+							if isAssigned {
+								Fjern som GM
+							}
+							if !isAssigned {
+								Tildel som GM
 							}
 						</button>
 					</div>
