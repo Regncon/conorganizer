@@ -14,6 +14,7 @@ import (
 	"github.com/Regncon/conorganizer/pages/admin/approval"
 	edit_form "github.com/Regncon/conorganizer/pages/admin/approval/editForm"
 	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -198,15 +199,21 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							isPlayer,
 							isGm,
 							db,
-							kv,
-							r,
 							logger,
 						)
 						if updatePlayerStatusErr != nil {
 							http.Error(w, updatePlayerStatusErr.Error(), http.StatusInternalServerError)
 							return
 						}
-						logger.Info("Successfully updated player status", "eventId", eventId, "puljeId", puljeId, "billettholderId", billettholderId, "isPlayer", isPlayer, "isGm", isGm)
+						logger.Info(
+							"Successfully updated player status",
+							"eventId", eventId,
+							"puljeId", puljeId,
+							"billettholderId", billettholderId,
+							"isPlayer", isPlayer,
+							"isGm", isGm,
+						)
+						keyvalue.BroadcastUpdate(kv, r)
 					})
 				})
 			})
