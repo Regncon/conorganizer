@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
+	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/pages/admin/approval"
-	"github.com/Regncon/conorganizer/pages/admin/approval/editForm"
+	edit_form "github.com/Regncon/conorganizer/pages/admin/approval/editForm"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -119,37 +121,89 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		})
 
 		adminRouter.Route("/approval/", func(approvalRouter chi.Router) {
-			approvalRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
-				sse := datastar.NewSSE(w, r)
+			approvalRouter.Route("/api/", func(apiRouter chi.Router) {
+				apiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+					sse := datastar.NewSSE(w, r)
 
-				sessionID, mvc, err := mvcSession(w, r)
-				ctx := r.Context()
-				watcher, err := kv.Watch(ctx, sessionID)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				defer watcher.Stop()
-
-				for {
-					select {
-					case <-ctx.Done():
+					sessionID, mvc, err := mvcSession(w, r)
+					ctx := r.Context()
+					watcher, err := kv.Watch(ctx, sessionID)
+					if err != nil {
+						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
-					case entry := <-watcher.Updates():
-						if entry == nil {
-							continue
-						}
-						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
+					}
+					defer watcher.Stop()
+
+					for {
+						select {
+						case <-ctx.Done():
 							return
-						}
-						c := approval.ApprovalPage(db, logger)
-						if err := sse.PatchElementTempl(c); err != nil {
-							sse.ConsoleError(err)
-							return
+						case entry := <-watcher.Updates():
+							if entry == nil {
+								continue
+							}
+							if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+								http.Error(w, err.Error(), http.StatusInternalServerError)
+								return
+							}
+							c := approval.ApprovalPage(db, logger)
+							if err := sse.PatchElementTempl(c); err != nil {
+								sse.ConsoleError(err)
+								return
+							}
 						}
 					}
-				}
+				})
+
+				apiRouter.Route("/events_players", func(eventsPlayersRouter chi.Router) {
+					eventsPlayersRouter.Put("/put/{eventId}/{puljeId}/{billettholderId}", func(w http.ResponseWriter, r *http.Request) {
+						// sse := datastar.NewSSE(w, r)
+						// sessionID, mvc, err := mvcSession(w, r)
+						// ctx := r.Context()
+
+						eventId := chi.URLParam(r, "eventId")
+						puljeId := chi.URLParam(r, "puljeId")
+						billettholderId, err := strconv.Atoi(chi.URLParam(r, "billettholderId"))
+						if err != nil {
+							logger.Error("Invalid billettholder ID", slog.String("billettholderId", chi.URLParam(r, "billettholderId")), slog.Any("error", err))
+							http.Error(w, "Invalid billettholder ID", http.StatusBadRequest)
+							return
+						}
+
+						type Store struct {
+							Input string `json:"title"`
+						}
+						store := &Store{}
+
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+
+						fmt.Printf("eventId: %s, puljeId: %s, billettholderId: %d, done \n",
+							eventId,
+							puljeId,
+							billettholderId,
+						)
+						var updatePlayerStatusErr = formsubmission.UpdatePlayerStatus(
+							eventId,
+							puljeId,
+							billettholderId,
+							true,
+							false,
+							db,
+							kv,
+							logger,
+						)
+						if updatePlayerStatusErr != nil {
+							http.Error(w, updatePlayerStatusErr.Error(), http.StatusInternalServerError)
+							return
+						}
+						fmt.Printf(eventId,
+							puljeId,
+							billettholderId, "done \n")
+					})
+				})
 			})
 
 			approvalRouter.Route("/edit", func(editEventRouter chi.Router) {
