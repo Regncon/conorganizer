@@ -46,7 +46,7 @@ var queryFirstChoice = `EXISTS (
                 ) AS first_choice`
 
 func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]InterestWithHolder, error) {
-	var q = `
+	var query = `
             SELECT
                 i.billettholder_id,
                 i.event_id,
@@ -66,11 +66,12 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
             WHERE
                 i.event_id = ?
                 AND i.pulje_id <> ''
-                AND ep.billettholder_id IS NULL
+                AND COALESCE(ep.is_player, 0) = 0
+                AND COALESCE(ep.is_gm, 0) = 0
             ORDER BY
                 i.interest_level DESC
     `
-	rows, queryErr := db.Query(q, eventId)
+	rows, queryErr := db.Query(query, eventId)
 	if queryErr != nil {
 		logger.Error("Failed to query interests with holders", "queryErr", queryErr)
 		return nil, queryErr
@@ -80,7 +81,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 	var interests []InterestWithHolder
 	for rows.Next() {
 		var interest InterestWithHolder
-		if err := rows.Scan(
+		if scanErr := rows.Scan(
 			&interest.BillettholderId,
 			&interest.EventId,
 			&interest.PuljeId,
