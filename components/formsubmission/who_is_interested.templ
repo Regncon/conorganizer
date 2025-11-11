@@ -3,10 +3,12 @@ package formsubmission
 import (
 	"database/sql"
 	"log/slog"
+	"net/http"
 
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -54,9 +56,13 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
             FROM
                 interests i
                 JOIN billettholdere b ON b.id = i.billettholder_id
+                LEFT JOIN events_players ep ON ep.billettholder_id = i.billettholder_id
+                AND ep.event_id = i.event_id
+                AND ep.pulje_id = i.pulje_id
             WHERE
                 i.event_id = ?
                 AND i.pulje_id <> ''
+                AND ep.billettholder_id IS NULL
             ORDER BY
                 i.interest_level DESC
     `
@@ -102,10 +108,10 @@ func UpdatePlayerStatus(eventId string,
 	isGM bool,
 	db *sql.DB,
 	kv jetstream.KeyValue,
+	r *http.Request,
 	logger *slog.Logger,
 ) error {
 
-	//use this
 	query := `INSERT INTO
                         events_players (event_id, pulje_id, billettholder_id, is_player, is_gm)
                 VALUES
@@ -119,6 +125,7 @@ func UpdatePlayerStatus(eventId string,
 		logger.Error("Failed to update player status in the database", "updatePlayerStatusErr", updatePlayerStatusErr)
 		return updatePlayerStatusErr
 	}
+	keyvalue.BroadcastUpdate(kv, r)
 	return nil
 }
 

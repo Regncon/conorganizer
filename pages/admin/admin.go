@@ -199,6 +199,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							isGm,
 							db,
 							kv,
+							r,
 							logger,
 						)
 						if updatePlayerStatusErr != nil {
