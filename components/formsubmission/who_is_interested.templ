@@ -299,25 +299,28 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 		<article class="form-card">
 			<h2 style="margin-bottom:1rem;">Fredag Kveld</h2>
 			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
-			@interestInPulje(eventId, models.PuljeFredagKveld, assignees, true)
+			@playersInPulje(eventId, models.PuljeFredagKveld, assignees)
 			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
 			@interestInPulje(eventId, models.PuljeFredagKveld, interests, false)
 		</article>
 		<article class="form-card">
 			<h2 style="margin-bottom:1rem;">Lørdag Morgen</h2>
 			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+			@playersInPulje(eventId, models.PuljeLordagMorgen, assignees)
 			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
 			@interestInPulje(eventId, models.PuljeLordagMorgen, interests, false)
 		</article>
 		<article class="form-card">
 			<h2 style="margin-bottom:1rem;">Lørdag Kveld</h2>
 			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+			@playersInPulje(eventId, models.PuljeLordagKveld, assignees)
 			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
 			@interestInPulje(eventId, models.PuljeLordagKveld, interests, false)
 		</article>
 		<article class="form-card">
 			<h2 style="margin-bottom:1rem;">Søndag Morgen</h2>
 			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+			@playersInPulje(eventId, models.PuljeSondagMorgen, assignees)
 			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
 			@interestInPulje(eventId, models.PuljeSondagMorgen, interests, false)
 		</article>
