@@ -2,13 +2,13 @@ package event_components
 
 import "github.com/Regncon/conorganizer/components/icons"
 
-templ ProgramPuljeEvent(imgurl string) {
+templ ProgramPuljeEvent(imgurl string, title string, description string, host int , eventType string, user int) {
 	<style>
 		.programpulje-event-container {
 			--linear-gradient-mask: linear-gradient(
 				to left,
 				black 19%,
-				transparent 63%
+				transparent 85%
 			);
 
       position: relative;
@@ -42,7 +42,7 @@ templ ProgramPuljeEvent(imgurl string) {
     }
 
     .programpulje-event-container-text {
-      display: flex; 
+      display: flex;
       flex-direction: column;
       gap: var(--spacing-3x);
       padding: var(--spacing-4x);
@@ -58,7 +58,7 @@ templ ProgramPuljeEvent(imgurl string) {
     }
 
     .programpulje-event-container-text-title {
-      display: flex; 
+      display: flex;
       flex-direction: column;
       gap: var(--spacing-1x);
       overflow: hidden;
@@ -92,24 +92,24 @@ templ ProgramPuljeEvent(imgurl string) {
       }
     }
 	</style>
-  {{
-    isGamemaster := true; // just swap this with whatever the flag is
-  }}
+	{{
+	isGamemaster := host == user
+	}}
 	<div class="item-card profile-event-bar programpulje-event-container">
-    if (isGamemaster) {
-      <div class="programpulje-event-user-is-gamemaster" data-tippy-content="Du er arrangøren">
-        @icons.Icon(icons.Gamemaster, icons.Size16)
-      </div>
-    }
+		if (isGamemaster) {
+			<div class="programpulje-event-user-is-gamemaster" data-tippy-content="Du er arrangøren">
+				@icons.Icon(icons.Gamemaster, icons.Size16)
+			</div>
+		}
 		<div class="programpulje-event-container-text">
 			<div class="programpulje-event-container-text-title">
-				<span class="text-event-name event-container-clip-text">Her kommer navnet på eventet</span>
-				<span class="text-event-type event-container-clip-text">Her kommer event-typen</span>
+				<span class="text-event-name event-container-clip-text"> { title }</span>
+				<span class="text-event-type event-container-clip-text">{ eventType }</span>
 			</div>
 			<span class="event-container-clip-text">
-				Her kommer beskrivelsen, som kan være såpass langt avgårde bortover
-        at den til slutt kommer til å croppe av og ut av syne ...
+				{description}
 			</span>
+
 		</div>
 		if imgurl != "" {
 			<img
