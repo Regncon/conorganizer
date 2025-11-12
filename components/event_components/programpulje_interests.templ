@@ -1,8 +1,11 @@
 package event_components
 
-import "github.com/Regncon/conorganizer/components/icons"
+import (
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/service/userProgram"
+)
 
-templ ProgramPuljeInterests() {
+templ ProgramPuljeInterests(interests []userProgram.UserInterest) {
 	<style>
 		.pulje-interests-container {
       display: flex;
@@ -19,7 +22,7 @@ templ ProgramPuljeInterests() {
     .pulje-interests-collapse {
       border-top: 1px solid var(--bg-item-border);
     }
-  
+
     .pulje-interests-summary {
       display: flex;
       align-items: center;
@@ -74,23 +77,17 @@ templ ProgramPuljeInterests() {
 		<details class="pulje-interests-collapse">
 			<summary class="pulje-interests-summary">
 				<span class="pulje-interests-summary-text">
-					Vis interesser (5)
+					Vis interesser ({ len(interests) })
 					@icons.Icon(icons.ChevronDown, icons.Size24)
 				</span>
 			</summary>
 			<div class="pulje-interests-collapse-content">
-				<div class="item-card profile-event-bar">
-					<span class="profile-event-bar-title">Her kommer veldig veldig veldig mye teskt som commer til å croppe</span>
-					<span class="pulje-interest-event-choice">Veldig interessert</span>
-				</div>
-				<div class="item-card profile-event-bar">
-					<span class="profile-event-bar-title">Her kommer veldig veldig veldig mye teskt som commer til å croppe</span>
-					<span class="pulje-interest-event-choice">Litt interessert</span>
-				</div>
-				<div class="item-card profile-event-bar">
-					<span class="profile-event-bar-title">Her kommer veldig veldig veldig mye teskt som commer til å croppe</span>
-					<span class="pulje-interest-event-choice">Interessert</span>
-				</div>
+				for _, interest := range interests {
+					<div class="item-card profile-event-bar">
+						<span class="profile-event-bar-title">{ interest.EventName }</span>
+						<span class="pulje-interest-event-choice">{ interest.InterestLevel }</span>
+					</div>
+				}
 			</div>
 		</details>
 	</div>

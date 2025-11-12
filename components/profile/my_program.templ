@@ -1,42 +1,50 @@
 package profilecomponent
 
-import(
+import (
 	"database/sql"
+	"github.com/Regncon/conorganizer/components/event_components"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventimage"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/service/userProgram"
 	"log/slog"
 	"strconv"
-	"github.com/Regncon/conorganizer/service/requestctx"
-	"github.com/Regncon/conorganizer/components/event_components"
-	"github.com/Regncon/conorganizer/service/eventimage"
-	"github.com/Regncon/conorganizer/service/userProgram"
-	"github.com/Regncon/conorganizer/models"
 )
 
 templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
 	{{ events, err := userProgram.GetAllEventsForUser(userInfo, db, logger) }}
-	{{ _, _ = events, err }}
-	{{ var fredagKveldEvent models.UserEvent }}
-	{{ var lordagMorgenEvent models.UserEvent }}
-	{{ var lordagKveldEvent models.UserEvent }}
-	{{ var sondagMorgenEvent models.UserEvent }}
-	{{ var sondagKveldEvent models.UserEvent }}
-
-for _, event := range events {
-	if event.PuljeName == "Fredag kveld" {
-		{{ fredagKveldEvent = event }}
-	}
-	if event.PuljeName == "Lørdag morgen" {
-		{{ lordagMorgenEvent = event }}
-	}
-	if event.PuljeName == "Lørdag kveld" {
-		{{ lordagKveldEvent = event }}
-	}
-	if event.PuljeName == "Søndag morgen" {
-		{{ sondagMorgenEvent = event }}
-	}
-	if event.PuljeName == "Søndag kveld" {
-		{{ sondagKveldEvent = event }}
-	}
-}
+	{{ interests, interestErr := userProgram.GetAllInterestsForUser(userInfo, db, logger) }}
+	{{ _, _, _ = events, interests, err }}
+	{{ _, _ = interestErr, err }}
+	{{
+		puljes := []struct {
+			displayName string
+			puljeID     string
+			time        string
+			event       models.UserEvent
+			interests   []userProgram.UserInterest
+		}{
+			{displayName: "Fredag kveld", puljeID: "FredagKveld", time: "(18:00 - 23:00)"},
+			{displayName: "Lørdag morgen", puljeID: "LordagMorgen", time: "(10:00 - 15:00)"},
+			{displayName: "Lørdag kveld", puljeID: "LordagKveld", time: "(18:00 - 23:00)"},
+			{displayName: "Søndag morgen", puljeID: "SondagMorgen", time: "(10:00 - 15:00)"},
+		}
+	}}
+	{{
+		for i := range puljes {
+			for _, event := range events {
+				if event.PuljeName == puljes[i].displayName {
+					puljes[i].event = event
+					break
+				}
+			}
+			for _, interest := range interests {
+				if interest.PuljeID == puljes[i].puljeID {
+					puljes[i].interests = append(puljes[i].interests, interest)
+				}
+			}
+		}
+	}}
 	<style>
 		.program-pulje-list {
 			display: flex;
@@ -68,72 +76,23 @@ for _, event := range events {
 		}
 		if (userInfo.IsAdmin) {
 			<section class="program-pulje-list">
-				<div class="program-pulje-container">
-					<h3 class="program-pulje">
-						Fredag kveld
-						<span class="program-pulje-time">(18:00 - 23:00)</span>
-					</h3>
-                        if fredagKveldEvent.EventID != "" {
-                            {{ imageCardUrl := eventimage.GetEventImageUrl(fredagKveldEvent.EventID, "card", eventImageDir) }}
-                            {{ userId, _ := strconv.Atoi(userInfo.Id) }}
-                            @event_components.ProgramPuljeEvent(imageCardUrl, fredagKveldEvent.Title, fredagKveldEvent.Intro, fredagKveldEvent.Host, fredagKveldEvent.EventType, userId)
-                        } else {
-                            @event_components.ProgramPuljeNoEvents()
-                        }
-				</div>
-				<div class="program-pulje-container">
-					<h3 class="program-pulje">
-						Lørdag Morgen
-						<span class="program-pulje-time">(10:00 - 15:00)</span>
-					</h3>
-                        if lordagMorgenEvent.EventID != "" {
-                            {{ imageCardUrl := eventimage.GetEventImageUrl(lordagMorgenEvent.EventID, "card", eventImageDir) }}
-                            {{ userId, _ := strconv.Atoi(userInfo.Id) }}
-                            @event_components.ProgramPuljeEvent(imageCardUrl, lordagMorgenEvent.Title, lordagMorgenEvent.Intro, lordagMorgenEvent.Host, lordagMorgenEvent.EventType, userId)
-                        } else {
-                            @event_components.ProgramPuljeNoEvents()
-                        }
-
-				</div>
-				   <div class="program-pulje-container">
-					   <h3 class="program-pulje">
-						   Lørdag Kveld
-						   <span class="program-pulje-time">(18:00 - 23:00)</span>
-					   </h3>
-					   if lordagKveldEvent.EventID != "" {
-						   {{ imageCardUrl := eventimage.GetEventImageUrl(lordagKveldEvent.EventID, "card", eventImageDir) }}
-						   {{ userId, _ := strconv.Atoi(userInfo.Id) }}
-						   @event_components.ProgramPuljeEvent(imageCardUrl, lordagKveldEvent.Title, lordagKveldEvent.Intro, lordagKveldEvent.Host, lordagKveldEvent.EventType, userId)
-					   } else {
-						   @event_components.ProgramPuljeNoEvents()
-					   }
-				   </div>
-				   <div class="program-pulje-container">
-					   <h3 class="program-pulje">
-						   Søndag Morgen
-						   <span class="program-pulje-time">(10:00 - 15:00)</span>
-					   </h3>
-					   if sondagMorgenEvent.EventID != "" {
-						   {{ imageCardUrl := eventimage.GetEventImageUrl(sondagMorgenEvent.EventID, "card", eventImageDir) }}
-						   {{ userId, _ := strconv.Atoi(userInfo.Id) }}
-						   @event_components.ProgramPuljeEvent(imageCardUrl, sondagMorgenEvent.Title, sondagMorgenEvent.Intro, sondagMorgenEvent.Host, sondagMorgenEvent.EventType, userId)
-					   } else {
-						   @event_components.ProgramPuljeNoEvents()
-					   }
-				   </div>
-				   <div class="program-pulje-container">
-					   <h3 class="program-pulje">
-						   Søndag Kveld
-						   <span class="program-pulje-time">(18:00 - 23:00)</span>
-					   </h3>
-					   if sondagKveldEvent.EventID != "" {
-						   {{ imageCardUrl := eventimage.GetEventImageUrl(sondagKveldEvent.EventID, "card", eventImageDir) }}
-						   {{ userId, _ := strconv.Atoi(userInfo.Id) }}
-						   @event_components.ProgramPuljeEvent(imageCardUrl, sondagKveldEvent.Title, sondagKveldEvent.Intro, sondagKveldEvent.Host, sondagKveldEvent.EventType, userId)
-					   } else {
-						   @event_components.ProgramPuljeNoEvents()
-					   }
-				   </div>
+				for _, pulje := range puljes {
+					<div class="program-pulje-container">
+						<h3 class="program-pulje">
+							{ pulje.displayName }
+							<span class="program-pulje-time">{ pulje.time }</span>
+						</h3>
+						if pulje.event.EventID != "" {
+							{{ imageCardUrl := eventimage.GetEventImageUrl(pulje.event.EventID, "card", eventImageDir) }}
+							{{ userId, _ := strconv.Atoi(userInfo.Id) }}
+							@event_components.ProgramPuljeEvent(imageCardUrl, pulje.event.Title, pulje.event.Intro, pulje.event.Host, pulje.event.EventType, userId)
+						} else if len(pulje.interests) > 0 {
+							@event_components.ProgramPuljeInterests(pulje.interests)
+						} else {
+							@event_components.ProgramPuljeNoEvents()
+						}
+					</div>
+				}
 			</section>
 		}
 	</div>
