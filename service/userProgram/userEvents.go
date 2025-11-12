@@ -11,7 +11,6 @@ import (
 )
 
 func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]models.UserEvent, error) {
-	logger.Info("Fetching events for user", "userId", userInfo.Id)
 
 	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db, logger)
 	if billettholderErr != nil {
@@ -77,7 +76,6 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 			logger.Error("Failed to scan event", "error", scanErr)
 			continue
 		}
-		logger.Info("Event scanned", "eventID", event.EventID, "title", event.Title, "pulje", event.PuljeName, "puljeID", event.PuljeID, "imageURL", event.ImageURL, "eventType", event.EventType)
 		events = append(events, event)
 	}
 
@@ -85,8 +83,6 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 		logger.Error("Error iterating rows", "error", rowsErr)
 		return nil, rowsErr
 	}
-
-	logger.Info("Found events", "count", len(events))
 
 	return events, nil
 }
