@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/descope/go-sdk/descope/client"
@@ -22,9 +23,8 @@ const (
 	ctxUserToken    userTokenKey    = "userToken"
 )
 
-const ProjectID = "P2ufzqahlYUHDIprVXtkuCx8MH5C" // TODO: get from env
-
 func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
+	ProjectID := os.Getenv("DESCOPE_PROJECT_ID")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			descopeClient, descopeClientError := client.NewWithConfig(&client.Config{ProjectID: ProjectID})
