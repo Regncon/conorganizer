@@ -120,12 +120,13 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 						</h3>
 						if pulje.event.EventID != "" {
 							{{ imageCardUrl := eventimage.GetEventImageUrl(pulje.event.EventID, "card", eventImageDir) }}
-							@event_components.ProgramPuljeEvent(imageCardUrl, pulje.event.Title, pulje.event.Intro, pulje.event.EventType, pulje.event.IsGM)
+							@event_components.ProgramPuljeEvent(pulje.event.EventID, imageCardUrl, pulje.event.Title, pulje.event.Intro, pulje.event.EventType, pulje.event.IsGM)
 						} else if len(pulje.interests) > 0 {
 							{{ interestList := make([]event_components.Interest, len(pulje.interests)) }}
 							{{
 								for i, interest := range pulje.interests {
 									interestList[i] = event_components.Interest{
+										EventID:       interest.EventID,
 										EventName:     interest.EventName,
 										InterestLevel: interest.InterestLevel,
 									}

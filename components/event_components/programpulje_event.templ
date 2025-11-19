@@ -1,8 +1,11 @@
 package event_components
 
-import "github.com/Regncon/conorganizer/components/icons"
+import (
+	"fmt"
+	"github.com/Regncon/conorganizer/components/icons"
+)
 
-templ ProgramPuljeEvent(imgurl string, title string, description string, eventType string, isGM bool) {
+templ ProgramPuljeEvent(eventID string, imgurl string, title string, description string, eventType string, isGM bool) {
 	<style>
 		.programpulje-event-container {
 			--linear-gradient-mask: linear-gradient(
@@ -92,7 +95,7 @@ templ ProgramPuljeEvent(imgurl string, title string, description string, eventTy
       }
     }
 	</style>
-	<div class="item-card profile-event-bar programpulje-event-container">
+	<a href={ templ.URL(fmt.Sprintf("/event/%s", eventID)) } class="item-card profile-event-bar programpulje-event-container">
 		if (isGM) {
 			<div class="programpulje-event-user-is-gamemaster" data-tippy-content="Du er arrangøren">
 				@icons.Icon(icons.Gamemaster, icons.Size16)
@@ -116,5 +119,5 @@ templ ProgramPuljeEvent(imgurl string, title string, description string, eventTy
 				class="programpulje-event-container-image"
 			/>
 		}
-	</div>
+	</a>
 }
