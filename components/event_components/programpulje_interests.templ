@@ -1,11 +1,13 @@
 package event_components
 
-import (
-	"github.com/Regncon/conorganizer/components/icons"
-	"github.com/Regncon/conorganizer/service/userProgram"
-)
+import "github.com/Regncon/conorganizer/components/icons"
 
-templ ProgramPuljeInterests(interests []userProgram.UserInterest) {
+type Interest struct {
+	EventName     string
+	InterestLevel string
+}
+
+templ ProgramPuljeInterests(interests []Interest) {
 	<style>
 		.pulje-interests-container {
       display: flex;

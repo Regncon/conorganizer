@@ -2,18 +2,34 @@ package profilecomponent
 
 import (
 	"database/sql"
+	"log/slog"
+	"sort"
+	"strconv"
+	"time"
+
 	"github.com/Regncon/conorganizer/components/event_components"
-	"github.com/Regncon/conorganizer/models"
+	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/requestctx"
-	"github.com/Regncon/conorganizer/service/userProgram"
-	"log/slog"
-	"strconv"
 )
 
+type UserEvent struct {
+	EventID     string
+	Title       string
+	Intro       string
+	Description string
+	ImageURL    string
+	Host        int
+	EventType   string
+	PuljeID     string
+	PuljeName   string
+	StartTime   time.Time
+	EndTime     time.Time
+}
+
 templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
-	{{ events, err := userProgram.GetAllEventsForUser(userInfo, db, logger) }}
-	{{ interests, interestErr := userProgram.GetAllInterestsForUser(userInfo, db, logger) }}
+	{{ events, err := GetAllEventsForUser(userInfo, db, logger) }}
+	{{ interests, interestErr := getAllInterestsForUser(userInfo, db, logger) }}
 	{{ _, _, _ = events, interests, err }}
 	{{ _, _ = interestErr, err }}
 	{{
@@ -21,8 +37,8 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 			displayName string
 			puljeID     string
 			time        string
-			event       models.UserEvent
-			interests   []userProgram.UserInterest
+			event       UserEvent
+			interests   []UserInterest
 		}{
 			{displayName: "Fredag kveld", puljeID: "FredagKveld", time: "(18:00 - 23:00)"},
 			{displayName: "Lørdag morgen", puljeID: "LordagMorgen", time: "(10:00 - 15:00)"},
@@ -43,6 +59,26 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 					puljes[i].interests = append(puljes[i].interests, interest)
 				}
 			}
+		}
+	}}
+	{{
+		interestOrder := map[string]int{
+			"Veldig interessert":  1,
+			"Middels interessert": 2,
+			"Litt interessert":    3,
+		}
+		for i := range puljes {
+			sort.Slice(puljes[i].interests, func(a, b int) bool {
+				orderA := interestOrder[puljes[i].interests[a].InterestLevel]
+				orderB := interestOrder[puljes[i].interests[b].InterestLevel]
+				if orderA == 0 {
+					orderA = 999
+				}
+				if orderB == 0 {
+					orderB = 999
+				}
+				return orderA < orderB
+			})
 		}
 	}}
 	<style>
@@ -87,7 +123,16 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 							{{ userId, _ := strconv.Atoi(userInfo.Id) }}
 							@event_components.ProgramPuljeEvent(imageCardUrl, pulje.event.Title, pulje.event.Intro, pulje.event.Host, pulje.event.EventType, userId)
 						} else if len(pulje.interests) > 0 {
-							@event_components.ProgramPuljeInterests(pulje.interests)
+							{{ interestList := make([]event_components.Interest, len(pulje.interests)) }}
+							{{
+								for i, interest := range pulje.interests {
+									interestList[i] = event_components.Interest{
+										EventName:     interest.EventName,
+										InterestLevel: interest.InterestLevel,
+									}
+								}
+							}}
+							@event_components.ProgramPuljeInterests(interestList)
 						} else {
 							@event_components.ProgramPuljeNoEvents()
 						}
@@ -96,4 +141,154 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 			</section>
 		}
 	</div>
+}
+
+type UserInterest struct {
+	EventID       string
+	EventName     string
+	InterestLevel string
+	PuljeID       string
+}
+
+func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]UserInterest, error) {
+	logger.Info("Fetching interests for user", "userId", userInfo.Id)
+
+	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db, logger)
+	if billettholderErr != nil {
+		logger.Error("Failed to get billettholdere", "error", billettholderErr)
+		return nil, billettholderErr
+	}
+
+	if len(billettholdere) == 0 {
+		logger.Info("User has no billettholdere")
+		return []UserInterest{}, nil
+	}
+
+	billettholderID := billettholdere[0].ID
+
+	query := `
+		SELECT
+			i.event_id,
+			e.title,
+			i.interest_level,
+			i.pulje_id
+		FROM interests i
+		JOIN events e ON i.event_id = e.id
+		WHERE i.billettholder_id = ?
+		ORDER BY i.pulje_id ASC
+	`
+
+	rows, queryErr := db.Query(query, billettholderID)
+	if queryErr != nil {
+		logger.Error("Failed to query interests", "error", queryErr)
+		return nil, queryErr
+	}
+	defer rows.Close()
+
+	var interests []UserInterest
+
+	for rows.Next() {
+		var interest UserInterest
+
+		scanErr := rows.Scan(
+			&interest.EventID,
+			&interest.EventName,
+			&interest.InterestLevel,
+			&interest.PuljeID,
+		)
+
+		if scanErr != nil {
+			logger.Error("Failed to scan interest", "error", scanErr)
+			continue
+		}
+
+		logger.Info("Interest scanned", "eventID", interest.EventID, "eventName", interest.EventName, "interestLevel", interest.InterestLevel, "puljeID", interest.PuljeID)
+		interests = append(interests, interest)
+	}
+
+	if rowsErr := rows.Err(); rowsErr != nil {
+		logger.Error("Error iterating rows", "error", rowsErr)
+		return nil, rowsErr
+	}
+
+	logger.Info("Found interests", "count", len(interests))
+
+	return interests, nil
+}
+
+func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]UserEvent, error) {
+
+	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db, logger)
+	if billettholderErr != nil {
+		logger.Error("Failed to get billettholdere", "error", billettholderErr)
+		return nil, billettholderErr
+	}
+
+	if len(billettholdere) == 0 {
+		logger.Info("User has no billettholdere")
+		return []UserEvent{}, nil
+	}
+
+	billettholderID := billettholdere[0].ID
+
+	query := `
+		SELECT
+			ep.event_id,
+			e.title,
+			COALESCE(e.intro, '') as intro,
+			COALESCE(e.description, '') as description,
+			COALESCE(e.image_url, '') as image_url,
+			COALESCE(e.host, 0) as host,
+			e.event_type,
+			ep.pulje_id,
+			p.name as pulje_name,
+			p.start_time,
+			p.end_time
+		FROM events_players ep
+		JOIN events e ON ep.event_id = e.id
+		JOIN puljer p ON ep.pulje_id = p.id
+		WHERE ep.billettholder_id = ?
+			AND ep.is_player = 1
+		ORDER BY p.start_time ASC
+	`
+
+	rows, queryErr := db.Query(query, billettholderID)
+	if queryErr != nil {
+		logger.Error("Failed to query events", "error", queryErr)
+		return nil, queryErr
+	}
+	defer rows.Close()
+
+	var events []UserEvent
+
+	for rows.Next() {
+		var event UserEvent
+
+		scanErr := rows.Scan(
+			&event.EventID,
+			&event.Title,
+			&event.Intro,
+			&event.Description,
+			&event.ImageURL,
+			&event.Host,
+			&event.EventType,
+			&event.PuljeID,
+			&event.PuljeName,
+			&event.StartTime,
+			&event.EndTime,
+		)
+
+		if scanErr != nil {
+			logger.Error("Failed to scan event", "error", scanErr)
+			continue
+		}
+		events = append(events, event)
+	}
+
+	if rowsErr := rows.Err(); rowsErr != nil {
+		logger.Error("Error iterating rows", "error", rowsErr)
+		return nil, rowsErr
+	}
+
+	return events, nil
 }
