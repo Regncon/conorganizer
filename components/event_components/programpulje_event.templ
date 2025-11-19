@@ -2,7 +2,7 @@ package event_components
 
 import "github.com/Regncon/conorganizer/components/icons"
 
-templ ProgramPuljeEvent(imgurl string, title string, description string, host int , eventType string, user int) {
+templ ProgramPuljeEvent(imgurl string, title string, description string, eventType string, isGM bool) {
 	<style>
 		.programpulje-event-container {
 			--linear-gradient-mask: linear-gradient(
@@ -92,24 +92,20 @@ templ ProgramPuljeEvent(imgurl string, title string, description string, host in
       }
     }
 	</style>
-	{{
-	isGamemaster := host == user
-	}}
 	<div class="item-card profile-event-bar programpulje-event-container">
-		if (isGamemaster) {
+		if (isGM) {
 			<div class="programpulje-event-user-is-gamemaster" data-tippy-content="Du er arrangøren">
 				@icons.Icon(icons.Gamemaster, icons.Size16)
 			</div>
 		}
 		<div class="programpulje-event-container-text">
 			<div class="programpulje-event-container-text-title">
-				<span class="text-event-name event-container-clip-text"> { title }</span>
+				<span class="text-event-name event-container-clip-text">{ title }</span>
 				<span class="text-event-type event-container-clip-text">{ eventType }</span>
 			</div>
 			<span class="event-container-clip-text">
-				{description}
+				{ description }
 			</span>
-
 		</div>
 		if imgurl != "" {
 			<img

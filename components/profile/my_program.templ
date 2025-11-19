@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"log/slog"
 	"sort"
-	"strconv"
 	"time"
 
 	"github.com/Regncon/conorganizer/components/event_components"
@@ -19,12 +18,13 @@ type UserEvent struct {
 	Intro       string
 	Description string
 	ImageURL    string
-	Host        int
+	Host        string
 	EventType   string
 	PuljeID     string
 	PuljeName   string
 	StartTime   time.Time
 	EndTime     time.Time
+	IsGM        bool
 }
 
 templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
@@ -120,8 +120,7 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 						</h3>
 						if pulje.event.EventID != "" {
 							{{ imageCardUrl := eventimage.GetEventImageUrl(pulje.event.EventID, "card", eventImageDir) }}
-							{{ userId, _ := strconv.Atoi(userInfo.Id) }}
-							@event_components.ProgramPuljeEvent(imageCardUrl, pulje.event.Title, pulje.event.Intro, pulje.event.Host, pulje.event.EventType, userId)
+							@event_components.ProgramPuljeEvent(imageCardUrl, pulje.event.Title, pulje.event.Intro, pulje.event.EventType, pulje.event.IsGM)
 						} else if len(pulje.interests) > 0 {
 							{{ interestList := make([]event_components.Interest, len(pulje.interests)) }}
 							{{
@@ -202,7 +201,6 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 			continue
 		}
 
-		logger.Info("Interest scanned", "eventID", interest.EventID, "eventName", interest.EventName, "interestLevel", interest.InterestLevel, "puljeID", interest.PuljeID)
 		interests = append(interests, interest)
 	}
 
@@ -231,6 +229,8 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 
 	billettholderID := billettholdere[0].ID
 
+	logger.Info("Fetching events for user", "billettholderID", billettholderID)
+
 	query := `
 		SELECT
 			ep.event_id,
@@ -243,16 +243,39 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 			ep.pulje_id,
 			p.name as pulje_name,
 			p.start_time,
-			p.end_time
+			p.end_time,
+			COALESCE(ep.is_gm, 0) as is_gm
 		FROM events_players ep
 		JOIN events e ON ep.event_id = e.id
 		JOIN puljer p ON ep.pulje_id = p.id
 		WHERE ep.billettholder_id = ?
 			AND ep.is_player = 1
+
+		UNION
+
+		SELECT
+			ep.event_id,
+			e.title,
+			COALESCE(e.intro, '') as intro,
+			COALESCE(e.description, '') as description,
+			COALESCE(e.image_url, '') as image_url,
+			COALESCE(e.host, 0) as host,
+			e.event_type,
+			ep.pulje_id,
+			p.name as pulje_name,
+			p.start_time,
+			p.end_time,
+			1 as is_gm
+		FROM users u
+		JOIN events e ON u.id = e.host
+		JOIN event_puljer ep ON e.id = ep.event_id
+		JOIN puljer p ON ep.pulje_id = p.id
+		WHERE u.user_id = ?
+
 		ORDER BY p.start_time ASC
 	`
 
-	rows, queryErr := db.Query(query, billettholderID)
+	rows, queryErr := db.Query(query, billettholderID, userInfo.Id)
 	if queryErr != nil {
 		logger.Error("Failed to query events", "error", queryErr)
 		return nil, queryErr
@@ -276,6 +299,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 			&event.PuljeName,
 			&event.StartTime,
 			&event.EndTime,
+			&event.IsGM,
 		)
 
 		if scanErr != nil {
