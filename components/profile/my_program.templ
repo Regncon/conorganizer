@@ -30,8 +30,6 @@ type UserEvent struct {
 templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
 	{{ events, err := GetAllEventsForUser(userInfo, db, logger) }}
 	{{ interests, interestErr := getAllInterestsForUser(userInfo, db, logger) }}
-	{{ _, _, _ = events, interests, err }}
-	{{ _, _ = interestErr, err }}
 	{{
 		puljes := []struct {
 			displayName string
@@ -107,10 +105,18 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 		<h2 class="surface-pane-title">
 			Mitt festivalprogram
 		</h2>
-		if (!userInfo.IsAdmin) {
+		if err != nil || interestErr != nil {
+			<div style="padding: var(--spacing-4x); color: var(--color-error); background-color: var(--bg-error-light); border-radius: var(--border-radius-2x);">
+				if err != nil {
+					<p>Feil ved henting av arrangementer: { err.Error() }</p>
+				}
+				if interestErr != nil {
+					<p>Feil ved henting av interesser: { interestErr.Error() }</p>
+				}
+			</div>
+		} else if !userInfo.IsAdmin {
 			<p style="font-style: italic;">kommer snart!</p>
-		}
-		if (userInfo.IsAdmin) {
+		} else if userInfo.IsAdmin {
 			<section class="program-pulje-list">
 				for _, pulje := range puljes {
 					<div class="program-pulje-container">
@@ -155,7 +161,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 
 	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db, logger)
 	if billettholderErr != nil {
-		logger.Error("Failed to get billettholdere", "error", billettholderErr)
+		logger.Error("Failed to get billettholdere", "billettholderErr", billettholderErr)
 		return nil, billettholderErr
 	}
 
@@ -180,7 +186,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 
 	rows, queryErr := db.Query(query, billettholderID)
 	if queryErr != nil {
-		logger.Error("Failed to query interests", "error", queryErr)
+		logger.Error("Failed to query interests", "queryErr", queryErr)
 		return nil, queryErr
 	}
 	defer rows.Close()
@@ -198,7 +204,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 		)
 
 		if scanErr != nil {
-			logger.Error("Failed to scan interest", "error", scanErr)
+			logger.Error("Failed to scan interest", "scanErr", scanErr)
 			continue
 		}
 
@@ -206,11 +212,9 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
-		logger.Error("Error iterating rows", "error", rowsErr)
+		logger.Error("Error iterating rows", "rowsErr", rowsErr)
 		return nil, rowsErr
 	}
-
-	logger.Info("Found interests", "count", len(interests))
 
 	return interests, nil
 }
@@ -219,18 +223,15 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 
 	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db, logger)
 	if billettholderErr != nil {
-		logger.Error("Failed to get billettholdere", "error", billettholderErr)
+		logger.Error("Failed to get billettholdere", "billettholderErr", billettholderErr)
 		return nil, billettholderErr
 	}
 
 	if len(billettholdere) == 0 {
-		logger.Info("User has no billettholdere")
 		return []UserEvent{}, nil
 	}
 
 	billettholderID := billettholdere[0].ID
-
-	logger.Info("Fetching events for user", "billettholderID", billettholderID)
 
 	query := `
 		SELECT
@@ -278,7 +279,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 
 	rows, queryErr := db.Query(query, billettholderID, userInfo.Id)
 	if queryErr != nil {
-		logger.Error("Failed to query events", "error", queryErr)
+		logger.Error("Failed to query events", "queryErr", queryErr)
 		return nil, queryErr
 	}
 	defer rows.Close()
@@ -304,14 +305,14 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 		)
 
 		if scanErr != nil {
-			logger.Error("Failed to scan event", "error", scanErr)
+			logger.Error("Failed to scan event", "scanErr", scanErr)
 			continue
 		}
 		events = append(events, event)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
-		logger.Error("Error iterating rows", "error", rowsErr)
+		logger.Error("Error iterating rows", "rowsErr", rowsErr)
 		return nil, rowsErr
 	}
 
