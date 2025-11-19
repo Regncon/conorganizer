@@ -1,8 +1,17 @@
 package event_components
 
-import "github.com/Regncon/conorganizer/components/icons"
+import (
+	"fmt"
+	"github.com/Regncon/conorganizer/components/icons"
+)
 
-templ ProgramPuljeInterests() {
+type Interest struct {
+	EventID       string
+	EventName     string
+	InterestLevel string
+}
+
+templ ProgramPuljeInterests(interests []Interest) {
 	<style>
 		.pulje-interests-container {
       display: flex;
@@ -19,7 +28,7 @@ templ ProgramPuljeInterests() {
     .pulje-interests-collapse {
       border-top: 1px solid var(--bg-item-border);
     }
-  
+
     .pulje-interests-summary {
       display: flex;
       align-items: center;
@@ -74,23 +83,17 @@ templ ProgramPuljeInterests() {
 		<details class="pulje-interests-collapse">
 			<summary class="pulje-interests-summary">
 				<span class="pulje-interests-summary-text">
-					Vis interesser (5)
+					Vis interesser ({ len(interests) })
 					@icons.Icon(icons.ChevronDown, icons.Size24)
 				</span>
 			</summary>
 			<div class="pulje-interests-collapse-content">
-				<div class="item-card profile-event-bar">
-					<span class="profile-event-bar-title">Her kommer veldig veldig veldig mye teskt som commer til å croppe</span>
-					<span class="pulje-interest-event-choice">Veldig interessert</span>
-				</div>
-				<div class="item-card profile-event-bar">
-					<span class="profile-event-bar-title">Her kommer veldig veldig veldig mye teskt som commer til å croppe</span>
-					<span class="pulje-interest-event-choice">Litt interessert</span>
-				</div>
-				<div class="item-card profile-event-bar">
-					<span class="profile-event-bar-title">Her kommer veldig veldig veldig mye teskt som commer til å croppe</span>
-					<span class="pulje-interest-event-choice">Interessert</span>
-				</div>
+				for _, interest := range interests {
+					<a href={ templ.URL(fmt.Sprintf("/event/%s", interest.EventID)) } class="item-card profile-event-bar">
+						<span class="profile-event-bar-title">{ interest.EventName }</span>
+						<span class="pulje-interest-event-choice">{ interest.InterestLevel }</span>
+					</a>
+				}
 			</div>
 		</details>
 	</div>
