@@ -10,7 +10,7 @@ tasks:
     # The `build:` tasks below are used together for "production" builds of your project
     build:templ:
         cmds:
-            - go run github.com/a-h/templ/cmd/templ@v0.3.943 generate -v
+            - go tool templ generate
 
     build:
         cmds:
@@ -22,19 +22,19 @@ tasks:
     # Use this task to debug your project with the delve debugger
     debug:
         cmds:
-            - go run github.com/go-delve/delve/cmd/dlv@v1.23.1 exec ./bin/main
+            - go tool dlv exec ./bin/main
         deps:
             - build
 
     # The `start:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
     start:templ:
         cmds:
-            - go run github.com/a-h/templ/cmd/templ@v0.3.943 generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
+            - go tool templ generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
 
     start:server:
         cmds:
             - |
-                go run github.com/air-verse/air@v1.62.0 \
+                go tool air \
                 --build.cmd "go build -tags dev -o tmp/bin/main" \
                 --build.bin "tmp/bin/main" \
                 --build.delay "20" \
@@ -45,8 +45,8 @@ tasks:
     start:reload:
         cmds:
             - |
-                go run github.com/air-verse/air@v1.62.0 \
-                --build.cmd "go run github.com/a-h/templ/cmd/templ@v0.3.943 generate --notify-proxy" \
+                go tool air \
+                --build.cmd "go tool templ generate --notify-proxy" \
                 --build.bin "true" \
                 --build.delay "100" \
                 --build.exclude_dir "" \
