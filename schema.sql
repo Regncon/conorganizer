@@ -1,4 +1,3 @@
-CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE users(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id TEXT NOT NULL UNIQUE,
@@ -19,16 +18,6 @@ CREATE TABLE events_types(event_type TEXT PRIMARY KEY);
 CREATE TABLE IF NOT EXISTS "age_groups"(age_group TEXT PRIMARY KEY);
 CREATE TABLE event_runtimes(runtime TEXT PRIMARY KEY);
 CREATE TABLE interest_levels(interest_level TEXT PRIMARY KEY);
-CREATE TABLE events_players(
-  event_id TEXT NOT NULL,
-  billettholder_id INTEGER NOT NULL,
-  interest_level TEXT NOT NULL,
-  inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY(event_id, billettholder_id),
-  FOREIGN KEY(event_id) REFERENCES events(id),
-  FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
-  FOREIGN KEY(interest_level) REFERENCES interest_levels(interest_level) ON UPDATE CASCADE
-);
 CREATE TABLE events_puljes_exclusions(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   pulje_name TEXT NOT NULL,
@@ -91,12 +80,6 @@ CREATE TABLE billettholder_emails(
   inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id)
 );
-CREATE TABLE puljer(
-  id TEXT NOT NULL PRIMARY KEY,
-  name TEXT NOT NULL,
-  start_time DATE NOT NULL,
-  end_time DATE NOT NULL
-);
 CREATE TABLE event_puljer(
   event_id TEXT NOT NULL,
   pulje_id TEXT NOT NULL,
@@ -118,4 +101,24 @@ CREATE TABLE interests(
   FOREIGN KEY(event_id) REFERENCES events(id),
   FOREIGN KEY(pulje_id) REFERENCES puljer(id),
   FOREIGN KEY(interest_level) REFERENCES interest_levels(interest_level) ON UPDATE CASCADE
+);
+CREATE TABLE puljer(
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  is_closed INTEGER NOT NULL DEFAULT FALSE,
+  is_published INTEGER NOT NULL DEFAULT FALSE,
+  start_time DATE NOT NULL,
+  end_time DATE NOT NULL
+);
+CREATE TABLE events_players(
+  event_id TEXT NOT NULL,
+  pulje_id TEXT NOT NULL,
+  billettholder_id INTEGER NOT NULL,
+  is_player BOOLEAN NOT NULL DEFAULT TRUE,
+  is_gm BOOLEAN NOT NULL DEFAULT FALSE,
+  inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(billettholder_id, event_id, pulje_id),
+  FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
+  FOREIGN KEY(event_id) REFERENCES events(id),
+  FOREIGN KEY(pulje_id) REFERENCES puljer(id)
 );

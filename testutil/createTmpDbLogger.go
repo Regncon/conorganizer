@@ -25,9 +25,8 @@ func CreateTemporaryDBAndLogger(name string, t *testing.T) (*sql.DB, *slog.Logge
 	}
 
 	testDBPath := filepath.Join(databaseTestsDir, uniqueName)
-	seedDBPath := filepath.Join(projectRoot, "database", "events.db")
 
-	db, err := service.InitTestDBFrom(seedDBPath, testDBPath)
+	db, err := service.InitTestDBFrom(testDBPath)
 	if err != nil {
 		t.Fatalf("failed to create test database: %v", err)
 	}
