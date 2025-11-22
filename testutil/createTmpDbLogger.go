@@ -17,14 +17,14 @@ func CreateTemporaryDBAndLogger(name string, t *testing.T) (*sql.DB, *slog.Logge
 
 	projectRoot := getProjectRoot(t)
 
-	uniqueDatabaseName := name + "_" + t.Name() + "_" + uuid.New().String() + ".db"
+	uniqueName := name + "_" + t.Name() + "_" + uuid.New().String() + ".db"
 
-	databaseTestsDirPath := filepath.Join(projectRoot, "database", "tests")
-	if err := os.MkdirAll(databaseTestsDirPath, 0o755); err != nil {
-		t.Fatalf("failed to create database tests directory: %v", err)
+	databaseTestsDir := filepath.Join(projectRoot, "database", "tests")
+	if err := os.MkdirAll(databaseTestsDir, 0o755); err != nil {
+		t.Fatalf("failed to create test db directory: %v", err)
 	}
 
-	testDBPath := filepath.Join(databaseTestsDirPath, uniqueDatabaseName)
+	testDBPath := filepath.Join(databaseTestsDir, uniqueName)
 	seedDBPath := filepath.Join(projectRoot, "database", "events.db")
 
 	db, err := service.InitTestDBFrom(seedDBPath, testDBPath)
@@ -43,23 +43,11 @@ func getProjectRoot(t *testing.T) string {
 
 	_, thisFilePath, _, ok := runtime.Caller(0)
 	if !ok {
-		t.Fatalf("unable to determine caller information")
+		t.Fatalf("unable to get caller info")
 	}
 
-	currentDir := filepath.Dir(thisFilePath)
+	testutilDir := filepath.Dir(thisFilePath)
+	projectRoot := filepath.Dir(testutilDir)
 
-	for {
-		goModPath := filepath.Join(currentDir, "go.mod")
-		_, err := os.Stat(goModPath)
-		if err == nil {
-			return currentDir
-		}
-
-		parentDir := filepath.Dir(currentDir)
-		if parentDir == currentDir {
-			t.Fatalf("could not find go.mod when walking up from %s", thisFilePath)
-		}
-
-		currentDir = parentDir
-	}
+	return projectRoot
 }
