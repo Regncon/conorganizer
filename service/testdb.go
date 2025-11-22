@@ -30,13 +30,6 @@ func InitTestDBFrom(testDBPath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("schema file %q is empty", schemaPath)
 	}
 
-	// Start clean
-	if _, err := os.Stat(testDBPath); err == nil {
-		if err := os.Remove(testDBPath); err != nil {
-			return nil, fmt.Errorf("remove existing test DB: %w", err)
-		}
-	}
-
 	db, err := sql.Open("sqlite", testDBPath)
 	if err != nil {
 		return nil, fmt.Errorf("open destination DB: %w", err)
@@ -74,8 +67,6 @@ func InitTestDBFrom(testDBPath string) (*sql.DB, error) {
 	return db, nil
 }
 
-// findProjectRoot walks upward from this file’s directory
-// until it finds go.mod. That directory is returned.
 func findProjectRoot() (string, error) {
 	currentDir, err := getThisFileDir()
 	if err != nil {
@@ -97,9 +88,7 @@ func findProjectRoot() (string, error) {
 	}
 }
 
-// getThisFileDir returns the directory containing this source file.
 func getThisFileDir() (string, error) {
-	// Use runtime.Caller to get the file path of this source file
 	_, thisFilePath, _, ok := runtime.Caller(0)
 	if !ok {
 		return "", fmt.Errorf("could not determine caller file path")
