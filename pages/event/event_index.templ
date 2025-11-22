@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"fmt"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/eventService"
@@ -45,9 +44,12 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 }
 
 templ eventIndex(eventId string, isAdmin bool, userInfo requestctx.UserRequestInfo, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
-	{{ url := fmt.Sprintf("/event/api/%s?%s", eventId, r.URL.RawQuery) }}
 	<div class="flex flex-col w-full min-h-screen bg-base-200">
-		<div id="event-container" data-on-load={ datastar.GetSSE(url) } class="event-container">
+		<div
+			id="event-container"
+			data-on-load={ datastar.GetSSE("/event/api/%s?%s", eventId, r.URL.RawQuery) }
+			class="event-container"
+		>
 			@event_page_content(eventId, isAdmin, logger, db, eventImageDir, r)
 		</div>
 	</div>
