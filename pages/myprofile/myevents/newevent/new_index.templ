@@ -1,9 +1,9 @@
 package newEvent
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
-	"context"
 
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -53,7 +53,7 @@ templ newEventIndex(eventId string, userId string, ctx context.Context, db *sql.
 	<div
 		id="formsubmission-container"
 		class="formsubmission-css-container"
-		data-on-load={ datastar.GetSSE("/my-events/api/new/" + eventId) }
+		data-on-load={ datastar.GetSSE("/my-events/api/new/%s", eventId) }
 	>
 		@NewEventFormPageContent(eventId, userId, ctx, db, eventImageDir, logger)
 	</div>
