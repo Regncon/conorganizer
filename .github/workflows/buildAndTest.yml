@@ -1,3 +1,5 @@
+name: Conorganizer_build_and_test #WARING!: Do not change the name of this workflow, as it is used in release scripts.
+
 on:
     push:
         branches: ["**"]

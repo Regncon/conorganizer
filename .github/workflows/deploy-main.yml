@@ -3,7 +3,7 @@ name: Deploy main to Hetzner
 on:
     workflow_run:
         workflows:
-            - Conorganizer build and test #WARNING!: Must match the name: in build.yml
+            - Conorganizer_build_and_test #WARING!: Must match the name: in build.yml
         types:
             - completed
 
