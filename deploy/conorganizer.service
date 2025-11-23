@@ -3,8 +3,8 @@ Description=Conorganizer service
 After=network.target
 
 [Service]
-User=conorganizer
-Group=conorganizer
+User=deploy
+Group=deploy
 WorkingDirectory=/opt/conorganizer
 
 ExecStart=/opt/conorganizer/conorganizer \
