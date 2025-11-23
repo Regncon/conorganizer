@@ -1,5 +1,5 @@
 name: Deploy main to Hetzner
-
+# Delete this line, trigger a deloy
 on:
     workflow_run:
         workflows:
