@@ -82,8 +82,9 @@ jobs:
                   username: ${{ secrets.HETZNER_USER }}
                   key: ${{ secrets.HETZNER_SSH_KEY }}
                   port: 22
-                  source: "deploy_bundle/*"
+                  source: "deploy_bundle"
                   target: "/opt/conorganizer"
+                  strip_components: 1
 
             - name: Install service and run deploy script on Hetzner
               uses: appleboy/ssh-action@v1.2.0
