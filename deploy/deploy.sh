@@ -19,30 +19,30 @@ fi
 # Install/overwrite systemd unit if present
 if [[ -f "$SERVICE_PATH" ]]; then
   echo "[deploy] Installing systemd unit: $SYSTEMD_UNIT"
-  sudo mv "$SERVICE_PATH" "$SYSTEMD_UNIT"
-  sudo chmod 644 "$SYSTEMD_UNIT"
+  mv "$SERVICE_PATH" "$SYSTEMD_UNIT"
+  chmod 644 "$SYSTEMD_UNIT"
 fi
 
 # Ensure ownership (optional)
-sudo chown deploy:deploy "$NEW_BIN" || true
+chown deploy:deploy "$NEW_BIN" || true
 
 # Backup current binary if it exists
 if [[ -f "$CUR_BIN" ]]; then
   echo "[deploy] Backing up current binary to $OLD_BIN"
-  sudo mv "$CUR_BIN" "$OLD_BIN"
+  mv "$CUR_BIN" "$OLD_BIN"
 fi
 
 echo "[deploy] Promoting new binary"
-sudo mv "$NEW_BIN" "$CUR_BIN"
-sudo chmod +x "$CUR_BIN"
-sudo chown deploy:deploy "$CUR_BIN" || true
+mv "$NEW_BIN" "$CUR_BIN"
+chmod +x "$CUR_BIN"
+chown deploy:deploy "$CUR_BIN" || true
 
 echo "[deploy] Restarting service: $SERVICE_NAME"
-sudo systemctl daemon-reload || true
-sudo systemctl restart "$SERVICE_NAME"
+systemctl daemon-reload || true
+systemctl restart "$SERVICE_NAME"
 
 echo "[deploy] Checking service status..."
-if sudo systemctl is-active --quiet "$SERVICE_NAME"; then
+if systemctl is-active --quiet "$SERVICE_NAME"; then
   echo "[deploy] Service is active."
 else
   echo "[deploy] ERROR: service failed to start" >&2
