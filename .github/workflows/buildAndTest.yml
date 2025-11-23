@@ -97,25 +97,8 @@ jobs:
                   script: |
                       set -euo pipefail
 
-                      APP_DIR="/opt/conorganizer"
-                      SERVICE_PATH="$APP_DIR/conorganizer.service"
-                      SYSTEMD_UNIT="/etc/systemd/system/conorganizer.service"
-
-                      if [ ! -f "$SERVICE_PATH" ]; then
-                        echo "Service file not found at $SERVICE_PATH" >&2
-                        exit 1
-                      fi
-
-                      # Install/overwrite systemd unit
-                      sudo mv "$SERVICE_PATH" "$SYSTEMD_UNIT"
-                      sudo chmod 644 "$SYSTEMD_UNIT"
-
-                      # Make sure deploy.sh is executable
+                      echo "Making deploy.sh executable"
                       sudo chmod +x "$APP_DIR/deploy.sh"
 
-                      # Enable service (idempotent)
-                      sudo systemctl daemon-reload
-                      sudo systemctl enable conorganizer.service || true
-
-                      # Run deploy script (handles binary promotion + restart)
+                      echo "Running deploy script"
                       sudo "$APP_DIR/deploy.sh"

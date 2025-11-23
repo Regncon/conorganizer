@@ -80,12 +80,12 @@ fi
 # Minimal sudo rights
 echo "[setup] Writing sudoers file: $SUDOERS_FILE"
 cat > "$SUDOERS_FILE" <<EOF
-# Minimal sudo rights for GitHub Actions deploy user '$DEPLOY_USER'
-$DEPLOY_USER ALL=(root) NOPASSWD: \
-    /bin/mv, \
-    /bin/chown, \
-    /bin/chmod, \
-    /bin/systemctl
+# Minimal sudo rights for GitHub Actions deploy user 'deploy'
+deploy ALL=(root) NOPASSWD: \
+    /usr/bin/mv, \
+    /usr/bin/chown, \
+    /usr/bin/chmod, \
+    /usr/bin/systemctl
 EOF
 
 chmod 440 "$SUDOERS_FILE"
