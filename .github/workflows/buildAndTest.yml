@@ -1,4 +1,4 @@
-name: Conorganizer_build_and_test #WARING!: Do not change the name of this workflow, as it is used in release scripts.
+name: Conorganizer build and test
 
 on:
     push:
@@ -26,7 +26,7 @@ jobs:
                   cache: true
 
             - name: Generate template files (templ via go.mod tool)
-              run: go tool templ generate
+              run: go tool templ.generate
 
             - name: Run tests
               run: go test ./...
@@ -37,5 +37,74 @@ jobs:
             - name: Upload binary artifact
               uses: actions/upload-artifact@v4
               with:
-                  name: conorganizer-${{ github.sha }}
+                  name: conorganizer
                   path: conorganizer
+
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repo (for deploy files)
+              uses: actions/checkout@v4
+
+            - name: Download build artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: conorganizer
+                  path: artifacts
+
+            - name: Prepare deploy bundle
+              run: |
+                  set -euo pipefail
+                  mkdir -p deploy_bundle
+                  # rename to conorganizer.new for the script
+                  cp artifacts/conorganizer deploy_bundle/conorganizer.new
+                  # deploy script and systemd unit from repo
+                  cp deploy/deploy.sh deploy_bundle/deploy.sh
+                  cp deploy/conorganizer.service deploy_bundle/conorganizer.service
+                  ls -l deploy_bundle
+
+            - name: Upload bundle to Hetzner
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USER }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  port: 22
+                  source: "deploy_bundle/*"
+                  target: "/opt/conorganizer"
+
+            - name: Install service and run deploy script on Hetzner
+              uses: appleboy/ssh-action@v1.2.0
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USER }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  port: 22
+                  script_stop: true
+                  script: |
+                      set -euo pipefail
+
+                      APP_DIR="/opt/conorganizer"
+                      SERVICE_PATH="$APP_DIR/conorganizer.service"
+                      SYSTEMD_UNIT="/etc/systemd/system/conorganizer.service"
+
+                      if [ ! -f "$SERVICE_PATH" ]; then
+                        echo "Service file not found at $SERVICE_PATH" >&2
+                        exit 1
+                      fi
+
+                      # Install/overwrite systemd unit
+                      sudo mv "$SERVICE_PATH" "$SYSTEMD_UNIT"
+                      sudo chmod 644 "$SYSTEMD_UNIT"
+
+                      # Make sure deploy.sh is executable
+                      sudo chmod +x "$APP_DIR/deploy.sh"
+
+                      # Enable service (idempotent)
+                      sudo systemctl daemon-reload
+                      sudo systemctl enable conorganizer.service || true
+
+                      # Run deploy script (handles binary promotion + restart)
+                      sudo "$APP_DIR/deploy.sh"
