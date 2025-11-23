@@ -96,6 +96,7 @@ jobs:
                   script_stop: true
                   script: |
                       set -euo pipefail
+                      APP_DIR="/opt/conorganizer"
 
                       echo "Making deploy.sh executable"
                       sudo chmod +x "$APP_DIR/deploy.sh"
