@@ -25,6 +25,9 @@ else
   echo "[setup] User '$DEPLOY_USER' already exists, skipping creation"
 fi
 
+echo "[setup] Ensuring '$DEPLOY_USER' has a usable shell (/bin/bash)"
+usermod -s /bin/bash "$DEPLOY_USER"
+
 echo "[setup] Ensuring $APP_DIR exists and is owned by $DEPLOY_USER"
 mkdir -p "$APP_DIR"
 chown -R "$DEPLOY_USER:$DEPLOY_GROUP" "$APP_DIR"
@@ -108,4 +111,3 @@ echo "   HETZNER_USER     = $DEPLOY_USER"
 echo "   HETZNER_SSH_KEY  = (private key above)"
 echo "   HETZNER_SSH_PORT = 22  (or your custom port)"
 echo "=============================================================="
-
