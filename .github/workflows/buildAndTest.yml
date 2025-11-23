@@ -26,7 +26,7 @@ jobs:
                   cache: true
 
             - name: Generate template files (templ via go.mod tool)
-              run: go tool templ.generate
+              run: go tool templ generate
 
             - name: Run tests
               run: go test ./...
