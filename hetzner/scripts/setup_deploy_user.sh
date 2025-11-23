@@ -85,7 +85,8 @@ deploy ALL=(root) NOPASSWD: \
     /usr/bin/mv, \
     /usr/bin/chown, \
     /usr/bin/chmod, \
-    /usr/bin/systemctl
+    /usr/bin/systemctl, \
+    /opt/conorganizer/deploy.sh
 EOF
 
 chmod 440 "$SUDOERS_FILE"
