@@ -65,6 +65,14 @@ jobs:
                   cp deploy/conorganizer.service deploy_bundle/conorganizer.service
                   ls -l deploy_bundle
 
+            - name: Check that HETZNER_SSH_KEY is set
+              run: |
+                  if [ -z "${{ secrets.HETZNER_SSH_KEY }}" ]; then
+                    echo "HETZNER_SSH_KEY is empty or not available in this context" >&2
+                    exit 1
+                  fi
+                  echo "HETZNER_SSH_KEY is set (value is masked in logs)."
+
             - name: Upload bundle to Hetzner
               uses: appleboy/scp-action@v0.1.7
               with:
