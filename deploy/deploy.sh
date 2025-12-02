@@ -4,11 +4,11 @@ set -euo pipefail
 # Base directory for all branch deployments
 ROOT_DIR="/opt/conorganizer"
 
-# Branch-safe name must be provided from CI, e.g. "main", "274-bytte-service-provider-basic-oppsett"
-SAFE_NAME="${SAFE_NAME:-}"
+# Branch-safe name is passed as first argument from CI, e.g. "main", "274-..."
+SAFE_NAME="${1:-}"
 
 if [[ -z "$SAFE_NAME" ]]; then
-  echo "[deploy] ERROR: SAFE_NAME is not set. Export SAFE_NAME before running this script." >&2
+  echo "[deploy] ERROR: SAFE_NAME (first argument) is not set." >&2
   exit 1
 fi
 

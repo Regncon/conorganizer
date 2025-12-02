@@ -139,9 +139,8 @@ jobs:
                       echo "Making deploy.sh executable"
                       sudo chmod +x "$APP_DIR/deploy.sh"
 
-                      echo "Running deploy script with SAFE_NAME=$SAFE_NAME"
-                      # Pass SAFE_NAME through the environment to the script
-                      sudo env SAFE_NAME="$SAFE_NAME" "$APP_DIR/deploy.sh"
+                      echo "Running deploy script with SAFE_NAME argument"
+                      sudo "$APP_DIR/deploy.sh" "$SAFE_NAME"
 
             - name: Echo deployment URL
               run: |
