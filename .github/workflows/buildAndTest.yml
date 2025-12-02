@@ -139,3 +139,21 @@ jobs:
 
                       echo "Running deploy script"
                       sudo "$APP_DIR/deploy.sh"
+
+            - name: Echo deployment URL
+              run: |
+                  BRANCH="${{ github.ref_name }}"
+                  SAFE_NAME=$(echo "$BRANCH" | tr '/_' '-' | tr '[:upper:]' '[:lower:]')
+
+                  if [ "$SAFE_NAME" = "main" ]; then
+                    HOST="main.lekeplassen.regncon.no"
+                  else
+                    HOST="${SAFE_NAME}.lekeplassen.regncon.no"
+                  fi
+
+                  echo ""
+                  echo "=========================================="
+                  echo "🚀 Deployment completed!"
+                  echo "🔗 URL: https://$HOST"
+                  echo "=========================================="
+                  echo ""
