@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Base directory for all branch deployments
-ROOT_DIR="/opt/conorganizer"
+# Directory of this script = branch app directory, e.g. /opt/conorganizer/main
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Data root on the mounted volume
 DATA_ROOT="/mnt/HC_Volume_103911252"
@@ -16,21 +16,21 @@ if [[ -z "$SAFE_NAME" ]]; then
   exit 1
 fi
 
-APP_DIR="$ROOT_DIR/$SAFE_NAME"
+APP_DIR="$SCRIPT_DIR"
 
 # Per-branch binary name: conorganizer-main, conorganizer-feature-x, etc.
 BIN_NAME="conorganizer-${SAFE_NAME}"
-NEW_BIN_SRC="$ROOT_DIR/conorganizer.new"
+NEW_BIN_SRC="$APP_DIR/conorganizer.new"
 CUR_BIN="$APP_DIR/$BIN_NAME"
 OLD_BIN="$APP_DIR/${BIN_NAME}.old"
 
 # Per-branch systemd service
 SERVICE_NAME="conorganizer-${SAFE_NAME}.service"
-SERVICE_SRC="$ROOT_DIR/$SERVICE_NAME"
+SERVICE_SRC="$APP_DIR/$SERVICE_NAME"
 SERVICE_UNIT="/etc/systemd/system/$SERVICE_NAME"
 
 # Per-branch Caddy site
-CADDY_SITE_SRC="$ROOT_DIR/caddy-${SAFE_NAME}.caddy"
+CADDY_SITE_SRC="$APP_DIR/caddy-${SAFE_NAME}.caddy"
 CADDY_SITE_DEST="/etc/caddy/sites-enabled/conorganizer-${SAFE_NAME}.caddy"
 
 # Per-branch data paths

@@ -119,7 +119,7 @@ jobs:
                   key: ${{ secrets.HETZNER_SSH_KEY }}
                   port: 22
                   source: "deploy_bundle"
-                  target: "/opt/conorganizer"
+                  target: "/opt/conorganizer/${{ steps.instance.outputs.safe_name }}"
                   strip_components: 1
 
             - name: Install service, Caddy site, and run deploy script on Hetzner
@@ -132,10 +132,12 @@ jobs:
                   script_stop: true
                   script: |
                       set -euo pipefail
-                      APP_DIR="/opt/conorganizer"
                       SAFE_NAME="${{ steps.instance.outputs.safe_name }}"
+                      APP_DIR="/opt/conorganizer/$SAFE_NAME"
 
                       echo "SAFE_NAME=$SAFE_NAME"
+                      echo "APP_DIR=$APP_DIR"
+
                       echo "Making deploy.sh executable"
                       sudo chmod +x "$APP_DIR/deploy.sh"
 
