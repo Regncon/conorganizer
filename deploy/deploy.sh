@@ -4,7 +4,7 @@ set -euo pipefail
 APP_DIR="/opt/conorganizer"
 
 # Runtime user/group for the service process
-SERVICE_USER="conorganizer"
+SERVICE_USER="deploy"
 SERVICE_GROUP="www-data"
 
 NEW_BIN="$APP_DIR/conorganizer.new"
