@@ -49,7 +49,7 @@ systemctl daemon-reload || true
 systemctl restart "$SERVICE_NAME"
 
 echo "[deploy] Checking service status..."
-if systemctl.is-active --quiet "$SERVICE_NAME"; then
+if systemctl is-active --quiet "$SERVICE_NAME"; then
   echo "[deploy] Service is active."
 else
   echo "[deploy] ERROR: service failed to start" >&2
