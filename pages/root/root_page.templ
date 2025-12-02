@@ -15,7 +15,7 @@ templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
 	})
-	<h1>Branch 1</h1>
+	<h1>Branch 2</h1>
 	@components.ProgramScrollnav()
 	@components.CallToAction()
 	@eventList(db, isAdmin, eventImageDir)
