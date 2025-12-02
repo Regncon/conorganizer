@@ -1,4 +1,4 @@
-name: Conorganizer build and test
+name: CI/CD Pipeline
 
 on:
     push:

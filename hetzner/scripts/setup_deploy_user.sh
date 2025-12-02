@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 #
-# Setup a restricted 'deploy' user for GitHub Actions deployments on Ubuntu.
-# Generates an SSH keypair automatically.
-#
-# Usage:
-#   sudo ./setup_deploy_user.sh
-#
+echo "Setup a restricted 'deploy' user for GitHub Actions deployments on Ubuntu."
+echo "Generates an SSH keypair automatically."
 
 set -euo pipefail
 
