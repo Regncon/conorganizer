@@ -122,7 +122,7 @@ jobs:
                   target: "/opt/conorganizer"
                   strip_components: 1
 
-            - name: Install service and run deploy script on Hetzner
+            - name: Install service, Caddy site, and run deploy script on Hetzner
               uses: appleboy/ssh-action@v1.2.0
               with:
                   host: ${{ secrets.HETZNER_HOST }}
@@ -133,12 +133,15 @@ jobs:
                   script: |
                       set -euo pipefail
                       APP_DIR="/opt/conorganizer"
+                      SAFE_NAME="${{ steps.instance.outputs.safe_name }}"
 
+                      echo "SAFE_NAME=$SAFE_NAME"
                       echo "Making deploy.sh executable"
                       sudo chmod +x "$APP_DIR/deploy.sh"
 
-                      echo "Running deploy script"
-                      sudo "$APP_DIR/deploy.sh"
+                      echo "Running deploy script with SAFE_NAME=$SAFE_NAME"
+                      # Pass SAFE_NAME through the environment to the script
+                      sudo env SAFE_NAME="$SAFE_NAME" "$APP_DIR/deploy.sh"
 
             - name: Echo deployment URL
               run: |
