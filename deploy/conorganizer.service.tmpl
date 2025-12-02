@@ -7,6 +7,7 @@ User=deploy
 Group=www-data
 WorkingDirectory=/opt/conorganizer/%SAFE_NAME%
 
+EnvironmentFile=/etc/conorganizer/env
 Environment=PORT=%PORT%
 
 ExecStart=/opt/conorganizer/%SAFE_NAME%/conorganizer-%SAFE_NAME% \
