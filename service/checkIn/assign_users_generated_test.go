@@ -18,7 +18,7 @@ func TestAssociateUserWithBillettholderGeneratedData(t *testing.T) {
 	uniqueDatabaseName := "test_associate_billettholders_generated_" + t.Name() + "_" + uuid.New().String() + ".db"
 	testDBPath := "../../database/tests/" + uniqueDatabaseName
 
-	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
+	db, err := service.InitTestDBFrom(testDBPath)
 	if err != nil {
 		t.Fatalf("failed to create test database: %v", err)
 	}

@@ -3,13 +3,19 @@ package eventimage
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
-func GetEventImageUrl(eventId string, kind string, eventImageDir *string) string {
-	imageFile := fmt.Sprintf("/%s/%s_%s.webp", *eventImageDir, eventId, kind)
-	if _, err := os.Stat(fmt.Sprintf(".%s", imageFile)); err == nil {
-		imageUrl := fmt.Sprintf("/event-images/%s_%s.webp", eventId, kind)
-		return imageUrl
+func GetEventImageUrl(eventID, kind string, eventImageDir *string) string {
+	if eventImageDir == nil || *eventImageDir == "" {
+		return fmt.Sprintf("/static/placeholder_%s.svg", kind)
+	}
+
+	filename := fmt.Sprintf("%s_%s.webp", eventID, kind)
+	imagePath := filepath.Join(*eventImageDir, filename)
+
+	if _, err := os.Stat(imagePath); err == nil {
+		return "/event-images/" + filename
 	}
 	return fmt.Sprintf("/static/placeholder_%s.svg", kind)
 }
