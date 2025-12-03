@@ -307,11 +307,11 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 						</button>
 						<button
 							class="btn btn--outline button-size"
-							if isAssigned && interest.IsGamemaster {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
-							}
 							if isAssigned && !interest.IsGamemaster {
 								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
+							}
+							if isAssigned && interest.IsGamemaster {
+								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
 							}
 							if !isAssigned {
 								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
