@@ -268,38 +268,42 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 				</div>
 				<div class="end">
 					<div class="pickers">
-						<button
-							class="btn btn--outline button-size"
-							if isAssigned {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
-							}
-							if !isAssigned {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
-							}
-						>
-							if isAssigned {
-								Fjern som spiller
-							}
-							if !isAssigned {
-								Tildel som spiller
-							}
-						</button>
-						<button
-							class="btn btn--outline button-size"
-							if isAssigned {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
-							}
-							if !isAssigned {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
-							}
-						>
-							if isAssigned {
-								Fjern som GM
-							}
-							if !isAssigned {
-								Tildel som GM
-							}
-						</button>
+						if !isAssigned|| !interest.IsGamemaster {
+							<button
+								class="btn btn--outline button-size"
+								if isAssigned {
+									data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
+								}
+								if !isAssigned {
+									data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
+								}
+							>
+								if isAssigned {
+									Fjern som spiller
+								}
+								if !isAssigned {
+									Tildel som spiller
+								}
+							</button>
+						}
+						if !isAssigned || interest.IsGamemaster {
+							<button
+								class="btn btn--outline button-size"
+								if isAssigned {
+									data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
+								}
+								if !isAssigned {
+									data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
+								}
+							>
+								if isAssigned {
+									Fjern som GM
+								}
+								if !isAssigned {
+									Tildel som GM
+								}
+							</button>
+						}
 					</div>
 				</div>
 			</section>
