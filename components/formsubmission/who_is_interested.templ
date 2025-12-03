@@ -212,7 +212,14 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
                 place-items: center;
                 text-align: center;
                 gap: 1ch;
-
+                .is-gamemaster {
+                    display: flex;
+                    place-content: center;
+                    place-items: center;
+                    .is-gamemaster-icon {
+                        color: var(--color-accent-cyan);
+                    }
+                }
                 .first-choice {
                     color: var(--color-error);
                     font-weight: 700;
@@ -220,6 +227,11 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
             }
             .end {
                 place-self: end;
+
+                .btn--outline:hover {
+                    color: var(--color-primary);
+                    border-color: var(--color-primary);
+                }
 
                 .pickers {
                     place-self: center;
@@ -248,11 +260,11 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 						<p class="first-choice">Fått førstevalg</p>
 					}
 					if interest.IsGamemaster {
-						<p>
-							<span class="programpulje-event-user-is-gamemaster" data-tippy-content={ fmt.Sprintf("%s %s er spilleder", interest.FirstName, interest.LastName) }>
-								@icons.Icon(icons.Gamemaster, icons.Size16)
+						<p class="is-gamemaster">
+							<span class="is-gamemaster-icon" data-tippy-content={ fmt.Sprintf("%s %s er spilleder", interest.FirstName, interest.LastName) }>
+								@icons.Icon(icons.Gamemaster, icons.Size24)
 							</span>
-							Er spilleder
+							Spilleder
 						</p>
 					}
 					<div style="display: flex; align-items: center; gap:0.5rem; ">
