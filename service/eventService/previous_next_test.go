@@ -102,7 +102,7 @@ func mustInitTestDB(t *testing.T) *sql.DB {
 	uniqueDatabaseName := "test_prevnext_" + t.Name() + "_" + uuid.New().String() + ".db"
 	testDBPath := "../../database/" + uniqueDatabaseName
 
-	db, err := service.InitTestDBFrom("../../database/events.db", testDBPath)
+	db, err := service.InitTestDBFrom(testDBPath)
 	if err != nil {
 		t.Fatalf("failed to create test database: %v", err)
 	}
