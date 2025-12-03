@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 
+	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
@@ -16,6 +17,7 @@ type InterestWithHolder struct {
 	PuljeId         string `json:"pulje_id"`
 	InterestLevel   string `json:"interest_level"`
 	FirstChoice     bool   `json:"first_choice"`
+	IsGamemaster    bool   `json:"is_gm"`
 
 	FirstName  string `json:"first_name"`
 	LastName   string `json:"last_name"`
@@ -54,6 +56,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 i.pulje_id,
                 i.interest_level,
                 ` + queryFirstChoice + `,
+                COALESCE(ep.is_gm, 0) AS is_gm,
                 b.first_name,
                 b.last_name,
                 b.ticket_type,
@@ -88,6 +91,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&interest.PuljeId,
 			&interest.InterestLevel,
 			&interest.FirstChoice,
+			&interest.IsGamemaster,
 			&interest.FirstName,
 			&interest.LastName,
 			&interest.TicketType,
@@ -114,6 +118,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 ep.pulje_id,
                 i.interest_level,
                 ` + queryFirstChoice + `,
+                cOALESCE(ep.is_gm, 0) AS is_gm,
                 b.first_name,
                 b.last_name,
                 b.ticket_type,
@@ -128,7 +133,8 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 ep.event_id = ?
                 AND (ep.is_player = 1 OR ep.is_gm = 1)
             ORDER BY
-                ep.billettholder_id
+                ep.is_gm DESC,
+                ep.inserted_time DESC
     `
 	rows, queryErr := db.Query(query, eventId)
 	if queryErr != nil {
@@ -146,6 +152,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&assignment.PuljeId,
 			&assignment.InterestLevel,
 			&assignment.FirstChoice,
+			&assignment.IsGamemaster,
 			&assignment.FirstName,
 			&assignment.LastName,
 			&assignment.TicketType,
@@ -238,6 +245,14 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 					// todo: incomplete first choice logic
 					if interest.FirstChoice {
 						<p class="first-choice">Fått førstevalg</p>
+					}
+					if interest.IsGamemaster {
+						<p>
+							<span class="programpulje-event-user-is-gamemaster" data-tippy-content={ fmt.Sprintf("%s %s er spilleder", interest.FirstName, interest.LastName) }>
+								@icons.Icon(icons.Gamemaster, icons.Size16)
+							</span>
+							Er spilleder
+						</p>
 					}
 					<div style="display: flex; align-items: center; gap:0.5rem; ">
 						if interest.IsOver18 {
