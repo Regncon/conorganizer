@@ -192,7 +192,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 	}
 	defer rows.Close()
 
-	var interests []UserInterest
+	interests := make([]UserInterest, 0)
 
 	for rows.Next() {
 		var interest UserInterest
@@ -285,7 +285,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 	}
 	defer rows.Close()
 
-	var events []UserEvent
+	events := make([]UserEvent, 0)
 
 	for rows.Next() {
 		var event UserEvent
