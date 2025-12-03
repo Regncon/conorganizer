@@ -1,50 +1,163 @@
-name: Conoginizer build test
+name: CI/CD Pipeline
 
 on:
-  # Runs on pushes targeting the default branch
-  push:
-    branches: ["main"]
+    push:
+        branches: ["**"]
 
-  # Runs on any open or reopened pull request
-  pull_request:
-    branches: ["main"]
-    types: [opened, reopened, synchronize]
+    pull_request:
+        branches: ["**"]
+        types: [opened, reopened, synchronize]
 
 permissions:
-  contents: read
+    contents: read
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    build:
+        runs-on: ubuntu-latest
 
-        # Caching is enabled by default
-        # https://docs.github.com/en/actions/use-cases-and-examples/building-and-testing/building-and-testing-go#caching-dependencies
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-            go-version: '1.24'
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
 
+            - name: Set up Go
+              uses: actions/setup-go@v5
+              with:
+                  go-version: "1.25"
+                  cache: true
 
-      - name: Install templ
-        run: go install github.com/a-h/templ/cmd/templ@latest
+            - name: Generate template files (templ via go.mod tool)
+              run: go tool templ generate
 
-      - name: Generate template files
-        run: templ generate
+            - name: Run tests
+              run: go test ./...
 
-      - name: Install dependencies
-        run: go get .
+            - name: Build binary
+              run: go build -o conorganizer
 
-      - name: Generate binary
-        run: go build -v ./...
+            - name: Upload binary artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: conorganizer
+                  path: conorganizer
 
-      - name: Test binary
-        run: go test
+    deploy:
+        needs: build
+        runs-on: ubuntu-latest
+        environment:
+            name: Production
 
-      - name: Upload results
-        uses: actions/upload-artifact@v4
-        with:
-          name: Go-results
-          path: TestResults.json
+        env:
+            BRANCH_NAME: ${{ github.ref_name }}
+
+        steps:
+            - name: Compute instance info
+              id: instance
+              run: |
+                  set -euo pipefail
+                  BRANCH="${BRANCH_NAME}"
+
+                  SAFE_NAME=$(echo "$BRANCH" | tr '/_' '-' | tr '[:upper:]' '[:lower:]')
+
+                  BASE_PORT=18000
+                  HASH=$(printf '%s' "$SAFE_NAME" | cksum | awk '{print $1}')
+                  PORT=$((BASE_PORT + HASH % 1000))
+
+                  HOST="${SAFE_NAME}.lekeplassen.regncon.no"
+
+                  echo "safe_name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
+                  echo "port=$PORT" >> "$GITHUB_OUTPUT"
+                  echo "host=$HOST" >> "$GITHUB_OUTPUT"
+
+            - name: Checkout repo (for deploy files)
+              uses: actions/checkout@v4
+
+            - name: Download build artifact
+              uses: actions/download-artifact@v4
+              with:
+                  name: conorganizer
+                  path: artifacts
+
+            - name: Prepare deploy bundle
+              run: |
+                  set -euo pipefail
+                  SAFE_NAME="${{ steps.instance.outputs.safe_name }}"
+                  PORT="${{ steps.instance.outputs.port }}"
+
+                  mkdir -p deploy_bundle
+
+                  cp artifacts/conorganizer deploy_bundle/conorganizer.new
+
+                  sed \
+                    -e "s/%SAFE_NAME%/$SAFE_NAME/g" \
+                    -e "s/%PORT%/$PORT/g" \
+                    deploy/conorganizer.service.tmpl \
+                    > deploy_bundle/conorganizer-${SAFE_NAME}.service
+
+                  cp deploy/deploy.sh deploy_bundle/deploy.sh
+
+                  sed \
+                    -e "s/%HOST%/${{ steps.instance.outputs.host }}/g" \
+                    -e "s/%PORT%/$PORT/g" \
+                    deploy/caddy-site.tmpl \
+                    > deploy_bundle/caddy-${SAFE_NAME}.caddy
+
+                  ls -l deploy_bundle
+
+            - name: Check that HETZNER_SSH_KEY is set
+              run: |
+                  if [ -z "${{ secrets.HETZNER_SSH_KEY }}" ]; then
+                    echo "HETZNER_SSH_KEY is empty or not available in this context" >&2
+                    exit 1
+                  fi
+                  echo "HETZNER_SSH_KEY is set (value is masked in logs)."
+
+            - name: Upload bundle to Hetzner
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USER }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  port: 22
+                  source: "deploy_bundle"
+                  target: "/opt/conorganizer/${{ steps.instance.outputs.safe_name }}"
+                  strip_components: 1
+
+            - name: Install service, Caddy site, and run deploy script on Hetzner
+              uses: appleboy/ssh-action@v1.2.0
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USER }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  port: 22
+                  script_stop: true
+                  script: |
+                      set -euo pipefail
+                      SAFE_NAME="${{ steps.instance.outputs.safe_name }}"
+                      APP_DIR="/opt/conorganizer/$SAFE_NAME"
+
+                      echo "SAFE_NAME=$SAFE_NAME"
+                      echo "APP_DIR=$APP_DIR"
+
+                      echo "Making deploy.sh executable"
+                      sudo chmod +x "$APP_DIR/deploy.sh"
+
+                      echo "Running deploy script with SAFE_NAME argument"
+                      sudo "$APP_DIR/deploy.sh" "$SAFE_NAME"
+
+            - name: Echo deployment URL
+              run: |
+                  BRANCH="${{ github.ref_name }}"
+                  SAFE_NAME=$(echo "$BRANCH" | tr '/_' '-' | tr '[:upper:]' '[:lower:]')
+
+                  if [ "$SAFE_NAME" = "main" ]; then
+                    HOST="main.lekeplassen.regncon.no"
+                  else
+                    HOST="${SAFE_NAME}.lekeplassen.regncon.no"
+                  fi
+
+                  echo ""
+                  echo "=========================================="
+                  echo "🚀 Deployment completed!"
+                  echo "🔗 URL: https://$HOST"
+                  echo "=========================================="
+                  echo ""

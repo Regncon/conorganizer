@@ -1,104 +1,105 @@
 version: "3"
 
 dotenv:
-  - '.env'
+    - ".env"
 
 env:
-  STATIC_DIR: "static"
+    STATIC_DIR: "static"
 
 tasks:
-  # The `build:` tasks below are used together for "production" builds of your project
-  build:templ:
-    cmds:
-      - go run github.com/a-h/templ/cmd/templ@v0.3.943 generate -v
+    # The `build:` tasks below are used together for "production" builds of your project
+    build:templ:
+        cmds:
+            - go tool templ generate
 
-  build:
-    cmds:
-      - go build -o bin/main .
-    deps:
-      - build:templ
-    parallel: true
+    build:
+        cmds:
+            - go build -o bin/main .
+        deps:
+            - build:templ
+        #parallel: true
 
-  # Use this task to debug your project with the delve debugger
-  debug:
-    cmds:
-      - go run github.com/go-delve/delve/cmd/dlv@v1.23.1 exec ./bin/main
-    deps:
-      - build
+    # Use this task to debug your project with the delve debugger
+    debug:
+        cmds:
+            - go tool dlv exec ./bin/main
+        deps:
+            - build
 
-  # The `start:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
-  start:templ:
-    cmds:
-      - go run github.com/a-h/templ/cmd/templ@v0.3.943 generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
+    # The `start:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
+    start:templ:
+        cmds:
+            - go tool templ generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
 
-  start:server:
-    cmds:
-      - |
-        go run github.com/air-verse/air@v1.62.0 \
-        --build.cmd "go build -tags dev -o tmp/bin/main" \
-        --build.bin "tmp/bin/main" \
-        --build.delay "20" \
-        --build.include_ext "go" \
-        --build.stop_on_error "false" \
-        --misc.clean_on_exit true
+    start:server:
+        cmds:
+            - |
+                go tool air \
+                --build.cmd "go build -tags dev -o tmp/bin/main" \
+                --build.bin "tmp/bin/main" \
+                --build.delay "20" \
+                --build.include_ext "go" \
+                --build.stop_on_error "false" \
+                --misc.clean_on_exit true
 
-  start:reload:
-    cmds:
-      - |
-        go run github.com/air-verse/air@v1.62.0 \
-        --build.cmd "go run github.com/a-h/templ/cmd/templ@v0.3.943 generate --notify-proxy" \
-        --build.bin "true" \
-        --build.delay "100" \
-        --build.exclude_dir "" \
-        --build.include_dir "$STATIC_DIR" \
-        --build.include_ext "js,css,env"
+    start:reload:
+        cmds:
+            - |
+                go tool air \
+                --build.cmd "go tool templ generate --notify-proxy" \
+                --build.bin "true" \
+                --build.delay "100" \
+                --build.exclude_dir "" \
+                --build.include_dir "$STATIC_DIR" \
+                --build.include_ext "js,css,env"
 
-  start:
-    deps:
-      - start:templ
-      - start:reload
-      - start:server
+    start:
+        deps:
+            - start:templ
+            - start:reload
+            - start:server
 
-  # Start development server
-  dev:
-    cmds:
-      - air -c .air.toml
+    # Start development server
+    dev:
+        cmds:
+            - air -c .air.toml
 
-  # Run current build
-  run:
-    cmds:
-      - ./bin/main
-    deps:
-      - build
+    # Run current build
+    run:
+        cmds:
+            - ./bin/main
+        deps:
+            - build
 
-  # Run all tests in all subdirectories
-  test:
-    cmds:
-      - go test ./...
+    # Run all tests in all subdirectories
+    test:
+        cmds:
+            - sqlite3 database/events.db ".schema --indent --nosys" > schema.sql
+            - go test ./...
 
-  # Download a local copy of latest S3 database
-  # Requires updated .env file, check discord!
-  download:
-    #vars:
-      #Filepaths
-      #FLY_CONFIG_PATH: "./backup-service/fly.toml"
-      #LOCAL_DB_PATH: "./database/events.db"
-      #NEWEST_DB_PATH:
-      #  sh: flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp find /data/regncon/backup/hourly/  | sort | tail -n1
-    #status:
-    #  - test "{{.NEWEST_DB_PATH}}" = ""
-    cmds:
-    #  - '{{ if .NEWEST_DB_PATH }} rm -f {{ .LOCAL_DB_PATH }} {{ .LOCAL_DB_PATH }}-shm {{ .LOCAL_DB_PATH }}-wal {{ end }}'
-      #- flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp get {{ .NEWEST_DB_PATH }} {{ .LOCAL_DB_PATH }}
-      # Create local-event-images directory if it doesn't exist
-      - mkdir -p ./local-event-images
-      ## Download all event images from https://program.regncon.no/event-images/ and save them to ./local-event-images
-      - wget -r -np -nH -N -R html,tmp --cut-dirs=1 -P ./local-event-images https://program.regncon.no/event-images/
+    # Download a local copy of latest S3 database
+    # Requires updated .env file, check discord!
+    download:
+        vars:
+            #Filepaths
+            FLY_CONFIG_PATH: "./backup-service/fly.toml"
+            LOCAL_DB_PATH: "./database/events.db"
+            NEWEST_DB_PATH:
+                sh: flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp find /data/regncon/backup/hourly/  | sort | tail -n1
+        status:
+            - test "{{.NEWEST_DB_PATH}}" = ""
+        cmds:
+            - "{{ if .NEWEST_DB_PATH }} rm -f {{ .LOCAL_DB_PATH }} {{ .LOCAL_DB_PATH }}-shm {{ .LOCAL_DB_PATH }}-wal {{ end }}"
+            - flyctl -c {{ .FLY_CONFIG_PATH }} ssh sftp get {{ .NEWEST_DB_PATH }} {{ .LOCAL_DB_PATH }}
+            # Create local-event-images directory if it doesn't exist
+            - mkdir -p ./local-event-images
+            ## Download all event images from https://program.regncon.no/event-images/ and save them to ./local-event-images
+            - wget -r -np -nH -N -R html,tmp --cut-dirs=1 -P ./local-event-images https://program.regncon.no/event-images/
 
-  # Kill all running air, templ and taks processes
-  kill:
-    cmds:
-      - killall -q main
-      - killall -q templ
-      - killall -q air
-      - killall -q task
+    # Kill all running air, templ and taks processes
+    kill:
+        cmds:
+            - killall -q main
+            - killall -q templ
+            - killall -q air
+            - killall -q task

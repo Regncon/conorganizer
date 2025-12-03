@@ -1,0 +1,21 @@
+[Unit]
+Description=Conorganizer (%SAFE_NAME%)
+After=network.target
+
+[Service]
+User=deploy
+Group=www-data
+WorkingDirectory=/opt/conorganizer/%SAFE_NAME%
+
+EnvironmentFile=/etc/conorganizer/env
+Environment=PORT=%PORT%
+
+ExecStart=/opt/conorganizer/%SAFE_NAME%/conorganizer-%SAFE_NAME% \
+  -dbp /mnt/HC_Volume_103911252/%SAFE_NAME%/database/events.db \
+  -image-path /mnt/HC_Volume_103911252/%SAFE_NAME%/event-images
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

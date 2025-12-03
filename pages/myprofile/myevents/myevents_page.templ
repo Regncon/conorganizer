@@ -14,7 +14,7 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.
 
 	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
 	if userDbIdErr != nil {
-		logger.Error("userDbIdErr", userDbIdErr)
+		logger.Error("failed to get user id from database", "error", userDbIdErr)
 		return events
 	}
 

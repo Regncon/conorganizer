@@ -2,6 +2,8 @@
 # ------------------------------------------------------------------
 data/*
 database/*
+!database/.gitkeep
+
 local-event-images/*
 backup-service/regncon
 *_templ.go

@@ -2,156 +2,97 @@ package service
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	_ "modernc.org/sqlite"
 )
 
-// InitTestDBFrom copies the schema (no data) from templateDBPath into a new DB at testDBPath.
-// It recreates tables, indexes, triggers and views, and copies PRAGMA user_version.
-// testDBPath will be overwritten if it already exists.
-func InitTestDBFrom(templateDBPath, testDBPath string) (*sql.DB, error) {
-	if templateDBPath == "" {
-		return nil, errors.New("templateDBPath is required")
-	}
+func InitTestDBFrom(testDBPath string) (*sql.DB, error) {
 	if testDBPath == "" {
-		return nil, errors.New("testDBPath is required")
-	}
-	if _, err := os.Stat(templateDBPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("template database not found: %s", templateDBPath)
+		return nil, fmt.Errorf("testDBPath is required")
 	}
 
-	// Ensure destination dir exists
-	if dir := filepath.Dir(testDBPath); dir != "." && dir != "" {
-		if _, err := os.Stat(dir); os.IsNotExist(err) {
-			return nil, fmt.Errorf("destination directory does not exist: %s", dir)
-		}
-	}
-
-	// Start clean
-	if _, err := os.Stat(testDBPath); err == nil {
-		_ = os.Remove(testDBPath)
-	}
-
-	src, err := sql.Open("sqlite", templateDBPath)
+	rootDir, err := findProjectRoot()
 	if err != nil {
-		return nil, fmt.Errorf("open template: %w", err)
+		return nil, err
 	}
-	defer src.Close()
 
-	// Pull schema objects from the template DB
-	var tables, views, indexes, triggers []string
-	rows, err := src.Query(`
-		SELECT type, sql
-		FROM sqlite_master
-		WHERE sql IS NOT NULL
-		  AND name NOT LIKE 'sqlite_%'
-		ORDER BY
-		  CASE type
-		    WHEN 'table'  THEN 1
-		    WHEN 'view'   THEN 2
-		    WHEN 'index'  THEN 3
-		    WHEN 'trigger'THEN 4
-		    ELSE 5
-		  END, name`)
+	schemaPath := filepath.Join(rootDir, "schema.sql")
+
+	schemaBytes, err := os.ReadFile(schemaPath)
 	if err != nil {
-		return nil, fmt.Errorf("read schema from template: %w", err)
+		return nil, fmt.Errorf("read schema file %q: %w", schemaPath, err)
 	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var typ, stmt string
-		if err := rows.Scan(&typ, &stmt); err != nil {
-			return nil, fmt.Errorf("scan schema row: %w", err)
-		}
-		switch typ {
-		case "table":
-			tables = append(tables, stmt)
-		case "view":
-			views = append(views, stmt)
-		case "index":
-			indexes = append(indexes, stmt)
-		case "trigger":
-			triggers = append(triggers, stmt)
-		}
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate schema: %w", err)
+	if len(schemaBytes) == 0 {
+		return nil, fmt.Errorf("schema file %q is empty", schemaPath)
 	}
 
-	// Copy PRAGMA user_version (optional, handy)
-	var userVersion int
-	_ = src.QueryRow(`PRAGMA user_version;`).Scan(&userVersion)
-
-	dst, err := sql.Open("sqlite", testDBPath)
+	db, err := sql.Open("sqlite", testDBPath)
 	if err != nil {
-		return nil, fmt.Errorf("open destination: %w", err)
+		return nil, fmt.Errorf("open destination DB: %w", err)
 	}
 
-	tx, err := dst.Begin()
+	tx, err := db.Begin()
 	if err != nil {
-		dst.Close()
-		return nil, fmt.Errorf("begin tx: %w", err)
+		db.Close()
+		return nil, fmt.Errorf("begin transaction: %w", err)
 	}
-	// Safer while creating objects in arbitrary order
+
 	if _, err := tx.Exec(`PRAGMA foreign_keys=OFF;`); err != nil {
 		tx.Rollback()
-		dst.Close()
+		db.Close()
 		return nil, fmt.Errorf("disable foreign_keys: %w", err)
 	}
 
-	execMany := func(stmts []string) error {
-		for _, s := range stmts {
-			if _, err := tx.Exec(s); err != nil {
-				return fmt.Errorf("exec schema statement failed: %w\nSQL: %s", err, s)
-			}
-		}
-		return nil
+	if _, err := tx.Exec(string(schemaBytes)); err != nil {
+		tx.Rollback()
+		db.Close()
+		return nil, fmt.Errorf("execute schema.sql: %w", err)
 	}
 
-	if err := execMany(tables); err != nil {
-		tx.Rollback()
-		dst.Close()
-		return nil, err
-	}
-	if err := execMany(views); err != nil {
-		tx.Rollback()
-		dst.Close()
-		return nil, err
-	}
-	if err := execMany(indexes); err != nil {
-		tx.Rollback()
-		dst.Close()
-		return nil, err
-	}
-	if err := execMany(triggers); err != nil {
-		tx.Rollback()
-		dst.Close()
-		return nil, err
-	}
-
-	if _, err := tx.Exec(fmt.Sprintf(`PRAGMA user_version=%d;`, userVersion)); err != nil {
-		tx.Rollback()
-		dst.Close()
-		return nil, fmt.Errorf("set user_version: %w", err)
-	}
 	if _, err := tx.Exec(`PRAGMA foreign_keys=ON;`); err != nil {
 		tx.Rollback()
-		dst.Close()
+		db.Close()
 		return nil, fmt.Errorf("enable foreign_keys: %w", err)
 	}
+
 	if err := tx.Commit(); err != nil {
-		dst.Close()
-		return nil, fmt.Errorf("commit schema tx: %w", err)
+		db.Close()
+		return nil, fmt.Errorf("commit transaction: %w", err)
 	}
 
-	if err := dst.Ping(); err != nil {
-		dst.Close()
-		return nil, fmt.Errorf("ping new test DB: %w", err)
+	return db, nil
+}
+
+func findProjectRoot() (string, error) {
+	currentDir, err := getThisFileDir()
+	if err != nil {
+		return "", err
 	}
 
-	return dst, nil
+	for {
+		goMod := filepath.Join(currentDir, "go.mod")
+		if _, err := os.Stat(goMod); err == nil {
+			return currentDir, nil
+		}
+
+		parent := filepath.Dir(currentDir)
+		if parent == currentDir {
+			return "", fmt.Errorf("could not find go.mod when searching from %s", currentDir)
+		}
+
+		currentDir = parent
+	}
+}
+
+func getThisFileDir() (string, error) {
+	_, thisFilePath, _, ok := runtime.Caller(0)
+	if !ok {
+		return "", fmt.Errorf("could not determine caller file path")
+	}
+
+	return filepath.Dir(thisFilePath), nil
 }

@@ -34,7 +34,7 @@ templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, eventImageD
 	<div
 		id="edit-form-container"
 		class="formsubmission-css-container"
-		data-on-load={ datastar.GetSSE("/admin/approval/edit/api/" + eventId) }
+		data-on-load={ datastar.GetSSE("/admin/approval/edit/api/%s", eventId) }
 	>
 		@EditEventFormPageContent(ctx, eventId, db, eventImageDir, logger)
 	</div>
