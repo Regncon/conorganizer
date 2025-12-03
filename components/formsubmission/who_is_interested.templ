@@ -134,7 +134,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 AND (ep.is_player = 1 OR ep.is_gm = 1)
             ORDER BY
                 ep.is_gm DESC,
-                ep.inserted_time DESC
+                ep.inserted_time ASC
     `
 	rows, queryErr := db.Query(query, eventId)
 	if queryErr != nil {
@@ -180,12 +180,13 @@ func UpdatePlayerStatus(eventId string,
 	logger *slog.Logger,
 ) error {
 	query := `INSERT INTO
-                        events_players (event_id, pulje_id, billettholder_id, is_player, is_gm)
+                        events_players (event_id, pulje_id, billettholder_id, is_player, is_gm, inserted_time)
                 VALUES
-                    (?, ?, ?, ?, ?)
+                    (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(event_id, pulje_id, billettholder_id) DO UPDATE SET
                     is_player = EXCLUDED.is_player,
-                    is_gm = EXCLUDED.is_gm
+                    is_gm = EXCLUDED.is_gm,
+                    inserted_time = CURRENT_TIMESTAMP
         `
 	_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId, isPlayer, isGM)
 	if updatePlayerStatusErr != nil {
