@@ -1,0 +1,29 @@
+name: Feature story
+title: "[Story]"
+description: Create a new bug report
+projects: []
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: text-story-summary
+    attributes:
+      label: Story Summary
+      description: Write a brief summary of the story, describing the user value that
+        is added.
+    validations:
+      required: true
+  - type: textarea
+    id: text-acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: List out, in bullet points, the acceptance criteria that must be
+        met by this story.
+    validations:
+      required: true
+  - type: textarea
+    id: text-additional-information
+    attributes:
+      label: Additional Information
+      description: Provide any other context that does not fit into the other fields.
+
