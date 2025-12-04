@@ -157,6 +157,23 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				})
 
 				apiRouter.Route("/events_players", func(eventsPlayersRouter chi.Router) {
+					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
+						// Check content type
+						contentType := r.Header.Get("Content-Type")
+						fmt.Printf("Content-Type: %s\n", contentType)
+
+						// get from form data
+						if err := r.ParseForm(); err != nil {
+							http.Error(w, "Failed to parse form data", http.StatusBadRequest)
+							return
+						}
+
+						fmt.Printf("Form data: %+v\n", r.Form.Get("name"))
+						fmt.Printf("Form data: %+v\n", r.Form.Get("billettholder-6"))
+
+						http.Error(w, "Not implemented", http.StatusNotImplemented)
+						return
+					})
 					eventsPlayersRouter.Put("/put/{eventId}/{puljeId}/{billettholderId}/{isPlayer}/{isGm}", func(w http.ResponseWriter, r *http.Request) {
 						// sse := datastar.NewSSE(w, r)
 						// sessionID, mvc, err := mvcSession(w, r)
