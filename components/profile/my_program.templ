@@ -14,7 +14,6 @@ import (
 )
 
 type UserEvent struct {
-	// UserEvent represents an event that a user is either playing in or is a gamemaster for
 	EventID     string
 	Title       string
 	Intro       string
@@ -30,11 +29,9 @@ type UserEvent struct {
 }
 
 templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
-	// Fetch all events the user is participating in or running
 	{{ events, err := GetAllEventsForUser(userInfo, db, logger) }}
-	// Fetch all events the user has marked as interested in
 	{{ interests, interestErr := getAllInterestsForUser(userInfo, db, logger) }}
-	{{  // Define the 4 festival time slots (puljer)
+	{{
 		puljer := []struct {
 			displayName string
 			puljeID     string
@@ -48,16 +45,16 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 			{displayName: "Søndag morgen", puljeID: "SondagMorgen", time: "(10:00 - 15:00)"},
 		}
 	}}
-	{{  // Assign events and interests to their corresponding time slots
+	{{
 		for i := range puljer {
-			// Find the event assigned to this time slot (if any)
+
 			for _, event := range events {
 				if event.PuljeName == puljer[i].displayName {
 					puljer[i].event = event
 					break
 				}
 			}
-			// Collect all interests that match this time slot
+
 			for _, interest := range interests {
 				if interest.PuljeID == puljer[i].puljeID {
 					puljer[i].interests = append(puljer[i].interests, interest)
@@ -65,8 +62,7 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 			}
 		}
 	}}
-	{{  // Sort interests by interest level within each time slot
-		// Priority: Veldig interessert (1) > Middels interessert (2) > Litt interessert (3)
+	{{
 		interestOrder := map[string]int{
 			"Veldig interessert":  1,
 			"Middels interessert": 2,
@@ -77,7 +73,7 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 				orderA := interestOrder[puljer[i].interests[a].InterestLevel]
 				orderB := interestOrder[puljer[i].interests[b].InterestLevel]
 				if orderA == 0 {
-					orderA = 999 // Unknown interest levels go to the end
+					orderA = 999
 				}
 				if orderB == 0 {
 					orderB = 999
@@ -124,15 +120,14 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 		} else if !userInfo.IsAdmin {
 			<p style="font-style: italic;">kommer snart!</p>
 		} else if userInfo.IsAdmin {
-		<section class="program-pulje-list">
-			for _, pulje := range puljer {
-				<div class="program-pulje-container">
-					<h3 class="program-pulje">
-						{ pulje.displayName }
-						<span class="program-pulje-time">{ pulje.time }</span>
-					</h3>
-					// Display priority: assigned event > interests > empty state
-					if pulje.event.EventID != "" {
+			<section class="program-pulje-list">
+				for _, pulje := range puljer {
+					<div class="program-pulje-container">
+						<h3 class="program-pulje">
+							{ pulje.displayName }
+							<span class="program-pulje-time">{ pulje.time }</span>
+						</h3>
+						if pulje.event.EventID != "" {
 							{{ imageCardUrl := eventimage.GetEventImageUrl(pulje.event.EventID, "card", eventImageDir) }}
 							@event_components.ProgramPuljeEvent(pulje.event.EventID, imageCardUrl, pulje.event.Title, pulje.event.Intro, pulje.event.EventType, pulje.event.IsGM)
 						} else if len(pulje.interests) > 0 {
@@ -180,6 +175,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 
 	billettholderID := billettholdere[0].ID
 
+	// Fetch interests for events the user marked as interested in
 	query := `
 		SELECT
 			i.event_id,
@@ -227,11 +223,8 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 	return interests, nil
 }
 
-	func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]UserEvent, error) {
-		// Fetches all events for a user using UNION of two queries:
-		// 1. Events the user is playing in (is_player = 1)
-		// 2. Events the user is running as gamemaster (host)
-		// A user can only be either a player OR a gamemaster for a specific event, never both	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db, logger)
+func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]UserEvent, error) {
+	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db, logger)
 	if billettholderErr != nil {
 		logger.Error("Failed to get billettholdere", "billettholderErr", billettholderErr)
 		return nil, fmt.Errorf("unable to get billettholder: %w, id: %+v", billettholderErr, userInfo.Id)
@@ -243,8 +236,8 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 
 	billettholderID := billettholdere[0].ID
 
-		query := `
-			// Query 1: Get events where user is a player
+	// Fetch events where user is a player OR is the gamemaster using UNION
+	query := `
 			SELECT
 				ep.event_id,
 				e.title,
@@ -266,7 +259,6 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 
 			UNION
 
-			// Query 2: Get events where user is the gamemaster (host)
 			SELECT
 				ep.event_id,
 				e.title,
@@ -286,8 +278,10 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 			JOIN puljer p ON ep.pulje_id = p.id
 			WHERE u.user_id = ?
 
-			ORDER BY p.start_time ASC
-		`	rows, queryErr := db.Query(query, billettholderID, userInfo.Id)
+		ORDER BY p.start_time ASC
+	`
+
+	rows, queryErr := db.Query(query, billettholderID, userInfo.Id)
 	if queryErr != nil {
 		logger.Error("Failed to query events", "queryErr", queryErr)
 		return nil, fmt.Errorf("unable to query events: %w", queryErr)
