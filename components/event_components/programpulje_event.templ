@@ -90,9 +90,7 @@ templ ProgramPuljeEvent(eventID string, imgurl string, title string, description
       .programpulje-event-container-text {
         width: calc(100% - 40px);
       }
-      .programpulje-event-container-image {
-        right: -80px;
-      }
+
     }
 	</style>
 	<a href={ templ.URL(fmt.Sprintf("/event/%s", eventID)) } class="item-card profile-event-bar programpulje-event-container">
