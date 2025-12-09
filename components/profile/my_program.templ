@@ -236,52 +236,30 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 
 	billettholderID := billettholdere[0].ID
 
-	// Fetch events where user is a player OR is the gamemaster using UNION
+	// Fetch events where user is a player or gamemaster
 	query := `
-			SELECT
-				ep.event_id,
-				e.title,
-				COALESCE(e.intro, '') as intro,
-				COALESCE(e.description, '') as description,
-				COALESCE(e.image_url, '') as image_url,
-				COALESCE(e.host, 0) as host,
-				e.event_type,
-				ep.pulje_id,
-				p.name as pulje_name,
-				p.start_time,
-				p.end_time,
-				COALESCE(ep.is_gm, 0) as is_gm
-			FROM events_players ep
-			JOIN events e ON ep.event_id = e.id
-			JOIN puljer p ON ep.pulje_id = p.id
-			WHERE ep.billettholder_id = ?
-				AND ep.is_player = 1
-
-			UNION
-
-			SELECT
-				ep.event_id,
-				e.title,
-				COALESCE(e.intro, '') as intro,
-				COALESCE(e.description, '') as description,
-				COALESCE(e.image_url, '') as image_url,
-				COALESCE(e.host, 0) as host,
-				e.event_type,
-				ep.pulje_id,
-				p.name as pulje_name,
-				p.start_time,
-				p.end_time,
-				1 as is_gm
-			FROM users u
-			JOIN events e ON u.id = e.host
-			JOIN event_puljer ep ON e.id = ep.event_id
-			JOIN puljer p ON ep.pulje_id = p.id
-			WHERE u.user_id = ?
-
+		SELECT
+			ep.event_id,
+			e.title,
+			COALESCE(e.intro, '') as intro,
+			COALESCE(e.description, '') as description,
+			COALESCE(e.image_url, '') as image_url,
+			COALESCE(e.host, 0) as host,
+			e.event_type,
+			ep.pulje_id,
+			p.name as pulje_name,
+			p.start_time,
+			p.end_time,
+			ep.is_gm
+		FROM events_players ep
+		JOIN events e ON ep.event_id = e.id
+		JOIN puljer p ON ep.pulje_id = p.id
+		WHERE ep.billettholder_id = ?
+			AND (ep.is_player = 1 OR ep.is_gm = 1)
 		ORDER BY p.start_time ASC
 	`
 
-	rows, queryErr := db.Query(query, billettholderID, userInfo.Id)
+	rows, queryErr := db.Query(query, billettholderID)
 	if queryErr != nil {
 		logger.Error("Failed to query events", "queryErr", queryErr)
 		return nil, fmt.Errorf("unable to query events: %w", queryErr)
