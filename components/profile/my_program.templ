@@ -96,9 +96,7 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 					<p>Feil ved henting av interesser: { interestErr.Error() }</p>
 				}
 			</div>
-		} else if !userInfo.IsAdmin {
-			<p style="font-style: italic;">kommer snart!</p>
-		} else if userInfo.IsAdmin {
+		} else {
 			<section class="program-pulje-list">
 				for _, pulje := range puljer {
 					<div class="program-pulje-container">
