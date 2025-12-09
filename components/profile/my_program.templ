@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
-	"sort"
 	"time"
 
 	"github.com/Regncon/conorganizer/components/event_components"
@@ -60,26 +59,6 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 					puljer[i].interests = append(puljer[i].interests, interest)
 				}
 			}
-		}
-	}}
-	{{
-		interestOrder := map[string]int{
-			"Veldig interessert":  1,
-			"Middels interessert": 2,
-			"Litt interessert":    3,
-		}
-		for i := range puljer {
-			sort.Slice(puljer[i].interests, func(a, b int) bool {
-				orderA := interestOrder[puljer[i].interests[a].InterestLevel]
-				orderB := interestOrder[puljer[i].interests[b].InterestLevel]
-				if orderA == 0 {
-					orderA = 999
-				}
-				if orderB == 0 {
-					orderB = 999
-				}
-				return orderA < orderB
-			})
 		}
 	}}
 	<style>
@@ -175,7 +154,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 
 	billettholderID := billettholdere[0].ID
 
-	// Fetch interests for events the user marked as interested in
+	// Fetch interests for events the user marked as interested in, ordered by priority
 	query := `
 		SELECT
 			i.event_id,
@@ -185,7 +164,13 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 		FROM interests i
 		JOIN events e ON i.event_id = e.id
 		WHERE i.billettholder_id = ?
-		ORDER BY i.pulje_id ASC
+		ORDER BY i.pulje_id ASC,
+			CASE i.interest_level
+				WHEN 'Veldig interessert' THEN 1
+				WHEN 'Middels interessert' THEN 2
+				WHEN 'Litt interessert' THEN 3
+				ELSE 999
+			END ASC
 	`
 
 	rows, queryErr := db.Query(query, billettholderID)
