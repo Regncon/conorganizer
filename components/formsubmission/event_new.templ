@@ -185,7 +185,7 @@ templ inputValidationComponent(label string, inputType InputType, field string, 
 			}
 			class={ "input input-bordered" , templ.KV("input-error",!isValid) }
 			data-bind={ field }
-			data-on-keydown__debounce.500ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+			data-on:keydown__debounce.500ms={ "@get('/my-events/api/new/inline_validation/data')" }
 			data-testid={ "input_" + field }
 			if field=="image_url" {
 				placeholder="f.eks. https://imgur.com/din_bilde_id"
@@ -219,7 +219,7 @@ templ checkboxValidationComponent(label, field string, isValid bool, isNotValidE
 				type="checkbox"
 				class="toggle"
 				data-bind={ field }
-				data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+				data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 				data-testid={ field + "_input" }
 				disabled?={ isDisabled }
 			/>
@@ -245,7 +245,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="1"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					data-testid={ field + "_1" }
 				/>
 				<span>Fredag kveld</span>
@@ -257,7 +257,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="2"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					data-testid={ field + "_2" }
 				/>
 				<span>Lørdag morgen</span>
@@ -269,7 +269,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="3"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					data-testid={ field + "_3" }
 				/>
 				<span>Lørdag kveld</span>
@@ -281,7 +281,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="4"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					data-testid={ field + "_4" }
 				/>
 				<span>Søndag morgen</span>
@@ -307,8 +307,8 @@ templ radioGroupValidationComponent(groupLabel string, options [2]string, fields
 					name={ groupLabel }
 					class="radio"
 					data-bind={ fields[0] }
-					data-on-click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[1]) }
-					data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[1]) }
+					data-on:change__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					checked?={ values[0] }
 				/>
 				<span>{ options[0] }</span>
@@ -319,8 +319,8 @@ templ radioGroupValidationComponent(groupLabel string, options [2]string, fields
 					name={ groupLabel }
 					class="radio"
 					data-bind={ fields[1] }
-					data-on-click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[0]) }
-					data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[0]) }
+					data-on:change__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					checked?={ values[1] }
 				/>
 				<span>{ options[1] }</span>
@@ -337,7 +337,7 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		id="inline_validation"
 		class="flex flex-col gap-4"
 		data-signals__ifmissing={ templ.JSONString(eventForm) }
-		data-on-submit={ datastar.PutSSE("/my-events/api/new/inline_validation/data") }
+		data-on:submit={ "@put('/my-events/api/new/inline_validation/data')" }
 	>
 		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
 		<div>

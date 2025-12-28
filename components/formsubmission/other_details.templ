@@ -214,7 +214,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					id="age-group"
 					data-signals={ fmt.Sprintf("{ageGroup:'%s'}", ageGroup) }
 					data-bind="ageGroup"
-					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/ageGroup", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/ageGroup')", eventId) }
 					name="age-group"
 					class="input"
 					required
@@ -236,7 +236,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					class="input"
 					data-signals={ fmt.Sprintf("{runtime:'%s'}", runtime) }
 					data-bind="runtime"
-					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/runtime", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/runtime')", eventId) }
 					required
 				>
 					<option value="Normal" selected>Vanlig pulje</option>
@@ -267,7 +267,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 							checked
 						}
 						data-bind="beginnerFriendly"
-						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/beginner-friendly", eventId) }
+						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/beginner-friendly')", eventId) }
 						type="checkbox"
 					/>
 					Arrangementet er nybegynnervennlig
@@ -292,7 +292,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 							checked
 						}
 						data-bind="canBeRunInEnglish"
-						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/can-be-run-in-english", eventId) }
+						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/can-be-run-in-english')", eventId) }
 						type="checkbox"
 						name="english-label"
 						class="checkbox input"
@@ -314,7 +314,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					class="input"
 					data-signals={ fmt.Sprintf("{maxPlayers:%d}", maxPlayers) }
 					data-bind="maxPlayers"
-					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/max-players", eventId) }
+						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/max-players')", eventId) }
 					type="number"
 					min="4"
 				/>
@@ -334,7 +334,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					name="other-notes"
 					data-signals={ fmt.Sprintf("{notes:'%s'}", notes) }
 					data-bind="notes"
-					data-on-change={ datastar.PutSSE("/my-events/api/new/%s/notes", eventId) }
+						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/notes')", eventId) }
 					class="input"
 					rows="5"
 					placeholder="Skriv eventuelle merknader her…"

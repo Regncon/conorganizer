@@ -8,7 +8,6 @@ import (
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
-	datastar "github.com/starfederation/datastar-go/datastar"
 	"log/slog"
 	"net/http"
 )
@@ -53,7 +52,7 @@ templ newEventIndex(eventId string, userId string, ctx context.Context, db *sql.
 	<div
 		id="formsubmission-container"
 		class="formsubmission-css-container"
-		data-on-load={ datastar.GetSSE("/my-events/api/new/%s", eventId) }
+		data-init={ fmt.Sprintf("@get('/my-events/api/new/%s',{requestCancellation: 'disabled'})", eventId) }
 	>
 		@NewEventFormPageContent(eventId, userId, ctx, db, eventImageDir, logger)
 	</div>

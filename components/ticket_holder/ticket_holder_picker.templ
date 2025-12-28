@@ -68,7 +68,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		<div
 			data-signals={ fmt.Sprintf("{billettHolderId:%d}", associatedTicketHolders[0].Id) }
 		></div>
-		<div data-signals-foo="1"></div>
+		<div data-signals:foo="1"></div>
 	}
 	if (len(associatedTicketHolders) > 1) {
 		<div class="ticket-holder-container">

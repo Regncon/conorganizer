@@ -129,7 +129,7 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 }
 
 templ profileTicketsIndex(userId string, db *sql.DB, logger *slog.Logger) {
-	<div id="profile-tickets-page-wrapper" data-on-load={ datastar.GetSSE("/profile/tickets/api") }>
+	<div id="profile-tickets-page-wrapper" data-init={ "@get('/profile/tickets/api',{requestCancellation: 'disabled'})" }>
 		@profileTicketsPageContent(userId, db, logger)
 	</div>
 }
