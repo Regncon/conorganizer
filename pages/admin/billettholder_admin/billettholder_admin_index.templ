@@ -7,7 +7,6 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/service/userctx"
-	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func indexRoute(router chi.Router, db *sql.DB, err error) {
@@ -23,7 +22,7 @@ func indexRoute(router chi.Router, db *sql.DB, err error) {
 }
 
 templ indexPage() {
-	<div id="billettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/billettholder/api/") }>
+	<div id="billettholder-admin-container" data-init={ "@get('/admin/billettholder/api/',{requestCancellation: 'disabled'})" }>
 		<p>Billettholder Admin</p>
 		<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
 	</div>
