@@ -5,8 +5,6 @@ run:
   issues-exit-code: 2
   tests: false
   allow-parallel-runners: true
-  skip-files:
-    - ".*_templ\\.go"
 formatters:
   exclusions:
     generated: lax
@@ -18,3 +16,5 @@ linters:
       - common-false-positives
       - legacy
       - std-error-handling
+    paths:
+      -  ".*_templ\\.go"
