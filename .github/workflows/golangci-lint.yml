@@ -1,11 +1,14 @@
 name: golangci-lint
 on:
-    push:
-        branches: ["**"]
-
-    pull_request:
-        branches: ["**"]
-        types: [opened, reopened, synchronize]
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '**.go'
+      - '**.mod'
+      - '**.sum'
 
 permissions:
   contents: read
