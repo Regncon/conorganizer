@@ -103,7 +103,11 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-				defer watcher.Stop()
+				defer func() {
+					if err := watcher.Stop(); err != nil {
+						logger.Error("Failed to stop watcher", "error", err)
+					}
+				}()
 
 				for {
 					select {
@@ -120,7 +124,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						isAdmin := authctx.GetAdminFromUserToken(ctx)
 						c := event_page(eventID, isAdmin, logger, db, eventImageDir, r)
 						if err := sse.PatchElementTempl(c); err != nil {
-							sse.ConsoleError(err)
+							_ = sse.ConsoleError(err)
 							return
 						}
 					}
@@ -173,7 +177,9 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							return
 						}
 
-						updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db, logger)
+						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db, logger); err != nil {
+							logger.Error("Failed to update interest", "error", err)
+						}
 
 						logger.Info(fmt.Sprintf("%d", signals.BillettHolderId), eventId, signals.PuljeId, sessionId, userInfo, fmt.Sprintf("%+v", interestLevel), "ASDFG")
 
