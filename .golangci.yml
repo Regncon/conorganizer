@@ -5,6 +5,8 @@ run:
   issues-exit-code: 2
   tests: false
   allow-parallel-runners: true
+  skip-files:
+    - ".*_templ\\.go"
 formatters:
   exclusions:
     generated: lax
