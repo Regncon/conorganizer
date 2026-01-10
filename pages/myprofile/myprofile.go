@@ -18,11 +18,13 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 	router.Route("/my-profile", func(ticketRouter chi.Router) {
 		ticketRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
-			layouts.Base(
+			if err := layouts.Base(
 				"Min profil",
 				userctx.GetUserRequestInfo(ctx),
 				myProfile(),
-			).Render(ctx, w)
+			).Render(ctx, w); err != nil {
+				logger.Error("Failed to render profile page", "error", err)
+			}
 
 		})
 
@@ -34,28 +36,34 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 			if ticketsErr != nil {
 				logger.Error("Failed to get tickets from check-in", "ticketsErr", ticketsErr)
 
-				layouts.Base(
+				if err := layouts.Base(
 					"Ingen billetter",
 					userctx.GetUserRequestInfo(ctx),
 					noTickets(),
-				).Render(ctx, w)
+				).Render(ctx, w); err != nil {
+					logger.Error("Failed to render no tickets page", "error", err)
+				}
 				return
 			}
 
 			if len(tickets) == 0 {
-				layouts.Base(
+				if err := layouts.Base(
 					"Ingen billetter",
 					userctx.GetUserRequestInfo(ctx),
 					noTickets(),
-				).Render(ctx, w)
+				).Render(ctx, w); err != nil {
+					logger.Error("Failed to render no tickets page", "error", err)
+				}
 				return
 			}
 
-			layouts.Base(
+			if err := layouts.Base(
 				"Mine billetter",
 				userctx.GetUserRequestInfo(ctx),
 				myTickets(),
-			).Render(ctx, w)
+			).Render(ctx, w); err != nil {
+				logger.Error("Failed to render tickets page", "error", err)
+			}
 
 		})
 	})

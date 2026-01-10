@@ -89,13 +89,21 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 			sse := datastar.NewSSE(w, r)
 
 			sessionID, mvc, err := mvcSession(w, r)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			ctx := r.Context()
 			watcher, err := kv.Watch(ctx, sessionID)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			defer watcher.Stop()
+			defer func() {
+				if err := watcher.Stop(); err != nil {
+					logger.Error("Failed to stop watcher", "error", err)
+				}
+			}()
 
 			for {
 				select {
@@ -111,7 +119,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					}
 					c := adminPage(db)
 					if err := sse.PatchElementTempl(c); err != nil {
-						sse.ConsoleError(err)
+						_ = sse.ConsoleError(err)
 						return
 					}
 				}
@@ -123,13 +131,21 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				sse := datastar.NewSSE(w, r)
 
 				sessionID, mvc, err := mvcSession(w, r)
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
 				ctx := r.Context()
 				watcher, err := kv.Watch(ctx, sessionID)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-				defer watcher.Stop()
+				defer func() {
+					if err := watcher.Stop(); err != nil {
+						logger.Error("Failed to stop watcher", "error", err)
+					}
+				}()
 
 				for {
 					select {
@@ -145,7 +161,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 						c := approval.ApprovalPage(db, logger)
 						if err := sse.PatchElementTempl(c); err != nil {
-							sse.ConsoleError(err)
+							_ = sse.ConsoleError(err)
 							return
 						}
 					}
@@ -178,7 +194,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						defer watcher.Stop()
+						defer func() {
+							if err := watcher.Stop(); err != nil {
+								logger.Error("Failed to stop watcher", "error", err)
+							}
+						}()
 
 						for {
 							select {
@@ -196,7 +216,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 								c := edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, logger)
 								if err := sse.PatchElementTempl(c); err != nil {
-									sse.ConsoleError(err)
+									_ = sse.ConsoleError(err)
 									return
 								}
 							}
