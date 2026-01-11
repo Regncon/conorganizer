@@ -42,19 +42,19 @@ func InitTestDBFrom(testDBPath string) (*sql.DB, error) {
 	}
 
 	if _, err := tx.Exec(`PRAGMA foreign_keys=OFF;`); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		db.Close()
 		return nil, fmt.Errorf("disable foreign_keys: %w", err)
 	}
 
 	if _, err := tx.Exec(string(schemaBytes)); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		db.Close()
 		return nil, fmt.Errorf("execute schema.sql: %w", err)
 	}
 
 	if _, err := tx.Exec(`PRAGMA foreign_keys=ON;`); err != nil {
-		tx.Rollback()
+		_ = tx.Rollback()
 		db.Close()
 		return nil, fmt.Errorf("enable foreign_keys: %w", err)
 	}

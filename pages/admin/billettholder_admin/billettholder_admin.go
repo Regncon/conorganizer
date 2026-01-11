@@ -92,7 +92,11 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			defer sub.Unsubscribe()
+			defer func() {
+				if err := sub.Unsubscribe(); err != nil {
+					logger.Error("Failed to unsubscribe", "error", err)
+				}
+			}()
 
 			// send the first render immediately
 			if err := sse.PatchElementTempl(BillettholderAdminPage(db, logger)); err != nil {
@@ -134,7 +138,11 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			defer sub.Unsubscribe()
+			defer func() {
+				if err := sub.Unsubscribe(); err != nil {
+					logger.Error("Failed to unsubscribe", "error", err)
+				}
+			}()
 
 			// initial render
 			if err := sse.PatchElementTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
