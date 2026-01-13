@@ -152,7 +152,6 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 
 	billettholderID := billettholdere[0].ID
 
-	// Fetch interests for events the user marked as interested in, ordered by priority
 	query := `
 		SELECT
 			i.event_id,
@@ -219,7 +218,6 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 
 	billettholderID := billettholdere[0].ID
 
-	// Fetch events where user is a player or gamemaster
 	query := `
 		SELECT
 			ep.event_id,
