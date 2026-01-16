@@ -23,7 +23,10 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		INSERT INTO puljer (
 			id, name, is_closed, is_published, start_time, end_time
 		) VALUES
-			('P1', 'P1name', 0, 1, '2025-10-01', '2025-10-01')
+			('P1', 'Friday', 0, 1, '2025-10-03', '2025-10-03'),
+			('P2', 'SaturdayMorning', 0, 1, '2025-10-04', '2025-10-04'),
+			('P3', 'SaturdayEvening', 0, 1, '2025-10-04', '2025-10-04'),
+			('P4', 'Sunday', 0, 1, '2025-10-05', '2025-10-05')
 	`)
 	mustExec(t, db, `
 		INSERT INTO events (
@@ -32,9 +35,9 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			pulje_name, max_players, beginner_friendly, can_be_run_in_english,
 			status
 		) VALUES
-			('E1','Event 1','intro','desc','', '', 'Other','Default','Normal','Host 1','h1@test.no','11111111','P1name',4,1,1,'Godkjent'),
-			('E2','Event 2','intro','desc','', '', 'Other','Default','Normal','Host 2','h2@test.no','22222222','P1name',4,1,1,'Godkjent'),
-			('E3','Event 3','intro','desc','', '', 'Other','Default','Normal','Host 3','h3@test.no','33333333','P1name',4,1,1,'Godkjent')
+			('E1','Event 1','intro','desc','', '', 'Other','Default','Normal','Host 1','h1@test.no','11111111','Friday',4,1,1,'Godkjent'),
+			('E2','Event 2','intro','desc','', '', 'Other','Default','Normal','Host 2','h2@test.no','22222222','SaturdayMorning',4,1,1,'Godkjent'),
+			('E3','Event 3','intro','desc','', '', 'Other','Default','Normal','Host 3','h3@test.no','33333333','SaturdayEvening',4,1,1,'Godkjent')
 	`)
 	mustExec(t, db, `
 		INSERT INTO billettholdere (
@@ -51,12 +54,12 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		INSERT INTO interests (
 			billettholder_id, event_id, pulje_id, interest_level
 		) VALUES
-			(1,'E2','P1','Veldig interessert'),
-			(2,'E2','P1','Veldig interessert'),
-			(3,'E2','P1','Interessert'),
-			(4,'E2','P1','Veldig interessert'),
-			(5,'E2','P1','Veldig interessert'),
-			(6,'E2','P1','Veldig interessert')
+			(1,'E2','P2','Veldig interessert'),
+			(2,'E2','P2','Veldig interessert'),
+			(3,'E2','P2','Interessert'),
+			(4,'E2','P2','Veldig interessert'),
+			(5,'E2','P2','Veldig interessert'),
+			(6,'E2','P2','Veldig interessert')
 	`)
 	mustExec(t, db, `
 		INSERT INTO events_players (
@@ -65,9 +68,9 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			('E1','P1',1,1,0),
 			('E1','P1',2,0,1),
 			('E1','P1',3,1,0),
-			('E2','P1',5,1,0),
+			('E2','P2',5,1,0),
 			('E1','P1',6,0,1),
-			('E3','P1',6,1,0)
+			('E3','P3',6,1,0)
 	`)
 
 	interests, getInterestsErr := GetInterestsForEvent("E2", db, logger)
