@@ -18,7 +18,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES ('Other')`)
 	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES ('Default')`)
 	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES ('Normal')`)
-	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES ('Veldig interessert'), ('Interessert')`)
+	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES ('Veldig interessert'), ('Interessert'), ('Litt interessert'), ('Ikkje interessert')`)
 	mustExec(t, db, `
 		INSERT INTO puljer (
 			id, name, is_closed, is_published, start_time, end_time
@@ -58,7 +58,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			(1,'E2','P2','Veldig interessert'),
 			(2,'E2','P2','Veldig interessert'),
 			(3,'E2','P2','Interessert'),
-			(4,'E2','P2','Veldig interessert'),
+			(4,'E2','P2','Litt interessert'),
 			(5,'E2','P2','Veldig interessert'),
 			(6,'E2','P2','Veldig interessert'),
 			(1,'E3','P3','Veldig interessert'),
@@ -66,7 +66,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			(6,'E3','P3','Veldig interessert'),
 			(1,'E4','P4','Veldig interessert'),
 			(2,'E4','P4','Veldig interessert'),
-			(4,'E4','P4','Veldig interessert')
+			(4,'E4','P4','Ikkje interessert')
 	`)
 	mustExec(t, db, `
 		INSERT INTO events_players (
