@@ -29,23 +29,21 @@ type AssignmentWithHolder = InterestWithHolder
 
 // todo still some bugs with this query. I think there is some logic missing
 var queryFirstChoice = `
-                EXISTS (
-                    SELECT
-                        1
-                    FROM
-                        interests i2
-                        JOIN events_players ep ON ep.billettholder_id = i2.billettholder_id
-                        AND ep.event_id = i2.event_id
-                        AND ep.pulje_id = i2.pulje_id
-                    WHERE
-                        i2.billettholder_id = i.billettholder_id
-                        AND i2.pulje_id <> ''
-                        AND i2.event_id <> i.event_id -- must be a different event
-                        AND i2.interest_level = 'Veldig interessert'
-                        AND (ep.is_player = 1 OR ep.is_gm = 1)
-                    LIMIT
-                        1
-                ) AS first_choice
+                CASE
+                    WHEN i.interest_level = 'Veldig interessert' AND EXISTS (
+                        SELECT
+                            1
+                        FROM
+                            events_players ep
+                        WHERE
+                            ep.billettholder_id = i.billettholder_id
+                            AND ep.event_id <> i.event_id -- must be a different event
+                            AND ep.is_player = 1
+                        LIMIT
+                            1
+                    ) THEN 1
+                    ELSE 0
+                END AS first_choice
 `
 
 func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]InterestWithHolder, error) {
