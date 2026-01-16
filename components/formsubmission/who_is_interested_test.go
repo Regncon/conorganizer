@@ -37,7 +37,8 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		) VALUES
 			('E1','Event 1','intro','desc','', '', 'Other','Default','Normal','Host 1','h1@test.no','11111111','Friday',4,1,1,'Godkjent'),
 			('E2','Event 2','intro','desc','', '', 'Other','Default','Normal','Host 2','h2@test.no','22222222','SaturdayMorning',4,1,1,'Godkjent'),
-			('E3','Event 3','intro','desc','', '', 'Other','Default','Normal','Host 3','h3@test.no','33333333','SaturdayEvening',4,1,1,'Godkjent')
+			('E3','Event 3','intro','desc','', '', 'Other','Default','Normal','Host 3','h3@test.no','33333333','SaturdayEvening',4,1,1,'Godkjent'),
+			('E4','Event 4','intro','desc','', '', 'Other','Default','Normal','Host 4','h4@test.no','44444444','Sunday',4,1,1,'Godkjent')
 	`)
 	mustExec(t, db, `
 		INSERT INTO billettholdere (
@@ -59,7 +60,13 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			(3,'E2','P2','Interessert'),
 			(4,'E2','P2','Veldig interessert'),
 			(5,'E2','P2','Veldig interessert'),
-			(6,'E2','P2','Veldig interessert')
+			(6,'E2','P2','Veldig interessert'),
+			(1,'E3','P3','Veldig interessert'),
+			(2,'E3','P3','Veldig interessert'),
+			(6,'E3','P3','Veldig interessert'),
+			(1,'E4','P4','Veldig interessert'),
+			(2,'E4','P4','Veldig interessert'),
+			(4,'E4','P4','Veldig interessert')
 	`)
 	mustExec(t, db, `
 		INSERT INTO events_players (
@@ -116,6 +123,46 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	}
 	if got[6].FirstChoice != true {
 		t.Errorf("gm+player with very interested should be first choice due to player assignment")
+	}
+
+	interestsE3, getInterestsE3Err := GetInterestsForEvent("E3", db, logger)
+	if getInterestsE3Err != nil {
+		t.Fatalf("GetInterestsForEvent E3 error: %v", getInterestsE3Err)
+	}
+
+	gotE3 := make(map[int]InterestWithHolder, len(interestsE3))
+	for _, interest := range interestsE3 {
+		gotE3[interest.BillettholderId] = interest
+	}
+
+	if _, ok := gotE3[6]; ok {
+		t.Fatalf("expected assigned-to-same-event billettholder to be excluded for E3")
+	}
+	if gotE3[1].FirstChoice != true {
+		t.Errorf("player assigned to other event should be first choice for E3")
+	}
+	if gotE3[2].FirstChoice != false {
+		t.Errorf("gm assigned to other event should not be first choice for E3")
+	}
+
+	interestsE4, getInterestsE4Err := GetInterestsForEvent("E4", db, logger)
+	if getInterestsE4Err != nil {
+		t.Fatalf("GetInterestsForEvent E4 error: %v", getInterestsE4Err)
+	}
+
+	gotE4 := make(map[int]InterestWithHolder, len(interestsE4))
+	for _, interest := range interestsE4 {
+		gotE4[interest.BillettholderId] = interest
+	}
+
+	if gotE4[1].FirstChoice != true {
+		t.Errorf("player assigned to other event should be first choice for E4")
+	}
+	if gotE4[2].FirstChoice != false {
+		t.Errorf("gm assigned to other event should not be first choice for E4")
+	}
+	if gotE4[4].FirstChoice != false {
+		t.Errorf("no assignment should not be first choice for E4")
 	}
 }
 
