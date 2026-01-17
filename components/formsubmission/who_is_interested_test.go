@@ -49,7 +49,8 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			(3,'NotVery','Three',1,'Test',1,1003,2003),
 			(4,'NoAssign','Four',1,'Test',1,1004,2004),
 			(5,'SameEvent','Five',1,'Test',1,1005,2005),
-			(6,'GMPlayer','Six',1,'Test',1,1006,2006)
+			(6,'GMPlayer','Six',1,'Test',1,1006,2006),
+			(7,'GMAndPlayer','Seven',1,'Test',1,1007,2007)
 	`)
 	mustExec(t, db, `
 		INSERT INTO interests (
@@ -61,6 +62,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			(4,'E2','P2','Litt interessert'),
 			(5,'E2','P2','Veldig interessert'),
 			(6,'E2','P2','Veldig interessert'),
+			(7,'E2','P2','Veldig interessert'),
 			(1,'E3','P3','Veldig interessert'),
 			(2,'E3','P3','Veldig interessert'),
 			(6,'E3','P3','Veldig interessert'),
@@ -77,7 +79,9 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			('E1','P1',3,1,0),
 			('E2','P2',5,1,0),
 			('E1','P1',6,0,1),
-			('E3','P3',6,1,0)
+			('E3','P3',6,1,0),
+			('E1','P1',7,0,1),
+			('E4','P4',7,1,0)
 	`)
 
 	interests, getInterestsErr := GetInterestsForEvent("E2", db, logger)
@@ -90,40 +94,57 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		got[interest.BillettholderId] = interest
 	}
 
-	if _, ok := got[5]; ok {
-		t.Fatalf("expected assigned-to-same-event billettholder to be excluded")
-	}
-	if _, ok := got[1]; !ok {
-		t.Fatalf("expected player-assigned billettholder to be returned")
-	}
-	if _, ok := got[2]; !ok {
-		t.Fatalf("expected gm-assigned billettholder to be returned")
-	}
-	if _, ok := got[3]; !ok {
-		t.Fatalf("expected not-very-interested billettholder to be returned")
-	}
-	if _, ok := got[4]; !ok {
-		t.Fatalf("expected unassigned billettholder to be returned")
-	}
-	if _, ok := got[6]; !ok {
-		t.Fatalf("expected gm+player billettholder to be returned")
-	}
+	// E2 inclusion checks confirm interests are listed even if the player is already assigned
+	// to the same event; assignment should only affect FirstChoice, not filtering.
+	t.Run("E2 includes/excludes correct billettholders", func(t *testing.T) {
+		if _, ok := got[5]; !ok {
+			t.Fatalf("expected assigned-to-same-event billettholder to be returned")
+		}
+		if _, ok := got[1]; !ok {
+			t.Fatalf("expected player-assigned billettholder to be returned")
+		}
+		if _, ok := got[2]; !ok {
+			t.Fatalf("expected gm-assigned billettholder to be returned")
+		}
+		if _, ok := got[3]; !ok {
+			t.Fatalf("expected not-very-interested billettholder to be returned")
+		}
+		if _, ok := got[4]; !ok {
+			t.Fatalf("expected unassigned billettholder to be returned")
+		}
+		if _, ok := got[6]; !ok {
+			t.Fatalf("expected gm+player billettholder to be returned")
+		}
+		if _, ok := got[7]; !ok {
+			t.Fatalf("expected gm+player (different events) billettholder to be returned")
+		}
+	})
 
-	if got[1].FirstChoice != true {
-		t.Errorf("player assigned to other event should be first choice")
-	}
-	if got[2].FirstChoice != false {
-		t.Errorf("gm assigned to other event should not be first choice")
-	}
-	if got[3].FirstChoice != false {
-		t.Errorf("not very interested should not be first choice")
-	}
-	if got[4].FirstChoice != false {
-		t.Errorf("no assignment should not be first choice")
-	}
-	if got[6].FirstChoice != true {
-		t.Errorf("gm+player with very interested should be first choice due to player assignment")
-	}
+	// E2 first-choice checks focus on the CASE logic in queryFirstChoice:
+	// - "Veldig interessert" + assigned as player in a different event => FirstChoice should be true.
+	// - GM-only in a different event should NOT count as FirstChoice.
+	// - Any interest below "Veldig interessert" should NOT be FirstChoice, even if assigned elsewhere.
+	// - No assignment at all should NOT be FirstChoice.
+	t.Run("E2 first-choice rules", func(t *testing.T) {
+		if got[1].FirstChoice != true {
+			t.Errorf("player assigned to other event should be first choice")
+		}
+		if got[2].FirstChoice != false {
+			t.Errorf("gm assigned to other event should not be first choice")
+		}
+		if got[3].FirstChoice != false {
+			t.Errorf("not very interested should not be first choice")
+		}
+		if got[4].FirstChoice != false {
+			t.Errorf("no assignment should not be first choice")
+		}
+		if got[6].FirstChoice != true {
+			t.Errorf("gm+player with very interested should be first choice due to player assignment")
+		}
+		if got[7].FirstChoice != true {
+			t.Errorf("gm in one event and player in another should still be first choice")
+		}
+	})
 
 	interestsE3, getInterestsE3Err := GetInterestsForEvent("E3", db, logger)
 	if getInterestsE3Err != nil {
@@ -135,15 +156,23 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		gotE3[interest.BillettholderId] = interest
 	}
 
-	if _, ok := gotE3[6]; ok {
-		t.Fatalf("expected assigned-to-same-event billettholder to be excluded for E3")
-	}
-	if gotE3[1].FirstChoice != true {
-		t.Errorf("player assigned to other event should be first choice for E3")
-	}
-	if gotE3[2].FirstChoice != false {
-		t.Errorf("gm assigned to other event should not be first choice for E3")
-	}
+	// E3 inclusion check confirms assignments to the same event do not filter interests out.
+	t.Run("E3 includes/excludes correct billettholders", func(t *testing.T) {
+		if _, ok := gotE3[6]; !ok {
+			t.Fatalf("expected assigned-to-same-event billettholder to be returned for E3")
+		}
+	})
+
+	// E3 first-choice checks re-run the same CASE rules against a different event to confirm
+	// the logic is not accidentally tied to E2-only data setup.
+	t.Run("E3 first-choice rules", func(t *testing.T) {
+		if gotE3[1].FirstChoice != true {
+			t.Errorf("player assigned to other event should be first choice for E3")
+		}
+		if gotE3[2].FirstChoice != false {
+			t.Errorf("gm assigned to other event should not be first choice for E3")
+		}
+	})
 
 	interestsE4, getInterestsE4Err := GetInterestsForEvent("E4", db, logger)
 	if getInterestsE4Err != nil {
@@ -155,15 +184,19 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		gotE4[interest.BillettholderId] = interest
 	}
 
-	if gotE4[1].FirstChoice != true {
-		t.Errorf("player assigned to other event should be first choice for E4")
-	}
-	if gotE4[2].FirstChoice != false {
-		t.Errorf("gm assigned to other event should not be first choice for E4")
-	}
-	if gotE4[4].FirstChoice != false {
-		t.Errorf("no assignment should not be first choice for E4")
-	}
+	// E4 first-choice checks cover an interest mix with an explicit "no assignment" case to ensure
+	// the FirstChoice flag remains false when the participant has no cross-event player assignment.
+	t.Run("E4 first-choice rules", func(t *testing.T) {
+		if gotE4[1].FirstChoice != true {
+			t.Errorf("player assigned to other event should be first choice for E4")
+		}
+		if gotE4[2].FirstChoice != false {
+			t.Errorf("gm assigned to other event should not be first choice for E4")
+		}
+		if gotE4[4].FirstChoice != false {
+			t.Errorf("no assignment should not be first choice for E4")
+		}
+	})
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
