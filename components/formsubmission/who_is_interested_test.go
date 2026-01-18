@@ -7,6 +7,26 @@ import (
 	"github.com/Regncon/conorganizer/testutil"
 )
 
+const (
+	eventE1 = "E1"
+	eventE2 = "E2"
+	eventE3 = "E3"
+	eventE4 = "E4"
+
+	puljeP1 = "P1"
+	puljeP2 = "P2"
+	puljeP3 = "P3"
+	puljeP4 = "P4"
+
+	idPlayerAssigned             = 1
+	idGMAssigned                 = 2
+	idNotVeryInterested          = 3
+	idUnassigned                 = 4
+	idSameEventAssignee          = 5
+	idGMPlayer                   = 6
+	idGMAndPlayerDifferentEvents = 7
+)
+
 func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	db, logger, createDBErr := testutil.CreateTemporaryDBAndLogger("test_first_choice", t)
 	if createDBErr != nil {
@@ -15,42 +35,19 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	defer db.Close()
 
 	seedBaseTables(t, db)
-	seedBillettholdere(t, db, []billettholderFixture{
-		{id: 1, firstName: "Player", lastName: "One"},
-		{id: 2, firstName: "GM", lastName: "Two"},
-		{id: 3, firstName: "NotVery", lastName: "Three"},
-		{id: 4, firstName: "NoAssign", lastName: "Four"},
-		{id: 5, firstName: "SameEvent", lastName: "Five"},
-		{id: 6, firstName: "GMPlayer", lastName: "Six"},
-		{id: 7, firstName: "GMAndPlayer", lastName: "Seven"},
-	})
-	seedInterests(t, db, []interestFixture{
-		{billettholderID: 1, eventID: "E2", puljeID: "P2", interestLevel: "Veldig interessert"},
-		{billettholderID: 2, eventID: "E2", puljeID: "P2", interestLevel: "Veldig interessert"},
-		{billettholderID: 3, eventID: "E2", puljeID: "P2", interestLevel: "Interessert"},
-		{billettholderID: 4, eventID: "E2", puljeID: "P2", interestLevel: "Litt interessert"},
-		{billettholderID: 5, eventID: "E2", puljeID: "P2", interestLevel: "Veldig interessert"},
-		{billettholderID: 6, eventID: "E2", puljeID: "P2", interestLevel: "Veldig interessert"},
-		{billettholderID: 7, eventID: "E2", puljeID: "P2", interestLevel: "Veldig interessert"},
-		{billettholderID: 1, eventID: "E3", puljeID: "P3", interestLevel: "Veldig interessert"},
-		{billettholderID: 2, eventID: "E3", puljeID: "P3", interestLevel: "Veldig interessert"},
-		{billettholderID: 6, eventID: "E3", puljeID: "P3", interestLevel: "Veldig interessert"},
-		{billettholderID: 1, eventID: "E4", puljeID: "P4", interestLevel: "Veldig interessert"},
-		{billettholderID: 2, eventID: "E4", puljeID: "P4", interestLevel: "Veldig interessert"},
-		{billettholderID: 4, eventID: "E4", puljeID: "P4", interestLevel: "Ikkje interessert"},
-	})
-	seedAssignments(t, db, []assignmentFixture{
-		{eventID: "E1", puljeID: "P1", billettholderID: 1, isPlayer: 1, isGM: 0},
-		{eventID: "E1", puljeID: "P1", billettholderID: 2, isPlayer: 0, isGM: 1},
-		{eventID: "E1", puljeID: "P1", billettholderID: 3, isPlayer: 1, isGM: 0},
-		{eventID: "E2", puljeID: "P2", billettholderID: 5, isPlayer: 1, isGM: 0},
-		{eventID: "E1", puljeID: "P1", billettholderID: 6, isPlayer: 0, isGM: 1},
-		{eventID: "E3", puljeID: "P3", billettholderID: 6, isPlayer: 1, isGM: 0},
-		{eventID: "E1", puljeID: "P1", billettholderID: 7, isPlayer: 0, isGM: 1},
-		{eventID: "E4", puljeID: "P4", billettholderID: 7, isPlayer: 1, isGM: 0},
-	})
+	seedBillettholdere(t, db, append(
+		playerFixtures(),
+		gmFixtures()...,
+	))
+	seedInterests(t, db, append(
+		interestsForE2(),
+		append(interestsForE3(), interestsForE4()...)...,
+	))
+	assignmentRows := append(assignmentsE1(), assignmentsE2()...)
+	assignmentRows = append(assignmentRows, assignmentsE3()...)
+	seedAssignments(t, db, assignmentRows)
 
-	interests, getInterestsErr := GetInterestsForEvent("E2", db, logger)
+	interests, getInterestsErr := GetInterestsForEvent(eventE2, db, logger)
 	if getInterestsErr != nil {
 		t.Fatalf("GetInterestsForEvent error: %v", getInterestsErr)
 	}
@@ -60,35 +57,13 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	// E2 inclusion checks confirm interests are listed even if the player is already assigned
 	// to the same event; assignment should only affect FirstChoice, not filtering.
 	t.Run("E2 includes/excludes correct billettholders", func(t *testing.T) {
-		sameEventAssigneeID := 5
-		playerAssignedID := 1
-		gmAssignedID := 2
-		notVeryInterestedID := 3
-		unassignedID := 4
-		gmPlayerID := 6
-		gmAndPlayerDifferentEventsID := 7
-
-		if _, ok := got[sameEventAssigneeID]; !ok {
-			t.Fatalf("expected assigned-to-same-event billettholder to be returned")
-		}
-		if _, ok := got[playerAssignedID]; !ok {
-			t.Fatalf("expected player-assigned billettholder to be returned")
-		}
-		if _, ok := got[gmAssignedID]; !ok {
-			t.Fatalf("expected gm-assigned billettholder to be returned")
-		}
-		if _, ok := got[notVeryInterestedID]; !ok {
-			t.Fatalf("expected not-very-interested billettholder to be returned")
-		}
-		if _, ok := got[unassignedID]; !ok {
-			t.Fatalf("expected unassigned billettholder to be returned")
-		}
-		if _, ok := got[gmPlayerID]; !ok {
-			t.Fatalf("expected gm+player billettholder to be returned")
-		}
-		if _, ok := got[gmAndPlayerDifferentEventsID]; !ok {
-			t.Fatalf("expected gm+player (different events) billettholder to be returned")
-		}
+		expectPresent(t, got, idSameEventAssignee, "expected assigned-to-same-event billettholder to be returned")
+		expectPresent(t, got, idPlayerAssigned, "expected player-assigned billettholder to be returned")
+		expectPresent(t, got, idGMAssigned, "expected gm-assigned billettholder to be returned")
+		expectPresent(t, got, idNotVeryInterested, "expected not-very-interested billettholder to be returned")
+		expectPresent(t, got, idUnassigned, "expected unassigned billettholder to be returned")
+		expectPresent(t, got, idGMPlayer, "expected gm+player billettholder to be returned")
+		expectPresent(t, got, idGMAndPlayerDifferentEvents, "expected gm+player (different events) billettholder to be returned")
 	})
 
 	// E2 first-choice checks focus on the CASE logic in queryFirstChoice:
@@ -97,34 +72,19 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	// - Any interest below "Veldig interessert" should NOT be FirstChoice, even if assigned elsewhere.
 	// - No assignment at all should NOT be FirstChoice.
 	t.Run("E2 first-choice rules", func(t *testing.T) {
-		playerAssignedID := 1
-		gmAssignedID := 2
-		notVeryInterestedID := 3
-		unassignedID := 4
-		gmPlayerID := 6
-		gmAndPlayerDifferentEventsID := 7
-
-		if got[playerAssignedID].FirstChoice != true {
-			t.Errorf("player assigned to other event should be first choice")
-		}
-		if got[gmAssignedID].FirstChoice != false {
-			t.Errorf("gm assigned to other event should not be first choice")
-		}
-		if got[notVeryInterestedID].FirstChoice != false {
-			t.Errorf("not very interested should not be first choice")
-		}
-		if got[unassignedID].FirstChoice != false {
-			t.Errorf("no assignment should not be first choice")
-		}
-		if got[gmPlayerID].FirstChoice != true {
-			t.Errorf("gm+player with very interested should be first choice due to player assignment")
-		}
-		if got[gmAndPlayerDifferentEventsID].FirstChoice != true {
-			t.Errorf("gm in one event and player in another should still be first choice")
+		for _, tc := range []firstChoiceCase{
+			{id: idPlayerAssigned, want: true, name: "player assigned to other event"},
+			{id: idGMAssigned, want: false, name: "gm assigned to other event"},
+			{id: idNotVeryInterested, want: false, name: "not very interested"},
+			{id: idUnassigned, want: false, name: "no assignment"},
+			{id: idGMPlayer, want: true, name: "gm+player with very interested"},
+			{id: idGMAndPlayerDifferentEvents, want: true, name: "gm in one event and player in another"},
+		} {
+			expectFirstChoice(t, got, tc)
 		}
 	})
 
-	interestsE3, getInterestsE3Err := GetInterestsForEvent("E3", db, logger)
+	interestsE3, getInterestsE3Err := GetInterestsForEvent(eventE3, db, logger)
 	if getInterestsE3Err != nil {
 		t.Fatalf("GetInterestsForEvent E3 error: %v", getInterestsE3Err)
 	}
@@ -133,27 +93,21 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 
 	// E3 inclusion check confirms assignments to the same event do not filter interests out.
 	t.Run("E3 includes/excludes correct billettholders", func(t *testing.T) {
-		sameEventAssigneeID := 6
-		if _, ok := gotE3[sameEventAssigneeID]; !ok {
-			t.Fatalf("expected assigned-to-same-event billettholder to be returned for E3")
-		}
+		expectPresent(t, gotE3, idGMPlayer, "expected assigned-to-same-event billettholder to be returned for E3")
 	})
 
 	// E3 first-choice checks re-run the same CASE rules against a different event to confirm
 	// the logic is not accidentally tied to E2-only data setup.
 	t.Run("E3 first-choice rules", func(t *testing.T) {
-		playerAssignedID := 1
-		gmAssignedID := 2
-
-		if gotE3[playerAssignedID].FirstChoice != true {
-			t.Errorf("player assigned to other event should be first choice for E3")
-		}
-		if gotE3[gmAssignedID].FirstChoice != false {
-			t.Errorf("gm assigned to other event should not be first choice for E3")
+		for _, tc := range []firstChoiceCase{
+			{id: idPlayerAssigned, want: true, name: "player assigned to other event"},
+			{id: idGMAssigned, want: false, name: "gm assigned to other event"},
+		} {
+			expectFirstChoice(t, gotE3, tc)
 		}
 	})
 
-	interestsE4, getInterestsE4Err := GetInterestsForEvent("E4", db, logger)
+	interestsE4, getInterestsE4Err := GetInterestsForEvent(eventE4, db, logger)
 	if getInterestsE4Err != nil {
 		t.Fatalf("GetInterestsForEvent E4 error: %v", getInterestsE4Err)
 	}
@@ -163,20 +117,20 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	// E4 first-choice checks cover an interest mix with an explicit "no assignment" case to ensure
 	// the FirstChoice flag remains false when the participant has no cross-event player assignment.
 	t.Run("E4 first-choice rules", func(t *testing.T) {
-		playerAssignedID := 1
-		gmAssignedID := 2
-		unassignedID := 4
-
-		if gotE4[playerAssignedID].FirstChoice != true {
-			t.Errorf("player assigned to other event should be first choice for E4")
-		}
-		if gotE4[gmAssignedID].FirstChoice != false {
-			t.Errorf("gm assigned to other event should not be first choice for E4")
-		}
-		if gotE4[unassignedID].FirstChoice != false {
-			t.Errorf("no assignment should not be first choice for E4")
+		for _, tc := range []firstChoiceCase{
+			{id: idPlayerAssigned, want: true, name: "player assigned to other event"},
+			{id: idGMAssigned, want: false, name: "gm assigned to other event"},
+			{id: idUnassigned, want: false, name: "no assignment"},
+		} {
+			expectFirstChoice(t, gotE4, tc)
 		}
 	})
+}
+
+type firstChoiceCase struct {
+	id   int
+	want bool
+	name string
 }
 
 type billettholderFixture struct {
@@ -239,6 +193,74 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 	`)
 }
 
+func playerFixtures() []billettholderFixture {
+	return []billettholderFixture{
+		{id: idPlayerAssigned, firstName: "Player", lastName: "One"},
+		{id: idNotVeryInterested, firstName: "NotVery", lastName: "Three"},
+		{id: idUnassigned, firstName: "NoAssign", lastName: "Four"},
+		{id: idSameEventAssignee, firstName: "SameEvent", lastName: "Five"},
+	}
+}
+
+func gmFixtures() []billettholderFixture {
+	return []billettholderFixture{
+		{id: idGMAssigned, firstName: "GM", lastName: "Two"},
+		{id: idGMPlayer, firstName: "GMPlayer", lastName: "Six"},
+		{id: idGMAndPlayerDifferentEvents, firstName: "GMAndPlayer", lastName: "Seven"},
+	}
+}
+
+func interestsForE2() []interestFixture {
+	return []interestFixture{
+		{billettholderID: idPlayerAssigned, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
+		{billettholderID: idGMAssigned, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
+		{billettholderID: idNotVeryInterested, eventID: eventE2, puljeID: puljeP2, interestLevel: "Interessert"},
+		{billettholderID: idUnassigned, eventID: eventE2, puljeID: puljeP2, interestLevel: "Litt interessert"},
+		{billettholderID: idSameEventAssignee, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
+		{billettholderID: idGMPlayer, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
+		{billettholderID: idGMAndPlayerDifferentEvents, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
+	}
+}
+
+func interestsForE3() []interestFixture {
+	return []interestFixture{
+		{billettholderID: idPlayerAssigned, eventID: eventE3, puljeID: puljeP3, interestLevel: "Veldig interessert"},
+		{billettholderID: idGMAssigned, eventID: eventE3, puljeID: puljeP3, interestLevel: "Veldig interessert"},
+		{billettholderID: idGMPlayer, eventID: eventE3, puljeID: puljeP3, interestLevel: "Veldig interessert"},
+	}
+}
+
+func interestsForE4() []interestFixture {
+	return []interestFixture{
+		{billettholderID: idPlayerAssigned, eventID: eventE4, puljeID: puljeP4, interestLevel: "Veldig interessert"},
+		{billettholderID: idGMAssigned, eventID: eventE4, puljeID: puljeP4, interestLevel: "Veldig interessert"},
+		{billettholderID: idUnassigned, eventID: eventE4, puljeID: puljeP4, interestLevel: "Ikkje interessert"},
+	}
+}
+
+func assignmentsE1() []assignmentFixture {
+	return []assignmentFixture{
+		{eventID: eventE1, puljeID: puljeP1, billettholderID: idPlayerAssigned, isPlayer: 1, isGM: 0},
+		{eventID: eventE1, puljeID: puljeP1, billettholderID: idGMAssigned, isPlayer: 0, isGM: 1},
+		{eventID: eventE1, puljeID: puljeP1, billettholderID: idNotVeryInterested, isPlayer: 1, isGM: 0},
+		{eventID: eventE1, puljeID: puljeP1, billettholderID: idGMPlayer, isPlayer: 0, isGM: 1},
+		{eventID: eventE1, puljeID: puljeP1, billettholderID: idGMAndPlayerDifferentEvents, isPlayer: 0, isGM: 1},
+	}
+}
+
+func assignmentsE2() []assignmentFixture {
+	return []assignmentFixture{
+		{eventID: eventE2, puljeID: puljeP2, billettholderID: idSameEventAssignee, isPlayer: 1, isGM: 0},
+	}
+}
+
+func assignmentsE3() []assignmentFixture {
+	return []assignmentFixture{
+		{eventID: eventE3, puljeID: puljeP3, billettholderID: idGMPlayer, isPlayer: 1, isGM: 0},
+		{eventID: eventE4, puljeID: puljeP4, billettholderID: idGMAndPlayerDifferentEvents, isPlayer: 1, isGM: 0},
+	}
+}
+
 func seedBillettholdere(t *testing.T, db *sql.DB, rows []billettholderFixture) {
 	t.Helper()
 
@@ -274,6 +296,20 @@ func seedAssignments(t *testing.T, db *sql.DB, rows []assignmentFixture) {
 				event_id, pulje_id, billettholder_id, is_player, is_gm
 			) VALUES (?, ?, ?, ?, ?)
 		`, row.eventID, row.puljeID, row.billettholderID, row.isPlayer, row.isGM)
+	}
+}
+
+func expectPresent(t *testing.T, got map[int]InterestWithHolder, id int, message string) {
+	t.Helper()
+	if _, ok := got[id]; !ok {
+		t.Fatal(message)
+	}
+}
+
+func expectFirstChoice(t *testing.T, got map[int]InterestWithHolder, tc firstChoiceCase) {
+	t.Helper()
+	if got[tc.id].FirstChoice != tc.want {
+		t.Errorf("%s should be first choice = %v", tc.name, tc.want)
 	}
 }
 
