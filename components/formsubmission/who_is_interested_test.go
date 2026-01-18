@@ -27,6 +27,12 @@ const (
 	idGMAndPlayerDifferentEvents = 7
 )
 
+// FirstChoice rules:
+// - The event you were assigned to does not mark you as FirstChoice there because you are
+//   already placed; the flag only becomes meaningful when you appear in other event interest lists.
+// - GM status alone never sets FirstChoice; only player assignments do, and GM-only involvement
+//   should never show you as FirstChoice.
+
 func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	db, logger, createDBErr := testutil.CreateTemporaryDBAndLogger("test_first_choice", t)
 	if createDBErr != nil {
