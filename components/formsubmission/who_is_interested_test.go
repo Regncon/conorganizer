@@ -14,75 +14,41 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	}
 	defer db.Close()
 
-	mustExec(t, db, `INSERT INTO event_statuses(status) VALUES ('Godkjent')`)
-	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES ('Other')`)
-	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES ('Default')`)
-	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES ('Normal')`)
-	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES ('Veldig interessert'), ('Interessert'), ('Litt interessert'), ('Ikkje interessert')`)
-	mustExec(t, db, `
-		INSERT INTO puljer (
-			id, name, is_closed, is_published, start_time, end_time
-		) VALUES
-			('P1', 'Friday', 0, 1, '2025-10-03', '2025-10-03'),
-			('P2', 'SaturdayMorning', 0, 1, '2025-10-04', '2025-10-04'),
-			('P3', 'SaturdayEvening', 0, 1, '2025-10-04', '2025-10-04'),
-			('P4', 'Sunday', 0, 1, '2025-10-05', '2025-10-05')
-	`)
-	mustExec(t, db, `
-		INSERT INTO events (
-			id, title, intro, description, image_url, system, event_type,
-			age_group, event_runtime, host_name, email, phone_number,
-			pulje_name, max_players, beginner_friendly, can_be_run_in_english,
-			status
-		) VALUES
-			('E1','Event 1','intro','desc','', '', 'Other','Default','Normal','Host 1','h1@test.no','11111111','Friday',4,1,1,'Godkjent'),
-			('E2','Event 2','intro','desc','', '', 'Other','Default','Normal','Host 2','h2@test.no','22222222','SaturdayMorning',4,1,1,'Godkjent'),
-			('E3','Event 3','intro','desc','', '', 'Other','Default','Normal','Host 3','h3@test.no','33333333','SaturdayEvening',4,1,1,'Godkjent'),
-			('E4','Event 4','intro','desc','', '', 'Other','Default','Normal','Host 4','h4@test.no','44444444','Sunday',4,1,1,'Godkjent')
-	`)
-	mustExec(t, db, `
-		INSERT INTO billettholdere (
-			id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
-		) VALUES
-			(1,'Player','One',1,'Test',1,1001,2001),
-			(2,'GM','Two',1,'Test',1,1002,2002),
-			(3,'NotVery','Three',1,'Test',1,1003,2003),
-			(4,'NoAssign','Four',1,'Test',1,1004,2004),
-			(5,'SameEvent','Five',1,'Test',1,1005,2005),
-			(6,'GMPlayer','Six',1,'Test',1,1006,2006),
-			(7,'GMAndPlayer','Seven',1,'Test',1,1007,2007)
-	`)
-	mustExec(t, db, `
-		INSERT INTO interests (
-			billettholder_id, event_id, pulje_id, interest_level
-		) VALUES
-			(1,'E2','P2','Veldig interessert'),
-			(2,'E2','P2','Veldig interessert'),
-			(3,'E2','P2','Interessert'),
-			(4,'E2','P2','Litt interessert'),
-			(5,'E2','P2','Veldig interessert'),
-			(6,'E2','P2','Veldig interessert'),
-			(7,'E2','P2','Veldig interessert'),
-			(1,'E3','P3','Veldig interessert'),
-			(2,'E3','P3','Veldig interessert'),
-			(6,'E3','P3','Veldig interessert'),
-			(1,'E4','P4','Veldig interessert'),
-			(2,'E4','P4','Veldig interessert'),
-			(4,'E4','P4','Ikkje interessert')
-	`)
-	mustExec(t, db, `
-		INSERT INTO events_players (
-			event_id, pulje_id, billettholder_id, is_player, is_gm
-		) VALUES
-			('E1','P1',1,1,0),
-			('E1','P1',2,0,1),
-			('E1','P1',3,1,0),
-			('E2','P2',5,1,0),
-			('E1','P1',6,0,1),
-			('E3','P3',6,1,0),
-			('E1','P1',7,0,1),
-			('E4','P4',7,1,0)
-	`)
+	seedBaseTables(t, db)
+	seedBillettholdere(t, db, []billettholderFixture{
+		{id: 1, firstName: "Player", lastName: "One"},
+		{id: 2, firstName: "GM", lastName: "Two"},
+		{id: 3, firstName: "NotVery", lastName: "Three"},
+		{id: 4, firstName: "NoAssign", lastName: "Four"},
+		{id: 5, firstName: "SameEvent", lastName: "Five"},
+		{id: 6, firstName: "GMPlayer", lastName: "Six"},
+		{id: 7, firstName: "GMAndPlayer", lastName: "Seven"},
+	})
+	seedInterests(t, db, []interestFixture{
+		{billettholderID: 1, eventID: "E2", puljeID: "P2", interestLevel: "Veldig interessert"},
+		{billettholderID: 2, eventID: "E2", puljeID: "P2", interestLevel: "Veldig interessert"},
+		{billettholderID: 3, eventID: "E2", puljeID: "P2", interestLevel: "Interessert"},
+		{billettholderID: 4, eventID: "E2", puljeID: "P2", interestLevel: "Litt interessert"},
+		{billettholderID: 5, eventID: "E2", puljeID: "P2", interestLevel: "Veldig interessert"},
+		{billettholderID: 6, eventID: "E2", puljeID: "P2", interestLevel: "Veldig interessert"},
+		{billettholderID: 7, eventID: "E2", puljeID: "P2", interestLevel: "Veldig interessert"},
+		{billettholderID: 1, eventID: "E3", puljeID: "P3", interestLevel: "Veldig interessert"},
+		{billettholderID: 2, eventID: "E3", puljeID: "P3", interestLevel: "Veldig interessert"},
+		{billettholderID: 6, eventID: "E3", puljeID: "P3", interestLevel: "Veldig interessert"},
+		{billettholderID: 1, eventID: "E4", puljeID: "P4", interestLevel: "Veldig interessert"},
+		{billettholderID: 2, eventID: "E4", puljeID: "P4", interestLevel: "Veldig interessert"},
+		{billettholderID: 4, eventID: "E4", puljeID: "P4", interestLevel: "Ikkje interessert"},
+	})
+	seedAssignments(t, db, []assignmentFixture{
+		{eventID: "E1", puljeID: "P1", billettholderID: 1, isPlayer: 1, isGM: 0},
+		{eventID: "E1", puljeID: "P1", billettholderID: 2, isPlayer: 0, isGM: 1},
+		{eventID: "E1", puljeID: "P1", billettholderID: 3, isPlayer: 1, isGM: 0},
+		{eventID: "E2", puljeID: "P2", billettholderID: 5, isPlayer: 1, isGM: 0},
+		{eventID: "E1", puljeID: "P1", billettholderID: 6, isPlayer: 0, isGM: 1},
+		{eventID: "E3", puljeID: "P3", billettholderID: 6, isPlayer: 1, isGM: 0},
+		{eventID: "E1", puljeID: "P1", billettholderID: 7, isPlayer: 0, isGM: 1},
+		{eventID: "E4", puljeID: "P4", billettholderID: 7, isPlayer: 1, isGM: 0},
+	})
 
 	interests, getInterestsErr := GetInterestsForEvent("E2", db, logger)
 	if getInterestsErr != nil {
@@ -197,6 +163,96 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			t.Errorf("no assignment should not be first choice for E4")
 		}
 	})
+}
+
+type billettholderFixture struct {
+	id        int
+	firstName string
+	lastName  string
+}
+
+type interestFixture struct {
+	billettholderID int
+	eventID         string
+	puljeID         string
+	interestLevel   string
+}
+
+type assignmentFixture struct {
+	eventID         string
+	puljeID         string
+	billettholderID int
+	isPlayer        int
+	isGM            int
+}
+
+func seedBaseTables(t *testing.T, db *sql.DB) {
+	t.Helper()
+
+	mustExec(t, db, `INSERT INTO event_statuses(status) VALUES ('Godkjent')`)
+	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES ('Other')`)
+	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES ('Default')`)
+	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES ('Normal')`)
+	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES ('Veldig interessert'), ('Interessert'), ('Litt interessert'), ('Ikkje interessert')`)
+	mustExec(t, db, `
+		INSERT INTO puljer (
+			id, name, is_closed, is_published, start_time, end_time
+		) VALUES
+			('P1', 'Friday', 0, 1, '2025-10-03', '2025-10-03'),
+			('P2', 'SaturdayMorning', 0, 1, '2025-10-04', '2025-10-04'),
+			('P3', 'SaturdayEvening', 0, 1, '2025-10-04', '2025-10-04'),
+			('P4', 'Sunday', 0, 1, '2025-10-05', '2025-10-05')
+	`)
+	mustExec(t, db, `
+		INSERT INTO events (
+			id, title, intro, description, image_url, system, event_type,
+			age_group, event_runtime, host_name, email, phone_number,
+			pulje_name, max_players, beginner_friendly, can_be_run_in_english,
+			status
+		) VALUES
+			('E1','Event 1','intro','desc','', '', 'Other','Default','Normal','Host 1','h1@test.no','11111111','Friday',4,1,1,'Godkjent'),
+			('E2','Event 2','intro','desc','', '', 'Other','Default','Normal','Host 2','h2@test.no','22222222','SaturdayMorning',4,1,1,'Godkjent'),
+			('E3','Event 3','intro','desc','', '', 'Other','Default','Normal','Host 3','h3@test.no','33333333','SaturdayEvening',4,1,1,'Godkjent'),
+			('E4','Event 4','intro','desc','', '', 'Other','Default','Normal','Host 4','h4@test.no','44444444','Sunday',4,1,1,'Godkjent')
+	`)
+}
+
+func seedBillettholdere(t *testing.T, db *sql.DB, rows []billettholderFixture) {
+	t.Helper()
+
+	for _, row := range rows {
+		orderID := 1000 + row.id
+		ticketID := 2000 + row.id
+		mustExec(t, db, `
+			INSERT INTO billettholdere (
+				id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
+			) VALUES (?, ?, ?, 1, 'Test', 1, ?, ?)
+		`, row.id, row.firstName, row.lastName, orderID, ticketID)
+	}
+}
+
+func seedInterests(t *testing.T, db *sql.DB, rows []interestFixture) {
+	t.Helper()
+
+	for _, row := range rows {
+		mustExec(t, db, `
+			INSERT INTO interests (
+				billettholder_id, event_id, pulje_id, interest_level
+			) VALUES (?, ?, ?, ?)
+		`, row.billettholderID, row.eventID, row.puljeID, row.interestLevel)
+	}
+}
+
+func seedAssignments(t *testing.T, db *sql.DB, rows []assignmentFixture) {
+	t.Helper()
+
+	for _, row := range rows {
+		mustExec(t, db, `
+			INSERT INTO events_players (
+				event_id, pulje_id, billettholder_id, is_player, is_gm
+			) VALUES (?, ?, ?, ?, ?)
+		`, row.eventID, row.puljeID, row.billettholderID, row.isPlayer, row.isGM)
+	}
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
