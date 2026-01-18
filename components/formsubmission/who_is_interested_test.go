@@ -55,10 +55,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		t.Fatalf("GetInterestsForEvent error: %v", getInterestsErr)
 	}
 
-	got := make(map[int]InterestWithHolder, len(interests))
-	for _, interest := range interests {
-		got[interest.BillettholderId] = interest
-	}
+	got := indexInterests(interests)
 
 	// E2 inclusion checks confirm interests are listed even if the player is already assigned
 	// to the same event; assignment should only affect FirstChoice, not filtering.
@@ -117,10 +114,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		t.Fatalf("GetInterestsForEvent E3 error: %v", getInterestsE3Err)
 	}
 
-	gotE3 := make(map[int]InterestWithHolder, len(interestsE3))
-	for _, interest := range interestsE3 {
-		gotE3[interest.BillettholderId] = interest
-	}
+	gotE3 := indexInterests(interestsE3)
 
 	// E3 inclusion check confirms assignments to the same event do not filter interests out.
 	t.Run("E3 includes/excludes correct billettholders", func(t *testing.T) {
@@ -145,10 +139,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		t.Fatalf("GetInterestsForEvent E4 error: %v", getInterestsE4Err)
 	}
 
-	gotE4 := make(map[int]InterestWithHolder, len(interestsE4))
-	for _, interest := range interestsE4 {
-		gotE4[interest.BillettholderId] = interest
-	}
+	gotE4 := indexInterests(interestsE4)
 
 	// E4 first-choice checks cover an interest mix with an explicit "no assignment" case to ensure
 	// the FirstChoice flag remains false when the participant has no cross-event player assignment.
@@ -184,6 +175,14 @@ type assignmentFixture struct {
 	billettholderID int
 	isPlayer        int
 	isGM            int
+}
+
+func indexInterests(interests []InterestWithHolder) map[int]InterestWithHolder {
+	index := make(map[int]InterestWithHolder, len(interests))
+	for _, interest := range interests {
+		index[interest.BillettholderId] = interest
+	}
+	return index
 }
 
 func seedBaseTables(t *testing.T, db *sql.DB) {
