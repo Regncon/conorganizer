@@ -46,12 +46,28 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		gmFixtures()...,
 	))
 	seedInterests(t, db, append(
-		interestsForE2(),
-		append(interestsForE3(), interestsForE4()...)...,
+		interestsForE1(),
+		append(interestsForE2(), append(interestsForE3(), interestsForE4()...)...)...,
 	))
 	assignmentRows := append(assignmentsE1(), assignmentsE2()...)
 	assignmentRows = append(assignmentRows, assignmentsE3()...)
 	seedAssignments(t, db, assignmentRows)
+
+	interestsE1, getInterestsE1Err := GetInterestsForEvent(eventE1, db, logger)
+	if getInterestsE1Err != nil {
+		t.Fatalf("GetInterestsForEvent E1 error: %v", getInterestsE1Err)
+	}
+
+	gotE1 := indexInterests(interestsE1)
+
+	// E1 first-choice check confirms the assigned event does not mark FirstChoice there.
+	t.Run("E1 first-choice rules", func(t *testing.T) {
+		for _, tc := range []firstChoiceCase{
+			{id: idPlayerAssigned, want: false, name: "player assigned in current event should not mark first choice here"},
+		} {
+			expectFirstChoice(t, gotE1, tc)
+		}
+	})
 
 	interests, getInterestsErr := GetInterestsForEvent(eventE2, db, logger)
 	if getInterestsErr != nil {
@@ -225,6 +241,12 @@ func interestsForE2() []interestFixture {
 		{billettholderID: idSameEventAssignee, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
 		{billettholderID: idGMPlayer, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
 		{billettholderID: idGMAndPlayerDifferentEvents, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
+	}
+}
+
+func interestsForE1() []interestFixture {
+	return []interestFixture{
+		{billettholderID: idPlayerAssigned, eventID: eventE1, puljeID: puljeP1, interestLevel: "Veldig interessert"},
 	}
 }
 
