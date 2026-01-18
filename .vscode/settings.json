@@ -60,6 +60,7 @@
         "strconv",
         "stringable",
         "tabindex",
+        "testutil",
         "ticketholder",
         "ticketholders",
         "tpope",
