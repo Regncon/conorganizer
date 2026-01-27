@@ -376,6 +376,51 @@ templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestW
 	@interestInPulje(eventId, puljeId, interests, true)
 }
 
+templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
+	<div>
+		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+		<form data-on-submit="@post('/admin/approval/api/events_players/post/add_gm', { 'contentType': 'form' })">
+			<label for="gm-search-label">S›k etter spiller som skal v‘re spilleder</label>
+			<input
+				list="gm-search"
+				id="gm-search-label"
+				placeholder="s›k etter spiller"
+				class="input"
+				required
+			/>
+			<datalist id="gm-search">
+				for _, billettholder := range billettholdere {
+					<option
+						name={ fmt.Sprintf("billettholder-%d", billettholder.Id) }
+						id={ fmt.Sprintf("billettholder-%d", billettholder.Id) }
+						value={ fmt.Sprintf("%s %s", billettholder.FirstName, billettholder.LastName) }
+					></option>
+				}
+			</datalist>
+			<button
+				type="submit"
+				class="btn btn--primary"
+			>
+				S›k
+			</button>
+		</form>
+	</div>
+}
+
+templ puljeSection(eventId string, title string, puljeId models.Pulje, interests []InterestWithHolder, assignees []InterestWithHolder, showGmForm bool, billettholdere []Billettholder) {
+	<article class="form-card">
+		<h2 style="margin-bottom:1rem;">{ title }</h2>
+		if showGmForm {
+			@gmPickerForm(eventId, puljeId, billettholdere)
+		} else {
+			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+		}
+		@playersInPulje(eventId, puljeId, assignees)
+		<h2 style="margin-bottom:1rem;">Who is interested?</h2>
+		@interestInPulje(eventId, puljeId, interests, false)
+	</article>
+}
+
 templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 	{{ interests, err := GetInterestsForEvent(eventId, db, logger) }}
 	{{ assignees, err := GetAssigneesForEvent(eventId, db, logger) }}
@@ -388,60 +433,10 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 			}
 			<h2>Spillere</h2>
 		</article>
-		<article class="form-card">
-			<h2 style="margin-bottom:1rem;">Fredag Kveld</h2>
-			<div>
-				<h2 style="margin-bottom:1rem;">Who is picked?</h2>
-				<form data-on-submit="@post('/admin/approval/api/events_players/post/add_gm', { 'contentType': 'form' })">
-					<label for="gm-search-label">Søk etter spiller som skal være spilleder</label>
-					<input
-						list="gm-search"
-						id="gm-search-label"
-						placeholder="søk etter spiller"
-						class="input"
-						required
-					/>
-					<datalist id="gm-search">
-						for _, billettholder := range billettholdere {
-							<option
-								name={ fmt.Sprintf("billettholder-%d", billettholder.Id) }
-								id={ fmt.Sprintf("billettholder-%d", billettholder.Id) }
-								value={ fmt.Sprintf("%s %s", billettholder.FirstName, billettholder.LastName) }
-							></option>
-						}
-					</datalist>
-					<button
-						type="submit"
-						class="btn btn--primary"
-					>
-						Søk
-					</button>
-				</form>
-			</div>
-			@playersInPulje(eventId, models.PuljeFredagKveld, assignees)
-			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
-			@interestInPulje(eventId, models.PuljeFredagKveld, interests, false)
-		</article>
-		<article class="form-card">
-			<h2 style="margin-bottom:1rem;">Lørdag Morgen</h2>
-			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
-			@playersInPulje(eventId, models.PuljeLordagMorgen, assignees)
-			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
-			@interestInPulje(eventId, models.PuljeLordagMorgen, interests, false)
-		</article>
-		<article class="form-card">
-			<h2 style="margin-bottom:1rem;">Lørdag Kveld</h2>
-			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
-			@playersInPulje(eventId, models.PuljeLordagKveld, assignees)
-			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
-			@interestInPulje(eventId, models.PuljeLordagKveld, interests, false)
-		</article>
-		<article class="form-card">
-			<h2 style="margin-bottom:1rem;">Søndag Morgen</h2>
-			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
-			@playersInPulje(eventId, models.PuljeSondagMorgen, assignees)
-			<h2 style="margin-bottom:1rem;">Who is interested?</h2>
-			@interestInPulje(eventId, models.PuljeSondagMorgen, interests, false)
-		</article>
+		@puljeSection(eventId, "Fredag Kveld", models.PuljeFredagKveld, interests, assignees, true, billettholdere)
+		@puljeSection(eventId, "L›rdag Morgen", models.PuljeLordagMorgen, interests, assignees, false, billettholdere)
+		@puljeSection(eventId, "L›rdag Kveld", models.PuljeLordagKveld, interests, assignees, false, billettholdere)
+		@puljeSection(eventId, "S›ndag Morgen", models.PuljeSondagMorgen, interests, assignees, false, billettholdere)
 	</div>
 }
+
