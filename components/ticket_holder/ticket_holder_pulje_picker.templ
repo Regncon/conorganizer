@@ -1,15 +1,15 @@
 package ticketholder
 
 import (
-	"fmt"
-	"log/slog"
 	"database/sql"
-    "github.com/Regncon/conorganizer/models"
-    "slices"
+	"fmt"
+	"github.com/Regncon/conorganizer/models"
+	"log/slog"
+	"slices"
 )
 
 templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger *slog.Logger) {
-    {{ puljer, _ := GetPuljerFromEventId(eventId, db, logger) }}
+	{{ puljer, _ := GetPuljerFromEventId(eventId, db, logger) }}
 	<style>
         .pulje-picker-container {
             padding-bottom: var(--responsive-pane-padding);
@@ -45,52 +45,55 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
             }
         }
     </style>
-    /* {{fmt.Println(puljer)}} */
-    if (len(puljer) > 1) {
-        <div class="pulje-picker-container">
-            <p class="label">Velg pulje for arrangementet</p>
-            <div class="pulje-wrapper">
-                <button
-                    class="btn btn--interest-picker"
-                    data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeFredagKveld)) }
-                    data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeFredagKveld)) }
-                    { addDisableAttr_pulje(puljer, models.PuljeFredagKveld) }
-                    >
-                    Fredag kveld
-                </button>
-                <button
-                    class="btn btn--interest-picker"
-                    data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeLordagMorgen)) }
-                    data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeLordagMorgen)) }
-                    { addDisableAttr_pulje(puljer, models.PuljeLordagMorgen) }
-                    >
-                    Lørdag morgen
-                </button>
-                <button
-                    class="btn btn--interest-picker"
-                    data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeLordagKveld)) }
-                    data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeLordagKveld)) }
-                    { addDisableAttr_pulje(puljer, models.PuljeLordagKveld) }
-                >
-                    Lørdag kveld
-                </button>
-                <button
-                    class="btn btn--interest-picker"
-                    data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeSondagMorgen)) }
-                    data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeSondagMorgen)) }
-                    { addDisableAttr_pulje(puljer, models.PuljeSondagMorgen) }
-                >
-                    Søndag morgen
-                </button>
-            </div>
-        </div>
-    }
+	if (len(puljer) > 1) {
+		<div class="pulje-picker-container">
+			<p class="label">Velg pulje for arrangementet</p>
+			<div class="pulje-wrapper">
+				<button
+					class="btn btn--interest-picker"
+					data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeFredagKveld)) }
+					data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeFredagKveld)) }
+					if isPuljeDisabled(puljer, models.PuljeFredagKveld) {
+						disabled
+					}
+				>
+					Fredag kveld
+				</button>
+				<button
+					class="btn btn--interest-picker"
+					data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeLordagMorgen)) }
+					data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeLordagMorgen)) }
+					if isPuljeDisabled(puljer, models.PuljeLordagMorgen) {
+						disabled
+					}
+				>
+					Lørdag morgen
+				</button>
+				<button
+					class="btn btn--interest-picker"
+					data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeLordagKveld)) }
+					data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeLordagKveld)) }
+					if isPuljeDisabled(puljer, models.PuljeLordagKveld) {
+						disabled
+					}
+				>
+					Lørdag kveld
+				</button>
+				<button
+					class="btn btn--interest-picker"
+					data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeSondagMorgen)) }
+					data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeSondagMorgen)) }
+					if isPuljeDisabled(puljer, models.PuljeSondagMorgen) {
+						disabled
+					}
+				>
+					Søndag morgen
+				</button>
+			</div>
+		</div>
+	}
 }
 
-func addDisableAttr_pulje(puljer []models.Pulje, currentPulje models.Pulje) string {
-    exists := slices.Contains(puljer, currentPulje)
-    if !exists {
-        return "disabled"
-    }
-    return ""
+func isPuljeDisabled(puljer []models.Pulje, currentPulje models.Pulje) bool {
+	return !slices.Contains(puljer, currentPulje)
 }
