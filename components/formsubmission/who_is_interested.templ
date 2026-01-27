@@ -380,14 +380,15 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 	<div>
 		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
 		<form data-on-submit="@post('/admin/approval/api/events_players/post/add_gm', { 'contentType': 'form' })">
-			<label for="gm-search-label">S›k etter spiller som skal v‘re spilleder</label>
+			<label for="gm-search-label">Søk etter spiller som skal være spilleder</label>
 			<input
 				list="gm-search"
 				id="gm-search-label"
-				placeholder="s›k etter spiller"
+				placeholder="søk etter spiller"
 				class="input"
 				required
 			/>
+			<div id="gm-search-results" class="gm-search-results" aria-live="polite"></div>
 			<datalist id="gm-search">
 				for _, billettholder := range billettholdere {
 					<option
@@ -397,11 +398,83 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 					></option>
 				}
 			</datalist>
+			<script>
+				(() => {
+					const input = document.getElementById("gm-search-label");
+					const results = document.getElementById("gm-search-results");
+					const options = Array.from(document.querySelectorAll("#gm-search option")).map((opt) => ({
+						id: opt.id,
+						label: opt.value,
+						norm: opt.value.toLowerCase(),
+					}));
+
+					const normalize = (value) => value.trim().toLowerCase();
+					const scoreOf = (name, query) => {
+						if (!query) return 0;
+						if (name === query) return 3;
+						if (name.startsWith(query)) return 2;
+						if (name.includes(query)) return 1;
+						return 0;
+					};
+
+					const highlight = (label, query) => {
+						if (!query) return label;
+						let out = label;
+						const parts = query.split(/\s+/).filter(Boolean);
+						for (const part of parts) {
+							const re = new RegExp(`(${part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})`, "ig");
+							out = out.replace(re, "<mark>$1</mark>");
+						}
+						return out;
+					};
+
+					const render = (query) => {
+						const norm = normalize(query);
+						if (!norm) {
+							results.innerHTML = "";
+							return;
+						}
+
+						const matches = options
+							.map((opt) => ({ ...opt, score: scoreOf(opt.norm, norm) }))
+							.filter((opt) => opt.score > 0)
+							.sort((a, b) => b.score - a.score || a.label.localeCompare(b.label))
+							.slice(0, 8);
+
+						if (matches.length === 0) {
+							results.innerHTML = "<div class=\"gm-search-empty\">No matches</div>";
+							return;
+						}
+
+						results.innerHTML = matches
+							.map(
+								(opt) =>
+									`<button type="button" class=" btn btn--outline gm-search-item" data-value="${opt.label}">${highlight(
+										opt.label,
+										norm
+									)}</button>`
+							)
+							.join("");
+					};
+
+					input.addEventListener("input", () => render(input.value));
+					results.addEventListener("click", (event) => {
+						const target = event.target;
+						if (!(target instanceof HTMLElement)) return;
+						const button = target.closest(".gm-search-item");
+						if (!button) return;
+						const value = button.getAttribute("data-value");
+						if (!value) return;
+						input.value = value;
+						results.innerHTML = "";
+					});
+				})();
+			</script>
 			<button
 				type="submit"
 				class="btn btn--primary"
 			>
-				S›k
+				Søk
 			</button>
 		</form>
 	</div>
@@ -434,9 +507,8 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 			<h2>Spillere</h2>
 		</article>
 		@puljeSection(eventId, "Fredag Kveld", models.PuljeFredagKveld, interests, assignees, true, billettholdere)
-		@puljeSection(eventId, "L›rdag Morgen", models.PuljeLordagMorgen, interests, assignees, false, billettholdere)
-		@puljeSection(eventId, "L›rdag Kveld", models.PuljeLordagKveld, interests, assignees, false, billettholdere)
-		@puljeSection(eventId, "S›ndag Morgen", models.PuljeSondagMorgen, interests, assignees, false, billettholdere)
+		@puljeSection(eventId, "Lørdag Morgen", models.PuljeLordagMorgen, interests, assignees, false, billettholdere)
+		@puljeSection(eventId, "Lørdag Kveld", models.PuljeLordagKveld, interests, assignees, false, billettholdere)
+		@puljeSection(eventId, "Søndag Morgen", models.PuljeSondagMorgen, interests, assignees, false, billettholdere)
 	</div>
 }
-
