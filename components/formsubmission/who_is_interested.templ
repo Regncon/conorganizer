@@ -381,7 +381,6 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 		<form data-on-submit="@post('/admin/approval/api/events_players/post/add_gm', { 'contentType': 'form' })">
 			<label for="gm-search-label">Søk etter spiller som skal være spilleder</label>
 			<input
-				list="gm-search"
 				id="gm-search-label"
 				placeholder="søk etter spiller"
 				class="input"
@@ -396,13 +395,18 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 			<div id="gm-search-results" class="gm-search-results" aria-live="polite"></div>
 			<script>
 				(() => {
+					const billettholdere = {{ billettholdere }};
+
 					const input = document.getElementById("gm-search-label");
 					const results = document.getElementById("gm-search-results");
-					const options = Array.from(document.querySelectorAll("#gm-search option")).map((opt) => ({
-						id: opt.id,
-						label: opt.value,
-						norm: opt.value.toLowerCase(),
-					}));
+					const options = billettholdere.map((billettholder) => {
+						const label = `${billettholder.FirstName} ${billettholder.LastName}`;
+						return {
+							id: billettholder.Id,
+							label,
+							norm: label.toLowerCase(),
+						};
+					});
 
 					const normalize = (value) => value.trim().toLowerCase();
 					const scoreOf = (name, query) => {
@@ -438,7 +442,7 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 							.slice(0, 8);
 
 						if (matches.length === 0) {
-							results.innerHTML = "<div class=\"gm-search-empty\">No matches</div>";
+							results.innerHTML = "<div class=\"gm-search-empty\">Ingen billettholdere funnet</div>";
 							return;
 						}
 
