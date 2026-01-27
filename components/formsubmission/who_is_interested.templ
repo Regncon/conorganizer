@@ -377,8 +377,7 @@ templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestW
 }
 
 templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
-	<div>
-		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+	<div class="gm-search-wrapper" style="margin-block-end: 2rem;">
 		<form data-on-submit="@post('/admin/approval/api/events_players/post/add_gm', { 'contentType': 'form' })">
 			<label for="gm-search-label">Søk etter spiller som skal være spilleder</label>
 			<input
@@ -388,16 +387,13 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 				class="input"
 				required
 			/>
+			<button
+				type="submit"
+				class="btn btn--primary"
+			>
+				Søk
+			</button>
 			<div id="gm-search-results" class="gm-search-results" aria-live="polite"></div>
-			<datalist id="gm-search">
-				for _, billettholder := range billettholdere {
-					<option
-						name={ fmt.Sprintf("billettholder-%d", billettholder.Id) }
-						id={ fmt.Sprintf("billettholder-%d", billettholder.Id) }
-						value={ fmt.Sprintf("%s %s", billettholder.FirstName, billettholder.LastName) }
-					></option>
-				}
-			</datalist>
 			<script>
 				(() => {
 					const input = document.getElementById("gm-search-label");
@@ -470,12 +466,6 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 					});
 				})();
 			</script>
-			<button
-				type="submit"
-				class="btn btn--primary"
-			>
-				Søk
-			</button>
 		</form>
 	</div>
 }
@@ -483,6 +473,7 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 templ puljeSection(eventId string, title string, puljeId models.Pulje, interests []InterestWithHolder, assignees []InterestWithHolder, showGmForm bool, billettholdere []Billettholder) {
 	<article class="form-card">
 		<h2 style="margin-bottom:1rem;">{ title }</h2>
+		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
 		if showGmForm {
 			@gmPickerForm(eventId, puljeId, billettholdere)
 		} else {
