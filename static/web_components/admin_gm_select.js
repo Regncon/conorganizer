@@ -401,9 +401,12 @@ class AdminGmSelect extends HTMLElement {
 
         const items = results.querySelectorAll(".gm-search-item")
         if (items.length > 0) {
-            event.preventDefault()
-            items[items.length - 1].focus()
-            return
+            const lastItem = items[items.length - 1]
+            if (lastItem instanceof HTMLElement) {
+                event.preventDefault()
+                lastItem.focus()
+                return
+            }
         }
         if (this.inputEl) {
             event.preventDefault()
