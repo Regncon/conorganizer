@@ -357,15 +357,26 @@ class AdminGmSelect extends HTMLElement {
      * @param {KeyboardEvent} event
      */
     handleResultsKeydown(event) {
-        if (event.key !== "Tab" || event.shiftKey) return
+        if (event.key !== "Tab") return
         const results = this.searchResultsEl
         if (!results || !this.submitButtonEl) return
 
         const items = results.querySelectorAll(".gm-search-item")
         if (items.length === 0) return
 
+        const firstItem = items[0]
         const lastItem = items[items.length - 1]
-        if (document.activeElement === lastItem) {
+        const active = document.activeElement
+
+        if (event.shiftKey) {
+            if (this.inputEl) {
+                event.preventDefault()
+                this.inputEl.focus()
+            }
+            return
+        }
+
+        if (active === lastItem) {
             event.preventDefault()
             this.submitButtonEl.focus()
         }
