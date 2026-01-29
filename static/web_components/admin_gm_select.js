@@ -21,7 +21,7 @@ const normalize = (value) => value.trim().toLowerCase()
  * @param {string} query
  * @returns {number}
  */
-const scoreMatch = (name, query) => {
+const matchScore = (name, query) => {
     if (!query) return 0
     if (name === query) return 3
     if (name.startsWith(query)) return 2
@@ -84,7 +84,7 @@ const collectMatchRanges = (label, query) => {
  * @param {string} query
  * @returns {DocumentFragment}
  */
-const buildHighlight = (label, query) => {
+const renderHighlightFragment = (label, query) => {
     const fragment = document.createDocumentFragment()
     const ranges = collectMatchRanges(label, query)
 
@@ -138,7 +138,7 @@ class AdminGmSelect extends HTMLElement {
         super()
 
         /** @type {Array<{id:number, label:string, norm:string}>} */
-        this.options = []
+        this.searchOptions = []
 
         /** @type {Array<{Id:number, FirstName:string, LastName:string}>} */
         this._billettholdere = []
@@ -147,8 +147,8 @@ class AdminGmSelect extends HTMLElement {
         this.handleInput = this.handleInput.bind(this)
         this.handleClick = this.handleClick.bind(this)
         this.handleInputKeydown = this.handleInputKeydown.bind(this)
-        this.handleResultsKeydown = this.handleResultsKeydown.bind(this)
-        this.handleSubmitKeydown = this.handleSubmitKeydown.bind(this)
+        this.handleResultsTab = this.handleResultsTab.bind(this)
+        this.handleSubmitTab = this.handleSubmitTab.bind(this)
     }
 
     /**
@@ -175,9 +175,9 @@ class AdminGmSelect extends HTMLElement {
         if (!this.inputEl || !this.searchResultsEl) return
         this.inputEl.removeEventListener("input", this.handleInput)
         this.inputEl.removeEventListener("keydown", this.handleInputKeydown)
-        this.searchResultsEl.removeEventListener("keydown", this.handleResultsKeydown)
+        this.searchResultsEl.removeEventListener("keydown", this.handleResultsTab)
         this.searchResultsEl.removeEventListener("click", this.handleClick)
-        this.submitButtonEl?.removeEventListener("keydown", this.handleSubmitKeydown)
+        this.submitButtonEl?.removeEventListener("keydown", this.handleSubmitTab)
     }
 
     /**
@@ -230,7 +230,7 @@ class AdminGmSelect extends HTMLElement {
      * Build searchable options from billettholder data.
      */
     _setOptions() {
-        this.options = (this._billettholdere || []).map((billettholder) => {
+        this.searchOptions = (this._billettholdere || []).map((billettholder) => {
             const label = `${ billettholder.FirstName } ${ billettholder.LastName }`
             return {
                 id: billettholder.Id,
@@ -286,9 +286,9 @@ class AdminGmSelect extends HTMLElement {
     _bind() {
         this.inputEl?.addEventListener("input", this.handleInput)
         this.inputEl?.addEventListener("keydown", this.handleInputKeydown)
-        this.searchResultsEl?.addEventListener("keydown", this.handleResultsKeydown)
+        this.searchResultsEl?.addEventListener("keydown", this.handleResultsTab)
         this.searchResultsEl?.addEventListener("click", this.handleClick)
-        this.submitButtonEl?.addEventListener("keydown", this.handleSubmitKeydown)
+        this.submitButtonEl?.addEventListener("keydown", this.handleSubmitTab)
     }
 
     /**
@@ -301,8 +301,8 @@ class AdminGmSelect extends HTMLElement {
         this.searchResultsEl?.replaceChildren()
         if (!norm) return
 
-        const matches = this.options
-            .map((opt) => ({ ...opt, score: scoreMatch(opt.norm, norm) }))
+        const matches = this.searchOptions
+            .map((opt) => ({ ...opt, score: matchScore(opt.norm, norm) }))
             .filter((opt) => opt.score > 0)
             // @ts-ignore
             .toSorted((a, b) => b.score - a.score || a.label.localeCompare(b.label))
@@ -324,7 +324,7 @@ class AdminGmSelect extends HTMLElement {
             button.classList.add("btn", "btn--outline", "gm-search-item")
             button.dataset.value = opt.label
             button.dataset.id = String(opt.id)
-            button.append(buildHighlight(opt.label, norm))
+            button.append(renderHighlightFragment(opt.label, norm))
             fragment.append(button)
         }
 
@@ -355,7 +355,7 @@ class AdminGmSelect extends HTMLElement {
      * Move from the last result to the submit button on Tab.
      * @param {KeyboardEvent} event
      */
-    handleResultsKeydown(event) {
+    handleResultsTab(event) {
         if (event.key !== "Tab") return
         const results = this.searchResultsEl
         if (!results || !this.submitButtonEl) return
@@ -384,7 +384,7 @@ class AdminGmSelect extends HTMLElement {
      * Move backward from submit to last result (or input) on Shift+Tab.
      * @param {KeyboardEvent} event
      */
-    handleSubmitKeydown(event) {
+    handleSubmitTab(event) {
         if (event.key !== "Tab") return
         if (!event.shiftKey) {
             event.preventDefault()
