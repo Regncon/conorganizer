@@ -324,13 +324,13 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 						<button
 							class="btn btn--outline button-size"
 							if isAssigned && interest.IsGamemaster {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
 							}
 							if isAssigned && !interest.IsGamemaster {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
 							}
 							if !isAssigned {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
 							}
 						>
 							if isAssigned && interest.IsGamemaster {
@@ -346,13 +346,13 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 						<button
 							class="btn btn--outline button-size"
 							if isAssigned && !interest.IsGamemaster {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
 							}
 							if isAssigned && interest.IsGamemaster {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
 							}
 							if !isAssigned {
-								data-on-click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
 							}
 						>
 							if isAssigned && !interest.IsGamemaster {
@@ -378,7 +378,7 @@ templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestW
 
 templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
 	<div class="gm-search-wrapper" style="margin-block-end: 2rem;">
-		<form data-on-submit="@post('/admin/approval/api/events_players/post/add_gm', { 'contentType': 'form' })">
+		<form data-on:submit="@post('/admin/approval/api/events_players/post/add_gm', { 'contentType': 'form' })">
 			<label for="gm-search-label">Søk etter spiller som skal være spilleder</label>
 			<input
 				id="gm-search-label"
