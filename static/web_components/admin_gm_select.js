@@ -246,7 +246,7 @@ class AdminGmSelect extends HTMLElement {
      * Render the light DOM structure so page styles apply.
      */
     _render() {
-        const labelText = this.getAttribute("label") || "Søk etter spiller som skal være spilleder"
+        const labelText = this.getAttribute("label") || "Søk etter spiller som skal være spilleder: "
         const placeholder = this.getAttribute("placeholder") || "søk etter spiller"
         const submitLabel = this.getAttribute("submit-label") || "Legg til som GM"
         const inputId = this.getAttribute("input-id") || `gm-search-${ Math.random().toString(36).substring(2, 8) }`
@@ -267,10 +267,12 @@ class AdminGmSelect extends HTMLElement {
         const button = document.createElement("button")
         button.type = "submit"
         button.className = "btn btn--primary"
+        button.style.marginLeft = "var(--spacing-4x)"
         button.append(document.createTextNode(submitLabel))
 
         const results = document.createElement("div")
         results.className = "gm-search-results"
+        results.style.marginTop = "var(--spacing-4x)"
         results.setAttribute("aria-live", "polite")
 
         this.append(label, input, button, results)
