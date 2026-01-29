@@ -248,7 +248,7 @@ class AdminGmSelect extends HTMLElement {
     _render() {
         const labelText = this.getAttribute("label") || "Søk etter spiller som skal være spilleder"
         const placeholder = this.getAttribute("placeholder") || "søk etter spiller"
-        const submitLabel = this.getAttribute("submit-label") || "Lagre"
+        const submitLabel = this.getAttribute("submit-label") || "Legg til som GM"
         const inputId = this.getAttribute("input-id") || `gm-search-${ Math.random().toString(36).substring(2, 8) }`
 
         this.replaceChildren()
