@@ -259,6 +259,7 @@ class AdminGmSelect extends HTMLElement {
 
         const input = document.createElement("input")
         input.id = inputId
+        input.type = "search"
         input.placeholder = placeholder
         input.className = "input"
         input.required = true
