@@ -168,9 +168,9 @@ class AdminGmSelect extends HTMLElement {
      * Cleanup listeners when removed from the DOM.
      */
     disconnectedCallback() {
-        if (!this.inputEl || !this.resultsEl) return
+        if (!this.inputEl || !this.searchResultsEl) return
         this.inputEl.removeEventListener("input", this.handleInput)
-        this.resultsEl.removeEventListener("click", this.handleClick)
+        this.searchResultsEl.removeEventListener("click", this.handleClick)
     }
 
     /**
@@ -180,7 +180,7 @@ class AdminGmSelect extends HTMLElement {
     set billettholdere(value) {
         this._billettholdere = Array.isArray(value) ? value : []
         this._setOptions()
-        if (this.inputEl && this.resultsEl) {
+        if (this.inputEl && this.searchResultsEl) {
             this._renderMatches(this.inputEl.value)
         }
     }
@@ -205,7 +205,7 @@ class AdminGmSelect extends HTMLElement {
         if (name !== "data-billettholdere") return
         this._loadDataFromAttribute()
         this._setOptions()
-        if (this.inputEl && this.resultsEl) {
+        if (this.inputEl && this.searchResultsEl) {
             this._renderMatches(this.inputEl.value)
         }
     }
@@ -274,7 +274,7 @@ class AdminGmSelect extends HTMLElement {
         /** @type {HTMLInputElement} */
         this.inputEl = input
         /** @type {HTMLDivElement} */
-        this.resultsEl = results
+        this.searchResultsEl = results
     }
 
     /**
@@ -284,7 +284,7 @@ class AdminGmSelect extends HTMLElement {
 
         this.inputEl.addEventListener("input", this.handleInput)
 
-        this.resultsEl.addEventListener("click", this.handleClick)
+        this.searchResultsEl.addEventListener("click", this.handleClick)
     }
 
     /**
@@ -294,7 +294,7 @@ class AdminGmSelect extends HTMLElement {
     _renderMatches(query) {
         const norm = normalize(query || "")
 
-        this.resultsEl.replaceChildren()
+        this.searchResultsEl.replaceChildren()
         if (!norm) return
 
         const matches = this.options
@@ -308,7 +308,7 @@ class AdminGmSelect extends HTMLElement {
             empty.classList.add("gm-search-empty")
             empty.append(document.createTextNode("Ingen billettholdere funnet"))
 
-            this.resultsEl.append(empty)
+            this.searchResultsEl.append(empty)
             return
         }
 
@@ -323,7 +323,7 @@ class AdminGmSelect extends HTMLElement {
             fragment.append(button)
         }
 
-        this.resultsEl.append(fragment)
+        this.searchResultsEl.append(fragment)
     }
 
     /**
@@ -349,7 +349,7 @@ class AdminGmSelect extends HTMLElement {
 
         this.inputEl.value = value
 
-        this.resultsEl.replaceChildren()
+        this.searchResultsEl.replaceChildren()
         const id = button.getAttribute("data-id")
         if (id) {
             // Datastar listens to this event and updates signals via data-on:gm-select.
