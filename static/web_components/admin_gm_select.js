@@ -146,6 +146,9 @@ class AdminGmSelect extends HTMLElement {
 
         this.handleInput = this.handleInput.bind(this)
         this.handleClick = this.handleClick.bind(this)
+        this.handleInputKeydown = this.handleInputKeydown.bind(this)
+        this.handleResultsKeydown = this.handleResultsKeydown.bind(this)
+        this.handleSubmitKeydown = this.handleSubmitKeydown.bind(this)
     }
 
     /**
@@ -171,7 +174,10 @@ class AdminGmSelect extends HTMLElement {
     disconnectedCallback() {
         if (!this.inputEl || !this.searchResultsEl) return
         this.inputEl.removeEventListener("input", this.handleInput)
+        this.inputEl.removeEventListener("keydown", this.handleInputKeydown)
+        this.searchResultsEl.removeEventListener("keydown", this.handleResultsKeydown)
         this.searchResultsEl.removeEventListener("click", this.handleClick)
+        this.submitButtonEl?.removeEventListener("keydown", this.handleSubmitKeydown)
     }
 
     /**
@@ -264,12 +270,16 @@ class AdminGmSelect extends HTMLElement {
         results.className = "gm-search-results"
         results.setAttribute("aria-live", "polite")
 
-        this.append(label, input, results, button)
+        this.append(label, input, button, results)
 
         /** @type {HTMLInputElement} */
         this.inputEl = input
         /** @type {HTMLDivElement} */
         this.searchResultsEl = results
+        /** @type {HTMLButtonElement} */
+        this.submitButtonEl = button
+        /** @type {HTMLButtonElement} */
+        this.submitButtonEl = button
     }
 
     /**
@@ -277,7 +287,10 @@ class AdminGmSelect extends HTMLElement {
      */
     _bind() {
         this.inputEl?.addEventListener("input", this.handleInput)
+        this.inputEl?.addEventListener("keydown", this.handleInputKeydown)
+        this.searchResultsEl?.addEventListener("keydown", this.handleResultsKeydown)
         this.searchResultsEl?.addEventListener("click", this.handleClick)
+        this.submitButtonEl?.addEventListener("keydown", this.handleSubmitKeydown)
     }
 
     /**
@@ -325,6 +338,87 @@ class AdminGmSelect extends HTMLElement {
     handleInput() {
 
         this._renderMatches(this.inputEl?.value ?? "")
+    }
+
+    /**
+     * Move focus into the results list when tabbing from the input.
+     * @param {KeyboardEvent} event
+     */
+    handleInputKeydown(event) {
+        if (event.key !== "Tab" || event.shiftKey) return
+        const firstResult = this.searchResultsEl?.querySelector(".gm-search-item")
+        if (!(firstResult instanceof HTMLButtonElement)) return
+        event.preventDefault()
+        firstResult.focus()
+    }
+
+    /**
+     * Move from the last result to the submit button on Tab.
+     * @param {KeyboardEvent} event
+     */
+    handleResultsKeydown(event) {
+        if (event.key !== "Tab" || event.shiftKey) return
+        const results = this.searchResultsEl
+        if (!results || !this.submitButtonEl) return
+
+        const items = results.querySelectorAll(".gm-search-item")
+        if (items.length === 0) return
+
+        const lastItem = items[items.length - 1]
+        if (document.activeElement === lastItem) {
+            event.preventDefault()
+            this.submitButtonEl.focus()
+        }
+    }
+
+    /**
+     * Move backward from submit to last result (or input) on Shift+Tab.
+     * @param {KeyboardEvent} event
+     */
+    handleSubmitKeydown(event) {
+        if (event.key !== "Tab") return
+        if (!event.shiftKey) {
+            event.preventDefault()
+            const next = this._nextFocusableOutside()
+            if (next) {
+                next.focus()
+            }
+            return
+        }
+        const results = this.searchResultsEl
+        if (!results) return
+
+        const items = results.querySelectorAll(".gm-search-item")
+        if (items.length > 0) {
+            event.preventDefault()
+            items[items.length - 1].focus()
+            return
+        }
+        if (this.inputEl) {
+            event.preventDefault()
+            this.inputEl.focus()
+        }
+    }
+
+    /**
+     * Find the next focusable element after this component.
+     * @returns {HTMLElement|null}
+     */
+    _nextFocusableOutside() {
+        const focusableSelector =
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+        const focusables = Array.from(document.querySelectorAll(focusableSelector))
+        const current = this.submitButtonEl
+        if (!current) return null
+        const startIndex = focusables.indexOf(current)
+        if (startIndex < 0) return null
+        for (let i = startIndex + 1; i < focusables.length; i += 1) {
+            const el = focusables[i]
+            if (!(el instanceof HTMLElement)) continue
+            if (this.contains(el)) continue
+            return el
+        }
+        return null
     }
 
     /**
