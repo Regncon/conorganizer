@@ -109,15 +109,21 @@ const buildHighlight = (label, query) => {
 }
 
 /**
- * GM search picker web component.
+ * Admin GM search + picker web component.
  *
  * Events:
- * - gm-select: { detail: { id: number, label: string } }
+ * - gm-select:
+ *   detail: {
+ *     id: number,
+ *     label: string
+ *   }
+ *   Use in Datastar:
+ *   data-on:gm-select="$gmSearchBillettholderId = evt.detail.id"
  *
  * Attributes:
  * - data-billettholdere: JSON array of { Id, FirstName, LastName }
  */
-class GmPicker extends HTMLElement {
+class AdminGmSelect extends HTMLElement {
     /**
      * Datastar reads updates via attributes; observe changes to re-render matches.
      * @returns {string[]}
@@ -358,4 +364,4 @@ class GmPicker extends HTMLElement {
 
 }
 
-customElements.define("gm-picker", GmPicker)
+customElements.define("admin-gm-select", AdminGmSelect)

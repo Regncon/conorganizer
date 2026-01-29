@@ -381,13 +381,13 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
 	<div class="gm-search-wrapper" style="margin-block-end: 2rem;">
 		<form data-on:submit="@post('/admin/approval/api/events_players/post/add_gm')">
-			<gm-picker
+			<admin-gm-select
 				data-billettholdere={ string(billettholdereJson) }
 				data-signals="{gmSearchBillettholderId:''}"
 				data-on:gm-select="$gmSearchBillettholderId = evt.detail.id"
-			></gm-picker>
+			></admin-gm-select>
 		</form>
-		<script src="/static/web_components/gm_picker.js"></script>
+		<script src="/static/web_components/admin_gm_select.js"></script>
 	</div>
 }
 
