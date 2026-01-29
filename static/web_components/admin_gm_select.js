@@ -1,4 +1,5 @@
 const HIGHLIGHT_ESCAPE_PATTERN = /[.*+?^${}()|[\]\\]/g
+const DATA_BILLETTHOLDERE_ATTR = "data-billettholdere"
 
 /**
  * Escape RegExp meta characters for a safe literal match.
@@ -130,7 +131,7 @@ class AdminGmSelect extends HTMLElement {
      * @returns {string[]}
      */
     static get observedAttributes() {
-        return ["data-billettholdere"]
+        return [DATA_BILLETTHOLDERE_ATTR]
     }
 
     constructor() {
@@ -180,9 +181,7 @@ class AdminGmSelect extends HTMLElement {
     set billettholdere(value) {
         this._billettholdere = Array.isArray(value) ? value : []
         this._setOptions()
-        if (this.inputEl && this.searchResultsEl) {
-            this._renderMatches(this.inputEl.value)
-        }
+        this._renderMatches(this.inputEl?.value ?? "")
     }
 
     /**
@@ -195,26 +194,23 @@ class AdminGmSelect extends HTMLElement {
 
     /**
      * React to Datastar-driven attribute updates.
-     * @param {string} name
+     * @param {`data-billettholdere`} name
      * @param {string|null} oldValue
      * @param {string|null} newValue
      */
-
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return
-        if (name !== "data-billettholdere") return
+        if (name !== DATA_BILLETTHOLDERE_ATTR) return
         this._loadDataFromAttribute()
         this._setOptions()
-        if (this.inputEl && this.searchResultsEl) {
-            this._renderMatches(this.inputEl.value)
-        }
+        this._renderMatches(this.inputEl?.value ?? "")
     }
 
     /**
-     * Parse billettholder data from data-billettholdere.
+     * Read JSON from the data-billettholdere attribute and update local state.
      */
     _loadDataFromAttribute() {
-        const raw = this.getAttribute("data-billettholdere")
+        const raw = this.getAttribute(DATA_BILLETTHOLDERE_ATTR)
         if (!raw) return
         try {
             const data = JSON.parse(raw)
@@ -242,7 +238,6 @@ class AdminGmSelect extends HTMLElement {
      * Render the light DOM structure so page styles apply.
      */
     _render() {
-        // Light DOM so global styles from the page keep working.
         const labelText = this.getAttribute("label") || "Søk etter spiller som skal være spilleder"
         const placeholder = this.getAttribute("placeholder") || "søk etter spiller"
         const submitLabel = this.getAttribute("submit-label") || "Lagre"
@@ -281,10 +276,8 @@ class AdminGmSelect extends HTMLElement {
      * Wire input + click handlers.
      */
     _bind() {
-
-        this.inputEl.addEventListener("input", this.handleInput)
-
-        this.searchResultsEl.addEventListener("click", this.handleClick)
+        this.inputEl?.addEventListener("input", this.handleInput)
+        this.searchResultsEl?.addEventListener("click", this.handleClick)
     }
 
     /**
@@ -294,7 +287,7 @@ class AdminGmSelect extends HTMLElement {
     _renderMatches(query) {
         const norm = normalize(query || "")
 
-        this.searchResultsEl.replaceChildren()
+        this.searchResultsEl?.replaceChildren()
         if (!norm) return
 
         const matches = this.options
@@ -308,7 +301,7 @@ class AdminGmSelect extends HTMLElement {
             empty.classList.add("gm-search-empty")
             empty.append(document.createTextNode("Ingen billettholdere funnet"))
 
-            this.searchResultsEl.append(empty)
+            this.searchResultsEl?.append(empty)
             return
         }
 
@@ -323,7 +316,7 @@ class AdminGmSelect extends HTMLElement {
             fragment.append(button)
         }
 
-        this.searchResultsEl.append(fragment)
+        this.searchResultsEl?.append(fragment)
     }
 
     /**
@@ -331,14 +324,13 @@ class AdminGmSelect extends HTMLElement {
      */
     handleInput() {
 
-        this._renderMatches(this.inputEl.value)
+        this._renderMatches(this.inputEl?.value ?? "")
     }
 
     /**
      * Handle result selection and dispatch gm-select.
      * @param {MouseEvent} event
      */
-
     handleClick(event) {
         const target = event.target
         if (!(target instanceof HTMLElement)) return
@@ -347,9 +339,11 @@ class AdminGmSelect extends HTMLElement {
         const value = button.getAttribute("data-value")
         if (!value) return
 
-        this.inputEl.value = value
+        if (this.inputEl) {
+            this.inputEl.value = value
+        }
 
-        this.searchResultsEl.replaceChildren()
+        this.searchResultsEl?.replaceChildren()
         const id = button.getAttribute("data-id")
         if (id) {
             // Datastar listens to this event and updates signals via data-on:gm-select.
