@@ -159,8 +159,8 @@ class AdminGmSelect extends HTMLElement {
         this._setOptions()
         this._bind()
 
-        if (this.input) {
-            this._renderMatches(this.input.value)
+        if (this.inputEl) {
+            this._renderMatches(this.inputEl.value)
         }
     }
 
@@ -168,9 +168,9 @@ class AdminGmSelect extends HTMLElement {
      * Cleanup listeners when removed from the DOM.
      */
     disconnectedCallback() {
-        if (!this.input || !this.results) return
-        this.input.removeEventListener("input", this.handleInput)
-        this.results.removeEventListener("click", this.handleClick)
+        if (!this.inputEl || !this.resultsEl) return
+        this.inputEl.removeEventListener("input", this.handleInput)
+        this.resultsEl.removeEventListener("click", this.handleClick)
     }
 
     /**
@@ -180,8 +180,8 @@ class AdminGmSelect extends HTMLElement {
     set billettholdere(value) {
         this._billettholdere = Array.isArray(value) ? value : []
         this._setOptions()
-        if (this.input && this.results) {
-            this._renderMatches(this.input.value)
+        if (this.inputEl && this.resultsEl) {
+            this._renderMatches(this.inputEl.value)
         }
     }
 
@@ -205,8 +205,8 @@ class AdminGmSelect extends HTMLElement {
         if (name !== "data-billettholdere") return
         this._loadDataFromAttribute()
         this._setOptions()
-        if (this.input && this.results) {
-            this._renderMatches(this.input.value)
+        if (this.inputEl && this.resultsEl) {
+            this._renderMatches(this.inputEl.value)
         }
     }
 
@@ -272,9 +272,9 @@ class AdminGmSelect extends HTMLElement {
         this.append(label, input, button, results)
 
         /** @type {HTMLInputElement} */
-        this.input = input
+        this.inputEl = input
         /** @type {HTMLDivElement} */
-        this.results = results
+        this.resultsEl = results
     }
 
     /**
@@ -282,9 +282,9 @@ class AdminGmSelect extends HTMLElement {
      */
     _bind() {
 
-        this.input.addEventListener("input", this.handleInput)
+        this.inputEl.addEventListener("input", this.handleInput)
 
-        this.results.addEventListener("click", this.handleClick)
+        this.resultsEl.addEventListener("click", this.handleClick)
     }
 
     /**
@@ -294,7 +294,7 @@ class AdminGmSelect extends HTMLElement {
     _renderMatches(query) {
         const norm = normalize(query || "")
 
-        this.results.replaceChildren()
+        this.resultsEl.replaceChildren()
         if (!norm) return
 
         const matches = this.options
@@ -308,7 +308,7 @@ class AdminGmSelect extends HTMLElement {
             empty.classList.add("gm-search-empty")
             empty.append(document.createTextNode("Ingen billettholdere funnet"))
 
-            this.results.append(empty)
+            this.resultsEl.append(empty)
             return
         }
 
@@ -323,7 +323,7 @@ class AdminGmSelect extends HTMLElement {
             fragment.append(button)
         }
 
-        this.results.append(fragment)
+        this.resultsEl.append(fragment)
     }
 
     /**
@@ -331,7 +331,7 @@ class AdminGmSelect extends HTMLElement {
      */
     handleInput() {
 
-        this._renderMatches(this.input.value)
+        this._renderMatches(this.inputEl.value)
     }
 
     /**
@@ -347,9 +347,9 @@ class AdminGmSelect extends HTMLElement {
         const value = button.getAttribute("data-value")
         if (!value) return
 
-        this.input.value = value
+        this.inputEl.value = value
 
-        this.results.replaceChildren()
+        this.resultsEl.replaceChildren()
         const id = button.getAttribute("data-id")
         if (id) {
             // Datastar listens to this event and updates signals via data-on:gm-select.
