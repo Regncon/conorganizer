@@ -264,7 +264,7 @@ class AdminGmSelect extends HTMLElement {
         results.className = "gm-search-results"
         results.setAttribute("aria-live", "polite")
 
-        this.append(label, input, button, results)
+        this.append(label, input, results, button)
 
         /** @type {HTMLInputElement} */
         this.inputEl = input
@@ -330,6 +330,7 @@ class AdminGmSelect extends HTMLElement {
     /**
      * Handle result selection and dispatch gm-select.
      * @param {MouseEvent} event
+     * @fires CustomEvent<{id:number,label:string}> gm-select
      */
     handleClick(event) {
         const target = event.target
@@ -346,7 +347,6 @@ class AdminGmSelect extends HTMLElement {
         this.searchResultsEl?.replaceChildren()
         const id = button.getAttribute("data-id")
         if (id) {
-            // Datastar listens to this event and updates signals via data-on:gm-select.
             this.dispatchEvent(
                 new CustomEvent("gm-select", {
                     detail: {
