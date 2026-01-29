@@ -1,3 +1,6 @@
+## Check domain domeneordbok.md
+when adding names check domeneordbok.md instead of translating to english
+
 ## When creating custom components that use signals
 
 Datastar interacts with custom web components using a "props down, events up" model:
