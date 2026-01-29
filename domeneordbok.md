@@ -1,4 +1,10 @@
-# Domenordbok
+# Domeneordbok
+
+## Ord
+Billettholder
+Billettholdere
+Pulje
+Puljer
 
 ## Billettholder
 En billettholder er en CheckIn billett
