@@ -108,6 +108,15 @@ const buildHighlight = (label, query) => {
     return fragment
 }
 
+/**
+ * GM search picker web component.
+ *
+ * Events:
+ * - gm-select: { detail: { id: number, label: string } }
+ *
+ * Attributes:
+ * - data-billettholdere: JSON array of { Id, FirstName, LastName }
+ */
 class GmPicker extends HTMLElement {
     /**
      * Datastar reads updates via attributes; observe changes to re-render matches.
@@ -120,8 +129,10 @@ class GmPicker extends HTMLElement {
     constructor() {
         super()
 
+        /** @type {Array<{id:number, label:string, norm:string}>} */
         this.options = []
 
+        /** @type {Array<{Id:number, FirstName:string, LastName:string}>} */
         this._billettholdere = []
         this._initialized = false
 
@@ -251,7 +262,9 @@ class GmPicker extends HTMLElement {
 
         this.append(label, input, button, results)
 
+        /** @type {HTMLInputElement} */
         this.input = input
+        /** @type {HTMLDivElement} */
         this.results = results
     }
 
