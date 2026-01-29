@@ -149,6 +149,7 @@ class AdminGmSelect extends HTMLElement {
         this.handleInputKeydown = this.handleInputKeydown.bind(this)
         this.handleResultsTab = this.handleResultsTab.bind(this)
         this.handleSubmitTab = this.handleSubmitTab.bind(this)
+        this.handleFormSubmit = this.handleFormSubmit.bind(this)
     }
 
     /**
@@ -178,6 +179,7 @@ class AdminGmSelect extends HTMLElement {
         this.searchResultsEl.removeEventListener("keydown", this.handleResultsTab)
         this.searchResultsEl.removeEventListener("click", this.handleClick)
         this.submitButtonEl?.removeEventListener("keydown", this.handleSubmitTab)
+        this.formEl?.removeEventListener("submit", this.handleFormSubmit)
     }
 
     /**
@@ -289,6 +291,8 @@ class AdminGmSelect extends HTMLElement {
         this.searchResultsEl?.addEventListener("keydown", this.handleResultsTab)
         this.searchResultsEl?.addEventListener("click", this.handleClick)
         this.submitButtonEl?.addEventListener("keydown", this.handleSubmitTab)
+        this.formEl = this.closest("form")
+        this.formEl?.addEventListener("submit", this.handleFormSubmit)
     }
 
     /**
@@ -405,6 +409,16 @@ class AdminGmSelect extends HTMLElement {
             event.preventDefault()
             this.inputEl.focus()
         }
+    }
+
+    /**
+     * Reset input and results when the form submits.
+     * @param {SubmitEvent} event
+     */
+    handleFormSubmit(event) {
+        if (event.currentTarget !== this.formEl) return
+        this.formEl?.reset()
+        this.searchResultsEl?.replaceChildren()
     }
 
     /**
