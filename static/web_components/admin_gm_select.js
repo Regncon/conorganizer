@@ -109,14 +109,15 @@ const buildHighlight = (label, query) => {
 }
 
 /**
- * Admin GM search + picker web component.
+ * Admin GM select web component.
  *
  * Events:
- * - gm-select:
+ * - name: "gm-select"
  *   detail: {
  *     id: number,
  *     label: string
  *   }
+ *
  *   Use in Datastar:
  *   data-on:gm-select="$gmSearchBillettholderId = evt.detail.id"
  *
@@ -158,7 +159,9 @@ class AdminGmSelect extends HTMLElement {
         this._setOptions()
         this._bind()
 
-        this._renderMatches(this.input.value)
+        if (this.input) {
+            this._renderMatches(this.input.value)
+        }
     }
 
     /**
@@ -288,7 +291,6 @@ class AdminGmSelect extends HTMLElement {
      * Render search result buttons for the current query.
      * @param {string} query
      */
-
     _renderMatches(query) {
         const norm = normalize(query || "")
 
