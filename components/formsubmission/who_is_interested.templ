@@ -485,7 +485,7 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 
 						if (matches.length === 0) {
 							const empty = document.createElement("div");
-							empty.className = "gm-search-empty";
+							empty.classList.add("gm-search-empty");
 							empty.append(document.createTextNode("Ingen billettholdere funnet"));
 							results.append(empty);
 							return;
@@ -495,7 +495,7 @@ templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 						for (const opt of matches) {
 							const button = document.createElement("button");
 							button.type = "button";
-							button.className = "btn btn--outline gm-search-item";
+							button.classList.add("btn", "btn--outline", "gm-search-item");
 							button.dataset.value = opt.label;
 							button.append(buildHighlight(opt.label, norm));
 							fragment.append(button);
