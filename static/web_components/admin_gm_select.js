@@ -247,7 +247,7 @@ class AdminGmSelect extends HTMLElement {
         const labelText = this.getAttribute("label") || "Søk etter spiller som skal være spilleder"
         const placeholder = this.getAttribute("placeholder") || "søk etter spiller"
         const submitLabel = this.getAttribute("submit-label") || "Lagre"
-        const inputId = this.getAttribute("input-id") || `gm-search-${ Math.random().toString(36).slice(2, 8) }`
+        const inputId = this.getAttribute("input-id") || `gm-search-${ Math.random().toString(36).substring(2, 8) }`
 
         this.replaceChildren()
 
@@ -304,8 +304,9 @@ class AdminGmSelect extends HTMLElement {
         const matches = this.options
             .map((opt) => ({ ...opt, score: scoreMatch(opt.norm, norm) }))
             .filter((opt) => opt.score > 0)
-            .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label))
-            .slice(0, 8)
+            // @ts-ignore
+            .toSorted((a, b) => b.score - a.score || a.label.localeCompare(b.label))
+            .toSpliced(8)
 
         if (matches.length === 0) {
             const empty = document.createElement("div")
@@ -413,18 +414,16 @@ class AdminGmSelect extends HTMLElement {
     _nextFocusableOutside() {
         const focusableSelector =
             'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        const focusables = Array.from(document.querySelectorAll(focusableSelector))
+        const focusableEls = [...document.querySelectorAll(focusableSelector)]
         const current = this.submitButtonEl
         if (!current) return null
-        const startIndex = focusables.indexOf(current)
+        const startIndex = focusableEls.indexOf(current)
         if (startIndex < 0) return null
-        for (let i = startIndex + 1; i < focusables.length; i += 1) {
-            const el = focusables[i]
-            if (!(el instanceof HTMLElement)) continue
-            if (this.contains(el)) continue
-            return el
-        }
-        return null
+        // @ts-ignore
+        const next = focusableEls.toSpliced(0, startIndex + 1).find((el) => {
+            return el instanceof HTMLElement && !this.contains(el)
+        })
+        return next instanceof HTMLElement ? next : null
     }
 
     /**
