@@ -278,8 +278,6 @@ class AdminGmSelect extends HTMLElement {
         this.searchResultsEl = results
         /** @type {HTMLButtonElement} */
         this.submitButtonEl = button
-        /** @type {HTMLButtonElement} */
-        this.submitButtonEl = button
     }
 
     /**
@@ -361,11 +359,10 @@ class AdminGmSelect extends HTMLElement {
         const results = this.searchResultsEl
         if (!results || !this.submitButtonEl) return
 
-        const items = results.querySelectorAll(".gm-search-item")
+        const items = [...results.querySelectorAll(".gm-search-item")]
         if (items.length === 0) return
 
-        const firstItem = items[0]
-        const lastItem = items[items.length - 1]
+        const lastItem = items.at(-1)
         const active = document.activeElement
 
         if (event.shiftKey) {
@@ -376,7 +373,7 @@ class AdminGmSelect extends HTMLElement {
             return
         }
 
-        if (active === lastItem) {
+        if (lastItem && active === lastItem) {
             event.preventDefault()
             this.submitButtonEl.focus()
         }
@@ -390,23 +387,18 @@ class AdminGmSelect extends HTMLElement {
         if (event.key !== "Tab") return
         if (!event.shiftKey) {
             event.preventDefault()
-            const next = this._nextFocusableOutside()
-            if (next) {
-                next.focus()
-            }
+            this._nextFocusableOutside()?.focus()
             return
         }
         const results = this.searchResultsEl
         if (!results) return
 
-        const items = results.querySelectorAll(".gm-search-item")
-        if (items.length > 0) {
-            const lastItem = items[items.length - 1]
-            if (lastItem instanceof HTMLElement) {
-                event.preventDefault()
-                lastItem.focus()
-                return
-            }
+        const items = [...results.querySelectorAll(".gm-search-item")]
+        const lastItem = items.at(-1)
+        if (lastItem instanceof HTMLElement) {
+            event.preventDefault()
+            lastItem.focus()
+            return
         }
         if (this.inputEl) {
             event.preventDefault()
