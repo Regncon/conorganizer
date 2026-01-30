@@ -323,7 +323,7 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 				buttonActions := []ButtonAction{playerAction, gmAction}
 			}}
 			<section
-				class="item-card section "
+				class="item-card section"
 			>
 				<div class="start">
 					if !isAssigned {
@@ -392,7 +392,7 @@ templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 templ puljeSection(eventId string, title string, puljeId models.Pulje, interests []InterestWithHolder, assignees []InterestWithHolder, showGmForm bool, billettholdere []Billettholder) {
 	<article class="form-card">
 		<h2 style="margin-bottom:1rem;">{ title }</h2>
-		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+		<h2 style="margin-bottom:1rem;">Finn spilleder?</h2>
 		if showGmForm {
 			@gmSelectForm(eventId, puljeId, billettholdere)
 		} else {
