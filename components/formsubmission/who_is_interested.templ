@@ -116,9 +116,10 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 ep.billettholder_id,
                 ep.event_id,
                 ep.pulje_id,
-                i.interest_level,
+                -- this is because we can insert ppl from search without interest as gm
+                COALESCE(i.interest_level, '') AS interest_level,
                 ` + queryFirstChoice + `,
-                cOALESCE(ep.is_gm, 0) AS is_gm,
+                COALESCE(ep.is_gm, 0) AS is_gm,
                 b.first_name,
                 b.last_name,
                 b.ticket_type,
