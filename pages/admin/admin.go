@@ -158,10 +158,19 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 				apiRouter.Route("/events_players", func(eventsPlayersRouter chi.Router) {
 					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
-						// Check content type
-						contentType := r.Header.Get("Content-Type")
-						fmt.Printf("Content-Type: %s\n", contentType)
+						// sse := datastar.NewSSE(w, r)
+						// sessionID, mvc, err := mvcSession(w, r)
+						// ctx := r.Context()
+						type Store struct {
+							BillettholderId int `json:"gmSearchBillettholderId"`
+						}
+						store := &Store{}
 
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+						fmt.Printf("Store: %+v\n", store)
 						// get from form data
 						if err := r.ParseForm(); err != nil {
 							http.Error(w, "Failed to parse form data", http.StatusBadRequest)
