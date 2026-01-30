@@ -313,13 +313,15 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
     </style>
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
-			assignPlayerURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/true/false')", eventId, puljeId, interest.BillettholderId)
-			removePlayerURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId)
-			assignGmURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/true')", eventId, puljeId, interest.BillettholderId)
-			removeGmURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId)
-			playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerURL, removePlayerURL)
-			gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmURL, removeGmURL)
-			buttonActions := []ButtonAction{ playerAction, gmAction }
+			{{
+				assignPlayerURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/true/false')", eventId, puljeId, interest.BillettholderId)
+				removePlayerURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId)
+				assignGmURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/true')", eventId, puljeId, interest.BillettholderId)
+				removeGmURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId)
+				playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerURL, removePlayerURL)
+				gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmURL, removeGmURL)
+				buttonActions := []ButtonAction{playerAction, gmAction}
+			}}
 			<section
 				class="item-card section "
 			>
@@ -377,7 +379,7 @@ templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 	<div class="gm-search-wrapper" style="margin-block-end: 2rem;">
 		<form
 			data-on:submit="@post('/admin/approval/api/events_players/post/add_gm')"
-			data-signals="{gmSearchBillettholderId:''}"
+			data-signals:gmSearchBillettholderId=""
 		>
 			<admin-gm-select
 				data-billettholdere={ string(billettholdereJson) }
