@@ -182,7 +182,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						fmt.Printf("Form data: %+v\n", r.Form.Get("name"))
 						fmt.Printf("Form data: %+v\n", r.Form.Get("billettholder-6"))
 
-						http.Error(w, "Not implemented", http.StatusNotImplemented)
+						// http.Error(w, "Not implemented", http.StatusNotImplemented)
 
 						var updatePlayerStatusErr = formsubmission.UpdatePlayerStatus(
 							store.EventId,
