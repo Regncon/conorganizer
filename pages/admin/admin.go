@@ -165,8 +165,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							BillettholderId int    `json:"assignmentGmSelect"`
 							EventId         string `json:"assignmentEventId"`
 							PuljeId         string `json:"assignmentPuljeId"`
-							IsPlayer        bool   `json:"assignmentIsPlayer"`
-							IsGm            bool   `json:"assignmentIsGm"`
 						}
 						store := &Store{}
 
@@ -185,6 +183,29 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						fmt.Printf("Form data: %+v\n", r.Form.Get("billettholder-6"))
 
 						http.Error(w, "Not implemented", http.StatusNotImplemented)
+
+						var updatePlayerStatusErr = formsubmission.UpdatePlayerStatus(
+							store.EventId,
+							store.PuljeId,
+							store.BillettholderId,
+							false,
+							true,
+							db,
+							logger,
+						)
+						if updatePlayerStatusErr != nil {
+							http.Error(w, updatePlayerStatusErr.Error(), http.StatusInternalServerError)
+							return
+						}
+						logger.Info(
+							"Successfully Added player as GM",
+							"eventId", store.EventId,
+							"puljeId", store.PuljeId,
+							"billettholderId", store.BillettholderId,
+							"isPlayer", false,
+							"isGm", true,
+						)
+						keyvalue.BroadcastUpdate(kv, r)
 						return
 					})
 					eventsPlayersRouter.Put("/put/{eventId}/{puljeId}/{billettholderId}/{isPlayer}/{isGm}", func(w http.ResponseWriter, r *http.Request) {
