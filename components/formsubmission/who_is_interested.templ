@@ -379,7 +379,6 @@ templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 	<div class="gm-search-wrapper" style="margin-block-end: 2rem;">
 		<form
 			data-on:submit="@post('/admin/approval/api/events_players/post/add_gm')"
-			data-signals:assignmentGmSelect=""
 		>
 			<admin-gm-select
 				data-billettholdere={ string(billettholdereJson) }
@@ -409,7 +408,15 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 	{{ interests, err := GetInterestsForEvent(eventId, db, logger) }}
 	{{ assignees, err := GetAssigneesForEvent(eventId, db, logger) }}
 	{{ billettholdere, err := getBillettholdere(db, logger) }}
-	<div style="display: flex; flex-direction: column; gap:1rem; margin-bottom:2rem;">
+	<div
+		style="
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        "
+		data-signals={ fmt.Sprintf("{assignmentEventId: '%s', assignmentGmSelect: 0000000, assignmentPuljeId: '', assignmentIsPlayer: false, assignmentIsGm: false}", eventId) }
+	>
 		<article class="form-card">
 			if err != nil {
 				<p>Error fetching interests: { err.Error() }</p>
