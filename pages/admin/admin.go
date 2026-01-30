@@ -162,7 +162,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						// sessionID, mvc, err := mvcSession(w, r)
 						// ctx := r.Context()
 						type Store struct {
-							BillettholderId int `json:"gmSearchBillettholderId"`
+							BillettholderId int `json:"assignmentGmSelect"`
 						}
 						store := &Store{}
 
