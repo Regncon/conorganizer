@@ -372,7 +372,7 @@ templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestW
 	@interestInPulje(eventId, puljeId, interests, true)
 }
 
-templ gmPickerForm(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
+templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
 	<div class="gm-search-wrapper" style="margin-block-end: 2rem;">
 		<form
@@ -393,7 +393,7 @@ templ puljeSection(eventId string, title string, puljeId models.Pulje, interests
 		<h2 style="margin-bottom:1rem;">{ title }</h2>
 		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
 		if showGmForm {
-			@gmPickerForm(eventId, puljeId, billettholdere)
+			@gmSelectForm(eventId, puljeId, billettholdere)
 		} else {
 			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
 		}
