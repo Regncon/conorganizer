@@ -393,6 +393,7 @@ templ puljeSection(eventId string, title string, puljeId models.Pulje, interests
 	<article class="form-card">
 		<h2 style="margin-bottom:1rem;">{ title }</h2>
 		<h2 style="margin-bottom:1rem;">Finn spilleder?</h2>
+		//TODO: remove this check
 		if showGmForm {
 			@gmSelectForm(eventId, puljeId, billettholdere)
 		} else {
