@@ -9,7 +9,6 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
-	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 type InterestWithHolder struct {
@@ -325,13 +324,13 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 						<button
 							class="btn btn--outline button-size"
 							if isAssigned && interest.IsGamemaster {
-								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/true/false')", eventId, puljeId, interest.BillettholderId) }
 							}
 							if isAssigned && !interest.IsGamemaster {
-								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId) }
 							}
 							if !isAssigned {
-								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/true/false", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/true/false')", eventId, puljeId, interest.BillettholderId) }
 							}
 						>
 							if isAssigned && interest.IsGamemaster {
@@ -347,13 +346,13 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 						<button
 							class="btn btn--outline button-size"
 							if isAssigned && !interest.IsGamemaster {
-								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/true')", eventId, puljeId, interest.BillettholderId) }
 							}
 							if isAssigned && interest.IsGamemaster {
-								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/false", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId) }
 							}
 							if !isAssigned {
-								data-on:click={ datastar.PutSSE("/admin/approval/api/events_players/put/%s/%s/%d/false/true", eventId, puljeId, interest.BillettholderId) }
+								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/true')", eventId, puljeId, interest.BillettholderId) }
 							}
 						>
 							if isAssigned && !interest.IsGamemaster {
