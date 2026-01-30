@@ -177,6 +177,31 @@ type Billettholder struct {
 	LastName  string
 }
 
+type ButtonAction struct {
+	Label string
+	URL   string
+}
+
+func playerButtonAction(isAssigned bool, isGamemaster bool, assignURL string, removeURL string) ButtonAction {
+	if !isAssigned {
+		return ButtonAction{Label: "Tildel som spiller", URL: assignURL}
+	}
+	if isGamemaster {
+		return ButtonAction{Label: "Bytt til spiller", URL: assignURL}
+	}
+	return ButtonAction{Label: "Fjern som spiller", URL: removeURL}
+}
+
+func gmButtonAction(isAssigned bool, isGamemaster bool, assignURL string, removeURL string) ButtonAction {
+	if !isAssigned {
+		return ButtonAction{Label: "Tildel som GM", URL: assignURL}
+	}
+	if isGamemaster {
+		return ButtonAction{Label: "Fjern som GM", URL: removeURL}
+	}
+	return ButtonAction{Label: "Bytt til GM", URL: assignURL}
+}
+
 func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error) {
 	var query = `
             Select id, first_name, last_name From billettholdere
@@ -288,6 +313,13 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
     </style>
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
+			assignPlayerURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/true/false')", eventId, puljeId, interest.BillettholderId)
+			removePlayerURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId)
+			assignGmURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/true')", eventId, puljeId, interest.BillettholderId)
+			removeGmURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId)
+			playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerURL, removePlayerURL)
+			gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmURL, removeGmURL)
+			buttonActions := []ButtonAction{ playerAction, gmAction }
 			<section
 				class="item-card section "
 			>
@@ -321,50 +353,14 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 				</div>
 				<div class="end">
 					<div class="pickers">
-						<button
-							class="btn btn--outline button-size"
-							if isAssigned && interest.IsGamemaster {
-								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/true/false')", eventId, puljeId, interest.BillettholderId) }
-							}
-							if isAssigned && !interest.IsGamemaster {
-								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId) }
-							}
-							if !isAssigned {
-								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/true/false')", eventId, puljeId, interest.BillettholderId) }
-							}
-						>
-							if isAssigned && interest.IsGamemaster {
-								Bytt til spiller
-							}
-							if isAssigned && !interest.IsGamemaster {
-								Fjern som spiller
-							}
-							if !isAssigned {
-								Tildel som spiller
-							}
-						</button>
-						<button
-							class="btn btn--outline button-size"
-							if isAssigned && !interest.IsGamemaster {
-								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/true')", eventId, puljeId, interest.BillettholderId) }
-							}
-							if isAssigned && interest.IsGamemaster {
-								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId) }
-							}
-							if !isAssigned {
-								data-on:click={ fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/true')", eventId, puljeId, interest.BillettholderId) }
-							}
-						>
-							if isAssigned && !interest.IsGamemaster {
-								Bytt til GM
-							}
-							if isAssigned && interest.IsGamemaster {
-								Fjern som GM
-							}
-							if !isAssigned {
-								Tildel som GM
-							}
-						</button>
+						for _, action := range buttonActions {
+							<button
+								class="btn btn--outline button-size"
+								data-on:click={ action.URL }
+							>
+								{ action.Label }
+							</button>
+						}
 					</div>
 				</div>
 			</section>
