@@ -378,7 +378,7 @@ templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
 	<div class="gm-search-wrapper" style="margin-block-end: 2rem;">
 		<form
-			data-on:submit="@post('/admin/approval/api/events_players/post/add_gm')"
+			data-on:submit={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_gm')", puljeId) }
 		>
 			<admin-gm-select
 				data-billettholdere={ string(billettholdereJson) }
@@ -393,12 +393,8 @@ templ puljeSection(eventId string, title string, puljeId models.Pulje, interests
 	<article class="form-card">
 		<h2 style="margin-bottom:1rem;">{ title }</h2>
 		<h2 style="margin-bottom:1rem;">Finn spilleder?</h2>
-		//TODO: remove this check
-		if showGmForm {
-			@gmSelectForm(eventId, puljeId, billettholdere)
-		} else {
-			<h2 style="margin-bottom:1rem;">Who is picked?</h2>
-		}
+		@gmSelectForm(eventId, puljeId, billettholdere)
+		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
 		@playersInPulje(eventId, puljeId, assignees)
 		<h2 style="margin-bottom:1rem;">Who is interested?</h2>
 		@interestInPulje(eventId, puljeId, interests, false)
