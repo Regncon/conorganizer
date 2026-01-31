@@ -180,27 +180,27 @@ type Billettholder struct {
 
 type ButtonAction struct {
 	Label string
-	URL   string
+	Action string
 }
 
-func playerButtonAction(isAssigned bool, isGamemaster bool, assignURL string, removeURL string) ButtonAction {
+func playerButtonAction(isAssigned bool, isGamemaster bool, assignAction string, removeAction string) ButtonAction {
 	if !isAssigned {
-		return ButtonAction{Label: "Tildel som spiller", URL: assignURL}
+		return ButtonAction{Label: "Tildel som spiller", Action: assignAction}
 	}
 	if isGamemaster {
-		return ButtonAction{Label: "Bytt til spiller", URL: assignURL}
+		return ButtonAction{Label: "Bytt til spiller", Action: assignAction}
 	}
-	return ButtonAction{Label: "Fjern som spiller", URL: removeURL}
+	return ButtonAction{Label: "Fjern som spiller", Action: removeAction}
 }
 
-func gmButtonAction(isAssigned bool, isGamemaster bool, assignURL string, removeURL string) ButtonAction {
+func gmButtonAction(isAssigned bool, isGamemaster bool, assignAction string, removeAction string) ButtonAction {
 	if !isAssigned {
-		return ButtonAction{Label: "Tildel som GM", URL: assignURL}
+		return ButtonAction{Label: "Tildel som GM", Action: assignAction}
 	}
 	if isGamemaster {
-		return ButtonAction{Label: "Fjern som GM", URL: removeURL}
+		return ButtonAction{Label: "Fjern som GM", Action: removeAction}
 	}
-	return ButtonAction{Label: "Bytt til GM", URL: assignURL}
+	return ButtonAction{Label: "Bytt til GM", Action: assignAction}
 }
 
 func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error) {
@@ -315,12 +315,12 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
 			{{
-				assignPlayerURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/true/false')", eventId, puljeId, interest.BillettholderId)
-				removePlayerURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId)
-				assignGmURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/true')", eventId, puljeId, interest.BillettholderId)
-				removeGmURL := fmt.Sprintf("@put('/admin/approval/api/events_players/put/%s/%s/%d/false/false')", eventId, puljeId, interest.BillettholderId)
-				playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerURL, removePlayerURL)
-				gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmURL, removeGmURL)
+				assignPlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = true; $assignmentIsGm = false; @put('/admin/approval/api/events_players/put')", eventId, puljeId, interest.BillettholderId)
+				removePlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/put')", eventId, puljeId, interest.BillettholderId)
+				assignGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = true; @put('/admin/approval/api/events_players/put')", eventId, puljeId, interest.BillettholderId)
+				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/put')", eventId, puljeId, interest.BillettholderId)
+				playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerAction, removePlayerAction)
+				gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmAction, removeGmAction)
 				buttonActions := []ButtonAction{playerAction, gmAction}
 			}}
 			<section
@@ -359,7 +359,7 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 						for _, action := range buttonActions {
 							<button
 								class="btn btn--outline button-size"
-								data-on:click={ action.URL }
+								data-on:click={ action.Action }
 							>
 								{ action.Label }
 							</button>
@@ -383,7 +383,7 @@ templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 		>
 			<admin-gm-select
 				data-billettholdere={ string(billettholdereJson) }
-				data-on:gm-select="$assignmentGmSelect = evt.detail.id"
+				data-on:gm-select="$assignmentBillettholderId = evt.detail.id"
 			></admin-gm-select>
 		</form>
 		<script src="/static/web_components/admin_gm_select.js"></script>
@@ -413,7 +413,7 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
             gap: 1rem;
             margin-bottom: 2rem;
         "
-		data-signals={ fmt.Sprintf("{assignmentEventId: '%s', assignmentGmSelect: 0000000, assignmentPuljeId: '', assignmentIsPlayer: false, assignmentIsGm: false}", eventId) }
+		data-signals={ fmt.Sprintf("{assignmentEventId: '%s', assignmentBillettholderId: 0, assignmentPuljeId: '', assignmentIsPlayer: false, assignmentIsGm: false}", eventId) }
 	>
 		<article class="form-card">
 			if err != nil {
