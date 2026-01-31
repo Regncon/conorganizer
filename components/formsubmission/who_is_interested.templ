@@ -412,7 +412,7 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            margin-bottom: 2rem;
+            margin-block: 2rem;
         "
 		data-signals={ fmt.Sprintf("{assignmentEventId: '%s', assignmentBillettholderId: 0, assignmentPuljeId: '', assignmentIsPlayer: false, assignmentIsGm: false}", eventId) }
 	>
