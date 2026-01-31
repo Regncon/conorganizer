@@ -392,7 +392,10 @@ templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 }
 
 templ puljeSection(eventId string, title string, puljeId models.Pulje, interests []InterestWithHolder, assignees []InterestWithHolder, showGmForm bool, billettholdere []Billettholder) {
-	<article class="form-card">
+	<article
+		class="form-card"
+		data-style:display={ fmt.Sprintf("(!$isActive%s || !$isPublished%s) && 'none' || ''", puljeId, puljeId) }
+	>
 		<h2 style="margin-bottom:1rem;">{ title }</h2>
 		<h2 style="margin-bottom:1rem;">Finn spilleder?</h2>
 		@gmSelectForm(eventId, puljeId, billettholdere)
