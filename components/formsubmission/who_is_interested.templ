@@ -179,7 +179,7 @@ type Billettholder struct {
 }
 
 type ButtonInfo struct {
-	Label string
+	Label  string
 	Action string
 }
 
@@ -384,6 +384,7 @@ templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 			<admin-gm-select
 				data-billettholdere={ string(billettholdereJson) }
 				data-on:gm-select="$assignmentBillettholderId = evt.detail.id"
+				input-tippy="Søk etter billettholder"
 			></admin-gm-select>
 		</form>
 		<script src="/static/web_components/admin_gm_select.js"></script>

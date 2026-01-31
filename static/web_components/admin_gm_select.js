@@ -246,9 +246,10 @@ class AdminGmSelect extends HTMLElement {
      * Render the light DOM structure so page styles apply.
      */
     _render() {
-        const placeholder = this.getAttribute("placeholder") || "søk etter spiller"
-        const submitLabel = this.getAttribute("submit-label") || "Legg til som GM"
-        const inputId = this.getAttribute("input-id") || `gm-search-${ Math.random().toString(36).substring(2, 8) }`
+        const placeholder = this.getAttribute("placeholder") ?? "søk etter spiller"
+        const submitLabel = this.getAttribute("submit-label") ?? "Legg til som GM"
+        const inputId = this.getAttribute("input-id") ?? `gm-search-${ Math.random().toString(36).substring(2, 8) }`
+        const inputTippy = this.getAttribute("input-tippy") ?? ""
 
         this.replaceChildren()
 
@@ -259,6 +260,7 @@ class AdminGmSelect extends HTMLElement {
         input.placeholder = placeholder
         input.className = "input"
         input.required = true
+        input.setAttribute("data-tippy-content", inputTippy)
 
         const button = document.createElement("button")
         button.type = "submit"
