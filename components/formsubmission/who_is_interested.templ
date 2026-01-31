@@ -12,12 +12,13 @@ import (
 )
 
 type InterestWithHolder struct {
-	BillettholderId int    `json:"billettholder_id"`
-	EventId         string `json:"event_id"`
-	PuljeId         string `json:"pulje_id"`
-	InterestLevel   string `json:"interest_level"`
-	FirstChoice     bool   `json:"first_choice"`
-	IsGamemaster    bool   `json:"is_gm"`
+	BillettholderId      int    `json:"billettholder_id"`
+	EventId              string `json:"event_id"`
+	PuljeId              string `json:"pulje_id"`
+	InterestLevel        string `json:"interest_level"`
+	FirstChoice          bool   `json:"first_choice"`
+	HasOtherEventInPulje bool   `json:"has_other_event_in_pulje"`
+	IsGamemaster         bool   `json:"is_gm"`
 
 	FirstName  string `json:"first_name"`
 	LastName   string `json:"last_name"`
@@ -48,6 +49,24 @@ var queryFirstChoice = `
                 ) AS first_choice
 `
 
+func queryOtherEventInPulje(alias string) string {
+	return fmt.Sprintf(`
+                EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        events_players ep2
+                    WHERE
+                        ep2.billettholder_id = %s.billettholder_id
+                        AND ep2.pulje_id = %s.pulje_id
+                        AND ep2.event_id <> %s.event_id
+                        AND (ep2.is_player = 1 OR ep2.is_gm = 1)
+                    LIMIT
+                        1
+                ) AS has_other_event_in_pulje
+`, alias, alias, alias)
+}
+
 func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]InterestWithHolder, error) {
 	var query = `
             SELECT
@@ -56,6 +75,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 i.pulje_id,
                 i.interest_level,
                 ` + queryFirstChoice + `,
+                ` + queryOtherEventInPulje("i") + `,
                 COALESCE(ep.is_gm, 0) AS is_gm,
                 b.first_name,
                 b.last_name,
@@ -91,6 +111,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&interest.PuljeId,
 			&interest.InterestLevel,
 			&interest.FirstChoice,
+			&interest.HasOtherEventInPulje,
 			&interest.IsGamemaster,
 			&interest.FirstName,
 			&interest.LastName,
@@ -119,6 +140,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 -- this is because we can insert ppl from search without interest as gm
                 COALESCE(i.interest_level, '') AS interest_level,
                 ` + queryFirstChoice + `,
+                ` + queryOtherEventInPulje("ep") + `,
                 COALESCE(ep.is_gm, 0) AS is_gm,
                 b.first_name,
                 b.last_name,
@@ -153,6 +175,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&assignment.PuljeId,
 			&assignment.InterestLevel,
 			&assignment.FirstChoice,
+			&assignment.HasOtherEventInPulje,
 			&assignment.IsGamemaster,
 			&assignment.FirstName,
 			&assignment.LastName,
@@ -288,6 +311,12 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
                     color: var(--color-error);
                     font-weight: 700;
                 }
+                .other-event-indicator {
+                    display: inline-flex;
+                    align-items: center;
+                    color: var(--color-warning);
+                    margin-inline-start: 0.25rem;
+                }
             }
             .end {
                 place-self: end;
@@ -332,6 +361,15 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 					}
 					{{ fullName := interest.FirstName + " " + interest.LastName }}
 					@ticketholder.NameInitials(fullName, ticketholder.GetInitials(fullName))
+					if interest.HasOtherEventInPulje {
+						<span
+							class="other-event-indicator"
+							data-tippy-content="Tildelt annet arrangement i samme pulje"
+							aria-label="Tildelt annet arrangement i samme pulje"
+						>
+							@icons.Icon(icons.Shield, icons.Size16)
+						</span>
+					}
 					// todo: incomplete first choice logic
 					if interest.FirstChoice {
 						<p class="first-choice">Fått førstevalg</p>
