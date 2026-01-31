@@ -194,7 +194,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						)
 						keyvalue.BroadcastUpdate(kv, r)
 					})
-					eventsPlayersRouter.Put("/put", func(w http.ResponseWriter, r *http.Request) {
+					eventsPlayersRouter.Put("/update_status", func(w http.ResponseWriter, r *http.Request) {
 						type Store struct {
 							BillettholderId int    `json:"assignmentBillettholderId"`
 							EventId         string `json:"assignmentEventId"`

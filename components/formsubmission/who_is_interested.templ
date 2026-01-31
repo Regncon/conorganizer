@@ -315,10 +315,10 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
 			{{
-				assignPlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = true; $assignmentIsGm = false; @put('/admin/approval/api/events_players/put')", eventId, puljeId, interest.BillettholderId)
-				removePlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/put')", eventId, puljeId, interest.BillettholderId)
-				assignGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = true; @put('/admin/approval/api/events_players/put')", eventId, puljeId, interest.BillettholderId)
-				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/put')", eventId, puljeId, interest.BillettholderId)
+				assignPlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = true; $assignmentIsGm = false; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
+				removePlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
+				assignGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = true; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
+				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
 				playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerAction, removePlayerAction)
 				gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmAction, removeGmAction)
 				buttonsInfo := []ButtonInfo{playerAction, gmAction}
