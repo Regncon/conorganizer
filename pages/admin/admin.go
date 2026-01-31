@@ -158,9 +158,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 				apiRouter.Route("/events_players", func(eventsPlayersRouter chi.Router) {
 					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
-						// sse := datastar.NewSSE(w, r)
-						// sessionID, mvc, err := mvcSession(w, r)
-						// ctx := r.Context()
+
 						type Store struct {
 							BillettholderId int    `json:"assignmentGmSelect"`
 							EventId         string `json:"assignmentEventId"`
@@ -172,17 +170,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
 						}
-						fmt.Printf("Store: %+v\n", store)
-						// get from form data
-						if err := r.ParseForm(); err != nil {
-							http.Error(w, "Failed to parse form data", http.StatusBadRequest)
-							return
-						}
-
-						fmt.Printf("Form data: %+v\n", r.Form.Get("name"))
-						fmt.Printf("Form data: %+v\n", r.Form.Get("billettholder-6"))
-
-						// http.Error(w, "Not implemented", http.StatusNotImplemented)
 
 						var updatePlayerStatusErr = formsubmission.UpdatePlayerStatus(
 							store.EventId,
@@ -194,6 +181,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							logger,
 						)
 						if updatePlayerStatusErr != nil {
+							logger.Error("Failed to add player as GM", "error", updatePlayerStatusErr)
 							http.Error(w, updatePlayerStatusErr.Error(), http.StatusInternalServerError)
 							return
 						}
@@ -206,13 +194,8 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"isGm", true,
 						)
 						keyvalue.BroadcastUpdate(kv, r)
-						return
 					})
 					eventsPlayersRouter.Put("/put/{eventId}/{puljeId}/{billettholderId}/{isPlayer}/{isGm}", func(w http.ResponseWriter, r *http.Request) {
-						// sse := datastar.NewSSE(w, r)
-						// sessionID, mvc, err := mvcSession(w, r)
-						// ctx := r.Context()
-
 						eventId := chi.URLParam(r, "eventId")
 						puljeId := chi.URLParam(r, "puljeId")
 						billettholderId, billettholderIdToIntErr := strconv.Atoi(chi.URLParam(r, "billettholderId"))
