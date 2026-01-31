@@ -5,6 +5,10 @@ Billettholder
 Billettholdere
 Pulje
 Puljer
+Fredag Kveld
+Lordag Morgen
+Lordag Kveld
+Sondag Morgen
 
 ## Billettholder
 En billettholder er en CheckIn billett
