@@ -178,29 +178,29 @@ type Billettholder struct {
 	LastName  string
 }
 
-type ButtonAction struct {
+type ButtonInfo struct {
 	Label string
 	Action string
 }
 
-func playerButtonAction(isAssigned bool, isGamemaster bool, assignAction string, removeAction string) ButtonAction {
+func playerButtonAction(isAssigned bool, isGamemaster bool, assignAction string, removeAction string) ButtonInfo {
 	if !isAssigned {
-		return ButtonAction{Label: "Tildel som spiller", Action: assignAction}
+		return ButtonInfo{Label: "Tildel som spiller", Action: assignAction}
 	}
 	if isGamemaster {
-		return ButtonAction{Label: "Bytt til spiller", Action: assignAction}
+		return ButtonInfo{Label: "Bytt til spiller", Action: assignAction}
 	}
-	return ButtonAction{Label: "Fjern som spiller", Action: removeAction}
+	return ButtonInfo{Label: "Fjern som spiller", Action: removeAction}
 }
 
-func gmButtonAction(isAssigned bool, isGamemaster bool, assignAction string, removeAction string) ButtonAction {
+func gmButtonAction(isAssigned bool, isGamemaster bool, assignAction string, removeAction string) ButtonInfo {
 	if !isAssigned {
-		return ButtonAction{Label: "Tildel som GM", Action: assignAction}
+		return ButtonInfo{Label: "Tildel som GM", Action: assignAction}
 	}
 	if isGamemaster {
-		return ButtonAction{Label: "Fjern som GM", Action: removeAction}
+		return ButtonInfo{Label: "Fjern som GM", Action: removeAction}
 	}
-	return ButtonAction{Label: "Bytt til GM", Action: assignAction}
+	return ButtonInfo{Label: "Bytt til GM", Action: assignAction}
 }
 
 func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error) {
@@ -321,7 +321,7 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/put')", eventId, puljeId, interest.BillettholderId)
 				playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerAction, removePlayerAction)
 				gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmAction, removeGmAction)
-				buttonActions := []ButtonAction{playerAction, gmAction}
+				buttonsInfo := []ButtonInfo{playerAction, gmAction}
 			}}
 			<section
 				class="item-card section"
@@ -356,12 +356,12 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 				</div>
 				<div class="end">
 					<div class="pickers">
-						for _, action := range buttonActions {
+						for _, buttonInfo := range buttonsInfo {
 							<button
 								class="btn btn--outline button-size"
-								data-on:click={ action.Action }
+								data-on:click={ buttonInfo.Action }
 							>
-								{ action.Label }
+								{ buttonInfo.Label }
 							</button>
 						}
 					</div>
