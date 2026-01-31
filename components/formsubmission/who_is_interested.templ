@@ -330,7 +330,8 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 					if !isAssigned {
 						<span>{ interest.InterestLevel }</span>
 					}
-					@ticketholder.NameInitials(interest.FirstName+" "+interest.LastName, string(interest.FirstName[0])+string(interest.LastName[0]))
+					{{ fullName := interest.FirstName + " " + interest.LastName }}
+					@ticketholder.NameInitials(fullName, ticketholder.GetInitials(fullName))
 					// todo: incomplete first choice logic
 					if interest.FirstChoice {
 						<p class="first-choice">Fått førstevalg</p>

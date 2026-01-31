@@ -137,8 +137,13 @@ func GetInitials(s string) string {
 		return "TT"
 	}
 
-	firstChar := rune(words[0][0])
-	lastChar := rune(words[len(words)-1][0])
+	firstWordRunes := []rune(words[0])
+	lastWordRunes := []rune(words[len(words)-1])
+	if len(firstWordRunes) == 0 || len(lastWordRunes) == 0 {
+		return "TT"
+	}
+	firstChar := firstWordRunes[0]
+	lastChar := lastWordRunes[0]
 
 	if unicode.IsLetter(firstChar) {
 		initialsBuilder.WriteRune(unicode.ToUpper(firstChar))
