@@ -1,50 +1,64 @@
-# Database View: `get_billettholder_id`
+# Database Views
 
-This view is defined in the migration file `20260201161247_views.sql`. It combines data from the `users` table and the `billettholdere_users` table, making it easier to query information about users who are also billettholdere (ticket holders).
+This file documents database views. Each entry contains a short purpose and a Go usage example.
 
-## Definition
+---
 
-The view is created with the following SQL:
+# Database View: `v_get_user_billettholder`
 
-```sql
-CREATE VIEW IF NOT EXISTS
-    get_billettholder_id AS
-SELECT
-    u.*,
-    bu.*
-FROM
-    billettholdere_users AS bu
-    LEFT JOIN users AS u ON u.id = bu.user_id;
+**Purpose:** Join between `users` and `billettholdere_users` to map application users to ticket-holder records.
+
+**Go usage example:**
+
+```go
+rows, err := db.Query("SELECT billettholder_id FROM v_get_user_billettholder WHERE user_id = $1", userID)
 ```
 
-- This view selects all columns from both `users` (`u.*`) and `billettholdere_users` (`bu.*`).
-- It performs a `LEFT JOIN` from `billettholdere_users` to `users` using the `user_id` field.
+---
 
-## Purpose
+# Database View: `v_events_by_pulje_active`
 
-- To simplify queries that need both user information and billettholder (ticket holder) details.
-- To avoid writing repetitive join statements in your application code.
-- To make it easy to fetch the billettholder id for a given user.
+**Purpose:** Pre-joined view of approved events with their active pulje metadata for listings.
 
-## How to Use
+**Go usage example:**
 
-You can use this view in your SQL queries just like a regular table.
-
-### Example Query
-
-```sql
-SELECT id
-FROM get_billettholder_id
-WHERE user_id = '42DGW23DAcd257ad';
+```go
+rows, err := db.Query("SELECT id, title, pulje_name FROM v_events_by_pulje_active WHERE is_published = $1", 1)
 ```
 
-This will return the `id` from the `billettholdere_users` table for the user with `user_id` '42DGW23DAcd257ad'.
-Use this when you need the billettholder id for a specific user.
+---
 
-### In Application Code
+# Database View: `v_event_summary`
 
-You can query the view as you would any table. For example, in Go:
+**Purpose:** Compact projection of commonly used event metadata for admin/summary screens.
 
-````go
-rows, userQueryErr := db.Query("SELECT id FROM get_billettholder_id WHERE user_id = $1", userID)
-````
+**Go usage example:**
+
+```go
+rows, err := db.Query("SELECT id, title, status FROM v_event_summary WHERE status = $1", "Godkjent")
+```
+
+---
+
+# Database View: `v_billettholder_emails`
+
+**Purpose:** Joins `billettholdere` with their emails for email-based lookups.
+
+**Go usage example:**
+
+```go
+rows, err := db.Query("SELECT billettholder_id, first_name, last_name FROM v_billettholder_emails WHERE email = $1", email)
+```
+
+---
+
+# Database View: `v_event_puljer_active`
+
+**Purpose:** Active and published puljer for an event.
+
+**Go usage example:**
+
+```go
+rows, err := db.Query("SELECT pulje_id, pulje_name FROM v_event_puljer_active WHERE event_id = $1", eventID)
+```
+
