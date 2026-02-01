@@ -5,7 +5,7 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 )
 
-templ ProgramPuljeEvent(eventID string, imgurl string, title string, description string, eventType string, isGM bool) {
+templ ProgramPuljeEvent(eventID string, imageCardUrl string, imageBannerUrl string, title string, description string, eventType string, isGM bool) {
 	<style>
 		.programpulje-event-container {
 			--linear-gradient-mask: linear-gradient(
@@ -58,7 +58,7 @@ templ ProgramPuljeEvent(eventID string, imgurl string, title string, description
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 621px;
+      max-width: 600px;
     }
 
     .programpulje-event-container-text-title {
@@ -85,14 +85,8 @@ templ ProgramPuljeEvent(eventID string, imgurl string, title string, description
 				mask-image: var(--linear-gradient-mask);
 				-webkit-mask-image: var(--linear-gradient-mask);
         filter: opacity(0.5);
-		}
-
-    @container main (width <= 480px) {
-      .programpulje-event-container-text {
-        width: calc(100% - 40px);
-      }
-
-    }
+        object-fit: cover;
+        object-position: center;
 	</style>
 	<a href={ templ.URL(fmt.Sprintf("/event/%s", eventID)) } class="item-card profile-event-bar programpulje-event-container">
 		if (isGM) {
@@ -109,14 +103,21 @@ templ ProgramPuljeEvent(eventID string, imgurl string, title string, description
 				{ description }
 			</span>
 		</div>
-		if imgurl != "" {
-			<img
-				src={ imgurl }
-				title=""
-				height="100%"
-				width="40%"
-				class="programpulje-event-container-image"
-			/>
+		if imageCardUrl != "" {
+			<picture>
+				<source
+					media="(width >= 37.5rem)"
+					srcset={ imageBannerUrl }
+					type="image/avif"
+				/>
+				<img
+					src={ imageCardUrl }
+					title=""
+					height="100%"
+					width="40%"
+					class="programpulje-event-container-image"
+				/>
+			</picture>
 		}
 	</a>
 }

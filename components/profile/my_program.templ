@@ -106,7 +106,8 @@ templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.L
 						</h3>
 						if pulje.event.EventID != "" {
 							{{ imageCardUrl := eventimage.GetEventImageUrl(pulje.event.EventID, "card", eventImageDir) }}
-							@event_components.ProgramPuljeEvent(pulje.event.EventID, imageCardUrl, pulje.event.Title, pulje.event.Intro, pulje.event.EventType, pulje.event.IsGM)
+							{{ imageBannerUrl := eventimage.GetEventImageUrl(pulje.event.EventID, "banner", eventImageDir) }}
+							@event_components.ProgramPuljeEvent(pulje.event.EventID, imageCardUrl, imageBannerUrl, pulje.event.Title, pulje.event.Intro, pulje.event.EventType, pulje.event.IsGM)
 						} else if len(pulje.interests) > 0 {
 							{{ interestList := make([]event_components.Interest, len(pulje.interests)) }}
 							{{
