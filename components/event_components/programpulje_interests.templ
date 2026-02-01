@@ -19,6 +19,7 @@ templ ProgramPuljeInterests(interests []Interest) {
 			border: 1px solid var(--bg-item-border);
 			border-radius: var(--border-radius-2x);
       container-type: inline-size;
+      container-name: pulje-interests-container;
 			.btn {
 				flex-shrink: 0;
 			}
@@ -84,14 +85,14 @@ templ ProgramPuljeInterests(interests []Interest) {
     }
 
 
-    @container (max-width: 768px) {
+    @container pulje-interests-container (max-width: 768px) {
       .pulje-interest-event-choice {
         text-align: left;
         min-width: unset;
       }
     }
 
-    @container (max-width: 580px) {
+    @container pulje-interests-container (max-width: 580px) {
       .pulje-interests-collapse-content {
         flex-direction: column;
         align-items: start;
