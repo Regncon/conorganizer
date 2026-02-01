@@ -51,14 +51,17 @@ templ ProgramPuljeEvent(eventID string, imageCardUrl string, imageBannerUrl stri
       padding: var(--spacing-4x);
       z-index: 1;
       overflow: hidden;
-      width: calc(100% - 120px);
+      width: calc(100% - 150px);
+      max-width: 580px;
+      min-width: 260px;
     }
+
+
 
     .event-container-clip-text {
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      max-width: 580px;
     }
 
     .programpulje-event-container-text-title {
