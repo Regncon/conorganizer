@@ -73,6 +73,28 @@ templ ProgramPuljeInterests(interests []Interest) {
       font-weight: bold;
       text-align: right;
       min-width: 120px; /* "veldig interessert" */
+      white-space: nowrap;
+    }
+
+    .pulje-interests-collapse-content  {
+      flex-direction: row;
+      justify-content: space-between;
+      padding-top: 16px
+    }
+
+    @media (max-width: 768px) {
+      .pulje-interest-event-choice {
+        text-align: left;
+        min-width: unset;
+      }
+
+    }
+
+    @media(max-width: 580px){
+        .pulje-interests-collapse-content {
+        flex-direction: column;
+        align-items: start;
+      }
     }
 	</style>
 	<div class="pulje-interests-container">
@@ -87,9 +109,9 @@ templ ProgramPuljeInterests(interests []Interest) {
 					@icons.Icon(icons.ChevronDown, icons.Size24)
 				</span>
 			</summary>
-			<div class="pulje-interests-collapse-content">
+			<div>
 				for _, interest := range interests {
-					<a href={ templ.URL(fmt.Sprintf("/event/%s", interest.EventID)) } class="item-card profile-event-bar">
+					<a href={ templ.URL(fmt.Sprintf("/event/%s", interest.EventID)) } class="item-card profile-event-bar pulje-interests-collapse-content">
 						<span class="profile-event-bar-title">{ interest.EventName }</span>
 						<span class="pulje-interest-event-choice">{ interest.InterestLevel }</span>
 					</a>
