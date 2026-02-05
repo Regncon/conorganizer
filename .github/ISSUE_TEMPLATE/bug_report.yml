@@ -1,4 +1,3 @@
----
 name: Bug report
 title: "[Bug]"
 description: Create a new bug report
@@ -27,4 +26,3 @@ body:
       label: Additional Information
       description: "Provide any other context to the problem. Device, browser,
         localization, and similar. "
----
