@@ -2,13 +2,13 @@ package ticketholder
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
-	"fmt"
 )
 
 /*
-        if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
+    if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
         <p class="label">Velg billettholder</p>
 		<div class="ticket-holder-picker-buttons">
 			for _, billettHolder := range associatedTicketHolders {
@@ -55,6 +55,14 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		}
 	</style>
 	{{ associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger) }}
+	{{
+	testUser := []BillettHolder{
+		BillettHolder{Id: 200, Name: "Ola Nordmann", Email: "ola.nordmann@example.com"},
+		BillettHolder{Id: 201, Name: "Kari Nordmann", Email: "kari.nordmann@example.com"},
+		BillettHolder{Id: 202, Name: "Per Hansen", Email: "per.hansen@example.com"},
+	}
+	associatedTicketHolders = append(associatedTicketHolders, testUser...)
+	}}
 	if err != nil {
 		<div class="ticket-holder-container">
 			<p>Feil ved henting av billettholdere: { err.Error() }</p>
@@ -68,15 +76,23 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		<div
 			data-signals={ fmt.Sprintf("{billettHolderId:%d}", associatedTicketHolders[0].Id) }
 		></div>
-		<div data-signals:foo="1"></div>
 	}
-	if (len(associatedTicketHolders) > 1) {
+	if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
 		<div class="ticket-holder-container">
 			<p class="label">Velg billettholder</p>
 			<div class="ticket-holder-picker-buttons">
 				for _, billettHolder := range associatedTicketHolders {
 					@TicketHolderButton(billettHolder)
 				}
+				@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
+			</div>
+		</div>
+	}
+	if (len(associatedTicketHolders) > 3) {
+		<div class="ticket-holder-container">
+			<p class="label">Velg billettholder</p>
+			<div class="ticket-holder-picker-dropdown">
+				@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
 			</div>
 		</div>
 	}
