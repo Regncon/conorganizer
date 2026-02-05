@@ -108,7 +108,7 @@ CREATE TABLE IF NOT EXISTS events (
     can_be_run_in_english BOOLEAN NOT NULL,
     notes TEXT DEFAULT '',
     status TEXT NOT NULL DEFAULT 'Kladd',
-    inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (host) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (pulje_name) REFERENCES puljer(name) ON UPDATE CASCADE,
     FOREIGN KEY (status) REFERENCES event_statuses(status) ON UPDATE CASCADE,
@@ -166,4 +166,6 @@ CREATE TABLE IF NOT EXISTS events_puljes_exclusions (
     FOREIGN KEY (pulje_name) REFERENCES puljer(name),
     FOREIGN KEY (event_id) REFERENCES events(id)
 );
+
+
 
