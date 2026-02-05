@@ -109,7 +109,7 @@ templ ticketCard(ticket checkIn.CheckInTicket, isBllettholder bool, searchTerm s
 		} else {
 			<button
 				class="btn btn--outline"
-				data-on-click={ templ.URL(fmt.Sprintf("@get('/admin/billettholder/add/api/convert/%s/')", strconv.Itoa(ticket.ID))) }
+				data-on:click={ templ.URL(fmt.Sprintf("@get('/admin/billettholder/add/api/convert/%s/')", strconv.Itoa(ticket.ID))) }
 			>
 				Konverter billett til deltager
 			</button>

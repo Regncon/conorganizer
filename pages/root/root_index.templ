@@ -8,7 +8,6 @@ import (
 	"github.com/Regncon/conorganizer/service/userctx"
 
 	"github.com/Regncon/conorganizer/layouts"
-	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
@@ -24,7 +23,7 @@ func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventIm
 }
 
 templ rootIndex(db *sql.DB, isAdmin bool, eventImageDir *string) {
-	<div id="root-page-wrapper" data-on-load={ datastar.GetSSE("/root/api") }>
+	<div id="root-page-wrapper" data-init={ "@get('/root/api',{requestCancellation: 'disabled'})" }>
 		@rootPageContent(db, isAdmin, eventImageDir)
 	</div>
 }

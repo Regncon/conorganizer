@@ -149,23 +149,23 @@ templ profileTicketsPageContent(userId string, db *sql.DB, logger *slog.Logger) 
 		<div style="display: flex; gap: 1rem; align-items: center; flex-direction: column;">
 			<button
 				class="btn btn--cta"
-				data-on-click={ datastar.PostSSE("/profile/tickets/api/get-tickets") }
-				data-indicator-fetching
-				data-attr-disabled="$fetching"
+				data-on:click={ "@post('/profile/tickets/api/get-tickets')" }
+				data-indicator:fetching
+				data-attr:disabled="$fetching"
 			>
 				<p data-text="$fetching ? '' : 'Hent billettar'">Hent billettar</p>
-				<span class="spinner show" data-class-show="$fetching">
+				<span class="spinner show" data-class:show="$fetching">
 					@icons.Icon(icons.Loading, icons.Size24)
 				</span>
 			</button>
 			<strong
 				style="color: var(--color-error);"
-				data-signals-getTicketsErrorMessage
+				data-signals:getTicketsErrorMessage
 				data-text="$getTicketsErrorMessage"
 			></strong>
 			<strong
 				style="color: var(--color-success);"
-				data-signals-getTicketsSuccessMessage
+				data-signals:getTicketsSuccessMessage
 				data-text="$getTicketsSuccessMessage"
 			></strong>
 		</div>

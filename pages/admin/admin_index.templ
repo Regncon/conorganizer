@@ -8,7 +8,6 @@ import (
 
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/Regncon/conorganizer/layouts"
-	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func adminLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
@@ -24,7 +23,7 @@ func adminLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err er
 }
 
 templ adminIndex() {
-	<div id="admin-container" data-on-load={ datastar.GetSSE("/admin/api/") }>
+	<div id="admin-container" data-init={ "@get('/admin/api/',{requestCancellation: 'disabled'})" }>
 		<p>Admin page</p>
 		<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
 	</div>

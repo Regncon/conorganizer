@@ -3,10 +3,10 @@ package edit_form
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
-	datastar "github.com/starfederation/datastar-go/datastar"
 	"log/slog"
 	"net/http"
 )
@@ -34,7 +34,7 @@ templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, eventImageD
 	<div
 		id="edit-form-container"
 		class="formsubmission-css-container"
-		data-on-load={ datastar.GetSSE("/admin/approval/edit/api/%s", eventId) }
+		data-init={ fmt.Sprintf("@get('/admin/approval/edit/api/%s',{requestCancellation: 'disabled'})", eventId) }
 	>
 		@EditEventFormPageContent(ctx, eventId, db, eventImageDir, logger)
 	</div>
