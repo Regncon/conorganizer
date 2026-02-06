@@ -105,7 +105,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						logger.Error("Failed to stop watcher", "error", err)
+						logger.Error("Failed to stop watcher", "event-error", err)
 					}
 				}()
 
