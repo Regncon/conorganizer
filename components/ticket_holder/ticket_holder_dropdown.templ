@@ -105,15 +105,13 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
 
     </style>
 	<div class="ticket-holder-picker">
-		<div class="custom-select">
+		<ticket-holder-dropdown class="custom-select">
 			<button
-				id="dropdown-button"
 				class="select-button input no-marking"
 				role="combobox"
 				aria-label="select button"
 				aria-haspopup="listbox"
 				aria-expanded="false"
-				aria-controls="dropdown-list"
 			>
 				<span class="selected-value"></span>
 				<div class="select-button-end">
@@ -125,13 +123,15 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
 			<ul
 				class="dropdown-list hidden"
 				role="listbox"
-				id="dropdown-list"
-				aria-labelledby="dropdown-button"
 			>
 				for _, bh := range associatedBillettholder {
 					{{ initials := GetInitials(bh.Name) }}
 					<li
                         role="option"
+						data-billett-holder-id={ fmt.Sprintf("%d", bh.Id) }
+						data-billett-holder-name={ bh.Name }
+						data-billett-holder-email={ bh.Email }
+						data-billett-holder-color={ bh.Color }
                         data-bind="billettHolderId"
                         data-on:click={ fmt.Sprintf("$billettHolderId = %d", bh.Id) }
 					>
@@ -139,170 +139,7 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
 					</li>
 				}
 			</ul>
-		</div>
+		</ticket-holder-dropdown>
 	</div>
-	<script>
-        const associatedBillettholder = {{ associatedBillettholder }};
-        console.log(associatedBillettholder);
-        let selectedBillettholder = {{ associatedBillettholder[0] }};
-        document.addEventListener("DOMContentLoaded", () => {
-            initDropDown();
-        });
-
-        const initLocalstorage = () => {
-            const selectedBillettholderLS = localStorage.getItem(LSEnum.SelectedBilletHolder);
-            const nameInitialsElement = document.querySelector(".selected-value");
-            const initials = selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase();
-            selectedBillettholder = {...selectedBillettholder, Initials: initials};
-
-
-            if (!selectedBillettholderLS) {
-                localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(selectedBillettholder));
-
-                nameInitialsElement.innerHTML = `
-                    <div class="name-initials">
-                        <span
-                        class="initials"
-                        style="
-                                background-color: hsl(from {{ColorForName(associatedBillettholder[0].Name)}} h s l / 0.5);
-                                border: 1px solid {{ColorForName(associatedBillettholder[0].Name)}};"
-
-                        >${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
-                        <p class="name">${selectedBillettholder.Name}</p>
-                    </div>
-                `;
-            }
-
-            if (selectedBillettholderLS) {
-                const billetHolder = JSON.parse(selectedBillettholderLS);
-                selectedBillettholder = billetHolder;
-
-                nameInitialsElement.innerHTML = `
-                    <div class="name-initials">
-                        <span
-                            class="initials"
-                            style="
-                                background-color: black;
-                                border: 1px solid black;
-                                "
-                        >
-                            ${selectedBillettholder.Name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                        </span>
-                        <p class="name">${selectedBillettholder.Name}</p>
-                    </div>
-                `;
-            }
-            selectedBillettholder = {...selectedBillettholder,  Initials: initials};
-            return selectedBillettholder;
-
-        };
-
-        const initDropDown = () => {
-            const customSelects = document.querySelectorAll(".custom-select");
-            customSelects.forEach((customSelect) => {
-                const selectButton = customSelect.querySelector(".select-button");
-                const dropdown = customSelect.querySelector(".dropdown-list");
-
-                let focusedIndex = -1;
-
-                const toggleDropdown = (expand = null) => {
-                    const isOpen = expand !== null ? expand : dropdown.classList.contains("hidden");
-
-                    dropdown.classList.toggle("hidden", !isOpen);
-
-                    selectButton.setAttribute("aria-expanded", isOpen);
-
-                    if (isOpen) {
-                        focusedIndex = [...options].findIndex((option) =>
-                            option.classList.contains("selected")
-                        );
-
-                        focusedIndex = focusedIndex === -1 ? 0 : focusedIndex;
-
-                        updateFocus();
-                    } else {
-                        focusedIndex = -1;
-                        selectButton.focus();
-                    }
-                };
-                const updateFocus = () => {
-                    options.forEach((option, index) => {
-                        if (option) {
-                            option.setAttribute("tabindex", index === focusedIndex ? "0" : "-1");
-
-                            if (index === focusedIndex) option.focus();
-                        }
-                    });
-                };
-
-                selectButton.addEventListener("click", () => {
-                    toggleDropdown();
-                });
-
-                selectButton.addEventListener("keydown", (event) => {
-                    if (event.key === "ArrowDown") {
-                        event.preventDefault();
-
-                        toggleDropdown(true);
-
-                    } else if (event.key === "Escape") {
-                        toggleDropdown(false);
-                    }
-                });
-
-                dropdown.addEventListener("keydown", (event) => {
-                    if (event.key === "ArrowDown") {
-                        event.preventDefault();
-
-                        focusedIndex = (focusedIndex + 1) % options.length;
-
-                        updateFocus();
-                    } else if (event.key === "ArrowUp") {
-                        event.preventDefault();
-
-                        focusedIndex = (focusedIndex - 1 + options.length) % options.length;
-
-                        updateFocus();
-                    } else if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-
-                        handleOptionSelect(options[focusedIndex]);
-
-                        toggleDropdown(false);
-                    } else if (event.key === "Escape") {
-                        toggleDropdown(false);
-                    }
-                });
-
-                const options = dropdown.querySelectorAll("li");
-                const selectedValue = selectButton.querySelector(".selected-value");
-
-                const handleOptionSelect = (option) => {
-                    options.forEach((opt) => opt.classList.remove("selected"));
-                    option.classList.add("selected");
-
-                    selectedValue.innerHTML = option.innerHTML;
-
-                    const name = option.querySelector(".name").textContent;
-                    const billetHolder = associatedBillettholder.find(th => th.Name === name);
-                    localStorage.setItem(LSEnum.SelectedBilletHolder, JSON.stringify(billetHolder));
-                    selectedBillettholder = billetHolder;
-                };
-
-                options.forEach((option) => {
-                    option.addEventListener("click", () => {
-                        handleOptionSelect(option);
-                        toggleDropdown(false);
-                    });
-                });
-
-                document.addEventListener("click", (event) => {
-                    const isOutsideClick = !customSelect.contains(event.target);
-                    if (isOutsideClick) {
-                        toggleDropdown(false);
-                    }
-                });
-            });
-        }
-    </script>
+	<script src="/static/web_components/ticket_holder_dropdown.js"></script>
 }
