@@ -1,4 +1,90 @@
 // @ts-check
+const STYLE_ID = "ticket-holder-dropdown-styles"
+const STYLE_TEXT = `
+ticket-holder-dropdown.custom-select {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+
+    .select-button {
+        display: flex;
+        place-content: space-between;
+        place-items: center;
+        width: 100%;
+        cursor: pointer;
+        padding-inline: var(--spacing-4x);
+        padding-block: var(--spacing-3x);
+
+        .select-button-end {
+            .arrow {
+                display: flex;
+                transition: transform ease-in-out 0.3s;
+            }
+        }
+
+        .selected-value {
+            .name-initials {
+                max-width: 12.8rem;
+            }
+        }
+
+        &[aria-expanded="true"] {
+            .select-button-end {
+                .arrow {
+                    transform: rotate(180deg);
+                }
+            }
+        }
+    }
+
+    .dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--bg-item-border);
+        border-radius: 0.25rem;
+        list-style: none;
+        padding: 10px;
+        margin: 10px 0 0;
+        box-shadow: var(--shadow-dialog);
+        max-height: 200px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        &.hidden {
+            display: none;
+        }
+
+        li {
+            background-color: var(--bg-item);
+            border: 1px solid var(--bg-item-border);
+            border-radius: var(--border-radius-2x);
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+
+            &.selected {
+                border-color: var(--color-primary);
+                color: var(--color-primary);
+                font-weight: bold;
+            }
+
+            &:hover,
+            &:focus-visible {
+                border-color: var(--color-primary);
+                color: var(--color-primary);
+            }
+        }
+    }
+}
+`
 
 /**
  * @typedef {Object} BillettHolder
@@ -426,82 +512,3 @@ if (!customElements.get("ticket-holder-dropdown")) {
 
     customElements.define("ticket-holder-dropdown", TicketHolderDropdown)
 }
-
-
-const STYLE_ID = "ticket-holder-dropdown-styles"
-const STYLE_TEXT = `
-ticket-holder-dropdown.custom-select {
-    position: relative;
-    display: inline-block;
-    width: 100%;
-}
-
-ticket-holder-dropdown .select-button {
-    display: flex;
-    place-content: space-between;
-    place-items: center;
-    width: 100%;
-    cursor: pointer;
-    padding-inline: var(--spacing-4x);
-    padding-block: var(--spacing-3x);
-}
-
-ticket-holder-dropdown .select-button .select-button-end .arrow {
-    display: flex;
-    transition: transform ease-in-out 0.3s;
-}
-
-ticket-holder-dropdown .select-button[aria-expanded="true"] .select-button-end .arrow {
-    transform: rotate(180deg);
-}
-
-ticket-holder-dropdown .selected-value .name-initials {
-    max-width: 12.8rem;
-}
-
-ticket-holder-dropdown .dropdown-list {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background-color: var(--bg-surface);
-    border: 1px solid var(--bg-item-border);
-    border-radius: 0.25rem;
-    list-style: none;
-    padding: 10px;
-    margin: 10px 0 0;
-    box-shadow: var(--shadow-dialog);
-    max-height: 200px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-ticket-holder-dropdown .dropdown-list.hidden {
-    display: none;
-}
-
-ticket-holder-dropdown .dropdown-list li {
-    background-color: var(--bg-item);
-    border: 1px solid var(--bg-item-border);
-    border-radius: var(--border-radius-2x);
-    padding: 10px;
-    cursor: pointer;
-    display: flex;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-ticket-holder-dropdown .dropdown-list li.selected,
-ticket-holder-dropdown .dropdown-list li:hover,
-ticket-holder-dropdown .dropdown-list li:focus-visible {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-}
-
-ticket-holder-dropdown .dropdown-list li.selected {
-    font-weight: bold;
-}
-`
