@@ -22,6 +22,8 @@ if (!customElements.get("ticket-holder-dropdown")) {
             this.focusedIndex = -1
             /** @type {string} */
             this.storageKey = "selectedBillettHolder"
+            /** @type {BillettHolder[]} */
+            this.holders = []
 
             this.onButtonClick = this.onButtonClick.bind(this)
             this.onButtonKeydown = this.onButtonKeydown.bind(this)
@@ -35,10 +37,16 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 return
             }
 
+            this.holders = this.parseHolders()
+            if (this.holders.length === 0) {
+                return
+            }
+
+            this.render()
+
             this.selectButton = this.querySelector(".select-button")
             this.dropdown = this.querySelector(".dropdown-list")
             this.selectedValue = this.querySelector(".selected-value")
-
             if (!this.selectButton || !this.dropdown || !this.selectedValue) {
                 return
             }
@@ -75,6 +83,114 @@ if (!customElements.get("ticket-holder-dropdown")) {
             }
             document.removeEventListener("click", this.onDocumentClick)
             this.dataset.initialized = "false"
+        }
+
+        /**
+         * @returns {BillettHolder[]}
+         */
+        parseHolders() {
+            const raw = this.getAttribute("data-billettholders")
+            if (!raw) {
+                return []
+            }
+            try {
+                const parsed = JSON.parse(raw)
+                if (!Array.isArray(parsed)) {
+                    return []
+                }
+                return parsed.map((item) => ({
+                    Id: Number(item?.Id || 0),
+                    Name: String(item?.Name || ""),
+                    Email: String(item?.Email || ""),
+                    Color: String(item?.Color || ""),
+                }))
+            } catch {
+                return []
+            }
+        }
+
+        /**
+         * @param {string} name
+         * @returns {string}
+         */
+        getInitials(name) {
+            return name
+                .split(" ")
+                .map((n) => n.trim())
+                .filter((n) => n.length > 0)
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()
+        }
+
+        /**
+         * @param {BillettHolder} holder
+         * @returns {HTMLDivElement}
+         */
+        createNameInitialsNode(holder) {
+            const wrapper = document.createElement("div")
+            wrapper.className = "name-initials"
+
+            const initials = document.createElement("span")
+            initials.className = "initials"
+            if (holder.Color) {
+                initials.style.backgroundColor = `hsl(from ${ holder.Color } h s l / 0.5)`
+                initials.style.border = `1px solid ${ holder.Color }`
+            }
+            initials.textContent = this.getInitials(holder.Name)
+
+            const name = document.createElement("p")
+            name.className = "name"
+            name.textContent = holder.Name
+
+            wrapper.appendChild(initials)
+            wrapper.appendChild(name)
+            return wrapper
+        }
+
+        /**
+         * @returns {void}
+         */
+        render() {
+            const button = document.createElement("button")
+            button.className = "select-button input no-marking"
+            button.setAttribute("role", "combobox")
+            button.setAttribute("aria-label", "select button")
+            button.setAttribute("aria-haspopup", "listbox")
+            button.setAttribute("aria-expanded", "false")
+            button.type = "button"
+
+            const selectedValue = document.createElement("span")
+            selectedValue.className = "selected-value"
+
+            const buttonEnd = document.createElement("div")
+            buttonEnd.className = "select-button-end"
+            const arrow = document.createElement("i")
+            arrow.className = "arrow"
+            arrow.textContent = "▾"
+            buttonEnd.appendChild(arrow)
+
+            button.appendChild(selectedValue)
+            button.appendChild(buttonEnd)
+
+            const list = document.createElement("ul")
+            list.className = "dropdown-list hidden"
+            list.setAttribute("role", "listbox")
+
+            this.holders.forEach((holder) => {
+                const li = document.createElement("li")
+                li.setAttribute("role", "option")
+                li.dataset.billettHolderId = String(holder.Id)
+                li.dataset.billettHolderName = holder.Name
+                li.dataset.billettHolderEmail = holder.Email
+                li.dataset.billettHolderColor = holder.Color
+                li.setAttribute("data-bind", "billettHolderId")
+                li.setAttribute("data-on:click", `$billettHolderId = ${ holder.Id }`)
+                li.appendChild(this.createNameInitialsNode(holder))
+                list.appendChild(li)
+            })
+
+            this.replaceChildren(button, list)
         }
 
         /**
@@ -126,15 +242,11 @@ if (!customElements.get("ticket-holder-dropdown")) {
             if (!this.selectedValue) {
                 return
             }
-
             this.getOptions().forEach((opt) => opt.classList.remove("selected"))
             option.classList.add("selected")
 
-            const fragment = document.createDocumentFragment()
-            option.childNodes.forEach((node) => {
-                fragment.appendChild(node.cloneNode(true))
-            })
-            this.selectedValue.replaceChildren(fragment)
+            const holder = this.toBillettHolder(option)
+            this.selectedValue.replaceChildren(this.createNameInitialsNode(holder))
         }
 
         /**
