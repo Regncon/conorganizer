@@ -152,6 +152,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		const LSEnum = {
 			SelectedBilletHolder: "selectedBillettHolder",
 		};
+        window.LSEnum = LSEnum;
 
 		function getBillettHolderFromLocalstorage() {
 			const selectedBillettHolderString = localStorage.getItem(
