@@ -6,6 +6,30 @@ ticket-holder-dropdown.custom-select {
     display: inline-block;
     width: 100%;
 
+    .name-initials {
+        display: inline-flex;
+        place-items: center;
+        gap: var(--spacing-2x);
+        min-width: 0;
+        overflow: clip;
+
+        .name {
+            white-space: nowrap;
+            overflow: clip;
+        }
+
+        .initials {
+            display: flex;
+            place-content: center;
+            place-items: center;
+            color: var(--color-text-strong);
+            font-size: 12px;
+            border-radius: 50%;
+            min-inline-size: 1.5rem;
+            min-block-size: 1.5rem;
+        }
+    }
+
     .select-button {
         display: flex;
         place-content: space-between;
