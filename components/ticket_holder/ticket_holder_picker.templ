@@ -31,6 +31,9 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		.ticket-holder-container {
 			padding-bottom: var(--responsive-pane-padding);
 		}
+        .ticket-holder-container[data-error] {
+			color: var(--color-error);
+		}
 		.ticket-holder-picker-buttons {
 			display: flex;
 			flex-direction: column;
@@ -54,31 +57,32 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			}
 		}
 	</style>
-	{{ associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger) }}
 	{{
+	associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger)
+
 	testUser := []BillettHolder{
 		BillettHolder{Id: 200, Name: "Ola Nordmann", Email: "ola.nordmann@example.com"},
 		BillettHolder{Id: 201, Name: "Kari Nordmann", Email: "kari.nordmann@example.com"},
 		BillettHolder{Id: 202, Name: "Per Hansen", Email: "per.hansen@example.com"},
 	}
 	associatedTicketHolders = append(associatedTicketHolders, testUser...)
+	err = fmt.Errorf("test error")
+
+	defaultId := ""
+	if len(associatedTicketHolders) > 0 {
+		defaultId = fmt.Sprintf("%d", associatedTicketHolders[0].Id)
+	}
 	}}
-	if err != nil {
-		<div class="ticket-holder-container">
-			<p>Feil ved henting av billettholdere: { err.Error() }</p>
-		</div>
-	}
-	if len(associatedTicketHolders) == 0 {
-		<div
-			data-signals={ fmt.Sprintf("{billettHolderId:''}") }
-		></div>
-	} else {
-		<div
-			data-signals={ fmt.Sprintf("{billettHolderId:%d}", associatedTicketHolders[0].Id) }
-		></div>
-	}
-	if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
-		<div class="ticket-holder-container">
+	<div
+		class="ticket-holder-container"
+		data-signals={ fmt.Sprintf("{billettHolderId:'%s'}", defaultId) }
+	>
+		if err != nil {
+			<div data-error class="ticket-holder-container">
+				<p>Feil ved henting av billettholdere: { err.Error() }</p>
+			</div>
+		}
+		if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
 			<p class="label">Velg billettholder</p>
 			<div class="ticket-holder-picker-buttons">
 				for _, billettHolder := range associatedTicketHolders {
@@ -86,16 +90,14 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 				}
 				@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
 			</div>
-		</div>
-	}
-	if (len(associatedTicketHolders) > 3) {
-		<div class="ticket-holder-container">
+		}
+		if (len(associatedTicketHolders) > 3) {
 			<p class="label">Velg billettholder</p>
 			<div class="ticket-holder-picker-dropdown">
 				@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
 			</div>
-		</div>
-	}
+		}
+	</div>
 	<script>
 		const billettHolderButtonPickerButton = document.querySelectorAll(
 			`.billett-holder-picker-button`,
