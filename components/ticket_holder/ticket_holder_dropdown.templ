@@ -1,6 +1,9 @@
 package ticketholder
 
-import "github.com/Regncon/conorganizer/service/requestctx"
+import (
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/service/requestctx"
+)
 
 // Takes a `selected` parameter to highlight the selected ticket holder
 templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder) {
@@ -14,7 +17,11 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
 		<ticket-holder-dropdown
 			class="custom-select"
 			data-billettholders={ templ.JSONString(associatedBillettholder) }
-		></ticket-holder-dropdown>
+		>
+			<template data-arrow-icon>
+				@icons.Icon(icons.ChevronDown, icons.Size24)
+			</template>
+		</ticket-holder-dropdown>
 	</div>
 	<script src="/static/web_components/ticket_holder_dropdown.js"></script>
 }

@@ -108,6 +108,17 @@ function ensureStyles() {
 }
 
 if (!customElements.get("ticket-holder-dropdown")) {
+    /**
+     * Ticket-holder dropdown custom element.
+     *
+     * Required input:
+     * - `data-billettholders`: JSON array of ticket holders.
+     *
+     * Optional templ-provided icon:
+     * - Provide a child `<template data-arrow-icon>...</template>`.
+     * - The component clones this template into the arrow slot during render.
+     * - If omitted, it falls back to a plain text arrow.
+     */
     class TicketHolderDropdown extends HTMLElement {
         constructor() {
             super()
@@ -123,6 +134,8 @@ if (!customElements.get("ticket-holder-dropdown")) {
             this.storageKey = "selectedBillettHolder"
             /** @type {BillettHolder[]} */
             this.billettholdere = []
+            /** @type {HTMLTemplateElement | null} */
+            this.arrowIconTemplate = null
 
             this.onButtonClick = this.onButtonClick.bind(this)
             this.onButtonKeydown = this.onButtonKeydown.bind(this)
@@ -141,6 +154,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
             if (this.billettholdere.length === 0) {
                 return
             }
+            this.arrowIconTemplate = this.querySelector("template[data-arrow-icon]")
 
             this.render()
 
@@ -267,7 +281,12 @@ if (!customElements.get("ticket-holder-dropdown")) {
             buttonEnd.className = "select-button-end"
             const arrow = document.createElement("i")
             arrow.className = "arrow"
-            arrow.textContent = "▾"
+            arrow.setAttribute("aria-hidden", "true")
+            if (this.arrowIconTemplate) {
+                arrow.appendChild(this.arrowIconTemplate.content.cloneNode(true))
+            } else {
+                arrow.textContent = "▾"
+            }
             buttonEnd.appendChild(arrow)
 
             button.appendChild(selectedValue)
