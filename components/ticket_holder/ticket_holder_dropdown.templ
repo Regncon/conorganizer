@@ -8,7 +8,7 @@ import (
 templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder) {
 	<ticket-holder-dropdown
 		class="custom-select"
-		data-billettholders={ templ.JSONString(associatedBillettholder) }
+		data-billettholdere={ templ.JSONString(associatedBillettholder) }
 	>
 		<template data-arrow-icon>
 			@icons.Icon(icons.ChevronDown, icons.Size24)

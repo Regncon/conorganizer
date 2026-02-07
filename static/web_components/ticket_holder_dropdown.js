@@ -35,12 +35,12 @@ if (!customElements.get("ticket-holder-dropdown")) {
      * @property {string} Email
      * @property {string} Color
      */
-
+    const DATA_BILLETTHOLDERE_ATTR = "data-billettholdere"
     /**
      * Ticket-holder dropdown custom element.
      *
      * Required input:
-     * - `data-billettholders`: JSON array of ticket holders.
+     * - `data-billettholdere`: JSON array of ticket holders.
      *
      * Optional templ-provided icon:
      * - Provide a child `<template data-arrow-icon>...</template>`.
@@ -49,7 +49,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
      */
     class TicketHolderDropdown extends HTMLElement {
         static get observedAttributes() {
-            return ["data-billettholders", "data-billettholdere"]
+            return [DATA_BILLETTHOLDERE_ATTR]
         }
 
         constructor() {
@@ -99,7 +99,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         attributeChangedCallback(name, oldValue, newValue) {
-            if ((name !== "data-billettholders" && name !== "data-billettholdere") || !this.isConnected) {
+            if (name !== DATA_BILLETTHOLDERE_ATTR || !this.isConnected) {
                 return
             }
             this.syncFromAttribute()
@@ -197,7 +197,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {BillettHolder[]}
          */
         parseHolders() {
-            const raw = this.getAttribute("data-billettholders") || this.getAttribute("data-billettholdere")
+            const raw = this.getAttribute(DATA_BILLETTHOLDERE_ATTR)
             if (!raw) {
                 return []
             }
