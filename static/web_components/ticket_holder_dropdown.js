@@ -303,8 +303,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 liEle.dataset.billettHolderName = holder.Name
                 liEle.dataset.billettHolderEmail = holder.Email
                 liEle.dataset.billettHolderColor = holder.Color
-                liEle.setAttribute("data-bind", "billettHolderId")
-                liEle.setAttribute("data-on:click", `$billettHolderId = ${ holder.Id }`)
+                liEle.onclick = () => this.emitHolderSelected(holder.Id)
                 liEle.appendChild(this.createNameInitialsNode(holder))
                 listEle.appendChild(liEle)
             })
@@ -530,6 +529,21 @@ if (!customElements.get("ticket-holder-dropdown")) {
             if (isOutsideClick) {
                 this.toggleDropdown(false)
             }
+        }
+
+
+        /**
+         * @param {number} holderId
+         * @returns {void}
+         */
+        emitHolderSelected(holderId) {
+            this.dispatchEvent(
+                new CustomEvent("billett-holder-selected", {
+                    detail: holderId,
+                    bubbles: true,
+                    composed: true,
+                }),
+            )
         }
     }
 
