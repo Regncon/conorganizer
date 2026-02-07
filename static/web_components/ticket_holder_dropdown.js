@@ -155,7 +155,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
             /** @type {number} */
             this.focusedIndex = -1
             /** @type {string} */
-            this.storageKey = "selectedBillettHolder"
+            this.LSKey = "LSKey"
             /** @type {BillettHolder[]} */
             this.billettholdere = []
             /** @type {HTMLTemplateElement | null} */
@@ -195,10 +195,6 @@ if (!customElements.get("ticket-holder-dropdown")) {
             this.selectButtonEle.id = buttonId
             this.selectButtonEle.setAttribute("aria-controls", controlId)
             this.dropdownEle.setAttribute("aria-labelledby", buttonId)
-
-            /** @type {{ SelectedBilletHolder?: string } | undefined} */
-            const lsEnum = /** @type {any} */ (window).LSEnum
-            this.storageKey = lsEnum?.SelectedBilletHolder || "selectedBillettHolder"
 
             this.selectButtonEle.addEventListener("click", this.onButtonClick)
             this.selectButtonEle.addEventListener("keydown", this.onButtonKeydown)
@@ -361,7 +357,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         saveSelected(optionEle) {
-            localStorage.setItem(this.storageKey, JSON.stringify(this.toBillettHolder(optionEle)))
+            localStorage.setItem(this.LSKey, JSON.stringify(this.toBillettHolder(optionEle)))
         }
 
         /**
@@ -427,7 +423,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 return
             }
 
-            const selectedBillettholderLS = localStorage.getItem(this.storageKey)
+            const selectedBillettholderLS = localStorage.getItem(this.LSKey)
             if (!selectedBillettholderLS) {
                 this.renderSelected(firstOptionEle)
                 this.saveSelected(firstOptionEle)
