@@ -1,137 +1,41 @@
 // @ts-check
-const STYLE_ID = "ticket-holder-dropdown-styles"
-const STYLE_TEXT = `
-ticket-holder-dropdown.custom-select {
-    position: relative;
-    display: inline-block;
-    width: 100%;
 
-    .name-initials {
-        display: inline-flex;
-        place-items: center;
-        gap: var(--spacing-2x);
-        min-width: 0;
-        overflow: clip;
-
-        .name {
-            white-space: nowrap;
-            overflow: clip;
-        }
-
-        .initials {
-            display: flex;
-            place-content: center;
-            place-items: center;
-            color: var(--color-text-strong);
-            font-size: 12px;
-            border-radius: 50%;
-            min-inline-size: 1.5rem;
-            min-block-size: 1.5rem;
-        }
-    }
-
-    .select-button {
-        display: flex;
-        place-content: space-between;
-        place-items: center;
-        width: 100%;
-        cursor: pointer;
-        padding-inline: var(--spacing-4x);
-        padding-block: var(--spacing-3x);
-
-        .select-button-end {
-            .arrow {
-                display: flex;
-                transition: transform ease-in-out 0.3s;
-            }
-        }
-
-        .selected-value {
-            .name-initials {
-                max-width: 12.8rem;
-            }
-        }
-
-        &[aria-expanded="true"] {
-            .select-button-end {
-                .arrow {
-                    transform: rotate(180deg);
-                }
-            }
-        }
-    }
-
-    .dropdown-list {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        background-color: var(--bg-surface);
-        border: 1px solid var(--bg-item-border);
-        border-radius: 0.25rem;
-        list-style: none;
-        padding: 10px;
-        margin: 10px 0 0;
-        box-shadow: var(--shadow-dialog);
-        max-height: 200px;
-        overflow-y: auto;
-        scrollbar-width: thin;
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-
-        &.hidden {
-            display: none;
-        }
-
-        li {
-            background-color: var(--bg-item);
-            border: 1px solid var(--bg-item-border);
-            border-radius: var(--border-radius-2x);
-            padding: 10px;
-            cursor: pointer;
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-
-            &.selected {
-                border-color: var(--color-primary);
-                color: var(--color-primary);
-                font-weight: bold;
-            }
-
-            &:hover,
-            &:focus-visible {
-                border-color: var(--color-primary);
-                color: var(--color-primary);
-            }
-        }
-    }
-}
-`
-
-/**
- * @typedef {Object} BillettHolder
- * @property {number} Id
- * @property {string} Name
- * @property {string} Email
- * @property {string} Color
- */
-
-/**
- * @returns {void}
- */
-function ensureStyles() {
-    if (document.getElementById(STYLE_ID)) {
-        return
-    }
-    const styleEle = document.createElement("style")
-    styleEle.id = STYLE_ID
-    styleEle.textContent = STYLE_TEXT
-    document.head.appendChild(styleEle)
-}
 
 if (!customElements.get("ticket-holder-dropdown")) {
+    const GLOBAL_STYLE_URLS = [
+        "/static/index.css",
+        "/static/buttons.css",
+        "/static/web_components/ticket_holder_dropdown.css",
+    ]
+
+    const globalSheetsPromise = (async () => {
+        // Feature check for constructable stylesheets
+        const supportsConstructable =
+            !!(Document.prototype && "adoptedStyleSheets" in Document.prototype) &&
+            !!(CSSStyleSheet.prototype && "replace" in CSSStyleSheet.prototype)
+
+        if (!supportsConstructable) return null
+
+        const sheets = []
+        for (const url of GLOBAL_STYLE_URLS) {
+            const resp = await fetch(url, { credentials: "same-origin" })
+            const cssText = await resp.text()
+            const sheet = new CSSStyleSheet()
+            await sheet.replace(cssText)
+            sheets.push(sheet)
+        }
+        return sheets
+    })()
+
+    /**
+     * Type for billettholder objects expected in the input JSON array.
+     * @typedef {Object} BillettHolder
+     * @property {number} Id
+     * @property {string} Name
+     * @property {string} Email
+     * @property {string} Color
+     */
+
     /**
      * Ticket-holder dropdown custom element.
      *
@@ -144,8 +48,28 @@ if (!customElements.get("ticket-holder-dropdown")) {
      * - If omitted, it falls back to a plain text arrow.
      */
     class TicketHolderDropdown extends HTMLElement {
+        static get observedAttributes() {
+            return ["data-billettholders", "data-billettholdere"]
+        }
+
         constructor() {
             super()
+            if (!this.shadowRoot) {
+                this.attachShadow({ mode: "open" })
+                globalSheetsPromise.then((sheets) => {
+                    if (sheets && this.shadowRoot) {
+                        this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, ...sheets]
+                    } else if (this.shadowRoot) {
+                        // Fallback: inject <link> tags
+                        for (const url of GLOBAL_STYLE_URLS) {
+                            const link = document.createElement("link")
+                            link.rel = "stylesheet"
+                            link.href = url
+                            this.shadowRoot.appendChild(link)
+                        }
+                    }
+                })
+            }
             /** @type {HTMLButtonElement | null} */
             this.selectButtonEle = null
             /** @type {HTMLUListElement | null} */
@@ -168,25 +92,75 @@ if (!customElements.get("ticket-holder-dropdown")) {
             this.onDocumentClick = this.onDocumentClick.bind(this)
         }
 
-        connectedCallback() {
-            if (this.dataset.initialized === "true") {
+        /**
+         * @param {string} name
+         * @param {string | null} oldValue
+         * @param {string | null} newValue
+         * @returns {void}
+         */
+        attributeChangedCallback(name, oldValue, newValue) {
+            if ((name !== "data-billettholders" && name !== "data-billettholdere") || !this.isConnected) {
                 return
             }
+            this.syncFromAttribute()
+        }
 
-            ensureStyles()
+        connectedCallback() {
+            this.ensureShadowStyles()
+            this.syncFromAttribute()
+        }
+
+        disconnectedCallback() {
+            this.teardownInteractiveElements()
+        }
+
+        /**
+         * @returns {void}
+         */
+        syncFromAttribute() {
             this.billettholdere = this.parseHolders()
             if (this.billettholdere.length === 0) {
+                this.teardownInteractiveElements()
+                this.shadowRoot?.replaceChildren()
+                this.ensureShadowStyles()
                 return
             }
-            this.arrowIconTemplateEle = this.querySelector("template[data-arrow-icon]")
+
+            if (!this.arrowIconTemplateEle) {
+                this.arrowIconTemplateEle = this.querySelector("template[data-arrow-icon]")
+            }
 
             this.render()
-
-            this.selectButtonEle = this.querySelector(".select-button")
-            this.dropdownEle = this.querySelector(".dropdown-list")
-            this.selectedValueEle = this.querySelector(".selected-value")
-            if (!this.selectButtonEle || !this.dropdownEle || !this.selectedValueEle) {
+            if (!this.setupInteractiveElements()) {
                 return
+            }
+            this.hydrateSelection()
+        }
+
+        /**
+         * @returns {void}
+         */
+        ensureShadowStyles() {
+            // if (!this.shadowRoot || this.shadowRoot.getElementById(STYLE_ID)) {
+            //     return
+            // }
+            // const styleEle = document.createElement("style")
+            // styleEle.id = STYLE_ID
+            // styleEle.textContent = STYLE_TEXT
+            // this.shadowRoot.appendChild(styleEle)
+        }
+
+        /**
+         * @returns {boolean}
+         */
+        setupInteractiveElements() {
+            this.teardownInteractiveElements()
+
+            this.selectButtonEle = this.shadowRoot?.querySelector(".select-button") || null
+            this.dropdownEle = this.shadowRoot?.querySelector(".dropdown-list") || null
+            this.selectedValueEle = this.shadowRoot?.querySelector(".selected-value") || null
+            if (!this.selectButtonEle || !this.dropdownEle || !this.selectedValueEle) {
+                return false
             }
 
             const controlId = `dropdown-list-${ Math.random().toString(36).slice(2, 10) }`
@@ -201,12 +175,13 @@ if (!customElements.get("ticket-holder-dropdown")) {
             this.dropdownEle.addEventListener("keydown", this.onDropdownKeydown)
             this.dropdownEle.addEventListener("click", this.onDropdownClick)
             document.addEventListener("click", this.onDocumentClick)
-
-            this.hydrateSelection()
-            this.dataset.initialized = "true"
+            return true
         }
 
-        disconnectedCallback() {
+        /**
+         * @returns {void}
+         */
+        teardownInteractiveElements() {
             if (this.selectButtonEle) {
                 this.selectButtonEle.removeEventListener("click", this.onButtonClick)
                 this.selectButtonEle.removeEventListener("keydown", this.onButtonKeydown)
@@ -216,14 +191,13 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 this.dropdownEle.removeEventListener("click", this.onDropdownClick)
             }
             document.removeEventListener("click", this.onDocumentClick)
-            this.dataset.initialized = "false"
         }
 
         /**
          * @returns {BillettHolder[]}
          */
         parseHolders() {
-            const raw = this.getAttribute("data-billettholders")
+            const raw = this.getAttribute("data-billettholders") || this.getAttribute("data-billettholdere")
             if (!raw) {
                 return []
             }
@@ -286,6 +260,9 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         render() {
+            if (!this.shadowRoot) {
+                return
+            }
             const wrapperEle = document.createElement("div")
             wrapperEle.className = "ticket-holder-dropdown-wrapper"
 
@@ -334,14 +311,16 @@ if (!customElements.get("ticket-holder-dropdown")) {
 
             wrapperEle.appendChild(buttonEle)
             wrapperEle.appendChild(listEle)
-            this.replaceChildren(wrapperEle)
+            this.shadowRoot.replaceChildren()
+            this.ensureShadowStyles()
+            this.shadowRoot.appendChild(wrapperEle)
         }
 
         /**
          * @returns {HTMLLIElement[]}
          */
         getOptions() {
-            return Array.from(this.querySelectorAll("li"))
+            return Array.from(this.shadowRoot?.querySelectorAll("li") || [])
         }
 
         /**

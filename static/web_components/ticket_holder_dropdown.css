@@ -1,0 +1,107 @@
+.ticket-holder-dropdown-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+
+    .name-initials {
+        display: inline-flex;
+        place-items: center;
+        gap: var(--spacing-2x);
+        min-width: 0;
+        overflow: clip;
+
+        .name {
+            white-space: nowrap;
+            overflow: clip;
+        }
+
+        .initials {
+            display: flex;
+            place-content: center;
+            place-items: center;
+            color: var(--color-text-strong);
+            font-size: 12px;
+            border-radius: 50%;
+            min-inline-size: 1.5rem;
+            min-block-size: 1.5rem;
+        }
+    }
+
+    .select-button {
+        display: flex;
+        place-content: space-between;
+        place-items: center;
+        width: 100%;
+        cursor: pointer;
+        padding-inline: var(--spacing-4x);
+        padding-block: var(--spacing-3x);
+
+        .select-button-end {
+            .arrow {
+                display: flex;
+                transition: transform ease-in-out 0.3s;
+            }
+        }
+
+        .selected-value {
+            .name-initials {
+                max-width: 12.8rem;
+            }
+        }
+
+        &[aria-expanded="true"] {
+            .select-button-end {
+                .arrow {
+                    transform: rotate(180deg);
+                }
+            }
+        }
+    }
+
+    .dropdown-list {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background-color: var(--bg-surface);
+        border: 1px solid var(--bg-item-border);
+        border-radius: 0.25rem;
+        list-style: none;
+        padding: 10px;
+        margin: 10px 0 0;
+        box-shadow: var(--shadow-dialog);
+        max-height: 200px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        &.hidden {
+            display: none;
+        }
+
+        li {
+            background-color: var(--bg-item);
+            border: 1px solid var(--bg-item-border);
+            border-radius: var(--border-radius-2x);
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+
+            &.selected {
+                border-color: var(--color-primary);
+                color: var(--color-primary);
+                font-weight: bold;
+            }
+
+            &:hover,
+            &:focus-visible {
+                border-color: var(--color-primary);
+                color: var(--color-primary);
+            }
+        }
+    }
+}
