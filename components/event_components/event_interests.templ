@@ -149,14 +149,14 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		</div>
 	</dialog>
 	<script>
-		const LSEnum = {
+		const LSKey = {
 			SelectedBilletHolder: "selectedBillettHolder",
 		};
-        window.LSEnum = LSEnum;
+        window.LSKey = LSKey;
 
 		function getBillettHolderFromLocalstorage() {
 			const selectedBillettHolderString = localStorage.getItem(
-				LSEnum.SelectedBilletHolder,
+				LSKey.SelectedBilletHolder,
 			);
 			if (!selectedBillettHolderString) {
 				return "";

@@ -106,7 +106,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 				const currentBillettHolder =
 					ev.currentTarget.dataset.currentBillettHolder;
 				localStorage.setItem(
-					LSEnum.SelectedBilletHolder,
+					LSKey.SelectedBilletHolder,
 					currentBillettHolder,
 				);
 			});

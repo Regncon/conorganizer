@@ -155,7 +155,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
             /** @type {number} */
             this.focusedIndex = -1
             /** @type {string} */
-            this.LSKey = "LSKey"
+            this.LSKey = "selectedBillettHolder"
             /** @type {BillettHolder[]} */
             this.billettholdere = []
             /** @type {HTMLTemplateElement | null} */
