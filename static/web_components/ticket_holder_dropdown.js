@@ -286,6 +286,9 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         render() {
+            const wrapperEle = document.createElement("div")
+            wrapperEle.className = "ticket-holder-dropdown-wrapper"
+
             const buttonEle = document.createElement("button")
             buttonEle.className = "select-button input no-marking"
             buttonEle.setAttribute("role", "combobox")
@@ -329,7 +332,9 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 listEle.appendChild(liEle)
             })
 
-            this.replaceChildren(buttonEle, listEle)
+            wrapperEle.appendChild(buttonEle)
+            wrapperEle.appendChild(listEle)
+            this.replaceChildren(wrapperEle)
         }
 
         /**

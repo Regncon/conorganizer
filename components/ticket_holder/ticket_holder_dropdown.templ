@@ -7,15 +7,13 @@ import (
 
 // Takes a `selected` parameter to highlight the selected ticket holder
 templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder) {
-	<div class="ticket-holder-picker">
-		<ticket-holder-dropdown
-			class="custom-select"
-			data-billettholders={ templ.JSONString(associatedBillettholder) }
-		>
-			<template data-arrow-icon>
-				@icons.Icon(icons.ChevronDown, icons.Size24)
-			</template>
-		</ticket-holder-dropdown>
-	</div>
+	<ticket-holder-dropdown
+		class="custom-select"
+		data-billettholders={ templ.JSONString(associatedBillettholder) }
+	>
+		<template data-arrow-icon>
+			@icons.Icon(icons.ChevronDown, icons.Size24)
+		</template>
+	</ticket-holder-dropdown>
 	<script src="/static/web_components/ticket_holder_dropdown.js"></script>
 }
