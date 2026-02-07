@@ -299,10 +299,10 @@ if (!customElements.get("ticket-holder-dropdown")) {
             this.billettholdere.forEach((holder) => {
                 const liEle = document.createElement("li")
                 liEle.setAttribute("role", "option")
-                liEle.dataset.billettHolderId = String(holder.Id)
-                liEle.dataset.billettHolderName = holder.Name
-                liEle.dataset.billettHolderEmail = holder.Email
-                liEle.dataset.billettHolderColor = holder.Color
+                liEle.dataset.Id = String(holder.Id)
+                liEle.dataset.Name = holder.Name
+                liEle.dataset.Email = holder.Email
+                liEle.dataset.Color = holder.Color
                 liEle.onclick = () => this.emitHolderSelected(holder.Id)
                 liEle.appendChild(this.createNameInitialsNode(holder))
                 listEle.appendChild(liEle)
@@ -328,10 +328,10 @@ if (!customElements.get("ticket-holder-dropdown")) {
          */
         toBillettHolder(optionEle) {
             return {
-                Id: Number(optionEle.dataset.billettHolderId || "0"),
-                Name: optionEle.dataset.billettHolderName || "",
-                Email: optionEle.dataset.billettHolderEmail || "",
-                Color: optionEle.dataset.billettHolderColor || "",
+                Id: Number(optionEle.dataset.Id || "0"),
+                Name: optionEle.dataset.Name || "",
+                Email: optionEle.dataset.Email || "",
+                Color: optionEle.dataset.Color || "",
             }
         }
 
@@ -417,7 +417,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 /** @type {BillettHolder} */
                 const selectedBillettholder = JSON.parse(selectedBillettholderLS)
                 const selectedOptionEle = optionEles.find(
-                    (optionEle) => Number(optionEle.dataset.billettHolderId || "0") === Number(selectedBillettholder.Id),
+                    (optionEle) => Number(optionEle.dataset.Id || "0") === Number(selectedBillettholder.Id),
                 )
                 if (!selectedOptionEle) {
                     this.renderSelected(firstOptionEle)
