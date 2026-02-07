@@ -7,12 +7,6 @@ import (
 
 // Takes a `selected` parameter to highlight the selected ticket holder
 templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder) {
-	{{
-	// If no ticket holders, return nothing
-	if len(associatedBillettholder) == 0 {
-		return
-	}
-	}}
 	<div class="ticket-holder-picker">
 		<ticket-holder-dropdown
 			class="custom-select"

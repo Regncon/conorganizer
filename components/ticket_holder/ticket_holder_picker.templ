@@ -2,7 +2,6 @@ package ticketholder
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
 )
@@ -66,15 +65,10 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		BillettHolder{Id: 202, Name: "Per Hansen", Email: "per.hansen@example.com", Color: "hsl(from #5733FF h s l / 0.5)"},
 	}
 	associatedTicketHolders = append(associatedTicketHolders, testUser...)
-
-	defaultId := ""
-	if len(associatedTicketHolders) > 0 {
-		defaultId = fmt.Sprintf("%d", associatedTicketHolders[0].Id)
-	}
 	}}
 	<div
 		class="ticket-holder-container"
-		data-signals={ fmt.Sprintf("{billettHolderId:'%s'}", defaultId) }
+		data-signals:billett-holder-id=""
 	>
 		if err != nil {
 			<div data-error class="ticket-holder-container">
