@@ -125,10 +125,10 @@ function ensureStyles() {
     if (document.getElementById(STYLE_ID)) {
         return
     }
-    const style = document.createElement("style")
-    style.id = STYLE_ID
-    style.textContent = STYLE_TEXT
-    document.head.appendChild(style)
+    const styleEle = document.createElement("style")
+    styleEle.id = STYLE_ID
+    styleEle.textContent = STYLE_TEXT
+    document.head.appendChild(styleEle)
 }
 
 if (!customElements.get("ticket-holder-dropdown")) {
@@ -147,11 +147,11 @@ if (!customElements.get("ticket-holder-dropdown")) {
         constructor() {
             super()
             /** @type {HTMLButtonElement | null} */
-            this.selectButton = null
+            this.selectButtonEle = null
             /** @type {HTMLUListElement | null} */
-            this.dropdown = null
+            this.dropdownEle = null
             /** @type {HTMLSpanElement | null} */
-            this.selectedValue = null
+            this.selectedValueEle = null
             /** @type {number} */
             this.focusedIndex = -1
             /** @type {string} */
@@ -159,7 +159,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
             /** @type {BillettHolder[]} */
             this.billettholdere = []
             /** @type {HTMLTemplateElement | null} */
-            this.arrowIconTemplate = null
+            this.arrowIconTemplateEle = null
 
             this.onButtonClick = this.onButtonClick.bind(this)
             this.onButtonKeydown = this.onButtonKeydown.bind(this)
@@ -178,32 +178,32 @@ if (!customElements.get("ticket-holder-dropdown")) {
             if (this.billettholdere.length === 0) {
                 return
             }
-            this.arrowIconTemplate = this.querySelector("template[data-arrow-icon]")
+            this.arrowIconTemplateEle = this.querySelector("template[data-arrow-icon]")
 
             this.render()
 
-            this.selectButton = this.querySelector(".select-button")
-            this.dropdown = this.querySelector(".dropdown-list")
-            this.selectedValue = this.querySelector(".selected-value")
-            if (!this.selectButton || !this.dropdown || !this.selectedValue) {
+            this.selectButtonEle = this.querySelector(".select-button")
+            this.dropdownEle = this.querySelector(".dropdown-list")
+            this.selectedValueEle = this.querySelector(".selected-value")
+            if (!this.selectButtonEle || !this.dropdownEle || !this.selectedValueEle) {
                 return
             }
 
             const controlId = `dropdown-list-${ Math.random().toString(36).slice(2, 10) }`
             const buttonId = `dropdown-button-${ Math.random().toString(36).slice(2, 10) }`
-            this.dropdown.id = controlId
-            this.selectButton.id = buttonId
-            this.selectButton.setAttribute("aria-controls", controlId)
-            this.dropdown.setAttribute("aria-labelledby", buttonId)
+            this.dropdownEle.id = controlId
+            this.selectButtonEle.id = buttonId
+            this.selectButtonEle.setAttribute("aria-controls", controlId)
+            this.dropdownEle.setAttribute("aria-labelledby", buttonId)
 
             /** @type {{ SelectedBilletHolder?: string } | undefined} */
             const lsEnum = /** @type {any} */ (window).LSEnum
             this.storageKey = lsEnum?.SelectedBilletHolder || "selectedBillettHolder"
 
-            this.selectButton.addEventListener("click", this.onButtonClick)
-            this.selectButton.addEventListener("keydown", this.onButtonKeydown)
-            this.dropdown.addEventListener("keydown", this.onDropdownKeydown)
-            this.dropdown.addEventListener("click", this.onDropdownClick)
+            this.selectButtonEle.addEventListener("click", this.onButtonClick)
+            this.selectButtonEle.addEventListener("keydown", this.onButtonKeydown)
+            this.dropdownEle.addEventListener("keydown", this.onDropdownKeydown)
+            this.dropdownEle.addEventListener("click", this.onDropdownClick)
             document.addEventListener("click", this.onDocumentClick)
 
             this.hydrateSelection()
@@ -211,13 +211,13 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         disconnectedCallback() {
-            if (this.selectButton) {
-                this.selectButton.removeEventListener("click", this.onButtonClick)
-                this.selectButton.removeEventListener("keydown", this.onButtonKeydown)
+            if (this.selectButtonEle) {
+                this.selectButtonEle.removeEventListener("click", this.onButtonClick)
+                this.selectButtonEle.removeEventListener("keydown", this.onButtonKeydown)
             }
-            if (this.dropdown) {
-                this.dropdown.removeEventListener("keydown", this.onDropdownKeydown)
-                this.dropdown.removeEventListener("click", this.onDropdownClick)
+            if (this.dropdownEle) {
+                this.dropdownEle.removeEventListener("keydown", this.onDropdownKeydown)
+                this.dropdownEle.removeEventListener("click", this.onDropdownClick)
             }
             document.removeEventListener("click", this.onDocumentClick)
             this.dataset.initialized = "false"
@@ -266,74 +266,74 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {HTMLDivElement}
          */
         createNameInitialsNode(holder) {
-            const wrapper = document.createElement("div")
-            wrapper.className = "name-initials"
+            const wrapperEle = document.createElement("div")
+            wrapperEle.className = "name-initials"
 
-            const initials = document.createElement("span")
-            initials.className = "initials"
+            const initialsEle = document.createElement("span")
+            initialsEle.className = "initials"
             if (holder.Color) {
-                initials.style.backgroundColor = `hsl(from ${ holder.Color } h s l / 0.5)`
-                initials.style.border = `1px solid ${ holder.Color }`
+                initialsEle.style.backgroundColor = `hsl(from ${ holder.Color } h s l / 0.5)`
+                initialsEle.style.border = `1px solid ${ holder.Color }`
             }
-            initials.textContent = this.getInitials(holder.Name)
+            initialsEle.textContent = this.getInitials(holder.Name)
 
-            const name = document.createElement("p")
-            name.className = "name"
-            name.textContent = holder.Name
+            const nameEle = document.createElement("p")
+            nameEle.className = "name"
+            nameEle.textContent = holder.Name
 
-            wrapper.appendChild(initials)
-            wrapper.appendChild(name)
-            return wrapper
+            wrapperEle.appendChild(initialsEle)
+            wrapperEle.appendChild(nameEle)
+            return wrapperEle
         }
 
         /**
          * @returns {void}
          */
         render() {
-            const button = document.createElement("button")
-            button.className = "select-button input no-marking"
-            button.setAttribute("role", "combobox")
-            button.setAttribute("aria-label", "select button")
-            button.setAttribute("aria-haspopup", "listbox")
-            button.setAttribute("aria-expanded", "false")
-            button.type = "button"
+            const buttonEle = document.createElement("button")
+            buttonEle.className = "select-button input no-marking"
+            buttonEle.setAttribute("role", "combobox")
+            buttonEle.setAttribute("aria-label", "select button")
+            buttonEle.setAttribute("aria-haspopup", "listbox")
+            buttonEle.setAttribute("aria-expanded", "false")
+            buttonEle.type = "button"
 
-            const selectedValue = document.createElement("span")
-            selectedValue.className = "selected-value"
+            const selectedValueEle = document.createElement("span")
+            selectedValueEle.className = "selected-value"
 
-            const buttonEnd = document.createElement("div")
-            buttonEnd.className = "select-button-end"
-            const arrow = document.createElement("i")
-            arrow.className = "arrow"
-            arrow.setAttribute("aria-hidden", "true")
-            if (this.arrowIconTemplate) {
-                arrow.appendChild(this.arrowIconTemplate.content.cloneNode(true))
+            const buttonEndEle = document.createElement("div")
+            buttonEndEle.className = "select-button-end"
+            const arrowEle = document.createElement("i")
+            arrowEle.className = "arrow"
+            arrowEle.setAttribute("aria-hidden", "true")
+            if (this.arrowIconTemplateEle) {
+                arrowEle.appendChild(this.arrowIconTemplateEle.content.cloneNode(true))
             } else {
-                arrow.textContent = "▾"
+                arrowEle.textContent = "▾"
             }
-            buttonEnd.appendChild(arrow)
+            buttonEndEle.appendChild(arrowEle)
 
-            button.appendChild(selectedValue)
-            button.appendChild(buttonEnd)
+            buttonEle.appendChild(selectedValueEle)
+            buttonEle.appendChild(buttonEndEle)
 
-            const list = document.createElement("ul")
-            list.className = "dropdown-list hidden"
-            list.setAttribute("role", "listbox")
+            const listEle = document.createElement("ul")
+            listEle.className = "dropdown-list hidden"
+            listEle.setAttribute("role", "listbox")
 
             this.billettholdere.forEach((holder) => {
-                const li = document.createElement("li")
-                li.setAttribute("role", "option")
-                li.dataset.billettHolderId = String(holder.Id)
-                li.dataset.billettHolderName = holder.Name
-                li.dataset.billettHolderEmail = holder.Email
-                li.dataset.billettHolderColor = holder.Color
-                li.setAttribute("data-bind", "billettHolderId")
-                li.setAttribute("data-on:click", `$billettHolderId = ${ holder.Id }`)
-                li.appendChild(this.createNameInitialsNode(holder))
-                list.appendChild(li)
+                const liEle = document.createElement("li")
+                liEle.setAttribute("role", "option")
+                liEle.dataset.billettHolderId = String(holder.Id)
+                liEle.dataset.billettHolderName = holder.Name
+                liEle.dataset.billettHolderEmail = holder.Email
+                liEle.dataset.billettHolderColor = holder.Color
+                liEle.setAttribute("data-bind", "billettHolderId")
+                liEle.setAttribute("data-on:click", `$billettHolderId = ${ holder.Id }`)
+                liEle.appendChild(this.createNameInitialsNode(holder))
+                listEle.appendChild(liEle)
             })
 
-            this.replaceChildren(button, list)
+            this.replaceChildren(buttonEle, listEle)
         }
 
         /**
@@ -344,52 +344,52 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
-         * @param {HTMLLIElement} option
+         * @param {HTMLLIElement} optionEle
          * @returns {BillettHolder}
          */
-        toBillettHolder(option) {
+        toBillettHolder(optionEle) {
             return {
-                Id: Number(option.dataset.billettHolderId || "0"),
-                Name: option.dataset.billettHolderName || "",
-                Email: option.dataset.billettHolderEmail || "",
-                Color: option.dataset.billettHolderColor || "",
+                Id: Number(optionEle.dataset.billettHolderId || "0"),
+                Name: optionEle.dataset.billettHolderName || "",
+                Email: optionEle.dataset.billettHolderEmail || "",
+                Color: optionEle.dataset.billettHolderColor || "",
             }
         }
 
         /**
-         * @param {HTMLLIElement} option
+         * @param {HTMLLIElement} optionEle
          * @returns {void}
          */
-        saveSelected(option) {
-            localStorage.setItem(this.storageKey, JSON.stringify(this.toBillettHolder(option)))
+        saveSelected(optionEle) {
+            localStorage.setItem(this.storageKey, JSON.stringify(this.toBillettHolder(optionEle)))
         }
 
         /**
-         * @param {HTMLLIElement[]} options
+         * @param {HTMLLIElement[]} optionEles
          * @returns {void}
          */
-        updateFocus(options) {
-            options.forEach((option, index) => {
-                option.setAttribute("tabindex", index === this.focusedIndex ? "0" : "-1")
+        updateFocus(optionEles) {
+            optionEles.forEach((optionEle, index) => {
+                optionEle.setAttribute("tabindex", index === this.focusedIndex ? "0" : "-1")
                 if (index === this.focusedIndex) {
-                    option.focus()
+                    optionEle.focus()
                 }
             })
         }
 
         /**
-         * @param {HTMLLIElement} option
+         * @param {HTMLLIElement} optionEle
          * @returns {void}
          */
-        renderSelected(option) {
-            if (!this.selectedValue) {
+        renderSelected(optionEle) {
+            if (!this.selectedValueEle) {
                 return
             }
             this.getOptions().forEach((opt) => opt.classList.remove("selected"))
-            option.classList.add("selected")
+            optionEle.classList.add("selected")
 
-            const holder = this.toBillettHolder(option)
-            this.selectedValue.replaceChildren(this.createNameInitialsNode(holder))
+            const holder = this.toBillettHolder(optionEle)
+            this.selectedValueEle.replaceChildren(this.createNameInitialsNode(holder))
         }
 
         /**
@@ -397,68 +397,68 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         toggleDropdown(expand = null) {
-            if (!this.dropdown || !this.selectButton) {
+            if (!this.dropdownEle || !this.selectButtonEle) {
                 return
             }
 
-            const options = this.getOptions()
-            const isOpen = expand !== null ? expand : this.dropdown.classList.contains("hidden")
-            this.dropdown.classList.toggle("hidden", !isOpen)
-            this.selectButton.setAttribute("aria-expanded", String(isOpen))
+            const optionEles = this.getOptions()
+            const isOpen = expand !== null ? expand : this.dropdownEle.classList.contains("hidden")
+            this.dropdownEle.classList.toggle("hidden", !isOpen)
+            this.selectButtonEle.setAttribute("aria-expanded", String(isOpen))
 
             if (isOpen) {
-                this.focusedIndex = options.findIndex((option) => option.classList.contains("selected"))
+                this.focusedIndex = optionEles.findIndex((optionEle) => optionEle.classList.contains("selected"))
                 this.focusedIndex = this.focusedIndex === -1 ? 0 : this.focusedIndex
-                this.updateFocus(options)
+                this.updateFocus(optionEles)
                 return
             }
 
             this.focusedIndex = -1
-            this.selectButton.focus()
+            this.selectButtonEle.focus()
         }
 
         /**
          * @returns {void}
          */
         hydrateSelection() {
-            const options = this.getOptions()
-            const firstOption = options[0]
-            if (!firstOption) {
+            const optionEles = this.getOptions()
+            const firstOptionEle = optionEles[0]
+            if (!firstOptionEle) {
                 return
             }
 
             const selectedBillettholderLS = localStorage.getItem(this.storageKey)
             if (!selectedBillettholderLS) {
-                this.renderSelected(firstOption)
-                this.saveSelected(firstOption)
+                this.renderSelected(firstOptionEle)
+                this.saveSelected(firstOptionEle)
                 return
             }
 
             try {
                 /** @type {BillettHolder} */
                 const selectedBillettholder = JSON.parse(selectedBillettholderLS)
-                const selectedOption = options.find(
-                    (option) => Number(option.dataset.billettHolderId || "0") === Number(selectedBillettholder.Id),
+                const selectedOptionEle = optionEles.find(
+                    (optionEle) => Number(optionEle.dataset.billettHolderId || "0") === Number(selectedBillettholder.Id),
                 )
-                if (!selectedOption) {
-                    this.renderSelected(firstOption)
-                    this.saveSelected(firstOption)
+                if (!selectedOptionEle) {
+                    this.renderSelected(firstOptionEle)
+                    this.saveSelected(firstOptionEle)
                     return
                 }
-                this.renderSelected(selectedOption)
+                this.renderSelected(selectedOptionEle)
             } catch {
-                this.renderSelected(firstOption)
-                this.saveSelected(firstOption)
+                this.renderSelected(firstOptionEle)
+                this.saveSelected(firstOptionEle)
             }
         }
 
         /**
-         * @param {HTMLLIElement} option
+         * @param {HTMLLIElement} optionEle
          * @returns {void}
          */
-        handleOptionSelect(option) {
-            this.renderSelected(option)
-            this.saveSelected(option)
+        handleOptionSelect(optionEle) {
+            this.renderSelected(optionEle)
+            this.saveSelected(optionEle)
         }
 
         /**
@@ -488,31 +488,31 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         onDropdownKeydown(event) {
-            const options = this.getOptions()
-            if (options.length === 0) {
+            const optionEles = this.getOptions()
+            if (optionEles.length === 0) {
                 return
             }
 
             if (event.key === "ArrowDown") {
                 event.preventDefault()
-                this.focusedIndex = (this.focusedIndex + 1) % options.length
-                this.updateFocus(options)
+                this.focusedIndex = (this.focusedIndex + 1) % optionEles.length
+                this.updateFocus(optionEles)
                 return
             }
             if (event.key === "ArrowUp") {
                 event.preventDefault()
-                this.focusedIndex = (this.focusedIndex - 1 + options.length) % options.length
-                this.updateFocus(options)
+                this.focusedIndex = (this.focusedIndex - 1 + optionEles.length) % optionEles.length
+                this.updateFocus(optionEles)
                 return
             }
             if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault()
-                const option = options[this.focusedIndex]
-                if (!option) {
+                const optionEle = optionEles[this.focusedIndex]
+                if (!optionEle) {
                     return
                 }
-                this.handleOptionSelect(option)
-                option.click()
+                this.handleOptionSelect(optionEle)
+                optionEle.click()
                 this.toggleDropdown(false)
                 return
             }
@@ -526,17 +526,17 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         onDropdownClick(event) {
-            const target = event.target
-            if (!(target instanceof Element)) {
+            const targetEle = event.target
+            if (!(targetEle instanceof Element)) {
                 return
             }
 
-            const option = target.closest("li")
-            if (!(option instanceof HTMLLIElement)) {
+            const optionEle = targetEle.closest("li")
+            if (!(optionEle instanceof HTMLLIElement)) {
                 return
             }
 
-            this.handleOptionSelect(option)
+            this.handleOptionSelect(optionEle)
             this.toggleDropdown(false)
         }
 
@@ -545,8 +545,8 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         onDocumentClick(event) {
-            const target = event.target
-            const isOutsideClick = !(target instanceof Node) || !this.contains(target)
+            const targetEle = event.target
+            const isOutsideClick = !(targetEle instanceof Node) || !this.contains(targetEle)
             if (isOutsideClick) {
                 this.toggleDropdown(false)
             }
