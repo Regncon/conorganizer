@@ -33,28 +33,6 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
         .ticket-holder-container[data-error] {
 			color: var(--color-error);
 		}
-		.ticket-holder-picker-buttons {
-			display: flex;
-			flex-direction: column;
-			gap: var(--spacing-2x);
-		}
-
-		@container interest-dialog (width > 23.9375rem) {
-			.ticket-holder-picker-buttons {
-				display: grid;
-				grid-template-columns: repeat(
-					auto-fit,
-					minmax(min(120px, 100%), 1fr)
-				);
-				gap: var(--spacing-2x);
-				.ticket-holder-picker:has(.no-marking) {
-					display: block;
-				}
-				ticket-holder-dropdown.custom-select {
-					display: none;
-				}
-			}
-		}
 	</style>
 	{{
 	associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger)
