@@ -29,7 +29,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
 
     /**
      * Type for billettholder objects expected in the input JSON array.
-     * @typedef {Object} BillettHolder
+     * @typedef {Object} Billettholder
      * @property {number} Id
      * @property {string} Name
      * @property {string} Email
@@ -80,7 +80,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
             this.focusedIndex = -1
             /** @type {string} */
             this.LSKey = "selectedBillettHolder"
-            /** @type {BillettHolder[]} */
+            /** @type {Billettholder[]} */
             this.billettholdere = []
             /** @type {HTMLTemplateElement | null} */
             this.arrowIconTemplateEle = null
@@ -118,7 +118,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         syncFromAttribute() {
-            this.billettholdere = this.parseHolders()
+            this.billettholdere = this.parseBillettholdere()
             if (this.billettholdere.length === 0) {
                 this.teardownInteractiveElements()
                 this.shadowRoot?.replaceChildren()
@@ -194,9 +194,9 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
-         * @returns {BillettHolder[]}
+         * @returns {Billettholder[]}
          */
-        parseHolders() {
+        parseBillettholdere() {
             const raw = this.getAttribute(DATA_BILLETTHOLDERE_ATTR)
             if (!raw) {
                 return []
@@ -232,24 +232,24 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
-         * @param {BillettHolder} holder
+         * @param {Billettholder} billettholder
          * @returns {HTMLDivElement}
          */
-        createNameInitialsNode(holder) {
+        createNameInitialsNode(billettholder) {
             const wrapperEle = document.createElement("div")
             wrapperEle.className = "name-initials"
 
             const initialsEle = document.createElement("span")
             initialsEle.className = "initials"
-            if (holder.Color) {
-                initialsEle.style.backgroundColor = `hsl(from ${ holder.Color } h s l / 0.5)`
-                initialsEle.style.border = `1px solid ${ holder.Color }`
+            if (billettholder.Color) {
+                initialsEle.style.backgroundColor = `hsl(from ${ billettholder.Color } h s l / 0.5)`
+                initialsEle.style.border = `1px solid ${ billettholder.Color }`
             }
-            initialsEle.textContent = this.getInitials(holder.Name)
+            initialsEle.textContent = this.getInitials(billettholder.Name)
 
             const nameEle = document.createElement("p")
             nameEle.className = "name"
-            nameEle.textContent = holder.Name
+            nameEle.textContent = billettholder.Name
 
             wrapperEle.appendChild(initialsEle)
             wrapperEle.appendChild(nameEle)
@@ -296,15 +296,15 @@ if (!customElements.get("ticket-holder-dropdown")) {
             listEle.className = "dropdown-list hidden"
             listEle.setAttribute("role", "listbox")
 
-            this.billettholdere.forEach((holder) => {
+            this.billettholdere.forEach((billettholder) => {
                 const liEle = document.createElement("li")
                 liEle.setAttribute("role", "option")
-                liEle.dataset.Id = String(holder.Id)
-                liEle.dataset.Name = holder.Name
-                liEle.dataset.Email = holder.Email
-                liEle.dataset.Color = holder.Color
-                liEle.onclick = () => this.emitHolderSelected(holder.Id)
-                liEle.appendChild(this.createNameInitialsNode(holder))
+                liEle.dataset.Id = String(billettholder.Id)
+                liEle.dataset.Name = billettholder.Name
+                liEle.dataset.Email = billettholder.Email
+                liEle.dataset.Color = billettholder.Color
+                liEle.onclick = () => this.emitBillettholderSelected(billettholder.Id)
+                liEle.appendChild(this.createNameInitialsNode(billettholder))
                 listEle.appendChild(liEle)
             })
 
@@ -324,7 +324,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
 
         /**
          * @param {HTMLLIElement} optionEle
-         * @returns {BillettHolder}
+         * @returns {Billettholder}
          */
         toBillettHolder(optionEle) {
             return {
@@ -367,8 +367,8 @@ if (!customElements.get("ticket-holder-dropdown")) {
             this.getOptions().forEach((opt) => opt.classList.remove("selected"))
             optionEle.classList.add("selected")
 
-            const holder = this.toBillettHolder(optionEle)
-            this.selectedValueEle.replaceChildren(this.createNameInitialsNode(holder))
+            const billettholder = this.toBillettHolder(optionEle)
+            this.selectedValueEle.replaceChildren(this.createNameInitialsNode(billettholder))
         }
 
         /**
@@ -414,7 +414,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
             }
 
             try {
-                /** @type {BillettHolder} */
+                /** @type {Billettholder} */
                 const selectedBillettholder = JSON.parse(selectedBillettholderLS)
                 const selectedOptionEle = optionEles.find(
                     (optionEle) => Number(optionEle.dataset.Id || "0") === Number(selectedBillettholder.Id),
@@ -533,13 +533,13 @@ if (!customElements.get("ticket-holder-dropdown")) {
 
 
         /**
-         * @param {number} holderId
+         * @param {number} billettholderId
          * @returns {void}
          */
-        emitHolderSelected(holderId) {
+        emitBillettholderSelected(billettholderId) {
             this.dispatchEvent(
                 new CustomEvent("billett-holder-selected", {
-                    detail: holderId,
+                    detail: billettholderId,
                     bubbles: true,
                     composed: true,
                 }),
