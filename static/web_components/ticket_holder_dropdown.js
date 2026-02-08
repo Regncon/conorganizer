@@ -48,6 +48,23 @@ if (!customElements.get("ticket-holder-dropdown")) {
      * - If omitted, it falls back to a plain text arrow.
      */
     class TicketHolderDropdown extends HTMLElement {
+        /** @type {HTMLButtonElement | null} */
+        #selectButtonEle = null
+        /** @type {HTMLUListElement | null} */
+        #dropdownEle = null
+        /** @type {HTMLSpanElement | null} */
+        #selectedValueEle = null
+        /** @type {number} */
+        #focusedIndex = -1
+        /** @type {string} */
+        #localStorageKey = "selectedBillettHolder"
+        /** @type {Billettholder[]} */
+        #billettholdere = []
+        /** @type {HTMLTemplateElement | null} */
+        #arrowIconTemplateEle = null
+        /** @type {AbortController | null} */
+        #listenersAbortController = null
+
         static get observedAttributes() {
             return [DATA_BILLETTHOLDERE_ATTR]
         }
@@ -70,20 +87,6 @@ if (!customElements.get("ticket-holder-dropdown")) {
                     }
                 })
             }
-            /** @type {HTMLButtonElement | null} */
-            this.selectButtonEle = null
-            /** @type {HTMLUListElement | null} */
-            this.dropdownEle = null
-            /** @type {HTMLSpanElement | null} */
-            this.selectedValueEle = null
-            /** @type {number} */
-            this.focusedIndex = -1
-            /** @type {string} */
-            this.LSKey = "selectedBillettHolder"
-            /** @type {Billettholder[]} */
-            this.billettholdere = []
-            /** @type {HTMLTemplateElement | null} */
-            this.arrowIconTemplateEle = null
 
             this.onButtonClick = this.onButtonClick.bind(this)
             this.onButtonKeydown = this.onButtonKeydown.bind(this)
@@ -119,16 +122,14 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         syncFromAttribute() {
-            this.billettholdere = this.parseBillettholdere()
-            if (this.billettholdere.length === 0) {
+            this.#billettholdere = this.parseBillettholdere()
+            if (this.#billettholdere.length === 0) {
                 this.teardownInteractiveElements()
                 this.shadowRoot?.replaceChildren()
                 return
             }
 
-            if (!this.arrowIconTemplateEle) {
-                this.arrowIconTemplateEle = this.querySelector("template[data-arrow-icon]")
-            }
+            this.#arrowIconTemplateEle ??= this.querySelector("template[data-arrow-icon]")
 
             this.render()
             if (!this.setupInteractiveElements()) {
@@ -144,25 +145,27 @@ if (!customElements.get("ticket-holder-dropdown")) {
         setupInteractiveElements() {
             this.teardownInteractiveElements()
 
-            this.selectButtonEle = this.shadowRoot?.querySelector(".select-button") || null
-            this.dropdownEle = this.shadowRoot?.querySelector(".dropdown-list") || null
-            this.selectedValueEle = this.shadowRoot?.querySelector(".selected-value") || null
-            if (!this.selectButtonEle || !this.dropdownEle || !this.selectedValueEle) {
+            this.#selectButtonEle = this.shadowRoot?.querySelector(".select-button") ?? null
+            this.#dropdownEle = this.shadowRoot?.querySelector(".dropdown-list") ?? null
+            this.#selectedValueEle = this.shadowRoot?.querySelector(".selected-value") ?? null
+            if (!this.#selectButtonEle || !this.#dropdownEle || !this.#selectedValueEle) {
                 return false
             }
 
-            const controlId = `dropdown-list-${ Math.random().toString(36).slice(2, 10) }`
-            const buttonId = `dropdown-button-${ Math.random().toString(36).slice(2, 10) }`
-            this.dropdownEle.id = controlId
-            this.selectButtonEle.id = buttonId
-            this.selectButtonEle.setAttribute("aria-controls", controlId)
-            this.dropdownEle.setAttribute("aria-labelledby", buttonId)
+            const controlId = `dropdown-list-${ crypto.randomUUID() }`
+            const buttonId = `dropdown-button-${ crypto.randomUUID() }`
+            this.#dropdownEle.id = controlId
+            this.#selectButtonEle.id = buttonId
+            this.#selectButtonEle.setAttribute("aria-controls", controlId)
+            this.#dropdownEle.setAttribute("aria-labelledby", buttonId)
 
-            this.selectButtonEle.addEventListener("click", this.onButtonClick)
-            this.selectButtonEle.addEventListener("keydown", this.onButtonKeydown)
-            this.dropdownEle.addEventListener("keydown", this.onDropdownKeydown)
-            this.dropdownEle.addEventListener("click", this.onDropdownClick)
-            document.addEventListener("click", this.onDocumentClick)
+            this.#listenersAbortController = new AbortController()
+            const { signal } = this.#listenersAbortController
+            this.#selectButtonEle.addEventListener("click", this.onButtonClick, { signal })
+            this.#selectButtonEle.addEventListener("keydown", this.onButtonKeydown, { signal })
+            this.#dropdownEle.addEventListener("keydown", this.onDropdownKeydown, { signal })
+            this.#dropdownEle.addEventListener("click", this.onDropdownClick, { signal })
+            document.addEventListener("click", this.onDocumentClick, { signal })
             return true
         }
 
@@ -171,15 +174,8 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         teardownInteractiveElements() {
-            if (this.selectButtonEle) {
-                this.selectButtonEle.removeEventListener("click", this.onButtonClick)
-                this.selectButtonEle.removeEventListener("keydown", this.onButtonKeydown)
-            }
-            if (this.dropdownEle) {
-                this.dropdownEle.removeEventListener("keydown", this.onDropdownKeydown)
-                this.dropdownEle.removeEventListener("click", this.onDropdownClick)
-            }
-            document.removeEventListener("click", this.onDocumentClick)
+            this.#listenersAbortController?.abort()
+            this.#listenersAbortController = null
         }
 
         /**
@@ -199,10 +195,10 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 }
 
                 return parsed.map((item) => ({
-                    Id: Number(item?.Id || 0),
-                    Name: String(item?.Name || ""),
-                    Email: String(item?.Email || ""),
-                    Color: String(item?.Color || ""),
+                    Id: Number(item?.Id ?? 0),
+                    Name: String(item?.Name ?? ""),
+                    Email: String(item?.Email ?? ""),
+                    Color: String(item?.Color ?? ""),
                 }))
             } catch {
                 return []
@@ -225,9 +221,9 @@ if (!customElements.get("ticket-holder-dropdown")) {
             }
 
             const firstName = parts[0]
-            const lastName = parts[parts.length - 1]
-            const firstInitial = firstName[0] || ""
-            const lastInitial = lastName[0] || ""
+            const lastName = parts.at(-1) ?? ""
+            const firstInitial = firstName[0] ?? ""
+            const lastInitial = lastName[0] ?? ""
 
             if (parts.length === 1) {
                 return firstInitial.toUpperCase()
@@ -289,8 +285,8 @@ if (!customElements.get("ticket-holder-dropdown")) {
             const arrowEle = document.createElement("i")
             arrowEle.className = "arrow"
             arrowEle.setAttribute("aria-hidden", "true")
-            if (this.arrowIconTemplateEle) {
-                arrowEle.appendChild(this.arrowIconTemplateEle.content.cloneNode(true))
+            if (this.#arrowIconTemplateEle) {
+                arrowEle.appendChild(this.#arrowIconTemplateEle.content.cloneNode(true))
             } else {
                 arrowEle.textContent = "▾"
             }
@@ -303,7 +299,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
             listEle.className = "dropdown-list hidden"
             listEle.setAttribute("role", "listbox")
 
-            this.billettholdere.forEach((billettholder) => {
+            this.#billettholdere.forEach((billettholder) => {
                 const liEle = document.createElement("li")
                 liEle.setAttribute("role", "option")
                 liEle.dataset.Id = String(billettholder.Id)
@@ -326,7 +322,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {HTMLLIElement[]}
          */
         getOptionElements() {
-            return Array.from(this.shadowRoot?.querySelectorAll("li") || [])
+            return Array.from(this.shadowRoot?.querySelectorAll("li") ?? [])
         }
 
         /**
@@ -334,12 +330,12 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @param {HTMLLIElement} optionEle
          * @returns {Billettholder}
          */
-        toBillettHolder(optionEle) {
+        toBillettholder(optionEle) {
             return {
-                Id: Number(optionEle.dataset.Id || "0"),
-                Name: optionEle.dataset.Name || "",
-                Email: optionEle.dataset.Email || "",
-                Color: optionEle.dataset.Color || "",
+                Id: Number(optionEle.dataset.Id ?? "0"),
+                Name: optionEle.dataset.Name ?? "",
+                Email: optionEle.dataset.Email ?? "",
+                Color: optionEle.dataset.Color ?? "",
             }
         }
 
@@ -349,7 +345,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         saveSelectedToLocalStorage(optionEle) {
-            localStorage.setItem(this.LSKey, JSON.stringify(this.toBillettHolder(optionEle)))
+            localStorage.setItem(this.#localStorageKey, JSON.stringify(this.toBillettholder(optionEle)))
         }
 
         /**
@@ -359,8 +355,8 @@ if (!customElements.get("ticket-holder-dropdown")) {
          */
         updateFocus(optionEles) {
             optionEles.forEach((optionEle, index) => {
-                optionEle.setAttribute("tabindex", index === this.focusedIndex ? "0" : "-1")
-                if (index === this.focusedIndex) {
+                optionEle.setAttribute("tabindex", index === this.#focusedIndex ? "0" : "-1")
+                if (index === this.#focusedIndex) {
                     optionEle.focus()
                 }
             })
@@ -372,14 +368,14 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         renderSelected(optionEle) {
-            if (!this.selectedValueEle) {
+            if (!this.#selectedValueEle) {
                 return
             }
             this.getOptionElements().forEach((opt) => opt.classList.remove("selected"))
             optionEle.classList.add("selected")
 
-            const billettholder = this.toBillettHolder(optionEle)
-            this.selectedValueEle.replaceChildren(this.createNameInitialsNode(billettholder))
+            const billettholder = this.toBillettholder(optionEle)
+            this.#selectedValueEle.replaceChildren(this.createNameInitialsNode(billettholder))
         }
 
         /**
@@ -388,24 +384,24 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         toggleDropdown(expand = null) {
-            if (!this.dropdownEle || !this.selectButtonEle) {
+            if (!this.#dropdownEle || !this.#selectButtonEle) {
                 return
             }
 
             const optionEles = this.getOptionElements()
-            const isOpen = expand !== null ? expand : this.dropdownEle.classList.contains("hidden")
-            this.dropdownEle.classList.toggle("hidden", !isOpen)
-            this.selectButtonEle.setAttribute("aria-expanded", String(isOpen))
+            const isOpen = expand !== null ? expand : this.#dropdownEle.classList.contains("hidden")
+            this.#dropdownEle.classList.toggle("hidden", !isOpen)
+            this.#selectButtonEle.setAttribute("aria-expanded", String(isOpen))
 
             if (isOpen) {
-                this.focusedIndex = optionEles.findIndex((optionEle) => optionEle.classList.contains("selected"))
-                this.focusedIndex = this.focusedIndex === -1 ? 0 : this.focusedIndex
+                this.#focusedIndex = optionEles.findIndex((optionEle) => optionEle.classList.contains("selected"))
+                this.#focusedIndex = this.#focusedIndex === -1 ? 0 : this.#focusedIndex
                 this.updateFocus(optionEles)
                 return
             }
 
-            this.focusedIndex = -1
-            this.selectButtonEle.focus()
+            this.#focusedIndex = -1
+            this.#selectButtonEle.focus()
         }
 
         /**
@@ -419,7 +415,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 return
             }
 
-            const selectedBillettholderLS = localStorage.getItem(this.LSKey)
+            const selectedBillettholderLS = localStorage.getItem(this.#localStorageKey)
             if (!selectedBillettholderLS) {
                 this.renderSelected(firstOptionEle)
                 this.saveSelectedToLocalStorage(firstOptionEle)
@@ -430,7 +426,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 /** @type {Billettholder} */
                 const selectedBillettholder = JSON.parse(selectedBillettholderLS)
                 const selectedOptionEle = optionEles.find(
-                    (optionEle) => Number(optionEle.dataset.Id || "0") === Number(selectedBillettholder.Id),
+                    (optionEle) => Number(optionEle.dataset.Id ?? "0") === Number(selectedBillettholder.Id),
                 )
                 if (!selectedOptionEle) {
                     this.renderSelected(firstOptionEle)
@@ -492,25 +488,25 @@ if (!customElements.get("ticket-holder-dropdown")) {
             switch (event.key) {
                 case "ArrowDown":
                     event.preventDefault()
-                    this.focusedIndex = (this.focusedIndex + 1) % optionEles.length
+                    this.#focusedIndex = (this.#focusedIndex + 1) % optionEles.length
                     this.updateFocus(optionEles)
                     return
                 case "ArrowUp":
                     event.preventDefault()
-                    this.focusedIndex = (this.focusedIndex - 1 + optionEles.length) % optionEles.length
+                    this.#focusedIndex = (this.#focusedIndex - 1 + optionEles.length) % optionEles.length
                     this.updateFocus(optionEles)
                     return
                 case "Enter":
                 case " ":
                     event.preventDefault()
                     {
-                        const optionEle = optionEles[this.focusedIndex]
+                        const optionEle = optionEles[this.#focusedIndex]
                         if (!optionEle) {
                             return
                         }
 
                         this.handleOptionSelect(optionEle)
-                        this.emitBillettholderSelected(this.toBillettHolder(optionEle).Id)
+                        this.emitBillettholderSelected(this.toBillettholder(optionEle).Id)
                         this.toggleDropdown(false)
                     }
                     return
