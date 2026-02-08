@@ -47,6 +47,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	<div
 		class="ticket-holder-container"
 		data-signals:billett-holder-id=""
+		data-on:billettholder-selected="$billettHolderId = evt.detail;"
 	>
 		if err != nil {
 			<div data-error class="ticket-holder-container">
@@ -69,6 +70,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			</div>
 		}
 	</div>
+	<pre data-json-signals></pre>
 	<script>
 		const billettHolderButtonPickerButton = document.querySelectorAll(
 			`.billett-holder-picker-button`,

@@ -419,6 +419,7 @@ if (!customElements.get("billettholder-dropdown")) {
             if (!selectedBillettholderLS) {
                 this.renderSelected(firstOptionEle)
                 this.saveSelectedToLocalStorage(firstOptionEle)
+                this.emitBillettholderSelected(this.toBillettholder(firstOptionEle).Id)
                 return
             }
 
@@ -431,12 +432,15 @@ if (!customElements.get("billettholder-dropdown")) {
                 if (!selectedOptionEle) {
                     this.renderSelected(firstOptionEle)
                     this.saveSelectedToLocalStorage(firstOptionEle)
+                    this.emitBillettholderSelected(this.toBillettholder(firstOptionEle).Id)
                     return
                 }
                 this.renderSelected(selectedOptionEle)
+                this.emitBillettholderSelected(this.toBillettholder(selectedOptionEle).Id)
             } catch {
                 this.renderSelected(firstOptionEle)
                 this.saveSelectedToLocalStorage(firstOptionEle)
+                this.emitBillettholderSelected(this.toBillettholder(firstOptionEle).Id)
             }
         }
 
@@ -558,13 +562,17 @@ if (!customElements.get("billettholder-dropdown")) {
          * @returns {void}
          */
         emitBillettholderSelected(billettholderId) {
-            this.dispatchEvent(
-                new CustomEvent("billettholder-selected", {
-                    detail: billettholderId,
-                    bubbles: true,
-                    composed: true,
-                }),
-            )
+            console.log("Emitting billettholder-selected event for id:", billettholderId)
+            // So we can set on initialization after hydrating selection without worrying about data-star being ready
+            setTimeout(() => {
+                this.dispatchEvent(
+                    new CustomEvent("billettholder-selected", {
+                        detail: billettholderId,
+                        bubbles: true,
+                        composed: true,
+                    }),
+                )
+            }, 150)
         }
 
     }

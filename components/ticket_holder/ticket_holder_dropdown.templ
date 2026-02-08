@@ -9,7 +9,6 @@ templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, 
 	<billettholder-dropdown
 		class="custom-select"
 		data-billettholdere={ templ.JSONString(associatedBillettholder) }
-		data-on:billettholder-selected="$billettHolderId = evt.detail;"
 	>
 		<template data-arrow-icon>
 			@icons.Icon(icons.ChevronDown, icons.Size24)
