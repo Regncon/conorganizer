@@ -191,11 +191,13 @@ if (!customElements.get("ticket-holder-dropdown")) {
             if (!raw) {
                 return []
             }
+
             try {
                 const parsed = JSON.parse(raw)
                 if (!Array.isArray(parsed)) {
                     return []
                 }
+
                 return parsed.map((item) => ({
                     Id: Number(item?.Id || 0),
                     Name: String(item?.Name || ""),
@@ -487,31 +489,36 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 return
             }
 
-            if (event.key === "ArrowDown") {
-                event.preventDefault()
-                this.focusedIndex = (this.focusedIndex + 1) % optionEles.length
-                this.updateFocus(optionEles)
-                return
-            }
-            if (event.key === "ArrowUp") {
-                event.preventDefault()
-                this.focusedIndex = (this.focusedIndex - 1 + optionEles.length) % optionEles.length
-                this.updateFocus(optionEles)
-                return
-            }
-            if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault()
-                const optionEle = optionEles[this.focusedIndex]
-                if (!optionEle) {
+            switch (event.key) {
+                case "ArrowDown":
+                    event.preventDefault()
+                    this.focusedIndex = (this.focusedIndex + 1) % optionEles.length
+                    this.updateFocus(optionEles)
                     return
-                }
-                this.handleOptionSelect(optionEle)
-                optionEle.click()
-                this.toggleDropdown(false)
-                return
-            }
-            if (event.key === "Escape") {
-                this.toggleDropdown(false)
+                case "ArrowUp":
+                    event.preventDefault()
+                    this.focusedIndex = (this.focusedIndex - 1 + optionEles.length) % optionEles.length
+                    this.updateFocus(optionEles)
+                    return
+                case "Enter":
+                case " ":
+                    event.preventDefault()
+                    {
+                        const optionEle = optionEles[this.focusedIndex]
+                        if (!optionEle) {
+                            return
+                        }
+
+                        this.handleOptionSelect(optionEle)
+                        this.emitBillettholderSelected(this.toBillettHolder(optionEle).Id)
+                        this.toggleDropdown(false)
+                    }
+                    return
+                case "Escape":
+                    this.toggleDropdown(false)
+                    return
+                default:
+                    return
             }
         }
 
@@ -563,6 +570,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 }),
             )
         }
+
     }
 
     customElements.define("ticket-holder-dropdown", TicketHolderDropdown)
