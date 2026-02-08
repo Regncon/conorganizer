@@ -107,7 +107,6 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         connectedCallback() {
-            this.ensureShadowStyles()
             this.syncFromAttribute()
         }
 
@@ -124,7 +123,6 @@ if (!customElements.get("ticket-holder-dropdown")) {
             if (this.billettholdere.length === 0) {
                 this.teardownInteractiveElements()
                 this.shadowRoot?.replaceChildren()
-                this.ensureShadowStyles()
                 return
             }
 
@@ -137,20 +135,6 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 return
             }
             this.hydrateSelection()
-        }
-
-        /**
-         * Placeholder for local shadow style setup.
-         * @returns {void}
-         */
-        ensureShadowStyles() {
-            // if (!this.shadowRoot || this.shadowRoot.getElementById(STYLE_ID)) {
-            //     return
-            // }
-            // const styleEle = document.createElement("style")
-            // styleEle.id = STYLE_ID
-            // styleEle.textContent = STYLE_TEXT
-            // this.shadowRoot.appendChild(styleEle)
         }
 
         /**
@@ -320,7 +304,6 @@ if (!customElements.get("ticket-holder-dropdown")) {
             wrapperEle.appendChild(buttonEle)
             wrapperEle.appendChild(listEle)
             this.shadowRoot.replaceChildren()
-            this.ensureShadowStyles()
             this.shadowRoot.appendChild(wrapperEle)
         }
 
