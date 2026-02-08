@@ -93,6 +93,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Runs when a watched attribute changes.
          * @param {string} name
          * @param {string | null} oldValue
          * @param {string | null} newValue
@@ -115,6 +116,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Reads input data, renders dropdown, and restores selection.
          * @returns {void}
          */
         syncFromAttribute() {
@@ -138,6 +140,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Placeholder for local shadow style setup.
          * @returns {void}
          */
         ensureShadowStyles() {
@@ -151,6 +154,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Finds key DOM nodes and attaches event listeners.
          * @returns {boolean}
          */
         setupInteractiveElements() {
@@ -179,6 +183,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Removes previously attached event listeners.
          * @returns {void}
          */
         teardownInteractiveElements() {
@@ -194,6 +199,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Parses `data-billettholdere` JSON into a normalized list.
          * @returns {Billettholder[]}
          */
         parseBillettholdere() {
@@ -218,6 +224,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Builds initials from a full name.
          * @param {string} name
          * @returns {string}
          */
@@ -232,6 +239,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Creates the visual row for a billettholder.
          * @param {Billettholder} billettholder
          * @returns {HTMLDivElement}
          */
@@ -257,6 +265,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Renders button + dropdown options inside shadow DOM.
          * @returns {void}
          */
         render() {
@@ -316,6 +325,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Returns all list option elements.
          * @returns {HTMLLIElement[]}
          */
         getOptions() {
@@ -323,6 +333,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Converts a list element dataset into a billettholder object.
          * @param {HTMLLIElement} optionEle
          * @returns {Billettholder}
          */
@@ -336,6 +347,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Saves selected billettholder to localStorage.
          * @param {HTMLLIElement} optionEle
          * @returns {void}
          */
@@ -344,6 +356,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Updates keyboard focus on dropdown options.
          * @param {HTMLLIElement[]} optionEles
          * @returns {void}
          */
@@ -357,6 +370,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Updates selected UI state and button content.
          * @param {HTMLLIElement} optionEle
          * @returns {void}
          */
@@ -372,6 +386,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Opens or closes the dropdown and manages focus.
          * @param {boolean | null} [expand]
          * @returns {void}
          */
@@ -397,6 +412,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Restores selection from localStorage or picks first option.
          * @returns {void}
          */
         hydrateSelection() {
@@ -432,6 +448,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Handles option selection side effects.
          * @param {HTMLLIElement} optionEle
          * @returns {void}
          */
@@ -441,6 +458,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Toggles dropdown on button click.
          * @returns {void}
          */
         onButtonClick() {
@@ -448,6 +466,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Handles keyboard input while focus is on button.
          * @param {KeyboardEvent} event
          * @returns {void}
          */
@@ -463,6 +482,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Handles keyboard navigation and selection in the list.
          * @param {KeyboardEvent} event
          * @returns {void}
          */
@@ -501,6 +521,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Handles mouse selection on dropdown options.
          * @param {MouseEvent} event
          * @returns {void}
          */
@@ -520,6 +541,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
         }
 
         /**
+         * Closes dropdown when clicking outside the component.
          * @param {MouseEvent} event
          * @returns {void}
          */
@@ -533,6 +555,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
 
 
         /**
+         * Emits selected billettholder id as a custom event.
          * @param {number} billettholderId
          * @returns {void}
          */
