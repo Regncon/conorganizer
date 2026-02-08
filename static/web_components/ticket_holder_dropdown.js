@@ -1,7 +1,7 @@
 // @ts-check
 
 
-if (!customElements.get("ticket-holder-dropdown")) {
+if (!customElements.get("billettholder-dropdown")) {
     const GLOBAL_STYLE_URLS = [
         "/static/index.css",
         "/static/buttons.css",
@@ -37,7 +37,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
      */
     const DATA_BILLETTHOLDERE_ATTR = "data-billettholdere"
     /**
-     * Ticket-holder dropdown custom element.
+     * Billettholder dropdown custom element.
      *
      * Required input:
      * - `data-billettholdere`: JSON array of ticket holders.
@@ -47,7 +47,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
      * - The component clones this template into the arrow slot during render.
      * - If omitted, it falls back to a plain text arrow.
      */
-    class TicketHolderDropdown extends HTMLElement {
+    class BillettholderDropdown extends HTMLElement {
         /** @type {HTMLButtonElement | null} */
         #selectButtonEle = null
         /** @type {HTMLUListElement | null} */
@@ -267,7 +267,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 return
             }
             const wrapperEle = document.createElement("div")
-            wrapperEle.className = "ticket-holder-dropdown-wrapper"
+            wrapperEle.className = "billettholder-dropdown-wrapper"
 
             const buttonEle = document.createElement("button")
             buttonEle.className = "select-button input no-marking"
@@ -559,7 +559,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          */
         emitBillettholderSelected(billettholderId) {
             this.dispatchEvent(
-                new CustomEvent("billett-holder-selected", {
+                new CustomEvent("billettholder-selected", {
                     detail: billettholderId,
                     bubbles: true,
                     composed: true,
@@ -569,5 +569,5 @@ if (!customElements.get("ticket-holder-dropdown")) {
 
     }
 
-    customElements.define("ticket-holder-dropdown", TicketHolderDropdown)
+    customElements.define("billettholder-dropdown", BillettholderDropdown)
 }

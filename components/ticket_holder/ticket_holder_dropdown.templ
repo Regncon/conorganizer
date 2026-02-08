@@ -6,13 +6,13 @@ import (
 )
 
 templ TicketHolderDropDown(eventId string, userInfo requestctx.UserRequestInfo, associatedBillettholder []BillettHolder) {
-	<ticket-holder-dropdown
+	<billettholder-dropdown
 		class="custom-select"
 		data-billettholdere={ templ.JSONString(associatedBillettholder) }
-		data-on:billett-holder-selected="$billettHolderId = evt.detail;"
+		data-on:billettholder-selected="$billettHolderId = evt.detail;"
 	>
 		<template data-arrow-icon>
 			@icons.Icon(icons.ChevronDown, icons.Size24)
 		</template>
-	</ticket-holder-dropdown>
+	</billettholder-dropdown>
 }
