@@ -213,13 +213,25 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {string}
          */
         getInitials(name) {
-            return name
+            const parts = name
                 .split(" ")
-                .map((n) => n.trim())
-                .filter((n) => n.length > 0)
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()
+                .map((part) => part.trim())
+                .filter((part) => part.length > 0)
+
+            if (parts.length === 0) {
+                return ""
+            }
+
+            const firstName = parts[0]
+            const lastName = parts[parts.length - 1]
+            const firstInitial = firstName[0] || ""
+            const lastInitial = lastName[0] || ""
+
+            if (parts.length === 1) {
+                return firstInitial.toUpperCase()
+            }
+
+            return `${ firstInitial }${ lastInitial }`.toUpperCase()
         }
 
         /**
