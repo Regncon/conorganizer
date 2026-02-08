@@ -29,6 +29,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		.dialog-container {
 			container-type: inline-size;
 			container-name: interest-dialog;
+			position: relative;
 		}
 
 		.interest-dialog[open] {
@@ -64,18 +65,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					height: fit-content;
 					color: var(--color-text-soft);
 					padding-bottom: var(--responsive-pane-padding);
-
-					.button-container {
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						height: 18px;
-						width: 18px;
-					}
-
-					.btn {
-						padding-inline: var(--spacing-2x);
-					}
 				}
 
 				.dialog-content {
@@ -109,6 +98,21 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 						font-size: 12px;
 					}
 				}
+
+				.close-button-container {
+					position: absolute;
+					top: 0;
+					right: 0;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					height: 18px;
+					width: 18px;
+
+					.btn {
+						padding-inline: var(--spacing-2x);
+					}
+				}
 			}
 		}
 	</style>
@@ -121,15 +125,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
-				<form class="button-container" method="dialog">
-					<button
-						autofocus
-						class="btn btn--ghost close"
-						data-on:click="$interestIsOpen = false"
-					>
-						@icons.Icon(icons.Close, icons.Size24)
-					</button>
-				</form>
 			</header>
 			<div class="dialog-content">
 				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
@@ -145,6 +140,14 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					Ferdig
 				</button>
 			</div>
+			<form class="close-button-container" method="dialog">
+				<button
+					class="btn btn--ghost close"
+					data-on:click="$interestIsOpen = false"
+				>
+					@icons.Icon(icons.Close, icons.Size24)
+				</button>
+			</form>
 		</div>
 	</dialog>
 	<script>
