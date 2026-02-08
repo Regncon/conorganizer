@@ -311,7 +311,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * Returns all list option elements.
          * @returns {HTMLLIElement[]}
          */
-        getOptions() {
+        getOptionElements() {
             return Array.from(this.shadowRoot?.querySelectorAll("li") || [])
         }
 
@@ -334,7 +334,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @param {HTMLLIElement} optionEle
          * @returns {void}
          */
-        saveSelected(optionEle) {
+        saveSelectedToLocalStorage(optionEle) {
             localStorage.setItem(this.LSKey, JSON.stringify(this.toBillettHolder(optionEle)))
         }
 
@@ -361,7 +361,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
             if (!this.selectedValueEle) {
                 return
             }
-            this.getOptions().forEach((opt) => opt.classList.remove("selected"))
+            this.getOptionElements().forEach((opt) => opt.classList.remove("selected"))
             optionEle.classList.add("selected")
 
             const billettholder = this.toBillettHolder(optionEle)
@@ -378,7 +378,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 return
             }
 
-            const optionEles = this.getOptions()
+            const optionEles = this.getOptionElements()
             const isOpen = expand !== null ? expand : this.dropdownEle.classList.contains("hidden")
             this.dropdownEle.classList.toggle("hidden", !isOpen)
             this.selectButtonEle.setAttribute("aria-expanded", String(isOpen))
@@ -399,7 +399,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         hydrateSelection() {
-            const optionEles = this.getOptions()
+            const optionEles = this.getOptionElements()
             const firstOptionEle = optionEles[0]
             if (!firstOptionEle) {
                 return
@@ -408,7 +408,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
             const selectedBillettholderLS = localStorage.getItem(this.LSKey)
             if (!selectedBillettholderLS) {
                 this.renderSelected(firstOptionEle)
-                this.saveSelected(firstOptionEle)
+                this.saveSelectedToLocalStorage(firstOptionEle)
                 return
             }
 
@@ -420,13 +420,13 @@ if (!customElements.get("ticket-holder-dropdown")) {
                 )
                 if (!selectedOptionEle) {
                     this.renderSelected(firstOptionEle)
-                    this.saveSelected(firstOptionEle)
+                    this.saveSelectedToLocalStorage(firstOptionEle)
                     return
                 }
                 this.renderSelected(selectedOptionEle)
             } catch {
                 this.renderSelected(firstOptionEle)
-                this.saveSelected(firstOptionEle)
+                this.saveSelectedToLocalStorage(firstOptionEle)
             }
         }
 
@@ -437,7 +437,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          */
         handleOptionSelect(optionEle) {
             this.renderSelected(optionEle)
-            this.saveSelected(optionEle)
+            this.saveSelectedToLocalStorage(optionEle)
         }
 
         /**
@@ -470,7 +470,7 @@ if (!customElements.get("ticket-holder-dropdown")) {
          * @returns {void}
          */
         onDropdownKeydown(event) {
-            const optionEles = this.getOptions()
+            const optionEles = this.getOptionElements()
             if (optionEles.length === 0) {
                 return
             }
