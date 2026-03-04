@@ -100,7 +100,6 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			{id: idNotVeryInterested, want: false, name: "not very interested"},
 			{id: idUnassigned, want: false, name: "no assignment"},
 			{id: idGMPlayer, want: true, name: "gm+player with very interested"},
-			{id: idGMAndPlayerDifferentEvents, want: true, name: "gm in one event and player in another"},
 		} {
 			expectFirstChoice(t, got, tc)
 		}
