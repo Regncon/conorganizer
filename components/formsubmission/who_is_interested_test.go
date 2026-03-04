@@ -336,7 +336,11 @@ func expectPresent(t *testing.T, got map[int]InterestWithHolder, id int, message
 
 func expectFirstChoice(t *testing.T, got map[int]InterestWithHolder, tc firstChoiceCase) {
 	t.Helper()
-	if got[tc.id].FirstChoice != tc.want {
+	interest, ok := got[tc.id]
+	if !ok {
+		t.Fatalf("%s: missing billettholder id %d", tc.name, tc.id)
+	}
+	if interest.FirstChoice != tc.want {
 		t.Errorf("%s should be first choice = %v", tc.name, tc.want)
 	}
 }
