@@ -58,7 +58,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		t.Fatalf("GetInterestsForEvent E1 error: %v", getInterestsE1Err)
 	}
 
-	gotE1 := indexInterests(interestsE1)
+	gotE1 := indexInterests(t, interestsE1)
 
 	// E1 first-choice check confirms the assigned event does not mark FirstChoice there.
 	t.Run("E1 first-choice rules", func(t *testing.T) {
@@ -74,7 +74,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		t.Fatalf("GetInterestsForEvent error: %v", getInterestsErr)
 	}
 
-	got := indexInterests(interests)
+	got := indexInterests(t, interests)
 
 	// E2 inclusion checks confirm interests are listed even if the player is already assigned
 	// to the same event; assignment should only affect FirstChoice, not filtering.
@@ -111,7 +111,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		t.Fatalf("GetInterestsForEvent E3 error: %v", getInterestsE3Err)
 	}
 
-	gotE3 := indexInterests(interestsE3)
+	gotE3 := indexInterests(t, interestsE3)
 
 	// E3 inclusion check confirms assignments to the same event do not filter interests out.
 	t.Run("E3 includes/excludes correct billettholders", func(t *testing.T) {
@@ -134,7 +134,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		t.Fatalf("GetInterestsForEvent E4 error: %v", getInterestsE4Err)
 	}
 
-	gotE4 := indexInterests(interestsE4)
+	gotE4 := indexInterests(t, interestsE4)
 
 	// E4 first-choice checks cover an interest mix with an explicit "no assignment" case to ensure
 	// the FirstChoice flag remains false when the participant has no cross-event player assignment.
@@ -176,10 +176,20 @@ type assignmentFixture struct {
 	isGM            int
 }
 
-func indexInterests(interests []InterestWithHolder) map[int][]InterestWithHolder {
-	index := make(map[int][]InterestWithHolder, len(interests))
+func indexInterests(t *testing.T, interests []InterestWithHolder) map[int]InterestWithHolder {
+	t.Helper()
+	index := make(map[int]InterestWithHolder, len(interests))
 	for _, interest := range interests {
-		index[interest.BillettholderId] = append(index[interest.BillettholderId], interest)
+		if prev, exists := index[interest.BillettholderId]; exists {
+			t.Fatalf(
+				"duplicate billettholder id %d found for event %s (pulje %s and %s)",
+				interest.BillettholderId,
+				interest.EventId,
+				prev.PuljeId,
+				interest.PuljeId,
+			)
+		}
+		index[interest.BillettholderId] = interest
 	}
 	return index
 }
@@ -327,27 +337,22 @@ func seedAssignments(t *testing.T, db *sql.DB, rows []assignmentFixture) {
 	}
 }
 
-func expectPresent(t *testing.T, got map[int][]InterestWithHolder, id int, message string) {
+func expectPresent(t *testing.T, got map[int]InterestWithHolder, id int, message string) {
 	t.Helper()
-	if rows, ok := got[id]; !ok || len(rows) == 0 {
+	if _, ok := got[id]; !ok {
 		t.Fatal(message)
 	}
 }
 
-func expectFirstChoice(t *testing.T, got map[int][]InterestWithHolder, tc firstChoiceCase) {
+func expectFirstChoice(t *testing.T, got map[int]InterestWithHolder, tc firstChoiceCase) {
 	t.Helper()
-	rows, ok := got[tc.id]
-	if !ok || len(rows) == 0 {
+	interest, ok := got[tc.id]
+	if !ok {
 		t.Fatalf("%s: missing billettholder id %d", tc.name, tc.id)
 	}
-
-	for _, row := range rows {
-		if row.FirstChoice == tc.want {
-			return
-		}
+	if interest.FirstChoice != tc.want {
+		t.Errorf("%s should be first choice = %v", tc.name, tc.want)
 	}
-
-	t.Errorf("%s should have at least one row with first choice = %v", tc.name, tc.want)
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
