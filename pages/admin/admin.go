@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Regncon/conorganizer/components/formsubmission"
@@ -157,64 +158,63 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 				apiRouter.Route("/events_players", func(eventsPlayersRouter chi.Router) {
 					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
+						// Check content type
+						contentType := r.Header.Get("Content-Type")
+						fmt.Printf("Content-Type: %s\n", contentType)
 
-						type Store struct {
-							BillettholderId int    `json:"assignmentBillettholderId"`
-							EventId         string `json:"assignmentEventId"`
-							PuljeId         string `json:"assignmentPuljeId"`
-						}
-						store := &Store{}
-
-						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
-							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+						// get from form data
+						if err := r.ParseForm(); err != nil {
+							http.Error(w, "Failed to parse form data", http.StatusBadRequest)
 							return
 						}
 
-						var updatePlayerStatusErr = formsubmission.UpdatePlayerStatus(
-							store.EventId,
-							store.PuljeId,
-							store.BillettholderId,
-							false,
-							true,
-							db,
-							logger,
-						)
-						if updatePlayerStatusErr != nil {
-							logger.Error("Failed to add player as GM", "error", updatePlayerStatusErr)
-							http.Error(w, updatePlayerStatusErr.Error(), http.StatusInternalServerError)
-							return
-						}
-						logger.Info(
-							"Successfully Added player as GM",
-							"eventId", store.EventId,
-							"puljeId", store.PuljeId,
-							"billettholderId", store.BillettholderId,
-							"isPlayer", false,
-							"isGm", true,
-						)
-						keyvalue.BroadcastUpdate(kv, r)
+						fmt.Printf("Form data: %+v\n", r.Form.Get("name"))
+						fmt.Printf("Form data: %+v\n", r.Form.Get("billettholder-6"))
+
+						http.Error(w, "Not implemented", http.StatusNotImplemented)
+						return
 					})
-					eventsPlayersRouter.Put("/update_status", func(w http.ResponseWriter, r *http.Request) {
-						type Store struct {
-							BillettholderId int    `json:"assignmentBillettholderId"`
-							EventId         string `json:"assignmentEventId"`
-							PuljeId         string `json:"assignmentPuljeId"`
-							IsPlayer        bool   `json:"assignmentIsPlayer"`
-							IsGm            bool   `json:"assignmentIsGm"`
-						}
-						store := &Store{}
+					eventsPlayersRouter.Put("/put/{eventId}/{puljeId}/{billettholderId}/{isPlayer}/{isGm}", func(w http.ResponseWriter, r *http.Request) {
+						// sse := datastar.NewSSE(w, r)
+						// sessionID, mvc, err := mvcSession(w, r)
+						// ctx := r.Context()
 
-						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
-							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+						eventId := chi.URLParam(r, "eventId")
+						puljeId := chi.URLParam(r, "puljeId")
+						billettholderId, billettholderIdToIntErr := strconv.Atoi(chi.URLParam(r, "billettholderId"))
+						if billettholderIdToIntErr != nil {
+							logger.Error("Invalid billettholder ID", slog.String("billettholderId", chi.URLParam(r, "billettholderId")), "billettholderIdToIntErr", billettholderIdToIntErr)
+							http.Error(w, "Invalid billettholder ID", http.StatusBadRequest)
 							return
 						}
+						isGm, isGmToBoolErr := strconv.ParseBool(chi.URLParam(r, "isGm"))
+						if isGmToBoolErr != nil {
+							logger.Error("Invalid isGm value", slog.String("isGm", chi.URLParam(r, "isGm")), "isGmToBoolErr", isGmToBoolErr)
+							http.Error(w, "Invalid isGm value", http.StatusBadRequest)
+							return
+						}
+						isPlayer, isPlayerToBoolErr := strconv.ParseBool(chi.URLParam(r, "isPlayer"))
+						if isPlayerToBoolErr != nil {
+							logger.Error("Invalid isPlayer value", slog.String("isPlayer", chi.URLParam(r, "isPlayer")), "isPlayerToBoolErr", isPlayerToBoolErr)
+							http.Error(w, "Invalid isPlayer value", http.StatusBadRequest)
+							return
+						}
+						// type Store struct {
+						// 	Input string `json:"title"`
+						// }
+						// store := &Store{}
+
+						// if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+						// 	http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+						// 	return
+						// }
 
 						var updatePlayerStatusErr = formsubmission.UpdatePlayerStatus(
-							store.EventId,
-							store.PuljeId,
-							store.BillettholderId,
-							store.IsPlayer,
-							store.IsGm,
+							eventId,
+							puljeId,
+							billettholderId,
+							isPlayer,
+							isGm,
 							db,
 							logger,
 						)
@@ -224,11 +224,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 						logger.Info(
 							"Successfully updated player status",
-							"eventId", store.EventId,
-							"puljeId", store.PuljeId,
-							"billettholderId", store.BillettholderId,
-							"isPlayer", store.IsPlayer,
-							"isGm", store.IsGm,
+							"eventId", eventId,
+							"puljeId", puljeId,
+							"billettholderId", billettholderId,
+							"isPlayer", isPlayer,
+							"isGm", isGm,
 						)
 						keyvalue.BroadcastUpdate(kv, r)
 					})
