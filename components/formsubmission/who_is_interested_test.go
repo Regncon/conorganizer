@@ -176,10 +176,10 @@ type assignmentFixture struct {
 	isGM            int
 }
 
-func indexInterests(interests []InterestWithHolder) map[int]InterestWithHolder {
-	index := make(map[int]InterestWithHolder, len(interests))
+func indexInterests(interests []InterestWithHolder) map[int][]InterestWithHolder {
+	index := make(map[int][]InterestWithHolder, len(interests))
 	for _, interest := range interests {
-		index[interest.BillettholderId] = interest
+		index[interest.BillettholderId] = append(index[interest.BillettholderId], interest)
 	}
 	return index
 }
@@ -327,22 +327,27 @@ func seedAssignments(t *testing.T, db *sql.DB, rows []assignmentFixture) {
 	}
 }
 
-func expectPresent(t *testing.T, got map[int]InterestWithHolder, id int, message string) {
+func expectPresent(t *testing.T, got map[int][]InterestWithHolder, id int, message string) {
 	t.Helper()
-	if _, ok := got[id]; !ok {
+	if rows, ok := got[id]; !ok || len(rows) == 0 {
 		t.Fatal(message)
 	}
 }
 
-func expectFirstChoice(t *testing.T, got map[int]InterestWithHolder, tc firstChoiceCase) {
+func expectFirstChoice(t *testing.T, got map[int][]InterestWithHolder, tc firstChoiceCase) {
 	t.Helper()
-	interest, ok := got[tc.id]
-	if !ok {
+	rows, ok := got[tc.id]
+	if !ok || len(rows) == 0 {
 		t.Fatalf("%s: missing billettholder id %d", tc.name, tc.id)
 	}
-	if interest.FirstChoice != tc.want {
-		t.Errorf("%s should be first choice = %v", tc.name, tc.want)
+
+	for _, row := range rows {
+		if row.FirstChoice == tc.want {
+			return
+		}
 	}
+
+	t.Errorf("%s should have at least one row with first choice = %v", tc.name, tc.want)
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
