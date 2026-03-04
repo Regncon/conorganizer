@@ -1,6 +1,6 @@
 name: Feature story
 title: "[Story]"
-description: Create a new bug report
+description: Create a new story ticket, under which subtasks can be created.
 projects: []
 labels:
   - enhancement

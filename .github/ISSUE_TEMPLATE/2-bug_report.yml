@@ -1,6 +1,6 @@
 name: Bug report
 title: "[Bug]"
-description: Create a new bug report
+description: Create a new bug report.
 projects: []
 labels:
   - bug
