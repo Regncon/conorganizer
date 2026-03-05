@@ -156,6 +156,21 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				})
 
 				apiRouter.Route("/events_players", func(eventsPlayersRouter chi.Router) {
+					eventsPlayersRouter.Post("/post/add_first_choice", func(w http.ResponseWriter, r *http.Request) {
+						type Store struct {
+							BillettholderId int    `json:"assignmentBillettholderId"`
+							EventId         string `json:"assignmentEventId"`
+							PuljeId         string `json:"assignmentPuljeId"`
+						}
+
+						store := &Store{}
+
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+
+					})
 					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
 
 						type Store struct {
