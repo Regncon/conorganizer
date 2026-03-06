@@ -18,6 +18,7 @@ type InterestWithHolder struct {
 	InterestLevel        string `json:"interest_level"`
 	FirstChoice          bool   `json:"first_choice"`
 	HasOtherEventInPulje bool   `json:"has_other_event_in_pulje"`
+	HasBeenGamemaster    bool   `json:"has_been_gm"`
 	IsGamemaster         bool   `json:"is_gm"`
 
 	FirstName  string `json:"first_name"`
@@ -78,6 +79,23 @@ func queryHasOtherAssignedEventInPulje(alias interestSourceAlias) string {
 `, alias, alias, alias)
 }
 
+func queryHasBeenGamemaster(alias interestSourceAlias) string {
+	return fmt.Sprintf(`
+                EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        events_players ep_gm
+                    WHERE
+                        ep_gm.billettholder_id = %s.billettholder_id
+                        AND ep_gm.event_id <> %s.event_id
+                        AND ep_gm.is_gm = 1
+                    LIMIT
+                        1
+                ) AS has_been_gm
+`, alias, alias)
+}
+
 func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]InterestWithHolder, error) {
 	var query = `
             SELECT
@@ -87,6 +105,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 i.interest_level,
                 ` + queryFirstChoice + `,
                 ` + queryHasOtherAssignedEventInPulje(interestRowAlias) + `,
+                ` + queryHasBeenGamemaster(interestRowAlias) + `,
                 COALESCE(ep.is_gm, 0) AS is_gm,
                 b.first_name,
                 b.last_name,
@@ -121,6 +140,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&interest.InterestLevel,
 			&interest.FirstChoice,
 			&interest.HasOtherEventInPulje,
+			&interest.HasBeenGamemaster,
 			&interest.IsGamemaster,
 			&interest.FirstName,
 			&interest.LastName,
@@ -150,6 +170,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 COALESCE(i.interest_level, '') AS interest_level,
                 ` + queryFirstChoice + `,
                 ` + queryHasOtherAssignedEventInPulje(assignmentRowAlias) + `,
+                ` + queryHasBeenGamemaster(assignmentRowAlias) + `,
                 COALESCE(ep.is_gm, 0) AS is_gm,
                 b.first_name,
                 b.last_name,
@@ -185,6 +206,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&assignment.InterestLevel,
 			&assignment.FirstChoice,
 			&assignment.HasOtherEventInPulje,
+			&assignment.HasBeenGamemaster,
 			&assignment.IsGamemaster,
 			&assignment.FirstName,
 			&assignment.LastName,
@@ -342,11 +364,11 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
             flex-wrap: nowrap;
             margin-bottom: var(--spacing-1x);
 
-            .start {
-                display: flex;
-                place-items: center;
-                text-align: center;
-                gap: 1ch;
+	            .start {
+	                display: flex;
+	                place-items: center;
+	                text-align: center;
+	                gap: 1ch;
                 .is-gamemaster {
                     display: flex;
                     place-content: center;
@@ -355,13 +377,21 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
                         color: var(--color-accent-cyan);
                     }
                 }
-                .first-choice {
-                    color: var(--color-error);
-                    font-weight: 700;
-                }
-                .other-event-indicator {
-                    display: inline-flex;
-                    align-items: center;
+	                .first-choice {
+	                    color: var(--color-error);
+	                    font-weight: 700;
+	                }
+	                .has-been-gamemaster {
+	                    display: flex;
+	                    place-content: center;
+	                    place-items: center;
+	                    .has-been-gamemaster-icon {
+	                        color: var(--color-success);
+	                    }
+	                }
+	                .other-event-indicator {
+	                    display: inline-flex;
+	                    align-items: center;
                     color: var(--color-warning);
                     margin-inline-start: 0.25rem;
                 }
@@ -427,6 +457,17 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 								@icons.Icon(icons.Gamemaster, icons.Size24)
 							</span>
 							Spilleder
+						</p>
+					}
+					if interest.HasBeenGamemaster && !interest.IsGamemaster {
+						<p class="has-been-gamemaster">
+							<span
+								class="has-been-gamemaster-icon"
+								data-tippy-content="Har vært GM"
+								aria-label="Har vært GM"
+							>
+								@icons.Icon(icons.Gamemaster, icons.Size24)
+							</span>
 						</p>
 					}
 					<div style="display: flex; align-items: center; gap:0.5rem; ">
