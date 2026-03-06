@@ -178,7 +178,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							logger,
 						)
 						if addFirstChoiceErr != nil {
-							logger.Error("Failed to add player as first choice", fmt.Errorf("error: %f", addFirstChoiceErr))
+							logger.Error("Failed to add player as first choice", "err", fmt.Errorf("error: %f", addFirstChoiceErr))
 							http.Error(w, addFirstChoiceErr.Error(), http.StatusInternalServerError)
 							return
 						}
