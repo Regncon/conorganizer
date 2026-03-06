@@ -23,11 +23,11 @@
 	"forwardPorts": [7331,8080],
 	"portsAttributes": {
 		"7331": {
-			"label": "ConOrganizer (Air proxy)",
+			"label": "Air proxy",
 			"onAutoForward": "openBrowser"
 		},
 		"8080":{
-			"label": "ConOrganizer (app server)",
+			"label": "app server",
 			"onAutoForward": "silent"
 		}
 	},
@@ -36,14 +36,9 @@
 	// "customizations": {},
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	"remoteUser": "devuser",
-	"mounts": [
-		"source=${localEnv:HOME}/.codex,target=/home/devuser/.codex,type=bind,consistency=cached"
-	],
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"openai.chatgpt",
-				"a-h.templ",
 				"mtxr.sqltools",
 				"lsl.vscode-templ-go-to-definition",
 				"editorconfig.editorconfig",
