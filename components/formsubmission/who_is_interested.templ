@@ -120,6 +120,19 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
             WHERE
                 i.event_id = ?
                 AND i.pulje_id <> ''
+                AND NOT EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        events_players ep_assigned
+                    WHERE
+                        ep_assigned.billettholder_id = i.billettholder_id
+                        AND ep_assigned.event_id = i.event_id
+                        AND ep_assigned.pulje_id = i.pulje_id
+                        AND (ep_assigned.is_player = 1 OR ep_assigned.is_gm = 1)
+                    LIMIT
+                        1
+                )
             ORDER BY
                 i.interest_level DESC
     `
@@ -184,7 +197,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                     AND i.pulje_id = ep.pulje_id
             WHERE
                 ep.event_id = ?
-                AND ep.is_player = 1
+                AND (ep.is_player = 1 OR ep.is_gm = 1)
             ORDER BY
                 ep.is_gm DESC,
                 ep.inserted_time ASC
