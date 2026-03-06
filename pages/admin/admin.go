@@ -170,13 +170,25 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							return
 						}
 
-						formsubmission.AddPlayersFirstChoice(
+						var addFirstChoiceErr = formsubmission.AddPlayersFirstChoice(
 							store.BillettholderId,
 							store.EventId,
 							store.PuljeId,
 							db,
 							logger,
 						)
+						if addFirstChoiceErr != nil {
+							logger.Error("Failed to add player as first choice", fmt.Errorf("error: %f", addFirstChoiceErr))
+							http.Error(w, addFirstChoiceErr.Error(), http.StatusInternalServerError)
+							return
+						}
+						logger.Info(
+							"Successfully added player as first choice",
+							"eventId", store.EventId,
+							"puljeId", store.PuljeId,
+							"billettholderId", store.BillettholderId,
+						)
+						keyvalue.BroadcastUpdate(kv, r)
 
 					})
 					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
