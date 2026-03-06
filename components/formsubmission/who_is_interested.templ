@@ -13,19 +13,19 @@ import (
 )
 
 type InterestWithHolder struct {
-	BillettholderId      int    `json:"billettholder_id"`
-	EventId              string `json:"event_id"`
-	PuljeId              string `json:"pulje_id"`
-	InterestLevel        string `json:"interest_level"`
-	FirstChoice          bool   `json:"first_choice"`
-	HasOtherEventInPulje bool   `json:"has_other_event_in_pulje"`
-	HasBeenGamemaster    bool   `json:"has_been_gm"`
-	IsGamemaster         bool   `json:"is_gm"`
+	BillettholderId      int
+	EventId              string
+	PuljeId              string
+	InterestLevel        string
+	FirstChoice          bool
+	HasOtherEventInPulje bool
+	HasBeenGamemaster    bool
+	IsGamemaster         bool
 
-	FirstName  string `json:"first_name"`
-	LastName   string `json:"last_name"`
-	TicketType string `json:"ticket_type"`
-	IsOver18   bool   `json:"is_over_18"`
+	FirstName  string
+	LastName   string
+	TicketType string
+	IsOver18   bool
 }
 
 type AssignmentWithHolder = InterestWithHolder
