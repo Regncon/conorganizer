@@ -25,6 +25,7 @@ const (
 	idSameEventAssignee          = 5
 	idGMPlayer                   = 6
 	idGMAndPlayerDifferentEvents = 7
+	idGMOnlyVeryInterestedOther  = 8
 )
 
 // FirstChoice rules:
@@ -86,6 +87,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 		expectPresent(t, got, idUnassigned, "expected unassigned billettholder to be returned")
 		expectPresent(t, got, idGMPlayer, "expected gm+player billettholder to be returned")
 		expectPresent(t, got, idGMAndPlayerDifferentEvents, "expected gm+player (different events) billettholder to be returned")
+		expectPresent(t, got, idGMOnlyVeryInterestedOther, "expected gm-only (other event) billettholder to be returned")
 	})
 
 	// E2 first-choice checks focus on the CASE logic in queryFirstChoice:
@@ -100,6 +102,7 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			{id: idNotVeryInterested, want: false, name: "not very interested"},
 			{id: idUnassigned, want: false, name: "no assignment"},
 			{id: idGMPlayer, want: true, name: "gm+player with very interested"},
+			{id: idGMOnlyVeryInterestedOther, want: false, name: "gm-only with very interested in other event"},
 		} {
 			expectFirstChoice(t, got, tc)
 		}
@@ -238,6 +241,7 @@ func gmFixtures() []billettholderFixture {
 		{id: idGMAssigned, firstName: "GM", lastName: "Two"},
 		{id: idGMPlayer, firstName: "GMPlayer", lastName: "Six"},
 		{id: idGMAndPlayerDifferentEvents, firstName: "GMAndPlayer", lastName: "Seven"},
+		{id: idGMOnlyVeryInterestedOther, firstName: "GMOnlyVeryInterested", lastName: "Eight"},
 	}
 }
 
@@ -250,12 +254,14 @@ func interestsForE2() []interestFixture {
 		{billettholderID: idSameEventAssignee, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
 		{billettholderID: idGMPlayer, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
 		{billettholderID: idGMAndPlayerDifferentEvents, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
+		{billettholderID: idGMOnlyVeryInterestedOther, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
 	}
 }
 
 func interestsForE1() []interestFixture {
 	return []interestFixture{
 		{billettholderID: idPlayerAssigned, eventID: eventE1, puljeID: puljeP1, interestLevel: "Veldig interessert"},
+		{billettholderID: idGMOnlyVeryInterestedOther, eventID: eventE1, puljeID: puljeP1, interestLevel: "Veldig interessert"},
 	}
 }
 
@@ -282,6 +288,7 @@ func assignmentsE1() []assignmentFixture {
 		{eventID: eventE1, puljeID: puljeP1, billettholderID: idNotVeryInterested, isPlayer: 1, isGM: 0},
 		{eventID: eventE1, puljeID: puljeP1, billettholderID: idGMPlayer, isPlayer: 0, isGM: 1},
 		{eventID: eventE1, puljeID: puljeP1, billettholderID: idGMAndPlayerDifferentEvents, isPlayer: 0, isGM: 1},
+		{eventID: eventE1, puljeID: puljeP1, billettholderID: idGMOnlyVeryInterestedOther, isPlayer: 0, isGM: 1},
 	}
 }
 

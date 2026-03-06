@@ -43,7 +43,7 @@ var queryFirstChoice = `
                         AND i2.pulje_id <> ''
                         AND i2.event_id <> i.event_id -- must be a different event
                         AND i2.interest_level = 'Veldig interessert'
-                        AND (ep.is_player = 1 OR ep.is_gm = 1)
+                        AND ep.is_player = 1
                     LIMIT
                         1
                 ) AS first_choice
@@ -159,7 +159,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                     AND i.pulje_id = ep.pulje_id
             WHERE
                 ep.event_id = ?
-                AND (ep.is_player = 1 OR ep.is_gm = 1)
+                AND ep.is_player = 1
             ORDER BY
                 ep.is_gm DESC,
                 ep.inserted_time ASC
