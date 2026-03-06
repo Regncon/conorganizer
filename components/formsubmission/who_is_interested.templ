@@ -464,13 +464,13 @@ templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billet
 		></admin-billettholder-search>
 		<div style="display:flex; gap: var(--spacing-4x); margin-top: var(--spacing-4x);">
 			<button
-				class="btn btn--primary"
+				class="btn btn--secondary"
 				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_gm'); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
 			>
 				Legg til som GM
 			</button>
 			<button
-				class="btn btn--primary"
+				class="btn btn--secondary"
 				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_first_choice'); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
 			>
 				Legg til som førstevalg
