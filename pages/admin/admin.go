@@ -169,6 +169,23 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
 						}
+						if store.BillettholderId <= 0 {
+							invalidBillettholderIdErr := fmt.Errorf(
+								"invalid assignmentBillettholderId %d: must be greater than 0",
+								store.BillettholderId,
+							)
+							logger.Error(
+								"Invalid billettholder id for add first choice",
+								"invalidBillettholderIdErr",
+								invalidBillettholderIdErr,
+								"eventId",
+								store.EventId,
+								"puljeId",
+								store.PuljeId,
+							)
+							http.Error(w, invalidBillettholderIdErr.Error(), http.StatusNotFound)
+							return
+						}
 
 						var addFirstChoiceErr = formsubmission.AddPlayersFirstChoice(
 							store.BillettholderId,
@@ -178,7 +195,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							logger,
 						)
 						if addFirstChoiceErr != nil {
-							logger.Error("Failed to add player as first choice", "err", fmt.Errorf("error: %f", addFirstChoiceErr))
+							logger.Error("Failed to add player as first choice", "err", fmt.Errorf("add first choice: %w", addFirstChoiceErr))
 							http.Error(w, addFirstChoiceErr.Error(), http.StatusInternalServerError)
 							return
 						}
@@ -202,6 +219,23 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+						if store.BillettholderId <= 0 {
+							invalidBillettholderIdErr := fmt.Errorf(
+								"invalid assignmentBillettholderId %d: must be greater than 0",
+								store.BillettholderId,
+							)
+							logger.Error(
+								"Invalid billettholder id for add GM",
+								"err",
+								invalidBillettholderIdErr,
+								"eventId",
+								store.EventId,
+								"puljeId",
+								store.PuljeId,
+							)
+							http.Error(w, invalidBillettholderIdErr.Error(), http.StatusNotFound)
 							return
 						}
 
