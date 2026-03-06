@@ -6,10 +6,10 @@ import (
 
 	"encoding/json"
 	"fmt"
-	"strings"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
+	"strings"
 )
 
 type InterestWithHolder struct {
@@ -525,14 +525,26 @@ templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestW
 
 templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
-	<div class="gm-search-wrapper" style="margin-block-end: 2rem;">
+	<style>
+		.billettholder-search {
+			margin-block-end: 2rem;
+
+            .billettholder-search-buttons {
+                display: flex;
+                gap: var(--spacing-4x);
+                margin-top: var(--spacing-4x);
+            }
+		}
+
+	</style>
+	<div class="billettholder-search">
 		<admin-billettholder-search
 			data-billettholdere={ string(billettholdereJson) }
 			data-attr:clear-input="$clearInput"
 			data-on:billettholder-select="$assignmentBillettholderId = evt.detail.id"
 			input-tippy="Søk etter billettholder"
 		></admin-billettholder-search>
-		<div style="display:flex; gap: var(--spacing-4x); margin-top: var(--spacing-4x);">
+		<div class="billettholder-search-buttons">
 			<button
 				class="btn btn--secondary"
 				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_gm'); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
