@@ -61,12 +61,24 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 
 	gotE1 := indexInterests(t, interestsE1)
 
-	// E1 first-choice check confirms the assigned event does not mark FirstChoice there.
-	t.Run("E1 first-choice rules", func(t *testing.T) {
+	assigneesE1, getAssigneesE1Err := GetAssigneesForEvent(eventE1, db, logger)
+	if getAssigneesE1Err != nil {
+		t.Fatalf("GetAssigneesForEvent E1 error: %v", getAssigneesE1Err)
+	}
+
+	gotAssignedE1 := indexInterests(t, assigneesE1)
+
+	// E1 inclusion check confirms same-event assignees are excluded from interests.
+	t.Run("E1 includes/excludes correct billettholders", func(t *testing.T) {
+		expectAbsent(t, gotE1, idPlayerAssigned, "expected assigned-to-same-event billettholder to be excluded for E1")
+	})
+
+	// E1 first-choice check confirms current-event assignees are not marked as first choice.
+	t.Run("E1 assignees should not show first-choice for current event", func(t *testing.T) {
 		for _, tc := range []firstChoiceCase{
-			{id: idPlayerAssigned, want: false, name: "player assigned in current event should not mark first choice here"},
+			{id: idPlayerAssigned, want: false, name: "player assigned in current event should not mark first choice"},
 		} {
-			expectFirstChoice(t, gotE1, tc)
+			expectFirstChoice(t, gotAssignedE1, tc)
 		}
 	})
 
@@ -77,10 +89,9 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 
 	got := indexInterests(t, interests)
 
-	// E2 inclusion checks confirm interests are listed even if the player is already assigned
-	// to the same event; assignment should only affect FirstChoice, not filtering.
+	// E2 inclusion checks confirm same-event assignees are excluded from interests.
 	t.Run("E2 includes/excludes correct billettholders", func(t *testing.T) {
-		expectPresent(t, got, idSameEventAssignee, "expected assigned-to-same-event billettholder to be returned")
+		expectAbsent(t, got, idSameEventAssignee, "expected assigned-to-same-event billettholder to be excluded")
 		expectPresent(t, got, idPlayerAssigned, "expected player-assigned billettholder to be returned")
 		expectPresent(t, got, idGMAssigned, "expected gm-assigned billettholder to be returned")
 		expectPresent(t, got, idNotVeryInterested, "expected not-very-interested billettholder to be returned")
@@ -115,9 +126,9 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 
 	gotE3 := indexInterests(t, interestsE3)
 
-	// E3 inclusion check confirms assignments to the same event do not filter interests out.
+	// E3 inclusion check confirms same-event assignees are excluded from interests.
 	t.Run("E3 includes/excludes correct billettholders", func(t *testing.T) {
-		expectPresent(t, gotE3, idGMPlayer, "expected assigned-to-same-event billettholder to be returned for E3")
+		expectAbsent(t, gotE3, idGMPlayer, "expected assigned-to-same-event billettholder to be excluded for E3")
 	})
 
 	// E3 first-choice checks re-run the same CASE rules against a different event to confirm
@@ -343,9 +354,21 @@ func seedAssignments(t *testing.T, db *sql.DB, rows []assignmentFixture) {
 	}
 }
 
+func hasInterest(got map[int]InterestWithHolder, id int) bool {
+	_, ok := got[id]
+	return ok
+}
+
 func expectPresent(t *testing.T, got map[int]InterestWithHolder, id int, message string) {
 	t.Helper()
-	if _, ok := got[id]; !ok {
+	if !hasInterest(got, id) {
+		t.Fatal(message)
+	}
+}
+
+func expectAbsent(t *testing.T, got map[int]InterestWithHolder, id int, message string) {
+	t.Helper()
+	if hasInterest(got, id) {
 		t.Fatal(message)
 	}
 }
