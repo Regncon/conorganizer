@@ -170,6 +170,14 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							return
 						}
 
+						formsubmission.AddPlayersFirstChoice(
+							store.BillettholderId,
+							store.EventId,
+							store.PuljeId,
+							db,
+							logger,
+						)
+
 					})
 					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
 

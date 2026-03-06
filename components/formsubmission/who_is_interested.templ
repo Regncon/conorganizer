@@ -258,17 +258,24 @@ func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error)
 	return billettholdere, nil
 }
 
-func AddPlayersFirstChoice(db *sql.DB, logger *slog.Logger) error {
+func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *slog.Logger) error {
 	query := `
         UPDATE events_players,
         interests
-        SET i.billettholder_id = ?, i.event_id = ?, i.pulje_id = ?, i.interest_level = 'Veldig interessert', ep.is_player = 1, ep.event_id = ?, ep.pulje_id = ?, ep.billettholder_id = ?
+        SET
+            i.billettholder_id = $1,
+            i.event_id = $2, i.pulje_id = $3,
+            i.interest_level = 'Veldig interessert',
+            ep.is_player = 1,
+            ep.billettholder_id = $1
+            ep.event_id = $2,
+            ep.pulje_id = $3,
         FROM
             events_players ep,
             interests i
         WHERE ep.billettholder_id = i.billettholder_id
     `
-	_, addFirstChoiceErr := db.Exec(query)
+	_, addFirstChoiceErr := db.Exec(query, bid, eId, Pid)
 	if addFirstChoiceErr != nil {
 		logger.Error("Failed to add players as first choice", "err", addFirstChoiceErr)
 		return addFirstChoiceErr
