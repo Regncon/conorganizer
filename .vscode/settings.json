@@ -30,6 +30,7 @@
         "fetchpriority",
         "formmethod",
         "formsubmission",
+        "gocache",
         "GOMODCACHE",
         "haspopup",
         "ifmissing",
