@@ -259,26 +259,40 @@ func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error)
 }
 
 func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *slog.Logger) error {
-	query := `
-        UPDATE events_players,
-        interests
-        SET
-            i.billettholder_id = $1,
-            i.event_id = $2, i.pulje_id = $3,
-            i.interest_level = 'Veldig interessert',
-            ep.is_player = 1,
-            ep.billettholder_id = $1
-            ep.event_id = $2,
-            ep.pulje_id = $3,
-        FROM
-            events_players ep,
-            interests i
-        WHERE ep.billettholder_id = i.billettholder_id
-    `
-	_, addFirstChoiceErr := db.Exec(query, bid, eId, Pid)
-	if addFirstChoiceErr != nil {
-		logger.Error("Failed to add players as first choice", "err", addFirstChoiceErr)
-		return addFirstChoiceErr
+	tx, txErr := db.Begin()
+	if txErr != nil {
+		logger.Error("Failed to begin transaction for first choice", "err", txErr)
+		return txErr
+	}
+	defer tx.Rollback()
+
+	upsertInterestQuery := `
+		INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level, inserted_time)
+		VALUES (?, ?, ?, 'Veldig interessert', CURRENT_TIMESTAMP)
+		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
+			interest_level = EXCLUDED.interest_level
+	`
+	if _, execErr := tx.Exec(upsertInterestQuery, bid, eId, Pid); execErr != nil {
+		logger.Error("Failed to upsert interest for first choice", "err", execErr)
+		return execErr
+	}
+
+	upsertPlayerQuery := `
+		INSERT INTO events_players (event_id, pulje_id, billettholder_id, is_player, is_gm, inserted_time)
+		VALUES (?, ?, ?, 1, 0, CURRENT_TIMESTAMP)
+		ON CONFLICT(event_id, pulje_id, billettholder_id) DO UPDATE SET
+			is_player = EXCLUDED.is_player,
+			is_gm = EXCLUDED.is_gm,
+			inserted_time = CURRENT_TIMESTAMP
+	`
+	if _, execErr := tx.Exec(upsertPlayerQuery, eId, Pid, bid); execErr != nil {
+		logger.Error("Failed to upsert player status for first choice", "err", execErr)
+		return execErr
+	}
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		logger.Error("Failed to commit first choice transaction", "err", commitErr)
+		return commitErr
 	}
 	return nil
 }
@@ -442,16 +456,27 @@ templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestW
 templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
 	<div class="gm-search-wrapper" style="margin-block-end: 2rem;">
-		<form
-			data-on:submit={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_gm')", puljeId) }
-		>
-			<admin-gm-select
-				data-billettholdere={ string(billettholdereJson) }
-				data-on:gm-select="$assignmentBillettholderId = evt.detail.id"
-				input-tippy="Søk etter billettholder"
-			></admin-gm-select>
-		</form>
-		<script src="/static/web_components/admin_gm_select.js"></script>
+		<admin-billettholder-search
+			data-billettholdere={ string(billettholdereJson) }
+			data-attr:clear-input="$clearInput"
+			data-on:billettholder-select="$assignmentBillettholderId = evt.detail.id"
+			input-tippy="Søk etter billettholder"
+		></admin-billettholder-search>
+		<div style="display:flex; gap: var(--spacing-4x); margin-top: var(--spacing-4x);">
+			<button
+				class="btn btn--primary"
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_gm'); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+			>
+				Legg til som GM
+			</button>
+			<button
+				class="btn btn--primary"
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_first_choice'); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+			>
+				Legg til som førstevalg
+			</button>
+		</div>
+		<script src="/static/web_components/admin_billettholder_search.js"></script>
 	</div>
 }
 
@@ -461,7 +486,7 @@ templ puljeSection(eventId string, title string, puljeId models.Pulje, interests
 		data-style:display={ fmt.Sprintf("(!$isActive%s || !$isPublished%s) && 'none' || ''", puljeId, puljeId) }
 	>
 		<h2 style="margin-bottom:1rem;">{ title }</h2>
-		<h2 style="margin-bottom:1rem;">Finn spilleder?</h2>
+		<h2 style="margin-bottom:1rem;">Finn billettholder!</h2>
 		@gmSelectForm(eventId, puljeId, billettholdere)
 		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
 		@playersInPulje(eventId, puljeId, assignees)
@@ -481,7 +506,7 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
             gap: 1rem;
             margin-block: 2rem;
         "
-		data-signals={ fmt.Sprintf("{assignmentEventId: '%s', assignmentBillettholderId: 0, assignmentPuljeId: '', assignmentIsPlayer: false, assignmentIsGm: false}", eventId) }
+		data-signals={ fmt.Sprintf("{assignmentEventId: '%s', assignmentBillettholderId: 0, assignmentPuljeId: '', assignmentIsPlayer: false, assignmentIsGm: false, clearInput: 0}", eventId) }
 	>
 		<article class="form-card">
 			if err != nil {

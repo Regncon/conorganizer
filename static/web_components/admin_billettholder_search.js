@@ -1,5 +1,6 @@
 const HIGHLIGHT_ESCAPE_PATTERN = /[.*+?^${}()|[\]\\]/g
 const DATA_BILLETTHOLDERE_ATTR = "data-billettholdere"
+const DATA_CLEAR_INPUT_ATTR = "data-clear-input"
 
 /**
  * Escape RegExp meta characters for a safe literal match.
@@ -110,28 +111,29 @@ const renderHighlightFragment = (label, query) => {
 }
 
 /**
- * Admin GM select web component.
+ * Admin billettholder search web component.
  *
  * Events:
- * - name: "gm-select"
+ * - name: "billettholder-select"
  *   detail: {
  *     id: number,
  *     label: string
  *   }
  *
  *   Use in Datastar:
- *   data-on:gm-select="$gmSearchBillettholderId = evt.detail.id"
+ *   data-on:billettholder-select="$assignmentBillettholderId = evt.detail.id"
  *
  * Attributes:
  * - data-billettholdere: JSON array of { Id, FirstName, LastName }
+ * - data-clear-input: any value; change clears input and search results
  */
-class AdminGmSelect extends HTMLElement {
+class AdminBillettholderSearch extends HTMLElement {
     /**
      * Datastar reads updates via attributes; observe changes to re-render matches.
      * @returns {string[]}
      */
     static get observedAttributes() {
-        return [DATA_BILLETTHOLDERE_ATTR]
+        return [DATA_BILLETTHOLDERE_ATTR, DATA_CLEAR_INPUT_ATTR]
     }
 
     constructor() {
@@ -143,13 +145,11 @@ class AdminGmSelect extends HTMLElement {
         /** @type {Array<{Id:number, FirstName:string, LastName:string}>} */
         this._billettholdere = []
         this._initialized = false
+        this._clearInput = this.getAttribute(DATA_CLEAR_INPUT_ATTR) ?? ""
 
         this.handleInput = this.handleInput.bind(this)
         this.handleClick = this.handleClick.bind(this)
         this.handleInputKeydown = this.handleInputKeydown.bind(this)
-        this.handleResultsTab = this.handleResultsTab.bind(this)
-        this.handleSubmitTab = this.handleSubmitTab.bind(this)
-        this.handleFormSubmit = this.handleFormSubmit.bind(this)
     }
 
     /**
@@ -176,10 +176,7 @@ class AdminGmSelect extends HTMLElement {
         if (!this.inputEl || !this.searchResultsEl) return
         this.inputEl.removeEventListener("input", this.handleInput)
         this.inputEl.removeEventListener("keydown", this.handleInputKeydown)
-        this.searchResultsEl.removeEventListener("keydown", this.handleResultsTab)
         this.searchResultsEl.removeEventListener("click", this.handleClick)
-        this.submitButtonEl?.removeEventListener("keydown", this.handleSubmitTab)
-        this.formEl?.removeEventListener("submit", this.handleFormSubmit)
     }
 
     /**
@@ -202,16 +199,22 @@ class AdminGmSelect extends HTMLElement {
 
     /**
      * React to Datastar-driven attribute updates.
-     * @param {`data-billettholdere`} name
+     * @param {`data-billettholdere`|`data-clear-input`} name
      * @param {string|null} oldValue
      * @param {string|null} newValue
      */
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return
-        if (name !== DATA_BILLETTHOLDERE_ATTR) return
-        this._loadDataFromAttribute()
-        this._setOptions()
-        this._renderMatches(this.inputEl?.value ?? "")
+        if (name === DATA_BILLETTHOLDERE_ATTR) {
+            this._loadDataFromAttribute()
+            this._setOptions()
+            this._renderMatches(this.inputEl?.value ?? "")
+            return
+        }
+        if (name === DATA_CLEAR_INPUT_ATTR) {
+            this._clearInput = newValue ?? ""
+            this._clearSearch()
+        }
     }
 
     /**
@@ -224,7 +227,7 @@ class AdminGmSelect extends HTMLElement {
             const data = JSON.parse(raw)
             this._billettholdere = Array.isArray(data) ? data : []
         } catch (error) {
-            console.warn("gm-picker: invalid JSON data", error)
+            console.warn("billettholder-search: invalid JSON data", error)
         }
     }
 
@@ -247,7 +250,6 @@ class AdminGmSelect extends HTMLElement {
      */
     _render() {
         const placeholder = this.getAttribute("placeholder") ?? "søk etter spiller"
-        const submitLabel = this.getAttribute("submit-label") ?? "Legg til som GM"
         const inputId = this.getAttribute("input-id") ?? `gm-search-${ Math.random().toString(36).substring(2, 8) }`
         const inputTippy = this.getAttribute("input-tippy") ?? ""
 
@@ -260,27 +262,20 @@ class AdminGmSelect extends HTMLElement {
         input.placeholder = placeholder
         input.className = "input"
         input.required = true
+        input.title = ""
         input.setAttribute("data-tippy-content", inputTippy)
-
-        const button = document.createElement("button")
-        button.type = "submit"
-        button.className = "btn btn--primary"
-        button.style.marginLeft = "var(--spacing-4x)"
-        button.append(document.createTextNode(submitLabel))
 
         const results = document.createElement("div")
         results.className = "gm-search-results"
         results.style.marginTop = "var(--spacing-4x)"
         results.setAttribute("aria-live", "polite")
 
-        this.append(input, button, results)
+        this.append(input, results)
 
         /** @type {HTMLInputElement} */
         this.inputEl = input
         /** @type {HTMLDivElement} */
         this.searchResultsEl = results
-        /** @type {HTMLButtonElement} */
-        this.submitButtonEl = button
     }
 
     /**
@@ -289,11 +284,7 @@ class AdminGmSelect extends HTMLElement {
     _bind() {
         this.inputEl?.addEventListener("input", this.handleInput)
         this.inputEl?.addEventListener("keydown", this.handleInputKeydown)
-        this.searchResultsEl?.addEventListener("keydown", this.handleResultsTab)
         this.searchResultsEl?.addEventListener("click", this.handleClick)
-        this.submitButtonEl?.addEventListener("keydown", this.handleSubmitTab)
-        this.formEl = this.closest("form")
-        this.formEl?.addEventListener("submit", this.handleFormSubmit)
     }
 
     /**
@@ -345,133 +336,61 @@ class AdminGmSelect extends HTMLElement {
     }
 
     /**
-     * Move focus into the results list when tabbing from the input.
+     * Press Enter in the input to select the first visible match.
      * @param {KeyboardEvent} event
      */
     handleInputKeydown(event) {
-        if (event.key !== "Tab" || event.shiftKey) return
+        if (event.key !== "Enter") return
         const firstResult = this.searchResultsEl?.querySelector(".gm-search-item")
         if (!(firstResult instanceof HTMLButtonElement)) return
         event.preventDefault()
-        firstResult.focus()
+        this._selectMatchButton(firstResult)
     }
 
     /**
-     * Move from the last result to the submit button on Tab.
-     * @param {KeyboardEvent} event
-     */
-    handleResultsTab(event) {
-        if (event.key !== "Tab") return
-        const results = this.searchResultsEl
-        if (!results || !this.submitButtonEl) return
-
-        const items = [...results.querySelectorAll(".gm-search-item")]
-        if (items.length === 0) return
-
-        const lastItem = items.at(-1)
-        const active = document.activeElement
-
-        if (event.shiftKey) {
-            if (this.inputEl) {
-                event.preventDefault()
-                this.inputEl.focus()
-            }
-            return
-        }
-
-        if (lastItem && active === lastItem) {
-            event.preventDefault()
-            this.submitButtonEl.focus()
-        }
-    }
-
-    /**
-     * Move backward from submit to last result (or input) on Shift+Tab.
-     * @param {KeyboardEvent} event
-     */
-    handleSubmitTab(event) {
-        if (event.key !== "Tab") return
-        if (!event.shiftKey) {
-            event.preventDefault()
-            this._nextFocusableOutside()?.focus()
-            return
-        }
-        const results = this.searchResultsEl
-        if (!results) return
-
-        const items = [...results.querySelectorAll(".gm-search-item")]
-        const lastItem = items.at(-1)
-        if (lastItem instanceof HTMLElement) {
-            event.preventDefault()
-            lastItem.focus()
-            return
-        }
-        if (this.inputEl) {
-            event.preventDefault()
-            this.inputEl.focus()
-        }
-    }
-
-    /**
-     * Reset input and results when the form submits.
-     * @param {SubmitEvent} event
-     */
-    handleFormSubmit(event) {
-        if (event.currentTarget !== this.formEl) return
-        this.formEl?.reset()
-        this.searchResultsEl?.replaceChildren()
-    }
-
-    /**
-     * Find the next focusable element after this component.
-     * @returns {HTMLElement|null}
-     */
-    _nextFocusableOutside() {
-        const focusableSelector =
-            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        const focusableEls = [...document.querySelectorAll(focusableSelector)]
-        const current = this.submitButtonEl
-        if (!current) return null
-        const startIndex = focusableEls.indexOf(current)
-        if (startIndex < 0) return null
-        // @ts-ignore
-        const next = focusableEls.toSpliced(0, startIndex + 1).find((el) => {
-            return el instanceof HTMLElement && !this.contains(el)
-        })
-        return next instanceof HTMLElement ? next : null
-    }
-
-    /**
-     * Handle result selection and dispatch gm-select.
+     * Handle result selection and dispatch billettholder-select.
      * @param {MouseEvent} event
-     * @fires CustomEvent<{id:number,label:string}> gm-select
+     * @fires CustomEvent<{id:number,label:string}> billettholder-select
      */
     handleClick(event) {
         const target = event.target
         if (!(target instanceof HTMLElement)) return
         const button = target.closest(".gm-search-item")
-        if (!button) return
+        if (!(button instanceof HTMLButtonElement)) return
+        this._selectMatchButton(button)
+    }
+
+    /**
+     * Select a search result and notify parent.
+     * @param {HTMLButtonElement} button
+     */
+    _selectMatchButton(button) {
         const value = button.getAttribute("data-value")
         if (!value) return
-
-        if (this.inputEl) {
-            this.inputEl.value = value
-        }
-
-        this.searchResultsEl?.replaceChildren()
         const id = button.getAttribute("data-id")
-        if (id) {
-            this.dispatchEvent(
-                new CustomEvent("gm-select", {
-                    detail: {
-                        id: Number(id),
-                        label: value,
-                    },
-                })
-            )
-        }
+        if (!id) return
+
+        if (this.inputEl) this.inputEl.value = value
+        this.searchResultsEl?.replaceChildren()
+
+        this.dispatchEvent(
+            new CustomEvent("billettholder-select", {
+                detail: {
+                    id: Number(id),
+                    label: value,
+                },
+            })
+        )
+    }
+
+    /**
+     * Clear input text and rendered results.
+     */
+    _clearSearch() {
+        if (this.inputEl) this.inputEl.value = ""
+        this.searchResultsEl?.replaceChildren()
     }
 
 }
 
-customElements.define("admin-gm-select", AdminGmSelect)
+customElements.define("admin-billettholder-search", AdminBillettholderSearch)
