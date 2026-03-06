@@ -523,7 +523,7 @@ templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestW
 	@interestInPulje(eventId, puljeId, interests, true)
 }
 
-templ gmSelectForm(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
+templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
 	<style>
 		.billettholder-search {
@@ -569,7 +569,7 @@ templ puljeSection(eventId string, title string, puljeId models.Pulje, interests
 	>
 		<h2 style="margin-bottom:1rem;">{ title }</h2>
 		<h2 style="margin-bottom:1rem;">Finn billettholder!</h2>
-		@gmSelectForm(eventId, puljeId, billettholdere)
+		@billettholderAssignmentActions(eventId, puljeId, billettholdere)
 		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
 		@playersInPulje(eventId, puljeId, assignees)
 		<h2 style="margin-bottom:1rem;">Who is interested?</h2>
