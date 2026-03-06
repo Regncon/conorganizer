@@ -28,7 +28,6 @@ type InterestWithHolder struct {
 
 type AssignmentWithHolder = InterestWithHolder
 
-// todo still some bugs with this query. I think there is some logic missing
 var queryFirstChoice = `
                 EXISTS (
                     SELECT
@@ -414,7 +413,6 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 							@icons.Icon(icons.Shield, icons.Size16)
 						</span>
 					}
-					// todo: incomplete first choice logic
 					if interest.FirstChoice {
 						<p class="first-choice">Fått førstevalg</p>
 					}
