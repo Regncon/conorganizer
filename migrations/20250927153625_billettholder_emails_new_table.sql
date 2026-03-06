@@ -13,4 +13,4 @@ CREATE TABLE IF NOT EXISTS billettholder_emails (
 -- +goose Down
 PRAGMA foreign_keys = ON;
 
-DROP TABLE billettholder_emails
+DROP TABLE billettholder_emails;
