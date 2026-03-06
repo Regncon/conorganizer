@@ -49,14 +49,14 @@ var queryFirstChoice = `
                 ) AS first_choice
 `
 
-type queryAlias string
+type interestSourceAlias string
 
 const (
-	aliasInterest queryAlias = "i"
-	aliasAssignee queryAlias = "ep"
+	interestRowAlias   interestSourceAlias = "i"
+	assignmentRowAlias interestSourceAlias = "ep"
 )
 
-func queryOtherEventInPulje(alias queryAlias) string {
+func queryHasOtherAssignedEventInPulje(alias interestSourceAlias) string {
 	return fmt.Sprintf(`
                 EXISTS (
                     SELECT
@@ -82,7 +82,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 i.pulje_id,
                 i.interest_level,
                 ` + queryFirstChoice + `,
-                ` + queryOtherEventInPulje(aliasInterest) + `,
+                ` + queryHasOtherAssignedEventInPulje(interestRowAlias) + `,
                 COALESCE(ep.is_gm, 0) AS is_gm,
                 b.first_name,
                 b.last_name,
@@ -145,7 +145,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 -- this is because we can insert ppl from search without interest as gm
                 COALESCE(i.interest_level, '') AS interest_level,
                 ` + queryFirstChoice + `,
-                ` + queryOtherEventInPulje(aliasAssignee) + `,
+                ` + queryHasOtherAssignedEventInPulje(assignmentRowAlias) + `,
                 COALESCE(ep.is_gm, 0) AS is_gm,
                 b.first_name,
                 b.last_name,
