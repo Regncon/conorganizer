@@ -14,6 +14,7 @@ import (
 	"database/sql"
 
 	"github.com/Regncon/conorganizer/service"
+	"github.com/Regncon/conorganizer/service/applog"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -23,10 +24,12 @@ import (
 )
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	logger := applog.NewJSONLogger()
+	slog.SetDefault(logger)
+	mainLogger := logger.With("component", "main")
 
 	if err := godotenv.Load(); err != nil {
-		fmt.Println("No .env file found")
+		mainLogger.Debug("No .env file found")
 	}
 
 	dsn := flag.String("dbp", "database/events.db", "absolute path to database file")
@@ -35,7 +38,7 @@ func main() {
 
 	db, dbErr := service.InitDB(*dsn)
 	if dbErr != nil {
-		logger.Error("Could not initialize DB; starting in degraded mode", "err", dbErr, "dsn", *dsn)
+		mainLogger.Error("Could not initialize DB; starting in degraded mode", "error", dbErr, "dsn", *dsn)
 		db = nil
 	}
 	defer func() {
@@ -51,14 +54,14 @@ func main() {
 		return "8080"
 	}
 
-	logger.Info("Starting Server 0.0.0.0:" + getPort())
-	defer logger.Info("Stopping Server")
+	mainLogger.Info("Starting server", "address", "0.0.0.0:"+getPort())
+	defer mainLogger.Info("Stopping server")
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
 	if err := run(ctx, logger, getPort(), eventImageDir, db, dbErr); err != nil {
-		logger.Error("Error running server", slog.Any("err", err))
+		mainLogger.Error("Error running server", "error", err)
 		os.Exit(1)
 	}
 }
@@ -73,10 +76,12 @@ func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *s
 }
 func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB, dbErr error) func() error {
 	return func() error {
+		serverLogger := logger.With("component", "http_server")
 		router := chi.NewRouter()
 
 		router.Use(
-			middleware.Logger,
+			middleware.RequestID,
+			RequestLoggingMiddleware(logger.With("component", "http")),
 			middleware.Recoverer,
 		)
 
@@ -84,14 +89,14 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		if eventImageDir != nil && *eventImageDir != "" {
 			if _, statErr := os.Stat(*eventImageDir); os.IsNotExist(statErr) {
 				imgErr = fmt.Errorf("event image directory %q does not exist: %w Create it and run task start again", *eventImageDir, statErr)
-				logger.Error("Event image directory does not exist; Create it and run task start again. Starting in degraded mode", "dir", *eventImageDir)
+				serverLogger.Error("Event image directory does not exist; create it and run task start again. Starting in degraded mode", "dir", *eventImageDir)
 			} else if statErr != nil {
 				imgErr = fmt.Errorf("unable to access event image directory %q: %w", *eventImageDir, statErr)
-				logger.Error("Unable to access event image directory; starting in degraded mode", "dir", *eventImageDir, "err", statErr)
+				serverLogger.Error("Unable to access event image directory; starting in degraded mode", "dir", *eventImageDir, "error", statErr)
 			}
 		} else {
 			imgErr = fmt.Errorf("event image directory path is empty")
-			logger.Error("Event image directory path is empty; starting in degraded mode")
+			serverLogger.Error("Event image directory path is empty; starting in degraded mode")
 		}
 
 		degradedErr := errors.Join(dbErr, imgErr)
@@ -107,12 +112,12 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		if fullMode {
 			cleanup, err := setupRoutes(ctx, logger, router, db, eventImageDir)
 			if err != nil {
-				logger.Error("error setting up routes; falling back to degraded mode", "err", err)
+				serverLogger.Error("Error setting up routes; falling back to degraded mode", "error", err)
 				mountDBErrorRoutes(router, err)
 			} else if cleanup != nil {
 				defer func() {
 					if err := cleanup(); err != nil {
-						logger.Error("Failed to cleanup routes", "err", err)
+						serverLogger.Error("Failed to clean up routes", "error", err)
 					}
 				}()
 			}
