@@ -21,6 +21,7 @@ import (
 )
 
 func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, logger *slog.Logger, db *sql.DB) error {
+	componentLogger := logger.With("component", "billettholder_admin")
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -44,9 +45,9 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 
 	notifyUpdate := func(sessionID string) {
 		subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
-		fmt.Println("update billettholder subj", subj)
+		componentLogger.Debug("Publishing billettholder update", "session_id", sessionID, "subject", subj)
 		if err := nc.Publish(subj, nil); err != nil {
-			logger.Error("failed to publish page update", "err", err, "session", sessionID)
+			componentLogger.Error("Failed to publish page update", "error", err, "session_id", sessionID)
 		}
 	}
 
@@ -94,7 +95,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			}
 			defer func() {
 				if err := sub.Unsubscribe(); err != nil {
-					logger.Error("Failed to unsubscribe", "error", err)
+					componentLogger.Error("Failed to unsubscribe", "error", err)
 				}
 			}()
 
@@ -132,7 +133,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 
 			ctx := r.Context()
 			subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
-			fmt.Println("add billettholder page subj", subj)
+			componentLogger.Debug("Subscribing add billettholder page", "session_id", sessionID, "subject", subj)
 			sub, err := nc.SubscribeSync(subj)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -140,7 +141,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			}
 			defer func() {
 				if err := sub.Unsubscribe(); err != nil {
-					logger.Error("Failed to unsubscribe", "error", err)
+					componentLogger.Error("Failed to unsubscribe", "error", err)
 				}
 			}()
 

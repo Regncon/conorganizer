@@ -2,7 +2,6 @@ package myevents
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -34,7 +33,7 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.
 		}
 		events = append(events, event)
 	}
-	fmt.Printf("Found %d events for user %s\n", len(events), userId)
+	logger.Debug("Found events for user", "event_count", len(events), "user_id", userId)
 	return events
 }
 

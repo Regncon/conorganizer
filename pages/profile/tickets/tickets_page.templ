@@ -65,13 +65,13 @@ func getTicketsRouter(
 		}
 		var singnalJson = fmt.Sprintf(`{"getTicketsErrorMessage": "%s", "getTicketsSuccessMessage": "%s"}`, errorMessage, successMessage)
 		if err = sse.PatchSignals([]byte(singnalJson)); err != nil {
-			logger.Error("Failed to patch signals", slog.Any("error", err))
+			logger.Error("Failed to patch signals", "error", err)
 			http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
 			return
 		}
 
 		if errorMessage != "" {
-			logger.Error("Failed to associate user with billettholder", "AssociateError", err)
+			logger.Error("Failed to associate user with billettholder", "error", err)
 			http.Error(w, "Failed to associate user with billettholder", http.StatusInternalServerError)
 			return
 		}

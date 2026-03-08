@@ -21,6 +21,7 @@ import (
 )
 
 func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
+	componentLogger := logger.With("component", "admin")
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -101,7 +102,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 			}
 			defer func() {
 				if err := watcher.Stop(); err != nil {
-					logger.Error("Failed to stop watcher", "error", err)
+					componentLogger.Error("Failed to stop watcher", "error", err)
 				}
 			}()
 
@@ -143,7 +144,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						logger.Error("Failed to stop watcher", "error", err)
+						componentLogger.Error("Failed to stop watcher", "error", err)
 					}
 				}()
 
@@ -196,7 +197,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 						defer func() {
 							if err := watcher.Stop(); err != nil {
-								logger.Error("Failed to stop watcher", "error", err)
+								componentLogger.Error("Failed to stop watcher", "error", err)
 							}
 						}()
 

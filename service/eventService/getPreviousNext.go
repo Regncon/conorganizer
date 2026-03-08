@@ -43,7 +43,7 @@ func GetPreviousNextInnsendtGodkjent(ctx context.Context, db *sql.DB, logger *sl
 			// currentID isn’t in the filtered set; return empty neighbors.
 			return components.PreviousNext{}, nil
 		}
-		logger.Error("GetPreviousNext scan failed", "error", err)
+		logger.With("component", "event_service").Error("GetPreviousNext scan failed", "error", err, "current_id", currentID)
 		return components.PreviousNext{}, err
 	}
 
