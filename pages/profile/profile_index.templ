@@ -32,7 +32,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 
 			billettholdere, err := billettholderService.GetBilettholdere(user.Id, db, logger)
 			if err != nil {
-				logger.Error("Failed to get billettholdere", slog.Any("error", err))
+				logger.Error("Failed to get billettholdere", "error", err)
 			}
 			var tickets = []profilecomponent.TicketHolder{}
 			for _, billettholder := range billettholdere {

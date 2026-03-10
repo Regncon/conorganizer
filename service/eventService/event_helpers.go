@@ -2,9 +2,9 @@ package eventservice
 
 import (
 	"database/sql"
-	"fmt"
-	"github.com/Regncon/conorganizer/models"
 	"log/slog"
+
+	"github.com/Regncon/conorganizer/models"
 )
 
 func GetEventById(eventID string, db *sql.DB, logger *slog.Logger) (*models.Event, error) {
@@ -58,7 +58,7 @@ func GetEventById(eventID string, db *sql.DB, logger *slog.Logger) (*models.Even
 		if err == sql.ErrNoRows {
 			return nil, nil // No event found
 		}
-		fmt.Printf("Error scanning event: %v\n", err)
+		logger.With("component", "event_service").Error("Failed to scan event row", "event_id", eventID, "error", err)
 		return nil, err
 	}
 	return &event, nil
@@ -104,7 +104,7 @@ func GetPujerForEvent(
 
 	rows, err := db.Query(query, eventID)
 	if err != nil {
-		logger.Error("Error querying puljer for event", slog.String("eventID", eventID), slog.String("error", err.Error()))
+		logger.With("component", "event_service").Error("Error querying puljer for event", "event_id", eventID, "error", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -112,13 +112,13 @@ func GetPujerForEvent(
 	for rows.Next() {
 		var pulje models.PuljeRow
 		if err := rows.Scan(&pulje.ID, &pulje.Name, &pulje.StartTime, &pulje.EndTime); err != nil {
-			logger.Error("Error scanning pulje row", slog.String("eventID", eventID), slog.String("error", err.Error()))
+			logger.With("component", "event_service").Error("Error scanning pulje row", "event_id", eventID, "error", err)
 			return nil, err
 		}
 		puljer = append(puljer, pulje)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Error("Error iterating over pulje rows", slog.String("eventID", eventID), slog.String("error", err.Error()))
+		logger.With("component", "event_service").Error("Error iterating over pulje rows", "event_id", eventID, "error", err)
 		return nil, err
 	}
 	return puljer, nil

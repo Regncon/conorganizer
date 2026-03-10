@@ -21,6 +21,7 @@ import (
 )
 
 func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
+	componentLogger := logger.With("component", "profile_tickets")
 
 	nc, err := ns.Client()
 	if err != nil {
@@ -45,9 +46,9 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 
 	notifyUpdate := func(sessionID string) {
 		subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
-		fmt.Println("update billettholder subj", subj)
+		componentLogger.Debug("Publishing profile tickets update", "session_id", sessionID, "subject", subj)
 		if err := nc.Publish(subj, nil); err != nil {
-			logger.Error("failed to publish page update", "err", err, "session", sessionID)
+			componentLogger.Error("Failed to publish page update", "error", err, "session_id", sessionID)
 		}
 	}
 
