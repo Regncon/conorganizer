@@ -117,8 +117,7 @@
 
 ::selection,
 mark,
-::target-text,
-::highlight {
+::target-text {
     background-color: var(--color-primary-text);
     color: var(--bg-base);
 }
