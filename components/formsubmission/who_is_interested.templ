@@ -135,7 +135,24 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                         1
                 )
             ORDER BY
-                i.interest_level DESC
+                EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        events_players ep_gm_order
+                    WHERE
+                        ep_gm_order.billettholder_id = i.billettholder_id
+                        AND ep_gm_order.event_id <> i.event_id
+                        AND ep_gm_order.is_gm = 1
+                    LIMIT
+                        1
+                ) DESC,
+                CASE i.interest_level
+                    WHEN '` + models.InterestLevelVery + `' THEN 3
+                    WHEN '` + models.InterestLevelMedium + `' THEN 2
+                    WHEN '` + models.InterestLevelLow + `' THEN 1
+                    ELSE 0
+                END DESC
     `
 	rows, queryErr := db.Query(query, eventId)
 	if queryErr != nil {
