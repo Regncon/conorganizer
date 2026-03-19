@@ -22,10 +22,10 @@
     /* secondary */
     --btn-secondary-bg: transparent;
     --btn-secondary-border: var(--color-text-soft);
-    --btn-secondary-hover-bg: var(--color-primary-hover);
-    --btn-secondary-active-bg: var(--color-primary-active);
+    --btn-secondary-hover-bg: var(--color-secondary-hover);
+    --btn-secondary-active-bg: var(--color-secondary-active);
     --btn-secondary-active-text: var(--color-text-strong);
-    --btn-secondary-focus-shadow: var(--color-primary-focus-visible);
+    --btn-secondary-focus-shadow: var(--color-secondary-focus-visible);
 
     /* --outline */
     --btn-outline-border: var(--color-secondary);
