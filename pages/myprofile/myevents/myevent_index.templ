@@ -7,7 +7,6 @@ import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
-	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func myeventsLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
@@ -23,7 +22,7 @@ func myeventsLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 }
 
 templ myeventsIndex(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
-	<div id="my-events-wrapper" data-on-load={ datastar.GetSSE("/my-events/api") }>
+	<div id="my-events-wrapper" data-init={ "@get('/my-events/api',{requestCancellation: 'disabled'})" }>
 		@myEventsPageContent(userid, db, eventImageDir, logger)
 	</div>
 }

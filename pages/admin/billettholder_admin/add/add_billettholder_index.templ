@@ -8,7 +8,6 @@ import (
 
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/Regncon/conorganizer/layouts"
-	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func AddBillettholderRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
@@ -24,7 +23,7 @@ func AddBillettholderRoute(router chi.Router, db *sql.DB, logger *slog.Logger, e
 }
 
 templ indexPage() {
-	<div id="add-billettholder-admin-container" data-on-load={ datastar.GetSSE("/admin/billettholder/add/api/") }>
+	<div id="add-billettholder-admin-container" data-init={ "@get('/admin/billettholder/add/api/',{requestCancellation: 'disabled'})" }>
 		<p>Add Billettholder Admin</p>
 		<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
 	</div>
