@@ -134,13 +134,23 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					sse := datastar.NewSSE(w, r)
 
 					sessionID, mvc, err := mvcSession(w, r)
-					ctx := r.Context()
-					watcher, err := kv.Watch(ctx, sessionID)
 					if err != nil {
+						logger.Error("Failed to get MVC session", "error", err)
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
-					defer watcher.Stop()
+					ctx := r.Context()
+					watcher, err := kv.Watch(ctx, sessionID)
+					if err != nil {
+						logger.Error("Failed to create watcher", "error", err)
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					defer func() {
+						if err := watcher.Stop(); err != nil {
+							logger.Error("Failed to stop watcher", "error", err)
+						}
+					}()
 
 					for {
 						select {
@@ -156,7 +166,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							}
 							c := approval.ApprovalPage(db, logger)
 							if err := sse.PatchElementTempl(c); err != nil {
-								sse.ConsoleError(err)
+								_ = sse.ConsoleError(err)
 								return
 							}
 						}
@@ -213,7 +223,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"puljeId", store.PuljeId,
 							"billettholderId", store.BillettholderId,
 						)
-						keyvalue.BroadcastUpdate(kv, r)
+						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+							logger.Error("Failed to broadcast add first choice update", "error", err)
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
 
 					})
 					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
@@ -269,7 +283,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"isPlayer", false,
 							"isGm", true,
 						)
-						keyvalue.BroadcastUpdate(kv, r)
+						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+							logger.Error("Failed to broadcast add GM update", "error", err)
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
 					})
 					eventsPlayersRouter.Put("/update_status", func(w http.ResponseWriter, r *http.Request) {
 						type Store struct {
@@ -307,7 +325,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"isPlayer", store.IsPlayer,
 							"isGm", store.IsGm,
 						)
-						keyvalue.BroadcastUpdate(kv, r)
+						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+							logger.Error("Failed to broadcast player status update", "error", err)
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
 					})
 				})
 			})
