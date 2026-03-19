@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/keyvalue"
@@ -240,15 +241,13 @@ type InterestLevels struct {
 func convertInterestLevelToDbInterestLevel(interest InterestLevels) string {
 	switch {
 	case interest.High != "":
-		return "Veldig interessert"
+		return models.InterestLevelVery
 	case interest.Medium != "":
-		return "Middels interessert"
+		return models.InterestLevelMedium
 	case interest.Low != "":
-		return "Litt interessert"
-	case interest.None != "":
-		return "Ikke interessert"
+		return models.InterestLevelLow
 	default:
-		return "Ikke interessert"
+		return ""
 	}
 }
 

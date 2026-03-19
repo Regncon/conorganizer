@@ -270,7 +270,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 							checked
 						}
 						data-bind={ fmt.Sprintf("isActive%s", pulje) }
-						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/event-in-pulje/%s", eventId, pulje) }
+						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/event-in-pulje/%s')", eventId, pulje) }
 						type="checkbox"
 						name="pulje"
 						class="checkbox input"
@@ -286,7 +286,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 							disabled
 						}
 						data-bind={ fmt.Sprintf("isPublished%s", pulje) }
-						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/is-published/%s", eventId, pulje) }
+						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/is-published/%s')", eventId, pulje) }
 						type="checkbox"
 						name="pulje"
 						class="checkbox input"
@@ -307,7 +307,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 				class="input"
 				type="text"
 				data-bind={ roomSignal }
-				data-on-change={ datastar.PutSSE("/my-events/api/new/%s/room-name/%s", eventId, pulje) }
+					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/room-name/%s')", eventId, pulje) }
 				placeholder="Rom for arrangementet"
 				required
 			/>

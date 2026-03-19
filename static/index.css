@@ -115,9 +115,16 @@
     }
 }
 
-::selection {
+::selection,
+mark,
+::target-text {
     background-color: var(--color-primary-text);
     color: var(--bg-base);
+}
+
+mark {
+    padding: 0 0.15rem;
+    border-radius: 0.2rem;
 }
 
 @view-transition {

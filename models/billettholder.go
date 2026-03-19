@@ -28,3 +28,27 @@ type BillettholderUsers struct {
 	UserID          int       `json:"user_id"`
 	InsertedTime    time.Time `json:"inserted_time"`
 }
+
+/*
+CREATE TABLE events_players (
+
+	    event_id TEXT NOT NULL,
+	    pulje_id TEXT NOT NULL,
+	    billettholder_id INTEGER NOT NULL,
+	    isPlayer BOOLEAN NOT NULL DEFAULT TRUE,
+	    isGm BOOLEAN NOT NULL DEFAULT FALSE,
+	    inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	    PRIMARY KEY (billettholder_id, event_id, pulje_id),
+	    FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
+	    FOREIGN KEY (event_id) REFERENCES events (id),
+	    FOREIGN KEY (pulje_id) REFERENCES puljer (id)
+	);
+*/
+type EventPlayer struct {
+	EventID         string    `json:"event_id"`
+	PuljeID         string    `json:"pulje_id"`
+	BillettholderID int       `json:"billettholder_id"`
+	IsPlayer        bool      `json:"is_player"`
+	IsGm            bool      `json:"is_gm"`
+	InsertedTime    time.Time `json:"inserted_time"`
+}

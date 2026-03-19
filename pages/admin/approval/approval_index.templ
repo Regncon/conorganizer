@@ -8,7 +8,6 @@ import (
 
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/Regncon/conorganizer/layouts"
-	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
@@ -24,7 +23,7 @@ func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err
 }
 
 templ approvalIndex(db *sql.DB, logger *slog.Logger) {
-	<div id="approval-container" data-on-load={ datastar.GetSSE("/admin/approval/api/") }>
+	<div id="approval-container" data-init={ "@get('/admin/approval/api/',{requestCancellation: 'disabled'})" }>
 		@ApprovalPageContent(db, logger)
 	</div>
 }
