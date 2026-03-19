@@ -110,7 +110,11 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 				logger.Error("error setting up routes; falling back to degraded mode", "err", err)
 				mountDBErrorRoutes(router, err)
 			} else if cleanup != nil {
-				defer cleanup()
+				defer func() {
+					if err := cleanup(); err != nil {
+						logger.Error("Failed to cleanup routes", "err", err)
+					}
+				}()
 			}
 		} else {
 			// Show a single degraded page that can list both reasons (DB + images)

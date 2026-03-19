@@ -1,0 +1,42 @@
+name: golangci-lint
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - '**.go'
+      - '**.mod'
+      - '**.sum'
+
+permissions:
+  contents: read
+
+jobs:
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.25
+      - name: Install templ
+        run: go install github.com/a-h/templ/cmd/templ@v0.3.960
+      - name: Cache templ output
+        id: templ-cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/*_templ.go
+          key: templ-${{ hashFiles('**/*.templ') }}
+          restore-keys: |
+            templ-
+      - name: Generate templ files
+        if: steps.templ-cache.outputs.cache-hit != 'true'
+        run: go tool templ generate
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.8

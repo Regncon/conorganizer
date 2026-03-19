@@ -20,11 +20,13 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 	router.Route("/auth", func(authRouter chi.Router) {
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
-			layouts.Base(
+			if err := layouts.Base(
 				"Innlogging til Regncon 2025!",
 				userctx.GetUserRequestInfo(ctx),
 				loginForm(),
-			).Render(ctx, w)
+			).Render(ctx, w); err != nil {
+				logger.Error("Failed to render login page", "error", err)
+			}
 		})
 
 		authRouter.Group(func(protectedRoute chi.Router) {
@@ -44,11 +46,13 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				})
 
 				var ctx = r.Context()
-				layouts.Base(
+				if err := layouts.Base(
 					"Is logged in test",
 					userctx.GetUserRequestInfo(ctx),
 					testComp,
-				).Render(ctx, w)
+				).Render(ctx, w); err != nil {
+					logger.Error("Failed to render auth test page", "error", err)
+				}
 			})
 
 			protectedRoute.Get("/post-login", func(w http.ResponseWriter, r *http.Request) {
@@ -104,10 +108,12 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 
 			redirectUrl := "/"
 			var ctx = r.Context()
-			layouts.Base("Logging you out",
+			if err := layouts.Base("Logging you out",
 				userctx.GetUserRequestInfo(ctx),
 				redirect.Redirect(redirectUrl),
-			).Render(ctx, w)
+			).Render(ctx, w); err != nil {
+				logger.Error("Failed to render logout page", "error", err)
+			}
 		})
 	})
 

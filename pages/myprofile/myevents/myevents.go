@@ -84,7 +84,11 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
-				defer watcher.Stop()
+				defer func() {
+					if err := watcher.Stop(); err != nil {
+						logger.Error("Failed to stop watcher", "error", err)
+					}
+				}()
 
 				for {
 					select {
@@ -102,7 +106,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, eventImageDir, logger)
 						if err := sse.PatchElementTempl(c); err != nil {
-							sse.ConsoleError(err)
+							_ = sse.ConsoleError(err)
 							return
 						}
 					}
@@ -132,7 +136,11 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						defer watcher.Stop()
+						defer func() {
+							if err := watcher.Stop(); err != nil {
+								logger.Error("Failed to stop watcher", "error", err)
+							}
+						}()
 
 						for {
 							select {
@@ -152,13 +160,15 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 								c := newEvent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, logger)
 								if err := sse.PatchElementTempl(c); err != nil {
-									sse.ConsoleError(err)
+									_ = sse.ConsoleError(err)
 									return
 								}
 							}
 						}
 					})
-					formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger)
+					if err := formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger); err != nil {
+						logger.Error("Failed to setup inline validation", "error", err)
+					}
 
 					// refactor to use "update/status etc"
 
