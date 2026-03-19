@@ -17,6 +17,7 @@ import (
 )
 
 func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
+	componentLogger := logger.With("component", "auth")
 	router.Route("/auth", func(authRouter chi.Router) {
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
@@ -25,7 +26,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				userctx.GetUserRequestInfo(ctx),
 				loginForm(),
 			).Render(ctx, w); err != nil {
-				logger.Error("Failed to render login page", "error", err)
+				componentLogger.Error("Failed to render login page", "error", err)
 			}
 		})
 
@@ -51,16 +52,15 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 					userctx.GetUserRequestInfo(ctx),
 					testComp,
 				).Render(ctx, w); err != nil {
-					logger.Error("Failed to render auth test page", "error", err)
+					componentLogger.Error("Failed to render auth test page", "error", err)
 				}
 			})
 
 			protectedRoute.Get("/post-login", func(w http.ResponseWriter, r *http.Request) {
-				fmt.Println("Post login handler called")
 				isAdmin := authctx.GetAdminFromUserToken(r.Context())
 				userToken, userTokenErr := authctx.GetUserTokenFromContext(r.Context())
 				if userTokenErr != nil {
-					logger.Error("Failed to get user token from context", "error", userTokenErr)
+					componentLogger.Error("Failed to get user token from context", "error", userTokenErr)
 					http.Redirect(w, r, "/auth", http.StatusSeeOther)
 					return
 				}
@@ -71,14 +71,14 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				if emailOk && email != "" && userID != "" {
 					exists, err := userExistsByEmail(db, email)
 					if err != nil {
-						logger.Error("Failed to check if user exists", "error", err, "email", email)
+						componentLogger.Error("Failed to check if user exists", "error", err, "user_id", userID)
 						http.Redirect(w, r, "/auth", http.StatusSeeOther)
 						return
 					}
 					if !exists {
-						insertUser(db, userID, email, isAdmin, logger)
+						insertUser(db, userID, email, isAdmin, componentLogger)
 					}
-					updateUserAdmin(db, userID, isAdmin, logger)
+					updateUserAdmin(db, userID, isAdmin, componentLogger)
 				}
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 			})
@@ -112,7 +112,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				userctx.GetUserRequestInfo(ctx),
 				redirect.Redirect(redirectUrl),
 			).Render(ctx, w); err != nil {
-				logger.Error("Failed to render logout page", "error", err)
+				componentLogger.Error("Failed to render logout page", "error", err)
 			}
 		})
 	})
@@ -135,10 +135,10 @@ func userExistsByEmail(db *sql.DB, email string) (bool, error) {
 func insertUser(db *sql.DB, userID, email string, isAdmin bool, logger *slog.Logger) {
 	_, err := db.Exec("INSERT INTO users (user_id, email, is_admin) VALUES (?, ?, ?)", userID, email, isAdmin)
 	if err != nil {
-		logger.Error("Failed to insert new user", "error", err, "email", email)
+		logger.Error("Failed to insert new user", "error", err, "user_id", userID)
 		return
 	}
-	logger.Info("Inserted new user", "email", email, "user_id", userID, "is_admin", isAdmin)
+	logger.Info("Inserted new user", "user_id", userID, "is_admin", isAdmin)
 }
 
 func updateUserAdmin(db *sql.DB, userID string, isAdmin bool, logger *slog.Logger) {

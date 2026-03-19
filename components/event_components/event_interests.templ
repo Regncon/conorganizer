@@ -81,7 +81,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 
 				.dialog-content {
 					display: flex;
-					flex-direction: column;					
+					flex-direction: column;
 					max-height: calc(100vh - 280px);
 					overflow: auto;
 
@@ -115,9 +115,9 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	</style>
 	<dialog
 		class="interest-dialog"
-		data-attr-open="isOpen($interestIsOpen)"
+		data-attr:open="isOpen($interestIsOpen)"
 		closedby="any"
-		data-signals-pulje-Id={ fmt.Sprintf("'%s'", puljeId) }
+		data-signals:pulje-Id={ fmt.Sprintf("'%s'", puljeId) }
 	>
 		<div class="dialog-container">
 			<header class="dialog-header">
@@ -126,7 +126,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					<button
 						autofocus
 						class="btn btn--ghost close"
-						data-on-click="$interestIsOpen = false"
+						data-on:click="$interestIsOpen = false"
 					>
 						@icons.Icon(icons.Close, icons.Size24)
 					</button>
@@ -142,7 +142,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			</div>
 			<div class="dialog-footer">
 				<p class="auto-save-message">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
-				<button class="btn btn--outline" data-on-click="$interestIsOpen = false">
+				<button class="btn btn--outline" data-on:click="$interestIsOpen = false">
 					Ferdig
 				</button>
 			</div>

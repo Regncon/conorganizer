@@ -35,14 +35,14 @@ func handleError(responder Responder, dispalyText string, errorText string) {
 
 	b, err := json.Marshal(payload)
 	if err != nil {
-		responder.Logger.Error("Failed to marshal patch signals payload", slog.Any("error", err))
+		responder.Logger.Error("Failed to marshal patch signals payload", "error", err)
 		http.Error(responder.w, "Failed to encode patch signals", http.StatusInternalServerError)
 		return
 	}
 
 	sse := datastar.NewSSE(responder.w, responder.r)
 	if err := sse.PatchSignals(b); err != nil {
-		responder.Logger.Error("Failed to patch signals", slog.Any("error", err))
+		responder.Logger.Error("Failed to patch signals", "error", err)
 		http.Error(responder.w, "Failed to patch signals", http.StatusInternalServerError)
 		return
 	}
@@ -64,14 +64,14 @@ func handleSuccess(responder Responder, successText string) {
 
 	b, err := json.Marshal(payload)
 	if err != nil {
-		responder.Logger.Error("Failed to marshal patch signals payload", slog.Any("error", err))
+		responder.Logger.Error("Failed to marshal patch signals payload", "error", err)
 		http.Error(responder.w, "Failed to encode patch signals", http.StatusInternalServerError)
 		return
 	}
 
 	sse := datastar.NewSSE(responder.w, responder.r)
 	if err := sse.PatchSignals(b); err != nil {
-		responder.Logger.Error("Failed to patch signals", slog.Any("error", err))
+		responder.Logger.Error("Failed to patch signals", "error", err)
 		http.Error(responder.w, "Failed to patch signals", http.StatusInternalServerError)
 		return
 	}
@@ -89,11 +89,12 @@ func addEmailToBilettholderRoute(
 	store sessions.Store,
 	notifyUpdate func(string),
 ) {
+	componentLogger := logger.With("component", "profile_tickets")
 	router.Post("/new-email/{id}/", func(w http.ResponseWriter, r *http.Request) {
-		logger.Info("Received request to add new email to billettholder")
+		componentLogger.Info("Received request to add new email to billettholder")
 		responder := Responder{
 			BillettholderID: chi.URLParam(r, "id"),
-			Logger:          logger,
+			Logger:          componentLogger,
 			Store:           store,
 			w:               w,
 			r:               r,
@@ -105,14 +106,14 @@ func addEmailToBilettholderRoute(
 			handleError(responder, "Noe gikk galt, prøv igjen", "Billettholder ID is missing in the request")
 			return
 		}
-		logger.Info("Billettholder ID", slog.String("id", billettholderID))
+		componentLogger.Info("Billettholder ID", slog.String("id", billettholderID))
 		signals := map[string]string{}
 		if err := datastar.ReadSignals(r, &signals); err != nil { /* ... */
 		}
 
 		newEmailAddress := ""
 		for k, v := range signals {
-			fmt.Println("Signal key:", k, "value:", v)
+			componentLogger.Debug("Processing signal key", "key", k)
 			if strings.HasPrefix(k, "newEmail-") {
 				idStr := strings.TrimPrefix(k, "newEmail-")
 				id, err := strconv.Atoi(idStr)
@@ -126,7 +127,7 @@ func addEmailToBilettholderRoute(
 				}
 			}
 		}
-		logger.Info("new email added", slog.String("email", newEmailAddress))
+		componentLogger.Info("New email added for billettholder", slog.String("id", billettholderID))
 
 		if newEmailAddress == "" {
 			handleError(responder, "Tomt felt for epostadresse", "New email address is missing in the request")
@@ -276,7 +277,7 @@ templ billettholderCard(billettholder models.Billettholder) {
 					if email.Kind == "Manual" {
 						<button
 							class="btn btn--ghost"
-							data-on-click={ datastar.PostSSE("/profile/tickets/api/delete-email/%d/%d/", billettholder.ID, email.ID) }
+							data-on:click={ fmt.Sprintf("@post('/profile/tickets/api/delete-email/%d/%d/')", billettholder.ID, email.ID) }
 							title="Slett epostadresse"
 						>
 							Slett
@@ -301,7 +302,7 @@ templ billettholderCard(billettholder models.Billettholder) {
 		></strong>
 		<button
 			class="btn btn--outline"
-			data-on-click={ datastar.PostSSE("/profile/tickets/api/new-email/%d/", billettholder.ID) }
+			data-on:click={ fmt.Sprintf("@post('/profile/tickets/api/new-email/%d/')", billettholder.ID) }
 		>
 			Legg til epost
 		</button>

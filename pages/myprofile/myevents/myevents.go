@@ -24,6 +24,7 @@ import (
 )
 
 func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
+	componentLogger := logger.With("component", "my_events")
 	kv, kvErr := SetupNats(ns)
 	if kvErr != nil {
 		return fmt.Errorf("error setting up nats: %w", kvErr)
@@ -86,7 +87,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						logger.Error("Failed to stop watcher", "error", err)
+						componentLogger.Error("Failed to stop watcher", "error", err)
 					}
 				}()
 
@@ -138,7 +139,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						}
 						defer func() {
 							if err := watcher.Stop(); err != nil {
-								logger.Error("Failed to stop watcher", "error", err)
+								componentLogger.Error("Failed to stop watcher", "error", err)
 							}
 						}()
 
@@ -167,7 +168,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						}
 					})
 					if err := formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger); err != nil {
-						logger.Error("Failed to setup inline validation", "error", err)
+						componentLogger.Error("Failed to set up inline validation", "error", err)
 					}
 
 					// refactor to use "update/status etc"
@@ -293,7 +294,8 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 }
 
 func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
-	logger.Info("Creating new event form submission")
+	componentLogger := logger.With("component", "my_events")
+	componentLogger.Info("Creating new event form submission")
 	userInfo := userctx.GetUserRequestInfo(r.Context())
 	if userInfo.Id == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
@@ -302,13 +304,13 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 
 	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db, logger)
 	if insertError != nil {
-		logger.Error("Failed to get user ID from database", "error", insertError)
+		componentLogger.Error("Failed to get user ID from database", "error", insertError, "user_id", userInfo.Id)
 		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)
 		return
 	}
 
-	logger.Info("found user info", "userId", userInfo.Id, "dbId", userDbId, "email", userInfo.Email)
-	logger.Info("Inserting new event form submission")
+	componentLogger.Info("Found user info for event creation", "user_id", userInfo.Id, "user_db_id", userDbId)
+	componentLogger.Info("Inserting new event form submission")
 
 	// Todo: Use database relations to get foreign keys, event_type etc.
 	query := `
@@ -323,10 +325,10 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 	var eventId string
 	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft).Scan(&eventId)
 	if insertError != nil {
-		logger.Error("Failed to create new event form submission", "error", insertError)
+		componentLogger.Error("Failed to create new event form submission", "error", insertError, "user_id", userInfo.Id)
 		return
 	}
 
-	logger.Info("New event form submission created", "eventID", eventId)
+	componentLogger.Info("New event form submission created", "event_id", eventId, "user_id", userInfo.Id)
 	http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s", eventId), http.StatusSeeOther)
 }

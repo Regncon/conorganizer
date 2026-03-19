@@ -23,6 +23,7 @@ import (
 )
 
 func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
+	componentLogger := logger.With("component", "event")
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -106,7 +107,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						logger.Error("Failed to stop watcher", "error", err)
+						componentLogger.Error("Failed to stop watcher", "error", err)
 					}
 				}()
 
@@ -138,19 +139,18 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					updateInterestRouter.Put("/{interestLevel}", func(w http.ResponseWriter, r *http.Request) {
 						type Put struct {
 							BillettHolderId int    `json:"billettHolderId"`
-							PuljeId         string `json:"puljeId"`
+							PuljeId         string `json:"pulje_id"`
 						}
 						signals := &Put{}
 
 						if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
-							logger.Error("Failed to read signals", "error", readSignalErr)
+							componentLogger.Error("Failed to read signals", "error", readSignalErr)
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
 						}
-						fmt.Printf("Signals: %+v\n", signals)
 						ctx := r.Context()
 						userInfo := userctx.GetUserRequestInfo(ctx)
-						// billettholderId, err := strconv.Atoi(chi.URLParam(r, "billettholderId"))
+						// billettholderId, err := strconv.Atoi(chi.URLParam(r, "billettholder_id"))
 						// if err != nil {
 						// 	logger.Error("Failed to convert billettholderId to int", "error", err)
 						// 	http.Error(w, "Failed to convert billettholderId to int", http.StatusBadRequest)
@@ -179,10 +179,16 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						}
 
 						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db, logger); err != nil {
-							logger.Error("Failed to update interest", "error", err)
+							componentLogger.Error("Failed to update interest", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 						}
 
-						logger.Info(fmt.Sprintf("%d", signals.BillettHolderId), eventId, signals.PuljeId, sessionId, userInfo, fmt.Sprintf("%+v", interestLevel), "ASDFG")
+						componentLogger.Debug("Interest update request handled",
+							"event_id", eventId,
+							"pulje_id", signals.PuljeId,
+							"session_id", sessionId,
+							"user_id", userInfo.Id,
+							"billettholder_id", signals.BillettHolderId,
+						)
 
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
