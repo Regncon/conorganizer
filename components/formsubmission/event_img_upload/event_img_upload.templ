@@ -40,7 +40,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			http.Error(w, "Event ID is required", http.StatusBadRequest)
 			return
 		}
-		logger.Info("Uploading event image", "eventID", eventID)
+		logger.Info("Uploading event image", "event_id", eventID)
 
 		file, header, err := r.FormFile("image")
 		if err != nil {
@@ -92,7 +92,7 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 			http.Error(w, "Invalid image kind", http.StatusBadRequest)
 			return
 		}
-		logger.Info("Uploading cropped event image", "eventID", eventID, "imageKind", imageKind)
+		logger.Info("Uploading cropped event image", "event_id", eventID, "imageKind", imageKind)
 		file, _, err := r.FormFile("image")
 		if err != nil {
 			logger.Error("Failed to get image from form", "error", err)

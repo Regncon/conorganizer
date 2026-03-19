@@ -20,14 +20,15 @@ type BillettHolder struct {
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]BillettHolder, error) {
-	logger.Info("Fetching ticket holders from the database...")
+	componentLogger := logger.With("component", "ticket_holder")
+	componentLogger.Info("Fetching ticket holders from database")
 	query := `SELECT email, billettholder_id, first_name, last_name
                 FROM billettholder_emails [be]
                 JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
                 WHERE [be].email = ? `
 	rows, ticketHolderQueryErr := db.Query(query, userInfo.Email)
 	if ticketHolderQueryErr != nil {
-		logger.Error("Failed to query ticket holders", "ticketHolderQueryErr", ticketHolderQueryErr)
+		componentLogger.Error("Failed to query ticket holders", "error", ticketHolderQueryErr)
 		return []BillettHolder{}, ticketHolderQueryErr
 	}
 	defer rows.Close()
@@ -39,7 +40,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 		var billettHolderId int
 
 		if ticketHolderScanErr := rows.Scan(&email, &billettHolderId, &firstName, &lastName); ticketHolderScanErr != nil {
-			logger.Error("Failed to scan ticket holder row", "ticketHolderScanErr", ticketHolderScanErr)
+			componentLogger.Error("Failed to scan ticket holder row", "error", ticketHolderScanErr)
 			continue
 		}
 		associatedTicketholders = append(associatedTicketholders, BillettHolder{
@@ -49,10 +50,9 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 			Color: ColorForName(fmt.Sprintf("%s %s", firstName, lastName)),
 		})
 
-		logger.Info("Ticket Holder", "email", email, "id", billettHolderId, "firstName", firstName, "lastName", lastName)
 	}
 	if ticketHolderRowsErr := rows.Err(); ticketHolderRowsErr != nil {
-		logger.Error("Error iterating over ticket holder rows", "ticketHolderRowsErr", ticketHolderRowsErr)
+		componentLogger.Error("Error iterating over ticket holder rows", "error", ticketHolderRowsErr)
 	}
 
 	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
@@ -90,10 +90,11 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 }
 
 func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]models.Pulje, error) {
+	componentLogger := logger.With("component", "ticket_holder")
 	puljerQuery := `SELECT pulje_id FROM event_puljer WHERE event_id = ? AND is_active = 1 AND is_published = 1`
 	rows, puljerErr := db.Query(puljerQuery, eventId)
 	if puljerErr != nil {
-		logger.Error("Failed to query event puljer", "puljerErr", puljerErr)
+		componentLogger.Error("Failed to query event puljer", "event_id", eventId, "error", puljerErr)
 		return nil, puljerErr
 	}
 	defer rows.Close()
@@ -102,13 +103,13 @@ func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]mo
 	for rows.Next() {
 		var puljeName models.Pulje
 		if scanErr := rows.Scan(&puljeName); scanErr != nil {
-			logger.Error("Failed to scan pulje row", "scanErr", scanErr)
+			componentLogger.Error("Failed to scan pulje row", "event_id", eventId, "error", scanErr)
 			continue
 		}
 		puljer = append(puljer, puljeName)
 	}
 	if rowsErr := rows.Err(); rowsErr != nil {
-		logger.Error("Error iterating over pulje rows", "rowsErr", rowsErr)
+		componentLogger.Error("Error iterating over pulje rows", "event_id", eventId, "error", rowsErr)
 	}
 
 	return puljer, nil
@@ -116,7 +117,6 @@ func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]mo
 
 func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders []BillettHolder) BillettHolder {
 	idx := slices.IndexFunc(ticketHolders, func(th BillettHolder) bool {
-		fmt.Printf("Comparing ticket holder email: %s with user email: %s\n", th.Email, userInfo.Email)
 		return th.Email == userInfo.Email
 	})
 

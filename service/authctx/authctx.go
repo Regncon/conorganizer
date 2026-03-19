@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/descope/go-sdk/descope/client"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
@@ -25,11 +26,13 @@ const (
 
 func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	ProjectID := os.Getenv("DESCOPE_PROJECT_ID")
+	authLogger := logger.With("component", "auth")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			requestID := middleware.GetReqID(r.Context())
 			descopeClient, descopeClientError := client.NewWithConfig(&client.Config{ProjectID: ProjectID})
 			if descopeClientError != nil {
-				logger.Error("Failed to create Descope client", slog.String("projectID", ProjectID), "descopeClientError", descopeClientError)
+				authLogger.Error("Failed to create Descope client", "project_id", ProjectID, "error", descopeClientError, "request_id", requestID)
 				ctx := context.WithValue(r.Context(), ctxSessionError, descopeClientError)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
@@ -61,12 +64,12 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 							// SameSite: http.SameSiteLaxMode,
 						})
 
-						logger.Info("Successfully validated and refreshed session", "email", userToken.Claims["email"])
+						authLogger.Debug("Successfully validated and refreshed session", "request_id", requestID)
 					}
 				}
 
 				if validateTokenError != nil {
-					logger.Error("Failed to validate and refresh session", "validateTokenError", validateTokenError)
+					authLogger.Error("Failed to validate and refresh session", "error", validateTokenError, "request_id", requestID)
 				}
 
 			}

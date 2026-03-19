@@ -17,7 +17,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
 		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 
-			puljeId := chi.URLParam(r, "puljeId")
+			puljeId := chi.URLParam(r, "pulje_id")
 			if puljeId == "" {
 				logger.Warn("Pulje ID is missing in the request")
 				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
@@ -53,7 +53,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 			} else if puljeId == string(models.PuljeSondagMorgen) {
 				isPublished = store.IsPublishedSondagMorgen
 			} else {
-				logger.Warn("Invalid pulje ID", "puljeId", puljeId)
+				logger.Warn("Invalid pulje ID", "pulje_id", puljeId)
 				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
 				return
 			}
@@ -86,7 +86,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 				return
 			}
 
-			puljeId := chi.URLParam(r, "puljeId")
+			puljeId := chi.URLParam(r, "pulje_id")
 			if puljeId == "" {
 				logger.Warn("Pulje ID is missing in the request")
 				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
@@ -155,7 +155,7 @@ func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, l
 				return
 			}
 
-			puljeId := chi.URLParam(r, "puljeId")
+			puljeId := chi.URLParam(r, "pulje_id")
 			if puljeId == "" {
 				logger.Warn("Pulje ID is missing in the request")
 				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
@@ -184,7 +184,7 @@ func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, l
 			} else if puljeId == string(models.PuljeSondagMorgen) {
 				roomName = store.RoomNameSondagMorgen
 			} else {
-				logger.Warn("Invalid pulje ID", "puljeId", puljeId)
+				logger.Warn("Invalid pulje ID", "pulje_id", puljeId)
 				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
 				return
 			}

@@ -16,7 +16,8 @@
 7. [Migrations](#-Migrations-with-goose)
     - [Running Goose manually](#running-goose-manually)
     - [Pushing migrations to prod](#pushing-migrations-to-prod-and-services)
-8. [Additional Resources](#additional-resources)
+8. [Agent Skills Path Compatibility](#agent-skills-path-compatibility)
+9. [Additional Resources](#additional-resources)
 
 ## Description
 
@@ -157,7 +158,7 @@ source ~/.zshrc
 ```
 
 </details>
-### Update templ 
+### Update templ
 ```bash
 go install github.com/a-h/templ/cmd/templ@latest
 ```
@@ -277,6 +278,20 @@ docker compose -f compose-restore.yaml up
     ```
 7. ???
 8. Profit
+
+## Agent Skills Path Compatibility
+
+Some agents do not discover skills directly from `.agents/skills`.
+
+If that happens, link each skill into that agent's own skills folder (create the folder first if needed).
+
+If you need a true symlink instead (may require admin/dev mode):
+
+```powershell
+$agentSkillsFolder = ".codex\skills"  # replace with your agent's skills folder
+New-Item -ItemType Directory -Force -Path $agentSkillsFolder | Out-Null
+New-Item -ItemType SymbolicLink -Path "$agentSkillsFolder" -Target ".agents\skills"
+```
 
 ## Additional Resources
 
