@@ -328,7 +328,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 		></strong>
 		<button
 			class="btn btn--outline"
-			data-on-click={ datastar.PostSSE("/admin/billettholder/api/new-email/%d/", billettholder.ID) }
+			data-on:click={ datastar.PostSSE("/admin/billettholder/api/new-email/%d/", billettholder.ID) }
 		>
 			Legg til epost
 		</button>
