@@ -1,7 +1,8 @@
 # Domeneordbok
 
 ## Ord
-interesse
+Interesse
+Interesser
 Billettholder
 Billettholdere
 Pulje
