@@ -118,7 +118,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	</style>
 	<dialog
 		class="interest-dialog"
-		data-attr:open="isOpen($_interestIsOpen)"
+		data-attr:open="$_interestIsOpen ? true : false"
 		closedby="any"
 		data-signals:pulje-Id={ fmt.Sprintf("'%s'", puljeId) }
 	>
@@ -169,26 +169,5 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			return selectedBillettHolder.Id;
 		}
 
-		function isOpen(isOpenData) {
-			// return false if is empty sting or undefined
-			if (!isOpenData || isOpenData === "false") {
-				return false;
-			}
-			return true;
-		}
-		/*
-		const modal = document.querySelector(".interest-dialog");
-		const button = document.querySelector(".interest-button");
-		const buttonAbortController = new AbortController();
-		const buttonSignal = buttonAbortController.signal;
-
-		const handleButtonClick = () => {
-			modal.showModal();
-		};
-
-		button.addEventListener("click", handleButtonClick, {
-			signal: buttonSignal,
-		});
-		      */
 	</script>
 }
