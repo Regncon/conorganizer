@@ -10,9 +10,13 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	<style>
 		.ticket-holder-container {
 			padding-bottom: var(--responsive-pane-padding);
-		}
-        .ticket-holder-container[data-error] {
-			color: var(--color-error);
+            .ticket-holder-error {
+                color: var(--color-error);
+            }
+            .ticket-holder-picker-buttons {
+                display: grid;
+                gap: var(--spacing-2x);
+            }
 		}
 	</style>
 	{{ associatedTicketHolders, err := GetTicketHolders(userInfo, db) }}
@@ -29,7 +33,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		data-on:billettholder-selected="$billettHolderId = evt.detail;"
 	>
 		if err != nil {
-			<div data-error class="ticket-holder-container">
+			<div class="ticket-holder-error">
 				<p>Feil ved henting av billettholdere: { err.Error() }</p>
 			</div>
 		}
