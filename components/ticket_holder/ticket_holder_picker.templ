@@ -13,6 +13,10 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
             .ticket-holder-error {
                 color: var(--color-error);
             }
+
+            &:empty {
+                display: none;
+            }
             .ticket-holder-picker-buttons {
                 display: grid;
                 gap: var(--spacing-2x);
