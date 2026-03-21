@@ -14,7 +14,8 @@ Capture the current logging architecture and non-negotiable rules for conorganiz
 2. App wiring:
 - `main.go` initializes logger via `applog.NewJSONLogger()`.
 - `slog.SetDefault(logger)` is called at startup.
-- Component loggers are created with `logger.With("component", "...")`.
+- Component-scoped loggers are created with `logger.With("component", "...")`.
+- Bind component-scoped loggers to the local variable name `logger`, not `componentLogger` or `<scope>Logger`.
 
 3. HTTP middleware:
 - `http_logging_middleware.go` emits one log per completed request.
@@ -71,13 +72,15 @@ When updating existing logging:
 
 1. Replace `"err"` fields with `"error"`.
 2. Convert `fmt.Print*` diagnostic logs in production paths to structured `logger.*` calls.
-3. Keep migration scope focused to touched areas.
-4. Avoid unrelated refactors.
+3. Rename `componentLogger` and `<scope>Logger` locals to `logger` when touching that scope.
+4. Keep migration scope focused to touched areas.
+5. Avoid unrelated refactors.
 
 ## Fast Verification Queries
 
 ```powershell
 rg -n 'logger\.With\(\"component\",' -S .
+rg -n 'componentLogger|[a-z][A-Za-z0-9]*Logger\s*:=' -S . --glob '*.go' --glob '*.templ'
 rg -n 'logger\.(Debug|Info|Warn|Error)\(\"[^\"]*\"\s*,\s*\"err\"' -S . --glob '!backup-*'
 rg -n 'fmt\.Println|fmt\.Printf|log\.Print|log\.Fatal' -S . --glob '!backup-*'
 rg -n 'request_id|status_code|duration_ms|http request completed' -S main.go http_logging_middleware.go service pages components
