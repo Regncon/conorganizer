@@ -60,8 +60,14 @@ Prefer these common keys:
 - A log-plus-return pair counts as reuse and should normally use a named error variable.
 - Log a failure once at the boundary that decides the outcome.
 - Lower-level helpers and services should usually wrap and return errors without logging when a caller will decide the response, retry, or degraded-mode behavior.
+- If a helper or service no longer logs after a migration, remove the unused `logger` parameter from its signature unless it is still needed for non-error logs in that function.
+- When changing a function signature, update all touched call sites. If generated `*_templ.go` files call that function and you are not running `templ generate`, update those generated call sites as well.
 - Route handlers, background loop tops, stream consumers, and similar handling boundaries should log the final failure before returning a response or taking an operational decision.
 - If a lower layer already logs because it fully handled the failure locally, higher layers should not log the same error again; only log the new decision when it adds value.
+- If you know a lower layer already returned a useful wrapped `fmt.Errorf(...)`, prefer logging `logger.Error(err.Error())` at the handling boundary instead of wrapping again just to restate the same failure.
+- If the callee is in the touched repo and you can see that its returned errors are already wrapped with `fmt.Errorf(...)`, treat it as known-wrapped and use `logger.Error(err.Error())` at the boundary.
+- If you do not know whether the returned error already carries useful wrapped context, prefer wrapping it at the boundary with `fmt.Errorf(...)` before logging so the boundary still contributes a clear operation-specific error.
+- Only skip the extra `fmt.Errorf(...)` at the boundary when the existing returned error is already known to carry the needed context.
 - Preferred one-use inline pattern:
 ```go
 logger.Error(fmt.Errorf("failed to stop watcher: %w", err).Error())
@@ -112,9 +118,10 @@ When updating returned errors:
 7. Avoid `%w` at HTTP handlers, `main`, and similar top-level response/logging boundaries; log the accumulated context and return a safe error or response instead.
 8. Use `%v` or translate to an exported repo error when callers should not depend on an underlying dependency error type.
 9. Do not double-wrap errors that already contain the needed local context.
-10. At log-only boundaries, prefer contextualizing the error with `fmt.Errorf(...)` and logging `logger.Error(err.Error())`.
-11. Do not introduce temporary `wrappedErr`-style variables for one-use errors.
-12. Avoid double-logging across layers. Helpers usually wrap and return; the handling boundary usually emits the log.
+10. At log-only boundaries, prefer `logger.Error(err.Error())` only when the returned error is already known to carry useful wrapped context.
+11. If that is not known, prefer `logger.Error(fmt.Errorf("...: %w", err).Error())`.
+12. Do not introduce temporary `wrappedErr`-style variables for one-use errors.
+13. Avoid double-logging across layers. Helpers usually wrap and return; the handling boundary usually emits the log.
 
 ## Migration Rules for Existing Logs
 
@@ -129,8 +136,11 @@ When updating existing logging:
 7. Remove duplicate logging of the same failure across helper and handler layers when touching that path.
 8. Demote expected failures and noisy loop logs when touching watchers, streams, polling, or request-boundary code.
 9. Add missing correlation fields to async/background logs when the surrounding context makes that practical.
-10. Keep migration scope focused to touched areas.
-11. Avoid unrelated refactors.
+10. Remove unused `logger` parameters from helpers/services that no longer log, and update all touched callers accordingly.
+11. When a boundary log is still needed after moving logs upward, prefer `logger.Error(err.Error())` only when the returned error is known to already carry useful wrapped context.
+12. If that is not known, prefer `logger.Error(fmt.Errorf("...: %w", err).Error())`.
+13. Keep migration scope focused to touched areas.
+14. Avoid unrelated refactors.
 
 ## Fast Verification Queries
 

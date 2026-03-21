@@ -45,11 +45,26 @@ Read these first:
 - A log-plus-return pair counts as reuse and should normally use a named error variable.
 - Log a failure once at the boundary that decides the outcome.
 - Lower-level helpers and services should usually wrap and return errors without logging when the caller will decide the response, retry, or degraded-mode behavior.
+- If a helper or service no longer logs after a migration, remove the unused `logger` parameter from its signature unless it is still needed for non-error logs in that function.
+- When you change a function signature, update all call sites in touched source files. If the function is called from generated `*_templ.go` files and you are not running `templ generate`, update those generated call sites too so the tree stays consistent.
 - Route handlers, background loop tops, stream consumers, and similar handling boundaries should log the final failure before returning a response or taking an operational decision.
 - If a lower layer already logs because it fully handled the failure locally, higher layers should not log the same error again; only log the new decision if that adds value.
+- If you know a lower layer already returned a useful wrapped `fmt.Errorf(...)`, prefer logging `logger.Error(err.Error())` at the handling boundary instead of wrapping again just to restate the same failure.
+- If the callee is in the touched repo and you can see that its returned errors are already wrapped with `fmt.Errorf(...)`, treat it as known-wrapped and use `logger.Error(err.Error())` at the boundary.
+- If you do not know whether the returned error already carries useful wrapped context, prefer wrapping it at the boundary with `fmt.Errorf(...)` before logging so the boundary still contributes a clear operation-specific error.
+- Only skip the extra `fmt.Errorf(...)` at the boundary when the existing returned error is already known to carry the needed context.
+- Treat the boundary log shape and the returned error shape as separate decisions.
+- Normalizing a boundary log to `logger.Error(err.Error())` does not imply `return err`.
+- If the current function adds meaningful caller-local context for its own caller, keep wrapping on `return` even when the log uses `err.Error()`.
+- Only collapse to `return err` when this function adds no useful context beyond what the callee already returned.
 - Preferred one-use inline example:
 ```go
 logger.Error(fmt.Errorf("failed to stop watcher: %w", err).Error())
+```
+- Preferred boundary log plus wrapped return example:
+```go
+logger.Error(err.Error(), "user_id", userInfo.Id)
+return nil, fmt.Errorf("unable to get billettholder for user %s: %w", userInfo.Id, err)
 ```
 - Preferred reuse example:
 ```go
@@ -92,10 +107,14 @@ return 0, saveErr
 - If the same wrapped error is used twice or more in the same block, prefer a local error variable.
 - A log-plus-return pair is enough reason to create a temporary error variable.
 - Keep `return err` when there is no meaningful context to add.
+- Decide the return shape independently from the log shape.
+- Changing `logger.Error(fmt.Errorf(...).Error())` to `logger.Error(err.Error())` is not a reason by itself to change `return fmt.Errorf(...: %w, err)` into `return err`.
+- Keep the boundary wrap on return when the current function contributes caller-local context such as `user_id`, route intent, or operation name.
 - Avoid `%w` at HTTP handlers, `main`, or other top-level response/logging boundaries.
 - Use `%v` or translate to your own exported error when callers should not depend on an underlying dependency error type.
 - Do not double-wrap errors that already carry the needed local context.
-- At log-only boundaries, prefer contextualizing the error with `fmt.Errorf(...)` and logging `logger.Error(err.Error())`.
+- At log-only boundaries, prefer `logger.Error(err.Error())` only when the returned error is already known to carry useful wrapped context.
+- If that is not known, prefer `logger.Error(fmt.Errorf("...: %w", err).Error())`.
 - Avoid double-logging across layers. Helpers usually wrap and return; the handling boundary usually emits the log.
 
 8. Validate before finishing.
@@ -117,9 +136,13 @@ When the user asks to "check logging in this PR", review for:
 8. Repetitive watcher/polling/stream logs are `Debug`-level, rate-limited, or summarized.
 9. Async/background logs carry useful correlation fields (`request_id`, `session_id`, IDs, stream subject) when available.
 10. Lifecycle and degraded-mode transitions are logged once at the operational boundary.
-11. Returned errors are wrapped with `%w` only when useful context is added.
-12. No duplicate logging of the same failure across helper and handler layers.
-13. No broad refactors unrelated to logging.
+11. Boundary logs prefer `logger.Error(err.Error())` only when the returned error is known to already carry useful wrapped context.
+12. If that is not known, boundary logs should wrap with `fmt.Errorf(...)` before logging.
+13. Boundary log normalization does not accidentally flatten useful wrapped returns into `return err`.
+14. Returned errors are wrapped with `%w` only when useful context is added.
+15. Unused logger parameters are removed from helpers/services that no longer log.
+16. No duplicate logging of the same failure across helper and handler layers.
+17. No broad refactors unrelated to logging.
 
 ## Useful Commands
 
