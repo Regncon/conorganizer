@@ -19,7 +19,8 @@ import (
 )
 
 func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
-	componentLogger := logger.With("component", "root")
+	baseLogger := logger
+	logger = logger.With("component", "root")
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -89,7 +90,7 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 		}
 		return sessionID, mvc, nil
 	}
-	rootLayoutRoute(router, db, logger, eventImageDir, err)
+	rootLayoutRoute(router, db, baseLogger, eventImageDir, err)
 
 	router.Route("/root", func(rootRouter chi.Router) {
 		rootRouter.Route("/api", func(rootApiRouter chi.Router) {
@@ -109,7 +110,7 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						componentLogger.Error("Failed to stop watcher", "error", err)
+						logger.Error("Failed to stop watcher", "error", err)
 					}
 				}()
 

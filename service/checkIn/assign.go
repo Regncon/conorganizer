@@ -116,8 +116,8 @@ func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db
 // AssociateUserWithBillettholder uses userID string from users table to match billettholders
 // and combine ids to billettholder_users for later lookup
 func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logger) error {
-	componentLogger := logger.With("component", "checkin_assign")
-	componentLogger.Info("Associating user with billettholder", "user_id", userID)
+	logger = logger.With("component", "checkin_assign")
+	logger.Info("Associating user with billettholder", "user_id", userID)
 
 	// Get user
 	var user models.User
@@ -165,7 +165,7 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 
 	_, err = db.Exec(baseQuery)
 	if err != nil {
-		componentLogger.Error("Unable to insert billettholder-user links", "error", err, "user_id", userID, "user_db_id", user.ID, "billettholder_count", len(billettholdere))
+		logger.Error("Unable to insert billettholder-user links", "error", err, "user_id", userID, "user_db_id", user.ID, "billettholder_count", len(billettholdere))
 		return fmt.Errorf("unable to insert into billettholder_users: %v", err)
 	}
 

@@ -13,7 +13,7 @@ Read these first:
 
 1. `service/applog/logger.go` for logger initialization and `LOG_LEVEL`.
 2. `http_logging_middleware.go` for request log format and level mapping.
-3. `main.go` for wiring (`slog.SetDefault`, request ID middleware, component logger usage).
+3. `main.go` for wiring (`slog.SetDefault`, request ID middleware, component-scoped logger usage).
 4. `references/project-logging-baseline.md` for rules and examples.
 
 ## Workflow
@@ -26,10 +26,11 @@ Read these first:
 
 2. Pick logger ownership and component.
 - Reuse passed `*slog.Logger` when available.
-- Create a local logger near route/service entry.
-- Never use the variable name `componentLogger`.
-- Always use scoped naming: `<scope>Logger := logger.With("component", "<component_name>")`.
-- Examples: `authLogger`, `eventServiceLogger`, `profileTicketsLogger`, `eventImageUploadLogger`.
+- Create or rebind a scoped logger near route/service entry.
+- Always bind the component-scoped logger to the variable name `logger`.
+- If the current scope already has `logger`, reassign it: `logger = logger.With("component", "<component_name>")`.
+- If the parent logger has a different name, derive `logger` from it: `logger := baseLogger.With("component", "<component_name>")`.
+- Never introduce `componentLogger` or `<scope>Logger` variable names.
 - Keep component names short and stable (`main`, `http`, `auth`, `event_service`, `profile_tickets`).
 
 3. Apply structured log rules.
@@ -74,6 +75,7 @@ Run from repo root:
 
 ```powershell
 rg -n 'logger\.With\(\"component\",' -S .
+rg -n 'componentLogger|[a-z][A-Za-z0-9]*Logger\s*:=' -S . --glob '*.go' --glob '*.templ'
 rg -n 'logger\.(Debug|Info|Warn|Error)\(\"[^\"]*\"\s*,\s*\"err\"' -S . --glob '!backup-*'
 rg -n 'fmt\.Println|fmt\.Printf|log\.Print|log\.Fatal' -S . --glob '!backup-*'
 rg -n 'request_id|status_code|duration_ms|http request completed' -S main.go http_logging_middleware.go service pages components

@@ -89,12 +89,12 @@ func addEmailToBilettholderRoute(
 	store sessions.Store,
 	notifyUpdate func(string),
 ) {
-	componentLogger := logger.With("component", "profile_tickets")
+	logger = logger.With("component", "profile_tickets")
 	router.Post("/new-email/{id}/", func(w http.ResponseWriter, r *http.Request) {
-		componentLogger.Info("Received request to add new email to billettholder")
+		logger.Info("Received request to add new email to billettholder")
 		responder := Responder{
 			BillettholderID: chi.URLParam(r, "id"),
-			Logger:          componentLogger,
+			Logger:          logger,
 			Store:           store,
 			w:               w,
 			r:               r,
@@ -106,14 +106,14 @@ func addEmailToBilettholderRoute(
 			handleError(responder, "Noe gikk galt, prøv igjen", "Billettholder ID is missing in the request")
 			return
 		}
-		componentLogger.Info("Billettholder ID", slog.String("id", billettholderID))
+		logger.Info("Billettholder ID", slog.String("id", billettholderID))
 		signals := map[string]string{}
 		if err := datastar.ReadSignals(r, &signals); err != nil { /* ... */
 		}
 
 		newEmailAddress := ""
 		for k, v := range signals {
-			componentLogger.Debug("Processing signal key", "key", k)
+			logger.Debug("Processing signal key", "key", k)
 			if strings.HasPrefix(k, "newEmail-") {
 				idStr := strings.TrimPrefix(k, "newEmail-")
 				id, err := strconv.Atoi(idStr)
@@ -127,7 +127,7 @@ func addEmailToBilettholderRoute(
 				}
 			}
 		}
-		componentLogger.Info("New email added for billettholder", slog.String("id", billettholderID))
+		logger.Info("New email added for billettholder", slog.String("id", billettholderID))
 
 		if newEmailAddress == "" {
 			handleError(responder, "Tomt felt for epostadresse", "New email address is missing in the request")
@@ -164,6 +164,7 @@ func deleteEmailFromBillettholderRoute(
 	store sessions.Store,
 	notifyUpdate func(string),
 ) {
+	logger = logger.With("component", "profile_tickets")
 	router.Post("/delete-email/{id}/{emailID}/", func(w http.ResponseWriter, r *http.Request) {
 		responder := Responder{
 			BillettholderID: chi.URLParam(r, "id"),
