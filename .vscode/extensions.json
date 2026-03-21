@@ -16,7 +16,8 @@
         "golang.go",
         "vincaslt.highlight-matching-tag",
         "bradgashler.htmltagwrap",
-        "oderwat.indent-rainbow"
+        "oderwat.indent-rainbow",
+        "github.vscode-github-actions"
     ],
     // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
     "unwantedRecommendations": []
