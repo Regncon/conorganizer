@@ -19,10 +19,26 @@ type BillettHolder struct {
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]BillettHolder, error) {
-	query := `SELECT email, billettholder_id, first_name, last_name
-                FROM billettholder_emails [be]
-                JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
-                WHERE [be].email = ? `
+	query := `
+    SELECT
+        [be].email,
+        [be].billettholder_id,
+        [bh].first_name,
+        [bh].last_name
+    FROM
+        billettholder_emails [be]
+        LEFT JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
+    WHERE
+        [be].kind = 'Ticket'
+        AND [be].billettholder_id IN (
+            SELECT
+                billettholder_id
+            FROM
+                billettholder_emails
+            WHERE
+                email = ?
+        )
+`
 	rows, ticketHolderQueryErr := db.Query(query, userInfo.Email)
 	if ticketHolderQueryErr != nil {
 		return nil, fmt.Errorf("failed to query ticket holders for email %q: %w", userInfo.Email, ticketHolderQueryErr)
