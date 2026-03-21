@@ -10,12 +10,11 @@ import (
 )
 
 func GetEventsByUserId(userID string, db *sql.DB, logger *slog.Logger) []models.EventCardModel {
-	baseLogger := logger
 	logger = logger.With("component", "profile")
 	var events []models.EventCardModel
 
 	// Get events where event created id is the same as user
-	userDbId, err := userctx.GetIdFromUserIdInDb(userID, db, baseLogger)
+	userDbId, err := userctx.GetIdFromUserIdInDb(userID, db)
 	if err != nil {
 		logger.Error(fmt.Errorf("failed to get user database ID for user %q: %w", userID, err).Error())
 		return events

@@ -46,7 +46,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 
 	notifyUpdate := func(sessionID string) {
 		subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
-		logger.Debug("Publishing billettholder update", "session_id", sessionID, "subject", subj)
+		logger.Debug("Publishing billettholder update")
 		if err := nc.Publish(subj, nil); err != nil {
 			logger.Error(fmt.Errorf("failed to publish billettholder page update for session %s: %w", sessionID, err).Error())
 		}
@@ -101,7 +101,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			}()
 
 			// send the first render immediately
-			if err := sse.PatchElementTempl(BillettholderAdminPage(db, baseLogger)); err != nil {
+			if err := sse.PatchElementTempl(BillettholderAdminPage(db, logger)); err != nil {
 				_ = sse.ConsoleError(err)
 				return
 			}
@@ -110,15 +110,15 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				if _, err := sub.NextMsgWithContext(ctx); err != nil {
 					return // context cancelled or sub closed
 				}
-				if err := sse.PatchElementTempl(BillettholderAdminPage(db, baseLogger)); err != nil {
+				if err := sse.PatchElementTempl(BillettholderAdminPage(db, logger)); err != nil {
 					_ = sse.ConsoleError(err)
 					return
 				}
 			}
 		})
 		billettholdereSearchRoute(billettholderAdminRouter, store, notifyUpdate)
-		addEmailToBilettholderRoute(billettholderAdminRouter, db, baseLogger, store, notifyUpdate)
-		deleteEmailFromBillettholderRoute(billettholderAdminRouter, db, baseLogger, store, notifyUpdate)
+		addEmailToBilettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
+		deleteEmailFromBillettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
 	})
 
 	addbillettholder.AddBillettholderRoute(router, db, baseLogger, err)
@@ -134,7 +134,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 
 			ctx := r.Context()
 			subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
-			logger.Debug("Subscribing add billettholder page", "session_id", sessionID, "subject", subj)
+			logger.Debug("Subscribing add billettholder page")
 			sub, err := nc.SubscribeSync(subj)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -147,7 +147,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			}()
 
 			// initial render
-			if err := sse.PatchElementTempl(addbillettholder.AddBillettholderAdminPage(db, baseLogger)); err != nil {
+			if err := sse.PatchElementTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
 				_ = sse.ConsoleError(err)
 				return
 			}
@@ -156,15 +156,15 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				if _, err := sub.NextMsgWithContext(ctx); err != nil {
 					return
 				}
-				if err := sse.PatchElementTempl(addbillettholder.AddBillettholderAdminPage(db, baseLogger)); err != nil {
+				if err := sse.PatchElementTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
 					_ = sse.ConsoleError(err)
 					return
 				}
 			}
 		})
 
-		addbillettholder.CheckInTicketsSearchRoute(addBillettholderRouter, db, baseLogger, store, notifyUpdate)
-		addbillettholder.ConvertTicketToBillettholderRoute(addBillettholderRouter, db, store, notifyUpdate, baseLogger)
+		addbillettholder.CheckInTicketsSearchRoute(addBillettholderRouter, db, logger, store, notifyUpdate)
+		addbillettholder.ConvertTicketToBillettholderRoute(addBillettholderRouter, db, store, notifyUpdate, logger)
 	})
 
 	return nil

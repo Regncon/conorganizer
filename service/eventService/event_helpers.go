@@ -3,12 +3,11 @@ package eventservice
 import (
 	"database/sql"
 	"fmt"
-	"log/slog"
 
 	"github.com/Regncon/conorganizer/models"
 )
 
-func GetEventById(eventID string, db *sql.DB, logger *slog.Logger) (*models.Event, error) {
+func GetEventById(eventID string, db *sql.DB) (*models.Event, error) {
 	query := `
             SELECT
                 id,
@@ -59,9 +58,7 @@ func GetEventById(eventID string, db *sql.DB, logger *slog.Logger) (*models.Even
 		if err == sql.ErrNoRows {
 			return nil, nil // No event found
 		}
-		scanErr := fmt.Errorf("failed to scan event row for event %q: %w", eventID, err)
-		logger.With("component", "event_service").Error(scanErr.Error())
-		return nil, scanErr
+		return nil, fmt.Errorf("failed to scan event row for event %q: %w", eventID, err)
 	}
 	return &event, nil
 }
@@ -69,7 +66,7 @@ func GetEventById(eventID string, db *sql.DB, logger *slog.Logger) (*models.Even
 func GetPujerForEvent(
 	eventID string,
 	db *sql.DB,
-	logger *slog.Logger) ([]models.PuljeRow, error) {
+) ([]models.PuljeRow, error) {
 	/*
 			   CREATE TABLE
 			       event_puljer (
@@ -106,25 +103,19 @@ func GetPujerForEvent(
 
 	rows, err := db.Query(query, eventID)
 	if err != nil {
-		queryErr := fmt.Errorf("error querying puljer for event %q: %w", eventID, err)
-		logger.With("component", "event_service").Error(queryErr.Error())
-		return nil, queryErr
+		return nil, fmt.Errorf("error querying puljer for event %q: %w", eventID, err)
 	}
 	defer rows.Close()
 	var puljer []models.PuljeRow
 	for rows.Next() {
 		var pulje models.PuljeRow
 		if err := rows.Scan(&pulje.ID, &pulje.Name, &pulje.StartTime, &pulje.EndTime); err != nil {
-			scanErr := fmt.Errorf("error scanning pulje row for event %q: %w", eventID, err)
-			logger.With("component", "event_service").Error(scanErr.Error())
-			return nil, scanErr
+			return nil, fmt.Errorf("error scanning pulje row for event %q: %w", eventID, err)
 		}
 		puljer = append(puljer, pulje)
 	}
 	if err := rows.Err(); err != nil {
-		rowsErr := fmt.Errorf("error iterating over pulje rows for event %q: %w", eventID, err)
-		logger.With("component", "event_service").Error(rowsErr.Error())
-		return nil, rowsErr
+		return nil, fmt.Errorf("error iterating over pulje rows for event %q: %w", eventID, err)
 	}
 	return puljer, nil
 }

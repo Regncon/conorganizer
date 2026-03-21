@@ -70,7 +70,7 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				}
 
 				if validateTokenError != nil {
-					logger.Error(fmt.Errorf("failed to validate and refresh session: %w", validateTokenError).Error(), "request_id", requestID)
+					logger.Warn(fmt.Errorf("failed to validate and refresh session: %w", validateTokenError).Error(), "request_id", requestID)
 				}
 
 			}

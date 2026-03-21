@@ -19,8 +19,7 @@ type BillettholderInterest struct {
 func getInterestLeveForUser(
 	eventId string,
 	db *sql.DB,
-	r *http.Request,
-	logger *slog.Logger) ([]BillettholderInterest, error) {
+	r *http.Request) ([]BillettholderInterest, error) {
 
 	var ctx = r.Context()
 	userInfo := userctx.GetUserRequestInfo(ctx)
@@ -34,25 +33,19 @@ func getInterestLeveForUser(
     `
 	rows, err := db.Query(query, userInfo.Id, eventId)
 	if err != nil {
-		queryErr := fmt.Errorf("failed to query interests for event %s and user %s: %w", eventId, userInfo.Id, err)
-		logger.Error(queryErr.Error())
-		return nil, queryErr
+		return nil, fmt.Errorf("failed to query interests for event %s and user %s: %w", eventId, userInfo.Id, err)
 	}
 	defer rows.Close()
 	var interests []BillettholderInterest
 	for rows.Next() {
 		var interest BillettholderInterest
 		if err := rows.Scan(&interest.BillettholderId, &interest.PuljeId, &interest.InterestLevel); err != nil {
-			scanErr := fmt.Errorf("failed to scan interest row for event %s: %w", eventId, err)
-			logger.Error(scanErr.Error())
-			return nil, scanErr
+			return nil, fmt.Errorf("failed to scan interest row for event %s: %w", eventId, err)
 		}
 		interests = append(interests, interest)
 	}
 	if err := rows.Err(); err != nil {
-		rowsErr := fmt.Errorf("row iteration error for event %s interests: %w", eventId, err)
-		logger.Error(rowsErr.Error())
-		return nil, rowsErr
+		return nil, fmt.Errorf("row iteration error for event %s interests: %w", eventId, err)
 	}
 	return interests, nil
 
@@ -63,13 +56,17 @@ templ TicketHolderInterestPicker(
 	db *sql.DB,
 	r *http.Request,
 	logger *slog.Logger) {
-	{{ userInterestsObject, err := getInterestLeveForUser(eventId, db, r, logger) }}
-	{{ userInterests, err := json.Marshal(userInterestsObject) }}
-	if err != nil {
-		<p>Error fetching user interests: { err.Error() }</p>
+	{{ userInterestsObject, userInterestsErr := getInterestLeveForUser(eventId, db, r) }}
+	if userInterestsErr != nil {
+		{{ logger.Error(userInterestsErr.Error(), "event_id", eventId) }}
+		<p>Error fetching user interests: { userInterestsErr.Error() }</p>
+		return
 	}
-	if err != nil {
-		<p>Error fetching interest levels: { err.Error() }</p>
+	{{ userInterests, marshalErr := json.Marshal(userInterestsObject) }}
+	if marshalErr != nil {
+		{{ logger.Error(fmt.Errorf("failed to encode interest picker data for event %s: %w", eventId, marshalErr).Error()) }}
+		<p>Error fetching interest levels: { marshalErr.Error() }</p>
+		return
 	}
 	<style>
 		.interest-buttons {

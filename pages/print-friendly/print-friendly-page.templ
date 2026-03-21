@@ -212,7 +212,7 @@ templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger) 
 	<h1>Print Friendly Page</h1>
 	{{ eventsByPulje, err := getEventsByPuljeForPrint(db) }}
 	if err != nil {
-		logger.Error(fmt.Errorf("failed to get events for print: %w", err).Error())
+		{{ logger.Error(fmt.Errorf("failed to get events for print: %w", err).Error()) }}
 		<p>Error fetching events: { err.Error() }</p>
 		return
 	}

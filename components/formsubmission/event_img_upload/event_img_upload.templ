@@ -173,7 +173,7 @@ templ page(eventId string, db *sql.DB, logger *slog.Logger) {
 			z-index: 2;
 		}
 	</style>
-	{{event, eventErr := eventservice.GetEventById(eventId, db, logger)
+	{{event, eventErr := eventservice.GetEventById(eventId, db)
 var title, intro, imageUrl string
 if eventErr == nil {
 	title = event.Title
@@ -182,7 +182,13 @@ if eventErr == nil {
 }
 	}}
 	if eventErr != nil {
+		{{ logger.Error(fmt.Errorf("failed to load event image page for event %s: %w", eventId, eventErr).Error()) }}
 		<p>Error fetching events: { eventErr.Error() }</p>
+		return
+	}
+	if event == nil {
+		{{ logger.Warn("Event not found for event image page", "event_id", eventId) }}
+		<p>Event not found</p>
 		return
 	}
 	<script src="/static/web_components/banner_cropper.js"></script>

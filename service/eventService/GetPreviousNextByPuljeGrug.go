@@ -3,7 +3,6 @@ package eventservice
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components"
@@ -64,7 +63,6 @@ func getFirstEventInPulje(eventsByPulje root.EventsByPulje, currentPuljeId model
 func GetPreviousNextByPuljeSimple(
 	ctx context.Context,
 	eventsByPulje root.EventsByPulje,
-	logger *slog.Logger,
 	currentID string,
 	isAdmin bool,
 	r *http.Request,

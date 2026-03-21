@@ -106,7 +106,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 							return
 						}
 
-						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, eventImageDir, baseLogger)
+						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, eventImageDir, logger)
 						if err := sse.PatchElementTempl(c); err != nil {
 							_ = sse.ConsoleError(err)
 							return
@@ -160,7 +160,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 								userId := userctx.GetUserRequestInfo(r.Context()).Id
 
-								c := newEvent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, baseLogger)
+								c := newEvent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, logger)
 								if err := sse.PatchElementTempl(c); err != nil {
 									_ = sse.ConsoleError(err)
 									return
@@ -235,10 +235,10 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					})
 
 					newApiIdRouter.Route("/upload", func(uploadRouter chi.Router) {
-						eventimgupload.EventImageFormSubmission(uploadRouter, db, eventImageDir, baseLogger)
+						eventimgupload.EventImageFormSubmission(uploadRouter, db, eventImageDir, logger)
 					})
 					newApiIdRouter.Route("/upload-cropped", func(uploadCroppedRouter chi.Router) {
-						eventimgupload.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, baseLogger)
+						eventimgupload.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, logger)
 					})
 					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
 						formsubmission.SubmitFormRoute(newApiIdRouter, db, kv, baseLogger)
@@ -257,7 +257,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				newEvent.NewEventLayoutRoute(newIdRoute, db, eventImageDir, baseLogger)
 
 				newIdRoute.Route("/image", func(imageRouter chi.Router) {
-					eventimgupload.EventImageRoute(imageRouter, db, baseLogger)
+					eventimgupload.EventImageRoute(imageRouter, db, logger)
 				})
 			})
 		})
@@ -295,7 +295,6 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 }
 
 func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
-	baseLogger := logger
 	logger = logger.With("component", "my_events")
 	logger.Info("Creating new event form submission")
 	userInfo := userctx.GetUserRequestInfo(r.Context())
@@ -304,7 +303,7 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 		return
 	}
 
-	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db, baseLogger)
+	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db)
 	if insertError != nil {
 		logger.Error(fmt.Errorf("failed to get user ID from database for user %q: %w", userInfo.Id, insertError).Error())
 		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)

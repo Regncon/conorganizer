@@ -3,7 +3,6 @@ package ticketholder
 import (
 	"database/sql"
 	"fmt"
-	"log/slog"
 	"slices"
 	"strings"
 	"unicode"
@@ -19,18 +18,14 @@ type BillettHolder struct {
 	Color string
 }
 
-func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]BillettHolder, error) {
-	logger = logger.With("component", "ticket_holder")
-	logger.Info("Fetching ticket holders from database")
+func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]BillettHolder, error) {
 	query := `SELECT email, billettholder_id, first_name, last_name
                 FROM billettholder_emails [be]
                 JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
                 WHERE [be].email = ? `
 	rows, ticketHolderQueryErr := db.Query(query, userInfo.Email)
 	if ticketHolderQueryErr != nil {
-		queryErr := fmt.Errorf("failed to query ticket holders for email %q: %w", userInfo.Email, ticketHolderQueryErr)
-		logger.Error(queryErr.Error())
-		return []BillettHolder{}, queryErr
+		return nil, fmt.Errorf("failed to query ticket holders for email %q: %w", userInfo.Email, ticketHolderQueryErr)
 	}
 	defer rows.Close()
 
@@ -41,8 +36,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 		var billettHolderId int
 
 		if ticketHolderScanErr := rows.Scan(&email, &billettHolderId, &firstName, &lastName); ticketHolderScanErr != nil {
-			logger.Error(fmt.Errorf("failed to scan ticket holder row: %w", ticketHolderScanErr).Error())
-			continue
+			return nil, fmt.Errorf("failed to scan ticket holder row: %w", ticketHolderScanErr)
 		}
 		associatedTicketholders = append(associatedTicketholders, BillettHolder{
 			Email: email,
@@ -53,7 +47,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 
 	}
 	if ticketHolderRowsErr := rows.Err(); ticketHolderRowsErr != nil {
-		logger.Error(fmt.Errorf("error iterating over ticket holder rows: %w", ticketHolderRowsErr).Error())
+		return nil, fmt.Errorf("error iterating over ticket holder rows: %w", ticketHolderRowsErr)
 	}
 
 	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
@@ -90,14 +84,11 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 
 }
 
-func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]models.Pulje, error) {
-	logger = logger.With("component", "ticket_holder")
+func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.Pulje, error) {
 	puljerQuery := `SELECT pulje_id FROM event_puljer WHERE event_id = ? AND is_active = 1 AND is_published = 1`
 	rows, puljerErr := db.Query(puljerQuery, eventId)
 	if puljerErr != nil {
-		queryErr := fmt.Errorf("failed to query event puljer for event %s: %w", eventId, puljerErr)
-		logger.Error(queryErr.Error())
-		return nil, queryErr
+		return nil, fmt.Errorf("failed to query event puljer for event %s: %w", eventId, puljerErr)
 	}
 	defer rows.Close()
 
@@ -105,13 +96,12 @@ func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]mo
 	for rows.Next() {
 		var puljeName models.Pulje
 		if scanErr := rows.Scan(&puljeName); scanErr != nil {
-			logger.Error(fmt.Errorf("failed to scan pulje row for event %s: %w", eventId, scanErr).Error())
-			continue
+			return nil, fmt.Errorf("failed to scan pulje row for event %s: %w", eventId, scanErr)
 		}
 		puljer = append(puljer, puljeName)
 	}
 	if rowsErr := rows.Err(); rowsErr != nil {
-		logger.Error(fmt.Errorf("error iterating over pulje rows for event %s: %w", eventId, rowsErr).Error())
+		return nil, fmt.Errorf("error iterating over pulje rows for event %s: %w", eventId, rowsErr)
 	}
 
 	return puljer, nil

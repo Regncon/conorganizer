@@ -54,20 +54,17 @@ func GetUserRequestInfo(ctx context.Context) requestctx.UserRequestInfo {
 	}
 }
 
-func GetIdFromUserIdInDb(userId string, db *sql.DB, logger *slog.Logger) (string, error) {
-	logger = logger.With("component", "user")
+func GetIdFromUserIdInDb(userId string, db *sql.DB) (string, error) {
 	var userDbId string
 	userQuery := "SELECT id FROM users WHERE user_id = ?"
 	userRow := db.QueryRow(userQuery, userId)
 	if userRowErr := userRow.Scan(&userDbId); userRowErr != nil {
-		findUserErr := fmt.Errorf("failed to find user %q: %w", userId, userRowErr)
-		logger.Error(findUserErr.Error())
-		return "", findUserErr
+		return "", fmt.Errorf("failed to find user %q: %w", userId, userRowErr)
 	}
 	return userDbId, nil
 }
 
-func GetIdFromUserIdInDbFromContext(ctx context.Context, db *sql.DB, logger *slog.Logger) (string, error) {
+func GetIdFromUserIdInDbFromContext(ctx context.Context, db *sql.DB) (string, error) {
 	userId := GetUserRequestInfo(ctx).Id
-	return GetIdFromUserIdInDb(userId, db, logger)
+	return GetIdFromUserIdInDb(userId, db)
 }

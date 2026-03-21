@@ -21,16 +21,27 @@ templ NewEventFormPage(eventId string, userId string, ctx context.Context, db *s
 templ NewEventFormPageContent(eventId string, userId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	{{
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
-	eventData, eventErr := eventservice.GetEventById(eventId, db, logger)
+		eventData, eventErr := eventservice.GetEventById(eventId, db)
 	isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
-	puljerForEvent, eventErr := eventservice.GetPujerForEvent(eventId, db, logger)
+		puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db)
 	}}
 	if eventErr != nil {
+		{{ logger.Error(eventErr.Error(), "event_id", eventId) }}
 		<p>Error fetching events: { eventErr.Error() }</p>
 		return
 	}
-	if  isAdmin == false && eventData.Status == models.EventStatusApproved {
-		{{ logger.Error("Attempt to edit an already approved or published event", "event_id", eventId) }}
+	if puljerErr != nil {
+		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
+		<p>Error fetching event puljer: { puljerErr.Error() }</p>
+		return
+	}
+	if eventData == nil {
+		{{ logger.Warn("Event not found for new event form", "event_id", eventId) }}
+		<p>Event not found</p>
+		return
+	}
+	if isAdmin == false && eventData.Status == models.EventStatusApproved {
+		{{ logger.Warn("Attempt to edit an already approved or published event", "event_id", eventId) }}
 		<h1>Arrangementet er allerede godkjent eller publisert</h1>
 		<h2>Ta kontakt med RegnCon styret på Dicord eller via epost om du ønsker å gjøre endringer på arrangementet.</h2>
 	} else {

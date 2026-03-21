@@ -54,11 +54,13 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			}
 		}
 	</style>
-	{{ associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger) }}
+	{{ associatedTicketHolders, err := GetTicketHolders(userInfo, db) }}
 	if err != nil {
+		{{ logger.Error(err.Error(), "user_id", userInfo.Id) }}
 		<div class="ticket-holder-container">
 			<p>Feil ved henting av billettholdere: { err.Error() }</p>
 		</div>
+		return
 	}
 	if len(associatedTicketHolders) == 0 {
 		<div

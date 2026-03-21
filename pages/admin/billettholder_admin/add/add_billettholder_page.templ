@@ -92,9 +92,12 @@ func isBillettholder(ticketID int, bilettholdere []models.Billettholder) bool {
 templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	{{ tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
 	if ticketsErr != nil {
-		logger.Error(fmt.Errorf("failed to load check-in tickets for admin billettholder add page: %w", ticketsErr).Error(), "search_term", searchTerm)
+		{{ logger.Error(ticketsErr.Error(), "search_term", searchTerm) }}
 	}
-	{{ billettholdere, billettholdereErr := billettholderService.GetBilettholdere("", db, logger) }}
+	{{ billettholdere, billettholdereErr := billettholderService.GetBilettholdere("", db) }}
+	if billettholdereErr != nil {
+		{{ logger.Error(billettholdereErr.Error()) }}
+	}
 	<div id="add-billettholder-admin-container">
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},

@@ -23,7 +23,6 @@ import (
 )
 
 func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
-	baseLogger := logger
 	logger = logger.With("component", "event")
 	nc, err := ns.Client()
 	if err != nil {
@@ -85,7 +84,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	}
 
 	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
-	eventLayoutRoute(router, db, baseLogger, eventImageDir, err)
+	eventLayoutRoute(router, db, logger, eventImageDir, err)
 
 	router.Route("/event/api", func(eventApiRouter chi.Router) {
 		eventApiRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
@@ -125,7 +124,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							return
 						}
 						isAdmin := authctx.GetAdminFromUserToken(ctx)
-						c := event_page(eventID, isAdmin, baseLogger, db, eventImageDir, r)
+						c := event_page(eventID, isAdmin, logger, db, eventImageDir, r)
 						if err := sse.PatchElementTempl(c); err != nil {
 							_ = sse.ConsoleError(err)
 							return
@@ -172,21 +171,20 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						case "none":
 							interestLevel.None = "none"
 						}
-						sessionId, _, mvcErr := mvcSession(w, r)
+						_, _, mvcErr := mvcSession(w, r)
 
 						if mvcErr != nil {
 							http.Error(w, mvcErr.Error(), http.StatusInternalServerError)
 							return
 						}
 
-						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db, logger); err != nil {
+						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db); err != nil {
 							logger.Error(fmt.Errorf("failed to update interest for event %s, pulje %s, billettholder %d: %w", eventId, signals.PuljeId, signals.BillettHolderId, err).Error())
 						}
 
 						logger.Debug("Interest update request handled",
 							"event_id", eventId,
 							"pulje_id", signals.PuljeId,
-							"session_id", sessionId,
 							"user_id", userInfo.Id,
 							"billettholder_id", signals.BillettHolderId,
 						)
@@ -259,14 +257,11 @@ func updateInterest(
 	interest InterestLevels,
 	puljeId string,
 	db *sql.DB,
-	logger *slog.Logger,
 ) error {
 	puljeQuery := `SELECT EXISTS (SELECT * FROM event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_active = 1 AND is_published = 1)`
 	_, puljerErr := db.Query(puljeQuery, eventID, puljeId)
 	if puljerErr != nil {
-		checkPuljeErr := fmt.Errorf("failed to check if pulje %s exists for event %s: %w", puljeId, eventID, puljerErr)
-		logger.Error(checkPuljeErr.Error())
-		return checkPuljeErr
+		return fmt.Errorf("failed to check if pulje %s exists for event %s: %w", puljeId, eventID, puljerErr)
 	}
 
 	userHasAccessToBillettHolderIdQuery := `
@@ -278,28 +273,20 @@ func updateInterest(
 	_, userHasAccessErr := db.Query(userHasAccessToBillettHolderIdQuery, billettholderId, userId)
 
 	if userHasAccessErr != nil {
-		checkAccessErr := fmt.Errorf("failed to check if user %s has access to billettholder %d: %w", userId, billettholderId, userHasAccessErr)
-		logger.Error(checkAccessErr.Error())
-		return checkAccessErr
+		return fmt.Errorf("failed to check if user %s has access to billettholder %d: %w", userId, billettholderId, userHasAccessErr)
 	}
 
 	if interest.None != "" {
 		dropQuery := `DELETE FROM interests WHERE event_id = $1 AND pulje_id = $2 AND billettholder_id = $3`
 		dropRows, dropErr := db.Exec(dropQuery, eventID, puljeId, billettholderId)
 		if dropErr != nil {
-			deleteInterestErr := fmt.Errorf("failed to drop interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, dropErr)
-			logger.Error(deleteInterestErr.Error())
-			return deleteInterestErr
+			return fmt.Errorf("failed to drop interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, dropErr)
 		}
 
 		_, dropAffectedErr := dropRows.RowsAffected()
 		if dropAffectedErr != nil {
-			dropRowsAffectedErr := fmt.Errorf("failed to get affected rows when dropping interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, dropAffectedErr)
-			logger.Error(dropRowsAffectedErr.Error())
-			return dropRowsAffectedErr
+			return fmt.Errorf("failed to get affected rows when dropping interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, dropAffectedErr)
 		}
-
-		logger.Info("Interest dropped successfully")
 
 		return nil
 	}
@@ -312,24 +299,17 @@ func updateInterest(
             `
 	updateRows, updateErr := db.Exec(updateQuery, billettholderId, eventID, puljeId, convertInterestLevelToDbInterestLevel(interest))
 	if updateErr != nil {
-		updateInterestErr := fmt.Errorf("failed to update interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, updateErr)
-		logger.Error(updateInterestErr.Error())
-		return updateInterestErr
+		return fmt.Errorf("failed to update interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, updateErr)
 	}
 
 	updateAffected, updateAffectedErr := updateRows.RowsAffected()
 	if updateAffectedErr != nil {
-		updateRowsAffectedErr := fmt.Errorf("failed to get affected rows when updating interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, updateAffectedErr)
-		logger.Error(updateRowsAffectedErr.Error())
-		return updateRowsAffectedErr
+		return fmt.Errorf("failed to get affected rows when updating interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, updateAffectedErr)
 	}
 
 	if updateAffected == 0 {
-		logger.Info("no rows were updated")
 		return nil
 	}
-
-	logger.Info("Interest updated successfully")
 
 	return nil
 }
