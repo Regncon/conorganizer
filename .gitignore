@@ -2,6 +2,7 @@
 # ------------------------------------------------------------------
 data/*
 database/*
+!database/Views.md
 !database/.gitkeep
 
 local-event-images/*
