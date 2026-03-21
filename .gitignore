@@ -11,6 +11,8 @@ backup-service/regncon
 compose-restore.yaml
 .backups/
 .gocache
+tmp-gocache/
+.tmp-gocache/
 
 # Ai folder
 .codex/*
