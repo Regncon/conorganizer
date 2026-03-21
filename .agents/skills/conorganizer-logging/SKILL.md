@@ -39,6 +39,21 @@ Read these first:
 - Prefer stable context keys: `event_id`, `user_id`, `pulje_id`, `ticket_id`, `billettholder_id`, `path`, `request_id`.
 - Keep `msg` short and action-oriented.
 - Prefer building a contextualized error with `fmt.Errorf(...)` and logging `logger.Error(fmt.Errorf(...).Error())` over repeating the same context in both the message and structured fields.
+- Prefer inline wrapping for one-off logs: `logger.Error(fmt.Errorf("...: %w", err).Error())`.
+- Do not introduce variables like `wrappedErr`, `queryErr`, or `insertErr` when the wrapped error is only used once.
+- If the same wrapped error is used twice or more in the same scope, prefer assigning it to a variable.
+- A log-plus-return pair counts as reuse and should normally use a named error variable.
+- Preferred one-use inline example:
+```go
+logger.Error(fmt.Errorf("failed to stop watcher: %w", err).Error())
+```
+- Preferred reuse example:
+```go
+saveErr := fmt.Errorf("error saving event form submission: %w", insertError)
+logger.Error(saveErr.Error())
+http.Error(w, fmt.Sprintf("Error updating event: %v", insertError), http.StatusBadRequest)
+return 0, saveErr
+```
 - Example: `logger.Error(fmt.Errorf("event image directory %q does not exist: %w Create it and run task start again", *eventImageDir, statErr).Error())`.
 
 4. Handle HTTP requests consistently.
@@ -57,6 +72,9 @@ Read these first:
 6. Wrap returned errors deliberately.
 - Run this pass after logging edits and before final validation.
 - Wrap returned errors with `fmt.Errorf("...: %w", err)` when adding useful local context or crossing a package/system boundary.
+- Prefer direct returns like `return fmt.Errorf("...: %w", err)` over `wrappedErr := ...; return wrappedErr` when the error is only returned once.
+- If the same wrapped error is used twice or more in the same block, prefer a local error variable.
+- A log-plus-return pair is enough reason to create a temporary error variable.
 - Keep `return err` when there is no meaningful context to add.
 - Avoid `%w` at HTTP handlers, `main`, or other top-level response/logging boundaries.
 - Use `%v` or translate to your own exported error when callers should not depend on an underlying dependency error type.

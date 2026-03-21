@@ -55,6 +55,20 @@ Prefer these common keys:
 - Short and action-focused.
 - No redundant data already available in structured fields.
 - If a log site creates a contextualized error with `fmt.Errorf(...)`, prefer `logger.Error(fmt.Errorf(...).Error())` instead of repeating the same context in both the message and structured fields.
+- For one-off log sites, keep the `fmt.Errorf(...)` inline instead of assigning it to a variable first.
+- If the same exact wrapped error is used twice or more in the same scope, prefer assigning it to a variable.
+- A log-plus-return pair counts as reuse and should normally use a named error variable.
+- Preferred one-use inline pattern:
+```go
+logger.Error(fmt.Errorf("failed to stop watcher: %w", err).Error())
+```
+- Preferred reuse pattern:
+```go
+saveErr := fmt.Errorf("error saving event form submission: %w", insertError)
+logger.Error(saveErr.Error())
+http.Error(w, fmt.Sprintf("Error updating event: %v", insertError), http.StatusBadRequest)
+return 0, saveErr
+```
 - Use `"error"` as the field key only when keeping a separate structured error field is still useful.
 
 ## Safety and Privacy Rules
@@ -74,11 +88,15 @@ When updating returned errors:
 
 1. Wrap with `fmt.Errorf("...: %w", err)` when the current function can add useful local context.
 2. Wrap when an error crosses a package, subsystem, or abstraction boundary and the higher layer can explain the failed operation.
-3. Keep `return err` when the current function adds no meaningful context.
-4. Avoid `%w` at HTTP handlers, `main`, and similar top-level response/logging boundaries; log the accumulated context and return a safe error or response instead.
-5. Use `%v` or translate to an exported repo error when callers should not depend on an underlying dependency error type.
-6. Do not double-wrap errors that already contain the needed local context.
-7. At log-only boundaries, prefer contextualizing the error with `fmt.Errorf(...)` and logging `logger.Error(err.Error())`.
+3. Prefer direct returns like `return fmt.Errorf("...: %w", err)` when the wrapped error is only returned once.
+4. If the same exact wrapped error is used twice or more in the same block, prefer a local error variable.
+5. A log-plus-return pair counts as reuse and should normally use a named error variable.
+6. Keep `return err` when the current function adds no meaningful context.
+7. Avoid `%w` at HTTP handlers, `main`, and similar top-level response/logging boundaries; log the accumulated context and return a safe error or response instead.
+8. Use `%v` or translate to an exported repo error when callers should not depend on an underlying dependency error type.
+9. Do not double-wrap errors that already contain the needed local context.
+10. At log-only boundaries, prefer contextualizing the error with `fmt.Errorf(...)` and logging `logger.Error(err.Error())`.
+11. Do not introduce temporary `wrappedErr`-style variables for one-use errors.
 
 ## Migration Rules for Existing Logs
 
@@ -89,8 +107,9 @@ When updating existing logging:
 3. Rename `componentLogger` and `<scope>Logger` locals to `logger` when touching that scope.
 4. Run a final pass over returned errors and wrap them with `fmt.Errorf(...: %w)` only when the function can add useful context.
 5. At log-only boundaries, prefer `logger.Error(fmt.Errorf(...).Error())` over duplicating the same context in both the message and structured fields.
-6. Keep migration scope focused to touched areas.
-7. Avoid unrelated refactors.
+6. Prefer inline wrapping for one-use errors, but create a temporary error variable when the same exact error is used twice or more.
+7. Keep migration scope focused to touched areas.
+8. Avoid unrelated refactors.
 
 ## Fast Verification Queries
 
