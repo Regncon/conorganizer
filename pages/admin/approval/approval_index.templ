@@ -2,23 +2,26 @@ package approval
 
 import (
 	"database/sql"
+	"fmt"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
-
-	"github.com/Regncon/conorganizer/service/userctx"
-	"github.com/Regncon/conorganizer/layouts"
 )
 
 func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
+	logger = logger.With("component", "approval")
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(r.Context())
-		layouts.Base(
+		if err := layouts.Base(
 			"Godkjenning av arrangementer",
 			userInfo,
 			approvalIndex(db, logger),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render approval page: %w", err).Error(), "user_id", userInfo.Id)
+		}
 	})
 }
 

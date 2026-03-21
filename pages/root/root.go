@@ -19,7 +19,6 @@ import (
 )
 
 func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
-	baseLogger := logger
 	logger = logger.With("component", "root")
 	nc, err := ns.Client()
 	if err != nil {
@@ -90,7 +89,7 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 		}
 		return sessionID, mvc, nil
 	}
-	rootLayoutRoute(router, db, baseLogger, eventImageDir, err)
+	rootLayoutRoute(router, db, logger, eventImageDir, err)
 
 	router.Route("/root", func(rootRouter chi.Router) {
 		rootRouter.Route("/api", func(rootApiRouter chi.Router) {

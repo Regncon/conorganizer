@@ -2,6 +2,7 @@ package profilepage
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/profile"
 	"github.com/Regncon/conorganizer/layouts"
@@ -20,6 +21,7 @@ import (
 func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
 	router.Route("/profile", func(profileRouter chi.Router) {
 		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			baseLogger := logger
 			logger = logger.With("component", "profile")
 			var ctx = r.Context()
 			var user = userctx.GetUserRequestInfo(ctx)
@@ -33,7 +35,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 
 			billettholdere, err := billettholderService.GetBilettholdere(user.Id, db)
 			if err != nil {
-					logger.Error(err.Error(), "user_id", user.Id)
+				logger.Error(err.Error(), "user_id", user.Id)
 			}
 			var tickets = []profilecomponent.TicketHolder{}
 			for _, billettholder := range billettholdere {
@@ -49,11 +51,13 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 				})
 			}
 
-			layouts.Base(
+			if err := layouts.Base(
 				"Min profil side",
 				user,
-					ProfilePage(user, events, tickets, db, logger, eventImageDir),
-			).Render(ctx, w)
+				ProfilePage(user, events, tickets, db, baseLogger, eventImageDir),
+			).Render(ctx, w); err != nil {
+				logger.Error(fmt.Errorf("failed to render profile page: %w", err).Error(), "user_id", user.Id)
+			}
 		})
 
 		// Subroutes

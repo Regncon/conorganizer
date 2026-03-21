@@ -69,7 +69,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 	}
 
 	router.Route("/my-events", func(myeventsRouter chi.Router) {
-		myeventsLayoutRoute(myeventsRouter, db, eventImageDir, baseLogger)
+		myeventsLayoutRoute(myeventsRouter, db, eventImageDir, logger)
 		myeventsRouter.Route("/api", func(apiRouter chi.Router) {
 			apiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				sessionID, mvc, err := mvcSession(w, r)
@@ -254,7 +254,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
 			newRouter.Route("/{id}", func(newIdRoute chi.Router) {
-				newEvent.NewEventLayoutRoute(newIdRoute, db, eventImageDir, baseLogger)
+				newEvent.NewEventLayoutRoute(newIdRoute, db, eventImageDir, logger)
 
 				newIdRoute.Route("/image", func(imageRouter chi.Router) {
 					eventimgupload.EventImageRoute(imageRouter, db, logger)

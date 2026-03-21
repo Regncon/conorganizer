@@ -36,11 +36,13 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 		var ctx = r.Context()
 		isAdmin := authctx.GetAdminFromUserToken(ctx)
 		userInfo := userctx.GetUserRequestInfo(ctx)
-		layouts.Base(
+		if err := layouts.Base(
 			event.Title,
 			userInfo,
 			eventIndex(event.ID, isAdmin, userInfo, logger, db, eventImageDir, r),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render event page: %w", err).Error(), "event_id", event.ID, "user_id", userInfo.Id)
+		}
 	})
 }
 

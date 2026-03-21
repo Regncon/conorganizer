@@ -76,7 +76,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 		return sessionID, mvc, nil
 	}
 
-	indexRoute(router, db, err)
+	indexRoute(router, db, logger, err)
 
 	router.Route("/admin/billettholder/api/", func(billettholderAdminRouter chi.Router) {
 		billettholderAdminRouter.With(authctx.RequireAdmin(baseLogger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -121,7 +121,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 		deleteEmailFromBillettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
 	})
 
-	addbillettholder.AddBillettholderRoute(router, db, baseLogger, err)
+	addbillettholder.AddBillettholderRoute(router, db, logger, err)
 
 	router.Route("/admin/billettholder/add/api/", func(addBillettholderRouter chi.Router) {
 		addBillettholderRouter.With(authctx.RequireAdmin(baseLogger)).Get("/", func(w http.ResponseWriter, r *http.Request) {

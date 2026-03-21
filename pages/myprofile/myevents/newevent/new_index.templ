@@ -41,11 +41,13 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 		}
 
 		var ctx = r.Context()
-		layouts.Base(
+		if err := layouts.Base(
 			title,
 			userctx.GetUserRequestInfo(ctx),
 			newEventIndex(eventId, userId, ctx, db, eventImageDir, logger),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render new-event page: %w", err).Error(), "event_id", eventId, "user_id", userId)
+		}
 	})
 }
 

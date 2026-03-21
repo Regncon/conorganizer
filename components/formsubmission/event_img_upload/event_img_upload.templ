@@ -24,11 +24,14 @@ func EventImageRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 			return
 		}
 		var ctx = r.Context()
-		layouts.Base(
+		userInfo := userctx.GetUserRequestInfo(ctx)
+		if err := layouts.Base(
 			"Last opp blide",
-			userctx.GetUserRequestInfo(ctx),
+			userInfo,
 			page(eventId, db, logger),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render event image page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
+		}
 	})
 }
 

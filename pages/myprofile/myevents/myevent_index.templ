@@ -1,23 +1,26 @@
 package myevents
 
 import (
-	"github.com/go-chi/chi/v5"
-	"net/http"
-	"log/slog"
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
+	"log/slog"
+	"net/http"
 )
 
 func myeventsLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		userId := userctx.GetUserRequestInfo(r.Context()).Id
-		layouts.Base(
+		if err := layouts.Base(
 			"My Events",
 			userctx.GetUserRequestInfo(ctx),
 			myeventsIndex(userId, db, eventImageDir, logger),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render my-events page: %w", err).Error(), "user_id", userId)
+		}
 	})
 }
 

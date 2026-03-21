@@ -80,11 +80,13 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 			var ctx = r.Context()
 			var user = userctx.GetUserRequestInfo(ctx)
 
-			layouts.Base(
+			if err := layouts.Base(
 				"Mine Billetter",
 				user,
 				profileTicketsIndex(user.Id, db, logger),
-			).Render(ctx, w)
+			).Render(ctx, w); err != nil {
+				logger.Error(fmt.Errorf("failed to render profile tickets page: %w", err).Error(), "user_id", user.Id)
+			}
 		})
 		profileRouter.Route("/api", func(billettholderAdminRouter chi.Router) {
 			billettholderAdminRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
