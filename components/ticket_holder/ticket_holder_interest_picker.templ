@@ -2,7 +2,6 @@ package ticketholder
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -15,6 +14,37 @@ type BillettholderInterest struct {
 	BillettholderId int    `json:"billettHolderId"`
 	PuljeId         string `json:"puljeId"`
 	InterestLevel   string `json:"interestLevel"`
+}
+
+type interestPickerSignals struct {
+	Interesser []BillettholderInterest `json:"interesser"`
+}
+
+func currentInteresseExpression() string {
+	return "$interesser.find(i => i.billettHolderId === $billettHolderId && i.puljeId === $puljeId)?.interestLevel ?? ''"
+}
+
+func isSelectedInteresseExpression(interestLevel string) string {
+	return fmt.Sprintf("(%s) == '%s'", currentInteresseExpression(), interestLevel)
+}
+
+func clearSelectedInteresseExpression() string {
+	return fmt.Sprintf("(%s) == ''", currentInteresseExpression())
+}
+
+func updateInteresseAction(eventId string, interestLevel string, routeSegment string) string {
+	filterCurrentInteresse := "$interesser.filter(i => !(i.billettHolderId === $billettHolderId && i.puljeId === $puljeId))"
+	if interestLevel == "" {
+		return fmt.Sprintf("$interesser = %s; @put('/event/api/%s/interest/update/%s')", filterCurrentInteresse, eventId, routeSegment)
+	}
+
+	return fmt.Sprintf(
+		"$interesser = %s.concat([{billettHolderId: $billettHolderId, puljeId: $puljeId, interestLevel: '%s'}]); @put('/event/api/%s/interest/update/%s')",
+		filterCurrentInteresse,
+		interestLevel,
+		eventId,
+		routeSegment,
+	)
 }
 
 func getInterestLeveForUser(
@@ -63,13 +93,6 @@ templ TicketHolderInterestPicker(
 		<p>Error fetching user interests: { userInterestsErr.Error() }</p>
 		return
 	}
-	{{ userInterests, marshalErr := json.Marshal(userInterestsObject) }}
-	if marshalErr != nil {
-		{{ logger.Error(fmt.Errorf("failed to encode interest picker data for event %s: %w", eventId, marshalErr).Error()) }}
-		<p>Error fetching interest levels: { marshalErr.Error() }</p>
-		return
-	}
-	{{ fmt.Printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! user interests for event %s: %+v", eventId, string(userInterests)) }}
 	<style>
 		.interest-buttons {
 			display: flex;
@@ -89,33 +112,33 @@ templ TicketHolderInterestPicker(
 	<div></div>
 	<div
 		class="interest-buttons"
-		data-signals:interesse-level={ fmt.Sprintf("%s.find(i => i.billettHolderId === $billettHolderId)?.interestLevel ?? ''", userInterests) }
+		data-signals__ifmissing={ templ.JSONString(interestPickerSignals{Interesser: userInterestsObject}) }
 	>
 		<button
 			class="btn btn--interest-picker"
-			data-class:selected={ fmt.Sprintf("$interesseLevel == '%s'", models.InterestLevelHigh) }
-			data-on:click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
+			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelHigh) }
+			data-on:click={ updateInteresseAction(eventId, models.InterestLevelHigh, "high") }
 		>
 			<span class="emoji">🤩</span> Veldig interessert
 		</button>
 		<button
 			class="btn btn--interest-picker"
-			data-class:selected={ fmt.Sprintf("$interesseLevel == '%s'", models.InterestLevelMedium) }
-			data-on:click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
+			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelMedium) }
+			data-on:click={ updateInteresseAction(eventId, models.InterestLevelMedium, "medium") }
 		>
 			<span class="emoji">🙂</span> Interessert
 		</button>
 		<button
 			class="btn btn--interest-picker"
-			data-class:selected={ fmt.Sprintf("$interesseLevel == '%s'", models.InterestLevelLow) }
-			data-on:click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
+			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelLow) }
+			data-on:click={ updateInteresseAction(eventId, models.InterestLevelLow, "low") }
 		>
 			<span class="emoji">🤨</span> Litt interessert
 		</button>
 		<button
 			class="btn btn--interest-picker"
-			data-class:selected="$interesseLevel == ''"
-			data-on:click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
+			data-class:selected={ clearSelectedInteresseExpression() }
+			data-on:click={ updateInteresseAction(eventId, "", "none") }
 		>
 			<span class="emoji">😑</span> Ikke interessert
 		</button>
