@@ -6,25 +6,6 @@ import (
 	"log/slog"
 )
 
-/*
-    if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
-        <p class="label">Velg billettholder</p>
-		<div class="ticket-holder-picker-buttons">
-			for _, billettHolder := range associatedTicketHolders {
-				@TicketHolderButton(billettHolder)
-			}
-            @TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
-		</div>
-	}
-
-	if (len(associatedTicketHolders) > 3) {
-        <p class="label">Velg billettholder</p>
-		<div class="ticket-holder-picker-dropdown">
-			@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
-		</div>
-	}
-*/
-
 templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, logger *slog.Logger) {
 	<style>
 		.ticket-holder-container {
@@ -42,14 +23,6 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		</div>
 		return
 	}
-	{{
-	testUser := []BillettHolder{
-		BillettHolder{Id: 200, Name: "Ola Nordmann", Email: "ola.nordmann@example.com", Color: "hsl(from #FF5733 h s l / 0.5)"},
-		BillettHolder{Id: 201, Name: "Kari Nordmann", Email: "kari.nordmann@example.com", Color: "hsl(from #33FF57 h s l / 0.5)"},
-		BillettHolder{Id: 202, Name: "Per Hansen", Email: "per.hansen@example.com", Color: "hsl(from #5733FF h s l / 0.5)"},
-	}
-	associatedTicketHolders = append(associatedTicketHolders, testUser...)
-	}}
 	<div
 		class="ticket-holder-container"
 		data-signals:billett-holder-id=""
@@ -66,7 +39,6 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 				for _, billettHolder := range associatedTicketHolders {
 					@TicketHolderButton(billettHolder)
 				}
-				@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
 			</div>
 		}
 		if (len(associatedTicketHolders) > 3) {
