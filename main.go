@@ -62,7 +62,7 @@ func main() {
 	defer stop()
 
 	if err := run(ctx, baseLogger, getPort(), eventImageDir, db, dbErr); err != nil {
-		logger.Error("Error running server", "error", err)
+		logger.Error(err.Error())
 		os.Exit(1)
 	}
 }
