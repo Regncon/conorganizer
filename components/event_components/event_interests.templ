@@ -119,7 +119,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	<dialog
 		class="interest-dialog"
 		data-attr:open="$_interestIsOpen ? true : false"
-		closedby="any"
 		data-signals:pulje-Id={ fmt.Sprintf("'%s'", puljeId) }
 	>
 		<div class="dialog-container">
@@ -155,6 +154,13 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			SelectedBilletHolder: "selectedBillettHolder",
 		};
         window.LSKey = LSKey;
+
+        const dialogElement = document.querySelector(`.interest-dialog`);
+
+			dialogElement.addEventListener("click", (ev) => {
+                const restoreScroll = ev.stopPropagation();
+			});
+
 
 		function getBillettHolderFromLocalstorage() {
 			const selectedBillettHolderString = localStorage.getItem(
