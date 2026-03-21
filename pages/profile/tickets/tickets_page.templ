@@ -56,6 +56,7 @@ func getTicketsRouter(
 		err := checkIn.AssociateUserWithBillettholder(user.Id, db, logger)
 
 		if err != nil {
+			logger.Error(fmt.Errorf("unable to associate billettholdere for user %q: %w", user.Id, err).Error())
 			errorMessage = "Feil ved henting av billettar: " + err.Error()
 		}
 
