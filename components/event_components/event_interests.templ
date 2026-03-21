@@ -142,7 +142,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		</div>
 	</dialog>
 	<script>
-		const LSKey = {
+		let LSKey = {
 			SelectedBilletHolder: "selectedBillettHolder",
 		};
         window.LSKey = LSKey;
@@ -153,19 +153,6 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
                 const restoreScroll = ev.stopPropagation();
 			});
 
-
-		function getBillettHolderFromLocalstorage() {
-			const selectedBillettHolderString = localStorage.getItem(
-				LSKey.SelectedBilletHolder,
-			);
-			if (!selectedBillettHolderString) {
-				return "";
-			}
-			const selectedBillettHolder = JSON.parse(
-				selectedBillettHolderString,
-			);
-			return selectedBillettHolder.Id;
-		}
 
 	</script>
 }

@@ -2,6 +2,7 @@ package ticketholder
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
 )
@@ -23,10 +24,13 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
             }
 		}
 	</style>
-	{{ associatedTicketHolders, err := GetTicketHolders(userInfo, db) }}
+	{{
+	associatedTicketHolders, err := GetTicketHolders(userInfo, db)
+	yourBillettHolder := GetYourBillettHolderInfo(userInfo, associatedTicketHolders)
+	}}
 	if err != nil {
 		{{ logger.Error(err.Error(), "user_id", userInfo.Id) }}
-		<div class="ticket-holder-container">
+		<div class="ticket-holder-error">
 			<p>Feil ved henting av billettholdere: { err.Error() }</p>
 		</div>
 		return
@@ -35,6 +39,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		class="ticket-holder-container"
 		data-signals:billett-holder-id=""
 		data-on:billettholder-selected="$billettHolderId = evt.detail;"
+		data-init={ fmt.Sprintf("const init = setInitialBillettholderToLocalStorage(); init ? $billettHolderId = init.Id : $billettHolderId = getBillettHolderFromLocalstorage()") }
 	>
 		if err != nil {
 			<div class="ticket-holder-error">
@@ -57,7 +62,44 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		}
 	</div>
 	<script>
-		const billettHolderButtonPickerButton = document.querySelectorAll(
+        LSKey = {
+			SelectedBilletHolder: "selectedBillettHolder",
+		};
+        function setInitialBillettholderToLocalStorage() {
+            const billettholder = {{ yourBillettHolder }}
+            const currentBillettholder = localStorage.getItem(LSKey.SelectedBilletHolder);
+            if (!currentBillettholder || currentBillettholder === JSON.stringify(billettholder)) {
+                localStorage.setItem(
+                    LSKey.SelectedBilletHolder,
+                    JSON.stringify({
+                        Id: billettholder.Id,
+                        Name: billettholder.Name,
+                        Email: billettholder.Email
+                    }, null, 2),
+                );
+                return {
+                    Id: billettholder.Id,
+                    Name: billettholder.Name,
+                    Email: billettholder.Email
+                }
+            }
+            return null
+        }
+
+        function getBillettHolderFromLocalstorage() {
+			const selectedBillettHolderString = localStorage.getItem(
+				LSKey.SelectedBilletHolder,
+			);
+			if (!selectedBillettHolderString) {
+				return "";
+			}
+			const selectedBillettHolder = JSON.parse(
+				selectedBillettHolderString,
+			);
+			return selectedBillettHolder.Id;
+		}
+
+        const billettHolderButtonPickerButton = document.querySelectorAll(
 			`.billett-holder-picker-button`,
 		);
 		billettHolderButtonPickerButton.forEach((button) => {
