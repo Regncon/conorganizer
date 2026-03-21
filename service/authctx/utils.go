@@ -66,7 +66,7 @@ func RequireAdmin(logger *slog.Logger) func(http.Handler) http.Handler {
 func GetUserIDFromToken(ctx context.Context) (string, error) {
 	userToken, err := GetUserTokenFromContext(ctx)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("get user ID from token: %w", err)
 	}
 
 	return userToken.ID, nil
@@ -76,7 +76,7 @@ func GetEmailFromToken(ctx context.Context) (string, error) {
 	userToken, err := GetUserTokenFromContext(ctx)
 
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("get email from token: %w", err)
 	}
 
 	email, emailOk := userToken.Claims["email"].(string)

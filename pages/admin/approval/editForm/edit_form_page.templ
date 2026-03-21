@@ -32,7 +32,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 	previousNextData, err := eventservice.GetPreviousNextInnsendtGodkjent(ctx, db, logger, eventId, eventImageDir)
 	}}
 	if err != nil {
-		logger.Error("Failed to get previous/next data", "error", err)
+		logger.Error(err.Error())
 		return
 	}
 	{{ eventData, eventErr := eventservice.GetEventById(eventId, db, logger) }}

@@ -34,22 +34,25 @@ func getInterestLeveForUser(
     `
 	rows, err := db.Query(query, userInfo.Id, eventId)
 	if err != nil {
-		logger.Error("failed to query interests", "error", err)
-		return nil, err
+		queryErr := fmt.Errorf("failed to query interests for event %s and user %s: %w", eventId, userInfo.Id, err)
+		logger.Error(queryErr.Error())
+		return nil, queryErr
 	}
 	defer rows.Close()
 	var interests []BillettholderInterest
 	for rows.Next() {
 		var interest BillettholderInterest
 		if err := rows.Scan(&interest.BillettholderId, &interest.PuljeId, &interest.InterestLevel); err != nil {
-			logger.Error("failed to scan row", "error", err)
-			return nil, err
+			scanErr := fmt.Errorf("failed to scan interest row for event %s: %w", eventId, err)
+			logger.Error(scanErr.Error())
+			return nil, scanErr
 		}
 		interests = append(interests, interest)
 	}
 	if err := rows.Err(); err != nil {
-		logger.Error("row iteration error", "error", err)
-		return nil, err
+		rowsErr := fmt.Errorf("row iteration error for event %s interests: %w", eventId, err)
+		logger.Error(rowsErr.Error())
+		return nil, rowsErr
 	}
 	return interests, nil
 

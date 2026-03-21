@@ -156,7 +156,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
     `
 	rows, queryErr := db.Query(query, eventId)
 	if queryErr != nil {
-		logger.Error("Failed to query interests with holders", "error", queryErr)
+		logger.Error(fmt.Errorf("failed to query interests with holders for event %s: %w", eventId, queryErr).Error())
 		return nil, fmt.Errorf("query interests with holders for event %s: %w", eventId, queryErr)
 	}
 
@@ -178,14 +178,14 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&interest.TicketType,
 			&interest.IsOver18,
 		); scanErr != nil {
-			logger.Error("Failed to scan interest with holder", "error", scanErr)
+			logger.Error(fmt.Errorf("failed to scan interest with holder for event %s: %w", eventId, scanErr).Error())
 			return nil, fmt.Errorf("scan interest row for event %s: %w", eventId, scanErr)
 		}
 		interests = append(interests, interest)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
-		logger.Error("Row iteration error", "error", rowErr)
+		logger.Error(fmt.Errorf("row iteration error for event %s interests: %w", eventId, rowErr).Error())
 		return nil, fmt.Errorf("iterate interest rows for event %s: %w", eventId, rowErr)
 	}
 	return interests, nil
@@ -222,7 +222,7 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
     `
 	rows, queryErr := db.Query(query, eventId)
 	if queryErr != nil {
-		logger.Error("Failed to query assignments with holders", "error", queryErr)
+		logger.Error(fmt.Errorf("failed to query assignments with holders for event %s: %w", eventId, queryErr).Error())
 		return nil, fmt.Errorf("query assignments with holders for event %s: %w", eventId, queryErr)
 	}
 
@@ -244,14 +244,14 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&assignment.TicketType,
 			&assignment.IsOver18,
 		); scanErr != nil {
-			logger.Error("Failed to scan assignment with holder", "error", scanErr)
+			logger.Error(fmt.Errorf("failed to scan assignment with holder for event %s: %w", eventId, scanErr).Error())
 			return nil, fmt.Errorf("scan assignment row for event %s: %w", eventId, scanErr)
 		}
 		assignments = append(assignments, assignment)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
-		logger.Error("Row iteration error", "error", rowErr)
+		logger.Error(fmt.Errorf("row iteration error for event %s assignments: %w", eventId, rowErr).Error())
 		return nil, fmt.Errorf("iterate assignment rows for event %s: %w", eventId, rowErr)
 	}
 	return assignments, nil
@@ -301,7 +301,7 @@ func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error)
     `
 	rows, queryErr := db.Query(query)
 	if queryErr != nil {
-		logger.Error("Failed to query billettholdere", "error", queryErr)
+		logger.Error(fmt.Errorf("failed to query billettholdere: %w", queryErr).Error())
 		return nil, fmt.Errorf("query billettholdere: %w", queryErr)
 	}
 
@@ -314,14 +314,14 @@ func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error)
 			&billettholder.FirstName,
 			&billettholder.LastName,
 		); scanErr != nil {
-			logger.Error("Failed to scan billettholder with holder", "error", scanErr)
+			logger.Error(fmt.Errorf("failed to scan billettholder row: %w", scanErr).Error())
 			return nil, fmt.Errorf("scan billettholder row: %w", scanErr)
 		}
 		billettholdere = append(billettholdere, billettholder)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
-		logger.Error("Row iteration error", "error", rowErr)
+		logger.Error(fmt.Errorf("row iteration error for billettholdere: %w", rowErr).Error())
 		return nil, fmt.Errorf("iterate billettholder rows: %w", rowErr)
 	}
 	return billettholdere, nil
@@ -330,7 +330,7 @@ func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error)
 func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *slog.Logger) error {
 	tx, txErr := db.Begin()
 	if txErr != nil {
-		logger.Error("Failed to begin transaction for first choice", "error", txErr)
+		logger.Error(fmt.Errorf("failed to begin transaction for first choice: %w", txErr).Error())
 		return fmt.Errorf("begin first choice transaction: %w", txErr)
 	}
 	defer tx.Rollback()
@@ -342,7 +342,7 @@ func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *
 			interest_level = EXCLUDED.interest_level
 	`
 	if _, execErr := tx.Exec(upsertInterestQuery, bid, eId, Pid); execErr != nil {
-		logger.Error("Failed to upsert interest for first choice", "error", execErr)
+		logger.Error(fmt.Errorf("failed to upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
 		return fmt.Errorf("upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr)
 	}
 
@@ -355,12 +355,12 @@ func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *
 			inserted_time = CURRENT_TIMESTAMP
 	`
 	if _, execErr := tx.Exec(upsertPlayerQuery, eId, Pid, bid); execErr != nil {
-		logger.Error("Failed to upsert player status for first choice", "error", execErr)
+		logger.Error(fmt.Errorf("failed to upsert player status for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
 		return fmt.Errorf("upsert player status for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr)
 	}
 
 	if commitErr := tx.Commit(); commitErr != nil {
-		logger.Error("Failed to commit first choice transaction", "error", commitErr)
+		logger.Error(fmt.Errorf("failed to commit first choice transaction: %w", commitErr).Error())
 		return fmt.Errorf("commit first choice transaction: %w", commitErr)
 	}
 	return nil
@@ -385,7 +385,7 @@ func UpdatePlayerStatus(eventId string,
         `
 	_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId, isPlayer, isGM)
 	if updatePlayerStatusErr != nil {
-		logger.Error("Failed to update player status in the database", "error", updatePlayerStatusErr)
+		logger.Error(fmt.Errorf("failed to update player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d, is_player=%t, is_gm=%t): %w", eventId, puljeId, billettholderId, isPlayer, isGM, updatePlayerStatusErr).Error())
 		return fmt.Errorf(
 			"update player status (event_id=%s, pulje_id=%s, billettholder_id=%d, is_player=%t, is_gm=%t): %w",
 			eventId,

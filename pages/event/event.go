@@ -108,7 +108,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						logger.Error("Failed to stop watcher", "error", err)
+						logger.Error(fmt.Errorf("failed to stop event watcher: %w", err).Error())
 					}
 				}()
 
@@ -145,7 +145,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						signals := &Put{}
 
 						if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
-							logger.Error("Failed to read signals", "error", readSignalErr)
+							logger.Error(fmt.Errorf("failed to read event interest signals: %w", readSignalErr).Error())
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
 						}
@@ -153,7 +153,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						userInfo := userctx.GetUserRequestInfo(ctx)
 						// billettholderId, err := strconv.Atoi(chi.URLParam(r, "billettholder_id"))
 						// if err != nil {
-						// 	logger.Error("Failed to convert billettholderId to int", "error", err)
+						// 	logger.Error(fmt.Errorf("failed to convert billettholderId to int: %w", err).Error())
 						// 	http.Error(w, "Failed to convert billettholderId to int", http.StatusBadRequest)
 						// 	return
 						// }
@@ -180,7 +180,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						}
 
 						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db, logger); err != nil {
-							logger.Error("Failed to update interest", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							logger.Error(fmt.Errorf("failed to update interest for event %s, pulje %s, billettholder %d: %w", eventId, signals.PuljeId, signals.BillettHolderId, err).Error())
 						}
 
 						logger.Debug("Interest update request handled",
@@ -264,8 +264,9 @@ func updateInterest(
 	puljeQuery := `SELECT EXISTS (SELECT * FROM event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_active = 1 AND is_published = 1)`
 	_, puljerErr := db.Query(puljeQuery, eventID, puljeId)
 	if puljerErr != nil {
-		logger.Error("failed to check if pulje exists", "error", puljerErr)
-		return puljerErr
+		checkPuljeErr := fmt.Errorf("failed to check if pulje %s exists for event %s: %w", puljeId, eventID, puljerErr)
+		logger.Error(checkPuljeErr.Error())
+		return checkPuljeErr
 	}
 
 	userHasAccessToBillettHolderIdQuery := `
@@ -277,27 +278,30 @@ func updateInterest(
 	_, userHasAccessErr := db.Query(userHasAccessToBillettHolderIdQuery, billettholderId, userId)
 
 	if userHasAccessErr != nil {
-		logger.Error("failed to check if user has access to billettholder", "error", userHasAccessErr)
-		return userHasAccessErr
+		checkAccessErr := fmt.Errorf("failed to check if user %s has access to billettholder %d: %w", userId, billettholderId, userHasAccessErr)
+		logger.Error(checkAccessErr.Error())
+		return checkAccessErr
 	}
 
 	if interest.None != "" {
 		dropQuery := `DELETE FROM interests WHERE event_id = $1 AND pulje_id = $2 AND billettholder_id = $3`
 		dropRows, dropErr := db.Exec(dropQuery, eventID, puljeId, billettholderId)
 		if dropErr != nil {
-			logger.Error("failed to drop interest", "error", dropErr)
-			return dropErr
+			deleteInterestErr := fmt.Errorf("failed to drop interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, dropErr)
+			logger.Error(deleteInterestErr.Error())
+			return deleteInterestErr
 		}
 
 		_, dropAffectedErr := dropRows.RowsAffected()
 		if dropAffectedErr != nil {
-			logger.Error("failed to get affected rows", "error", dropAffectedErr)
-			return dropAffectedErr
+			dropRowsAffectedErr := fmt.Errorf("failed to get affected rows when dropping interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, dropAffectedErr)
+			logger.Error(dropRowsAffectedErr.Error())
+			return dropRowsAffectedErr
 		}
 
 		logger.Info("Interest dropped successfully")
 
-		return fmt.Errorf("interest dropped successfully")
+		return nil
 	}
 
 	updateQuery := `
@@ -306,16 +310,18 @@ func updateInterest(
                 ON CONFLICT(billettholder_id, pulje_id, event_id) DO UPDATE SET
                     interest_level = excluded.interest_level
             `
-	updateRows, updateAffectedErr := db.Exec(updateQuery, billettholderId, eventID, puljeId, convertInterestLevelToDbInterestLevel(interest))
-	if updateAffectedErr != nil {
-		logger.Error("failed to update interest", "error", updateAffectedErr)
-		return updateAffectedErr
+	updateRows, updateErr := db.Exec(updateQuery, billettholderId, eventID, puljeId, convertInterestLevelToDbInterestLevel(interest))
+	if updateErr != nil {
+		updateInterestErr := fmt.Errorf("failed to update interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, updateErr)
+		logger.Error(updateInterestErr.Error())
+		return updateInterestErr
 	}
 
 	updateAffected, updateAffectedErr := updateRows.RowsAffected()
 	if updateAffectedErr != nil {
-		logger.Error("failed to get affected rows", "error", updateAffectedErr)
-		return updateAffectedErr
+		updateRowsAffectedErr := fmt.Errorf("failed to get affected rows when updating interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, updateAffectedErr)
+		logger.Error(updateRowsAffectedErr.Error())
+		return updateRowsAffectedErr
 	}
 
 	if updateAffected == 0 {

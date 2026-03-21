@@ -110,7 +110,7 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						logger.Error("Failed to stop watcher", "error", err)
+						logger.Error(fmt.Errorf("failed to stop root watcher: %w", err).Error())
 					}
 				}()
 

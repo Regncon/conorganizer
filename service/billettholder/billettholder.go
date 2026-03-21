@@ -2,6 +2,7 @@ package billettholderService
 
 import (
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"sort"
 
@@ -41,8 +42,9 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 	}
 
 	if err != nil {
-		logger.Error("Failed to query billettholdere", "error", err)
-		return nil, err
+		queryErr := fmt.Errorf("failed to query billettholdere: %w", err)
+		logger.Error(queryErr.Error())
+		return nil, queryErr
 	}
 	defer rows.Close()
 
@@ -65,8 +67,9 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 			&b.IsOver18, &b.OrderID, &b.TicketID, &b.InsertedTime,
 			&er.id, &er.email, &er.kind, &er.insertedTime,
 		); err != nil {
-			logger.Error("Failed to scan row", "error", err)
-			return nil, err
+			scanErr := fmt.Errorf("failed to scan billettholder row: %w", err)
+			logger.Error(scanErr.Error())
+			return nil, scanErr
 		}
 
 		holder, ok := byID[b.ID]
@@ -98,8 +101,9 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 		}
 	}
 	if err := rows.Err(); err != nil {
-		logger.Error("Row iteration error", "error", err)
-		return nil, err
+		rowsErr := fmt.Errorf("row iteration error for billettholdere: %w", err)
+		logger.Error(rowsErr.Error())
+		return nil, rowsErr
 	}
 
 	sort.Ints(order) // or remove this to keep INSERT order from the query
@@ -116,8 +120,9 @@ func GetBillettholderByUserId(db *sql.DB, logger *slog.Logger, userID string) (i
         SELECT id FROM billettholdere WHERE user_id = $1 `, userID)
 
 	if err := row.Scan(&billettholderId); err != nil {
-		logger.Error("Failed to scan row", "error", err)
-		return 0, err
+		scanErr := fmt.Errorf("failed to scan billettholder row for user %q: %w", userID, err)
+		logger.Error(scanErr.Error())
+		return 0, scanErr
 	}
 
 	return billettholderId, nil

@@ -2,7 +2,7 @@ package checkIn
 
 import (
 	"database/sql"
-	"errors"
+	"fmt"
 	"log/slog"
 )
 
@@ -27,9 +27,11 @@ func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTic
 func ConvertTicketToBillettholder(ticketId int, db *sql.DB, logger *slog.Logger) error {
 	tickets, err := GetTicketsFromCheckIn(logger, "")
 	if err != nil {
-		return errors.New("failed to fetch tickets from check-in: " + err.Error())
+		return fmt.Errorf("failed to fetch tickets from check-in: %w", err)
 	}
 
-	err = converTicketIdToNewBillettholder(ticketId, tickets, db, logger)
-	return err
+	if err := converTicketIdToNewBillettholder(ticketId, tickets, db, logger); err != nil {
+		return fmt.Errorf("failed to convert ticket %d to billettholder: %w", ticketId, err)
+	}
+	return nil
 }

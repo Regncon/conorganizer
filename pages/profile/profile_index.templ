@@ -2,6 +2,7 @@ package profilepage
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/profile"
 	"github.com/Regncon/conorganizer/layouts"
@@ -32,7 +33,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 
 			billettholdere, err := billettholderService.GetBilettholdere(user.Id, db, logger)
 			if err != nil {
-				logger.Error("Failed to get billettholdere", "error", err)
+				logger.Error(fmt.Errorf("failed to get billettholdere for user %q: %w", user.Id, err).Error())
 			}
 			var tickets = []profilecomponent.TicketHolder{}
 			for _, billettholder := range billettholdere {

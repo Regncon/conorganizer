@@ -39,7 +39,7 @@ func main() {
 
 	db, dbErr := service.InitDB(*dsn)
 	if dbErr != nil {
-		logger.Error("Could not initialize DB; starting in degraded mode", "error", dbErr, "dsn", *dsn)
+		logger.Error(fmt.Errorf("could not initialize DB at %q; starting in degraded mode: %w", *dsn, dbErr).Error())
 		db = nil
 	}
 	defer func() {
@@ -90,15 +90,15 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		var imgErr error
 		if eventImageDir != nil && *eventImageDir != "" {
 			if _, statErr := os.Stat(*eventImageDir); os.IsNotExist(statErr) {
-				imgErr = fmt.Errorf("event image directory %q does not exist: %w Create it and run task start again", *eventImageDir, statErr)
-				logger.Error("Event image directory does not exist; create it and run task start again. Starting in degraded mode", "dir", *eventImageDir)
+				imgErr = fmt.Errorf("event image directory %q does not exist; create it and run task start again: %w", *eventImageDir, statErr)
+				logger.Error(imgErr.Error())
 			} else if statErr != nil {
 				imgErr = fmt.Errorf("unable to access event image directory %q: %w", *eventImageDir, statErr)
-				logger.Error("Unable to access event image directory; starting in degraded mode", "dir", *eventImageDir, "error", statErr)
+				logger.Error(imgErr.Error())
 			}
 		} else {
 			imgErr = fmt.Errorf("event image directory path is empty")
-			logger.Error("Event image directory path is empty; starting in degraded mode")
+			logger.Error(imgErr.Error())
 		}
 
 		degradedErr := errors.Join(dbErr, imgErr)
@@ -114,12 +114,12 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		if fullMode {
 			cleanup, err := setupRoutes(ctx, baseLogger, router, db, eventImageDir)
 			if err != nil {
-				logger.Error("Error setting up routes; falling back to degraded mode", "error", err)
+				logger.Error(fmt.Errorf("error setting up routes; falling back to degraded mode: %w", err).Error())
 				mountDBErrorRoutes(router, err)
 			} else if cleanup != nil {
 				defer func() {
 					if err := cleanup(); err != nil {
-						logger.Error("Failed to clean up routes", "error", err)
+						logger.Error(fmt.Errorf("failed to clean up routes: %w", err).Error())
 					}
 				}()
 			}

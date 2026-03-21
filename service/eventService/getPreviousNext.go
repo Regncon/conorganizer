@@ -3,6 +3,7 @@ package eventservice
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"strings"
 
@@ -40,11 +41,12 @@ func GetPreviousNextInnsendtGodkjent(ctx context.Context, db *sql.DB, logger *sl
 		Scan(&prevID, &prevTitle, &prevImg, &nextID, &nextTitle, &nextImg)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// currentID isn’t in the filtered set; return empty neighbors.
+			// currentID isn't in the filtered set; return empty neighbors.
 			return components.PreviousNext{}, nil
 		}
-		logger.With("component", "event_service").Error("GetPreviousNext scan failed", "error", err, "current_id", currentID)
-		return components.PreviousNext{}, err
+		scanErr := fmt.Errorf("get previous/next scan failed for event %q: %w", currentID, err)
+		logger.With("component", "event_service").Error(scanErr.Error())
+		return components.PreviousNext{}, scanErr
 	}
 
 	PrevImageBannerUrl := eventimage.GetEventImageUrl(nstr(prevID), "banner", eventImageDir)

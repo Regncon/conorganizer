@@ -3,6 +3,7 @@ package userctx
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -29,7 +30,7 @@ func UserMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				logger.Warn("User is not logged in", "request_id", requestID, "path", r.URL.Path)
 				w.WriteHeader(http.StatusUnauthorized)
 				if err := layouts.Base("Unauthorized", requestctx.UserRequestInfo{}, Unauthorized()).Render(r.Context(), w); err != nil {
-					logger.Error("Failed to render unauthorized page", "error", err, "request_id", requestID)
+					logger.Error(fmt.Errorf("failed to render unauthorized page: %w", err).Error(), "request_id", requestID)
 				}
 				return
 			}
@@ -59,8 +60,9 @@ func GetIdFromUserIdInDb(userId string, db *sql.DB, logger *slog.Logger) (string
 	userQuery := "SELECT id FROM users WHERE user_id = ?"
 	userRow := db.QueryRow(userQuery, userId)
 	if userRowErr := userRow.Scan(&userDbId); userRowErr != nil {
-		logger.Error("Failed to find user", "user_id", userId, "error", userRowErr)
-		return "", userRowErr
+		findUserErr := fmt.Errorf("failed to find user %q: %w", userId, userRowErr)
+		logger.Error(findUserErr.Error())
+		return "", findUserErr
 	}
 	return userDbId, nil
 }

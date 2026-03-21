@@ -2,6 +2,7 @@ package printfriendly
 
 import (
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -98,7 +99,7 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 
 	rows, err := db.Query(q)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query events by pulje for print: %w", err)
 	}
 	defer rows.Close()
 
@@ -150,7 +151,7 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 			&startStr,
 			&endStr,
 		); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan print-friendly event row: %w", err)
 		}
 
 		startTime, _ := parseDate(startStr)
@@ -173,7 +174,11 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 		block.Events = append(block.Events, ev)
 	}
 
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate print-friendly event rows: %w", err)
+	}
+
+	return out, nil
 }
 
 templ eventPulje(pulje models.Pulje, byPulje EventsPrintByPulje, eventImageDir *string) {
@@ -207,7 +212,7 @@ templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger) 
 	<h1>Print Friendly Page</h1>
 	{{ eventsByPulje, err := getEventsByPuljeForPrint(db) }}
 	if err != nil {
-		logger.Error("Failed to get events for print", "error", err)
+		logger.Error(fmt.Errorf("failed to get events for print: %w", err).Error())
 		<p>Error fetching events: { err.Error() }</p>
 		return
 	}

@@ -2,7 +2,7 @@ package checkIn
 
 import (
 	"database/sql"
-	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/Regncon/conorganizer/models"
@@ -21,12 +21,14 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 	}
 
 	if ticket == nil {
-		logger.Error("Ticket not found", "ticket_id", ticketId)
-		return errors.New("ticket not found")
+		notFoundErr := fmt.Errorf("ticket %d not found", ticketId)
+		logger.Error(notFoundErr.Error())
+		return notFoundErr
 	}
 	if ticket.TypeId == TicketTypeMiddag {
-		logger.Error("Cannot convert 'Middag' ticket to billettholder", "ticket_id", ticketId)
-		return errors.New("cannot convert 'Middag' ticket to billettholder")
+		unsupportedTicketErr := fmt.Errorf("cannot convert 'Middag' ticket to billettholder")
+		logger.Error(unsupportedTicketErr.Error())
+		return unsupportedTicketErr
 	}
 
 	billettholder := models.Billettholder{
@@ -48,8 +50,9 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
     `, billettholder.FirstName, billettholder.LastName, billettholder.TicketID).Scan(&exists)
 
 	if billettholderExistsErr != nil {
-		logger.Error("Failed to check if billettholder exists", "error", billettholderExistsErr, "ticket_id", ticketId)
-		return errors.New("failed to check if billettholder exists: " + billettholderExistsErr.Error())
+		checkExistsErr := fmt.Errorf("failed to check if billettholder exists for ticket %d: %w", ticketId, billettholderExistsErr)
+		logger.Error(checkExistsErr.Error())
+		return checkExistsErr
 	}
 
 	var billettholderID int64
@@ -69,17 +72,20 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			billettholder.OrderID,
 		)
 		if err != nil {
-			logger.Error("Failed to insert billettholder", "error", err, "ticket_id", ticketId)
-			return errors.New("failed to insert billettholder: " + err.Error())
+			insertErr := fmt.Errorf("failed to insert billettholder for ticket %d: %w", ticketId, err)
+			logger.Error(insertErr.Error())
+			return insertErr
 		}
 		billettholderID, err = result.LastInsertId()
 		if err != nil {
-			logger.Error("Failed to fetch last insert ID", "error", err, "ticket_id", ticketId)
-			return errors.New("failed to fetch last insert ID: " + err.Error())
+			insertIDErr := fmt.Errorf("failed to fetch last insert ID for ticket %d: %w", ticketId, err)
+			logger.Error(insertIDErr.Error())
+			return insertIDErr
 		}
 	} else if selectErr != nil {
-		logger.Error("Failed to select billettholder", "error", selectErr, "ticket_id", ticketId)
-		return errors.New("failed to select billettholder: " + selectErr.Error())
+		selectBillettholderErr := fmt.Errorf("failed to select billettholder for ticket %d: %w", ticketId, selectErr)
+		logger.Error(selectBillettholderErr.Error())
+		return selectBillettholderErr
 	}
 
 	emails := []models.BillettholderEmail{
@@ -110,8 +116,9 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			)
 		`, email.BillettholderID, email.Email).Scan(&exists)
 		if checkErr != nil {
-			logger.Error("Failed to check existing email", "error", checkErr, "billettholder_id", email.BillettholderID)
-			return errors.New("failed to check existing email: " + checkErr.Error())
+			checkEmailErr := fmt.Errorf("failed to check existing email for billettholder %d: %w", email.BillettholderID, checkErr)
+			logger.Error(checkEmailErr.Error())
+			return checkEmailErr
 		}
 		if exists {
 			logger.Debug("Email already exists, skipping", "billettholder_id", email.BillettholderID)
@@ -124,8 +131,9 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			) VALUES (?, ?, ?)
 		`, email.BillettholderID, email.Email, email.Kind)
 		if err != nil {
-			logger.Error("Failed to insert billettholder email", "error", err, "billettholder_id", email.BillettholderID)
-			return errors.New("failed to insert billettholder email: " + err.Error())
+			insertEmailErr := fmt.Errorf("failed to insert billettholder email for billettholder %d: %w", email.BillettholderID, err)
+			logger.Error(insertEmailErr.Error())
+			return insertEmailErr
 		}
 	}
 

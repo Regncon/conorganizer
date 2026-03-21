@@ -39,7 +39,7 @@ func getTicketsRouter(
 		// finn tickets fra user id?
 		tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(logger, userctx.GetUserRequestInfo(ctx).Email)
 		if ticketsErr != nil {
-			logger.Error("Unable to get tickets", "error", ticketsErr)
+			logger.Error(fmt.Errorf("unable to get tickets for user %q: %w", user.Id, ticketsErr).Error())
 			errorMessage = "Feil ved henting av billettar: " + ticketsErr.Error()
 		}
 
@@ -47,7 +47,7 @@ func getTicketsRouter(
 		for _, ticket := range tickets {
 			err := checkIn.ConvertTicketToBillettholder(ticket.ID, db, logger)
 			if err != nil {
-				logger.Error("Unable to convert tickets", "error", err)
+				logger.Error(fmt.Errorf("unable to convert ticket %d for user %q: %w", ticket.ID, user.Id, err).Error())
 				errorMessage = "Feil ved henting av billettar: " + err.Error()
 			}
 		}
@@ -65,14 +65,13 @@ func getTicketsRouter(
 		}
 		var singnalJson = fmt.Sprintf(`{"getTicketsErrorMessage": "%s", "getTicketsSuccessMessage": "%s"}`, errorMessage, successMessage)
 		if err = sse.PatchSignals([]byte(singnalJson)); err != nil {
-			logger.Error("Failed to patch signals", "error", err)
+			logger.Error(fmt.Errorf("failed to patch ticket page signals for user %q: %w", user.Id, err).Error())
 			http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
 			return
 		}
 
 		if errorMessage != "" {
-			logger.Error("Failed to associate user with billettholder", "error", err)
-			http.Error(w, "Failed to associate user with billettholder", http.StatusInternalServerError)
+			http.Error(w, errorMessage, http.StatusInternalServerError)
 			return
 		}
 

@@ -3,7 +3,6 @@ package checkIn
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -64,7 +63,7 @@ func (c *Cache) Get(logger *slog.Logger, searchTerm string) ([]CheckInTicket, er
 	// Fetch new data and update cache
 	tickets, err := fetchTicketsFromCheckIn(baseLogger)
 	if err != nil {
-		return nil, errors.New("failed to fetch tickets from CheckIn: " + err.Error())
+		return nil, fmt.Errorf("failed to fetch tickets from CheckIn: %w", err)
 	}
 
 	c.data = tickets
@@ -115,42 +114,47 @@ func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 	clientSecret := os.Getenv("CHECKIN_SECRET")
 	if clientID == "" || clientSecret == "" {
 		logger.Error("Missing CHECKIN_KEY or CHECKIN_SECRET")
-		return nil, errors.New("missing CHECKIN_KEY or CHECKIN_SECRET environment variables")
+		return nil, fmt.Errorf("missing CHECKIN_KEY or CHECKIN_SECRET environment variables")
 	}
 
 	reqBody, err := json.Marshal(map[string]string{
 		"query": query,
 	})
 	if err != nil {
-		logger.Error("Failed to marshal request body", "error", err)
-		return nil, errors.New("failed to marshal request body: " + err.Error())
+		marshalErr := fmt.Errorf("failed to marshal request body: %w", err)
+		logger.Error(marshalErr.Error())
+		return nil, marshalErr
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("https://app.checkin.no/graphql?client_id=%s&client_secret=%s", clientID, clientSecret), bytes.NewBuffer(reqBody))
 	if err != nil {
-		logger.Error("Failed to create request", "error", err)
-		return nil, errors.New("failed to create request: " + err.Error())
+		requestErr := fmt.Errorf("failed to create check-in request: %w", err)
+		logger.Error(requestErr.Error())
+		return nil, requestErr
 	}
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		logger.Error("Request failed", "error", err)
-		return nil, errors.New("request failed: " + err.Error())
+		doErr := fmt.Errorf("check-in request failed: %w", err)
+		logger.Error(doErr.Error())
+		return nil, doErr
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		logger.Error("Failed to read response body", "error", err)
-		return nil, errors.New("failed to read response body: " + err.Error())
+		readErr := fmt.Errorf("failed to read check-in response body: %w", err)
+		logger.Error(readErr.Error())
+		return nil, readErr
 	}
 
 	var result queryResult
 	if err := json.Unmarshal(body, &result); err != nil {
-		logger.Error("Failed to unmarshal response", "error", err)
-		return nil, errors.New("failed to unmarshal response: " + err.Error())
+		unmarshalErr := fmt.Errorf("failed to unmarshal check-in response: %w", err)
+		logger.Error(unmarshalErr.Error())
+		return nil, unmarshalErr
 	}
 
 	var tickets []CheckInTicket

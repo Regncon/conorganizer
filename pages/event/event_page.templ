@@ -30,7 +30,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 	{{ hasTickets := len(associatedTicketHolders) > 0 }}
 	{{ previousNextData, err := eventservice.GetPreviousNextByPuljeSimple(ctx, evnetsByPulje, logger, eventId, true, r, eventImageDir) }}
 	if err != nil {
-		logger.Error("Failed to get data", "error", err)
+		logger.Error(fmt.Errorf("failed to get event page data for event %s: %w", eventId, err).Error())
 		return
 	}
 	if event == nil {

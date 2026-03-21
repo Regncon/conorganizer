@@ -48,7 +48,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 		subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
 		logger.Debug("Publishing billettholder update", "session_id", sessionID, "subject", subj)
 		if err := nc.Publish(subj, nil); err != nil {
-			logger.Error("Failed to publish page update", "error", err, "session_id", sessionID)
+			logger.Error(fmt.Errorf("failed to publish billettholder page update for session %s: %w", sessionID, err).Error())
 		}
 	}
 
@@ -96,7 +96,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			}
 			defer func() {
 				if err := sub.Unsubscribe(); err != nil {
-					logger.Error("Failed to unsubscribe", "error", err)
+					logger.Error(fmt.Errorf("failed to unsubscribe billettholder admin stream: %w", err).Error())
 				}
 			}()
 
@@ -142,7 +142,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			}
 			defer func() {
 				if err := sub.Unsubscribe(); err != nil {
-					logger.Error("Failed to unsubscribe", "error", err)
+					logger.Error(fmt.Errorf("failed to unsubscribe add-billettholder stream: %w", err).Error())
 				}
 			}()
 

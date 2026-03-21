@@ -49,7 +49,7 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 		subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
 		logger.Debug("Publishing profile tickets update", "session_id", sessionID, "subject", subj)
 		if err := nc.Publish(subj, nil); err != nil {
-			logger.Error("Failed to publish page update", "error", err, "session_id", sessionID)
+			logger.Error(fmt.Errorf("failed to publish profile tickets page update for session %s: %w", sessionID, err).Error())
 		}
 	}
 
