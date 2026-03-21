@@ -8,32 +8,15 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-type statusCodeResponseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (w *statusCodeResponseWriter) WriteHeader(statusCode int) {
-	w.statusCode = statusCode
-	w.ResponseWriter.WriteHeader(statusCode)
-}
-
-func (w *statusCodeResponseWriter) Write(data []byte) (int, error) {
-	if w.statusCode == 0 {
-		w.statusCode = http.StatusOK
-	}
-	return w.ResponseWriter.Write(data)
-}
-
 func RequestLoggingMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			startTime := time.Now()
-			responseWriter := &statusCodeResponseWriter{ResponseWriter: w}
+			responseWriter := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 			next.ServeHTTP(responseWriter, r)
 
-			statusCode := responseWriter.statusCode
+			statusCode := responseWriter.Status()
 			if statusCode == 0 {
 				statusCode = http.StatusOK
 			}
