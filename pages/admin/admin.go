@@ -23,7 +23,8 @@ import (
 )
 
 func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
-	componentLogger := logger.With("component", "admin")
+	baseLogger := logger
+	logger = logger.With("component", "admin")
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -87,7 +88,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 	// newEvent.NewEventLayoutRoute(router, db, err)
 
 	router.Route("/admin", func(adminRouter chi.Router) {
-		adminLayoutRoute(adminRouter, db, logger, err)
+		adminLayoutRoute(adminRouter, db, baseLogger, err)
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 
@@ -104,7 +105,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 			}
 			defer func() {
 				if err := watcher.Stop(); err != nil {
-					componentLogger.Error("Failed to stop watcher", "error", err)
+					logger.Error("Failed to stop watcher", "error", err)
 				}
 			}()
 
@@ -165,7 +166,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 								http.Error(w, err.Error(), http.StatusInternalServerError)
 								return
 							}
-							c := approval.ApprovalPage(db, logger)
+							c := approval.ApprovalPage(db, baseLogger)
 							if err := sse.PatchElementTempl(c); err != nil {
 								_ = sse.ConsoleError(err)
 								return
@@ -195,11 +196,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							)
 							logger.Error(
 								"Invalid billettholder id for add first choice",
-								"invalidBillettholderIdErr",
+								"error",
 								invalidBillettholderIdErr,
-								"eventId",
+								"event_id",
 								store.EventId,
-								"puljeId",
+								"pulje_id",
 								store.PuljeId,
 							)
 							http.Error(w, invalidBillettholderIdErr.Error(), http.StatusNotFound)
@@ -211,18 +212,18 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							store.EventId,
 							store.PuljeId,
 							db,
-							logger,
+							baseLogger,
 						)
 						if addFirstChoiceErr != nil {
-							logger.Error("Failed to add player as first choice", "err", fmt.Errorf("add first choice: %w", addFirstChoiceErr))
+							logger.Error("Failed to add player as first choice", "error", fmt.Errorf("add first choice: %w", addFirstChoiceErr))
 							http.Error(w, addFirstChoiceErr.Error(), http.StatusInternalServerError)
 							return
 						}
 						logger.Info(
 							"Successfully added player as first choice",
-							"eventId", store.EventId,
-							"puljeId", store.PuljeId,
-							"billettholderId", store.BillettholderId,
+							"event_id", store.EventId,
+							"pulje_id", store.PuljeId,
+							"billettholder_id", store.BillettholderId,
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
 							logger.Error("Failed to broadcast add first choice update", "error", err)
@@ -251,11 +252,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							)
 							logger.Error(
 								"Invalid billettholder id for add GM",
-								"err",
+								"error",
 								invalidBillettholderIdErr,
-								"eventId",
+								"event_id",
 								store.EventId,
-								"puljeId",
+								"pulje_id",
 								store.PuljeId,
 							)
 							http.Error(w, invalidBillettholderIdErr.Error(), http.StatusNotFound)
@@ -269,7 +270,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							false,
 							true,
 							db,
-							logger,
+							baseLogger,
 						)
 						if updatePlayerStatusErr != nil {
 							logger.Error("Failed to add player as GM", "error", updatePlayerStatusErr)
@@ -278,11 +279,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 						logger.Info(
 							"Successfully Added player as GM",
-							"eventId", store.EventId,
-							"puljeId", store.PuljeId,
-							"billettholderId", store.BillettholderId,
-							"isPlayer", false,
-							"isGm", true,
+							"event_id", store.EventId,
+							"pulje_id", store.PuljeId,
+							"billettholder_id", store.BillettholderId,
+							"is_player", false,
+							"is_gm", true,
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
 							logger.Error("Failed to broadcast add GM update", "error", err)
@@ -312,7 +313,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							store.IsPlayer,
 							store.IsGm,
 							db,
-							logger,
+							baseLogger,
 						)
 						if updatePlayerStatusErr != nil {
 							http.Error(w, updatePlayerStatusErr.Error(), http.StatusInternalServerError)
@@ -320,11 +321,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 						logger.Info(
 							"Successfully updated player status",
-							"eventId", store.EventId,
-							"puljeId", store.PuljeId,
-							"billettholderId", store.BillettholderId,
-							"isPlayer", store.IsPlayer,
-							"isGm", store.IsGm,
+							"event_id", store.EventId,
+							"pulje_id", store.PuljeId,
+							"billettholder_id", store.BillettholderId,
+							"is_player", store.IsPlayer,
+							"is_gm", store.IsGm,
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
 							logger.Error("Failed to broadcast player status update", "error", err)
@@ -337,7 +338,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 			approvalRouter.Route("/edit", func(editEventRouter chi.Router) {
 				editEventRouter.Route("/{id}", func(newIdRoute chi.Router) {
-					edit_form.EditFormLayoutRoute(newIdRoute, db, eventImageDir, logger)
+					edit_form.EditFormLayoutRoute(newIdRoute, db, eventImageDir, baseLogger)
 				})
 				editEventRouter.Route("/api/{id}", func(newApiIdRouter chi.Router) {
 					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -363,7 +364,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 						defer func() {
 							if err := watcher.Stop(); err != nil {
-								componentLogger.Error("Failed to stop watcher", "error", err)
+								logger.Error("Failed to stop watcher", "error", err)
 							}
 						}()
 
@@ -381,7 +382,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 									return
 								}
 
-								c := edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, logger)
+								c := edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, baseLogger)
 								if err := sse.PatchElementTempl(c); err != nil {
 									_ = sse.ConsoleError(err)
 									return
@@ -391,7 +392,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					})
 				})
 			})
-			approval.ApprovalLayoutRoute(approvalRouter, db, logger, err)
+			approval.ApprovalLayoutRoute(approvalRouter, db, baseLogger, err)
 		})
 	})
 

@@ -9,8 +9,8 @@ import (
 )
 
 func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db *sql.DB, logger *slog.Logger) error {
-	componentLogger := logger.With("component", "checkin_convert")
-	componentLogger.Info("Converting ticket to billettholder", "ticket_id", ticketId)
+	logger = logger.With("component", "checkin_convert")
+	logger.Info("Converting ticket to billettholder", "ticket_id", ticketId)
 
 	var ticket *CheckInTicket
 	for _, t := range tickets {
@@ -21,11 +21,11 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 	}
 
 	if ticket == nil {
-		componentLogger.Error("Ticket not found", "ticket_id", ticketId)
+		logger.Error("Ticket not found", "ticket_id", ticketId)
 		return errors.New("ticket not found")
 	}
 	if ticket.TypeId == TicketTypeMiddag {
-		componentLogger.Error("Cannot convert 'Middag' ticket to billettholder", "ticket_id", ticketId)
+		logger.Error("Cannot convert 'Middag' ticket to billettholder", "ticket_id", ticketId)
 		return errors.New("cannot convert 'Middag' ticket to billettholder")
 	}
 
@@ -48,7 +48,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
     `, billettholder.FirstName, billettholder.LastName, billettholder.TicketID).Scan(&exists)
 
 	if billettholderExistsErr != nil {
-		componentLogger.Error("Failed to check if billettholder exists", "error", billettholderExistsErr, "ticket_id", ticketId)
+		logger.Error("Failed to check if billettholder exists", "error", billettholderExistsErr, "ticket_id", ticketId)
 		return errors.New("failed to check if billettholder exists: " + billettholderExistsErr.Error())
 	}
 
@@ -69,16 +69,16 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			billettholder.OrderID,
 		)
 		if err != nil {
-			componentLogger.Error("Failed to insert billettholder", "error", err, "ticket_id", ticketId)
+			logger.Error("Failed to insert billettholder", "error", err, "ticket_id", ticketId)
 			return errors.New("failed to insert billettholder: " + err.Error())
 		}
 		billettholderID, err = result.LastInsertId()
 		if err != nil {
-			componentLogger.Error("Failed to fetch last insert ID", "error", err, "ticket_id", ticketId)
+			logger.Error("Failed to fetch last insert ID", "error", err, "ticket_id", ticketId)
 			return errors.New("failed to fetch last insert ID: " + err.Error())
 		}
 	} else if selectErr != nil {
-		componentLogger.Error("Failed to select billettholder", "error", selectErr, "ticket_id", ticketId)
+		logger.Error("Failed to select billettholder", "error", selectErr, "ticket_id", ticketId)
 		return errors.New("failed to select billettholder: " + selectErr.Error())
 	}
 
@@ -110,11 +110,11 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			)
 		`, email.BillettholderID, email.Email).Scan(&exists)
 		if checkErr != nil {
-			componentLogger.Error("Failed to check existing email", "error", checkErr, "billettholder_id", email.BillettholderID)
+			logger.Error("Failed to check existing email", "error", checkErr, "billettholder_id", email.BillettholderID)
 			return errors.New("failed to check existing email: " + checkErr.Error())
 		}
 		if exists {
-			componentLogger.Debug("Email already exists, skipping", "billettholder_id", email.BillettholderID)
+			logger.Debug("Email already exists, skipping", "billettholder_id", email.BillettholderID)
 			continue
 		}
 
@@ -124,11 +124,11 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			) VALUES (?, ?, ?)
 		`, email.BillettholderID, email.Email, email.Kind)
 		if err != nil {
-			componentLogger.Error("Failed to insert billettholder email", "error", err, "billettholder_id", email.BillettholderID)
+			logger.Error("Failed to insert billettholder email", "error", err, "billettholder_id", email.BillettholderID)
 			return errors.New("failed to insert billettholder email: " + err.Error())
 		}
 	}
 
-	componentLogger.Info("Successfully inserted billettholder", "ticket_id", ticketId, "billettholder_id", billettholderID)
+	logger.Info("Successfully inserted billettholder", "ticket_id", ticketId, "billettholder_id", billettholderID)
 	return nil
 }

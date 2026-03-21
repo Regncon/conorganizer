@@ -23,7 +23,8 @@ import (
 )
 
 func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
-	componentLogger := logger.With("component", "event")
+	baseLogger := logger
+	logger = logger.With("component", "event")
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -84,7 +85,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	}
 
 	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
-	eventLayoutRoute(router, db, logger, eventImageDir, err)
+	eventLayoutRoute(router, db, baseLogger, eventImageDir, err)
 
 	router.Route("/event/api", func(eventApiRouter chi.Router) {
 		eventApiRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
@@ -107,7 +108,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						componentLogger.Error("Failed to stop watcher", "error", err)
+						logger.Error("Failed to stop watcher", "error", err)
 					}
 				}()
 
@@ -124,7 +125,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							return
 						}
 						isAdmin := authctx.GetAdminFromUserToken(ctx)
-						c := event_page(eventID, isAdmin, logger, db, eventImageDir, r)
+						c := event_page(eventID, isAdmin, baseLogger, db, eventImageDir, r)
 						if err := sse.PatchElementTempl(c); err != nil {
 							_ = sse.ConsoleError(err)
 							return
@@ -144,7 +145,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						signals := &Put{}
 
 						if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
-							componentLogger.Error("Failed to read signals", "error", readSignalErr)
+							logger.Error("Failed to read signals", "error", readSignalErr)
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
 						}
@@ -179,10 +180,10 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						}
 
 						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db, logger); err != nil {
-							componentLogger.Error("Failed to update interest", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							logger.Error("Failed to update interest", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 						}
 
-						componentLogger.Debug("Interest update request handled",
+						logger.Debug("Interest update request handled",
 							"event_id", eventId,
 							"pulje_id", signals.PuljeId,
 							"session_id", sessionId,

@@ -50,18 +50,19 @@ var ticketCache = &Cache{
 }
 
 func (c *Cache) Get(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {
-	componentLogger := logger.With("component", "checkin_cache")
+	baseLogger := logger
+	logger = logger.With("component", "checkin_cache")
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
 	// Check if cache is valid
 	if time.Since(c.lastFetch) < c.ttl {
-		componentLogger.Debug("Returning cached tickets")
+		logger.Debug("Returning cached tickets")
 		return filterTickets(c.data, searchTerm), nil
 	}
 
 	// Fetch new data and update cache
-	tickets, err := fetchTicketsFromCheckIn(logger)
+	tickets, err := fetchTicketsFromCheckIn(baseLogger)
 	if err != nil {
 		return nil, errors.New("failed to fetch tickets from CheckIn: " + err.Error())
 	}
@@ -93,7 +94,7 @@ func filterTickets(tickets []CheckInTicket, searchTerm string) []CheckInTicket {
 }
 
 func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
-	componentLogger := logger.With("component", "checkin")
+	logger = logger.With("component", "checkin")
 	query := `{
 		eventTickets(customer_id: 13446, id: 109715, onlyCompleted: true) {
 			id
@@ -113,7 +114,7 @@ func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 	clientID := os.Getenv("CHECKIN_KEY")
 	clientSecret := os.Getenv("CHECKIN_SECRET")
 	if clientID == "" || clientSecret == "" {
-		componentLogger.Error("Missing CHECKIN_KEY or CHECKIN_SECRET")
+		logger.Error("Missing CHECKIN_KEY or CHECKIN_SECRET")
 		return nil, errors.New("missing CHECKIN_KEY or CHECKIN_SECRET environment variables")
 	}
 
@@ -121,13 +122,13 @@ func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 		"query": query,
 	})
 	if err != nil {
-		componentLogger.Error("Failed to marshal request body", "error", err)
+		logger.Error("Failed to marshal request body", "error", err)
 		return nil, errors.New("failed to marshal request body: " + err.Error())
 	}
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("https://app.checkin.no/graphql?client_id=%s&client_secret=%s", clientID, clientSecret), bytes.NewBuffer(reqBody))
 	if err != nil {
-		componentLogger.Error("Failed to create request", "error", err)
+		logger.Error("Failed to create request", "error", err)
 		return nil, errors.New("failed to create request: " + err.Error())
 	}
 	req.Header.Set("Content-Type", "application/json")
@@ -135,20 +136,20 @@ func fetchTicketsFromCheckIn(logger *slog.Logger) ([]CheckInTicket, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		componentLogger.Error("Request failed", "error", err)
+		logger.Error("Request failed", "error", err)
 		return nil, errors.New("request failed: " + err.Error())
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		componentLogger.Error("Failed to read response body", "error", err)
+		logger.Error("Failed to read response body", "error", err)
 		return nil, errors.New("failed to read response body: " + err.Error())
 	}
 
 	var result queryResult
 	if err := json.Unmarshal(body, &result); err != nil {
-		componentLogger.Error("Failed to unmarshal response", "error", err)
+		logger.Error("Failed to unmarshal response", "error", err)
 		return nil, errors.New("failed to unmarshal response: " + err.Error())
 	}
 

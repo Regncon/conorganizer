@@ -14,7 +14,8 @@ import (
 )
 
 func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
-	componentLogger := logger.With("component", "my_profile")
+	baseLogger := logger
+	logger = logger.With("component", "my_profile")
 
 	router.Route("/my-profile", func(ticketRouter chi.Router) {
 		ticketRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +25,7 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 				userctx.GetUserRequestInfo(ctx),
 				myProfile(),
 			).Render(ctx, w); err != nil {
-				componentLogger.Error("Failed to render profile page", "error", err)
+				logger.Error("Failed to render profile page", "error", err)
 			}
 
 		})
@@ -32,17 +33,17 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 		ticketRouter.Get("/my-tickets", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
 
-			tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(logger, userctx.GetUserRequestInfo(ctx).Email)
+			tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(baseLogger, userctx.GetUserRequestInfo(ctx).Email)
 
 			if ticketsErr != nil {
-				componentLogger.Error("Failed to get tickets from check-in", "error", ticketsErr)
+				logger.Error("Failed to get tickets from check-in", "error", ticketsErr)
 
 				if err := layouts.Base(
 					"Ingen billetter",
 					userctx.GetUserRequestInfo(ctx),
 					noTickets(),
 				).Render(ctx, w); err != nil {
-					componentLogger.Error("Failed to render no tickets page", "error", err)
+					logger.Error("Failed to render no tickets page", "error", err)
 				}
 				return
 			}
@@ -53,7 +54,7 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 					userctx.GetUserRequestInfo(ctx),
 					noTickets(),
 				).Render(ctx, w); err != nil {
-					componentLogger.Error("Failed to render no tickets page", "error", err)
+					logger.Error("Failed to render no tickets page", "error", err)
 				}
 				return
 			}
@@ -63,7 +64,7 @@ func SetupMyProfileRoute(router chi.Router, store sessions.Store, ns *embeddedna
 				userctx.GetUserRequestInfo(ctx),
 				myTickets(),
 			).Render(ctx, w); err != nil {
-				componentLogger.Error("Failed to render tickets page", "error", err)
+				logger.Error("Failed to render tickets page", "error", err)
 			}
 
 		})
