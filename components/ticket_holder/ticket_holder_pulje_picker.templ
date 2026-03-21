@@ -29,7 +29,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
                 color: var(--color-primary);
             }
 
-            .btn--interest-picker {
+            .btn--secondary {
                 font-size: 12px;
                 border-radius: var(--border-radius-1x);
                 justify-content: center;
@@ -41,7 +41,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
             .pulje-wrapper {
                 grid-template-columns: 1fr 1fr 1fr 1fr;
 
-                .btn--interest-picker {
+                .btn--secondary {
                     padding-inline: var(--spacing-4x);
                     font-size: 16px;
                     min-height: 7.125rem;
@@ -55,7 +55,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 			<p class="label">Velg pulje for arrangementet</p>
 			<div class="pulje-wrapper">
 				<button
-					class="btn btn--interest-picker"
+					class="btn btn--secondary"
 					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeFredagKveld) }
 					data-on:click={ fmt.Sprintf("$puljeId = '%s'", models.PuljeFredagKveld) }
 					if isPuljeDisabled(puljer, models.PuljeFredagKveld) {
@@ -65,7 +65,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 					Fredag kveld
 				</button>
 				<button
-					class="btn btn--interest-picker"
+					class="btn btn--secondary"
 					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeLordagMorgen) }
 					data-on:click={ fmt.Sprintf("$puljeId = '%s'", models.PuljeLordagMorgen) }
 					if isPuljeDisabled(puljer, models.PuljeLordagMorgen) {
@@ -75,7 +75,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 					Lørdag morgen
 				</button>
 				<button
-					class="btn btn--interest-picker"
+					class="btn btn--secondary"
 					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeLordagKveld) }
 					data-on:click={ fmt.Sprintf("$puljeId = '%s'", models.PuljeLordagKveld) }
 					if isPuljeDisabled(puljer, models.PuljeLordagKveld) {
@@ -85,7 +85,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 					Lørdag kveld
 				</button>
 				<button
-					class="btn btn--interest-picker"
+					class="btn btn--secondary"
 					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeSondagMorgen) }
 					data-on:click={ fmt.Sprintf("$puljeId = '%s'", models.PuljeSondagMorgen) }
 					if isPuljeDisabled(puljer, models.PuljeSondagMorgen) {

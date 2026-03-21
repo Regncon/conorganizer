@@ -99,8 +99,9 @@ templ TicketHolderInterestPicker(
 			flex-direction: column;
 			gap: var(--spacing-2x);
 
-			.btn--interest-picker {
+			.btn--secondary {
 				min-height: var(--btn-height-cta);
+                place-content: start;
 			}
 
 			.selected {
@@ -115,28 +116,28 @@ templ TicketHolderInterestPicker(
 		data-signals__ifmissing={ templ.JSONString(interestPickerSignals{Interesser: userInterestsObject}) }
 	>
 		<button
-			class="btn btn--interest-picker"
+			class="btn btn--secondary"
 			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelHigh) }
 			data-on:click={ updateInteresseAction(eventId, models.InterestLevelHigh, "high") }
 		>
 			<span class="emoji">🤩</span> Veldig interessert
 		</button>
 		<button
-			class="btn btn--interest-picker"
+			class="btn btn--secondary"
 			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelMedium) }
 			data-on:click={ updateInteresseAction(eventId, models.InterestLevelMedium, "medium") }
 		>
 			<span class="emoji">🙂</span> Interessert
 		</button>
 		<button
-			class="btn btn--interest-picker"
+			class="btn btn--secondary"
 			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelLow) }
 			data-on:click={ updateInteresseAction(eventId, models.InterestLevelLow, "low") }
 		>
 			<span class="emoji">🤨</span> Litt interessert
 		</button>
 		<button
-			class="btn btn--interest-picker"
+			class="btn btn--secondary"
 			data-class:selected={ clearSelectedInteresseExpression() }
 			data-on:click={ updateInteresseAction(eventId, "", "none") }
 		>
