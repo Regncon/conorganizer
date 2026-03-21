@@ -2,6 +2,7 @@ package authctx
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -26,13 +27,13 @@ const (
 
 func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	ProjectID := os.Getenv("DESCOPE_PROJECT_ID")
-	authLogger := logger.With("component", "auth")
+	logger = logger.With("component", "auth")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requestID := middleware.GetReqID(r.Context())
 			descopeClient, descopeClientError := client.NewWithConfig(&client.Config{ProjectID: ProjectID})
 			if descopeClientError != nil {
-				authLogger.Error("Failed to create Descope client", "project_id", ProjectID, "error", descopeClientError, "request_id", requestID)
+				logger.Error(fmt.Errorf("failed to create Descope client for project %q: %w", ProjectID, descopeClientError).Error(), "request_id", requestID)
 				ctx := context.WithValue(r.Context(), ctxSessionError, descopeClientError)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
@@ -64,12 +65,12 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 							// SameSite: http.SameSiteLaxMode,
 						})
 
-						authLogger.Debug("Successfully validated and refreshed session", "request_id", requestID)
+						logger.Debug("Successfully validated and refreshed session", "request_id", requestID)
 					}
 				}
 
 				if validateTokenError != nil {
-					authLogger.Error("Failed to validate and refresh session", "error", validateTokenError, "request_id", requestID)
+					logger.Warn(fmt.Errorf("failed to validate and refresh session: %w", validateTokenError).Error(), "request_id", requestID)
 				}
 
 			}

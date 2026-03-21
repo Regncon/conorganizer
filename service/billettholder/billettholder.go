@@ -2,13 +2,13 @@ package billettholderService
 
 import (
 	"database/sql"
-	"log/slog"
+	"fmt"
 	"sort"
 
 	"github.com/Regncon/conorganizer/models"
 )
 
-func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.Billettholder, error) {
+func GetBilettholdere(userId string, db *sql.DB) ([]models.Billettholder, error) {
 	var rows *sql.Rows
 	var err error
 	if userId == "" {
@@ -41,8 +41,7 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 	}
 
 	if err != nil {
-		logger.Error("Failed to query billettholdere", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to query billettholdere: %w", err)
 	}
 	defer rows.Close()
 
@@ -65,8 +64,7 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 			&b.IsOver18, &b.OrderID, &b.TicketID, &b.InsertedTime,
 			&er.id, &er.email, &er.kind, &er.insertedTime,
 		); err != nil {
-			logger.Error("Failed to scan row", "error", err)
-			return nil, err
+			return nil, fmt.Errorf("failed to scan billettholder row: %w", err)
 		}
 
 		holder, ok := byID[b.ID]
@@ -98,8 +96,7 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 		}
 	}
 	if err := rows.Err(); err != nil {
-		logger.Error("Row iteration error", "error", err)
-		return nil, err
+		return nil, fmt.Errorf("row iteration error for billettholdere: %w", err)
 	}
 
 	sort.Ints(order) // or remove this to keep INSERT order from the query
@@ -110,14 +107,13 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 	return out, nil
 }
 
-func GetBillettholderByUserId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
+func GetBillettholderByUserId(db *sql.DB, userID string) (int, error) {
 	var billettholderId int
 	row := db.QueryRow(`
         SELECT id FROM billettholdere WHERE user_id = $1 `, userID)
 
 	if err := row.Scan(&billettholderId); err != nil {
-		logger.Error("Failed to scan row", "error", err)
-		return 0, err
+		return 0, fmt.Errorf("failed to scan billettholder row for user %q: %w", userID, err)
 	}
 
 	return billettholderId, nil

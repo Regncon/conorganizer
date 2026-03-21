@@ -28,16 +28,28 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 	{{
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
 	isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
-	puljerForEvent, eventErr := eventservice.GetPujerForEvent(eventId, db, logger)
-	previousNextData, err := eventservice.GetPreviousNextInnsendtGodkjent(ctx, db, logger, eventId, eventImageDir)
+	puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db)
+	previousNextData, previousNextErr := eventservice.GetPreviousNextInnsendtGodkjent(ctx, db, eventId, eventImageDir)
 	}}
-	if err != nil {
-		logger.Error("Failed to get previous/next data", "error", err)
+	if previousNextErr != nil {
+		{{ logger.Error(previousNextErr.Error(), "event_id", eventId) }}
+		<p>Error fetching event navigation: { previousNextErr.Error() }</p>
 		return
 	}
-	{{ eventData, eventErr := eventservice.GetEventById(eventId, db, logger) }}
+	if puljerErr != nil {
+		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
+		<p>Error fetching event puljer: { puljerErr.Error() }</p>
+		return
+	}
+	{{ eventData, eventErr := eventservice.GetEventById(eventId, db) }}
 	if eventErr != nil {
+		{{ logger.Error(eventErr.Error(), "event_id", eventId) }}
 		<p>Error fetching events: { eventErr.Error() }</p>
+		return
+	}
+	if eventData == nil {
+		{{ logger.Warn("Event not found for approval edit page", "event_id", eventId) }}
+		<p>Event not found</p>
 		return
 	}
 	@components.Breadcrumbs([]components.BreadcrumbPath{

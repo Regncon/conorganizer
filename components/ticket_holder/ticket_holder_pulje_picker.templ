@@ -9,7 +9,12 @@ import (
 )
 
 templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger *slog.Logger) {
-	{{ puljer, _ := GetPuljerFromEventId(eventId, db, logger) }}
+	{{ puljer, puljerErr := GetPuljerFromEventId(eventId, db) }}
+	if puljerErr != nil {
+		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
+		<p>Feil ved henting av puljer: { puljerErr.Error() }</p>
+		return
+	}
 	<style>
         .pulje-picker-container {
             padding-bottom: var(--responsive-pane-padding);

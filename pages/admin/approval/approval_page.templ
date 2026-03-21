@@ -2,6 +2,7 @@ package approval
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 	"log/slog"
@@ -32,7 +33,7 @@ func getEvents(db *sql.DB, logger *slog.Logger) []models.EventCardModel {
 	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE status IN ('Innsendt', 'Godkjent') ORDER BY inserted_time DESC"
 	rows, eventsQueryErr := db.Query(eventsQuery)
 	if eventsQueryErr != nil {
-		logger.Error("Failed to query events", "error", eventsQueryErr)
+		logger.Error(fmt.Errorf("failed to query approval events: %w", eventsQueryErr).Error())
 		return events
 	}
 	defer rows.Close()
@@ -40,7 +41,7 @@ func getEvents(db *sql.DB, logger *slog.Logger) []models.EventCardModel {
 	for rows.Next() {
 		var event models.EventCardModel
 		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
-			logger.Error("Failed to scan event row", "error", scanErr)
+			logger.Error(fmt.Errorf("failed to scan approval event row: %w", scanErr).Error())
 			return events
 		}
 		events = append(events, event)

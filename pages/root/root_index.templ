@@ -2,23 +2,25 @@ package root
 
 import (
 	"database/sql"
+	"fmt"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
-	"github.com/Regncon/conorganizer/service/userctx"
-
-	"github.com/Regncon/conorganizer/layouts"
 )
 
 func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(r.Context())
-		layouts.Base(
+		if err := layouts.Base(
 			"Regncon program",
 			userInfo,
 			rootIndex(db, userInfo.IsAdmin, eventImageDir),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render root page: %w", err).Error(), "user_id", userInfo.Id)
+		}
 	})
 }
 

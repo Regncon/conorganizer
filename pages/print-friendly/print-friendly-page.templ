@@ -2,6 +2,7 @@ package printfriendly
 
 import (
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -17,15 +18,18 @@ import (
 // func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
 // func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
 func PrintFriendlyRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
+	logger = logger.With("component", "print_friendly")
 
 	router.Get("/print", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(r.Context())
-		layouts.Base(
+		if err := layouts.Base(
 			"Regncon program uttriftsvennlig",
 			userInfo,
 			printFriendlyPage(db, eventImageDir, logger),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render print-friendly page: %w", err).Error(), "user_id", userInfo.Id)
+		}
 	})
 	return nil
 }
@@ -98,7 +102,7 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 
 	rows, err := db.Query(q)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("query events by pulje for print: %w", err)
 	}
 	defer rows.Close()
 
@@ -150,7 +154,7 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 			&startStr,
 			&endStr,
 		); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("scan print-friendly event row: %w", err)
 		}
 
 		startTime, _ := parseDate(startStr)
@@ -173,7 +177,11 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 		block.Events = append(block.Events, ev)
 	}
 
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate print-friendly event rows: %w", err)
+	}
+
+	return out, nil
 }
 
 templ eventPulje(pulje models.Pulje, byPulje EventsPrintByPulje, eventImageDir *string) {
@@ -207,7 +215,7 @@ templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger) 
 	<h1>Print Friendly Page</h1>
 	{{ eventsByPulje, err := getEventsByPuljeForPrint(db) }}
 	if err != nil {
-		logger.Error("Failed to get events for print", "error", err)
+		{{ logger.Error(fmt.Errorf("failed to get events for print: %w", err).Error()) }}
 		<p>Error fetching events: { err.Error() }</p>
 		return
 	}

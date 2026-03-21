@@ -34,8 +34,13 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			color: var(--color-error);
 		}
 	</style>
-	{{
-	associatedTicketHolders, err := GetTicketHolders(userInfo, db, logger)
+	{{ associatedTicketHolders, err := GetTicketHolders(userInfo, db) }}
+	if err != nil {
+		{{ logger.Error(err.Error(), "user_id", userInfo.Id) }}
+		<div class="ticket-holder-container">
+			<p>Feil ved henting av billettholdere: { err.Error() }</p>
+		</div>
+		return
 
 	testUser := []BillettHolder{
 		BillettHolder{Id: 200, Name: "Ola Nordmann", Email: "ola.nordmann@example.com", Color: "hsl(from #FF5733 h s l / 0.5)"},

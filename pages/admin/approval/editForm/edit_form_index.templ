@@ -12,6 +12,7 @@ import (
 )
 
 func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	logger = logger.With("component", "approval_edit_form")
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 
@@ -22,11 +23,14 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 		}
 
 		var ctx = r.Context()
-		layouts.Base(
+		userInfo := userctx.GetUserRequestInfo(ctx)
+		if err := layouts.Base(
 			title,
-			userctx.GetUserRequestInfo(ctx),
+			userInfo,
 			editFormIndex(eventId, ctx, db, eventImageDir, logger),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render approval edit form page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
+		}
 	})
 }
 

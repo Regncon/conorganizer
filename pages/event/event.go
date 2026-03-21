@@ -23,7 +23,7 @@ import (
 )
 
 func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
-	componentLogger := logger.With("component", "event")
+	logger = logger.With("component", "event")
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -107,7 +107,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						componentLogger.Error("Failed to stop watcher", "error", err)
+						logger.Error(fmt.Errorf("failed to stop event watcher: %w", err).Error())
 					}
 				}()
 
@@ -144,7 +144,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						signals := &Put{}
 
 						if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
-							componentLogger.Error("Failed to read signals", "error", readSignalErr)
+							logger.Error(fmt.Errorf("failed to read event interest signals: %w", readSignalErr).Error())
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
 						}
@@ -152,7 +152,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						userInfo := userctx.GetUserRequestInfo(ctx)
 						// billettholderId, err := strconv.Atoi(chi.URLParam(r, "billettholder_id"))
 						// if err != nil {
-						// 	logger.Error("Failed to convert billettholderId to int", "error", err)
+						// 	logger.Error(fmt.Errorf("failed to convert billettholderId to int: %w", err).Error())
 						// 	http.Error(w, "Failed to convert billettholderId to int", http.StatusBadRequest)
 						// 	return
 						// }
@@ -171,21 +171,20 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						case "none":
 							interestLevel.None = "none"
 						}
-						sessionId, _, mvcErr := mvcSession(w, r)
+						_, _, mvcErr := mvcSession(w, r)
 
 						if mvcErr != nil {
 							http.Error(w, mvcErr.Error(), http.StatusInternalServerError)
 							return
 						}
 
-						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db, logger); err != nil {
-							componentLogger.Error("Failed to update interest", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db); err != nil {
+							logger.Error(fmt.Errorf("failed to update interest for event %s, pulje %s, billettholder %d: %w", eventId, signals.PuljeId, signals.BillettHolderId, err).Error())
 						}
 
-						componentLogger.Debug("Interest update request handled",
+						logger.Debug("Interest update request handled",
 							"event_id", eventId,
 							"pulje_id", signals.PuljeId,
-							"session_id", sessionId,
 							"user_id", userInfo.Id,
 							"billettholder_id", signals.BillettHolderId,
 						)
@@ -258,13 +257,11 @@ func updateInterest(
 	interest InterestLevels,
 	puljeId string,
 	db *sql.DB,
-	logger *slog.Logger,
 ) error {
 	puljeQuery := `SELECT EXISTS (SELECT * FROM event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_active = 1 AND is_published = 1)`
 	_, puljerErr := db.Query(puljeQuery, eventID, puljeId)
 	if puljerErr != nil {
-		logger.Error("failed to check if pulje exists", "error", puljerErr)
-		return puljerErr
+		return fmt.Errorf("failed to check if pulje %s exists for event %s: %w", puljeId, eventID, puljerErr)
 	}
 
 	userHasAccessToBillettHolderIdQuery := `
@@ -276,27 +273,22 @@ func updateInterest(
 	_, userHasAccessErr := db.Query(userHasAccessToBillettHolderIdQuery, billettholderId, userId)
 
 	if userHasAccessErr != nil {
-		logger.Error("failed to check if user has access to billettholder", "error", userHasAccessErr)
-		return userHasAccessErr
+		return fmt.Errorf("failed to check if user %s has access to billettholder %d: %w", userId, billettholderId, userHasAccessErr)
 	}
 
 	if interest.None != "" {
 		dropQuery := `DELETE FROM interests WHERE event_id = $1 AND pulje_id = $2 AND billettholder_id = $3`
 		dropRows, dropErr := db.Exec(dropQuery, eventID, puljeId, billettholderId)
 		if dropErr != nil {
-			logger.Error("failed to drop interest", "error", dropErr)
-			return dropErr
+			return fmt.Errorf("failed to drop interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, dropErr)
 		}
 
 		_, dropAffectedErr := dropRows.RowsAffected()
 		if dropAffectedErr != nil {
-			logger.Error("failed to get affected rows", "error", dropAffectedErr)
-			return dropAffectedErr
+			return fmt.Errorf("failed to get affected rows when dropping interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, dropAffectedErr)
 		}
 
-		logger.Info("Interest dropped successfully")
-
-		return fmt.Errorf("interest dropped successfully")
+		return nil
 	}
 
 	updateQuery := `
@@ -305,24 +297,19 @@ func updateInterest(
                 ON CONFLICT(billettholder_id, pulje_id, event_id) DO UPDATE SET
                     interest_level = excluded.interest_level
             `
-	updateRows, updateAffectedErr := db.Exec(updateQuery, billettholderId, eventID, puljeId, convertInterestLevelToDbInterestLevel(interest))
-	if updateAffectedErr != nil {
-		logger.Error("failed to update interest", "error", updateAffectedErr)
-		return updateAffectedErr
+	updateRows, updateErr := db.Exec(updateQuery, billettholderId, eventID, puljeId, convertInterestLevelToDbInterestLevel(interest))
+	if updateErr != nil {
+		return fmt.Errorf("failed to update interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, updateErr)
 	}
 
 	updateAffected, updateAffectedErr := updateRows.RowsAffected()
 	if updateAffectedErr != nil {
-		logger.Error("failed to get affected rows", "error", updateAffectedErr)
-		return updateAffectedErr
+		return fmt.Errorf("failed to get affected rows when updating interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, updateAffectedErr)
 	}
 
 	if updateAffected == 0 {
-		logger.Info("no rows were updated")
 		return nil
 	}
-
-	logger.Info("Interest updated successfully")
 
 	return nil
 }
