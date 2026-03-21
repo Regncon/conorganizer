@@ -21,7 +21,6 @@ import (
 )
 
 func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger) error {
-	baseLogger := logger
 	logger = logger.With("component", "profile_tickets")
 
 	nc, err := ns.Client()
@@ -47,9 +46,9 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 
 	notifyUpdate := func(sessionID string) {
 		subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
-		logger.Debug("Publishing profile tickets update", "session_id", sessionID, "subject", subj)
+		logger.Debug("Publishing profile tickets update")
 		if err := nc.Publish(subj, nil); err != nil {
-			logger.Error("Failed to publish page update", "error", err, "session_id", sessionID)
+			logger.Error(fmt.Errorf("failed to publish profile tickets page update for session %s: %w", sessionID, err).Error())
 		}
 	}
 
@@ -81,11 +80,13 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 			var ctx = r.Context()
 			var user = userctx.GetUserRequestInfo(ctx)
 
-			layouts.Base(
+			if err := layouts.Base(
 				"Mine Billetter",
 				user,
-				profileTicketsIndex(user.Id, db, baseLogger),
-			).Render(ctx, w)
+				profileTicketsIndex(user.Id, db, logger),
+			).Render(ctx, w); err != nil {
+				logger.Error(fmt.Errorf("failed to render profile tickets page: %w", err).Error(), "user_id", user.Id)
+			}
 		})
 		profileRouter.Route("/api", func(billettholderAdminRouter chi.Router) {
 			billettholderAdminRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +108,7 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 
 				var user = userctx.GetUserRequestInfo(ctx)
 				// send the first render immediately
-				if err := sse.PatchElementTempl(profileTicketsPage(user.Id, db, baseLogger)); err != nil {
+				if err := sse.PatchElementTempl(profileTicketsPage(user.Id, db, logger)); err != nil {
 					_ = sse.ConsoleError(err)
 					return
 				}
@@ -116,15 +117,15 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 					if _, err := sub.NextMsgWithContext(ctx); err != nil {
 						return // context cancelled or sub closed
 					}
-					if err := sse.PatchElementTempl(profileTicketsPage(user.Id, db, baseLogger)); err != nil {
+					if err := sse.PatchElementTempl(profileTicketsPage(user.Id, db, logger)); err != nil {
 						_ = sse.ConsoleError(err)
 						return
 					}
 				}
 			})
-			addEmailToBilettholderRoute(billettholderAdminRouter, db, baseLogger, store, notifyUpdate)
-			deleteEmailFromBillettholderRoute(billettholderAdminRouter, db, baseLogger, store, notifyUpdate)
-			getTicketsRouter(billettholderAdminRouter, db, baseLogger, store, notifyUpdate)
+			addEmailToBilettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
+			deleteEmailFromBillettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
+			getTicketsRouter(billettholderAdminRouter, db, logger, store, notifyUpdate)
 		})
 	})
 	return nil

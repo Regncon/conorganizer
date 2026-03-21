@@ -2,12 +2,12 @@ package eventservice
 
 import (
 	"database/sql"
-	"log/slog"
+	"fmt"
 
 	"github.com/Regncon/conorganizer/models"
 )
 
-func GetEventById(eventID string, db *sql.DB, logger *slog.Logger) (*models.Event, error) {
+func GetEventById(eventID string, db *sql.DB) (*models.Event, error) {
 	query := `
             SELECT
                 id,
@@ -58,8 +58,7 @@ func GetEventById(eventID string, db *sql.DB, logger *slog.Logger) (*models.Even
 		if err == sql.ErrNoRows {
 			return nil, nil // No event found
 		}
-		logger.With("component", "event_service").Error("Failed to scan event row", "event_id", eventID, "error", err)
-		return nil, err
+		return nil, fmt.Errorf("failed to scan event row for event %q: %w", eventID, err)
 	}
 	return &event, nil
 }
@@ -67,7 +66,7 @@ func GetEventById(eventID string, db *sql.DB, logger *slog.Logger) (*models.Even
 func GetPujerForEvent(
 	eventID string,
 	db *sql.DB,
-	logger *slog.Logger) ([]models.PuljeRow, error) {
+) ([]models.PuljeRow, error) {
 	/*
 			   CREATE TABLE
 			       event_puljer (
@@ -104,22 +103,19 @@ func GetPujerForEvent(
 
 	rows, err := db.Query(query, eventID)
 	if err != nil {
-		logger.With("component", "event_service").Error("Error querying puljer for event", "event_id", eventID, "error", err)
-		return nil, err
+		return nil, fmt.Errorf("error querying puljer for event %q: %w", eventID, err)
 	}
 	defer rows.Close()
 	var puljer []models.PuljeRow
 	for rows.Next() {
 		var pulje models.PuljeRow
 		if err := rows.Scan(&pulje.ID, &pulje.Name, &pulje.StartTime, &pulje.EndTime); err != nil {
-			logger.With("component", "event_service").Error("Error scanning pulje row", "event_id", eventID, "error", err)
-			return nil, err
+			return nil, fmt.Errorf("error scanning pulje row for event %q: %w", eventID, err)
 		}
 		puljer = append(puljer, pulje)
 	}
 	if err := rows.Err(); err != nil {
-		logger.With("component", "event_service").Error("Error iterating over pulje rows", "event_id", eventID, "error", err)
-		return nil, err
+		return nil, fmt.Errorf("error iterating over pulje rows for event %q: %w", eventID, err)
 	}
 	return puljer, nil
 }
@@ -162,12 +158,12 @@ func GetEventByID(id string, db *sql.DB) (*models.Event, error) {
 		&event.BeginnerFriendly,
 		&event.CanBeRunInEnglish,
 		&event.Status,
-	); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, nil // No event found
+		); err != nil {
+			if err == sql.ErrNoRows {
+				return nil, nil // No event found
+			}
+			return nil, fmt.Errorf("failed to scan event row for event %q: %w", id, err)
 		}
-		return nil, err
-	}
 
 	return &event, nil
 }

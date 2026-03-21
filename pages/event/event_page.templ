@@ -23,22 +23,38 @@ templ event_page(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, 
 templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
 	{{ userInfo := userctx.GetUserRequestInfo(r.Context()) }}
 	{{ puljeId := r.URL.Query().Get("pulje") }}
-	{{ event, err := eventservice.GetEventById(eventId, db, logger) }}
-	{{ puljerForEvent, err := eventservice.GetPujerForEvent(eventId, db, logger) }}
-	{{ evnetsByPulje, err := root.GetEventsByPulje(db) }}
-	{{ associatedTicketHolders, err := ticketholder.GetTicketHolders(userInfo, db, logger) }}
-	{{ hasTickets := len(associatedTicketHolders) > 0 }}
-	{{ previousNextData, err := eventservice.GetPreviousNextByPuljeSimple(ctx, evnetsByPulje, logger, eventId, true, r, eventImageDir) }}
-	if err != nil {
-		logger.Error("Failed to get data", "error", err)
+	{{ event, eventErr := eventservice.GetEventById(eventId, db) }}
+	if eventErr != nil {
+		{{ logger.Error(eventErr.Error(), "event_id", eventId) }}
+		<p>Error fetching event: { eventErr.Error() }</p>
 		return
 	}
 	if event == nil {
 		<p>Event not found</p>
 		return
 	}
-	if err != nil || event == nil {
-		<p>Error fetching event: { err.Error() }</p>
+	{{ puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db) }}
+	if puljerErr != nil {
+		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
+		<p>Error fetching event puljer: { puljerErr.Error() }</p>
+		return
+	}
+	{{ evnetsByPulje, eventsByPuljeErr := root.GetEventsByPulje(db) }}
+	if eventsByPuljeErr != nil {
+		{{ logger.Error(fmt.Errorf("failed to load event navigation data for event %s: %w", eventId, eventsByPuljeErr).Error()) }}
+		<p>Error fetching event navigation: { eventsByPuljeErr.Error() }</p>
+		return
+	}
+	{{ associatedTicketHolders, ticketHoldersErr := ticketholder.GetTicketHolders(userInfo, db) }}
+	if ticketHoldersErr != nil {
+		{{ logger.Error(ticketHoldersErr.Error(), "event_id", eventId, "user_id", userInfo.Id) }}
+	}
+	{{ hasTickets := len(associatedTicketHolders) > 0 }}
+	{{ previousNextData, previousNextErr := eventservice.GetPreviousNextByPuljeSimple(ctx, evnetsByPulje, eventId, true, r, eventImageDir) }}
+	if previousNextErr != nil {
+		{{ logger.Error(previousNextErr.Error(), "event_id", eventId) }}
+		<p>Error fetching event navigation: { previousNextErr.Error() }</p>
+		return
 	}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},

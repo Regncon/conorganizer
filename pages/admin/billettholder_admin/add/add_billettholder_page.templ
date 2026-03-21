@@ -90,8 +90,14 @@ func isBillettholder(ticketID int, bilettholdere []models.Billettholder) bool {
 */
 
 templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ tickets, err := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
-	{{ billettholdere, err := billettholderService.GetBilettholdere("", db, logger) }}
+	{{ tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
+	if ticketsErr != nil {
+		{{ logger.Error(ticketsErr.Error(), "search_term", searchTerm) }}
+	}
+	{{ billettholdere, billettholdereErr := billettholderService.GetBilettholdere("", db) }}
+	if billettholdereErr != nil {
+		{{ logger.Error(billettholdereErr.Error()) }}
+	}
 	<div id="add-billettholder-admin-container">
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
@@ -103,7 +109,7 @@ templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 			<h1 class="page-heading">Billetter</h1>
 			<p class="page-heading-helptext">Her kan du legge til en ny billettholder</p>
 			<div class="add-billettholder-admin-grid">
-				if err != nil {
+				if ticketsErr != nil || billettholdereErr != nil {
 					<p>Failed to load tickets:</p>
 				} else {
 					for _, ticket := range tickets {

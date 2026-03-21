@@ -69,7 +69,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 	}
 
 	router.Route("/my-events", func(myeventsRouter chi.Router) {
-		myeventsLayoutRoute(myeventsRouter, db, eventImageDir, baseLogger)
+		myeventsLayoutRoute(myeventsRouter, db, eventImageDir, logger)
 		myeventsRouter.Route("/api", func(apiRouter chi.Router) {
 			apiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				sessionID, mvc, err := mvcSession(w, r)
@@ -88,7 +88,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						logger.Error("Failed to stop watcher", "error", err)
+						logger.Error(fmt.Errorf("failed to stop my-events watcher: %w", err).Error())
 					}
 				}()
 
@@ -106,7 +106,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 							return
 						}
 
-						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, eventImageDir, baseLogger)
+						c := myEventsPage(userctx.GetUserRequestInfo(r.Context()).Id, db, eventImageDir, logger)
 						if err := sse.PatchElementTempl(c); err != nil {
 							_ = sse.ConsoleError(err)
 							return
@@ -140,7 +140,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						}
 						defer func() {
 							if err := watcher.Stop(); err != nil {
-								logger.Error("Failed to stop watcher", "error", err)
+								logger.Error(fmt.Errorf("failed to stop new-event watcher: %w", err).Error())
 							}
 						}()
 
@@ -160,7 +160,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 								userId := userctx.GetUserRequestInfo(r.Context()).Id
 
-								c := newEvent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, baseLogger)
+								c := newEvent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, logger)
 								if err := sse.PatchElementTempl(c); err != nil {
 									_ = sse.ConsoleError(err)
 									return
@@ -169,7 +169,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						}
 					})
 					if err := formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, baseLogger); err != nil {
-						logger.Error("Failed to set up inline validation", "error", err)
+						logger.Error(fmt.Errorf("failed to set up inline validation: %w", err).Error())
 					}
 
 					// refactor to use "update/status etc"
@@ -235,10 +235,10 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 					})
 
 					newApiIdRouter.Route("/upload", func(uploadRouter chi.Router) {
-						eventimgupload.EventImageFormSubmission(uploadRouter, db, eventImageDir, baseLogger)
+						eventimgupload.EventImageFormSubmission(uploadRouter, db, eventImageDir, logger)
 					})
 					newApiIdRouter.Route("/upload-cropped", func(uploadCroppedRouter chi.Router) {
-						eventimgupload.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, baseLogger)
+						eventimgupload.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, logger)
 					})
 					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
 						formsubmission.SubmitFormRoute(newApiIdRouter, db, kv, baseLogger)
@@ -254,10 +254,10 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 		myeventsRouter.Route("/new", func(newRouter chi.Router) {
 			newRouter.Route("/{id}", func(newIdRoute chi.Router) {
-				newEvent.NewEventLayoutRoute(newIdRoute, db, eventImageDir, baseLogger)
+				newEvent.NewEventLayoutRoute(newIdRoute, db, eventImageDir, logger)
 
 				newIdRoute.Route("/image", func(imageRouter chi.Router) {
-					eventimgupload.EventImageRoute(imageRouter, db, baseLogger)
+					eventimgupload.EventImageRoute(imageRouter, db, logger)
 				})
 			})
 		})
@@ -295,7 +295,6 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 }
 
 func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
-	baseLogger := logger
 	logger = logger.With("component", "my_events")
 	logger.Info("Creating new event form submission")
 	userInfo := userctx.GetUserRequestInfo(r.Context())
@@ -304,9 +303,9 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 		return
 	}
 
-	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db, baseLogger)
+	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db)
 	if insertError != nil {
-		logger.Error("Failed to get user ID from database", "error", insertError, "user_id", userInfo.Id)
+		logger.Error(fmt.Errorf("failed to get user ID from database for user %q: %w", userInfo.Id, insertError).Error())
 		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)
 		return
 	}
@@ -327,7 +326,7 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 	var eventId string
 	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft).Scan(&eventId)
 	if insertError != nil {
-		logger.Error("Failed to create new event form submission", "error", insertError, "user_id", userInfo.Id)
+		logger.Error(fmt.Errorf("failed to create new event form submission for user %q: %w", userInfo.Id, insertError).Error())
 		return
 	}
 

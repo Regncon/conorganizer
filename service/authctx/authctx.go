@@ -2,6 +2,7 @@ package authctx
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -32,7 +33,7 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			requestID := middleware.GetReqID(r.Context())
 			descopeClient, descopeClientError := client.NewWithConfig(&client.Config{ProjectID: ProjectID})
 			if descopeClientError != nil {
-				logger.Error("Failed to create Descope client", "project_id", ProjectID, "error", descopeClientError, "request_id", requestID)
+				logger.Error(fmt.Errorf("failed to create Descope client for project %q: %w", ProjectID, descopeClientError).Error(), "request_id", requestID)
 				ctx := context.WithValue(r.Context(), ctxSessionError, descopeClientError)
 				next.ServeHTTP(w, r.WithContext(ctx))
 				return
@@ -69,7 +70,7 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 				}
 
 				if validateTokenError != nil {
-					logger.Error("Failed to validate and refresh session", "error", validateTokenError, "request_id", requestID)
+					logger.Warn(fmt.Errorf("failed to validate and refresh session: %w", validateTokenError).Error(), "request_id", requestID)
 				}
 
 			}

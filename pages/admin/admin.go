@@ -88,7 +88,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 	// newEvent.NewEventLayoutRoute(router, db, err)
 
 	router.Route("/admin", func(adminRouter chi.Router) {
-		adminLayoutRoute(adminRouter, db, baseLogger, err)
+		adminLayoutRoute(adminRouter, db, logger, err)
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 
@@ -105,7 +105,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 			}
 			defer func() {
 				if err := watcher.Stop(); err != nil {
-					logger.Error("Failed to stop watcher", "error", err)
+					logger.Error(fmt.Errorf("failed to stop admin watcher: %w", err).Error())
 				}
 			}()
 
@@ -137,20 +137,20 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 					sessionID, mvc, err := mvcSession(w, r)
 					if err != nil {
-						logger.Error("Failed to get MVC session", "error", err)
+						logger.Error(fmt.Errorf("failed to get approval MVC session: %w", err).Error())
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
 					ctx := r.Context()
 					watcher, err := kv.Watch(ctx, sessionID)
 					if err != nil {
-						logger.Error("Failed to create watcher", "error", err)
+						logger.Error(fmt.Errorf("failed to create approval watcher: %w", err).Error())
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
 					defer func() {
 						if err := watcher.Stop(); err != nil {
-							logger.Error("Failed to stop watcher", "error", err)
+							logger.Error(fmt.Errorf("failed to stop approval watcher: %w", err).Error())
 						}
 					}()
 
@@ -190,20 +190,8 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							return
 						}
 						if store.BillettholderId <= 0 {
-							invalidBillettholderIdErr := fmt.Errorf(
-								"invalid assignmentBillettholderId %d: must be greater than 0",
-								store.BillettholderId,
-							)
-							logger.Error(
-								"Invalid billettholder id for add first choice",
-								"error",
-								invalidBillettholderIdErr,
-								"event_id",
-								store.EventId,
-								"pulje_id",
-								store.PuljeId,
-							)
-							http.Error(w, invalidBillettholderIdErr.Error(), http.StatusNotFound)
+							logger.Error(fmt.Errorf("invalid billettholder id for add first choice (event_id=%s, pulje_id=%s): invalid assignmentBillettholderId %d: must be greater than 0", store.EventId, store.PuljeId, store.BillettholderId).Error())
+							http.Error(w, fmt.Errorf("invalid assignmentBillettholderId %d: must be greater than 0", store.BillettholderId).Error(), http.StatusNotFound)
 							return
 						}
 
@@ -215,7 +203,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							baseLogger,
 						)
 						if addFirstChoiceErr != nil {
-							logger.Error("Failed to add player as first choice", "error", fmt.Errorf("add first choice: %w", addFirstChoiceErr))
+							logger.Error(fmt.Errorf("failed to add player as first choice: %w", addFirstChoiceErr).Error())
 							http.Error(w, addFirstChoiceErr.Error(), http.StatusInternalServerError)
 							return
 						}
@@ -226,7 +214,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"billettholder_id", store.BillettholderId,
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
-							logger.Error("Failed to broadcast add first choice update", "error", err)
+							logger.Error(fmt.Errorf("failed to broadcast add first choice update: %w", err).Error())
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
 						}
@@ -246,20 +234,8 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							return
 						}
 						if store.BillettholderId <= 0 {
-							invalidBillettholderIdErr := fmt.Errorf(
-								"invalid assignmentBillettholderId %d: must be greater than 0",
-								store.BillettholderId,
-							)
-							logger.Error(
-								"Invalid billettholder id for add GM",
-								"error",
-								invalidBillettholderIdErr,
-								"event_id",
-								store.EventId,
-								"pulje_id",
-								store.PuljeId,
-							)
-							http.Error(w, invalidBillettholderIdErr.Error(), http.StatusNotFound)
+							logger.Error(fmt.Errorf("invalid billettholder id for add GM (event_id=%s, pulje_id=%s): invalid assignmentBillettholderId %d: must be greater than 0", store.EventId, store.PuljeId, store.BillettholderId).Error())
+							http.Error(w, fmt.Errorf("invalid assignmentBillettholderId %d: must be greater than 0", store.BillettholderId).Error(), http.StatusNotFound)
 							return
 						}
 
@@ -273,7 +249,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							baseLogger,
 						)
 						if updatePlayerStatusErr != nil {
-							logger.Error("Failed to add player as GM", "error", updatePlayerStatusErr)
+							logger.Error(fmt.Errorf("failed to add player as GM: %w", updatePlayerStatusErr).Error())
 							http.Error(w, updatePlayerStatusErr.Error(), http.StatusInternalServerError)
 							return
 						}
@@ -286,7 +262,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"is_gm", true,
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
-							logger.Error("Failed to broadcast add GM update", "error", err)
+							logger.Error(fmt.Errorf("failed to broadcast add GM update: %w", err).Error())
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
 						}
@@ -328,7 +304,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"is_gm", store.IsGm,
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
-							logger.Error("Failed to broadcast player status update", "error", err)
+							logger.Error(fmt.Errorf("failed to broadcast player status update: %w", err).Error())
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
 						}
@@ -364,7 +340,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 						defer func() {
 							if err := watcher.Stop(); err != nil {
-								logger.Error("Failed to stop watcher", "error", err)
+								logger.Error(fmt.Errorf("failed to stop edit-form watcher: %w", err).Error())
 							}
 						}()
 
