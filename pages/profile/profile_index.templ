@@ -20,12 +20,12 @@ import (
 func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
 	router.Route("/profile", func(profileRouter chi.Router) {
 		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			routeLogger := logger.With("component", "profile")
+			logger = logger.With("component", "profile")
 			var ctx = r.Context()
 			var user = userctx.GetUserRequestInfo(ctx)
 
 			// User generated events
-			var events = GetEventsByUserId(user.Id, db, routeLogger)
+			var events = GetEventsByUserId(user.Id, db, logger)
 
 			/* sort.Slice(events, func(i, j int) bool {
 				return events[i].Status > events[j].Status
@@ -33,7 +33,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 
 			billettholdere, err := billettholderService.GetBilettholdere(user.Id, db)
 			if err != nil {
-				routeLogger.Error(err.Error(), "user_id", user.Id)
+					logger.Error(err.Error(), "user_id", user.Id)
 			}
 			var tickets = []profilecomponent.TicketHolder{}
 			for _, billettholder := range billettholdere {
@@ -52,7 +52,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			layouts.Base(
 				"Min profil side",
 				user,
-				ProfilePage(user, events, tickets, db, routeLogger, eventImageDir),
+					ProfilePage(user, events, tickets, db, logger, eventImageDir),
 			).Render(ctx, w)
 		})
 

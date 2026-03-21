@@ -149,7 +149,7 @@ func updateUserAdmin(db *sql.DB, userID string, isAdmin bool, logger *slog.Logge
 	var currentIsAdmin bool
 	err := db.QueryRow("SELECT is_admin FROM users WHERE user_id = ?", userID).Scan(&currentIsAdmin)
 	if err == sql.ErrNoRows {
-		logger.Error("User not found for admin update", "user_id", userID)
+		logger.Warn("User not found for admin update", "user_id", userID)
 		return
 	}
 	if err != nil {

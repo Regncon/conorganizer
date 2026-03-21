@@ -156,7 +156,6 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
     `
 	rows, queryErr := db.Query(query, eventId)
 	if queryErr != nil {
-		logger.Error(fmt.Errorf("failed to query interests with holders for event %s: %w", eventId, queryErr).Error())
 		return nil, fmt.Errorf("query interests with holders for event %s: %w", eventId, queryErr)
 	}
 
@@ -178,14 +177,12 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&interest.TicketType,
 			&interest.IsOver18,
 		); scanErr != nil {
-			logger.Error(fmt.Errorf("failed to scan interest with holder for event %s: %w", eventId, scanErr).Error())
 			return nil, fmt.Errorf("scan interest row for event %s: %w", eventId, scanErr)
 		}
 		interests = append(interests, interest)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
-		logger.Error(fmt.Errorf("row iteration error for event %s interests: %w", eventId, rowErr).Error())
 		return nil, fmt.Errorf("iterate interest rows for event %s: %w", eventId, rowErr)
 	}
 	return interests, nil
@@ -222,7 +219,6 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
     `
 	rows, queryErr := db.Query(query, eventId)
 	if queryErr != nil {
-		logger.Error(fmt.Errorf("failed to query assignments with holders for event %s: %w", eventId, queryErr).Error())
 		return nil, fmt.Errorf("query assignments with holders for event %s: %w", eventId, queryErr)
 	}
 
@@ -244,14 +240,12 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&assignment.TicketType,
 			&assignment.IsOver18,
 		); scanErr != nil {
-			logger.Error(fmt.Errorf("failed to scan assignment with holder for event %s: %w", eventId, scanErr).Error())
 			return nil, fmt.Errorf("scan assignment row for event %s: %w", eventId, scanErr)
 		}
 		assignments = append(assignments, assignment)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
-		logger.Error(fmt.Errorf("row iteration error for event %s assignments: %w", eventId, rowErr).Error())
 		return nil, fmt.Errorf("iterate assignment rows for event %s: %w", eventId, rowErr)
 	}
 	return assignments, nil
@@ -301,7 +295,6 @@ func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error)
     `
 	rows, queryErr := db.Query(query)
 	if queryErr != nil {
-		logger.Error(fmt.Errorf("failed to query billettholdere: %w", queryErr).Error())
 		return nil, fmt.Errorf("query billettholdere: %w", queryErr)
 	}
 
@@ -309,19 +302,17 @@ func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error)
 	billettholdere := make([]Billettholder, 0)
 	for rows.Next() {
 		var billettholder Billettholder
-		if scanErr := rows.Scan(
-			&billettholder.Id,
-			&billettholder.FirstName,
-			&billettholder.LastName,
-		); scanErr != nil {
-			logger.Error(fmt.Errorf("failed to scan billettholder row: %w", scanErr).Error())
-			return nil, fmt.Errorf("scan billettholder row: %w", scanErr)
-		}
+			if scanErr := rows.Scan(
+				&billettholder.Id,
+				&billettholder.FirstName,
+				&billettholder.LastName,
+			); scanErr != nil {
+				return nil, fmt.Errorf("scan billettholder row: %w", scanErr)
+			}
 		billettholdere = append(billettholdere, billettholder)
 	}
 
 	if rowErr := rows.Err(); rowErr != nil {
-		logger.Error(fmt.Errorf("row iteration error for billettholdere: %w", rowErr).Error())
 		return nil, fmt.Errorf("iterate billettholder rows: %w", rowErr)
 	}
 	return billettholdere, nil

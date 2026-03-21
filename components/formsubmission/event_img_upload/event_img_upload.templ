@@ -34,12 +34,12 @@ func EventImageRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 
 func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		eventID := chi.URLParam(r, "id")
-		if eventID == "" {
-			logger.Error("Event ID is required")
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
-			return
-		}
+			eventID := chi.URLParam(r, "id")
+			if eventID == "" {
+				logger.Warn("Event ID is required")
+				http.Error(w, "Event ID is required", http.StatusBadRequest)
+				return
+			}
 		logger.Info("Uploading event image", "event_id", eventID)
 
 		file, header, err := r.FormFile("image")
@@ -80,19 +80,19 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 
 func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		logger.Info("Received cropped image upload request")
-		eventID := chi.URLParam(r, "id")
-		if strings.TrimSpace(eventID) == "" {
-			logger.Error("Event ID is required")
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
-			return
-		}
-		imageKind := r.FormValue("kind")
-		if imageKind != "card" && imageKind != "banner" {
-			logger.Error("Invalid image kind", "imageKind", imageKind)
-			http.Error(w, "Invalid image kind", http.StatusBadRequest)
-			return
-		}
+			logger.Info("Received cropped image upload request")
+			eventID := chi.URLParam(r, "id")
+			if strings.TrimSpace(eventID) == "" {
+				logger.Warn("Event ID is required")
+				http.Error(w, "Event ID is required", http.StatusBadRequest)
+				return
+			}
+			imageKind := r.FormValue("kind")
+			if imageKind != "card" && imageKind != "banner" {
+				logger.Warn("Invalid image kind", "imageKind", imageKind)
+				http.Error(w, "Invalid image kind", http.StatusBadRequest)
+				return
+			}
 		logger.Info("Uploading cropped event image", "event_id", eventID, "imageKind", imageKind)
 		file, _, err := r.FormFile("image")
 		if err != nil {
