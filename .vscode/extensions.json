@@ -8,7 +8,15 @@
         "lsl.vscode-templ-go-to-definition",
         "editorconfig.editorconfig",
         "usernamehw.errorlens",
-        "yy0931.vscode-sqlite3-editor"
+        "yy0931.vscode-sqlite3-editor",
+        "formulahendry.auto-close-tag",
+        "formulahendry.auto-rename-tag",
+        "streetsidesoftware.code-spell-checker",
+        "starfederation.datastar-vscode",
+        "golang.go",
+        "vincaslt.highlight-matching-tag",
+        "bradgashler.htmltagwrap",
+        "oderwat.indent-rainbow"
     ],
     // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
     "unwantedRecommendations": []

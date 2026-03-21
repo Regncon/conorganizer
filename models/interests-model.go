@@ -1,7 +1,11 @@
 package models
 
-import (
-	"time"
+import "time"
+
+const (
+	InterestLevelVery   = "Veldig interessert"
+	InterestLevelMedium = "Middels interessert"
+	InterestLevelLow    = "Litt interessert"
 )
 
 type Interest struct {

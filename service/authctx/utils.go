@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/descope/go-sdk/descope"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 func GetUserTokenFromContext(ctx context.Context) (*descope.Token, error) {
@@ -48,11 +49,12 @@ func GetAdminFromUserToken(ctx context.Context) bool {
 }
 
 func RequireAdmin(logger *slog.Logger) func(http.Handler) http.Handler {
+	authLogger := logger.With("component", "auth")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			isAdmin := GetAdminFromUserToken(r.Context())
 			if !isAdmin {
-				logger.Warn("User is not an admin")
+				authLogger.Warn("User is not an admin", "request_id", middleware.GetReqID(r.Context()), "path", r.URL.Path)
 				http.Error(w, "You are not an admin", http.StatusForbidden)
 				return
 			}

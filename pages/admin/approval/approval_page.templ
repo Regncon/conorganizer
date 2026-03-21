@@ -2,7 +2,6 @@ package approval
 
 import (
 	"database/sql"
-	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 	"log/slog"
@@ -46,7 +45,7 @@ func getEvents(db *sql.DB, logger *slog.Logger) []models.EventCardModel {
 		}
 		events = append(events, event)
 	}
-	fmt.Printf("Found %d events", len(events))
+	logger.Debug("Loaded approval events", "event_count", len(events))
 	return events
 }
 

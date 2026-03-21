@@ -138,11 +138,11 @@ type UserInterest struct {
 }
 
 func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]UserInterest, error) {
-	logger.Info("Fetching interests for user", "userId", userInfo.Id)
+	logger.Info("Fetching interests for user", "user_id", userInfo.Id)
 
 	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db, logger)
 	if billettholderErr != nil {
-		logger.Error("Failed to get billettholdere", "billettholderErr", billettholderErr)
+		logger.Error("Failed to get billettholdere", "error", billettholderErr)
 		return nil, fmt.Errorf("unable to get billettholder: %w, id: %+v", billettholderErr, userInfo.Id)
 	}
 
@@ -173,7 +173,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 
 	rows, queryErr := db.Query(query, billettholderID)
 	if queryErr != nil {
-		logger.Error("Failed to query interests", "queryErr", queryErr)
+		logger.Error("Failed to query interests", "error", queryErr)
 		return nil, fmt.Errorf("unable to query interests: %w", queryErr)
 	}
 	defer rows.Close()
@@ -191,7 +191,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 		)
 
 		if scanErr != nil {
-			logger.Error("Failed to scan interest", "scanErr", scanErr)
+			logger.Error("Failed to scan interest", "error", scanErr)
 			continue
 		}
 
@@ -199,7 +199,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
-		logger.Error("Error iterating rows", "rowsErr", rowsErr)
+		logger.Error("Error iterating rows", "error", rowsErr)
 		return nil, fmt.Errorf("error iterating interest rows: %w", rowsErr)
 	}
 
@@ -209,7 +209,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]UserEvent, error) {
 	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db, logger)
 	if billettholderErr != nil {
-		logger.Error("Failed to get billettholdere", "billettholderErr", billettholderErr)
+		logger.Error("Failed to get billettholdere", "error", billettholderErr)
 		return nil, fmt.Errorf("unable to get billettholder: %w, id: %+v", billettholderErr, userInfo.Id)
 	}
 
@@ -243,7 +243,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 
 	rows, queryErr := db.Query(query, billettholderID)
 	if queryErr != nil {
-		logger.Error("Failed to query events", "queryErr", queryErr)
+		logger.Error("Failed to query events", "error", queryErr)
 		return nil, fmt.Errorf("unable to query events: %w", queryErr)
 	}
 	defer rows.Close()
@@ -269,14 +269,14 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 		)
 
 		if scanErr != nil {
-			logger.Error("Failed to scan event", "scanErr", scanErr)
+			logger.Error("Failed to scan event", "error", scanErr)
 			continue
 		}
 		events = append(events, event)
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
-		logger.Error("Error iterating rows", "rowsErr", rowsErr)
+		logger.Error("Error iterating rows", "error", rowsErr)
 		return nil, fmt.Errorf("error iterating event rows: %w", rowsErr)
 	}
 
