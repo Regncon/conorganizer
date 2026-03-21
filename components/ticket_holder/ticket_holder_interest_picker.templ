@@ -1,18 +1,19 @@
 package ticketholder
 
 import (
+	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log/slog"
-	"database/sql"
 	"net/http"
-	"encoding/json"
 
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/userctx"
 )
 
 type BillettholderInterest struct {
-	BillettholderId int    `json:"billettholder_id"`
-	PuljeId         string `json:"pulje_id"`
+	BillettholderId int    `json:"billettHolderId"`
+	PuljeId         string `json:"puljeId"`
 	InterestLevel   string `json:"interestLevel"`
 }
 
@@ -68,6 +69,7 @@ templ TicketHolderInterestPicker(
 		<p>Error fetching interest levels: { marshalErr.Error() }</p>
 		return
 	}
+	{{ fmt.Printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! user interests for event %s: %+v", eventId, string(userInterests)) }}
 	<style>
 		.interest-buttons {
 			display: flex;
@@ -85,78 +87,37 @@ templ TicketHolderInterestPicker(
 		}
 	</style>
 	<div></div>
-	<div class="interest-buttons">
+	<div
+		class="interest-buttons"
+		data-signals:interesse-level={ fmt.Sprintf("%s.find(i => i.billettHolderId === $billettHolderId)?.interestLevel ?? ''", userInterests) }
+	>
 		<button
 			class="btn btn--interest-picker"
-			data-class:selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'high')", string(userInterests)) }
+			data-class:selected={ fmt.Sprintf("$interesseLevel == '%s'", models.InterestLevelHigh) }
 			data-on:click={ fmt.Sprintf("@put('/event/api/%s/interest/update/high')", eventId) }
 		>
 			<span class="emoji">🤩</span> Veldig interessert
 		</button>
 		<button
 			class="btn btn--interest-picker"
-			data-class:selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'medium')", string(userInterests)) }
+			data-class:selected={ fmt.Sprintf("$interesseLevel == '%s'", models.InterestLevelMedium) }
 			data-on:click={ fmt.Sprintf("@put('/event/api/%s/interest/update/medium')", eventId) }
 		>
 			<span class="emoji">🙂</span> Interessert
 		</button>
 		<button
 			class="btn btn--interest-picker"
-			data-class:selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'low')", string(userInterests)) }
+			data-class:selected={ fmt.Sprintf("$interesseLevel == '%s'", models.InterestLevelLow) }
 			data-on:click={ fmt.Sprintf("@put('/event/api/%s/interest/update/low')", eventId) }
 		>
 			<span class="emoji">🤨</span> Litt interessert
 		</button>
 		<button
 			class="btn btn--interest-picker"
-			data-class:selected={ fmt.Sprintf("isSelected(%+v, $billettHolderId, $puljeId, 'none')", string(userInterests)) }
+			data-class:selected="$interesseLevel == ''"
 			data-on:click={ fmt.Sprintf("@put('/event/api/%s/interest/update/none')", eventId) }
 		>
 			<span class="emoji">😑</span> Ikke interessert
 		</button>
 	</div>
-	<div data-signal-valgtInteresse="getInterestLevel($billettHolderId, $puljeId)"></div>
-	<script>
-		/**
-		 * @param {number} billettholderId
-		 * @param {string} puljeId
-		 */
-		function getInterestLevel(interestLevels, billettholderId, puljeId) {
-			if (!interestLevels || interestLevels.length === 0) {
-				return "Ikke funnet";
-			}
-			const match = interestLevels.find((i) => {
-				return (
-					i.billettholderId === billettholderId &&
-					i.puljeId === puljeId
-				);
-			});
-			return match ? match.interestLevel : "Ikke funnet";
-		}
-		/**
-		 * @param {number} billettholderId
-		 * @param {string} puljeId
-		 * @param {string} level
-		 */
-		function isSelected(interestLevels, billettholderId, puljeId, level) {
-			const currentLevel = getInterestLevel(
-				interestLevels,
-				billettholderId,
-				puljeId,
-			);
-			if (currentLevel === "Litt interessert" && level === "low") {
-				return true;
-			}
-			if (currentLevel === "Middels interessert" && level === "medium") {
-				return true;
-			}
-			if (currentLevel === "Veldig interessert" && level === "high") {
-				return true;
-			}
-			if (currentLevel === "Ikke funnet" && level === "none") {
-				return true;
-			}
-			return false;
-		}
-	</script>
 }

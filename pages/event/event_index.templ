@@ -53,7 +53,9 @@ templ eventIndex(eventId string, isAdmin bool, userInfo requestctx.UserRequestIn
 			data-init={ fmt.Sprintf("@get('/event/api/%s?%s',{requestCancellation: 'disabled'})", eventId, r.URL.RawQuery) }
 			class="event-container"
 		>
-			@event_page_content(eventId, isAdmin, logger, db, eventImageDir, r)
+			<div id="event-page-content">
+				@event_page_content(eventId, isAdmin, logger, db, eventImageDir, r)
+			</div>
 		</div>
 	</div>
 	<script src="/static/web_components/ticket_holder_dropdown.js"></script>

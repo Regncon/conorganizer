@@ -148,7 +148,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                         1
                 ) DESC,
                 CASE i.interest_level
-                    WHEN '` + models.InterestLevelVery + `' THEN 3
+                    WHEN '` + models.InterestLevelHigh + `' THEN 3
                     WHEN '` + models.InterestLevelMedium + `' THEN 2
                     WHEN '` + models.InterestLevelLow + `' THEN 1
                     ELSE 0
@@ -302,13 +302,13 @@ func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error)
 	billettholdere := make([]Billettholder, 0)
 	for rows.Next() {
 		var billettholder Billettholder
-			if scanErr := rows.Scan(
-				&billettholder.Id,
-				&billettholder.FirstName,
-				&billettholder.LastName,
-			); scanErr != nil {
-				return nil, fmt.Errorf("scan billettholder row: %w", scanErr)
-			}
+		if scanErr := rows.Scan(
+			&billettholder.Id,
+			&billettholder.FirstName,
+			&billettholder.LastName,
+		); scanErr != nil {
+			return nil, fmt.Errorf("scan billettholder row: %w", scanErr)
+		}
 		billettholdere = append(billettholdere, billettholder)
 	}
 

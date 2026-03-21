@@ -118,7 +118,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	</style>
 	<dialog
 		class="interest-dialog"
-		data-attr:open="isOpen($interestIsOpen)"
+		data-attr:open="isOpen($_interestIsOpen)"
 		closedby="any"
 		data-signals:pulje-Id={ fmt.Sprintf("'%s'", puljeId) }
 	>
@@ -136,14 +136,14 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			</div>
 			<div class="dialog-footer">
 				<p class="auto-save-message">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
-				<button class="btn btn--outline" data-on:click="$interestIsOpen = false">
+				<button class="btn btn--outline" data-on:click="$_interestIsOpen = false">
 					Ferdig
 				</button>
 			</div>
 			<form class="close-button-container" method="dialog">
 				<button
 					class="btn btn--ghost close"
-					data-on:click="$interestIsOpen = false"
+					data-on:click="$_interestIsOpen = false"
 				>
 					@icons.Icon(icons.Close, icons.Size24)
 				</button>

@@ -125,6 +125,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						}
 						isAdmin := authctx.GetAdminFromUserToken(ctx)
 						c := event_page(eventID, isAdmin, logger, db, eventImageDir, r)
+
 						if err := sse.PatchElementTempl(c); err != nil {
 							_ = sse.ConsoleError(err)
 							return
@@ -139,7 +140,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					updateInterestRouter.Put("/{interestLevel}", func(w http.ResponseWriter, r *http.Request) {
 						type Put struct {
 							BillettHolderId int    `json:"billettHolderId"`
-							PuljeId         string `json:"pulje_id"`
+							PuljeId         string `json:"puljeId"`
+							InteresseLevel  string `json:"interesseLevel"`
 						}
 						signals := &Put{}
 
@@ -150,12 +152,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						}
 						ctx := r.Context()
 						userInfo := userctx.GetUserRequestInfo(ctx)
-						// billettholderId, err := strconv.Atoi(chi.URLParam(r, "billettholder_id"))
-						// if err != nil {
-						// 	logger.Error(fmt.Errorf("failed to convert billettholderId to int: %w", err).Error())
-						// 	http.Error(w, "Failed to convert billettholderId to int", http.StatusBadRequest)
-						// 	return
-						// }
 
 						eventId := chi.URLParam(r, "idx")
 						// convert interestLevel string to InterestLevels struct
@@ -240,7 +236,7 @@ type InterestLevels struct {
 func convertInterestLevelToDbInterestLevel(interest InterestLevels) string {
 	switch {
 	case interest.High != "":
-		return models.InterestLevelVery
+		return models.InterestLevelHigh
 	case interest.Medium != "":
 		return models.InterestLevelMedium
 	case interest.Low != "":
