@@ -58,6 +58,10 @@ Prefer these common keys:
 - For one-off log sites, keep the `fmt.Errorf(...)` inline instead of assigning it to a variable first.
 - If the same exact wrapped error is used twice or more in the same scope, prefer assigning it to a variable.
 - A log-plus-return pair counts as reuse and should normally use a named error variable.
+- Log a failure once at the boundary that decides the outcome.
+- Lower-level helpers and services should usually wrap and return errors without logging when a caller will decide the response, retry, or degraded-mode behavior.
+- Route handlers, background loop tops, stream consumers, and similar handling boundaries should log the final failure before returning a response or taking an operational decision.
+- If a lower layer already logs because it fully handled the failure locally, higher layers should not log the same error again; only log the new decision when it adds value.
 - Preferred one-use inline pattern:
 ```go
 logger.Error(fmt.Errorf("failed to stop watcher: %w", err).Error())
@@ -82,6 +86,19 @@ Never log:
 
 When context is needed, prefer internal IDs over raw personal fields.
 
+## Advanced Runtime Rules
+
+1. Expected failures should usually not be logged at `Error`.
+2. Treat `sql.ErrNoRows`, validation failures, canceled requests, client disconnects, and similar expected outcomes as `Debug`, `Info`, `Warn`, or no log depending on the handling boundary and user impact.
+3. Repeated watcher, polling, stream, and retry-loop logs should default to `Debug` unless they indicate a state transition or actionable problem.
+4. Avoid one log per steady-state loop iteration; prefer rate-limiting, aggregation, or summary logs for noisy paths.
+5. Async and background flows should carry correlation fields that help reconstruct the sequence.
+6. Prefer stable, actionable identifiers that operators can actually use: `request_id` when it still exists in context, otherwise domain IDs like `event_id`, `pulje_id`, `user_id`, or `billettholder_id`.
+7. Do not add ephemeral internal values like in-memory session IDs, transient stream subjects, or similar correlation fields unless they are persisted, searchable, or already used operationally in this repo.
+8. Log lifecycle transitions once at the operational boundary: startup complete, shutdown start/complete, entering degraded mode, retry scheduled, retries exhausted, and recovery after failure.
+9. Do not emit success logs for every normal heartbeat, poll, or stream tick.
+10. If a path emits high-volume state-change logs, consider metrics/tracing instead of per-item logs; use logs for transitions, anomalies, and decisions.
+
 ## Error Wrapping Rules
 
 When updating returned errors:
@@ -97,6 +114,7 @@ When updating returned errors:
 9. Do not double-wrap errors that already contain the needed local context.
 10. At log-only boundaries, prefer contextualizing the error with `fmt.Errorf(...)` and logging `logger.Error(err.Error())`.
 11. Do not introduce temporary `wrappedErr`-style variables for one-use errors.
+12. Avoid double-logging across layers. Helpers usually wrap and return; the handling boundary usually emits the log.
 
 ## Migration Rules for Existing Logs
 
@@ -108,8 +126,11 @@ When updating existing logging:
 4. Run a final pass over returned errors and wrap them with `fmt.Errorf(...: %w)` only when the function can add useful context.
 5. At log-only boundaries, prefer `logger.Error(fmt.Errorf(...).Error())` over duplicating the same context in both the message and structured fields.
 6. Prefer inline wrapping for one-use errors, but create a temporary error variable when the same exact error is used twice or more.
-7. Keep migration scope focused to touched areas.
-8. Avoid unrelated refactors.
+7. Remove duplicate logging of the same failure across helper and handler layers when touching that path.
+8. Demote expected failures and noisy loop logs when touching watchers, streams, polling, or request-boundary code.
+9. Add missing correlation fields to async/background logs when the surrounding context makes that practical.
+10. Keep migration scope focused to touched areas.
+11. Avoid unrelated refactors.
 
 ## Fast Verification Queries
 

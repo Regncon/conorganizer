@@ -43,6 +43,10 @@ Read these first:
 - Do not introduce variables like `wrappedErr`, `queryErr`, or `insertErr` when the wrapped error is only used once.
 - If the same wrapped error is used twice or more in the same scope, prefer assigning it to a variable.
 - A log-plus-return pair counts as reuse and should normally use a named error variable.
+- Log a failure once at the boundary that decides the outcome.
+- Lower-level helpers and services should usually wrap and return errors without logging when the caller will decide the response, retry, or degraded-mode behavior.
+- Route handlers, background loop tops, stream consumers, and similar handling boundaries should log the final failure before returning a response or taking an operational decision.
+- If a lower layer already logs because it fully handled the failure locally, higher layers should not log the same error again; only log the new decision if that adds value.
 - Preferred one-use inline example:
 ```go
 logger.Error(fmt.Errorf("failed to stop watcher: %w", err).Error())
@@ -69,7 +73,19 @@ return 0, saveErr
 - Avoid personal data when possible (especially email in info/debug paths).
 - If user identifiers are needed, prefer internal IDs.
 
-6. Wrap returned errors deliberately.
+6. Apply advanced runtime logging rules.
+- Expected failures should usually not be logged at `Error`.
+- Treat `sql.ErrNoRows`, validation failures, canceled requests, client disconnects, and similar expected outcomes as `Debug`, `Info`, `Warn`, or no log depending on the boundary and user impact.
+- Repeated watcher, polling, stream, and retry-loop logs should default to `Debug` unless they represent a state transition or actionable problem.
+- Avoid one log per steady-state loop iteration; prefer rate-limiting, aggregation, or summary logs for noisy paths.
+- In async and background flows, include correlation fields that help stitch events together.
+- Prefer stable, actionable identifiers that operators can actually use: `request_id` when it still exists, otherwise domain IDs like `event_id`, `pulje_id`, `user_id`, or `billettholder_id`.
+- Do not add ephemeral internal values like in-memory session IDs, transient stream subjects, or similar correlation fields unless they are persisted, searchable, or already used operationally in this repo.
+- Log lifecycle transitions once: startup complete, shutdown start/complete, entering degraded mode, retry scheduled, retries exhausted, and recovery after failure.
+- Do not emit success logs for every normal heartbeat, poll, or stream tick.
+- If a path emits high-volume state-change logs, consider whether the signal belongs in metrics/tracing instead of per-item logs.
+
+7. Wrap returned errors deliberately.
 - Run this pass after logging edits and before final validation.
 - Wrap returned errors with `fmt.Errorf("...: %w", err)` when adding useful local context or crossing a package/system boundary.
 - Prefer direct returns like `return fmt.Errorf("...: %w", err)` over `wrappedErr := ...; return wrappedErr` when the error is only returned once.
@@ -80,8 +96,9 @@ return 0, saveErr
 - Use `%v` or translate to your own exported error when callers should not depend on an underlying dependency error type.
 - Do not double-wrap errors that already carry the needed local context.
 - At log-only boundaries, prefer contextualizing the error with `fmt.Errorf(...)` and logging `logger.Error(err.Error())`.
+- Avoid double-logging across layers. Helpers usually wrap and return; the handling boundary usually emits the log.
 
-7. Validate before finishing.
+8. Validate before finishing.
 - Run targeted scans for anti-patterns.
 - Run Go tests for changed packages if possible.
 - Report any pre-existing failures separately from logging edits.
@@ -96,8 +113,13 @@ When the user asks to "check logging in this PR", review for:
 4. `component` context exists at service/route boundaries.
 5. Request ID propagated where middleware context exists.
 6. No secret or PII leakage in new logs.
-7. Returned errors are wrapped with `%w` only when useful context is added.
-8. No broad refactors unrelated to logging.
+7. Expected failures (`sql.ErrNoRows`, validation, canceled requests, client disconnects) are not promoted to `Error` without a clear reason.
+8. Repetitive watcher/polling/stream logs are `Debug`-level, rate-limited, or summarized.
+9. Async/background logs carry useful correlation fields (`request_id`, `session_id`, IDs, stream subject) when available.
+10. Lifecycle and degraded-mode transitions are logged once at the operational boundary.
+11. Returned errors are wrapped with `%w` only when useful context is added.
+12. No duplicate logging of the same failure across helper and handler layers.
+13. No broad refactors unrelated to logging.
 
 ## Useful Commands
 
