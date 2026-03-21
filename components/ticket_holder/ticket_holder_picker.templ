@@ -41,7 +41,8 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			<p>Feil ved henting av billettholdere: { err.Error() }</p>
 		</div>
 		return
-
+	}
+	{{
 	testUser := []BillettHolder{
 		BillettHolder{Id: 200, Name: "Ola Nordmann", Email: "ola.nordmann@example.com", Color: "hsl(from #FF5733 h s l / 0.5)"},
 		BillettHolder{Id: 201, Name: "Kari Nordmann", Email: "kari.nordmann@example.com", Color: "hsl(from #33FF57 h s l / 0.5)"},
