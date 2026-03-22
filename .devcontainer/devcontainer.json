@@ -1,51 +1,46 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/go
 {
-	"name": "Go",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	//"image": "mcr.microsoft.com/devcontainers/go:1-1.24-bookworm",
-	// "features": {
-	// 	"ghcr.io/eitsupi/devcontainer-features/go-task:1": {},
-	// 	"ghcr.io/warrenbuckley/codespace-features/sqlite:1": {}
-	// },
-	//"dockerComposeFile": ["../compose.yaml"],
-	"build":{
-		"dockerfile": "../Dockerfile",
-		"context": ".."
-	},
-	"workspaceFolder": "/home/devuser/app",
-	"workspaceMount": "source=${localWorkspaceFolder},target=/home/devuser/app,type=bind,consistency=cached",
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
-	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
-	// Use 'postCreateCommand' to run commands after the container is created.
-	"forwardPorts": [7331,8080],
-	"portsAttributes": {
-		"7331": {
-			"label": "Air proxy",
-			"onAutoForward": "openBrowser"
-		},
-		"8080":{
-			"label": "app server",
-			"onAutoForward": "silent"
-		}
-	},
-	//"postCreateCommand": "sudo apt-get update && sudo apt-get install -y wget && go get -tool github.com/a-h/templ/cmd/templ@latest",
-	// Configure tool-specific properties.
-	// "customizations": {},
-	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	"remoteUser": "devuser",
-	"customizations": {
-		"vscode": {
-			"extensions": [
-				"mtxr.sqltools",
-				"lsl.vscode-templ-go-to-definition",
-				"editorconfig.editorconfig",
-				"usernamehw.errorlens",
-				"yy0931.vscode-sqlite3-editor",
-				"golang.go"
-			]
-		}
-	}
+    "name": "Go",
+    "build": {
+        "dockerfile": "../Dockerfile",
+        "context": ".."
+    },
+    "workspaceFolder": "/home/devuser/app",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/home/devuser/app,type=bind,consistency=cached",
+    "forwardPorts": [
+        7331,
+        8080
+    ],
+    "portsAttributes": {
+        "7331": {
+            "label": "Air proxy",
+            "onAutoForward": "openBrowser"
+        },
+        "8080": {
+            "label": "app server",
+            "onAutoForward": "silent"
+        }
+    },
+    "remoteUser": "devuser",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "a-h.templ",
+                "lsl.vscode-templ-go-to-definition",
+                "editorconfig.editorconfig",
+                "usernamehw.errorlens",
+                "yy0931.vscode-sqlite3-editor",
+                "formulahendry.auto-close-tag",
+                "formulahendry.auto-rename-tag",
+                "streetsidesoftware.code-spell-checker",
+                "starfederation.datastar-vscode",
+                "golang.go",
+                "vincaslt.highlight-matching-tag",
+                "bradgashler.htmltagwrap",
+                "oderwat.indent-rainbow",
+                "github.vscode-github-actions"
+            ]
+        }
+    }
 }
