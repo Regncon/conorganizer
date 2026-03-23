@@ -563,13 +563,13 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 		<div class="billettholder-search-buttons">
 			<button
 				class="btn btn--secondary"
-				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_gm'); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_gm'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
 			>
 				Legg til som GM
 			</button>
 			<button
 				class="btn btn--secondary"
-				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_first_choice'); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_first_choice'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
 			>
 				Legg til som førstevalg
 			</button>
