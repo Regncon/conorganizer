@@ -1,7 +1,7 @@
 const HIGHLIGHT_ESCAPE_PATTERN = /[.*+?^${}()|[\]\\]/g
-const ATTRS = Object.freeze({
-    billettholdere: "data-billettholdere",
-    clearInput: "data-clear-input",
+const COMPONENT_ATTRIBUTES = Object.freeze({
+    billettholdereJson: "data-billettholdere",
+    clearInputVersion: "data-clear-input",
 })
 const ADMIN_BILLETTHOLDER_SEARCH_TAG = "admin-billettholder-search"
 const GLOBAL_STYLE_URLS = [
@@ -115,28 +115,28 @@ const renderHighlightFragment = (label, query) => {
 }
 
 class AdminBillettholderSearch extends HTMLElement {
-    static observedAttributes = [ATTRS.billettholdere, ATTRS.clearInput]
+    static observedAttributes = [COMPONENT_ATTRIBUTES.billettholdereJson, COMPONENT_ATTRIBUTES.clearInputVersion]
 
     /** @type {Array<{id:number, label:string, norm:string}>} */
-    #searchOptions = []
+    #searchableBillettholderOptions = []
     /** @type {Array<{Id:number, FirstName:string, LastName:string}>} */
-    #billettholdere = []
+    #availableBillettholdere = []
     /** @type {HTMLInputElement | null} */
-    #inputEl = null
+    #searchInputElement = null
     /** @type {HTMLDivElement | null} */
-    #searchResultsEl = null
+    #searchResultsElement = null
     /** @type {HTMLDivElement} */
-    #mountEl
+    #shadowContentRoot
     /** @type {AbortController | null} */
-    #events = null
-    #initialized = false
-    #clearInput = ""
+    #eventListenerController = null
+    #hasConnected = false
+    #clearInputVersion = ""
 
     constructor() {
         super()
-        this.#clearInput = this.getAttribute(ATTRS.clearInput) ?? ""
-        this.#mountEl = document.createElement("div")
-        this.#mountEl.className = "admin-billettholder-search-root"
+        this.#clearInputVersion = this.getAttribute(COMPONENT_ATTRIBUTES.clearInputVersion) ?? ""
+        this.#shadowContentRoot = document.createElement("div")
+        this.#shadowContentRoot.className = "admin-billettholder-search-root"
 
         if (!this.shadowRoot) {
             const shadowRoot = this.attachShadow({ mode: "open" })
@@ -239,7 +239,7 @@ class AdminBillettholderSearch extends HTMLElement {
                     }
                 }
             `
-            shadowRoot.append(style, this.#mountEl)
+            shadowRoot.append(style, this.#shadowContentRoot)
         }
 
         this.handleInput = this.handleInput.bind(this)
@@ -248,19 +248,19 @@ class AdminBillettholderSearch extends HTMLElement {
     }
 
     connectedCallback() {
-        if (this.#initialized) return
-        this.#initialized = true
+        if (this.#hasConnected) return
+        this.#hasConnected = true
 
-        this.#loadDataFromAttribute()
-        this.#render()
-        this.#setOptions()
-        this.#bind()
-        this.#renderMatches(this.#inputEl?.value ?? "")
+        this.#syncBillettholdereFromAttribute()
+        this.#renderSearchInterface()
+        this.#rebuildSearchableOptions()
+        this.#bindEventListeners()
+        this.#renderSearchResults(this.#searchInputElement?.value ?? "")
     }
 
     disconnectedCallback() {
-        this.#events?.abort()
-        this.#events = null
+        this.#eventListenerController?.abort()
+        this.#eventListenerController = null
     }
 
     /**
@@ -268,9 +268,9 @@ class AdminBillettholderSearch extends HTMLElement {
      * @param {Array<{Id:number, FirstName:string, LastName:string}>} value
      */
     set billettholdere(value) {
-        this.#billettholdere = Array.isArray(value) ? value : []
-        this.#setOptions()
-        this.#renderMatches(this.#inputEl?.value ?? "")
+        this.#availableBillettholdere = Array.isArray(value) ? value : []
+        this.#rebuildSearchableOptions()
+        this.#renderSearchResults(this.#searchInputElement?.value ?? "")
     }
 
     /**
@@ -278,7 +278,7 @@ class AdminBillettholderSearch extends HTMLElement {
      * @returns {Array<{Id:number, FirstName:string, LastName:string}>}
      */
     get billettholdere() {
-        return this.#billettholdere
+        return this.#availableBillettholdere
     }
 
     /**
@@ -288,31 +288,31 @@ class AdminBillettholderSearch extends HTMLElement {
      */
     attributeChangedCallback(name, oldValue, newValue) {
         if (oldValue === newValue) return
-        if (name === ATTRS.billettholdere) {
-            this.#loadDataFromAttribute()
-            this.#setOptions()
-            this.#renderMatches(this.#inputEl?.value ?? "")
+        if (name === COMPONENT_ATTRIBUTES.billettholdereJson) {
+            this.#syncBillettholdereFromAttribute()
+            this.#rebuildSearchableOptions()
+            this.#renderSearchResults(this.#searchInputElement?.value ?? "")
             return
         }
-        if (name === ATTRS.clearInput) {
-            this.#clearInput = newValue ?? ""
-            this.#clearSearch()
+        if (name === COMPONENT_ATTRIBUTES.clearInputVersion) {
+            this.#clearInputVersion = newValue ?? ""
+            this.#clearSearchInputAndResults()
         }
     }
 
-    #loadDataFromAttribute() {
-        const raw = this.getAttribute(ATTRS.billettholdere)
+    #syncBillettholdereFromAttribute() {
+        const raw = this.getAttribute(COMPONENT_ATTRIBUTES.billettholdereJson)
         if (!raw) return
         try {
             const data = JSON.parse(raw)
-            this.#billettholdere = Array.isArray(data) ? data : []
+            this.#availableBillettholdere = Array.isArray(data) ? data : []
         } catch (error) {
             console.warn("billettholder-search: invalid JSON data", error)
         }
     }
 
-    #setOptions() {
-        this.#searchOptions = this.#billettholdere.map((billettholder) => {
+    #rebuildSearchableOptions() {
+        this.#searchableBillettholderOptions = this.#availableBillettholdere.map((billettholder) => {
             const label = `${ billettholder.FirstName } ${ billettholder.LastName }`
             return {
                 id: billettholder.Id,
@@ -322,12 +322,12 @@ class AdminBillettholderSearch extends HTMLElement {
         })
     }
 
-    #render() {
+    #renderSearchInterface() {
         const placeholder = this.getAttribute("placeholder") ?? "s›k etter spiller"
         const inputId = this.getAttribute("input-id") ?? `gm-search-${ Math.random().toString(36).substring(2, 8) }`
         const inputTippy = this.getAttribute("input-tippy") ?? ""
 
-        this.#mountEl.replaceChildren()
+        this.#shadowContentRoot.replaceChildren()
 
         const input = document.createElement("input")
         input.id = inputId
@@ -343,62 +343,62 @@ class AdminBillettholderSearch extends HTMLElement {
         results.className = "gm-search-results"
         results.setAttribute("aria-live", "polite")
 
-        this.#mountEl.append(input, results)
-        this.#inputEl = input
-        this.#searchResultsEl = results
+        this.#shadowContentRoot.append(input, results)
+        this.#searchInputElement = input
+        this.#searchResultsElement = results
     }
 
-    #bind() {
-        if (!this.#inputEl || !this.#searchResultsEl) return
+    #bindEventListeners() {
+        if (!this.#searchInputElement || !this.#searchResultsElement) return
 
-        this.#events?.abort()
-        this.#events = new AbortController()
-        const signal = this.#events.signal
+        this.#eventListenerController?.abort()
+        this.#eventListenerController = new AbortController()
+        const signal = this.#eventListenerController.signal
 
-        this.#inputEl.addEventListener("input", this.handleInput, { signal })
-        this.#inputEl.addEventListener("keydown", this.handleInputKeydown, { signal })
-        this.#searchResultsEl.addEventListener("click", this.handleClick, { signal })
+        this.#searchInputElement.addEventListener("input", this.handleInput, { signal })
+        this.#searchInputElement.addEventListener("keydown", this.handleInputKeydown, { signal })
+        this.#searchResultsElement.addEventListener("click", this.handleClick, { signal })
     }
 
     /**
      * @param {string} query
      */
-    #renderMatches(query) {
-        const norm = normalize(query)
+    #renderSearchResults(query) {
+        const normalizedQuery = normalize(query)
 
-        this.#searchResultsEl?.replaceChildren()
-        if (!norm) return
+        this.#searchResultsElement?.replaceChildren()
+        if (!normalizedQuery) return
 
-        const matches = this.#searchOptions
-            .map((opt) => ({ ...opt, score: matchScore(opt.norm, norm) }))
-            .filter((opt) => opt.score > 0)
-            .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label))
+        const matchingBillettholderOptions = this.#searchableBillettholderOptions
+            .map((option) => ({ ...option, score: matchScore(option.norm, normalizedQuery) }))
+            .filter((option) => option.score > 0)
+            .sort((leftOption, rightOption) => rightOption.score - leftOption.score || leftOption.label.localeCompare(rightOption.label))
             .slice(0, 8)
 
-        if (matches.length === 0) {
-            const empty = document.createElement("div")
-            empty.classList.add("gm-search-empty")
-            empty.append(document.createTextNode("Ingen billettholdere funnet"))
-            this.#searchResultsEl?.append(empty)
+        if (matchingBillettholderOptions.length === 0) {
+            const emptyStateElement = document.createElement("div")
+            emptyStateElement.classList.add("gm-search-empty")
+            emptyStateElement.append(document.createTextNode("Ingen billettholdere funnet"))
+            this.#searchResultsElement?.append(emptyStateElement)
             return
         }
 
-        const fragment = document.createDocumentFragment()
-        for (const opt of matches) {
-            const button = document.createElement("button")
-            button.type = "button"
-            button.classList.add("btn", "btn--outline", "gm-search-item")
-            button.dataset.value = opt.label
-            button.dataset.id = String(opt.id)
-            button.append(renderHighlightFragment(opt.label, norm))
-            fragment.append(button)
+        const resultButtonsFragment = document.createDocumentFragment()
+        for (const option of matchingBillettholderOptions) {
+            const resultButton = document.createElement("button")
+            resultButton.type = "button"
+            resultButton.classList.add("btn", "btn--outline", "gm-search-item")
+            resultButton.dataset.value = option.label
+            resultButton.dataset.id = String(option.id)
+            resultButton.append(renderHighlightFragment(option.label, normalizedQuery))
+            resultButtonsFragment.append(resultButton)
         }
 
-        this.#searchResultsEl?.append(fragment)
+        this.#searchResultsElement?.append(resultButtonsFragment)
     }
 
     handleInput() {
-        this.#renderMatches(this.#inputEl?.value ?? "")
+        this.#renderSearchResults(this.#searchInputElement?.value ?? "")
     }
 
     /**
@@ -406,10 +406,10 @@ class AdminBillettholderSearch extends HTMLElement {
      */
     handleInputKeydown(event) {
         if (event.key !== "Enter") return
-        const firstResult = this.#searchResultsEl?.querySelector(".gm-search-item")
-        if (!(firstResult instanceof HTMLButtonElement)) return
+        const firstVisibleResultButton = this.#searchResultsElement?.querySelector(".gm-search-item")
+        if (!(firstVisibleResultButton instanceof HTMLButtonElement)) return
         event.preventDefault()
-        this.#selectMatchButton(firstResult)
+        this.#selectSearchResultButton(firstVisibleResultButton)
     }
 
     /**
@@ -418,36 +418,36 @@ class AdminBillettholderSearch extends HTMLElement {
     handleClick(event) {
         const target = event.target
         if (!(target instanceof HTMLElement)) return
-        const button = target.closest(".gm-search-item")
-        if (!(button instanceof HTMLButtonElement)) return
-        this.#selectMatchButton(button)
+        const resultButton = target.closest(".gm-search-item")
+        if (!(resultButton instanceof HTMLButtonElement)) return
+        this.#selectSearchResultButton(resultButton)
     }
 
     /**
      * @param {HTMLButtonElement} button
      */
-    #selectMatchButton(button) {
-        const value = button.getAttribute("data-value")
-        if (!value) return
-        const id = button.getAttribute("data-id")
-        if (!id) return
+    #selectSearchResultButton(selectedResultButton) {
+        const selectedLabel = selectedResultButton.getAttribute("data-value")
+        if (!selectedLabel) return
+        const selectedId = selectedResultButton.getAttribute("data-id")
+        if (!selectedId) return
 
-        if (this.#inputEl) this.#inputEl.value = value
-        this.#searchResultsEl?.replaceChildren()
+        if (this.#searchInputElement) this.#searchInputElement.value = selectedLabel
+        this.#searchResultsElement?.replaceChildren()
 
         this.dispatchEvent(
             new CustomEvent("billettholder-select", {
                 detail: {
-                    id: Number(id),
-                    label: value,
+                    id: Number(selectedId),
+                    label: selectedLabel,
                 },
             }),
         )
     }
 
-    #clearSearch() {
-        if (this.#inputEl) this.#inputEl.value = ""
-        this.#searchResultsEl?.replaceChildren()
+    #clearSearchInputAndResults() {
+        if (this.#searchInputElement) this.#searchInputElement.value = ""
+        this.#searchResultsElement?.replaceChildren()
     }
 }
 
