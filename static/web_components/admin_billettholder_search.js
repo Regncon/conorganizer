@@ -115,7 +115,8 @@ const ADMIN_BILLETTHOLDER_SEARCH_SHADOW_STYLES = `
 
         mark {
             background: var(--color-warning);
-            color: inherit;
+            color: var(--bg-base);
+            margin-inline-end: 0.3ch;
         }
     }
 `
@@ -560,6 +561,13 @@ class AdminBillettholderSearch extends HTMLElement {
                 composed: true,
             }),
         )
+
+        requestAnimationFrame(() => {
+            const currentInputElement = this.shadowRoot?.querySelector(".input")
+            if (currentInputElement instanceof HTMLInputElement) {
+                currentInputElement.focus()
+            }
+        })
     }
 
     /**
@@ -570,6 +578,7 @@ class AdminBillettholderSearch extends HTMLElement {
         if (this.#searchInputElement) this.#searchInputElement.value = ""
         this.#searchResultsElement?.replaceChildren()
     }
+
 }
 
 if (!customElements.get(ADMIN_BILLETTHOLDER_SEARCH_TAG)) {
