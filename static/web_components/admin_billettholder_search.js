@@ -330,6 +330,14 @@ class AdminBillettholderSearch extends HTMLElement {
     }
 
     /**
+     * Public API for clearing the current search value and visible results.
+     * @returns {void}
+     */
+    clearSearch() {
+        this.#clearSearchInputAndResults()
+    }
+
+    /**
      * React to Datastar-driven attribute updates.
      * @param {`data-billettholdere`|`data-clear-input`} name
      * @param {string|null} oldValue
@@ -410,7 +418,7 @@ class AdminBillettholderSearch extends HTMLElement {
         const searchInputElement = document.createElement("input")
         searchInputElement.type = "search"
         searchInputElement.autocomplete = "off"
-        searchInputElement.placeholder = this.getAttribute("placeholder") ?? "s›k etter spiller"
+        searchInputElement.placeholder = this.getAttribute("placeholder") ?? "søk etter spiller"
         searchInputElement.className = "input"
         searchInputElement.required = true
         searchInputElement.title = ""
