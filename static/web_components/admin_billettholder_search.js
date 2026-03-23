@@ -8,6 +8,23 @@ const GLOBAL_STYLE_URLS = [
     "/static/index.css",
     "/static/buttons.css",
 ]
+const globalStyleSheetsPromise = (async () => {
+    const supportsConstructableStyleSheets =
+        !!(Document.prototype && "adoptedStyleSheets" in Document.prototype) &&
+        !!(CSSStyleSheet.prototype && "replace" in CSSStyleSheet.prototype)
+
+    if (!supportsConstructableStyleSheets) return null
+
+    const styleSheets = []
+    for (const url of GLOBAL_STYLE_URLS) {
+        const response = await fetch(url, { credentials: "same-origin" })
+        const cssText = await response.text()
+        const styleSheet = new CSSStyleSheet()
+        await styleSheet.replace(cssText)
+        styleSheets.push(styleSheet)
+    }
+    return styleSheets
+})()
 
 /**
  * Escape RegExp meta characters for a safe literal match.
@@ -140,12 +157,18 @@ class AdminBillettholderSearch extends HTMLElement {
 
         if (!this.shadowRoot) {
             const shadowRoot = this.attachShadow({ mode: "open" })
-            for (const url of GLOBAL_STYLE_URLS) {
-                const link = document.createElement("link")
-                link.rel = "stylesheet"
-                link.href = url
-                shadowRoot.appendChild(link)
-            }
+            globalStyleSheetsPromise.then((styleSheets) => {
+                if (styleSheets && this.shadowRoot) {
+                    this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, ...styleSheets]
+                } else if (this.shadowRoot) {
+                    for (const url of GLOBAL_STYLE_URLS) {
+                        const link = document.createElement("link")
+                        link.rel = "stylesheet"
+                        link.href = url
+                        this.shadowRoot.appendChild(link)
+                    }
+                }
+            })
             const style = document.createElement("style")
             style.textContent = `
                 :host {
@@ -323,7 +346,7 @@ class AdminBillettholderSearch extends HTMLElement {
     }
 
     #renderSearchInterface() {
-        const placeholder = this.getAttribute("placeholder") ?? "s›k etter spiller"
+        const placeholder = this.getAttribute("placeholder") ?? "søk etter spiller"
         const inputId = this.getAttribute("input-id") ?? `gm-search-${ Math.random().toString(36).substring(2, 8) }`
         const inputTippy = this.getAttribute("input-tippy") ?? ""
 
@@ -424,7 +447,7 @@ class AdminBillettholderSearch extends HTMLElement {
     }
 
     /**
-     * @param {HTMLButtonElement} button
+     * @param {HTMLButtonElement} selectedResultButton
      */
     #selectSearchResultButton(selectedResultButton) {
         const selectedLabel = selectedResultButton.getAttribute("data-value")
