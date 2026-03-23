@@ -27,6 +27,8 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	{{
 	associatedTicketHolders, err := GetTicketHolders(userInfo, db)
 	yourBillettHolder := GetYourBillettHolderInfo(userInfo, associatedTicketHolders)
+	associatedTicketHoldersJSON, _ := templ.JSONString(associatedTicketHolders)
+	yourBillettHolderJSON, _ := templ.JSONString(yourBillettHolder)
 	}}
 	if err != nil {
 		{{ logger.Error(err.Error(), "user_id", userInfo.Id) }}
@@ -39,7 +41,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		class="ticket-holder-container"
 		data-signals:billett-holder-id=""
 		data-on:billettholder-selected="$billettHolderId = evt.detail;"
-		data-init={ fmt.Sprintf("const init = setInitialBillettholderToLocalStorage(); init ? $billettHolderId = init.Id : $billettHolderId = getBillettHolderFromLocalstorage()") }
+		data-init={ fmt.Sprintf("const init = window.initializeSelectedBillettholder(%s, %s); $billettHolderId = init?.Id ?? ''", associatedTicketHoldersJSON, yourBillettHolderJSON) }
 	>
 		if err != nil {
 			<div class="ticket-holder-error">
@@ -62,55 +64,57 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		}
 	</div>
 	<script>
-        LSKey = {
+        window.LSKey = {
 			SelectedBilletHolder: "selectedBillettHolder",
 		};
-        function setInitialBillettholderToLocalStorage() {
-            const billettholder = {{ yourBillettHolder }}
-            const currentBillettholder = localStorage.getItem(LSKey.SelectedBilletHolder);
-            if (!currentBillettholder || currentBillettholder === JSON.stringify(billettholder)) {
-                localStorage.setItem(
-                    LSKey.SelectedBilletHolder,
-                    JSON.stringify({
-                        Id: billettholder.Id,
-                        Name: billettholder.Name,
-                        Email: billettholder.Email
-                    }, null, 2),
-                );
-                return {
-                    Id: billettholder.Id,
-                    Name: billettholder.Name,
-                    Email: billettholder.Email
-                }
+        window.getSelectedBillettholderFromLocalStorage = function getSelectedBillettholderFromLocalStorage() {
+            const selectedBillettholderString = localStorage.getItem(window.LSKey.SelectedBilletHolder)
+            if (!selectedBillettholderString) {
+                return null
             }
-            return null
+
+            try {
+                const selectedBillettholder = JSON.parse(selectedBillettholderString)
+                if (!selectedBillettholder?.Id) {
+                    return null
+                }
+                return {
+                    Id: selectedBillettholder.Id,
+                    Name: selectedBillettholder.Name ?? "",
+                    Email: selectedBillettholder.Email ?? "",
+                }
+            } catch {
+                return null
+            }
         }
 
-        function getBillettHolderFromLocalstorage() {
-			const selectedBillettHolderString = localStorage.getItem(
-				LSKey.SelectedBilletHolder,
-			);
-			if (!selectedBillettHolderString) {
-				return "";
-			}
-			const selectedBillettHolder = JSON.parse(
-				selectedBillettHolderString,
-			);
-			return selectedBillettHolder.Id;
-		}
+        window.setSelectedBillettholderInLocalStorage = function setSelectedBillettholderInLocalStorage(billettholder) {
+            if (!billettholder?.Id) {
+                return null
+            }
 
-        const billettHolderButtonPickerButton = document.querySelectorAll(
-			`.billett-holder-picker-button`,
-		);
-		billettHolderButtonPickerButton.forEach((button) => {
-			button.addEventListener("click", (ev) => {
-				const currentBillettHolder =
-					ev.currentTarget.dataset.currentBillettHolder;
-				localStorage.setItem(
-					LSKey.SelectedBilletHolder,
-					currentBillettHolder,
-				);
-			});
-		});
+            const selectedBillettholder = {
+                Id: billettholder.Id,
+                Name: billettholder.Name ?? "",
+                Email: billettholder.Email ?? "",
+            }
+            localStorage.setItem(window.LSKey.SelectedBilletHolder, JSON.stringify(selectedBillettholder))
+            return selectedBillettholder
+        }
+
+        window.initializeSelectedBillettholder = function initializeSelectedBillettholder(associatedBillettholdere, yourBillettholder) {
+            const storedBillettholder = window.getSelectedBillettholderFromLocalStorage()
+            if (storedBillettholder) {
+                return window.setSelectedBillettholderInLocalStorage(storedBillettholder)
+            }
+
+            if (!yourBillettholder?.Id) {
+                return null
+            }
+
+            const selectedBillettholder = associatedBillettholdere.find((billettholder) => billettholder.Id === yourBillettholder.Id)
+                ?? yourBillettholder
+            return window.setSelectedBillettholderInLocalStorage(selectedBillettholder)
+        }
 	</script>
 }

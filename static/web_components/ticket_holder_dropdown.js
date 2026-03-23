@@ -56,8 +56,6 @@ if (!customElements.get("billettholder-dropdown")) {
         #selectedValueEle = null
         /** @type {number} */
         #focusedIndex = -1
-        /** @type {string} */
-        #localStorageKey = "selectedBillettHolder"
         /** @type {Billettholder[]} */
         #billettholdere = []
         /** @type {HTMLTemplateElement | null} */
@@ -135,7 +133,7 @@ if (!customElements.get("billettholder-dropdown")) {
             if (!this.setupInteractiveElements()) {
                 return
             }
-            this.hydrateSelection()
+            this.hydrateSelectionFromSharedStorage()
         }
 
         /**
@@ -306,7 +304,6 @@ if (!customElements.get("billettholder-dropdown")) {
                 liEle.dataset.Name = billettholder.Name
                 liEle.dataset.Email = billettholder.Email
                 liEle.dataset.Color = billettholder.Color
-                liEle.onclick = () => this.emitBillettholderSelected(billettholder.Id)
                 liEle.appendChild(this.createNameInitialsNode(billettholder))
                 listEle.appendChild(liEle)
             })
@@ -340,12 +337,16 @@ if (!customElements.get("billettholder-dropdown")) {
         }
 
         /**
-         * Saves selected billettholder to localStorage.
+         * Builds the canonical localStorage payload from an option element.
          * @param {HTMLLIElement} optionEle
-         * @returns {void}
+         * @returns {{Id:number, Name:string, Email:string}}
          */
-        saveSelectedToLocalStorage(optionEle) {
-            localStorage.setItem(this.#localStorageKey, JSON.stringify(this.toBillettholder(optionEle)))
+        toStoredBillettholder(optionEle) {
+            return {
+                Id: Number(optionEle.dataset.Id ?? "0"),
+                Name: optionEle.dataset.Name ?? "",
+                Email: optionEle.dataset.Email ?? "",
+            }
         }
 
         /**
@@ -405,43 +406,31 @@ if (!customElements.get("billettholder-dropdown")) {
         }
 
         /**
-         * Restores selection from localStorage or picks first option.
+         * Restores the selected UI state from shared storage, with a first-option visual fallback.
          * @returns {void}
          */
-        hydrateSelection() {
+        hydrateSelectionFromSharedStorage() {
             const optionEles = this.getOptionElements()
             const firstOptionEle = optionEles[0]
             if (!firstOptionEle) {
                 return
             }
 
-            const selectedBillettholderLS = localStorage.getItem(this.#localStorageKey)
-            if (!selectedBillettholderLS) {
+            const selectedBillettholder = window.getSelectedBillettholderFromLocalStorage?.()
+            if (!selectedBillettholder?.Id) {
                 this.renderSelected(firstOptionEle)
-                this.saveSelectedToLocalStorage(firstOptionEle)
-                this.emitBillettholderSelected(this.toBillettholder(firstOptionEle).Id)
                 return
             }
 
-            try {
-                /** @type {Billettholder} */
-                const selectedBillettholder = JSON.parse(selectedBillettholderLS)
-                const selectedOptionEle = optionEles.find(
-                    (optionEle) => Number(optionEle.dataset.Id ?? "0") === Number(selectedBillettholder.Id),
-                )
-                if (!selectedOptionEle) {
-                    this.renderSelected(firstOptionEle)
-                    this.saveSelectedToLocalStorage(firstOptionEle)
-                    this.emitBillettholderSelected(this.toBillettholder(firstOptionEle).Id)
-                    return
-                }
-                this.renderSelected(selectedOptionEle)
-                this.emitBillettholderSelected(this.toBillettholder(selectedOptionEle).Id)
-            } catch {
+            const selectedOptionEle = optionEles.find(
+                (optionEle) => Number(optionEle.dataset.Id ?? "0") === Number(selectedBillettholder.Id),
+            )
+            if (!selectedOptionEle) {
                 this.renderSelected(firstOptionEle)
-                this.saveSelectedToLocalStorage(firstOptionEle)
-                this.emitBillettholderSelected(this.toBillettholder(firstOptionEle).Id)
+                return
             }
+
+            this.renderSelected(selectedOptionEle)
         }
 
         /**
@@ -451,7 +440,7 @@ if (!customElements.get("billettholder-dropdown")) {
          */
         handleOptionSelect(optionEle) {
             this.renderSelected(optionEle)
-            this.saveSelectedToLocalStorage(optionEle)
+            window.setSelectedBillettholderInLocalStorage?.(this.toStoredBillettholder(optionEle))
         }
 
         /**
@@ -539,6 +528,7 @@ if (!customElements.get("billettholder-dropdown")) {
             }
 
             this.handleOptionSelect(optionEle)
+            this.emitBillettholderSelected(this.toBillettholder(optionEle).Id)
             this.toggleDropdown(false)
         }
 
