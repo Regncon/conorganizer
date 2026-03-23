@@ -357,8 +357,12 @@ if (!customElements.get("billettholder-dropdown")) {
         updateFocus(optionEles) {
             optionEles.forEach((optionEle, index) => {
                 optionEle.setAttribute("tabindex", index === this.#focusedIndex ? "0" : "-1")
-                if (index === this.#focusedIndex) {
-                    optionEle.focus()
+            })
+
+            requestAnimationFrame(() => {
+                const focusedOptionEle = optionEles[this.#focusedIndex]
+                if (focusedOptionEle instanceof HTMLLIElement) {
+                    focusedOptionEle.focus()
                 }
             })
         }

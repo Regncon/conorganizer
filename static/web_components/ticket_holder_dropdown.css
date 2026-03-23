@@ -2,6 +2,7 @@
     position: relative;
     display: inline-block;
     width: 100%;
+    padding-inline: 0.3rem;
 
     .name-initials {
         display: inline-flex;
@@ -55,6 +56,13 @@
                     transform: rotate(180deg);
                 }
             }
+        }
+
+        &:focus,
+        &:focus-visible {
+            outline: none;
+            color: var(--btn-primary-active-text);
+            box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
         }
     }
 

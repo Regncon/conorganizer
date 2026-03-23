@@ -75,7 +75,8 @@
     color: var(--btn-primary-active-text);
 }
 
-.btn--primary:focus-visible {
+.btn--primary:focus-visible,
+.btn--primary:focus {
     outline: none;
     background-color: var(--btn-primary-hover-bg);
     color: var(--btn-primary-active-text);
@@ -112,7 +113,8 @@
     color: var(--btn-secondary-active-text);
 }
 
-.btn--secondary:focus-visible {
+.btn--secondary:focus-visible,
+.btn--secondary:focus {
     outline: none;
     background-color: var(--btn-secondary-hover-bg);
     color: var(--btn-secondary-active-text);
@@ -142,7 +144,8 @@
     color: var(--btn-outline-active-text);
 }
 
-.btn--outline:focus-visible {
+.btn--outline:focus-visible,
+.btn--outline:focus {
     outline: none;
     background-color: var(--btn-outline-hover-bg);
     color: var(--btn-outline-active-text);
@@ -173,7 +176,8 @@
     color: var(--btn-ghost-active-text);
 }
 
-.btn--ghost:focus-visible {
+.btn--ghost:focus-visible,
+.btn--ghost:focus {
     outline: none;
     background-color: var(--btn-ghost-hover-bg);
     color: var(--btn-ghost-active-text);
@@ -205,7 +209,8 @@
     color: var(--btn-primary-active-text);
 }
 
-.btn--cta:focus-visible {
+.btn--cta:focus-visible,
+.btn--cta:focus {
     outline: none;
     box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
     background-color: var(--color-primary-hover);
