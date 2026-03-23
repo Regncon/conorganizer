@@ -8,6 +8,7 @@ const GLOBAL_STYLE_URLS = [
     "/static/index.css",
     "/static/buttons.css",
 ]
+const EMPTY_SEARCH_RESULTS_TEXT = "Ingen billettholdere funnet"
 
 const globalStyleSheetsPromise = (async () => {
     const supportsConstructableStyleSheets =
@@ -224,6 +225,20 @@ const renderHighlightedLabelFragment = (label, normalizedQuery) => {
         fragment.append(document.createTextNode(label.slice(currentCursor)))
     }
     return fragment
+}
+
+/**
+ * Find and rank the best visible billettholder matches for a normalized query.
+ * @param {Array<{id:number, label:string, normalizedLabel:string}>} searchableBillettholderOptions
+ * @param {string} normalizedQuery
+ * @returns {Array<{id:number, label:string, normalizedLabel:string, score:number}>}
+ */
+const getTopMatchingBillettholderOptions = (searchableBillettholderOptions, normalizedQuery) => {
+    return searchableBillettholderOptions
+        .map((option) => ({ ...option, score: calculateMatchScore(option.normalizedLabel, normalizedQuery) }))
+        .filter((option) => option.score > 0)
+        .toSorted((leftOption, rightOption) => rightOption.score - leftOption.score || leftOption.label.localeCompare(rightOption.label))
+        .toSpliced(8)
 }
 
 /**
@@ -465,16 +480,15 @@ class AdminBillettholderSearch extends HTMLElement {
         this.#searchResultsElement?.replaceChildren()
         if (!normalizedQuery) return
 
-        const matchingBillettholderOptions = this.#searchableBillettholderOptions
-            .map((option) => ({ ...option, score: calculateMatchScore(option.normalizedLabel, normalizedQuery) }))
-            .filter((option) => option.score > 0)
-            .sort((leftOption, rightOption) => rightOption.score - leftOption.score || leftOption.label.localeCompare(rightOption.label))
-            .slice(0, 8)
+        const matchingBillettholderOptions = getTopMatchingBillettholderOptions(
+            this.#searchableBillettholderOptions,
+            normalizedQuery,
+        )
 
         if (matchingBillettholderOptions.length === 0) {
             const emptyStateElement = document.createElement("div")
             emptyStateElement.classList.add("gm-search-empty")
-            emptyStateElement.append(document.createTextNode("Ingen billettholdere funnet"))
+            emptyStateElement.append(document.createTextNode(EMPTY_SEARCH_RESULTS_TEXT))
             this.#searchResultsElement?.append(emptyStateElement)
             return
         }
@@ -561,13 +575,7 @@ class AdminBillettholderSearch extends HTMLElement {
                 composed: true,
             }),
         )
-
-        requestAnimationFrame(() => {
-            const currentInputElement = this.shadowRoot?.querySelector(".input")
-            if (currentInputElement instanceof HTMLInputElement) {
-                currentInputElement.focus()
-            }
-        })
+        this.#restoreInputFocusAfterSelection()
     }
 
     /**
@@ -577,6 +585,19 @@ class AdminBillettholderSearch extends HTMLElement {
     #clearSearchInputAndResults() {
         if (this.#searchInputElement) this.#searchInputElement.value = ""
         this.#searchResultsElement?.replaceChildren()
+    }
+
+    /**
+     * Restore focus to the current search input after Datastar updates settle.
+     * @returns {void}
+     */
+    #restoreInputFocusAfterSelection() {
+        requestAnimationFrame(() => {
+            const currentInputElement = this.shadowRoot?.querySelector(".input")
+            if (currentInputElement instanceof HTMLInputElement) {
+                currentInputElement.focus()
+            }
+        })
     }
 
 }
