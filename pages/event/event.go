@@ -154,6 +154,21 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						userInfo := userctx.GetUserRequestInfo(ctx)
 
 						eventId := chi.URLParam(r, "idx")
+						if eventId == "" {
+							logger.Warn("Rejected interest update: missing event id", "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							http.Error(w, "event id is required", http.StatusBadRequest)
+							return
+						}
+						if signals.BillettHolderId <= 0 {
+							logger.Warn("Rejected interest update: missing billettholder id", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							http.Error(w, "billettholder id is required", http.StatusBadRequest)
+							return
+						}
+						if signals.PuljeId == "" {
+							logger.Warn("Rejected interest update: missing pulje id", "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
+							http.Error(w, "pulje id is required", http.StatusBadRequest)
+							return
+						}
 						// convert interestLevel string to InterestLevels struct
 						var interestLevel InterestLevels
 
@@ -166,6 +181,16 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							interestLevel.Low = "low"
 						case "none":
 							interestLevel.None = "none"
+						default:
+							logger.Warn("Rejected interest update: missing or invalid interest level", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "route_interest_level", chi.URLParam(r, "interestLevel"))
+							http.Error(w, "interest level is required", http.StatusBadRequest)
+							return
+						}
+
+						if !hasSelectedInterestLevel(interestLevel) {
+							logger.Warn("Rejected interest update: no interest level selected", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							http.Error(w, "interest level is required", http.StatusBadRequest)
+							return
 						}
 						_, _, mvcErr := mvcSession(w, r)
 
@@ -176,6 +201,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 
 						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db); err != nil {
 							logger.Error(fmt.Errorf("failed to update interest for event %s, pulje %s, billettholder %d: %w", eventId, signals.PuljeId, signals.BillettHolderId, err).Error())
+							http.Error(w, "failed to update interest", http.StatusBadRequest)
+							return
 						}
 
 						logger.Debug("Interest update request handled",
@@ -233,6 +260,10 @@ type InterestLevels struct {
 	None   string `json:"none"`
 }
 
+func hasSelectedInterestLevel(interest InterestLevels) bool {
+	return interest.High != "" || interest.Medium != "" || interest.Low != "" || interest.None != ""
+}
+
 func convertInterestLevelToDbInterestLevel(interest InterestLevels) string {
 	switch {
 	case interest.High != "":
@@ -254,10 +285,27 @@ func updateInterest(
 	puljeId string,
 	db *sql.DB,
 ) error {
+	if eventID == "" {
+		return fmt.Errorf("event id is required")
+	}
+	if billettholderId <= 0 {
+		return fmt.Errorf("billettholder id is required")
+	}
+	if puljeId == "" {
+		return fmt.Errorf("pulje id is required")
+	}
+	if !hasSelectedInterestLevel(interest) {
+		return fmt.Errorf("interest level is required")
+	}
+
 	puljeQuery := `SELECT EXISTS (SELECT * FROM event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_active = 1 AND is_published = 1)`
-	_, puljerErr := db.Query(puljeQuery, eventID, puljeId)
+	var puljeExists bool
+	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId).Scan(&puljeExists)
 	if puljerErr != nil {
 		return fmt.Errorf("failed to check if pulje %s exists for event %s: %w", puljeId, eventID, puljerErr)
+	}
+	if !puljeExists {
+		return fmt.Errorf("pulje %s is not active and published for event %s", puljeId, eventID)
 	}
 
 	userHasAccessToBillettHolderIdQuery := `
@@ -266,10 +314,14 @@ func updateInterest(
                 FROM billettholdere_users [BU]
                 JOIN users [U] ON [BU].user_id = [U].id
                 WHERE [BU].billettholder_id = $1 AND [U].user_id = $2)`
-	_, userHasAccessErr := db.Query(userHasAccessToBillettHolderIdQuery, billettholderId, userId)
+	var userHasAccess bool
+	userHasAccessErr := db.QueryRow(userHasAccessToBillettHolderIdQuery, billettholderId, userId).Scan(&userHasAccess)
 
 	if userHasAccessErr != nil {
 		return fmt.Errorf("failed to check if user %s has access to billettholder %d: %w", userId, billettholderId, userHasAccessErr)
+	}
+	if !userHasAccess {
+		return fmt.Errorf("user %s does not have access to billettholder %d", userId, billettholderId)
 	}
 
 	if interest.None != "" {
