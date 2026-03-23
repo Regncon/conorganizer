@@ -1,6 +1,11 @@
 const HIGHLIGHT_ESCAPE_PATTERN = /[.*+?^${}()|[\]\\]/g
 const DATA_BILLETTHOLDERE_ATTR = "data-billettholdere"
 const DATA_CLEAR_INPUT_ATTR = "data-clear-input"
+const ADMIN_BILLETTHOLDER_SEARCH_TAG = "admin-billettholder-search"
+const GLOBAL_STYLE_URLS = [
+    "/static/index.css",
+    "/static/buttons.css",
+]
 
 /**
  * Escape RegExp meta characters for a safe literal match.
@@ -146,6 +151,114 @@ class AdminBillettholderSearch extends HTMLElement {
         this._billettholdere = []
         this._initialized = false
         this._clearInput = this.getAttribute(DATA_CLEAR_INPUT_ATTR) ?? ""
+        this.mountEl = document.createElement("div")
+        this.mountEl.className = "admin-billettholder-search-root"
+
+        if (!this.shadowRoot) {
+            const shadowRoot = this.attachShadow({ mode: "open" })
+            for (const url of GLOBAL_STYLE_URLS) {
+                const link = document.createElement("link")
+                link.rel = "stylesheet"
+                link.href = url
+                shadowRoot.appendChild(link)
+            }
+            const style = document.createElement("style")
+            style.textContent = `
+                :host {
+                    display: block;
+                }
+
+                .admin-billettholder-search-root {
+                    display: block;
+
+                    input {
+                        font-family: var(--font-monospace);
+                    }
+
+                    .input {
+                        background-color: var(--bg-item);
+                        color: var(--color-text-primary);
+                        border-radius: var(--border-radius-2x);
+                        min-height: 2.6rem;
+                        border: 1px solid var(--bg-item-border);
+                        font-size: 1rem;
+                        padding-inline-start: 1rem;
+                        padding-inline-end: 1rem;
+                        margin: 0;
+                        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+                        box-sizing: border-box;
+
+                        &::placeholder {
+                            color: var(--color-text-soft-50);
+                        }
+
+                        &:focus-visible {
+                            outline: 0;
+                            border: 1px solid var(--color-primary-hover);
+                            box-shadow: 0 0 0 0.25rem hsla(from var(--color-primary-hover) h s l / 0.25);
+                        }
+                    }
+
+                    .gm-search-results {
+                        margin-top: var(--spacing-4x);
+                        display: block;
+                    }
+
+                    .gm-search-empty {
+                        color: var(--color-text-soft);
+                    }
+
+                    .gm-search-item {
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: flex-start;
+                        height: var(--btn-height);
+                        padding: 0 var(--btn-padding-x);
+                        font-size: var(--btn-font-size);
+                        font-weight: var(--btn-font-weight);
+                        line-height: 1;
+                        border-radius: var(--btn-border-radius);
+                        border-style: solid;
+                        border-width: var(--btn-border-width);
+                        cursor: pointer;
+                        user-select: none;
+                        transition:
+                            background-color var(--btn-transition-duration) ease,
+                            color var(--btn-transition-duration) ease,
+                            border-color var(--btn-transition-duration) ease,
+                            box-shadow var(--btn-transition-duration) ease,
+                            transform var(--btn-transition-duration) ease;
+                        inline-size: auto;
+                        max-inline-size: 100%;
+                        text-align: left;
+                        border-color: var(--btn-outline-border);
+                        color: var(--color-secondary);
+                        background-color: transparent;
+                        margin: 0 var(--spacing-2x) var(--spacing-2x) 0;
+                        vertical-align: top;
+
+                        &:hover {
+                            background-color: var(--btn-outline-hover-bg);
+                            color: var(--btn-outline-active-text);
+                        }
+
+                        &:focus-visible {
+                            outline: none;
+                            background-color: var(--btn-outline-hover-bg);
+                            color: var(--btn-outline-active-text);
+                            box-shadow: 0 0 0 3px var(--btn-outline-focus-shadow);
+                        }
+                    }
+
+                    mark {
+                        background: var(--color-warning);
+                        color: var(--bg-base);
+                        margin-inline-end: 0.2ch;
+                    }
+                }
+            `
+            shadowRoot.append(style, this.mountEl)
+        }
 
         this.handleInput = this.handleInput.bind(this)
         this.handleClick = this.handleClick.bind(this)
@@ -253,7 +366,7 @@ class AdminBillettholderSearch extends HTMLElement {
         const inputId = this.getAttribute("input-id") ?? `gm-search-${ Math.random().toString(36).substring(2, 8) }`
         const inputTippy = this.getAttribute("input-tippy") ?? ""
 
-        this.replaceChildren()
+        this.mountEl.replaceChildren()
 
         const input = document.createElement("input")
         input.id = inputId
@@ -267,10 +380,9 @@ class AdminBillettholderSearch extends HTMLElement {
 
         const results = document.createElement("div")
         results.className = "gm-search-results"
-        results.style.marginTop = "var(--spacing-4x)"
         results.setAttribute("aria-live", "polite")
 
-        this.append(input, results)
+        this.mountEl.append(input, results)
 
         /** @type {HTMLInputElement} */
         this.inputEl = input
@@ -300,9 +412,8 @@ class AdminBillettholderSearch extends HTMLElement {
         const matches = this.searchOptions
             .map((opt) => ({ ...opt, score: matchScore(opt.norm, norm) }))
             .filter((opt) => opt.score > 0)
-            // @ts-ignore
-            .toSorted((a, b) => b.score - a.score || a.label.localeCompare(b.label))
-            .toSpliced(8)
+            .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label))
+            .slice(0, 8)
 
         if (matches.length === 0) {
             const empty = document.createElement("div")
@@ -393,4 +504,6 @@ class AdminBillettholderSearch extends HTMLElement {
 
 }
 
-customElements.define("admin-billettholder-search", AdminBillettholderSearch)
+if (!customElements.get(ADMIN_BILLETTHOLDER_SEARCH_TAG)) {
+    customElements.define(ADMIN_BILLETTHOLDER_SEARCH_TAG, AdminBillettholderSearch)
+}
