@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Regncon/conorganizer/models"
@@ -21,6 +22,29 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
+
+func patchInterestErrorSignal(sse *datastar.ServerSentEventGenerator, errorMessage string) error {
+	signalJSON, err := json.Marshal(map[string]string{
+		"interestErrorMessage": errorMessage,
+	})
+	if err != nil {
+		return fmt.Errorf("marshal interest error signal: %w", err)
+	}
+	if err := sse.PatchSignals(signalJSON); err != nil {
+		return fmt.Errorf("patch interest error signal: %w", err)
+	}
+	return nil
+}
+
+func interestErrorMessageFromError(err error) string {
+	if err == nil {
+		return ""
+	}
+	if strings.Contains(err.Error(), "does not have access") {
+		return "Du har ikkje tilgang til å endre interessa til denne billettheldaren. Kontakt styret."
+	}
+	return err.Error()
+}
 
 func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
 	logger = logger.With("component", "event")
@@ -150,23 +174,30 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
 						}
+						sse := datastar.NewSSE(w, r)
 						ctx := r.Context()
 						userInfo := userctx.GetUserRequestInfo(ctx)
 
 						eventId := chi.URLParam(r, "idx")
 						if eventId == "" {
-							logger.Warn("Rejected interest update: missing event id", "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							http.Error(w, "event id is required", http.StatusBadRequest)
+							logger.Error("Rejected interest update: missing event id", "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							if err := patchInterestErrorSignal(sse, "Mangler arrangement."); err != nil {
+								logger.Error(err.Error(), "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							}
 							return
 						}
 						if signals.BillettHolderId <= 0 {
-							logger.Warn("Rejected interest update: missing billettholder id", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							http.Error(w, "billettholder id is required", http.StatusBadRequest)
+							logger.Error("Rejected interest update: missing billettholder id", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							if err := patchInterestErrorSignal(sse, "Vel billetthelder f\u00f8r du melder interesse."); err != nil {
+								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							}
 							return
 						}
 						if signals.PuljeId == "" {
-							logger.Warn("Rejected interest update: missing pulje id", "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
-							http.Error(w, "pulje id is required", http.StatusBadRequest)
+							logger.Error("Rejected interest update: missing pulje id", "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
+							if err := patchInterestErrorSignal(sse, "Vel pulje f\u00f8r du melder interesse."); err != nil {
+								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
+							}
 							return
 						}
 						// convert interestLevel string to InterestLevels struct
@@ -182,14 +213,18 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						case "none":
 							interestLevel.None = "none"
 						default:
-							logger.Warn("Rejected interest update: missing or invalid interest level", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "route_interest_level", chi.URLParam(r, "interestLevel"))
-							http.Error(w, "interest level is required", http.StatusBadRequest)
+							logger.Error("Rejected interest update: missing or invalid interest level", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "route_interest_level", chi.URLParam(r, "interestLevel"))
+							if err := patchInterestErrorSignal(sse, "Vel interesse f\u00f8r du lagrar."); err != nil {
+								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							}
 							return
 						}
 
 						if !hasSelectedInterestLevel(interestLevel) {
-							logger.Warn("Rejected interest update: no interest level selected", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							http.Error(w, "interest level is required", http.StatusBadRequest)
+							logger.Error("Rejected interest update: no interest level selected", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							if err := patchInterestErrorSignal(sse, "Vel interesse f\u00f8r du lagrar."); err != nil {
+								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							}
 							return
 						}
 						_, _, mvcErr := mvcSession(w, r)
@@ -200,8 +235,16 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						}
 
 						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db); err != nil {
-							logger.Error(fmt.Errorf("failed to update interest for event %s, pulje %s, billettholder %d: %w", eventId, signals.PuljeId, signals.BillettHolderId, err).Error())
-							http.Error(w, "failed to update interest", http.StatusBadRequest)
+							logger.Error(
+								err.Error(),
+								"event_id", eventId,
+								"user_id", userInfo.Id,
+								"pulje_id", signals.PuljeId,
+								"billettholder_id", signals.BillettHolderId,
+							)
+							if patchErr := patchInterestErrorSignal(sse, interestErrorMessageFromError(err)); patchErr != nil {
+								logger.Error(patchErr.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							}
 							return
 						}
 
@@ -321,7 +364,7 @@ func updateInterest(
 		return fmt.Errorf("failed to check if user %s has access to billettholder %d: %w", userId, billettholderId, userHasAccessErr)
 	}
 	if !userHasAccess {
-		return fmt.Errorf("user %s does not have access to billettholder %d", userId, billettholderId)
+		return fmt.Errorf("user %s does not have access to this billettholder interest", userId)
 	}
 
 	if interest.None != "" {

@@ -99,6 +99,10 @@ templ TicketHolderInterestPicker(
 			flex-direction: column;
 			gap: var(--spacing-2x);
 
+			.ticket-holder-error {
+				color: var(--color-error);
+			}
+
 			.btn--secondary {
 				min-height: var(--btn-height-cta);
                 place-content: start;
@@ -115,6 +119,11 @@ templ TicketHolderInterestPicker(
 		class="interest-buttons"
 		data-signals__ifmissing={ templ.JSONString(interestPickerSignals{Interesser: userInterestsObject}) }
 	>
+		<strong
+			class="ticket-holder-error"
+			data-signals:interestErrorMessage
+			data-text="$interestErrorMessage"
+		></strong>
 		<button
 			class="btn btn--secondary"
 			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelHigh) }
