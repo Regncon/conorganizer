@@ -8,6 +8,7 @@ const GLOBAL_STYLE_URLS = [
     "/static/index.css",
     "/static/buttons.css",
 ]
+
 const globalStyleSheetsPromise = (async () => {
     const supportsConstructableStyleSheets =
         !!(Document.prototype && "adoptedStyleSheets" in Document.prototype) &&
@@ -26,6 +27,99 @@ const globalStyleSheetsPromise = (async () => {
     return styleSheets
 })()
 
+const ADMIN_BILLETTHOLDER_SEARCH_SHADOW_STYLES = `
+    :host {
+        display: block;
+    }
+
+    .admin-billettholder-search-root {
+        display: block;
+
+        input {
+            font-family: var(--font-monospace);
+        }
+
+        .input {
+            background-color: var(--bg-item);
+            color: var(--color-text-primary);
+            border-radius: var(--border-radius-2x);
+            min-height: 2.6rem;
+            border: 1px solid var(--bg-item-border);
+            font-size: 1rem;
+            padding-inline: 1rem;
+            margin: 0;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            box-sizing: border-box;
+
+            &::placeholder {
+                color: var(--color-text-soft-50);
+            }
+
+            &:focus-visible {
+                outline: 0;
+                border: 1px solid var(--color-primary-hover);
+                box-shadow: 0 0 0 0.25rem hsla(from var(--color-primary-hover) h s l / 0.25);
+            }
+        }
+
+        .gm-search-results {
+            margin-top: var(--spacing-4x);
+            display: block;
+        }
+
+        .gm-search-empty {
+            color: var(--color-text-soft);
+        }
+
+        .gm-search-item {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-start;
+            height: var(--btn-height);
+            padding: 0 var(--btn-padding-x);
+            font-size: var(--btn-font-size);
+            font-weight: var(--btn-font-weight);
+            line-height: 1;
+            border-radius: var(--btn-border-radius);
+            border-style: solid;
+            border-width: var(--btn-border-width);
+            cursor: pointer;
+            user-select: none;
+            transition:
+                background-color var(--btn-transition-duration) ease,
+                color var(--btn-transition-duration) ease,
+                border-color var(--btn-transition-duration) ease,
+                box-shadow var(--btn-transition-duration) ease,
+                transform var(--btn-transition-duration) ease;
+            inline-size: auto;
+            max-inline-size: 100%;
+            text-align: left;
+            border-color: var(--btn-outline-border);
+            color: var(--color-secondary);
+            background-color: transparent;
+            margin: 0 var(--spacing-2x) var(--spacing-2x) 0;
+            vertical-align: top;
+
+            &:hover {
+                background-color: var(--btn-outline-hover-bg);
+                color: var(--btn-outline-active-text);
+            }
+
+            &:focus-visible {
+                outline: none;
+                background-color: var(--btn-outline-hover-bg);
+                color: var(--btn-outline-active-text);
+                box-shadow: 0 0 0 3px var(--btn-outline-focus-shadow);
+            }
+        }
+
+        mark {
+            background: var(--color-warning);
+            color: inherit;
+        }
+    }
+`
+
 /**
  * Escape RegExp meta characters for a safe literal match.
  * @param {string} value
@@ -38,19 +132,19 @@ const escapeHighlightPart = (value) => value.replace(HIGHLIGHT_ESCAPE_PATTERN, "
  * @param {string} value
  * @returns {string}
  */
-const normalize = (value) => value.trim().toLowerCase()
+const normalizeQuery = (value) => value.trim().toLowerCase()
 
 /**
  * Score how well a name matches a query.
- * @param {string} name
- * @param {string} query
+ * @param {string} candidateName
+ * @param {string} normalizedQuery
  * @returns {number}
  */
-const matchScore = (name, query) => {
-    if (!query) return 0
-    if (name === query) return 3
-    if (name.startsWith(query)) return 2
-    if (name.includes(query)) return 1
+const calculateMatchScore = (candidateName, normalizedQuery) => {
+    if (!normalizedQuery) return 0
+    if (candidateName === normalizedQuery) return 3
+    if (candidateName.startsWith(normalizedQuery)) return 2
+    if (candidateName.includes(normalizedQuery)) return 1
     return 0
 }
 
@@ -59,82 +153,104 @@ const matchScore = (name, query) => {
  * @param {Array<[number, number]>} ranges
  * @returns {Array<[number, number]>}
  */
-const mergeRanges = (ranges) => {
+const mergeOverlappingRanges = (ranges) => {
     if (ranges.length === 0) return []
 
-    ranges.sort((a, b) => a[0] - b[0])
-    const merged = [ranges[0]]
+    ranges.sort((leftRange, rightRange) => leftRange[0] - rightRange[0])
+    const mergedRanges = [ranges[0]]
     for (let i = 1; i < ranges.length; i += 1) {
-        const current = ranges[i]
-        const last = merged[merged.length - 1]
-        if (current[0] <= last[1]) {
-            last[1] = Math.max(last[1], current[1])
+        const currentRange = ranges[i]
+        const previousMergedRange = mergedRanges[mergedRanges.length - 1]
+        if (currentRange[0] <= previousMergedRange[1]) {
+            previousMergedRange[1] = Math.max(previousMergedRange[1], currentRange[1])
         } else {
-            merged.push(current)
+            mergedRanges.push(currentRange)
         }
     }
-    return merged
+    return mergedRanges
 }
 
 /**
- * Find and merge all match ranges in a label.
+ * Find and merge all highlight ranges in a visible label.
  * @param {string} label
- * @param {string} query
+ * @param {string} normalizedQuery
  * @returns {Array<[number, number]>}
  */
-const collectMatchRanges = (label, query) => {
-    if (!query) return []
-    const parts = query.split(/\s+/).filter(Boolean).map(escapeHighlightPart)
+const collectHighlightRanges = (label, normalizedQuery) => {
+    if (!normalizedQuery) return []
+    const queryParts = normalizedQuery.split(/\s+/).filter(Boolean).map(escapeHighlightPart)
     /** @type {Array<[number, number]>} */
-    const ranges = []
+    const highlightRanges = []
 
-    for (const part of parts) {
-        const partMatch = new RegExp(part, "ig")
-        let match = partMatch.exec(label)
-        while (match) {
-            ranges.push([match.index, match.index + match[0].length])
-            match = partMatch.exec(label)
+    for (const queryPart of queryParts) {
+        const partMatcher = new RegExp(queryPart, "ig")
+        let partMatch = partMatcher.exec(label)
+        while (partMatch) {
+            highlightRanges.push([partMatch.index, partMatch.index + partMatch[0].length])
+            partMatch = partMatcher.exec(label)
         }
     }
 
-    return mergeRanges(ranges)
+    return mergeOverlappingRanges(highlightRanges)
 }
 
 /**
- * Build a DOM fragment in memory, then insert once into the live DOM.
+ * Build a DOM fragment with highlighted <mark> ranges.
  * @param {string} label
- * @param {string} query
+ * @param {string} normalizedQuery
  * @returns {DocumentFragment}
  */
-const renderHighlightFragment = (label, query) => {
+const renderHighlightedLabelFragment = (label, normalizedQuery) => {
     const fragment = document.createDocumentFragment()
-    const ranges = collectMatchRanges(label, query)
+    const highlightRanges = collectHighlightRanges(label, normalizedQuery)
 
-    if (ranges.length === 0) {
+    if (highlightRanges.length === 0) {
         fragment.append(document.createTextNode(label))
         return fragment
     }
 
-    let cursor = 0
-    for (const [start, end] of ranges) {
-        if (cursor < start) {
-            fragment.append(document.createTextNode(label.slice(cursor, start)))
+    let currentCursor = 0
+    for (const [startIndex, endIndex] of highlightRanges) {
+        if (currentCursor < startIndex) {
+            fragment.append(document.createTextNode(label.slice(currentCursor, startIndex)))
         }
-        const mark = document.createElement("mark")
-        mark.append(document.createTextNode(label.slice(start, end)))
-        fragment.append(mark)
-        cursor = end
+        const markElement = document.createElement("mark")
+        markElement.append(document.createTextNode(label.slice(startIndex, endIndex)))
+        fragment.append(markElement)
+        currentCursor = endIndex
     }
-    if (cursor < label.length) {
-        fragment.append(document.createTextNode(label.slice(cursor)))
+    if (currentCursor < label.length) {
+        fragment.append(document.createTextNode(label.slice(currentCursor)))
     }
     return fragment
 }
 
+/**
+ * Searchable admin billettholder picker web component.
+ *
+ * Attributes:
+ * - `data-billettholdere`: JSON array of `{ Id, FirstName, LastName }`
+ * - `data-clear-input`: changing the value clears the current search input and results
+ * - `placeholder`: optional input placeholder text
+ * - `input-tippy`: optional tooltip text for the search input
+ *
+ * Events:
+ * - `billettholder-select`: emitted when a result is selected
+ *   detail: `{ id: number, label: string }`
+ *
+ * Datastar usage:
+ * - `data-attr:clear-input="$clearInput"`
+ * - `data-on:billettholder-select="$assignmentBillettholderId = evt.detail.id"`
+ *
+ * Renders its internal UI inside Shadow DOM so Datastar light-DOM patching
+ * does not wipe the search input after the component has connected.
+ *
+ * @extends HTMLElement
+ */
 class AdminBillettholderSearch extends HTMLElement {
     static observedAttributes = [COMPONENT_ATTRIBUTES.billettholdereJson, COMPONENT_ATTRIBUTES.clearInputVersion]
 
-    /** @type {Array<{id:number, label:string, norm:string}>} */
+    /** @type {Array<{id:number, label:string, normalizedLabel:string}>} */
     #searchableBillettholderOptions = []
     /** @type {Array<{Id:number, FirstName:string, LastName:string}>} */
     #availableBillettholdere = []
@@ -146,7 +262,9 @@ class AdminBillettholderSearch extends HTMLElement {
     #shadowContentRoot
     /** @type {AbortController | null} */
     #eventListenerController = null
+    /** @type {boolean} */
     #hasConnected = false
+    /** @type {string} */
     #clearInputVersion = ""
 
     constructor() {
@@ -162,107 +280,14 @@ class AdminBillettholderSearch extends HTMLElement {
                     this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, ...styleSheets]
                 } else if (this.shadowRoot) {
                     for (const url of GLOBAL_STYLE_URLS) {
-                        const link = document.createElement("link")
-                        link.rel = "stylesheet"
-                        link.href = url
-                        this.shadowRoot.appendChild(link)
+                        const linkElement = document.createElement("link")
+                        linkElement.rel = "stylesheet"
+                        linkElement.href = url
+                        this.shadowRoot.appendChild(linkElement)
                     }
                 }
             })
-            const style = document.createElement("style")
-            style.textContent = `
-                :host {
-                    display: block;
-                }
-
-                .admin-billettholder-search-root {
-                    display: block;
-
-                    input {
-                        font-family: var(--font-monospace);
-                    }
-
-                    .input {
-                        background-color: var(--bg-item);
-                        color: var(--color-text-primary);
-                        border-radius: var(--border-radius-2x);
-                        min-height: 2.6rem;
-                        border: 1px solid var(--bg-item-border);
-                        font-size: 1rem;
-                        padding-inline: 1rem;
-                        margin: 0;
-                        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-                        box-sizing: border-box;
-
-                        &::placeholder {
-                            color: var(--color-text-soft-50);
-                        }
-
-                        &:focus-visible {
-                            outline: 0;
-                            border: 1px solid var(--color-primary-hover);
-                            box-shadow: 0 0 0 0.25rem hsla(from var(--color-primary-hover) h s l / 0.25);
-                        }
-                    }
-
-                    .gm-search-results {
-                        margin-top: var(--spacing-4x);
-                        display: block;
-                    }
-
-                    .gm-search-empty {
-                        color: var(--color-text-soft);
-                    }
-
-                    .gm-search-item {
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: flex-start;
-                        height: var(--btn-height);
-                        padding: 0 var(--btn-padding-x);
-                        font-size: var(--btn-font-size);
-                        font-weight: var(--btn-font-weight);
-                        line-height: 1;
-                        border-radius: var(--btn-border-radius);
-                        border-style: solid;
-                        border-width: var(--btn-border-width);
-                        cursor: pointer;
-                        user-select: none;
-                        transition:
-                            background-color var(--btn-transition-duration) ease,
-                            color var(--btn-transition-duration) ease,
-                            border-color var(--btn-transition-duration) ease,
-                            box-shadow var(--btn-transition-duration) ease,
-                            transform var(--btn-transition-duration) ease;
-                        inline-size: auto;
-                        max-inline-size: 100%;
-                        text-align: left;
-                        border-color: var(--btn-outline-border);
-                        color: var(--color-secondary);
-                        background-color: transparent;
-                        margin: 0 var(--spacing-2x) var(--spacing-2x) 0;
-                        vertical-align: top;
-
-                        &:hover {
-                            background-color: var(--btn-outline-hover-bg);
-                            color: var(--btn-outline-active-text);
-                        }
-
-                        &:focus-visible {
-                            outline: none;
-                            background-color: var(--btn-outline-hover-bg);
-                            color: var(--btn-outline-active-text);
-                            box-shadow: 0 0 0 3px var(--btn-outline-focus-shadow);
-                        }
-                    }
-
-                    mark {
-                        background: var(--color-warning);
-                        color: inherit;
-                    }
-                }
-            `
-            shadowRoot.append(style, this.#shadowContentRoot)
+            shadowRoot.append(this.#createShadowStyleElement(), this.#shadowContentRoot)
         }
 
         this.handleInput = this.handleInput.bind(this)
@@ -305,6 +330,7 @@ class AdminBillettholderSearch extends HTMLElement {
     }
 
     /**
+     * React to Datastar-driven attribute updates.
      * @param {`data-billettholdere`|`data-clear-input`} name
      * @param {string|null} oldValue
      * @param {string|null} newValue
@@ -323,60 +349,96 @@ class AdminBillettholderSearch extends HTMLElement {
         }
     }
 
+    /**
+     * Create the component-local shadow DOM style element.
+     * @returns {HTMLStyleElement}
+     */
+    #createShadowStyleElement() {
+        const styleElement = document.createElement("style")
+        styleElement.textContent = ADMIN_BILLETTHOLDER_SEARCH_SHADOW_STYLES
+        return styleElement
+    }
+
+    /**
+     * Read billettholder JSON from the host element attribute into component state.
+     * @returns {void}
+     */
     #syncBillettholdereFromAttribute() {
-        const raw = this.getAttribute(COMPONENT_ATTRIBUTES.billettholdereJson)
-        if (!raw) return
+        const billettholdereJson = this.getAttribute(COMPONENT_ATTRIBUTES.billettholdereJson)
+        if (!billettholdereJson) return
         try {
-            const data = JSON.parse(raw)
-            this.#availableBillettholdere = Array.isArray(data) ? data : []
+            const parsedBillettholdere = JSON.parse(billettholdereJson)
+            this.#availableBillettholdere = Array.isArray(parsedBillettholdere) ? parsedBillettholdere : []
         } catch (error) {
             console.warn("billettholder-search: invalid JSON data", error)
         }
     }
 
+    /**
+     * Build the normalized option list used by the in-memory search.
+     * @returns {void}
+     */
     #rebuildSearchableOptions() {
         this.#searchableBillettholderOptions = this.#availableBillettholdere.map((billettholder) => {
             const label = `${ billettholder.FirstName } ${ billettholder.LastName }`
             return {
                 id: billettholder.Id,
                 label,
-                norm: label.toLowerCase(),
+                normalizedLabel: label.toLowerCase(),
             }
         })
     }
 
+    /**
+     * Render the search input and result container inside shadow DOM.
+     * @returns {void}
+     */
     #renderSearchInterface() {
-        const placeholder = this.getAttribute("placeholder") ?? "søk etter spiller"
-        const inputId = this.getAttribute("input-id") ?? `gm-search-${ Math.random().toString(36).substring(2, 8) }`
-        const inputTippy = this.getAttribute("input-tippy") ?? ""
-
         this.#shadowContentRoot.replaceChildren()
-
-        const input = document.createElement("input")
-        input.id = inputId
-        input.type = "search"
-        input.autocomplete = "off"
-        input.placeholder = placeholder
-        input.className = "input"
-        input.required = true
-        input.title = ""
-        input.setAttribute("data-tippy-content", inputTippy)
-
-        const results = document.createElement("div")
-        results.className = "gm-search-results"
-        results.setAttribute("aria-live", "polite")
-
-        this.#shadowContentRoot.append(input, results)
-        this.#searchInputElement = input
-        this.#searchResultsElement = results
+        const searchInputElement = this.#createSearchInputElement()
+        const searchResultsContainer = this.#createSearchResultsContainer()
+        this.#shadowContentRoot.append(searchInputElement, searchResultsContainer)
+        this.#searchInputElement = searchInputElement
+        this.#searchResultsElement = searchResultsContainer
     }
 
+    /**
+     * Create the search input element from current host attributes.
+     * @returns {HTMLInputElement}
+     */
+    #createSearchInputElement() {
+        const searchInputElement = document.createElement("input")
+        searchInputElement.type = "search"
+        searchInputElement.autocomplete = "off"
+        searchInputElement.placeholder = this.getAttribute("placeholder") ?? "s›k etter spiller"
+        searchInputElement.className = "input"
+        searchInputElement.required = true
+        searchInputElement.title = ""
+        searchInputElement.setAttribute("data-tippy-content", this.getAttribute("input-tippy") ?? "")
+        return searchInputElement
+    }
+
+    /**
+     * Create the search result container.
+     * @returns {HTMLDivElement}
+     */
+    #createSearchResultsContainer() {
+        const searchResultsContainer = document.createElement("div")
+        searchResultsContainer.className = "gm-search-results"
+        searchResultsContainer.setAttribute("aria-live", "polite")
+        return searchResultsContainer
+    }
+
+    /**
+     * Attach DOM listeners using an AbortController so rebinds stay cheap and safe.
+     * @returns {void}
+     */
     #bindEventListeners() {
         if (!this.#searchInputElement || !this.#searchResultsElement) return
 
         this.#eventListenerController?.abort()
         this.#eventListenerController = new AbortController()
-        const signal = this.#eventListenerController.signal
+        const { signal } = this.#eventListenerController
 
         this.#searchInputElement.addEventListener("input", this.handleInput, { signal })
         this.#searchInputElement.addEventListener("keydown", this.handleInputKeydown, { signal })
@@ -384,16 +446,18 @@ class AdminBillettholderSearch extends HTMLElement {
     }
 
     /**
+     * Render the current search result list for a query string.
      * @param {string} query
+     * @returns {void}
      */
     #renderSearchResults(query) {
-        const normalizedQuery = normalize(query)
+        const normalizedQuery = normalizeQuery(query)
 
         this.#searchResultsElement?.replaceChildren()
         if (!normalizedQuery) return
 
         const matchingBillettholderOptions = this.#searchableBillettholderOptions
-            .map((option) => ({ ...option, score: matchScore(option.norm, normalizedQuery) }))
+            .map((option) => ({ ...option, score: calculateMatchScore(option.normalizedLabel, normalizedQuery) }))
             .filter((option) => option.score > 0)
             .sort((leftOption, rightOption) => rightOption.score - leftOption.score || leftOption.label.localeCompare(rightOption.label))
             .slice(0, 8)
@@ -408,24 +472,40 @@ class AdminBillettholderSearch extends HTMLElement {
 
         const resultButtonsFragment = document.createDocumentFragment()
         for (const option of matchingBillettholderOptions) {
-            const resultButton = document.createElement("button")
-            resultButton.type = "button"
-            resultButton.classList.add("btn", "btn--outline", "gm-search-item")
-            resultButton.dataset.value = option.label
-            resultButton.dataset.id = String(option.id)
-            resultButton.append(renderHighlightFragment(option.label, normalizedQuery))
-            resultButtonsFragment.append(resultButton)
+            resultButtonsFragment.append(this.#createSearchResultButton(option, normalizedQuery))
         }
 
         this.#searchResultsElement?.append(resultButtonsFragment)
     }
 
+    /**
+     * Create a selectable result button for one billettholder option.
+     * @param {{id:number, label:string, normalizedLabel:string}} option
+     * @param {string} normalizedQuery
+     * @returns {HTMLButtonElement}
+     */
+    #createSearchResultButton(option, normalizedQuery) {
+        const resultButtonElement = document.createElement("button")
+        resultButtonElement.type = "button"
+        resultButtonElement.classList.add("btn", "btn--outline", "gm-search-item")
+        resultButtonElement.dataset.value = option.label
+        resultButtonElement.dataset.id = String(option.id)
+        resultButtonElement.append(renderHighlightedLabelFragment(option.label, normalizedQuery))
+        return resultButtonElement
+    }
+
+    /**
+     * Handle text input updates from the search field.
+     * @returns {void}
+     */
     handleInput() {
         this.#renderSearchResults(this.#searchInputElement?.value ?? "")
     }
 
     /**
+     * Pressing Enter selects the first visible search result.
      * @param {KeyboardEvent} event
+     * @returns {void}
      */
     handleInputKeydown(event) {
         if (event.key !== "Enter") return
@@ -436,18 +516,22 @@ class AdminBillettholderSearch extends HTMLElement {
     }
 
     /**
+     * Handle click selection from the rendered search results.
      * @param {MouseEvent} event
+     * @returns {void}
      */
     handleClick(event) {
-        const target = event.target
-        if (!(target instanceof HTMLElement)) return
-        const resultButton = target.closest(".gm-search-item")
+        const eventTarget = event.target
+        if (!(eventTarget instanceof HTMLElement)) return
+        const resultButton = eventTarget.closest(".gm-search-item")
         if (!(resultButton instanceof HTMLButtonElement)) return
         this.#selectSearchResultButton(resultButton)
     }
 
     /**
+     * Select a result button, write the label into the input, and emit the public selection event.
      * @param {HTMLButtonElement} selectedResultButton
+     * @returns {void}
      */
     #selectSearchResultButton(selectedResultButton) {
         const selectedLabel = selectedResultButton.getAttribute("data-value")
@@ -464,10 +548,16 @@ class AdminBillettholderSearch extends HTMLElement {
                     id: Number(selectedId),
                     label: selectedLabel,
                 },
+                bubbles: true,
+                composed: true,
             }),
         )
     }
 
+    /**
+     * Clear the current search input value and any rendered search results.
+     * @returns {void}
+     */
     #clearSearchInputAndResults() {
         if (this.#searchInputElement) this.#searchInputElement.value = ""
         this.#searchResultsElement?.replaceChildren()
