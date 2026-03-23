@@ -174,9 +174,9 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
 						}
-						sse := datastar.NewSSE(w, r)
 						ctx := r.Context()
 						userInfo := userctx.GetUserRequestInfo(ctx)
+						sse := datastar.NewSSE(w, r)
 
 						eventId := chi.URLParam(r, "idx")
 						if eventId == "" {
@@ -246,6 +246,10 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 								logger.Error(patchErr.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 							}
 							return
+						}
+
+						if err := patchInterestErrorSignal(sse, ""); err != nil {
+							logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 						}
 
 						logger.Debug("Interest update request handled",
