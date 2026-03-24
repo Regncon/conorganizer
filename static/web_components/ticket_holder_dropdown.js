@@ -28,6 +28,17 @@ if (!customElements.get("billettholder-dropdown")) {
     })()
 
     /**
+     * Window with billettholder localStorage helpers provided by TicketHolderPicker.
+     * @typedef {Window & typeof globalThis & {
+     *   getSelectedBillettholderFromLocalStorage?: () => {Id:number, Name:string, Email:string} | null,
+     *   setSelectedBillettholderInLocalStorage?: (billettholder: {Id:number, Name:string, Email:string}) => unknown,
+     * }} TicketHolderWindow
+     */
+
+    /** @type {TicketHolderWindow} */
+    const ticketHolderWindow = window
+
+    /**
      * Type for billettholder objects expected in the input JSON array.
      * @typedef {Object} Billettholder
      * @property {number} Id
@@ -420,7 +431,7 @@ if (!customElements.get("billettholder-dropdown")) {
                 return
             }
 
-            const selectedBillettholder = window.getSelectedBillettholderFromLocalStorage?.()
+            const selectedBillettholder = ticketHolderWindow.getSelectedBillettholderFromLocalStorage?.()
             if (!selectedBillettholder?.Id) {
                 this.renderSelected(firstOptionEle)
                 return
@@ -444,7 +455,7 @@ if (!customElements.get("billettholder-dropdown")) {
          */
         handleOptionSelect(optionEle) {
             this.renderSelected(optionEle)
-            window.setSelectedBillettholderInLocalStorage?.(this.toStoredBillettholder(optionEle))
+            ticketHolderWindow.setSelectedBillettholderInLocalStorage?.(this.toStoredBillettholder(optionEle))
         }
 
         /**
