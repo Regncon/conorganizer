@@ -8,12 +8,13 @@
         display: inline-flex;
         place-items: center;
         gap: var(--spacing-2x);
-        min-width: 0;
-        overflow: clip;
+        max-width: 25.625rem;
 
         .name {
             white-space: nowrap;
             overflow: clip;
+            text-overflow: ellipsis;
+            min-width: 0;
         }
 
         .initials {
@@ -41,12 +42,6 @@
             .arrow {
                 display: flex;
                 transition: transform ease-in-out 0.3s;
-            }
-        }
-
-        .selected-value {
-            .name-initials {
-                max-width: 12.8rem;
             }
         }
 
