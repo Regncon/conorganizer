@@ -26,11 +26,6 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	</style>
 	{{
 	associatedTicketHolders, err := GetTicketHolders(userInfo, db)
-	associatedTicketHolders = append(associatedTicketHolders,
-		BillettHolder{Id: 999001, Name: "Dropdown Test One", Email: "dropdown-test-one@example.com", Color: "#5b8def"},
-		BillettHolder{Id: 999002, Name: "Dropdown Test Two", Email: "dropdown-test-two@example.com", Color: "#e67e22"},
-		BillettHolder{Id: 999003, Name: "Dropdown Test Three", Email: "dropdown-test-three@example.com", Color: "#27ae60"},
-	)
 	yourBillettHolder := GetYourBillettHolderInfo(userInfo, associatedTicketHolders)
 	associatedTicketHoldersJSON, _ := templ.JSONString(associatedTicketHolders)
 	yourBillettHolderJSON, _ := templ.JSONString(yourBillettHolder)
