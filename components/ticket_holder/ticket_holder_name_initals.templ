@@ -1,8 +1,6 @@
 package ticketholder
 
-import (
-	"fmt"
-)
+import "fmt"
 
 templ NameInitials(name string, initials string) {
 	<style>
@@ -10,12 +8,14 @@ templ NameInitials(name string, initials string) {
 			display: inline-flex;
 			place-items: center;
 			gap: var(--spacing-2x);
-			min-width: 0;
-			overflow: clip;
+            min-width: 0;
+
 
 			.name {
-				white-space: nowrap;
-				overflow: clip;
+            min-width: 0;
+                overflow: clip;
+                white-space: nowrap;
+                text-overflow: ellipsis;
 			}
 			.initials {
 				display: flex;
