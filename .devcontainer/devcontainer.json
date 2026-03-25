@@ -23,6 +23,7 @@
         }
     },
     "remoteUser": "devuser",
+    "postCreateCommand": "go tool task start",
     "customizations": {
         "vscode": {
             "extensions": [
