@@ -1,13 +1,59 @@
 /*
-  Styles for card-shaped event elements
+    style for clickable items
+*/
+.card-clickable {
+    display: grid;
+    width: 11.1875rem;
+    height: 5.75rem;
+    color: var(--color-text-strong);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--bg-surface-border);
+    border-radius: var(--border-radius-1x);
+    padding: var(--spacing-3x);
+    cursor: pointer;
+
+
+
+    &:disabled {
+        background-color: unset;
+        border-color: var(--bg-surface-border);
+        color: var(--color-text-soft-50);
+        cursor: not-allowed;
+    }
+
+    &:not(.selected):hover {
+        background-color: var(--bg-surface-hover);
+        border-color: var(--bg-surface-border-hover);
+    }
+
+    &:not(.selected):focus-visible {
+        border: 0;
+        outline: 3px solid var(--color-text-soft-50);
+        background-color: var(--bg-surface-hover);
+    }
+
+    &:not(.selected):active {
+        background-color: var(--bg-surface-active);
+        border-color: var(--bg-surface-border-hover);
+    }
+
+    &.selected {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+        cursor: unset;
+    }
+
+}
+
+/*
+    Styles for card-shaped event elements
 */
 .event-card-container {
     display: grid;
     grid-template-rows: 180px minmax(110px, 1fr) min-content;
-    grid-template-columns: minmax(
-        300px,
-        1fr
-    ); /* min-width to fit smallest mobile size */
+    grid-template-columns: minmax(300px, 1fr);
+
+    /* min-width to fit smallest mobile size */
     color: var(--color-primary-text);
     background-color: var(--bg-surface);
     border-radius: var(--border-radius-1x);
@@ -21,7 +67,7 @@
     position: absolute;
     top: 10px;
     left: 10px;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: hsl(0deg 0% 0% / 70%);
     padding: 5px;
     border-radius: 5px;
 }
@@ -63,7 +109,6 @@
 
 .event-card-description {
     overflow: clip;
-    margin-top: 0;
     font-size: var(--text-body-small);
     height: 40px;
     margin: 0;
@@ -83,6 +128,7 @@
     align-items: center;
     gap: var(--spacing-1x);
     overflow: hidden;
+
     p {
         font-size: 12px;
         margin: 0;
@@ -107,13 +153,14 @@
     width: 24px;
     height: 24px;
 }
+
 .event-card-tagicon-container:hover {
     color: var(--color-text-strong);
 }
 
-/* 
-  Styles for bar-shaped event elements, primarily on the admin page,
-  can extend to also cover styles for profile event bars (e.g. inside expandable interest list)
+/*
+    Styles for bar-shaped event elements, primarily on the admin page,
+    can extend to also cover styles for profile event bars (e.g. inside expandable interest list)
 */
 .event-bar-container {
     color: var(--color-primary-text);
@@ -122,7 +169,6 @@
     border-radius: var(--border-radius-2x);
     border-color: var(--bg-item-border);
     border-width: 1px;
-    box-sizing: border-box;
     display: block;
     text-decoration: none;
     width: 100%;
@@ -131,6 +177,7 @@
     box-sizing: border-box;
     transition: border-color 120ms ease-in-out;
 }
+
 .event-bar-container:hover {
     border-color: var(--color-primary);
 }
@@ -157,9 +204,9 @@
 }
 
 /*
-  Similar to the above element, this card shows a single event.
-  It is used on the user's profile to show their submitted events and their interests.
-  NB: This element is meant to be clickable.
+    Similar to the above element, this card shows a single event.
+    It is used on the user's profile to show their submitted events and their interests.
+    NB: This element is meant to be clickable.
  */
 .profile-event-bar {
     display: grid;
@@ -175,6 +222,7 @@
     border: 1px solid var(--bg-item-border);
     cursor: pointer;
     font-size: var(--text-body-small);
+
     .profile-event-bar-title {
         font-weight: normal;
         font-size: var(--text-body-small);

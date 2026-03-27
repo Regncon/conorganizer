@@ -35,10 +35,16 @@
 
     --bg-tooltip: #11111b;
     --bg-base: #1a1b26;
+
     --bg-surface: #252735;
+    --bg-surface-border: var(--bg-item-border);
+    --bg-surface-border-hover: #63687B;
+    --bg-surface-hover: #353847;
+    --bg-surface-active: #474957;
+
     --bg-item: #35394a;
-    /* This is a border for surface and item both */
     --bg-item-border: #494D62;
+
     --bg-backdrop: #11111B;
 
     /* text & font */
@@ -71,7 +77,7 @@
     --border-radius-2x: 8px;
 
     /* shadow */
-    --shadow-dialog: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
+    --shadow-dialog: 0 19px 38px hsl(0deg  0% 0% / 30%), 0 15px 12px hsl(0deg  0% 0% / 22%);
 
     /* content width */
     --page-content-max-width: 1440px;
