@@ -2,30 +2,7 @@
 
 
 if (!customElements.get("billettholder-dropdown")) {
-    const GLOBAL_STYLE_URLS = [
-        "/static/css/index.css",
-        "/static/css/buttons.css",
-        "/static/web_components/ticket_holder_dropdown.css",
-    ]
-
-    const globalSheetsPromise = (async () => {
-        // Feature check for constructable stylesheets
-        const supportsConstructable =
-            !!(Document.prototype && "adoptedStyleSheets" in Document.prototype) &&
-            !!(CSSStyleSheet.prototype && "replace" in CSSStyleSheet.prototype)
-
-        if (!supportsConstructable) return null
-
-        const sheets = []
-        for (const url of GLOBAL_STYLE_URLS) {
-            const resp = await fetch(url, { credentials: "same-origin" })
-            const cssText = await resp.text()
-            const sheet = new CSSStyleSheet()
-            await sheet.replace(cssText)
-            sheets.push(sheet)
-        }
-        return sheets
-    })()
+    const STYLE_URLS = window.conorganizerSharedStyles.getStyleUrls(["/static/web_components/ticket_holder_dropdown.css"])
 
     /**
      * Window with billettholder localStorage helpers provided by TicketHolderPicker.
@@ -82,19 +59,9 @@ if (!customElements.get("billettholder-dropdown")) {
             super()
             if (!this.shadowRoot) {
                 this.attachShadow({ mode: "open" })
-                globalSheetsPromise.then((sheets) => {
-                    if (sheets && this.shadowRoot) {
-                        this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, ...sheets]
-                    } else if (this.shadowRoot) {
-                        // Fallback: inject <link> tags
-                        for (const url of GLOBAL_STYLE_URLS) {
-                            const link = document.createElement("link")
-                            link.rel = "stylesheet"
-                            link.href = url
-                            this.shadowRoot.appendChild(link)
-                        }
-                    }
-                })
+                if (this.shadowRoot) {
+                    window.conorganizerSharedStyles.applyStyleUrlsToShadowRoot(this.shadowRoot, STYLE_URLS)
+                }
             }
 
             this.onButtonClick = this.onButtonClick.bind(this)
