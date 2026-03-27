@@ -6,8 +6,8 @@ if (!customElements.get("admin-billettholder-search")) {
     })
     const ADMIN_BILLETTHOLDER_SEARCH_TAG = "admin-billettholder-search"
     const GLOBAL_STYLE_URLS = [
-        "/static/index.css",
-        "/static/buttons.css",
+        "/static/css/index.css",
+        "/static/css/buttons.css",
     ]
     const EMPTY_SEARCH_RESULTS_TEXT = "Ingen billettholdere funnet"
 

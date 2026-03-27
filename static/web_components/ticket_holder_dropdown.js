@@ -3,8 +3,8 @@
 
 if (!customElements.get("billettholder-dropdown")) {
     const GLOBAL_STYLE_URLS = [
-        "/static/index.css",
-        "/static/buttons.css",
+        "/static/css/index.css",
+        "/static/css/buttons.css",
         "/static/web_components/ticket_holder_dropdown.css",
     ]
 

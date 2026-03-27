@@ -1,7 +1,7 @@
 // ---- shared global styles (loaded once) ------------------------------------
 const GLOBAL_STYLE_URLS = [
-    "/static/index.css",
-    "/static/buttons.css"
+    "/static/css/index.css",
+    "/static/css/buttons.css"
 ];
 
 const globalSheetsPromise = (async () => {
