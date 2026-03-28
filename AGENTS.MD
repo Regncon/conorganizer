@@ -60,5 +60,8 @@ This sets the `$_reversed` signal to the value from the event payload.
 
 For more details and live examples, refer to the Datastar documentation on web components.
 
+### Sub Agents
+Use subagents when this task would be faster or more reliable with them.
+
 ## finishing instructions
 When done reading this you will output "Done reading AGENTS.MD file."
