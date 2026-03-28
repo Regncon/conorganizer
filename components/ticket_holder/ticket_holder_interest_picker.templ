@@ -98,16 +98,17 @@ templ TicketHolderInterestPicker(
 			display: flex;
 			flex-direction: column;
 			gap: var(--spacing-2x);
-            padding-inline: 0.2rem;
 
 			.ticket-holder-error {
 				color: var(--color-error);
 			}
 
-			.btn--secondary,
-			.btn--primary {
-				min-height: var(--btn-height-cta);
+			.card-clickable {
+				height: 3.75rem;
+                display: flex;
                 place-content: start;
+                place-items: center;
+                width: 100%;
 			}
 		}
 	</style>
@@ -121,37 +122,37 @@ templ TicketHolderInterestPicker(
 			data-signals:interestErrorMessage
 			data-text="$interestErrorMessage"
 		></strong>
-		<button
-			class="btn btn--secondary"
-			data-class:btn--primary={ isSelectedInteresseExpression(models.InterestLevelHigh) }
-			data-class:btn--secondary={ fmt.Sprintf("!(%s)", isSelectedInteresseExpression(models.InterestLevelHigh)) }
+		<div
+			role="button"
+			class="card-clickable"
+			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelHigh) }
 			data-on:click={ updateInteresseAction(eventId, models.InterestLevelHigh, "high") }
 		>
 			<span class="emoji">🤩</span> Veldig interessert
-		</button>
-		<button
-			class="btn btn--secondary"
-			data-class:btn--primary={ isSelectedInteresseExpression(models.InterestLevelMedium) }
-			data-class:btn--secondary={ fmt.Sprintf("!(%s)", isSelectedInteresseExpression(models.InterestLevelMedium)) }
+		</div>
+		<div
+			role="button"
+			class="card-clickable"
+			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelMedium) }
 			data-on:click={ updateInteresseAction(eventId, models.InterestLevelMedium, "medium") }
 		>
 			<span class="emoji">🙂</span> Interessert
-		</button>
-		<button
-			class="btn btn--secondary"
-			data-class:btn--primary={ isSelectedInteresseExpression(models.InterestLevelLow) }
-			data-class:btn--secondary={ fmt.Sprintf("!(%s)", isSelectedInteresseExpression(models.InterestLevelLow)) }
+		</div>
+		<div
+			role="button"
+			class="card-clickable"
+			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelLow) }
 			data-on:click={ updateInteresseAction(eventId, models.InterestLevelLow, "low") }
 		>
 			<span class="emoji">🤨</span> Litt interessert
-		</button>
-		<button
-			class="btn btn--secondary"
-			data-class:btn--primary={ clearSelectedInteresseExpression() }
-			data-class:btn--secondary={ fmt.Sprintf("!(%s)", clearSelectedInteresseExpression()) }
+		</div>
+		<div
+			role="button"
+			class="card-clickable"
+			data-class:selected={ clearSelectedInteresseExpression() }
 			data-on:click={ updateInteresseAction(eventId, "", "none") }
 		>
 			<span class="emoji">😑</span> Ikke interessert
-		</button>
+		</div>
 	</div>
 }
