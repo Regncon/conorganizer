@@ -4,11 +4,13 @@
     width: 100%;
     padding-inline: 0.3rem;
 
+
     .name-initials {
         display: inline-flex;
         place-items: center;
         gap: var(--spacing-2x);
-        max-width: 25.625rem;
+        width: 100%;;
+        max-width: 28.375rem;
 
         .name {
             white-space: nowrap;
@@ -37,6 +39,8 @@
         cursor: pointer;
         padding-inline: var(--spacing-4x);
         padding-block: var(--spacing-3x);
+        border-radius: var(--border-radius-1x);
+        height: 2.75rem;
 
         .select-button-end {
             .arrow {
@@ -55,7 +59,7 @@
 
         &:focus,
         &:focus-visible {
-            outline: none;
+            outline: 1px solid var(--color-primary);
             color: var(--btn-primary-active-text);
             box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
         }
@@ -63,23 +67,20 @@
 
     .dropdown-list {
         position: absolute;
-        top: 100%;
+        top: 85%;
         left: 0;
         width: 100%;
-        background-color: var(--bg-surface);
+        background-color: var(--bg-item);
+        color: var(--color-text-soft);
         border: 1px solid var(--bg-item-border);
-        border-radius: 0.25rem;
+        border-radius: var(--border-radius-1x);
         list-style: none;
-        padding: 10px;
-        margin: 10px 0 0;
-        box-shadow: var(--shadow-dialog);
-        max-height: 200px;
         overflow-y: auto;
         scrollbar-width: thin;
         display: flex;
         flex-direction: column;
-        gap: 0.5rem;
         z-index: 1;
+        padding-inline: var(--spacing-4x);
 
 
         &.hidden {
@@ -88,25 +89,21 @@
 
         li {
             background-color: var(--bg-item);
-            border: 1px solid var(--bg-item-border);
             border-radius: var(--border-radius-2x);
-            padding: 10px;
+            padding-block: var(--spacing-2x);
             cursor: pointer;
             display: flex;
             gap: 0.5rem;
             align-items: center;
 
-            &.selected {
+            &.selected, &:hover, &:focus-visible {
+                outline: 0;
+                margin-block: var(--spacing-1x);
+                padding-block: calc(var(--spacing-1x) + 2px);
+                margin-inline: calc(-1 * var(--spacing-3x));
+                padding-inline: var(--spacing-3x);
+                background-color: var(--item-flat-active);
                 border-color: var(--color-primary);
-                color: var(--color-primary);
-                font-weight: bold;
-            }
-
-            &:hover,
-            &:focus-visible {
-                outline: none;
-                border-color: var(--color-primary);
-                color: var(--color-primary);
             }
         }
     }
