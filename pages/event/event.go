@@ -43,7 +43,10 @@ func interestErrorMessageFromError(err error) string {
 	if strings.Contains(err.Error(), "does not have access") {
 		return "Du har ikkje tilgang til å endre interessa til denne billettheldaren. Kontakt styret."
 	}
-	return err.Error()
+	if strings.Contains(err.Error(), "is not active and published for event") {
+		return "Denne pulja er ikkje tilgjengeleg for dette arrangementet."
+	}
+	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
 }
 
 func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
