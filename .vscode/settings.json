@@ -1,4 +1,8 @@
 {
+    "[css]": {
+        "editor.defaultFormatter": "stylelint.vscode-stylelint"
+    },
+    "css.validate": false,
     "gopls": {
         "build.buildFlags": ["-tags=dev"]
     },
@@ -33,9 +37,11 @@
         "formmethod",
         "formsubmission",
         "gocache",
+        "golangci",
         "GOMODCACHE",
         "haspopup",
         "ifmissing",
+        "interessa",
         "Itoa",
         "joerdav",
         "keymap",
@@ -43,6 +49,7 @@
         "khtml",
         "kristijanhusak",
         "labelledby",
+        "lagrast",
         "lmao",
         "loggedinmw",
         "Lordag",
@@ -58,6 +65,7 @@
         "pipefail",
         "prevnext",
         "println",
+        "pulja",
         "requestctx",
         "roleplay",
         "Sondag",
@@ -69,6 +77,7 @@
         "testutil",
         "ticketholder",
         "ticketholders",
+        "tilgjengeleg",
         "tmpl",
         "tpope",
         "ttrpg",
