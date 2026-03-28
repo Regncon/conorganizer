@@ -25,16 +25,34 @@ func GetBilettholdere(userId string, db *sql.DB) ([]models.Billettholder, error)
 		rows, err = db.Query(queryAll)
 	} else {
 		queryByUser := (`
+        WITH current_user AS (
+            SELECT id, email
+            FROM users
+            WHERE user_id = ?
+        ),
+        linked_orders AS (
+            SELECT DISTINCT b.order_id
+            FROM billettholdere AS b
+            JOIN billettholdere_users AS bu
+                ON b.id = bu.billettholder_id
+            JOIN current_user AS u
+                ON bu.user_id = u.id
+            UNION
+            SELECT DISTINCT b.order_id
+            FROM billettholdere AS b
+            JOIN billettholder_emails AS e
+                ON b.id = e.billettholder_id
+            JOIN current_user AS u
+                ON e.email = u.email
+        )
         SELECT
             b.id, b.first_name, b.last_name, b.ticket_type_id, b.ticket_type,
             b.is_over_18, b.order_id, b.ticket_id, b.inserted_time,
             e.id, e.email, e.kind, e.inserted_time
         FROM billettholdere AS b
-        JOIN billettholdere_users bu ON b.id = bu.billettholder_id
-        JOIN users u ON bu.user_id = u.id
         LEFT JOIN billettholder_emails AS e
             ON b.id = e.billettholder_id
-        WHERE u.user_id = ?
+        WHERE b.order_id IN (SELECT order_id FROM linked_orders)
         ORDER BY b.id, e.id
     `)
 		rows, err = db.Query(queryByUser, userId)
