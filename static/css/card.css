@@ -40,6 +40,7 @@
         border-color: var(--color-primary);
         color: var(--color-primary);
         cursor: unset;
+        pointer-events: none;
     }
 
 }
