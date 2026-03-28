@@ -12,9 +12,8 @@
     padding: var(--spacing-3x);
     cursor: pointer;
 
-
-
-    &:disabled {
+    &[disabled] {
+        pointer-events: none;
         background-color: unset;
         border-color: var(--bg-surface-border);
         color: var(--color-text-soft-50);
