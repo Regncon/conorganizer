@@ -288,7 +288,12 @@ if (!customElements.get("billettholder-dropdown")) {
                 liEle.dataset.Name = billettholder.Name
                 liEle.dataset.Email = billettholder.Email
                 liEle.dataset.Color = billettholder.Color
-                liEle.appendChild(this.createNameInitialsNode(billettholder))
+
+                const liWrapperEle = document.createElement("div")
+                liWrapperEle.className = "li-wrapper"
+                liWrapperEle.appendChild(this.createNameInitialsNode(billettholder))
+
+                liEle.appendChild(liWrapperEle)
                 listEle.appendChild(liEle)
             })
 
@@ -304,6 +309,16 @@ if (!customElements.get("billettholder-dropdown")) {
          */
         getOptionElements() {
             return Array.from(this.shadowRoot?.querySelectorAll("li") ?? [])
+        }
+
+        /**
+         * Returns the selectable wrapper inside an option element.
+         * @param {HTMLLIElement} optionEle
+         * @returns {HTMLDivElement | null}
+         */
+        getOptionWrapper(optionEle) {
+            const wrapperEle = optionEle.querySelector(".li-wrapper")
+            return wrapperEle instanceof HTMLDivElement ? wrapperEle : null
         }
 
         /**
@@ -360,8 +375,10 @@ if (!customElements.get("billettholder-dropdown")) {
             if (!this.#selectedValueEle) {
                 return
             }
-            this.getOptionElements().forEach((opt) => opt.classList.remove("selected"))
-            optionEle.classList.add("selected")
+            this.getOptionElements().forEach((opt) => {
+                this.getOptionWrapper(opt)?.classList.remove("selected")
+            })
+            this.getOptionWrapper(optionEle)?.classList.add("selected")
 
             const billettholder = this.toBillettholder(optionEle)
             this.#selectedValueEle.replaceChildren(this.createNameInitialsNode(billettholder))
@@ -383,7 +400,9 @@ if (!customElements.get("billettholder-dropdown")) {
             this.#selectButtonEle.setAttribute("aria-expanded", String(isOpen))
 
             if (isOpen) {
-                this.#focusedIndex = optionEles.findIndex((optionEle) => optionEle.classList.contains("selected"))
+                this.#focusedIndex = optionEles.findIndex((optionEle) =>
+                    this.getOptionWrapper(optionEle)?.classList.contains("selected") ?? false,
+                )
                 this.#focusedIndex = this.#focusedIndex === -1 ? 0 : this.#focusedIndex
                 this.updateFocus(optionEles)
                 return
