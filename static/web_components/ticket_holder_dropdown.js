@@ -2,18 +2,24 @@
 
 
 if (!customElements.get("billettholder-dropdown")) {
-    const STYLE_URLS = window.conorganizerSharedStyles.getStyleUrls(["/static/web_components/ticket_holder_dropdown.css"])
 
     /**
-     * Window with billettholder localStorage helpers provided by TicketHolderPicker.
      * @typedef {Window & typeof globalThis & {
+     *   conorganizerSharedStyles?: {
+     *     getStyleUrls: (names: string[]) => string[],
+     *     applyStyleUrlsToShadowRoot: (shadowRoot: ShadowRoot, styleUrls: string[]) => void,
+     *   },
      *   getSelectedBillettholderFromLocalStorage?: () => {Id:number, Name:string, Email:string} | null,
      *   setSelectedBillettholderInLocalStorage?: (billettholder: {Id:number, Name:string, Email:string}) => unknown,
      * }} TicketHolderWindow
      */
 
     /** @type {TicketHolderWindow} */
-    const ticketHolderWindow = window
+    const typedWindow = window
+
+    const STYLE_URLS = typedWindow.conorganizerSharedStyles?.getStyleUrls(
+        ["/static/web_components/ticket_holder_dropdown.css"]
+    ) ?? []
 
     /**
      * Type for billettholder objects expected in the input JSON array.
@@ -60,7 +66,7 @@ if (!customElements.get("billettholder-dropdown")) {
             if (!this.shadowRoot) {
                 this.attachShadow({ mode: "open" })
                 if (this.shadowRoot) {
-                    window.conorganizerSharedStyles.applyStyleUrlsToShadowRoot(this.shadowRoot, STYLE_URLS)
+                    typedWindow.conorganizerSharedStyles?.applyStyleUrlsToShadowRoot(this.shadowRoot, STYLE_URLS)
                 }
             }
 
@@ -398,7 +404,7 @@ if (!customElements.get("billettholder-dropdown")) {
                 return
             }
 
-            const selectedBillettholder = ticketHolderWindow.getSelectedBillettholderFromLocalStorage?.()
+            const selectedBillettholder = typedWindow.getSelectedBillettholderFromLocalStorage?.()
             if (!selectedBillettholder?.Id) {
                 this.renderSelected(firstOptionEle)
                 return
@@ -422,7 +428,7 @@ if (!customElements.get("billettholder-dropdown")) {
          */
         handleOptionSelect(optionEle) {
             this.renderSelected(optionEle)
-            ticketHolderWindow.setSelectedBillettholderInLocalStorage?.(this.toStoredBillettholder(optionEle))
+            typedWindow.setSelectedBillettholderInLocalStorage?.(this.toStoredBillettholder(optionEle))
         }
 
         /**
