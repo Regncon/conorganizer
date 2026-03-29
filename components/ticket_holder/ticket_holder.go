@@ -169,3 +169,21 @@ func GetInitials(s string) string {
 
 	return initialsBuilder.String()
 }
+
+func GetFirstNameAndLastInitial(fullName string) string {
+	nameParts := strings.Fields(fullName)
+	if len(nameParts) == 0 {
+		return ""
+	}
+
+	if len(nameParts) == 1 {
+		return nameParts[0]
+	}
+
+	lastNameRunes := []rune(nameParts[len(nameParts)-1])
+	if len(lastNameRunes) == 0 {
+		return nameParts[0]
+	}
+
+	return fmt.Sprintf("%s %c", nameParts[0], unicode.ToUpper(lastNameRunes[0]))
+}
