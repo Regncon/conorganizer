@@ -118,7 +118,11 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
 			</header>
-			<div class="dialog-content">
+			<div
+				class="dialog-content"
+				tabindex="-1"
+				data-effect="$_interestIsOpen && document.querySelector('.dialog-content')?.focus()"
+			>
 				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
