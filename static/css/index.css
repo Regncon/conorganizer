@@ -38,13 +38,15 @@
 
     --bg-surface: #252735;
     --bg-surface-border: var(--bg-item-border);
-    --bg-surface-border-hover: #63687B;
+    --bg-surface-border-hover: var(--bg-item-border-hover);
     --bg-surface-hover: #353847;
     --bg-surface-active: #474957;
 
     --bg-item: #35394a;
+    --bg-item-hover: #44485A;
+    --bg-item-border-hover: #7f8198;
     --bg-item-border: #494D62;
-    --item-flat-active: hsl(230deg 40% 86% / 20%);;
+    --item-flat-active: hsl(230deg 40% 86% / 20%);
 
     --bg-backdrop: #11111B;
 

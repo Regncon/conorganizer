@@ -5,30 +5,41 @@
     display: grid;
     width: 11.1875rem;
     height: 5.75rem;
-    color: var(--color-text-strong);
-    background-color: var(--bg-surface);
-    border: 1px solid var(--bg-surface-border);
+    border: 1px solid;
     border-radius: var(--border-radius-1x);
     padding: var(--spacing-3x);
     cursor: pointer;
+    outline: 0;
 
     &[disabled] {
         pointer-events: none;
         background-color: unset;
-        border-color: var(--bg-surface-border);
-        color: var(--color-text-soft-50);
         cursor: not-allowed;
-    }
-
-    &:not(.selected):hover {
-        background-color: var(--bg-surface-hover);
-        border-color: var(--bg-surface-border-hover);
+        color: var(--color-text-soft-50);
     }
 
     &:not(.selected):focus-visible {
-        border: 0;
-        outline: 3px solid var(--color-text-soft-50);
+        outline: 3px solid;
+    }
+
+    &.selected {
+        cursor: unset;
+        pointer-events: none;
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+    }
+}
+
+.card-clickable-surface {
+    color: var(--color-text-strong);
+    background-color: var(--bg-surface);
+    border-color: var(--bg-surface-border);
+
+    &:not(.selected):hover,
+    &:not(.selected):focus-visible {
         background-color: var(--bg-surface-hover);
+        border-color: var(--bg-surface-border-hover);
+        outline-color: var(--color-text-soft-50);
     }
 
     &:not(.selected):active {
@@ -36,13 +47,32 @@
         border-color: var(--bg-surface-border-hover);
     }
 
-    &.selected {
-        border-color: var(--color-primary);
-        color: var(--color-primary);
-        cursor: unset;
-        pointer-events: none;
+    &[disabled] {
+        background-color: var(--bg-surface);
+        border-color: var(--bg-surface-border);
+    }
+}
+
+.card-clickable-item {
+    background-color: var(--bg-item);
+    border-color: var(--bg-item-border);
+
+    &:not(.selected):hover,
+    &:not(.selected):focus-visible {
+        background-color: var(--bg-item-hover);
+        border-color: var(--bg-item-border-hover);
+        outline-color: var(--color-text-soft-50);
     }
 
+    &:not(.selected):active {
+        background-color: var(--bg-surface-active);
+        border-color: var(--bg-item-border-hover);
+    }
+
+    &[disabled] {
+        background-color: unset;
+        border-color: var(--bg-item-border);
+    }
 }
 
 /*
