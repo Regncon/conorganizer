@@ -15,8 +15,6 @@ templ TicketHolderButton(currentBillettHolder BillettHolder) {
 	{{ shortName := GetFirstNameAndLastInitial(currentBillettHolder.Name) }}
 	<style>
 		.ticket-holder-picker {
-            --border-outline-width: 4px;
-
             padding-inline: var(--border-outline-width);
 			.card-clickable {
                 place-content: start;
