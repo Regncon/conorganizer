@@ -137,13 +137,12 @@ mark {
 }
 
 @view-transition {
-    navigation: Auto;
+    navigation: auto;
 }
 
 html {
     color-scheme: dark;
     box-sizing: border-box;
-    color: var(--primary-text);
     font-size: var(--text-body);
     font-family: var(--font-sans-serif);
     color: var(--color-primary-text);
@@ -378,12 +377,6 @@ input {
     align-items: center;
 }
 
-.checkbox-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
 .checkbox {
     height: 1rem;
     width: 1rem;
@@ -395,9 +388,10 @@ input {
 }
 
 *,
-*:before,
-*:after {
+*::before,
+*::after {
     box-sizing: inherit;
+    outline: none;
 }
 
 .flex {
