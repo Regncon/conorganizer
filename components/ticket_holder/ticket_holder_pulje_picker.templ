@@ -62,7 +62,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 			<div class="pulje-wrapper">
 				<div
 					role="button"
-					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '-0'", models.PuljeFredagKveld, isPuljeDisabled(puljer, models.PuljeFredagKveld)) }
+					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeFredagKveld, isPuljeDisabled(puljer, models.PuljeFredagKveld)) }
 					class="card-clickable card-clickable-item"
 					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeFredagKveld) }
 					data-on:click={ fmt.Sprintf("$puljeId = '%s'", models.PuljeFredagKveld) }
@@ -75,7 +75,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 				</div>
 				<div
 					role="button"
-					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '-0'", models.PuljeLordagMorgen, isPuljeDisabled(puljer, models.PuljeLordagMorgen)) }
+					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeLordagMorgen, isPuljeDisabled(puljer, models.PuljeLordagMorgen)) }
 					class="card-clickable card-clickable-item"
 					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeLordagMorgen) }
 					data-on:click={ fmt.Sprintf("$puljeId = '%s'", models.PuljeLordagMorgen) }
@@ -88,7 +88,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 				</div>
 				<div
 					role="button"
-					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '-0'", models.PuljeLordagKveld, isPuljeDisabled(puljer, models.PuljeLordagKveld)) }
+					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeLordagKveld, isPuljeDisabled(puljer, models.PuljeLordagKveld)) }
 					class="card-clickable card-clickable-item"
 					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeLordagKveld) }
 					data-on:click={ fmt.Sprintf("$puljeId = '%s'", models.PuljeLordagKveld) }
@@ -101,7 +101,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 				</div>
 				<div
 					role="button"
-					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '-0'", models.PuljeSondagMorgen, isPuljeDisabled(puljer, models.PuljeSondagMorgen)) }
+					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeSondagMorgen, isPuljeDisabled(puljer, models.PuljeSondagMorgen)) }
 					class="card-clickable card-clickable-item"
 					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeSondagMorgen) }
 					data-on:click={ fmt.Sprintf("$puljeId = '%s'", models.PuljeSondagMorgen) }
