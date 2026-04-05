@@ -164,10 +164,11 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			eventIdRouter.Route("/interest", func(eventInterest chi.Router) {
 				eventInterest.Route("/update", func(updateInterestRouter chi.Router) {
 
-					updateInterestRouter.Put("/{interestLevel}", func(w http.ResponseWriter, r *http.Request) {
+					updateInterestRouter.Put("/interest", func(w http.ResponseWriter, r *http.Request) {
 						type Put struct {
-							BillettHolderId int    `json:"billettHolderId"`
-							PuljeId         string `json:"puljeId"`
+							BillettHolderId            int    `json:"billettHolderId"`
+							PuljeId                    string `json:"puljeId"`
+							CurrentInterestLevelChoice string `json:"currentInterestLevelChoice"`
 						}
 						signals := &Put{}
 
@@ -202,33 +203,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							}
 							return
 						}
-						// convert interestLevel string to InterestLevels struct
-						var interestLevel InterestLevels
 
-						switch chi.URLParam(r, "interestLevel") {
-						case "high":
-							interestLevel.High = "high"
-						case "medium":
-							interestLevel.Medium = "medium"
-						case "low":
-							interestLevel.Low = "low"
-						case "none":
-							interestLevel.None = "none"
-						default:
-							logger.Error("Rejected interest update: missing or invalid interest level", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "route_interest_level", chi.URLParam(r, "interestLevel"))
-							if err := patchInterestErrorSignal(sse, "Vel interesse f\u00f8r du lagrar."); err != nil {
-								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							}
-							return
-						}
-
-						if !hasSelectedInterestLevel(interestLevel) {
-							logger.Error("Rejected interest update: no interest level selected", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							if err := patchInterestErrorSignal(sse, "Vel interesse f\u00f8r du lagrar."); err != nil {
-								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							}
-							return
-						}
 						_, _, mvcErr := mvcSession(w, r)
 
 						if mvcErr != nil {
@@ -236,7 +211,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							return
 						}
 
-						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, interestLevel, signals.PuljeId, db); err != nil {
+						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, signals.CurrentInterestLevelChoice, signals.PuljeId, db); err != nil {
 							logger.Error(
 								err.Error(),
 								"event_id", eventId,
@@ -302,38 +277,19 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 	return id, nil
 }
 
-type InterestLevels struct {
-	Low    string `json:"low"`
-	Medium string `json:"medium"`
-	High   string `json:"high"`
-	None   string `json:"none"`
-}
-
-func hasSelectedInterestLevel(interest InterestLevels) bool {
-	return interest.High != "" || interest.Medium != "" || interest.Low != "" || interest.None != ""
-}
-
-func convertInterestLevelToDbInterestLevel(interest InterestLevels) string {
-	switch {
-	case interest.High != "":
-		return models.InterestLevelHigh
-	case interest.Medium != "":
-		return models.InterestLevelMedium
-	case interest.Low != "":
-		return models.InterestLevelLow
-	default:
-		return ""
-	}
+func hasValidInterestChoice(interest string) bool {
+	return interest == models.InterestLevelHigh || interest == models.InterestLevelMedium || interest == models.InterestLevelLow || interest == ""
 }
 
 func updateInterest(
 	userId string,
 	billettholderId int,
 	eventID string,
-	interest InterestLevels,
+	currentInterestLevelChoice string,
 	puljeId string,
 	db *sql.DB,
 ) error {
+
 	if eventID == "" {
 		return fmt.Errorf("event id is required")
 	}
@@ -343,7 +299,7 @@ func updateInterest(
 	if puljeId == "" {
 		return fmt.Errorf("pulje id is required")
 	}
-	if !hasSelectedInterestLevel(interest) {
+	if !hasValidInterestChoice(currentInterestLevelChoice) {
 		return fmt.Errorf("interest level is required")
 	}
 
@@ -373,13 +329,12 @@ func updateInterest(
 		return fmt.Errorf("user %s does not have access to this billettholder interest", userId)
 	}
 
-	if interest.None != "" {
+	if currentInterestLevelChoice == "" {
 		dropQuery := `DELETE FROM interests WHERE event_id = $1 AND pulje_id = $2 AND billettholder_id = $3`
 		dropRows, dropErr := db.Exec(dropQuery, eventID, puljeId, billettholderId)
 		if dropErr != nil {
 			return fmt.Errorf("failed to drop interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, dropErr)
 		}
-
 		_, dropAffectedErr := dropRows.RowsAffected()
 		if dropAffectedErr != nil {
 			return fmt.Errorf("failed to get affected rows when dropping interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, dropAffectedErr)
@@ -394,7 +349,7 @@ func updateInterest(
                 ON CONFLICT(billettholder_id, pulje_id, event_id) DO UPDATE SET
                     interest_level = excluded.interest_level
             `
-	updateRows, updateErr := db.Exec(updateQuery, billettholderId, eventID, puljeId, convertInterestLevelToDbInterestLevel(interest))
+	updateRows, updateErr := db.Exec(updateQuery, billettholderId, eventID, puljeId, currentInterestLevelChoice)
 	if updateErr != nil {
 		return fmt.Errorf("failed to update interest for event %s, pulje %s, billettholder %d: %w", eventID, puljeId, billettholderId, updateErr)
 	}

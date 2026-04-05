@@ -34,23 +34,14 @@ func clearSelectedInteresseExpression() string {
 
 func updateInteresseAction(eventId string, interestLevel string, routeSegment string) string {
 	filterCurrentInteresse := "$interesser.filter(i => !(i.billettHolderId === $billettHolderId && i.puljeId === $puljeId))"
-	if interestLevel == "" {
-		return fmt.Sprintf("$interesser = %s; @put('/event/api/%s/interest/update/%s')", filterCurrentInteresse, eventId, routeSegment)
-	}
-
 	return fmt.Sprintf(
 		`$interesser = %s.concat([{billettHolderId: $billettHolderId, puljeId: $puljeId, interestLevel: '%s'}]);
-        @put('/event/api/%s/interest/update/%s');
-        $selectedInterest = {
-        billettHolderId: $billettHolderId,
-        puljeId: $puljeId,
-        interestLevel: '%s'
-        }`,
+        $currentInterestLevelChoice = '%s';
+        @put('/event/api/%s/interest/update/interest');`,
 		filterCurrentInteresse,
 		interestLevel,
-		eventId,
-		routeSegment,
 		interestLevel,
+		eventId,
 	)
 }
 
@@ -123,11 +114,7 @@ templ TicketHolderInterestPicker(
 	<div
 		class="interest-buttons"
 		data-signals__ifmissing={ templ.JSONString(interestPickerSignals{Interesser: userInterestsObject}) }
-		data-signals:selected-interest=" {
-            billettHolderId: $billettHolderId,
-            puljeId: $puljeId,
-            interestLevel: ''
-        }"
+		data-signals:current-interest-level-choice="''"
 	>
 		<strong
 			class="ticket-holder-error"
@@ -138,7 +125,7 @@ templ TicketHolderInterestPicker(
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelHigh) }
-			data-attr:tabindex={ fmt.Sprintf("$selectedInterest.interestLevel == '%s' ? '-1' : '0'", models.InterestLevelHigh) }
+			data-attr:tabindex={ fmt.Sprintf("false == '%s' ? '-1' : '0'", models.InterestLevelHigh) }
 			data-on:click={ updateInteresseAction(eventId, models.InterestLevelHigh, "high") }
 		>
 			<span class="emoji">🤩</span> Veldig interessert
@@ -147,7 +134,7 @@ templ TicketHolderInterestPicker(
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelMedium) }
-			data-attr:tabindex={ fmt.Sprintf("$selectedInterest.interestLevel == '%s' ? '-1' : '0'", models.InterestLevelMedium) }
+			data-attr:tabindex={ fmt.Sprintf("false == '%s' ? '-1' : '0'", models.InterestLevelMedium) }
 			data-on:click={ updateInteresseAction(eventId, models.InterestLevelMedium, "medium") }
 		>
 			<span class="emoji">🙂</span> Interessert
@@ -156,7 +143,7 @@ templ TicketHolderInterestPicker(
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ isSelectedInteresseExpression(models.InterestLevelLow) }
-			data-attr:tabindex={ fmt.Sprintf("$selectedInterest.interestLevel == '%s' ? '-1' : '0'", models.InterestLevelLow) }
+			data-attr:tabindex={ fmt.Sprintf("false == '%s' ? '-1' : '0'", models.InterestLevelLow) }
 			data-on:click={ updateInteresseAction(eventId, models.InterestLevelLow, "low") }
 		>
 			<span class="emoji">🤨</span> Litt interessert
@@ -165,7 +152,7 @@ templ TicketHolderInterestPicker(
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ clearSelectedInteresseExpression() }
-			data-attr:tabindex="$selectedInterest.interestLevel == '' ? '-1' : '0'"
+			data-attr:tabindex="false == '' ? '-1' : '0'"
 			data-on:click={ updateInteresseAction(eventId, "", "none") }
 		>
 			<span class="emoji">😑</span> Ikke interessert
