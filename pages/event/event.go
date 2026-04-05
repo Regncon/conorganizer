@@ -168,7 +168,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						type Put struct {
 							BillettHolderId int    `json:"billettHolderId"`
 							PuljeId         string `json:"puljeId"`
-							InteresseLevel  string `json:"interesseLevel"`
 						}
 						signals := &Put{}
 
