@@ -19,6 +19,7 @@ type BillettHolder struct {
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]BillettHolder, error) {
+	// todo: use the correct way to get billettholders (billettholderservice.GetBilettholdere has a fallback to get all billettholders)
 	query := `
     SELECT
         [be].email,
@@ -65,36 +66,6 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
 	if ticketHolderRowsErr := rows.Err(); ticketHolderRowsErr != nil {
 		return nil, fmt.Errorf("error iterating over ticket holder rows: %w", ticketHolderRowsErr)
 	}
-
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "lo@najcuksuc.sn",
-	// 	Name:  "Leonard Moreno",
-	// 	Id:    1,
-	// 	Color: ColorForName("Leonard Moreno"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "lacbe@lecuc.my",
-	// 	Name:  "Olive Berry",
-	// 	Id:    2,
-	// 	Color: ColorForName("Olive Berry"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "mijinpu@posrik.cz",
-	// 	Name:  "Bobby Silva",
-	// 	Id:    3,
-	// 	Color: ColorForName("Bobby Silva"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "igkir@mukpunuc.be",
-	// 	Name:  "Bertha Francis",
-	// 	Id:    5,
-	// 	Color: ColorForName("Bertha Francis"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "ruidavuf@otavig.gy",
-	// 	Name:  "Mario Ross",
-	// 	Id:    6,
-	// })
 
 	return associatedTicketholders, nil
 
