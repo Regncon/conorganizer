@@ -11,13 +11,15 @@ templ Redirect(url string) {
             transition: color 1s ease;
         }
 
-        </style>
-		<meta http-equiv="refresh" content={ fmt.Sprintf("5;url=%s", templ.URL(url)) }/>
-		<div style="display: flex; place-items: center; flex-direction: column;">
-			<p>You are not logged in OR session expired. Redirecting to the login page in <span class="redirect-countdown">5</span> seconds...</p>
-			<a href={ templ.URL(url) }>Click here if you are not redirected.</a>
-		</div>
-		<script>
+    </style>
+	<meta http-equiv="refresh" content={ fmt.Sprintf("5;url=%s", templ.URL(url)) }/>
+	<div style="display: flex; place-items: center; flex-direction: column;">
+		<p>You are not logged in OR session expired. Redirecting to the login page in <span class="redirect-countdown">5</span> seconds...</p>
+		<a href={ templ.URL(url) }>Click here if you are not redirected.</a>
+	</div>
+	<script>
+
+            localStorage.removeItem("selectedBillettHolder");
             const countdownElement = document.querySelector('.redirect-countdown');
 
             const INITIAL_COUNTDOWN = 5;
