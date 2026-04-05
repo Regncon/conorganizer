@@ -42,8 +42,8 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	<div
 		class="ticket-holder-container"
 		data-signals:billett-holder-id=""
-		data-on:billettholder-selected="$billettHolderId = evt.detail;"
-		data-init={ fmt.Sprintf("const init = window.initializeSelectedBillettholder(%s, %s); $billettHolderId = init?.Id ?? ''", associatedTicketHoldersJSON, yourBillettHolderJSON) }
+		data-on:billettholder-selected={ fmt.Sprintf("$billettHolderId = evt.detail; @put('/event/api/%s/interest/selected-interest')", eventId) }
+		data-init={ fmt.Sprintf("const init = window.initializeSelectedBillettholder(%s, %s); $billettHolderId = init?.Id ?? ''; @put('/event/api/%s/interest/selected-interest')", associatedTicketHoldersJSON, yourBillettHolderJSON, eventId) }
 	>
 		if err != nil {
 			<div class="ticket-holder-error">
@@ -54,7 +54,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			<p class="label">Velg billettholder</p>
 			<div class="ticket-holder-picker-buttons">
 				for _, billettHolder := range associatedTicketHolders {
-					@TicketHolderButton(billettHolder)
+					@TicketHolderButton(billettHolder, eventId)
 				}
 			</div>
 		}

@@ -162,6 +162,35 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			})
 
 			eventIdRouter.Route("/interest", func(eventInterest chi.Router) {
+
+				eventInterest.Put("/selected-interest", func(w http.ResponseWriter, r *http.Request) {
+					eventId := chi.URLParam(r, "idx")
+					type Signals struct {
+						BillettHolderId int    `json:"billettHolderId"`
+						PuljeId         string `json:"puljeId"`
+					}
+					signals := &Signals{}
+					if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
+						logger.Error(fmt.Errorf("failed to read event interest signals: %w", readSignalErr).Error())
+						http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+						return
+					}
+
+					interest, err := getSelectedInterest(eventId, signals.BillettHolderId, signals.PuljeId, db)
+					if err != nil {
+						logger.Error(fmt.Errorf("failed to get selected interest: %w", err).Error())
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+
+					sse := datastar.NewSSE(w, r)
+					signalJSON := []byte(fmt.Sprintf(`{"selectedInterestLevel":%q}`, interest))
+					if err := sse.PatchSignals(signalJSON); err != nil {
+						logger.Error(fmt.Errorf("failed to patch selected interest signal: %w", err).Error(), "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "selectedInterestLevel", interest)
+					}
+
+				})
+
 				eventInterest.Route("/update", func(updateInterestRouter chi.Router) {
 
 					updateInterestRouter.Put("/interest", func(w http.ResponseWriter, r *http.Request) {
@@ -279,6 +308,19 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 
 func hasValidInterestChoice(interest string) bool {
 	return interest == models.InterestLevelHigh || interest == models.InterestLevelMedium || interest == models.InterestLevelLow || interest == ""
+}
+
+func getSelectedInterest(eventId string, billettholderId int, puljeId string, db *sql.DB) (string, error) {
+	query := `SELECT interest_level FROM interests WHERE event_id = $1 AND billettholder_id = $2 AND pulje_id = $3`
+	var interestLevel string
+	err := db.QueryRow(query, eventId, billettholderId, puljeId).Scan(&interestLevel)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", nil
+		}
+		return "", fmt.Errorf("failed to get selected interest: %w", err)
+	}
+	return interestLevel, nil
 }
 
 func updateInterest(
