@@ -184,7 +184,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					}
 
 					sse := datastar.NewSSE(w, r)
-					signalJSON := []byte(fmt.Sprintf(`{"selectedInterestLevel":%q}`, interest))
+					signalJSON := []byte(fmt.Sprintf(`{"selectedInterestLevel": %q, "currentInterestLevelChoice": "Pending choice"}`, interest))
 					if err := sse.PatchSignals(signalJSON); err != nil {
 						logger.Error(fmt.Errorf("failed to patch selected interest signal: %w", err).Error(), "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "selectedInterestLevel", interest)
 					}
