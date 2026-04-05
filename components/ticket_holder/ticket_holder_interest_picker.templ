@@ -58,7 +58,7 @@ templ TicketHolderInterestPicker(
 		<div
 			role="button"
 			class="card-clickable card-clickable-item"
-			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel == '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelHigh, models.InterestLevelHigh) }
+			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelHigh, models.InterestLevelHigh) }
 			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelHigh) }
 			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelHigh, eventId) }
 		>
@@ -67,7 +67,7 @@ templ TicketHolderInterestPicker(
 		<div
 			role="button"
 			class="card-clickable card-clickable-item"
-			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel == '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelMedium, models.InterestLevelMedium) }
+			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelMedium, models.InterestLevelMedium) }
 			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelMedium) }
 			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelMedium, eventId) }
 		>
@@ -76,7 +76,7 @@ templ TicketHolderInterestPicker(
 		<div
 			role="button"
 			class="card-clickable card-clickable-item"
-			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel == '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelLow, models.InterestLevelLow) }
+			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelLow, models.InterestLevelLow) }
 			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelLow) }
 			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelLow, eventId) }
 		>
