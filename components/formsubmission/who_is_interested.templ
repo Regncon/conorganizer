@@ -4,117 +4,618 @@ import (
 	"database/sql"
 	"log/slog"
 
-	"github.com/Regncon/conorganizer/models"
-
+	"encoding/json"
+	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/models"
+	"strings"
 )
 
 type InterestWithHolder struct {
-	BillettholderId int    `json:"billettholder_id"`
-	EventId         string `json:"event_id"`
-	PuljeId         string `json:"pulje_id"`
-	InterestLevel   string `json:"interest_level"`
+	BillettholderId      int
+	EventId              string
+	PuljeId              string
+	InterestLevel        string
+	FirstChoice          bool
+	HasOtherEventInPulje bool
+	HasBeenGamemaster    bool
+	IsGamemaster         bool
 
-	FirstName  string `json:"first_name"`
-	LastName   string `json:"last_name"`
-	TicketType string `json:"ticket_type"`
-	IsOver18   bool   `json:"is_over_18"`
+	FirstName  string
+	LastName   string
+	TicketType string
+	IsOver18   bool
+}
+
+type AssignmentWithHolder = InterestWithHolder
+
+var queryFirstChoice = `
+                EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        interests i2
+                    WHERE
+                        i2.billettholder_id = i.billettholder_id
+                        AND i2.pulje_id <> ''
+                        AND i2.event_id <> i.event_id -- must be a different event
+                        AND i2.interest_level = 'Veldig interessert'
+                        AND EXISTS (
+                            SELECT
+                                1
+                            FROM
+                                events_players ep
+                            WHERE
+                                ep.billettholder_id = i2.billettholder_id
+                                AND ep.event_id = i2.event_id
+                                AND ep.pulje_id = i2.pulje_id
+                                AND ep.is_player = 1
+                        )
+                ) AS first_choice
+`
+
+type interestSourceAlias string
+
+const (
+	interestRowAlias   interestSourceAlias = "i"
+	assignmentRowAlias interestSourceAlias = "ep"
+)
+
+func queryHasOtherAssignedEventInPulje(alias interestSourceAlias) string {
+	return fmt.Sprintf(`
+                EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        events_players ep2
+                    WHERE
+                        ep2.billettholder_id = %s.billettholder_id
+                        AND ep2.pulje_id = %s.pulje_id
+                        AND ep2.event_id <> %s.event_id
+                        AND (ep2.is_player = 1 OR ep2.is_gm = 1)
+                    LIMIT
+                        1
+                ) AS has_other_event_in_pulje
+`, alias, alias, alias)
+}
+
+func queryHasBeenGamemaster(alias interestSourceAlias) string {
+	return fmt.Sprintf(`
+                EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        events_players ep_gm
+                    WHERE
+                        ep_gm.billettholder_id = %s.billettholder_id
+                        AND ep_gm.event_id <> %s.event_id
+                        AND ep_gm.is_gm = 1
+                    LIMIT
+                        1
+                ) AS has_been_gm
+`, alias, alias)
 }
 
 func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]InterestWithHolder, error) {
-	const q = `
-        SELECT
-            i.billettholder_id,
-            i.event_id,
-            i.pulje_id,
-            i.interest_level,
-            b.first_name,
-            b.last_name,
-            b.ticket_type,
-            b.is_over_18
-        FROM interests i
-        INNER JOIN billettholdere b ON i.billettholder_id = b.id
-        WHERE i.event_id = ? AND i.pulje_id != ''
-        ORDER BY i.interest_level DESC
+	var query = `
+            SELECT
+                i.billettholder_id,
+                i.event_id,
+                i.pulje_id,
+                i.interest_level,
+                ` + queryFirstChoice + `,
+                ` + queryHasOtherAssignedEventInPulje(interestRowAlias) + `,
+                ` + queryHasBeenGamemaster(interestRowAlias) + `,
+                COALESCE(ep.is_gm, 0) AS is_gm,
+                b.first_name,
+                b.last_name,
+                b.ticket_type,
+                b.is_over_18
+            FROM
+                interests i
+                JOIN billettholdere b ON b.id = i.billettholder_id
+                LEFT JOIN events_players ep ON ep.billettholder_id = i.billettholder_id
+                AND ep.event_id = i.event_id
+                AND ep.pulje_id = i.pulje_id
+            WHERE
+                i.event_id = ?
+                AND i.pulje_id <> ''
+                AND NOT EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        events_players ep_assigned
+                    WHERE
+                        ep_assigned.billettholder_id = i.billettholder_id
+                        AND ep_assigned.event_id = i.event_id
+                        AND ep_assigned.pulje_id = i.pulje_id
+                        AND (ep_assigned.is_player = 1 OR ep_assigned.is_gm = 1)
+                    LIMIT
+                        1
+                )
+            ORDER BY
+                EXISTS (
+                    SELECT
+                        1
+                    FROM
+                        events_players ep_gm_order
+                    WHERE
+                        ep_gm_order.billettholder_id = i.billettholder_id
+                        AND ep_gm_order.event_id <> i.event_id
+                        AND ep_gm_order.is_gm = 1
+                    LIMIT
+                        1
+                ) DESC,
+                CASE i.interest_level
+                    WHEN '` + models.InterestLevelVery + `' THEN 3
+                    WHEN '` + models.InterestLevelMedium + `' THEN 2
+                    WHEN '` + models.InterestLevelLow + `' THEN 1
+                    ELSE 0
+                END DESC
     `
-	rows, err := db.Query(q, eventId)
-	if err != nil {
-		logger.Error("Failed to query interests with holders", "error", err)
-		return nil, err
+	rows, queryErr := db.Query(query, eventId)
+	if queryErr != nil {
+		return nil, fmt.Errorf("query interests with holders for event %s: %w", eventId, queryErr)
 	}
+
 	defer rows.Close()
 	var interests []InterestWithHolder
 	for rows.Next() {
 		var interest InterestWithHolder
-		if err := rows.Scan(&interest.BillettholderId, &interest.EventId, &interest.PuljeId, &interest.InterestLevel, &interest.FirstName, &interest.LastName, &interest.TicketType, &interest.IsOver18); err != nil {
-			logger.Error("Failed to scan interest with holder", "error", err)
-			return nil, err
+		if scanErr := rows.Scan(
+			&interest.BillettholderId,
+			&interest.EventId,
+			&interest.PuljeId,
+			&interest.InterestLevel,
+			&interest.FirstChoice,
+			&interest.HasOtherEventInPulje,
+			&interest.HasBeenGamemaster,
+			&interest.IsGamemaster,
+			&interest.FirstName,
+			&interest.LastName,
+			&interest.TicketType,
+			&interest.IsOver18,
+		); scanErr != nil {
+			return nil, fmt.Errorf("scan interest row for event %s: %w", eventId, scanErr)
 		}
 		interests = append(interests, interest)
 	}
-	if err := rows.Err(); err != nil {
-		logger.Error("Row iteration error", "error", err)
-		return nil, err
+
+	if rowErr := rows.Err(); rowErr != nil {
+		return nil, fmt.Errorf("iterate interest rows for event %s: %w", eventId, rowErr)
 	}
 	return interests, nil
-
 }
 
-templ interestInPulje(puljeId models.Pulje, interests []InterestWithHolder) {
+func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]InterestWithHolder, error) {
+	var query = `
+            SELECT
+                ep.billettholder_id,
+                ep.event_id,
+                ep.pulje_id,
+                -- this is because we can insert ppl from search without interest as gm
+                COALESCE(i.interest_level, '') AS interest_level,
+                ` + queryFirstChoice + `,
+                ` + queryHasOtherAssignedEventInPulje(assignmentRowAlias) + `,
+                ` + queryHasBeenGamemaster(assignmentRowAlias) + `,
+                COALESCE(ep.is_gm, 0) AS is_gm,
+                b.first_name,
+                b.last_name,
+                b.ticket_type,
+                b.is_over_18
+            FROM
+                events_players ep
+                JOIN billettholdere b ON b.id = ep.billettholder_id
+                LEFT JOIN interests i ON i.billettholder_id = ep.billettholder_id
+                    AND i.event_id = ep.event_id
+                    AND i.pulje_id = ep.pulje_id
+            WHERE
+                ep.event_id = ?
+                AND (ep.is_player = 1 OR ep.is_gm = 1)
+            ORDER BY
+                ep.is_gm DESC,
+                ep.inserted_time ASC
+    `
+	rows, queryErr := db.Query(query, eventId)
+	if queryErr != nil {
+		return nil, fmt.Errorf("query assignments with holders for event %s: %w", eventId, queryErr)
+	}
+
+	defer rows.Close()
+	var assignments []AssignmentWithHolder
+	for rows.Next() {
+		var assignment AssignmentWithHolder
+		if scanErr := rows.Scan(
+			&assignment.BillettholderId,
+			&assignment.EventId,
+			&assignment.PuljeId,
+			&assignment.InterestLevel,
+			&assignment.FirstChoice,
+			&assignment.HasOtherEventInPulje,
+			&assignment.HasBeenGamemaster,
+			&assignment.IsGamemaster,
+			&assignment.FirstName,
+			&assignment.LastName,
+			&assignment.TicketType,
+			&assignment.IsOver18,
+		); scanErr != nil {
+			return nil, fmt.Errorf("scan assignment row for event %s: %w", eventId, scanErr)
+		}
+		assignments = append(assignments, assignment)
+	}
+
+	if rowErr := rows.Err(); rowErr != nil {
+		return nil, fmt.Errorf("iterate assignment rows for event %s: %w", eventId, rowErr)
+	}
+	return assignments, nil
+}
+
+type Billettholder struct {
+	Id        int
+	FirstName string
+	LastName  string
+}
+
+type ButtonInfo struct {
+	Label  string
+	Action string
+}
+
+func actionButtonClass(label string) string {
+	if strings.HasPrefix(label, "Fjern ") {
+		return "btn btn--primary button-size"
+	}
+	return "btn btn--outline button-size"
+}
+
+func playerButtonAction(isAssigned bool, isGamemaster bool, assignAction string, removeAction string) ButtonInfo {
+	if !isAssigned {
+		return ButtonInfo{Label: "Tildel som spiller", Action: assignAction}
+	}
+	if isGamemaster {
+		return ButtonInfo{Label: "Bytt til spiller", Action: assignAction}
+	}
+	return ButtonInfo{Label: "Fjern som spiller", Action: removeAction}
+}
+
+func gmButtonAction(isAssigned bool, isGamemaster bool, assignAction string, removeAction string) ButtonInfo {
+	if !isAssigned {
+		return ButtonInfo{Label: "Tildel som GM", Action: assignAction}
+	}
+	if isGamemaster {
+		return ButtonInfo{Label: "Fjern som GM", Action: removeAction}
+	}
+	return ButtonInfo{Label: "Bytt til GM", Action: assignAction}
+}
+
+func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error) {
+	var query = `
+            Select id, first_name, last_name From billettholdere
+    `
+	rows, queryErr := db.Query(query)
+	if queryErr != nil {
+		return nil, fmt.Errorf("query billettholdere: %w", queryErr)
+	}
+
+	defer rows.Close()
+	billettholdere := make([]Billettholder, 0)
+	for rows.Next() {
+		var billettholder Billettholder
+		if scanErr := rows.Scan(
+			&billettholder.Id,
+			&billettholder.FirstName,
+			&billettholder.LastName,
+		); scanErr != nil {
+			return nil, fmt.Errorf("scan billettholder row: %w", scanErr)
+		}
+		billettholdere = append(billettholdere, billettholder)
+	}
+
+	if rowErr := rows.Err(); rowErr != nil {
+		return nil, fmt.Errorf("iterate billettholder rows: %w", rowErr)
+	}
+	return billettholdere, nil
+}
+
+func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *slog.Logger) error {
+	tx, txErr := db.Begin()
+	if txErr != nil {
+		logger.Error(fmt.Errorf("failed to begin transaction for first choice: %w", txErr).Error())
+		return fmt.Errorf("begin first choice transaction: %w", txErr)
+	}
+	defer tx.Rollback()
+
+	upsertInterestQuery := `
+		INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level, inserted_time)
+		VALUES (?, ?, ?, 'Veldig interessert', CURRENT_TIMESTAMP)
+		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
+			interest_level = EXCLUDED.interest_level
+	`
+	if _, execErr := tx.Exec(upsertInterestQuery, bid, eId, Pid); execErr != nil {
+		logger.Error(fmt.Errorf("failed to upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
+		return fmt.Errorf("upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr)
+	}
+
+	upsertPlayerQuery := `
+		INSERT INTO events_players (event_id, pulje_id, billettholder_id, is_player, is_gm, inserted_time)
+		VALUES (?, ?, ?, 1, 0, CURRENT_TIMESTAMP)
+		ON CONFLICT(event_id, pulje_id, billettholder_id) DO UPDATE SET
+			is_player = EXCLUDED.is_player,
+			is_gm = EXCLUDED.is_gm,
+			inserted_time = CURRENT_TIMESTAMP
+	`
+	if _, execErr := tx.Exec(upsertPlayerQuery, eId, Pid, bid); execErr != nil {
+		logger.Error(fmt.Errorf("failed to upsert player status for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
+		return fmt.Errorf("upsert player status for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr)
+	}
+
+	if commitErr := tx.Commit(); commitErr != nil {
+		logger.Error(fmt.Errorf("failed to commit first choice transaction: %w", commitErr).Error())
+		return fmt.Errorf("commit first choice transaction: %w", commitErr)
+	}
+	return nil
+}
+
+func UpdatePlayerStatus(eventId string,
+	puljeId string,
+	billettholderId int,
+	isPlayer bool,
+	isGM bool,
+	db *sql.DB,
+	logger *slog.Logger,
+) error {
+	query := `INSERT INTO
+                        events_players (event_id, pulje_id, billettholder_id, is_player, is_gm, inserted_time)
+                VALUES
+                    (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(event_id, pulje_id, billettholder_id) DO UPDATE SET
+                    is_player = EXCLUDED.is_player,
+                    is_gm = EXCLUDED.is_gm,
+                    inserted_time = CURRENT_TIMESTAMP
+        `
+	_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId, isPlayer, isGM)
+	if updatePlayerStatusErr != nil {
+		logger.Error(fmt.Errorf("failed to update player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d, is_player=%t, is_gm=%t): %w", eventId, puljeId, billettholderId, isPlayer, isGM, updatePlayerStatusErr).Error())
+		return fmt.Errorf(
+			"update player status (event_id=%s, pulje_id=%s, billettholder_id=%d, is_player=%t, is_gm=%t): %w",
+			eventId,
+			puljeId,
+			billettholderId,
+			isPlayer,
+			isGM,
+			updatePlayerStatusErr,
+		)
+	}
+	return nil
+}
+
+templ interestInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder, isAssigned bool) {
+	<style>
+
+        .section {
+
+            display: flex;
+            gap: 1rem;
+            place-content: space-between;
+            flex-wrap: nowrap;
+            margin-bottom: var(--spacing-1x);
+
+	            .start {
+	                display: flex;
+	                place-items: center;
+	                text-align: center;
+	                gap: 1ch;
+                .is-gamemaster {
+                    display: flex;
+                    place-content: center;
+                    place-items: center;
+                    .is-gamemaster-icon {
+                        color: var(--color-accent-cyan);
+                    }
+                }
+	                .first-choice {
+	                    color: var(--color-error);
+	                    font-weight: 700;
+	                }
+	                .has-been-gamemaster {
+	                    display: flex;
+	                    place-content: center;
+	                    place-items: center;
+	                    .has-been-gamemaster-icon {
+	                        color: var(--color-success);
+	                    }
+	                }
+	                .other-event-indicator {
+	                    display: inline-flex;
+	                    align-items: center;
+                    color: var(--color-warning);
+                    margin-inline-start: 0.25rem;
+                }
+            }
+            .end {
+                place-self: end;
+
+                .btn--outline:hover {
+                    background-color: var(--color-primary-hover);
+                    border-color: var(--color-primary);
+                }
+                .btn {
+                    min-inline-size: 9.25rem;
+                }
+
+                .pickers {
+                    place-self: center;
+                    display: flex;
+                    gap: var(--spacing-8x);
+
+                        .button-size {
+                            inline-size: fit-content;
+                        }
+                }
+            }
+        }
+    </style>
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
+			{{
+				assignPlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = true; $assignmentIsGm = false; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
+				removePlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
+				assignGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = true; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
+				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
+				playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerAction, removePlayerAction)
+				gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmAction, removeGmAction)
+				buttonsInfo := []ButtonInfo{playerAction, gmAction}
+			}}
 			<section
-				class="item-card"
-				style="display:grid;
-                        gap:1rem;
-                        grid-template-columns: auto auto 1fr auto auto;
-                        align-items: center;
-                        margin-bottom:0.5rem;"
+				class="item-card section"
 			>
-				<span>{ interest.InterestLevel }</span>
-				@ticketholder.NameInitials(interest.FirstName+" "+interest.LastName, string(interest.FirstName[0])+string(interest.LastName[0]))
-				<span>{ interest.FirstName } { interest.LastName }</span>
-				<div style="display: flex; align-items: center; gap:0.5rem; ">
-					if interest.IsOver18 {
-						@icons.Icon(icons.EventAdultOnly, icons.Size24)
-						<p><strong>Alder:</strong> Over 18</p>
-					} else {
-						@icons.Icon(icons.EventChildFriendly, icons.Size24)
-						<p><strong>Alder:</strong> Under 18</p>
+				<div class="start">
+					if !isAssigned {
+						<span>{ interest.InterestLevel }</span>
 					}
+					{{ fullName := interest.FirstName + " " + interest.LastName }}
+					@ticketholder.NameInitials(fullName, ticketholder.GetInitials(fullName))
+					if interest.HasOtherEventInPulje {
+						<span
+							class="other-event-indicator"
+							data-tippy-content="Tildelt annet arrangement i samme pulje"
+							aria-label="Tildelt annet arrangement i samme pulje"
+						>
+							@icons.Icon(icons.Shield, icons.Size16)
+						</span>
+					}
+					if interest.FirstChoice {
+						<p class="first-choice">Fått førstevalg</p>
+					}
+					if interest.IsGamemaster {
+						<p class="is-gamemaster">
+							<span class="is-gamemaster-icon" data-tippy-content={ fmt.Sprintf("%s %s er spilleder", interest.FirstName, interest.LastName) }>
+								@icons.Icon(icons.Gamemaster, icons.Size24)
+							</span>
+							Spilleder
+						</p>
+					}
+					if interest.HasBeenGamemaster && !interest.IsGamemaster {
+						<p class="has-been-gamemaster">
+							<span
+								class="has-been-gamemaster-icon"
+								data-tippy-content="Har vært GM"
+								aria-label="Har vært GM"
+							>
+								@icons.Icon(icons.Gamemaster, icons.Size24)
+							</span>
+						</p>
+					}
+					<div style="display: flex; align-items: center; gap:0.5rem; ">
+						if interest.IsOver18 {
+							@icons.Icon(icons.EventAdultOnly, icons.Size24)
+							<p><strong>Alder:</strong> Over 18</p>
+						} else {
+							@icons.Icon(icons.EventChildFriendly, icons.Size24)
+							<p><strong>Alder:</strong> Under 18</p>
+						}
+					</div>
+					<span>{ interest.TicketType }</span>
 				</div>
-				<span>{ interest.TicketType }</span>
+				<div class="end">
+					<div class="pickers">
+						for _, buttonInfo := range buttonsInfo {
+							<button
+								class={ actionButtonClass(buttonInfo.Label) }
+								data-on:click={ buttonInfo.Action }
+							>
+								{ buttonInfo.Label }
+							</button>
+						}
+					</div>
+				</div>
 			</section>
 		}
 	}
 }
 
+templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder) {
+	@interestInPulje(eventId, puljeId, interests, true)
+}
+
+templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
+	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
+	<style>
+		.billettholder-search {
+			margin-block-end: 2rem;
+
+            .billettholder-search-buttons {
+                display: flex;
+                gap: var(--spacing-4x);
+                margin-top: var(--spacing-4x);
+            }
+		}
+
+	</style>
+	<div class="billettholder-search">
+		<admin-billettholder-search
+			data-billettholdere={ string(billettholdereJson) }
+			data-attr:clear-input="$clearInput"
+			data-on:billettholder-select="$assignmentBillettholderId = evt.detail.id"
+			input-tippy="Søk etter billettholder"
+		></admin-billettholder-search>
+		<div class="billettholder-search-buttons">
+			<button
+				class="btn btn--secondary"
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_gm'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+			>
+				Legg til som GM
+			</button>
+			<button
+				class="btn btn--secondary"
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_first_choice'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+			>
+				Legg til som førstevalg
+			</button>
+		</div>
+		<script src="/static/web_components/admin_billettholder_search.js"></script>
+	</div>
+}
+
+templ puljeSection(eventId string, title string, puljeId models.Pulje, interests []InterestWithHolder, assignees []InterestWithHolder, showGmForm bool, billettholdere []Billettholder) {
+	<article
+		class="form-card"
+		data-style:display={ fmt.Sprintf("(!$isActive%s || !$isPublished%s) && 'none' || ''", puljeId, puljeId) }
+	>
+		<h2 style="margin-bottom:1rem;">{ title }</h2>
+		<h2 style="margin-bottom:1rem;">Finn billettholder!</h2>
+		@billettholderAssignmentActions(eventId, puljeId, billettholdere)
+		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+		@playersInPulje(eventId, puljeId, assignees)
+		<h2 style="margin-bottom:1rem;">Who is interested?</h2>
+		@interestInPulje(eventId, puljeId, interests, false)
+	</article>
+}
+
 templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 	{{ interests, err := GetInterestsForEvent(eventId, db, logger) }}
-	<div style="display: flex; flex-direction: column; gap:1rem; margin-bottom:2rem;">
+	{{ assignees, err := GetAssigneesForEvent(eventId, db, logger) }}
+	{{ billettholdere, err := getBillettholdere(db, logger) }}
+	<div
+		style="
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-block: 2rem;
+        "
+		data-signals={ fmt.Sprintf("{assignmentEventId: '%s', assignmentBillettholderId: 0, assignmentPuljeId: '', assignmentIsPlayer: false, assignmentIsGm: false, clearInput: 0}", eventId) }
+	>
 		<article class="form-card">
 			if err != nil {
 				<p>Error fetching interests: { err.Error() }</p>
 				return
 			}
-			<h2>Who is interested?</h2>
+			<h2>Spillere</h2>
 		</article>
-		<article class="form-card">
-			<h2 style="margin-bottom:1rem;">Fredag Kveld</h2>
-			@interestInPulje(models.PuljeFredagKveld, interests)
-		</article>
-		<article class="form-card">
-			<h2 style="margin-bottom:1rem;">Lørdag Morgen</h2>
-			@interestInPulje(models.PuljeLordagMorgen, interests)
-		</article>
-		<article class="form-card">
-			<h2 style="margin-bottom:1rem;">Lørdag Kveld</h2>
-			@interestInPulje(models.PuljeLordagKveld, interests)
-		</article>
-		<article class="form-card">
-			<h2 style="margin-bottom:1rem;">Søndag Morgen</h2>
-			@interestInPulje(models.PuljeSondagMorgen, interests)
-		</article>
+		@puljeSection(eventId, "Fredag Kveld", models.PuljeFredagKveld, interests, assignees, true, billettholdere)
+		@puljeSection(eventId, "Lørdag Morgen", models.PuljeLordagMorgen, interests, assignees, false, billettholdere)
+		@puljeSection(eventId, "Lørdag Kveld", models.PuljeLordagKveld, interests, assignees, false, billettholdere)
+		@puljeSection(eventId, "Søndag Morgen", models.PuljeSondagMorgen, interests, assignees, false, billettholdere)
 	</div>
 }

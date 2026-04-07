@@ -9,9 +9,11 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/pages/admin/approval"
-	"github.com/Regncon/conorganizer/pages/admin/approval/editForm"
+	edit_form "github.com/Regncon/conorganizer/pages/admin/approval/editForm"
 	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
@@ -21,6 +23,8 @@ import (
 )
 
 func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
+	baseLogger := logger
+	logger = logger.With("component", "admin")
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -101,7 +105,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 			}
 			defer func() {
 				if err := watcher.Stop(); err != nil {
-					logger.Error("Failed to stop watcher", "error", err)
+					logger.Error(fmt.Errorf("failed to stop admin watcher: %w", err).Error())
 				}
 			}()
 
@@ -127,50 +131,190 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		})
 
 		adminRouter.Route("/approval/", func(approvalRouter chi.Router) {
-			approvalRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
-				sse := datastar.NewSSE(w, r)
+			approvalRouter.Route("/api/", func(apiRouter chi.Router) {
+				apiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+					sse := datastar.NewSSE(w, r)
 
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				ctx := r.Context()
-				watcher, err := kv.Watch(ctx, sessionID)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				defer func() {
-					if err := watcher.Stop(); err != nil {
-						logger.Error("Failed to stop watcher", "error", err)
-					}
-				}()
-
-				for {
-					select {
-					case <-ctx.Done():
+					sessionID, mvc, err := mvcSession(w, r)
+					if err != nil {
+						logger.Error(fmt.Errorf("failed to get approval MVC session: %w", err).Error())
+						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
-					case entry := <-watcher.Updates():
-						if entry == nil {
-							continue
+					}
+					ctx := r.Context()
+					watcher, err := kv.Watch(ctx, sessionID)
+					if err != nil {
+						logger.Error(fmt.Errorf("failed to create approval watcher: %w", err).Error())
+						http.Error(w, err.Error(), http.StatusInternalServerError)
+						return
+					}
+					defer func() {
+						if err := watcher.Stop(); err != nil {
+							logger.Error(fmt.Errorf("failed to stop approval watcher: %w", err).Error())
 						}
-						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
+					}()
+
+					for {
+						select {
+						case <-ctx.Done():
 							return
-						}
-						c := approval.ApprovalPage(db, logger)
-						if err := sse.PatchElementTempl(c); err != nil {
-							_ = sse.ConsoleError(err)
-							return
+						case entry := <-watcher.Updates():
+							if entry == nil {
+								continue
+							}
+							if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+								http.Error(w, err.Error(), http.StatusInternalServerError)
+								return
+							}
+							c := approval.ApprovalPage(db, baseLogger)
+							if err := sse.PatchElementTempl(c); err != nil {
+								_ = sse.ConsoleError(err)
+								return
+							}
 						}
 					}
-				}
+				})
+
+				apiRouter.Route("/events_players", func(eventsPlayersRouter chi.Router) {
+					eventsPlayersRouter.Post("/post/add_first_choice", func(w http.ResponseWriter, r *http.Request) {
+						type Store struct {
+							BillettholderId int    `json:"assignmentBillettholderId"`
+							EventId         string `json:"assignmentEventId"`
+							PuljeId         string `json:"assignmentPuljeId"`
+						}
+
+						store := &Store{}
+
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+						if store.BillettholderId <= 0 {
+							logger.Error(fmt.Errorf("invalid billettholder id for add first choice (event_id=%s, pulje_id=%s): invalid assignmentBillettholderId %d: must be greater than 0", store.EventId, store.PuljeId, store.BillettholderId).Error())
+							http.Error(w, fmt.Errorf("invalid assignmentBillettholderId %d: must be greater than 0", store.BillettholderId).Error(), http.StatusNotFound)
+							return
+						}
+
+						var addFirstChoiceErr = formsubmission.AddPlayersFirstChoice(
+							store.BillettholderId,
+							store.EventId,
+							store.PuljeId,
+							db,
+							baseLogger,
+						)
+						if addFirstChoiceErr != nil {
+							logger.Error(fmt.Errorf("failed to add player as first choice: %w", addFirstChoiceErr).Error())
+							http.Error(w, addFirstChoiceErr.Error(), http.StatusInternalServerError)
+							return
+						}
+						logger.Info(
+							"Successfully added player as first choice",
+							"event_id", store.EventId,
+							"pulje_id", store.PuljeId,
+							"billettholder_id", store.BillettholderId,
+						)
+						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast add first choice update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+
+					})
+					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
+
+						type Store struct {
+							BillettholderId int    `json:"assignmentBillettholderId"`
+							EventId         string `json:"assignmentEventId"`
+							PuljeId         string `json:"assignmentPuljeId"`
+						}
+						store := &Store{}
+
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+						if store.BillettholderId <= 0 {
+							logger.Error(fmt.Errorf("invalid billettholder id for add GM (event_id=%s, pulje_id=%s): invalid assignmentBillettholderId %d: must be greater than 0", store.EventId, store.PuljeId, store.BillettholderId).Error())
+							http.Error(w, fmt.Errorf("invalid assignmentBillettholderId %d: must be greater than 0", store.BillettholderId).Error(), http.StatusNotFound)
+							return
+						}
+
+						var updatePlayerStatusErr = formsubmission.UpdatePlayerStatus(
+							store.EventId,
+							store.PuljeId,
+							store.BillettholderId,
+							false,
+							true,
+							db,
+							baseLogger,
+						)
+						if updatePlayerStatusErr != nil {
+							logger.Error(fmt.Errorf("failed to add player as GM: %w", updatePlayerStatusErr).Error())
+							http.Error(w, updatePlayerStatusErr.Error(), http.StatusInternalServerError)
+							return
+						}
+						logger.Info(
+							"Successfully Added player as GM",
+							"event_id", store.EventId,
+							"pulje_id", store.PuljeId,
+							"billettholder_id", store.BillettholderId,
+							"is_player", false,
+							"is_gm", true,
+						)
+						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast add GM update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+					})
+					eventsPlayersRouter.Put("/update_status", func(w http.ResponseWriter, r *http.Request) {
+						type Store struct {
+							BillettholderId int    `json:"assignmentBillettholderId"`
+							EventId         string `json:"assignmentEventId"`
+							PuljeId         string `json:"assignmentPuljeId"`
+							IsPlayer        bool   `json:"assignmentIsPlayer"`
+							IsGm            bool   `json:"assignmentIsGm"`
+						}
+						store := &Store{}
+
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+
+						var updatePlayerStatusErr = formsubmission.UpdatePlayerStatus(
+							store.EventId,
+							store.PuljeId,
+							store.BillettholderId,
+							store.IsPlayer,
+							store.IsGm,
+							db,
+							baseLogger,
+						)
+						if updatePlayerStatusErr != nil {
+							http.Error(w, updatePlayerStatusErr.Error(), http.StatusInternalServerError)
+							return
+						}
+						logger.Info(
+							"Successfully updated player status",
+							"event_id", store.EventId,
+							"pulje_id", store.PuljeId,
+							"billettholder_id", store.BillettholderId,
+							"is_player", store.IsPlayer,
+							"is_gm", store.IsGm,
+						)
+						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast player status update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+					})
+				})
 			})
 
 			approvalRouter.Route("/edit", func(editEventRouter chi.Router) {
 				editEventRouter.Route("/{id}", func(newIdRoute chi.Router) {
-					edit_form.EditFormLayoutRoute(newIdRoute, db, eventImageDir, logger)
+					edit_form.EditFormLayoutRoute(newIdRoute, db, eventImageDir, baseLogger)
 				})
 				editEventRouter.Route("/api/{id}", func(newApiIdRouter chi.Router) {
 					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -196,7 +340,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 						defer func() {
 							if err := watcher.Stop(); err != nil {
-								logger.Error("Failed to stop watcher", "error", err)
+								logger.Error(fmt.Errorf("failed to stop edit-form watcher: %w", err).Error())
 							}
 						}()
 
@@ -214,7 +358,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 									return
 								}
 
-								c := edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, logger)
+								c := edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, baseLogger)
 								if err := sse.PatchElementTempl(c); err != nil {
 									_ = sse.ConsoleError(err)
 									return
@@ -224,7 +368,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					})
 				})
 			})
-			approval.ApprovalLayoutRoute(approvalRouter, db, logger, err)
+			approval.ApprovalLayoutRoute(approvalRouter, db, baseLogger, err)
 		})
 	})
 

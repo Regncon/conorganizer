@@ -16,8 +16,9 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 
-		userId, userIdErr := userctx.GetIdFromUserIdInDbFromContext(r.Context(), db, logger)
+		userId, userIdErr := userctx.GetIdFromUserIdInDbFromContext(r.Context(), db)
 		if userIdErr != nil {
+			logger.Error(fmt.Errorf("failed to get user ID for new event route: %w", userIdErr).Error())
 			http.Error(w, userIdErr.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -40,11 +41,13 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 		}
 
 		var ctx = r.Context()
-		layouts.Base(
+		if err := layouts.Base(
 			title,
 			userctx.GetUserRequestInfo(ctx),
 			newEventIndex(eventId, userId, ctx, db, eventImageDir, logger),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render new-event page: %w", err).Error(), "event_id", eventId, "user_id", userId)
+		}
 	})
 }
 

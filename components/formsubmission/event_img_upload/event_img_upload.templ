@@ -24,27 +24,30 @@ func EventImageRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 			return
 		}
 		var ctx = r.Context()
-		layouts.Base(
+		userInfo := userctx.GetUserRequestInfo(ctx)
+		if err := layouts.Base(
 			"Last opp blide",
-			userctx.GetUserRequestInfo(ctx),
+			userInfo,
 			page(eventId, db, logger),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render event image page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
+		}
 	})
 }
 
 func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		eventID := chi.URLParam(r, "id")
-		if eventID == "" {
-			logger.Error("Event ID is required")
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
-			return
-		}
-		logger.Info("Uploading event image", "eventID", eventID)
+			eventID := chi.URLParam(r, "id")
+			if eventID == "" {
+				logger.Warn("Event ID is required")
+				http.Error(w, "Event ID is required", http.StatusBadRequest)
+				return
+			}
+		logger.Info("Uploading event image", "event_id", eventID)
 
 		file, header, err := r.FormFile("image")
 		if err != nil {
-			logger.Error("Failed to get image from form", "error", err)
+			logger.Error(fmt.Errorf("failed to get image from form for event %s: %w", eventID, err).Error())
 			http.Error(w, "Failed to get image from form", http.StatusBadRequest)
 			return
 		}
@@ -52,14 +55,14 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 		imagePath := fmt.Sprintf("%s/%s_%s", *eventImageDir, eventID, header.Filename)
 		out, err := os.Create(imagePath)
 		if err != nil {
-			logger.Error("Failed to create image file", "error", err)
+			logger.Error(fmt.Errorf("failed to create image file %q: %w", imagePath, err).Error())
 			http.Error(w, "Failed to save image", http.StatusInternalServerError)
 			return
 		}
 		defer out.Close()
 		_, err = io.Copy(out, file)
 		if err != nil {
-			logger.Error("Failed to save image file", "error", err)
+			logger.Error(fmt.Errorf("failed to save image file %q: %w", imagePath, err).Error())
 			http.Error(w, "Failed to save image", http.StatusInternalServerError)
 			return
 		}
@@ -69,6 +72,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 		query := `UPDATE events SET image_url = ? WHERE id = ?`
 		_, err = db.Exec(query, eventID+"_"+header.Filename, eventID)
 		if err != nil {
+			logger.Error(fmt.Errorf("failed to update event image path for event %s: %w", eventID, err).Error())
 			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
 			return
 		}
@@ -79,23 +83,23 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 
 func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
-		logger.Info("Received cropped image upload request")
-		eventID := chi.URLParam(r, "id")
-		if strings.TrimSpace(eventID) == "" {
-			logger.Error("Event ID is required")
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
-			return
-		}
-		imageKind := r.FormValue("kind")
-		if imageKind != "card" && imageKind != "banner" {
-			logger.Error("Invalid image kind", "imageKind", imageKind)
-			http.Error(w, "Invalid image kind", http.StatusBadRequest)
-			return
-		}
-		logger.Info("Uploading cropped event image", "eventID", eventID, "imageKind", imageKind)
+			logger.Info("Received cropped image upload request")
+			eventID := chi.URLParam(r, "id")
+			if strings.TrimSpace(eventID) == "" {
+				logger.Warn("Event ID is required")
+				http.Error(w, "Event ID is required", http.StatusBadRequest)
+				return
+			}
+			imageKind := r.FormValue("kind")
+			if imageKind != "card" && imageKind != "banner" {
+				logger.Warn("Invalid image kind", "imageKind", imageKind)
+				http.Error(w, "Invalid image kind", http.StatusBadRequest)
+				return
+			}
+		logger.Info("Uploading cropped event image", "event_id", eventID, "imageKind", imageKind)
 		file, _, err := r.FormFile("image")
 		if err != nil {
-			logger.Error("Failed to get image from form", "error", err)
+			logger.Error(fmt.Errorf("failed to get cropped image from form for event %s: %w", eventID, err).Error())
 			http.Error(w, "Failed to get image from form", http.StatusBadRequest)
 			return
 		}
@@ -104,14 +108,14 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 		imagePath := fmt.Sprintf("%s/%s", *eventImageDir, filename)
 		out, err := os.Create(imagePath)
 		if err != nil {
-			logger.Error("Failed to create image file", "error", err)
+			logger.Error(fmt.Errorf("failed to create cropped image file %q: %w", imagePath, err).Error())
 			http.Error(w, "Failed to save image", http.StatusInternalServerError)
 			return
 		}
 		defer out.Close()
 		_, err = io.Copy(out, file)
 		if err != nil {
-			logger.Error("Failed to save image file", "error", err)
+			logger.Error(fmt.Errorf("failed to save cropped image file %q: %w", imagePath, err).Error())
 			http.Error(w, "Failed to save image", http.StatusInternalServerError)
 			return
 		}
@@ -172,7 +176,7 @@ templ page(eventId string, db *sql.DB, logger *slog.Logger) {
 			z-index: 2;
 		}
 	</style>
-	{{event, eventErr := eventservice.GetEventById(eventId, db, logger)
+	{{event, eventErr := eventservice.GetEventById(eventId, db)
 var title, intro, imageUrl string
 if eventErr == nil {
 	title = event.Title
@@ -181,7 +185,13 @@ if eventErr == nil {
 }
 	}}
 	if eventErr != nil {
+		{{ logger.Error(fmt.Errorf("failed to load event image page for event %s: %w", eventId, eventErr).Error()) }}
 		<p>Error fetching events: { eventErr.Error() }</p>
+		return
+	}
+	if event == nil {
+		{{ logger.Warn("Event not found for event image page", "event_id", eventId) }}
+		<p>Event not found</p>
 		return
 	}
 	<script src="/static/web_components/banner_cropper.js"></script>

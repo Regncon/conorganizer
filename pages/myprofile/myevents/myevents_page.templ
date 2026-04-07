@@ -12,16 +12,16 @@ import (
 func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.EventCardModel {
 	var events []models.EventCardModel
 
-	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
+	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db)
 	if userDbIdErr != nil {
-		logger.Error("failed to get user id from database", "error", userDbIdErr)
+		logger.Error(fmt.Errorf("failed to get user id from database for user %q: %w", userId, userDbIdErr).Error())
 		return events
 	}
 
 	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE host = ?"
 	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
 	if eventsQueryErr != nil {
-		logger.Error("Failed to query events", "user_id", userId, "error", eventsQueryErr)
+		logger.Error(fmt.Errorf("failed to query events for user %q: %w", userId, eventsQueryErr).Error())
 		return events
 	}
 	defer rows.Close()
@@ -29,12 +29,12 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.
 	for rows.Next() {
 		var event models.EventCardModel
 		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
-			logger.Error("Failed to scan event row", "user_id", userId, "error", scanErr)
+			logger.Error(fmt.Errorf("failed to scan event row for user %q: %w", userId, scanErr).Error())
 			return events
 		}
 		events = append(events, event)
 	}
-	fmt.Printf("Found %d events for user %s\n", len(events), userId)
+	logger.Debug("Found events for user", "event_count", len(events), "user_id", userId)
 	return events
 }
 

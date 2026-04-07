@@ -21,6 +21,8 @@ import (
 )
 
 func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, logger *slog.Logger, db *sql.DB) error {
+	baseLogger := logger
+	logger = logger.With("component", "billettholder_admin")
 	nc, err := ns.Client()
 	if err != nil {
 		return fmt.Errorf("error creating nats client: %w", err)
@@ -44,9 +46,9 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 
 	notifyUpdate := func(sessionID string) {
 		subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
-		fmt.Println("update billettholder subj", subj)
+		logger.Debug("Publishing billettholder update")
 		if err := nc.Publish(subj, nil); err != nil {
-			logger.Error("failed to publish page update", "err", err, "session", sessionID)
+			logger.Error(fmt.Errorf("failed to publish billettholder page update for session %s: %w", sessionID, err).Error())
 		}
 	}
 
@@ -74,10 +76,10 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 		return sessionID, mvc, nil
 	}
 
-	indexRoute(router, db, err)
+	indexRoute(router, db, logger, err)
 
 	router.Route("/admin/billettholder/api/", func(billettholderAdminRouter chi.Router) {
-		billettholderAdminRouter.With(authctx.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
+		billettholderAdminRouter.With(authctx.RequireAdmin(baseLogger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 			sessionID, _, err := session(w, r)
 			if err != nil {
@@ -94,7 +96,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			}
 			defer func() {
 				if err := sub.Unsubscribe(); err != nil {
-					logger.Error("Failed to unsubscribe", "error", err)
+					logger.Error(fmt.Errorf("failed to unsubscribe billettholder admin stream: %w", err).Error())
 				}
 			}()
 
@@ -122,7 +124,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 	addbillettholder.AddBillettholderRoute(router, db, logger, err)
 
 	router.Route("/admin/billettholder/add/api/", func(addBillettholderRouter chi.Router) {
-		addBillettholderRouter.With(authctx.RequireAdmin(logger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
+		addBillettholderRouter.With(authctx.RequireAdmin(baseLogger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 			sessionID, _, err := session(w, r)
 			if err != nil {
@@ -132,7 +134,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 
 			ctx := r.Context()
 			subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
-			fmt.Println("add billettholder page subj", subj)
+			logger.Debug("Subscribing add billettholder page")
 			sub, err := nc.SubscribeSync(subj)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -140,7 +142,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			}
 			defer func() {
 				if err := sub.Unsubscribe(); err != nil {
-					logger.Error("Failed to unsubscribe", "error", err)
+					logger.Error(fmt.Errorf("failed to unsubscribe add-billettholder stream: %w", err).Error())
 				}
 			}()
 

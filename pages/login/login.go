@@ -17,6 +17,8 @@ import (
 )
 
 func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
+	baseLogger := logger
+	logger = logger.With("component", "auth")
 	router.Route("/auth", func(authRouter chi.Router) {
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
@@ -25,12 +27,12 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				userctx.GetUserRequestInfo(ctx),
 				loginForm(),
 			).Render(ctx, w); err != nil {
-				logger.Error("Failed to render login page", "error", err)
+				logger.Error(fmt.Errorf("failed to render login page: %w", err).Error())
 			}
 		})
 
 		authRouter.Group(func(protectedRoute chi.Router) {
-			protectedRoute.Use(authctx.AuthMiddleware(logger))
+			protectedRoute.Use(authctx.AuthMiddleware(baseLogger))
 
 			protectedRoute.Get("/test", func(w http.ResponseWriter, r *http.Request) {
 				userToken, userTokenErr := authctx.GetUserTokenFromContext(r.Context())
@@ -42,7 +44,10 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				isAdmin := authctx.GetAdminFromUserToken(r.Context())
 				testComp := templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
 					_, err := io.WriteString(w, fmt.Sprintf("Test successful! Authenticated as: %v, and is admin: %v", userToken.Claims["email"], isAdmin))
-					return err
+					if err != nil {
+						return fmt.Errorf("write auth test response: %w", err)
+					}
+					return nil
 				})
 
 				var ctx = r.Context()
@@ -51,16 +56,15 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 					userctx.GetUserRequestInfo(ctx),
 					testComp,
 				).Render(ctx, w); err != nil {
-					logger.Error("Failed to render auth test page", "error", err)
+					logger.Error(fmt.Errorf("failed to render auth test page: %w", err).Error())
 				}
 			})
 
 			protectedRoute.Get("/post-login", func(w http.ResponseWriter, r *http.Request) {
-				fmt.Println("Post login handler called")
 				isAdmin := authctx.GetAdminFromUserToken(r.Context())
 				userToken, userTokenErr := authctx.GetUserTokenFromContext(r.Context())
 				if userTokenErr != nil {
-					logger.Error("Failed to get user token from context", "error", userTokenErr)
+					logger.Error(fmt.Errorf("failed to get user token from context: %w", userTokenErr).Error())
 					http.Redirect(w, r, "/auth", http.StatusSeeOther)
 					return
 				}
@@ -71,7 +75,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				if emailOk && email != "" && userID != "" {
 					exists, err := userExistsByEmail(db, email)
 					if err != nil {
-						logger.Error("Failed to check if user exists", "error", err, "email", email)
+						logger.Error(fmt.Errorf("failed to check if user %q exists: %w", userID, err).Error())
 						http.Redirect(w, r, "/auth", http.StatusSeeOther)
 						return
 					}
@@ -112,7 +116,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				userctx.GetUserRequestInfo(ctx),
 				redirect.Redirect(redirectUrl),
 			).Render(ctx, w); err != nil {
-				logger.Error("Failed to render logout page", "error", err)
+				logger.Error(fmt.Errorf("failed to render logout page: %w", err).Error())
 			}
 		})
 	})
@@ -127,7 +131,7 @@ func userExistsByEmail(db *sql.DB, email string) (bool, error) {
 		return false, nil
 	}
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to query user by email %q: %w", email, err)
 	}
 	return true, nil
 }
@@ -135,21 +139,21 @@ func userExistsByEmail(db *sql.DB, email string) (bool, error) {
 func insertUser(db *sql.DB, userID, email string, isAdmin bool, logger *slog.Logger) {
 	_, err := db.Exec("INSERT INTO users (user_id, email, is_admin) VALUES (?, ?, ?)", userID, email, isAdmin)
 	if err != nil {
-		logger.Error("Failed to insert new user", "error", err, "email", email)
+		logger.Error(fmt.Errorf("failed to insert new user %q: %w", userID, err).Error())
 		return
 	}
-	logger.Info("Inserted new user", "email", email, "user_id", userID, "is_admin", isAdmin)
+	logger.Info("Inserted new user", "user_id", userID, "is_admin", isAdmin)
 }
 
 func updateUserAdmin(db *sql.DB, userID string, isAdmin bool, logger *slog.Logger) {
 	var currentIsAdmin bool
 	err := db.QueryRow("SELECT is_admin FROM users WHERE user_id = ?", userID).Scan(&currentIsAdmin)
 	if err == sql.ErrNoRows {
-		logger.Error("User not found for admin update", "user_id", userID)
+		logger.Warn("User not found for admin update", "user_id", userID)
 		return
 	}
 	if err != nil {
-		logger.Error("Failed to fetch current is_admin", "error", err, "user_id", userID)
+		logger.Error(fmt.Errorf("failed to fetch current is_admin for user %q: %w", userID, err).Error())
 		return
 	}
 	if currentIsAdmin == isAdmin {
@@ -158,7 +162,7 @@ func updateUserAdmin(db *sql.DB, userID string, isAdmin bool, logger *slog.Logge
 	}
 	_, updateErr := db.Exec("UPDATE users SET is_admin = ? WHERE user_id = ?", isAdmin, userID)
 	if updateErr != nil {
-		logger.Error("Failed to update user", "error", updateErr, "user_id", userID)
+		logger.Error(fmt.Errorf("failed to update user %q: %w", userID, updateErr).Error())
 		return
 	}
 	logger.Info("Updated user admin status", "user_id", userID, "is_admin", isAdmin)

@@ -24,6 +24,8 @@ import (
 )
 
 func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
+	baseLogger := logger
+	logger = logger.With("component", "my_events")
 	kv, kvErr := SetupNats(ns)
 	if kvErr != nil {
 		return fmt.Errorf("error setting up nats: %w", kvErr)
@@ -86,7 +88,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
-						logger.Error("Failed to stop watcher", "error", err)
+						logger.Error(fmt.Errorf("failed to stop my-events watcher: %w", err).Error())
 					}
 				}()
 
@@ -138,7 +140,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						}
 						defer func() {
 							if err := watcher.Stop(); err != nil {
-								logger.Error("Failed to stop watcher", "error", err)
+								logger.Error(fmt.Errorf("failed to stop new-event watcher: %w", err).Error())
 							}
 						}()
 
@@ -166,21 +168,21 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 							}
 						}
 					})
-					if err := formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger); err != nil {
-						logger.Error("Failed to setup inline validation", "error", err)
+					if err := formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, baseLogger); err != nil {
+						logger.Error(fmt.Errorf("failed to set up inline validation: %w", err).Error())
 					}
 
 					// refactor to use "update/status etc"
 
 					newApiIdRouter.Route("/event-in-pulje", func(putRoomNameRouter chi.Router) {
-						formsubmission.UpdateEventInPulje(putRoomNameRouter, db, kv, logger)
+						formsubmission.UpdateEventInPulje(putRoomNameRouter, db, kv, baseLogger)
 					})
 					newApiIdRouter.Route("/is-published", func(putIsPublishedRouter chi.Router) {
-						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, kv, logger)
+						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, kv, baseLogger)
 					})
 
 					newApiIdRouter.Route("/room-name", func(putRoomNameRouter chi.Router) {
-						formsubmission.UpdateRoomName(putRoomNameRouter, db, kv, logger)
+						formsubmission.UpdateRoomName(putRoomNameRouter, db, kv, baseLogger)
 					})
 
 					newApiIdRouter.Route("/status", func(putStatusRouter chi.Router) {
@@ -239,12 +241,12 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						eventimgupload.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, logger)
 					})
 					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
-						formsubmission.SubmitFormRoute(newApiIdRouter, db, kv, logger)
+						formsubmission.SubmitFormRoute(newApiIdRouter, db, kv, baseLogger)
 					})
 				})
 
 				apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
-					createNewEventFormSubmission(db, logger, w, r)
+					createNewEventFormSubmission(db, baseLogger, w, r)
 				})
 			})
 
@@ -293,6 +295,7 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 }
 
 func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
+	logger = logger.With("component", "my_events")
 	logger.Info("Creating new event form submission")
 	userInfo := userctx.GetUserRequestInfo(r.Context())
 	if userInfo.Id == "" {
@@ -300,14 +303,14 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 		return
 	}
 
-	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db, logger)
+	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db)
 	if insertError != nil {
-		logger.Error("Failed to get user ID from database", "error", insertError)
+		logger.Error(fmt.Errorf("failed to get user ID from database for user %q: %w", userInfo.Id, insertError).Error())
 		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)
 		return
 	}
 
-	logger.Info("found user info", "userId", userInfo.Id, "dbId", userDbId, "email", userInfo.Email)
+	logger.Info("Found user info for event creation", "user_id", userInfo.Id, "user_db_id", userDbId)
 	logger.Info("Inserting new event form submission")
 
 	// Todo: Use database relations to get foreign keys, event_type etc.
@@ -323,10 +326,10 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 	var eventId string
 	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft).Scan(&eventId)
 	if insertError != nil {
-		logger.Error("Failed to create new event form submission", "error", insertError)
+		logger.Error(fmt.Errorf("failed to create new event form submission for user %q: %w", userInfo.Id, insertError).Error())
 		return
 	}
 
-	logger.Info("New event form submission created", "eventID", eventId)
+	logger.Info("New event form submission created", "event_id", eventId, "user_id", userInfo.Id)
 	http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s", eventId), http.StatusSeeOther)
 }

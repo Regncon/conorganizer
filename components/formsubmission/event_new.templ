@@ -71,12 +71,12 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 
 			puljeNames, puljeNamesError := getPuljeNames(db, logger)
 			if puljeNamesError != nil {
-				logger.Error("Error getting pulje names", "puljeNamesError", puljeNamesError)
+				logger.Error(fmt.Errorf("error getting pulje names: %w", puljeNamesError).Error())
 			}
 
 			puljeNameInt, puljeNameToIntError := strconv.Atoi(*eventForm.PuljeName)
 			if puljeNameToIntError != nil {
-				logger.Error("Invalid pulje name format", "puljeNameToIntError", puljeNameToIntError)
+				logger.Error(fmt.Errorf("invalid pulje name format %q: %w", *eventForm.PuljeName, puljeNameToIntError).Error())
 			}
 
 			isPuljeNameValid = puljeNameInt > 0 && len(puljeNames) > 0 && puljeNameInt <= len(puljeNames)
@@ -120,12 +120,11 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				PuljeName: &emptyPulje,
 			}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
-				fmt.Printf("Debug - ReadSignals error: %v\n", err)
-				fmt.Printf("Debug - Raw form data: %+v\n", r.Form)
+				logger.Debug(fmt.Errorf("ReadSignals failed for inline validation: %w", err).Error())
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-			fmt.Printf("Debug - Form after ReadSignals: %+v\n", eventForm)
+			logger.Debug("ReadSignals completed for inline validation")
 			sse := datastar.NewSSE(w, r)
 			eventFormValidationResult := checkEventFromValidity(eventForm)
 			sse.PatchElementTempl(inlineValidationFormEventComponent(eventForm, eventFormValidationResult))
@@ -141,7 +140,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				PuljeName: &emptyPulje,
 			}
 			if readSignalsError := datastar.ReadSignals(r, eventForm); readSignalsError != nil {
-				logger.Error("Error reading signals", "signalsError", readSignalsError)
+				logger.Error(fmt.Errorf("error reading signals: %w", readSignalsError).Error())
 				http.Error(w, readSignalsError.Error(), http.StatusBadRequest)
 				return
 			}
@@ -675,16 +674,18 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 	)
 
 	if insertError != nil {
-		logger.Error("Error updating event", "insertError", insertError)
+		saveErr := fmt.Errorf("error saving event form submission: %w", insertError)
+		logger.Error(saveErr.Error())
 		http.Error(w, fmt.Sprintf("Error updating event: %v", insertError), http.StatusBadRequest)
-		return 0, insertError
+		return 0, saveErr
 	}
 
 	rowsAffected, rowsAffectedErr := result.RowsAffected()
 	if rowsAffectedErr != nil {
-		logger.Error("Error getting rows affected", "rowsAffectedErr", rowsAffectedErr)
+		rowsAffectedErrWrapped := fmt.Errorf("error getting rows affected for new event submission: %w", rowsAffectedErr)
+		logger.Error(rowsAffectedErrWrapped.Error())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return 0, rowsAffectedErr
+		return 0, rowsAffectedErrWrapped
 	}
 
 	if rowsAffected == 0 {
@@ -692,7 +693,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 		http.Error(w, "Event not found or no changes made", http.StatusNotFound)
 		return 0, nil
 	}
-	fmt.Printf("Event saved successfully: %v\n", eventForm)
+	logger.Info("Event saved successfully")
 	return result.LastInsertId()
 }
 
@@ -700,7 +701,7 @@ func getPuljeNames(db *sql.DB, logger *slog.Logger) ([]PuljeNameStruct, error) {
 	query := "SELECT name FROM puljer"
 	rows, queryError := db.Query(query)
 	if queryError != nil {
-		return nil, queryError
+		return nil, fmt.Errorf("error querying pulje names: %w", queryError)
 	}
 
 	defer rows.Close()
@@ -710,15 +711,17 @@ func getPuljeNames(db *sql.DB, logger *slog.Logger) ([]PuljeNameStruct, error) {
 	for rows.Next() {
 		var name string
 		if scanError := rows.Scan(&name); scanError != nil {
-			logger.Error("Error scanning pulje name", "scanError", scanError)
-			return nil, scanError
+			scanErr := fmt.Errorf("error scanning pulje name: %w", scanError)
+			logger.Error(scanErr.Error())
+			return nil, scanErr
 		}
 		puljer = append(puljer, PuljeNameStruct{Name: name})
 	}
 
 	if rowsError := rows.Err(); rowsError != nil {
-		logger.Error("Error in rows iteration", "rowsError", rowsError)
-		return nil, rowsError
+		rowsErr := fmt.Errorf("error iterating pulje rows: %w", rowsError)
+		logger.Error(rowsErr.Error())
+		return nil, rowsErr
 	}
 
 	return puljer, nil
@@ -728,7 +731,7 @@ func getHostId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
 	query := "SELECT id FROM users where user_id = ?"
 	rows, queryError := db.Query(query, userID)
 	if queryError != nil {
-		return 0, queryError
+		return 0, fmt.Errorf("error querying host id for user %q: %w", userID, queryError)
 	}
 
 	defer rows.Close()
@@ -737,14 +740,16 @@ func getHostId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
 
 	for rows.Next() {
 		if scanError := rows.Scan(&userId); scanError != nil {
-			logger.Error("Error scanning user id", "scanError", scanError)
-			return 0, scanError
+			scanErr := fmt.Errorf("error scanning user id for user %q: %w", userID, scanError)
+			logger.Error(scanErr.Error())
+			return 0, scanErr
 		}
 	}
 
 	if rowsError := rows.Err(); rowsError != nil {
-		logger.Error("Error in rows iteration", "rowsError", rowsError)
-		return 0, rowsError
+		rowsErr := fmt.Errorf("error iterating user rows for user %q: %w", userID, rowsError)
+		logger.Error(rowsErr.Error())
+		return 0, rowsErr
 	}
 
 	return userId, nil

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Conorganizer Logging"
+  short_description: "Create, migrate, and review structured slog logging"
+  default_prompt: "Update or add logging in conorganizer using the existing slog JSON setup, canonical fields, and privacy guardrails."

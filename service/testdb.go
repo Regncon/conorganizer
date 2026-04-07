@@ -17,7 +17,7 @@ func InitTestDBFrom(testDBPath string) (*sql.DB, error) {
 
 	rootDir, err := findProjectRoot()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("find project root: %w", err)
 	}
 
 	schemaPath := filepath.Join(rootDir, "schema.sql")
@@ -70,7 +70,7 @@ func InitTestDBFrom(testDBPath string) (*sql.DB, error) {
 func findProjectRoot() (string, error) {
 	currentDir, err := getThisFileDir()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("get current file directory: %w", err)
 	}
 
 	for {

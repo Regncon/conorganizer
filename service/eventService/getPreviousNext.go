@@ -3,14 +3,14 @@ package eventservice
 import (
 	"context"
 	"database/sql"
-	"log/slog"
+	"fmt"
 	"strings"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
-func GetPreviousNextInnsendtGodkjent(ctx context.Context, db *sql.DB, logger *slog.Logger, currentID string, eventImageDir *string) (components.PreviousNext, error) {
+func GetPreviousNextInnsendtGodkjent(ctx context.Context, db *sql.DB, currentID string, eventImageDir *string) (components.PreviousNext, error) {
 	const q = `
         WITH ordered AS (
             SELECT
@@ -40,11 +40,10 @@ func GetPreviousNextInnsendtGodkjent(ctx context.Context, db *sql.DB, logger *sl
 		Scan(&prevID, &prevTitle, &prevImg, &nextID, &nextTitle, &nextImg)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// currentID isn’t in the filtered set; return empty neighbors.
+			// currentID isn't in the filtered set; return empty neighbors.
 			return components.PreviousNext{}, nil
 		}
-		logger.Error("GetPreviousNext scan failed", "error", err)
-		return components.PreviousNext{}, err
+		return components.PreviousNext{}, fmt.Errorf("get previous/next scan failed for event %q: %w", currentID, err)
 	}
 
 	PrevImageBannerUrl := eventimage.GetEventImageUrl(nstr(prevID), "banner", eventImageDir)
