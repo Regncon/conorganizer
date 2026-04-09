@@ -75,7 +75,8 @@
     color: var(--btn-primary-active-text);
 }
 
-.btn--primary:focus-visible {
+.btn--primary:focus-visible,
+.btn--primary:focus {
     outline: none;
     background-color: var(--btn-primary-hover-bg);
     color: var(--btn-primary-active-text);
@@ -112,7 +113,8 @@
     color: var(--btn-secondary-active-text);
 }
 
-.btn--secondary:focus-visible {
+.btn--secondary:focus-visible,
+.btn--secondary:focus {
     outline: none;
     background-color: var(--btn-secondary-hover-bg);
     color: var(--btn-secondary-active-text);
@@ -142,7 +144,8 @@
     color: var(--btn-outline-active-text);
 }
 
-.btn--outline:focus-visible {
+.btn--outline:focus-visible,
+.btn--outline:focus {
     outline: none;
     background-color: var(--btn-outline-hover-bg);
     color: var(--btn-outline-active-text);
@@ -173,7 +176,8 @@
     color: var(--btn-ghost-active-text);
 }
 
-.btn--ghost:focus-visible {
+.btn--ghost:focus-visible,
+.btn--ghost:focus {
     outline: none;
     background-color: var(--btn-ghost-hover-bg);
     color: var(--btn-ghost-active-text);
@@ -205,7 +209,8 @@
     color: var(--btn-primary-active-text);
 }
 
-.btn--cta:focus-visible {
+.btn--cta:focus-visible,
+.btn--cta:focus {
     outline: none;
     box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
     background-color: var(--color-primary-hover);
@@ -226,36 +231,6 @@
 
 .btn-with-icon {
     gap: var(--spacing-2x);
-}
-
-.btn--interest-picker {
-    --btn-interest-border-text-color: var(--color-text-soft);
-    font-weight: var(--btn-font-weight);
-    font-size: var(--btn-font-size);
-    color: var(--btn-interest-border-text-color);
-    border: 1px solid var(--bg-item-border);
-    background-color: var(--bg-item);
-    min-height: 48px;
-    place-content: start;
-    padding: 0;
-    padding-inline: var(--spacing-4x);
-    padding-block: var(--spacing-3x);
-    width: min(30rem, 100%);
-}
-
-.btn--interest-picker:hover,
-.btn--interest-picker:focus-visible,
-.btn--interest-picker-selected {
-    color: var(--btn-outline-active-text);
-    border-color: var(--btn-outline-border);
-}
-
-.btn--interest-picker:disabled {
-    background-color: transparent;
-    color: var(--color-text-soft);
-    border-color: var(--bg-item-border);
-    cursor: not-allowed;
-    opacity: 0.5;
 }
 
 /* Apply as extra style to a .btn element if it only shows icon */

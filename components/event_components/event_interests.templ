@@ -18,22 +18,14 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	r *http.Request,
 	logger *slog.Logger) {
 	<style>
-		dialog::backdrop {
-			background-image: linear-gradient(45deg, var(--bg-backdrop));
-			opacity: 0.6;
-		}
-
-		.interest-dialog {
-			visibility: hidden;
-		}
 		.dialog-container {
 			container-type: inline-size;
 			container-name: interest-dialog;
+			position: relative;
 		}
 
 		.interest-dialog[open] {
-			inset: 0; /* top/right/bottom/left: 0 */
-			z-index: 5;
+			inset: 0;
 			--dialog-width: min(32.5rem, calc(100% - 16px));
 			visibility: visible;
 			width: var(--dialog-width);
@@ -48,6 +40,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			bottom: 0;
 			left: 0;
 			right: 0;
+            outline:none;
 
 			.no-marking {
 				user-select: none;
@@ -65,21 +58,11 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 					height: fit-content;
 					color: var(--color-text-soft);
 					padding-bottom: var(--responsive-pane-padding);
-
-					.button-container {
-						display: flex;
-						align-items: center;
-						justify-content: center;
-						height: 18px;
-						width: 18px;
-					}
-
-					.btn {
-						padding-inline: var(--spacing-2x);
-					}
 				}
 
 				.dialog-content {
+                    --border-outline-width: 4px;
+
 					display: flex;
 					flex-direction: column;
 					max-height: calc(100vh - 280px);
@@ -110,29 +93,38 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 						font-size: 12px;
 					}
 				}
+
+				.close-button-container {
+					position: absolute;
+					top: 0;
+					right: 0;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					height: 18px;
+					width: 18px;
+
+					.btn {
+						padding-inline: var(--spacing-2x);
+					}
+				}
 			}
 		}
 	</style>
 	<dialog
 		class="interest-dialog"
-		data-attr:open="isOpen($interestIsOpen)"
-		closedby="any"
+		data-attr:open="$_interestIsOpen ? true : false"
 		data-signals:pulje-Id={ fmt.Sprintf("'%s'", puljeId) }
 	>
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>
-				<form class="button-container" method="dialog">
-					<button
-						autofocus
-						class="btn btn--ghost close"
-						data-on:click="$interestIsOpen = false"
-					>
-						@icons.Icon(icons.Close, icons.Size24)
-					</button>
-				</form>
 			</header>
-			<div class="dialog-content">
+			<div
+				class="dialog-content"
+				tabindex="-1"
+				data-effect="$_interestIsOpen && document.querySelector('.dialog-content')?.focus()"
+			>
 				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
@@ -142,50 +134,32 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			</div>
 			<div class="dialog-footer">
 				<p class="auto-save-message">Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
-				<button class="btn btn--outline" data-on:click="$interestIsOpen = false">
+				<button class="btn btn--outline" data-on:click="$_interestIsOpen = false">
 					Ferdig
 				</button>
 			</div>
+			<form class="close-button-container" method="dialog">
+				<button
+					class="btn btn--ghost close"
+					data-on:click="$_interestIsOpen = false"
+				>
+					@icons.Icon(icons.Close, icons.Size24)
+				</button>
+			</form>
 		</div>
 	</dialog>
 	<script>
-		const LSEnum = {
+		let LSKey = {
 			SelectedBilletHolder: "selectedBillettHolder",
 		};
+        window.LSKey = LSKey;
 
-		function getBillettHolderFromLocalstorage() {
-			const selectedBillettHolderString = localStorage.getItem(
-				LSEnum.SelectedBilletHolder,
-			);
-			if (!selectedBillettHolderString) {
-				return "";
-			}
-			const selectedBillettHolder = JSON.parse(
-				selectedBillettHolderString,
-			);
-			return selectedBillettHolder.Id;
-		}
+        const dialogElement = document.querySelector(`.interest-dialog`);
 
-		function isOpen(isOpenData) {
-			// return false if is empty sting or undefined
-			if (!isOpenData || isOpenData === "false") {
-				return false;
-			}
-			return true;
-		}
-		/*
-		const modal = document.querySelector(".interest-dialog");
-		const button = document.querySelector(".interest-button");
-		const buttonAbortController = new AbortController();
-		const buttonSignal = buttonAbortController.signal;
-
-		const handleButtonClick = () => {
-			modal.showModal();
-		};
-
-		button.addEventListener("click", handleButtonClick, {
-			signal: buttonSignal,
+		dialogElement.addEventListener("click", (ev) => {
+                const restoreScroll = ev.stopPropagation();
 		});
-		      */
+
+
 	</script>
 }

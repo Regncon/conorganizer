@@ -2,99 +2,121 @@ package ticketholder
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
-	"fmt"
 )
-
-/*
-        if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
-        <p class="label">Velg billettholder</p>
-		<div class="ticket-holder-picker-buttons">
-			for _, billettHolder := range associatedTicketHolders {
-				@TicketHolderButton(billettHolder)
-			}
-            @TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
-		</div>
-	}
-
-	if (len(associatedTicketHolders) > 3) {
-        <p class="label">Velg billettholder</p>
-		<div class="ticket-holder-picker-dropdown">
-			@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
-		</div>
-	}
-*/
 
 templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, logger *slog.Logger) {
 	<style>
 		.ticket-holder-container {
 			padding-bottom: var(--responsive-pane-padding);
-		}
-		.ticket-holder-picker-buttons {
-			display: flex;
-			flex-direction: column;
-			gap: var(--spacing-2x);
-		}
+            .ticket-holder-error {
+                color: var(--color-error);
+            }
 
-		@container interest-dialog (width > 23.9375rem) {
-			.ticket-holder-picker-buttons {
-				display: grid;
-				grid-template-columns: repeat(
-					auto-fit,
-					minmax(min(120px, 100%), 1fr)
-				);
-				gap: var(--spacing-2x);
-				.ticket-holder-picker:has(.no-marking) {
-					display: block;
-				}
-				.ticket-holder-picker:has(.custom-select) {
-					display: none;
-				}
-			}
+            &:empty {
+                display: none;
+            }
+            .ticket-holder-picker-buttons {
+                display: flex;
+                flex-wrap: wrap;
+                column-gap:calc(var(--border-outline-width) - var(--spacing-2x));
+                row-gap: var(--spacing-2x);
+            }
 		}
 	</style>
-	{{ associatedTicketHolders, err := GetTicketHolders(userInfo, db) }}
+	{{
+	associatedTicketHolders, err := GetTicketHolders(userInfo, db)
+	yourBillettHolder := GetYourBillettHolderInfo(userInfo, associatedTicketHolders)
+	associatedTicketHoldersJSON, _ := templ.JSONString(associatedTicketHolders)
+	yourBillettHolderJSON, _ := templ.JSONString(yourBillettHolder)
+	}}
 	if err != nil {
 		{{ logger.Error(err.Error(), "user_id", userInfo.Id) }}
-		<div class="ticket-holder-container">
+		<div class="ticket-holder-error">
 			<p>Feil ved henting av billettholdere: { err.Error() }</p>
 		</div>
 		return
 	}
-	if len(associatedTicketHolders) == 0 {
-		<div
-			data-signals={ fmt.Sprintf("{billettHolderId:''}") }
-		></div>
-	} else {
-		<div
-			data-signals={ fmt.Sprintf("{billettHolderId:%d}", associatedTicketHolders[0].Id) }
-		></div>
-		<div data-signals:foo="1"></div>
-	}
-	if (len(associatedTicketHolders) > 1) {
-		<div class="ticket-holder-container">
+	<div
+		class="ticket-holder-container"
+		data-signals:billett-holder-id=""
+		data-on:billettholder-selected={ fmt.Sprintf("$billettHolderId = evt.detail; @put('/event/api/%s/interest/selected-interest')", eventId) }
+		data-init={ fmt.Sprintf("const init = window.initializeSelectedBillettholder(%s, %s); $billettHolderId = init?.Id ?? ''; @put('/event/api/%s/interest/selected-interest')", associatedTicketHoldersJSON, yourBillettHolderJSON, eventId) }
+	>
+		if err != nil {
+			<div class="ticket-holder-error">
+				<p>Feil ved henting av billettholdere: { err.Error() }</p>
+			</div>
+		}
+		if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
 			<p class="label">Velg billettholder</p>
 			<div class="ticket-holder-picker-buttons">
 				for _, billettHolder := range associatedTicketHolders {
-					@TicketHolderButton(billettHolder)
+					@TicketHolderButton(billettHolder, eventId)
 				}
 			</div>
-		</div>
-	}
+		}
+		if (len(associatedTicketHolders) > 3) {
+			<p class="label">Velg billettholder</p>
+			<div class="ticket-holder-picker-dropdown">
+				@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
+			</div>
+		}
+	</div>
 	<script>
-		const billettHolderButtonPickerButton = document.querySelectorAll(
-			`.billett-holder-picker-button`,
-		);
-		billettHolderButtonPickerButton.forEach((button) => {
-			button.addEventListener("click", (ev) => {
-				const currentBillettHolder =
-					ev.currentTarget.dataset.currentBillettHolder;
-				localStorage.setItem(
-					LSEnum.SelectedBilletHolder,
-					currentBillettHolder,
-				);
-			});
-		});
+        window.LSKey = {
+			SelectedBilletHolder: "selectedBillettHolder",
+		};
+        window.getSelectedBillettholderFromLocalStorage = function getSelectedBillettholderFromLocalStorage() {
+            const selectedBillettholderString = localStorage.getItem(window.LSKey.SelectedBilletHolder)
+            if (!selectedBillettholderString) {
+                return null
+            }
+
+            try {
+                const selectedBillettholder = JSON.parse(selectedBillettholderString)
+                if (!selectedBillettholder?.Id) {
+                    return null
+                }
+                return {
+                    Id: selectedBillettholder.Id,
+                    Name: selectedBillettholder.Name ?? "",
+                    Email: selectedBillettholder.Email ?? "",
+                }
+            } catch {
+                return null
+            }
+        }
+
+        window.setSelectedBillettholderInLocalStorage = function setSelectedBillettholderInLocalStorage(billettholder) {
+            if (!billettholder?.Id) {
+                return null
+            }
+
+            const selectedBillettholder = {
+                Id: billettholder.Id,
+                Name: billettholder.Name ?? "",
+                Email: billettholder.Email ?? "",
+            }
+            localStorage.setItem(window.LSKey.SelectedBilletHolder, JSON.stringify(selectedBillettholder))
+            return selectedBillettholder
+        }
+
+        window.initializeSelectedBillettholder = function initializeSelectedBillettholder(associatedBillettholdere, yourBillettholder) {
+            const storedBillettholder = window.getSelectedBillettholderFromLocalStorage()
+            if (storedBillettholder) {
+                return window.setSelectedBillettholderInLocalStorage(storedBillettholder)
+            }
+
+            if (!yourBillettholder?.Id) {
+                return null
+            }
+
+            const selectedBillettholder = associatedBillettholdere.find((billettholder) => billettholder.Id === yourBillettholder.Id)
+                ?? yourBillettholder
+            return window.setSelectedBillettholderInLocalStorage(selectedBillettholder)
+        }
 	</script>
 }

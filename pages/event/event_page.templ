@@ -15,7 +15,7 @@ import (
 )
 
 templ event_page(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
-	<div id="event-container" class="event-container">
+	<div id="event-page-content">
 		@event_page_content(eventId, isAdmin, logger, db, eventImageDir, r)
 	</div>
 }

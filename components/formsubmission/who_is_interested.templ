@@ -148,7 +148,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                         1
                 ) DESC,
                 CASE i.interest_level
-                    WHEN '` + models.InterestLevelVery + `' THEN 3
+                    WHEN '` + models.InterestLevelHigh + `' THEN 3
                     WHEN '` + models.InterestLevelMedium + `' THEN 2
                     WHEN '` + models.InterestLevelLow + `' THEN 1
                     ELSE 0

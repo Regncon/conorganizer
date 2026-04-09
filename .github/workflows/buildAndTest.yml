@@ -164,31 +164,42 @@ jobs:
                   echo "🔗 URL: https://$HOST"
                   echo "=========================================="
                   echo ""
-            - name: Comment deployment URL on PR
+            - name: Update PR with deployment URL
               if: github.event_name == 'pull_request'
               uses: actions/github-script@v8
               with:
                   script: |
                       const host = '${{ steps.instance.outputs.host }}'
-                      const body = `🚀 Preview deployment ready
+                      const deploymentUrlBlock = [
+                        '<!-- preview-deployment-url:start -->',
+                        '## Preview deployment',
+                        '',
+                        '_Added automatically by CI_',
+                        '',
+                        `🔗 https://${host}`,
+                        '<!-- preview-deployment-url:end -->'
+                      ].join('\n')
 
-                      🔗 https://${host}`
-
-                      const { data: comments } = await github.rest.issues.listComments({
+                      const { data: pullRequest } = await github.rest.pulls.get({
                           owner: context.repo.owner,
                           repo: context.repo.repo,
-                          issue_number: context.issue.number
+                          pull_number: context.issue.number
                       })
 
-                      const existing = comments.find((comment) =>
-                          comment.user?.type === 'Bot' && comment.body === body
-                      )
+                      const currentBody = pullRequest.body ?? ''
+                      const marker = '<!-- preview-deployment-url:start -->'
+                      const alreadyHasPreviewBlock = currentBody.includes(marker)
+                      const prBodyIsEmpty = currentBody === ''
 
-                      if (!existing) {
-                          await github.rest.issues.createComment({
-                          owner: context.repo.owner,
-                          repo: context.repo.repo,
-                          issue_number: context.issue.number,
-                          body
-                          })
+                      if (!alreadyHasPreviewBlock) {
+                        const updatedBody = prBodyIsEmpty
+                          ? deploymentUrlBlock
+                          : `${currentBody}\n\n${deploymentUrlBlock}`
+
+                        await github.rest.pulls.update({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        pull_number: context.issue.number,
+                        body: updatedBody
+                        })
                       }

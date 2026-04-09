@@ -35,10 +35,19 @@
 
     --bg-tooltip: #11111b;
     --bg-base: #1a1b26;
+
     --bg-surface: #252735;
+    --bg-surface-border: var(--bg-item-border);
+    --bg-surface-border-hover: var(--bg-item-border-hover);
+    --bg-surface-hover: #353847;
+    --bg-surface-active: #474957;
+
     --bg-item: #35394a;
-    /* This is a border for surface and item both */
+    --bg-item-hover: #44485A;
+    --bg-item-border-hover: #7f8198;
     --bg-item-border: #494D62;
+    --item-flat-active: hsl(230deg 40% 86% / 20%);
+
     --bg-backdrop: #11111B;
 
     /* text & font */
@@ -71,7 +80,7 @@
     --border-radius-2x: 8px;
 
     /* shadow */
-    --shadow-dialog: 0 19px 38px rgba(0, 0, 0, 0.30), 0 15px 12px rgba(0, 0, 0, 0.22);
+    --shadow-dialog: 0 19px 38px hsl(0deg  0% 0% / 30%), 0 15px 12px hsl(0deg  0% 0% / 22%);
 
     /* content width */
     --page-content-max-width: 1440px;
@@ -128,13 +137,12 @@ mark {
 }
 
 @view-transition {
-    navigation: Auto;
+    navigation: auto;
 }
 
 html {
     color-scheme: dark;
     box-sizing: border-box;
-    color: var(--primary-text);
     font-size: var(--text-body);
     font-family: var(--font-sans-serif);
     color: var(--color-primary-text);
@@ -369,12 +377,6 @@ input {
     align-items: center;
 }
 
-.checkbox-label {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
 .checkbox {
     height: 1rem;
     width: 1rem;
@@ -386,9 +388,10 @@ input {
 }
 
 *,
-*:before,
-*:after {
+*::before,
+*::after {
     box-sizing: inherit;
+    outline: none;
 }
 
 .flex {

@@ -19,10 +19,27 @@ type BillettHolder struct {
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]BillettHolder, error) {
-	query := `SELECT email, billettholder_id, first_name, last_name
-                FROM billettholder_emails [be]
-                JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
-                WHERE [be].email = ? `
+	// todo: use the correct way to get billettholders (billettholderservice.GetBilettholdere has a fallback to get all billettholders)
+	query := `
+    SELECT
+        [be].email,
+        [be].billettholder_id,
+        [bh].first_name,
+        [bh].last_name
+    FROM
+        billettholder_emails [be]
+        LEFT JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
+    WHERE
+        [be].kind = 'Ticket'
+        AND [be].billettholder_id IN (
+            SELECT
+                billettholder_id
+            FROM
+                billettholder_emails
+            WHERE
+                email = ?
+        )
+`
 	rows, ticketHolderQueryErr := db.Query(query, userInfo.Email)
 	if ticketHolderQueryErr != nil {
 		return nil, fmt.Errorf("failed to query ticket holders for email %q: %w", userInfo.Email, ticketHolderQueryErr)
@@ -49,36 +66,6 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
 	if ticketHolderRowsErr := rows.Err(); ticketHolderRowsErr != nil {
 		return nil, fmt.Errorf("error iterating over ticket holder rows: %w", ticketHolderRowsErr)
 	}
-
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "lo@najcuksuc.sn",
-	// 	Name:  "Leonard Moreno",
-	// 	Id:    1,
-	// 	Color: ColorForName("Leonard Moreno"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "lacbe@lecuc.my",
-	// 	Name:  "Olive Berry",
-	// 	Id:    2,
-	// 	Color: ColorForName("Olive Berry"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "mijinpu@posrik.cz",
-	// 	Name:  "Bobby Silva",
-	// 	Id:    3,
-	// 	Color: ColorForName("Bobby Silva"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "igkir@mukpunuc.be",
-	// 	Name:  "Bertha Francis",
-	// 	Id:    5,
-	// 	Color: ColorForName("Bertha Francis"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "ruidavuf@otavig.gy",
-	// 	Name:  "Mario Ross",
-	// 	Id:    6,
-	// })
 
 	return associatedTicketholders, nil
 
@@ -152,4 +139,22 @@ func GetInitials(s string) string {
 	}
 
 	return initialsBuilder.String()
+}
+
+func GetFirstNameAndLastInitial(fullName string) string {
+	nameParts := strings.Fields(fullName)
+	if len(nameParts) == 0 {
+		return ""
+	}
+
+	if len(nameParts) == 1 {
+		return nameParts[0]
+	}
+
+	lastNameRunes := []rune(nameParts[len(nameParts)-1])
+	if len(lastNameRunes) == 0 {
+		return nameParts[0]
+	}
+
+	return fmt.Sprintf("%s %c", nameParts[0], unicode.ToUpper(lastNameRunes[0]))
 }

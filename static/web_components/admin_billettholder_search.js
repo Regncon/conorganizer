@@ -5,29 +5,8 @@ if (!customElements.get("admin-billettholder-search")) {
         clearInputVersion: "data-clear-input",
     })
     const ADMIN_BILLETTHOLDER_SEARCH_TAG = "admin-billettholder-search"
-    const GLOBAL_STYLE_URLS = [
-        "/static/index.css",
-        "/static/buttons.css",
-    ]
+    const STYLE_URLS = window.conorganizerSharedStyles.getStyleUrls()
     const EMPTY_SEARCH_RESULTS_TEXT = "Ingen billettholdere funnet"
-
-    const globalStyleSheetsPromise = (async () => {
-        const supportsConstructableStyleSheets =
-            !!(Document.prototype && "adoptedStyleSheets" in Document.prototype) &&
-            !!(CSSStyleSheet.prototype && "replace" in CSSStyleSheet.prototype)
-
-        if (!supportsConstructableStyleSheets) return null
-
-        const styleSheets = []
-        for (const url of GLOBAL_STYLE_URLS) {
-            const response = await fetch(url, { credentials: "same-origin" })
-            const cssText = await response.text()
-            const styleSheet = new CSSStyleSheet()
-            await styleSheet.replace(cssText)
-            styleSheets.push(styleSheet)
-        }
-        return styleSheets
-    })()
 
     const ADMIN_BILLETTHOLDER_SEARCH_SHADOW_STYLES = `
     :host {
@@ -293,18 +272,7 @@ if (!customElements.get("admin-billettholder-search")) {
 
             if (!this.shadowRoot) {
                 const shadowRoot = this.attachShadow({ mode: "open" })
-                globalStyleSheetsPromise.then((styleSheets) => {
-                    if (styleSheets && this.shadowRoot) {
-                        this.shadowRoot.adoptedStyleSheets = [...this.shadowRoot.adoptedStyleSheets, ...styleSheets]
-                    } else if (this.shadowRoot) {
-                        for (const url of GLOBAL_STYLE_URLS) {
-                            const linkElement = document.createElement("link")
-                            linkElement.rel = "stylesheet"
-                            linkElement.href = url
-                            this.shadowRoot.appendChild(linkElement)
-                        }
-                    }
-                })
+                window.conorganizerSharedStyles.applyStyleUrlsToShadowRoot(shadowRoot, STYLE_URLS)
                 shadowRoot.append(this.#createShadowStyleElement(), this.#shadowContentRoot)
             }
 

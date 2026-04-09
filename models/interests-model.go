@@ -3,7 +3,7 @@ package models
 import "time"
 
 const (
-	InterestLevelVery   = "Veldig interessert"
+	InterestLevelHigh   = "Veldig interessert"
 	InterestLevelMedium = "Middels interessert"
 	InterestLevelLow    = "Litt interessert"
 )
