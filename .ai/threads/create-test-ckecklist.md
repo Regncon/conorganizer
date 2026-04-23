@@ -288,4 +288,31 @@ Ingen tester ble kjørt; dette er kun dokumentasjonsarbeid. Hvis du vil, kan vi 
 
 Time: 2026-04-23 09:20:12
 --- Next Prompt ---
+Lage generl.md nå.
+Jeg har slettet noen irrelevante tester fra `root.md`.
+Flytt alt som har med meny navigasjon å gjøre til general.md. Det er ikke spesifikt for forsiden, og det er bedre å samle det på ett sted.
+Flytt navigasjon til `send inn arrangement` til `event-form.md`. Det er mer relevant der, og det gjør `root.md` mer fokusert på forsiden som helhet. Det skal være forskjellig oppførsel på `send inn arrangement`-knappen avhengig av om brukeren er logget inn eller ikke. 
+
+
+
+
+Time: 2026-04-23 09:46:01
+--- Codex Run ---
+
+```Markdown
+Jeg oppdaterer dokumentasjonen i tråd med den nye avgrensningen: `general.md` får alt som er tverrgående for meny og navigasjon, og `root.md` blir strammere rundt forsiden. Før jeg gjør endringen, leser jeg den nåværende `root.md` og ser på hvordan uinnlogget tilgang faktisk håndteres, slik at formuleringene om navigasjon blir riktige.
+Jeg ser at uinnlogget tilgang til beskyttede sider gir en eksplisitt “Du har ikkje tilgang”-side med innloggingslenke. Jeg henter resten av menykomponenten før jeg skriver `general.md`, så den fanger både Hjem, Min Side, Admin og bruker-/innloggingsmenyen korrekt.
+Jeg flytter nå all delt meny-/navigasjonsoppførsel ut av `root.md` og inn i en ny `general.md`. Samtidig lar jeg `root.md` stå igjen med det som faktisk er spesifikt for forsiden: puljer, arrangementskort, scrollnavigasjon på programmet og den visuelle helheten.
+`general.md` er lagt til, og `root.md` er strammet inn slik at den ikke lenger eier felles menyoppførsel. Jeg tar en rask kontroll nå for å sikre at fordelingen mellom de to filene er ren, og at ingenting åpenbart relevant for forsiden ble flyttet ut ved et uhell.
+Jeg har lagt til [general.md](/home/cinmay/Documents/conorganizer/documentation/testing/general.md:1) og flyttet felles meny-/navigasjonsoppførsel ut av [root.md](/home/cinmay/Documents/conorganizer/documentation/testing/root.md:1).
+
+`general.md` samler nå hovednavigasjon, rollebasert synlighet i menyen, innlogging, utlogging, brukermeny, tilgang til beskyttede sider og generelle navigasjonsforventninger på tvers av appen. `root.md` er strammere og handler nå om forsiden som forside: CTA-seksjonen som innhold, puljer, arrangementskort, snarveinavigasjon, feiltilstander og helhetsopplevelse.
+
+Jeg har bevisst ikke flyttet selve oppførselen for klikk på `Send inn arrangement` inn i noen fil ennå, siden du vil ha den i `event-form.md` og den filen ikke finnes ennå. Ingen tester ble kjørt; dette er kun dokumentasjonsendringer.
+
+Neste naturlige steg er `event-form.md`, siden den nå eier den rolleavhengige oppførselen til `Send inn arrangement`-inngangen.
+```
+
+Time: 2026-04-23 09:46:01
+--- Next Prompt ---
 
