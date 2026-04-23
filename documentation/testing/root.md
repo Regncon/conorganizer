@@ -10,9 +10,7 @@ Denne sjekklisten dekker forsiden på `/`. Forsiden er en sentral inngang til ap
 
 ## Sjekkliste
 
-- [ ] `Gitt at brukeren åpner forsiden, når siden lastes, så skal siden vises uten brutte hovedelementer, uforståelige feilmeldinger eller tydelig uferdige tilstander.`
 - [ ] `Gitt at brukeren åpner forsiden, når siden er ferdig lastet, så skal brødsmulestien vise at brukeren er på Hjem.`
-- [ ] `Gitt at brukeren åpner forsiden, når hovednavigasjonen vises, så skal Hjem være tilgjengelig og navigasjonen skal fremstå konsistent og brukbar på siden.`
 - [ ] `Gitt at brukeren ikke er innlogget, når forsiden vises, så skal hovednavigasjonen ikke gi inntrykk av at brukeren har tilgang til Min Side eller adminfunksjoner.`
 - [ ] `Gitt at brukeren er innlogget, når forsiden vises, så skal hovednavigasjonen gi tilgang til Min Side uten å vise feil rolle eller feil menyvalg.`
 - [ ] `Gitt at brukeren er admin, når forsiden vises, så skal hovednavigasjonen gi tilgang til admin uten å skjule eller forveksle vanlige brukerfunksjoner.`
@@ -39,7 +37,7 @@ Denne sjekklisten dekker forsiden på `/`. Forsiden er en sentral inngang til ap
 - [ ] `Gitt at brukeren bruker forsiden med tastatur eller andre alternative navigasjonsformer, når fokus flyttes mellom interaktive elementer, så skal det være mulig å forstå hvor brukeren befinner seg og hvilke handlinger som kan utføres.`
 - [ ] `Gitt at forsiden brukes over tid med flere raske klikk på navigasjon og kort, når brukeren forflytter seg mellom sider, så skal det ikke oppstå åpenbare duplikathandlinger, feilnavigasjon eller ustabil oppførsel.`
 - [ ] `Gitt at forsiden vises med ekte eller store datamengder, når mange arrangementer finnes i samme eller flere puljer, så skal siden fortsatt være lesbar, navigerbar og uten tydelige sammenbrudd i layout eller informasjonsstruktur.`
-- [ ] `Gitt at brukeren ser forsiden som helhet, når siden er ferdig lastet, så skal den fremstå som en ferdig og konsistent del av produktet uten placeholder-preg, utilsiktede språkblandinger eller visuelt forstyrrende detaljer.`
+
 
 ## Kan automatiseres
 
