@@ -1,15 +1,15 @@
 package formsubmission
 
 import (
-	"net/http"
-	"html"
-	"github.com/go-chi/chi/v5"
 	"fmt"
+	"html"
+	"net/http"
 
+	"database/sql"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/keyvalue"
-	"github.com/Regncon/conorganizer/models"
-	"database/sql"
+	"github.com/go-chi/chi/v5"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -71,8 +71,10 @@ func UpdateIntro(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
+		normalizedInput := normalizeTextareaSubmission(store.Input)
+
 		query := `UPDATE events SET intro = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
+		_, err := db.Exec(query, normalizedInput, eventID)
 		if err != nil {
 			http.Error(w, "Failed to update the intro for event in the database", http.StatusInternalServerError)
 			return
@@ -164,9 +166,10 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 
 		ctx := r.Context()
 		isAdmin := authctx.GetAdminFromUserToken(ctx)
-		escapedInput := store.Input
+		normalizedInput := normalizeTextareaSubmission(store.Input)
+		escapedInput := normalizedInput
 		if isAdmin == false {
-			escapedInput = html.EscapeString(store.Input)
+			escapedInput = html.EscapeString(normalizedInput)
 		}
 
 		query := `UPDATE events SET description = ? WHERE id = ?`
