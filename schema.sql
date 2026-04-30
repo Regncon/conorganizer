@@ -45,7 +45,7 @@ CREATE TABLE "events"(
   age_group TEXT NOT NULL DEFAULT 'Default',
   event_runtime TEXT NOT NULL DEFAULT 'Normal',
   host_name TEXT NOT NULL,
-  host INTEGER,
+  user_id INTEGER,
   email TEXT NOT NULL,
   phone_number TEXT NOT NULL,
   /* pulje_name INTEGER, */
@@ -55,7 +55,7 @@ CREATE TABLE "events"(
   notes TEXT DEFAULT '',
   status TEXT NOT NULL DEFAULT 'Kladd',
   inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY(host) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY(pulje_name) REFERENCES puljer(name) ON UPDATE CASCADE,
   FOREIGN KEY(status) REFERENCES event_statuses(status) ON UPDATE CASCADE,
   FOREIGN KEY(event_type) REFERENCES events_types(event_type) ON UPDATE CASCADE,

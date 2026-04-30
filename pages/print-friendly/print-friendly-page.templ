@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/event"
-	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
 )
 
 // func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
@@ -78,7 +78,7 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
             e.age_group,
             e.event_runtime,
             e.host_name,
-            e.host,
+            e.user_id,
             e.email,
             e.phone_number,
             e.pulje_name,
@@ -139,7 +139,7 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 			&ev.AgeGroup,
 			&ev.Runtime,
 			&ev.HostName,
-			&ev.Host,
+			&ev.UserId,
 			&ev.Email,
 			&ev.PhoneNumber,
 			&ev.PuljeName,
