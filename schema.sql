@@ -1,6 +1,7 @@
+CREATE TABLE sqlite_sequence(name,seq);
 CREATE TABLE users(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id TEXT NOT NULL UNIQUE,
+  external_id TEXT NOT NULL UNIQUE,
   email TEXT NOT NULL,
   is_admin BOOLEAN NOT NULL DEFAULT FALSE,
   inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -15,30 +16,30 @@ CREATE TABLE billettholdere_users(
 );
 CREATE TABLE event_statuses(status TEXT PRIMARY KEY);
 CREATE TABLE events_types(event_type TEXT PRIMARY KEY);
-CREATE TABLE IF NOT EXISTS "age_groups"(age_group TEXT PRIMARY KEY);
+CREATE TABLE age_groups(age_group TEXT PRIMARY KEY);
 CREATE TABLE event_runtimes(runtime TEXT PRIMARY KEY);
 CREATE TABLE interest_levels(interest_level TEXT PRIMARY KEY);
-CREATE TABLE events_puljes_exclusions(
+/* CREATE TABLE events_puljes_exclusions(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   pulje_name TEXT NOT NULL,
   event_id TEXT NOT NULL,
   FOREIGN KEY(pulje_name) REFERENCES puljer(name),
   FOREIGN KEY(event_id) REFERENCES events(id)
-);
-CREATE TABLE _litestream_seq(id INTEGER PRIMARY KEY, seq INTEGER);
-CREATE TABLE _litestream_lock(id INTEGER);
+); */
+/* CREATE TABLE _litestream_seq(id INTEGER PRIMARY KEY, seq INTEGER);
+CREATE TABLE _litestream_lock(id INTEGER); */
 CREATE TABLE goose_db_version(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   version_id INTEGER NOT NULL,
   is_applied INTEGER NOT NULL,
   tstamp TIMESTAMP DEFAULT(datetime('now'))
 );
-CREATE TABLE IF NOT EXISTS "events"(
+CREATE TABLE "events"(
   id TEXT PRIMARY KEY NOT NULL DEFAULT(lower(hex(randomblob(8)))),
   title TEXT NOT NULL,
   intro TEXT NOT NULL,
   description TEXT NOT NULL,
-  image_url TEXT DEFAULT '',
+  /* image_url TEXT DEFAULT '', */
   system TEXT DEFAULT '',
   event_type TEXT NOT NULL DEFAULT 'Other',
   age_group TEXT NOT NULL DEFAULT 'Default',
@@ -47,7 +48,7 @@ CREATE TABLE IF NOT EXISTS "events"(
   host INTEGER,
   email TEXT NOT NULL,
   phone_number TEXT NOT NULL,
-  pulje_name INTEGER,
+  /* pulje_name INTEGER, */
   max_players INTEGER NOT NULL,
   beginner_friendly BOOLEAN NOT NULL,
   can_be_run_in_english BOOLEAN NOT NULL,
@@ -61,7 +62,7 @@ CREATE TABLE IF NOT EXISTS "events"(
   FOREIGN KEY(age_group) REFERENCES age_groups(age_group) ON UPDATE CASCADE,
   FOREIGN KEY(event_runtime) REFERENCES event_runtimes(runtime) ON UPDATE CASCADE
 );
-CREATE TABLE IF NOT EXISTS "billettholdere"(
+CREATE TABLE "billettholdere"(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
@@ -90,18 +91,6 @@ CREATE TABLE event_puljer(
   FOREIGN KEY(event_id) REFERENCES events(id) ON DELETE CASCADE,
   FOREIGN KEY(pulje_id) REFERENCES puljer(id) ON UPDATE CASCADE
 );
-CREATE TABLE interests(
-  billettholder_id INTEGER NOT NULL,
-  event_id TEXT NOT NULL,
-  pulje_id TEXT NOT NULL,
-  interest_level TEXT NOT NULL,
-  inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY(billettholder_id, event_id, pulje_id),
-  FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
-  FOREIGN KEY(event_id) REFERENCES events(id),
-  FOREIGN KEY(pulje_id) REFERENCES puljer(id),
-  FOREIGN KEY(interest_level) REFERENCES interest_levels(interest_level) ON UPDATE CASCADE
-);
 CREATE TABLE puljer(
   id TEXT NOT NULL PRIMARY KEY,
   name TEXT NOT NULL,
@@ -121,4 +110,23 @@ CREATE TABLE events_players(
   FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
   FOREIGN KEY(event_id) REFERENCES events(id),
   FOREIGN KEY(pulje_id) REFERENCES puljer(id)
+);
+CREATE VIEW get_billettholder_id AS
+SELECT
+  u.*,
+  bu.*
+FROM billettholdere_users bu
+LEFT JOIN users u ON u.id = bu.user_id
+/* get_billettholder_id(id,user_id,email,is_admin,inserted_time,billettholder_id,"user_id:1","inserted_time:1") */;
+CREATE TABLE "interests"(
+  billettholder_id INTEGER NOT NULL,
+  event_id TEXT NOT NULL,
+  pulje_id TEXT NOT NULL,
+  interest_level TEXT NOT NULL,
+  inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(billettholder_id, event_id, pulje_id),
+  FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
+  FOREIGN KEY(event_id) REFERENCES events(id),
+  FOREIGN KEY(pulje_id) REFERENCES puljer(id),
+  FOREIGN KEY(interest_level) REFERENCES interest_levels(interest_level) ON UPDATE CASCADE
 );
