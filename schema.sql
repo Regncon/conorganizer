@@ -136,12 +136,20 @@ CREATE TABLE
     puljer (
         id TEXT NOT NULL PRIMARY KEY,
         name TEXT NOT NULL,
-        is_locked BOOLEAN NOT NULL DEFAULT FALSE,
-        is_closed INTEGER NOT NULL DEFAULT FALSE,
-        is_published INTEGER NOT NULL DEFAULT FALSE,
+        status TEXT NOT NULL CHECK (
+            kind IN (
+                'not_published',
+                'published',
+                'locked',
+                'completed'
+            )
+        ),
         start_time DATE NOT NULL,
-        end_time DATE NOT NULL
+        end_time DATE NOT NULL FOREIGN KEY (status) REFERENCES pulje_statuses (status) ON UPDATE CASCADE,
     );
+
+CREATE TABLE
+    pulje_statuses (status TEXT PRIMARY KEY);
 
 CREATE TABLE
     events_players (
