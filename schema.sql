@@ -111,7 +111,12 @@ CREATE TABLE
         billettholder_id INTEGER NOT NULL,
         email TEXT NOT NULL COLLATE NOCASE,
         kind TEXT NOT NULL CHECK (kind IN ('Ticket', 'Associated', 'Manual')),
-        inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by_id INTEGER,
+        updated_by_id INTEGER,
+        FOREIGN KEY (created_by_id) REFERENCES users (id) ON DELETE SET NULL,
+        FOREIGN KEY (updated_by_id) REFERENCES users (id) ON DELETE SET NULL,
         FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id)
     );
 
