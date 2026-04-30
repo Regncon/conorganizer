@@ -97,7 +97,12 @@ CREATE TABLE
         is_over_18 BOOLEAN NOT NULL,
         order_id INTEGER NOT NULL,
         ticket_id INTEGER NOT NULL UNIQUE,
-        inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_by_id INTEGER,
+        updated_by_id INTEGER,
+        FOREIGN KEY (created_by_id) REFERENCES users (id) ON DELETE SET NULL,
+        FOREIGN KEY (updated_by_id) REFERENCES users (id) ON DELETE SET NULL,
     );
 
 CREATE TABLE
