@@ -124,7 +124,7 @@ CREATE TABLE
     event_puljer (
         event_id TEXT NOT NULL,
         pulje_id TEXT NOT NULL,
-        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        is_in_pulje BOOLEAN NOT NULL DEFAULT TRUE,
         is_published BOOLEAN NOT NULL DEFAULT FALSE,
         room TEXT DEFAULT '',
         PRIMARY KEY (event_id, pulje_id),
@@ -136,6 +136,7 @@ CREATE TABLE
     puljer (
         id TEXT NOT NULL PRIMARY KEY,
         name TEXT NOT NULL,
+        is_locked BOOLEAN NOT NULL DEFAULT FALSE,
         is_closed INTEGER NOT NULL DEFAULT FALSE,
         is_published INTEGER NOT NULL DEFAULT FALSE,
         start_time DATE NOT NULL,
