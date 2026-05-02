@@ -12,8 +12,6 @@ Denne sjekklisten dekker oppførsel som går igjen på tvers av flere sider og f
 
 ### Ikke innlogget bruker
 
-- [ ] `Gitt at brukeren ikke er innlogget, når hovednavigasjonen vises, så skal navigasjonen ikke gi inntrykk av at brukeren har tilgang til Min Side eller adminfunksjoner.`
-
 - [ ] `Gitt at brukeren ikke er innlogget, når innloggingsknappen vises i hovednavigasjonen, så skal det være tydelig at dette er riktig inngang til innlogging.`
 
 - [ ] `Gitt at brukeren ikke er innlogget, når brukeren trykker på innloggingsknappen fra hovednavigasjonen, så skal brukeren bli sendt til innloggingsflyten uten å møte uventede feilmeldinger eller feil side.`
@@ -30,8 +28,6 @@ Denne sjekklisten dekker oppførsel som går igjen på tvers av flere sider og f
 
 - [ ] `Gitt at eksterne lenker vises i brukermenyen, når brukeren åpner dem, så skal det være tydelig at brukeren forlater eller åpner innhold utenfor appens egne sider.`
 
-- [ ] `Gitt at språk og navngivning brukes i hovednavigasjon og brukermeny, når brukeren beveger seg mellom sider, så skal tekstene være konsistente og ikke skape tvil om hvor brukeren er eller hva et menyvalg gjør.`
-
 - [ ] `Gitt at brukeren ser navigasjonen på tvers av sider, når appen brukes som helhet, så skal navigasjonen fremstå som ferdig og konsistent uten placeholder-preg, utilsiktet språkblanding eller visuelt forstyrrende detaljer.`
 
 ### Innlogget bruker
@@ -42,18 +38,6 @@ Denne sjekklisten dekker oppførsel som går igjen på tvers av flere sider og f
 
 - [ ] `Gitt at brukeren åpner appen på større skjerm, når hovednavigasjonen brukes på tvers av relevante sider, så skal logo, menyknapper og brukermeny oppføre seg konsistent og uten visuelle brudd.`
 
-- [ ] `Gitt at brukeren ser Hjem i hovednavigasjonen, når brukeren trykker på Hjem, så skal brukeren bli sendt til forsiden uten å havne i en mellomtilstand eller på feil side.`
-
-- [ ] `Gitt at brukeren er innlogget, når hovednavigasjonen vises, så skal Min Side være tilgjengelig og presentert på en måte som ikke kan forveksles med adminfunksjoner.`
-
-- [ ] `Gitt at brukeren er innlogget, når brukeren navigerer til Min Side fra hovednavigasjonen, så skal brukeren bli sendt til riktig side for egen profil og eget innhold.`
-
-- [ ] `Gitt at brukeren er innlogget, når brukermenyen åpnes, så skal menyen åpne og lukke seg på en stabil måte uten å dekke til eller bryte annen viktig navigasjon.`
-
-- [ ] `Gitt at brukeren er innlogget, når brukermenyen vises, så skal den inneholde valg som er relevante for vanlig bruker og ikke vise adminvalg til brukere som ikke er admin.`
-
-- [ ] `Gitt at brukeren ikke er admin, når brukeren navigerer rundt i appen, så skal adminfunksjoner ikke vises i navigasjonen eller presenteres som tilgjengelige.`
-
 - [ ] `Gitt at brukeren er innlogget, når brukeren velger å logge ut fra brukermenyen, så skal brukeren bli logget ut og etterpå møte en tilstand som tydelig viser at brukeren ikke lenger er innlogget.`
 
 - [ ] `Gitt at brukeren nylig har logget ut, når brukeren navigerer videre i appen, så skal navigasjonen oppføre seg som for en ikke-innlogget bruker og ikke etterlate inntrykk av at brukeren fortsatt er innlogget.`
@@ -62,15 +46,7 @@ Denne sjekklisten dekker oppførsel som går igjen på tvers av flere sider og f
 
 ### Admin
 
-- [ ] `Gitt at brukeren er admin, når hovednavigasjonen vises, så skal admin være tilgjengelig uten at vanlige brukerfunksjoner skjules eller endrer betydning.`
-
 - [ ] `Gitt at brukeren er admin, når brukeren navigerer til Admin fra hovednavigasjonen, så skal brukeren bli sendt til adminområdet uten å møte feil rolle eller feil landingsside.`
+- [ ] `Gitt at brukeren er admin, når brukeren navigerer via hovednavigasjonen, så skal brukerne tas til relevante sider og alle linker fungere som forventet. `
 
-- [ ] `Gitt at brukeren er admin, når brukermenyen åpnes, så skal adminspesifikke valg vises tydelig og ikke blandes sammen med valg som gjelder vanlig bruker.`
 
-
-## Kan automatiseres
-
-- Synlighet av menyvalg for ikke-innlogget bruker, innlogget bruker og admin egner seg godt for ende-til-ende-tester som verifiserer rollebasert navigasjon.
-- Navigasjon til Hjem, Min Side, innlogging og admin egner seg godt for ende-til-ende-tester som verifiserer at riktige sider åpnes fra hovednavigasjonen.
-- Beskyttelse av innloggede sider og adminsider egner seg godt for ende-til-ende-tester eller integrasjonstester som verifiserer at brukeren møtes med riktig tilgangsoppførsel.

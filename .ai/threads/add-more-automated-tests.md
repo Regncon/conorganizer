@@ -323,4 +323,27 @@ I left the unrelated existing dirty files alone. For full-suite verification, ru
 
 Time: 2026-04-26 14:57:49
 --- Next Prompt ---
+Exellent. Let's remove the old manual test cases for this behavior from documentation/testing/general.md.
+Let's also extract the helper functions so we can reuse them for testing other components. Put theme somewhere that makes sense.
+
+Time: 2026-04-26 15:16:01
+--- Codex Run ---
+
+```Markdown
+I’ll move the templ/goquery render-and-query helpers into the existing `testutil` package, update the header tests to use them, then trim the manual checklist entries that are now covered by automated component tests.
+I’m going to keep the reusable helpers out of the root `testutil` package because that package imports database/service setup. A small `testutil/templtest` package keeps component tests lightweight and avoids accidental import cycles.
+The helper extraction is done. I’m trimming only the manual checklist entries that match the newly automated role-based navigation visibility/destination behavior, leaving interaction, wording, layout, and route-protection checks in place.
+The header test now only contains the behavior cases; rendering, href collection, and set comparison live in `testutil/templtest`. I’m running the focused tests for both packages.
+Done.
+
+I moved the reusable component-test helpers into [testutil/templtest/component.go](/home/cinmay/Documents/conorganizer/testutil/templtest/component.go:14). The header tests now use `templtest.Render`, `templtest.CollectUniqueInternalHrefs`, and `templtest.AssertSameHrefs`, so [components/header/menu_test.go](/home/cinmay/Documents/conorganizer/components/header/menu_test.go:17) is back to just the three behavior cases.
+
+I also removed the manual role-based navigation visibility cases from [documentation/testing/general.md](/home/cinmay/Documents/conorganizer/documentation/testing/general.md:13). I left the remaining navigation, layout, wording, interaction, and access-control checklist items because these component tests do not cover those behaviors.
+
+Verification:
+`GOCACHE=/tmp/go-build-cache go test ./components/header ./testutil/templtest` passes.
+```
+
+Time: 2026-04-26 15:16:01
+--- Next Prompt ---
 
