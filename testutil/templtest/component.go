@@ -11,7 +11,6 @@ import (
 	"github.com/a-h/templ"
 )
 
-// Render renders a templ component and parses the output as a goquery document.
 func Render(t testing.TB, component templ.Component) *goquery.Document {
 	t.Helper()
 
@@ -28,7 +27,6 @@ func Render(t testing.TB, component templ.Component) *goquery.Document {
 	return doc
 }
 
-// CollectUniqueInternalHrefs returns unique app-internal hrefs from all links in the document.
 func CollectUniqueInternalHrefs(doc *goquery.Document) []string {
 	uniqueHrefs := make(map[string]struct{})
 
@@ -55,7 +53,6 @@ func CollectUniqueInternalHrefs(doc *goquery.Document) []string {
 	return hrefs
 }
 
-// AssertSameHrefs compares href sets without depending on their order.
 func AssertSameHrefs(t testing.TB, expectedHrefs []string, actualHrefs []string) {
 	t.Helper()
 

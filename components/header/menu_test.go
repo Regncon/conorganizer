@@ -7,9 +7,11 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-// Gitt at brukeren ikke er innlogget, når hovednavigasjonen vises,
-// så skal brukeren bare få interne navigasjonslenker til forsiden og innlogging.
 func TestMenu_AnonymousUserOnlyReceivesPublicInternalNavigation(t *testing.T) {
+	// Gitt at brukeren ikke er innlogget,
+	// når hovednavigasjonen vises,
+	// så skal brukeren bare få interne navigasjonslenker til forsiden og innlogging.
+
 	// Given
 	expectedInternalHrefs := []string{"/", "/auth"}
 	userInfo := requestctx.UserRequestInfo{}
@@ -22,9 +24,11 @@ func TestMenu_AnonymousUserOnlyReceivesPublicInternalNavigation(t *testing.T) {
 	templtest.AssertSameHrefs(t, expectedInternalHrefs, actualInternalHrefs)
 }
 
-// Gitt at brukeren er innlogget uten adminrettigheter, når hovednavigasjonen vises,
-// så skal brukeren bare få interne navigasjonslenker til forsiden, egen profil og utlogging.
 func TestMenu_LoggedInUserOnlyReceivesUserInternalNavigation(t *testing.T) {
+	// Gitt at brukeren er innlogget uten adminrettigheter,
+	// når hovednavigasjonen vises,
+	// så skal brukeren bare få interne navigasjonslenker til forsiden, egen profil og utlogging.
+
 	// Given
 	expectedInternalHrefs := []string{"/", "/profile", "/auth/logout"}
 	userInfo := requestctx.UserRequestInfo{
@@ -40,9 +44,11 @@ func TestMenu_LoggedInUserOnlyReceivesUserInternalNavigation(t *testing.T) {
 	templtest.AssertSameHrefs(t, expectedInternalHrefs, actualInternalHrefs)
 }
 
-// Gitt at brukeren er admin, når hovednavigasjonen vises,
-// så skal brukeren få interne navigasjonslenker til forsiden, egen profil, utlogging og adminområdene.
 func TestMenu_AdminUserReceivesUserAndAdminInternalNavigation(t *testing.T) {
+	// Gitt at brukeren er admin,
+	// når hovednavigasjonen vises,
+	// så skal brukeren få interne navigasjonslenker til forsiden, egen profil, utlogging og adminområdene.
+
 	// Given
 	expectedInternalHrefs := []string{
 		"/",
