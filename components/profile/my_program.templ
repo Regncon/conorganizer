@@ -18,7 +18,7 @@ type UserEvent struct {
 	Intro       string
 	Description string
 	ImageURL    string
-	Host        string
+	UserID      int
 	EventType   string
 	PuljeID     string
 	PuljeName   string
@@ -224,7 +224,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 			COALESCE(e.intro, '') as intro,
 			COALESCE(e.description, '') as description,
 			COALESCE(e.image_url, '') as image_url,
-			COALESCE(e.host, 0) as host,
+			COALESCE(e.user_id, 0) as user_id,
 			e.event_type,
 			ep.pulje_id,
 			p.name as pulje_name,
@@ -256,7 +256,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 			&event.Intro,
 			&event.Description,
 			&event.ImageURL,
-			&event.Host,
+			&event.UserId,
 			&event.EventType,
 			&event.PuljeID,
 			&event.PuljeName,

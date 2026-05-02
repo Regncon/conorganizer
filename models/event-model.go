@@ -50,7 +50,7 @@ type Event struct {
 	AgeGroup          AgeGroup       `json:"age_group"`
 	Runtime           Runtime        `json:"runtime"`
 	HostName          string         `json:"host_name"`
-	Host              sql.NullInt64  `json:"host"`
+	UserID            sql.NullInt64  `json:"user_id"`
 	Email             string         `json:"email"`
 	PhoneNumber       string         `json:"phone_number"`
 	PuljeName         sql.NullString `json:"pulje_name"`
