@@ -27,7 +27,7 @@ func Render(t testing.TB, component templ.Component) *goquery.Document {
 	return doc
 }
 
-func CollectUniqueInternalHrefs(doc *goquery.Document) []string {
+func CollectUniqueHrefs(doc *goquery.Document) []string {
 	uniqueHrefs := make(map[string]struct{})
 
 	doc.Find("a[href]").Each(func(_ int, link *goquery.Selection) {
@@ -37,7 +37,7 @@ func CollectUniqueInternalHrefs(doc *goquery.Document) []string {
 		}
 
 		href = strings.TrimSpace(href)
-		if href == "" || !strings.HasPrefix(href, "/") || strings.HasPrefix(href, "//") {
+		if href == "" {
 			return
 		}
 
@@ -60,7 +60,7 @@ func AssertSameHrefs(t testing.TB, expectedHrefs []string, actualHrefs []string)
 	actualHrefs = sortedCopy(actualHrefs)
 
 	if !slices.Equal(expectedHrefs, actualHrefs) {
-		t.Fatalf("expected internal hrefs %v, got %v", expectedHrefs, actualHrefs)
+		t.Fatalf("expected hrefs %v, got %v", expectedHrefs, actualHrefs)
 	}
 }
 

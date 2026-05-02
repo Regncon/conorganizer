@@ -346,4 +346,28 @@ Verification:
 
 Time: 2026-04-26 15:16:01
 --- Next Prompt ---
+I thing we should test the external links as well. Remove the word "internal" from the test descriptions and assertions and don't filter the links by whether they are internal or external.
+
+Update the helpers [testutil/templtest/component.go](/home/cinmay/Documents/conorganizer/testutil/templtest/component.go:14)  and the tests [components/header/menu_test.go](/home/cinmay/Documents/conorganizer/components/header/menu_test.go:17) 
+
+Time: 2026-05-02 08:35:14
+--- Codex Run ---
+
+```Markdown
+I’ll update the helper to collect all hrefs, then adjust the menu tests and BDD comments so the expected sets include the external FAQ link instead of filtering it out.
+I’m renaming the helper and local variables from “internal hrefs” to plain “hrefs”, and the logged-in/admin expectations will now include the FAQ URL.
+The helper now keeps every non-empty href, including external URLs. I’m running the focused tests to verify the expected FAQ links are included for logged-in users and admins.
+Updated both files.
+
+The helper in [component.go](/home/cinmay/Documents/conorganizer/testutil/templtest/component.go:30) is now `CollectUniqueHrefs` and keeps all non-empty `href`s, including external URLs. The assertion failure text now says `expected hrefs`.
+
+The menu tests in [menu_test.go](/home/cinmay/Documents/conorganizer/components/header/menu_test.go:10) no longer use “internal” in names, BDD comments, or variables. Logged-in and admin expectations now include `https://www.regncon.no/vanlege-sporsmal/`.
+
+Verification passed:
+
+`GOCACHE=/tmp/go-build-cache go test ./components/header ./testutil/templtest`
+```
+
+Time: 2026-05-02 08:35:14
+--- Next Prompt ---
 

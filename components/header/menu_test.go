@@ -7,30 +7,35 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestMenu_AnonymousUserOnlyReceivesPublicInternalNavigation(t *testing.T) {
+func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
 	// Gitt at brukeren ikke er innlogget,
 	// når hovednavigasjonen vises,
-	// så skal brukeren bare få interne navigasjonslenker til forsiden og innlogging.
+	// så skal brukeren bare få navigasjonslenker til forsiden og innlogging.
 
 	// Given
-	expectedInternalHrefs := []string{"/", "/auth"}
+	expectedHrefs := []string{"/", "/auth"}
 	userInfo := requestctx.UserRequestInfo{}
 
 	// When
 	doc := templtest.Render(t, Menu(userInfo))
-	actualInternalHrefs := templtest.CollectUniqueInternalHrefs(doc)
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then
-	templtest.AssertSameHrefs(t, expectedInternalHrefs, actualInternalHrefs)
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
 }
 
-func TestMenu_LoggedInUserOnlyReceivesUserInternalNavigation(t *testing.T) {
+func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	// Gitt at brukeren er innlogget uten adminrettigheter,
 	// når hovednavigasjonen vises,
-	// så skal brukeren bare få interne navigasjonslenker til forsiden, egen profil og utlogging.
+	// så skal brukeren bare få navigasjonslenker til forsiden, egen profil, utlogging og vanlege spørsmål.
 
 	// Given
-	expectedInternalHrefs := []string{"/", "/profile", "/auth/logout"}
+	expectedHrefs := []string{
+		"/",
+		"/profile",
+		"/auth/logout",
+		"https://www.regncon.no/vanlege-sporsmal/",
+	}
 	userInfo := requestctx.UserRequestInfo{
 		IsLoggedIn: true,
 		IsAdmin:    false,
@@ -38,25 +43,26 @@ func TestMenu_LoggedInUserOnlyReceivesUserInternalNavigation(t *testing.T) {
 
 	// When
 	doc := templtest.Render(t, Menu(userInfo))
-	actualInternalHrefs := templtest.CollectUniqueInternalHrefs(doc)
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then
-	templtest.AssertSameHrefs(t, expectedInternalHrefs, actualInternalHrefs)
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
 }
 
-func TestMenu_AdminUserReceivesUserAndAdminInternalNavigation(t *testing.T) {
+func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	// Gitt at brukeren er admin,
 	// når hovednavigasjonen vises,
-	// så skal brukeren få interne navigasjonslenker til forsiden, egen profil, utlogging og adminområdene.
+	// så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.
 
 	// Given
-	expectedInternalHrefs := []string{
+	expectedHrefs := []string{
 		"/",
 		"/profile",
 		"/auth/logout",
 		"/admin",
 		"/admin/billettholder/",
 		"/admin/approval/",
+		"https://www.regncon.no/vanlege-sporsmal/",
 	}
 	userInfo := requestctx.UserRequestInfo{
 		IsLoggedIn: true,
@@ -65,8 +71,8 @@ func TestMenu_AdminUserReceivesUserAndAdminInternalNavigation(t *testing.T) {
 
 	// When
 	doc := templtest.Render(t, Menu(userInfo))
-	actualInternalHrefs := templtest.CollectUniqueInternalHrefs(doc)
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then
-	templtest.AssertSameHrefs(t, expectedInternalHrefs, actualInternalHrefs)
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
 }
