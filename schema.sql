@@ -35,15 +35,6 @@ CREATE TABLE
 CREATE TABLE
     interest_levels (interest_level TEXT PRIMARY KEY);
 
-/* CREATE TABLE events_puljes_exclusions(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-pulje_name TEXT NOT NULL,
-event_id TEXT NOT NULL,
-FOREIGN KEY(pulje_name) REFERENCES puljer(name),
-FOREIGN KEY(event_id) REFERENCES events(id)
-); */
-/* CREATE TABLE _litestream_seq(id INTEGER PRIMARY KEY, seq INTEGER);
-CREATE TABLE _litestream_lock(id INTEGER); */
 CREATE TABLE
     goose_db_version (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,7 +58,6 @@ CREATE TABLE
         user_id INTEGER,
         email TEXT NOT NULL,
         phone_number TEXT NOT NULL,
-        /* pulje_name INTEGER, */
         max_players INTEGER NOT NULL,
         beginner_friendly BOOLEAN NOT NULL,
         can_be_run_in_english BOOLEAN NOT NULL,
