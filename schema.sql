@@ -11,7 +11,7 @@ CREATE TABLE
     );
 
 CREATE TABLE
-    billettholdere_users (
+    relation_billettholdere_users (
         billettholder_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
         inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -106,7 +106,7 @@ CREATE TABLE
     );
 
 CREATE TABLE
-    billettholder_emails (
+    relation_billettholder_emails (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         billettholder_id INTEGER NOT NULL,
         email TEXT NOT NULL COLLATE NOCASE,
@@ -121,7 +121,7 @@ CREATE TABLE
     );
 
 CREATE TABLE
-    event_puljer (
+    relation_event_puljer (
         event_id TEXT NOT NULL,
         pulje_id TEXT NOT NULL,
         is_in_pulje BOOLEAN NOT NULL DEFAULT TRUE,
@@ -152,7 +152,7 @@ CREATE TABLE
     pulje_statuses (status TEXT PRIMARY KEY);
 
 CREATE TABLE
-    events_players (
+    relation_events_players (
         event_id TEXT NOT NULL,
         pulje_id TEXT NOT NULL,
         billettholder_id INTEGER NOT NULL,
@@ -171,7 +171,7 @@ SELECT
     u.*,
     bu.*
 FROM
-    billettholdere_users bu
+    relation_billettholdere_users bu
     LEFT JOIN users u ON u.id = bu.user_id
     /* get_billettholder_id(id,user_id,email,is_admin,inserted_time,billettholder_id,"user_id:1","inserted_time:1") */;
 
