@@ -1,17 +1,17 @@
 package event
 
 import (
-	"fmt"
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net/http"
 
-	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/service/eventService"
-	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/Regncon/conorganizer/service/eventService"
+	"github.com/Regncon/conorganizer/service/userctx"
 )
 
 templ event_page(eventId string, isAdmin bool, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {
