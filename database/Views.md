@@ -6,12 +6,12 @@ This file documents database views. Each entry contains a short purpose and a Go
 
 # Database View: `v_get_user_billettholder`
 
-**Purpose:** Join between `users` and `billettholdere_users` to map application users to ticket-holder records.
+**Purpose:** Join between `users` and `relation_billettholdere_users` to map application users to ticket-holder records.
 
 **Go usage example:**
 
 ```go
-rows, err := db.Query("SELECT billettholder_id FROM v_get_user_billettholder WHERE user_id = $1", userID)
+rows, err := db.Query("SELECT billettholder_id FROM v_get_user_billettholder WHERE external_id = $1", externalID)
 ```
 
 ---
@@ -23,7 +23,7 @@ rows, err := db.Query("SELECT billettholder_id FROM v_get_user_billettholder WHE
 **Go usage example:**
 
 ```go
-rows, err := db.Query("SELECT id, title, pulje_name FROM v_events_by_pulje_active WHERE is_published = $1", 1)
+rows, err := db.Query("SELECT id, title, pulje_id, pulje_start_at FROM v_events_by_pulje_active WHERE is_published = $1", 1)
 ```
 
 ---
@@ -59,6 +59,5 @@ rows, err := db.Query("SELECT billettholder_id, first_name, last_name FROM v_bil
 **Go usage example:**
 
 ```go
-rows, err := db.Query("SELECT pulje_id, pulje_name FROM v_event_puljer_active WHERE event_id = $1", eventID)
+rows, err := db.Query("SELECT pulje_id, pulje_start_at, pulje_end_at FROM v_event_puljer_active WHERE event_id = $1", eventID)
 ```
-

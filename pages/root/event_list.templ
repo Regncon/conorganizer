@@ -32,15 +32,12 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 			e.can_be_run_in_english,
 
 			-- pulje
-			ep.pulje_id,
-			p.name,
-			p.start_time,
-			p.end_time
-		FROM events e
-		INNER JOIN event_puljer ep ON ep.event_id = e.id
-		INNER JOIN puljer      p  ON p.id = ep.pulje_id
-		WHERE e.status = 'Godkjent' AND ep.is_active = 1
-        ORDER BY p.start_time DESC, e.inserted_time DESC, e.id ASC
+			e.pulje_id,
+			e.pulje_name,
+			e.pulje_start_at,
+			e.pulje_end_at
+		FROM v_events_by_pulje_active e
+        ORDER BY e.pulje_start_at DESC, e.created_at DESC, e.id ASC
 	`
 
 	rows, err := db.Query(q)
@@ -101,10 +98,10 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 		if !ok {
 			block = &PuljeBlock{
 				Pulje: models.PuljeRow{
-					ID:        key,
-					Name:      puljeName,
-					StartTime: startTime,
-					EndTime:   endTime,
+					ID:      key,
+					Name:    puljeName,
+					StartAt: startTime,
+					EndAt:   endTime,
 				},
 			}
 			out[key] = block
@@ -131,7 +128,7 @@ templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *strin
 	<section class="container-inner-padding program-pulje-section" id={ pulje }>
 		<h2 class="pulje-heading">
 			{ block.Pulje.Name }
-			<span class="pulje-heading-time">({ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") })</span>
+			<span class="pulje-heading-time">({ block.Pulje.StartAt.Format("15:04") } – { block.Pulje.EndAt.Format("15:04") })</span>
 		</h2>
 		<div class="page-wide-eventcard-grid">
 			for _, event := range block.Events {

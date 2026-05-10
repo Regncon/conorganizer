@@ -58,7 +58,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 				return
 			}
 
-			query := `UPDATE event_puljer SET is_published = ? WHERE event_id = ? AND pulje_id = ?;`
+			query := `UPDATE relation_event_puljer SET is_published = ? WHERE event_id = ? AND pulje_id = ?;`
 			_, err := db.Exec(query, isPublished, eventID, puljeId)
 			if err != nil {
 				logger.Error("Failed to update publish status in the database", "error", err)
@@ -94,10 +94,10 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 			}
 
 			type Store struct {
-				IsActiveFredagKveld  bool `json:"isActiveFredagKveld"`
-				IsActiveLordagMorgen bool `json:"isActiveLordagMorgen"`
-				IsActiveLordagKveld  bool `json:"isActiveLordagKveld"`
-				IsActiveSondagMorgen bool `json:"isActiveSondagMorgen"`
+				IsInPuljeFredagKveld  bool `json:"isInPuljeFredagKveld"`
+				IsInPuljeLordagMorgen bool `json:"isInPuljeLordagMorgen"`
+				IsInPuljeLordagKveld  bool `json:"isInPuljeLordagKveld"`
+				IsInPuljeSondagMorgen bool `json:"isInPuljeSondagMorgen"`
 			}
 			store := &Store{}
 
@@ -107,28 +107,28 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 				return
 			}
 
-			var isActive bool
+			var isInPulje bool
 			if puljeId == string(models.PuljeFredagKveld) {
-				isActive = store.IsActiveFredagKveld
+				isInPulje = store.IsInPuljeFredagKveld
 			} else if puljeId == string(models.PuljeLordagMorgen) {
-				isActive = store.IsActiveLordagMorgen
+				isInPulje = store.IsInPuljeLordagMorgen
 			} else if puljeId == string(models.PuljeLordagKveld) {
-				isActive = store.IsActiveLordagKveld
+				isInPulje = store.IsInPuljeLordagKveld
 			} else if puljeId == string(models.PuljeSondagMorgen) {
-				isActive = store.IsActiveSondagMorgen
+				isInPulje = store.IsInPuljeSondagMorgen
 			} else {
 				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
 				return
 			}
 
 			const upsert = `
-			INSERT INTO event_puljer (event_id, pulje_id, is_active, is_published)
-			VALUES (?, ?, 1, 0)
+			INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published)
+			VALUES (?, ?, ?, 0)
 			ON CONFLICT(event_id, pulje_id) DO UPDATE SET
-			  is_active = ?, is_published = 0;
+			  is_in_pulje = excluded.is_in_pulje, is_published = 0;
 			`
-			if _, err := db.Exec(upsert, eventID, puljeId, isActive); err != nil {
-				logger.Error("Failed to upsert event_puljer", "error", err)
+			if _, err := db.Exec(upsert, eventID, puljeId, isInPulje); err != nil {
+				logger.Error("Failed to upsert relation_event_puljer", "error", err)
 				http.Error(w, "Failed to update event in pulje", http.StatusInternalServerError)
 				return
 			}
@@ -189,7 +189,7 @@ func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, l
 				return
 			}
 
-			query := `UPDATE event_puljer SET room = ? WHERE event_id = ? AND pulje_id = ?;`
+			query := `UPDATE relation_event_puljer SET room = ? WHERE event_id = ? AND pulje_id = ?;`
 			_, err := db.Exec(query, roomName, eventID, puljeId)
 			if err != nil {
 				logger.Error("Failed to update room name in the database", "error", err)
@@ -211,10 +211,10 @@ func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventP
             SELECT
                 event_id,
                 pulje_id,
-                is_active,
+                is_in_pulje,
                 is_published,
                 room
-            FROM event_puljer
+            FROM relation_event_puljer
             WHERE event_id = ? AND pulje_id = ?
             `
 	rows, err := db.Query(query, eventId, pulje)
@@ -228,7 +228,7 @@ func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventP
 		if err := rows.Scan(
 			&event.EventID,
 			&event.PuljeID,
-			&event.IsActive,
+			&event.IsInPulje,
 			&event.IsPublished,
 			&event.Room,
 		); err != nil {
@@ -266,10 +266,10 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 				<label class="checkbox-background form-group-checkbox">
 					<span>Legg til i pulje </span>
 					<input
-						if eventPulje.IsActive {
+						if eventPulje.IsInPulje {
 							checked
 						}
-						data-bind={ fmt.Sprintf("isActive%s", pulje) }
+						data-bind={ fmt.Sprintf("isInPulje%s", pulje) }
 						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/event-in-pulje/%s", eventId, pulje) }
 						type="checkbox"
 						name="pulje"
@@ -282,7 +282,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 						if eventPulje.IsPublished {
 							checked
 						}
-						if eventPulje.IsActive == false {
+						if eventPulje.IsInPulje == false {
 							disabled
 						}
 						data-bind={ fmt.Sprintf("isPublished%s", pulje) }
@@ -300,7 +300,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 				data-signals={ fmt.Sprintf("{%s:'%s'}", roomSignal, eventPulje.Room) }
 			></div>
 			<input
-				if eventPulje.IsActive == false {
+				if eventPulje.IsInPulje == false {
 					disabled
 				}
 				name="room"

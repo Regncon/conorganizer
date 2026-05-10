@@ -255,7 +255,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				newEvent.NewEventLayoutRoute(newIdRoute, db, eventImageDir, logger)
 
 				newIdRoute.Route("/image", func(imageRouter chi.Router) {
-					eventimgupload.EventImageRoute(imageRouter, db, logger)
+					eventimgupload.EventImageRoute(imageRouter, db, eventImageDir, logger)
 				})
 			})
 		})
@@ -300,7 +300,7 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 		return
 	}
 
-	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db, logger)
+	userDbId, insertError := userctx.GetIdFromExternalIdInDb(userInfo.Id, db, logger)
 	if insertError != nil {
 		logger.Error("Failed to get user ID from database", "error", insertError)
 		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)
@@ -313,11 +313,11 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 	// Todo: Use database relations to get foreign keys, event_type etc.
 	query := `
 	INSERT INTO events (
-		host, email, status, title, intro, description, host_name, phone_number, max_players,
+		user_id, created_by_id, updated_by_id, email, status, title, intro, description, host_name, phone_number, max_players,
 		event_type, beginner_friendly,
 		can_be_run_in_english
 	) VALUES (
-		$1, $2, $3, '', '', '', '', '', 6, 'rollespill', false, false
+		$1, $1, $1, $2, $3, '', '', '', '', '', 6, 'roleplay', false, false
 	) RETURNING id`
 
 	var eventId string

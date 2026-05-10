@@ -16,28 +16,25 @@ func GetPreviousNextInnsendtGodkjent(ctx context.Context, db *sql.DB, logger *sl
             SELECT
                 id,
                 title,
-                image_url,
-                LAG(id)        OVER (ORDER BY inserted_time DESC, id DESC) AS previous_id,
-                LAG(title)     OVER (ORDER BY inserted_time DESC, id DESC) AS previous_title,
-                LAG(image_url) OVER (ORDER BY inserted_time DESC, id DESC) AS previous_image_url,
-                LEAD(id)       OVER (ORDER BY inserted_time DESC, id DESC) AS next_id,
-                LEAD(title)    OVER (ORDER BY inserted_time DESC, id DESC) AS next_title,
-                LEAD(image_url)OVER (ORDER BY inserted_time DESC, id DESC) AS next_image_url
+                LAG(id)     OVER (ORDER BY created_at DESC, id DESC) AS previous_id,
+                LAG(title)  OVER (ORDER BY created_at DESC, id DESC) AS previous_title,
+                LEAD(id)    OVER (ORDER BY created_at DESC, id DESC) AS next_id,
+                LEAD(title) OVER (ORDER BY created_at DESC, id DESC) AS next_title
             FROM events
             WHERE status IN ('Innsendt', 'Godkjent')
         )
-        SELECT previous_id, previous_title, previous_image_url,
-               next_id,     next_title,     next_image_url
+        SELECT previous_id, previous_title,
+               next_id,     next_title
         FROM ordered
         WHERE id = ?;`
 
 	var (
-		prevID, prevTitle, prevImg sql.NullString
-		nextID, nextTitle, nextImg sql.NullString
+		prevID, prevTitle sql.NullString
+		nextID, nextTitle sql.NullString
 	)
 
 	err := db.QueryRowContext(ctx, q, currentID).
-		Scan(&prevID, &prevTitle, &prevImg, &nextID, &nextTitle, &nextImg)
+		Scan(&prevID, &prevTitle, &nextID, &nextTitle)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			// currentID isn’t in the filtered set; return empty neighbors.

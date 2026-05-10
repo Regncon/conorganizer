@@ -15,10 +15,10 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 		queryAll := (`
         SELECT
             b.id, b.first_name, b.last_name, b.ticket_type_id, b.ticket_type,
-            b.is_over_18, b.order_id, b.ticket_id, b.inserted_time,
-            e.id, e.email, e.kind, e.inserted_time
+            b.is_over_18, b.order_id, b.ticket_id, b.created_at, b.updated_at,
+            e.id, e.email, e.kind, e.created_at, e.updated_at
         FROM billettholdere AS b
-        LEFT JOIN billettholder_emails AS e
+        LEFT JOIN relation_billettholder_emails AS e
             ON b.id = e.billettholder_id
         ORDER BY b.id, e.id
 	`)
@@ -27,14 +27,14 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 		queryByUser := (`
         SELECT
             b.id, b.first_name, b.last_name, b.ticket_type_id, b.ticket_type,
-            b.is_over_18, b.order_id, b.ticket_id, b.inserted_time,
-            e.id, e.email, e.kind, e.inserted_time
+            b.is_over_18, b.order_id, b.ticket_id, b.created_at, b.updated_at,
+            e.id, e.email, e.kind, e.created_at, e.updated_at
         FROM billettholdere AS b
-        JOIN billettholdere_users bu ON b.id = bu.billettholder_id
+        JOIN relation_billettholdere_users bu ON b.id = bu.billettholder_id
         JOIN users u ON bu.user_id = u.id
-        LEFT JOIN billettholder_emails AS e
+        LEFT JOIN relation_billettholder_emails AS e
             ON b.id = e.billettholder_id
-        WHERE u.user_id = ?
+        WHERE u.external_id = ?
         ORDER BY b.id, e.id
     `)
 		rows, err = db.Query(queryByUser, userId)
@@ -47,10 +47,11 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 	defer rows.Close()
 
 	type emailRow struct {
-		id           sql.NullInt64
-		email        sql.NullString
-		kind         sql.NullString
-		insertedTime sql.NullTime
+		id        sql.NullInt64
+		email     sql.NullString
+		kind      sql.NullString
+		createdAt sql.NullTime
+		updatedAt sql.NullTime
 	}
 
 	byID := make(map[int]*models.Billettholder)
@@ -62,8 +63,8 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 
 		if err := rows.Scan(
 			&b.ID, &b.FirstName, &b.LastName, &b.TicketTypeId, &b.TicketType,
-			&b.IsOver18, &b.OrderID, &b.TicketID, &b.InsertedTime,
-			&er.id, &er.email, &er.kind, &er.insertedTime,
+			&b.IsOver18, &b.OrderID, &b.TicketID, &b.CreatedAt, &b.UpdatedAt,
+			&er.id, &er.email, &er.kind, &er.createdAt, &er.updatedAt,
 		); err != nil {
 			logger.Error("Failed to scan row", "error", err)
 			return nil, err
@@ -80,7 +81,8 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 				IsOver18:     b.IsOver18,
 				OrderID:      b.OrderID,
 				TicketID:     b.TicketID,
-				InsertedTime: b.InsertedTime,
+				CreatedAt:    b.CreatedAt,
+				UpdatedAt:    b.UpdatedAt,
 				Emails:       nil,
 			}
 			byID[b.ID] = holder
@@ -93,7 +95,8 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 				BillettholderID: b.ID,
 				Email:           er.email.String,
 				Kind:            er.kind.String,
-				InsertedTime:    er.insertedTime.Time,
+				CreatedAt:       er.createdAt.Time,
+				UpdatedAt:       er.updatedAt.Time,
 			})
 		}
 	}
@@ -113,7 +116,11 @@ func GetBilettholdere(userId string, db *sql.DB, logger *slog.Logger) ([]models.
 func GetBillettholderByUserId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
 	var billettholderId int
 	row := db.QueryRow(`
-        SELECT id FROM billettholdere WHERE user_id = $1 `, userID)
+        SELECT bu.billettholder_id
+        FROM relation_billettholdere_users bu
+        JOIN users u ON u.id = bu.user_id
+        WHERE u.external_id = $1
+        LIMIT 1`, userID)
 
 	if err := row.Scan(&billettholderId); err != nil {
 		logger.Error("Failed to scan row", "error", err)

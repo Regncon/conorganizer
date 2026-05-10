@@ -22,7 +22,7 @@ type BillettHolder struct {
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]BillettHolder, error) {
 	logger.Info("Fetching ticket holders from the database...")
 	query := `SELECT email, billettholder_id, first_name, last_name
-                FROM billettholder_emails [be]
+                FROM relation_billettholder_emails [be]
                 JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
                 WHERE [be].email = ? `
 	rows, ticketHolderQueryErr := db.Query(query, userInfo.Email)
@@ -90,7 +90,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 }
 
 func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]models.Pulje, error) {
-	puljerQuery := `SELECT pulje_id FROM event_puljer WHERE event_id = ? AND is_active = 1 AND is_published = 1`
+	puljerQuery := `SELECT pulje_id FROM relation_event_puljer WHERE event_id = ? AND is_in_pulje = 1 AND is_published = 1`
 	rows, puljerErr := db.Query(puljerQuery, eventId)
 	if puljerErr != nil {
 		logger.Error("Failed to query event puljer", "puljerErr", puljerErr)

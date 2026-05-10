@@ -5,6 +5,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"database/sql"
@@ -16,7 +17,7 @@ import (
 	"net/http"
 )
 
-func EventImageRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
+func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 		if eventId == "" {
@@ -27,7 +28,7 @@ func EventImageRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 		layouts.Base(
 			"Last opp blide",
 			userctx.GetUserRequestInfo(ctx),
-			page(eventId, db, logger),
+			page(eventId, db, eventImageDir, logger),
 		).Render(ctx, w)
 	})
 }
@@ -49,7 +50,13 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			return
 		}
 		defer file.Close()
-		imagePath := fmt.Sprintf("%s/%s_%s", *eventImageDir, eventID, header.Filename)
+		if err := removeExistingSourceImages(eventID, eventImageDir); err != nil {
+			logger.Error("Failed to remove existing source images", "error", err)
+			http.Error(w, "Failed to replace image", http.StatusInternalServerError)
+			return
+		}
+		filename := sourceImageFilename(eventID, header.Filename)
+		imagePath := filepath.Join(*eventImageDir, filename)
 		out, err := os.Create(imagePath)
 		if err != nil {
 			logger.Error("Failed to create image file", "error", err)
@@ -64,14 +71,6 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
-		// Update the event with the iEventPictureRouteImage URL/path
-
-		query := `UPDATE events SET image_url = ? WHERE id = ?`
-		_, err = db.Exec(query, eventID+"_"+header.Filename, eventID)
-		if err != nil {
-			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
-			return
-		}
 
 		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/", eventID), http.StatusSeeOther)
 	})
@@ -120,7 +119,53 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 	})
 }
 
-templ page(eventId string, db *sql.DB, logger *slog.Logger) {
+func sourceImageFilename(eventID string, originalFilename string) string {
+	ext := strings.ToLower(filepath.Ext(originalFilename))
+	if ext == "" {
+		ext = ".img"
+	}
+	return fmt.Sprintf("%s_source%s", eventID, ext)
+}
+
+func removeExistingSourceImages(eventID string, eventImageDir *string) error {
+	if eventImageDir == nil || strings.TrimSpace(*eventImageDir) == "" {
+		return nil
+	}
+	entries, err := os.ReadDir(*eventImageDir)
+	if err != nil {
+		return err
+	}
+	prefix := eventID + "_source"
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasPrefix(entry.Name(), prefix) {
+			continue
+		}
+		if err := os.Remove(filepath.Join(*eventImageDir, entry.Name())); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func getUploadedSourceImageURL(eventID string, eventImageDir *string) string {
+	if eventImageDir == nil || strings.TrimSpace(*eventImageDir) == "" {
+		return ""
+	}
+	entries, err := os.ReadDir(*eventImageDir)
+	if err != nil {
+		return ""
+	}
+	prefix := eventID + "_source"
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasPrefix(entry.Name(), prefix) {
+			continue
+		}
+		return "/event-images/" + entry.Name()
+	}
+	return ""
+}
+
+templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	<style>
 		.img-upload-form-content {
 			display: flex;
@@ -173,11 +218,11 @@ templ page(eventId string, db *sql.DB, logger *slog.Logger) {
 		}
 	</style>
 	{{event, eventErr := eventservice.GetEventById(eventId, db, logger)
-var title, intro, imageUrl string
+var title, intro string
+imageUrl := getUploadedSourceImageURL(eventId, eventImageDir)
 if eventErr == nil {
 	title = event.Title
 	intro = event.Intro
-	imageUrl = event.ImageURL.String
 }
 	}}
 	if eventErr != nil {
@@ -244,7 +289,7 @@ if eventErr == nil {
 						width="600"
 						height="350"
 						image-kind="card"
-						image-url={ "/event-images/" + imageUrl }
+						image-url={ imageUrl }
 					></banner-cropper>
 					<div class="event-image-title-preview">
 						<h1>{ title }</h1>
@@ -260,7 +305,7 @@ if eventErr == nil {
 						width="1360"
 						height="400"
 						image-kind="banner"
-						image-url={ "/event-images/" + imageUrl }
+						image-url={ imageUrl }
 					></banner-cropper>
 					<div class="event-image-title-preview banner-image">
 						<h1>{ title }</h1>

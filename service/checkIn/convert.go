@@ -104,7 +104,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		exists := false
 		checkErr := db.QueryRow(`
 			SELECT EXISTS(
-				SELECT 1 FROM billettholder_emails
+				SELECT 1 FROM relation_billettholder_emails
 				WHERE billettholder_id = ? AND email = ?
 			)
 		`, email.BillettholderID, email.Email).Scan(&exists)
@@ -118,7 +118,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		}
 
 		_, err := db.Exec(`
-			INSERT INTO billettholder_emails (
+			INSERT INTO relation_billettholder_emails (
 				billettholder_id, email, kind
 			) VALUES (?, ?, ?)
 		`, email.BillettholderID, email.Email, email.Kind)

@@ -63,7 +63,7 @@ func TestAssociateUserWithBillettholderGeneratedData(t *testing.T) {
 		return
 	}
 
-	// Attempt to insert into billettholder_emails
+	// Attempt to insert into relation_billettholder_emails
 	var expectedBillettholderEmails []models.BillettholderEmail
 	for _, person := range expectedGeneratedUsers {
 		billettholderEmail := models.BillettholderEmail{
@@ -78,13 +78,13 @@ func TestAssociateUserWithBillettholderGeneratedData(t *testing.T) {
 		queryBillettholderEmail = append(queryBillettholderEmail, fmt.Sprintf(`(%d, "%s", "%s")`, billettholderEmail.BillettholderID, billettholderEmail.Email, "Manual"))
 	}
 	queryBase = fmt.Sprintf(`
-            INSERT INTO billettholder_emails (
+            INSERT INTO relation_billettholder_emails (
                 billettholder_id, email, kind
                 ) VALUES %s`, strings.Join(queryBillettholderEmail, ", "))
 
 	_, err = db.Exec(queryBase)
 	if err != nil {
-		fmt.Println("failed to insert billettholder_emails", "error", err)
+		fmt.Println("failed to insert relation_billettholder_emails", "error", err)
 		return
 	}
 
@@ -92,21 +92,21 @@ func TestAssociateUserWithBillettholderGeneratedData(t *testing.T) {
 	var expectedUsers []models.User
 	for i, holder := range expectedGeneratedUsers {
 		expectedUsers = append(expectedUsers, models.User{
-			ID:      i + 1,
-			UserID:  holder.FirstName + strconv.Itoa(i+1),
-			Email:   holder.Email,
-			IsAdmin: rand.Intn(100) > 10,
+			ID:         i + 1,
+			ExternalID: holder.FirstName + strconv.Itoa(i+1),
+			Email:      holder.Email,
+			IsAdmin:    rand.Intn(100) > 10,
 		})
 	}
 
 	var queryUsers []string
 	for _, user := range expectedUsers {
-		queryUsers = append(queryUsers, fmt.Sprintf(`(%d, "%s", "%s", %v)`, user.ID, user.UserID, user.Email, user.IsAdmin))
+		queryUsers = append(queryUsers, fmt.Sprintf(`(%d, "%s", "%s", %v)`, user.ID, user.ExternalID, user.Email, user.IsAdmin))
 	}
 
 	queryBase = fmt.Sprintf(`
                 INSERT INTO users (
-                    id, user_id, email, is_admin
+                    id, external_id, email, is_admin
                     ) VALUES %s`, strings.Join(queryUsers, ", "))
 
 	_, err = db.Exec(queryBase)
@@ -120,8 +120,8 @@ func TestAssociateUserWithBillettholderGeneratedData(t *testing.T) {
 	slogger := testutil.NewSlogAdapter(sl)
 
 	for _, user := range expectedUsers {
-		// fmt.Printf("Calling AssociateUserWithBillettholder() on: %s (%s)\n", user.UserID, user.Email)
-		err = AssociateUserWithBillettholder(user.UserID, db, slogger)
+		// fmt.Printf("Calling AssociateUserWithBillettholder() on: %s (%s)\n", user.ExternalID, user.Email)
+		err = AssociateUserWithBillettholder(user.ExternalID, db, slogger)
 		if err != nil {
 			t.Fatalf("failed to convert ticketId to billettholder: %v", err)
 		}
@@ -144,7 +144,7 @@ func TestAssociateUserWithBillettholderGeneratedData(t *testing.T) {
 	var billettholderUsers []models.BillettholderUsers
 
 	rows, err := db.Query(`
-                    SELECT billettholder_id, user_id FROM billettholdere_users
+                    SELECT billettholder_id, user_id FROM relation_billettholdere_users
                     `)
 	if err != nil {
 		t.Fatalf("Failed to get rows from billettholder_users: %v", err)
@@ -165,5 +165,5 @@ func TestAssociateUserWithBillettholderGeneratedData(t *testing.T) {
 		t.Fatalf("expected %d billettholder users, got %d", len(expectedBillettholderUsers), len(billettholderUsers))
 	}
 
-	// Kan det eksistere billettholder_emails med duplicate e-post?
+	// Kan det eksistere relation_billettholder_emails med duplicate e-post?
 }

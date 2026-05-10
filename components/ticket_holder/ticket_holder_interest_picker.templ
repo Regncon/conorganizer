@@ -28,9 +28,9 @@ func getInterestLeveForUser(
 	query := `
         SELECT [I].billettholder_id,[I].pulje_id, [I].interest_level
         FROM interests [I]
-        JOIN billettholdere_users [BU] ON [I].billettholder_id = [BU].billettholder_id
+        JOIN relation_billettholdere_users [BU] ON [I].billettholder_id = [BU].billettholder_id
         JOIN users [U] ON [BU].user_id = [U].id
-        WHERE [U].user_id = ? AND [I].event_id = ?
+        WHERE [U].external_id = ? AND [I].event_id = ?
     `
 	rows, err := db.Query(query, userInfo.Id, eventId)
 	if err != nil {

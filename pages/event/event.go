@@ -255,24 +255,32 @@ func updateInterest(
 	db *sql.DB,
 	logger *slog.Logger,
 ) error {
-	puljeQuery := `SELECT EXISTS (SELECT * FROM event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_active = 1 AND is_published = 1)`
-	_, puljerErr := db.Query(puljeQuery, eventID, puljeId)
+	puljeQuery := `SELECT EXISTS (SELECT 1 FROM relation_event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_in_pulje = 1 AND is_published = 1)`
+	var puljeExists bool
+	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId).Scan(&puljeExists)
 	if puljerErr != nil {
 		logger.Error("failed to check if pulje exists", "error", puljerErr)
 		return puljerErr
 	}
+	if !puljeExists {
+		return fmt.Errorf("pulje is not active for event")
+	}
 
 	userHasAccessToBillettHolderIdQuery := `
         SELECT EXISTS
-            (SELECT *
-                FROM billettholdere_users [BU]
+            (SELECT 1
+                FROM relation_billettholdere_users [BU]
                 JOIN users [U] ON [BU].user_id = [U].id
-                WHERE [BU].billettholder_id = $1 AND [U].user_id = $2)`
-	_, userHasAccessErr := db.Query(userHasAccessToBillettHolderIdQuery, billettholderId, userId)
+                WHERE [BU].billettholder_id = $1 AND [U].external_id = $2)`
+	var userHasAccess bool
+	userHasAccessErr := db.QueryRow(userHasAccessToBillettHolderIdQuery, billettholderId, userId).Scan(&userHasAccess)
 
 	if userHasAccessErr != nil {
 		logger.Error("failed to check if user has access to billettholder", "error", userHasAccessErr)
 		return userHasAccessErr
+	}
+	if !userHasAccess {
+		return fmt.Errorf("user does not have access to billettholder")
 	}
 
 	if interest.None != "" {

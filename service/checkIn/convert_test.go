@@ -76,7 +76,10 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 
 	// ❸ Assert
 	var billettholder models.Billettholder
-	err = db.QueryRow("SELECT * FROM billettholdere WHERE ticket_id = ?", ticketId).Scan(
+	err = db.QueryRow(`
+		SELECT id, first_name, last_name, ticket_type_id, ticket_type,
+			is_over_18, order_id, ticket_id, created_at, updated_at
+		FROM billettholdere WHERE ticket_id = ?`, ticketId).Scan(
 		&billettholder.ID,
 		&billettholder.FirstName,
 		&billettholder.LastName,
@@ -85,7 +88,8 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 		&billettholder.IsOver18,
 		&billettholder.OrderID,
 		&billettholder.TicketID,
-		&billettholder.InsertedTime,
+		&billettholder.CreatedAt,
+		&billettholder.UpdatedAt,
 	)
 
 	if err != nil {
@@ -103,14 +107,14 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 	}
 
 	var billettholderEmails []models.BillettholderEmail
-	rows, err := db.Query("SELECT id, billettholder_id, email, kind, inserted_time FROM billettholder_emails WHERE billettholder_id = ?", billettholder.ID)
+	rows, err := db.Query("SELECT id, billettholder_id, email, kind, created_at, updated_at FROM relation_billettholder_emails WHERE billettholder_id = ?", billettholder.ID)
 	if err != nil {
 		t.Fatalf("failed to query billettholder emails: %v", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var email models.BillettholderEmail
-		if err := rows.Scan(&email.ID, &email.BillettholderID, &email.Email, &email.Kind, &email.InsertedTime); err != nil {
+		if err := rows.Scan(&email.ID, &email.BillettholderID, &email.Email, &email.Kind, &email.CreatedAt, &email.UpdatedAt); err != nil {
 			t.Fatalf("failed to scan billettholder email: %v", err)
 		}
 		billettholderEmails = append(billettholderEmails, email)
@@ -224,14 +228,14 @@ func TestDontAddDuplicateAssociatedEmails(t *testing.T) {
 
 	// ❸ Assert
 	var billettholderEmails []models.BillettholderEmail
-	rows, err := db.Query("SELECT id, billettholder_id, email, kind, inserted_time FROM billettholder_emails")
+	rows, err := db.Query("SELECT id, billettholder_id, email, kind, created_at, updated_at FROM relation_billettholder_emails")
 	if err != nil {
 		t.Fatalf("failed to query billettholder emails: %v", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var email models.BillettholderEmail
-		if err := rows.Scan(&email.ID, &email.BillettholderID, &email.Email, &email.Kind, &email.InsertedTime); err != nil {
+		if err := rows.Scan(&email.ID, &email.BillettholderID, &email.Email, &email.Kind, &email.CreatedAt, &email.UpdatedAt); err != nil {
 			t.Fatalf("failed to scan billettholder email: %v", err)
 		}
 		billettholderEmails = append(billettholderEmails, email)

@@ -35,16 +35,16 @@ func ValidPuljeValues() []string {
 }
 
 type PuljeRow struct {
-	ID        Pulje     `json:"id"`
-	Name      string    `json:"name"`
-	StartTime time.Time `json:"start_time"`
-	EndTime   time.Time `json:"end_time"`
+	ID      Pulje     `json:"id"`
+	Name    string    `json:"name"`
+	StartAt time.Time `json:"start_at"`
+	EndAt   time.Time `json:"end_at"`
 }
 
 type EventPulje struct {
 	EventID     string `json:"event_id"`
 	PuljeID     Pulje  `json:"pulje_id"`
-	IsActive    bool   `json:"isActive"`
+	IsInPulje   bool   `json:"isInPulje"`
 	IsPublished bool   `json:"isPublished"`
 	Room        string `json:"room"`
 }

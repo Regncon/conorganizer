@@ -12,13 +12,13 @@ import (
 func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.EventCardModel {
 	var events []models.EventCardModel
 
-	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db, logger)
+	userDbId, userDbIdErr := userctx.GetIdFromExternalIdInDb(userId, db, logger)
 	if userDbIdErr != nil {
 		logger.Error("failed to get user id from database", "error", userDbIdErr)
 		return events
 	}
 
-	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE host = ?"
+	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE user_id = ?"
 	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
 	if eventsQueryErr != nil {
 		logger.Error("Failed to query events", "user_id", userId, "error", eventsQueryErr)

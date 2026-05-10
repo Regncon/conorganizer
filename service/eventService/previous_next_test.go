@@ -25,13 +25,19 @@ func TestGetPreviousNext(t *testing.T) {
 	defer db.Close()
 
 	mustExec(t, db, `DELETE FROM events;`)
+	mustExec(t, db, `INSERT OR IGNORE INTO event_statuses (status) VALUES ('Kladd'), ('Innsendt'), ('Godkjent');`)
+	mustExec(t, db, `INSERT OR IGNORE INTO events_types (event_type) VALUES ('other');`)
+	mustExec(t, db, `INSERT OR IGNORE INTO age_groups (age_group) VALUES ('Default');`)
+	mustExec(t, db, `INSERT OR IGNORE INTO event_runtimes (runtime) VALUES ('Normal');`)
 	mustExec(t, db, `
 		INSERT INTO events (
 			id,
 			title,
 			intro,
 			description,
-			image_url,
+			event_type,
+			age_group,
+			event_runtime,
 			host_name,
 			email,
 			phone_number,
@@ -39,12 +45,12 @@ func TestGetPreviousNext(t *testing.T) {
 			beginner_friendly,
 			can_be_run_in_english,
 			status,
-			inserted_time
+			created_at
 		) VALUES
-		('e1','Old','intro e1','desc e1','/img1','Host One','one@test.test','11111111',4,1,1,'Godkjent','2025-10-01 10:00:00'),
-		('e2','Mid','intro e2','desc e2','',     'Host Two','two@test.test','22222222',5,0,1,'Innsendt','2025-10-02 10:00:00'),
-		('e3','New','intro e3','desc e3','/img3','Host Tre','tre@test.test','33333333',6,1,0,'Godkjent','2025-10-03 10:00:00'),
-		('e4','KladdRow','intro e4','desc e4','', 'Host Four','four@test.test','44444444',3,0,0,'Kladd','2025-10-04 10:00:00')
+		('e1','Old','intro e1','desc e1','other','Default','Normal','Host One','one@test.test','11111111',4,1,1,'Godkjent','2025-10-01 10:00:00'),
+		('e2','Mid','intro e2','desc e2','other','Default','Normal','Host Two','two@test.test','22222222',5,0,1,'Innsendt','2025-10-02 10:00:00'),
+		('e3','New','intro e3','desc e3','other','Default','Normal','Host Tre','tre@test.test','33333333',6,1,0,'Godkjent','2025-10-03 10:00:00'),
+		('e4','KladdRow','intro e4','desc e4','other','Default','Normal','Host Four','four@test.test','44444444',3,0,0,'Kladd','2025-10-04 10:00:00')
 	`)
 
 	cases := []struct {

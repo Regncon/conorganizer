@@ -12,14 +12,14 @@ func GetEventsByUserId(userID string, db *sql.DB, logger *slog.Logger) []models.
 	var events []models.EventCardModel
 
 	// Get events where event created id is the same as user
-	userDbId, err := userctx.GetIdFromUserIdInDb(userID, db, logger)
+	userDbId, err := userctx.GetIdFromExternalIdInDb(userID, db, logger)
 	if err != nil {
 		logger.Error("userDbIdErr", "error", err)
 		return events
 	}
 
 	// Query for events created by user
-	eventsQuery := "SELECT id, title, intro, status, system, host_name, beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE host = ?"
+	eventsQuery := "SELECT id, title, intro, status, system, host_name, beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE user_id = ?"
 	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
 	if eventsQueryErr != nil {
 		logger.Error("Failed to query events", "user_id", userID, "error", eventsQueryErr)

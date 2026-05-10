@@ -12,7 +12,8 @@ type Billettholder struct {
 	IsOver18     bool                 `json:"is_over_18"`
 	OrderID      int                  `json:"order_id"`
 	TicketID     int                  `json:"ticket_id"`
-	InsertedTime time.Time            `json:"inserted_time"`
+	CreatedAt    time.Time            `json:"created_at"`
+	UpdatedAt    time.Time            `json:"updated_at"`
 }
 
 type BillettholderEmail struct {
@@ -20,11 +21,12 @@ type BillettholderEmail struct {
 	BillettholderID int       `json:"billettholder_id"`
 	Email           string    `json:"email"`
 	Kind            string    `json:"kind"` // 'Ticket','Associated','Manual'
-	InsertedTime    time.Time `json:"inserted_time"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 type BillettholderUsers struct {
 	BillettholderID int       `json:"billettholder_id"`
 	UserID          int       `json:"user_id"`
-	InsertedTime    time.Time `json:"inserted_time"`
+	InsertedAt      time.Time `json:"inserted_at"`
 }

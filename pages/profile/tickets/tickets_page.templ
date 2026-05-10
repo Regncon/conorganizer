@@ -52,7 +52,7 @@ func getTicketsRouter(
 			}
 		}
 
-		// Link user + billettholdere to billettholdere_users
+		// Link user + billettholdere to relation_billettholdere_users
 		err := checkIn.AssociateUserWithBillettholder(user.Id, db, logger)
 
 		if err != nil {

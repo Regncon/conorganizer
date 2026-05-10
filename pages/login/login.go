@@ -132,34 +132,34 @@ func userExistsByEmail(db *sql.DB, email string) (bool, error) {
 	return true, nil
 }
 
-func insertUser(db *sql.DB, userID, email string, isAdmin bool, logger *slog.Logger) {
-	_, err := db.Exec("INSERT INTO users (user_id, email, is_admin) VALUES (?, ?, ?)", userID, email, isAdmin)
+func insertUser(db *sql.DB, externalID, email string, isAdmin bool, logger *slog.Logger) {
+	_, err := db.Exec("INSERT INTO users (external_id, email, is_admin) VALUES (?, ?, ?)", externalID, email, isAdmin)
 	if err != nil {
 		logger.Error("Failed to insert new user", "error", err, "email", email)
 		return
 	}
-	logger.Info("Inserted new user", "email", email, "user_id", userID, "is_admin", isAdmin)
+	logger.Info("Inserted new user", "email", email, "external_id", externalID, "is_admin", isAdmin)
 }
 
-func updateUserAdmin(db *sql.DB, userID string, isAdmin bool, logger *slog.Logger) {
+func updateUserAdmin(db *sql.DB, externalID string, isAdmin bool, logger *slog.Logger) {
 	var currentIsAdmin bool
-	err := db.QueryRow("SELECT is_admin FROM users WHERE user_id = ?", userID).Scan(&currentIsAdmin)
+	err := db.QueryRow("SELECT is_admin FROM users WHERE external_id = ?", externalID).Scan(&currentIsAdmin)
 	if err == sql.ErrNoRows {
-		logger.Error("User not found for admin update", "user_id", userID)
+		logger.Error("User not found for admin update", "external_id", externalID)
 		return
 	}
 	if err != nil {
-		logger.Error("Failed to fetch current is_admin", "error", err, "user_id", userID)
+		logger.Error("Failed to fetch current is_admin", "error", err, "external_id", externalID)
 		return
 	}
 	if currentIsAdmin == isAdmin {
-		logger.Info("No change to user admin status", "user_id", userID, "is_admin", isAdmin)
+		logger.Info("No change to user admin status", "external_id", externalID, "is_admin", isAdmin)
 		return
 	}
-	_, updateErr := db.Exec("UPDATE users SET is_admin = ? WHERE user_id = ?", isAdmin, userID)
+	_, updateErr := db.Exec("UPDATE users SET is_admin = ? WHERE external_id = ?", isAdmin, externalID)
 	if updateErr != nil {
-		logger.Error("Failed to update user", "error", updateErr, "user_id", userID)
+		logger.Error("Failed to update user", "error", updateErr, "external_id", externalID)
 		return
 	}
-	logger.Info("Updated user admin status", "user_id", userID, "is_admin", isAdmin)
+	logger.Info("Updated user admin status", "external_id", externalID, "is_admin", isAdmin)
 }
