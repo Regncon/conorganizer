@@ -130,7 +130,7 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 	// Get associated billettholdere
 	var billettholdere []models.BillettholderEmail
 	rows, err := db.Query(`
-        SELECT id, billettholder_id, email, kind, created_at, updated_at FROM relation_billettholder_emails WHERE email = ? COLLATE NOCASE
+        SELECT id, billettholder_id, email, kind, created_at, updated_at, created_by_id, updated_by_id FROM relation_billettholder_emails WHERE email = ? COLLATE NOCASE
     `, user.Email)
 	if err != nil {
 		return fmt.Errorf("unable to query relation_billettholder_emails: %v", err)
@@ -139,7 +139,7 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 
 	for rows.Next() {
 		var result models.BillettholderEmail
-		err := rows.Scan(&result.ID, &result.BillettholderID, &result.Email, &result.Kind, &result.CreatedAt, &result.UpdatedAt)
+		err := rows.Scan(&result.ID, &result.BillettholderID, &result.Email, &result.Kind, &result.CreatedAt, &result.UpdatedAt, &result.CreatedByID, &result.UpdatedByID)
 		if err != nil {
 			return fmt.Errorf("unable to scan relation_billettholder_emails: %v", err)
 		}
