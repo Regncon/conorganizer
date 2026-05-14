@@ -9,8 +9,8 @@ import (
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/Regncon/conorganizer/service/billettholder"
+	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/delaneyj/toolbelt"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
@@ -94,7 +94,7 @@ templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	if ticketsErr != nil {
 		{{ logger.Error(ticketsErr.Error(), "search_term", searchTerm) }}
 	}
-	{{ billettholdere, billettholdereErr := billettholderService.GetBilettholdere("", db) }}
+	{{ billettholdere, billettholdereErr := billettholderService.GetBillettholdere("", db) }}
 	if billettholdereErr != nil {
 		{{ logger.Error(billettholdereErr.Error()) }}
 	}

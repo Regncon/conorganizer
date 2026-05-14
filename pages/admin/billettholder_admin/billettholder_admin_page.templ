@@ -2,14 +2,14 @@ package billettholderadmin
 
 import (
 	"database/sql"
-	"log/slog"
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/sessions"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/billettholder"
+	"github.com/go-chi/chi/v5"
+	"github.com/gorilla/sessions"
 )
 
 var searchTerm = ""
@@ -55,7 +55,7 @@ func billettholdereSearchRoute(
 */
 
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ bilettholdere, err := billettholderService.GetBilettholdere("", db) }}
+	{{ bilettholdere, err := billettholderService.GetBillettholdere("", db) }}
 	if err != nil {
 		{{ logger.Error(err.Error()) }}
 	}

@@ -19,7 +19,7 @@ type BillettHolder struct {
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]BillettHolder, error) {
-	// todo: use the correct way to get billettholders (billettholderservice.GetBilettholdere has a fallback to get all billettholders)
+	// todo: use the correct way to get billettholders (billettholderservice.GetBillettholdere has a fallback to get all billettholders)
 	query := `
     SELECT
         [be].email,

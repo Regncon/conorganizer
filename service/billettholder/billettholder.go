@@ -8,7 +8,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-func GetBilettholdere(userId string, db *sql.DB) ([]models.Billettholder, error) {
+func GetBillettholdere(userId string, db *sql.DB) ([]models.Billettholder, error) {
 	var rows *sql.Rows
 	var err error
 	if userId == "" {

@@ -33,7 +33,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 				return events[i].Status > events[j].Status
 			}) */
 
-			billettholdere, err := billettholderService.GetBilettholdere(user.Id, db)
+			billettholdere, err := billettholderService.GetBillettholdere(user.Id, db)
 			if err != nil {
 				logger.Error(err.Error(), "user_id", user.Id)
 			}

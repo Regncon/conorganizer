@@ -142,7 +142,7 @@ type UserInterest struct {
 }
 
 func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]UserInterest, error) {
-	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db)
+	billettholdere, billettholderErr := billettholderService.GetBillettholdere(userInfo.Id, db)
 	if billettholderErr != nil {
 		return nil, fmt.Errorf("unable to get billettholder for user %s: %w", userInfo.Id, billettholderErr)
 	}
@@ -205,7 +205,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 }
 
 func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]UserEvent, error) {
-	billettholdere, billettholderErr := billettholderService.GetBilettholdere(userInfo.Id, db)
+	billettholdere, billettholderErr := billettholderService.GetBillettholdere(userInfo.Id, db)
 	if billettholderErr != nil {
 		return nil, fmt.Errorf("unable to get billettholder for user %s: %w", userInfo.Id, billettholderErr)
 	}
