@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/components/event_components"
+	"github.com/Regncon/conorganizer/models"
 	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/requestctx"
@@ -153,7 +154,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 
 	billettholderID := billettholdere[0].ID
 
-	query := `
+	query := fmt.Sprintf(`
 		SELECT
 			i.event_id,
 			e.title,
@@ -164,12 +165,16 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 		WHERE i.billettholder_id = ?
 		ORDER BY i.pulje_id ASC,
 			CASE i.interest_level
-				WHEN 'Veldig interessert' THEN 1
-				WHEN 'Middels interessert' THEN 2
-				WHEN 'Litt interessert' THEN 3
+				WHEN %q THEN 1
+				WHEN %q THEN 2
+				WHEN %q THEN 3
 				ELSE 999
 			END ASC
-	`
+	`,
+		models.InterestLevelHigh,
+		models.InterestLevelMedium,
+		models.InterestLevelLow,
+	)
 
 	rows, queryErr := db.Query(query, billettholderID)
 	if queryErr != nil {
