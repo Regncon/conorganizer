@@ -370,4 +370,60 @@ Verification passed:
 
 Time: 2026-05-02 08:35:14
 --- Next Prompt ---
+Have a look at the other .templ files and see if there are any other behaviors that we can test with this approach. Look for if statements, else statements, switches and loops in the templates that change the rendered output based on the input data. Also look for any other candidates in the templ html that can be tested. 
+
+Time: 2026-05-02 14:33:14
+--- Codex Run ---
+
+```Markdown
+I’ll scan the `.templ` files for conditional and repeated rendering, then inspect the higher-signal components so we can separate good component-test candidates from behavior that belongs in handler or integration tests.
+The scan found a lot of templ logic, but many hits are route handlers, DB queries, or client-side JavaScript inside `.templ` files. I’m narrowing to components whose rendered HTML changes directly from function inputs, because those fit the new render-and-query helper best.
+I found several good candidates for the same component-rendering approach. Best targets are pure-ish templ components where input data directly controls links, labels, attributes, or repeated items.
+
+**Strong Candidates**
+- [components/event_card.templ](/home/cinmay/Documents/conorganizer/components/event_card.templ:10)  
+  Good behavior surface: href changes by status and `pulje`, status tag changes by `IsPublished`/`Status`, fallback text appears when title/system/intro/host are empty, event type/age/runtime/boolean tags render conditionally.
+
+- [components/previous_next.templ](/home/cinmay/Documents/conorganizer/components/previous_next.templ:32) and [components/breadcrumb_nav_buttons.templ](/home/cinmay/Documents/conorganizer/components/breadcrumb_nav_buttons.templ:3)  
+  Test previous/next URLs vs disabled states, titles, and image rendering only when image URLs exist.
+
+- [pages/event/event_interest_panel.templ](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ:3)  
+  Very clean: `hasTickets=true` renders “Meld interesse” and FAQ link; `false` renders “Hent billett” linking to `/profile/tickets`.
+
+- [components/ui/button/eventStatus.templ](/home/cinmay/Documents/conorganizer/components/ui/button/eventStatus.templ:9)  
+  Switch-based rendering. Test each status maps to expected text/class and an icon is rendered.
+
+- [components/breadcrumbs.templ](/home/cinmay/Documents/conorganizer/components/breadcrumbs.templ:10)  
+  Test URL paths render as links, final no-URL path renders as current page text, and mobile back link points to the previous step.
+
+- [components/event_components/programpulje_event.templ](/home/cinmay/Documents/conorganizer/components/event_components/programpulje_event.templ:8)  
+  Test GM badge appears only for `isGM`, image `<picture>` appears only with image URL, and event href uses the event ID.
+
+- [components/event_components/programpulje_interests.templ](/home/cinmay/Documents/conorganizer/components/event_components/programpulje_interests.templ:14)  
+  Test summary count, one event link per interest, and rendered interest levels.
+
+**Also Worth Testing**
+- [components/profile/my_events.templ](/home/cinmay/Documents/conorganizer/components/profile/my_events.templ:8)  
+  Event link changes by status, empty title shows “Mangler navn”, loops over events.
+
+- [components/profile/my_tickets.templ](/home/cinmay/Documents/conorganizer/components/profile/my_tickets.templ:29)  
+  Loops over ticket holders and always includes `/profile/tickets`.
+
+- [components/formsubmission/statusCard.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/statusCard.templ:47)  
+  Admin vs non-admin options are a good behavior test. This may also reveal odd behavior: admin options all render with `selected`.
+
+- [components/formsubmission/event_new.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/event_new.templ:174)  
+  Validation components are very testable, especially because they already use `data-testid`. Test error labels and disabled submit button.
+
+- [components/formsubmission/who_is_interested.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/who_is_interested.templ:393)  
+  High-value but more complex. The pure partials can test first-choice badges, GM badges, “assigned elsewhere” indicators, age text, and action button labels.
+
+**Less Ideal Without Refactoring**
+Templates that query DBs or read requests inside render are harder to component-test cleanly: `TicketHolderPuljePicker`, `TicketHolderPicker`, `puljeRow`, `event_page_content`, `MyPropgram`, and the top-level `WhoIsInterested`. They can be tested with a test DB, but I’d prefer extracting data-only partials first where possible.
+
+My suggested next test batch: `EventInterestPanel`, `PreviousNextBar`, `EventCard`, and `EventStatus`. They are high signal, low setup, and fit the helper we just made.
+```
+
+Time: 2026-05-02 14:33:14
+--- Next Prompt ---
 
