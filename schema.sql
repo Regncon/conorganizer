@@ -118,10 +118,11 @@ CREATE TABLE
         pulje_id TEXT NOT NULL,
         is_in_pulje BOOLEAN NOT NULL DEFAULT TRUE,
         is_published BOOLEAN NOT NULL DEFAULT FALSE,
-        room TEXT DEFAULT '',
+        room_id INTEGER,
         PRIMARY KEY (event_id, pulje_id),
         FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
-        FOREIGN KEY (pulje_id) REFERENCES puljer (id) ON UPDATE CASCADE
+        FOREIGN KEY (pulje_id) REFERENCES puljer (id) ON UPDATE CASCADE,
+        FOREIGN KEY (room_id) REFERENCES rooms (id) ON DELETE SET NULL
     );
 
 CREATE TABLE
@@ -173,6 +174,14 @@ CREATE TABLE
         FOREIGN KEY (interest_level) REFERENCES interest_levels (interest_level) ON UPDATE CASCADE
     );
 
+CREATE TABLE
+    rooms (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        floor INTEGER NOT NULL,
+        max_concurrent_games INTEGER NOT NULL
+    );
+
 CREATE VIEW
     v_get_user_billettholder AS
 SELECT
@@ -211,6 +220,10 @@ SELECT
     e.created_at,
     ep.is_published AS is_published,
     ep.pulje_id,
+    ep.room_id,
+    r.name AS room_name,
+    r.floor AS room_floor,
+    r.max_concurrent_games AS room_max_concurrent_games,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
     p.end_at AS pulje_end_at
@@ -218,6 +231,7 @@ FROM
     events e
     INNER JOIN relation_event_puljer ep ON ep.event_id = e.id
     INNER JOIN puljer p ON p.id = ep.pulje_id
+    LEFT JOIN rooms r ON r.id = ep.room_id
 WHERE
     e.status = 'Godkjent'
     AND ep.is_in_pulje = 1;
@@ -268,6 +282,10 @@ CREATE VIEW
 SELECT
     ep.event_id,
     ep.pulje_id,
+    ep.room_id,
+    r.name AS room_name,
+    r.floor AS room_floor,
+    r.max_concurrent_games AS room_max_concurrent_games,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
     p.end_at AS pulje_end_at,
@@ -276,6 +294,7 @@ SELECT
 FROM
     relation_event_puljer ep
     JOIN puljer p ON p.id = ep.pulje_id
+    LEFT JOIN rooms r ON r.id = ep.room_id
 WHERE
     ep.is_in_pulje = 1
     AND ep.is_published = 1;

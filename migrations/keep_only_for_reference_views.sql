@@ -47,6 +47,10 @@ SELECT
     e.created_at,
     ep.is_published AS is_published,
     ep.pulje_id,
+    ep.room_id,
+    r.name AS room_name,
+    r.floor AS room_floor,
+    r.max_concurrent_games AS room_max_concurrent_games,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
     p.end_at AS pulje_end_at
@@ -54,6 +58,7 @@ FROM
     events e
     INNER JOIN relation_event_puljer ep ON ep.event_id = e.id
     INNER JOIN puljer p ON p.id = ep.pulje_id
+    LEFT JOIN rooms r ON r.id = ep.room_id
 WHERE
     e.status = 'Godkjent'
     AND ep.is_in_pulje = 1;
@@ -110,6 +115,10 @@ CREATE VIEW IF NOT EXISTS
 SELECT
     ep.event_id,
     ep.pulje_id,
+    ep.room_id,
+    r.name AS room_name,
+    r.floor AS room_floor,
+    r.max_concurrent_games AS room_max_concurrent_games,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
     p.end_at AS pulje_end_at,
@@ -118,6 +127,7 @@ SELECT
 FROM
     relation_event_puljer ep
     JOIN puljer p ON p.id = ep.pulje_id
+    LEFT JOIN rooms r ON r.id = ep.room_id
 WHERE
     ep.is_in_pulje = 1
     AND ep.is_published = 1;

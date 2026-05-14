@@ -85,10 +85,11 @@ func GetPujerForEvent(
 			           pulje_id TEXT NOT NULL,
 			           is_in_pulje BOOLEAN NOT NULL DEFAULT TRUE,
 			           is_published BOOLEAN NOT NULL DEFAULT FALSE,
-			           room TEXT DEFAULT '',
+			           room_id INTEGER,
 			           PRIMARY KEY (event_id, pulje_id),
 			           FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
-			           FOREIGN KEY (pulje_id) REFERENCES puljer (id) ON UPDATE CASCADE
+			           FOREIGN KEY (pulje_id) REFERENCES puljer (id) ON UPDATE CASCADE,
+			           FOREIGN KEY (room_id) REFERENCES rooms (id) ON DELETE SET NULL
 			       );
 		CREATE TABLE
 		    puljer (

@@ -47,5 +47,5 @@ type EventPulje struct {
 	PuljeID     Pulje  `json:"pulje_id"`
 	IsInPulje   bool   `json:"isInPulje"`
 	IsPublished bool   `json:"isPublished"`
-	Room        string `json:"room"`
+	RoomID      string `json:"room_id"`
 }
