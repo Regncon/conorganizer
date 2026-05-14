@@ -30,7 +30,7 @@ func BroadcastUpdate(kv jetstream.KeyValue, r *http.Request) error {
 			}
 			mvc.EditingIdx = -1
 			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-				fmt.Printf("Error: Failed to save MVC for key %s: %v\n", sessionID, err)
+				return fmt.Errorf("failed to save mvc for key %s: %w", sessionID, err)
 			}
 		}
 	}

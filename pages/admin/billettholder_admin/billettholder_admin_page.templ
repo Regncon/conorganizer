@@ -55,7 +55,10 @@ func billettholdereSearchRoute(
 */
 
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ bilettholdere, err := billettholderService.GetBilettholdere("", db, logger) }}
+	{{ bilettholdere, err := billettholderService.GetBilettholdere("", db) }}
+	if err != nil {
+		{{ logger.Error(err.Error()) }}
+	}
 	<div id="billettholder-admin-container">
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},

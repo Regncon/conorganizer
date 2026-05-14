@@ -11,6 +11,12 @@ backup-service/regncon
 *_templ.txt
 compose-restore.yaml
 .backups/
+.gocache
+tmp-gocache/
+.tmp-gocache/
+
+# Ai folder
+.codex/*
 
 # ------------------------------------------------------------------
 # Go

@@ -57,6 +57,29 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			isValid := isTitleValid && isIntroValid && isDescriptionValid && isMaxPlayersValid && isSystemValid &&
 				isHostNameValid && isEmailValid && isPhoneNumberValid && isAgeGroupValid && isEventRuntimeValid
 
+			var isPuljeNameValid = false
+
+			puljeNames, puljeNamesError := getPuljeNames(db, logger)
+			if puljeNamesError != nil {
+				logger.Error(fmt.Errorf("error getting pulje names: %w", puljeNamesError).Error())
+			}
+
+			puljeNameInt, puljeNameToIntError := strconv.Atoi(*eventForm.PuljeName)
+			if puljeNameToIntError != nil {
+				logger.Error(fmt.Errorf("invalid pulje name format %q: %w", *eventForm.PuljeName, puljeNameToIntError).Error())
+			}
+
+			isPuljeNameValid = puljeNameInt > 0 && len(puljeNames) > 0 && puljeNameInt <= len(puljeNames)
+			isChildFriendly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
+			isAdultsOnly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
+			isBeginnerFriendly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
+			isExperiencedOnly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
+			isLongRunning := (eventForm.LongRunning != eventForm.ShortRunning)
+			isShortRunning := (eventForm.LongRunning != eventForm.ShortRunning)
+			isValid := isTitleValid && isDescriptionValid && isMaxPlayersValid && isSystemValid &&
+				isImageURLValid && isHostNameValid && isEmailValid && isPhoneNumberValid && isPuljeNameValid && isChildFriendly &&
+				isAdultsOnly && isBeginnerFriendly && isExperiencedOnly && isLongRunning && isShortRunning
+
 			return ValidationResultStruct{
 				IsTitleValid:            isTitleValid,
 				IsIntroValid:            isIntroValid,
@@ -81,12 +104,11 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				EventRuntime: "Normal",
 			}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
-				fmt.Printf("Debug - ReadSignals error: %v\n", err)
-				fmt.Printf("Debug - Raw form data: %+v\n", r.Form)
+				logger.Debug(fmt.Errorf("ReadSignals failed for inline validation: %w", err).Error())
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
-			fmt.Printf("Debug - Form after ReadSignals: %+v\n", eventForm)
+			logger.Debug("ReadSignals completed for inline validation")
 			sse := datastar.NewSSE(w, r)
 			eventFormValidationResult := checkEventFromValidity(eventForm)
 			sse.PatchElementTempl(inlineValidationFormEventComponent(eventForm, eventFormValidationResult))
@@ -100,7 +122,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 				EventRuntime: "Normal",
 			}
 			if readSignalsError := datastar.ReadSignals(r, eventForm); readSignalsError != nil {
-				logger.Error("Error reading signals", "signalsError", readSignalsError)
+				logger.Error(fmt.Errorf("error reading signals: %w", readSignalsError).Error())
 				http.Error(w, readSignalsError.Error(), http.StatusBadRequest)
 				return
 			}
@@ -144,7 +166,7 @@ templ inputValidationComponent(label string, inputType InputType, field string, 
 			}
 			class={ "input input-bordered" , templ.KV("input-error",!isValid) }
 			data-bind={ field }
-			data-on-keydown__debounce.500ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+			data-on:keydown__debounce.500ms={ "@get('/my-events/api/new/inline_validation/data')" }
 			data-testid={ "input_" + field }
 			if field=="system" {
 				placeholder="f.eks. D&D 5e, Pathfinder, etc."
@@ -175,7 +197,7 @@ templ checkboxValidationComponent(label, field string, isValid bool, isNotValidE
 				type="checkbox"
 				class="toggle"
 				data-bind={ field }
-				data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+				data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 				data-testid={ field + "_input" }
 				disabled?={ isDisabled }
 			/>
@@ -201,7 +223,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="1"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					data-testid={ field + "_1" }
 				/>
 				<span>Fredag kveld</span>
@@ -213,7 +235,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="2"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					data-testid={ field + "_2" }
 				/>
 				<span>Lørdag morgen</span>
@@ -225,7 +247,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="3"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					data-testid={ field + "_3" }
 				/>
 				<span>Lørdag kveld</span>
@@ -237,7 +259,7 @@ templ radioValidationComponent(label, field string, isValid bool, isNotValidErro
 					value="4"
 					class="radio"
 					data-bind={ field }
-					data-on-click__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					data-testid={ field + "_4" }
 				/>
 				<span>Søndag morgen</span>
@@ -263,8 +285,8 @@ templ radioGroupValidationComponent(groupLabel string, options [2]string, fields
 					name={ groupLabel }
 					class="radio"
 					data-bind={ fields[0] }
-					data-on-click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[1]) }
-					data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[1]) }
+					data-on:change__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					checked?={ values[0] }
 				/>
 				<span>{ options[0] }</span>
@@ -275,8 +297,8 @@ templ radioGroupValidationComponent(groupLabel string, options [2]string, fields
 					name={ groupLabel }
 					class="radio"
 					data-bind={ fields[1] }
-					data-on-click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[0]) }
-					data-on-change__debounce.100ms={ datastar.GetSSE("/my-events/api/new/inline_validation/data") }
+					data-on:click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[0]) }
+					data-on:change__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
 					checked?={ values[1] }
 				/>
 				<span>{ options[1] }</span>
@@ -293,7 +315,7 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		id="inline_validation"
 		class="flex flex-col gap-4"
 		data-signals__ifmissing={ templ.JSONString(eventForm) }
-		data-on-submit={ datastar.PutSSE("/my-events/api/new/inline_validation/data") }
+		data-on:submit={ "@put('/my-events/api/new/inline_validation/data')" }
 	>
 		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
 		<div>
@@ -596,16 +618,18 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 	)
 
 	if insertError != nil {
-		logger.Error("Error updating event", "insertError", insertError)
+		saveErr := fmt.Errorf("error saving event form submission: %w", insertError)
+		logger.Error(saveErr.Error())
 		http.Error(w, fmt.Sprintf("Error updating event: %v", insertError), http.StatusBadRequest)
-		return 0, insertError
+		return 0, saveErr
 	}
 
 	rowsAffected, rowsAffectedErr := result.RowsAffected()
 	if rowsAffectedErr != nil {
-		logger.Error("Error getting rows affected", "rowsAffectedErr", rowsAffectedErr)
+		rowsAffectedErrWrapped := fmt.Errorf("error getting rows affected for new event submission: %w", rowsAffectedErr)
+		logger.Error(rowsAffectedErrWrapped.Error())
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return 0, rowsAffectedErr
+		return 0, rowsAffectedErrWrapped
 	}
 
 	if rowsAffected == 0 {
@@ -613,7 +637,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 		http.Error(w, "Event not found or no changes made", http.StatusNotFound)
 		return 0, nil
 	}
-	fmt.Printf("Event saved successfully: %v\n", eventForm)
+	logger.Info("Event saved successfully")
 	return result.LastInsertId()
 }
 
@@ -621,7 +645,37 @@ func getUserDbID(db *sql.DB, logger *slog.Logger, externalID string) (int, error
 	query := "SELECT id FROM users where external_id = ?"
 	rows, queryError := db.Query(query, externalID)
 	if queryError != nil {
-		return 0, queryError
+		return nil, fmt.Errorf("error querying pulje names: %w", queryError)
+	}
+
+	defer rows.Close()
+
+	var puljer []PuljeNameStruct
+
+	for rows.Next() {
+		var name string
+		if scanError := rows.Scan(&name); scanError != nil {
+			scanErr := fmt.Errorf("error scanning pulje name: %w", scanError)
+			logger.Error(scanErr.Error())
+			return nil, scanErr
+		}
+		puljer = append(puljer, PuljeNameStruct{Name: name})
+	}
+
+	if rowsError := rows.Err(); rowsError != nil {
+		rowsErr := fmt.Errorf("error iterating pulje rows: %w", rowsError)
+		logger.Error(rowsErr.Error())
+		return nil, rowsErr
+	}
+
+	return puljer, nil
+}
+
+func getHostId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
+	query := "SELECT id FROM users where user_id = ?"
+	rows, queryError := db.Query(query, userID)
+	if queryError != nil {
+		return 0, fmt.Errorf("error querying host id for user %q: %w", userID, queryError)
 	}
 
 	defer rows.Close()
@@ -630,14 +684,16 @@ func getUserDbID(db *sql.DB, logger *slog.Logger, externalID string) (int, error
 
 	for rows.Next() {
 		if scanError := rows.Scan(&userId); scanError != nil {
-			logger.Error("Error scanning user id", "scanError", scanError)
-			return 0, scanError
+			scanErr := fmt.Errorf("error scanning user id for user %q: %w", userID, scanError)
+			logger.Error(scanErr.Error())
+			return 0, scanErr
 		}
 	}
 
 	if rowsError := rows.Err(); rowsError != nil {
-		logger.Error("Error in rows iteration", "rowsError", rowsError)
-		return 0, rowsError
+		rowsErr := fmt.Errorf("error iterating user rows for user %q: %w", userID, rowsError)
+		logger.Error(rowsErr.Error())
+		return 0, rowsErr
 	}
 
 	return userId, nil

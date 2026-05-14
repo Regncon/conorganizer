@@ -1,96 +1,122 @@
 package ticketholder
 
 import (
-	"fmt"
-	"log/slog"
 	"database/sql"
-    "github.com/Regncon/conorganizer/models"
-    "slices"
+	"fmt"
+	"github.com/Regncon/conorganizer/models"
+	"log/slog"
+	"slices"
 )
 
 templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger *slog.Logger) {
-    {{ puljer, _ := GetPuljerFromEventId(eventId, db, logger) }}
+	{{ puljer, puljerErr := GetPuljerFromEventId(eventId, db) }}
+	if puljerErr != nil {
+		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
+		<p>Feil ved henting av puljer: { puljerErr.Error() }</p>
+		return
+	}
 	<style>
         .pulje-picker-container {
             padding-bottom: var(--responsive-pane-padding);
         }
         .pulje-wrapper {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(2, 1fr);
             gap: var(--spacing-2x);
 
-            .selected {
-                border-color: var(--color-primary);
-                color: var(--color-primary);
-            }
-
-            .btn--interest-picker {
+            .card-clickable {
+                display: flex;
+                gap: var(--spacing-1x);
                 font-size: 12px;
                 border-radius: var(--border-radius-1x);
                 justify-content: center;
-                min-height: 3rem;
+                height: 3rem;
+                width: 100%;
+                place-items: center;
+                p + p {
+                    margin: 0;
+                }
             }
         }
 
-        @container interest-dialog (width > 23.9375rem) {
+        @container interest-dialog (width >= 30rem) {
             .pulje-wrapper {
-                grid-template-columns: 1fr 1fr 1fr 1fr;
+                grid-template-columns: repeat(4, 1fr);
+                padding-inline: var(--border-outline-width);
 
-                .btn--interest-picker {
+                .card-clickable {
+                    display: grid;
+                    gap: var(--spacing-1x);
+                    text-align: center;
                     padding-inline: var(--spacing-4x);
                     font-size: 16px;
-                    min-height: 7.125rem;
-                    min-height: 4.5rem;
+                    height: 4.5rem;
+                    max-width: 7.125rem;
                 }
             }
         }
     </style>
-    /* {{fmt.Println(puljer)}} */
-    if (len(puljer) > 1) {
-        <div class="pulje-picker-container">
-            <p class="label">Velg pulje for arrangementet</p>
-            <div class="pulje-wrapper">
-                <button
-                    class="btn btn--interest-picker"
-                    data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeFredagKveld)) }
-                    data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeFredagKveld)) }
-                    { addDisableAttr_pulje(puljer, models.PuljeFredagKveld) }
-                    >
-                    Fredag kveld
-                </button>
-                <button
-                    class="btn btn--interest-picker"
-                    data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeLordagMorgen)) }
-                    data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeLordagMorgen)) }
-                    { addDisableAttr_pulje(puljer, models.PuljeLordagMorgen) }
-                    >
-                    Lørdag morgen
-                </button>
-                <button
-                    class="btn btn--interest-picker"
-                    data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeLordagKveld)) }
-                    data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeLordagKveld)) }
-                    { addDisableAttr_pulje(puljer, models.PuljeLordagKveld) }
-                >
-                    Lørdag kveld
-                </button>
-                <button
-                    class="btn btn--interest-picker"
-                    data-class-selected={ fmt.Sprintf("$puljeId == '%s'", string(models.PuljeSondagMorgen)) }
-                    data-on-click={ fmt.Sprintf("$puljeId = '%s'", string(models.PuljeSondagMorgen)) }
-                    { addDisableAttr_pulje(puljer, models.PuljeSondagMorgen) }
-                >
-                    Søndag morgen
-                </button>
-            </div>
-        </div>
-    }
+	if (len(puljer) > 1) {
+		<div class="pulje-picker-container">
+			<p class="label">Velg pulje for arrangementet</p>
+			<div class="pulje-wrapper">
+				<div
+					role="button"
+					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeFredagKveld, isPuljeDisabled(puljer, models.PuljeFredagKveld)) }
+					class="card-clickable card-clickable-item"
+					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeFredagKveld) }
+					data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", models.PuljeFredagKveld, eventId) }
+					if isPuljeDisabled(puljer, models.PuljeFredagKveld) {
+						disabled
+					}
+				>
+					<p>Fredag</p>
+					<p>kveld</p>
+				</div>
+				<div
+					role="button"
+					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeLordagMorgen, isPuljeDisabled(puljer, models.PuljeLordagMorgen)) }
+					class="card-clickable card-clickable-item"
+					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeLordagMorgen) }
+					data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", models.PuljeLordagMorgen, eventId) }
+					if isPuljeDisabled(puljer, models.PuljeLordagMorgen) {
+						disabled
+					}
+				>
+					<p>Lørdag</p>
+					<p>morgen</p>
+				</div>
+				<div
+					role="button"
+					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeLordagKveld, isPuljeDisabled(puljer, models.PuljeLordagKveld)) }
+					class="card-clickable card-clickable-item"
+					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeLordagKveld) }
+					data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", models.PuljeLordagKveld, eventId) }
+					if isPuljeDisabled(puljer, models.PuljeLordagKveld) {
+						disabled
+					}
+				>
+					<p>Lørdag</p>
+					<p>kveld</p>
+				</div>
+				<div
+					role="button"
+					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeSondagMorgen, isPuljeDisabled(puljer, models.PuljeSondagMorgen)) }
+					class="card-clickable card-clickable-item"
+					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeSondagMorgen) }
+					data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", models.PuljeSondagMorgen, eventId) }
+					if isPuljeDisabled(puljer, models.PuljeSondagMorgen) {
+						disabled
+					}
+				>
+					<p>Søndag</p>
+					<p>morgen</p>
+				</div>
+			</div>
+		</div>
+	}
 }
 
-func addDisableAttr_pulje(puljer []models.Pulje, currentPulje models.Pulje) string {
-    exists := slices.Contains(puljer, currentPulje)
-    if !exists {
-        return "disabled"
-    }
-    return ""
+func isPuljeDisabled(puljer []models.Pulje, currentPulje models.Pulje) bool {
+	return !slices.Contains(puljer, currentPulje)
 }

@@ -1,27 +1,4 @@
-// ---- shared global styles (loaded once) ------------------------------------
-const GLOBAL_STYLE_URLS = [
-    "/static/index.css",
-    "/static/buttons.css"
-];
-
-const globalSheetsPromise = (async () => {
-    // Feature check for constructable stylesheets
-    const supportsConstructable =
-        !!(Document.prototype && "adoptedStyleSheets" in Document.prototype) &&
-        !!(CSSStyleSheet.prototype && "replace" in CSSStyleSheet.prototype);
-
-    if (!supportsConstructable) return null;
-
-    const sheets = [];
-    for (const url of GLOBAL_STYLE_URLS) {
-        const resp = await fetch(url, { credentials: "same-origin" });
-        const cssText = await resp.text();
-        const sheet = new CSSStyleSheet();
-        await sheet.replace(cssText);
-        sheets.push(sheet);
-    }
-    return sheets;
-})();
+const STYLE_URLS = window.conorganizerSharedStyles.getStyleUrls();
 
 // ---- component --------------------------------------------------------------
 class BannerCropper extends HTMLElement {
@@ -52,20 +29,7 @@ class BannerCropper extends HTMLElement {
         // Shadow DOM
         const root = this.attachShadow({ mode: "open" });
 
-        // Apply global styles (adoptedStyleSheets or <link> fallback)
-        globalSheetsPromise.then((sheets) => {
-            if (sheets) {
-                root.adoptedStyleSheets = [...root.adoptedStyleSheets, ...sheets];
-            } else {
-                // Fallback: inject <link> tags
-                for (const url of GLOBAL_STYLE_URLS) {
-                    const link = document.createElement("link");
-                    link.rel = "stylesheet";
-                    link.href = url;
-                    root.appendChild(link);
-                }
-            }
-        });
+        window.conorganizerSharedStyles.applyStyleUrlsToShadowRoot(root, STYLE_URLS);
 
         root.innerHTML = `
             <div style="display:flex; flex-direction: column; gap:1rem; background: var(--color-bg-secondary);">

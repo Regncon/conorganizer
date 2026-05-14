@@ -3,15 +3,16 @@ package edit_form
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
-	datastar "github.com/starfederation/datastar-go/datastar"
 	"log/slog"
 	"net/http"
 )
 
 func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	logger = logger.With("component", "approval_edit_form")
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 
@@ -22,11 +23,14 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 		}
 
 		var ctx = r.Context()
-		layouts.Base(
+		userInfo := userctx.GetUserRequestInfo(ctx)
+		if err := layouts.Base(
 			title,
-			userctx.GetUserRequestInfo(ctx),
+			userInfo,
 			editFormIndex(eventId, ctx, db, eventImageDir, logger),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render approval edit form page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
+		}
 	})
 }
 
@@ -34,7 +38,7 @@ templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, eventImageD
 	<div
 		id="edit-form-container"
 		class="formsubmission-css-container"
-		data-on-load={ datastar.GetSSE("/admin/approval/edit/api/%s", eventId) }
+		data-init={ fmt.Sprintf("@get('/admin/approval/edit/api/%s',{requestCancellation: 'disabled'})", eventId) }
 	>
 		@EditEventFormPageContent(ctx, eventId, db, eventImageDir, logger)
 	</div>

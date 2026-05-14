@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS interests (
 CREATE TABLE IF NOT EXISTS events_players (
     event_id TEXT NOT NULL,
     billettholder_id INTEGER NOT NULL,
-	interest_level TEXT NOT NULL,
+    isGm BOOLEAN NOT NULL DEFAULT FALSE,
     inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (event_id, billettholder_id),
     FOREIGN KEY (event_id) REFERENCES events(id),

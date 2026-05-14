@@ -19,7 +19,7 @@ func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 			http.Error(w, "Event ID is required", http.StatusBadRequest)
 			return
 		}
-		logger.Info("Submitting event", "eventID", eventID)
+		logger.Info("Submitting event", "event_id", eventID)
 
 		query := `UPDATE events SET status = ? WHERE id = ?`
 		_, err := db.Exec(query, models.EventStatusSubmitted, eventID)

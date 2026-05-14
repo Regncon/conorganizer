@@ -53,7 +53,7 @@ templ statusCard(event *models.Event, isAdmin bool) {
 				class="input"
 				data-signals={ fmt.Sprintf("{status:'%s'}", event.Status) }
 				data-bind="status"
-				data-on-change={ datastar.PutSSE("/my-events/api/new/%s/status", event.ID) }
+				data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/status')", event.ID) }
 				required
 			>
 				if isAdmin {

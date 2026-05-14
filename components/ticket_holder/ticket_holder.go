@@ -3,7 +3,6 @@ package ticketholder
 import (
 	"database/sql"
 	"fmt"
-	"log/slog"
 	"slices"
 	"strings"
 	"unicode"
@@ -19,16 +18,31 @@ type BillettHolder struct {
 	Color string
 }
 
-func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) ([]BillettHolder, error) {
-	logger.Info("Fetching ticket holders from the database...")
-	query := `SELECT email, billettholder_id, first_name, last_name
-                FROM relation_billettholder_emails [be]
-                JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
-                WHERE [be].email = ? `
+func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]BillettHolder, error) {
+	// todo: use the correct way to get billettholders (billettholderservice.GetBilettholdere has a fallback to get all billettholders)
+	query := `
+    SELECT
+        [be].email,
+        [be].billettholder_id,
+        [bh].first_name,
+        [bh].last_name
+    FROM
+        billettholder_emails [be]
+        LEFT JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
+    WHERE
+        [be].kind = 'Ticket'
+        AND [be].billettholder_id IN (
+            SELECT
+                billettholder_id
+            FROM
+                billettholder_emails
+            WHERE
+                email = ?
+        )
+`
 	rows, ticketHolderQueryErr := db.Query(query, userInfo.Email)
 	if ticketHolderQueryErr != nil {
-		logger.Error("Failed to query ticket holders", "ticketHolderQueryErr", ticketHolderQueryErr)
-		return []BillettHolder{}, ticketHolderQueryErr
+		return nil, fmt.Errorf("failed to query ticket holders for email %q: %w", userInfo.Email, ticketHolderQueryErr)
 	}
 	defer rows.Close()
 
@@ -39,8 +53,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 		var billettHolderId int
 
 		if ticketHolderScanErr := rows.Scan(&email, &billettHolderId, &firstName, &lastName); ticketHolderScanErr != nil {
-			logger.Error("Failed to scan ticket holder row", "ticketHolderScanErr", ticketHolderScanErr)
-			continue
+			return nil, fmt.Errorf("failed to scan ticket holder row: %w", ticketHolderScanErr)
 		}
 		associatedTicketholders = append(associatedTicketholders, BillettHolder{
 			Email: email,
@@ -49,52 +62,20 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *s
 			Color: ColorForName(fmt.Sprintf("%s %s", firstName, lastName)),
 		})
 
-		logger.Info("Ticket Holder", "email", email, "id", billettHolderId, "firstName", firstName, "lastName", lastName)
 	}
 	if ticketHolderRowsErr := rows.Err(); ticketHolderRowsErr != nil {
-		logger.Error("Error iterating over ticket holder rows", "ticketHolderRowsErr", ticketHolderRowsErr)
+		return nil, fmt.Errorf("error iterating over ticket holder rows: %w", ticketHolderRowsErr)
 	}
-
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "lo@najcuksuc.sn",
-	// 	Name:  "Leonard Moreno",
-	// 	Id:    1,
-	// 	Color: ColorForName("Leonard Moreno"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "lacbe@lecuc.my",
-	// 	Name:  "Olive Berry",
-	// 	Id:    2,
-	// 	Color: ColorForName("Olive Berry"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "mijinpu@posrik.cz",
-	// 	Name:  "Bobby Silva",
-	// 	Id:    3,
-	// 	Color: ColorForName("Bobby Silva"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "igkir@mukpunuc.be",
-	// 	Name:  "Bertha Francis",
-	// 	Id:    5,
-	// 	Color: ColorForName("Bertha Francis"),
-	// })
-	// associatedTicketholders = append(associatedTicketholders, BillettHolder{
-	// 	Email: "ruidavuf@otavig.gy",
-	// 	Name:  "Mario Ross",
-	// 	Id:    6,
-	// })
 
 	return associatedTicketholders, nil
 
 }
 
-func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]models.Pulje, error) {
-	puljerQuery := `SELECT pulje_id FROM relation_event_puljer WHERE event_id = ? AND is_in_pulje = 1 AND is_published = 1`
+func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.Pulje, error) {
+	puljerQuery := `SELECT pulje_id FROM event_puljer WHERE event_id = ? AND is_active = 1 AND is_published = 1`
 	rows, puljerErr := db.Query(puljerQuery, eventId)
 	if puljerErr != nil {
-		logger.Error("Failed to query event puljer", "puljerErr", puljerErr)
-		return nil, puljerErr
+		return nil, fmt.Errorf("failed to query event puljer for event %s: %w", eventId, puljerErr)
 	}
 	defer rows.Close()
 
@@ -102,13 +83,12 @@ func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]mo
 	for rows.Next() {
 		var puljeName models.Pulje
 		if scanErr := rows.Scan(&puljeName); scanErr != nil {
-			logger.Error("Failed to scan pulje row", "scanErr", scanErr)
-			continue
+			return nil, fmt.Errorf("failed to scan pulje row for event %s: %w", eventId, scanErr)
 		}
 		puljer = append(puljer, puljeName)
 	}
 	if rowsErr := rows.Err(); rowsErr != nil {
-		logger.Error("Error iterating over pulje rows", "rowsErr", rowsErr)
+		return nil, fmt.Errorf("error iterating over pulje rows for event %s: %w", eventId, rowsErr)
 	}
 
 	return puljer, nil
@@ -116,7 +96,6 @@ func GetPuljerFromEventId(eventId string, db *sql.DB, logger *slog.Logger) ([]mo
 
 func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders []BillettHolder) BillettHolder {
 	idx := slices.IndexFunc(ticketHolders, func(th BillettHolder) bool {
-		fmt.Printf("Comparing ticket holder email: %s with user email: %s\n", th.Email, userInfo.Email)
 		return th.Email == userInfo.Email
 	})
 
@@ -137,8 +116,13 @@ func GetInitials(s string) string {
 		return "TT"
 	}
 
-	firstChar := rune(words[0][0])
-	lastChar := rune(words[len(words)-1][0])
+	firstWordRunes := []rune(words[0])
+	lastWordRunes := []rune(words[len(words)-1])
+	if len(firstWordRunes) == 0 || len(lastWordRunes) == 0 {
+		return "TT"
+	}
+	firstChar := firstWordRunes[0]
+	lastChar := lastWordRunes[0]
 
 	if unicode.IsLetter(firstChar) {
 		initialsBuilder.WriteRune(unicode.ToUpper(firstChar))
@@ -155,4 +139,22 @@ func GetInitials(s string) string {
 	}
 
 	return initialsBuilder.String()
+}
+
+func GetFirstNameAndLastInitial(fullName string) string {
+	nameParts := strings.Fields(fullName)
+	if len(nameParts) == 0 {
+		return ""
+	}
+
+	if len(nameParts) == 1 {
+		return nameParts[0]
+	}
+
+	lastNameRunes := []rune(nameParts[len(nameParts)-1])
+	if len(lastNameRunes) == 0 {
+		return nameParts[0]
+	}
+
+	return fmt.Sprintf("%s %c", nameParts[0], unicode.ToUpper(lastNameRunes[0]))
 }

@@ -4,6 +4,22 @@ templ loginForm() {
 	<script src="https://descopecdn.com/npm/@descope/web-component@3.21.0/dist/index.js"></script>
 	<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
 	<script src="https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js"></script>
+	<style>
+        form {
+            display: flex;
+            place-content: center;
+            descope-wc {
+                max-width: 35.3125rem;
+            }
+            @media screen and (width <= 26.5625rem) {
+                descope-wc {
+                        --descope-container-align-items__override: auto;
+                        --descope-container-horizontal-padding__override: var(--spacing-2x);
+                        --descope-container-host-width__override: 100%;
+                }
+            }
+        }
+    </style>
 	<descope-wc
 		project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
 		flow-id="sign-up-or-in-passwords-social"

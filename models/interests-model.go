@@ -1,8 +1,11 @@
 package models
 
-import (
-	"database/sql"
-	"time"
+import "time"
+
+const (
+	InterestLevelHigh   = "Veldig interessert"
+	InterestLevelMedium = "Middels interessert"
+	InterestLevelLow    = "Litt interessert"
 )
 
 type Interest struct {

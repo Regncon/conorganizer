@@ -2,6 +2,7 @@ package event
 
 import (
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -11,7 +12,6 @@ import (
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
-	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
@@ -23,8 +23,9 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 			return
 		}
 
-		event, err := eventservice.GetEventById(eventID, db, logger)
+		event, err := eventservice.GetEventById(eventID, db)
 		if err != nil {
+			logger.Error(err.Error(), "event_id", eventID)
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -35,11 +36,13 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 		var ctx = r.Context()
 		isAdmin := authctx.GetAdminFromUserToken(ctx)
 		userInfo := userctx.GetUserRequestInfo(ctx)
-		layouts.Base(
+		if err := layouts.Base(
 			event.Title,
 			userInfo,
 			eventIndex(event.ID, isAdmin, userInfo, logger, db, eventImageDir, r),
-		).Render(ctx, w)
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render event page: %w", err).Error(), "event_id", event.ID, "user_id", userInfo.Id)
+		}
 	})
 }
 
@@ -47,10 +50,13 @@ templ eventIndex(eventId string, isAdmin bool, userInfo requestctx.UserRequestIn
 	<div class="flex flex-col w-full min-h-screen bg-base-200">
 		<div
 			id="event-container"
-			data-on-load={ datastar.GetSSE("/event/api/%s?%s", eventId, r.URL.RawQuery) }
+			data-init={ fmt.Sprintf("@get('/event/api/%s?%s',{requestCancellation: 'disabled'})", eventId, r.URL.RawQuery) }
 			class="event-container"
 		>
-			@event_page_content(eventId, isAdmin, logger, db, eventImageDir, r)
+			<div id="event-page-content">
+				@event_page_content(eventId, isAdmin, logger, db, eventImageDir, r)
+			</div>
 		</div>
 	</div>
+	<script src="/static/web_components/ticket_holder_dropdown.js"></script>
 }
