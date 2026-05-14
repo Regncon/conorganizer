@@ -105,7 +105,7 @@ func GetPujerForEvent(
 			EndAt   time.Time `json:"end_at"`
 		}
 	*/
-	query := `SELECT p.id, p.name, p.start_at, p.end_at
+	query := `SELECT p.id, p.name, p.status, p.start_at, p.end_at
             FROM puljer p
             JOIN relation_event_puljer ep ON p.id = ep.pulje_id
             WHERE ep.event_id = ? AND ep.is_in_pulje = TRUE AND ep.is_published = TRUE
@@ -121,7 +121,7 @@ func GetPujerForEvent(
 	var puljer []models.PuljeRow
 	for rows.Next() {
 		var pulje models.PuljeRow
-		if err := rows.Scan(&pulje.ID, &pulje.Name, &pulje.StartAt, &pulje.EndAt); err != nil {
+		if err := rows.Scan(&pulje.ID, &pulje.Name, &pulje.Status, &pulje.StartAt, &pulje.EndAt); err != nil {
 			logger.Error("Error scanning pulje row", slog.String("eventID", eventID), slog.String("error", err.Error()))
 			return nil, err
 		}

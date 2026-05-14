@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type Billettholder struct {
 	ID           int                  `json:"id"`
@@ -14,15 +17,19 @@ type Billettholder struct {
 	TicketID     int                  `json:"ticket_id"`
 	CreatedAt    time.Time            `json:"created_at"`
 	UpdatedAt    time.Time            `json:"updated_at"`
+	CreatedByID  sql.NullInt64        `json:"created_by_id"`
+	UpdatedByID  sql.NullInt64        `json:"updated_by_id"`
 }
 
 type BillettholderEmail struct {
-	ID              int       `json:"id"`
-	BillettholderID int       `json:"billettholder_id"`
-	Email           string    `json:"email"`
-	Kind            string    `json:"kind"` // 'Ticket','Associated','Manual'
-	CreatedAt       time.Time `json:"created_at"`
-	UpdatedAt       time.Time `json:"updated_at"`
+	ID              int           `json:"id"`
+	BillettholderID int           `json:"billettholder_id"`
+	Email           string        `json:"email"`
+	Kind            string        `json:"kind"` // 'Ticket','Associated','Manual'
+	CreatedAt       time.Time     `json:"created_at"`
+	UpdatedAt       time.Time     `json:"updated_at"`
+	CreatedByID     sql.NullInt64 `json:"created_by_id"`
+	UpdatedByID     sql.NullInt64 `json:"updated_by_id"`
 }
 
 type BillettholderUsers struct {
