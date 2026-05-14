@@ -92,8 +92,8 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				Path:     "/",
 				MaxAge:   -1,
 				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteStrictMode,
+				Secure:   false,
+				SameSite: http.SameSiteLaxMode,
 			})
 
 			http.SetCookie(w, &http.Cookie{
@@ -102,8 +102,8 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				Path:     "/",
 				MaxAge:   -1,
 				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteStrictMode,
+				Secure:   false,
+				SameSite: http.SameSiteLaxMode,
 			})
 
 			redirectUrl := "/"
