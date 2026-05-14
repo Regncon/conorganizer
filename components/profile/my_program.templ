@@ -17,7 +17,6 @@ type UserEvent struct {
 	Title       string
 	Intro       string
 	Description string
-	ImageURL    string
 	UserID      int
 	EventType   string
 	PuljeID     string
@@ -223,20 +222,18 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 			e.title,
 			COALESCE(e.intro, '') as intro,
 			COALESCE(e.description, '') as description,
-			COALESCE(e.image_url, '') as image_url,
 			COALESCE(e.user_id, 0) as user_id,
 			e.event_type,
 			ep.pulje_id,
 			p.name as pulje_name,
-			p.start_time,
-			p.end_time,
-			ep.is_gm
-		FROM events_players ep
+			p.start_at,
+			p.end_at,
+			ep.role = 'GM' AS is_gamemaster
+		FROM relation_events_players ep
 		JOIN events e ON ep.event_id = e.id
 		JOIN puljer p ON ep.pulje_id = p.id
 		WHERE ep.billettholder_id = ?
-			AND (ep.is_player = 1 OR ep.is_gm = 1)
-		ORDER BY p.start_time ASC
+		ORDER BY p.start_at ASC
 	`
 
 	rows, queryErr := db.Query(query, billettholderID)
@@ -255,7 +252,6 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 			&event.Title,
 			&event.Intro,
 			&event.Description,
-			&event.ImageURL,
 			&event.UserID,
 			&event.EventType,
 			&event.PuljeID,

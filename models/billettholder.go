@@ -39,14 +39,13 @@ type BillettholderUsers struct {
 }
 
 /*
-CREATE TABLE events_players (
+CREATE TABLE relation_events_players (
 
 	    event_id TEXT NOT NULL,
 	    pulje_id TEXT NOT NULL,
 	    billettholder_id INTEGER NOT NULL,
-	    isPlayer BOOLEAN NOT NULL DEFAULT TRUE,
-	    isGm BOOLEAN NOT NULL DEFAULT FALSE,
-	    inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	    role TEXT NOT NULL DEFAULT 'Player' CHECK (role IN ('Player', 'GM')),
+	    inserted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	    PRIMARY KEY (billettholder_id, event_id, pulje_id),
 	    FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
 	    FOREIGN KEY (event_id) REFERENCES events (id),
@@ -57,7 +56,6 @@ type EventPlayer struct {
 	EventID         string    `json:"event_id"`
 	PuljeID         string    `json:"pulje_id"`
 	BillettholderID int       `json:"billettholder_id"`
-	IsPlayer        bool      `json:"is_player"`
-	IsGm            bool      `json:"is_gm"`
-	InsertedTime    time.Time `json:"inserted_time"`
+	Role            string    `json:"role"`
+	InsertedAt      time.Time `json:"inserted_at"`
 }

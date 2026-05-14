@@ -175,8 +175,8 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					}
 				})
 
-				apiRouter.Route("/events_players", func(eventsPlayersRouter chi.Router) {
-					eventsPlayersRouter.Post("/post/add_first_choice", func(w http.ResponseWriter, r *http.Request) {
+				apiRouter.Route("/event-players", func(eventPlayersRouter chi.Router) {
+					eventPlayersRouter.Post("/post/add_first_choice", func(w http.ResponseWriter, r *http.Request) {
 						type Store struct {
 							BillettholderId int    `json:"assignmentBillettholderId"`
 							EventId         string `json:"assignmentEventId"`
@@ -220,7 +220,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 
 					})
-					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
+					eventPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
 
 						type Store struct {
 							BillettholderId int    `json:"assignmentBillettholderId"`
@@ -258,8 +258,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"event_id", store.EventId,
 							"pulje_id", store.PuljeId,
 							"billettholder_id", store.BillettholderId,
-							"is_player", false,
-							"is_gm", true,
+							"role", "GM",
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast add GM update: %w", err).Error())
@@ -267,7 +266,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							return
 						}
 					})
-					eventsPlayersRouter.Put("/update_status", func(w http.ResponseWriter, r *http.Request) {
+					eventPlayersRouter.Put("/update_status", func(w http.ResponseWriter, r *http.Request) {
 						type Store struct {
 							BillettholderId int    `json:"assignmentBillettholderId"`
 							EventId         string `json:"assignmentEventId"`
@@ -300,8 +299,8 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"event_id", store.EventId,
 							"pulje_id", store.PuljeId,
 							"billettholder_id", store.BillettholderId,
-							"is_player", store.IsPlayer,
-							"is_gm", store.IsGm,
+							"assignment_is_player", store.IsPlayer,
+							"assignment_is_gm", store.IsGm,
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast player status update: %w", err).Error())

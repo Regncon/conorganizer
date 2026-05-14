@@ -27,7 +27,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
         [bh].first_name,
         [bh].last_name
     FROM
-        billettholder_emails [be]
+        relation_billettholder_emails [be]
         LEFT JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
     WHERE
         [be].kind = 'Ticket'
@@ -35,7 +35,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
             SELECT
                 billettholder_id
             FROM
-                billettholder_emails
+                relation_billettholder_emails
             WHERE
                 email = ?
         )
@@ -72,7 +72,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
 }
 
 func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.Pulje, error) {
-	puljerQuery := `SELECT pulje_id FROM event_puljer WHERE event_id = ? AND is_active = 1 AND is_published = 1`
+	puljerQuery := `SELECT pulje_id FROM relation_event_puljer WHERE event_id = ? AND is_in_pulje = 1 AND is_published = 1`
 	rows, puljerErr := db.Query(puljerQuery, eventId)
 	if puljerErr != nil {
 		return nil, fmt.Errorf("failed to query event puljer for event %s: %w", eventId, puljerErr)

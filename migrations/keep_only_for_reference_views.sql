@@ -6,7 +6,7 @@ DROP VIEW IF EXISTS v_billettholder_emails;
 DROP VIEW IF EXISTS v_event_puljer_active;
 
 -- Used by: view for external user<->billettholder lookup.
--- Relevant code: service/userctx/userctx.go:55 (users lookup), pages/event/event.go:266-269 (join users<->billettholdere_users)
+-- Relevant code: service/userctx/userctx.go:55 (users lookup), pages/event/event.go:266-269 (join users<->relation_billettholdere_users)
 CREATE VIEW IF NOT EXISTS
     v_get_user_billettholder AS
 SELECT

@@ -8,7 +8,12 @@ CREATE TABLE interests_rebuild_tmp (
     event_id TEXT NOT NULL,
     pulje_id TEXT NOT NULL,
     interest_level TEXT NOT NULL,
-    inserted_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_by_id INTEGER,
+    updated_by_id INTEGER,
+    FOREIGN KEY (created_by_id) REFERENCES users (id) ON DELETE SET NULL,
+    FOREIGN KEY (updated_by_id) REFERENCES users (id) ON DELETE SET NULL,
     PRIMARY KEY (billettholder_id, event_id, pulje_id),
     FOREIGN KEY (billettholder_id) REFERENCES billettholdere(id),
     FOREIGN KEY (event_id) REFERENCES events(id),
@@ -21,14 +26,20 @@ INSERT OR IGNORE INTO interests_rebuild_tmp (
     event_id,
     pulje_id,
     interest_level,
-    inserted_time
+    created_at,
+    updated_at,
+    created_by_id,
+    updated_by_id
 )
 SELECT
     billettholder_id,
     event_id,
     pulje_id,
     interest_level,
-    inserted_time
+    created_at,
+    updated_at,
+    created_by_id,
+    updated_by_id
 FROM interests
 -- Only include rows with non-empty pulje_id to avoid violating the new PK constraint.
 WHERE TRIM(pulje_id) <> '';

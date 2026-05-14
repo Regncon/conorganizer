@@ -11,7 +11,7 @@ INSERT INTO _email_anonymize_map (email, anon_email)
 WITH all_emails AS (
     SELECT email FROM users
     UNION
-    SELECT email FROM billettholder_emails
+    SELECT email FROM relation_billettholder_emails
     UNION
     SELECT email FROM events
 ),
@@ -39,11 +39,11 @@ SET email = (
     WHERE m.email = users.email
 );
 
-UPDATE billettholder_emails
+UPDATE relation_billettholder_emails
 SET email = (
     SELECT anon_email
     FROM _email_anonymize_map m
-    WHERE m.email = billettholder_emails.email
+    WHERE m.email = relation_billettholder_emails.email
 );
 
 UPDATE events
@@ -60,7 +60,7 @@ SET
 
 UPDATE events
 SET host_name = CASE
-    WHEN host IS NOT NULL THEN 'Host ' || printf('%06d', host)
+    WHEN user_id IS NOT NULL THEN 'Host ' || printf('%06d', user_id)
     ELSE 'Host'
 END;
 

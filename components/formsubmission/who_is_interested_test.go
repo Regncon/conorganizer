@@ -215,26 +215,27 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES ('Default')`)
 	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES ('Normal')`)
 	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES ('Veldig interessert'), ('Interessert'), ('Litt interessert'), ('Ikkje interessert')`)
+	mustExec(t, db, `INSERT INTO pulje_statuses(status) VALUES ('published')`)
 	mustExec(t, db, `
 		INSERT INTO puljer (
-			id, name, is_closed, is_published, start_time, end_time
+			id, name, status, start_at, end_at
 		) VALUES
-			('P1', 'Friday', 0, 1, '2025-10-03', '2025-10-03'),
-			('P2', 'SaturdayMorning', 0, 1, '2025-10-04', '2025-10-04'),
-			('P3', 'SaturdayEvening', 0, 1, '2025-10-04', '2025-10-04'),
-			('P4', 'Sunday', 0, 1, '2025-10-05', '2025-10-05')
+			('P1', 'Friday', 'published', '2025-10-03', '2025-10-03'),
+			('P2', 'SaturdayMorning', 'published', '2025-10-04', '2025-10-04'),
+			('P3', 'SaturdayEvening', 'published', '2025-10-04', '2025-10-04'),
+			('P4', 'Sunday', 'published', '2025-10-05', '2025-10-05')
 	`)
 	mustExec(t, db, `
 		INSERT INTO events (
-			id, title, intro, description, image_url, system, event_type,
+			id, title, intro, description, system, event_type,
 			age_group, event_runtime, host_name, email, phone_number,
-			pulje_name, max_players, beginner_friendly, can_be_run_in_english,
+			max_players, beginner_friendly, can_be_run_in_english,
 			status
 		) VALUES
-			('E1','Event 1','intro','desc','', '', 'Other','Default','Normal','Host 1','h1@test.no','11111111','Friday',4,1,1,'Godkjent'),
-			('E2','Event 2','intro','desc','', '', 'Other','Default','Normal','Host 2','h2@test.no','22222222','SaturdayMorning',4,1,1,'Godkjent'),
-			('E3','Event 3','intro','desc','', '', 'Other','Default','Normal','Host 3','h3@test.no','33333333','SaturdayEvening',4,1,1,'Godkjent'),
-			('E4','Event 4','intro','desc','', '', 'Other','Default','Normal','Host 4','h4@test.no','44444444','Sunday',4,1,1,'Godkjent')
+			('E1','Event 1','intro','desc','', 'Other','Default','Normal','Host 1','h1@test.no','11111111',4,1,1,'Godkjent'),
+			('E2','Event 2','intro','desc','', 'Other','Default','Normal','Host 2','h2@test.no','22222222',4,1,1,'Godkjent'),
+			('E3','Event 3','intro','desc','', 'Other','Default','Normal','Host 3','h3@test.no','33333333',4,1,1,'Godkjent'),
+			('E4','Event 4','intro','desc','', 'Other','Default','Normal','Host 4','h4@test.no','44444444',4,1,1,'Godkjent')
 	`)
 }
 
@@ -346,11 +347,15 @@ func seedAssignments(t *testing.T, db *sql.DB, rows []assignmentFixture) {
 	t.Helper()
 
 	for _, row := range rows {
+		role := "Player"
+		if row.isGM == 1 {
+			role = "GM"
+		}
 		mustExec(t, db, `
-			INSERT INTO events_players (
-				event_id, pulje_id, billettholder_id, is_player, is_gm
-			) VALUES (?, ?, ?, ?, ?)
-		`, row.eventID, row.puljeID, row.billettholderID, row.isPlayer, row.isGM)
+			INSERT INTO relation_events_players (
+				event_id, pulje_id, billettholder_id, role
+			) VALUES (?, ?, ?, ?)
+		`, row.eventID, row.puljeID, row.billettholderID, role)
 	}
 }
 

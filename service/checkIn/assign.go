@@ -133,7 +133,7 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
         SELECT id, billettholder_id, email, kind, created_at, updated_at, created_by_id, updated_by_id FROM relation_billettholder_emails WHERE email = ? COLLATE NOCASE
     `, user.Email)
 	if err != nil {
-		return fmt.Errorf("unable to query billettholder_emails for email %q: %w", user.Email, err)
+		return fmt.Errorf("unable to query relation_billettholder_emails for email %q: %w", user.Email, err)
 	}
 	defer rows.Close()
 
@@ -141,7 +141,7 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 		var result models.BillettholderEmail
 		err := rows.Scan(&result.ID, &result.BillettholderID, &result.Email, &result.Kind, &result.CreatedAt, &result.UpdatedAt, &result.CreatedByID, &result.UpdatedByID)
 		if err != nil {
-			return fmt.Errorf("unable to scan billettholder_emails for email %q: %w", user.Email, err)
+			return fmt.Errorf("unable to scan relation_billettholder_emails for email %q: %w", user.Email, err)
 		}
 		billettholdere = append(billettholdere, result)
 	}

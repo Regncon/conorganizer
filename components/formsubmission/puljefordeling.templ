@@ -128,7 +128,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 			  is_in_pulje = excluded.is_in_pulje, is_published = 0;
 			`
 			if _, err := db.Exec(upsert, eventID, puljeId, isInPulje); err != nil {
-				logger.Error(fmt.Errorf("failed to upsert event_puljer for event %s and pulje %s: %w", eventID, puljeId, err).Error())
+				logger.Error(fmt.Errorf("failed to upsert relation_event_puljer for event %s and pulje %s: %w", eventID, puljeId, err).Error())
 				http.Error(w, "Failed to update event in pulje", http.StatusInternalServerError)
 				return
 			}

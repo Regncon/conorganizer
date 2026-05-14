@@ -345,7 +345,7 @@ func updateInterest(
 		return fmt.Errorf("interest level is required")
 	}
 
-	puljeQuery := `SELECT EXISTS (SELECT * FROM event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_active = 1 AND is_published = 1)`
+	puljeQuery := `SELECT EXISTS (SELECT 1 FROM relation_event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_in_pulje = 1 AND is_published = 1)`
 	var puljeExists bool
 	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId).Scan(&puljeExists)
 	if puljerErr != nil {
@@ -360,7 +360,7 @@ func updateInterest(
             (SELECT 1
                 FROM relation_billettholdere_users [BU]
                 JOIN users [U] ON [BU].user_id = [U].id
-                WHERE [BU].billettholder_id = $1 AND [U].user_id = $2)`
+                WHERE [BU].billettholder_id = $1 AND [U].external_id = $2)`
 	var userHasAccess bool
 	userHasAccessErr := db.QueryRow(userHasAccessToBillettHolderIdQuery, billettholderId, userId).Scan(&userHasAccess)
 

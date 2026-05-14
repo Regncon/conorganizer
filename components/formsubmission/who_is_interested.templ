@@ -45,12 +45,12 @@ var queryFirstChoice = `
                             SELECT
                                 1
                             FROM
-                                events_players ep
+                                relation_events_players ep
                             WHERE
                                 ep.billettholder_id = i2.billettholder_id
                                 AND ep.event_id = i2.event_id
                                 AND ep.pulje_id = i2.pulje_id
-                                AND ep.is_player = 1
+                                AND ep.role = 'Player'
                         )
                 ) AS first_choice
 `
@@ -68,12 +68,12 @@ func queryHasOtherAssignedEventInPulje(alias interestSourceAlias) string {
                     SELECT
                         1
                     FROM
-                        events_players ep2
+                        relation_events_players ep2
                     WHERE
                         ep2.billettholder_id = %s.billettholder_id
                         AND ep2.pulje_id = %s.pulje_id
                         AND ep2.event_id <> %s.event_id
-                        AND (ep2.is_player = 1 OR ep2.is_gm = 1)
+                        AND ep2.role IN ('Player', 'GM')
                     LIMIT
                         1
                 ) AS has_other_event_in_pulje
@@ -86,11 +86,11 @@ func queryHasBeenGamemaster(alias interestSourceAlias) string {
                     SELECT
                         1
                     FROM
-                        events_players ep_gm
+                        relation_events_players ep_gm
                     WHERE
                         ep_gm.billettholder_id = %s.billettholder_id
                         AND ep_gm.event_id <> %s.event_id
-                        AND ep_gm.is_gm = 1
+                        AND ep_gm.role = 'GM'
                     LIMIT
                         1
                 ) AS has_been_gm
@@ -107,7 +107,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 ` + queryFirstChoice + `,
                 ` + queryHasOtherAssignedEventInPulje(interestRowAlias) + `,
                 ` + queryHasBeenGamemaster(interestRowAlias) + `,
-                COALESCE(ep.is_gm, 0) AS is_gm,
+                COALESCE(ep.role = 'GM', 0) AS is_gamemaster,
                 b.first_name,
                 b.last_name,
                 b.ticket_type,
@@ -115,7 +115,7 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
             FROM
                 interests i
                 JOIN billettholdere b ON b.id = i.billettholder_id
-                LEFT JOIN events_players ep ON ep.billettholder_id = i.billettholder_id
+                LEFT JOIN relation_events_players ep ON ep.billettholder_id = i.billettholder_id
                 AND ep.event_id = i.event_id
                 AND ep.pulje_id = i.pulje_id
             WHERE
@@ -125,12 +125,12 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                     SELECT
                         1
                     FROM
-                        events_players ep_assigned
+                        relation_events_players ep_assigned
                     WHERE
                         ep_assigned.billettholder_id = i.billettholder_id
                         AND ep_assigned.event_id = i.event_id
                         AND ep_assigned.pulje_id = i.pulje_id
-                        AND (ep_assigned.is_player = 1 OR ep_assigned.is_gm = 1)
+                        AND ep_assigned.role IN ('Player', 'GM')
                     LIMIT
                         1
                 )
@@ -139,11 +139,11 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                     SELECT
                         1
                     FROM
-                        events_players ep_gm_order
+                        relation_events_players ep_gm_order
                     WHERE
                         ep_gm_order.billettholder_id = i.billettholder_id
                         AND ep_gm_order.event_id <> i.event_id
-                        AND ep_gm_order.is_gm = 1
+                        AND ep_gm_order.role = 'GM'
                     LIMIT
                         1
                 ) DESC,
@@ -199,23 +199,22 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 ` + queryFirstChoice + `,
                 ` + queryHasOtherAssignedEventInPulje(assignmentRowAlias) + `,
                 ` + queryHasBeenGamemaster(assignmentRowAlias) + `,
-                COALESCE(ep.is_gm, 0) AS is_gm,
+                COALESCE(ep.role = 'GM', 0) AS is_gamemaster,
                 b.first_name,
                 b.last_name,
                 b.ticket_type,
                 b.is_over_18
             FROM
-                events_players ep
+                relation_events_players ep
                 JOIN billettholdere b ON b.id = ep.billettholder_id
                 LEFT JOIN interests i ON i.billettholder_id = ep.billettholder_id
                     AND i.event_id = ep.event_id
                     AND i.pulje_id = ep.pulje_id
             WHERE
                 ep.event_id = ?
-                AND (ep.is_player = 1 OR ep.is_gm = 1)
             ORDER BY
-                ep.is_gm DESC,
-                ep.inserted_time ASC
+                (ep.role = 'GM') DESC,
+                ep.inserted_at ASC
     `
 	rows, queryErr := db.Query(query, eventId)
 	if queryErr != nil {
@@ -327,10 +326,11 @@ func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *
 	defer tx.Rollback()
 
 	upsertInterestQuery := `
-		INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level, inserted_time)
-		VALUES (?, ?, ?, 'Veldig interessert', CURRENT_TIMESTAMP)
+		INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level)
+		VALUES (?, ?, ?, 'Veldig interessert')
 		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
-			interest_level = EXCLUDED.interest_level
+			interest_level = EXCLUDED.interest_level,
+			updated_at = CURRENT_TIMESTAMP
 	`
 	if _, execErr := tx.Exec(upsertInterestQuery, bid, eId, Pid); execErr != nil {
 		logger.Error(fmt.Errorf("failed to upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
@@ -338,12 +338,11 @@ func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *
 	}
 
 	upsertPlayerQuery := `
-		INSERT INTO events_players (event_id, pulje_id, billettholder_id, is_player, is_gm, inserted_time)
-		VALUES (?, ?, ?, 1, 0, CURRENT_TIMESTAMP)
-		ON CONFLICT(event_id, pulje_id, billettholder_id) DO UPDATE SET
-			is_player = EXCLUDED.is_player,
-			is_gm = EXCLUDED.is_gm,
-			inserted_time = CURRENT_TIMESTAMP
+		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role)
+		VALUES (?, ?, ?, 'Player')
+		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
+			role = EXCLUDED.role,
+			inserted_at = CURRENT_TIMESTAMP
 	`
 	if _, execErr := tx.Exec(upsertPlayerQuery, eId, Pid, bid); execErr != nil {
 		logger.Error(fmt.Errorf("failed to upsert player status for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
@@ -365,20 +364,40 @@ func UpdatePlayerStatus(eventId string,
 	db *sql.DB,
 	logger *slog.Logger,
 ) error {
-	query := `INSERT INTO
-                        events_players (event_id, pulje_id, billettholder_id, is_player, is_gm, inserted_time)
-                VALUES
-                    (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-                ON CONFLICT(event_id, pulje_id, billettholder_id) DO UPDATE SET
-                    is_player = EXCLUDED.is_player,
-                    is_gm = EXCLUDED.is_gm,
-                    inserted_time = CURRENT_TIMESTAMP
-        `
-	_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId, isPlayer, isGM)
+	if isPlayer && isGM {
+		return fmt.Errorf("player assignment cannot be both Player and GM")
+	}
+
+	if !isPlayer && !isGM {
+		query := `
+			DELETE FROM relation_events_players
+			WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ?
+		`
+		_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId)
+		if updatePlayerStatusErr != nil {
+			logger.Error(fmt.Errorf("failed to remove player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, updatePlayerStatusErr).Error())
+			return fmt.Errorf("remove player status (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, updatePlayerStatusErr)
+		}
+		return nil
+	}
+
+	role := "Player"
+	if isGM {
+		role = "GM"
+	}
+
+	query := `
+		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
+			role = EXCLUDED.role,
+			inserted_at = CURRENT_TIMESTAMP
+	`
+	_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId, role)
 	if updatePlayerStatusErr != nil {
-		logger.Error(fmt.Errorf("failed to update player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d, is_player=%t, is_gm=%t): %w", eventId, puljeId, billettholderId, isPlayer, isGM, updatePlayerStatusErr).Error())
+		logger.Error(fmt.Errorf("failed to update player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d, isPlayer=%t, isGM=%t): %w", eventId, puljeId, billettholderId, isPlayer, isGM, updatePlayerStatusErr).Error())
 		return fmt.Errorf(
-			"update player status (event_id=%s, pulje_id=%s, billettholder_id=%d, is_player=%t, is_gm=%t): %w",
+			"update player status (event_id=%s, pulje_id=%s, billettholder_id=%d, isPlayer=%t, isGM=%t): %w",
 			eventId,
 			puljeId,
 			billettholderId,
@@ -459,10 +478,10 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
 			{{
-				assignPlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = true; $assignmentIsGm = false; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
-				removePlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
-				assignGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = true; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
-				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/events_players/update_status')", eventId, puljeId, interest.BillettholderId)
+				assignPlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = true; $assignmentIsGm = false; @put('/admin/approval/api/event-players/update_status')", eventId, puljeId, interest.BillettholderId)
+				removePlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/event-players/update_status')", eventId, puljeId, interest.BillettholderId)
+				assignGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = true; @put('/admin/approval/api/event-players/update_status')", eventId, puljeId, interest.BillettholderId)
+				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/event-players/update_status')", eventId, puljeId, interest.BillettholderId)
 				playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerAction, removePlayerAction)
 				gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmAction, removeGmAction)
 				buttonsInfo := []ButtonInfo{playerAction, gmAction}
@@ -563,13 +582,13 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 		<div class="billettholder-search-buttons">
 			<button
 				class="btn btn--secondary"
-				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_gm'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_gm'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
 			>
 				Legg til som GM
 			</button>
 			<button
 				class="btn btn--secondary"
-				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/events_players/post/add_first_choice'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_first_choice'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
 			>
 				Legg til som førstevalg
 			</button>
