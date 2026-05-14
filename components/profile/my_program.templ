@@ -26,7 +26,7 @@ type UserEvent struct {
 	IsGM        bool
 }
 
-templ MyPropgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
+templ MyProgram(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
 	{{ logger = logger.With("component", "profile_program") }}
 	{{ events, err := GetAllEventsForUser(userInfo, db, logger) }}
 	{{ interests, interestErr := getAllInterestsForUser(userInfo, db, logger) }}

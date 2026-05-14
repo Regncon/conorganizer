@@ -74,7 +74,7 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 	<section class="page-content-container profile-container">
 		<div class="profile-content-column">
 			@profilecomponent.MyEvents(events)
-			@profilecomponent.MyPropgram(user, db, logger, eventImageDir)
+			@profilecomponent.MyProgram(user, db, logger, eventImageDir)
 		</div>
 		<div class="profile-content-column">
 			/* @profilecomponent.UserDetails(user) */
