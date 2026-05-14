@@ -139,7 +139,7 @@ func userExistsByEmail(db *sql.DB, email string) (bool, error) {
 func insertUser(db *sql.DB, externalID, email string, isAdmin bool, logger *slog.Logger) {
 	_, err := db.Exec("INSERT INTO users (external_id, email, is_admin) VALUES (?, ?, ?)", externalID, email, isAdmin)
 	if err != nil {
-		logger.Error(fmt.Errorf("failed to insert new user %q: %w", userID, err).Error())
+		logger.Error(fmt.Errorf("failed to insert new user %q: %w", externalID, err).Error())
 		return
 	}
 
@@ -150,7 +150,7 @@ func updateUserAdmin(db *sql.DB, externalID string, isAdmin bool, logger *slog.L
 	var currentIsAdmin bool
 	err := db.QueryRow("SELECT is_admin FROM users WHERE external_id = ?", externalID).Scan(&currentIsAdmin)
 	if err == sql.ErrNoRows {
-		logger.Error(fmt.Errorf("User not found for admin update").Error(), "user_id", userID)
+		logger.Error(fmt.Errorf("User not found for admin update").Error(), "user_id", externalID)
 		return
 	}
 	if err != nil {

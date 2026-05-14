@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 const (
 	InterestLevelHigh   = "Veldig interessert"

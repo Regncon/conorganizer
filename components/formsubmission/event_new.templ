@@ -57,29 +57,6 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			isValid := isTitleValid && isIntroValid && isDescriptionValid && isMaxPlayersValid && isSystemValid &&
 				isHostNameValid && isEmailValid && isPhoneNumberValid && isAgeGroupValid && isEventRuntimeValid
 
-			var isPuljeNameValid = false
-
-			puljeNames, puljeNamesError := getPuljeNames(db, logger)
-			if puljeNamesError != nil {
-				logger.Error(fmt.Errorf("error getting pulje names: %w", puljeNamesError).Error())
-			}
-
-			puljeNameInt, puljeNameToIntError := strconv.Atoi(*eventForm.PuljeName)
-			if puljeNameToIntError != nil {
-				logger.Error(fmt.Errorf("invalid pulje name format %q: %w", *eventForm.PuljeName, puljeNameToIntError).Error())
-			}
-
-			isPuljeNameValid = puljeNameInt > 0 && len(puljeNames) > 0 && puljeNameInt <= len(puljeNames)
-			isChildFriendly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
-			isAdultsOnly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
-			isBeginnerFriendly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
-			isExperiencedOnly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
-			isLongRunning := (eventForm.LongRunning != eventForm.ShortRunning)
-			isShortRunning := (eventForm.LongRunning != eventForm.ShortRunning)
-			isValid := isTitleValid && isDescriptionValid && isMaxPlayersValid && isSystemValid &&
-				isImageURLValid && isHostNameValid && isEmailValid && isPhoneNumberValid && isPuljeNameValid && isChildFriendly &&
-				isAdultsOnly && isBeginnerFriendly && isExperiencedOnly && isLongRunning && isShortRunning
-
 			return ValidationResultStruct{
 				IsTitleValid:            isTitleValid,
 				IsIntroValid:            isIntroValid,
@@ -577,8 +554,21 @@ templ formSubmissionPage() {
 }
 
 func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruct, w http.ResponseWriter, r *http.Request) (int64, error) {
-	userID, _ := authctx.GetUserIDFromToken(r.Context())
-	userDbID, _ := getUserDbID(db, logger, userID)
+	userID, tokenErr := authctx.GetUserIDFromToken(r.Context())
+	if tokenErr != nil {
+		return 0, fmt.Errorf("get user id from token: %w", tokenErr)
+	}
+
+	userDbID, userDbIDErr := getUserDbID(db, logger, userID)
+	if userDbIDErr != nil {
+		return 0, userDbIDErr
+	}
+
+	system := ""
+	if eventForm.System != nil {
+		system = *eventForm.System
+	}
+
 	query := `
             INSERT INTO events (
             title,
@@ -603,7 +593,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 		eventForm.Title,
 		eventForm.Intro,
 		eventForm.Description,
-		eventForm.System,
+		system,
 		eventForm.HostName,
 		userDbID,
 		userDbID,
@@ -642,37 +632,19 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 }
 
 func getUserDbID(db *sql.DB, logger *slog.Logger, externalID string) (int, error) {
-	query := "SELECT id FROM users where external_id = ?"
-	rows, queryError := db.Query(query, externalID)
-	if queryError != nil {
-		return nil, fmt.Errorf("error querying pulje names: %w", queryError)
+	query := "SELECT id FROM users WHERE external_id = ?"
+	var userDbID int
+	if queryError := db.QueryRow(query, externalID).Scan(&userDbID); queryError != nil {
+		err := fmt.Errorf("error querying user id for external id %q: %w", externalID, queryError)
+		logger.Error(err.Error())
+		return 0, err
 	}
 
-	defer rows.Close()
-
-	var puljer []PuljeNameStruct
-
-	for rows.Next() {
-		var name string
-		if scanError := rows.Scan(&name); scanError != nil {
-			scanErr := fmt.Errorf("error scanning pulje name: %w", scanError)
-			logger.Error(scanErr.Error())
-			return nil, scanErr
-		}
-		puljer = append(puljer, PuljeNameStruct{Name: name})
-	}
-
-	if rowsError := rows.Err(); rowsError != nil {
-		rowsErr := fmt.Errorf("error iterating pulje rows: %w", rowsError)
-		logger.Error(rowsErr.Error())
-		return nil, rowsErr
-	}
-
-	return puljer, nil
+	return userDbID, nil
 }
 
 func getHostId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
-	query := "SELECT id FROM users where user_id = ?"
+	query := "SELECT id FROM users WHERE external_id = ?"
 	rows, queryError := db.Query(query, userID)
 	if queryError != nil {
 		return 0, fmt.Errorf("error querying host id for user %q: %w", userID, queryError)

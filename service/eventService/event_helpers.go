@@ -121,8 +121,7 @@ func GetPujerForEvent(
 	for rows.Next() {
 		var pulje models.PuljeRow
 		if err := rows.Scan(&pulje.ID, &pulje.Name, &pulje.Status, &pulje.StartAt, &pulje.EndAt); err != nil {
-			logger.Error("Error scanning pulje row", slog.String("eventID", eventID), slog.String("error", err.Error()))
-			return nil, err
+			return nil, fmt.Errorf("error scanning pulje row for event %q: %w", eventID, err)
 		}
 		puljer = append(puljer, pulje)
 	}

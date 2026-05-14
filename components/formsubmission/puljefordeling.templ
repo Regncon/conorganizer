@@ -127,7 +127,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 			ON CONFLICT(event_id, pulje_id) DO UPDATE SET
 			  is_in_pulje = excluded.is_in_pulje, is_published = 0;
 			`
-			if _, err := db.Exec(upsert, eventID, puljeId, isActive); err != nil {
+			if _, err := db.Exec(upsert, eventID, puljeId, isInPulje); err != nil {
 				logger.Error(fmt.Errorf("failed to upsert event_puljer for event %s and pulje %s: %w", eventID, puljeId, err).Error())
 				http.Error(w, "Failed to update event in pulje", http.StatusInternalServerError)
 				return
@@ -140,69 +140,6 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 			}
 
 			w.WriteHeader(http.StatusNoContent) // 204
-		})
-	})
-}
-
-func UpdateRoomName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
-	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
-		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
-
-			eventID := chi.URLParam(r, "id")
-			if eventID == "" {
-				logger.Warn("Event ID is missing in the request")
-				http.Error(w, "Event ID is required", http.StatusBadRequest)
-				return
-			}
-
-			puljeId := chi.URLParam(r, "pulje_id")
-			if puljeId == "" {
-				logger.Warn("Pulje ID is missing in the request")
-				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
-				return
-			}
-
-			type Store struct {
-				RoomNameFredagKveld  string `json:"roomNameFredagKveld"`
-				RoomNameLordagMorgen string `json:"roomNameLordagMorgen"`
-				RoomNameLordagKveld  string `json:"roomNameLordagKveld"`
-				RoomNameSondagMorgen string `json:"roomNameSondagMorgen"`
-			}
-			store := &Store{}
-
-			if err := datastar.ReadSignals(r, store); err != nil {
-				logger.Error(fmt.Errorf("failed to read signals from request: %w", err).Error())
-				http.Error(w, err.Error(), http.StatusBadRequest)
-				return
-			}
-			var roomName string
-			if puljeId == string(models.PuljeFredagKveld) {
-				roomName = store.RoomNameFredagKveld
-			} else if puljeId == string(models.PuljeLordagMorgen) {
-				roomName = store.RoomNameLordagMorgen
-			} else if puljeId == string(models.PuljeLordagKveld) {
-				roomName = store.RoomNameLordagKveld
-			} else if puljeId == string(models.PuljeSondagMorgen) {
-				roomName = store.RoomNameSondagMorgen
-			} else {
-				logger.Warn("Invalid pulje ID", "pulje_id", puljeId)
-				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
-				return
-			}
-
-			query := `UPDATE event_puljer SET room = ? WHERE event_id = ? AND pulje_id = ?;`
-			_, err := db.Exec(query, roomName, eventID, puljeId)
-			if err != nil {
-				logger.Error(fmt.Errorf("failed to update room name in the database for event %s and pulje %s: %w", eventID, puljeId, err).Error())
-				http.Error(w, "Failed to update room name in the database", http.StatusInternalServerError)
-				return
-			}
-
-			if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
-				logger.Error(fmt.Errorf("failed to broadcast room update for event %s and pulje %s: %w", eventID, puljeId, err).Error())
-				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
-				return
-			}
 		})
 	})
 }
@@ -292,24 +229,6 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 				</label>
 			</div>
 		</div>
-		<label class="label-small color-strong form-group" style="width: 25rem;">
-			Rom { pulje }
-			<div
-				data-signals={ fmt.Sprintf("{%s:'%s'}", roomSignal, eventPulje.Room) }
-			></div>
-			<input
-				if eventPulje.IsActive == false {
-					disabled
-				}
-				name="room"
-				class="input"
-				type="text"
-				data-bind={ roomSignal }
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/room-name/%s')", eventId, pulje) }
-				placeholder="Rom for arrangementet"
-				required
-			/>
-		</label>
 	</div>
 }
 
