@@ -17,7 +17,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
 		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 
-			puljeId := chi.URLParam(r, "pulje_id")
+			puljeId := chi.URLParam(r, "puljeId")
 			if puljeId == "" {
 				logger.Warn("Pulje ID is missing in the request")
 				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
@@ -53,7 +53,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 			} else if puljeId == string(models.PuljeSondagMorgen) {
 				isPublished = store.IsPublishedSondagMorgen
 			} else {
-				logger.Warn("Invalid pulje ID", "pulje_id", puljeId)
+				logger.Warn("Invalid pulje ID", "puljeId", puljeId)
 				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
 				return
 			}
@@ -86,7 +86,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 				return
 			}
 
-			puljeId := chi.URLParam(r, "pulje_id")
+			puljeId := chi.URLParam(r, "puljeId")
 			if puljeId == "" {
 				logger.Warn("Pulje ID is missing in the request")
 				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
@@ -205,7 +205,7 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 							checked
 						}
 						data-bind={ fmt.Sprintf("isInPulje%s", pulje) }
-						data-on-change={ datastar.PutSSE("/my-events/api/new/%s/event-in-pulje/%s", eventId, pulje) }
+						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/event-in-pulje/%s')", eventId, pulje) }
 						type="checkbox"
 						name="pulje"
 						class="checkbox input"
