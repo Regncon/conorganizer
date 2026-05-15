@@ -212,7 +212,7 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 	t.Helper()
 
 	mustExec(t, db, `INSERT INTO event_statuses(status) VALUES ('Godkjent')`)
-	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES ('other')`)
+	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES ('Other')`)
 	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES ('Default')`)
 	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES ('Normal')`)
 	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES ('Veldig interessert'), ('Middels interessert'), ('Litt interessert')`)
@@ -233,10 +233,10 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 			max_players, beginner_friendly, can_be_run_in_english,
 			status
 		) VALUES
-			('E1','Event 1','intro','desc','', 'other','Default','Normal','Host 1','h1@test.no','11111111',4,1,1,'Godkjent'),
-			('E2','Event 2','intro','desc','', 'other','Default','Normal','Host 2','h2@test.no','22222222',4,1,1,'Godkjent'),
-			('E3','Event 3','intro','desc','', 'other','Default','Normal','Host 3','h3@test.no','33333333',4,1,1,'Godkjent'),
-			('E4','Event 4','intro','desc','', 'other','Default','Normal','Host 4','h4@test.no','44444444',4,1,1,'Godkjent')
+			('E1','Event 1','intro','desc','', 'Other','Default','Normal','Host 1','h1@test.no','11111111',4,1,1,'Godkjent'),
+			('E2','Event 2','intro','desc','', 'Other','Default','Normal','Host 2','h2@test.no','22222222',4,1,1,'Godkjent'),
+			('E3','Event 3','intro','desc','', 'Other','Default','Normal','Host 3','h3@test.no','33333333',4,1,1,'Godkjent'),
+			('E4','Event 4','intro','desc','', 'Other','Default','Normal','Host 4','h4@test.no','44444444',4,1,1,'Godkjent')
 	`)
 }
 

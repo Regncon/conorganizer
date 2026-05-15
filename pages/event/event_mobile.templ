@@ -361,6 +361,9 @@ templ Event_mobile(
 									} else if event.EventType == models.EventTypeBoardGame {
 										<span>Brettspill</span>
 										@icons.Icon(icons.EventBoardgame, icons.Size16)
+									} else if event.EventType == models.EventTypeCardGame {
+										<span>Kortspill</span>
+										@icons.Icon(icons.EventCardgame, icons.Size16)
 									} else if event.EventType == models.EventTypeOther {
 										<span>Annet</span>
 										@icons.Icon(icons.EventOtherGames, icons.Size16)

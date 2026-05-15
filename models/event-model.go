@@ -17,11 +17,26 @@ const (
 type EventType string
 
 const (
-	EventTypeRoleplay  EventType = "roleplay"
-	EventTypeBoardGame EventType = "boardgame"
-	EventTypeCardGame  EventType = "cardgame"
-	EventTypeOther     EventType = "other"
+	EventTypeRoleplay  EventType = "Roleplay"
+	EventTypeBoardGame EventType = "Boardgame"
+	EventTypeCardGame  EventType = "Cardgame"
+	EventTypeOther     EventType = "Other"
 )
+
+func (eventType EventType) Label() string {
+	switch eventType {
+	case EventTypeRoleplay:
+		return "Rollespill"
+	case EventTypeBoardGame:
+		return "Brettspill"
+	case EventTypeCardGame:
+		return "Kortspill"
+	case EventTypeOther:
+		return "Annet"
+	default:
+		return string(eventType)
+	}
+}
 
 type AgeGroup string
 

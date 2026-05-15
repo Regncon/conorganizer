@@ -228,9 +228,10 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					class="input"
 					required
 				>
-					<option value="roleplay">Rollespill</option>
-					<option value="boardgame">Brettspill</option>
-					<option value="other">Annet</option>
+					<option value={ models.EventTypeRoleplay }>{ models.EventTypeRoleplay.Label() }</option>
+					<option value={ models.EventTypeBoardGame }>{ models.EventTypeBoardGame.Label() }</option>
+					<option value={ models.EventTypeCardGame }>{ models.EventTypeCardGame.Label() }</option>
+					<option value={ models.EventTypeOther }>{ models.EventTypeOther.Label() }</option>
 				</select>
 			</label>
 			<a

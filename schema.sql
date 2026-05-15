@@ -50,7 +50,7 @@ CREATE TABLE
         intro TEXT NOT NULL,
         description TEXT NOT NULL,
         system TEXT DEFAULT '',
-        event_type TEXT NOT NULL DEFAULT 'other',
+        event_type TEXT NOT NULL DEFAULT 'Other',
         age_group TEXT NOT NULL DEFAULT 'Default',
         event_runtime TEXT NOT NULL DEFAULT 'Normal',
         host_name TEXT NOT NULL,
@@ -194,10 +194,10 @@ VALUES
 INSERT INTO
     events_types (event_type)
 VALUES
-    ('roleplay'),
-    ('boardgame'),
-    ('cardgame'),
-    ('other');
+    ('Roleplay'),
+    ('Boardgame'),
+    ('Cardgame'),
+    ('Other');
 
 INSERT INTO
     age_groups (age_group)

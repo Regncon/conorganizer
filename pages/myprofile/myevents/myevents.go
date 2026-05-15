@@ -316,11 +316,11 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 		event_type, beginner_friendly,
 		can_be_run_in_english
 	) VALUES (
-		$1, $1, $1, $2, $3, '', '', '', '', '', 6, 'roleplay', false, false
+		$1, $1, $1, $2, $3, '', '', '', '', '', 6, $4, false, false
 	) RETURNING id`
 
 	var eventId string
-	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft).Scan(&eventId)
+	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft, models.EventTypeRoleplay).Scan(&eventId)
 	if insertError != nil {
 		logger.Error(fmt.Errorf("failed to create new event form submission for user %q: %w", userInfo.Id, insertError).Error())
 		return
