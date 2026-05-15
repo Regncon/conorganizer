@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 )
 
@@ -211,10 +212,10 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 	t.Helper()
 
 	mustExec(t, db, `INSERT INTO event_statuses(status) VALUES ('Godkjent')`)
-	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES ('Other')`)
+	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES ('other')`)
 	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES ('Default')`)
 	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES ('Normal')`)
-	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES ('Veldig interessert'), ('Interessert'), ('Litt interessert'), ('Ikkje interessert')`)
+	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES ('Veldig interessert'), ('Middels interessert'), ('Litt interessert')`)
 	mustExec(t, db, `INSERT INTO pulje_statuses(status) VALUES ('published')`)
 	mustExec(t, db, `
 		INSERT INTO puljer (
@@ -232,10 +233,10 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 			max_players, beginner_friendly, can_be_run_in_english,
 			status
 		) VALUES
-			('E1','Event 1','intro','desc','', 'Other','Default','Normal','Host 1','h1@test.no','11111111',4,1,1,'Godkjent'),
-			('E2','Event 2','intro','desc','', 'Other','Default','Normal','Host 2','h2@test.no','22222222',4,1,1,'Godkjent'),
-			('E3','Event 3','intro','desc','', 'Other','Default','Normal','Host 3','h3@test.no','33333333',4,1,1,'Godkjent'),
-			('E4','Event 4','intro','desc','', 'Other','Default','Normal','Host 4','h4@test.no','44444444',4,1,1,'Godkjent')
+			('E1','Event 1','intro','desc','', 'other','Default','Normal','Host 1','h1@test.no','11111111',4,1,1,'Godkjent'),
+			('E2','Event 2','intro','desc','', 'other','Default','Normal','Host 2','h2@test.no','22222222',4,1,1,'Godkjent'),
+			('E3','Event 3','intro','desc','', 'other','Default','Normal','Host 3','h3@test.no','33333333',4,1,1,'Godkjent'),
+			('E4','Event 4','intro','desc','', 'other','Default','Normal','Host 4','h4@test.no','44444444',4,1,1,'Godkjent')
 	`)
 }
 
@@ -259,37 +260,37 @@ func gmFixtures() []billettholderFixture {
 
 func interestsForE2() []interestFixture {
 	return []interestFixture{
-		{billettholderID: idPlayerAssigned, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMAssigned, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
-		{billettholderID: idNotVeryInterested, eventID: eventE2, puljeID: puljeP2, interestLevel: "Interessert"},
-		{billettholderID: idUnassigned, eventID: eventE2, puljeID: puljeP2, interestLevel: "Litt interessert"},
-		{billettholderID: idSameEventAssignee, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMPlayer, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMAndPlayerDifferentEvents, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMOnlyVeryInterestedOther, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
+		{billettholderID: idPlayerAssigned, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMAssigned, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idNotVeryInterested, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelMedium},
+		{billettholderID: idUnassigned, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelLow},
+		{billettholderID: idSameEventAssignee, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMPlayer, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMAndPlayerDifferentEvents, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMOnlyVeryInterestedOther, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
 	}
 }
 
 func interestsForE1() []interestFixture {
 	return []interestFixture{
-		{billettholderID: idPlayerAssigned, eventID: eventE1, puljeID: puljeP1, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMOnlyVeryInterestedOther, eventID: eventE1, puljeID: puljeP1, interestLevel: "Veldig interessert"},
+		{billettholderID: idPlayerAssigned, eventID: eventE1, puljeID: puljeP1, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMOnlyVeryInterestedOther, eventID: eventE1, puljeID: puljeP1, interestLevel: models.InterestLevelHigh},
 	}
 }
 
 func interestsForE3() []interestFixture {
 	return []interestFixture{
-		{billettholderID: idPlayerAssigned, eventID: eventE3, puljeID: puljeP3, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMAssigned, eventID: eventE3, puljeID: puljeP3, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMPlayer, eventID: eventE3, puljeID: puljeP3, interestLevel: "Veldig interessert"},
+		{billettholderID: idPlayerAssigned, eventID: eventE3, puljeID: puljeP3, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMAssigned, eventID: eventE3, puljeID: puljeP3, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMPlayer, eventID: eventE3, puljeID: puljeP3, interestLevel: models.InterestLevelHigh},
 	}
 }
 
 func interestsForE4() []interestFixture {
 	return []interestFixture{
-		{billettholderID: idPlayerAssigned, eventID: eventE4, puljeID: puljeP4, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMAssigned, eventID: eventE4, puljeID: puljeP4, interestLevel: "Veldig interessert"},
-		{billettholderID: idUnassigned, eventID: eventE4, puljeID: puljeP4, interestLevel: "Ikkje interessert"},
+		{billettholderID: idPlayerAssigned, eventID: eventE4, puljeID: puljeP4, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMAssigned, eventID: eventE4, puljeID: puljeP4, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idUnassigned, eventID: eventE4, puljeID: puljeP4, interestLevel: models.InterestLevelLow},
 	}
 }
 

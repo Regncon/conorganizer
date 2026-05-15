@@ -22,8 +22,8 @@ type UserEvent struct {
 	EventType   string
 	PuljeID     string
 	PuljeName   string
-	StartTime   time.Time
-	EndTime     time.Time
+	StartAt     time.Time
+	EndAt       time.Time
 	IsGM        bool
 }
 
@@ -261,8 +261,8 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, db *sql.DB, logger
 			&event.EventType,
 			&event.PuljeID,
 			&event.PuljeName,
-			&event.StartTime,
-			&event.EndTime,
+			&event.StartAt,
+			&event.EndAt,
 			&event.IsGM,
 		)
 

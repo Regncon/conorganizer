@@ -50,7 +50,7 @@ CREATE TABLE
         intro TEXT NOT NULL,
         description TEXT NOT NULL,
         system TEXT DEFAULT '',
-        event_type TEXT NOT NULL DEFAULT 'Other',
+        event_type TEXT NOT NULL DEFAULT 'other',
         age_group TEXT NOT NULL DEFAULT 'Default',
         event_runtime TEXT NOT NULL DEFAULT 'Normal',
         host_name TEXT NOT NULL,
@@ -180,6 +180,84 @@ CREATE TABLE
         name TEXT NOT NULL,
         floor INTEGER NOT NULL,
         max_concurrent_games INTEGER NOT NULL
+    );
+
+INSERT INTO
+    event_statuses (status)
+VALUES
+    ('Kladd'),
+    ('Innsendt'),
+    ('Godkjent'),
+    ('Forkastet'),
+    ('Publisert');
+
+INSERT INTO
+    events_types (event_type)
+VALUES
+    ('roleplay'),
+    ('boardgame'),
+    ('cardgame'),
+    ('other');
+
+INSERT INTO
+    age_groups (age_group)
+VALUES
+    ('Default'),
+    ('ChildFriendly'),
+    ('AdultsOnly');
+
+INSERT INTO
+    event_runtimes (runtime)
+VALUES
+    ('Normal'),
+    ('ShortRunning'),
+    ('LongRunning');
+
+INSERT INTO
+    interest_levels (interest_level)
+VALUES
+    ('Veldig interessert'),
+    ('Middels interessert'),
+    ('Litt interessert');
+
+INSERT INTO
+    pulje_statuses (status)
+VALUES
+    ('not_published'),
+    ('published'),
+    ('locked'),
+    ('completed');
+
+INSERT INTO
+    puljer (id, name, status, start_at, end_at)
+VALUES
+    (
+        'FredagKveld',
+        'Fredag kveld',
+        'not_published',
+        '2025-10-10T18:00:00Z',
+        '2025-10-10T23:00:00Z'
+    ),
+    (
+        'LordagMorgen',
+        'Lørdag morgen',
+        'not_published',
+        '2025-10-11T10:00:00Z',
+        '2025-10-11T15:00:00Z'
+    ),
+    (
+        'LordagKveld',
+        'Lørdag kveld',
+        'not_published',
+        '2025-10-11T18:00:00Z',
+        '2025-10-11T23:00:00Z'
+    ),
+    (
+        'SondagMorgen',
+        'Søndag morgen',
+        'not_published',
+        '2025-10-12T10:00:00Z',
+        '2025-10-12T15:00:00Z'
     );
 
 CREATE VIEW
