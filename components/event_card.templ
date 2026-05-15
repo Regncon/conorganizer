@@ -94,19 +94,19 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
 			</div>
 			<div class="event-card-footer-tagicons">
 				if eventCard.EventType == models.EventTypeRoleplay {
-					<div class="event-card-tagicon-container" data-tippy-content="Rollespill">
+					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
 						@icons.Icon(icons.EventRoleplay, icons.Size20)
 					</div>
 				} else if eventCard.EventType == models.EventTypeBoardGame {
-					<div class="event-card-tagicon-container" data-tippy-content="Brettspill">
+					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
 						@icons.Icon(icons.EventBoardgame, icons.Size20)
 					</div>
 				} else if eventCard.EventType == models.EventTypeCardGame {
-					<div class="event-card-tagicon-container" data-tippy-content="Kortspill">
+					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
 						@icons.Icon(icons.EventCardgame, icons.Size20)
 					</div>
 				} else if eventCard.EventType == models.EventTypeOther {
-					<div class="event-card-tagicon-container" data-tippy-content="Annet arrangement">
+					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.EventType.Label() }>
 						@icons.Icon(icons.EventOtherGames, icons.Size20)
 					</div>
 				}

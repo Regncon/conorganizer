@@ -356,16 +356,16 @@ templ Event_mobile(
 							<div class="event-details-type">
 								<span class="label-small color-strong">
 									if event.EventType == models.EventTypeRoleplay {
-										<span>Rollespill</span>
+										<span>{ event.EventType.Label() }</span>
 										@icons.Icon(icons.EventRoleplay, icons.Size16)
 									} else if event.EventType == models.EventTypeBoardGame {
-										<span>Brettspill</span>
+										<span>{ event.EventType.Label() }</span>
 										@icons.Icon(icons.EventBoardgame, icons.Size16)
 									} else if event.EventType == models.EventTypeCardGame {
-										<span>Kortspill</span>
+										<span>{ event.EventType.Label() }</span>
 										@icons.Icon(icons.EventCardgame, icons.Size16)
 									} else if event.EventType == models.EventTypeOther {
-										<span>Annet</span>
+										<span>{ event.EventType.Label() }</span>
 										@icons.Icon(icons.EventOtherGames, icons.Size16)
 									}
 								</span>
