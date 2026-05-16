@@ -91,18 +91,7 @@ UPDATE events
 SET host_name = CASE
     WHEN user_id IS NOT NULL THEN 'Host ' || printf('%06d', ((user_id * 2654435761) % 900000) + 100000)
     ELSE 'Host'
-END
-WHERE NOT EXISTS (
-    SELECT 1
-    FROM _email_anonymize_keep k
-    WHERE lower(trim(k.email_key)) = lower(events.email)
-)
-AND NOT EXISTS (
-    SELECT 1
-    FROM users u
-    JOIN _email_anonymize_keep k ON lower(trim(k.email_key)) = lower(u.email)
-    WHERE u.id = events.user_id
-);
+END;
 
 UPDATE events
 SET phone_number = '00000000';
