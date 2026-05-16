@@ -3,11 +3,11 @@ PRAGMA foreign_keys = OFF;
 
 DROP TABLE IF EXISTS _email_anonymize_map;
 CREATE TABLE _email_anonymize_map (
-    email TEXT PRIMARY KEY,
+    email_key TEXT PRIMARY KEY,
     anon_email TEXT NOT NULL
 );
 
-INSERT INTO _email_anonymize_map (email, anon_email)
+INSERT INTO _email_anonymize_map (email_key, anon_email)
 WITH all_emails AS (
     SELECT email FROM users
     UNION
@@ -16,19 +16,19 @@ WITH all_emails AS (
     SELECT email FROM events
 ),
 dedup AS (
-    SELECT email
+    SELECT lower(email) AS email_key
     FROM all_emails
     WHERE email IS NOT NULL AND email <> ''
-    GROUP BY email
+    GROUP BY lower(email)
 ),
 numbered AS (
     SELECT
-        email,
-        row_number() OVER (ORDER BY email) AS rn
+        email_key,
+        row_number() OVER (ORDER BY email_key) AS rn
     FROM dedup
 )
 SELECT
-    email,
+    email_key,
     printf('user_%05d@example.invalid', rn) AS anon_email
 FROM numbered;
 
@@ -36,21 +36,21 @@ UPDATE users
 SET email = (
     SELECT anon_email
     FROM _email_anonymize_map m
-    WHERE m.email = users.email
+    WHERE m.email_key = lower(users.email)
 );
 
 UPDATE relation_billettholder_emails
 SET email = (
     SELECT anon_email
     FROM _email_anonymize_map m
-    WHERE m.email = relation_billettholder_emails.email
+    WHERE m.email_key = lower(relation_billettholder_emails.email)
 );
 
 UPDATE events
 SET email = (
     SELECT anon_email
     FROM _email_anonymize_map m
-    WHERE m.email = events.email
+    WHERE m.email_key = lower(events.email)
 );
 
 UPDATE billettholdere
