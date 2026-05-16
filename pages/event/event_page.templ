@@ -39,6 +39,19 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		<p>Error fetching event puljer: { puljerErr.Error() }</p>
 		return
 	}
+	{{
+		selectedPuljeId := puljeId
+		selectedPuljeIsActive := false
+		for _, pulje := range puljerForEvent {
+			if string(pulje.ID) == selectedPuljeId {
+				selectedPuljeIsActive = true
+				break
+			}
+		}
+		if !selectedPuljeIsActive && len(puljerForEvent) > 0 {
+			selectedPuljeId = string(puljerForEvent[0].ID)
+		}
+	}}
 	{{ evnetsByPulje, eventsByPuljeErr := root.GetEventsByPulje(db) }}
 	if eventsByPuljeErr != nil {
 		{{ logger.Error(fmt.Errorf("failed to load event navigation data for event %s: %w", eventId, eventsByPuljeErr).Error()) }}
@@ -70,5 +83,5 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		>Administrator - rediger arrangementer</a>
 	}
 	@Event_mobile(event, previousNextData, puljerForEvent, hasTickets, eventImageDir)
-	@event_components.EventInterests(userInfo, eventId, puljeId, db, r, logger)
+	@event_components.EventInterests(userInfo, eventId, selectedPuljeId, db, r, logger)
 }
