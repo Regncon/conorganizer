@@ -150,11 +150,11 @@ func updateUserAdmin(db *sql.DB, externalID string, isAdmin bool, logger *slog.L
 	var currentIsAdmin bool
 	err := db.QueryRow("SELECT is_admin FROM users WHERE external_id = ?", externalID).Scan(&currentIsAdmin)
 	if err == sql.ErrNoRows {
-		logger.Error(fmt.Errorf("User not found for admin update").Error(), "user_id", externalID)
+		logger.Error("user not found for admin update", "user_id", externalID)
 		return
 	}
 	if err != nil {
-		logger.Error(fmt.Errorf("Failed to fetch current is_admin: %w", err).Error(), "external_id", externalID)
+		logger.Error(fmt.Errorf("failed to fetch current is_admin: %w", err).Error(), "external_id", externalID)
 		return
 	}
 	if currentIsAdmin == isAdmin {
@@ -163,7 +163,7 @@ func updateUserAdmin(db *sql.DB, externalID string, isAdmin bool, logger *slog.L
 	}
 	_, updateErr := db.Exec("UPDATE users SET is_admin = ? WHERE external_id = ?", isAdmin, externalID)
 	if updateErr != nil {
-		logger.Error(fmt.Errorf("Failed to update user: %w", updateErr).Error(), "external_id", externalID)
+		logger.Error(fmt.Errorf("failed to update user: %w", updateErr).Error(), "external_id", externalID)
 		return
 	}
 	logger.Info("Updated user admin status", "external_id", externalID, "is_admin", isAdmin)
