@@ -13,7 +13,7 @@ CREATE TABLE _email_anonymize_keep (
 );
 
 -- Emails listed here are intentionally kept for testing/admin access.
--- Add values as lower-case email addresses before running the migration.
+-- Add email addresses here before running the migration.
 INSERT INTO _email_anonymize_keep (email_key) VALUES
     ('test@test.com'),
     ('test2@test.com');
@@ -31,7 +31,7 @@ dedup AS (
     FROM all_emails
     WHERE email IS NOT NULL AND email <> ''
       AND lower(email) NOT IN (
-          SELECT email_key FROM _email_anonymize_keep
+          SELECT lower(trim(email_key)) FROM _email_anonymize_keep
       )
     GROUP BY lower(email)
 ),
@@ -43,7 +43,7 @@ numbered AS (
 )
 SELECT
     email_key,
-    printf('user_%05d@example.invalid', rn) AS anon_email
+    printf('user_%05d@example.invalid', ((rn * 7919) % 90000) + 10000) AS anon_email
 FROM numbered;
 
 UPDATE users
@@ -79,28 +79,28 @@ WHERE lower(email) IN (
 UPDATE billettholdere
 SET
     first_name = 'User',
-    last_name = printf('%06d', id)
+    last_name = printf('%06d', ((id * 2654435761) % 900000) + 100000)
 WHERE NOT EXISTS (
     SELECT 1
     FROM relation_billettholder_emails e
-    JOIN _email_anonymize_keep k ON k.email_key = lower(e.email)
+    JOIN _email_anonymize_keep k ON lower(trim(k.email_key)) = lower(e.email)
     WHERE e.billettholder_id = billettholdere.id
 );
 
 UPDATE events
 SET host_name = CASE
-    WHEN user_id IS NOT NULL THEN 'Host ' || printf('%06d', user_id)
+    WHEN user_id IS NOT NULL THEN 'Host ' || printf('%06d', ((user_id * 2654435761) % 900000) + 100000)
     ELSE 'Host'
 END
 WHERE NOT EXISTS (
     SELECT 1
     FROM _email_anonymize_keep k
-    WHERE k.email_key = lower(events.email)
+    WHERE lower(trim(k.email_key)) = lower(events.email)
 )
 AND NOT EXISTS (
     SELECT 1
     FROM users u
-    JOIN _email_anonymize_keep k ON k.email_key = lower(u.email)
+    JOIN _email_anonymize_keep k ON lower(trim(k.email_key)) = lower(u.email)
     WHERE u.id = events.user_id
 );
 
