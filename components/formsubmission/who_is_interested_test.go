@@ -103,9 +103,9 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	})
 
 	// E2 first-choice checks focus on the CASE logic in queryFirstChoice:
-	// - "Veldig interessert" + assigned as player in a different event => FirstChoice should be true.
+	// - Highest interest + assigned as player in a different event => FirstChoice should be true.
 	// - GM-only in a different event should NOT count as FirstChoice.
-	// - Any interest below "Veldig interessert" should NOT be FirstChoice, even if assigned elsewhere.
+	// - Any lower interest should NOT be FirstChoice, even if assigned elsewhere.
 	// - No assignment at all should NOT be FirstChoice.
 	t.Run("E2 first-choice rules", func(t *testing.T) {
 		for _, tc := range []firstChoiceCase{
@@ -179,7 +179,7 @@ type interestFixture struct {
 	billettholderID int
 	eventID         string
 	puljeID         string
-	interestLevel   string
+	interestLevel   models.InterestLevel
 }
 
 type assignmentFixture struct {
@@ -211,21 +211,21 @@ func indexInterests(t *testing.T, interests []InterestWithHolder) map[int]Intere
 func seedBaseTables(t *testing.T, db *sql.DB) {
 	t.Helper()
 
-	mustExec(t, db, `INSERT INTO event_statuses(status) VALUES ('Godkjent')`)
-	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES ('Other')`)
-	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES ('Default')`)
-	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES ('Normal')`)
-	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES ('Veldig interessert'), ('Middels interessert'), ('Litt interessert')`)
-	mustExec(t, db, `INSERT INTO pulje_statuses(status) VALUES ('published')`)
+	mustExec(t, db, `INSERT INTO event_statuses(status) VALUES (?)`, models.EventStatusApproved)
+	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
+	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
+	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
+	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
+	mustExec(t, db, `INSERT INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusPublished)
 	mustExec(t, db, `
 		INSERT INTO puljer (
 			id, name, status, start_at, end_at
 		) VALUES
-			('P1', 'Friday', 'published', '2025-10-03', '2025-10-03'),
-			('P2', 'SaturdayMorning', 'published', '2025-10-04', '2025-10-04'),
-			('P3', 'SaturdayEvening', 'published', '2025-10-04', '2025-10-04'),
-			('P4', 'Sunday', 'published', '2025-10-05', '2025-10-05')
-	`)
+			('P1', 'Friday', ?, '2025-10-03', '2025-10-03'),
+			('P2', 'SaturdayMorning', ?, '2025-10-04', '2025-10-04'),
+			('P3', 'SaturdayEvening', ?, '2025-10-04', '2025-10-04'),
+			('P4', 'Sunday', ?, '2025-10-05', '2025-10-05')
+	`, models.PuljeStatusPublished, models.PuljeStatusPublished, models.PuljeStatusPublished, models.PuljeStatusPublished)
 	mustExec(t, db, `
 		INSERT INTO events (
 			id, title, intro, description, system, event_type,
@@ -233,16 +233,21 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 			max_players, beginner_friendly, can_be_run_in_english,
 			status
 		) VALUES
-			('E1','Event 1','intro','desc','', 'Other','Default','Normal','Host 1','h1@test.no','11111111',4,1,1,'Godkjent'),
-			('E2','Event 2','intro','desc','', 'Other','Default','Normal','Host 2','h2@test.no','22222222',4,1,1,'Godkjent'),
-			('E3','Event 3','intro','desc','', 'Other','Default','Normal','Host 3','h3@test.no','33333333',4,1,1,'Godkjent'),
-			('E4','Event 4','intro','desc','', 'Other','Default','Normal','Host 4','h4@test.no','44444444',4,1,1,'Godkjent')
-	`)
+			('E1','Event 1','intro','desc','', ?,?,?,'Host 1','h1@test.no','11111111',4,1,1,?),
+			('E2','Event 2','intro','desc','', ?,?,?,'Host 2','h2@test.no','22222222',4,1,1,?),
+			('E3','Event 3','intro','desc','', ?,?,?,'Host 3','h3@test.no','33333333',4,1,1,?),
+			('E4','Event 4','intro','desc','', ?,?,?,'Host 4','h4@test.no','44444444',4,1,1,?)
+	`,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
+	)
 }
 
 func playerFixtures() []billettholderFixture {
 	return []billettholderFixture{
-		{id: idPlayerAssigned, firstName: "Player", lastName: "One"},
+		{id: idPlayerAssigned, firstName: "Assigned", lastName: "One"},
 		{id: idNotVeryInterested, firstName: "NotVery", lastName: "Three"},
 		{id: idUnassigned, firstName: "NoAssign", lastName: "Four"},
 		{id: idSameEventAssignee, firstName: "SameEvent", lastName: "Five"},
@@ -251,7 +256,7 @@ func playerFixtures() []billettholderFixture {
 
 func gmFixtures() []billettholderFixture {
 	return []billettholderFixture{
-		{id: idGMAssigned, firstName: "GM", lastName: "Two"},
+		{id: idGMAssigned, firstName: "Gamemaster", lastName: "Two"},
 		{id: idGMPlayer, firstName: "GMPlayer", lastName: "Six"},
 		{id: idGMAndPlayerDifferentEvents, firstName: "GMAndPlayer", lastName: "Seven"},
 		{id: idGMOnlyVeryInterestedOther, firstName: "GMOnlyVeryInterested", lastName: "Eight"},
@@ -348,9 +353,9 @@ func seedAssignments(t *testing.T, db *sql.DB, rows []assignmentFixture) {
 	t.Helper()
 
 	for _, row := range rows {
-		role := "Player"
+		role := models.EventPlayerRolePlayer
 		if row.isGM == 1 {
-			role = "GM"
+			role = models.EventPlayerRoleGM
 		}
 		mustExec(t, db, `
 			INSERT INTO relation_events_players (

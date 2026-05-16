@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/components/formsubmission"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/admin/approval"
 	edit_form "github.com/Regncon/conorganizer/pages/admin/approval/editForm"
 	"github.com/Regncon/conorganizer/pages/root"
@@ -258,7 +259,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"event_id", store.EventId,
 							"pulje_id", store.PuljeId,
 							"billettholder_id", store.BillettholderId,
-							"role", "GM",
+							"role", models.EventPlayerRoleGM,
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast add GM update: %w", err).Error())

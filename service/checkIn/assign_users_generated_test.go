@@ -75,7 +75,7 @@ func TestAssociateUserWithBillettholderGeneratedData(t *testing.T) {
 
 	var queryBillettholderEmail []string
 	for _, billettholderEmail := range expectedBillettholderEmails {
-		queryBillettholderEmail = append(queryBillettholderEmail, fmt.Sprintf(`(%d, "%s", "%s")`, billettholderEmail.BillettholderID, billettholderEmail.Email, "Manual"))
+		queryBillettholderEmail = append(queryBillettholderEmail, fmt.Sprintf(`(%d, "%s", "%s")`, billettholderEmail.BillettholderID, billettholderEmail.Email, models.BillettholderEmailKindManual))
 	}
 	queryBase = fmt.Sprintf(`
             INSERT INTO relation_billettholder_emails (

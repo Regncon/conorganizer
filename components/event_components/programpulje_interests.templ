@@ -3,12 +3,13 @@ package event_components
 import (
 	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
 )
 
 type Interest struct {
 	EventID       string
 	EventName     string
-	InterestLevel string
+	InterestLevel models.InterestLevel
 }
 
 templ ProgramPuljeInterests(interests []Interest) {
@@ -115,7 +116,7 @@ templ ProgramPuljeInterests(interests []Interest) {
 				for _, interest := range interests {
 					<a href={ templ.URL(fmt.Sprintf("/event/%s", interest.EventID)) } class="item-card profile-event-bar pulje-interests-collapse-content">
 						<span class="profile-event-bar-title">{ interest.EventName }</span>
-						<span class="pulje-interest-event-choice">{ interest.InterestLevel }</span>
+						<span class="pulje-interest-event-choice">{ interest.InterestLevel.Label() }</span>
 					</a>
 				}
 			</div>

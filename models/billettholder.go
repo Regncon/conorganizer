@@ -22,14 +22,35 @@ type Billettholder struct {
 }
 
 type BillettholderEmail struct {
-	ID              int           `json:"id"`
-	BillettholderID int           `json:"billettholder_id"`
-	Email           string        `json:"email"`
-	Kind            string        `json:"kind"` // 'Ticket','Associated','Manual'
-	CreatedAt       time.Time     `json:"created_at"`
-	UpdatedAt       time.Time     `json:"updated_at"`
-	CreatedByID     sql.NullInt64 `json:"created_by_id"`
-	UpdatedByID     sql.NullInt64 `json:"updated_by_id"`
+	ID              int                    `json:"id"`
+	BillettholderID int                    `json:"billettholder_id"`
+	Email           string                 `json:"email"`
+	Kind            BillettholderEmailKind `json:"kind"` // See BillettholderEmailKind constants.
+	CreatedAt       time.Time              `json:"created_at"`
+	UpdatedAt       time.Time              `json:"updated_at"`
+	CreatedByID     sql.NullInt64          `json:"created_by_id"`
+	UpdatedByID     sql.NullInt64          `json:"updated_by_id"`
+}
+
+type BillettholderEmailKind string
+
+const (
+	BillettholderEmailKindTicket     BillettholderEmailKind = "Ticket"
+	BillettholderEmailKindAssociated BillettholderEmailKind = "Associated"
+	BillettholderEmailKindManual     BillettholderEmailKind = "Manual"
+)
+
+func (kind BillettholderEmailKind) Label() string {
+	switch kind {
+	case BillettholderEmailKindTicket:
+		return "Billett"
+	case BillettholderEmailKindAssociated:
+		return "Tilknyttet"
+	case BillettholderEmailKindManual:
+		return "Manuell"
+	default:
+		return string(kind)
+	}
 }
 
 type BillettholderUsers struct {
@@ -52,10 +73,28 @@ CREATE TABLE relation_events_players (
 	    FOREIGN KEY (pulje_id) REFERENCES puljer (id)
 	);
 */
+type EventPlayerRole string
+
+const (
+	EventPlayerRolePlayer EventPlayerRole = "Player"
+	EventPlayerRoleGM     EventPlayerRole = "GM"
+)
+
+func (role EventPlayerRole) Label() string {
+	switch role {
+	case EventPlayerRolePlayer:
+		return "spiller"
+	case EventPlayerRoleGM:
+		return "GM"
+	default:
+		return string(role)
+	}
+}
+
 type EventPlayer struct {
-	EventID         string    `json:"event_id"`
-	PuljeID         string    `json:"pulje_id"`
-	BillettholderID int       `json:"billettholder_id"`
-	Role            string    `json:"role"`
-	InsertedAt      time.Time `json:"inserted_at"`
+	EventID         string          `json:"event_id"`
+	PuljeID         string          `json:"pulje_id"`
+	BillettholderID int             `json:"billettholder_id"`
+	Role            EventPlayerRole `json:"role"`
+	InsertedAt      time.Time       `json:"inserted_at"`
 }

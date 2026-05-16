@@ -80,7 +80,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		{
 			BillettholderID: int(billettholderID),
 			Email:           ticket.Email,
-			Kind:            "Ticket",
+			Kind:            models.BillettholderEmailKindTicket,
 		},
 	}
 	// find associated emails if any. An associated email is any email that is in a ticket with the same order ID but is not the ticket email
@@ -89,7 +89,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			associatedEmail := models.BillettholderEmail{
 				BillettholderID: int(billettholderID),
 				Email:           t.Email,
-				Kind:            "Associated",
+				Kind:            models.BillettholderEmailKindAssociated,
 			}
 			emails = append(emails, associatedEmail)
 		}

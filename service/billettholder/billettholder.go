@@ -92,7 +92,7 @@ func GetBillettholdere(userId string, db *sql.DB) ([]models.Billettholder, error
 				ID:              int(er.id.Int64),
 				BillettholderID: b.ID,
 				Email:           er.email.String,
-				Kind:            er.kind.String,
+				Kind:            models.BillettholderEmailKind(er.kind.String),
 				CreatedAt:       er.createdAt.Time,
 				UpdatedAt:       er.updatedAt.Time,
 			})

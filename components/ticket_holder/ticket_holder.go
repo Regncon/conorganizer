@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/Regncon/conorganizer/models"
+	puljerService "github.com/Regncon/conorganizer/service/puljer"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
@@ -29,9 +30,9 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
     FROM
         relation_billettholder_emails [be]
         LEFT JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
-    WHERE
-        [be].kind = 'Ticket'
-        AND [be].billettholder_id IN (
+	    WHERE
+	        [be].kind = ?
+	        AND [be].billettholder_id IN (
             SELECT
                 billettholder_id
             FROM
@@ -40,7 +41,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
                 email = ?
         )
 `
-	rows, ticketHolderQueryErr := db.Query(query, userInfo.Email)
+	rows, ticketHolderQueryErr := db.Query(query, models.BillettholderEmailKindTicket, userInfo.Email)
 	if ticketHolderQueryErr != nil {
 		return nil, fmt.Errorf("failed to query ticket holders for email %q: %w", userInfo.Email, ticketHolderQueryErr)
 	}
@@ -71,24 +72,10 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
 
 }
 
-func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.Pulje, error) {
-	puljerQuery := `SELECT pulje_id FROM relation_event_puljer WHERE event_id = ? AND is_in_pulje = 1 AND is_published = 1`
-	rows, puljerErr := db.Query(puljerQuery, eventId)
-	if puljerErr != nil {
-		return nil, fmt.Errorf("failed to query event puljer for event %s: %w", eventId, puljerErr)
-	}
-	defer rows.Close()
-
-	var puljer []models.Pulje
-	for rows.Next() {
-		var puljeName models.Pulje
-		if scanErr := rows.Scan(&puljeName); scanErr != nil {
-			return nil, fmt.Errorf("failed to scan pulje row for event %s: %w", eventId, scanErr)
-		}
-		puljer = append(puljer, puljeName)
-	}
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, fmt.Errorf("error iterating over pulje rows for event %s: %w", eventId, rowsErr)
+func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.PuljeRow, error) {
+	puljer, err := puljerService.GetActivePuljeForEvent(eventId, db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query event puljer for event %s: %w", eventId, err)
 	}
 
 	return puljer, nil

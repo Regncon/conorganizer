@@ -94,19 +94,19 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	var happyPathBillettholderEmail = models.BillettholderEmail{
 		BillettholderID: happyPathBillettholder.ID,
 		Email:           happyPathPerson.Email,
-		Kind:            "Manual",
+		Kind:            models.BillettholderEmailKindManual,
 	}
 
 	var missMatchedBillettholderEmail = models.BillettholderEmail{
 		BillettholderID: missMatchBillettholder.ID,
 		Email:           strings.ToUpper(happyPathPerson.Email),
-		Kind:            "Manual",
+		Kind:            models.BillettholderEmailKindManual,
 	}
 
 	var uassociatedBillettholderEmail = models.BillettholderEmail{
 		BillettholderID: unassociatedBillettholder.ID,
 		Email:           uassociatedPerson.Email,
-		Kind:            "Manual",
+		Kind:            models.BillettholderEmailKindManual,
 	}
 
 	var testBillettholders []models.Billettholder
@@ -151,7 +151,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 
 	var queryBillettholderEmail []string
 	for _, billettholderEmail := range expectedBillettholderEmails {
-		queryBillettholderEmail = append(queryBillettholderEmail, fmt.Sprintf(`(%d, "%s", "%s")`, billettholderEmail.BillettholderID, billettholderEmail.Email, "Manual"))
+		queryBillettholderEmail = append(queryBillettholderEmail, fmt.Sprintf(`(%d, "%s", "%s")`, billettholderEmail.BillettholderID, billettholderEmail.Email, models.BillettholderEmailKindManual))
 	}
 	queryBase = fmt.Sprintf(`
             INSERT INTO relation_billettholder_emails (

@@ -10,9 +10,9 @@ import (
 )
 
 type BillettholderInterest struct {
-	BillettholderId int    `json:"billettHolderId"`
-	PuljeId         string `json:"puljeId"`
-	InterestLevel   string `json:"interestLevel"`
+	BillettholderId int                  `json:"billettHolderId"`
+	PuljeId         string               `json:"puljeId"`
+	InterestLevel   models.InterestLevel `json:"interestLevel"`
 }
 
 type interestPickerSignals struct {
@@ -47,7 +47,7 @@ templ TicketHolderInterestPicker(
 	<div
 		class="interest-buttons"
 		data-signals:current-interest-level-choice={ fmt.Sprintf("'%s'", pendingChoice) }
-		data-signals:selected-interest-level="''"
+		data-signals:selected-interest-level={ fmt.Sprintf("'%s'", models.InterestLevelNone) }
 	>
 		<strong
 			class="ticket-holder-error"
@@ -61,7 +61,7 @@ templ TicketHolderInterestPicker(
 			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelHigh) }
 			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelHigh, eventId) }
 		>
-			<span class="emoji">🤩</span> Veldig interessert
+			<span class="emoji">🤩</span> { models.InterestLevelHigh.Label() }
 		</div>
 		<div
 			role="button"
@@ -70,7 +70,7 @@ templ TicketHolderInterestPicker(
 			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelMedium) }
 			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelMedium, eventId) }
 		>
-			<span class="emoji">🙂</span> Interessert
+			<span class="emoji">🙂</span> { models.InterestLevelMedium.Label() }
 		</div>
 		<div
 			role="button"
@@ -79,16 +79,16 @@ templ TicketHolderInterestPicker(
 			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelLow) }
 			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelLow, eventId) }
 		>
-			<span class="emoji">🤨</span> Litt interessert
+			<span class="emoji">🤨</span> { models.InterestLevelLow.Label() }
 		</div>
 		<div
 			role="button"
 			class="card-clickable card-clickable-item"
-			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '': $currentInterestLevelChoice === ''", pendingChoice) }
-			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '' ? '-1' : '0' : '0'", pendingChoice) }
-			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = ''; @put('/event/api/%s/interest/update/interest')", eventId) }
+			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelNone, models.InterestLevelNone) }
+			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelNone) }
+			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelNone, eventId) }
 		>
-			<span class="emoji">😑</span> Ikke interessert
+			<span class="emoji">😑</span> { models.InterestLevelNone.Label() }
 		</div>
 	</div>
 }

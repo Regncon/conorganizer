@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Regncon/conorganizer/models"
+	puljerService "github.com/Regncon/conorganizer/service/puljer"
 )
 
 func GetEventById(eventID string, db *sql.DB) (*models.Event, error) {
@@ -77,56 +78,9 @@ func GetPujerForEvent(
 	eventID string,
 	db *sql.DB,
 ) ([]models.PuljeRow, error) {
-	/*
-			   CREATE TABLE
-			       relation_event_puljer (
-			           event_id TEXT NOT NULL,
-			           pulje_id TEXT NOT NULL,
-			           is_in_pulje BOOLEAN NOT NULL DEFAULT TRUE,
-			           is_published BOOLEAN NOT NULL DEFAULT FALSE,
-			           room_id INTEGER,
-			           PRIMARY KEY (event_id, pulje_id),
-			           FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
-			           FOREIGN KEY (pulje_id) REFERENCES puljer (id) ON UPDATE CASCADE,
-			           FOREIGN KEY (room_id) REFERENCES rooms (id) ON DELETE SET NULL
-			       );
-		CREATE TABLE
-		    puljer (
-		        id TEXT NOT NULL PRIMARY KEY,
-		        name TEXT NOT NULL,
-		        start_at DATE NOT NULL,
-		        end_at DATE NOT NULL
-		    );
-
-		type PuljeRow struct {
-			ID      Pulje     `json:"id"`
-			Name    string    `json:"name"`
-			StartAt time.Time `json:"start_at"`
-			EndAt   time.Time `json:"end_at"`
-		}
-	*/
-	query := `SELECT p.id, p.name, p.status, p.start_at, p.end_at
-            FROM puljer p
-            JOIN relation_event_puljer ep ON p.id = ep.pulje_id
-            WHERE ep.event_id = ? AND ep.is_in_pulje = TRUE AND ep.is_published = TRUE
-            ORDER BY p.start_at ASC
-            `
-
-	rows, err := db.Query(query, eventID)
+	puljer, err := puljerService.GetActivePuljeForEvent(eventID, db)
 	if err != nil {
 		return nil, fmt.Errorf("error querying puljer for event %q: %w", eventID, err)
-	}
-	defer rows.Close()
-	var puljer []models.PuljeRow
-	for rows.Next() {
-		var pulje models.PuljeRow
-		if err := rows.Scan(&pulje.ID, &pulje.Name, &pulje.Status, &pulje.StartAt, &pulje.EndAt); err != nil {
-			return nil, fmt.Errorf("error scanning pulje row for event %q: %w", eventID, err)
-		}
-		puljer = append(puljer, pulje)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over pulje rows for event %q: %w", eventID, err)
 	}
 	return puljer, nil
 }

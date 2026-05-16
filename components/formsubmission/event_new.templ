@@ -3,6 +3,7 @@ package formsubmission
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -20,8 +21,8 @@ type EventFormStruct struct {
 	Email             string  `json:"email"`
 	PhoneNumber       string  `json:"phone_number"`
 	MaxPlayers        int     `json:"max_players"`
-	AgeGroup          string  `json:"age_group"`
-	EventRuntime      string  `json:"event_runtime"`
+	AgeGroup          models.AgeGroup `json:"age_group"`
+	EventRuntime      models.Runtime  `json:"event_runtime"`
 	BeginnerFriendly  bool    `json:"beginner_friendly"`
 	CanBeRunInEnglish bool    `json:"can_be_run_in_english"`
 }
@@ -52,8 +53,8 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			isHostNameValid := len(eventForm.HostName) > 2
 			isEmailValid := strings.Contains(eventForm.Email, "@") && len(eventForm.Email) > 5
 			isPhoneNumberValid := len(eventForm.PhoneNumber) >= 8
-			isAgeGroupValid := eventForm.AgeGroup == "Default" || eventForm.AgeGroup == "ChildFriendly" || eventForm.AgeGroup == "AdultsOnly"
-			isEventRuntimeValid := eventForm.EventRuntime == "Normal" || eventForm.EventRuntime == "ShortRunning" || eventForm.EventRuntime == "LongRunning"
+			isAgeGroupValid := eventForm.AgeGroup.Valid()
+			isEventRuntimeValid := eventForm.EventRuntime.Valid()
 			isValid := isTitleValid && isIntroValid && isDescriptionValid && isMaxPlayersValid && isSystemValid &&
 				isHostNameValid && isEmailValid && isPhoneNumberValid && isAgeGroupValid && isEventRuntimeValid
 
@@ -77,8 +78,8 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			emptySystem := ""
 			eventForm := &EventFormStruct{
 				System:       &emptySystem,
-				AgeGroup:     "Default",
-				EventRuntime: "Normal",
+				AgeGroup:     models.AgeGroupDefault,
+				EventRuntime: models.RunTimeNormal,
 			}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
 				logger.Debug(fmt.Errorf("ReadSignals failed for inline validation: %w", err).Error())
@@ -95,8 +96,8 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			emptySystem := ""
 			eventForm := &EventFormStruct{
 				System:       &emptySystem,
-				AgeGroup:     "Default",
-				EventRuntime: "Normal",
+				AgeGroup:     models.AgeGroupDefault,
+				EventRuntime: models.RunTimeNormal,
 			}
 			if readSignalsError := datastar.ReadSignals(r, eventForm); readSignalsError != nil {
 				logger.Error(fmt.Errorf("error reading signals: %w", readSignalsError).Error())
@@ -187,60 +188,26 @@ templ checkboxValidationComponent(label, field string, isValid bool, isNotValidE
 	</div>
 }
 
-templ radioValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
+templ radioValidationComponent(label, field string, puljer []models.PuljeRow, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
 	<div class="form-control">
 		<label class="label">
 			<span class="label-text">{ label }</span>
 		</label>
 		<div class="flex flex-col gap-2">
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="1"
-					class="radio"
-					data-bind={ field }
-					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
-					data-testid={ field + "_1" }
-				/>
-				<span>Fredag kveld</span>
-			</label>
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="2"
-					class="radio"
-					data-bind={ field }
-					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
-					data-testid={ field + "_2" }
-				/>
-				<span>Lørdag morgen</span>
-			</label>
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="3"
-					class="radio"
-					data-bind={ field }
-					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
-					data-testid={ field + "_3" }
-				/>
-				<span>Lørdag kveld</span>
-			</label>
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="4"
-					class="radio"
-					data-bind={ field }
-					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
-					data-testid={ field + "_4" }
-				/>
-				<span>Søndag morgen</span>
-			</label>
+			for _, pulje := range puljer {
+				<label class="cursor-pointer flex items-center gap-2">
+					<input
+						type="radio"
+						name={ field }
+						value={ string(pulje.ID) }
+						class="radio"
+						data-bind={ field }
+						data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
+						data-testid={ field + "_" + string(pulje.ID) }
+					/>
+					<span>{ pulje.Name } ({ pulje.TimeRange() })</span>
+				</label>
+			}
 		</div>
 		if !isValid {
 			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>
@@ -303,8 +270,8 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 			@inputValidationComponent("Navn på arrangør", "text", "host_name", eventFormValidationResult.IsHostNameValid, "Navn på arrangør må være minst 3 tegn lang")
 			@inputValidationComponent("E-postadresse", "text", "email", eventFormValidationResult.IsEmailValid, "E-postadressen må være gyldig")
 			@inputValidationComponent("Telefonnummer", "text", "phone_number", eventFormValidationResult.IsPhoneNumberValid, "Telefonnummeret må være minst 8 siffer")
-			@inputValidationComponent("Aldersgruppe", "text", "age_group", eventFormValidationResult.IsAgeGroupValid, "Aldersgruppe må være Default, ChildFriendly eller AdultsOnly")
-			@inputValidationComponent("Varighet", "text", "event_runtime", eventFormValidationResult.IsEventRuntimeValid, "Varighet må være Normal, ShortRunning eller LongRunning")
+			@inputValidationComponent("Aldersgruppe", "text", "age_group", eventFormValidationResult.IsAgeGroupValid, "Velg en gyldig aldersgruppe")
+			@inputValidationComponent("Varighet", "text", "event_runtime", eventFormValidationResult.IsEventRuntimeValid, "Velg en gyldig varighet")
 			@inputValidationComponent("Maks antall spillere", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Maks antall spillere må være mellom 1 og 18")
 			@checkboxValidationComponent("Nybegynnervennlig", "beginner_friendly", true, "", false)
 			@checkboxValidationComponent("Kan kjøres på engelsk", "can_be_run_in_english", true, "", false)
@@ -543,8 +510,8 @@ templ formSubmissionPage() {
 	emptyStr := ""
 	initialForm := &EventFormStruct{
 		System:       &emptyStr,
-		AgeGroup:     "Default",
-		EventRuntime: "Normal",
+		AgeGroup:     models.AgeGroupDefault,
+		EventRuntime: models.RunTimeNormal,
 	}
 	}}
 	<div>
@@ -587,7 +554,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
             beginner_friendly,
             can_be_run_in_english,
             status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Kladd')`
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, insertError := db.Exec(query,
 		eventForm.Title,
@@ -605,6 +572,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 		eventForm.EventRuntime,
 		eventForm.BeginnerFriendly,
 		eventForm.CanBeRunInEnglish,
+		models.EventStatusDraft,
 	)
 
 	if insertError != nil {

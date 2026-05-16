@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
 )
 
@@ -21,7 +22,7 @@ func GetPreviousNextInnsendtGodkjent(ctx context.Context, db *sql.DB, currentID 
                 LEAD(id)    OVER (ORDER BY created_at DESC, id DESC) AS next_id,
                 LEAD(title) OVER (ORDER BY created_at DESC, id DESC) AS next_title
             FROM events
-            WHERE status IN ('Innsendt', 'Godkjent')
+            WHERE status IN (?, ?)
         )
         SELECT previous_id, previous_title,
                next_id,     next_title
@@ -33,7 +34,7 @@ func GetPreviousNextInnsendtGodkjent(ctx context.Context, db *sql.DB, currentID 
 		nextID, nextTitle sql.NullString
 	)
 
-	err := db.QueryRowContext(ctx, q, currentID).
+	err := db.QueryRowContext(ctx, q, models.EventStatusSubmitted, models.EventStatusApproved, currentID).
 		Scan(&prevID, &prevTitle, &nextID, &nextTitle)
 	if err != nil {
 		if err == sql.ErrNoRows {

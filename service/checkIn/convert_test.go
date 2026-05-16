@@ -25,8 +25,8 @@ func TestConvertTicketIdToNewBillettholder(t *testing.T) {
 		IsOver18:     true,
 	}
 	expectedBillettholderEmails := []models.BillettholderEmail{
-		{BillettholderID: expectedBillettholder.ID, Email: "ticket_email@test.test", Kind: "Ticket"},
-		{BillettholderID: expectedBillettholder.ID, Email: "associated_email@test.test", Kind: "Associated"},
+		{BillettholderID: expectedBillettholder.ID, Email: "ticket_email@test.test", Kind: models.BillettholderEmailKindTicket},
+		{BillettholderID: expectedBillettholder.ID, Email: "associated_email@test.test", Kind: models.BillettholderEmailKindAssociated},
 	}
 
 	tickets := []CheckInTicket{
@@ -171,8 +171,8 @@ func TestDontAddDuplicateAssociatedEmails(t *testing.T) {
 	const ticketId = 42
 
 	expectedBillettholderEmails := []models.BillettholderEmail{
-		{BillettholderID: 0, Email: "ticket_email@test.test", Kind: "Ticket"},
-		{BillettholderID: 0, Email: "associated_email@test.test", Kind: "Associated"},
+		{BillettholderID: 0, Email: "ticket_email@test.test", Kind: models.BillettholderEmailKindTicket},
+		{BillettholderID: 0, Email: "associated_email@test.test", Kind: models.BillettholderEmailKindAssociated},
 	}
 
 	tickets := []CheckInTicket{

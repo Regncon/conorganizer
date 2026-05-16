@@ -30,8 +30,8 @@ func splitEventsByStatusMap(events []models.EventCardModel) (submitted, approved
 func getEvents(db *sql.DB, logger *slog.Logger) []models.EventCardModel {
 	var events []models.EventCardModel
 
-	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE status IN ('Innsendt', 'Godkjent') ORDER BY created_at DESC"
-	rows, eventsQueryErr := db.Query(eventsQuery)
+	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE status IN (?, ?) ORDER BY created_at DESC"
+	rows, eventsQueryErr := db.Query(eventsQuery, models.EventStatusSubmitted, models.EventStatusApproved)
 	if eventsQueryErr != nil {
 		logger.Error(fmt.Errorf("failed to query approval events: %w", eventsQueryErr).Error())
 		return events

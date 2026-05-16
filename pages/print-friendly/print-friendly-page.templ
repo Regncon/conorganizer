@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/event"
+	"github.com/Regncon/conorganizer/service/puljer"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 )
@@ -99,19 +99,6 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 	}
 	defer rows.Close()
 
-	parseDate := func(s string) (time.Time, error) {
-		// Try common SQLite date encodings; adjust if your data uses another format.
-		// DATE columns are often stored as "YYYY-MM-DD".
-		//  2025-10-10T18:00:00Z
-		if t, err := time.Parse("2006-01-02T15:04:05Z07:00", s); err == nil {
-			return t, nil
-		}
-		// Fallbacks (uncomment if needed):
-		// if t, err := time.Parse(time.RFC3339, s); err == nil { return t, nil }
-		// if t, err := time.Parse("2006-01-02 15:04:05", s); err == nil { return t, nil }
-		return time.Time{}, nil
-	}
-
 	out := make(EventsPrintByPulje)
 
 	for rows.Next() {
@@ -148,19 +135,16 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 			return nil, fmt.Errorf("scan print-friendly event row: %w", err)
 		}
 
-		startTime, _ := parseDate(startStr)
-		endTime, _ := parseDate(endStr)
-
 		key := models.Pulje(puljeID)
 		block, ok := out[key]
 		if !ok {
+			pulje, err := puljerService.BuildPulje(key, puljeName, "", startStr, endStr)
+			if err != nil {
+				return nil, err
+			}
+
 			block = &PuljePrintBlock{
-				Pulje: models.PuljeRow{
-					ID:      key,
-					Name:    puljeName,
-					StartAt: startTime,
-					EndAt:   endTime,
-				},
+				Pulje: pulje,
 			}
 			out[key] = block
 		}
@@ -185,7 +169,7 @@ templ eventPulje(pulje models.Pulje, byPulje EventsPrintByPulje, eventImageDir *
 			for _, blockEvent := range block.Events {
 				<h2 class="pulje-heading">
 					{ block.Pulje.Name }
-					<span class="pulje-heading-time">({ block.Pulje.StartAt.Format("15:04") } – { block.Pulje.EndAt.Format("15:04") })</span>
+					<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
 				</h2>
 				<hr style="margin-block: 1rem;"/>
 				@event.Event_mobile(&blockEvent, components.PreviousNext{}, nil, true, eventImageDir)
@@ -205,13 +189,18 @@ templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger) 
 	</style>
 	<h1>Print Friendly Page</h1>
 	{{ eventsByPulje, err := getEventsByPuljeForPrint(db) }}
-	if err != nil {
+	{{ puljer, puljerErr := puljerService.GetAllPuljer(db) }}
+	if err != nil || puljerErr != nil {
+		{{
+			if puljerErr != nil {
+				err = puljerErr
+			}
+		}}
 		{{ logger.Error(fmt.Errorf("failed to get events for print: %w", err).Error()) }}
 		<p>Error fetching events: { err.Error() }</p>
 		return
 	}
-	@eventPulje(models.PuljeFredagKveld, eventsByPulje, eventImageDir)
-	@eventPulje(models.PuljeLordagMorgen, eventsByPulje, eventImageDir)
-	@eventPulje(models.PuljeLordagKveld, eventsByPulje, eventImageDir)
-	@eventPulje(models.PuljeSondagMorgen, eventsByPulje, eventImageDir)
+	for _, pulje := range puljer {
+		@eventPulje(pulje.ID, eventsByPulje, eventImageDir)
+	}
 }

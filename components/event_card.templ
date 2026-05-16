@@ -26,27 +26,27 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
 				if eventCard.IsPublished {
 					<div style="color:var(--color-success);display: flex;align-items: center; gap: 0.5rem;">
 						@icons.Icon(icons.ProgressComplete, icons.Size20)
-						<span>Publisert</span>
+						<span>{ models.EventStatusPublished.Label() }</span>
 					</div>
 				} else if eventCard.Status == models.EventStatusDraft {
 					<div style="color:var(--color-soft-text);display: flex;align-items: center; gap: 0.5rem;">
 						@icons.Icon(icons.Progress25, icons.Size20)
-						<span>Kladd</span>
+						<span>{ eventCard.Status.Label() }</span>
 					</div>
 				} else if eventCard.Status == models.EventStatusSubmitted {
 					<div style="color:var(--color-soft-text);display: flex;align-items: center; gap: 0.5rem;">
 						@icons.Icon(icons.Progress50, icons.Size20)
-						<span>Innsendt</span>
+						<span>{ eventCard.Status.Label() }</span>
 					</div>
 				} else if eventCard.Status == models.EventStatusApproved {
 					<div style="color:var(--color-warning);display: flex;align-items: center; gap: 0.5rem;">
 						@icons.Icon(icons.Progress75, icons.Size20)
-						<span>Godkjent</span>
+						<span>{ eventCard.Status.Label() }</span>
 					</div>
 				} else if eventCard.Status == models.EventStatusArchived {
 					<div style="color:var(--color-error);display: flex;align-items: center; gap: 0.5rem;">
 						@icons.Icon(icons.ProgressRejected, icons.Size20)
-						<span>Arkivert</span>
+						<span>{ eventCard.Status.Label() }</span>
 					</div>
 				}
 			</div>
@@ -111,20 +111,20 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
 					</div>
 				}
 				if eventCard.AgeGroup == models.AgeGroupAdultsOnly {
-					<div class="event-card-tagicon-container" data-tippy-content="Egnet for voksne">
+					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.AgeGroup.BadgeLabel() }>
 						@icons.Icon(icons.EventAdultOnly, icons.Size20)
 					</div>
 				} else if eventCard.AgeGroup == models.AgeGroupChildFriendly {
-					<div class="event-card-tagicon-container" data-tippy-content="Barnevennlig">
+					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.AgeGroup.BadgeLabel() }>
 						@icons.Icon(icons.EventChildFriendly, icons.Size20)
 					</div>
 				}
 				if eventCard.Runtime == models.RunTimeLongRunning {
-					<div class="event-card-tagicon-container" data-tippy-content="Varer over 6 timer">
+					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.Runtime.BadgeLabel() }>
 						@icons.Icon(icons.TimeOver6Hours, icons.Size20)
 					</div>
 				} else if eventCard.Runtime == models.RunTimeShortRunning {
-					<div class="event-card-tagicon-container" data-tippy-content="Varer under 3 timer">
+					<div class="event-card-tagicon-container" data-tippy-content={ eventCard.Runtime.BadgeLabel() }>
 						@icons.Icon(icons.TimeUnder3Hours, icons.Size20)
 					</div>
 				}

@@ -3,9 +3,7 @@ package ticketholder
 import (
 	"database/sql"
 	"fmt"
-	"github.com/Regncon/conorganizer/models"
 	"log/slog"
-	"slices"
 )
 
 templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger *slog.Logger) {
@@ -57,66 +55,22 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
         }
     </style>
 	if (len(puljer) > 1) {
-		<div class="pulje-picker-container">
-			<p class="label">Velg pulje for arrangementet</p>
-			<div class="pulje-wrapper">
-				<div
-					role="button"
-					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeFredagKveld, isPuljeDisabled(puljer, models.PuljeFredagKveld)) }
-					class="card-clickable card-clickable-item"
-					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeFredagKveld) }
-					data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", models.PuljeFredagKveld, eventId) }
-					if isPuljeDisabled(puljer, models.PuljeFredagKveld) {
-						disabled
+			<div class="pulje-picker-container">
+				<p class="label">Velg pulje for arrangementet</p>
+				<div class="pulje-wrapper">
+					for _, pulje := range puljer {
+						<div
+							role="button"
+							data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : '0'", pulje.ID) }
+							class="card-clickable card-clickable-item"
+							data-class:selected={ fmt.Sprintf("$puljeId == '%s'", pulje.ID) }
+							data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", pulje.ID, eventId) }
+						>
+							<p>{ pulje.Name }</p>
+							<p>{ pulje.TimeRange() }</p>
+						</div>
 					}
-				>
-					<p>Fredag</p>
-					<p>kveld</p>
-				</div>
-				<div
-					role="button"
-					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeLordagMorgen, isPuljeDisabled(puljer, models.PuljeLordagMorgen)) }
-					class="card-clickable card-clickable-item"
-					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeLordagMorgen) }
-					data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", models.PuljeLordagMorgen, eventId) }
-					if isPuljeDisabled(puljer, models.PuljeLordagMorgen) {
-						disabled
-					}
-				>
-					<p>Lørdag</p>
-					<p>morgen</p>
-				</div>
-				<div
-					role="button"
-					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeLordagKveld, isPuljeDisabled(puljer, models.PuljeLordagKveld)) }
-					class="card-clickable card-clickable-item"
-					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeLordagKveld) }
-					data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", models.PuljeLordagKveld, eventId) }
-					if isPuljeDisabled(puljer, models.PuljeLordagKveld) {
-						disabled
-					}
-				>
-					<p>Lørdag</p>
-					<p>kveld</p>
-				</div>
-				<div
-					role="button"
-					data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : %t ? '-1' : '0'", models.PuljeSondagMorgen, isPuljeDisabled(puljer, models.PuljeSondagMorgen)) }
-					class="card-clickable card-clickable-item"
-					data-class:selected={ fmt.Sprintf("$puljeId == '%s'", models.PuljeSondagMorgen) }
-					data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", models.PuljeSondagMorgen, eventId) }
-					if isPuljeDisabled(puljer, models.PuljeSondagMorgen) {
-						disabled
-					}
-				>
-					<p>Søndag</p>
-					<p>morgen</p>
 				</div>
 			</div>
-		</div>
 	}
-}
-
-func isPuljeDisabled(puljer []models.Pulje, currentPulje models.Pulje) bool {
-	return !slices.Contains(puljer, currentPulje)
 }

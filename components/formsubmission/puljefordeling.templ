@@ -8,6 +8,7 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/service/puljer"
 	"github.com/go-chi/chi/v5"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -173,30 +174,16 @@ func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventP
 	}
 	return event, nil
 }
-func getPuljeDisplayName(pulje models.Pulje) string {
-	switch pulje {
-	case models.PuljeFredagKveld:
-		return "Fredag kveld"
-	case models.PuljeLordagMorgen:
-		return "Lørdag morgen"
-	case models.PuljeLordagKveld:
-		return "Lørdag kveld"
-	case models.PuljeSondagMorgen:
-		return "Søndag morgen"
-	default:
-		return "Ukjent pulje"
-	}
-}
 
-templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
-	{{ eventPulje, err := getEvenPulje(eventId, pulje, db) }}
+templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
+	{{ eventPulje, err := getEvenPulje(eventId, pulje.ID, db) }}
 	if err != nil {
 		<p>Error fetching event pulje: { err.Error() }</p>
 		return
 	}
 	<div style="display: flex; gap: 1rem; align-items: center;">
 		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
-			<h3>{ getPuljeDisplayName(pulje) }</h3>
+			<h3>{ pulje.Name } <span>({ pulje.TimeRange() })</span></h3>
 			<div style="display: flex; gap: 1rem;">
 				<label class="checkbox-background form-group-checkbox">
 					<span>Legg til i pulje </span>
@@ -204,15 +191,15 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 						if eventPulje.IsInPulje {
 							checked
 						}
-						data-bind={ fmt.Sprintf("isInPulje%s", pulje) }
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/event-in-pulje/%s')", eventId, pulje) }
+						data-bind={ fmt.Sprintf("isInPulje%s", pulje.ID) }
+						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/event-in-pulje/%s')", eventId, pulje.ID) }
 						type="checkbox"
 						name="pulje"
 						class="checkbox input"
 					/>
 				</label>
 				<label class="checkbox-background form-group-checkbox">
-					<span>Publisert</span>
+					<span>{ models.PuljeStatusPublished.Label() }</span>
 					<input
 						if eventPulje.IsPublished {
 							checked
@@ -220,8 +207,8 @@ templ puljeRow(eventId string, pulje models.Pulje, db *sql.DB) {
 						if eventPulje.IsInPulje == false {
 							disabled
 						}
-						data-bind={ fmt.Sprintf("isPublished%s", pulje) }
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/is-published/%s')", eventId, pulje) }
+						data-bind={ fmt.Sprintf("isPublished%s", pulje.ID) }
+						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/is-published/%s')", eventId, pulje.ID) }
 						type="checkbox"
 						name="pulje"
 						class="checkbox input"
@@ -236,10 +223,14 @@ templ puljefordeling(eventId string, db *sql.DB) {
 	<article class="form-card">
 		<h4 class="form-card-title">Puljefordeling</h4>
 		<section class="puljefordeling-section">
-			@puljeRow(eventId, models.PuljeFredagKveld, db)
-			@puljeRow(eventId, models.PuljeLordagMorgen, db)
-			@puljeRow(eventId, models.PuljeLordagKveld, db)
-			@puljeRow(eventId, models.PuljeSondagMorgen, db)
+			{{ puljer, err := puljerService.GetAllPuljer(db) }}
+			if err != nil {
+				<p>Error fetching puljer: { err.Error() }</p>
+				return
+			}
+			for _, pulje := range puljer {
+				@puljeRow(eventId, pulje, db)
+			}
 		</section>
 	</article>
 }
