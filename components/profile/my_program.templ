@@ -127,7 +127,7 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 							@event_components.ProgramPuljeInterests(interestList)
 						}
 						if len(pulje.Events) == 0 && len(pulje.Interests) == 0 {
-							@event_components.ProgramPuljeNoEvents()
+							@event_components.ProgramPuljeNoEvents(pulje.Pulje.ID)
 						}
 					</div>
 				}

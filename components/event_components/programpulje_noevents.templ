@@ -1,7 +1,11 @@
 package event_components
 
+import "fmt"
+import "github.com/Regncon/conorganizer/models"
+
 // TODO: Knappen i denne komponenten burde peke til respektiv pulje med #hash i URL'en
-templ ProgramPuljeNoEvents() {
+templ ProgramPuljeNoEvents(puljeId models.Pulje) {
+	{{ puljeLink := fmt.Sprintf("/#%s", puljeId) }}
 	<style>
 		.pulje-no-events-container {
 			align-items: center;
@@ -24,7 +28,7 @@ templ ProgramPuljeNoEvents() {
 			Vi har ingenting å vise her ennå.
 			Har du sjekket om det finnes noen kule arrangementer du ønsker å delta på?
 		</p>
-		<a href="/" class="btn btn--outline">
+		<a href={ puljeLink } class="btn btn--outline">
 			Se arrangementer
 		</a>
 	</div>
