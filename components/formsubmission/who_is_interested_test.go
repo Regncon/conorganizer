@@ -211,12 +211,12 @@ func indexInterests(t *testing.T, interests []InterestWithHolder) map[int]Intere
 func seedBaseTables(t *testing.T, db *sql.DB) {
 	t.Helper()
 
-	mustExec(t, db, `INSERT INTO event_statuses(status) VALUES (?)`, models.EventStatusApproved)
-	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
-	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
-	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
-	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
-	mustExec(t, db, `INSERT INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusPublished)
+	mustExec(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?)`, models.EventStatusApproved)
+	mustExec(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
+	mustExec(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
+	mustExec(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
+	mustExec(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
+	mustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusPublished)
 	mustExec(t, db, `
 		INSERT INTO puljer (
 			id, name, status, start_at, end_at
