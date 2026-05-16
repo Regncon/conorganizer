@@ -3,6 +3,11 @@ package profilepage
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
+	"net/http"
+	"strconv"
+	"strings"
+
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/profile"
 	"github.com/Regncon/conorganizer/layouts"
@@ -14,8 +19,6 @@ import (
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
-	"log/slog"
-	"net/http"
 )
 
 func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
@@ -37,6 +40,8 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			if err != nil {
 				logger.Error(err.Error(), "user_id", user.Id)
 			}
+			selectedBillettholderID := selectedBillettholderIDFromRequest(r, user, billettholdere, logger)
+			validBillettholderIDs := billettholderIDs(billettholdere)
 			var tickets = []profilecomponent.TicketHolder{}
 			for _, billettholder := range billettholdere {
 				tickets = append(tickets, profilecomponent.TicketHolder{
@@ -54,7 +59,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			if err := layouts.Base(
 				"Min profil side",
 				user,
-				ProfilePage(user, events, tickets, db, baseLogger, eventImageDir),
+				ProfilePage(user, events, tickets, selectedBillettholderID, validBillettholderIDs, db, baseLogger, eventImageDir),
 			).Render(ctx, w); err != nil {
 				logger.Error(fmt.Errorf("failed to render profile page: %w", err).Error(), "user_id", user.Id)
 			}
@@ -66,21 +71,143 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 	return nil
 }
 
-templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardModel, tickets []profilecomponent.TicketHolder, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
+func selectedBillettholderIDFromRequest(r *http.Request, user requestctx.UserRequestInfo, billettholdere []models.Billettholder, logger *slog.Logger) int {
+	selectedIDRaw := r.URL.Query().Get("b_id")
+	if selectedIDRaw != "" {
+		selectedID, err := strconv.Atoi(selectedIDRaw)
+		if err == nil && hasBillettholderID(billettholdere, selectedID) {
+			return selectedID
+		}
+		if err != nil {
+			logger.Warn(fmt.Errorf("Ignoring invalid selected billettholder id: %w", err).Error(), "user_id", user.Id, "billettholder_search_param", selectedIDRaw)
+		} else {
+			logger.Warn(fmt.Errorf("Ignoring selected billettholder not linked to user: %w", err).Error(), "user_id", user.Id, "billettholder_id", selectedID)
+		}
+	}
+
+	return defaultSelectedBillettholderID(user, billettholdere)
+}
+
+func hasBillettholderID(billettholdere []models.Billettholder, billettholderID int) bool {
+	for _, billettholder := range billettholdere {
+		if billettholder.ID == billettholderID {
+			return true
+		}
+	}
+	return false
+}
+
+func billettholderIDs(billettholdere []models.Billettholder) []int {
+	ids := make([]int, 0, len(billettholdere))
+	for _, billettholder := range billettholdere {
+		ids = append(ids, billettholder.ID)
+	}
+	return ids
+}
+
+func defaultSelectedBillettholderID(user requestctx.UserRequestInfo, billettholdere []models.Billettholder) int {
+	for _, billettholder := range billettholdere {
+		for _, email := range billettholder.Emails {
+			if strings.EqualFold(email.Email, user.Email) {
+				return billettholder.ID
+			}
+		}
+	}
+
+	if len(billettholdere) > 0 {
+		return billettholdere[0].ID
+	}
+
+	return 0
+}
+
+templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardModel, tickets []profilecomponent.TicketHolder, selectedBillettholderID int, validBillettholderIDs []int, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: ""},
 	})
-	<section class="page-content-container profile-container">
+	<section
+		class="page-content-container profile-container"
+		data-profile-selected-billettholder-id={ fmt.Sprintf("%d", selectedBillettholderID) }
+		data-profile-valid-billettholder-ids={ templ.JSONString(validBillettholderIDs) }
+	>
 		<div class="profile-content-column">
 			@profilecomponent.MyEvents(events)
-			@profilecomponent.MyProgram(user, db, logger, eventImageDir)
+			@profilecomponent.MyProgram(user, selectedBillettholderID, db, logger, eventImageDir)
 		</div>
 		<div class="profile-content-column">
 			/* @profilecomponent.UserDetails(user) */
 			@profilecomponent.MyTickets(tickets)
 		</div>
 	</section>
+	<script>
+		(() => {
+			const container = document.querySelector("[data-profile-valid-billettholder-ids]");
+			if (!container) {
+				return;
+			}
+
+			let validIDs = [];
+			try {
+				validIDs = JSON.parse(container.dataset.profileValidBillettholderIds ?? "[]").map(Number);
+			} catch {
+				validIDs = [];
+			}
+
+			const validIDSet = new Set(validIDs);
+			const serverSelectedID = Number(container.dataset.profileSelectedBillettholderId ?? 0);
+			const url = new URL(window.location.href);
+			const currentIDRaw = url.searchParams.get("b_id");
+			const currentID = Number(currentIDRaw ?? 0);
+
+			const replaceWithServerSelection = () => {
+				if (!currentIDRaw) {
+					return;
+				}
+
+				if (serverSelectedID > 0 && validIDSet.has(serverSelectedID)) {
+					url.searchParams.set("b_id", String(serverSelectedID));
+				} else {
+					url.searchParams.delete("b_id");
+				}
+
+				if (url.href !== window.location.href) {
+					window.location.replace(url);
+				}
+			};
+
+			const selectedRaw = localStorage.getItem("selectedBillettHolder");
+			if (!selectedRaw) {
+				if (currentIDRaw && (!Number.isInteger(currentID) || !validIDSet.has(currentID))) {
+					replaceWithServerSelection();
+				}
+				return;
+			}
+
+			let selected;
+			try {
+				selected = JSON.parse(selectedRaw);
+			} catch {
+				localStorage.removeItem("selectedBillettHolder");
+				replaceWithServerSelection();
+				return;
+			}
+
+			const selectedID = Number(selected?.Id ?? 0);
+			if (!Number.isInteger(selectedID) || selectedID <= 0 || !validIDSet.has(selectedID)) {
+				localStorage.removeItem("selectedBillettHolder");
+				replaceWithServerSelection();
+				return;
+			}
+
+			if (currentIDRaw === String(selectedID)) {
+				return;
+			}
+
+			url.searchParams.set("b_id", String(selectedID));
+			window.location.replace(url);
+		})();
+	</script>
 	<style>
 		.profile-container {
 			display: grid;
