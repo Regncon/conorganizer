@@ -55,22 +55,21 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
         }
     </style>
 	if (len(puljer) > 1) {
-			<div class="pulje-picker-container">
-				<p class="label">Velg pulje for arrangementet</p>
-				<div class="pulje-wrapper">
-					for _, pulje := range puljer {
-						<div
-							role="button"
-							data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : '0'", pulje.ID) }
-							class="card-clickable card-clickable-item"
-							data-class:selected={ fmt.Sprintf("$puljeId == '%s'", pulje.ID) }
-							data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", pulje.ID, eventId) }
-						>
-							<p>{ pulje.Name }</p>
-							<p>{ pulje.TimeRange() }</p>
-						</div>
-					}
-				</div>
+		<div class="pulje-picker-container">
+			<p class="label">Velg pulje for arrangementet</p>
+			<div class="pulje-wrapper">
+				for _, pulje := range puljer {
+					<div
+						role="button"
+						data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : '0'", pulje.ID) }
+						class="card-clickable card-clickable-item"
+						data-class:selected={ fmt.Sprintf("$puljeId == '%s'", pulje.ID) }
+						data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", pulje.ID, eventId) }
+					>
+						<p>{ pulje.Name }</p>
+					</div>
+				}
 			</div>
+		</div>
 	}
 }
