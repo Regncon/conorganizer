@@ -51,7 +51,7 @@ templ statusCard(event *models.Event, isAdmin bool) {
 			<select
 				name="status"
 				class="input"
-				data-signals={ fmt.Sprintf("{status:'%s'}", event.Status) }
+				data-signals={ dataSignals(map[string]models.EventStatus{"status": event.Status}) }
 				data-bind="status"
 				data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/status')", event.ID) }
 				required

@@ -192,7 +192,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 			<label class="label-small color-strong form-group title">
 				Tittel
 				<div
-					data-signals={ fmt.Sprintf("{title:'%s'}", title) }
+					data-signals={ dataSignals(map[string]string{"title": title}) }
 				></div>
 				<input
 					name="title"
@@ -221,7 +221,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 			<label class="label-small color-strong form-group type">
 				Type arrangement
 				<select
-					data-signals={ fmt.Sprintf("{type:'%s'}", eventType) }
+					data-signals={ dataSignals(map[string]models.EventType{"type": eventType}) }
 					data-bind="type"
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/type')", eventId) }
 					name="type"
@@ -244,7 +244,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 			<label class="label-small color-strong form-group system">
 				System
 				<div
-					data-signals={ fmt.Sprintf("{system:'%s'}", system) }
+					data-signals={ dataSignals(map[string]string{"system": system}) }
 				></div>
 				<input
 					name="system"

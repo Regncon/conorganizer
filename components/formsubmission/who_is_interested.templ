@@ -638,7 +638,7 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
             gap: 1rem;
             margin-block: 2rem;
         "
-		data-signals={ fmt.Sprintf("{assignmentEventId: '%s', assignmentBillettholderId: 0, assignmentPuljeId: '', assignmentIsPlayer: false, assignmentIsGm: false, clearInput: 0}", eventId) }
+		data-signals={ dataSignals(map[string]any{"assignmentEventId": eventId, "assignmentBillettholderId": 0, "assignmentPuljeId": "", "assignmentIsPlayer": false, "assignmentIsGm": false, "clearInput": 0}) }
 	>
 		<article class="form-card">
 			if loadErr != nil {
