@@ -13,7 +13,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	newEvent "github.com/Regncon/conorganizer/pages/myprofile/myevents/newevent"
 	"github.com/Regncon/conorganizer/pages/root"
-
+	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -242,7 +242,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				})
 
 				apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
-					createNewEventFormSubmission(db, baseLogger, w, r)
+					createNewEventFormSubmission(db, kv, baseLogger, w, r)
 				})
 			})
 
@@ -290,7 +290,7 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 	return id, nil
 }
 
-func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
+func createNewEventFormSubmission(db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
 	logger = logger.With("component", "my_events")
 	logger.Info("Creating new event form submission")
 	userInfo := userctx.GetUserRequestInfo(r.Context())
@@ -327,5 +327,8 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 	}
 
 	logger.Info("New event form submission created", "event_id", eventId, "user_id", userInfo.Id)
+	if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		logger.Error(fmt.Errorf("failed to broadcast new event creation: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
+	}
 	http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s", eventId), http.StatusSeeOther)
 }

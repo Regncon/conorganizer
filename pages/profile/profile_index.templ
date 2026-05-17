@@ -4,121 +4,18 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
-	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/components/profile"
-	"github.com/Regncon/conorganizer/layouts"
+	profilecomponent "github.com/Regncon/conorganizer/components/profile"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/pages/profile/tickets"
-	"github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/requestctx"
-	"github.com/Regncon/conorganizer/service/userctx"
-	"github.com/delaneyj/toolbelt/embeddednats"
-	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/sessions"
 )
 
-func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
-	router.Route("/profile", func(profileRouter chi.Router) {
-		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			baseLogger := logger
-			logger = logger.With("component", "profile")
-			var ctx = r.Context()
-			var user = userctx.GetUserRequestInfo(ctx)
-
-			// User generated events
-			var events = GetEventsByUserId(user.Id, db, logger)
-
-			/* sort.Slice(events, func(i, j int) bool {
-				return events[i].Status > events[j].Status
-			}) */
-
-			billettholdere, err := billettholderService.GetBillettholdere(user.Id, db)
-			if err != nil {
-				logger.Error(err.Error(), "user_id", user.Id)
-			}
-			selectedBillettholderID := selectedBillettholderIDFromRequest(r, user, billettholdere, logger)
-			validBillettholderIDs := billettholderIDs(billettholdere)
-			var tickets = []profilecomponent.TicketHolder{}
-			for _, billettholder := range billettholdere {
-				tickets = append(tickets, profilecomponent.TicketHolder{
-					Name:   billettholder.FirstName + " " + billettholder.LastName,
-					Ticket: billettholder.TicketType,
-					Email: func() string {
-						if len(billettholder.Emails) > 0 {
-							return billettholder.Emails[0].Email
-						}
-						return ""
-					}(),
-				})
-			}
-
-			if err := layouts.Base(
-				"Min profil side",
-				user,
-				ProfilePage(user, events, tickets, selectedBillettholderID, validBillettholderIDs, db, baseLogger, eventImageDir),
-			).Render(ctx, w); err != nil {
-				logger.Error(fmt.Errorf("failed to render profile page: %w", err).Error(), "user_id", user.Id)
-			}
-		})
-
-		// Subroutes
-		profileticketspage.ProfileTicketsRoute(profileRouter, store, ns, db, logger)
-	})
-	return nil
-}
-
-func selectedBillettholderIDFromRequest(r *http.Request, user requestctx.UserRequestInfo, billettholdere []models.Billettholder, logger *slog.Logger) int {
-	selectedIDRaw := r.URL.Query().Get("b_id")
-	if selectedIDRaw != "" {
-		selectedID, err := strconv.Atoi(selectedIDRaw)
-		if err == nil && hasBillettholderID(billettholdere, selectedID) {
-			return selectedID
-		}
-		if err != nil {
-			logger.Warn(fmt.Errorf("Ignoring invalid selected billettholder id: %w", err).Error(), "user_id", user.Id, "billettholder_search_param", selectedIDRaw)
-		} else {
-			logger.Warn(fmt.Errorf("Ignoring selected billettholder not linked to user: %w", err).Error(), "user_id", user.Id, "billettholder_id", selectedID)
-		}
-	}
-
-	return defaultSelectedBillettholderID(user, billettholdere)
-}
-
-func hasBillettholderID(billettholdere []models.Billettholder, billettholderID int) bool {
-	for _, billettholder := range billettholdere {
-		if billettholder.ID == billettholderID {
-			return true
-		}
-	}
-	return false
-}
-
-func billettholderIDs(billettholdere []models.Billettholder) []int {
-	ids := make([]int, 0, len(billettholdere))
-	for _, billettholder := range billettholdere {
-		ids = append(ids, billettholder.ID)
-	}
-	return ids
-}
-
-func defaultSelectedBillettholderID(user requestctx.UserRequestInfo, billettholdere []models.Billettholder) int {
-	for _, billettholder := range billettholdere {
-		for _, email := range billettholder.Emails {
-			if strings.EqualFold(email.Email, user.Email) {
-				return billettholder.ID
-			}
-		}
-	}
-
-	if len(billettholdere) > 0 {
-		return billettholdere[0].ID
-	}
-
-	return 0
+templ ProfileMainColumn(user requestctx.UserRequestInfo, events []models.EventCardModel, selectedBillettholderID int, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
+	<div id="profile-main-column" class="profile-content-column">
+		@profilecomponent.MyEvents(events)
+		@profilecomponent.MyProgram(user, selectedBillettholderID, db, logger, eventImageDir)
+	</div>
 }
 
 templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardModel, tickets []profilecomponent.TicketHolder, selectedBillettholderID int, validBillettholderIDs []int, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
@@ -130,11 +27,9 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 		class="page-content-container profile-container"
 		data-profile-selected-billettholder-id={ fmt.Sprintf("%d", selectedBillettholderID) }
 		data-profile-valid-billettholder-ids={ templ.JSONString(validBillettholderIDs) }
+		data-init={ "@get('/profile/api' + window.location.search,{requestCancellation: 'disabled'})" }
 	>
-		<div class="profile-content-column">
-			@profilecomponent.MyEvents(events)
-			@profilecomponent.MyProgram(user, selectedBillettholderID, db, logger, eventImageDir)
-		</div>
+		@ProfileMainColumn(user, events, selectedBillettholderID, db, logger, eventImageDir)
 		<div class="profile-content-column">
 			/* @profilecomponent.UserDetails(user) */
 			@profilecomponent.MyTickets(tickets)
@@ -234,5 +129,5 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 				grid-template-columns: auto 400px;
 			}
 		}
-	</style>
-}
+		</style>
+	}
