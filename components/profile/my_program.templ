@@ -113,7 +113,7 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 								@event_components.ProgramPuljeEvent(event.EventID, imageCardUrl, imageBannerUrl, event.Title, event.Intro, event.EventType, event.IsGM)
 							}
 						}
-						if len(pulje.Interests) > 0 {
+						if len(pulje.Events) == 0 && len(pulje.Interests) > 0 {
 							{{ interestList := make([]event_components.Interest, len(pulje.Interests)) }}
 							{{
 									for i, interest := range pulje.Interests {
@@ -179,7 +179,6 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 					SELECT 1
 					FROM relation_events_players assigned
 					WHERE assigned.billettholder_id = i.billettholder_id
-						AND assigned.event_id = i.event_id
 						AND assigned.pulje_id = i.pulje_id
 				)
 		GROUP BY i.event_id, e.title, i.pulje_id
