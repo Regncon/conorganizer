@@ -41,17 +41,13 @@ func GetAllPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 	return scanPulje(rows)
 }
 
-func BuildPulje(id models.Pulje, name string, status models.PuljeStatus, startAtRaw string, endAtRaw string) (models.PuljeRow, error) {
-	startAt, err := models.ParsePuljeTime(startAtRaw)
-	if err != nil {
-		return models.PuljeRow{}, fmt.Errorf("parse pulje %s start_at %q: %w", id, startAtRaw, err)
+func BuildPulje(id models.Pulje, name string, status models.PuljeStatus, startAt models.DBDateTime, endAt models.DBDateTime) (models.PuljeRow, error) {
+	if !startAt.Valid {
+		return models.PuljeRow{}, fmt.Errorf("pulje %s start_at is empty", id)
 	}
-
-	endAt, err := models.ParsePuljeTime(endAtRaw)
-	if err != nil {
-		return models.PuljeRow{}, fmt.Errorf("parse pulje %s end_at %q: %w", id, endAtRaw, err)
+	if !endAt.Valid {
+		return models.PuljeRow{}, fmt.Errorf("pulje %s end_at is empty", id)
 	}
-
 	return models.PuljeRow{
 		ID:      id,
 		Name:    name,
@@ -68,7 +64,7 @@ func scanPulje(rows *sql.Rows) ([]models.PuljeRow, error) {
 			id             models.Pulje
 			name           string
 			status         models.PuljeStatus
-			startAt, endAt string
+			startAt, endAt models.DBDateTime
 		)
 
 		if err := rows.Scan(&id, &name, &status, &startAt, &endAt); err != nil {

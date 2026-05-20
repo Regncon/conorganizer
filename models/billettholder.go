@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"time"
 )
 
 type Billettholder struct {
@@ -15,8 +14,8 @@ type Billettholder struct {
 	IsOver18     bool                 `json:"is_over_18"`
 	OrderID      int                  `json:"order_id"`
 	TicketID     int                  `json:"ticket_id"`
-	CreatedAt    time.Time            `json:"created_at"`
-	UpdatedAt    time.Time            `json:"updated_at"`
+	CreatedAt    DBDateTime           `json:"created_at"`
+	UpdatedAt    DBDateTime           `json:"updated_at"`
 	CreatedByID  sql.NullInt64        `json:"created_by_id"`
 	UpdatedByID  sql.NullInt64        `json:"updated_by_id"`
 }
@@ -26,8 +25,8 @@ type BillettholderEmail struct {
 	BillettholderID int                    `json:"billettholder_id"`
 	Email           string                 `json:"email"`
 	Kind            BillettholderEmailKind `json:"kind"` // See BillettholderEmailKind constants.
-	CreatedAt       time.Time              `json:"created_at"`
-	UpdatedAt       time.Time              `json:"updated_at"`
+	CreatedAt       DBDateTime             `json:"created_at"`
+	UpdatedAt       DBDateTime             `json:"updated_at"`
 	CreatedByID     sql.NullInt64          `json:"created_by_id"`
 	UpdatedByID     sql.NullInt64          `json:"updated_by_id"`
 }
@@ -54,9 +53,9 @@ func (kind BillettholderEmailKind) Label() string {
 }
 
 type BillettholderUsers struct {
-	BillettholderID int       `json:"billettholder_id"`
-	UserID          int       `json:"user_id"`
-	InsertedAt      time.Time `json:"inserted_at"`
+	BillettholderID int        `json:"billettholder_id"`
+	UserID          int        `json:"user_id"`
+	InsertedAt      DBDateTime `json:"inserted_at"`
 }
 
 /*
@@ -66,7 +65,7 @@ CREATE TABLE relation_events_players (
 	    pulje_id TEXT NOT NULL,
 	    billettholder_id INTEGER NOT NULL,
 	    role TEXT NOT NULL DEFAULT 'Player' CHECK (role IN ('Player', 'GM')),
-	    inserted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	    inserted_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
 	    PRIMARY KEY (billettholder_id, event_id, pulje_id),
 	    FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
 	    FOREIGN KEY (event_id) REFERENCES events (id),
@@ -96,5 +95,5 @@ type EventPlayer struct {
 	PuljeID         string          `json:"pulje_id"`
 	BillettholderID int             `json:"billettholder_id"`
 	Role            EventPlayerRole `json:"role"`
-	InsertedAt      time.Time       `json:"inserted_at"`
+	InsertedAt      DBDateTime      `json:"inserted_at"`
 }

@@ -49,8 +49,8 @@ func GetBillettholdere(userId string, db *sql.DB) ([]models.Billettholder, error
 		id        sql.NullInt64
 		email     sql.NullString
 		kind      sql.NullString
-		createdAt sql.NullTime
-		updatedAt sql.NullTime
+		createdAt models.DBDateTime
+		updatedAt models.DBDateTime
 	}
 
 	byID := make(map[int]*models.Billettholder)
@@ -93,8 +93,8 @@ func GetBillettholdere(userId string, db *sql.DB) ([]models.Billettholder, error
 				BillettholderID: b.ID,
 				Email:           er.email.String,
 				Kind:            models.BillettholderEmailKind(er.kind.String),
-				CreatedAt:       er.createdAt.Time,
-				UpdatedAt:       er.updatedAt.Time,
+				CreatedAt:       er.createdAt,
+				UpdatedAt:       er.updatedAt,
 			})
 		}
 	}

@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"time"
 )
 
 type EventStatus string
@@ -143,12 +142,12 @@ type Event struct {
 	CanBeRunInEnglish   bool           `json:"can_be_run_in_english"`
 	Notes               string         `json:"notes"`
 	Status              EventStatus    `json:"status"`
-	CreatedAt           time.Time      `json:"created_at"`
-	UpdatedAt           time.Time      `json:"updated_at"`
+	CreatedAt           DBDateTime     `json:"created_at"`
+	UpdatedAt           DBDateTime     `json:"updated_at"`
 	CreatedByID         sql.NullInt64  `json:"created_by_id"`
 	UpdatedByID         sql.NullInt64  `json:"updated_by_id"`
 	StatusChangedByID   sql.NullInt64  `json:"status_changed_by_id"`
-	StatusChangedAt     sql.NullTime   `json:"status_changed_at"`
+	StatusChangedAt     DBDateTime     `json:"status_changed_at"`
 	StatusChangedAction sql.NullString `json:"status_changed_action"`
 }
 

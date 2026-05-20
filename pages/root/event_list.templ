@@ -53,7 +53,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 		var (
 			ev                 models.EventCardModel
 			puljeID, puljeName string
-			startStr, endStr   string
+			startAt, endAt     models.DBDateTime
 		)
 
 		if err := rows.Scan(
@@ -72,8 +72,8 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 
 			&puljeID,
 			&puljeName,
-			&startStr,
-			&endStr,
+			&startAt,
+			&endAt,
 		); err != nil {
 			return nil, err
 		}
@@ -81,7 +81,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 		key := models.Pulje(puljeID)
 		block, ok := out[key]
 		if !ok {
-			pulje, err := puljerService.BuildPulje(key, puljeName, "", startStr, endStr)
+			pulje, err := puljerService.BuildPulje(key, puljeName, "", startAt, endAt)
 			if err != nil {
 				return nil, err
 			}

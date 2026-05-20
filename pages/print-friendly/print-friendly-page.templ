@@ -105,7 +105,7 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 		var (
 			ev                 models.Event
 			puljeID, puljeName string
-			startStr, endStr   string
+			startAt, endAt     models.DBDateTime
 		)
 
 		if err := rows.Scan(
@@ -129,8 +129,8 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 
 			&puljeID,
 			&puljeName,
-			&startStr,
-			&endStr,
+			&startAt,
+			&endAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan print-friendly event row: %w", err)
 		}
@@ -138,7 +138,7 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 		key := models.Pulje(puljeID)
 		block, ok := out[key]
 		if !ok {
-			pulje, err := puljerService.BuildPulje(key, puljeName, "", startStr, endStr)
+			pulje, err := puljerService.BuildPulje(key, puljeName, "", startAt, endAt)
 			if err != nil {
 				return nil, err
 			}

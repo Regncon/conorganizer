@@ -2,7 +2,6 @@ package models
 
 import (
 	"database/sql"
-	"time"
 )
 
 type InterestLevel string
@@ -43,8 +42,8 @@ type Interest struct {
 	EventId         string        `json:"event_id"`
 	PuljeId         string        `json:"pulje_id"`
 	InterestLevel   InterestLevel `json:"interest_level"`
-	CreatedAt       time.Time     `json:"created_at"`
-	UpdatedAt       time.Time     `json:"updated_at"`
+	CreatedAt       DBDateTime    `json:"created_at"`
+	UpdatedAt       DBDateTime    `json:"updated_at"`
 	CreatedByID     sql.NullInt64 `json:"created_by_id"`
 	UpdatedByID     sql.NullInt64 `json:"updated_by_id"`
 }

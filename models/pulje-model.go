@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"time"
 )
 
 type Pulje string
@@ -73,33 +72,12 @@ type PuljeRow struct {
 	ID      Pulje       `json:"id"`
 	Name    string      `json:"name"`
 	Status  PuljeStatus `json:"status"`
-	StartAt time.Time   `json:"start_at"`
-	EndAt   time.Time   `json:"end_at"`
+	StartAt DBDateTime  `json:"start_at"`
+	EndAt   DBDateTime  `json:"end_at"`
 }
 
 func (pulje PuljeRow) TimeRange() string {
 	return fmt.Sprintf("%s - %s", pulje.StartAt.Format("15:04"), pulje.EndAt.Format("15:04"))
-}
-
-func ParsePuljeTime(value string) (time.Time, error) {
-	layouts := []string{
-		time.RFC3339,
-		time.RFC3339Nano,
-		"2006-01-02 15:04:05",
-		"2006-01-02 15:04:05Z07:00",
-		"2006-01-02 15:04",
-		"2006-01-02T15:04:05",
-		"2006-01-02",
-	}
-
-	for _, layout := range layouts {
-		parsed, err := time.Parse(layout, value)
-		if err == nil {
-			return parsed, nil
-		}
-	}
-
-	return time.Time{}, fmt.Errorf("unsupported pulje timestamp format")
 }
 
 type EventPulje struct {

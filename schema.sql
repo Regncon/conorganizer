@@ -3,45 +3,45 @@ CREATE TABLE
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         external_id TEXT NOT NULL UNIQUE,
         email TEXT NOT NULL,
-        is_admin BOOLEAN NOT NULL DEFAULT FALSE,
-        inserted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
+        is_admin INTEGER NOT NULL DEFAULT 0 CHECK (is_admin IN (0, 1)),
+        inserted_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    ) STRICT;
 
 CREATE TABLE
     relation_billettholdere_users (
         billettholder_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
-        inserted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        inserted_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
         PRIMARY KEY (billettholder_id, user_id),
         FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
         FOREIGN KEY (user_id) REFERENCES users (id)
-    );
+    ) STRICT;
 
 CREATE TABLE
-    event_statuses (status TEXT PRIMARY KEY);
+    event_statuses (status TEXT PRIMARY KEY) STRICT;
 
 CREATE TABLE
-    events_types (event_type TEXT PRIMARY KEY);
+    events_types (event_type TEXT PRIMARY KEY) STRICT;
 
 CREATE TABLE
-    age_groups (age_group TEXT PRIMARY KEY);
+    age_groups (age_group TEXT PRIMARY KEY) STRICT;
 
 CREATE TABLE
-    event_runtimes (runtime TEXT PRIMARY KEY);
+    event_runtimes (runtime TEXT PRIMARY KEY) STRICT;
 
 CREATE TABLE
-    interest_levels (interest_level TEXT PRIMARY KEY);
+    interest_levels (interest_level TEXT PRIMARY KEY) STRICT;
 
 CREATE TABLE
-    pulje_statuses (status TEXT PRIMARY KEY);
+    pulje_statuses (status TEXT PRIMARY KEY) STRICT;
 
 CREATE TABLE
     goose_db_version (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         version_id INTEGER NOT NULL,
         is_applied INTEGER NOT NULL,
-        tstamp TIMESTAMP DEFAULT (datetime ('now'))
-    );
+        tstamp TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    ) STRICT;
 
 CREATE TABLE
     "events" (
@@ -58,16 +58,16 @@ CREATE TABLE
         email TEXT NOT NULL,
         phone_number TEXT NOT NULL,
         max_players INTEGER NOT NULL,
-        beginner_friendly BOOLEAN NOT NULL,
-        can_be_run_in_english BOOLEAN NOT NULL,
+        beginner_friendly INTEGER NOT NULL DEFAULT 0 CHECK (beginner_friendly IN (0, 1)),
+        can_be_run_in_english INTEGER NOT NULL DEFAULT 0 CHECK (can_be_run_in_english IN (0, 1)),
         notes TEXT DEFAULT '',
         status TEXT NOT NULL DEFAULT 'Kladd',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        updated_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
         created_by_id INTEGER,
         updated_by_id INTEGER,
         status_changed_by_id INTEGER,
-        status_changed_at TIMESTAMP,
+        status_changed_at TEXT,
         status_changed_action TEXT,
         FOREIGN KEY (created_by_id) REFERENCES users (id) ON DELETE SET NULL,
         FOREIGN KEY (updated_by_id) REFERENCES users (id) ON DELETE SET NULL,
@@ -77,7 +77,7 @@ CREATE TABLE
         FOREIGN KEY (event_type) REFERENCES events_types (event_type) ON UPDATE CASCADE,
         FOREIGN KEY (age_group) REFERENCES age_groups (age_group) ON UPDATE CASCADE,
         FOREIGN KEY (event_runtime) REFERENCES event_runtimes (runtime) ON UPDATE CASCADE
-    );
+    ) STRICT;
 
 CREATE TABLE
     "billettholdere" (
@@ -86,16 +86,16 @@ CREATE TABLE
         last_name TEXT NOT NULL,
         ticket_type_id INTEGER NOT NULL,
         ticket_type TEXT NOT NULL,
-        is_over_18 BOOLEAN NOT NULL,
+        is_over_18 INTEGER NOT NULL DEFAULT 0 CHECK (is_over_18 IN (0, 1)),
         order_id INTEGER NOT NULL,
         ticket_id INTEGER NOT NULL UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        updated_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
         created_by_id INTEGER,
         updated_by_id INTEGER,
         FOREIGN KEY (created_by_id) REFERENCES users (id) ON DELETE SET NULL,
         FOREIGN KEY (updated_by_id) REFERENCES users (id) ON DELETE SET NULL
-    );
+    ) STRICT;
 
 CREATE TABLE
     relation_billettholder_emails (
@@ -103,27 +103,27 @@ CREATE TABLE
         billettholder_id INTEGER NOT NULL,
         email TEXT NOT NULL COLLATE NOCASE,
         kind TEXT NOT NULL CHECK (kind IN ('Ticket', 'Associated', 'Manual')),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        updated_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
         created_by_id INTEGER,
         updated_by_id INTEGER,
         FOREIGN KEY (created_by_id) REFERENCES users (id) ON DELETE SET NULL,
         FOREIGN KEY (updated_by_id) REFERENCES users (id) ON DELETE SET NULL,
         FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id)
-    );
+    ) STRICT;
 
 CREATE TABLE
     relation_event_puljer (
         event_id TEXT NOT NULL,
         pulje_id TEXT NOT NULL,
-        is_in_pulje BOOLEAN NOT NULL DEFAULT TRUE,
-        is_published BOOLEAN NOT NULL DEFAULT FALSE,
+        is_in_pulje INTEGER NOT NULL DEFAULT 1 CHECK (is_in_pulje IN (0, 1)),
+        is_published INTEGER NOT NULL DEFAULT 0 CHECK (is_published IN (0, 1)),
         room_id INTEGER,
         PRIMARY KEY (event_id, pulje_id),
         FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
         FOREIGN KEY (pulje_id) REFERENCES puljer (id) ON UPDATE CASCADE,
         FOREIGN KEY (room_id) REFERENCES rooms (id) ON DELETE SET NULL
-    );
+    ) STRICT;
 
 CREATE TABLE
     puljer (
@@ -137,10 +137,10 @@ CREATE TABLE
                 'completed'
             )
         ),
-        start_at DATE NOT NULL,
-        end_at DATE NOT NULL,
+        start_at TEXT NOT NULL,
+        end_at TEXT NOT NULL,
         FOREIGN KEY (status) REFERENCES pulje_statuses (status) ON UPDATE CASCADE
-    );
+    ) STRICT;
 
 CREATE TABLE
     relation_events_players (
@@ -148,12 +148,12 @@ CREATE TABLE
         pulje_id TEXT NOT NULL,
         billettholder_id INTEGER NOT NULL,
         role TEXT NOT NULL DEFAULT 'Player' CHECK (role IN ('Player', 'GM')),
-        inserted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        inserted_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
         PRIMARY KEY (billettholder_id, event_id, pulje_id),
         FOREIGN KEY (billettholder_id) REFERENCES billettholdere (id),
         FOREIGN KEY (event_id) REFERENCES events (id),
         FOREIGN KEY (pulje_id) REFERENCES puljer (id)
-    );
+    ) STRICT;
 
 CREATE TABLE
     "interests" (
@@ -161,8 +161,8 @@ CREATE TABLE
         event_id TEXT NOT NULL,
         pulje_id TEXT NOT NULL,
         interest_level TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        created_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+        updated_at TEXT DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
         created_by_id INTEGER,
         updated_by_id INTEGER,
         FOREIGN KEY (created_by_id) REFERENCES users (id) ON DELETE SET NULL,
@@ -172,7 +172,7 @@ CREATE TABLE
         FOREIGN KEY (event_id) REFERENCES events (id),
         FOREIGN KEY (pulje_id) REFERENCES puljer (id),
         FOREIGN KEY (interest_level) REFERENCES interest_levels (interest_level) ON UPDATE CASCADE
-    );
+    ) STRICT;
 
 CREATE TABLE
     rooms (
@@ -180,7 +180,7 @@ CREATE TABLE
         name TEXT NOT NULL,
         floor INTEGER NOT NULL,
         max_concurrent_games INTEGER NOT NULL
-    );
+    ) STRICT;
 
 INSERT INTO
     event_statuses (status)
