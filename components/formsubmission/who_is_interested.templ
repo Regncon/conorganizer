@@ -331,7 +331,7 @@ func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *
 		VALUES (?, ?, ?, '` + string(models.InterestLevelHigh) + `')
 		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
 			interest_level = EXCLUDED.interest_level,
-			updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+			updated_at = ` + models.DBDateTimeNowSQL + `
 	`
 	if _, execErr := tx.Exec(upsertInterestQuery, bid, eId, Pid); execErr != nil {
 		logger.Error(fmt.Errorf("failed to upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
@@ -343,7 +343,7 @@ func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *
 		VALUES (?, ?, ?, '` + string(models.EventPlayerRolePlayer) + `')
 		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
 			role = EXCLUDED.role,
-			inserted_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+			inserted_at = ` + models.DBDateTimeNowSQL + `
 	`
 	if _, execErr := tx.Exec(upsertPlayerQuery, eId, Pid, bid); execErr != nil {
 		logger.Error(fmt.Errorf("failed to upsert player status for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
@@ -392,7 +392,7 @@ func UpdatePlayerStatus(eventId string,
 		VALUES (?, ?, ?, '` + string(role) + `')
 		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
 			role = EXCLUDED.role,
-			inserted_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+			inserted_at = ` + models.DBDateTimeNowSQL + `
 	`
 	_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId)
 	if updatePlayerStatusErr != nil {

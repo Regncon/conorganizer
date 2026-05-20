@@ -15,6 +15,8 @@ var (
 	_ driver.Valuer = DBDateTime{}
 )
 
+const DBDateTimeNowSQL = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')"
+
 type DBDateTime struct {
 	Time  time.Time
 	Valid bool
