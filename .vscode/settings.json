@@ -62,6 +62,7 @@
         "nowrap",
         "nstr",
         "omitempty",
+        "omitzero",
         "passwordless",
         "pipefail",
         "prevnext",
