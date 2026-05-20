@@ -12,11 +12,45 @@ CREATE TABLE _email_anonymize_keep (
     email_key TEXT PRIMARY KEY
 );
 
--- Emails listed here are intentionally kept for testing/admin access.
--- Add email addresses here before running the migration.
-INSERT INTO _email_anonymize_keep (email_key) VALUES
-    ('test@test.com'),
-    ('test2@test.com');
+-- Emails listed in ANONYMIZE_PRESERVE_EMAILS are intentionally kept for testing/admin access.
+-- Set ANONYMIZE_PRESERVE_EMAILS in .env as a comma-separated list before running the migration.
+-- Example: ANONYMIZE_PRESERVE_EMAILS=admin@example.com,test@example.com
+-- +goose ENVSUB ON
+WITH RECURSIVE keep_emails(value) AS (
+    SELECT '${ANONYMIZE_PRESERVE_EMAILS:-}'
+),
+split(email_key, rest) AS (
+    SELECT
+        lower(trim(CASE
+            WHEN instr(value, ',') = 0 THEN value
+            ELSE substr(value, 1, instr(value, ',') - 1)
+        END)),
+        CASE
+            WHEN instr(value, ',') = 0 THEN ''
+            ELSE substr(value, instr(value, ',') + 1)
+        END
+    FROM keep_emails
+
+    UNION ALL
+
+    SELECT
+        lower(trim(CASE
+            WHEN instr(rest, ',') = 0 THEN rest
+            ELSE substr(rest, 1, instr(rest, ',') - 1)
+        END)),
+        CASE
+            WHEN instr(rest, ',') = 0 THEN ''
+            ELSE substr(rest, instr(rest, ',') + 1)
+        END
+    FROM split
+    WHERE rest <> ''
+)
+INSERT INTO _email_anonymize_keep (email_key)
+SELECT email_key
+FROM split
+WHERE email_key <> ''
+ON CONFLICT(email_key) DO NOTHING;
+-- +goose ENVSUB OFF
 
 INSERT INTO _email_anonymize_map (email_key, anon_email)
 WITH all_emails AS (
