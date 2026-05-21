@@ -174,6 +174,12 @@ CREATE TABLE
         FOREIGN KEY (interest_level) REFERENCES interest_levels (interest_level) ON UPDATE CASCADE
     ) STRICT;
 
+    tabell_program
+    bool is_published
+    when published then hide puljer but show individual events
+    when published show pulje and sort events under pulje
+    when not published hide interest button and påmedling button
+
 CREATE TABLE
     rooms (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
