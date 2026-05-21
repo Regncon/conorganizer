@@ -203,7 +203,339 @@ GOCACHE=/tmp/conorganizer-go-build go test ./service/checkIn ./pages/admin/bille
 
 Remaining follow-up: reverse cleanup on manual email deletion is still separate, as scoped in the ticket. Also, the email insert and association insert are still not wrapped in a single transaction; that only matters for rare partial-write failure cases.
 ```
+```
 
 Time: 2026-05-14 15:40:47
+--- Next Prompt ---
+
+Let's try to clean up the test.
+
+Here is an example of what I'm looking for:
+
+```Go
+package header
+
+import (
+	"testing"
+
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/testutil/templtest"
+)
+
+func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
+	// Gitt at brukeren ikke er innlogget,
+	// når hovednavigasjonen vises,
+	// så skal brukeren bare få navigasjonslenker til forsiden og innlogging.
+
+	// Given
+	expectedHrefs := []string{"/", "/auth"}
+	userInfo := requestctx.UserRequestInfo{}
+
+	// When
+	doc := templtest.Render(t, Menu(userInfo))
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
+
+	// Then
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+}
+
+func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
+	// Gitt at brukeren er innlogget uten adminrettigheter,
+	// når hovednavigasjonen vises,
+	// så skal brukeren bare få navigasjonslenker til forsiden, egen profil, utlogging og vanlege spørsmål.
+
+	// Given
+	expectedHrefs := []string{
+		"/",
+		"/profile",
+		"/auth/logout",
+		"https://www.regncon.no/vanlege-sporsmal/",
+	}
+	userInfo := requestctx.UserRequestInfo{
+		IsLoggedIn: true,
+		IsAdmin:    false,
+	}
+
+	// When
+	doc := templtest.Render(t, Menu(userInfo))
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
+
+	// Then
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+}
+
+func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
+	// Gitt at brukeren er admin,
+	// når hovednavigasjonen vises,
+	// så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.
+
+	// Given
+	expectedHrefs := []string{
+		"/",
+		"/profile",
+		"/auth/logout",
+		"/admin",
+		"/admin/billettholder/",
+		"/admin/approval/",
+		"https://www.regncon.no/vanlege-sporsmal/",
+	}
+	userInfo := requestctx.UserRequestInfo{
+		IsLoggedIn: true,
+		IsAdmin:    true,
+	}
+
+	// When
+	doc := templtest.Render(t, Menu(userInfo))
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
+
+	// Then
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+}
+```
+
+Here are some guidelines for the cleanup:
+When possible, Add a comment at the top of each test that follows the BDD Behavior-Driven Development style:
+
+Given some initial context, When an event occurs, Then ensure some outcomes.
+
+Split the test into three sections with a comment header for each: // Given // When // Then
+
+Always start the // Given section with the expected output. This makes it easier to understand the test's purpose and verify that the generated OpenSCAD matches expectations.
+
+Let's have a discussion about how to make the test more readable and maintainable.
+
+Time: 2026-05-21 10:33:47
+--- Codex Run ---
+
+Codex output:
+Agreed. The current test proves the bug, but the intent is buried under SQL setup.
+
+I’d clean it up around two ideas:
+
+1. Split behavior from setup noise.
+2. Make idempotency either a clearly named second test or an explicit second `When`.
+
+I’d lean toward two tests:
+
+```go
+func TestAssociateUsersWithBillettholderEmail_CreatesAssociationForMatchingUserEmail(t *testing.T)
+func TestAssociateUsersWithBillettholderEmail_DoesNotDuplicateExistingAssociation(t *testing.T)
+```
+
+That keeps each test’s “Then” small and direct.
+
+Suggested structure for the first test:
+
+```go
+func TestAssociateUsersWithBillettholderEmail_CreatesAssociationForMatchingUserEmail(t *testing.T) {
+	// Gitt at ein billettholder har fått lagt til ei manuell e-postadresse,
+	// og ein eksisterande brukar har same e-postadresse med annan casing,
+	// når e-postadressa blir forsona mot brukarar,
+	// så skal billettholderen få ei varig brukar-tilknyting.
+
+	// Given
+	expectedAssociation := models.BillettholderUsers{
+		BillettholderID: 12345,
+		UserID:          67890,
+	}
+
+	db, logger := createAssociationTestDB(t)
+	insertBillettholder(t, db, expectedAssociation.BillettholderID)
+	insertUser(t, db, expectedAssociation.UserID, "test-user", "Participant@Example.com")
+	insertManualBillettholderEmail(t, db, expectedAssociation.BillettholderID, "participant@example.com")
+
+	// When
+	err := AssociateUsersWithBillettholderEmail(
+		expectedAssociation.BillettholderID,
+		"participant@example.com",
+		db,
+		logger,
+	)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected association to succeed: %v", err)
+	}
+	assertBillettholderUserAssociation(t, db, expectedAssociation)
+}
+```
+
+For idempotency:
+
+```go
+func TestAssociateUsersWithBillettholderEmail_DoesNotDuplicateExistingAssociation(t *testing.T) {
+	// Gitt at ein billettholder allereie er knytt til ein brukar via ei e-postadresse,
+	// når same e-postforsoning køyrer på nytt,
+	// så skal det framleis berre finnast éi tilknyting.
+
+	// Given
+	expectedAssociationCount := 1
+	// setup same rows, plus existing billettholdere_users row
+
+	// When
+	err := AssociateUsersWithBillettholderEmail(...)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected repeated association to succeed: %v", err)
+	}
+	assertBillettholderUserAssociationCount(t, db, expectedAssociation, expectedAssociationCount)
+}
+```
+
+The helper names matter. I’d keep them local and boring:
+
+- `createAssociationTestDB`
+- `insertBillettholder`
+- `insertUser`
+- `insertManualBillettholderEmail`
+- `assertBillettholderUserAssociation`
+- `assertBillettholderUserAssociationCount`
+
+That gives us tests that read like behavior, while the SQL stays visible enough to trust but not loud enough to dominate the test.
+```
+
+Time: 2026-05-21 10:33:47
+--- Next Prompt ---
+Much better. I wonder if we could make the helper functions a part of the service or resuse existing functions so that we use the same functins fot the test as we use in porduction. 
+
+Time: 2026-05-21 10:56:27
+--- Codex Run ---
+
+Codex output:
+Yes, but I’d separate two kinds of helpers.
+
+For this test, I would not move raw setup helpers like `insertUser`, `insertBillettholder`, or `insertManualBillettholderEmail` into the production service just to reuse them. Those are fixture builders. If they become production APIs, we risk adding public service surface whose only real caller is tests.
+
+The production behavior we want to reuse is already the new helper:
+
+```go
+AssociateUsersWithBillettholderEmail(...)
+```
+
+That should stay in the service because both the route and the test care about the same reconciliation behavior.
+
+For the test setup, I’d prefer either:
+
+```go
+// local to assign_users_test.go
+insertUser(t, db, ...)
+insertBillettholder(t, db, ...)
+insertManualBillettholderEmail(t, db, ...)
+```
+
+or, if several packages need the same setup later:
+
+```go
+// testutil only, not production service
+testutil.InsertUser(t, db, ...)
+testutil.InsertBillettholder(t, db, ...)
+testutil.InsertBillettholderEmail(t, db, ...)
+```
+
+The rule of thumb I’d use:
+
+- Reuse production functions for the behavior under test.
+- Use test helpers for arranging prerequisite database state.
+- Don’t make production service functions whose only purpose is test setup.
+- Avoid arranging the test through the exact code path we’re trying to verify, unless the test is explicitly an integration/route test.
+
+A route-level test could be useful later: call the manual email-add handler and assert both `billettholder_emails` and `billettholdere_users`. But that’s a broader test because it pulls in Datastar request shape, sessions, router setup, and SSE response behavior. For the current regression, the service-level helper test is the cleaner target.
+```
+```
+
+Time: 2026-05-21 10:56:27
+--- Next Prompt ---
+But arent there some equivalent functions in the service that we could reuse?
+
+Time: 2026-05-21 10:58:38
+--- Codex Run ---
+
+Codex output:
+I’ll check the existing service layer before answering that, especially around billettholder creation, user persistence, and email insertion. If there are real production helpers already in use, reusing them in the test is better than adding fixture-only abstractions.
+The search shows there are a few related functions, but not all of them line up with this test’s setup. I’m opening the likely candidates now to separate “reusable production behavior” from route-local or CheckIn-specific code.
+There are partial equivalents, but not an exact one for this test.
+
+I checked the service layer:
+
+- `checkIn.converTicketIdToNewBillettholder(...)`
+  - Inserts `billettholdere`.
+  - Inserts `billettholder_emails`.
+  - But it is CheckIn-ticket based and inserts `Ticket` / `Associated` emails, not `Manual`.
+  - It is unexported, but the current test is in package `checkIn`, so we technically can call it.
+
+- `checkIn.ConvertTicketToBillettholder(...)`
+  - Exported, but calls `GetTicketsFromCheckIn(...)`, so it pulls in the CheckIn cache/API path. I would not use this in this unit test.
+
+- `pages/login.insertUser(...)`
+  - Inserts a user, but it is route-local, unexported, logs instead of returning errors, and lives outside `service`. Not a good test setup dependency.
+
+- `billettholderService.GetBilettholdere(...)`
+  - Read-only lookup. Useful for assertions maybe, not setup.
+
+So I think we have two reasonable cleanup paths.
+
+**Option A: Keep the test at helper level**
+Use small test-only SQL helpers for setup, and test:
+
+```go
+AssociateUsersWithBillettholderEmail(...)
+```
+
+This is cleanest if the production helper remains “given a billettholder ID and email, reconcile matching users.”
+
+**Option B: Extract the full manual add behavior into service**
+This might be better architecture:
+
+```go
+func AddManualBillettholderEmail(
+	billettholderID int,
+	email string,
+	db *sql.DB,
+	logger *slog.Logger,
+) error
+```
+
+That service would:
+- check duplicate `billettholder_emails`
+- insert `kind = 'Manual'`
+- call `AssociateUsersWithBillettholderEmail`
+- ideally do both writes in a transaction
+
+Then both handlers become much thinner, and the test can exercise the same production function the route uses.
+
+I would not reuse `converTicketIdToNewBillettholder` for this specific regression. It would make the test depend on ticket conversion behavior when the bug is about manual email insertion. Better to either keep SQL setup helpers or extract `AddManualBillettholderEmail` and test that.
+
+Time: 2026-05-21 10:58:38
+--- Next Prompt ---
+
+Ok, lets stick with the test heplpers for now. 
+Go head and modify the tests with the structure we discussed. 
+
+Time: 2026-05-21 11:04:37
+--- Codex Run ---
+
+Codex output:
+I’ll refactor just the new regression coverage: split the creation and idempotency cases, move the noisy SQL into local test helpers, and keep the Given/When/Then structure with expected output first.
+The test now has separate creation and idempotency cases, with local helpers carrying the setup SQL. I’m formatting and running the affected package tests to catch any cleanup mistakes.
+Refactored the new association tests in [assign_users_test.go](/home/cinmay/Documents/conorganizer/service/checkIn/assign_users_test.go:235).
+
+What changed:
+- Split the original test into two focused cases:
+  - creates an association for a matching user email with different casing
+  - does not duplicate an existing association
+- Added BDD comments at the top of each test.
+- Added `// Given`, `// When`, `// Then` sections.
+- Moved setup/query noise into local test helpers.
+- Kept the expected output first in each `Given` section.
+
+Verification passed:
+
+```bash
+GOCACHE=/tmp/conorganizer-go-build go test ./service/checkIn -run 'TestAssociateUsersWithBillettholderEmail' -count=1
+```
+```
+
+Time: 2026-05-21 11:04:37
 --- Next Prompt ---
 

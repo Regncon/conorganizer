@@ -1,7 +1,9 @@
 package checkIn
 
 import (
+	"database/sql"
 	"fmt"
+	"log/slog"
 	"strings"
 	"testing"
 
@@ -230,21 +232,83 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	}
 }
 
-func TestAssociateUsersWithBillettholderEmail(t *testing.T) {
+func TestAssociateUsersWithBillettholderEmail_CreatesAssociationForMatchingUserEmail(t *testing.T) {
+	// Gitt at ein billettholder har fått lagt til ei manuell e-postadresse,
+	// og ein eksisterande brukar har same e-postadresse med annan casing,
+	// når e-postadressa blir forsona mot brukarar,
+	// så skal billettholderen få ei varig brukar-tilknyting.
+
+	// Given
+	expectedAssociation := models.BillettholderUsers{
+		BillettholderID: 12345,
+		UserID:          67890,
+	}
+	manualEmail := "participant@example.com"
+	userEmail := "Participant@Example.com"
+
+	db, slogger := createAssociationTestDB(t)
+	defer db.Close()
+
+	insertBillettholder(t, db, expectedAssociation.BillettholderID)
+	insertUser(t, db, expectedAssociation.UserID, "test-user", userEmail)
+	insertManualBillettholderEmail(t, db, expectedAssociation.BillettholderID, manualEmail)
+
+	// When
+	err := AssociateUsersWithBillettholderEmail(expectedAssociation.BillettholderID, manualEmail, db, slogger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected association to succeed: %v", err)
+	}
+	assertOnlyBillettholderUserAssociation(t, db, expectedAssociation)
+}
+
+func TestAssociateUsersWithBillettholderEmail_DoesNotDuplicateExistingAssociation(t *testing.T) {
+	// Gitt at ein billettholder allereie er knytt til ein brukar via ei manuell e-postadresse,
+	// når same e-postforsoning køyrer på nytt,
+	// så skal det framleis berre finnast éi brukar-tilknyting.
+
+	// Given
+	expectedAssociation := models.BillettholderUsers{
+		BillettholderID: 12345,
+		UserID:          67890,
+	}
+	expectedAssociationCount := 1
+	manualEmail := "participant@example.com"
+
+	db, slogger := createAssociationTestDB(t)
+	defer db.Close()
+
+	insertBillettholder(t, db, expectedAssociation.BillettholderID)
+	insertUser(t, db, expectedAssociation.UserID, "test-user", manualEmail)
+	insertManualBillettholderEmail(t, db, expectedAssociation.BillettholderID, manualEmail)
+	insertBillettholderUserAssociation(t, db, expectedAssociation)
+
+	// When
+	err := AssociateUsersWithBillettholderEmail(expectedAssociation.BillettholderID, manualEmail, db, slogger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected repeated association to succeed: %v", err)
+	}
+	assertBillettholderUserAssociationCount(t, db, expectedAssociation, expectedAssociationCount)
+}
+
+func createAssociationTestDB(t *testing.T) (*sql.DB, *slog.Logger) {
+	t.Helper()
+
 	db, slogger, err := testutil.CreateTemporaryDBAndLogger("test_associate_users_with_billettholder_email", t)
 	if err != nil {
 		t.Fatalf("failed to create test database and logger: %v", err)
 	}
-	defer db.Close()
 
-	const (
-		billettholderID = 12345
-		userID          = 67890
-		manualEmail     = "participant@example.com"
-		userEmail       = "Participant@Example.com"
-	)
+	return db, slogger
+}
 
-	_, err = db.Exec(`
+func insertBillettholder(t *testing.T, db *sql.DB, billettholderID int) {
+	t.Helper()
+
+	_, err := db.Exec(`
 		INSERT INTO billettholdere (
 			id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -252,49 +316,72 @@ func TestAssociateUsersWithBillettholderEmail(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to insert billettholder: %v", err)
 	}
+}
 
-	_, err = db.Exec(`
+func insertUser(t *testing.T, db *sql.DB, userID int, descopeUserID string, email string) {
+	t.Helper()
+
+	_, err := db.Exec(`
 		INSERT INTO users (id, user_id, email, is_admin)
 		VALUES (?, ?, ?, ?)
-	`, userID, "test-user", userEmail, false)
+	`, userID, descopeUserID, email, false)
 	if err != nil {
 		t.Fatalf("failed to insert user: %v", err)
 	}
+}
 
-	_, err = db.Exec(`
+func insertManualBillettholderEmail(t *testing.T, db *sql.DB, billettholderID int, email string) {
+	t.Helper()
+
+	_, err := db.Exec(`
 		INSERT INTO billettholder_emails (billettholder_id, email, kind)
 		VALUES (?, ?, 'Manual')
-	`, billettholderID, manualEmail)
+	`, billettholderID, email)
 	if err != nil {
 		t.Fatalf("failed to insert billettholder email: %v", err)
 	}
+}
 
-	if err := AssociateUsersWithBillettholderEmail(billettholderID, manualEmail, db, slogger); err != nil {
-		t.Fatalf("failed to associate users with billettholder email: %v", err)
-	}
-	if err := AssociateUsersWithBillettholderEmail(billettholderID, manualEmail, db, slogger); err != nil {
-		t.Fatalf("failed to rerun association idempotently: %v", err)
-	}
+func insertBillettholderUserAssociation(t *testing.T, db *sql.DB, association models.BillettholderUsers) {
+	t.Helper()
 
-	var associationCount int
-	err = db.QueryRow(`
-		SELECT COUNT(*)
-		FROM billettholdere_users
-		WHERE billettholder_id = ? AND user_id = ?
-	`, billettholderID, userID).Scan(&associationCount)
+	_, err := db.Exec(`
+		INSERT INTO billettholdere_users (billettholder_id, user_id)
+		VALUES (?, ?)
+	`, association.BillettholderID, association.UserID)
 	if err != nil {
-		t.Fatalf("failed to count billettholder user associations: %v", err)
+		t.Fatalf("failed to insert billettholder user association: %v", err)
 	}
-	if associationCount != 1 {
-		t.Fatalf("expected exactly 1 billettholder user association, got %d", associationCount)
-	}
+}
+
+func assertOnlyBillettholderUserAssociation(t *testing.T, db *sql.DB, expected models.BillettholderUsers) {
+	t.Helper()
+
+	assertBillettholderUserAssociationCount(t, db, expected, 1)
 
 	var totalAssociations int
-	err = db.QueryRow(`SELECT COUNT(*) FROM billettholdere_users`).Scan(&totalAssociations)
+	err := db.QueryRow(`SELECT COUNT(*) FROM billettholdere_users`).Scan(&totalAssociations)
 	if err != nil {
 		t.Fatalf("failed to count all billettholder user associations: %v", err)
 	}
 	if totalAssociations != 1 {
 		t.Fatalf("expected exactly 1 total billettholder user association, got %d", totalAssociations)
+	}
+}
+
+func assertBillettholderUserAssociationCount(t *testing.T, db *sql.DB, expected models.BillettholderUsers, expectedCount int) {
+	t.Helper()
+
+	var associationCount int
+	err := db.QueryRow(`
+		SELECT COUNT(*)
+		FROM billettholdere_users
+		WHERE billettholder_id = ? AND user_id = ?
+	`, expected.BillettholderID, expected.UserID).Scan(&associationCount)
+	if err != nil {
+		t.Fatalf("failed to count billettholder user associations: %v", err)
+	}
+	if associationCount != expectedCount {
+		t.Fatalf("expected %d billettholder user associations, got %d", expectedCount, associationCount)
 	}
 }
