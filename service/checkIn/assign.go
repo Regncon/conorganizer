@@ -196,3 +196,38 @@ func AssociateUsersWithBillettholderEmail(billettholderID int, email string, db 
 
 	return nil
 }
+
+// DisassociateUsersFromBillettholderEmail removes user links for a removed
+// billettholder email when no remaining email still matches the same users.
+func DisassociateUsersFromBillettholderEmail(billettholderID int, email string, db *sql.DB, logger *slog.Logger) error {
+	logger = logger.With("component", "checkin_assign")
+	logger.Debug("Disassociating users from billettholder email", "billettholder_id", billettholderID)
+
+	result, err := db.Exec(`
+		DELETE FROM billettholdere_users
+		WHERE billettholder_id = ?
+		AND user_id IN (
+			SELECT id
+			FROM users
+			WHERE email = ? COLLATE NOCASE
+		)
+		AND NOT EXISTS (
+			SELECT 1
+			FROM billettholder_emails
+			WHERE billettholder_id = ?
+			AND email = ? COLLATE NOCASE
+		)
+	`, billettholderID, email, billettholderID, email)
+	if err != nil {
+		return fmt.Errorf("unable to disassociate users from billettholder %d by email: %w", billettholderID, err)
+	}
+
+	if rowsAffected, err := result.RowsAffected(); err == nil {
+		logger.Debug("Disassociated users from billettholder email",
+			"billettholder_id", billettholderID,
+			"removed_associations", rowsAffected,
+		)
+	}
+
+	return nil
+}

@@ -557,4 +557,38 @@ No tests run; this was a docs-only change.
 
 Time: 2026-05-21 11:18:09
 --- Next Prompt ---
+Now, let's create the code for the removal of the email and the corresponding association cleanup.
+
+Time: 2026-05-21 11:33:16
+--- Codex Run ---
+
+Codex output:
+I’ll treat this as the reverse reconciliation flow: delete the manual email, then remove only the user association that is no longer justified by any remaining billettholder email. I’ll add focused service tests first, then wire the helper into both delete handlers.
+I’m going to add a symmetric service helper, so I’ll use the `conorganizer-logging` guidance for its small debug logging and error-wrapping style.
+I’m adding the cleanup regression tests first. They’ll define the desired helper contract: after the email row is gone, cleanup removes the durable link only when no remaining email still matches the user.
+The failing tests now define the cleanup helper. I’m adding the service implementation with case-insensitive matching and a guard that keeps the association if any remaining billettholder email still matches the user email.
+The cleanup helper tests pass. I’m replacing the duplicated handler cleanup SQL with the new service helper in both admin and profile delete routes.
+The handlers are wired and generated templ files are refreshed locally. I’m running the affected service and page package tests/compiles now.
+Implemented the removal cleanup path.
+
+Changed:
+- Added `DisassociateUsersFromBillettholderEmail` in [assign.go](/home/cinmay/Documents/conorganizer/service/checkIn/assign.go:200).
+- Added regression tests for:
+  - removing the association when the deleted email was the last matching email
+  - keeping the association when another remaining email still matches case-insensitively
+  in [assign_users_test.go](/home/cinmay/Documents/conorganizer/service/checkIn/assign_users_test.go:297).
+- Replaced duplicated cleanup SQL in both delete handlers:
+  - [admin route](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_card.templ:226)
+  - [profile route](/home/cinmay/Documents/conorganizer/pages/profile/tickets/billettholder_profile_card.templ:198)
+
+Verification passed:
+
+```bash
+GOCACHE=/tmp/conorganizer-go-build go test ./service/checkIn ./pages/admin/billettholder_admin ./pages/profile/tickets -count=1
+```
+
+Remaining note: the email delete and association cleanup are still two DB statements in the handlers, not one transaction.
+
+Time: 2026-05-21 11:33:16
+--- Next Prompt ---
 

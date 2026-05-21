@@ -294,6 +294,76 @@ func TestAssociateUsersWithBillettholderEmail_DoesNotDuplicateExistingAssociatio
 	assertBillettholderUserAssociationCount(t, db, expectedAssociation, expectedAssociationCount)
 }
 
+func TestDisassociateUsersFromBillettholderEmail_RemovesAssociationWhenNoRemainingEmailMatchesUser(t *testing.T) {
+	// Gitt at ei manuell e-postadresse er fjerna frå ein billettholder,
+	// og ingen attverande e-postadresser på billettholderen samsvarer med brukaren,
+	// når e-postadressa blir forsona mot brukar-tilknytingar,
+	// så skal den varige brukar-tilknytinga fjernast.
+
+	// Given
+	expectedAssociation := models.BillettholderUsers{
+		BillettholderID: 12345,
+		UserID:          67890,
+	}
+	expectedAssociationCount := 0
+	manualEmail := "participant@example.com"
+	userEmail := "Participant@Example.com"
+
+	db, slogger := createAssociationTestDB(t)
+	defer db.Close()
+
+	insertBillettholder(t, db, expectedAssociation.BillettholderID)
+	insertUser(t, db, expectedAssociation.UserID, "test-user", userEmail)
+	removedEmailID := insertManualBillettholderEmail(t, db, expectedAssociation.BillettholderID, manualEmail)
+	insertBillettholderUserAssociation(t, db, expectedAssociation)
+	deleteBillettholderEmailByID(t, db, removedEmailID)
+
+	// When
+	err := DisassociateUsersFromBillettholderEmail(expectedAssociation.BillettholderID, manualEmail, db, slogger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected disassociation to succeed: %v", err)
+	}
+	assertBillettholderUserAssociationCount(t, db, expectedAssociation, expectedAssociationCount)
+}
+
+func TestDisassociateUsersFromBillettholderEmail_KeepsAssociationWhenRemainingEmailStillMatchesUser(t *testing.T) {
+	// Gitt at ei manuell e-postadresse er fjerna frå ein billettholder,
+	// men ei anna attverande e-postadresse på same billettholder framleis samsvarer med brukaren,
+	// når e-postadressa blir forsona mot brukar-tilknytingar,
+	// så skal den varige brukar-tilknytinga behaldast.
+
+	// Given
+	expectedAssociation := models.BillettholderUsers{
+		BillettholderID: 12345,
+		UserID:          67890,
+	}
+	expectedAssociationCount := 1
+	removedEmail := "participant@example.com"
+	remainingEmail := "PARTICIPANT@example.com"
+	userEmail := "Participant@Example.com"
+
+	db, slogger := createAssociationTestDB(t)
+	defer db.Close()
+
+	insertBillettholder(t, db, expectedAssociation.BillettholderID)
+	insertUser(t, db, expectedAssociation.UserID, "test-user", userEmail)
+	removedEmailID := insertManualBillettholderEmail(t, db, expectedAssociation.BillettholderID, removedEmail)
+	insertManualBillettholderEmail(t, db, expectedAssociation.BillettholderID, remainingEmail)
+	insertBillettholderUserAssociation(t, db, expectedAssociation)
+	deleteBillettholderEmailByID(t, db, removedEmailID)
+
+	// When
+	err := DisassociateUsersFromBillettholderEmail(expectedAssociation.BillettholderID, removedEmail, db, slogger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected disassociation cleanup to succeed: %v", err)
+	}
+	assertBillettholderUserAssociationCount(t, db, expectedAssociation, expectedAssociationCount)
+}
+
 func createAssociationTestDB(t *testing.T) (*sql.DB, *slog.Logger) {
 	t.Helper()
 
@@ -330,15 +400,30 @@ func insertUser(t *testing.T, db *sql.DB, userID int, descopeUserID string, emai
 	}
 }
 
-func insertManualBillettholderEmail(t *testing.T, db *sql.DB, billettholderID int, email string) {
+func insertManualBillettholderEmail(t *testing.T, db *sql.DB, billettholderID int, email string) int {
 	t.Helper()
 
-	_, err := db.Exec(`
+	result, err := db.Exec(`
 		INSERT INTO billettholder_emails (billettholder_id, email, kind)
 		VALUES (?, ?, 'Manual')
 	`, billettholderID, email)
 	if err != nil {
 		t.Fatalf("failed to insert billettholder email: %v", err)
+	}
+
+	emailID, err := result.LastInsertId()
+	if err != nil {
+		t.Fatalf("failed to get inserted billettholder email ID: %v", err)
+	}
+	return int(emailID)
+}
+
+func deleteBillettholderEmailByID(t *testing.T, db *sql.DB, emailID int) {
+	t.Helper()
+
+	_, err := db.Exec(`DELETE FROM billettholder_emails WHERE id = ?`, emailID)
+	if err != nil {
+		t.Fatalf("failed to delete billettholder email: %v", err)
 	}
 }
 
