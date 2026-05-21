@@ -591,4 +591,39 @@ Remaining note: the email delete and association cleanup are still two DB statem
 
 Time: 2026-05-21 11:33:16
 --- Next Prompt ---
+Let's add some better logging so that we can see in our Grafana dashboards when associations are created or removed through these flows, and if there are any errors during the process.
+
+Time: 2026-05-21 11:48:16
+--- Codex Run ---
+
+Codex output:
+I’ll use the `conorganizer-logging` guidance here and keep the new logs structured, non-PII, and at `Info` only when an association row is actually created or removed. Errors will stay logged at the route boundary where the user-visible outcome is decided.
+I’m updating the two service helpers because they know the exact row counts. That gives Grafana stable event logs without exposing the email address.
+The service event logs cover successful row changes. I’m also making the route-boundary error messages more explicit for Grafana, without adding duplicate logs or exposing the email address.
+The logs are now at the right boundary: `Info` for actual association mutations, and clearer route-boundary `Error` messages for failure paths. I’m running the affected tests again.
+Added dashboard-friendly logging for the association flows.
+
+Updated [assign.go](/home/cinmay/Documents/conorganizer/service/checkIn/assign.go:188) so successful row changes now emit `Info` logs:
+
+- `Created billettholder user associations`
+  - `billettholder_id`
+  - `association_flow="billettholder_email"`
+  - `created_associations`
+- `Removed billettholder user associations`
+  - `billettholder_id`
+  - `association_flow="billettholder_email"`
+  - `removed_associations`
+
+No email addresses are logged.
+
+Also updated the admin/profile handlers to produce clearer route-boundary error messages if association creation/removal fails after manual email add/delete.
+
+Verification passed:
+
+```bash
+GOCACHE=/tmp/conorganizer-go-build go test ./service/checkIn ./pages/admin/billettholder_admin ./pages/profile/tickets -count=1
+```
+
+Time: 2026-05-21 11:48:16
+--- Next Prompt ---
 

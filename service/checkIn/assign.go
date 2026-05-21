@@ -188,9 +188,19 @@ func AssociateUsersWithBillettholderEmail(billettholderID int, email string, db 
 	}
 
 	if rowsAffected, err := result.RowsAffected(); err == nil {
-		logger.Debug("Associated users with billettholder email",
+		if rowsAffected > 0 {
+			logger.Info("Created billettholder user associations",
+				"billettholder_id", billettholderID,
+				"association_flow", "billettholder_email",
+				"created_associations", rowsAffected,
+			)
+		} else {
+			logger.Debug("No billettholder user associations created", "billettholder_id", billettholderID)
+		}
+	} else {
+		logger.Debug("Unable to read created association count",
 			"billettholder_id", billettholderID,
-			"inserted_associations", rowsAffected,
+			"error", err,
 		)
 	}
 
@@ -223,9 +233,19 @@ func DisassociateUsersFromBillettholderEmail(billettholderID int, email string, 
 	}
 
 	if rowsAffected, err := result.RowsAffected(); err == nil {
-		logger.Debug("Disassociated users from billettholder email",
+		if rowsAffected > 0 {
+			logger.Info("Removed billettholder user associations",
+				"billettholder_id", billettholderID,
+				"association_flow", "billettholder_email",
+				"removed_associations", rowsAffected,
+			)
+		} else {
+			logger.Debug("No billettholder user associations removed", "billettholder_id", billettholderID)
+		}
+	} else {
+		logger.Debug("Unable to read removed association count",
 			"billettholder_id", billettholderID,
-			"removed_associations", rowsAffected,
+			"error", err,
 		)
 	}
 
