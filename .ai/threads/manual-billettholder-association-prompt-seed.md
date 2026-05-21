@@ -534,8 +534,27 @@ Verification passed:
 ```bash
 GOCACHE=/tmp/conorganizer-go-build go test ./service/checkIn -run 'TestAssociateUsersWithBillettholderEmail' -count=1
 ```
-```
 
 Time: 2026-05-21 11:04:37
+--- Next Prompt ---
+Go ahead and update the AGENTS.MD file with the new test structure and the discussion about production vs test helpers so that Codex can refer to it in future sessions.
+
+Time: 2026-05-21 11:18:09
+--- Codex Run ---
+
+Codex output:
+I’ll find the repo guidance file and add a focused testing section that captures the Given/When/Then structure plus the helper boundary we discussed.
+I’m adding the guidance as a repo-level testing convention, keeping it separate from the Datastar notes so future agents can find it quickly.
+Updated [AGENTS.MD](/home/cinmay/Documents/conorganizer/AGENTS.MD:4) with:
+
+- BDD-style Go test structure guidance.
+- `// Given`, `// When`, `// Then` convention.
+- Expected output first in `Given`.
+- Guidance on splitting focused behavior tests.
+- Production helper vs test helper rules, including when to use `testutil`.
+
+No tests run; this was a docs-only change.
+
+Time: 2026-05-21 11:18:09
 --- Next Prompt ---
 
