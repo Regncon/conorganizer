@@ -190,7 +190,7 @@ func addEmailToBilettholderRoute(
 
 		err = checkIn.AssociateUsersWithBillettholderEmail(billettholderIDInt, newEmailAddress, db, logger)
 		if err != nil {
-			handleError(responder, "Noe gikk galt, prøv igjen", err.Error())
+			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to create billettholder user associations after manual email add: "+err.Error())
 			return
 		}
 
@@ -267,7 +267,7 @@ func deleteEmailFromBillettholderRoute(
 
 		err = checkIn.DisassociateUsersFromBillettholderEmail(billettholderIDInt, email, db, logger)
 		if err != nil {
-			handleError(responder, "Noe gikk galt ved fjerning av bruker-tilknytning", err.Error())
+			handleError(responder, "Noe gikk galt ved fjerning av bruker-tilknytning", "Failed to remove billettholder user associations after manual email delete: "+err.Error())
 			return
 		}
 
