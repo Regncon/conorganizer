@@ -168,3 +168,31 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 
 	return nil
 }
+
+// AssociateUsersWithBillettholderEmail links an existing billettholder to all users
+// whose email matches the supplied billettholder email.
+func AssociateUsersWithBillettholderEmail(billettholderID int, email string, db *sql.DB, logger *slog.Logger) error {
+	logger = logger.With("component", "checkin_assign")
+	logger.Debug("Associating users with billettholder email", "billettholder_id", billettholderID)
+
+	result, err := db.Exec(`
+		INSERT OR IGNORE INTO billettholdere_users (
+			billettholder_id, user_id
+		)
+		SELECT ?, id
+		FROM users
+		WHERE email = ? COLLATE NOCASE
+	`, billettholderID, email)
+	if err != nil {
+		return fmt.Errorf("unable to associate users with billettholder %d by email: %w", billettholderID, err)
+	}
+
+	if rowsAffected, err := result.RowsAffected(); err == nil {
+		logger.Debug("Associated users with billettholder email",
+			"billettholder_id", billettholderID,
+			"inserted_associations", rowsAffected,
+		)
+	}
+
+	return nil
+}

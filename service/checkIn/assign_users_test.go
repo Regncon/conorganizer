@@ -229,3 +229,72 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		}
 	}
 }
+
+func TestAssociateUsersWithBillettholderEmail(t *testing.T) {
+	db, slogger, err := testutil.CreateTemporaryDBAndLogger("test_associate_users_with_billettholder_email", t)
+	if err != nil {
+		t.Fatalf("failed to create test database and logger: %v", err)
+	}
+	defer db.Close()
+
+	const (
+		billettholderID = 12345
+		userID          = 67890
+		manualEmail     = "participant@example.com"
+		userEmail       = "Participant@Example.com"
+	)
+
+	_, err = db.Exec(`
+		INSERT INTO billettholdere (
+			id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`, billettholderID, "Test", "Participant", 199999, "Test", true, 19999999, 4999999)
+	if err != nil {
+		t.Fatalf("failed to insert billettholder: %v", err)
+	}
+
+	_, err = db.Exec(`
+		INSERT INTO users (id, user_id, email, is_admin)
+		VALUES (?, ?, ?, ?)
+	`, userID, "test-user", userEmail, false)
+	if err != nil {
+		t.Fatalf("failed to insert user: %v", err)
+	}
+
+	_, err = db.Exec(`
+		INSERT INTO billettholder_emails (billettholder_id, email, kind)
+		VALUES (?, ?, 'Manual')
+	`, billettholderID, manualEmail)
+	if err != nil {
+		t.Fatalf("failed to insert billettholder email: %v", err)
+	}
+
+	if err := AssociateUsersWithBillettholderEmail(billettholderID, manualEmail, db, slogger); err != nil {
+		t.Fatalf("failed to associate users with billettholder email: %v", err)
+	}
+	if err := AssociateUsersWithBillettholderEmail(billettholderID, manualEmail, db, slogger); err != nil {
+		t.Fatalf("failed to rerun association idempotently: %v", err)
+	}
+
+	var associationCount int
+	err = db.QueryRow(`
+		SELECT COUNT(*)
+		FROM billettholdere_users
+		WHERE billettholder_id = ? AND user_id = ?
+	`, billettholderID, userID).Scan(&associationCount)
+	if err != nil {
+		t.Fatalf("failed to count billettholder user associations: %v", err)
+	}
+	if associationCount != 1 {
+		t.Fatalf("expected exactly 1 billettholder user association, got %d", associationCount)
+	}
+
+	var totalAssociations int
+	err = db.QueryRow(`SELECT COUNT(*) FROM billettholdere_users`).Scan(&totalAssociations)
+	if err != nil {
+		t.Fatalf("failed to count all billettholder user associations: %v", err)
+	}
+	if totalAssociations != 1 {
+		t.Fatalf("expected exactly 1 total billettholder user association, got %d", totalAssociations)
+	}
+}
