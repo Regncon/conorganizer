@@ -183,6 +183,7 @@ CREATE TABLE
 CREATE TABLE
     rooms (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        room_number TEXT NOT NULL,
         name TEXT NOT NULL,
         floor INTEGER NOT NULL,
         max_concurrent_games INTEGER NOT NULL
