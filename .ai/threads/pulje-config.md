@@ -885,4 +885,208 @@ Both passed. The migration needs to be applied before the admin page can read/up
 
 Time: 2026-05-22 16:42:18
 --- Next Prompt ---
+Ok, now let's create a test for the front page to check that the events are displayed correctly based on the global publishing state.
+
+Here is an example file that show how the test should be structured:
+```go
+package header
+
+import (
+	"testing"
+
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/testutil/templtest"
+)
+
+func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
+	// Gitt at brukeren ikke er innlogget,
+	// når hovednavigasjonen vises,
+	// så skal brukeren bare få navigasjonslenker til forsiden og innlogging.
+
+	// Given
+	expectedHrefs := []string{"/", "/auth"}
+	userInfo := requestctx.UserRequestInfo{}
+
+	// When
+	doc := templtest.Render(t, Menu(userInfo))
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
+
+	// Then
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+}
+
+func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
+	// Gitt at brukeren er innlogget uten adminrettigheter,
+	// når hovednavigasjonen vises,
+	// så skal brukeren bare få navigasjonslenker til forsiden, egen profil, utlogging og vanlege spørsmål.
+
+	// Given
+	expectedHrefs := []string{
+		"/",
+		"/profile",
+		"/auth/logout",
+		"https://www.regncon.no/vanlege-sporsmal/",
+	}
+	userInfo := requestctx.UserRequestInfo{
+		IsLoggedIn: true,
+		IsAdmin:    false,
+	}
+
+	// When
+	doc := templtest.Render(t, Menu(userInfo))
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
+
+	// Then
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+}
+
+func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
+	// Gitt at brukeren er admin,
+	// når hovednavigasjonen vises,
+	// så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.
+
+	// Given
+	expectedHrefs := []string{
+		"/",
+		"/profile",
+		"/auth/logout",
+		"/admin",
+		"/admin/billettholder/",
+		"/admin/approval/",
+		"https://www.regncon.no/vanlege-sporsmal/",
+	}
+	userInfo := requestctx.UserRequestInfo{
+		IsLoggedIn: true,
+		IsAdmin:    true,
+	}
+
+	// When
+	doc := templtest.Render(t, Menu(userInfo))
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
+
+	// Then
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+}
+```
+
+The example test if a link is present so we may have to find a way to test if a component is present or not.
+What do we need to test? I suspect we need to test at least the following:
+1. If the scrollnav is present or not.
+2. If the events are sorted alphabetically when the global publishing is off.
+3. If the events are sorted by pulje and then alphabetically when the global publishing is on. 
+Perhaps we need to split the global event list and the pulje event list into two separate components so that we can test them separately.
+We will do one test at a time.
+Let's discuss the implementation of the test for the front page before we start coding.
+
+Time: 2026-05-22 17:09:55
+--- Codex Run ---
+
+Codex output:
+I’ll look at the current front-page component boundaries and the `templtest` helpers first, then we can choose a test shape that is small enough to implement before changing the rendering logic.
+Yes, I would split this into a small test sequence instead of writing one large “front page behaves correctly” test.
+
+**Recommended Component Shape**
+The front page should have one decision point:
+
+```go
+programPublished := getProgramPublished(db)
+
+if programPublished {
+    ProgramScrollnav(...)
+    puljeEventList(...)
+} else {
+    flatEventList(...)
+}
+```
+
+That suggests splitting the rendering into two components:
+
+- `flatEventList(...)`
+  - Used when global publishing is off.
+  - Renders approved events alphabetically.
+  - Includes events with no pulje.
+
+- `puljeEventList(...)`
+  - Used when global publishing is on.
+  - Renders pulje sections.
+  - Includes only events where `relation_event_puljer.is_published = 1`.
+  - Sorts by pulje, then event title alphabetically.
+
+Then `eventList(...)` or `rootPageContent(...)` becomes the small coordinator.
+
+**What To Test**
+I agree with your list. I’d test these separately:
+
+1. Global publishing off hides the scrollnav.
+2. Global publishing on shows the scrollnav.
+3. Global publishing off renders approved events alphabetically in a flat list.
+4. Global publishing on renders events grouped by pulje.
+5. Within each pulje, events are sorted alphabetically.
+6. In published mode, events not published in any pulje are excluded.
+7. In unpublished mode, approved events without a pulje are included.
+
+**First Test**
+I’d start with the smallest useful integration test:
+
+`TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav`
+
+Given:
+- `program_publishing_state.is_published = 0`
+- at least one pulje exists
+
+When:
+- rendering the front page content
+
+Then:
+- `.program-scrollnav-container` is not present
+
+That test forces the front page to actually consult the global publishing state, but does not yet require us to solve event ordering.
+
+**Test Helpers**
+We can add or reuse helpers like:
+
+- `HasSelector(doc, ".program-scrollnav-container")`
+- `CollectTexts(doc, ".event-card-title")`
+- `CollectTexts(doc, ".pulje-heading")`
+
+The event titles are easy to inspect because event cards already render titles with `.event-card-title`.
+
+One practical note: the test DB helper builds from `schema.sql`, so once we add tests around `program_publishing_state`, `schema.sql` needs to include the new table or the test needs to create that table as part of setup. Since this is now real schema, I’d prefer keeping `schema.sql` aligned rather than hiding the table creation inside the test.
+
+Time: 2026-05-22 17:09:55
+--- Next Prompt ---
+I have updated the schema.sql file from the current database, so the new table is now included in the schema.sql file.
+Let's also test that the flat event list only includes events that are approved with the event status "Godkjent".  
+If you are ready then go ahead an implement the first test. 
+
+Time: 2026-05-22 17:20:42
+--- Codex Run ---
+
+Codex output:
+I’ll implement the first front-page test against the current root rendering path, using the updated `schema.sql` as the test DB source. I’ll include enough seed data to prove the unpublished/flat mode is used and that non-approved events are filtered out.
+The current root page always renders the scrollnav before the event list, so this first test will be a TDD-style failing test unless we also implement the front-page branch. I’m going to keep it as the behavior spec for the next step and make the failure clear.
+I’m going to add a lightweight `templtest` helper package now, since the example structure depends on rendering a templ component and querying the resulting HTML. Then I’ll add the first root-page behavior test using that helper.
+The test and helper package are added. I’m formatting and running the targeted root-page test now; I expect it to fail until the front page switches between flat and pulje modes.
+The new test fails in the expected way: the current page still renders the scrollnav and no flat event cards. I’m doing a final status/diff check so the changes are easy to review before we implement the page logic.
+Added the first front-page test in [root_page_test.go](/home/cinmay/Documents/conorganizer/pages/root/root_page_test.go:14).
+
+It currently specifies that when `program_publishing_state.is_published = 0`, the front page should:
+
+- hide `.program-scrollnav-container`
+- render a flat event list containing only events with status `Godkjent`
+- exclude `Kladd` and `Innsendt`
+- show approved events alphabetically: `Alpha Approved`, `Beta Approved`
+
+I also added [templtest.go](/home/cinmay/Documents/conorganizer/testutil/templtest/templtest.go:15), a small helper package for rendering templ components and querying rendered HTML.
+
+Targeted test run:
+
+```sh
+GOCACHE=/tmp/go-build go test ./pages/root -run TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnavAndOnlyShowsApprovedEvents -count=1
+```
+
+It fails as expected right now because the front page still always renders the scrollnav and does not have the flat event list yet.
+
+Time: 2026-05-22 17:20:42
+--- Next Prompt ---
 
