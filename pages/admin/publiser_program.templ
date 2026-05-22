@@ -18,15 +18,16 @@ templ publiserProgram() {
 			max-width: 72ch;
 		}
 		.publiser-program-control {
-			display: flex;
-			align-items: center;
-			justify-content: space-between;
-			gap: var(--spacing-5x);
 			padding: var(--spacing-4x);
 			border: 1px solid var(--bg-item-border);
 			border-radius: var(--border-radius-2x);
 			background-color: var(--bg-item);
 		}
+        .publiser-program-control-body {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-4x);
+        }
 		.publiser-program-state {
 			display: flex;
 			flex-direction: column;
@@ -93,25 +94,27 @@ templ publiserProgram() {
 	<section class="publiser-program" data-signals:program-published="false">
 		<div class="publiser-program-header">
 			<h2>Publiser program</h2>
-			<p>Styr om forsiden viser programmet med puljefilter og puljegruppering.</p>
+			<p>Publiser programmet og åpne for ønsker og påmeldinger. </p>
 		</div>
 		<div class="publiser-program-control">
-			<div class="publiser-program-state">
-				<span class="publiser-program-state-label">Status</span>
-				<strong class="publiser-program-state-value" data-text="$programPublished ? 'Publisert' : 'Ikke publisert'">Ikke publisert</strong>
+			<span class="publiser-program-state-label">Status</span>
+			<div class="publiser-program-control-body">
+				<div class="publiser-program-state">
+					<strong class="publiser-program-state-value" data-text="$programPublished ? 'Publisert' : 'Ikke publisert'">Ikke publisert</strong>
+				</div>
+				<label class="publiser-program-switch">
+					<input
+						type="checkbox"
+						role="switch"
+						aria-label="Publiser program"
+						data-bind="programPublished"
+						data-on:click="if (!confirm('Vil du endre publisering av programmet?')) { evt.preventDefault(); }"
+					/>
+					<span class="publiser-program-switch-track" aria-hidden="true">
+						<span class="publiser-program-switch-thumb"></span>
+					</span>
+				</label>
 			</div>
-			<label class="publiser-program-switch">
-				<input
-					type="checkbox"
-					role="switch"
-					aria-label="Publiser program"
-					data-bind="programPublished"
-					data-on:click="if (!confirm('Vil du endre publisering av programmet?')) { evt.preventDefault(); }"
-				/>
-				<span class="publiser-program-switch-track" aria-hidden="true">
-					<span class="publiser-program-switch-thumb"></span>
-				</span>
-			</label>
 		</div>
 	</section>
 }

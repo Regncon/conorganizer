@@ -83,6 +83,9 @@ templ adminPage(db *sql.DB) {
 			<h1 class="page-heading">Administrasjon</h1>
 			<div class="admin-page-layout">
 				<div class="admin-grid">
+					<section class="admin-grid-card admin-grid-card--full">
+						@publiserProgram()
+					</section>
 					<section class="admin-grid-card">
 						<img
 							src="/static/approve.webp"
@@ -106,9 +109,6 @@ templ adminPage(db *sql.DB) {
 							<p>Se oversikt over alle billettholdere.</p>
 							<a role="button" href="/admin/billettholder/" class="btn btn--outline">Gå til billettholdere</a>
 						</div>
-					</section>
-					<section class="admin-grid-card admin-grid-card--full">
-						@publiserProgram()
 					</section>
 					<section class="admin-grid-card admin-grid-card--full">
 						@puljefordeling(db)
