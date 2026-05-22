@@ -1,0 +1,131 @@
+package admin
+
+import (
+	"database/sql"
+	"fmt"
+
+	"github.com/Regncon/conorganizer/models"
+	puljerService "github.com/Regncon/conorganizer/service/puljer"
+)
+
+func puljeIsLocked(status models.PuljeStatus) bool {
+	return status == models.PuljeStatusLocked || status == models.PuljeStatusCompleted
+}
+
+func puljeIsCompleted(status models.PuljeStatus) bool {
+	return status == models.PuljeStatusCompleted
+}
+
+func puljeStatusConfirmAction(message string) string {
+	return fmt.Sprintf("if (!confirm(%q)) evt.preventDefault()", message)
+}
+
+templ puljefordeling(db *sql.DB) {
+	{{
+		puljer, err := puljerService.GetAllPuljer(db)
+	}}
+	<style>
+		.puljefordeling {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-5x);
+		}
+		.puljefordeling-header {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-4x);
+		}
+		.puljefordeling-header p {
+			color: var(--color-text-soft);
+			max-width: 72ch;
+		}
+		.puljefordeling-card-grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
+			gap: var(--spacing-4x);
+		}
+		.puljefordeling-status-card {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-4x);
+			border: 1px solid var(--bg-item-border);
+		}
+		.puljefordeling-status-card h3 {
+			color: var(--color-text-strong);
+			font-size: var(--text-body);
+		}
+		.puljefordeling-status-controls {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+		}
+		.puljefordeling-status-control {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-3x);
+			color: var(--color-text-soft);
+			cursor: pointer;
+			min-height: 24px;
+		}
+		.puljefordeling-status-control input {
+			flex: 0 0 auto;
+		}
+		.puljefordeling-card-action {
+			width: 100%;
+			margin-top: auto;
+		}
+		@container main (width > 1200px) {
+			.puljefordeling-card-grid {
+				grid-template-columns: repeat(4, minmax(0, 1fr));
+			}
+		}
+	</style>
+	<section class="puljefordeling">
+		<div class="puljefordeling-header">
+			<h2>Puljefordeling</h2>
+			<p>Her kan du sjekke fordeling av deltakere på arrangementer i puljene under festivalen.</p>
+		</div>
+		if err != nil {
+			<p>Kunne ikke hente puljer: { err.Error() }</p>
+		} else {
+			<div class="puljefordeling-card-grid">
+				for _, pulje := range puljer {
+					@puljeStatusCard(pulje)
+				}
+			</div>
+		}
+	</section>
+}
+
+templ puljeStatusCard(pulje models.PuljeRow) {
+	<article class="item-card puljefordeling-status-card">
+		<h3>{ pulje.Name }</h3>
+		<div class="puljefordeling-status-controls">
+			<label class="puljefordeling-status-control">
+				<input
+					if puljeIsLocked(pulje.Status) {
+						checked
+					}
+					data-on:click={ puljeStatusConfirmAction(fmt.Sprintf("Vil du endre lukking for %s?", pulje.Name)) }
+					type="checkbox"
+					class="checkbox input"
+				/>
+				<span>Puljefordeling lukket</span>
+			</label>
+			<label class="puljefordeling-status-control">
+				<input
+					if puljeIsCompleted(pulje.Status) {
+						checked
+					}
+					data-on:click={ puljeStatusConfirmAction(fmt.Sprintf("Vil du endre publisering av puljefordeling for %s?", pulje.Name)) }
+					type="checkbox"
+					class="checkbox input"
+				/>
+				<span>Puljefordeling publisert</span>
+			</label>
+		</div>
+		<button type="button" class="btn btn--outline puljefordeling-card-action" disabled>
+			Fordel deltakere
+		</button>
+	</article>
+}
