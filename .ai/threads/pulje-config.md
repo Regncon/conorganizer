@@ -853,4 +853,36 @@ Both passed. Existing unrelated changes in `.ai/threads/pulje-config.md` and `sc
 
 Time: 2026-05-22 16:33:22
 --- Next Prompt ---
+Ok, let's move on to the next step which is to add the database calls and the API endpoint to update the global publishing state.
+Remember that the code for querying the database and the API endpoint should live in the same templ file as the admin UI component. This will ensure a high degree of cohesion and low abstraction.
+
+
+Time: 2026-05-22 16:42:18
+--- Codex Run ---
+
+Codex output:
+I’ll add the state table support, wire the admin component to read from it, and add the Datastar update endpoint next to the component as requested. I’ll also check the existing puljefordeling endpoint pattern so the route, validation, and broadcast behavior match the codebase.
+I’m using the conorganizer logging guidance for the new admin route so the handler has the same component-scoped `slog` shape as the existing pulje status endpoint.
+I’ll add a one-row `program_publishing_state` table, then update `publiser_program.templ` to own the read/update helpers, route registration function, and UI state binding. The admin route setup only needs one new call to mount the endpoint.
+The migration and route wiring are in place. I’m regenerating templ now because `publiserProgram` gained Go imports, helper functions, and a `db` parameter.
+`admin.go` is gofmt-clean after the route registration. I’m running the suite now; after that I’ll check the working tree so we can distinguish this work from the existing schema/thread changes.
+Implemented the database-backed global program publishing state.
+
+Changes:
+- Added migration [20260522150000_program_publishing_state.sql](/home/cinmay/Documents/conorganizer/migrations/20260522150000_program_publishing_state.sql:1) with a one-row `program_publishing_state` table.
+- Added colocated DB helpers and `PUT /admin/api/program-publishing` in [publiser_program.templ](/home/cinmay/Documents/conorganizer/pages/admin/publiser_program.templ:18).
+- Updated the admin UI to read the current state from the DB and submit changes after confirmation.
+- Registered the new route in [admin.go](/home/cinmay/Documents/conorganizer/pages/admin/admin.go:91).
+
+Verified with:
+
+```sh
+go tool templ generate
+GOCACHE=/tmp/go-build go test ./...
+```
+
+Both passed. The migration needs to be applied before the admin page can read/update the new table. Existing unrelated changes in `.ai/threads/pulje-config.md` and `schema.sql` are still present.
+
+Time: 2026-05-22 16:42:18
+--- Next Prompt ---
 

@@ -43,7 +43,7 @@ templ adminPage(db *sql.DB) {
 						"/static/publiser-program.webp",
 						"Program publishing",
 					) {
-						@publiserProgram()
+						@publiserProgram(db)
 					}
 					@adminCard(
 						"Arrangementer til godkjenning",
