@@ -16,11 +16,66 @@ type PuljeBlock struct {
 
 type EventsByPulje map[models.Pulje]*PuljeBlock
 
+func GetApprovedEventsAlphabetically(db *sql.DB) ([]models.EventCardModel, error) {
+	const q = `
+		SELECT
+			e.id,
+			0 AS is_published,
+			e.title,
+			e.intro,
+			e.status,
+			e.system,
+			e.host_name,
+			e.event_type,
+			e.age_group,
+			e.event_runtime,
+			e.beginner_friendly,
+			e.can_be_run_in_english
+		FROM events e
+		WHERE e.status = ?
+		ORDER BY e.title COLLATE NOCASE ASC, e.id ASC
+	`
+
+	rows, err := db.Query(q, models.EventStatusApproved)
+	if err != nil {
+		return nil, fmt.Errorf("query approved events alphabetically: %w", err)
+	}
+	defer rows.Close()
+
+	events := make([]models.EventCardModel, 0)
+	for rows.Next() {
+		var event models.EventCardModel
+		if err := rows.Scan(
+			&event.Id,
+			&event.IsPublished,
+			&event.Title,
+			&event.Intro,
+			&event.Status,
+			&event.System,
+			&event.HostName,
+			&event.EventType,
+			&event.AgeGroup,
+			&event.Runtime,
+			&event.BeginnerFriendly,
+			&event.CanBeRunInEnglish,
+		); err != nil {
+			return nil, fmt.Errorf("scan approved event row: %w", err)
+		}
+		events = append(events, event)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate approved event rows: %w", err)
+	}
+
+	return events, nil
+}
+
 func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 	const q = `
 		SELECT
 			e.id,
-            e.is_published,
+			e.is_published,
 			e.title,
 			e.intro,
 			e.status,
@@ -38,7 +93,8 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 			e.pulje_start_at,
 			e.pulje_end_at
 		FROM v_events_by_pulje_active e
-        ORDER BY e.pulje_start_at DESC, e.created_at DESC, e.id ASC
+		WHERE e.is_published = 1
+		ORDER BY e.pulje_start_at ASC, e.title COLLATE NOCASE ASC, e.id ASC
 	`
 
 	rows, err := db.Query(q)
@@ -98,12 +154,13 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 	return out, rows.Err()
 }
 
-/*
-
-	for _, event := range eventsByPulje[models.PuljeLordagMorgen] {
-		@components.EventCard(event, eventImageDir, isAdmin)
-	}
-*/
+templ flatEventList(events []models.EventCardModel, eventImageDir *string, isAdmin bool) {
+	<div class="page-wide-eventcard-grid">
+		for _, event := range events {
+			@components.EventCard(event, eventImageDir, isAdmin, "")
+		}
+	</div>
+}
 
 templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *string, isAdmin bool) {
 	{{ block := byPulje[pulje] }}
@@ -122,9 +179,7 @@ templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *strin
 	}
 }
 
-templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
-	{{ eventsByPulje, err := GetEventsByPulje(db) }}
-	{{ puljer, puljerErr := puljerService.GetAllPuljer(db) }}
+templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublished bool) {
 	<style>
 		.event-pulje-overview {
 			display: flex;
@@ -136,7 +191,7 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 			}
 		}
 		@container main (width > 600px) {
-			.event-pulje-overview	{
+			.event-pulje-overview {
 				.program-pulje-section:not(:first-child) {
 					padding-top: var(--spacing-8x);
 				}
@@ -165,16 +220,29 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 		}
 	</style>
 	<div class="page-content-container event-pulje-overview">
-		if err != nil || puljerErr != nil {
+		if programPublished {
 			{{
-				if puljerErr != nil {
-					err = puljerErr
-				}
+				eventsByPulje, err := GetEventsByPulje(db)
+				puljer, puljerErr := puljerService.GetAllPuljer(db)
 			}}
-			<p>Error fetching events: { err.Error() }</p>
+			if err != nil || puljerErr != nil {
+				{{
+					if puljerErr != nil {
+						err = puljerErr
+					}
+				}}
+				<p>Error fetching events: { err.Error() }</p>
+			} else {
+				for _, pulje := range puljer {
+					@eventPulje(pulje.ID, eventsByPulje, eventImageDir, isAdmin)
+				}
+			}
 		} else {
-			for _, pulje := range puljer {
-				@eventPulje(pulje.ID, eventsByPulje, eventImageDir, isAdmin)
+			{{ events, err := GetApprovedEventsAlphabetically(db) }}
+			if err != nil {
+				<p>Error fetching events: { err.Error() }</p>
+			} else {
+				@flatEventList(events, eventImageDir, isAdmin)
 			}
 		}
 	</div>

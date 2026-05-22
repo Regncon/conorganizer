@@ -1116,3 +1116,38 @@ Both still fail as expected because the front page logic has not been updated ye
 Time: 2026-05-22 17:30:37
 --- Next Prompt ---
 
+Ok, let's implement the logic on the front page to display events based on the global publishing state.
+
+Time: 2026-05-22 17:35:24
+--- Codex Run ---
+
+Codex output:
+I’ll update the root page decision point to read `program_publishing_state`, then split the event rendering into a flat approved list for unpublished mode and the existing pulje-grouped view for published mode. I’ll keep the DB queries in the root templ file that owns the front-page rendering.
+I’ll make `rootPageContent` read the global state once, use it to hide/show `ProgramScrollnav`, and pass that state into `eventList` so the list can choose flat vs pulje rendering without querying both paths.
+The flat approved query and pulje query switch are in place. I’m regenerating templ now; if this compiles cleanly I’ll run the two root-page tests.
+Templ generation succeeded, but the formatter left a small indentation artifact around `eventList`. I’m cleaning that before running tests.
+The two new unpublished-mode tests now pass. I’m running the full suite to catch any compile or behavior regressions from the root-page signature and query changes.
+Implemented the front-page switch based on `program_publishing_state`.
+
+What changed:
+- [root_page.templ](/home/cinmay/Documents/conorganizer/pages/root/root_page.templ:11) now reads the global publishing state.
+- The pulje scrollnav only renders when program publishing is on.
+- [event_list.templ](/home/cinmay/Documents/conorganizer/pages/root/event_list.templ:19) now has:
+  - flat approved-event query for unpublished mode
+  - pulje-grouped query for published mode
+  - published mode now filters `relation_event_puljer.is_published = 1`
+  - sorting now uses title alphabetically where relevant
+
+Verified with:
+
+```sh
+go tool templ generate
+GOCACHE=/tmp/go-build go test ./pages/root -run 'TestRootPageContent_WhenProgramPublishingIsOff_(HidesScrollnav|OnlyShowsApprovedEvents)' -count=1
+GOCACHE=/tmp/go-build go test ./...
+```
+
+All passed. Existing `.ai/threads/pulje-config.md` and `schema.sql` changes are still present.
+
+Time: 2026-05-22 17:35:24
+--- Next Prompt ---
+
