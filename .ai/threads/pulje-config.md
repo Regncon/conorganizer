@@ -1150,4 +1150,65 @@ All passed. Existing `.ai/threads/pulje-config.md` and `schema.sql` changes are 
 
 Time: 2026-05-22 17:35:24
 --- Next Prompt ---
+Are we don here? 
+
+Time: 2026-05-22 17:41:05
+--- Codex Run ---
+
+Codex output:
+For the current slice, yes.
+
+Done:
+- Admin UI for global program publishing
+- DB-backed global publishing state
+- API endpoint to update it
+- Front-page logic for unpublished vs published mode
+- Tests for unpublished mode:
+  - scrollnav hidden
+  - only `Godkjent` events shown in the flat list
+- Full `go test ./...` passes
+
+Not yet covered:
+- Tests for published mode:
+  - scrollnav visible
+  - grouped by pulje
+  - only `relation_event_puljer.is_published = 1`
+  - alphabetical sorting within each pulje
+
+So the feature is functionally implemented for the agreed front-page behavior, but I’d add the published-mode tests before calling the testing coverage complete.
+
+Time: 2026-05-22 17:41:05
+--- Next Prompt ---
+Ok, let's go ahead and implement the tests.
+
+Time: 2026-05-22 17:45:22
+--- Codex Run ---
+
+Codex output:
+I’ll add the published-mode tests around the same rendered front-page output, using the existing helper setup. I’ll keep them focused on visibility, grouping, published relation filtering, and alphabetical order within puljer.
+I’ve confirmed the current root-page behavior and test helper are already in the tree. I’ll add the published-mode tests to the same file and extend the seed helpers so relations can be marked published or unpublished per pulje.
+I’ll add four published-mode tests: scrollnav visible, only published pulje relations included, pulje headings in time order, and alphabetical event ordering within a pulje. To keep the tests readable I’ll add small seed helpers for puljer and `relation_event_puljer`.
+The published-mode tests and relation seeding helpers are added. I’m formatting and running the root package tests now to see whether the implementation already satisfies all published-mode assertions.
+The root tests pass with the new published-mode coverage. I’ll run the full test suite next to make sure the added fixtures and helpers didn’t disturb other packages.
+Implemented the published-mode front-page tests in [root_page_test.go](/home/cinmay/Documents/conorganizer/pages/root/root_page_test.go:63).
+
+Added coverage for:
+- scrollnav visible when program publishing is on
+- pulje view only shows approved events with `relation_event_puljer.is_published = 1`
+- approved events without a published pulje relation are excluded
+- non-approved events are excluded even if their pulje relation is published
+- pulje sections render in start-time order
+- events sort alphabetically within a pulje
+
+Verified with:
+
+```sh
+GOCACHE=/tmp/go-build go test ./pages/root -count=1
+GOCACHE=/tmp/go-build go test ./...
+```
+
+Both passed. Existing `.ai/threads/pulje-config.md` and `schema.sql` changes are still present.
+
+Time: 2026-05-22 17:45:22
+--- Next Prompt ---
 

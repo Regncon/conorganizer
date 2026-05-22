@@ -60,6 +60,125 @@ func TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsApprovedEvents(t *t
 	}
 }
 
+func TestRootPageContent_WhenProgramPublishingIsOn_ShowsScrollnav(t *testing.T) {
+	// Gitt at publisering av program er skrudd på,
+	// når forsiden vises,
+	// så skal puljefilteret vises.
+
+	// Given
+	expectedScrollnavVisible := true
+
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, true)
+	insertRootPagePulje(t, db)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualScrollnavVisible := templtest.HasSelector(doc, ".program-scrollnav-container")
+
+	// Then
+	if actualScrollnavVisible != expectedScrollnavVisible {
+		t.Fatalf("scrollnav visibility mismatch\nexpected: %v\nactual:   %v", expectedScrollnavVisible, actualScrollnavVisible)
+	}
+}
+
+func TestRootPageContent_WhenProgramPublishingIsOn_OnlyShowsPublishedPuljeEvents(t *testing.T) {
+	// Gitt at publisering av program er skrudd på,
+	// når forsiden vises,
+	// så skal puljevisningen bare vise godkjente arrangementer som er publisert i en pulje.
+
+	// Given
+	expectedTitles := []string{"Published Approved"}
+
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, true)
+	insertRootPagePulje(t, db)
+
+	insertRootPageEvent(t, db, "published-approved", "Published Approved", models.EventStatusApproved)
+	insertRootPageEventPulje(t, db, "published-approved", models.PuljeFredagKveld, true)
+
+	insertRootPageEvent(t, db, "unpublished-approved", "Unpublished Approved", models.EventStatusApproved)
+	insertRootPageEventPulje(t, db, "unpublished-approved", models.PuljeFredagKveld, false)
+
+	insertRootPageEvent(t, db, "unrelated-approved", "Unrelated Approved", models.EventStatusApproved)
+
+	insertRootPageEvent(t, db, "published-submitted", "Published Submitted", models.EventStatusSubmitted)
+	insertRootPageEventPulje(t, db, "published-submitted", models.PuljeFredagKveld, true)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualTitles := templtest.CollectTexts(doc, ".event-card-title")
+
+	// Then
+	if !slices.Equal(expectedTitles, actualTitles) {
+		t.Fatalf("event titles mismatch\nexpected: %v\nactual:   %v", expectedTitles, actualTitles)
+	}
+}
+
+func TestRootPageContent_WhenProgramPublishingIsOn_RendersPuljeSectionsInTimeOrder(t *testing.T) {
+	// Gitt at publisering av program er skrudd på,
+	// når forsiden vises,
+	// så skal arrangementene grupperes i puljer sortert etter starttidspunkt.
+
+	// Given
+	expectedPuljeHeadings := []string{
+		"Fredag kveld (18:00 - 23:00)",
+		"Lordag morgen (10:00 - 14:00)",
+	}
+
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, true)
+	insertRootPagePuljeWithDetails(t, db, models.PuljeFredagKveld, "Fredag kveld", "2026-10-09T18:00:00Z", "2026-10-09T23:00:00Z")
+	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lordag morgen", "2026-10-10T10:00:00Z", "2026-10-10T14:00:00Z")
+
+	insertRootPageEvent(t, db, "lordag-event", "Lordag Event", models.EventStatusApproved)
+	insertRootPageEventPulje(t, db, "lordag-event", models.PuljeLordagMorgen, true)
+
+	insertRootPageEvent(t, db, "fredag-event", "Fredag Event", models.EventStatusApproved)
+	insertRootPageEventPulje(t, db, "fredag-event", models.PuljeFredagKveld, true)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualPuljeHeadings := templtest.CollectTexts(doc, ".pulje-heading")
+
+	// Then
+	if !slices.Equal(expectedPuljeHeadings, actualPuljeHeadings) {
+		t.Fatalf("pulje headings mismatch\nexpected: %v\nactual:   %v", expectedPuljeHeadings, actualPuljeHeadings)
+	}
+}
+
+func TestRootPageContent_WhenProgramPublishingIsOn_SortsEventsAlphabeticallyWithinPulje(t *testing.T) {
+	// Gitt at publisering av program er skrudd på,
+	// når forsiden vises,
+	// så skal arrangementene sorteres alfabetisk innenfor hver pulje.
+
+	// Given
+	expectedTitles := []string{"Alpha Event", "Beta Event"}
+
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, true)
+	insertRootPagePulje(t, db)
+
+	insertRootPageEvent(t, db, "beta-event", "Beta Event", models.EventStatusApproved)
+	insertRootPageEventPulje(t, db, "beta-event", models.PuljeFredagKveld, true)
+
+	insertRootPageEvent(t, db, "alpha-event", "Alpha Event", models.EventStatusApproved)
+	insertRootPageEventPulje(t, db, "alpha-event", models.PuljeFredagKveld, true)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualTitles := templtest.CollectTexts(doc, ".event-card-title")
+
+	// Then
+	if !slices.Equal(expectedTitles, actualTitles) {
+		t.Fatalf("event titles mismatch\nexpected: %v\nactual:   %v", expectedTitles, actualTitles)
+	}
+}
+
 func createRootPageTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
@@ -115,10 +234,16 @@ func setProgramPublishing(t *testing.T, db *sql.DB, isPublished bool) {
 func insertRootPagePulje(t *testing.T, db *sql.DB) {
 	t.Helper()
 
+	insertRootPagePuljeWithDetails(t, db, models.PuljeFredagKveld, "Fredag kveld", "2026-10-09T18:00:00Z", "2026-10-09T23:00:00Z")
+}
+
+func insertRootPagePuljeWithDetails(t *testing.T, db *sql.DB, puljeID models.Pulje, name string, startAt string, endAt string) {
+	t.Helper()
+
 	mustExec(t, db, `
 		INSERT INTO puljer(id, name, status, start_at, end_at)
 		VALUES(?, ?, ?, ?, ?)
-	`, models.PuljeFredagKveld, "Fredag kveld", puljeStatusForRootPageTest(t, db), "2026-10-09T18:00:00Z", "2026-10-09T23:00:00Z")
+	`, puljeID, name, puljeStatusForRootPageTest(t, db), startAt, endAt)
 }
 
 func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus) {
@@ -138,6 +263,20 @@ func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, stat
 		)
 		VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, id, title, "Intro", "Description", "Host", "host@example.com", "12345678", 4, status)
+}
+
+func insertRootPageEventPulje(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, isPublished bool) {
+	t.Helper()
+
+	published := 0
+	if isPublished {
+		published = 1
+	}
+
+	mustExec(t, db, `
+		INSERT INTO relation_event_puljer(event_id, pulje_id, is_in_pulje, is_published)
+		VALUES(?, ?, 1, ?)
+	`, eventID, puljeID, published)
 }
 
 func puljeStatusForRootPageTest(t *testing.T, db *sql.DB) string {
