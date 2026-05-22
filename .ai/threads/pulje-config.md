@@ -467,4 +467,27 @@ I kept your manual admin page placement intact.
 
 Time: 2026-05-22 11:33:36
 --- Next Prompt ---
+After running go tool task test, this command updates she schema.sql file with the new schema. One of the test fail when I run  go test ./...
+
+Time: 2026-05-22 11:46:03
+--- Codex Run ---
+
+Codex output:
+I’ll reproduce the failure from the current working tree first. Since `task test` regenerates `schema.sql` from `database/events.db`, I’ll also check whether the local database has actually been migrated to the new `open | locked | completed` pulje status schema.
+The failure is because `task test` regenerated `schema.sql` from an unmigrated `database/events.db`, so the test DB still has the old pulje status CHECK while the fixture inserts `open`. I’ll make this unrelated formsubmission fixture tolerate either schema shape, so it passes before and after the DB migration.
+`go test ./...` now passes with the schema generated from the current local DB. I’m also running the project’s `task test` path with `GOCACHE` pointed at `/tmp` so it exercises the schema regeneration step as well.
+Fixed the failing test.
+
+Root cause: `go tool task test` regenerates `schema.sql` from the current local `database/events.db`. That DB still has the legacy pulje status check, so the test fixture inserting `open` failed.
+
+I updated the unrelated formsubmission fixture to choose a valid pulje status from the loaded test schema: it uses `open` when the schema supports it, otherwise legacy `published`. See [who_is_interested_test.go](/home/cinmay/Documents/conorganizer/components/formsubmission/who_is_interested_test.go:251).
+
+Verified:
+- `GOCACHE=/tmp/go-build go test ./...`
+- `GOCACHE=/tmp/go-build go tool task test`
+
+Both pass now. `schema.sql` is still modified because `task test` regenerated it from the current local DB.
+
+Time: 2026-05-22 11:46:03
+--- Next Prompt ---
 
