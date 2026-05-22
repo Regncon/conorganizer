@@ -11,32 +11,50 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnavAndOnlyShowsApprovedEvents(t *testing.T) {
+func TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav(t *testing.T) {
 	// Gitt at publisering av program er skrudd av,
 	// når forsiden vises,
-	// så skal puljefilteret skjules og den flate arrangementslisten bare vise godkjente arrangementer.
+	// så skal puljefilteret skjules.
 
 	// Given
+	expectedScrollnavVisible := false
+
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)
 	setProgramPublishing(t, db, false)
 	insertRootPagePulje(t, db)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualScrollnavVisible := templtest.HasSelector(doc, ".program-scrollnav-container")
+
+	// Then
+	if actualScrollnavVisible != expectedScrollnavVisible {
+		t.Fatalf("scrollnav visibility mismatch\nexpected: %v\nactual:   %v", expectedScrollnavVisible, actualScrollnavVisible)
+	}
+}
+
+func TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsApprovedEvents(t *testing.T) {
+	// Gitt at publisering av program er skrudd av,
+	// når forsiden vises,
+	// så skal den flate arrangementslisten bare vise godkjente arrangementer.
+
+	// Given
+	expectedTitles := []string{"Alpha Approved", "Beta Approved"}
+
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, false)
 	insertRootPageEvent(t, db, "draft-event", "Draft Event", models.EventStatusDraft)
 	insertRootPageEvent(t, db, "submitted-event", "Submitted Event", models.EventStatusSubmitted)
 	insertRootPageEvent(t, db, "beta-approved", "Beta Approved", models.EventStatusApproved)
 	insertRootPageEvent(t, db, "alpha-approved", "Alpha Approved", models.EventStatusApproved)
 
-	expectedTitles := []string{"Alpha Approved", "Beta Approved"}
-
 	// When
 	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualTitles := templtest.CollectTexts(doc, ".event-card-title")
 
 	// Then
-	if templtest.HasSelector(doc, ".program-scrollnav-container") {
-		t.Errorf("expected program scrollnav to be hidden when program publishing is off")
-	}
-
-	actualTitles := templtest.CollectTexts(doc, ".event-card-title")
 	if !slices.Equal(expectedTitles, actualTitles) {
 		t.Fatalf("event titles mismatch\nexpected: %v\nactual:   %v", expectedTitles, actualTitles)
 	}

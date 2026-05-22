@@ -1089,4 +1089,30 @@ It fails as expected right now because the front page still always renders the s
 
 Time: 2026-05-22 17:20:42
 --- Next Prompt ---
+It looks like it should be two test since is has an `and` in the name. Let's split it into two tests, one for the scrollnav and one for the events.
+Also but the expected at the top of the // Given section. Test should always start with the expected result when possible.
+
+Time: 2026-05-22 17:30:37
+--- Codex Run ---
+
+Codex output:
+I’ll split the combined TDD spec into two focused tests and reorder the Given sections so each starts with its expected result. The shared seed helpers can stay in the same file.
+The combined test is split now. I’m formatting and rerunning both targeted tests so we can confirm the two failures map cleanly to the two missing behaviors.
+Split the combined test into two focused tests in [root_page_test.go](/home/cinmay/Documents/conorganizer/pages/root/root_page_test.go:14):
+
+- `TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav`
+- `TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsApprovedEvents`
+
+I also moved each expected result to the top of its `// Given` section.
+
+Targeted run:
+
+```sh
+GOCACHE=/tmp/go-build go test ./pages/root -run 'TestRootPageContent_WhenProgramPublishingIsOff_(HidesScrollnav|OnlyShowsApprovedEvents)' -count=1
+```
+
+Both still fail as expected because the front page logic has not been updated yet.
+
+Time: 2026-05-22 17:30:37
+--- Next Prompt ---
 
