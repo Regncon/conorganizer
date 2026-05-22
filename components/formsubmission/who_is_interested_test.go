@@ -216,7 +216,7 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 	mustExec(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
 	mustExec(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
 	mustExec(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
-	mustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusPublished)
+	mustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusOpen)
 	mustExec(t, db, `
 		INSERT INTO puljer (
 			id, name, status, start_at, end_at
@@ -225,7 +225,7 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 			('P2', 'SaturdayMorning', ?, '2025-10-04', '2025-10-04'),
 			('P3', 'SaturdayEvening', ?, '2025-10-04', '2025-10-04'),
 			('P4', 'Sunday', ?, '2025-10-05', '2025-10-05')
-	`, models.PuljeStatusPublished, models.PuljeStatusPublished, models.PuljeStatusPublished, models.PuljeStatusPublished)
+	`, models.PuljeStatusOpen, models.PuljeStatusOpen, models.PuljeStatusOpen, models.PuljeStatusOpen)
 	mustExec(t, db, `
 		INSERT INTO events (
 			id, title, intro, description, system, event_type,

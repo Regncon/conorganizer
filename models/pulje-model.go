@@ -47,6 +47,7 @@ func ValidPuljeValues() []string {
 type PuljeStatus string
 
 const (
+	PuljeStatusOpen         PuljeStatus = "open"
 	PuljeStatusNotPublished PuljeStatus = "not_published"
 	PuljeStatusPublished    PuljeStatus = "published"
 	PuljeStatusLocked       PuljeStatus = "locked"
@@ -55,6 +56,8 @@ const (
 
 func (status PuljeStatus) Label() string {
 	switch status {
+	case PuljeStatusOpen:
+		return "Åpen"
 	case PuljeStatusNotPublished:
 		return "Ikke publisert"
 	case PuljeStatusPublished:

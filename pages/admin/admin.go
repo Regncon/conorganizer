@@ -90,6 +90,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 	router.Route("/admin", func(adminRouter chi.Router) {
 		adminLayoutRoute(adminRouter, db, logger, err)
+		puljefordelingStatusRoute(adminRouter, db, kv, logger)
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 

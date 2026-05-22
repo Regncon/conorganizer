@@ -426,4 +426,45 @@ Note: `schema.sql` and `.ai/` were already showing as working-tree changes/untra
 
 Time: 2026-05-22 11:17:35
 --- Next Prompt ---
+Ok, I made some manual changes to the code. 
+Let's continue, add the database calls to get the pulje status. And add a new API endpoint to update the pulje status. Both the code for querying the database and the API endpoint should live in the same templ file. We want a high degree of cohesion and low absraction. There are other examples in the codebase of this behavior. 
+
+Time: 2026-05-22 11:33:36
+--- Codex Run ---
+
+Codex output:
+I’ll pick up from your latest edits and read the current admin puljefordeling/admin route code before patching, so I don’t overwrite your manual changes. Since the endpoint will likely include handler logging, I’ll also use the local logging skill for the handler shape.
+Your manual change moved the puljefordeling section into the admin card grid; I’ll leave that placement intact. I’m going to keep the query/update helpers inside `pages/admin/puljefordeling.templ`, mount one admin API route from `admin.go`, and keep the existing `service/puljer` untouched.
+The query and update helper are now colocated with the templ component. I’m mounting the route from the admin router next, keeping the handler implementation in the component file as requested.
+The endpoint will send `open`, `locked`, and `completed`, so I’m also aligning the schema definition with that status set. I’m not touching the existing service layer because the admin component now owns its own query/update code.
+The schema and a Goose migration now reflect the new `open | locked | completed` pulje status set. Next I’m regenerating templ output and running tests; if the migration SQL needs SQLite syntax adjustment, the checks should catch the Go side and I’ll inspect the SQL separately.
+The first test run exposed a real follow-up from the status rename: a formsubmission test fixture still inserts puljer with the old `published` status, which now violates the new `open | locked | completed` check. I’ll update that fixture to use `open`, keeping the old constant available for any non-pulje-status label usage.
+I updated the affected test fixture to use `open`, regenerated templ output, and formatted the touched Go files. I’m rerunning the full test suite now.
+The Go suite passes. I’m doing one more non-destructive check by applying the new Goose migration to a temporary copy of the local database, because SQLite table recreation migrations are easy to get subtly wrong.
+The migration check found a SQLite-specific issue: renaming `puljer_new` while views temporarily reference the dropped `puljer` table. I’ll adjust the migration to use SQLite’s `legacy_alter_table` mode during the table swap, then retest it on the temp database.
+Implemented the DB-backed pulje status UI and update endpoint.
+
+What changed:
+- [pages/admin/puljefordeling.templ](/home/cinmay/Documents/conorganizer/pages/admin/puljefordeling.templ:19) now owns the pulje query, status validation, DB update helper, and API handler.
+- Added `PUT /admin/api/puljer/{puljeId}/status`, mounted from [pages/admin/admin.go](/home/cinmay/Documents/conorganizer/pages/admin/admin.go:93).
+- Checkbox actions now confirm, set the Datastar `puljeStatus` signal, call the endpoint, and trigger the existing admin SSE refresh.
+- Added `open` to `models.PuljeStatus` in [models/pulje-model.go](/home/cinmay/Documents/conorganizer/models/pulje-model.go:50).
+- Added a Goose migration for `open | locked | completed` in [20260522120000_pulje_status_open_locked_completed.sql](/home/cinmay/Documents/conorganizer/migrations/20260522120000_pulje_status_open_locked_completed.sql:1).
+- Updated the affected test fixture to use `open`.
+
+Behavior mapping:
+- Lock checkbox checked: `locked`
+- Lock checkbox unchecked: `open`
+- Published checkbox checked: `completed`
+- Published checkbox unchecked: `locked`
+
+Verification:
+- `go tool templ generate`
+- `GOCACHE=/tmp/go-build go test ./...`
+- Applied the new migration to a temporary copy of `database/events.db`; existing puljer converted to `open`.
+
+I kept your manual admin page placement intact.
+
+Time: 2026-05-22 11:33:36
+--- Next Prompt ---
 

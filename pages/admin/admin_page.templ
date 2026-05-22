@@ -76,7 +76,6 @@ templ adminPage(db *sql.DB) {
 		<div class="page-content-container">
 			<h1 class="page-heading">Administrasjon</h1>
 			<div class="admin-page-layout">
-				@puljefordeling(db)
 				<div class="admin-grid">
 					<section class="admin-grid-card">
 						<img
@@ -101,6 +100,9 @@ templ adminPage(db *sql.DB) {
 							<p>Se oversikt over alle billettholdere.</p>
 							<a role="button" href="/admin/billettholder/" class="btn btn--outline">Gå til billettholdere</a>
 						</div>
+					</section>
+					<section class="admin-grid-card">
+						@puljefordeling(db)
 					</section>
 				</div>
 			</div>
