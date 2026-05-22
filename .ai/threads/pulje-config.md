@@ -491,3 +491,272 @@ Both pass now. `schema.sql` is still modified because `task test` regenerated it
 Time: 2026-05-22 11:46:03
 --- Next Prompt ---
 
+Ok, let's move on and discuss the next feature. I have created a new branch for the global publishing of the program. 
+The global publishing of the program is a feature that allows the administrators to control when the program is visible to the public. This is useful for events where the program is not ready yet, or when the organizers want to create some anticipation before revealing the program.
+
+When the global publishing is turned off, the front page should display a list of events sorted alphabetically, and the pulje filter should be hidden. When the global publishing is turned on, the front page should display the pulje filter, and the events should be sorted by pulje and then alphabetically within each pulje.
+
+We need a new component for the admin page to control the global publishing state. This is the publiser program feature . 
+The new .templ component should follow the same pattern as the pulje status component, with database calls and API endpoints colocated in the same file. The component should have a toggle switch to turn the global publishing on and off, and it should display the current state of the global publishing.There also needs to be a confirmation dialog when the admin tries to change the state of the global publishing.
+
+Here is a preposal for the order of implementation:
+1. Create the UI for the global publishing toggle on the admin page.
+2. Add the database calls and the api endpoint to update the global publishing state.
+3. Create a test for the front page to check that the events are displayed correctly based on the global publishing state.
+4. Implement the logic on the front page to display events based on the global publishing state.
+We will wait to implement the logic for the event page as we are currently blocked by another developer who is working on the event page.
+
+Let's discuss the implementation of the global publishing feature before we start coding.
+
+Time: 2026-05-22 12:05:39
+--- Codex Run ---
+
+Codex output:
+Good sequence. I’d keep this feature separate from pulje status and model it as a single global program display mode.
+
+**Database Model**
+I’d use a dedicated one-row table:
+
+```sql
+CREATE TABLE program_publishing(
+  id INTEGER NOT NULL PRIMARY KEY CHECK(id = 1),
+  is_published INTEGER NOT NULL DEFAULT 0 CHECK(is_published IN (0, 1)),
+  updated_at TEXT,
+  updated_by_id INTEGER,
+  FOREIGN KEY(updated_by_id) REFERENCES users(id) ON DELETE SET NULL
+) STRICT;
+```
+
+Seed:
+
+```sql
+INSERT INTO program_publishing(id, is_published)
+VALUES (1, 0);
+```
+
+`is_published = 0` means alphabetical event list, no pulje filter.
+
+`is_published = 1` means pulje filter visible, events grouped/sorted by pulje.
+
+**Admin Component**
+I’d add a new admin-local templ file:
+
+```text
+pages/admin/publiser_program.templ
+```
+
+Containing:
+
+```go
+func getProgramPublishingState(db *sql.DB) (...)
+func updateProgramPublishingState(db *sql.DB, ...)
+func publiserProgramRoute(router chi.Router, ...)
+templ publiserProgram(db *sql.DB)
+```
+
+That matches the pulje status pattern: DB reads, DB writes, API route, and UI all colocated.
+
+The admin UI should probably be a compact card with:
+
+- title: `Publiser program`
+- current state: `Publisert` / `Ikke publisert`
+- one toggle switch
+- `confirm()` before changing
+- endpoint: probably `PUT /admin/api/program-publishing`
+
+**Frontend Behavior**
+I’d treat the front page as having two modes:
+
+```text
+program unpublished:
+  show flat event list
+  sort by event title alphabetically
+  hide pulje filter
+  show each event once
+
+program published:
+  show pulje filter
+  group/sort by pulje start time
+  sort events alphabetically within each pulje
+```
+
+The “show each event once” part matters because the same event can belong to more than one pulje. In unpublished mode, I think users should see the event catalog, not duplicate copies per pulje.
+
+**Test Shape**
+The front page test should probably seed:
+
+- program publishing off
+- several approved events with titles intentionally out of order
+- relation rows across multiple puljer
+
+Then assert:
+
+- pulje filter/nav is absent
+- event titles render alphabetically
+- duplicated pulje relations do not duplicate the event
+
+Then repeat with publishing on:
+
+- pulje filter/nav is present
+- pulje sections render in pulje order
+- events inside each pulje are alphabetical
+
+**One Naming Concern**
+There is a product-language mismatch to settle:
+
+You describe this as “program visible to the public,” but when publishing is off, the front page still displays events. So this state is not really “hide the program completely”; it is more like:
+
+```text
+program_publishing off = hide pulje schedule/filter, show event catalog
+program_publishing on = show scheduled pulje program
+```
+
+That’s fine, but I’d avoid writing backend logic that hides all events when `is_published = 0`.
+
+Before coding, I’d confirm two details:
+
+1. In unpublished mode, should approved events appear even if they are not connected to any pulje?
+2. In published mode, should the pulje view include only `relation_event_puljer.is_published = 1`, or all `is_in_pulje = 1` events?
+
+Time: 2026-05-22 12:05:39
+--- Next Prompt ---
+1. Yes, any approved event should appear on the front page even if they are not connected to any pulje.
+2. In published mode, only the events with `relation_event_puljer.is_published = 1` should be included in the pulje view. Events that are not published in any pulje should not be included in the pulje view. 
+To clarify, publiering av programm is a domain specific term that means "showing the program with pulje filter and grouping" and that the pulje is open to interest. 
+Hens, here the meaning of "publisert" is not that the program is visible to the public, but that the program is visible in a specific way with the pulje filter and grouping. 
+
+Time: 2026-05-22 12:15:02
+--- Codex Run ---
+
+Codex output:
+That clarification helps. I’d model it as a **program display mode**, but keep the user-facing/admin wording as “publisert program” because that is the domain term.
+
+So the rules become:
+
+```text
+program_publishing.is_published = false
+  front page: approved events, flat list, alphabetical
+  pulje filter: hidden
+  event inclusion: approved events even without pulje
+  interest flow: not part of this step / event page later
+
+program_publishing.is_published = true
+  front page: pulje filter visible
+  event list: grouped by pulje
+  event inclusion: only relation_event_puljer.is_published = 1
+  sorting: pulje order, then event title alphabetically
+```
+
+For interest permissions later, I’d make the rule:
+
+```text
+billettholdere can show/change interest only when:
+  global program is published
+  AND the selected pulje status is open
+  AND the event is published in that pulje
+```
+
+That keeps global publishing and pulje locking independent but composable.
+
+For the front page implementation, I’d avoid trying to reuse one query for both modes. The two modes have genuinely different inclusion rules:
+
+**Unpublished Program Query**
+Flat approved-event catalog:
+
+```sql
+SELECT ...
+FROM events
+WHERE status = 'Godkjent'
+ORDER BY title COLLATE NOCASE ASC, id ASC;
+```
+
+This should return each event once, regardless of pulje relations.
+
+**Published Program Query**
+Pulje program:
+
+```sql
+SELECT ...
+FROM v_events_by_pulje_active
+WHERE is_published = 1
+ORDER BY pulje_start_at ASC, title COLLATE NOCASE ASC, id ASC;
+```
+
+Or equivalent direct SQL. This excludes events with no published pulje relation.
+
+For tests, I’d seed at least:
+
+- approved event with no pulje relation
+- approved event with unpublished pulje relation
+- approved event with published pulje relation
+- non-approved event
+- two events with titles that prove alphabetical ordering
+- multiple puljer to prove pulje ordering
+
+Expected assertions:
+
+```text
+global unpublished:
+  includes approved event without pulje
+  includes approved event with unpublished pulje relation
+  excludes non-approved event
+  hides pulje filter
+  renders flat alphabetical order
+
+global published:
+  includes only events with relation_event_puljer.is_published = 1
+  excludes approved event without pulje
+  excludes approved event with only unpublished pulje relation
+  shows pulje filter
+  groups by pulje
+  sorts alphabetically inside each pulje
+```
+
+Implementation order still looks good. I’d only tweak it slightly:
+
+1. Add DB table/migration and admin component/API together.
+2. Add front-page tests for both modes.
+3. Implement front-page query/render switching.
+4. Leave event-page interest behavior for the later event-page work.
+
+The main decision left before coding is naming. My preference:
+
+- Table: `program_publishing`
+- Column: `is_published`
+- Component: `publiserProgram`
+- API: `PUT /admin/api/program-publishing`
+
+That matches the domain language while keeping the technical meaning scoped to this feature.
+
+Time: 2026-05-22 12:15:02
+--- Next Prompt ---
+We will have to go through the sql queries for the front page when we get there. 
+I would still like you to first create the admin UI before we start working on the front page or the database.
+Go ahead and create the admin UI for the global publishing of the program.
+
+Time: 2026-05-22 12:23:32
+--- Codex Run ---
+
+Codex output:
+I’ll add only the admin UI slice: a new `publiserProgram` templ component with a switch-style checkbox, current-state display, and `confirm()` handling, then render it on the admin page. No DB table, queries, or API route yet.
+I’m going to add the new component as UI-only with local Datastar state, then place it before the puljefordeling card on the admin page. I’ll also add a small full-width admin-card modifier so these admin tool components get consistent padding inside the existing grid card pattern.
+The UI component and admin page placement are patched. I’m regenerating templ code and running the Go suite now to catch template or compile issues.
+Implemented the admin UI-only slice for global program publishing.
+
+Added [pages/admin/publiser_program.templ](/home/cinmay/Documents/conorganizer/pages/admin/publiser_program.templ:3) with:
+- switch-style toggle
+- current state display: `Publisert` / `Ikke publisert`
+- `confirm()` before changing
+- local Datastar state only, no DB/API wiring yet
+
+Updated [pages/admin/admin_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/admin_page.templ:110) to render it before `puljefordeling`, and added a full-width admin card modifier for these admin tool components.
+
+Verification:
+- `go tool templ generate`
+- `GOCACHE=/tmp/go-build go test ./...`
+
+No database, API, or front-page logic was added in this step.
+
+Time: 2026-05-22 12:23:32
+--- Next Prompt ---
+

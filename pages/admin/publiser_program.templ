@@ -1,0 +1,117 @@
+package admin
+
+templ publiserProgram() {
+	<style>
+		.publiser-program {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-5x);
+			width: 100%;
+		}
+		.publiser-program-header {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-4x);
+		}
+		.publiser-program-header p {
+			color: var(--color-text-soft);
+			max-width: 72ch;
+		}
+		.publiser-program-control {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--spacing-5x);
+			padding: var(--spacing-4x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-2x);
+			background-color: var(--bg-item);
+		}
+		.publiser-program-state {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-1x);
+		}
+		.publiser-program-state-label {
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+		}
+		.publiser-program-state-value {
+			color: var(--color-text-strong);
+		}
+		.publiser-program-switch {
+			position: relative;
+			display: inline-flex;
+			align-items: center;
+			flex: 0 0 auto;
+			cursor: pointer;
+		}
+		.publiser-program-switch input {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			opacity: 0;
+		}
+		.publiser-program-switch-track {
+			position: relative;
+			display: inline-flex;
+			width: 52px;
+			height: 30px;
+			border: 1px solid var(--bg-item-border-hover);
+			border-radius: 999px;
+			background-color: var(--bg-surface);
+			transition: var(--btn-transition);
+		}
+		.publiser-program-switch-thumb {
+			position: absolute;
+			top: 3px;
+			left: 3px;
+			width: 22px;
+			height: 22px;
+			border-radius: 999px;
+			background-color: var(--color-text-soft);
+			transition: transform 0.2s ease, background-color 0.2s ease;
+		}
+		.publiser-program-switch input:checked + .publiser-program-switch-track {
+			border-color: var(--color-primary);
+			background-color: var(--color-primary-hover);
+		}
+		.publiser-program-switch input:checked + .publiser-program-switch-track .publiser-program-switch-thumb {
+			transform: translateX(22px);
+			background-color: var(--color-primary);
+		}
+		.publiser-program-switch input:focus-visible + .publiser-program-switch-track {
+			box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
+		}
+		@container main (width <= 600px) {
+			.publiser-program-control {
+				align-items: flex-start;
+				flex-direction: column;
+			}
+		}
+	</style>
+	<section class="publiser-program" data-signals:program-published="false">
+		<div class="publiser-program-header">
+			<h2>Publiser program</h2>
+			<p>Styr om forsiden viser programmet med puljefilter og puljegruppering.</p>
+		</div>
+		<div class="publiser-program-control">
+			<div class="publiser-program-state">
+				<span class="publiser-program-state-label">Status</span>
+				<strong class="publiser-program-state-value" data-text="$programPublished ? 'Publisert' : 'Ikke publisert'">Ikke publisert</strong>
+			</div>
+			<label class="publiser-program-switch">
+				<input
+					type="checkbox"
+					role="switch"
+					aria-label="Publiser program"
+					data-bind="programPublished"
+					data-on:click="if (!confirm('Vil du endre publisering av programmet?')) { evt.preventDefault(); }"
+				/>
+				<span class="publiser-program-switch-track" aria-hidden="true">
+					<span class="publiser-program-switch-thumb"></span>
+				</span>
+			</label>
+		</div>
+	</section>
+}
