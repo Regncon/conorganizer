@@ -759,4 +759,64 @@ No database, API, or front-page logic was added in this step.
 
 Time: 2026-05-22 12:23:32
 --- Next Prompt ---
+I made some tweaks to the CSS. We should find an image to use for the global publishing of the program, so that it matches the other admin components. 
+What would be a good image to use for the global publishing of the program?
+
+Time: 2026-05-22 12:43:29
+--- Codex Run ---
+
+Codex output:
+I’ll first check the existing static assets so the recommendation fits the visual language already used by the admin cards.
+A good fit would be an illustration of a **program poster being unveiled on a tavern notice board**.
+
+It matches the existing fantasy/convention visual style better than a generic “publish” icon, and it communicates the domain meaning clearly: the program is now presented in its structured public form.
+
+I’d avoid:
+- `approve.webp`: already reads as approval/confirmation.
+- `participants-small.webp`: good style, but it reads more like attendees/participation.
+- `banner-test.jpg`: too generic compared with the other admin cards.
+
+Best concept:
+
+> A warm fantasy convention notice board in a cozy tavern, with a parchment program schedule pinned open, lantern light, wax seal, painterly digital illustration, no readable text, landscape crop.
+
+I’d store it as something like:
+
+`static/publiser-program.webp`
+
+or, if we want English asset names:
+
+`static/program-publishing.webp`
+
+The important detail is **no readable text** in the image, so we avoid fake/gibberish lettering and keep the actual meaning in the UI text.
+
+Time: 2026-05-22 12:43:29
+--- Next Prompt ---
+Ok, I created the image and saved it as `static/publiser-program.webp`
+Go ahead and add the image to the admin UI for the global publishing of the program. The styling should be consistent with the other admin cards.
+
+Time: 2026-05-22 16:25:34
+--- Codex Run ---
+
+Codex output:
+I’ll wire the new asset into the existing `publiserProgram` component and check the neighboring admin-card markup so the image treatment matches the current pattern.
+I found the existing admin card image styles in `pages/admin/admin_page.templ`, and the new image is present under `static/`. I’m reading the component markup now so I can add the image without disturbing your CSS tweaks.
+I’m going to keep the shared `admin-grid-card-image` class for the asset so it inherits the same sizing as the other admin cards, then wrap the text and toggle beside it on wider screens and stacked on mobile.
+The markup now uses `/static/publiser-program.webp` with the same image class as the existing admin cards. I’m regenerating templ output and running the Go tests with the temporary cache setting this repo needs.
+Tests passed, but the diff shows the templ formatter did not normalize the inline CSS indentation. I’m going to clean that up so the file stays consistent with the surrounding component style.
+Added the new image to the global publishing admin UI in [publiser_program.templ](/home/cinmay/Documents/conorganizer/pages/admin/publiser_program.templ:3).
+
+It now uses `/static/publiser-program.webp` with the shared `admin-grid-card-image` styling, stacked on mobile and side-by-side with the text/toggle on wider screens.
+
+Verified with:
+
+```sh
+go tool templ generate
+GOCACHE=/tmp/go-build go test ./...
+```
+
+Both passed. Note that `static/publiser-program.webp` is currently untracked, so it should be included when you commit this feature.
+
+Time: 2026-05-22 16:25:34
+--- Next Prompt ---
 

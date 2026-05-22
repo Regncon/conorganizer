@@ -8,6 +8,18 @@ templ publiserProgram() {
 			gap: var(--spacing-5x);
 			width: 100%;
 		}
+		.publiser-program-summary {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-5x);
+		}
+		.publiser-program-content {
+			display: flex;
+			flex: 1;
+			flex-direction: column;
+			gap: var(--spacing-5x);
+			min-width: 0;
+		}
 		.publiser-program-header {
 			display: flex;
 			flex-direction: column;
@@ -23,11 +35,11 @@ templ publiserProgram() {
 			border-radius: var(--border-radius-2x);
 			background-color: var(--bg-item);
 		}
-        .publiser-program-control-body {
-            display: flex;
-            align-items: center;
-            gap: var(--spacing-4x);
-        }
+		.publiser-program-control-body {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-4x);
+		}
 		.publiser-program-state {
 			display: flex;
 			flex-direction: column;
@@ -84,6 +96,11 @@ templ publiserProgram() {
 		.publiser-program-switch input:focus-visible + .publiser-program-switch-track {
 			box-shadow: 0 0 0 3px var(--btn-primary-focus-shadow);
 		}
+		@container main (width > 600px) {
+			.publiser-program-summary {
+				flex-direction: row;
+			}
+		}
 		@container main (width <= 600px) {
 			.publiser-program-control {
 				align-items: flex-start;
@@ -92,28 +109,37 @@ templ publiserProgram() {
 		}
 	</style>
 	<section class="publiser-program" data-signals:program-published="false">
-		<div class="publiser-program-header">
-			<h2>Publiser program</h2>
-			<p>Publiser programmet og åpne for ønsker og påmeldinger. </p>
-		</div>
-		<div class="publiser-program-control">
-			<span class="publiser-program-state-label">Status</span>
-			<div class="publiser-program-control-body">
-				<div class="publiser-program-state">
-					<strong class="publiser-program-state-value" data-text="$programPublished ? 'Publisert' : 'Ikke publisert'">Ikke publisert</strong>
+		<div class="publiser-program-summary">
+			<img
+				src="/static/publiser-program.webp"
+				alt="Program publishing"
+				class="admin-grid-card-image"
+			/>
+			<div class="publiser-program-content">
+				<div class="publiser-program-header">
+					<h2>Publiser program</h2>
+					<p>Publiser programmet og åpne for ønsker og påmeldinger.</p>
 				</div>
-				<label class="publiser-program-switch">
-					<input
-						type="checkbox"
-						role="switch"
-						aria-label="Publiser program"
-						data-bind="programPublished"
-						data-on:click="if (!confirm('Vil du endre publisering av programmet?')) { evt.preventDefault(); }"
-					/>
-					<span class="publiser-program-switch-track" aria-hidden="true">
-						<span class="publiser-program-switch-thumb"></span>
-					</span>
-				</label>
+				<div class="publiser-program-control">
+					<span class="publiser-program-state-label">Status</span>
+					<div class="publiser-program-control-body">
+						<div class="publiser-program-state">
+							<strong class="publiser-program-state-value" data-text="$programPublished ? 'Publisert' : 'Ikke publisert'">Ikke publisert</strong>
+						</div>
+						<label class="publiser-program-switch">
+							<input
+								type="checkbox"
+								role="switch"
+								aria-label="Publiser program"
+								data-bind="programPublished"
+								data-on:click="if (!confirm('Vil du endre publisering av programmet?')) { evt.preventDefault(); }"
+							/>
+							<span class="publiser-program-switch-track" aria-hidden="true">
+								<span class="publiser-program-switch-thumb"></span>
+							</span>
+						</label>
+					</div>
+				</div>
 			</div>
 		</div>
 	</section>
