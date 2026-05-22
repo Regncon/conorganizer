@@ -23,94 +23,45 @@ templ adminPage(db *sql.DB) {
 				flex-direction: column;
 				gap: var(--responsive-page-section-spacing);
 			}
-			.admin-grid-card {
-				display: flex;
-				flex-direction: column;
+			.admin-panel-card {
 				width: 100%;
 				background-color: var(--bg-surface);
 				border-radius: var(--border-radius-2x);
-				text-decoration: none;
 				color: white;
 				box-sizing: border-box;
-			}
-			.admin-grid-card--full {
 				padding: var(--spacing-5x);
-			}
-			.admin-grid-card-image {
-				width: 100%;
-				height: 160px;
-				object-fit: cover;
-				border-radius: var(--border-radius-2x);
-			}
-			.admin-grid-card-content {
-				padding: var(--spacing-5x);
-				h2, p {
-					margin-top: 0;
-					margin-bottom: var(--spacing-4x);
-				}
-				.btn {
-					width: 100%;
-				}
-			}
-			@container main (width > 600px) {
-				.admin-grid-card {
-					flex-direction: row;
-					gap: var(--spacing-5x);
-					padding: var(--spacing-5x);
-				}
-				.admin-grid-card--full {
-					flex-direction: column;
-				}
-				.admin-grid-card-image {
-					width: 200px;
-					height: 120px;
-				}
-				.admin-grid-card-content {
-					padding: 0;
-					.btn {
-						width: initial;
-					}
-				}
-			}
-			@container main (width > 800px) {
-				.admin-grid-card-image {
-					width: 300px;
-					height: 180px;
-				}
 			}
 		</style>
+		@adminCardStyles()
 		<div class="page-content-container">
 			<h1 class="page-heading">Administrasjon</h1>
 			<div class="admin-page-layout">
 				<div class="admin-grid">
-					<section class="admin-grid-card admin-grid-card--full">
+					@adminCard(
+						"Publiser program",
+						"Publiser programmet og åpne for ønsker og påmeldinger.",
+						"/static/publiser-program.webp",
+						"Program publishing",
+					) {
 						@publiserProgram()
-					</section>
-					<section class="admin-grid-card">
-						<img
-							src="/static/approve.webp"
-							alt="Events awaiting approval"
-							class="admin-grid-card-image"
-						/>
-						<div class="admin-grid-card-content">
-							<h2>Arrangementer til godkjenning</h2>
-							<p>Her kan du godkjenne arrangementer som er sendt inn av brukere.</p>
-							<a role="button" href="/admin/approval/" class="btn btn--outline">Gå til arrangementer</a>
-						</div>
-					</section>
-					<section class="admin-grid-card">
-						<img
-							src="/static/participants-small.webp"
-							alt="Participants"
-							class="admin-grid-card-image"
-						/>
-						<div class="admin-grid-card-content">
-							<h2>Billettholderoversikt</h2>
-							<p>Se oversikt over alle billettholdere.</p>
-							<a role="button" href="/admin/billettholder/" class="btn btn--outline">Gå til billettholdere</a>
-						</div>
-					</section>
-					<section class="admin-grid-card admin-grid-card--full">
+					}
+					@adminCard(
+						"Arrangementer til godkjenning",
+						"Her kan du godkjenne arrangementer som er sendt inn av brukere.",
+						"/static/approve.webp",
+						"Events awaiting approval",
+					) {
+						<a role="button" href="/admin/approval/" class="btn btn--outline">Gå til arrangementer</a>
+					}
+					@adminCard(
+						"Billettholderoversikt",
+						"Se oversikt over alle billettholdere.",
+						"/static/participants-small.webp",
+						"Participants",
+					) {
+						<a role="button" href="/admin/billettholder/" class="btn btn--outline">Gå til billettholdere</a>
+					}
+					<section class="admin-panel-card">
 						@puljefordeling(db)
 					</section>
 				</div>

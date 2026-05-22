@@ -793,7 +793,7 @@ The important detail is **no readable text** in the image, so we avoid fake/gibb
 Time: 2026-05-22 12:43:29
 --- Next Prompt ---
 Ok, I created the image and saved it as `static/publiser-program.webp`
-Go ahead and add the image to the admin UI for the global publishing of the program. The styling should be consistent with the other admin cards.
+Go ahead and add the image to the admin UI for the global publishing of the program. The styling should be consistent with the other admin cards
 
 Time: 2026-05-22 16:25:34
 --- Codex Run ---
@@ -818,5 +818,39 @@ GOCACHE=/tmp/go-build go test ./...
 Both passed. Note that `static/publiser-program.webp` is currently untracked, so it should be included when you commit this feature.
 
 Time: 2026-05-22 16:25:34
+--- Next Prompt ---
+Ok, let's refactor a bit. Let's make a reusable component for admin cards since there are three of them now. 
+They should take in a title, description, image and child components. Replace the existing admin cards with the new reusable component. The styling should be consistent with the existing admin cards.
+
+Time: 2026-05-22 16:33:22
+--- Codex Run ---
+
+Codex output:
+I’ll extract the shared card shell in the admin package and then replace the three current admin cards with it. First I’m checking the local templ patterns for passing child content so the refactor fits the codebase.
+The repo already uses templ child components in a couple of places, so I’ll model the admin card as a small local shell that receives `children templ.Component`. The publishing component can then shrink down to just its toggle/status body.
+I’ll move the shared image-card CSS into a small `admin_card.templ` helper, leave the puljefordeling wrapper as a separate full panel, and make `publiserProgram` only render the toggle body. That keeps the new component focused on the three image cards the admin page now has.
+The shared component is in place and the three image cards now use it. I’m regenerating templ next; that will catch whether the child-block syntax compiles cleanly in this version.
+Templ generation succeeded. I noticed the formatter preserved some uneven indentation in the inline styles, so I’m doing a small cleanup pass before running the full test suite.
+The cleanup is done and templ generation still passes. I’m running the test suite now, then I’ll do a final diff/status check.
+Refactored the admin image cards into a reusable component.
+
+Changed:
+- Added [admin_card.templ](/home/cinmay/Documents/conorganizer/pages/admin/admin_card.templ:3) with shared card styling and `adminCard(title, description, imageSrc, imageAlt)` using child content.
+- Updated [admin_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/admin_page.templ:35) to use `adminCard` for:
+  - Publiser program
+  - Arrangementer til godkjenning
+  - Billettholderoversikt
+- Simplified [publiser_program.templ](/home/cinmay/Documents/conorganizer/pages/admin/publiser_program.templ:3) so it only owns the toggle/status UI.
+
+Verified with:
+
+```sh
+go tool templ generate
+GOCACHE=/tmp/go-build go test ./...
+```
+
+Both passed. Existing unrelated changes in `.ai/threads/pulje-config.md` and `schema.sql` are still present.
+
+Time: 2026-05-22 16:33:22
 --- Next Prompt ---
 
