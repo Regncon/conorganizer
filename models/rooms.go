@@ -9,3 +9,12 @@ type Room struct {
 	Notes               string `json:"note"`
 	IsDisabled          bool   `json:"is_disabled"`
 }
+
+type RoomByPulje struct {
+	ID                  int
+	Name                string
+	RoomNumber          string
+	Events              []EventPulje
+	Notes               string
+	MaxConcurrentEvents int
+}
