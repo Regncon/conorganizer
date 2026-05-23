@@ -1,6 +1,54 @@
 ## Check domain domeneordbok.md
 when adding names check domeneordbok.md instead of translating to english
 
+## Go test structure
+When writing or cleaning up Go tests, prefer behavior-focused tests that read from intent to verification.
+
+- Add a short BDD-style comment at the top of each test when it improves readability:
+  - Given some initial context,
+  - When an event occurs,
+  - Then ensure the expected outcome.
+- Split each test into three visible sections:
+  - `// Given`
+  - `// When`
+  - `// Then`
+- Start the `// Given` section with the expected output or expected result. This makes the test's purpose clear before setup details.
+- Keep test names specific to one behavior. Prefer splitting creation, duplicate/idempotency, validation, and error cases into separate tests.
+- Move noisy setup SQL and repeated assertions into local test helpers when that makes the test read like behavior.
+
+Example shape:
+
+```go
+func TestService_EventProducesExpectedResult(t *testing.T) {
+	// Given an existing domain object,
+	// when the service reconciles related data,
+	// then the expected durable relation is stored.
+
+	// Given
+	expectedResult := models.SomeResult{ID: 123}
+	db := createTestDB(t)
+	insertRequiredFixture(t, db, expectedResult.ID)
+
+	// When
+	err := ServiceFunction(expectedResult.ID, db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected service call to succeed: %v", err)
+	}
+	assertExpectedResult(t, db, expectedResult)
+}
+```
+
+### Production helpers vs test helpers
+Reuse production functions for the behavior under test. Do not add production service functions only to make test setup nicer.
+
+- Use production helpers when they represent real application behavior that the test is exercising.
+- Use test helpers for arranging prerequisite database state, such as inserting fixture users, billettholdere, emails, or association rows.
+- If setup helpers become useful across packages, move them to `testutil`, not to production services.
+- Avoid arranging a test through the exact code path being verified unless the test is explicitly an integration or route test.
+- Route-level tests can exercise handlers and their production wiring, but keep service-level regression tests focused on the service behavior.
+
 ## When creating custom components that use signals
 
 Datastar interacts with custom web components using a "props down, events up" model:

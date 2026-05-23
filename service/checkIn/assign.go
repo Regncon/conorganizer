@@ -173,3 +173,86 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 
 	return nil
 }
+
+// AssociateUsersWithBillettholderEmail links an existing billettholder to all users
+// whose email matches the supplied billettholder email.
+func AssociateUsersWithBillettholderEmail(billettholderID int, email string, db *sql.DB, logger *slog.Logger) error {
+	logger = logger.With("component", "checkin_assign")
+	logger.Debug("Associating users with billettholder email", "billettholder_id", billettholderID)
+
+	result, err := db.Exec(`
+		INSERT OR IGNORE INTO relation_billettholdere_users (
+			billettholder_id, user_id
+		)
+		SELECT ?, id
+		FROM users
+		WHERE email = ? COLLATE NOCASE
+	`, billettholderID, email)
+	if err != nil {
+		return fmt.Errorf("unable to associate users with billettholder %d by email: %w", billettholderID, err)
+	}
+
+	if rowsAffected, err := result.RowsAffected(); err == nil {
+		if rowsAffected > 0 {
+			logger.Info("Created billettholder user associations",
+				"billettholder_id", billettholderID,
+				"association_flow", "billettholder_email",
+				"created_associations", rowsAffected,
+			)
+		} else {
+			logger.Debug("No billettholder user associations created", "billettholder_id", billettholderID)
+		}
+	} else {
+		logger.Debug("Unable to read created association count",
+			"billettholder_id", billettholderID,
+			"error", err,
+		)
+	}
+
+	return nil
+}
+
+// DisassociateUsersFromBillettholderEmail removes user links for a removed
+// billettholder email when no remaining email still matches the same users.
+func DisassociateUsersFromBillettholderEmail(billettholderID int, email string, db *sql.DB, logger *slog.Logger) error {
+	logger = logger.With("component", "checkin_assign")
+	logger.Debug("Disassociating users from billettholder email", "billettholder_id", billettholderID)
+
+	result, err := db.Exec(`
+		DELETE FROM relation_billettholdere_users
+		WHERE billettholder_id = ?
+		AND user_id IN (
+			SELECT id
+			FROM users
+			WHERE email = ? COLLATE NOCASE
+		)
+		AND NOT EXISTS (
+			SELECT 1
+			FROM relation_billettholder_emails
+			WHERE billettholder_id = ?
+			AND email = ? COLLATE NOCASE
+		)
+	`, billettholderID, email, billettholderID, email)
+	if err != nil {
+		return fmt.Errorf("unable to disassociate users from billettholder %d by email: %w", billettholderID, err)
+	}
+
+	if rowsAffected, err := result.RowsAffected(); err == nil {
+		if rowsAffected > 0 {
+			logger.Info("Removed billettholder user associations",
+				"billettholder_id", billettholderID,
+				"association_flow", "billettholder_email",
+				"removed_associations", rowsAffected,
+			)
+		} else {
+			logger.Debug("No billettholder user associations removed", "billettholder_id", billettholderID)
+		}
+	} else {
+		logger.Debug("Unable to read removed association count",
+			"billettholder_id", billettholderID,
+			"error", err,
+		)
+	}
+
+	return nil
+}

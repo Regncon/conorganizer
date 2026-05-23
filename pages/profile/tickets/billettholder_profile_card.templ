@@ -11,6 +11,7 @@ import (
 
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/go-chi/chi/v5"
 	"github.com/gorilla/sessions"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -105,6 +106,12 @@ func addEmailToBilettholderRoute(
 			handleError(responder, "Noe gikk galt, prøv igjen", "Billettholder ID is missing in the request")
 			return
 		}
+		billettholderIDInt, err := strconv.Atoi(billettholderID)
+		if err != nil {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Invalid billettholder ID in the request")
+			return
+		}
+
 		signals := map[string]string{}
 		if err := datastar.ReadSignals(r, &signals); err != nil { /* ... */
 		}
@@ -118,7 +125,7 @@ func addEmailToBilettholderRoute(
 					handleError(responder, "Noe gikk galt, prøv igjen", "Invalid billettholder ID in signal key")
 					return
 				}
-				if strconv.Itoa(id) == billettholderID {
+				if id == billettholderIDInt {
 					newEmailAddress = v
 					break
 				}
@@ -136,7 +143,7 @@ func addEmailToBilettholderRoute(
 
 		var exists int
 		queryCheck := `SELECT COUNT(*) FROM relation_billettholder_emails WHERE billettholder_id = ? AND email = ?`
-		err := db.QueryRow(queryCheck, billettholderID, newEmailAddress).Scan(&exists)
+		err = db.QueryRow(queryCheck, billettholderID, newEmailAddress).Scan(&exists)
 		if err != nil {
 			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to check existing emails in the database: "+err.Error())
 			return
@@ -150,6 +157,12 @@ func addEmailToBilettholderRoute(
 		_, err = db.Exec(query, billettholderID, newEmailAddress, models.BillettholderEmailKindManual)
 		if err != nil {
 			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to insert new email into the database: "+err.Error())
+			return
+		}
+
+		err = checkIn.AssociateUsersWithBillettholderEmail(billettholderIDInt, newEmailAddress, db, logger)
+		if err != nil {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to create billettholder user associations after manual email add: "+err.Error())
 			return
 		}
 
@@ -180,6 +193,10 @@ func deleteEmailFromBillettholderRoute(
 
 		if billettholderID == "" || emailID == "" {
 			handleError(responder, "Noe gikk galt, prøv igjen", "Missing billettholderID or emailID in delete request")
+			return
+		}
+		if _, err := strconv.Atoi(billettholderID); err != nil {
+			handleError(responder, "Noe gikk galt, prøv igjen", "Invalid billettholder ID in delete request")
 			return
 		}
 
