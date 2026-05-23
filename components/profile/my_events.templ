@@ -7,7 +7,7 @@ import (
 
 templ singleEvent(event models.EventCardModel) {
 	{{ eventLink := "my-events/new/" + event.Id }}
-	if event.Status == "Publisert" || event.Status == "Innsendt" {
+	if event.Status == models.EventStatusPublished || event.Status == models.EventStatusSubmitted {
 		{{ eventLink = "event/" + event.Id }}
 	}
 	<a href={ eventLink } class="item-card profile-event-bar">

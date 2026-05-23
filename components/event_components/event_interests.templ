@@ -111,11 +111,11 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			}
 		}
 	</style>
-	<dialog
-		class="interest-dialog"
-		data-attr:open="$_interestIsOpen ? true : false"
-		data-signals:pulje-Id={ fmt.Sprintf("'%s'", puljeId) }
-	>
+		<dialog
+			class="interest-dialog"
+			data-attr:open="$_interestIsOpen ? true : false"
+			data-signals:pulje-id={ fmt.Sprintf("'%s'", puljeId) }
+		>
 		<div class="dialog-container">
 			<header class="dialog-header">
 				<h3>Meld interesse</h3>

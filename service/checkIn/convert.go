@@ -80,7 +80,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		{
 			BillettholderID: int(billettholderID),
 			Email:           ticket.Email,
-			Kind:            "Ticket",
+			Kind:            models.BillettholderEmailKindTicket,
 		},
 	}
 	// find associated emails if any. An associated email is any email that is in a ticket with the same order ID but is not the ticket email
@@ -89,7 +89,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			associatedEmail := models.BillettholderEmail{
 				BillettholderID: int(billettholderID),
 				Email:           t.Email,
-				Kind:            "Associated",
+				Kind:            models.BillettholderEmailKindAssociated,
 			}
 			emails = append(emails, associatedEmail)
 		}
@@ -99,7 +99,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		exists := false
 		checkErr := db.QueryRow(`
 			SELECT EXISTS(
-				SELECT 1 FROM billettholder_emails
+				SELECT 1 FROM relation_billettholder_emails
 				WHERE billettholder_id = ? AND email = ?
 			)
 		`, email.BillettholderID, email.Email).Scan(&exists)
@@ -112,7 +112,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		}
 
 		_, err := db.Exec(`
-			INSERT INTO billettholder_emails (
+			INSERT INTO relation_billettholder_emails (
 				billettholder_id, email, kind
 			) VALUES (?, ?, ?)
 		`, email.BillettholderID, email.Email, email.Kind)

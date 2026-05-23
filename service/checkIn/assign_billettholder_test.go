@@ -100,17 +100,17 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 	var expectedUsers []models.User
 	for i, holder := range generatededTickets {
 		expectedUsers = append(expectedUsers, models.User{
-			ID:      i + 1,
-			UserID:  holder.FirstName + strconv.Itoa(i+1),
-			Email:   holder.Email,
-			IsAdmin: rand.Intn(100) > 10,
+			ID:         i + 1,
+			ExternalID: holder.FirstName + strconv.Itoa(i+1),
+			Email:      holder.Email,
+			IsAdmin:    rand.Intn(100) > 10,
 		})
 	}
 	var queryUsers []string
 	for _, user := range expectedUsers {
-		queryUsers = append(queryUsers, fmt.Sprintf(`(%d, "%s", "%s", %v)`, user.ID, user.UserID, user.Email, user.IsAdmin))
+		queryUsers = append(queryUsers, fmt.Sprintf(`(%d, "%s", "%s", %v)`, user.ID, user.ExternalID, user.Email, user.IsAdmin))
 	}
-	queryBase := fmt.Sprintf(`INSERT INTO users (id, user_id, email, is_admin) VALUES %s`, strings.Join(queryUsers, ", "))
+	queryBase := fmt.Sprintf(`INSERT INTO users (id, external_id, email, is_admin) VALUES %s`, strings.Join(queryUsers, ", "))
 
 	_, err = db.Exec(queryBase)
 	if err != nil {
@@ -120,7 +120,7 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 
 	// Generate some fake billettholder_users
 	/* for _, expectedUser := range expectedUsers {
-		err = AssociateUserWithBillettholder(expectedUser.UserID, db, slogger)
+		err = AssociateUserWithBillettholder(expectedUser.ExternalID, db, slogger)
 		if err != nil {
 			fmt.Println(err)
 		}
@@ -146,7 +146,7 @@ func TestAssociateTicketsWithBillettholder(t *testing.T) {
 
 	// Check billettholder contains a certain amount of email: targetEmail
 	var resultTargetEmailCount int
-	resultTargetEmailRow := db.QueryRow("SELECT COUNT(email) FROM billettholder_emails WHERE email = ?", targetEmail)
+	resultTargetEmailRow := db.QueryRow("SELECT COUNT(email) FROM relation_billettholder_emails WHERE email = ?", targetEmail)
 	if err = resultTargetEmailRow.Scan(&resultTargetEmailCount); err != nil {
 		t.Fatal(resultTargetEmailRow.Err())
 	}

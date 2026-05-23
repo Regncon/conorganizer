@@ -105,17 +105,27 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
         }
 
         window.initializeSelectedBillettholder = function initializeSelectedBillettholder(associatedBillettholdere, yourBillettholder) {
+            const findAssociatedBillettholder = (billettholderId) => associatedBillettholdere.find((billettholder) => Number(billettholder.Id) === Number(billettholderId))
+
             const storedBillettholder = window.getSelectedBillettholderFromLocalStorage()
             if (storedBillettholder) {
-                return window.setSelectedBillettholderInLocalStorage(storedBillettholder)
+                const selectedBillettholder = findAssociatedBillettholder(storedBillettholder.Id)
+                if (selectedBillettholder) {
+                    return window.setSelectedBillettholderInLocalStorage(selectedBillettholder)
+                }
+
+                localStorage.removeItem(window.LSKey.SelectedBilletHolder)
             }
 
             if (!yourBillettholder?.Id) {
                 return null
             }
 
-            const selectedBillettholder = associatedBillettholdere.find((billettholder) => billettholder.Id === yourBillettholder.Id)
-                ?? yourBillettholder
+            const selectedBillettholder = findAssociatedBillettholder(yourBillettholder.Id)
+            if (!selectedBillettholder) {
+                return null
+            }
+
             return window.setSelectedBillettholderInLocalStorage(selectedBillettholder)
         }
 	</script>

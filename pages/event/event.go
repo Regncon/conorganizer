@@ -15,9 +15,9 @@ import (
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/Regncon/conorganizer/service/userctx"
-	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -195,9 +195,9 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 
 					updateInterestRouter.Put("/interest", func(w http.ResponseWriter, r *http.Request) {
 						type Put struct {
-							BillettHolderId            int    `json:"billettHolderId"`
-							PuljeId                    string `json:"puljeId"`
-							CurrentInterestLevelChoice string `json:"currentInterestLevelChoice"`
+							BillettHolderId            int                  `json:"billettHolderId"`
+							PuljeId                    string               `json:"puljeId"`
+							CurrentInterestLevelChoice models.InterestLevel `json:"currentInterestLevelChoice"`
 						}
 						signals := &Put{}
 
@@ -297,7 +297,7 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 	}
 	id, ok := sess.Values["id"].(string)
 	if !ok {
-		id = toolbelt.NextEncodedID()
+		id = uuid.NewString()
 		sess.Values["id"] = id
 		if err := sess.Save(r, w); err != nil {
 			return "", fmt.Errorf("failed to save session: %w", err)
@@ -306,19 +306,19 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 	return id, nil
 }
 
-func hasValidInterestChoice(interest string) bool {
-	return interest == models.InterestLevelHigh || interest == models.InterestLevelMedium || interest == models.InterestLevelLow || interest == ""
+func hasValidInterestChoice(interest models.InterestLevel) bool {
+	return interest.Valid()
 }
 
-func getSelectedInterest(eventId string, billettholderId int, puljeId string, db *sql.DB) (string, error) {
+func getSelectedInterest(eventId string, billettholderId int, puljeId string, db *sql.DB) (models.InterestLevel, error) {
 	query := `SELECT interest_level FROM interests WHERE event_id = $1 AND billettholder_id = $2 AND pulje_id = $3`
-	var interestLevel string
+	var interestLevel models.InterestLevel
 	err := db.QueryRow(query, eventId, billettholderId, puljeId).Scan(&interestLevel)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "", nil
+			return models.InterestLevelNone, nil
 		}
-		return "", fmt.Errorf("failed to get selected interest: %w", err)
+		return models.InterestLevelNone, fmt.Errorf("failed to get selected interest: %w", err)
 	}
 	return interestLevel, nil
 }
@@ -327,7 +327,7 @@ func updateInterest(
 	userId string,
 	billettholderId int,
 	eventID string,
-	currentInterestLevelChoice string,
+	currentInterestLevelChoice models.InterestLevel,
 	puljeId string,
 	db *sql.DB,
 ) error {
@@ -345,7 +345,7 @@ func updateInterest(
 		return fmt.Errorf("interest level is required")
 	}
 
-	puljeQuery := `SELECT EXISTS (SELECT * FROM event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_active = 1 AND is_published = 1)`
+	puljeQuery := `SELECT EXISTS (SELECT 1 FROM relation_event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_in_pulje = 1 AND is_published = 1)`
 	var puljeExists bool
 	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId).Scan(&puljeExists)
 	if puljerErr != nil {
@@ -357,10 +357,10 @@ func updateInterest(
 
 	userHasAccessToBillettHolderIdQuery := `
         SELECT EXISTS
-            (SELECT *
-                FROM billettholdere_users [BU]
+            (SELECT 1
+                FROM relation_billettholdere_users [BU]
                 JOIN users [U] ON [BU].user_id = [U].id
-                WHERE [BU].billettholder_id = $1 AND [U].user_id = $2)`
+                WHERE [BU].billettholder_id = $1 AND [U].external_id = $2)`
 	var userHasAccess bool
 	userHasAccessErr := db.QueryRow(userHasAccessToBillettHolderIdQuery, billettholderId, userId).Scan(&userHasAccess)
 
@@ -371,7 +371,7 @@ func updateInterest(
 		return fmt.Errorf("user %s does not have access to this billettholder interest", userId)
 	}
 
-	if currentInterestLevelChoice == "" {
+	if currentInterestLevelChoice == models.InterestLevelNone {
 		dropQuery := `DELETE FROM interests WHERE event_id = $1 AND pulje_id = $2 AND billettholder_id = $3`
 		dropRows, dropErr := db.Exec(dropQuery, eventID, puljeId, billettholderId)
 		if dropErr != nil {

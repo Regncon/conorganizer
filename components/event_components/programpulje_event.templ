@@ -3,9 +3,10 @@ package event_components
 import (
 	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
 )
 
-templ ProgramPuljeEvent(eventID string, imageCardUrl string, imageBannerUrl string, title string, description string, eventType string, isGM bool) {
+templ ProgramPuljeEvent(eventID string, imageCardUrl string, imageBannerUrl string, title string, description string, eventType models.EventType, isGM bool) {
 	<style>
 		.programpulje-event-container {
 			--linear-gradient-mask: linear-gradient(
@@ -100,7 +101,7 @@ templ ProgramPuljeEvent(eventID string, imageCardUrl string, imageBannerUrl stri
 		<div class="programpulje-event-container-text">
 			<div class="programpulje-event-container-text-title">
 				<span class="text-event-name event-container-clip-text">{ title }</span>
-				<span class="text-event-type event-container-clip-text">{ eventType }</span>
+				<span class="text-event-type event-container-clip-text">{ eventType.Label() }</span>
 			</div>
 			<span class="event-container-clip-text">
 				{ description }

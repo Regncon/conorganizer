@@ -2,8 +2,10 @@ package formsubmission
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 )
 
@@ -102,9 +104,9 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 	})
 
 	// E2 first-choice checks focus on the CASE logic in queryFirstChoice:
-	// - "Veldig interessert" + assigned as player in a different event => FirstChoice should be true.
+	// - Highest interest + assigned as player in a different event => FirstChoice should be true.
 	// - GM-only in a different event should NOT count as FirstChoice.
-	// - Any interest below "Veldig interessert" should NOT be FirstChoice, even if assigned elsewhere.
+	// - Any lower interest should NOT be FirstChoice, even if assigned elsewhere.
 	// - No assignment at all should NOT be FirstChoice.
 	t.Run("E2 first-choice rules", func(t *testing.T) {
 		for _, tc := range []firstChoiceCase{
@@ -178,7 +180,7 @@ type interestFixture struct {
 	billettholderID int
 	eventID         string
 	puljeID         string
-	interestLevel   string
+	interestLevel   models.InterestLevel
 }
 
 type assignmentFixture struct {
@@ -210,37 +212,65 @@ func indexInterests(t *testing.T, interests []InterestWithHolder) map[int]Intere
 func seedBaseTables(t *testing.T, db *sql.DB) {
 	t.Helper()
 
-	mustExec(t, db, `INSERT INTO event_statuses(status) VALUES ('Godkjent')`)
-	mustExec(t, db, `INSERT INTO events_types(event_type) VALUES ('Other')`)
-	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES ('Default')`)
-	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES ('Normal')`)
-	mustExec(t, db, `INSERT INTO interest_levels(interest_level) VALUES ('Veldig interessert'), ('Interessert'), ('Litt interessert'), ('Ikkje interessert')`)
+	puljeStatus := puljeStatusForTestSchema(t, db)
+
+	mustExec(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?)`, models.EventStatusApproved)
+	mustExec(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
+	mustExec(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
+	mustExec(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
+	mustExec(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
+	mustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, puljeStatus)
 	mustExec(t, db, `
 		INSERT INTO puljer (
-			id, name, is_closed, is_published, start_time, end_time
+			id, name, status, start_at, end_at
 		) VALUES
-			('P1', 'Friday', 0, 1, '2025-10-03', '2025-10-03'),
-			('P2', 'SaturdayMorning', 0, 1, '2025-10-04', '2025-10-04'),
-			('P3', 'SaturdayEvening', 0, 1, '2025-10-04', '2025-10-04'),
-			('P4', 'Sunday', 0, 1, '2025-10-05', '2025-10-05')
-	`)
+			('P1', 'Friday', ?, '2025-10-03', '2025-10-03'),
+			('P2', 'SaturdayMorning', ?, '2025-10-04', '2025-10-04'),
+			('P3', 'SaturdayEvening', ?, '2025-10-04', '2025-10-04'),
+			('P4', 'Sunday', ?, '2025-10-05', '2025-10-05')
+	`, puljeStatus, puljeStatus, puljeStatus, puljeStatus)
 	mustExec(t, db, `
 		INSERT INTO events (
-			id, title, intro, description, image_url, system, event_type,
+			id, title, intro, description, system, event_type,
 			age_group, event_runtime, host_name, email, phone_number,
-			pulje_name, max_players, beginner_friendly, can_be_run_in_english,
+			max_players, beginner_friendly, can_be_run_in_english,
 			status
 		) VALUES
-			('E1','Event 1','intro','desc','', '', 'Other','Default','Normal','Host 1','h1@test.no','11111111','Friday',4,1,1,'Godkjent'),
-			('E2','Event 2','intro','desc','', '', 'Other','Default','Normal','Host 2','h2@test.no','22222222','SaturdayMorning',4,1,1,'Godkjent'),
-			('E3','Event 3','intro','desc','', '', 'Other','Default','Normal','Host 3','h3@test.no','33333333','SaturdayEvening',4,1,1,'Godkjent'),
-			('E4','Event 4','intro','desc','', '', 'Other','Default','Normal','Host 4','h4@test.no','44444444','Sunday',4,1,1,'Godkjent')
-	`)
+			('E1','Event 1','intro','desc','', ?,?,?,'Host 1','h1@test.no','11111111',4,1,1,?),
+			('E2','Event 2','intro','desc','', ?,?,?,'Host 2','h2@test.no','22222222',4,1,1,?),
+			('E3','Event 3','intro','desc','', ?,?,?,'Host 3','h3@test.no','33333333',4,1,1,?),
+			('E4','Event 4','intro','desc','', ?,?,?,'Host 4','h4@test.no','44444444',4,1,1,?)
+	`,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
+	)
+}
+
+func puljeStatusForTestSchema(t *testing.T, db *sql.DB) models.PuljeStatus {
+	t.Helper()
+
+	var createTableSQL string
+	err := db.QueryRow(`
+		SELECT sql
+		FROM sqlite_schema
+		WHERE type = 'table' AND name = 'puljer'
+	`).Scan(&createTableSQL)
+	if err != nil {
+		t.Fatalf("failed to read puljer schema: %v", err)
+	}
+
+	if strings.Contains(createTableSQL, "'open'") {
+		return models.PuljeStatusOpen
+	}
+
+	return models.PuljeStatusPublished
 }
 
 func playerFixtures() []billettholderFixture {
 	return []billettholderFixture{
-		{id: idPlayerAssigned, firstName: "Player", lastName: "One"},
+		{id: idPlayerAssigned, firstName: "Assigned", lastName: "One"},
 		{id: idNotVeryInterested, firstName: "NotVery", lastName: "Three"},
 		{id: idUnassigned, firstName: "NoAssign", lastName: "Four"},
 		{id: idSameEventAssignee, firstName: "SameEvent", lastName: "Five"},
@@ -249,7 +279,7 @@ func playerFixtures() []billettholderFixture {
 
 func gmFixtures() []billettholderFixture {
 	return []billettholderFixture{
-		{id: idGMAssigned, firstName: "GM", lastName: "Two"},
+		{id: idGMAssigned, firstName: "Gamemaster", lastName: "Two"},
 		{id: idGMPlayer, firstName: "GMPlayer", lastName: "Six"},
 		{id: idGMAndPlayerDifferentEvents, firstName: "GMAndPlayer", lastName: "Seven"},
 		{id: idGMOnlyVeryInterestedOther, firstName: "GMOnlyVeryInterested", lastName: "Eight"},
@@ -258,37 +288,37 @@ func gmFixtures() []billettholderFixture {
 
 func interestsForE2() []interestFixture {
 	return []interestFixture{
-		{billettholderID: idPlayerAssigned, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMAssigned, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
-		{billettholderID: idNotVeryInterested, eventID: eventE2, puljeID: puljeP2, interestLevel: "Interessert"},
-		{billettholderID: idUnassigned, eventID: eventE2, puljeID: puljeP2, interestLevel: "Litt interessert"},
-		{billettholderID: idSameEventAssignee, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMPlayer, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMAndPlayerDifferentEvents, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMOnlyVeryInterestedOther, eventID: eventE2, puljeID: puljeP2, interestLevel: "Veldig interessert"},
+		{billettholderID: idPlayerAssigned, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMAssigned, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idNotVeryInterested, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelMedium},
+		{billettholderID: idUnassigned, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelLow},
+		{billettholderID: idSameEventAssignee, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMPlayer, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMAndPlayerDifferentEvents, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMOnlyVeryInterestedOther, eventID: eventE2, puljeID: puljeP2, interestLevel: models.InterestLevelHigh},
 	}
 }
 
 func interestsForE1() []interestFixture {
 	return []interestFixture{
-		{billettholderID: idPlayerAssigned, eventID: eventE1, puljeID: puljeP1, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMOnlyVeryInterestedOther, eventID: eventE1, puljeID: puljeP1, interestLevel: "Veldig interessert"},
+		{billettholderID: idPlayerAssigned, eventID: eventE1, puljeID: puljeP1, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMOnlyVeryInterestedOther, eventID: eventE1, puljeID: puljeP1, interestLevel: models.InterestLevelHigh},
 	}
 }
 
 func interestsForE3() []interestFixture {
 	return []interestFixture{
-		{billettholderID: idPlayerAssigned, eventID: eventE3, puljeID: puljeP3, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMAssigned, eventID: eventE3, puljeID: puljeP3, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMPlayer, eventID: eventE3, puljeID: puljeP3, interestLevel: "Veldig interessert"},
+		{billettholderID: idPlayerAssigned, eventID: eventE3, puljeID: puljeP3, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMAssigned, eventID: eventE3, puljeID: puljeP3, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMPlayer, eventID: eventE3, puljeID: puljeP3, interestLevel: models.InterestLevelHigh},
 	}
 }
 
 func interestsForE4() []interestFixture {
 	return []interestFixture{
-		{billettholderID: idPlayerAssigned, eventID: eventE4, puljeID: puljeP4, interestLevel: "Veldig interessert"},
-		{billettholderID: idGMAssigned, eventID: eventE4, puljeID: puljeP4, interestLevel: "Veldig interessert"},
-		{billettholderID: idUnassigned, eventID: eventE4, puljeID: puljeP4, interestLevel: "Ikkje interessert"},
+		{billettholderID: idPlayerAssigned, eventID: eventE4, puljeID: puljeP4, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idGMAssigned, eventID: eventE4, puljeID: puljeP4, interestLevel: models.InterestLevelHigh},
+		{billettholderID: idUnassigned, eventID: eventE4, puljeID: puljeP4, interestLevel: models.InterestLevelLow},
 	}
 }
 
@@ -346,11 +376,15 @@ func seedAssignments(t *testing.T, db *sql.DB, rows []assignmentFixture) {
 	t.Helper()
 
 	for _, row := range rows {
+		role := models.EventPlayerRolePlayer
+		if row.isGM == 1 {
+			role = models.EventPlayerRoleGM
+		}
 		mustExec(t, db, `
-			INSERT INTO events_players (
-				event_id, pulje_id, billettholder_id, is_player, is_gm
-			) VALUES (?, ?, ?, ?, ?)
-		`, row.eventID, row.puljeID, row.billettholderID, row.isPlayer, row.isGM)
+			INSERT INTO relation_events_players (
+				event_id, pulje_id, billettholder_id, role
+			) VALUES (?, ?, ?, ?)
+		`, row.eventID, row.puljeID, row.billettholderID, role)
 	}
 }
 

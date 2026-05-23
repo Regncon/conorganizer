@@ -45,17 +45,17 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 
 	// Happy path user
 	var happyPathUser = models.User{
-		ID:      expectedBillettholderUser.UserID,
-		UserID:  "testuser",
-		Email:   happyPathEmail,
-		IsAdmin: false,
+		ID:         expectedBillettholderUser.UserID,
+		ExternalID: "testuser",
+		Email:      happyPathEmail,
+		IsAdmin:    false,
 	}
 
 	var unassociatedPathUser = models.User{
-		ID:      2,
-		UserID:  "gudrunanita",
-		Email:   happyPathEmail,
-		IsAdmin: false,
+		ID:         2,
+		ExternalID: "gudrunanita",
+		Email:      happyPathEmail,
+		IsAdmin:    false,
 	}
 
 	// Happy path billettholder
@@ -96,19 +96,19 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	var happyPathBillettholderEmail = models.BillettholderEmail{
 		BillettholderID: happyPathBillettholder.ID,
 		Email:           happyPathPerson.Email,
-		Kind:            "Manual",
+		Kind:            models.BillettholderEmailKindManual,
 	}
 
 	var missMatchedBillettholderEmail = models.BillettholderEmail{
 		BillettholderID: missMatchBillettholder.ID,
 		Email:           strings.ToUpper(happyPathPerson.Email),
-		Kind:            "Manual",
+		Kind:            models.BillettholderEmailKindManual,
 	}
 
 	var uassociatedBillettholderEmail = models.BillettholderEmail{
 		BillettholderID: unassociatedBillettholder.ID,
 		Email:           uassociatedPerson.Email,
-		Kind:            "Manual",
+		Kind:            models.BillettholderEmailKindManual,
 	}
 
 	var testBillettholders []models.Billettholder
@@ -141,7 +141,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 		return
 	}
 
-	// Attempt to insert into billettholder_emails
+	// Attempt to insert into relation_billettholder_emails
 	var expectedBillettholderEmails []models.BillettholderEmail
 	for _, person := range testBillettholderEmails {
 		billettholderEmail := models.BillettholderEmail{
@@ -153,27 +153,27 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 
 	var queryBillettholderEmail []string
 	for _, billettholderEmail := range expectedBillettholderEmails {
-		queryBillettholderEmail = append(queryBillettholderEmail, fmt.Sprintf(`(%d, "%s", "%s")`, billettholderEmail.BillettholderID, billettholderEmail.Email, "Manual"))
+		queryBillettholderEmail = append(queryBillettholderEmail, fmt.Sprintf(`(%d, "%s", "%s")`, billettholderEmail.BillettholderID, billettholderEmail.Email, models.BillettholderEmailKindManual))
 	}
 	queryBase = fmt.Sprintf(`
-            INSERT INTO billettholder_emails (
+            INSERT INTO relation_billettholder_emails (
                 billettholder_id, email, kind
                 ) VALUES %s`, strings.Join(queryBillettholderEmail, ", "))
 
 	_, err = db.Exec(queryBase)
 	if err != nil {
-		fmt.Println("failed to insert billettholder_emails", "error", err)
+		fmt.Println("failed to insert relation_billettholder_emails", "error", err)
 		return
 	}
 
 	var queryUsers []string
 	for _, user := range testUsers {
-		queryUsers = append(queryUsers, fmt.Sprintf(`(%d, "%s", "%s", %v)`, user.ID, user.UserID, user.Email, user.IsAdmin))
+		queryUsers = append(queryUsers, fmt.Sprintf(`(%d, "%s", "%s", %v)`, user.ID, user.ExternalID, user.Email, user.IsAdmin))
 	}
 
 	queryBase = fmt.Sprintf(`
                 INSERT INTO users (
-                    id, user_id, email, is_admin
+                    id, external_id, email, is_admin
                     ) VALUES %s`, strings.Join(queryUsers, ", "))
 
 	_, err = db.Exec(queryBase)
@@ -187,14 +187,14 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	slogger := testutil.NewSlogAdapter(sl)
 
 	/* for _, user := range testUsers {
-		// fmt.Printf("Calling AssociateUserWithBillettholder() on: %s (%s)\n", user.UserID, user.Email)
-		err = AssociateUserWithBillettholder(user.UserID, db, slogger)
+		// fmt.Printf("Calling AssociateUserWithBillettholder() on: %s (%s)\n", user.ExternalID, user.Email)
+		err = AssociateUserWithBillettholder(user.ExternalID, db, slogger)
 		if err != nil {
 			t.Fatalf("failed to convert ticketId to billettholder: %v", err)
 		}
 	} */
 
-	err = AssociateUserWithBillettholder(happyPathUser.UserID, db, slogger)
+	err = AssociateUserWithBillettholder(happyPathUser.ExternalID, db, slogger)
 	if err != nil {
 		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
 	}
@@ -205,7 +205,7 @@ func TestAssociateUserWithBillettholder(t *testing.T) {
 	}
 
 	var resultBillettholderUsers []models.BillettholderUsers
-	rows, err := db.Query("SELECT billettholder_id, user_id FROM billettholdere_users")
+	rows, err := db.Query("SELECT billettholder_id, user_id FROM relation_billettholdere_users")
 	if err != nil {
 		t.Fatalf("failed to query billettholder_users: %v", err)
 	}

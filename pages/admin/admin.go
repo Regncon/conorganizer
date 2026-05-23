@@ -10,13 +10,14 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/components/formsubmission"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/admin/approval"
 	edit_form "github.com/Regncon/conorganizer/pages/admin/approval/editForm"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/keyvalue"
-	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -89,6 +90,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 	router.Route("/admin", func(adminRouter chi.Router) {
 		adminLayoutRoute(adminRouter, db, logger, err)
+		puljefordelingStatusRoute(adminRouter, db, kv, logger)
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 
@@ -175,8 +177,8 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					}
 				})
 
-				apiRouter.Route("/events_players", func(eventsPlayersRouter chi.Router) {
-					eventsPlayersRouter.Post("/post/add_first_choice", func(w http.ResponseWriter, r *http.Request) {
+				apiRouter.Route("/event-players", func(eventPlayersRouter chi.Router) {
+					eventPlayersRouter.Post("/post/add_first_choice", func(w http.ResponseWriter, r *http.Request) {
 						type Store struct {
 							BillettholderId int    `json:"assignmentBillettholderId"`
 							EventId         string `json:"assignmentEventId"`
@@ -220,7 +222,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 
 					})
-					eventsPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
+					eventPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
 
 						type Store struct {
 							BillettholderId int    `json:"assignmentBillettholderId"`
@@ -258,8 +260,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"event_id", store.EventId,
 							"pulje_id", store.PuljeId,
 							"billettholder_id", store.BillettholderId,
-							"is_player", false,
-							"is_gm", true,
+							"role", models.EventPlayerRoleGM,
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast add GM update: %w", err).Error())
@@ -267,7 +268,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							return
 						}
 					})
-					eventsPlayersRouter.Put("/update_status", func(w http.ResponseWriter, r *http.Request) {
+					eventPlayersRouter.Put("/update_status", func(w http.ResponseWriter, r *http.Request) {
 						type Store struct {
 							BillettholderId int    `json:"assignmentBillettholderId"`
 							EventId         string `json:"assignmentEventId"`
@@ -300,8 +301,8 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"event_id", store.EventId,
 							"pulje_id", store.PuljeId,
 							"billettholder_id", store.BillettholderId,
-							"is_player", store.IsPlayer,
-							"is_gm", store.IsGm,
+							"assignment_is_player", store.IsPlayer,
+							"assignment_is_gm", store.IsGm,
 						)
 						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast player status update: %w", err).Error())
@@ -393,7 +394,7 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 	}
 	id, ok := sess.Values["id"].(string)
 	if !ok {
-		id = toolbelt.NextEncodedID()
+		id = uuid.NewString()
 		sess.Values["id"] = id
 		if err := sess.Save(r, w); err != nil {
 			return "", fmt.Errorf("failed to save session: %w", err)

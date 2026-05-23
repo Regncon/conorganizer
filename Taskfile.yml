@@ -77,9 +77,25 @@ tasks:
             - sqlite3 database/events.db ".schema --indent --nosys" > schema.sql
             - go test ./...
 
-    # Download a local copy of latest S3 database
-    # Requires updated .env file, check discord!
+    # Download local copies of production assets
     download:
+        deps:
+            - download:db
+            - download:images
+
+    # Download a local copy of the production database
+    # Requires DB_SSH_USER in .env or shell environment
+    download:db:
+        cmds:
+            - |
+                set -eu
+                : "${DB_SSH_USER:?Set DB_SSH_USER in .env}"
+                mkdir -p database
+                scp -P 22 "${DB_SSH_USER}@46.62.159.49:/mnt/HC_Volume_103911252/main/database/events.db" "database/events.db.download"
+                mv "database/events.db.download" "database/events.db"
+
+    # Download local copies of production event images
+    download:images:
         cmds:
             # Create local-event-images directory if it doesn't exist
             - mkdir -p ./local-event-images

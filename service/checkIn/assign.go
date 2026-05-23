@@ -53,7 +53,7 @@ func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db
 	var billettholdereIDs []models.Billettholder
 	rows, err := db.Query(`
         SELECT DISTINCT b.ticket_id
-        FROM billettholder_emails e
+        FROM relation_billettholder_emails e
         JOIN billettholdere b ON b.id = e.billettholder_id
         WHERE e.email = ? COLLATE NOCASE;
     `, email)
@@ -121,7 +121,7 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 	// Get user
 	var user models.User
 	err := db.QueryRow(`
-        SELECT id, email FROM users WHERE user_id = ?;
+        SELECT id, email FROM users WHERE external_id = ?;
     `, userID).Scan(&user.ID, &user.Email)
 	if err != nil {
 		return fmt.Errorf("failed to get user %q: %w", userID, err)
@@ -130,18 +130,18 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 	// Get associated billettholdere
 	var billettholdere []models.BillettholderEmail
 	rows, err := db.Query(`
-        SELECT id, billettholder_id, email, kind, inserted_time FROM billettholder_emails WHERE email = ? COLLATE NOCASE
+        SELECT id, billettholder_id, email, kind, created_at, updated_at, created_by_id, updated_by_id FROM relation_billettholder_emails WHERE email = ? COLLATE NOCASE
     `, user.Email)
 	if err != nil {
-		return fmt.Errorf("unable to query billettholder_emails for email %q: %w", user.Email, err)
+		return fmt.Errorf("unable to query relation_billettholder_emails for email %q: %w", user.Email, err)
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var result models.BillettholderEmail
-		err := rows.Scan(&result.ID, &result.BillettholderID, &result.Email, &result.Kind, &result.InsertedTime)
+		err := rows.Scan(&result.ID, &result.BillettholderID, &result.Email, &result.Kind, &result.CreatedAt, &result.UpdatedAt, &result.CreatedByID, &result.UpdatedByID)
 		if err != nil {
-			return fmt.Errorf("unable to scan billettholder_emails for email %q: %w", user.Email, err)
+			return fmt.Errorf("unable to scan relation_billettholder_emails for email %q: %w", user.Email, err)
 		}
 		billettholdere = append(billettholdere, result)
 	}
@@ -156,14 +156,19 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 		lines = append(lines, fmt.Sprintf(`(%d, %d)`, billettholder.BillettholderID, user.ID))
 	}
 	var baseQuery = fmt.Sprintf(`
-        INSERT OR IGNORE INTO billettholdere_users (
+        INSERT OR IGNORE INTO relation_billettholdere_users (
             billettholder_id, user_id
         ) VALUES %s
     `, strings.Join(lines, ", "))
 
 	_, err = db.Exec(baseQuery)
 	if err != nil {
-		return fmt.Errorf("unable to insert billettholder-user links for user %q: %w", userID, err)
+		fmt.Printf("UserID: %s has id: %d \n", userID, user.ID)
+		for _, billet := range billettholdere {
+			fmt.Printf("Billettholdere: %+v \n", billet)
+		}
+
+		return fmt.Errorf("unable to insert into relation_billettholdere_users: %v", err)
 	}
 
 	return nil
