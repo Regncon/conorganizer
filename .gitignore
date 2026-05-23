@@ -5,6 +5,8 @@ database/*
 !database/Views.md
 !database/.gitkeep
 
+documentation/testing/*.pdf
+
 local-event-images/*
 backup-service/regncon
 *_templ.go
