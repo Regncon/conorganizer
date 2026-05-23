@@ -22,7 +22,7 @@ templ EventStatus(statusRaw models.EventStatus) {
 				@icons.Icon(icons.ProgressComplete, icons.Size16)
 		}
 		<p>
-			{ status }
+			{ statusRaw.Label() }
 		</p>
 	</span>
 }

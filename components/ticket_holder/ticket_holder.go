@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"github.com/Regncon/conorganizer/models"
+	puljerService "github.com/Regncon/conorganizer/service/puljer"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
@@ -19,7 +20,7 @@ type BillettHolder struct {
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]BillettHolder, error) {
-	// todo: use the correct way to get billettholders (billettholderservice.GetBilettholdere has a fallback to get all billettholders)
+	// todo: use the correct way to get billettholders (billettholderservice.GetBillettholdere has a fallback to get all billettholders)
 	query := `
     SELECT
         [be].email,
@@ -27,20 +28,20 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
         [bh].first_name,
         [bh].last_name
     FROM
-        billettholder_emails [be]
+        relation_billettholder_emails [be]
         LEFT JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
-    WHERE
-        [be].kind = 'Ticket'
-        AND [be].billettholder_id IN (
+	    WHERE
+	        [be].kind = ?
+	        AND [be].billettholder_id IN (
             SELECT
                 billettholder_id
             FROM
-                billettholder_emails
+                relation_billettholder_emails
             WHERE
                 email = ?
         )
 `
-	rows, ticketHolderQueryErr := db.Query(query, userInfo.Email)
+	rows, ticketHolderQueryErr := db.Query(query, models.BillettholderEmailKindTicket, userInfo.Email)
 	if ticketHolderQueryErr != nil {
 		return nil, fmt.Errorf("failed to query ticket holders for email %q: %w", userInfo.Email, ticketHolderQueryErr)
 	}
@@ -71,24 +72,10 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
 
 }
 
-func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.Pulje, error) {
-	puljerQuery := `SELECT pulje_id FROM event_puljer WHERE event_id = ? AND is_active = 1 AND is_published = 1`
-	rows, puljerErr := db.Query(puljerQuery, eventId)
-	if puljerErr != nil {
-		return nil, fmt.Errorf("failed to query event puljer for event %s: %w", eventId, puljerErr)
-	}
-	defer rows.Close()
-
-	var puljer []models.Pulje
-	for rows.Next() {
-		var puljeName models.Pulje
-		if scanErr := rows.Scan(&puljeName); scanErr != nil {
-			return nil, fmt.Errorf("failed to scan pulje row for event %s: %w", eventId, scanErr)
-		}
-		puljer = append(puljer, puljeName)
-	}
-	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, fmt.Errorf("error iterating over pulje rows for event %s: %w", eventId, rowsErr)
+func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.PuljeRow, error) {
+	puljer, err := puljerService.GetActivePuljeForEvent(eventId, db)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query event puljer for event %s: %w", eventId, err)
 	}
 
 	return puljer, nil

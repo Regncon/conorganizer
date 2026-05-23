@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/event"
+	"github.com/Regncon/conorganizer/service/puljer"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 )
@@ -48,16 +48,14 @@ SELECT
 		title,
 		intro,
 		description,
-		image_url,
 		system,
 		event_type,
 		age_group,
 		event_runtime,
 		host_name,
-		host,
+		user_id,
 		email,
 		phone_number,
-		pulje_name,
 		max_players,
 		beginner_friendly,
 		can_be_run_in_english,
@@ -72,7 +70,6 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 			e.title,
             e.intro,
             e.description,
-            e.image_url,
             e.system,
             e.event_type,
             e.age_group,
@@ -81,7 +78,6 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
             e.user_id,
             e.email,
             e.phone_number,
-            e.pulje_name,
             e.max_players,
             e.beginner_friendly,
             e.can_be_run_in_english,
@@ -89,15 +85,12 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
             e.status,
 
 			-- pulje
-			ep.pulje_id,
-			p.name,
-			p.start_time,
-			p.end_time
-		FROM events e
-		INNER JOIN event_puljer ep ON ep.event_id = e.id
-		INNER JOIN puljer      p  ON p.id = ep.pulje_id
-		WHERE e.status = 'Godkjent' AND ep.is_active = 1
-        ORDER BY p.start_time DESC, e.inserted_time DESC, e.id ASC
+			e.pulje_id,
+			e.pulje_name,
+			e.pulje_start_at,
+			e.pulje_end_at
+		FROM v_events_by_pulje_active e
+        ORDER BY e.pulje_start_at DESC, e.created_at DESC, e.id ASC
 	`
 
 	rows, err := db.Query(q)
@@ -106,26 +99,13 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 	}
 	defer rows.Close()
 
-	parseDate := func(s string) (time.Time, error) {
-		// Try common SQLite date encodings; adjust if your data uses another format.
-		// DATE columns are often stored as "YYYY-MM-DD".
-		//  2025-10-10T18:00:00Z
-		if t, err := time.Parse("2006-01-02T15:04:05Z07:00", s); err == nil {
-			return t, nil
-		}
-		// Fallbacks (uncomment if needed):
-		// if t, err := time.Parse(time.RFC3339, s); err == nil { return t, nil }
-		// if t, err := time.Parse("2006-01-02 15:04:05", s); err == nil { return t, nil }
-		return time.Time{}, nil
-	}
-
 	out := make(EventsPrintByPulje)
 
 	for rows.Next() {
 		var (
 			ev                 models.Event
 			puljeID, puljeName string
-			startStr, endStr   string
+			startAt, endAt     models.DBDateTime
 		)
 
 		if err := rows.Scan(
@@ -133,16 +113,14 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 			&ev.Title,
 			&ev.Intro,
 			&ev.Description,
-			&ev.ImageURL,
 			&ev.System,
 			&ev.EventType,
 			&ev.AgeGroup,
 			&ev.Runtime,
 			&ev.HostName,
-			&ev.UserId,
+			&ev.UserID,
 			&ev.Email,
 			&ev.PhoneNumber,
-			&ev.PuljeName,
 			&ev.MaxPlayers,
 			&ev.BeginnerFriendly,
 			&ev.CanBeRunInEnglish,
@@ -151,25 +129,22 @@ func getEventsByPuljeForPrint(db *sql.DB) (EventsPrintByPulje, error) {
 
 			&puljeID,
 			&puljeName,
-			&startStr,
-			&endStr,
+			&startAt,
+			&endAt,
 		); err != nil {
 			return nil, fmt.Errorf("scan print-friendly event row: %w", err)
 		}
 
-		startTime, _ := parseDate(startStr)
-		endTime, _ := parseDate(endStr)
-
 		key := models.Pulje(puljeID)
 		block, ok := out[key]
 		if !ok {
+			pulje, err := puljerService.BuildPulje(key, puljeName, "", startAt, endAt)
+			if err != nil {
+				return nil, err
+			}
+
 			block = &PuljePrintBlock{
-				Pulje: models.PuljeRow{
-					ID:        key,
-					Name:      puljeName,
-					StartTime: startTime,
-					EndTime:   endTime,
-				},
+				Pulje: pulje,
 			}
 			out[key] = block
 		}
@@ -194,7 +169,7 @@ templ eventPulje(pulje models.Pulje, byPulje EventsPrintByPulje, eventImageDir *
 			for _, blockEvent := range block.Events {
 				<h2 class="pulje-heading">
 					{ block.Pulje.Name }
-					<span class="pulje-heading-time">({ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") })</span>
+					<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
 				</h2>
 				<hr style="margin-block: 1rem;"/>
 				@event.Event_mobile(&blockEvent, components.PreviousNext{}, nil, true, eventImageDir)
@@ -214,13 +189,18 @@ templ printFriendlyPage(db *sql.DB, eventImageDir *string, logger *slog.Logger) 
 	</style>
 	<h1>Print Friendly Page</h1>
 	{{ eventsByPulje, err := getEventsByPuljeForPrint(db) }}
-	if err != nil {
+	{{ puljer, puljerErr := puljerService.GetAllPuljer(db) }}
+	if err != nil || puljerErr != nil {
+		{{
+			if puljerErr != nil {
+				err = puljerErr
+			}
+		}}
 		{{ logger.Error(fmt.Errorf("failed to get events for print: %w", err).Error()) }}
 		<p>Error fetching events: { err.Error() }</p>
 		return
 	}
-	@eventPulje(models.PuljeFredagKveld, eventsByPulje, eventImageDir)
-	@eventPulje(models.PuljeLordagMorgen, eventsByPulje, eventImageDir)
-	@eventPulje(models.PuljeLordagKveld, eventsByPulje, eventImageDir)
-	@eventPulje(models.PuljeSondagMorgen, eventsByPulje, eventImageDir)
+	for _, pulje := range puljer {
+		@eventPulje(pulje.ID, eventsByPulje, eventImageDir)
+	}
 }

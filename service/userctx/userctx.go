@@ -54,17 +54,17 @@ func GetUserRequestInfo(ctx context.Context) requestctx.UserRequestInfo {
 	}
 }
 
-func GetIdFromUserIdInDb(userId string, db *sql.DB) (string, error) {
-	var userDbId string
-	userQuery := "SELECT id FROM users WHERE user_id = ?"
-	userRow := db.QueryRow(userQuery, userId)
-	if userRowErr := userRow.Scan(&userDbId); userRowErr != nil {
-		return "", fmt.Errorf("failed to find user %q: %w", userId, userRowErr)
+func GetUserIDFromExternalID(externalID string, db *sql.DB, logger *slog.Logger) (string, error) {
+	var userID string
+	userQuery := "SELECT id FROM users WHERE external_id = ?"
+	userRow := db.QueryRow(userQuery, externalID)
+	if userRowErr := userRow.Scan(&userID); userRowErr != nil {
+		return "", fmt.Errorf("failed to find user external_id %q: %w", externalID, userRowErr)
 	}
-	return userDbId, nil
+	return userID, nil
 }
 
-func GetIdFromUserIdInDbFromContext(ctx context.Context, db *sql.DB) (string, error) {
-	userId := GetUserRequestInfo(ctx).Id
-	return GetIdFromUserIdInDb(userId, db)
+func GetUserIDFromExternalIDFromContext(ctx context.Context, db *sql.DB, logger *slog.Logger) (string, error) {
+	externalID := GetUserRequestInfo(ctx).Id
+	return GetUserIDFromExternalID(externalID, db, logger)
 }

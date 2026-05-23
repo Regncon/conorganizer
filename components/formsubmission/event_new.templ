@@ -3,55 +3,42 @@ package formsubmission
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"strings"
 )
 
-type PuljeNameStruct struct {
-	Name string `json:"name"`
-}
-
 type EventFormStruct struct {
 	Title             string  `json:"title"`
+	Intro             string  `json:"intro"`
 	Description       string  `json:"description"`
-	ImageURL          *string `json:"image_url,omitempty"`
 	System            *string `json:"system,omitempty"`
 	HostName          string  `json:"host_name"`
-	Host              int     `json:"host"`
 	Email             string  `json:"email"`
 	PhoneNumber       string  `json:"phone_number"`
-	PuljeName         *string `json:"pulje_name,omitempty"`
 	MaxPlayers        int     `json:"max_players"`
-	ChildFriendly     bool    `json:"child_friendly"`
-	AdultsOnly        bool    `json:"adults_only"`
+	AgeGroup          models.AgeGroup `json:"age_group"`
+	EventRuntime      models.Runtime  `json:"event_runtime"`
 	BeginnerFriendly  bool    `json:"beginner_friendly"`
-	ExperiencedOnly   bool    `json:"experienced_only"`
 	CanBeRunInEnglish bool    `json:"can_be_run_in_english"`
-	LongRunning       bool    `json:"long_running"`
-	ShortRunning      bool    `json:"short_running"`
 }
 
 type ValidationResultStruct struct {
 	IsTitleValid            bool
+	IsIntroValid            bool
 	IsDescriptionValid      bool
-	IsImageURLValid         bool
 	IsSystemValid           bool
 	IsHostNameValid         bool
 	IsEmailValid            bool
 	IsPhoneNumberValid      bool
-	IsPuljeNameValid        bool
 	IsMaxPlayersValid       bool
-	IsChildFriendlyValid    bool
-	IsAdultsOnlyValid       bool
+	IsAgeGroupValid         bool
+	IsEventRuntimeValid     bool
 	IsBeginnerFriendlyValid bool
-	IsExperiencedOnlyValid  bool
-	IsLongRunningValid      bool
-	IsShortRunningValid     bool
 	IsValid                 bool
 }
 
@@ -59,65 +46,40 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 	eventFormRouter.Route("/inline_validation/data", func(dataRouter chi.Router) {
 		checkEventFromValidity := func(eventForm *EventFormStruct) ValidationResultStruct {
 			isTitleValid := len(eventForm.Title) >= 3
+			isIntroValid := len(eventForm.Intro) >= 3
 			isDescriptionValid := len(eventForm.Description) >= 3
 			isMaxPlayersValid := eventForm.MaxPlayers > 0 && eventForm.MaxPlayers <= 18
 			isSystemValid := eventForm.System != nil && len(*eventForm.System) > 2
 			isHostNameValid := len(eventForm.HostName) > 2
-			isImageURLValid := eventForm.ImageURL != nil && strings.Contains(*eventForm.ImageURL, "imgur.com")
 			isEmailValid := strings.Contains(eventForm.Email, "@") && len(eventForm.Email) > 5
 			isPhoneNumberValid := len(eventForm.PhoneNumber) >= 8
-
-			var isPuljeNameValid = false
-
-			puljeNames, puljeNamesError := getPuljeNames(db, logger)
-			if puljeNamesError != nil {
-				logger.Error(fmt.Errorf("error getting pulje names: %w", puljeNamesError).Error())
-			}
-
-			puljeNameInt, puljeNameToIntError := strconv.Atoi(*eventForm.PuljeName)
-			if puljeNameToIntError != nil {
-				logger.Error(fmt.Errorf("invalid pulje name format %q: %w", *eventForm.PuljeName, puljeNameToIntError).Error())
-			}
-
-			isPuljeNameValid = puljeNameInt > 0 && len(puljeNames) > 0 && puljeNameInt <= len(puljeNames)
-			isChildFriendly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
-			isAdultsOnly := (eventForm.ChildFriendly != eventForm.AdultsOnly)
-			isBeginnerFriendly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
-			isExperiencedOnly := (eventForm.BeginnerFriendly != eventForm.ExperiencedOnly)
-			isLongRunning := (eventForm.LongRunning != eventForm.ShortRunning)
-			isShortRunning := (eventForm.LongRunning != eventForm.ShortRunning)
-			isValid := isTitleValid && isDescriptionValid && isMaxPlayersValid && isSystemValid &&
-				isImageURLValid && isHostNameValid && isEmailValid && isPhoneNumberValid && isPuljeNameValid && isChildFriendly &&
-				isAdultsOnly && isBeginnerFriendly && isExperiencedOnly && isLongRunning && isShortRunning
+			isAgeGroupValid := eventForm.AgeGroup.Valid()
+			isEventRuntimeValid := eventForm.EventRuntime.Valid()
+			isValid := isTitleValid && isIntroValid && isDescriptionValid && isMaxPlayersValid && isSystemValid &&
+				isHostNameValid && isEmailValid && isPhoneNumberValid && isAgeGroupValid && isEventRuntimeValid
 
 			return ValidationResultStruct{
 				IsTitleValid:            isTitleValid,
+				IsIntroValid:            isIntroValid,
 				IsDescriptionValid:      isDescriptionValid,
-				IsImageURLValid:         isImageURLValid,
 				IsMaxPlayersValid:       isMaxPlayersValid,
 				IsSystemValid:           isSystemValid,
 				IsHostNameValid:         isHostNameValid,
 				IsEmailValid:            isEmailValid,
 				IsPhoneNumberValid:      isPhoneNumberValid,
-				IsPuljeNameValid:        isPuljeNameValid,
-				IsChildFriendlyValid:    isChildFriendly,
-				IsAdultsOnlyValid:       isAdultsOnly,
-				IsBeginnerFriendlyValid: isBeginnerFriendly,
-				IsExperiencedOnlyValid:  isExperiencedOnly,
-				IsLongRunningValid:      isLongRunning,
-				IsShortRunningValid:     isShortRunning,
+				IsAgeGroupValid:         isAgeGroupValid,
+				IsEventRuntimeValid:     isEventRuntimeValid,
+				IsBeginnerFriendlyValid: true,
 				IsValid:                 isValid,
 			}
 		}
 
 		dataRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			emptyImgURL := ""
 			emptySystem := ""
-			emptyPulje := ""
 			eventForm := &EventFormStruct{
-				ImageURL:  &emptyImgURL,
-				System:    &emptySystem,
-				PuljeName: &emptyPulje,
+				System:       &emptySystem,
+				AgeGroup:     models.AgeGroupDefault,
+				EventRuntime: models.RunTimeNormal,
 			}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
 				logger.Debug(fmt.Errorf("ReadSignals failed for inline validation: %w", err).Error())
@@ -131,13 +93,11 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 		})
 
 		dataRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
-			emptyImgURL := ""
 			emptySystem := ""
-			emptyPulje := ""
 			eventForm := &EventFormStruct{
-				ImageURL:  &emptyImgURL,
-				System:    &emptySystem,
-				PuljeName: &emptyPulje,
+				System:       &emptySystem,
+				AgeGroup:     models.AgeGroupDefault,
+				EventRuntime: models.RunTimeNormal,
 			}
 			if readSignalsError := datastar.ReadSignals(r, eventForm); readSignalsError != nil {
 				logger.Error(fmt.Errorf("error reading signals: %w", readSignalsError).Error())
@@ -186,9 +146,6 @@ templ inputValidationComponent(label string, inputType InputType, field string, 
 			data-bind={ field }
 			data-on:keydown__debounce.500ms={ "@get('/my-events/api/new/inline_validation/data')" }
 			data-testid={ "input_" + field }
-			if field=="image_url" {
-				placeholder="f.eks. https://imgur.com/din_bilde_id"
-			}
 			if field=="system" {
 				placeholder="f.eks. D&D 5e, Pathfinder, etc."
 			}
@@ -231,60 +188,26 @@ templ checkboxValidationComponent(label, field string, isValid bool, isNotValidE
 	</div>
 }
 
-templ radioValidationComponent(label, field string, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
+templ radioValidationComponent(label, field string, puljer []models.PuljeRow, isValid bool, isNotValidErrorLabelFmt string, labelArgs ...any) {
 	<div class="form-control">
 		<label class="label">
 			<span class="label-text">{ label }</span>
 		</label>
 		<div class="flex flex-col gap-2">
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="1"
-					class="radio"
-					data-bind={ field }
-					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
-					data-testid={ field + "_1" }
-				/>
-				<span>Fredag kveld</span>
-			</label>
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="2"
-					class="radio"
-					data-bind={ field }
-					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
-					data-testid={ field + "_2" }
-				/>
-				<span>Lørdag morgen</span>
-			</label>
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="3"
-					class="radio"
-					data-bind={ field }
-					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
-					data-testid={ field + "_3" }
-				/>
-				<span>Lørdag kveld</span>
-			</label>
-			<label class="cursor-pointer flex items-center gap-2">
-				<input
-					type="radio"
-					name={ field }
-					value="4"
-					class="radio"
-					data-bind={ field }
-					data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
-					data-testid={ field + "_4" }
-				/>
-				<span>Søndag morgen</span>
-			</label>
+			for _, pulje := range puljer {
+				<label class="cursor-pointer flex items-center gap-2">
+					<input
+						type="radio"
+						name={ field }
+						value={ string(pulje.ID) }
+						class="radio"
+						data-bind={ field }
+						data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
+						data-testid={ field + "_" + string(pulje.ID) }
+					/>
+					<span>{ pulje.Name } ({ pulje.TimeRange() })</span>
+				</label>
+			}
 		</div>
 		if !isValid {
 			<label class="text-sm font-bold text-error" data-testid={ "validation_" + field }>
@@ -341,48 +264,17 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
 		<div>
 			@inputValidationComponent("Tittel på spillmodul / arrangement", "text", "title", eventFormValidationResult.IsTitleValid, "Tittel må være minst 3 tegn lang")
+			@inputValidationComponent("Kort introduksjon", "text", "intro", eventFormValidationResult.IsIntroValid, "Introduksjon må være minst 3 tegn lang")
 			@inputValidationComponent("Beskrivelse", "text", "description", eventFormValidationResult.IsDescriptionValid, "Beskrivelse må være minst 3 tegn lang")
-			@inputValidationComponent("Bilde URL", "text", "image_url", eventFormValidationResult.IsImageURLValid, "Bilde URL må være fra imgur.com")
 			@inputValidationComponent("System", "text", "system", eventFormValidationResult.IsSystemValid, "System må være minst 3 tegn lang")
 			@inputValidationComponent("Navn på arrangør", "text", "host_name", eventFormValidationResult.IsHostNameValid, "Navn på arrangør må være minst 3 tegn lang")
 			@inputValidationComponent("E-postadresse", "text", "email", eventFormValidationResult.IsEmailValid, "E-postadressen må være gyldig")
 			@inputValidationComponent("Telefonnummer", "text", "phone_number", eventFormValidationResult.IsPhoneNumberValid, "Telefonnummeret må være minst 8 siffer")
-			@radioValidationComponent("Pulje navn", "pulje_name", eventFormValidationResult.IsPuljeNameValid, "Du må velge en pulje")
+			@inputValidationComponent("Aldersgruppe", "text", "age_group", eventFormValidationResult.IsAgeGroupValid, "Velg en gyldig aldersgruppe")
+			@inputValidationComponent("Varighet", "text", "event_runtime", eventFormValidationResult.IsEventRuntimeValid, "Velg en gyldig varighet")
 			@inputValidationComponent("Maks antall spillere", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Maks antall spillere må være mellom 1 og 18")
+			@checkboxValidationComponent("Nybegynnervennlig", "beginner_friendly", true, "", false)
 			@checkboxValidationComponent("Kan kjøres på engelsk", "can_be_run_in_english", true, "", false)
-			<div class="radio-groups">
-				<div class="radio-group-container">
-					@radioGroupValidationComponent(
-						"Aldersgruppe",
-						[2]string{"Barnevennlig", "Kun for voksne"},
-						[2]string{"child_friendly", "adults_only"},
-						[2]bool{eventForm.ChildFriendly, eventForm.AdultsOnly},
-						eventFormValidationResult.IsChildFriendlyValid && eventFormValidationResult.IsAdultsOnlyValid,
-						"Du må velge én aldersgruppe",
-					)
-				</div>
-				<div class="radio-group-container">
-					@radioGroupValidationComponent(
-						"Erfaringsnivå",
-						[2]string{"Nybegynnervennlig", "Kun for erfarne"},
-						[2]string{"beginner_friendly", "experienced_only"},
-						[2]bool{eventForm.BeginnerFriendly, eventForm.ExperiencedOnly},
-						eventFormValidationResult.IsBeginnerFriendlyValid &&
-							eventFormValidationResult.IsExperiencedOnlyValid,
-						"Du må velge ett erfaringsnivå",
-					)
-				</div>
-				<div class="radio-group-container">
-					@radioGroupValidationComponent(
-						"Varighet",
-						[2]string{"Langvarig", "Kortvarig"},
-						[2]string{"long_running", "short_running"},
-						[2]bool{eventForm.LongRunning, eventForm.ShortRunning},
-						eventFormValidationResult.IsLongRunningValid && eventFormValidationResult.IsShortRunningValid,
-						"Du må velge én varighet",
-					)
-				</div>
-			</div>
 		</div>
 		<button
 			class="btn btn-success"
@@ -617,9 +509,9 @@ templ formSubmissionPage() {
 	{{
 	emptyStr := ""
 	initialForm := &EventFormStruct{
-		ImageURL:  &emptyStr,
-		System:    &emptyStr,
-		PuljeName: &emptyStr,
+		System:       &emptyStr,
+		AgeGroup:     models.AgeGroupDefault,
+		EventRuntime: models.RunTimeNormal,
 	}
 	}}
 	<div>
@@ -629,48 +521,58 @@ templ formSubmissionPage() {
 }
 
 func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruct, w http.ResponseWriter, r *http.Request) (int64, error) {
-	userID, _ := authctx.GetUserIDFromToken(r.Context())
-	hostId, _ := getHostId(db, logger, userID)
-	eventForm.Host = hostId
+	userID, tokenErr := authctx.GetUserIDFromToken(r.Context())
+	if tokenErr != nil {
+		return 0, fmt.Errorf("get user id from token: %w", tokenErr)
+	}
+
+	userDbID, userDbIDErr := getUserDbID(db, logger, userID)
+	if userDbIDErr != nil {
+		return 0, userDbIDErr
+	}
+
+	system := ""
+	if eventForm.System != nil {
+		system = *eventForm.System
+	}
+
 	query := `
             INSERT INTO events (
             title,
+            intro,
             description,
-            image_url,
             system,
             host_name,
-            host,
+            user_id,
+            created_by_id,
+            updated_by_id,
             email,
             phone_number,
-            pulje_name,
             max_players,
-            child_friendly,
-            adults_only,
+            age_group,
+            event_runtime,
             beginner_friendly,
-            experienced_only,
             can_be_run_in_english,
-            long_running,
-            short_running
-            ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 	result, insertError := db.Exec(query,
 		eventForm.Title,
+		eventForm.Intro,
 		eventForm.Description,
-		eventForm.ImageURL,
-		eventForm.System,
+		system,
 		eventForm.HostName,
-		eventForm.Host,
+		userDbID,
+		userDbID,
+		userDbID,
 		eventForm.Email,
 		eventForm.PhoneNumber,
-		eventForm.PuljeName,
 		eventForm.MaxPlayers,
-		eventForm.ChildFriendly,
-		eventForm.AdultsOnly,
+		eventForm.AgeGroup,
+		eventForm.EventRuntime,
 		eventForm.BeginnerFriendly,
-		eventForm.ExperiencedOnly,
 		eventForm.CanBeRunInEnglish,
-		eventForm.LongRunning,
-		eventForm.ShortRunning,
+		models.EventStatusDraft,
 	)
 
 	if insertError != nil {
@@ -697,38 +599,20 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 	return result.LastInsertId()
 }
 
-func getPuljeNames(db *sql.DB, logger *slog.Logger) ([]PuljeNameStruct, error) {
-	query := "SELECT name FROM puljer"
-	rows, queryError := db.Query(query)
-	if queryError != nil {
-		return nil, fmt.Errorf("error querying pulje names: %w", queryError)
+func getUserDbID(db *sql.DB, logger *slog.Logger, externalID string) (int, error) {
+	query := "SELECT id FROM users WHERE external_id = ?"
+	var userDbID int
+	if queryError := db.QueryRow(query, externalID).Scan(&userDbID); queryError != nil {
+		err := fmt.Errorf("error querying user id for external id %q: %w", externalID, queryError)
+		logger.Error(err.Error())
+		return 0, err
 	}
 
-	defer rows.Close()
-
-	var puljer []PuljeNameStruct
-
-	for rows.Next() {
-		var name string
-		if scanError := rows.Scan(&name); scanError != nil {
-			scanErr := fmt.Errorf("error scanning pulje name: %w", scanError)
-			logger.Error(scanErr.Error())
-			return nil, scanErr
-		}
-		puljer = append(puljer, PuljeNameStruct{Name: name})
-	}
-
-	if rowsError := rows.Err(); rowsError != nil {
-		rowsErr := fmt.Errorf("error iterating pulje rows: %w", rowsError)
-		logger.Error(rowsErr.Error())
-		return nil, rowsErr
-	}
-
-	return puljer, nil
+	return userDbID, nil
 }
 
 func getHostId(db *sql.DB, logger *slog.Logger, userID string) (int, error) {
-	query := "SELECT id FROM users where user_id = ?"
+	query := "SELECT id FROM users WHERE external_id = ?"
 	rows, queryError := db.Query(query, userID)
 	if queryError != nil {
 		return 0, fmt.Errorf("error querying host id for user %q: %w", userID, queryError)

@@ -1,13 +1,13 @@
 package formsubmission
 
 import (
+	"database/sql"
 	"fmt"
-	"github.com/go-chi/chi/v5"
 	"net/http"
 
-	"database/sql"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/go-chi/chi/v5"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -15,7 +15,7 @@ import (
 func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
-			Input string `json:"ageGroup"`
+			Input models.AgeGroup `json:"ageGroup"`
 		}
 		store := &Store{}
 
@@ -47,7 +47,7 @@ func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
-			Input string `json:"runtime"`
+			Input models.Runtime `json:"runtime"`
 		}
 		store := &Store{}
 
@@ -190,8 +190,10 @@ func UpdateNotes(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
+		normalizedInput := normalizeTextareaSubmission(store.Input)
+
 		query := `UPDATE events SET notes = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
+		_, err := db.Exec(query, normalizedInput, eventID)
 		if err != nil {
 			http.Error(w, "Failed to update the notes for event in the database", http.StatusInternalServerError)
 			return
@@ -212,16 +214,16 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				Aldersgruppe
 				<select
 					id="age-group"
-					data-signals={ fmt.Sprintf("{ageGroup:'%s'}", ageGroup) }
+					data-signals={ dataSignals(map[string]models.AgeGroup{"ageGroup": ageGroup}) }
 					data-bind="ageGroup"
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/ageGroup')", eventId) }
 					name="age-group"
 					class="input"
 					required
 				>
-					<option value="Default" selected>Standard</option>
-					<option value="ChildFriendly">Barn (under 12 år)</option>
-					<option value="AdultsOnly">Voksne (18+ år)</option>
+					<option value={ models.AgeGroupDefault } selected>{ models.AgeGroupDefault.Label() }</option>
+					<option value={ models.AgeGroupChildFriendly }>{ models.AgeGroupChildFriendly.Label() }</option>
+					<option value={ models.AgeGroupAdultsOnly }>{ models.AgeGroupAdultsOnly.Label() }</option>
 				</select>
 			</label>
 			<article class="item-card age-group-description">
@@ -234,14 +236,14 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					id="runtime"
 					name="runtime"
 					class="input"
-					data-signals={ fmt.Sprintf("{runtime:'%s'}", runtime) }
+					data-signals={ dataSignals(map[string]models.Runtime{"runtime": runtime}) }
 					data-bind="runtime"
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/runtime')", eventId) }
 					required
 				>
-					<option value="Normal" selected>Vanlig pulje</option>
-					<option value="ShortRunning">Kortere (2–3 timer)</option>
-					<option value="LongRunning">Lengre (6+ timer)</option>
+					<option value={ models.RunTimeNormal } selected>{ models.RunTimeNormal.Label() }</option>
+					<option value={ models.RunTimeShortRunning }>{ models.RunTimeShortRunning.Label() }</option>
+					<option value={ models.RunTimeLongRunning }>{ models.RunTimeLongRunning.Label() }</option>
 				</select>
 			</label>
 			<article class="item-card runtime-description">
@@ -312,9 +314,9 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				<input
 					name="max-players"
 					class="input"
-					data-signals={ fmt.Sprintf("{maxPlayers:%d}", maxPlayers) }
+					data-signals={ dataSignals(map[string]int{"maxPlayers": maxPlayers}) }
 					data-bind="maxPlayers"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/max-players')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/max-players')", eventId) }
 					type="number"
 					min="4"
 				/>
@@ -332,9 +334,9 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				Andre merknader – er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
 				<textarea
 					name="other-notes"
-					data-signals={ fmt.Sprintf("{notes:'%s'}", notes) }
+					data-signals={ dataSignals(map[string]string{"notes": notes}) }
 					data-bind="notes"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/notes')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/notes')", eventId) }
 					class="input"
 					rows="5"
 					placeholder="Skriv eventuelle merknader her…"

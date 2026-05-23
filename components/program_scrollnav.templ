@@ -1,8 +1,18 @@
 package components
 
-templ ProgramScrollnav() {
+import (
+	"database/sql"
+
+	"github.com/Regncon/conorganizer/service/puljer"
+)
+
+templ ProgramScrollnav(db *sql.DB) {
+	{{ puljer, err := puljerService.GetAllPuljer(db) }}
+	if err != nil {
+		return
+	}
 	<style>
-    .program-scrollnav-container {
+	    .program-scrollnav-container {
       padding: var(--spacing-2x) 0;
       position: sticky;
       top: 51px; /* should not be hardcoded but gotta finish */
@@ -52,26 +62,16 @@ templ ProgramScrollnav() {
         top: var(--nav-height);
       }
     }
-  </style>
+		</style>
 	<script src="/static/web_components/scroll_highlighter.js"></script>
 	<div class="program-scrollnav-container">
 		<div class="page-content-container program-scrollnav-bar">
-			<div class="scrollnav-button">
-				<a class="btn btn--ghost" href="#FredagKveld">Fredag Kveld</a>
-				<span class="scrollnav-active-bar"></span>
-			</div>
-			<div class="scrollnav-button">
-				<a class="btn btn--ghost" href="#LordagMorgen">Lørdag Morgen</a>
-				<span class="scrollnav-active-bar"></span>
-			</div>
-			<div class="scrollnav-button">
-				<a class="btn btn--ghost" href="#LordagKveld">Lørdag Kveld</a>
-				<span class="scrollnav-active-bar"></span>
-			</div>
-			<div class="scrollnav-button">
-				<a class="btn btn--ghost" href="#SondagMorgen">Søndag Morgen</a>
-				<span class="scrollnav-active-bar"></span>
-			</div>
+			for _, pulje := range puljer {
+				<div class="scrollnav-button">
+					<a class="btn btn--ghost" href={ templ.URL("#" + string(pulje.ID)) }>{ pulje.Name }</a>
+					<span class="scrollnav-active-bar"></span>
+				</div>
+			}
 		</div>
 	</div>
 }

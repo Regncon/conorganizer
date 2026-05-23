@@ -8,8 +8,7 @@ require (
 )
 
 require (
-	github.com/PuerkitoBio/goquery v1.12.0
-	github.com/a-h/templ v0.3.1001
+	github.com/a-h/templ v0.3.1020
 	github.com/benbjohnson/hashfs v0.2.2
 	github.com/delaneyj/toolbelt v0.5.1
 	github.com/descope/go-sdk v1.6.16
@@ -173,16 +172,16 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.40.0 // indirect
 	go.opentelemetry.io/otel/trace v1.40.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.49.0 // indirect
+	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/exp v0.0.0-20250819193227-8b4c13bb791b // indirect
-	golang.org/x/mod v0.33.0 // indirect
-	golang.org/x/net v0.52.0 // indirect
+	golang.org/x/mod v0.32.0 // indirect
+	golang.org/x/net v0.51.0 // indirect
 	golang.org/x/oauth2 v0.33.0 // indirect
-	golang.org/x/sys v0.42.0 // indirect
-	golang.org/x/term v0.41.0 // indirect
-	golang.org/x/text v0.35.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/term v0.40.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
-	golang.org/x/tools v0.42.0 // indirect
+	golang.org/x/tools v0.41.0 // indirect
 	google.golang.org/api v0.256.0 // indirect
 	google.golang.org/genproto v0.0.0-20250922171735-9219d122eba9 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251111163417-95abcf5c77ba // indirect
