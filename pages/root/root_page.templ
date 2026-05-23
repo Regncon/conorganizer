@@ -2,8 +2,29 @@ package root
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
+
 	"github.com/Regncon/conorganizer/components"
 )
+
+func getProgramPublished(db *sql.DB) (bool, error) {
+	const query = `
+		SELECT is_published
+		FROM program_publishing_state
+		WHERE id = 1
+	`
+
+	var isPublished int
+	if err := db.QueryRow(query).Scan(&isPublished); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("query program publishing state: %w", err)
+	}
+
+	return isPublished == 1, nil
+}
 
 templ rootPage(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	<div id="root-page-wrapper">
@@ -12,10 +33,21 @@ templ rootPage(db *sql.DB, isAdmin bool, eventImageDir *string) {
 }
 
 templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
+	{{
+		programPublished, err := getProgramPublished(db)
+	}}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
 	})
-	@components.ProgramScrollnav(db)
-	@components.CallToAction()
-	@eventList(db, isAdmin, eventImageDir)
+	if err != nil {
+		<div class="page-content-container">
+			<p>Error fetching program publishing state: { err.Error() }</p>
+		</div>
+	} else {
+		if programPublished {
+			@components.ProgramScrollnav(db)
+		}
+		@components.CallToAction()
+		@eventList(db, isAdmin, eventImageDir, programPublished)
+	}
 }

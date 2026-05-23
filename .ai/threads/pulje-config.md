@@ -490,4 +490,62 @@ Both pass now. `schema.sql` is still modified because `task test` regenerated it
 
 Time: 2026-05-22 11:46:03
 --- Next Prompt ---
+The github action for .github/workflows/golangci-lint.yml fails with the following error:
+
+Run golangci/golangci-lint-action@v9
+  with:
+    version: v2.8
+    install-mode: binary
+    install-only: false
+    github-token: ***
+    verify: true
+    only-new-issues: false
+    skip-cache: false
+    skip-save-cache: false
+    cache-invalidation-interval: 7
+    problem-matchers: false
+  env:
+    GOTOOLCHAIN: local
+Restore cache
+  Checking for go.mod: go.mod
+  Cache hit for restore-key: golangci-lint.cache-Linux-2942-6a6011c221a24cd6cfa6e7cc685b6b5aa6bd6732
+  Received 802347 of 802347 (100.0%), 1.3 MBs/sec
+  Cache Size: ~1 MB (802347 B)
+  /usr/bin/tar -xf /home/runner/work/_temp/964b6f31-15a5-4963-af92-6bedb235e535/cache.tzst -P -C /home/runner/work/conorganizer/conorganizer --use-compress-program unzstd
+  Cache restored successfully
+  Restored cache for golangci-lint from key 'golangci-lint.cache-Linux-2942-f753f90eb4cfdc65826579c5a1b21fa41a9207f3' in 1289ms
+Install
+  Finding needed golangci-lint version...
+  Requested golangci-lint 'v2.8', using 'v2.8.0', calculation took 245ms
+  Installation mode: binary
+  Installing golangci-lint binary v2.8.0...
+  Downloading binary https://github.com/golangci/golangci-lint/releases/download/v2.8.0/golangci-lint-2.8.0-linux-amd64.tar.gz ...
+  /usr/bin/tar xz --overwrite --warning=no-unknown-keyword --overwrite -C /home/runner -f /home/runner/work/_temp/949ad2ca-1979-4a6c-9338-391b2ff59d43
+  Installed golangci-lint into /home/runner/golangci-lint-2.8.0-linux-amd64/golangci-lint in 719ms
+run golangci-lint
+  Running [/home/runner/golangci-lint-2.8.0-linux-amd64/golangci-lint config path] in [/home/runner/work/conorganizer/conorganizer] ...
+  Running [/home/runner/golangci-lint-2.8.0-linux-amd64/golangci-lint run] in [/home/runner/work/conorganizer/conorganizer] ...
+  Error: can't load config: the Go language version (go1.25) used to build golangci-lint is lower than the targeted Go version (1.26)
+  The command is terminated due to an error: can't load config: the Go language version (go1.25) used to build golangci-lint is lower than the targeted Go version (1.26)
+  
+  Error: golangci-lint exit with code 3
+  Ran golangci-lint in 109ms
+
+Time: 2026-05-23 17:51:28
+--- Codex Run ---
+
+Codex output:
+I’ll check the workflow and Go version settings first. The error means the linter binary was built with Go 1.25 but the repo/config targets Go 1.26, so the fix is usually to align the workflow linter version or the project Go version.
+The repo targets Go 1.26, and golangci-lint v2.8 only advertises Go 1.25 support. I’m going to make the minimal workflow change: bump the linter to v2.9.0, the release that adds Go 1.26 support.
+I’m checking the workflow diff and the upstream golangci-lint release notes so the fix is tied to the actual Go version support instead of just changing the version number.
+The version bump is in place, but the diff shows tab indentation slipped into the YAML. I’m going to normalize that before treating the workflow as fixed.
+The official changelog confirms `v2.9.0` is the first listed release with Go 1.26 support, so this is the right minimum bump for the workflow. I’m doing a final whitespace/diff check now.
+Done. I updated [.github/workflows/golangci-lint.yml](/home/cinmay/Documents/conorganizer/.github/workflows/golangci-lint.yml:42) from `v2.8` to `v2.9.0`.
+
+The CI failure happens because `v2.8.0` was built with Go 1.25 while this repo targets Go 1.26. The official `golangci-lint` changelog lists Go 1.26 support under `v2.9.0`: https://golangci-lint.run/docs/product/changelog/#v290
+
+Verification: `git diff --check -- .github/workflows/golangci-lint.yml` passes. I did not run the GitHub Action locally. Your existing `.ai/threads/pulje-config.md` change is still untouched.
+
+Time: 2026-05-23 17:51:28
+--- Next Prompt ---
 

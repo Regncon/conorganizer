@@ -19,9 +19,9 @@ import (
 	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/service/userctx"
-	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -283,7 +283,7 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 	}
 	id, ok := sess.Values["id"].(string)
 	if !ok {
-		id = toolbelt.NextEncodedID()
+		id = uuid.NewString()
 		sess.Values["id"] = id
 		if err := sess.Save(r, w); err != nil {
 			return "", fmt.Errorf("failed to save session: %w", err)
