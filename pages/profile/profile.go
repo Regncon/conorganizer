@@ -79,7 +79,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			requestLogger := logger.With("component", "profile")
 			ctx := r.Context()
 			user := userctx.GetUserRequestInfo(ctx)
-			events := GetEventsByUserId(user.Id, db, requestLogger)
+			events := GetEventsByExternalID(user.Id, db, requestLogger)
 			billettholdere, err := billettholderService.GetBillettholdere(user.Id, db)
 			if err != nil {
 				requestLogger.Error(err.Error(), "user_id", user.Id)
@@ -134,7 +134,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 				}()
 
 				renderProfileMainColumn := func() error {
-					events := GetEventsByUserId(user.Id, db, requestLogger)
+					events := GetEventsByExternalID(user.Id, db, requestLogger)
 					billettholdere, err := billettholderService.GetBillettholdere(user.Id, db)
 					if err != nil {
 						requestLogger.Error(err.Error(), "user_id", user.Id)
@@ -179,22 +179,22 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 	return nil
 }
 
-func GetEventsByUserId(userID string, db *sql.DB, logger *slog.Logger) []models.EventCardModel {
+func GetEventsByExternalID(externalID string, db *sql.DB, logger *slog.Logger) []models.EventCardModel {
 	logger = logger.With("component", "profile")
 	var events []models.EventCardModel
 
 	// Get events where event created id is the same as user
-	userDbId, err := userctx.GetIdFromExternalIdInDb(userID, db, logger)
+	userID, err := userctx.GetUserIDFromExternalID(externalID, db, logger)
 	if err != nil {
-		logger.Error(fmt.Errorf("failed to get user database ID for user %q: %w", userID, err).Error())
+		logger.Error(fmt.Errorf("failed to resolve user_id for external_id %q: %w", externalID, err).Error())
 		return events
 	}
 
 	// Query for events created by user
 	eventsQuery := "SELECT id, title, intro, status, system, host_name, beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE user_id = ?"
-	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
+	rows, eventsQueryErr := db.Query(eventsQuery, userID)
 	if eventsQueryErr != nil {
-		logger.Error(fmt.Errorf("failed to query events for user %q: %w", userID, eventsQueryErr).Error())
+		logger.Error(fmt.Errorf("failed to query events for external_id %q: %w", externalID, eventsQueryErr).Error())
 		return events
 	}
 	defer rows.Close()
@@ -203,7 +203,7 @@ func GetEventsByUserId(userID string, db *sql.DB, logger *slog.Logger) []models.
 	for rows.Next() {
 		var event models.EventCardModel
 		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
-			logger.Error(fmt.Errorf("failed to scan event row for user %q: %w", userID, scanErr).Error())
+			logger.Error(fmt.Errorf("failed to scan event row for external_id %q: %w", externalID, scanErr).Error())
 			return events
 		}
 		events = append(events, event)
