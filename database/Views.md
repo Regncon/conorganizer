@@ -18,12 +18,12 @@ rows, err := db.Query("SELECT billettholder_id FROM v_get_user_billettholder WHE
 
 # Database View: `v_events_by_pulje_active`
 
-**Purpose:** Pre-joined view of approved events with their active pulje metadata for listings.
+**Purpose:** Pre-joined view of approved events with their active pulje and room metadata for listings.
 
 **Go usage example:**
 
 ```go
-rows, err := db.Query("SELECT id, title, pulje_id, pulje_start_at FROM v_events_by_pulje_active WHERE is_published = $1", 1)
+rows, err := db.Query("SELECT id, title, pulje_id, pulje_start_at, room_number, room_name, room_is_disabled FROM v_events_by_pulje_active WHERE is_published = $1", 1)
 ```
 
 ---
@@ -54,10 +54,10 @@ rows, err := db.Query("SELECT billettholder_id, first_name, last_name FROM v_bil
 
 # Database View: `v_event_puljer_active`
 
-**Purpose:** Active and published puljer for an event.
+**Purpose:** Active and published puljer for an event, including optional room metadata.
 
 **Go usage example:**
 
 ```go
-rows, err := db.Query("SELECT pulje_id, pulje_start_at, pulje_end_at FROM v_event_puljer_active WHERE event_id = $1", eventID)
+rows, err := db.Query("SELECT pulje_id, pulje_start_at, pulje_end_at, room_number, room_name, room_notes FROM v_event_puljer_active WHERE event_id = $1", eventID)
 ```

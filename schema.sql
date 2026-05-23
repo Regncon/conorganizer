@@ -263,6 +263,8 @@ VALUES
         '2025-10-12T15:00:00Z'
     );
 
+-- Views information /database/views.md
+
 CREATE VIEW
     v_get_user_billettholder AS
 SELECT
