@@ -16,14 +16,14 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 
-		userId, userIdErr := userctx.GetIdFromExternalIdInDbFromContext(r.Context(), db, logger)
-		if userIdErr != nil {
-			logger.Error(fmt.Errorf("failed to get user ID for new event route: %w", userIdErr).Error())
-			http.Error(w, userIdErr.Error(), http.StatusInternalServerError)
+		userID, userIDErr := userctx.GetUserIDFromExternalIDFromContext(r.Context(), db, logger)
+		if userIDErr != nil {
+			logger.Error(fmt.Errorf("failed to get user_id for new event route: %w", userIDErr).Error())
+			http.Error(w, userIDErr.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		selectErr, statusCode := validateEventExists(db, eventId, userId)
+		selectErr, statusCode := validateEventExists(db, eventId, userID)
 		if selectErr != nil && statusCode == http.StatusInternalServerError {
 			http.Error(w, selectErr.Error(), http.StatusInternalServerError)
 			return
@@ -44,20 +44,20 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 		if err := layouts.Base(
 			title,
 			userctx.GetUserRequestInfo(ctx),
-			newEventIndex(eventId, userId, ctx, db, eventImageDir, logger),
+			newEventIndex(eventId, userID, ctx, db, eventImageDir, logger),
 		).Render(ctx, w); err != nil {
-			logger.Error(fmt.Errorf("failed to render new-event page: %w", err).Error(), "event_id", eventId, "user_id", userId)
+			logger.Error(fmt.Errorf("failed to render new-event page: %w", err).Error(), "event_id", eventId, "user_id", userID)
 		}
 	})
 }
 
-templ newEventIndex(eventId string, userId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+templ newEventIndex(eventId string, userID string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	<div
 		id="formsubmission-container"
 		class="formsubmission-css-container"
 		data-init={ fmt.Sprintf("@get('/my-events/api/new/%s',{requestCancellation: 'disabled'})", eventId) }
 	>
-		@NewEventFormPageContent(eventId, userId, ctx, db, eventImageDir, logger)
+		@NewEventFormPageContent(eventId, userID, ctx, db, eventImageDir, logger)
 	</div>
 }
 

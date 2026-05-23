@@ -299,14 +299,14 @@ func createNewEventFormSubmission(db *sql.DB, kv jetstream.KeyValue, logger *slo
 		return
 	}
 
-	userDbId, insertError := userctx.GetIdFromExternalIdInDb(userInfo.Id, db, logger)
+	userID, insertError := userctx.GetUserIDFromExternalID(userInfo.Id, db, logger)
 	if insertError != nil {
-		logger.Error(fmt.Errorf("failed to get user ID from database for user %q: %w", userInfo.Id, insertError).Error())
+		logger.Error(fmt.Errorf("failed to resolve user_id for external_id %q: %w", userInfo.Id, insertError).Error())
 		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)
 		return
 	}
 
-	logger.Info("Found user info for event creation", "user_id", userInfo.Id, "user_db_id", userDbId)
+	logger.Info("Found user info for event creation", "external_id", userInfo.Id, "user_id", userID)
 	logger.Info("Inserting new event form submission")
 
 	// Todo: Use database relations to get foreign keys, event_type etc.
@@ -320,7 +320,7 @@ func createNewEventFormSubmission(db *sql.DB, kv jetstream.KeyValue, logger *slo
 	) RETURNING id`
 
 	var eventId string
-	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft, models.EventTypeRoleplay).Scan(&eventId)
+	insertError = db.QueryRow(query, userID, userInfo.Email, models.EventStatusDraft, models.EventTypeRoleplay).Scan(&eventId)
 	if insertError != nil {
 		logger.Error(fmt.Errorf("failed to create new event form submission for user %q: %w", userInfo.Id, insertError).Error())
 		return

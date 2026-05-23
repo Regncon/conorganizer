@@ -10,13 +10,13 @@ DROP VIEW IF EXISTS v_event_puljer_active;
 CREATE VIEW IF NOT EXISTS
     v_get_user_billettholder AS
 SELECT
-    u.id AS user_db_id,
+    u.id AS user_id,
     u.external_id AS external_id,
     u.email AS user_email,
     u.is_admin AS user_is_admin,
     u.inserted_at AS user_inserted_at,
     bu.billettholder_id AS billettholder_id,
-    bu.user_id AS billettholder_user_db_id,
+    bu.user_id AS billettholder_user_id,
     bu.inserted_at AS billettholder_user_inserted_at
 FROM
     relation_billettholdere_users AS bu
