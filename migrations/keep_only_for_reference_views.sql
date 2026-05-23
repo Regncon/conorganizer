@@ -10,13 +10,13 @@ DROP VIEW IF EXISTS v_event_puljer_active;
 CREATE VIEW IF NOT EXISTS
     v_get_user_billettholder AS
 SELECT
-    u.id AS user_db_id,
+    u.id AS user_id,
     u.external_id AS external_id,
     u.email AS user_email,
     u.is_admin AS user_is_admin,
     u.inserted_at AS user_inserted_at,
     bu.billettholder_id AS billettholder_id,
-    bu.user_id AS billettholder_user_db_id,
+    bu.user_id AS billettholder_user_id,
     bu.inserted_at AS billettholder_user_inserted_at
 FROM
     relation_billettholdere_users AS bu
@@ -48,9 +48,12 @@ SELECT
     ep.is_published AS is_published,
     ep.pulje_id,
     ep.room_id,
+    r.room_number,
     r.name AS room_name,
     r.floor AS room_floor,
     r.max_concurrent_games AS room_max_concurrent_games,
+    r.notes AS room_notes,
+    r.is_disabled AS room_is_disabled,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
     p.end_at AS pulje_end_at
@@ -116,9 +119,12 @@ SELECT
     ep.event_id,
     ep.pulje_id,
     ep.room_id,
+    r.room_number,
     r.name AS room_name,
     r.floor AS room_floor,
     r.max_concurrent_games AS room_max_concurrent_games,
+    r.notes AS room_notes,
+    r.is_disabled AS room_is_disabled,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
     p.end_at AS pulje_end_at,
