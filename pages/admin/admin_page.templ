@@ -23,6 +23,11 @@ templ adminPage(db *sql.DB) {
 				flex-direction: column;
 				gap: var(--responsive-page-section-spacing);
 			}
+			.admin-grid-card {
+				display: flex;
+				flex-direction: column;
+				gap: var(--responsive-page-section-spacing);
+			}
 			.admin-panel-card {
 				width: 100%;
 				background-color: var(--bg-surface);
@@ -37,31 +42,31 @@ templ adminPage(db *sql.DB) {
 			<h1 class="page-heading">Administrasjon</h1>
 			<div class="admin-page-layout">
 				<div class="admin-grid">
-					@adminCard(
-						"Publiser program",
-						"Publiser programmet og åpne for ønsker og påmeldinger.",
-						"/static/publiser-program.webp",
-						"Program publishing",
-					) {
-						@publiserProgram(db)
-					}
-					@adminCard(
-						"Arrangementer til godkjenning",
-						"Her kan du godkjenne arrangementer som er sendt inn av brukere.",
-						"/static/approve.webp",
-						"Events awaiting approval",
-					) {
-						<a role="button" href="/admin/approval/" class="btn btn--outline">Gå til arrangementer</a>
-					}
-					@adminCard(
-						"Billettholderoversikt",
-						"Se oversikt over alle billettholdere.",
-						"/static/participants-small.webp",
-						"Participants",
-					) {
-						<a role="button" href="/admin/billettholder/" class="btn btn--outline">Gå til billettholdere</a>
-					}
-					<section class="admin-panel-card">
+					<section class="admin-grid-card">
+						<img
+							src="/static/approve.webp"
+							alt="Events awaiting approval"
+							class="admin-grid-card-image"
+						/>
+						<div class="admin-grid-card-content">
+							<h2>Arrangementer til godkjenning</h2>
+							<p>Her kan du godkjenne arrangementer som er sendt inn av brukere.</p>
+							<a role="button" href="/admin/approval/" class="btn btn--outline">Gå til arrangementer</a>
+						</div>
+					</section>
+					<section class="admin-grid-card">
+						<img
+							src="/static/participants-small.webp"
+							alt="Participants"
+							class="admin-grid-card-image"
+						/>
+						<div class="admin-grid-card-content">
+							<h2>Billettholderoversikt</h2>
+							<p>Se oversikt over alle billettholdere.</p>
+							<a role="button" href="/admin/billettholder/" class="btn btn--outline">Gå til billettholdere</a>
+						</div>
+					</section>
+					<section class="admin-grid-card">
 						@puljefordeling(db)
 					</section>
 				</div>
