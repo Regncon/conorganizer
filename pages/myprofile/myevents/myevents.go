@@ -13,7 +13,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	newEvent "github.com/Regncon/conorganizer/pages/myprofile/myevents/newevent"
 	"github.com/Regncon/conorganizer/pages/root"
-
+	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -174,15 +174,11 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 
 					// refactor to use "update/status etc"
 
-					newApiIdRouter.Route("/event-in-pulje", func(putRoomNameRouter chi.Router) {
-						formsubmission.UpdateEventInPulje(putRoomNameRouter, db, kv, baseLogger)
+					newApiIdRouter.Route("/event-in-pulje", func(putEventInPuljeRouter chi.Router) {
+						formsubmission.UpdateEventInPulje(putEventInPuljeRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/is-published", func(putIsPublishedRouter chi.Router) {
 						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, kv, baseLogger)
-					})
-
-					newApiIdRouter.Route("/room-name", func(putRoomNameRouter chi.Router) {
-						formsubmission.UpdateRoomName(putRoomNameRouter, db, kv, baseLogger)
 					})
 
 					newApiIdRouter.Route("/status", func(putStatusRouter chi.Router) {
@@ -246,7 +242,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				})
 
 				apiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
-					createNewEventFormSubmission(db, baseLogger, w, r)
+					createNewEventFormSubmission(db, kv, baseLogger, w, r)
 				})
 			})
 
@@ -257,7 +253,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 				newEvent.NewEventLayoutRoute(newIdRoute, db, eventImageDir, logger)
 
 				newIdRoute.Route("/image", func(imageRouter chi.Router) {
-					eventimgupload.EventImageRoute(imageRouter, db, logger)
+					eventimgupload.EventImageRoute(imageRouter, db, eventImageDir, logger)
 				})
 			})
 		})
@@ -294,7 +290,7 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 	return id, nil
 }
 
-func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
+func createNewEventFormSubmission(db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
 	logger = logger.With("component", "my_events")
 	logger.Info("Creating new event form submission")
 	userInfo := userctx.GetUserRequestInfo(r.Context())
@@ -303,33 +299,36 @@ func createNewEventFormSubmission(db *sql.DB, logger *slog.Logger, w http.Respon
 		return
 	}
 
-	userDbId, insertError := userctx.GetIdFromUserIdInDb(userInfo.Id, db)
+	userID, insertError := userctx.GetUserIDFromExternalID(userInfo.Id, db, logger)
 	if insertError != nil {
-		logger.Error(fmt.Errorf("failed to get user ID from database for user %q: %w", userInfo.Id, insertError).Error())
+		logger.Error(fmt.Errorf("failed to resolve user_id for external_id %q: %w", userInfo.Id, insertError).Error())
 		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)
 		return
 	}
 
-	logger.Info("Found user info for event creation", "user_id", userInfo.Id, "user_db_id", userDbId)
+	logger.Info("Found user info for event creation", "external_id", userInfo.Id, "user_id", userID)
 	logger.Info("Inserting new event form submission")
 
 	// Todo: Use database relations to get foreign keys, event_type etc.
 	query := `
 	INSERT INTO events (
-		host, email, status, title, intro, description, host_name, phone_number, max_players,
+		user_id, created_by_id, updated_by_id, email, status, title, intro, description, host_name, phone_number, max_players,
 		event_type, beginner_friendly,
 		can_be_run_in_english
 	) VALUES (
-		$1, $2, $3, '', '', '', '', '', 6, 'rollespill', false, false
+		$1, $1, $1, $2, $3, '', '', '', '', '', 6, $4, false, false
 	) RETURNING id`
 
 	var eventId string
-	insertError = db.QueryRow(query, userDbId, userInfo.Email, models.EventStatusDraft).Scan(&eventId)
+	insertError = db.QueryRow(query, userID, userInfo.Email, models.EventStatusDraft, models.EventTypeRoleplay).Scan(&eventId)
 	if insertError != nil {
 		logger.Error(fmt.Errorf("failed to create new event form submission for user %q: %w", userInfo.Id, insertError).Error())
 		return
 	}
 
 	logger.Info("New event form submission created", "event_id", eventId, "user_id", userInfo.Id)
+	if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		logger.Error(fmt.Errorf("failed to broadcast new event creation: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
+	}
 	http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s", eventId), http.StatusSeeOther)
 }

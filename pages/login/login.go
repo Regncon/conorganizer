@@ -96,8 +96,8 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				Path:     "/",
 				MaxAge:   -1,
 				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteStrictMode,
+				Secure:   false,
+				SameSite: http.SameSiteLaxMode,
 			})
 
 			http.SetCookie(w, &http.Cookie{
@@ -106,8 +106,8 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				Path:     "/",
 				MaxAge:   -1,
 				HttpOnly: true,
-				Secure:   true,
-				SameSite: http.SameSiteStrictMode,
+				Secure:   false,
+				SameSite: http.SameSiteLaxMode,
 			})
 
 			redirectUrl := "/"
@@ -136,34 +136,35 @@ func userExistsByEmail(db *sql.DB, email string) (bool, error) {
 	return true, nil
 }
 
-func insertUser(db *sql.DB, userID, email string, isAdmin bool, logger *slog.Logger) {
-	_, err := db.Exec("INSERT INTO users (user_id, email, is_admin) VALUES (?, ?, ?)", userID, email, isAdmin)
+func insertUser(db *sql.DB, externalID, email string, isAdmin bool, logger *slog.Logger) {
+	_, err := db.Exec("INSERT INTO users (external_id, email, is_admin) VALUES (?, ?, ?)", externalID, email, isAdmin)
 	if err != nil {
-		logger.Error(fmt.Errorf("failed to insert new user %q: %w", userID, err).Error())
+		logger.Error(fmt.Errorf("failed to insert new user %q: %w", externalID, err).Error())
 		return
 	}
-	logger.Info("Inserted new user", "user_id", userID, "is_admin", isAdmin)
+
+	logger.Info("Inserted new user", "email", email, "external_id", externalID, "is_admin", isAdmin)
 }
 
-func updateUserAdmin(db *sql.DB, userID string, isAdmin bool, logger *slog.Logger) {
+func updateUserAdmin(db *sql.DB, externalID string, isAdmin bool, logger *slog.Logger) {
 	var currentIsAdmin bool
-	err := db.QueryRow("SELECT is_admin FROM users WHERE user_id = ?", userID).Scan(&currentIsAdmin)
+	err := db.QueryRow("SELECT is_admin FROM users WHERE external_id = ?", externalID).Scan(&currentIsAdmin)
 	if err == sql.ErrNoRows {
-		logger.Warn("User not found for admin update", "user_id", userID)
+		logger.Error("user not found for admin update", "user_id", externalID)
 		return
 	}
 	if err != nil {
-		logger.Error(fmt.Errorf("failed to fetch current is_admin for user %q: %w", userID, err).Error())
+		logger.Error(fmt.Errorf("failed to fetch current is_admin: %w", err).Error(), "external_id", externalID)
 		return
 	}
 	if currentIsAdmin == isAdmin {
-		logger.Info("No change to user admin status", "user_id", userID, "is_admin", isAdmin)
+		logger.Info("No change to user admin status", "external_id", externalID, "is_admin", isAdmin)
 		return
 	}
-	_, updateErr := db.Exec("UPDATE users SET is_admin = ? WHERE user_id = ?", isAdmin, userID)
+	_, updateErr := db.Exec("UPDATE users SET is_admin = ? WHERE external_id = ?", isAdmin, externalID)
 	if updateErr != nil {
-		logger.Error(fmt.Errorf("failed to update user %q: %w", userID, updateErr).Error())
+		logger.Error(fmt.Errorf("failed to update user: %w", updateErr).Error(), "external_id", externalID)
 		return
 	}
-	logger.Info("Updated user admin status", "user_id", userID, "is_admin", isAdmin)
+	logger.Info("Updated user admin status", "external_id", externalID, "is_admin", isAdmin)
 }

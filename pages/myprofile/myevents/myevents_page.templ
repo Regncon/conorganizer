@@ -9,19 +9,19 @@ import (
 	"log/slog"
 )
 
-func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.EventCardModel {
+func GetEventsByExternalID(db *sql.DB, externalID string, logger *slog.Logger) []models.EventCardModel {
 	var events []models.EventCardModel
 
-	userDbId, userDbIdErr := userctx.GetIdFromUserIdInDb(userId, db)
-	if userDbIdErr != nil {
-		logger.Error(fmt.Errorf("failed to get user id from database for user %q: %w", userId, userDbIdErr).Error())
+	userID, userIDErr := userctx.GetUserIDFromExternalID(externalID, db, logger)
+	if userIDErr != nil {
+		logger.Error(fmt.Errorf("failed to resolve user_id for external_id %q: %w", externalID, userIDErr).Error())
 		return events
 	}
 
-	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE host = ?"
-	rows, eventsQueryErr := db.Query(eventsQuery, userDbId)
+	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE user_id = ?"
+	rows, eventsQueryErr := db.Query(eventsQuery, userID)
 	if eventsQueryErr != nil {
-		logger.Error(fmt.Errorf("failed to query events for user %q: %w", userId, eventsQueryErr).Error())
+		logger.Error(fmt.Errorf("failed to query events for external_id %q: %w", externalID, eventsQueryErr).Error())
 		return events
 	}
 	defer rows.Close()
@@ -29,22 +29,22 @@ func GetEventsByUserId(db *sql.DB, userId string, logger *slog.Logger) []models.
 	for rows.Next() {
 		var event models.EventCardModel
 		if scanErr := rows.Scan(&event.Id, &event.Title, &event.Intro, &event.Status, &event.System, &event.HostName, &event.BeginnerFriendly, &event.EventType, &event.AgeGroup, &event.Runtime, &event.CanBeRunInEnglish); scanErr != nil {
-			logger.Error(fmt.Errorf("failed to scan event row for user %q: %w", userId, scanErr).Error())
+			logger.Error(fmt.Errorf("failed to scan event row for external_id %q: %w", externalID, scanErr).Error())
 			return events
 		}
 		events = append(events, event)
 	}
-	logger.Debug("Found events for user", "event_count", len(events), "user_id", userId)
+	logger.Debug("Found events for user", "event_count", len(events), "external_id", externalID, "user_id", userID)
 	return events
 }
 
-templ myEventsPage(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+templ myEventsPage(externalID string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	<div id="my-events-wrapper">
-		@myEventsPageContent(userid, db, eventImageDir, logger)
+		@myEventsPageContent(externalID, db, eventImageDir, logger)
 	</div>
 }
 
-templ myEventsPageContent(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+templ myEventsPageContent(externalID string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Mine arrangementer", Url: ""},
@@ -52,7 +52,7 @@ templ myEventsPageContent(userid string, db *sql.DB, eventImageDir *string, logg
 	<div class="page-content-container">
 		<h1 class="page-heading">Mine arrangementer</h1>
 		<div class="my-event-grid">
-			@events(userid, db, eventImageDir, logger)
+			@events(externalID, db, eventImageDir, logger)
 		</div>
 	</div>
 	<style>
@@ -67,8 +67,8 @@ templ myEventsPageContent(userid string, db *sql.DB, eventImageDir *string, logg
 	</style>
 }
 
-templ events(userid string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
-	{{ events := GetEventsByUserId(db, userid, logger) }}
+templ events(externalID string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	{{ events := GetEventsByExternalID(db, externalID, logger) }}
 	if len(events) == 0 {
 		@createEvent()
 	}

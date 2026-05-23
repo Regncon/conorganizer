@@ -121,12 +121,12 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					required
 					autocomplete="name"
 				/>
-				<div data-signals={ fmt.Sprintf("{name:'%s'}", name) }></div>
+				<div data-signals={ dataSignals(map[string]string{"name": name}) }></div>
 			</label>
 			<label class="label color-strong form-group">
 				E-post
 				<input
-					data-signals={ fmt.Sprintf("{email:'%s'}", email) }
+					data-signals={ dataSignals(map[string]string{"email": email}) }
 					type="email"
 					data-bind="email"
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/email')", eventId) }
@@ -141,7 +141,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 				Telefon
 				<input
 					type="tel"
-					data-signals={ fmt.Sprintf("{phone:'%s'}", phone) }
+					data-signals={ dataSignals(map[string]string{"phone": phone}) }
 					data-bind="phone"
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/phone')", eventId) }
 					name="phone"

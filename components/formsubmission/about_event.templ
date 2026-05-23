@@ -185,14 +185,14 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 	})
 }
 
-templ aboutEvent(eventId string, title string, intro string, eventType models.EventType, image string, system string, description string) {
+templ aboutEvent(eventId string, title string, intro string, eventType models.EventType, system string, description string) {
 	<article class="form-card">
 		<h4 class="form-card-title">Om arrangementet</h4>
 		<section class="about-section">
 			<label class="label-small color-strong form-group title">
 				Tittel
 				<div
-					data-signals={ fmt.Sprintf("{title:'%s'}", title) }
+					data-signals={ dataSignals(map[string]string{"title": title}) }
 				></div>
 				<input
 					name="title"
@@ -221,16 +221,17 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 			<label class="label-small color-strong form-group type">
 				Type arrangement
 				<select
-					data-signals={ fmt.Sprintf("{type:'%s'}", eventType) }
+					data-signals={ dataSignals(map[string]models.EventType{"type": eventType}) }
 					data-bind="type"
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/type')", eventId) }
 					name="type"
 					class="input"
 					required
 				>
-					<option value="roleplay">Rollespill</option>
-					<option value="boardgame">Brettspill</option>
-					<option value="other">Annet</option>
+					<option value={ models.EventTypeRoleplay }>{ models.EventTypeRoleplay.Label() }</option>
+					<option value={ models.EventTypeBoardGame }>{ models.EventTypeBoardGame.Label() }</option>
+					<option value={ models.EventTypeCardGame }>{ models.EventTypeCardGame.Label() }</option>
+					<option value={ models.EventTypeOther }>{ models.EventTypeOther.Label() }</option>
 				</select>
 			</label>
 			<a
@@ -243,7 +244,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 			<label class="label-small color-strong form-group system">
 				System
 				<div
-					data-signals={ fmt.Sprintf("{system:'%s'}", system) }
+					data-signals={ dataSignals(map[string]string{"system": system}) }
 				></div>
 				<input
 					name="system"

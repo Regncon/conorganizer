@@ -2,10 +2,11 @@ package root
 
 import (
 	"database/sql"
-	"time"
+	"fmt"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/puljer"
 )
 
 type PuljeBlock struct {
@@ -19,7 +20,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 	const q = `
 		SELECT
 			e.id,
-            ep.is_published,
+            e.is_published,
 			e.title,
 			e.intro,
 			e.status,
@@ -32,35 +33,19 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 			e.can_be_run_in_english,
 
 			-- pulje
-			ep.pulje_id,
-			p.name,
-			p.start_time,
-			p.end_time
-		FROM events e
-		INNER JOIN event_puljer ep ON ep.event_id = e.id
-		INNER JOIN puljer      p  ON p.id = ep.pulje_id
-		WHERE e.status = 'Godkjent' AND ep.is_active = 1
-        ORDER BY p.start_time DESC, e.inserted_time DESC, e.id ASC
+			e.pulje_id,
+			e.pulje_name,
+			e.pulje_start_at,
+			e.pulje_end_at
+		FROM v_events_by_pulje_active e
+        ORDER BY e.pulje_start_at DESC, e.created_at DESC, e.id ASC
 	`
 
 	rows, err := db.Query(q)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("querying events by pulje: %w", err)
 	}
 	defer rows.Close()
-
-	parseDate := func(s string) (time.Time, error) {
-		// Try common SQLite date encodings; adjust if your data uses another format.
-		// DATE columns are often stored as "YYYY-MM-DD".
-		//  2025-10-10T18:00:00Z
-		if t, err := time.Parse("2006-01-02T15:04:05Z07:00", s); err == nil {
-			return t, nil
-		}
-		// Fallbacks (uncomment if needed):
-		// if t, err := time.Parse(time.RFC3339, s); err == nil { return t, nil }
-		// if t, err := time.Parse("2006-01-02 15:04:05", s); err == nil { return t, nil }
-		return time.Time{}, nil
-	}
 
 	out := make(EventsByPulje)
 
@@ -68,7 +53,7 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 		var (
 			ev                 models.EventCardModel
 			puljeID, puljeName string
-			startStr, endStr   string
+			startAt, endAt     models.DBDateTime
 		)
 
 		if err := rows.Scan(
@@ -87,25 +72,22 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 
 			&puljeID,
 			&puljeName,
-			&startStr,
-			&endStr,
+			&startAt,
+			&endAt,
 		); err != nil {
 			return nil, err
 		}
 
-		startTime, _ := parseDate(startStr)
-		endTime, _ := parseDate(endStr)
-
 		key := models.Pulje(puljeID)
 		block, ok := out[key]
 		if !ok {
+			pulje, err := puljerService.BuildPulje(key, puljeName, "", startAt, endAt)
+			if err != nil {
+				return nil, err
+			}
+
 			block = &PuljeBlock{
-				Pulje: models.PuljeRow{
-					ID:        key,
-					Name:      puljeName,
-					StartTime: startTime,
-					EndTime:   endTime,
-				},
+				Pulje: pulje,
 			}
 			out[key] = block
 		}
@@ -125,28 +107,28 @@ func GetEventsByPulje(db *sql.DB) (EventsByPulje, error) {
 
 templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *string, isAdmin bool) {
 	{{ block := byPulje[pulje] }}
-	if block == nil {
-		return
+	if block != nil {
+		<section class="container-inner-padding program-pulje-section" id={ pulje }>
+			<h2 class="pulje-heading">
+				{ block.Pulje.Name }
+				<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
+			</h2>
+			<div class="page-wide-eventcard-grid">
+				for _, event := range block.Events {
+					@components.EventCard(event, eventImageDir, isAdmin, string(pulje))
+				}
+			</div>
+		</section>
 	}
-	<section class="container-inner-padding program-pulje-section" id={ pulje }>
-		<h2 class="pulje-heading">
-			{ block.Pulje.Name }
-			<span class="pulje-heading-time">({ block.Pulje.StartTime.Format("15:04") } – { block.Pulje.EndTime.Format("15:04") })</span>
-		</h2>
-		<div class="page-wide-eventcard-grid">
-			for _, event := range block.Events {
-				@components.EventCard(event, eventImageDir, isAdmin, string(pulje))
-			}
-		</div>
-	</section>
 }
 
 templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	{{ eventsByPulje, err := GetEventsByPulje(db) }}
+	{{ puljer, puljerErr := puljerService.GetAllPuljer(db) }}
 	<style>
 		.event-pulje-overview {
 			display: flex;
-			flex-direction: column;			
+			flex-direction: column;
 			margin-top: var(--responsive-top-of-page-spacing);
 			/* Using padding here so the space between counts as in the scroll context of the one above */
 			.program-pulje-section:not(:first-child) {
@@ -183,13 +165,17 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string) {
 		}
 	</style>
 	<div class="page-content-container event-pulje-overview">
-		if err != nil {
+		if err != nil || puljerErr != nil {
+			{{
+				if puljerErr != nil {
+					err = puljerErr
+				}
+			}}
 			<p>Error fetching events: { err.Error() }</p>
-			return
+		} else {
+			for _, pulje := range puljer {
+				@eventPulje(pulje.ID, eventsByPulje, eventImageDir, isAdmin)
+			}
 		}
-		@eventPulje(models.PuljeFredagKveld, eventsByPulje, eventImageDir, isAdmin)
-		@eventPulje(models.PuljeLordagMorgen, eventsByPulje, eventImageDir, isAdmin)
-		@eventPulje(models.PuljeLordagKveld, eventsByPulje, eventImageDir, isAdmin)
-		@eventPulje(models.PuljeSondagMorgen, eventsByPulje, eventImageDir, isAdmin)
 	</div>
 }

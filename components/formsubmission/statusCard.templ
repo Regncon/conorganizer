@@ -51,21 +51,21 @@ templ statusCard(event *models.Event, isAdmin bool) {
 			<select
 				name="status"
 				class="input"
-				data-signals={ fmt.Sprintf("{status:'%s'}", event.Status) }
+				data-signals={ dataSignals(map[string]models.EventStatus{"status": event.Status}) }
 				data-bind="status"
 				data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/status')", event.ID) }
 				required
 			>
 				if isAdmin {
-					<option value={ models.EventStatusDraft } selected>Kladd</option>
-					<option value={ models.EventStatusSubmitted } selected>Innsendt</option>
-					<option value={ models.EventStatusApproved } selected>Godkjent ( Du er administrator )</option>
-					<option value={ models.EventStatusArchived } selected>Arkivert</option>
+						<option value={ models.EventStatusDraft } selected>{ models.EventStatusDraft.Label() }</option>
+						<option value={ models.EventStatusSubmitted } selected>{ models.EventStatusSubmitted.Label() }</option>
+						<option value={ models.EventStatusApproved } selected>{ models.EventStatusApproved.Label() } ( Du er administrator )</option>
+						<option value={ models.EventStatusArchived } selected>{ models.EventStatusArchived.Label() }</option>
 				} else {
 					if event.Status == models.EventStatusDraft || event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusArchived {
-						<option value={ models.EventStatusDraft }>Kladd</option>
-						<option value={ models.EventStatusArchived }>Arkivert</option>
-						<option value={ models.EventStatusSubmitted } disabled>Innsendt (Bruk kappen på bunn av skjema) </option>
+							<option value={ models.EventStatusDraft }>{ models.EventStatusDraft.Label() }</option>
+							<option value={ models.EventStatusArchived }>{ models.EventStatusArchived.Label() }</option>
+								<option value={ models.EventStatusSubmitted } disabled>{ models.EventStatusSubmitted.Label() } (Bruk knappen nederst i skjema) </option>
 					}
 				}
 			</select>

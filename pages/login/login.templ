@@ -49,7 +49,7 @@ templ loginForm() {
                         return;
                 }
 
-                document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
+                document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; samesite=Lax`;
             }
 
             const wcElement = document.getElementsByTagName('descope-wc')[0];

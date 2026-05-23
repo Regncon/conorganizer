@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/Regncon/conorganizer/models"
+	puljerService "github.com/Regncon/conorganizer/service/puljer"
 )
 
 func GetEventById(eventID string, db *sql.DB) (*models.Event, error) {
@@ -14,21 +15,26 @@ func GetEventById(eventID string, db *sql.DB) (*models.Event, error) {
                 title,
                 intro,
                 description,
-                image_url,
                 system,
                 event_type,
                 age_group,
                 event_runtime,
                 host_name,
-                host,
+                user_id,
                 email,
                 phone_number,
-                pulje_name,
                 max_players,
                 beginner_friendly,
                 can_be_run_in_english,
                 notes,
-                status
+                status,
+                created_at,
+                updated_at,
+                created_by_id,
+                updated_by_id,
+                status_changed_by_id,
+                status_changed_at,
+                status_changed_action
             FROM events WHERE id = ?
             `
 	row := db.QueryRow(query, eventID)
@@ -39,21 +45,26 @@ func GetEventById(eventID string, db *sql.DB) (*models.Event, error) {
 		&event.Title,
 		&event.Intro,
 		&event.Description,
-		&event.ImageURL,
 		&event.System,
 		&event.EventType,
 		&event.AgeGroup,
 		&event.Runtime,
 		&event.HostName,
-		&event.Host,
+		&event.UserID,
 		&event.Email,
 		&event.PhoneNumber,
-		&event.PuljeName,
 		&event.MaxPlayers,
 		&event.BeginnerFriendly,
 		&event.CanBeRunInEnglish,
 		&event.Notes,
 		&event.Status,
+		&event.CreatedAt,
+		&event.UpdatedAt,
+		&event.CreatedByID,
+		&event.UpdatedByID,
+		&event.StatusChangedByID,
+		&event.StatusChangedAt,
+		&event.StatusChangedAction,
 	); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil // No event found
@@ -67,104 +78,9 @@ func GetPujerForEvent(
 	eventID string,
 	db *sql.DB,
 ) ([]models.PuljeRow, error) {
-	/*
-			   CREATE TABLE
-			       event_puljer (
-			           event_id TEXT NOT NULL,
-			           pulje_id TEXT NOT NULL,
-			           is_active BOOLEAN NOT NULL DEFAULT TRUE,
-			           is_published BOOLEAN NOT NULL DEFAULT FALSE,
-			           room TEXT DEFAULT '',
-			           PRIMARY KEY (event_id, pulje_id),
-			           FOREIGN KEY (event_id) REFERENCES events (id) ON DELETE CASCADE,
-			           FOREIGN KEY (pulje_id) REFERENCES puljer (id) ON UPDATE CASCADE
-			       );
-		CREATE TABLE
-		    puljer (
-		        id TEXT NOT NULL PRIMARY KEY,
-		        name TEXT NOT NULL,
-		        start_time DATE NOT NULL,
-		        end_time DATE NOT NULL
-		    );
-
-		type PuljeRow struct {
-			ID        Pulje     `json:"id"`
-			Name      string    `json:"name"`
-			StartTime time.Time `json:"start_time"`
-			EndTime   time.Time `json:"end_time"`
-		}
-	*/
-	query := `SELECT p.id, p.name, p.start_time, p.end_time
-            FROM puljer p
-            JOIN event_puljer ep ON p.id = ep.pulje_id
-            WHERE ep.event_id = ? AND ep.is_active = TRUE AND ep.is_published = TRUE
-            ORDER BY p.start_time ASC
-            `
-
-	rows, err := db.Query(query, eventID)
+	puljer, err := puljerService.GetActivePuljeForEvent(eventID, db)
 	if err != nil {
 		return nil, fmt.Errorf("error querying puljer for event %q: %w", eventID, err)
 	}
-	defer rows.Close()
-	var puljer []models.PuljeRow
-	for rows.Next() {
-		var pulje models.PuljeRow
-		if err := rows.Scan(&pulje.ID, &pulje.Name, &pulje.StartTime, &pulje.EndTime); err != nil {
-			return nil, fmt.Errorf("error scanning pulje row for event %q: %w", eventID, err)
-		}
-		puljer = append(puljer, pulje)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("error iterating over pulje rows for event %q: %w", eventID, err)
-	}
 	return puljer, nil
 }
-
-/*
-func GetEventByID(id string, db *sql.DB) (*models.Event, error) {
-	query := `
-            SELECT
-                id,
-                title,
-                description,
-                image_url,
-                system,
-                host_name,
-                host,
-                email,
-                phone_number,
-                pulje_name,
-                max_players,
-                beginner_friendly,
-                can_be_run_in_english,
-                status
-            FROM events WHERE id = ? AND status = ?
-            `
-	row := db.QueryRow(query, id, models.EventStatusPublished)
-
-	var event models.Event
-	if err := row.Scan(
-		&event.ID,
-		&event.Title,
-		&event.Description,
-		&event.ImageURL,
-		&event.System,
-		&event.HostName,
-		&event.Host,
-		&event.Email,
-		&event.PhoneNumber,
-		&event.PuljeName,
-		&event.MaxPlayers,
-		&event.BeginnerFriendly,
-		&event.CanBeRunInEnglish,
-		&event.Status,
-		); err != nil {
-			if err == sql.ErrNoRows {
-				return nil, nil // No event found
-			}
-			return nil, fmt.Errorf("failed to scan event row for event %q: %w", id, err)
-		}
-
-	return &event, nil
-}
-*/

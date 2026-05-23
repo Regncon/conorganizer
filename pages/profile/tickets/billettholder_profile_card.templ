@@ -135,7 +135,7 @@ func addEmailToBilettholderRoute(
 		}
 
 		var exists int
-		queryCheck := `SELECT COUNT(*) FROM billettholder_emails WHERE billettholder_id = ? AND email = ?`
+		queryCheck := `SELECT COUNT(*) FROM relation_billettholder_emails WHERE billettholder_id = ? AND email = ?`
 		err := db.QueryRow(queryCheck, billettholderID, newEmailAddress).Scan(&exists)
 		if err != nil {
 			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to check existing emails in the database: "+err.Error())
@@ -146,8 +146,8 @@ func addEmailToBilettholderRoute(
 			return
 		}
 
-		query := `INSERT INTO billettholder_emails (billettholder_id, email, kind) VALUES (?, ?, 'Manual')`
-		_, err = db.Exec(query, billettholderID, newEmailAddress)
+		query := `INSERT INTO relation_billettholder_emails (billettholder_id, email, kind) VALUES (?, ?, ?)`
+		_, err = db.Exec(query, billettholderID, newEmailAddress, models.BillettholderEmailKindManual)
 		if err != nil {
 			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to insert new email into the database: "+err.Error())
 			return
@@ -185,10 +185,10 @@ func deleteEmailFromBillettholderRoute(
 
 		// Validate the email belongs to this billettholder and fetch kind/email for messages/guard
 		var email string
-		var kind string
+		var kind models.BillettholderEmailKind
 		err := db.QueryRow(`
 			SELECT email, kind
-			FROM billettholder_emails
+			FROM relation_billettholder_emails
 			WHERE id = ? AND billettholder_id = ?
 		`, emailID, billettholderID).Scan(&email, &kind)
 		if err == sql.ErrNoRows {
@@ -199,20 +199,20 @@ func deleteEmailFromBillettholderRoute(
 			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to read email before delete: "+err.Error())
 			return
 		}
-		if kind != "Manual" {
+		if kind != models.BillettholderEmailKindManual {
 			handleError(responder, "Kun manuelle epostadresser kan slettes", "Attempt to delete non-manual email blocked")
 			return
 		}
 
-		// Don’t allow deleting the ticket email
-		if strings.EqualFold(kind, "Ticket") {
+		// Don't allow deleting the ticket email
+		if strings.EqualFold(string(kind), string(models.BillettholderEmailKindTicket)) {
 			handleError(responder, "Kan ikke slette billett-epost", "Attempt to delete Ticket email blocked")
 			return
 		}
 
 		// Delete
 		if _, err := db.Exec(`
-			DELETE FROM billettholder_emails
+			DELETE FROM relation_billettholder_emails
 			WHERE id = ? AND billettholder_id = ?
 		`, emailID, billettholderID); err != nil {
 			handleError(responder, "Noe gikk galt, prøv igjen", "Failed to delete email: "+err.Error())
@@ -220,10 +220,10 @@ func deleteEmailFromBillettholderRoute(
 		}
 
 		if _, err := db.Exec(`
-            DELETE FROM billettholdere_users
+            DELETE FROM relation_billettholdere_users
             WHERE billettholder_id = ? AND user_id IN (
                 SELECT u.id FROM users u
-                JOIN billettholdere_users bu ON bu.user_id = u.id
+                JOIN relation_billettholdere_users bu ON bu.user_id = u.id
                 WHERE bu.billettholder_id = ? AND u.email = ?
             )
         `, billettholderID, billettholderID, email); err != nil {
@@ -250,7 +250,7 @@ templ billettholderCard(billettholder models.Billettholder) {
 			</em>
 		</p>
 		for _, email := range billettholder.Emails {
-			if email.Kind == "Ticket" {
+			if email.Kind == models.BillettholderEmailKindTicket {
 				<div style="display: flex; align-items: center; gap:0.5rem; ">
 					<strong>Epost:</strong>
 					<a href={ "mailto:" + email.Email }>
@@ -270,12 +270,12 @@ templ billettholderCard(billettholder models.Billettholder) {
 		</div>
 		<span>Andre epostadresser på samme bestilling:</span>
 		for _, email := range billettholder.Emails {
-			if email.Kind == "Associated" || email.Kind == "Manual" {
+			if email.Kind == models.BillettholderEmailKindAssociated || email.Kind == models.BillettholderEmailKindManual {
 				<div style="display:flex; align-items:center; gap:0.5rem; justify-content: space-between;">
 					<a href={ "mailto:" + email.Email }>
 						{ email.Email }
 					</a>
-					if email.Kind == "Manual" {
+					if email.Kind == models.BillettholderEmailKindManual {
 						<button
 							class="btn btn--ghost"
 							data-on:click={ fmt.Sprintf("@post('/profile/tickets/api/delete-email/%d/%d/')", billettholder.ID, email.ID) }
