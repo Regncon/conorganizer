@@ -1211,4 +1211,34 @@ Both passed. Existing `.ai/threads/pulje-config.md` and `schema.sql` changes are
 
 Time: 2026-05-22 17:45:22
 --- Next Prompt ---
+Ok, are we done now?
+
+Time: 2026-05-22 17:53:54
+--- Codex Run ---
+
+Codex output:
+Yes, for this feature slice we’re done.
+
+Implemented and verified:
+- Admin UI for global program publishing
+- DB table/state for program publishing
+- API endpoint for updating the state
+- Front page switches between flat and pulje views
+- Flat view:
+  - hides scrollnav
+  - shows only `Godkjent` events
+  - sorts alphabetically
+- Pulje view:
+  - shows scrollnav
+  - groups by pulje
+  - includes only `relation_event_puljer.is_published = 1`
+  - excludes non-approved events
+  - sorts puljer by start time
+  - sorts events alphabetically within each pulje
+- Full test suite passes with `GOCACHE=/tmp/go-build go test ./...`
+
+Only note: `.ai/threads/pulje-config.md` and `schema.sql` are still modified in the worktree.
+
+Time: 2026-05-22 17:53:54
+--- Next Prompt ---
 
