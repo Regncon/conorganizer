@@ -181,7 +181,7 @@ func AssociateUsersWithBillettholderEmail(billettholderID int, email string, db 
 	logger.Debug("Associating users with billettholder email", "billettholder_id", billettholderID)
 
 	result, err := db.Exec(`
-		INSERT OR IGNORE INTO billettholdere_users (
+		INSERT OR IGNORE INTO relation_billettholdere_users (
 			billettholder_id, user_id
 		)
 		SELECT ?, id
@@ -219,7 +219,7 @@ func DisassociateUsersFromBillettholderEmail(billettholderID int, email string, 
 	logger.Debug("Disassociating users from billettholder email", "billettholder_id", billettholderID)
 
 	result, err := db.Exec(`
-		DELETE FROM billettholdere_users
+		DELETE FROM relation_billettholdere_users
 		WHERE billettholder_id = ?
 		AND user_id IN (
 			SELECT id
@@ -228,7 +228,7 @@ func DisassociateUsersFromBillettholderEmail(billettholderID int, email string, 
 		)
 		AND NOT EXISTS (
 			SELECT 1
-			FROM billettholder_emails
+			FROM relation_billettholder_emails
 			WHERE billettholder_id = ?
 			AND email = ? COLLATE NOCASE
 		)

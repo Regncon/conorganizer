@@ -392,7 +392,7 @@ func insertUser(t *testing.T, db *sql.DB, userID int, descopeUserID string, emai
 	t.Helper()
 
 	_, err := db.Exec(`
-		INSERT INTO users (id, user_id, email, is_admin)
+		INSERT INTO users (id, external_id, email, is_admin)
 		VALUES (?, ?, ?, ?)
 	`, userID, descopeUserID, email, false)
 	if err != nil {
@@ -404,7 +404,7 @@ func insertManualBillettholderEmail(t *testing.T, db *sql.DB, billettholderID in
 	t.Helper()
 
 	result, err := db.Exec(`
-		INSERT INTO billettholder_emails (billettholder_id, email, kind)
+		INSERT INTO relation_billettholder_emails (billettholder_id, email, kind)
 		VALUES (?, ?, 'Manual')
 	`, billettholderID, email)
 	if err != nil {
@@ -421,7 +421,7 @@ func insertManualBillettholderEmail(t *testing.T, db *sql.DB, billettholderID in
 func deleteBillettholderEmailByID(t *testing.T, db *sql.DB, emailID int) {
 	t.Helper()
 
-	_, err := db.Exec(`DELETE FROM billettholder_emails WHERE id = ?`, emailID)
+	_, err := db.Exec(`DELETE FROM relation_billettholder_emails WHERE id = ?`, emailID)
 	if err != nil {
 		t.Fatalf("failed to delete billettholder email: %v", err)
 	}
@@ -431,7 +431,7 @@ func insertBillettholderUserAssociation(t *testing.T, db *sql.DB, association mo
 	t.Helper()
 
 	_, err := db.Exec(`
-		INSERT INTO billettholdere_users (billettholder_id, user_id)
+		INSERT INTO relation_billettholdere_users (billettholder_id, user_id)
 		VALUES (?, ?)
 	`, association.BillettholderID, association.UserID)
 	if err != nil {
@@ -445,7 +445,7 @@ func assertOnlyBillettholderUserAssociation(t *testing.T, db *sql.DB, expected m
 	assertBillettholderUserAssociationCount(t, db, expected, 1)
 
 	var totalAssociations int
-	err := db.QueryRow(`SELECT COUNT(*) FROM billettholdere_users`).Scan(&totalAssociations)
+	err := db.QueryRow(`SELECT COUNT(*) FROM relation_billettholdere_users`).Scan(&totalAssociations)
 	if err != nil {
 		t.Fatalf("failed to count all billettholder user associations: %v", err)
 	}
@@ -460,7 +460,7 @@ func assertBillettholderUserAssociationCount(t *testing.T, db *sql.DB, expected 
 	var associationCount int
 	err := db.QueryRow(`
 		SELECT COUNT(*)
-		FROM billettholdere_users
+		FROM relation_billettholdere_users
 		WHERE billettholder_id = ? AND user_id = ?
 	`, expected.BillettholderID, expected.UserID).Scan(&associationCount)
 	if err != nil {
