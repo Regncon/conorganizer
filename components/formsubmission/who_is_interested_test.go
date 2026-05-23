@@ -2,6 +2,7 @@ package formsubmission
 
 import (
 	"database/sql"
+	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
@@ -211,12 +212,14 @@ func indexInterests(t *testing.T, interests []InterestWithHolder) map[int]Intere
 func seedBaseTables(t *testing.T, db *sql.DB) {
 	t.Helper()
 
+	puljeStatus := puljeStatusForTestSchema(t, db)
+
 	mustExec(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?)`, models.EventStatusApproved)
 	mustExec(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
 	mustExec(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
 	mustExec(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
 	mustExec(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
-	mustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusPublished)
+	mustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, puljeStatus)
 	mustExec(t, db, `
 		INSERT INTO puljer (
 			id, name, status, start_at, end_at
@@ -225,7 +228,7 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 			('P2', 'SaturdayMorning', ?, '2025-10-04', '2025-10-04'),
 			('P3', 'SaturdayEvening', ?, '2025-10-04', '2025-10-04'),
 			('P4', 'Sunday', ?, '2025-10-05', '2025-10-05')
-	`, models.PuljeStatusPublished, models.PuljeStatusPublished, models.PuljeStatusPublished, models.PuljeStatusPublished)
+	`, puljeStatus, puljeStatus, puljeStatus, puljeStatus)
 	mustExec(t, db, `
 		INSERT INTO events (
 			id, title, intro, description, system, event_type,
@@ -243,6 +246,26 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
 	)
+}
+
+func puljeStatusForTestSchema(t *testing.T, db *sql.DB) models.PuljeStatus {
+	t.Helper()
+
+	var createTableSQL string
+	err := db.QueryRow(`
+		SELECT sql
+		FROM sqlite_schema
+		WHERE type = 'table' AND name = 'puljer'
+	`).Scan(&createTableSQL)
+	if err != nil {
+		t.Fatalf("failed to read puljer schema: %v", err)
+	}
+
+	if strings.Contains(createTableSQL, "'open'") {
+		return models.PuljeStatusOpen
+	}
+
+	return models.PuljeStatusPublished
 }
 
 func playerFixtures() []billettholderFixture {
