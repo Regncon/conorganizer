@@ -174,19 +174,15 @@ CREATE TABLE
         FOREIGN KEY (interest_level) REFERENCES interest_levels (interest_level) ON UPDATE CASCADE
     ) STRICT;
 
-    tabell_program
-    bool is_published
-    when published then hide puljer but show individual events
-    when published show pulje and sort events under pulje
-    when not published hide interest button and påmedling button
-
 CREATE TABLE
     rooms (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        room_number TEXT NOT NULL,
+        room_number TEXT NOT NULL DEFAULT '',
         name TEXT NOT NULL,
         floor INTEGER NOT NULL,
-        max_concurrent_games INTEGER NOT NULL
+        max_concurrent_games INTEGER NOT NULL,
+        notes TEXT NOT NULL DEFAULT '',
+        is_disabled INTEGER NOT NULL DEFAULT 0 CHECK (is_disabled IN (0, 1))
     ) STRICT;
 
 INSERT INTO
@@ -306,9 +302,12 @@ SELECT
     ep.is_published AS is_published,
     ep.pulje_id,
     ep.room_id,
+    r.room_number,
     r.name AS room_name,
     r.floor AS room_floor,
     r.max_concurrent_games AS room_max_concurrent_games,
+    r.notes AS room_notes,
+    r.is_disabled AS room_is_disabled,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
     p.end_at AS pulje_end_at
@@ -368,9 +367,12 @@ SELECT
     ep.event_id,
     ep.pulje_id,
     ep.room_id,
+    r.room_number,
     r.name AS room_name,
     r.floor AS room_floor,
     r.max_concurrent_games AS room_max_concurrent_games,
+    r.notes AS room_notes,
+    r.is_disabled AS room_is_disabled,
     p.name AS pulje_name,
     p.start_at AS pulje_start_at,
     p.end_at AS pulje_end_at,
