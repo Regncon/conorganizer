@@ -64,13 +64,13 @@ rows, err := db.Query("SELECT billettholder_id FROM v_get_user_billettholder WHE
 | `created_at` | `TEXT` | Event creation timestamp. |
 | `is_published` | `INTEGER` | Pulje publish flag for this event, `0` or `1`. |
 | `pulje_id` | `TEXT` | Pulje id. |
-| `room_id` | `INTEGER` | Assigned room id, or `NULL`. |
-| `room_number` | `TEXT` | Room number, or `NULL`. |
-| `room_name` | `TEXT` | Room name, or `NULL`. |
-| `room_floor` | `INTEGER` | Room floor, or `NULL`. |
-| `room_max_concurrent_games` | `INTEGER` | Room capacity, or `NULL`. |
-| `room_notes` | `TEXT` | Room notes, or `NULL`. |
-| `room_is_disabled` | `INTEGER` | Room disabled flag, `0`/`1`, or `NULL`. |
+| `room_id` | `INTEGER` | Pulje-assigned room id, or `NULL`. |
+| `room_number` | `TEXT` | Pulje-assigned room number, or `NULL`. |
+| `room_name` | `TEXT` | Pulje-assigned room name, or `NULL`. |
+| `room_floor` | `INTEGER` | Pulje-assigned room floor, or `NULL`. |
+| `room_max_concurrent_games` | `INTEGER` | Pulje-assigned room capacity, or `NULL`. |
+| `room_notes` | `TEXT` | Pulje-assigned room notes, or `NULL`. |
+| `room_is_disabled` | `INTEGER` | Pulje-assigned room disabled flag, `0`/`1`, or `NULL`. |
 | `pulje_name` | `TEXT` | Pulje display name. |
 | `pulje_start_at` | `TEXT` | Pulje start timestamp. |
 | `pulje_end_at` | `TEXT` | Pulje end timestamp. |
