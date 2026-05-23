@@ -53,6 +53,7 @@ Follow the [Linux/Mac Setup Guide](#linuxmac-setup-guide) below.
 
 > [!NOTE]
 > To get the latest backup of the database and all the images from prod run:
+> The database download requires `DB_SSH_USER` in your `.env` file or shell environment.
 
 ```bash
 task download
