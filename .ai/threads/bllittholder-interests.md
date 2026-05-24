@@ -495,3 +495,44 @@ For the next test, I’d suggest checking the tab/pulje counts: each pulje shoul
 Time: 2026-05-24 15:46:37
 --- Next Prompt ---
 
+Ok, now rewrite the test into a failing test that tries to call the real function TDD style. Comment out the mock data. Let's prepare for the real data layer implementation.
+Fist create the test. Then we will have a discussion about how to implement the data layer and make the test pass.
+
+Time: 2026-05-24 15:56:45
+--- Codex Run ---
+
+Codex output:
+I’ll turn the existing mock-contract test into the first red test against the intended real loader shape. I’m going to inspect the local DB/test patterns first so the test uses the same fixture style as the rest of the repo.
+I found the existing mock test and the repo’s SQLite test helpers. For this red step I’ll make the test call the intended real loader API directly, even though that API does not exist yet, so `go test` should fail at compile time as the next implementation target.
+I’m going to replace the mock-shape test with one data-layer contract test. It will seed a temporary SQLite DB, call the planned real batch loader, and fail because that loader has not been implemented yet.
+The red test is now replacing the mock assertion. I’ll format it and run the focused test command; the expected failure should point at the missing real loader function, not at the fixtures.
+Rewrote the test as a red TDD test in [billettholder_interest_dialog_test.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog_test.go:11).
+
+The mock-based test is gone. The new test seeds a real temporary SQLite DB and calls the intended real loader:
+
+```go
+getBillettholderInterestSectionsByBillettholderID(db, []int{expectedBillettholderID})
+```
+
+It currently fails exactly because that function does not exist yet:
+
+```text
+undefined: getBillettholderInterestSectionsByBillettholderID
+```
+
+The test encodes these expectations:
+- assigned-only events are included
+- assigned events with interests appear under `Assigned`, not duplicated under interest levels
+- interest rows are grouped by pulje and then high/medium/low
+- event status is preserved for muted unpublished styling later
+- unrelated billettholder rows are ignored
+- only puljes with rows are expected in the result
+
+Verification:
+- `gofmt` passed
+- `git diff --check` passed
+- `go test ./pages/admin/billettholder_admin` fails intentionally on the missing real loader function.
+
+Time: 2026-05-24 15:56:45
+--- Next Prompt ---
+
