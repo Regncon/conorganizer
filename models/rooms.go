@@ -10,6 +10,17 @@ type Room struct {
 	IsDisabled         bool   `json:"is_disabled"`
 }
 
+// Normalized version of `Room` type for use when updating a room, or quering for a specific room with optional params
+type RoomInput struct {
+	ID                 int
+	Name               *string
+	RoomNumber         *string
+	Floor              *int
+	MaxConcurrentGames *int
+	Notes              *string
+	IsDisabled         *bool
+}
+
 /*
 RoomEventPuljeSummary is the summary of an event in `relation_event_puljer` and used in `RoomByPulje` struct
   - `EventPuljeID` is the ID of the unique event in a pulje

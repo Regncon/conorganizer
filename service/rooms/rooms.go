@@ -14,7 +14,7 @@ func CreateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
 		return nil, fmt.Errorf("Room number is required")
 	}
 
-	// We can disable this check if we want
+	// We can disable this check if we want, if so, remember to update test
 	if !strings.HasPrefix(data.RoomNumber, fmt.Sprintf("%d", data.Floor)) {
 		return nil, fmt.Errorf(
 			"Room number must start with the floor number, eg: %dxx, got: %s",
@@ -53,8 +53,114 @@ func CreateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
 	return &data, nil
 }
 
-// UpdateRoom updates a room based on its ID
-func UpdateRoom(db *sql.DB, data models.Room) {}
+// UpdateRoom updates a room based on its ID with partial new information
+func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, error) {
+	if data.ID < 1 {
+		return nil, fmt.Errorf("Room ID is required and must be a valid positive number")
+	}
+
+	// Set up params based on partial data
+	setParts := []string{}
+	args := []any{}
+
+	if data.Name != nil {
+		if strings.TrimSpace(*data.Name) == "" {
+			return nil, fmt.Errorf("room name cannot be empty")
+		}
+
+		setParts = append(setParts, "name = ?")
+		args = append(args, *data.Name)
+	}
+
+	if data.RoomNumber != nil {
+		if strings.TrimSpace(*data.RoomNumber) == "" {
+			return nil, fmt.Errorf("room number cannot be empty")
+		}
+
+		setParts = append(setParts, "room_number = ?")
+		args = append(args, *data.RoomNumber)
+	}
+
+	if data.Floor != nil {
+		setParts = append(setParts, "floor = ?")
+		args = append(args, *data.Floor)
+	}
+
+	if data.MaxConcurrentGames != nil {
+		if *data.MaxConcurrentGames < 1 {
+			return nil, fmt.Errorf("max concurrent games must be greater than 0")
+		}
+
+		setParts = append(setParts, "max_concurrent_games = ?")
+		args = append(args, *data.MaxConcurrentGames)
+	}
+
+	if data.Notes != nil {
+		setParts = append(setParts, "notes = ?")
+		args = append(args, *data.Notes)
+	}
+
+	if data.IsDisabled != nil {
+		setParts = append(setParts, "is_disabled = ?")
+		args = append(args, *data.IsDisabled)
+	}
+
+	if len(args) == 0 {
+		return nil, fmt.Errorf("Update room called without any updated data")
+	}
+
+	// Construct query based on partial data
+	query := fmt.Sprintf(`
+		UPDATE rooms
+		SET %s
+		WHERE id = ?
+        RETURNING
+			id,
+			name,
+			room_number,
+			floor,
+			max_concurrent_games,
+			notes,
+			is_disabled;
+	`, strings.Join(setParts, ", "))
+
+	// Construct args based on partial data
+	args = append(args, data.ID)
+
+	_, err := db.Exec(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update room: %w", err)
+	}
+
+	var updated models.Room
+
+	err = db.QueryRow(`
+		SELECT
+			id,
+			name,
+			room_number,
+			floor,
+			max_concurrent_games,
+			notes,
+			is_disabled
+		FROM rooms
+		WHERE id = ?
+	`, data.ID).Scan(
+		&updated.ID,
+		&updated.Name,
+		&updated.RoomNumber,
+		&updated.Floor,
+		&updated.MaxConcurrentGames,
+		&updated.Notes,
+		&updated.IsDisabled,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch updated room: %w", err)
+	}
+
+	return &updated, nil
+}
 
 // GetRoomByID returns a room pointer based on a roomID
 func GetRoomByID(db *sql.DB, roomID int) {}

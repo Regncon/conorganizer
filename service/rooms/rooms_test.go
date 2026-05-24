@@ -29,7 +29,7 @@ func TestCreateRoom(t *testing.T) {
 	invalidRoomNumber.Floor = 2
 
 	var invalidRoomConcurrency = validRoom
-	invalidRoomConcurrency.MaxConcurrentGames = -1
+	invalidRoomConcurrency.MaxConcurrentGames = 0
 
 	// When
 	// - create room is called once
@@ -73,3 +73,101 @@ func TestCreateRoom(t *testing.T) {
 		t.Fatal("expected error when creating room with 0 or less max games, but it was allowed")
 	}
 }
+
+func TestUpdateRoomPartial(t *testing.T) {
+	// Given
+	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
+	if err != nil {
+		t.Fatalf("failed to create test database and logger: %v", err)
+	}
+	defer db.Close()
+
+	var originalRoom = models.Room{
+		Name:               "Hakkebakken",
+		RoomNumber:         "101",
+		Floor:              1,
+		MaxConcurrentGames: 2,
+		Notes:              "Dette er et gyldig rom",
+		IsDisabled:         false,
+	}
+	var originalRoomPartial = models.Room{
+		Name:               "Hakkebakken",
+		RoomNumber:         "101",
+		Floor:              1,
+		MaxConcurrentGames: 2,
+		Notes:              "Dette er et gyldig rom",
+		IsDisabled:         false,
+	}
+
+	createRoomResult, err := CreateRoom(db, originalRoom)
+	if err != nil {
+		t.Fatalf("unexpected error creating original room: %v", err)
+	}
+	createRoomPartialResult, err := CreateRoom(db, originalRoomPartial)
+	if err != nil {
+		t.Fatalf("unexpected error creating original room: %v", err)
+	}
+
+	// When
+	var updatedName string = "Tangerud"
+	var updatedRoomNumber string = "303"
+	var updatedFloor int = 3
+	var updatedConcurrent int = 3
+	var updatedNotes string = ""
+	var updatedDisables bool = true
+
+	var updatedRoom = models.RoomInput{
+		ID:                 createRoomResult.ID,
+		Name:               &updatedName,
+		RoomNumber:         &updatedRoomNumber,
+		Floor:              &updatedFloor,
+		MaxConcurrentGames: &updatedConcurrent,
+		Notes:              &updatedNotes,
+		IsDisabled:         &updatedDisables,
+	}
+	updatedRoomResult, err := UpdateRoomPartial(db, updatedRoom)
+	if err != nil {
+		t.Fatalf("unexpected error when updating valid room: %v", err)
+	}
+	partialUpdatedRoomResult, err := UpdateRoomPartial(db, models.RoomInput{ID: createRoomPartialResult.ID, Name: &updatedName})
+	if err != nil {
+		t.Fatalf("unexpected error when partially updating valid room: %v", err)
+	}
+
+	var invalidRoomNumber string = ""
+	var invalidName string = ""
+	var invalidConcurrent int = -1
+
+	_, errInvalidID := UpdateRoomPartial(db, models.RoomInput{})
+	_, errInvalidName := UpdateRoomPartial(db, models.RoomInput{ID: 1, Name: &invalidName})
+	_, errInvalidRoomNumber := UpdateRoomPartial(db, models.RoomInput{ID: 1, RoomNumber: &invalidRoomNumber})
+	_, errInvalidConcurrency := UpdateRoomPartial(db, models.RoomInput{ID: 1, MaxConcurrentGames: &invalidConcurrent})
+
+	// Then
+	if originalRoom.Name != createRoomResult.Name {
+		t.Errorf("Original name was different to what create room returned")
+	}
+	if createRoomResult.Name == updatedRoomResult.Name {
+		t.Errorf("Room name persisted after updateRoom was called successfully\nexpected: \t%s\nrecieved: \t%s", createRoomResult.Name, updatedRoomResult.Name)
+	}
+	if createRoomPartialResult.Name == partialUpdatedRoomResult.Name {
+		t.Errorf("Room name persisted after updateRoom was called successfully\nexpected: \t%s\nrecieved: \t%s", createRoomPartialResult.Name, partialUpdatedRoomResult.Name)
+	}
+
+	if errInvalidID == nil {
+		t.Errorf("UpdateRoom allowed update when ID was omited")
+	}
+	if errInvalidName == nil {
+		t.Errorf("UpdateRoom allowed update when name was an empty string")
+	}
+	if errInvalidConcurrency == nil {
+		t.Errorf("UpdateRoom allowed update when max concurrent games was less than 1")
+	}
+	if errInvalidRoomNumber == nil {
+		t.Errorf("UpdateRoom allowed update when room number was an empty string")
+	}
+}
+
+func StringPtr(s string) *string { return &s }
+func IntPtr(i int) *int          { return &i }
+func BoolPtr(b bool) *bool       { return &b }
