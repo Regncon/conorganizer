@@ -65,9 +65,8 @@ templ billettholderInterestSummaryStyles() {
 	</style>
 }
 
-templ billettholderInterestSummary(billettholder models.Billettholder, searchTerm string) {
+templ billettholderInterestSummary(billettholder models.Billettholder, searchTerm string, interestSections []billettholderInterestPuljeSection) {
 	{{
-		interestSections := mockBillettholderInterestSections(billettholder)
 		hasGMOrDM := billettholderHasGMOrDM(interestSections)
 		hasFirstChoice := billettholderHasFirstChoice(interestSections)
 		assignedTotal := billettholderAssignedTotal(interestSections)

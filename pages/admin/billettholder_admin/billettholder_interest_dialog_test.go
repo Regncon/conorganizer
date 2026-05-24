@@ -154,7 +154,11 @@ func assertBillettholderInterestSections(
 	}
 }
 
-func normalizeBillettholderInterestRows(rows []billettholderInterestMockRow) []expectedBillettholderInterestRow {
+func normalizeBillettholderInterestRows(rows []billettholderInterestEventRow) []expectedBillettholderInterestRow {
+	if len(rows) == 0 {
+		return nil
+	}
+
 	normalized := make([]expectedBillettholderInterestRow, 0, len(rows))
 	for _, row := range rows {
 		normalized = append(normalized, expectedBillettholderInterestRow{

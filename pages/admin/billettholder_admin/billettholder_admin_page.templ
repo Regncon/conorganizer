@@ -3,6 +3,7 @@ package billettholderadmin
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -55,7 +56,17 @@ func billettholdereSearchRoute(
 */
 
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ bilettholdere, err := billettholderService.GetBillettholdere("", db) }}
+	{{
+		bilettholdere, err := billettholderService.GetBillettholdere("", db)
+		interestSectionsByBillettholderID := map[int][]billettholderInterestPuljeSection{}
+		if err == nil {
+			var interestErr error
+			interestSectionsByBillettholderID, interestErr = getBillettholderInterestSectionsByBillettholderID(db, billettholderIDs(bilettholdere))
+			if interestErr != nil {
+				logger.Error(fmt.Errorf("failed to load billettholder interests: %w", interestErr).Error())
+			}
+		}
+	}}
 	if err != nil {
 		{{ logger.Error(err.Error()) }}
 	}
@@ -93,7 +104,7 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 					<p>Failed to load billettholdere.</p>
 				} else {
 					for _, billettholder := range bilettholdere {
-						@billettholderCard(billettholder, searchTerm)
+						@billettholderCard(billettholder, searchTerm, interestSectionsByBillettholderID[billettholder.ID])
 					}
 				}
 			</div>

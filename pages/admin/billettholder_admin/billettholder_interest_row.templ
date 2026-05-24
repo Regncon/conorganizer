@@ -148,7 +148,7 @@ templ billettholderInterestRowStyles() {
 	</style>
 }
 
-templ billettholderInterestGroup(title string, rows []billettholderInterestMockRow) {
+templ billettholderInterestGroup(title string, rows []billettholderInterestEventRow) {
 	if len(rows) > 0 {
 		<div class="billettholder-interest-group">
 			<h4 class="billettholder-interest-group-title">{ title } ({ strconv.Itoa(len(rows)) })</h4>
@@ -159,7 +159,7 @@ templ billettholderInterestGroup(title string, rows []billettholderInterestMockR
 	}
 }
 
-templ billettholderInterestRow(row billettholderInterestMockRow, isAssigned bool) {
+templ billettholderInterestRow(row billettholderInterestEventRow, isAssigned bool) {
 	{{
 		rowClass := "billettholder-interest-row"
 		if row.EventStatus != models.EventStatusPublished {

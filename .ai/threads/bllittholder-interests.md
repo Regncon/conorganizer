@@ -535,4 +535,47 @@ Verification:
 
 Time: 2026-05-24 15:56:45
 --- Next Prompt ---
+Ok, go ahead and implement the data layer. Delete the mock data, and add the real query to the UI. 
+
+Time: 2026-05-24 16:31:40
+--- Codex Run ---
+
+Codex output:
+I’ll wire this through the page as a batch query, not per card: page loads all billettholders, loads all interest sections keyed by billettholder ID, then the card passes the section slice into the interest summary component. First I’m reading the current split components so the refactor stays narrow.
+The real loader will live in a plain Go file and own the section/row types. I’m going to keep rendering helpers in the component templates, replace the summary/card signatures to accept real sections, and keep the page usable even if the interest loader errors by logging and rendering empty interest summaries.
+I’m making the data contract real now: new batch loader, real row type names, and the admin page will pass each card its preloaded sections. The mock generator block is being removed rather than left dormant.
+The code now has the real SQL loader and no mock generator in the source templates. I’m regenerating templ output next, then I’ll run the package tests; I expect the previous red test to move to a SQL/order assertion if anything is off.
+Templ generation exposed a Go naming collision: the new row type name matched the generated component function name. I’m renaming only the data type to `billettholderInterestEventRow` and keeping the existing component name intact.
+The loader is returning the right rows and order; the failing assertion is only `nil` versus empty slices in the test normalization for absent groups. I’m tightening the test helper so absent groups normalize to nil, then I’ll rerun.
+The focused test now passes, and a scan confirms the mock helpers/strings are gone from the billettholder admin source. I’m doing the final formatting/diff checks and a quick worktree review next.
+Implemented the real data layer and wired it into the UI.
+
+Key changes:
+- Added batch loader in [billettholder_interest_data.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_data.go:41).
+- Removed the mock data generator from [billettholder_interest_dialog.templ](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog.templ:1).
+- Updated the admin page to load interests once and pass sections into each card in [billettholder_admin_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_admin_page.templ:58).
+- Updated card/summary/row components to use real section data.
+- Kept assigned rows separate from interest-level rows. Assigned rows still carry their interest level when one exists.
+- Added an empty-state message for billettholdere with no interests or assignments.
+
+The query includes:
+- assigned-only events
+- assigned events with interest level
+- unassigned interest rows
+- pulje grouping/order
+- assigned rows first
+- interest rows grouped high, medium, low
+- event status for the unpublished/muted styling
+
+Verification passed:
+```sh
+go tool templ generate
+GOCACHE=/tmp/conorganizer-go-build-cache go test -count=1 ./pages/admin/billettholder_admin
+git diff --check -- pages/admin/billettholder_admin
+```
+
+Note: `.ai/threads/bllittholder-interests.md` is still modified in the worktree; I didn’t touch it.
+
+Time: 2026-05-24 16:31:40
+--- Next Prompt ---
 
