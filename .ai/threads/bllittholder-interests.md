@@ -1,5 +1,5 @@
 --- Codex Session ---
-ID: 019e5949-bbc1-70b3-9960-e93cca6d0e8d
+ID: 019e59ef-4bce-7fa0-b443-03b9780e6b70
 
 # bllittholder-interests
 
@@ -465,3 +465,33 @@ func TestService_EventProducesExpectedResult(t *testing.T) {
 	assertExpectedResult(t, db, expectedResult)
 }
 ```
+
+
+Time: 2026-05-24 15:46:37
+--- Codex Run ---
+
+Codex output:
+I’ll reshape the first test to match this exact structure: a BDD sentence comment at the top of the test, then explicit `// Given`, `// When`, `// Then` sections. I’ll keep it as one test only and rerun the focused package checks.
+I’ve removed the subtest wrapper and normalized the comments to the pattern you showed. I’m formatting and running the focused package test now.
+Adjusted the first test to match your example style in [billettholder_interest_dialog_test.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog_test.go:8).
+
+It now has:
+
+- BDD description comment at the top of the test
+- `// Given`, `// When`, `// Then` sections
+- expected results declared first in `// Given`
+- no `t.Run` wrapper
+
+Verified with:
+
+```sh
+gofmt -w pages/admin/billettholder_admin/billettholder_interest_dialog_test.go
+GOCACHE=/tmp/conorganizer-go-build-cache go test ./pages/admin/billettholder_admin
+git diff --check -- pages/admin/billettholder_admin/billettholder_interest_dialog_test.go
+```
+
+For the next test, I’d suggest checking the tab/pulje counts: each pulje should report `2` assigned rows and `30` interest rows, and the overall modal summary should split assigned and interests correctly.
+
+Time: 2026-05-24 15:46:37
+--- Next Prompt ---
+
