@@ -169,4 +169,53 @@ I did not implement tests or the real data layer yet.
 
 Time: 2026-05-24 13:02:45
 --- Next Prompt ---
+Let's clearly show when a new pujle starts in the modal. Give it a tile and a dividing line. Just under the pulje title we should show the assigned events for that pulje. Then reduce the interest level line hight into a single line and have alternating background colors for each interest level line so that it's easier to read. Make a small header for each interest level as well.
+
+Time: 2026-05-24 13:15:35
+--- Codex Run ---
+
+Codex output:
+I’ll adjust the existing mock modal UI only: clearer pulje section boundaries, assigned rows directly under each pulje heading, denser one-line rows, and alternating row backgrounds inside each interest group.
+The modal sections and row density are updated. I’m running templ generation and the package test now to make sure the templ changes still compile.
+Updated the mock modal UI in [billettholder_card.templ](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_card.templ:541).
+
+Changes:
+- Pulje sections now have stronger spacing, a pulje title, and a divider line.
+- Assigned events appear directly under each pulje title with a `Tildelt (N)` header.
+- Interest groups now have compact headers with counts.
+- Event rows are denser and single-line on wider screens.
+- Rows alternate background colors within each group for readability.
+
+Verification passed:
+- `go tool templ generate`
+- `GOCACHE=/tmp/conorganizer-go-build-cache go test ./pages/admin/billettholder_admin`
+- `git diff --check`
+
+Time: 2026-05-24 13:15:35
+--- Next Prompt ---
+Add more test data. Two rows for assigned events and ten rows for each interest level.
+
+Time: 2026-05-24 13:21:31
+--- Codex Run ---
+
+Codex output:
+I’ll expand the mock generator instead of manually listing dozens of rows, so every pulje can stress the modal with predictable assigned/high/medium/low groups while keeping the later data-layer replacement simple.
+The larger fixture now generates two assigned rows plus ten high, ten medium, and ten low rows for every pulje section. I’m running the compile checks now.
+Expanded the mock fixture in [billettholder_card.templ](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_card.templ:65).
+
+Each pulje now gets:
+- 2 assigned rows
+- 10 `Veldig interessert` rows
+- 10 `Interessert` rows
+- 10 `Litt interessert` rows
+
+That gives 128 modal rows per billettholder card, which should be enough to judge scrolling, grouping, and readability.
+
+Verification passed:
+- `go tool templ generate`
+- `GOCACHE=/tmp/conorganizer-go-build-cache go test ./pages/admin/billettholder_admin`
+- `git diff --check`
+
+Time: 2026-05-24 13:21:31
+--- Next Prompt ---
 
