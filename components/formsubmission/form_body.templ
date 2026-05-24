@@ -1,9 +1,133 @@
 package formsubmission
 
 import (
+	"context"
 	"database/sql"
+	"fmt"
+	"log/slog"
+	"strconv"
+
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/userctx"
 )
+
+type eventAuditExecutor interface {
+	ExecContext(context.Context, string, ...any) (sql.Result, error)
+}
+
+func updateEventFieldWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, setClause string, args ...any) error {
+	updatedByID, err := currentUserDBID(ctx, db, logger)
+	if err != nil {
+		return err
+	}
+
+	query := `UPDATE events SET ` + setClause + `, updated_at = ` + models.DBDateTimeNowSQL + `, updated_by_id = ? WHERE id = ?`
+	args = append(args, updatedByID, eventID)
+	if _, err := db.ExecContext(ctx, query, args...); err != nil {
+		return fmt.Errorf("update event %q with audit: %w", eventID, err)
+	}
+	return nil
+}
+
+func TouchEventUpdatedAt(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string) error {
+	updatedByID, err := currentUserDBID(ctx, db, logger)
+	if err != nil {
+		return err
+	}
+	return touchEventUpdatedAtWithUserID(ctx, db, eventID, updatedByID)
+}
+
+func updateEventStatusWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, status models.EventStatus) error {
+	updatedByID, err := currentUserDBID(ctx, db, logger)
+	if err != nil {
+		return err
+	}
+
+	query := `UPDATE events SET status = ?, updated_at = ` + models.DBDateTimeNowSQL + `, updated_by_id = ?, status_changed_at = ` + models.DBDateTimeNowSQL + `, status_changed_by_id = ?, status_changed_action = ? WHERE id = ?`
+	if _, err := db.ExecContext(ctx, query, status, updatedByID, updatedByID, string(status), eventID); err != nil {
+		return fmt.Errorf("update event %q status with audit: %w", eventID, err)
+	}
+	return nil
+}
+
+func submitEventWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string) error {
+	return updateEventStatusWithAudit(ctx, db, logger, eventID, models.EventStatusSubmitted)
+}
+
+func updateEventPuljePublishedWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, isPublished bool) error {
+	updatedByID, err := currentUserDBID(ctx, db, logger)
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("start publish update transaction for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	defer tx.Rollback()
+
+	query := `UPDATE relation_event_puljer SET is_published = ? WHERE event_id = ? AND pulje_id = ?;`
+	if _, err := tx.ExecContext(ctx, query, isPublished, eventID, puljeID); err != nil {
+		return fmt.Errorf("update publish status for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	if err := touchEventUpdatedAtWithUserID(ctx, tx, eventID, updatedByID); err != nil {
+		return fmt.Errorf("touch event after publish update for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit publish update for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	return nil
+}
+
+func updateEventPuljeMembershipWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, isInPulje bool) error {
+	updatedByID, err := currentUserDBID(ctx, db, logger)
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("start pulje update transaction for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	defer tx.Rollback()
+
+	const upsert = `
+	INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published)
+	VALUES (?, ?, ?, 0)
+	ON CONFLICT(event_id, pulje_id) DO UPDATE SET
+		is_in_pulje = excluded.is_in_pulje, is_published = 0;
+	`
+	if _, err := tx.ExecContext(ctx, upsert, eventID, puljeID, isInPulje); err != nil {
+		return fmt.Errorf("upsert relation_event_puljer for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	if err := touchEventUpdatedAtWithUserID(ctx, tx, eventID, updatedByID); err != nil {
+		return fmt.Errorf("touch event after pulje update for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit pulje update for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	return nil
+}
+
+func touchEventUpdatedAtWithUserID(ctx context.Context, executor eventAuditExecutor, eventID string, updatedByID int64) error {
+	query := `UPDATE events SET updated_at = ` + models.DBDateTimeNowSQL + `, updated_by_id = ? WHERE id = ?`
+	if _, err := executor.ExecContext(ctx, query, updatedByID, eventID); err != nil {
+		return fmt.Errorf("touch event %q updated_at: %w", eventID, err)
+	}
+	return nil
+}
+
+func currentUserDBID(ctx context.Context, db *sql.DB, logger *slog.Logger) (int64, error) {
+	userID, err := userctx.GetUserIDFromExternalIDFromContext(ctx, db, logger)
+	if err != nil {
+		return 0, fmt.Errorf("get current user id for event audit: %w", err)
+	}
+	updatedByID, err := strconv.ParseInt(userID, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parse current user id %q for event audit: %w", userID, err)
+	}
+	return updatedByID, nil
+}
 
 templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 	<style>

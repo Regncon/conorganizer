@@ -1,20 +1,21 @@
 package eventimgupload
 
 import (
+	"database/sql"
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"database/sql"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
-	"net/http"
 )
 
 func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
@@ -38,12 +39,12 @@ func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logge
 
 func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
-			eventID := chi.URLParam(r, "id")
-			if eventID == "" {
-				logger.Warn("Event ID is required")
-				http.Error(w, "Event ID is required", http.StatusBadRequest)
-				return
-			}
+		eventID := chi.URLParam(r, "id")
+		if eventID == "" {
+			logger.Warn("Event ID is required")
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
 		logger.Info("Uploading event image", "event_id", eventID)
 
 		file, header, err := r.FormFile("image")
@@ -73,6 +74,11 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			http.Error(w, "Failed to save image", http.StatusInternalServerError)
 			return
 		}
+		if err := formsubmission.TouchEventUpdatedAt(r.Context(), db, logger, eventID); err != nil {
+			logger.Error(fmt.Errorf("failed to touch event after source image upload for event %s: %w", eventID, err).Error())
+			http.Error(w, "Failed to update event image audit", http.StatusInternalServerError)
+			return
+		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
 
 		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/", eventID), http.StatusSeeOther)
@@ -81,19 +87,19 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 
 func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
-			logger.Info("Received cropped image upload request")
-			eventID := chi.URLParam(r, "id")
-			if strings.TrimSpace(eventID) == "" {
-				logger.Warn("Event ID is required")
-				http.Error(w, "Event ID is required", http.StatusBadRequest)
-				return
-			}
-			imageKind := r.FormValue("kind")
-			if imageKind != "card" && imageKind != "banner" {
-				logger.Warn("Invalid image kind", "imageKind", imageKind)
-				http.Error(w, "Invalid image kind", http.StatusBadRequest)
-				return
-			}
+		logger.Info("Received cropped image upload request")
+		eventID := chi.URLParam(r, "id")
+		if strings.TrimSpace(eventID) == "" {
+			logger.Warn("Event ID is required")
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+		imageKind := r.FormValue("kind")
+		if imageKind != "card" && imageKind != "banner" {
+			logger.Warn("Invalid image kind", "imageKind", imageKind)
+			http.Error(w, "Invalid image kind", http.StatusBadRequest)
+			return
+		}
 		logger.Info("Uploading cropped event image", "event_id", eventID, "imageKind", imageKind)
 		file, _, err := r.FormFile("image")
 		if err != nil {
@@ -115,6 +121,11 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 		if err != nil {
 			logger.Error(fmt.Errorf("failed to save cropped image file %q: %w", imagePath, err).Error())
 			http.Error(w, "Failed to save image", http.StatusInternalServerError)
+			return
+		}
+		if err := formsubmission.TouchEventUpdatedAt(r.Context(), db, logger, eventID); err != nil {
+			logger.Error(fmt.Errorf("failed to touch event after cropped image upload for event %s: %w", eventID, err).Error())
+			http.Error(w, "Failed to update event image audit", http.StatusInternalServerError)
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
