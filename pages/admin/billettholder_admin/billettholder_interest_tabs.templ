@@ -1,0 +1,157 @@
+package billettholderadmin
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
+)
+
+templ billettholderInterestTabsStyles() {
+	<style>
+		.billettholder-interest-tabs {
+			display: grid;
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			gap: var(--spacing-2x);
+			border-bottom: 1px solid var(--bg-item-border);
+			padding-bottom: var(--spacing-3x);
+		}
+
+		.billettholder-interest-tab {
+			display: grid;
+			gap: var(--spacing-1x);
+			align-items: center;
+			min-height: 4.25rem;
+			padding: var(--spacing-2x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-1x);
+			background: var(--bg-item);
+			color: var(--color-text-soft);
+			cursor: pointer;
+			text-align: left;
+			transition: var(--btn-transition);
+		}
+
+		.billettholder-interest-tab:hover,
+		.billettholder-interest-tab:focus-visible,
+		.billettholder-interest-tab.selected {
+			border-color: var(--color-primary);
+			background: var(--bg-item-hover);
+			color: var(--color-text-strong);
+			outline: none;
+		}
+
+		.billettholder-interest-tab-title {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-1x);
+			font-size: 12px;
+			font-weight: 700;
+		}
+
+		.billettholder-interest-tab-gm {
+			color: var(--color-success);
+		}
+
+		.billettholder-interest-tab-counts {
+			display: flex;
+			flex-wrap: wrap;
+			gap: var(--spacing-1x);
+			font-size: 12px;
+		}
+
+		.billettholder-interest-tab-panel.hidden {
+			display: none;
+		}
+
+		.billettholder-interest-tab-panel {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+		}
+
+		.billettholder-interest-pulje-title {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-3x);
+			margin: 0;
+			font-size: var(--text-heading-3);
+			color: var(--color-primary);
+		}
+
+		.billettholder-interest-pulje-title::after {
+			content: "";
+			flex: 1;
+			border-top: 1px solid var(--bg-item-border);
+		}
+
+		@media (max-width: 48rem) {
+			.billettholder-interest-tabs {
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+			}
+		}
+
+		@media (max-width: 36rem) {
+			.billettholder-interest-tabs {
+				grid-template-columns: 1fr;
+			}
+		}
+	</style>
+}
+
+templ billettholderInterestTabs(sections []billettholderInterestPuljeSection) {
+	<div class="billettholder-interest-tabs" role="tablist" aria-label="Velg pulje">
+		for _, section := range sections {
+			<button
+				type="button"
+				class="billettholder-interest-tab"
+				role="tab"
+				data-class:selected={ fmt.Sprintf("$billettholderInterestActivePulje == '%s'", section.PuljeID) }
+				data-attr:aria-selected={ fmt.Sprintf("$billettholderInterestActivePulje == '%s' ? 'true' : 'false'", section.PuljeID) }
+				data-attr:tabindex={ fmt.Sprintf("$billettholderInterestActivePulje == '%s' ? '0' : '-1'", section.PuljeID) }
+				data-on:click={ fmt.Sprintf("$billettholderInterestActivePulje = '%s'", section.PuljeID) }
+			>
+				<span class="billettholder-interest-tab-title">
+					{ section.Name }
+					if billettholderSectionHasGMOrDM(section) {
+						<span class="billettholder-interest-tab-gm" aria-label="GM i denne puljen">
+							@icons.Icon(icons.Gamemaster, icons.Size16)
+						</span>
+					}
+				</span>
+				<span class="billettholder-interest-tab-counts">
+					<span>{ strconv.Itoa(len(section.Assigned)) } tildelt</span>
+					<span>{ strconv.Itoa(billettholderSectionInterestLevelTotal(section)) } interesser</span>
+				</span>
+			</button>
+		}
+	</div>
+}
+
+templ billettholderInterestTabPanels(sections []billettholderInterestPuljeSection) {
+	for _, section := range sections {
+		@billettholderInterestTabPanel(section)
+	}
+}
+
+templ billettholderInterestTabPanel(section billettholderInterestPuljeSection) {
+	<section
+		class="billettholder-interest-tab-panel"
+		role="tabpanel"
+		data-class:hidden={ fmt.Sprintf("$billettholderInterestActivePulje != '%s'", section.PuljeID) }
+	>
+		<h3 class="billettholder-interest-pulje-title">{ section.Name }</h3>
+		if len(section.Assigned) > 0 {
+			<div class="billettholder-interest-group">
+				<h4 class="billettholder-interest-group-title billettholder-interest-assigned-title">Tildelt ({ strconv.Itoa(len(section.Assigned)) })</h4>
+				for _, row := range section.Assigned {
+					@billettholderInterestRow(row, true)
+				}
+			</div>
+		}
+		@billettholderInterestGroup(billettholderInterestLevelIcon(models.InterestLevelHigh)+" "+models.InterestLevelHigh.Label(), section.High)
+		@billettholderInterestGroup(billettholderInterestLevelIcon(models.InterestLevelMedium)+" "+models.InterestLevelMedium.Label(), section.Medium)
+		@billettholderInterestGroup(billettholderInterestLevelIcon(models.InterestLevelLow)+" "+models.InterestLevelLow.Label(), section.Low)
+	</section>
+}

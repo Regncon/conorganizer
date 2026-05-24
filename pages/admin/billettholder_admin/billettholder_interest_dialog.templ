@@ -1,0 +1,316 @@
+package billettholderadmin
+
+import (
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
+)
+
+type billettholderInterestMockRow struct {
+	EventID       string
+	EventTitle    string
+	EventStatus   models.EventStatus
+	InterestLevel models.InterestLevel
+	AssignedRole  models.EventPlayerRole
+}
+
+type billettholderInterestPuljeSection struct {
+	PuljeID  models.Pulje
+	Name     string
+	Assigned []billettholderInterestMockRow
+	High     []billettholderInterestMockRow
+	Medium   []billettholderInterestMockRow
+	Low      []billettholderInterestMockRow
+}
+
+func mockBillettholderInterestSections(billettholder models.Billettholder) []billettholderInterestPuljeSection {
+	return []billettholderInterestPuljeSection{
+		mockBillettholderInterestSection(billettholder, models.PuljeFredagKveld, "Fredag kveld", "fredag-kveld", 0),
+		mockBillettholderInterestSection(billettholder, models.PuljeLordagMorgen, "Lørdag morgen", "lordag-morgen", 1),
+		mockBillettholderInterestSection(billettholder, models.PuljeLordagKveld, "Lørdag kveld", "lordag-kveld", 2),
+		mockBillettholderInterestSection(billettholder, models.PuljeSondagMorgen, "Søndag morgen", "sondag-morgen", 3),
+	}
+}
+
+func mockBillettholderInterestSection(
+	billettholder models.Billettholder,
+	puljeID models.Pulje,
+	puljeName string,
+	eventIDPrefix string,
+	statusOffset int,
+) billettholderInterestPuljeSection {
+	assignedInterestLevel := models.InterestLevelMedium
+	if billettholder.ID%3 == 0 {
+		assignedInterestLevel = models.InterestLevelHigh
+	}
+
+	assignedOnlyRole := models.EventPlayerRolePlayer
+	if billettholder.ID%2 == 0 {
+		assignedOnlyRole = models.EventPlayerRoleGM
+	}
+
+	return billettholderInterestPuljeSection{
+		PuljeID: puljeID,
+		Name:    puljeName,
+		Assigned: []billettholderInterestMockRow{
+			{
+				EventID:       mockBillettholderEventID(billettholder.ID, eventIDPrefix, "assigned-with-interest", 1),
+				EventTitle:    fmt.Sprintf("%s: Tildelt med registrert interesse", puljeName),
+				EventStatus:   mockBillettholderEventStatus(statusOffset),
+				InterestLevel: assignedInterestLevel,
+				AssignedRole:  models.EventPlayerRolePlayer,
+			},
+			{
+				EventID:      mockBillettholderEventID(billettholder.ID, eventIDPrefix, "assigned-only", 2),
+				EventTitle:   fmt.Sprintf("%s: Tildelt uten registrert interesse", puljeName),
+				EventStatus:  mockBillettholderEventStatus(statusOffset + 1),
+				AssignedRole: assignedOnlyRole,
+			},
+		},
+		High:   mockBillettholderInterestRows(billettholder.ID, eventIDPrefix, puljeName, models.InterestLevelHigh, statusOffset),
+		Medium: mockBillettholderInterestRows(billettholder.ID, eventIDPrefix, puljeName, models.InterestLevelMedium, statusOffset+1),
+		Low:    mockBillettholderInterestRows(billettholder.ID, eventIDPrefix, puljeName, models.InterestLevelLow, statusOffset+2),
+	}
+}
+
+func mockBillettholderInterestRows(
+	billettholderID int,
+	eventIDPrefix string,
+	puljeName string,
+	level models.InterestLevel,
+	statusOffset int,
+) []billettholderInterestMockRow {
+	titles := []string{
+		"Skygger over Bryggen",
+		"Tåkeskogen",
+		"Kartografene",
+		"Maskeradeball",
+		"Vaktskiftet",
+		"Stjerneskipet",
+		"Den siste porten",
+		"Ravnens løfte",
+		"Glasshuset",
+		"Ekspedisjon nordlys",
+	}
+
+	rows := make([]billettholderInterestMockRow, 0, len(titles))
+	for i, title := range titles {
+		rows = append(rows, billettholderInterestMockRow{
+			EventID:       mockBillettholderEventID(billettholderID, eventIDPrefix, string(level), i+1),
+			EventTitle:    fmt.Sprintf("%s: %s", puljeName, title),
+			EventStatus:   mockBillettholderEventStatus(statusOffset + i),
+			InterestLevel: level,
+		})
+	}
+	return rows
+}
+
+func mockBillettholderEventID(billettholderID int, eventIDPrefix string, group string, index int) string {
+	return fmt.Sprintf("mock-%d-%s-%s-%02d", billettholderID, eventIDPrefix, strings.ToLower(group), index)
+}
+
+func mockBillettholderEventStatus(index int) models.EventStatus {
+	switch index % 4 {
+	case 0:
+		return models.EventStatusPublished
+	case 1:
+		return models.EventStatusApproved
+	case 2:
+		return models.EventStatusSubmitted
+	default:
+		return models.EventStatusDraft
+	}
+}
+
+func billettholderAssignedTotal(sections []billettholderInterestPuljeSection) int {
+	total := 0
+	for _, section := range sections {
+		total += len(section.Assigned)
+	}
+	return total
+}
+
+func billettholderInterestLevelTotal(sections []billettholderInterestPuljeSection) int {
+	total := 0
+	for _, section := range sections {
+		total += len(section.High) + len(section.Medium) + len(section.Low)
+	}
+	return total
+}
+
+func billettholderSectionInterestLevelTotal(section billettholderInterestPuljeSection) int {
+	return len(section.High) + len(section.Medium) + len(section.Low)
+}
+
+func billettholderSectionHasGMOrDM(section billettholderInterestPuljeSection) bool {
+	for _, row := range section.Assigned {
+		if row.AssignedRole == models.EventPlayerRoleGM {
+			return true
+		}
+	}
+	return false
+}
+
+func billettholderHasGMOrDM(sections []billettholderInterestPuljeSection) bool {
+	for _, section := range sections {
+		if billettholderSectionHasGMOrDM(section) {
+			return true
+		}
+	}
+	return false
+}
+
+func billettholderHasFirstChoice(sections []billettholderInterestPuljeSection) bool {
+	for _, section := range sections {
+		for _, row := range section.Assigned {
+			if row.AssignedRole == models.EventPlayerRolePlayer && row.InterestLevel == models.InterestLevelHigh {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func billettholderFirstPuljeID(sections []billettholderInterestPuljeSection) models.Pulje {
+	if len(sections) == 0 {
+		return models.PuljeFredagKveld
+	}
+	return sections[0].PuljeID
+}
+
+func billettholderInterestLevelIcon(level models.InterestLevel) string {
+	switch level {
+	case models.InterestLevelHigh:
+		return "🤩"
+	case models.InterestLevelMedium:
+		return "🙂"
+	case models.InterestLevelLow:
+		return "🤨"
+	default:
+		return "•"
+	}
+}
+
+func billettholderInterestRoleLabel(role models.EventPlayerRole) string {
+	switch role {
+	case models.EventPlayerRoleGM:
+		return "Spilleder (GM/DM)"
+	case models.EventPlayerRolePlayer:
+		return "Spiller"
+	default:
+		return ""
+	}
+}
+
+func billettholderInterestLabel(level models.InterestLevel) string {
+	if level == models.InterestLevelNone {
+		return "Ingen interesse registrert"
+	}
+	return level.Label()
+}
+
+templ billettholderInterestDialogStyles() {
+	<style>
+		.billettholder-interest-dialog {
+			width: min(56rem, calc(100vw - 2rem));
+			max-height: min(52rem, calc(100vh - 2rem));
+			padding: 0;
+			border: none;
+			border-radius: var(--border-radius-2x);
+			background: var(--bg-surface);
+			color: var(--color-text-strong);
+			box-shadow: var(--shadow-dialog);
+		}
+
+		.billettholder-interest-dialog::backdrop {
+			background: hsl(0deg 0% 0% / 55%);
+		}
+
+		.billettholder-interest-dialog-shell {
+			display: flex;
+			flex-direction: column;
+			max-height: min(52rem, calc(100vh - 2rem));
+		}
+
+		.billettholder-interest-dialog-header {
+			display: flex;
+			align-items: start;
+			justify-content: space-between;
+			gap: var(--spacing-4x);
+			padding: var(--spacing-4x);
+			border-bottom: 1px solid var(--bg-item-border);
+		}
+
+		.billettholder-interest-dialog-title {
+			margin: 0;
+			font-size: var(--text-heading-3);
+		}
+
+		.billettholder-interest-dialog-subtitle {
+			margin: var(--spacing-1x) 0 0;
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+		}
+
+		.billettholder-interest-dialog-content {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-4x);
+			padding: var(--spacing-4x);
+			overflow: auto;
+		}
+
+		.billettholder-interest-summary-counts {
+			display: flex;
+			flex-wrap: wrap;
+			gap: var(--spacing-3x);
+			margin: 0;
+			color: var(--color-text-soft);
+		}
+
+	</style>
+}
+
+templ billettholderInterestDialog(
+	billettholder models.Billettholder,
+	sections []billettholderInterestPuljeSection,
+	dialogID string,
+	assignedTotal int,
+	interestLevelTotal int,
+) {
+	<dialog
+		id={ dialogID }
+		class="billettholder-interest-dialog"
+		aria-labelledby={ dialogID + "-title" }
+		data-signals:billettholder-interest-active-pulje={ fmt.Sprintf("'%s'", billettholderFirstPuljeID(sections)) }
+	>
+		<div class="billettholder-interest-dialog-shell">
+			<header class="billettholder-interest-dialog-header">
+				<div>
+					<h2 id={ dialogID + "-title" } class="billettholder-interest-dialog-title">
+						Interesser for { billettholder.FirstName } { billettholder.LastName }
+					</h2>
+					<p class="billettholder-interest-dialog-subtitle">
+						Tildelte arrangementer vises først i hver pulje, deretter interesser sortert etter interessenivå.
+					</p>
+				</div>
+				<form method="dialog">
+					<button class="btn btn--ghost btn-icon-only" aria-label="Lukk interesser">
+						@icons.Icon(icons.Close, icons.Size16)
+					</button>
+				</form>
+			</header>
+			<div class="billettholder-interest-dialog-content">
+				<p class="billettholder-interest-summary-counts">
+					<span>{ strconv.Itoa(interestLevelTotal) } interesser</span>
+					<span>{ strconv.Itoa(assignedTotal) } tildelte arrangementer</span>
+				</p>
+				@billettholderInterestTabs(sections)
+				@billettholderInterestTabPanels(sections)
+			</div>
+		</div>
+	</dialog>
+}
