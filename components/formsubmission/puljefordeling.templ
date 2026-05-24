@@ -59,9 +59,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 				return
 			}
 
-			query := `UPDATE relation_event_puljer SET is_published = ? WHERE event_id = ? AND pulje_id = ?;`
-			_, err := db.Exec(query, isPublished, eventID, puljeId)
-			if err != nil {
+			if err := updateEventPuljePublishedWithAudit(r.Context(), db, logger, eventID, puljeId, isPublished); err != nil {
 				logger.Error(fmt.Errorf("failed to update publish status in the database for event %s and pulje %s: %w", eventID, puljeId, err).Error())
 				http.Error(w, "Failed to update publish status in the database", http.StatusInternalServerError)
 				return
@@ -122,13 +120,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 				return
 			}
 
-			const upsert = `
-			INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published)
-			VALUES (?, ?, ?, 0)
-			ON CONFLICT(event_id, pulje_id) DO UPDATE SET
-			  is_in_pulje = excluded.is_in_pulje, is_published = 0;
-			`
-			if _, err := db.Exec(upsert, eventID, puljeId, isInPulje); err != nil {
+			if err := updateEventPuljeMembershipWithAudit(r.Context(), db, logger, eventID, puljeId, isInPulje); err != nil {
 				logger.Error(fmt.Errorf("failed to upsert relation_event_puljer for event %s and pulje %s: %w", eventID, puljeId, err).Error())
 				http.Error(w, "Failed to update event in pulje", http.StatusInternalServerError)
 				return

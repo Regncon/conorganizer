@@ -3,6 +3,7 @@ package formsubmission
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/Regncon/conorganizer/models"
@@ -12,7 +13,7 @@ import (
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input models.AgeGroup `json:"ageGroup"`
@@ -30,9 +31,7 @@ func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
-		query := `UPDATE events SET age_group = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
-		if err != nil {
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "age_group = ?", store.Input); err != nil {
 			http.Error(w, "Failed to update the title for event in the database", http.StatusInternalServerError)
 			return
 		}
@@ -44,7 +43,7 @@ func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 
-func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input models.Runtime `json:"runtime"`
@@ -62,9 +61,7 @@ func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
-		query := `UPDATE events SET event_runtime = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
-		if err != nil {
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "event_runtime = ?", store.Input); err != nil {
 			http.Error(w, "Failed to update the runtime for event in the database", http.StatusInternalServerError)
 			return
 		}
@@ -76,7 +73,7 @@ func UpdateRuntime(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 
-func UpdateBeginnerFriendly(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateBeginnerFriendly(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input bool `json:"beginnerFriendly"`
@@ -94,9 +91,7 @@ func UpdateBeginnerFriendly(eventRouter chi.Router, db *sql.DB, kv jetstream.Key
 			return
 		}
 
-		query := `UPDATE events SET beginner_friendly = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
-		if err != nil {
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "beginner_friendly = ?", store.Input); err != nil {
 			http.Error(w, "Failed to update the beginner friendly for event in the database", http.StatusInternalServerError)
 			return
 		}
@@ -108,7 +103,7 @@ func UpdateBeginnerFriendly(eventRouter chi.Router, db *sql.DB, kv jetstream.Key
 	})
 }
 
-func UpdateCanBeRunInEnglish(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateCanBeRunInEnglish(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input bool `json:"canBeRunInEnglish"`
@@ -126,9 +121,7 @@ func UpdateCanBeRunInEnglish(eventRouter chi.Router, db *sql.DB, kv jetstream.Ke
 			return
 		}
 
-		query := `UPDATE events SET can_be_run_in_english = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
-		if err != nil {
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "can_be_run_in_english = ?", store.Input); err != nil {
 			http.Error(w, "Failed to update the can be run in English for event in the database", http.StatusInternalServerError)
 			return
 		}
@@ -140,7 +133,7 @@ func UpdateCanBeRunInEnglish(eventRouter chi.Router, db *sql.DB, kv jetstream.Ke
 	})
 }
 
-func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input int `json:"maxPlayers"`
@@ -158,9 +151,7 @@ func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue)
 			return
 		}
 
-		query := `UPDATE events SET max_players = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
-		if err != nil {
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "max_players = ?", store.Input); err != nil {
 			http.Error(w, "Failed to update the max players for event in the database", http.StatusInternalServerError)
 			return
 		}
@@ -172,7 +163,7 @@ func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue)
 	})
 }
 
-func UpdateNotes(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateNotes(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"notes"`
@@ -192,9 +183,7 @@ func UpdateNotes(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 
 		normalizedInput := normalizeTextareaSubmission(store.Input)
 
-		query := `UPDATE events SET notes = ? WHERE id = ?`
-		_, err := db.Exec(query, normalizedInput, eventID)
-		if err != nil {
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "notes = ?", normalizedInput); err != nil {
 			http.Error(w, "Failed to update the notes for event in the database", http.StatusInternalServerError)
 			return
 		}
