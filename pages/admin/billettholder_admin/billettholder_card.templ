@@ -45,6 +45,191 @@ func highlightSearchTerm(text, searchTerm string) string {
 	return out.String()
 }
 
+type billettholderInterestMockRow struct {
+	EventID       string
+	EventTitle    string
+	EventStatus   models.EventStatus
+	InterestLevel models.InterestLevel
+	AssignedRole  models.EventPlayerRole
+}
+
+type billettholderInterestPuljeSection struct {
+	PuljeID  models.Pulje
+	Name     string
+	Assigned []billettholderInterestMockRow
+	High     []billettholderInterestMockRow
+	Medium   []billettholderInterestMockRow
+	Low      []billettholderInterestMockRow
+}
+
+func mockBillettholderInterestSections(billettholder models.Billettholder) []billettholderInterestPuljeSection {
+	mockID := func(suffix string) string {
+		return fmt.Sprintf("mock-%d-%s", billettholder.ID, suffix)
+	}
+
+	fridayFirstChoice := billettholder.ID%3 == 0
+	fridayAssignedWithoutFirstChoice := billettholder.ID%3 == 2
+	fridayInterestLevel := models.InterestLevelHigh
+	if fridayAssignedWithoutFirstChoice {
+		fridayInterestLevel = models.InterestLevelMedium
+	}
+	fridayAssignment := billettholderInterestMockRow{
+		EventID:       mockID("fredag-skygger-over-bryggen"),
+		EventTitle:    "Skygger over Bryggen",
+		EventStatus:   models.EventStatusPublished,
+		InterestLevel: fridayInterestLevel,
+		AssignedRole:  models.EventPlayerRolePlayer,
+	}
+
+	fridaySection := billettholderInterestPuljeSection{
+		PuljeID: models.PuljeFredagKveld,
+		Name:    "Fredag kveld",
+		Low: []billettholderInterestMockRow{
+			{
+				EventID:       mockID("fredag-kortspill-etter-midnatt"),
+				EventTitle:    "Kortspill etter midnatt",
+				EventStatus:   models.EventStatusDraft,
+				InterestLevel: models.InterestLevelLow,
+			},
+		},
+	}
+	if fridayFirstChoice || fridayAssignedWithoutFirstChoice {
+		fridaySection.Assigned = []billettholderInterestMockRow{fridayAssignment}
+	} else {
+		fridaySection.High = []billettholderInterestMockRow{fridayAssignment}
+	}
+
+	assignedOnlyRole := models.EventPlayerRolePlayer
+	if billettholder.ID%2 == 0 {
+		assignedOnlyRole = models.EventPlayerRoleGM
+	}
+
+	return []billettholderInterestPuljeSection{
+		fridaySection,
+		{
+			PuljeID: models.PuljeLordagMorgen,
+			Name:    "Lørdag morgen",
+			High: []billettholderInterestMockRow{
+				{
+					EventID:       mockID("lordag-morgen-takeskogen"),
+					EventTitle:    "Tåkeskogen",
+					EventStatus:   models.EventStatusApproved,
+					InterestLevel: models.InterestLevelHigh,
+				},
+			},
+			Medium: []billettholderInterestMockRow{
+				{
+					EventID:       mockID("lordag-morgen-kartografene"),
+					EventTitle:    "Kartografene",
+					EventStatus:   models.EventStatusPublished,
+					InterestLevel: models.InterestLevelMedium,
+				},
+			},
+		},
+		{
+			PuljeID: models.PuljeLordagKveld,
+			Name:    "Lørdag kveld",
+			Assigned: []billettholderInterestMockRow{
+				{
+					EventID:      mockID("lordag-kveld-bak-porten"),
+					EventTitle:   "Bak porten",
+					EventStatus:  models.EventStatusPublished,
+					AssignedRole: assignedOnlyRole,
+				},
+			},
+			High: []billettholderInterestMockRow{
+				{
+					EventID:       mockID("lordag-kveld-maskeradeball"),
+					EventTitle:    "Maskeradeball",
+					EventStatus:   models.EventStatusPublished,
+					InterestLevel: models.InterestLevelHigh,
+				},
+			},
+			Low: []billettholderInterestMockRow{
+				{
+					EventID:       mockID("lordag-kveld-vaktskiftet"),
+					EventTitle:    "Vaktskiftet",
+					EventStatus:   models.EventStatusSubmitted,
+					InterestLevel: models.InterestLevelLow,
+				},
+			},
+		},
+		{
+			PuljeID: models.PuljeSondagMorgen,
+			Name:    "Søndag morgen",
+			Medium: []billettholderInterestMockRow{
+				{
+					EventID:       mockID("sondag-morgen-stjerneskipet"),
+					EventTitle:    "Stjerneskipet",
+					EventStatus:   models.EventStatusPublished,
+					InterestLevel: models.InterestLevelMedium,
+				},
+			},
+		},
+	}
+}
+
+func billettholderInterestTotal(sections []billettholderInterestPuljeSection) int {
+	total := 0
+	for _, section := range sections {
+		total += len(section.Assigned) + len(section.High) + len(section.Medium) + len(section.Low)
+	}
+	return total
+}
+
+func billettholderHasGMOrDM(sections []billettholderInterestPuljeSection) bool {
+	for _, section := range sections {
+		for _, row := range section.Assigned {
+			if row.AssignedRole == models.EventPlayerRoleGM {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func billettholderHasFirstChoice(sections []billettholderInterestPuljeSection) bool {
+	for _, section := range sections {
+		for _, row := range section.Assigned {
+			if row.AssignedRole == models.EventPlayerRolePlayer && row.InterestLevel == models.InterestLevelHigh {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func billettholderInterestLevelIcon(level models.InterestLevel) string {
+	switch level {
+	case models.InterestLevelHigh:
+		return "🤩"
+	case models.InterestLevelMedium:
+		return "🙂"
+	case models.InterestLevelLow:
+		return "🤨"
+	default:
+		return "•"
+	}
+}
+
+func billettholderInterestRoleLabel(role models.EventPlayerRole) string {
+	switch role {
+	case models.EventPlayerRoleGM:
+		return "Spilleder (GM/DM)"
+	case models.EventPlayerRolePlayer:
+		return "Spiller"
+	default:
+		return ""
+	}
+}
+
+func billettholderInterestLabel(level models.InterestLevel) string {
+	if level == models.InterestLevelNone {
+		return "Ingen interesse registrert"
+	}
+	return level.Label()
+}
+
 type Responder struct {
 	BillettholderID string
 	Logger          *slog.Logger
@@ -280,8 +465,300 @@ func deleteEmailFromBillettholderRoute(
 	})
 }
 
+templ billettholderCardStyles() {
+	<style>
+		.billettholder-status-strip {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: var(--spacing-2x);
+		}
+
+		.billettholder-status-badge {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-2x);
+			min-height: 2rem;
+			padding: var(--spacing-1x) var(--spacing-2x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-1x);
+			background: rgb(41, 45, 68);
+			color: var(--color-text-strong);
+			font-size: 12px;
+			line-height: 1.25;
+		}
+
+		.billettholder-status-badge.is-muted {
+			color: var(--color-text-soft);
+		}
+
+		.billettholder-interest-open {
+			width: 100%;
+			justify-content: space-between;
+			gap: var(--spacing-2x);
+		}
+
+		.billettholder-interest-dialog {
+			width: min(48rem, calc(100vw - 2rem));
+			max-height: min(52rem, calc(100vh - 2rem));
+			padding: 0;
+			border: none;
+			border-radius: var(--border-radius-2x);
+			background: var(--bg-surface);
+			color: var(--color-text-strong);
+			box-shadow: var(--shadow-dialog);
+		}
+
+		.billettholder-interest-dialog::backdrop {
+			background: hsl(0deg 0% 0% / 55%);
+		}
+
+		.billettholder-interest-dialog-shell {
+			display: flex;
+			flex-direction: column;
+			max-height: min(52rem, calc(100vh - 2rem));
+		}
+
+		.billettholder-interest-dialog-header {
+			display: flex;
+			align-items: start;
+			justify-content: space-between;
+			gap: var(--spacing-4x);
+			padding: var(--spacing-4x);
+			border-bottom: 1px solid var(--bg-item-border);
+		}
+
+		.billettholder-interest-dialog-title {
+			margin: 0;
+			font-size: var(--text-heading-3);
+		}
+
+		.billettholder-interest-dialog-subtitle {
+			margin: var(--spacing-1x) 0 0;
+			color: var(--color-text-soft);
+			font-size: var(--text-body-small);
+		}
+
+		.billettholder-interest-dialog-content {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-5x);
+			padding: var(--spacing-4x);
+			overflow: auto;
+		}
+
+		.billettholder-interest-pulje {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+		}
+
+		.billettholder-interest-pulje-title {
+			margin: 0;
+			font-size: var(--text-heading-4);
+			color: var(--color-primary);
+		}
+
+		.billettholder-interest-group {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+		}
+
+		.billettholder-interest-group-title {
+			margin: 0;
+			color: var(--color-text-soft);
+			font-size: 12px;
+			font-weight: 700;
+		}
+
+		.billettholder-interest-row {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) max-content;
+			align-items: center;
+			gap: var(--spacing-3x);
+			padding: var(--spacing-3x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-1x);
+			background: var(--bg-item);
+			color: var(--color-text-strong);
+			text-decoration: none;
+			transition: var(--btn-transition);
+		}
+
+		.billettholder-interest-row:hover,
+		.billettholder-interest-row:focus-visible {
+			border-color: var(--color-primary);
+			background: var(--bg-item-hover);
+			outline: none;
+		}
+
+		.billettholder-interest-row.is-unpublished {
+			opacity: 0.55;
+		}
+
+		.billettholder-interest-row-title {
+			display: block;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+			font-weight: 700;
+		}
+
+		.billettholder-interest-row-meta {
+			display: flex;
+			flex-wrap: wrap;
+			gap: var(--spacing-2x);
+			margin-top: var(--spacing-1x);
+			color: var(--color-text-soft);
+			font-size: 12px;
+		}
+
+		.billettholder-interest-row-chip {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			min-height: 1.75rem;
+			padding: 0 var(--spacing-2x);
+			border-radius: var(--border-radius-1x);
+			background: var(--bg-surface);
+			border: 1px solid var(--bg-surface-border);
+			color: var(--color-text-strong);
+			font-size: 12px;
+			font-weight: 700;
+			white-space: nowrap;
+		}
+
+		@media (min-width: 36rem) {
+			.billettholder-status-strip {
+				grid-template-columns: 1fr 1fr;
+			}
+		}
+
+		@media (max-width: 36rem) {
+			.billettholder-interest-row {
+				grid-template-columns: 1fr;
+				align-items: start;
+			}
+
+			.billettholder-interest-row-chip {
+				width: fit-content;
+			}
+		}
+	</style>
+}
+
+templ billettholderInterestRow(row billettholderInterestMockRow, isAssigned bool) {
+	{{
+		rowClass := "billettholder-interest-row"
+		if row.EventStatus != models.EventStatusPublished {
+			rowClass += " is-unpublished"
+		}
+	}}
+	<a class={ rowClass } href={ templ.URL(fmt.Sprintf("/admin/approval/edit/%s", row.EventID)) }>
+		<span>
+			<span class="billettholder-interest-row-title">{ row.EventTitle }</span>
+			<span class="billettholder-interest-row-meta">
+				if isAssigned {
+					<span>Tildelt som { billettholderInterestRoleLabel(row.AssignedRole) }</span>
+				}
+				<span>{ billettholderInterestLevelIcon(row.InterestLevel) } { billettholderInterestLabel(row.InterestLevel) }</span>
+				if row.EventStatus != models.EventStatusPublished {
+					<span>Ikke publisert: { row.EventStatus.Label() }</span>
+				} else {
+					<span>Publisert</span>
+				}
+			</span>
+		</span>
+		<span class="billettholder-interest-row-chip">
+			if isAssigned {
+				{ billettholderInterestRoleLabel(row.AssignedRole) }
+			} else {
+				{ row.InterestLevel.Label() }
+			}
+		</span>
+	</a>
+}
+
+templ billettholderInterestGroup(title string, rows []billettholderInterestMockRow) {
+	if len(rows) > 0 {
+		<div class="billettholder-interest-group">
+			<h4 class="billettholder-interest-group-title">{ title }</h4>
+			for _, row := range rows {
+				@billettholderInterestRow(row, false)
+			}
+		</div>
+	}
+}
+
+templ billettholderInterestDialog(
+	billettholder models.Billettholder,
+	sections []billettholderInterestPuljeSection,
+	dialogID string,
+	totalRows int,
+) {
+	<dialog
+		id={ dialogID }
+		class="billettholder-interest-dialog"
+		aria-labelledby={ dialogID + "-title" }
+	>
+		<div class="billettholder-interest-dialog-shell">
+			<header class="billettholder-interest-dialog-header">
+				<div>
+					<h2 id={ dialogID + "-title" } class="billettholder-interest-dialog-title">
+						Interesser for { billettholder.FirstName } { billettholder.LastName }
+					</h2>
+					<p class="billettholder-interest-dialog-subtitle">
+						Tildelte arrangementer vises først i hver pulje, deretter interesser sortert etter interessenivå.
+					</p>
+				</div>
+				<form method="dialog">
+					<button class="btn btn--ghost btn-icon-only" aria-label="Lukk interesser">
+						@icons.Icon(icons.Close, icons.Size16)
+					</button>
+				</form>
+			</header>
+			<div class="billettholder-interest-dialog-content">
+				<p style="margin:0; color: var(--color-text-soft);">
+					{ strconv.Itoa(totalRows) } rader med interesser og tildelinger.
+				</p>
+				for _, section := range sections {
+					<section class="billettholder-interest-pulje">
+						<h3 class="billettholder-interest-pulje-title">{ section.Name }</h3>
+						if len(section.Assigned) > 0 {
+							<div class="billettholder-interest-group">
+								<h4 class="billettholder-interest-group-title">Tildelt</h4>
+								for _, row := range section.Assigned {
+									@billettholderInterestRow(row, true)
+								}
+							</div>
+						}
+						@billettholderInterestGroup(billettholderInterestLevelIcon(models.InterestLevelHigh)+" "+models.InterestLevelHigh.Label(), section.High)
+						@billettholderInterestGroup(billettholderInterestLevelIcon(models.InterestLevelMedium)+" "+models.InterestLevelMedium.Label(), section.Medium)
+						@billettholderInterestGroup(billettholderInterestLevelIcon(models.InterestLevelLow)+" "+models.InterestLevelLow.Label(), section.Low)
+					</section>
+				}
+			</div>
+		</div>
+	</dialog>
+}
+
 templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
-	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
+	{{
+		interestSections := mockBillettholderInterestSections(billettholder)
+		hasGMOrDM := billettholderHasGMOrDM(interestSections)
+		hasFirstChoice := billettholderHasFirstChoice(interestSections)
+		interestTotal := billettholderInterestTotal(interestSections)
+		dialogID := fmt.Sprintf("billettholder-interests-%d", billettholder.ID)
+		gmStatusClass := "billettholder-status-badge"
+		if !hasGMOrDM {
+			gmStatusClass += " is-muted"
+		}
+		firstChoiceStatusClass := "billettholder-status-badge"
+		if !hasFirstChoice {
+			firstChoiceStatusClass += " is-muted"
+		}
+	}}
+	<div class="card" style="display:flex; flex-direction:column; gap:0.75rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		<p style="margin:0;">
 			<strong>Bestilling: </strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
 		</p>
@@ -313,6 +790,34 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 				<p><strong>Alder:</strong> Under 18</p>
 			}
 		</div>
+		<div class="billettholder-status-strip">
+			<div class={ gmStatusClass }>
+				@icons.Icon(icons.Gamemaster, icons.Size16)
+				if hasGMOrDM {
+					<span>@templ.Raw(highlightSearchTerm("Spilleder (GM/DM)", searchTerm))</span>
+				} else {
+					<span>@templ.Raw(highlightSearchTerm("Ikke spilleder", searchTerm))</span>
+				}
+			</div>
+			<div class={ firstChoiceStatusClass }>
+				if hasFirstChoice {
+					@icons.Icon(icons.ProgressComplete, icons.Size16)
+					<span>@templ.Raw(highlightSearchTerm("Fått førstevalg", searchTerm))</span>
+				} else {
+					@icons.Icon(icons.ProgressRejected, icons.Size16)
+					<span>@templ.Raw(highlightSearchTerm("Ikke fått førstevalg", searchTerm))</span>
+				}
+			</div>
+		</div>
+		<button
+			type="button"
+			class="btn btn--outline btn-with-icon billettholder-interest-open"
+			data-on:click={ fmt.Sprintf("document.getElementById('%s')?.showModal()", dialogID) }
+		>
+			<span>Interesser ({ strconv.Itoa(interestTotal) })</span>
+			@icons.Icon(icons.ChevronDown, icons.Size16)
+		</button>
+		@billettholderInterestDialog(billettholder, interestSections, dialogID, interestTotal)
 		<span>Andre epostadresser på samme bestilling:</span>
 		for _, email := range billettholder.Emails {
 			if email.Kind == models.BillettholderEmailKindAssociated || email.Kind == models.BillettholderEmailKindManual {

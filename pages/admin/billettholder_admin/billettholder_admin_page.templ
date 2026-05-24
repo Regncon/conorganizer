@@ -74,6 +74,7 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 				>Legg til billettholder</a>
 			</div>
 			<p class="page-heading-help-text">Her kan du se en oversikt over alle billettholdere</p>
+			@billettholderCardStyles()
 			<div class="billettholder-admin-grid">
 				<style>
 					.billettholder-admin-grid {
