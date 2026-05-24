@@ -298,3 +298,78 @@ func TestGetRoomByID(t *testing.T) {
 		t.Fatal("expected error when getting non-existing room, but it was allowed")
 	}
 }
+
+func TestGetAllRooms(t *testing.T) {
+	// Given
+	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
+	if err != nil {
+		t.Fatalf("failed to create test database and logger: %v", err)
+	}
+	defer db.Close()
+
+	var validRooms = []models.Room{
+		{
+			Name:               "Hakkebakken",
+			RoomNumber:         "101",
+			Floor:              1,
+			MaxConcurrentGames: 2,
+			Notes:              "Room 1",
+			IsDisabled:         false,
+		}, {
+			Name:               "Tangerud",
+			RoomNumber:         "201",
+			Floor:              2,
+			MaxConcurrentGames: 4,
+			Notes:              "Second room",
+			IsDisabled:         false,
+		}, {
+			Name:               "Hundremeter Skogen",
+			RoomNumber:         "301",
+			Floor:              3,
+			MaxConcurrentGames: 1,
+			Notes:              "Second room",
+			IsDisabled:         false,
+		},
+	}
+
+	var createdRooms []models.Room
+	for _, room := range validRooms {
+		createdRoom, err := CreateRoom(db, room)
+		if err != nil {
+			t.Fatalf("unexpected error creating room: %v", err)
+		}
+
+		createdRooms = append(createdRooms, *createdRoom)
+	}
+
+	// When
+	resultRooms, err := GetAllRooms(db)
+	if err != nil {
+		t.Fatalf("unexpected error getting all rooms: %v", err)
+	}
+
+	// Then
+	// - ensure all rooms were returned
+	if len(resultRooms) != 3 {
+		t.Fatalf(
+			"expected 3 rooms, recieved: %d",
+			len(resultRooms),
+		)
+	}
+
+	// - ensure ordering is correct
+	if resultRooms[0].ID != createdRooms[0].ID {
+		t.Fatalf(
+			"expected first room ID %d, recieved %d",
+			createdRooms[0].ID,
+			resultRooms[0].ID,
+		)
+	}
+	if resultRooms[len(resultRooms)-1].ID != createdRooms[len(createdRooms)-1].ID {
+		t.Fatalf(
+			"expected last room ID %d, recieved %d",
+			createdRooms[len(createdRooms)-1].ID,
+			resultRooms[len(resultRooms)-1].ID,
+		)
+	}
+}

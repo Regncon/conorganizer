@@ -261,7 +261,55 @@ func GetRoomByID(db *sql.DB, roomID int) (*models.Room, error) {
 }
 
 // GetAllRooms returns a list of all rooms stored in DB
-func GetAllRooms(db *sql.DB) {}
+func GetAllRooms(db *sql.DB) ([]*models.Room, error) {
+	query := `
+		SELECT
+			id,
+			name,
+			room_number,
+			floor,
+			max_concurrent_games,
+			notes,
+			is_disabled
+		FROM rooms
+		ORDER BY floor ASC, room_number ASC
+	`
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rooms: %w", err)
+	}
+	defer rows.Close()
+
+	var rooms []*models.Room
+
+	for rows.Next() {
+
+		var room models.Room
+
+		err := rows.Scan(
+			&room.ID,
+			&room.Name,
+			&room.RoomNumber,
+			&room.Floor,
+			&room.MaxConcurrentGames,
+			&room.Notes,
+			&room.IsDisabled,
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan room: %w", err)
+		}
+
+		rooms = append(rooms, &room)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error while iterating rooms: %w", err)
+	}
+
+	return rooms, nil
+}
 
 // GetAllRoomStatusesByPuljeID Generates a list of all rooms, but unique to a pulje
 func GetAllRoomStatusesByPuljeID(db *sql.DB, puljeID string) {
