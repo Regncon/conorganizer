@@ -38,13 +38,13 @@ func TouchEventUpdatedAt(ctx context.Context, db *sql.DB, logger *slog.Logger, e
 }
 
 func updateEventStatusWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, status models.EventStatus) error {
-	updatedByID, err := currentUserDBID(ctx, db, logger)
+	statusChangedByID, err := currentUserDBID(ctx, db, logger)
 	if err != nil {
 		return err
 	}
 
-	query := `UPDATE events SET status = ?, updated_at = ` + models.DBDateTimeNowSQL + `, updated_by_id = ?, status_changed_at = ` + models.DBDateTimeNowSQL + `, status_changed_by_id = ?, status_changed_action = ? WHERE id = ?`
-	if _, err := db.ExecContext(ctx, query, status, updatedByID, updatedByID, string(status), eventID); err != nil {
+	query := `UPDATE events SET status = ?, status_changed_at = ` + models.DBDateTimeNowSQL + `, status_changed_by_id = ?, status_changed_action = ? WHERE id = ?`
+	if _, err := db.ExecContext(ctx, query, status, statusChangedByID, string(status), eventID); err != nil {
 		return fmt.Errorf("update event %q status with audit: %w", eventID, err)
 	}
 	return nil
