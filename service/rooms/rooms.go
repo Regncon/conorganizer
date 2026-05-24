@@ -53,6 +53,60 @@ func CreateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
 	return &data, nil
 }
 
+// UpdateRoom updates a room based on its ID with new Room type data
+func UpdateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
+	if strings.TrimSpace(data.RoomNumber) == "" {
+		return nil, fmt.Errorf("Room number is required")
+	}
+
+	// We can disable this check if we want, if so, remember to update test
+	if !strings.HasPrefix(data.RoomNumber, fmt.Sprintf("%d", data.Floor)) {
+		return nil, fmt.Errorf(
+			"Room number must start with the floor number, eg: %dxx, got: %s",
+			data.Floor,
+			data.RoomNumber,
+		)
+	}
+
+	if data.MaxConcurrentGames < 1 {
+		return nil, fmt.Errorf("Max concurrent events must be greater than 0, got: %d", data.MaxConcurrentGames)
+	}
+
+	query := `
+		UPDATE rooms
+		SET
+			name = ?,
+			room_number = ?,
+			floor = ?,
+			max_concurrent_games = ?,
+			notes = ?,
+			is_disabled = ?
+		WHERE id = ?
+		RETURNING
+			id,
+			name,
+			room_number,
+			floor,
+			max_concurrent_games,
+			notes,
+			is_disabled
+	`
+
+	var updated models.Room
+
+	err := db.QueryRow(
+		query, data.Name, data.RoomNumber, data.Floor, data.MaxConcurrentGames, data.Notes, data.IsDisabled, data.ID,
+	).Scan(
+		&updated.ID, &updated.Name, &updated.RoomNumber, &updated.Floor, &updated.MaxConcurrentGames, &updated.Notes, &updated.IsDisabled,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to update room: %w", err)
+	}
+
+	return &updated, nil
+}
+
 // UpdateRoom updates a room based on its ID with partial new information
 func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, error) {
 	if data.ID < 1 {

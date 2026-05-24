@@ -74,6 +74,89 @@ func TestCreateRoom(t *testing.T) {
 	}
 }
 
+func TestUpdateRoom(t *testing.T) {
+	// Given
+	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
+	if err != nil {
+		t.Fatalf("failed to create test database and logger: %v", err)
+	}
+	defer db.Close()
+
+	var originalRoom = models.Room{
+		Name:               "Hakkebakken",
+		RoomNumber:         "101",
+		Floor:              1,
+		MaxConcurrentGames: 2,
+		Notes:              "Dette er et gyldig rom",
+		IsDisabled:         false,
+	}
+
+	resultCreateRoom, err := CreateRoom(db, originalRoom)
+	if err != nil {
+		t.Fatalf("unexpected error creating original room: %v", err)
+	}
+
+	var updatedRoom = models.Room{
+		ID:                 resultCreateRoom.ID,
+		Name:               "Tangerud",
+		RoomNumber:         "209",
+		Floor:              2,
+		MaxConcurrentGames: 3,
+		Notes:              "Dette er en oppdatert note",
+		IsDisabled:         true,
+	}
+
+	var updatedRoomInvalidRoomNumber = *resultCreateRoom
+	updatedRoomInvalidRoomNumber.RoomNumber = ""
+
+	var updatedRoomInvalidRoomConcurrency = *resultCreateRoom
+	updatedRoomInvalidRoomConcurrency.MaxConcurrentGames = -1
+
+	var updatedRoomInvalidRoomNumberFloor = *resultCreateRoom
+	updatedRoomInvalidRoomNumberFloor.Floor = 3
+	updatedRoomInvalidRoomNumberFloor.RoomNumber = "203"
+
+	// When
+	resultUpdateRoomValid, err := UpdateRoom(db, updatedRoom)
+	if err != nil {
+		t.Fatalf("unexpected error when updating valid room: %v", err)
+	}
+
+	_, errInvalidRoomNumber := UpdateRoom(db, updatedRoomInvalidRoomNumber)
+	_, errInvalidRoomConcurrency := UpdateRoom(db, updatedRoomInvalidRoomConcurrency)
+	_, errInvalidRoomNumberFloor := UpdateRoom(db, updatedRoomInvalidRoomNumberFloor)
+
+	// Then
+	if resultCreateRoom.ID != resultUpdateRoomValid.ID {
+		t.Fatalf("UpdateRoom caused room ID to change\nexpected: \t%d\nrecieved: \t%d", resultCreateRoom.ID, resultUpdateRoomValid.ID)
+	}
+	if resultCreateRoom.Name == resultUpdateRoomValid.Name {
+		t.Fatalf("UpdateRoom did not update name correctly\nexpected: \t%s\nrecieved: \t%s", resultCreateRoom.Name, resultUpdateRoomValid.Name)
+	}
+	if resultCreateRoom.RoomNumber == resultUpdateRoomValid.RoomNumber {
+		t.Fatalf("UpdateRoom did not update room number correctly\nexpected: \t%s\nrecieved: \t%s", resultCreateRoom.RoomNumber, resultUpdateRoomValid.RoomNumber)
+	}
+	if resultCreateRoom.Floor == resultUpdateRoomValid.Floor {
+		t.Fatalf("UpdateRoom did not update floor number correctly\nexpected: \t%d\nrecieved: \t%d", resultCreateRoom.Floor, resultUpdateRoomValid.Floor)
+	}
+	if resultCreateRoom.Notes == resultUpdateRoomValid.Notes {
+		t.Fatalf("UpdateRoom did not update notes correctly\nexpected: \t%s\nrecieved: \t%s", resultCreateRoom.Notes, resultUpdateRoomValid.Notes)
+	}
+	if resultCreateRoom.MaxConcurrentGames == resultUpdateRoomValid.MaxConcurrentGames {
+		t.Fatalf("UpdateRoom did not update max concurrent games correctly\nexpected: \t%d\nrecieved: \t%d", resultCreateRoom.MaxConcurrentGames, resultUpdateRoomValid.MaxConcurrentGames)
+	}
+
+	if errInvalidRoomNumber == nil {
+		t.Fatalf("UpdateRoom allowed updating invalid room number")
+	}
+	if errInvalidRoomNumberFloor == nil {
+		t.Fatalf("UpdateRoom allowed updating with an invalid room number and floor combination")
+	}
+	if errInvalidRoomConcurrency == nil {
+		t.Fatalf("UpdateRoom allowed updating invalid max concurrent games")
+	}
+}
+
 func TestUpdateRoomPartial(t *testing.T) {
 	// Given
 	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
@@ -167,7 +250,3 @@ func TestUpdateRoomPartial(t *testing.T) {
 		t.Errorf("UpdateRoom allowed update when room number was an empty string")
 	}
 }
-
-func StringPtr(s string) *string { return &s }
-func IntPtr(i int) *int          { return &i }
-func BoolPtr(b bool) *bool       { return &b }
