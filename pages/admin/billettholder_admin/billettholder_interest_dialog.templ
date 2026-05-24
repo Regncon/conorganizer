@@ -58,14 +58,14 @@ func mockBillettholderInterestSection(
 		Assigned: []billettholderInterestMockRow{
 			{
 				EventID:       mockBillettholderEventID(billettholder.ID, eventIDPrefix, "assigned-with-interest", 1),
-				EventTitle:    fmt.Sprintf("%s: Tildelt med registrert interesse", puljeName),
+				EventTitle:    "Tildelt med registrert interesse",
 				EventStatus:   mockBillettholderEventStatus(statusOffset),
 				InterestLevel: assignedInterestLevel,
 				AssignedRole:  models.EventPlayerRolePlayer,
 			},
 			{
 				EventID:      mockBillettholderEventID(billettholder.ID, eventIDPrefix, "assigned-only", 2),
-				EventTitle:   fmt.Sprintf("%s: Tildelt uten registrert interesse", puljeName),
+				EventTitle:   "Tildelt uten registrert interesse",
 				EventStatus:  mockBillettholderEventStatus(statusOffset + 1),
 				AssignedRole: assignedOnlyRole,
 			},
@@ -100,7 +100,7 @@ func mockBillettholderInterestRows(
 	for i, title := range titles {
 		rows = append(rows, billettholderInterestMockRow{
 			EventID:       mockBillettholderEventID(billettholderID, eventIDPrefix, string(level), i+1),
-			EventTitle:    fmt.Sprintf("%s: %s", puljeName, title),
+			EventTitle:    title,
 			EventStatus:   mockBillettholderEventStatus(statusOffset + i),
 			InterestLevel: level,
 		})

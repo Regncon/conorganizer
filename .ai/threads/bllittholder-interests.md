@@ -387,4 +387,25 @@ I also tried starting the dev server on `localhost:7331`, but the sandbox reject
 
 Time: 2026-05-24 14:06:19
 --- Next Prompt ---
+Now that we have tabs that clearly differentiate the pulje, we no longer need to show the pulje name in each row. Let's remove that to reduce visual noise and make it easier to scan the event titles.
+
+Time: 2026-05-24 14:12:39
+--- Codex Run ---
+
+Codex output:
+I’ll remove the pulje prefix from the mock row titles only; the tab already gives that context, so the row title can focus on the event name.
+I’ll make the row-title cleanup and re-run the templ generation plus the focused package test so we know the template still compiles.
+The template generation and focused package test both pass. I’m checking the local diff once so I can report the exact file touched without mixing in unrelated work.
+Removed the pulje name prefix from modal row titles in [billettholder_interest_dialog.templ](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog.templ:58). Assigned rows and interest rows now show only the event title/context, while the tabs provide the pulje context.
+
+Checks passed:
+
+- `go tool templ generate`
+- `GOCACHE=/tmp/conorganizer-go-build-cache go test ./pages/admin/billettholder_admin`
+- `git diff --check -- pages/admin/billettholder_admin`
+
+Note: `.ai/threads/bllittholder-interests.md` is still modified in the worktree; I didn’t touch it.
+
+Time: 2026-05-24 14:12:39
+--- Next Prompt ---
 
