@@ -373,3 +373,29 @@ func TestGetAllRooms(t *testing.T) {
 		)
 	}
 }
+
+func TestGetAllRoomStatusesByPulje(t *testing.T) {
+	// Given
+	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
+	if err != nil {
+		t.Fatalf("failed to create test database and logger: %v", err)
+	}
+	defer db.Close()
+
+	var expectedStatusesLength int = 2
+
+	// Populate db with rooms
+	// Populate db with events, puljer and some relation_event_pulje entries
+
+	// When
+	var pulje models.Pulje = models.PuljeFredagKveld
+	result, err := GetAllRoomStatusesByPulje(db, pulje)
+	if err != nil {
+		t.Fatalf("Unexpected arror: %v", err)
+	}
+
+	// Then
+	if len(result) != expectedStatusesLength {
+		t.Fatalf("Result of get all statuses did not match expected length\nexpected: %d\nrecieved: %d", expectedStatusesLength, len(result))
+	}
+}

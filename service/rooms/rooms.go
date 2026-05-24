@@ -311,12 +311,13 @@ func GetAllRooms(db *sql.DB) ([]*models.Room, error) {
 	return rooms, nil
 }
 
-// GetAllRoomStatusesByPuljeID Generates a list of all rooms, but unique to a pulje
-func GetAllRoomStatusesByPuljeID(db *sql.DB, puljeID string) {
+// GetAllRoomStatusesByPulje Generates a list of all rooms, but unique to a pulje
+func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) ([]*models.RoomEventPuljeSummary, error) {
 	// This function needs to return a detailed overview of available rooms, where
 	// assigned events are limited to pulje
 
 	// Should this include complete events from event puljer, just event puljer id or just convert this to a number?
+	return nil, nil
 }
 
 // SetRelationEventPuljeRoom assigns a room to an event in `relation_event_puljer`
