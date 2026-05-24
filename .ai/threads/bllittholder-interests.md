@@ -409,3 +409,59 @@ Note: `.ai/threads/bllittholder-interests.md` is still modified in the worktree;
 Time: 2026-05-24 14:12:39
 --- Next Prompt ---
 
+Let's move on to the tests now.
+Each test should start with a bdd style description of the test case, be split into // given // when // then sections and have the // given start with the expected reults.
+Let's generate the code for one test at a time and have a discussion about the next test before we generate the code for it.
+
+
+Time: 2026-05-24 14:18:19
+--- Codex Run ---
+
+Codex output:
+I’ll start by looking at the current mock-data helpers and existing test style in this package. Then I’ll add one focused test, run it, and stop there so we can choose the next case deliberately.
+There aren’t existing tests in this package, so I’m going to start with the smallest data-contract test: one generated pulje section should have the expected mock shape and ordering inside the section. That gives us a stable baseline before we test totals, GM badges, or first-choice status.
+I’m adding this first test as a contract around the mock sections rather than the rendered HTML. It will lock down pulje order, assigned-row count, and the high/medium/low grouping counts before we test visual ordering separately.
+The first test is in place. I’m formatting it and running the focused package test now; if that passes, I’ll summarize the test and propose the next one for discussion.
+Added the first test in [billettholder_interest_dialog_test.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog_test.go:8).
+
+It follows the requested shape: BDD-style `t.Run`, `// given`, `// when`, `// then`, and the `// given` section starts with expected results. This test locks down:
+
+- pulje order
+- pulje display names
+- 2 assigned rows per pulje
+- 10 rows for each interest level
+- high, medium, low grouping order
+
+Verified with:
+
+```sh
+gofmt -w pages/admin/billettholder_admin/billettholder_interest_dialog_test.go
+GOCACHE=/tmp/conorganizer-go-build-cache go test ./pages/admin/billettholder_admin
+```
+
+For the next test, I’d recommend testing the rendered modal panel order: assigned rows first, then high, medium, low sections, and no pulje name repeated in row titles. That covers the UI behavior the admin actually scans.
+
+Time: 2026-05-24 14:18:19
+--- Next Prompt ---
+Almost. Here is an example of how the test could look like:
+```go
+func TestService_EventProducesExpectedResult(t *testing.T) {
+	// Given an existing domain object,
+	// when the service reconciles related data,
+	// then the expected durable relation is stored.
+
+	// Given
+	expectedResult := models.SomeResult{ID: 123}
+	db := createTestDB(t)
+	insertRequiredFixture(t, db, expectedResult.ID)
+
+	// When
+	err := ServiceFunction(expectedResult.ID, db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected service call to succeed: %v", err)
+	}
+	assertExpectedResult(t, db, expectedResult)
+}
+```
