@@ -169,6 +169,22 @@ func billettholderInterestTotal(sections []billettholderInterestPuljeSection) in
 	return total
 }
 
+func billettholderAssignedTotal(sections []billettholderInterestPuljeSection) int {
+	total := 0
+	for _, section := range sections {
+		total += len(section.Assigned)
+	}
+	return total
+}
+
+func billettholderInterestLevelTotal(sections []billettholderInterestPuljeSection) int {
+	total := 0
+	for _, section := range sections {
+		total += len(section.High) + len(section.Medium) + len(section.Low)
+	}
+	return total
+}
+
 func billettholderHasGMOrDM(sections []billettholderInterestPuljeSection) bool {
 	for _, section := range sections {
 		for _, row := range section.Assigned {
@@ -483,9 +499,26 @@ templ billettholderCardStyles() {
 			color: var(--color-text-soft);
 		}
 
+		.billettholder-status-badge.is-gm {
+			border-color: var(--color-success);
+			color: var(--color-success);
+		}
+
+		.billettholder-status-badge.is-warning {
+			border-color: var(--color-warning);
+			color: var(--color-warning);
+		}
+
 		.billettholder-interest-open {
 			width: 100%;
 			justify-content: space-between;
+			gap: var(--spacing-2x);
+		}
+
+		.billettholder-interest-open-counts {
+			display: inline-flex;
+			flex-wrap: wrap;
+			align-items: center;
 			gap: var(--spacing-2x);
 		}
 
@@ -536,6 +569,14 @@ templ billettholderCardStyles() {
 			gap: var(--spacing-6x);
 			padding: var(--spacing-4x);
 			overflow: auto;
+		}
+
+		.billettholder-interest-summary-counts {
+			display: flex;
+			flex-wrap: wrap;
+			gap: var(--spacing-3x);
+			margin: 0;
+			color: var(--color-text-soft);
 		}
 
 		.billettholder-interest-pulje {
@@ -653,10 +694,22 @@ templ billettholderCardStyles() {
 			white-space: nowrap;
 		}
 
+		.billettholder-interest-assigned-role {
+			display: inline-flex;
+			align-items: center;
+			gap: var(--spacing-1x);
+		}
+
+		.billettholder-interest-assigned-role.is-gm {
+			color: var(--color-success);
+			font-weight: 700;
+		}
+
 		.billettholder-interest-row-chip {
 			display: inline-flex;
 			align-items: center;
 			justify-content: center;
+			gap: var(--spacing-1x);
 			min-height: 1.75rem;
 			padding: 0 var(--spacing-2x);
 			border-radius: var(--border-radius-1x);
@@ -666,6 +719,11 @@ templ billettholderCardStyles() {
 			font-size: 12px;
 			font-weight: 700;
 			white-space: nowrap;
+		}
+
+		.billettholder-interest-row-chip.is-gm {
+			border-color: var(--color-success);
+			color: var(--color-success);
 		}
 
 		@media (min-width: 36rem) {
@@ -699,12 +757,23 @@ templ billettholderInterestRow(row billettholderInterestMockRow, isAssigned bool
 		if row.EventStatus != models.EventStatusPublished {
 			rowClass += " is-unpublished"
 		}
+		assignedRoleClass := "billettholder-interest-assigned-role"
+		chipClass := "billettholder-interest-row-chip"
+		if isAssigned && row.AssignedRole == models.EventPlayerRoleGM {
+			assignedRoleClass += " is-gm"
+			chipClass += " is-gm"
+		}
 	}}
 	<a class={ rowClass } href={ templ.URL(fmt.Sprintf("/admin/approval/edit/%s", row.EventID)) }>
 		<span class="billettholder-interest-row-title">{ row.EventTitle }</span>
 		<span class="billettholder-interest-row-meta">
 			if isAssigned {
-				<span>Tildelt som { billettholderInterestRoleLabel(row.AssignedRole) }</span>
+				<span class={ assignedRoleClass }>
+					if row.AssignedRole == models.EventPlayerRoleGM {
+						@icons.Icon(icons.Gamemaster, icons.Size16)
+					}
+					Tildelt som { billettholderInterestRoleLabel(row.AssignedRole) }
+				</span>
 			}
 			<span>{ billettholderInterestLevelIcon(row.InterestLevel) } { billettholderInterestLabel(row.InterestLevel) }</span>
 			if row.EventStatus != models.EventStatusPublished {
@@ -713,8 +782,11 @@ templ billettholderInterestRow(row billettholderInterestMockRow, isAssigned bool
 				<span>Publisert</span>
 			}
 		</span>
-		<span class="billettholder-interest-row-chip">
+		<span class={ chipClass }>
 			if isAssigned {
+				if row.AssignedRole == models.EventPlayerRoleGM {
+					@icons.Icon(icons.Gamemaster, icons.Size16)
+				}
 				{ billettholderInterestRoleLabel(row.AssignedRole) }
 			} else {
 				{ row.InterestLevel.Label() }
@@ -738,7 +810,8 @@ templ billettholderInterestDialog(
 	billettholder models.Billettholder,
 	sections []billettholderInterestPuljeSection,
 	dialogID string,
-	totalRows int,
+	assignedTotal int,
+	interestLevelTotal int,
 ) {
 	<dialog
 		id={ dialogID }
@@ -762,8 +835,9 @@ templ billettholderInterestDialog(
 				</form>
 			</header>
 			<div class="billettholder-interest-dialog-content">
-				<p style="margin:0; color: var(--color-text-soft);">
-					{ strconv.Itoa(totalRows) } rader med interesser og tildelinger.
+				<p class="billettholder-interest-summary-counts">
+					<span>{ strconv.Itoa(interestLevelTotal) } interesser</span>
+					<span>{ strconv.Itoa(assignedTotal) } tildelte arrangementer</span>
 				</p>
 				for _, section := range sections {
 					<section class="billettholder-interest-pulje">
@@ -791,15 +865,18 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 		interestSections := mockBillettholderInterestSections(billettholder)
 		hasGMOrDM := billettholderHasGMOrDM(interestSections)
 		hasFirstChoice := billettholderHasFirstChoice(interestSections)
-		interestTotal := billettholderInterestTotal(interestSections)
+		assignedTotal := billettholderAssignedTotal(interestSections)
+		interestLevelTotal := billettholderInterestLevelTotal(interestSections)
 		dialogID := fmt.Sprintf("billettholder-interests-%d", billettholder.ID)
 		gmStatusClass := "billettholder-status-badge"
-		if !hasGMOrDM {
+		if hasGMOrDM {
+			gmStatusClass += " is-gm"
+		} else {
 			gmStatusClass += " is-muted"
 		}
 		firstChoiceStatusClass := "billettholder-status-badge"
 		if !hasFirstChoice {
-			firstChoiceStatusClass += " is-muted"
+			firstChoiceStatusClass += " is-warning"
 		}
 	}}
 	<div class="card" style="display:flex; flex-direction:column; gap:0.75rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
@@ -846,10 +923,10 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 			<div class={ firstChoiceStatusClass }>
 				if hasFirstChoice {
 					@icons.Icon(icons.ProgressComplete, icons.Size16)
-					<span>@templ.Raw(highlightSearchTerm("Fått førstevalg", searchTerm))</span>
+					<span>@templ.Raw(highlightSearchTerm("Har fått førstevalg", searchTerm))</span>
 				} else {
 					@icons.Icon(icons.ProgressRejected, icons.Size16)
-					<span>@templ.Raw(highlightSearchTerm("Ikke fått førstevalg", searchTerm))</span>
+					<span>@templ.Raw(highlightSearchTerm("Har ikke fått førstevalg", searchTerm))</span>
 				}
 			</div>
 		</div>
@@ -858,10 +935,13 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 			class="btn btn--outline btn-with-icon billettholder-interest-open"
 			data-on:click={ fmt.Sprintf("document.getElementById('%s')?.showModal()", dialogID) }
 		>
-			<span>Interesser ({ strconv.Itoa(interestTotal) })</span>
+			<span class="billettholder-interest-open-counts">
+				<span>Interesser ({ strconv.Itoa(interestLevelTotal) })</span>
+				<span>Tildelt ({ strconv.Itoa(assignedTotal) })</span>
+			</span>
 			@icons.Icon(icons.ChevronDown, icons.Size16)
 		</button>
-		@billettholderInterestDialog(billettholder, interestSections, dialogID, interestTotal)
+		@billettholderInterestDialog(billettholder, interestSections, dialogID, assignedTotal, interestLevelTotal)
 		<span>Andre epostadresser på samme bestilling:</span>
 		for _, email := range billettholder.Emails {
 			if email.Kind == models.BillettholderEmailKindAssociated || email.Kind == models.BillettholderEmailKindManual {
