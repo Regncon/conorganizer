@@ -250,3 +250,51 @@ func TestUpdateRoomPartial(t *testing.T) {
 		t.Errorf("UpdateRoom allowed update when room number was an empty string")
 	}
 }
+
+func TestGetRoomByID(t *testing.T) {
+	// Given
+	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
+	if err != nil {
+		t.Fatalf("failed to create test database and logger: %v", err)
+	}
+	defer db.Close()
+
+	var validRoom = models.Room{
+		Name:               "Hakkebakken",
+		RoomNumber:         "101",
+		Floor:              1,
+		MaxConcurrentGames: 2,
+		Notes:              "Dette er et gyldig rom",
+		IsDisabled:         false,
+	}
+
+	createdRoom, err := CreateRoom(db, validRoom)
+	if err != nil {
+		t.Fatalf("unexpected error creating room: %v", err)
+	}
+
+	// When
+	roomResult, err := GetRoomByID(db, createdRoom.ID)
+	if err != nil {
+		t.Fatalf("unexpected error getting room by ID: %v", err)
+	}
+
+	_, errInvalidID := GetRoomByID(db, 0)
+	_, errMissingRoom := GetRoomByID(db, -1)
+
+	// Then
+	if *roomResult != *createdRoom {
+		t.Fatalf(
+			"GetRoomByID did not return expected room\nexpected:\t%v\nrecieved:\t%v",
+			*createdRoom,
+			*roomResult,
+		)
+	}
+
+	if errInvalidID == nil {
+		t.Fatal("expected error when getting room with invalid ID, but it was allowed")
+	}
+	if errMissingRoom == nil {
+		t.Fatal("expected error when getting non-existing room, but it was allowed")
+	}
+}

@@ -2,6 +2,7 @@ package rooms
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -217,7 +218,47 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, error) 
 }
 
 // GetRoomByID returns a room pointer based on a roomID
-func GetRoomByID(db *sql.DB, roomID int) {}
+func GetRoomByID(db *sql.DB, roomID int) (*models.Room, error) {
+	if roomID < 1 {
+		return nil, fmt.Errorf("invalid room ID")
+	}
+
+	query := `
+		SELECT
+			id,
+			name,
+			room_number,
+			floor,
+			max_concurrent_games,
+			notes,
+			is_disabled
+		FROM rooms
+		WHERE id = ?
+	`
+
+	var room models.Room
+
+	err := db.QueryRow(query, roomID).Scan(
+		&room.ID,
+		&room.Name,
+		&room.RoomNumber,
+		&room.Floor,
+		&room.MaxConcurrentGames,
+		&room.Notes,
+		&room.IsDisabled,
+	)
+
+	if err != nil {
+
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("room with ID %d was not found", roomID)
+		}
+
+		return nil, fmt.Errorf("failed to get room with ID: %w", err)
+	}
+
+	return &room, nil
+}
 
 // GetAllRooms returns a list of all rooms stored in DB
 func GetAllRooms(db *sql.DB) {}
