@@ -1,13 +1,13 @@
 package models
 
 type Room struct {
-	ID                  int    `json:"id"`
-	Name                string `json:"name"`
-	RoomNumber          string `json:"room_number"`
-	Floor               int    `json:"floor"`
-	MaxConcurrentEvents int    `json:"max_concurrent_events"`
-	Notes               string `json:"notes"`
-	IsDisabled          bool   `json:"is_disabled"`
+	ID                 int    `json:"id"`
+	Name               string `json:"name"`
+	RoomNumber         string `json:"room_number"`
+	Floor              int    `json:"floor"`
+	MaxConcurrentGames int    `json:"max_concurrent_games"`
+	Notes              string `json:"notes"`
+	IsDisabled         bool   `json:"is_disabled"`
 }
 
 /*
@@ -26,10 +26,10 @@ type RoomEventPuljeSummary struct {
 // out what `max_concurrent_events` is based on a pulje, but also for the dropdown input component
 // used in assigning rooms to an event in a pulje
 type RoomByPulje struct {
-	ID                  int
-	Name                string
-	RoomNumber          string
-	AssignedEventsID    []RoomEventPuljeSummary
-	MaxConcurrentEvents int
-	Notes               string
+	ID                 int
+	Name               string
+	RoomNumber         string
+	AssignedEventsID   []RoomEventPuljeSummary
+	MaxConcurrentGames int
+	Notes              string
 }
