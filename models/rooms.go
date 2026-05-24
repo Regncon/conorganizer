@@ -1,18 +1,6 @@
 package models
 
-// Room is the internal struct of a room
 type Room struct {
-	ID                  int
-	Name                string
-	RoomNumber          string
-	Floor               int
-	MaxConcurrentEvents int
-	Notes               string
-	IsDisabled          bool
-}
-
-// RoomJSON is the JSON representation of `Room` type for use with db query and front-end
-type RoomJSON struct {
 	ID                  int    `json:"id"`
 	Name                string `json:"name"`
 	RoomNumber          string `json:"room_number"`
