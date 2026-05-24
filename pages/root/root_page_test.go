@@ -3,7 +3,6 @@ package root
 import (
 	"database/sql"
 	"slices"
-	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
@@ -211,7 +210,11 @@ func seedRootPageLookups(t *testing.T, db *sql.DB) {
 	mustExec(t, db, `INSERT INTO age_groups(age_group) VALUES (?) ON CONFLICT(age_group) DO NOTHING`, models.AgeGroupDefault)
 	mustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES (?) ON CONFLICT(runtime) DO NOTHING`, models.RunTimeNormal)
 
-	for _, status := range []string{"not_published", "published", "open", "locked", "completed"} {
+	for _, status := range []models.PuljeStatus{
+		models.PuljeStatusOpen,
+		models.PuljeStatusLocked,
+		models.PuljeStatusCompleted,
+	} {
 		mustExec(t, db, `INSERT INTO pulje_statuses(status) VALUES (?) ON CONFLICT(status) DO NOTHING`, status)
 	}
 }
@@ -243,7 +246,7 @@ func insertRootPagePuljeWithDetails(t *testing.T, db *sql.DB, puljeID models.Pul
 	mustExec(t, db, `
 		INSERT INTO puljer(id, name, status, start_at, end_at)
 		VALUES(?, ?, ?, ?, ?)
-	`, puljeID, name, puljeStatusForRootPageTest(t, db), startAt, endAt)
+	`, puljeID, name, models.PuljeStatusOpen, startAt, endAt)
 }
 
 func insertRootPageEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus) {
@@ -277,25 +280,6 @@ func insertRootPageEventPulje(t *testing.T, db *sql.DB, eventID string, puljeID 
 		INSERT INTO relation_event_puljer(event_id, pulje_id, is_in_pulje, is_published)
 		VALUES(?, ?, 1, ?)
 	`, eventID, puljeID, published)
-}
-
-func puljeStatusForRootPageTest(t *testing.T, db *sql.DB) string {
-	t.Helper()
-
-	var schema string
-	if err := db.QueryRow(`
-		SELECT sql
-		FROM sqlite_schema
-		WHERE type = 'table' AND name = 'puljer'
-	`).Scan(&schema); err != nil {
-		t.Fatalf("failed to read puljer schema: %v", err)
-	}
-
-	if strings.Contains(schema, "'open'") {
-		return string(models.PuljeStatusOpen)
-	}
-
-	return string(models.PuljeStatusPublished)
 }
 
 func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {

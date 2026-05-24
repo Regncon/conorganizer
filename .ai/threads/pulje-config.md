@@ -582,4 +582,164 @@ Both pass. Your existing `.ai/threads/pulje-config.md` change is still untouched
 
 Time: 2026-05-24 10:37:36
 --- Next Prompt ---
+The status text in puljer is not following the naming convention.
+
+```sql
+CREATE TABLE puljer(
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  status TEXT NOT NULL CHECK(status IN('not_published',
+'published',
+'locked',
+'completed')),
+```
+Let's discuss how to fix this before we start coding.
+
+Time: 2026-05-24 10:44:51
+--- Codex Run ---
+
+Codex output:
+I’ll just inspect the current schema/model references so the discussion is anchored in what is actually in the branch now, without making code changes.
+Yes, this should be cleaned up before more features build on it.
+
+Right now the codebase is in a mixed state:
+
+- `models.PuljeStatus` contains both the old states and the new state:
+  - old: `not_published`, `published`
+  - new: `open`, `locked`, `completed`
+- `pages/admin/puljefordeling.templ` only treats these as valid:
+  - `open`
+  - `locked`
+  - `completed`
+- `migrations/20260522120000_pulje_status_open_locked_completed.sql` already has the right idea: migrate old statuses into `open | locked | completed`.
+- But `schema.sql` and `initialize.sql` still define/seed the old statuses:
+  - `not_published`
+  - `published`
+  - `locked`
+  - `completed`
+
+So the fix should be to make `puljer.status` purely about the pulje allocation lifecycle:
+
+```sql
+status TEXT NOT NULL DEFAULT 'open'
+CHECK(status IN('open', 'locked', 'completed'))
+```
+
+The mapping from old data should be:
+
+```text
+not_published -> open
+published     -> open
+locked        -> locked
+completed     -> completed
+```
+
+That matches the domain split we discussed: “program publishing” is global, while “pulje status” controls whether billettholdere can edit interests and whether results are visible.
+
+I would fix it in this order:
+
+1. Update `initialize.sql` so `pulje_statuses` only seeds `open`, `locked`, `completed`, and initial `puljer` rows use `open`.
+2. Regenerate or update `schema.sql` so the `puljer.status` constraint matches `open | locked | completed`.
+3. Remove `PuljeStatusNotPublished` and `PuljeStatusPublished` from `models/pulje-model.go`.
+4. Remove the temporary compatibility logic in `pages/root/root_page_test.go` that checks whether the schema contains `'open'`.
+5. Run the schema/test task and `go test ./...`.
+
+The existing migration can probably stay as-is, since its `Up` migration already expresses the intended database transition. The main problem is that the checked-in baseline schema and initial seed data did not catch up.
+
+Time: 2026-05-24 10:44:51
+--- Next Prompt ---
+I also believe that the convention in this database is to start with a capital letter? The `initialize.sql` file also needs to be updated yes. Do we need to update the initialize.sql file with the new program_publishing_state table as well?
+
+Time: 2026-05-24 10:50:16
+--- Codex Run ---
+
+Codex output:
+I’ll check the actual seeded lookup values before answering, because this affects whether the pulje statuses should be `Open`/`Locked` or Norwegian display values like `Åpen`/`Låst`.
+Yes, I agree. The current `open | locked | completed` values do not match the existing database style.
+
+The database convention is not fully “Norwegian text everywhere”, but it is definitely not lower snake case for lookup values. Examples:
+
+```sql
+event_statuses: 'Kladd', 'Innsendt', 'Godkjent', 'Forkastet', 'Publisert'
+events_types:   'Roleplay', 'Boardgame', 'Cardgame', 'Other'
+age_groups:     'Default', 'ChildFriendly', 'AdultsOnly'
+runtimes:       'Normal', 'ShortRunning', 'LongRunning'
+role:           'Player', 'GM'
+```
+
+So for `puljer.status`, I think we should use capitalized enum-style values:
+
+```sql
+'Open'
+'Locked'
+'Completed'
+```
+
+Then the Go labels can still render Norwegian:
+
+```go
+PuljeStatusOpen      -> "Åpen"
+PuljeStatusLocked    -> "Låst"
+PuljeStatusCompleted -> "Fullført"
+```
+
+That keeps the database convention consistent without storing translated UI labels as state keys.
+
+And yes, `initialize.sql` should also be updated with the new `program_publishing_state` table. It currently needs both:
+
+```sql
+CREATE TABLE program_publishing_state(
+  id INTEGER NOT NULL PRIMARY KEY CHECK(id = 1),
+  is_published INTEGER NOT NULL DEFAULT 0 CHECK(is_published IN(0, 1))
+) STRICT;
+```
+
+and seed data:
+
+```sql
+INSERT INTO program_publishing_state(id, is_published)
+VALUES (1, 0);
+```
+
+Even though the app treats a missing row as “not published”, it does not handle a missing table. Fresh databases created from `initialize.sql` need that table.
+
+Time: 2026-05-24 10:50:16
+--- Next Prompt ---
+Ok, let's do it.
+
+Time: 2026-05-24 10:56:50
+--- Codex Run ---
+
+Codex output:
+I’ll make this as a forward migration instead of rewriting the existing migration, so databases that already applied the lowercase status migration still move cleanly to the capitalized values. Then I’ll update the model, baseline SQL, and tests to stop accepting the old names.
+I’m updating the schema baseline and seed data now: `puljer.status` will use `Open`, `Locked`, `Completed`, initial puljer will start as `Open`, and fresh databases will get the `program_publishing_state` table with a default off row.
+The source templates and Go constants now use capitalized pulje status values. I’m regenerating templ output next so the checked-in generated files match the `.templ` sources.
+The generated templ output is ignored by git in this repo, so only the `.templ` source is tracked. I’m running the project test task now because it also validates/generated schema artifacts in this codebase.
+`go tool task test` did run its schema export step, but the Go test part hit the sandboxed Go cache. I’ll rerun with `GOCACHE=/tmp/go-build`; first I’m checking whether the schema export revealed that the local SQLite database still needs the new migration applied.
+The local `database/events.db` that `task test` exports from is still on the old pulje statuses. Since that DB is not tracked, I’m applying the new migration’s `Up` block locally so `schema.sql` can be regenerated from the final schema.
+The schema export is now on the new status values, and the remaining failure is a compile-time reference to the removed `PuljeStatusPublished` in another puljefordeling component. I’m tracing that reference and updating it to the new status model.
+There were two more old compatibility references: one checkbox label was using the removed pulje “published” status as a label, and one test still had fallback logic for old schemas. I’ve replaced those and am regenerating templates again.
+The old status symbols are gone from tracked source outside migration history. I’m rerunning the full task with the writable Go cache now.
+Implemented.
+
+Changes made:
+- Pulje statuses are now `Open`, `Locked`, `Completed` in [models/pulje-model.go](/home/cinmay/Documents/conorganizer/models/pulje-model.go:50).
+- Removed the old `not_published` / `published` pulje status model values.
+- Added a forward migration: [20260524100000_capitalize_pulje_statuses.sql](/home/cinmay/Documents/conorganizer/migrations/20260524100000_capitalize_pulje_statuses.sql:1).
+  - Maps `not_published`, `published`, and lowercase `open` to `Open`.
+  - Maps lowercase `locked` / `completed` to `Locked` / `Completed`.
+- Updated [initialize.sql](/home/cinmay/Documents/conorganizer/initialize.sql:129) to use the new statuses and seed puljer as `Open`.
+- Added `program_publishing_state` to [initialize.sql](/home/cinmay/Documents/conorganizer/initialize.sql:144), including the default `(1, 0)` row.
+- Regenerated [schema.sql](/home/cinmay/Documents/conorganizer/schema.sql:261) from the local DB after applying the migration.
+- Removed old test compatibility helpers that supported both old and new pulje schemas.
+- Replaced one old `PuljeStatusPublished.Label()` usage with the literal checkbox label `Publisert`, since that checkbox is about `relation_event_puljer.is_published`, not `puljer.status`.
+
+Verification:
+- `go tool templ generate`
+- `GOCACHE=/tmp/go-build go tool task test`
+
+Both passed. Your existing `.ai/threads/pulje-config.md` change is still untouched.
+
+Time: 2026-05-24 10:56:50
+--- Next Prompt ---
 
