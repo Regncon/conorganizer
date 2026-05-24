@@ -548,4 +548,38 @@ Verification: `git diff --check -- .github/workflows/golangci-lint.yml` passes. 
 
 Time: 2026-05-23 17:51:28
 --- Next Prompt ---
+Something broke during all the merging and updating.
+Here is the error message. Check the github history and the codebase to find out what broke and how to fix it.
+{"time":"2026-05-24T10:33:47.714713039+02:00","level":"WARN","msg":"http request completed","component":"http","method":"PUT","path":"/admin/api/program-publishing","status_code":404,"duration_ms":100,"request_id":"resurrection/PsUmaRX3ny-000121"}
+
+
+Time: 2026-05-24 10:37:36
+--- Codex Run ---
+
+Codex output:
+I’ll trace the `/admin/api/program-publishing` route from the workflow error back through the router and recent commits, then patch whichever side drifted: route registration, handler path, or the form action.
+The UI still sends `PUT /admin/api/program-publishing`, and the component defines a matching relative route under `/api/program-publishing`. The likely break is route registration after the merges, so I’m checking how admin subroutes are wired.
+Found the break: `programPublishingRoute` still exists, but `SetupAdminRoute` no longer calls it. I’m checking the commit that introduced the feature to confirm this was lost during merge rather than an intentional rename.
+The history confirms the original feature commit added exactly one line in `pages/admin/admin.go`: `programPublishingRoute(adminRouter, db, kv, logger)`. That line is missing now, so I’m restoring it and then I’ll run the relevant tests.
+The admin package compiles after restoring the route registration. I’m running the full Go test suite as a regression check because the failure came from the live route wiring rather than the component itself.
+Fixed. The merge dropped the admin route registration for program publishing.
+
+The handler still existed in `pages/admin/publiser_program.templ`, and the UI still called `PUT /admin/api/program-publishing`, but [pages/admin/admin.go](/home/cinmay/Documents/conorganizer/pages/admin/admin.go:94) no longer registered `programPublishingRoute(...)` under `/admin`. That made the request fall through to `404`.
+
+I checked the history and commit `7098e17a` originally added this line:
+
+```go
+programPublishingRoute(adminRouter, db, kv, logger)
+```
+
+I restored it next to the puljefordeling route registration.
+
+Verification:
+- `GOCACHE=/tmp/go-build go test ./pages/admin`
+- `GOCACHE=/tmp/go-build go test ./...`
+
+Both pass. Your existing `.ai/threads/pulje-config.md` change is still untouched.
+
+Time: 2026-05-24 10:37:36
+--- Next Prompt ---
 
