@@ -208,7 +208,6 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/ageGroup')", eventId) }
 					name="age-group"
 					class="input"
-					required
 				>
 					<option value={ models.AgeGroupDefault } selected>{ models.AgeGroupDefault.Label() }</option>
 					<option value={ models.AgeGroupChildFriendly }>{ models.AgeGroupChildFriendly.Label() }</option>
@@ -228,7 +227,6 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-signals={ dataSignals(map[string]models.Runtime{"runtime": runtime}) }
 					data-bind="runtime"
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/runtime')", eventId) }
-					required
 				>
 					<option value={ models.RunTimeNormal } selected>{ models.RunTimeNormal.Label() }</option>
 					<option value={ models.RunTimeShortRunning }>{ models.RunTimeShortRunning.Label() }</option>
@@ -308,6 +306,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/max-players')", eventId) }
 					type="number"
 					min="4"
+					step="1"
 				/>
 			</label>
 			<article class="item-card" id="player-count-description">
