@@ -21,7 +21,6 @@ when adding names check domeneordbok.md instead of translating to english
 - Avoid viewport media queries for components. Use `@container` instead.
 - Use viewport media queries only for page-level/global layout concerns.
 
-
 ## Go test structure
 When writing or cleaning up Go tests, prefer behavior-focused tests that read from intent to verification.
 
