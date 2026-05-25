@@ -161,7 +161,7 @@ templ billettholderInterestGroup(title string, rows []billettholderInterestEvent
 templ billettholderInterestRow(row billettholderInterestEventRow, isAssigned bool) {
 	{{
 		rowClass := "billettholder-interest-row"
-		if row.EventStatus != models.EventStatusPublished {
+		if !row.IsPublished {
 			rowClass += " is-unpublished"
 		}
 		assignedRoleClass := "billettholder-interest-assigned-role"
@@ -187,10 +187,10 @@ templ billettholderInterestRow(row billettholderInterestEventRow, isAssigned boo
 				</span>
 			}
 			<span>{ billettholderInterestLevelIcon(row.InterestLevel) } { billettholderInterestLabel(row.InterestLevel) }</span>
-			if row.EventStatus != models.EventStatusPublished {
-				<span>Ikke publisert: { row.EventStatus.Label() }</span>
+			if !row.IsPublished {
+				<span>Ikke publisert i pulje</span>
 			} else {
-				<span>Publisert</span>
+				<span>Publisert i pulje</span>
 			}
 		</span>
 		<span class={ chipClass }>

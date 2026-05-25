@@ -10,9 +10,9 @@ import (
 )
 
 func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInterestedEventsGroupedByPulje(t *testing.T) {
-	// Given expected pulje sections with assigned rows separated from interest rows,
+	// Given expected pulje sections with assigned rows separated from interest rows and pulje publication state,
 	// when the real billettholder interest loader reads the database,
-	// then each requested billettholder gets assigned rows first and interest rows grouped by level.
+	// then each requested billettholder gets assigned rows first and interest rows grouped by level with the correct pulje-specific publication status.
 
 	// Given
 	expectedBillettholderID := 42
@@ -25,6 +25,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 					EventID:       "assigned-gm-without-interest",
 					EventTitle:    "Assigned GM Without Interest",
 					EventStatus:   models.EventStatusPublished,
+					IsPublished:   true,
 					InterestLevel: models.InterestLevelNone,
 					AssignedRole:  models.EventPlayerRoleGM,
 				},
@@ -32,6 +33,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 					EventID:       "assigned-player-first-choice",
 					EventTitle:    "Assigned Player First Choice",
 					EventStatus:   models.EventStatusPublished,
+					IsPublished:   true,
 					InterestLevel: models.InterestLevelHigh,
 					AssignedRole:  models.EventPlayerRolePlayer,
 				},
@@ -41,6 +43,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 					EventID:       "high-interest",
 					EventTitle:    "High Interest",
 					EventStatus:   models.EventStatusPublished,
+					IsPublished:   false,
 					InterestLevel: models.InterestLevelHigh,
 				},
 			},
@@ -49,6 +52,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 					EventID:       "medium-interest",
 					EventTitle:    "Medium Interest",
 					EventStatus:   models.EventStatusApproved,
+					IsPublished:   true,
 					InterestLevel: models.InterestLevelMedium,
 				},
 			},
@@ -57,6 +61,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 					EventID:       "low-interest",
 					EventTitle:    "Low Interest",
 					EventStatus:   models.EventStatusDraft,
+					IsPublished:   false,
 					InterestLevel: models.InterestLevelLow,
 				},
 			},
@@ -69,6 +74,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 					EventID:       "saturday-assigned-player",
 					EventTitle:    "Saturday Assigned Player",
 					EventStatus:   models.EventStatusPublished,
+					IsPublished:   true,
 					InterestLevel: models.InterestLevelNone,
 					AssignedRole:  models.EventPlayerRolePlayer,
 				},
@@ -78,6 +84,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 					EventID:       "saturday-high-interest",
 					EventTitle:    "Saturday High Interest",
 					EventStatus:   models.EventStatusApproved,
+					IsPublished:   true,
 					InterestLevel: models.InterestLevelHigh,
 				},
 			},
@@ -94,6 +101,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 	seedBillettholderInterestBillettholdere(t, db, expectedBillettholderID)
 	seedBillettholderInterestPuljer(t, db)
 	seedBillettholderInterestEvents(t, db)
+	seedBillettholderInterestEventPuljer(t, db)
 	seedBillettholderInterestRows(t, db, expectedBillettholderID)
 	seedBillettholderInterestAssignments(t, db, expectedBillettholderID)
 
@@ -126,6 +134,7 @@ type expectedBillettholderInterestRow struct {
 	EventID       string
 	EventTitle    string
 	EventStatus   models.EventStatus
+	IsPublished   bool
 	InterestLevel models.InterestLevel
 	AssignedRole  models.EventPlayerRole
 }
@@ -165,6 +174,7 @@ func normalizeBillettholderInterestRows(rows []billettholderInterestEventRow) []
 			EventID:       row.EventID,
 			EventTitle:    row.EventTitle,
 			EventStatus:   row.EventStatus,
+			IsPublished:   row.IsPublished,
 			InterestLevel: row.InterestLevel,
 			AssignedRole:  row.AssignedRole,
 		})
@@ -234,6 +244,35 @@ func seedBillettholderInterestEvents(t *testing.T, db *sql.DB) {
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusPublished,
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusPublished,
+	)
+}
+
+func seedBillettholderInterestEventPuljer(t *testing.T, db *sql.DB) {
+	t.Helper()
+
+	mustExecBillettholderInterestTest(t, db, `
+		INSERT INTO relation_event_puljer (
+			event_id, pulje_id, is_in_pulje, is_published
+		) VALUES
+			('assigned-gm-without-interest', ?, 1, 1),
+			('assigned-player-first-choice', ?, 1, 1),
+			('high-interest', ?, 1, 0),
+			('medium-interest', ?, 1, 1),
+			('low-interest', ?, 1, 0),
+			('saturday-assigned-player', ?, 1, 1),
+			('saturday-high-interest', ?, 1, 0),
+			('saturday-high-interest', ?, 1, 1),
+			('other-billettholder-interest', ?, 1, 1)
+	`,
+		models.PuljeFredagKveld,
+		models.PuljeFredagKveld,
+		models.PuljeFredagKveld,
+		models.PuljeFredagKveld,
+		models.PuljeFredagKveld,
+		models.PuljeLordagMorgen,
+		models.PuljeFredagKveld,
+		models.PuljeLordagMorgen,
+		models.PuljeFredagKveld,
 	)
 }
 

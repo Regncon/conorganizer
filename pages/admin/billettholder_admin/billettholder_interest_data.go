@@ -12,6 +12,7 @@ type billettholderInterestEventRow struct {
 	EventID       string
 	EventTitle    string
 	EventStatus   models.EventStatus
+	IsPublished   bool
 	InterestLevel models.InterestLevel
 	AssignedRole  models.EventPlayerRole
 }
@@ -69,6 +70,7 @@ func getBillettholderInterestSectionsByBillettholderID(
 				e.id AS event_id,
 				e.title AS event_title,
 				e.status AS event_status,
+				COALESCE(ep.is_published, 0) AS is_published,
 				COALESCE(i.interest_level, '') AS interest_level,
 				rep.role AS assigned_role,
 				1 AS is_assigned
@@ -79,6 +81,9 @@ func getBillettholderInterestSectionsByBillettholderID(
 				ON e.id = rep.event_id
 			INNER JOIN puljer AS p
 				ON p.id = rep.pulje_id
+			LEFT JOIN relation_event_puljer AS ep
+				ON ep.event_id = rep.event_id
+				AND ep.pulje_id = rep.pulje_id
 			LEFT JOIN interests AS i
 				ON i.billettholder_id = rep.billettholder_id
 				AND i.event_id = rep.event_id
@@ -94,6 +99,7 @@ func getBillettholderInterestSectionsByBillettholderID(
 				e.id AS event_id,
 				e.title AS event_title,
 				e.status AS event_status,
+				COALESCE(ep.is_published, 0) AS is_published,
 				i.interest_level AS interest_level,
 				'' AS assigned_role,
 				0 AS is_assigned
@@ -104,6 +110,9 @@ func getBillettholderInterestSectionsByBillettholderID(
 				ON e.id = i.event_id
 			INNER JOIN puljer AS p
 				ON p.id = i.pulje_id
+			LEFT JOIN relation_event_puljer AS ep
+				ON ep.event_id = i.event_id
+				AND ep.pulje_id = i.pulje_id
 			LEFT JOIN relation_events_players AS rep
 				ON rep.billettholder_id = i.billettholder_id
 				AND rep.event_id = i.event_id
@@ -117,6 +126,7 @@ func getBillettholderInterestSectionsByBillettholderID(
 			event_id,
 			event_title,
 			event_status,
+			is_published,
 			interest_level,
 			assigned_role,
 			is_assigned
@@ -154,6 +164,7 @@ func getBillettholderInterestSectionsByBillettholderID(
 			eventID         string
 			eventTitle      string
 			eventStatus     string
+			isPublished     int
 			interestLevel   string
 			assignedRole    string
 			isAssigned      int
@@ -165,6 +176,7 @@ func getBillettholderInterestSectionsByBillettholderID(
 			&eventID,
 			&eventTitle,
 			&eventStatus,
+			&isPublished,
 			&interestLevel,
 			&assignedRole,
 			&isAssigned,
@@ -190,6 +202,7 @@ func getBillettholderInterestSectionsByBillettholderID(
 			EventID:       eventID,
 			EventTitle:    eventTitle,
 			EventStatus:   models.EventStatus(eventStatus),
+			IsPublished:   isPublished == 1,
 			InterestLevel: models.InterestLevel(interestLevel),
 			AssignedRole:  models.EventPlayerRole(assignedRole),
 		}
