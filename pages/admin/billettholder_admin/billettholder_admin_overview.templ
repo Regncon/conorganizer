@@ -1,0 +1,153 @@
+package billettholderadmin
+
+import (
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"strconv"
+
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/billettholder"
+)
+
+type billettholderAdminOverviewCounts struct {
+	Total              int
+	WithoutFirstChoice int
+	GMOrDM             int
+}
+
+func getBillettholderAdminOverviewCounts(db *sql.DB) (billettholderAdminOverviewCounts, error) {
+	var counts billettholderAdminOverviewCounts
+	err := db.QueryRow(`
+		WITH published_assignments AS (
+			SELECT
+				rep.billettholder_id,
+				rep.role,
+				i.interest_level
+			FROM relation_events_players AS rep
+			INNER JOIN relation_event_puljer AS ep
+				ON ep.event_id = rep.event_id
+				AND ep.pulje_id = rep.pulje_id
+				AND ep.is_published = 1
+			LEFT JOIN interests AS i
+				ON i.billettholder_id = rep.billettholder_id
+				AND i.event_id = rep.event_id
+				AND i.pulje_id = rep.pulje_id
+		),
+		first_choice_billettholdere AS (
+			SELECT DISTINCT billettholder_id
+			FROM published_assignments
+			WHERE role = ? AND interest_level = ?
+		),
+		gm_billettholdere AS (
+			SELECT DISTINCT billettholder_id
+			FROM published_assignments
+			WHERE role = ?
+		)
+		SELECT
+			(SELECT COUNT(*) FROM billettholdere),
+			(
+				SELECT COUNT(*)
+				FROM billettholdere AS b
+				WHERE NOT EXISTS (
+					SELECT 1
+					FROM first_choice_billettholdere AS fc
+					WHERE fc.billettholder_id = b.id
+				)
+			),
+			(SELECT COUNT(*) FROM gm_billettholdere)
+	`,
+		models.EventPlayerRolePlayer,
+		models.InterestLevelHigh,
+		models.EventPlayerRoleGM,
+	).Scan(&counts.Total, &counts.WithoutFirstChoice, &counts.GMOrDM)
+	if err != nil {
+		return billettholderAdminOverviewCounts{}, fmt.Errorf("query billettholder admin overview counts: %w", err)
+	}
+
+	return counts, nil
+}
+
+func billettholderAdminOverviewFilterClass(active bool) string {
+	class := "btn btn--outline billettholder-admin-overview-filter"
+	if active {
+		class += " selected"
+	}
+	return class
+}
+
+templ billettholderAdminOverview(db *sql.DB, logger *slog.Logger, filters billettholderService.BillettholderFilters) {
+	{{
+		counts, err := getBillettholderAdminOverviewCounts(db)
+		if err != nil {
+			logger.Error(err.Error())
+		}
+	}}
+	<style>
+		.billettholder-admin-overview {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+			margin-block-end: var(--spacing-4x);
+		}
+
+		.billettholder-admin-overview-counts,
+		.billettholder-admin-overview-filters {
+			display: flex;
+			flex-wrap: wrap;
+			gap: var(--spacing-2x);
+			align-items: center;
+		}
+
+		.billettholder-admin-overview-count {
+			display: inline-flex;
+			align-items: center;
+			min-height: 2rem;
+			padding: 0 var(--spacing-2x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-1x);
+			background: var(--bg-item);
+			color: var(--color-text-strong);
+			font-size: 12px;
+			font-weight: 700;
+		}
+
+		.billettholder-admin-overview-filter.selected {
+			border-color: var(--color-primary);
+			background: var(--bg-item-hover);
+			color: var(--color-text-strong);
+		}
+	</style>
+	<section
+		class="billettholder-admin-overview"
+		data-signals:filter-without-first-choice={ fmt.Sprintf("%t", filters.WithoutFirstChoice) }
+		data-signals:filter-gm-or-dm={ fmt.Sprintf("%t", filters.GMOrDM) }
+	>
+		<p class="page-heading-help-text">Her kan du se en oversikt over alle billettholdere</p>
+		<div class="billettholder-admin-overview-counts" aria-label="Billettholderstatistikk">
+			<span class="billettholder-admin-overview-count">Totalt: { strconv.Itoa(counts.Total) }</span>
+			<span class="billettholder-admin-overview-count">Uten førstevalg: { strconv.Itoa(counts.WithoutFirstChoice) }</span>
+			<span class="billettholder-admin-overview-count">GM/DM: { strconv.Itoa(counts.GMOrDM) }</span>
+		</div>
+		<div class="billettholder-admin-overview-filters" aria-label="Billettholderfiltre">
+			<button
+				type="button"
+				class={ billettholderAdminOverviewFilterClass(filters.WithoutFirstChoice) }
+				data-class:selected="$filterWithoutFirstChoice"
+				data-attr:aria-pressed="$filterWithoutFirstChoice ? 'true' : 'false'"
+				data-on:click="$filterWithoutFirstChoice = !$filterWithoutFirstChoice; @get('/admin/billettholder/api/search/')"
+			>
+				Uten førstevalg
+			</button>
+			<button
+				type="button"
+				class={ billettholderAdminOverviewFilterClass(filters.GMOrDM) }
+				data-class:selected="$filterGmOrDm"
+				data-attr:aria-pressed="$filterGmOrDm ? 'true' : 'false'"
+				data-on:click="$filterGmOrDm = !$filterGmOrDm; @get('/admin/billettholder/api/search/')"
+			>
+				GM/DM
+			</button>
+		</div>
+	</section>
+}
