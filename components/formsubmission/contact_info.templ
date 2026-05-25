@@ -1,17 +1,18 @@
 package formsubmission
 
 import (
-	"net/http"
-	"github.com/go-chi/chi/v5"
-
-	"github.com/Regncon/conorganizer/service/keyvalue"
 	"database/sql"
 	"fmt"
+	"log/slog"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/go-chi/chi/v5"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"name"`
@@ -29,9 +30,7 @@ func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
-		query := `UPDATE events SET host_name = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
-		if err != nil {
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "host_name = ?", store.Input); err != nil {
 			http.Error(w, "Failed to update the name for event in the database", http.StatusInternalServerError)
 			return
 		}
@@ -42,7 +41,7 @@ func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 	})
 }
 
-func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"email"`
@@ -60,9 +59,7 @@ func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
-		query := `UPDATE events SET email = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
-		if err != nil {
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "email = ?", store.Input); err != nil {
 			http.Error(w, "Failed to update the email for event in the database", http.StatusInternalServerError)
 			return
 		}
@@ -73,7 +70,7 @@ func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 		}
 	})
 }
-func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"phone"`
@@ -91,9 +88,7 @@ func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
-		query := `UPDATE events SET phone_number = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Input, eventID)
-		if err != nil {
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "phone_number = ?", store.Input); err != nil {
 			http.Error(w, "Failed to update the phone for event in the database", http.StatusInternalServerError)
 			return
 		}
@@ -119,6 +114,8 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					class="input"
 					placeholder="Ditt navn"
 					required
+					pattern=".{2,}"
+					title="Bruk minst 2 tegn"
 					autocomplete="name"
 				/>
 				<div data-signals={ dataSignals(map[string]string{"name": name}) }></div>
@@ -148,6 +145,8 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					class="input"
 					placeholder="Ditt telefonnummer"
 					required
+					pattern="(?:\+47\s*)?\d(?:\s*\d){7}"
+					title="Bruk 8 siffer, eventuelt med +47 foran"
 					autocomplete="tel"
 				/>
 			</label>
