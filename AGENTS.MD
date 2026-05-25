@@ -1,6 +1,27 @@
 ## Check domain domeneordbok.md
 when adding names check domeneordbok.md instead of translating to english
 
+# CSS rules
+
+### Required CSS style
+- Use native CSS nesting.
+- Use container queries for responsive component styling.
+- Prefer component-based responsiveness over viewport-based media queries.
+- Use modern CSS features where appropriate:
+  - custom properties
+  - logical properties
+  - `:has()`
+  - `clamp()`
+  - `min()`
+  - `max()`
+  - `color-mix()`
+  - container query units like `cqw`, `cqh`, `cqi`, `cqb`
+- Keep selectors shallow and readable.
+- Avoid Sass-style CSS that does not work natively in browsers.
+- Avoid viewport media queries for components. Use `@container` instead.
+- Use viewport media queries only for page-level/global layout concerns.
+
+
 ## Go test structure
 When writing or cleaning up Go tests, prefer behavior-focused tests that read from intent to verification.
 
