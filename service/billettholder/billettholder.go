@@ -8,6 +8,11 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
+type BillettholderFilters struct {
+	WithoutFirstChoice bool
+	GMOrDM             bool
+}
+
 func GetBillettholdere(userId string, db *sql.DB) ([]models.Billettholder, error) {
 	var rows *sql.Rows
 	var err error
@@ -45,6 +50,88 @@ func GetBillettholdere(userId string, db *sql.DB) ([]models.Billettholder, error
 	}
 	defer rows.Close()
 
+	return scanBillettholdere(rows)
+}
+
+func GetBillettholdereWithFilters(userId string, db *sql.DB, filters BillettholderFilters) ([]models.Billettholder, error) {
+	query := `
+		WITH published_assignments AS (
+			SELECT
+				rep.billettholder_id,
+				rep.role,
+				i.interest_level
+			FROM relation_events_players AS rep
+			INNER JOIN relation_event_puljer AS ep
+				ON ep.event_id = rep.event_id
+				AND ep.pulje_id = rep.pulje_id
+				AND ep.is_published = 1
+			LEFT JOIN interests AS i
+				ON i.billettholder_id = rep.billettholder_id
+				AND i.event_id = rep.event_id
+				AND i.pulje_id = rep.pulje_id
+		),
+		first_choice_billettholdere AS (
+			SELECT DISTINCT billettholder_id
+			FROM published_assignments
+			WHERE role = ? AND interest_level = ?
+		),
+		gm_billettholdere AS (
+			SELECT DISTINCT billettholder_id
+			FROM published_assignments
+			WHERE role = ?
+		)
+		SELECT
+			b.id, b.first_name, b.last_name, b.ticket_type_id, b.ticket_type,
+			b.is_over_18, b.order_id, b.ticket_id, b.created_at, b.updated_at,
+			e.id, e.email, e.kind, e.created_at, e.updated_at
+		FROM billettholdere AS b
+		LEFT JOIN relation_billettholder_emails AS e
+			ON b.id = e.billettholder_id
+	`
+	args := []any{
+		models.EventPlayerRolePlayer,
+		models.InterestLevelHigh,
+		models.EventPlayerRoleGM,
+	}
+
+	if userId != "" {
+		query += `
+			JOIN relation_billettholdere_users bu ON b.id = bu.billettholder_id
+			JOIN users u ON bu.user_id = u.id
+		`
+	}
+
+	query += `
+		WHERE (? = 0 OR NOT EXISTS (
+			SELECT 1
+			FROM first_choice_billettholdere AS fc
+			WHERE fc.billettholder_id = b.id
+		))
+		AND (? = 0 OR EXISTS (
+			SELECT 1
+			FROM gm_billettholdere AS gm
+			WHERE gm.billettholder_id = b.id
+		))
+	`
+	args = append(args, boolToInt(filters.WithoutFirstChoice), boolToInt(filters.GMOrDM))
+
+	if userId != "" {
+		query += ` AND u.external_id = ?`
+		args = append(args, userId)
+	}
+
+	query += ` ORDER BY b.id, e.id`
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query filtered billettholdere: %w", err)
+	}
+	defer rows.Close()
+
+	return scanBillettholdere(rows)
+}
+
+func scanBillettholdere(rows *sql.Rows) ([]models.Billettholder, error) {
 	type emailRow struct {
 		id        sql.NullInt64
 		email     sql.NullString
@@ -108,6 +195,13 @@ func GetBillettholdere(userId string, db *sql.DB) ([]models.Billettholder, error
 		out = append(out, *byID[id])
 	}
 	return out, nil
+}
+
+func boolToInt(value bool) int {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func GetBillettholderByUserId(db *sql.DB, userID string) (int, error) {

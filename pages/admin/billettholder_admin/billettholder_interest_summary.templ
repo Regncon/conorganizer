@@ -1,0 +1,122 @@
+package billettholderadmin
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
+)
+
+templ billettholderInterestSummaryStyles() {
+	<style>
+		.billettholder-card {
+			container: billettholder-card / inline-size;
+		}
+
+		.billettholder-status-strip {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: var(--spacing-2x);
+		}
+
+		.billettholder-status-badge {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-2x);
+			min-height: 2rem;
+			padding: var(--spacing-1x) var(--spacing-2x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-1x);
+			background: color-mix(in srgb, var(--bg-item) 88%, black);
+			color: var(--color-text-strong);
+			font-size: 12px;
+			line-height: 1.25;
+
+			&.is-muted {
+				color: var(--color-text-soft);
+			}
+
+			&.is-gm {
+				border-color: var(--color-success);
+				color: var(--color-success);
+			}
+
+			&.is-warning {
+				border-color: var(--color-warning);
+				color: var(--color-warning);
+			}
+		}
+
+		.billettholder-interest-open {
+			width: 100%;
+			justify-content: space-between;
+			gap: var(--spacing-2x);
+
+			& .billettholder-interest-open-counts {
+				display: inline-flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: var(--spacing-2x);
+			}
+		}
+
+		@container billettholder-card (min-width: 36rem) {
+			.billettholder-status-strip {
+				grid-template-columns: 1fr 1fr;
+			}
+		}
+	</style>
+}
+
+templ billettholderInterestSummary(billettholder models.Billettholder, searchTerm string, interestSections []billettholderInterestPuljeSection) {
+	{{
+		hasGMOrDM := billettholderHasGMOrDM(interestSections)
+		hasFirstChoice := billettholderHasFirstChoice(interestSections)
+		assignedTotal := billettholderAssignedTotal(interestSections)
+		interestLevelTotal := billettholderInterestLevelTotal(interestSections)
+		firstPuljeID := billettholderFirstPuljeID(interestSections)
+		dialogID := fmt.Sprintf("billettholder-interests-%d", billettholder.ID)
+		gmStatusClass := "billettholder-status-badge"
+		if hasGMOrDM {
+			gmStatusClass += " is-gm"
+		} else {
+			gmStatusClass += " is-muted"
+		}
+		firstChoiceStatusClass := "billettholder-status-badge"
+		if !hasFirstChoice {
+			firstChoiceStatusClass += " is-warning"
+		}
+	}}
+	<div class="billettholder-status-strip">
+		<div class={ gmStatusClass }>
+			@icons.Icon(icons.Gamemaster, icons.Size16)
+			if hasGMOrDM {
+				<span>@templ.Raw(highlightSearchTerm("Spilleder (GM/DM)", searchTerm))</span>
+			} else {
+				<span>@templ.Raw(highlightSearchTerm("Ikke spilleder", searchTerm))</span>
+			}
+		</div>
+		<div class={ firstChoiceStatusClass }>
+			if hasFirstChoice {
+				@icons.Icon(icons.ProgressComplete, icons.Size16)
+				<span>@templ.Raw(highlightSearchTerm("Har fått førstevalg", searchTerm))</span>
+			} else {
+				@icons.Icon(icons.ProgressRejected, icons.Size16)
+				<span>@templ.Raw(highlightSearchTerm("Har ikke fått førstevalg", searchTerm))</span>
+			}
+		</div>
+	</div>
+	<button
+		type="button"
+		class="btn btn--outline btn-with-icon billettholder-interest-open"
+		data-on:click={ fmt.Sprintf("$billettholderInterestActivePulje = '%s'; document.getElementById('%s')?.showModal()", firstPuljeID, dialogID) }
+	>
+		<span class="billettholder-interest-open-counts">
+			<span>Interesser ({ strconv.Itoa(interestLevelTotal) })</span>
+			<span>Tildelt ({ strconv.Itoa(assignedTotal) })</span>
+		</span>
+		@icons.Icon(icons.ChevronDown, icons.Size16)
+	</button>
+	@billettholderInterestDialog(billettholder, interestSections, dialogID, assignedTotal, interestLevelTotal)
+}
