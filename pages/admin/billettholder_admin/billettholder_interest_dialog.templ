@@ -156,6 +156,13 @@ templ billettholderInterestDialogStyles() {
 		}
 
 	</style>
+	<script>
+		window.addEventListener("pageshow", () => {
+			document.querySelectorAll(".billettholder-interest-dialog[open]").forEach((dialog) => {
+				dialog.close();
+			});
+		});
+	</script>
 }
 
 templ billettholderInterestDialog(

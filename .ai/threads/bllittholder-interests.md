@@ -578,4 +578,32 @@ Note: `.ai/threads/bllittholder-interests.md` is still modified in the worktree;
 
 Time: 2026-05-24 16:31:40
 --- Next Prompt ---
+There is a bug when I click on an event in the modal and it takes me to the edit page. Then when I click the back button on the browser it takes me back to the admin page but the modal is still open, but not visible. I can't click on anything on the page and I have to refresh the page to be able to interact with it again.
+
+Time: 2026-05-25 12:43:13
+--- Codex Run ---
+
+Codex output:
+I’ll fix this at the modal link level first: close the native `<dialog>` before the browser navigates to the edit page, so the page state saved in browser history is not “modal open.” I’ll inspect the row component and then run templ generation plus the focused package test.
+The specific browser behavior is a BFCache/native-dialog state issue. I’m adding two small guards: close the interest dialog before row-link navigation, and close any restored interest dialog on `pageshow` when the browser returns from history.
+The guards are in place. I’m regenerating templ output and running the focused tests now; this should catch any template syntax issue, though the browser-history behavior itself is a manual/browser concern.
+Fixed the stuck modal state.
+
+Changed:
+- [billettholder_interest_row.templ](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_row.templ:171): closes the open interest dialog before navigating to the event edit page.
+- [billettholder_interest_dialog.templ](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog.templ:156): adds a `pageshow` guard that closes any restored interest dialog when returning via browser history.
+
+This handles the browser back/forward cache case where the native `<dialog>` can remain open internally while no longer being visibly rendered.
+
+Verification passed:
+```sh
+go tool templ generate
+GOCACHE=/tmp/conorganizer-go-build-cache go test -count=1 ./pages/admin/billettholder_admin
+git diff --check -- pages/admin/billettholder_admin
+```
+
+I did not touch `.ai/threads/bllittholder-interests.md`.
+
+Time: 2026-05-25 12:43:13
+--- Next Prompt ---
 

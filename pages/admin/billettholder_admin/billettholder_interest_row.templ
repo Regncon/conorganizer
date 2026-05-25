@@ -171,7 +171,11 @@ templ billettholderInterestRow(row billettholderInterestEventRow, isAssigned boo
 			chipClass += " is-gm"
 		}
 	}}
-	<a class={ rowClass } href={ templ.URL(fmt.Sprintf("/admin/approval/edit/%s", row.EventID)) }>
+	<a
+		class={ rowClass }
+		href={ templ.URL(fmt.Sprintf("/admin/approval/edit/%s", row.EventID)) }
+		data-on:click="document.querySelector('.billettholder-interest-dialog[open]')?.close()"
+	>
 		<span class="billettholder-interest-row-title">{ row.EventTitle }</span>
 		<span class="billettholder-interest-row-meta">
 			if isAssigned {
