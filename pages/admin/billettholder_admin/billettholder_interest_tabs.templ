@@ -121,8 +121,8 @@ templ billettholderInterestTabs(sections []billettholderInterestPuljeSection) {
 					}
 				</span>
 				<span class="billettholder-interest-tab-counts">
-					<span>{ strconv.Itoa(len(section.Assigned)) } tildelt</span>
 					<span>{ strconv.Itoa(billettholderSectionInterestLevelTotal(section)) } interesser</span>
+					<span>{ strconv.Itoa(len(section.Assigned)) } tildelt</span>
 				</span>
 			</button>
 		}

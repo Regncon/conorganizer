@@ -51,9 +51,6 @@ templ billettholderInterestRowStyles() {
 			border-bottom-right-radius: var(--border-radius-1x);
 		}
 
-		.billettholder-interest-row + .billettholder-interest-row {
-			border-top: none;
-		}
 
 		.billettholder-interest-row:nth-of-type(odd) {
 			background: var(--bg-item);
@@ -65,6 +62,8 @@ templ billettholderInterestRowStyles() {
 
 		.billettholder-interest-row:hover,
 		.billettholder-interest-row:focus-visible {
+			border: var(--border-radius-1x);
+			border: 1px solid;
 			border-color: var(--color-primary);
 			background: var(--bg-item-hover);
 			outline: none;
