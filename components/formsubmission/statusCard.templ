@@ -2,17 +2,19 @@
 package formsubmission
 
 import (
-	"net/http"
-	"fmt"
-	"github.com/go-chi/chi/v5"
 	"database/sql"
+	"fmt"
+	"log/slog"
+	"net/http"
+
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/go-chi/chi/v5"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func UpdateStatus(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
+func UpdateStatus(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Status models.EventStatus `json:"status"`
@@ -30,9 +32,7 @@ func UpdateStatus(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue) {
 			return
 		}
 
-		query := `UPDATE events SET status = ? WHERE id = ?`
-		_, err := db.Exec(query, store.Status, eventID)
-		if err != nil {
+		if err := updateEventStatusWithAudit(r.Context(), db, logger, eventID, store.Status); err != nil {
 			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
 			return
 		}
@@ -57,15 +57,16 @@ templ statusCard(event *models.Event, isAdmin bool) {
 				required
 			>
 				if isAdmin {
-						<option value={ models.EventStatusDraft } selected>{ models.EventStatusDraft.Label() }</option>
-						<option value={ models.EventStatusSubmitted } selected>{ models.EventStatusSubmitted.Label() }</option>
-						<option value={ models.EventStatusApproved } selected>{ models.EventStatusApproved.Label() } ( Du er administrator )</option>
-						<option value={ models.EventStatusArchived } selected>{ models.EventStatusArchived.Label() }</option>
+					<option value={ models.EventStatusDraft } selected>{ models.EventStatusDraft.Label() }</option>
+					<option value={ models.EventStatusSubmitted } selected>{ models.EventStatusSubmitted.Label() }</option>
+					<option value={ models.EventStatusApproved } selected>{ models.EventStatusApproved.Label() } ( Du er administrator )</option>
+					<option value={ models.EventStatusPublished } selected>{ models.EventStatusPublished.Label() } ( Du er administrator )</option>
+					<option value={ models.EventStatusArchived } selected>{ models.EventStatusArchived.Label() }</option>
 				} else {
 					if event.Status == models.EventStatusDraft || event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusArchived {
-							<option value={ models.EventStatusDraft }>{ models.EventStatusDraft.Label() }</option>
-							<option value={ models.EventStatusArchived }>{ models.EventStatusArchived.Label() }</option>
-								<option value={ models.EventStatusSubmitted } disabled>{ models.EventStatusSubmitted.Label() } (Bruk knappen nederst i skjema) </option>
+						<option value={ models.EventStatusDraft }>{ models.EventStatusDraft.Label() }</option>
+						<option value={ models.EventStatusArchived }>{ models.EventStatusArchived.Label() }</option>
+						<option value={ models.EventStatusSubmitted } disabled>{ models.EventStatusSubmitted.Label() } (Bruk knappen nederst i skjema) </option>
 					}
 				}
 			</select>

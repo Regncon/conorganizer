@@ -168,66 +168,64 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 							}
 						}
 					})
-					if err := formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, baseLogger); err != nil {
+					if err := formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger); err != nil {
 						logger.Error(fmt.Errorf("failed to set up inline validation: %w", err).Error())
 					}
-
-					// refactor to use "update/status etc"
 
 					newApiIdRouter.Route("/event-in-pulje", func(putEventInPuljeRouter chi.Router) {
 						formsubmission.UpdateEventInPulje(putEventInPuljeRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/is-published", func(putIsPublishedRouter chi.Router) {
-						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, kv, baseLogger)
+						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, kv, logger)
 					})
 
 					newApiIdRouter.Route("/status", func(putStatusRouter chi.Router) {
-						formsubmission.UpdateStatus(putStatusRouter, db, kv)
+						formsubmission.UpdateStatus(putStatusRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/name", func(putNameRouter chi.Router) {
-						formsubmission.UpdateName(putNameRouter, db, kv)
+						formsubmission.UpdateName(putNameRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/email", func(putEmailRouter chi.Router) {
-						formsubmission.UpdateEmail(putEmailRouter, db, kv)
+						formsubmission.UpdateEmail(putEmailRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/phone", func(putPhoneRouter chi.Router) {
-						formsubmission.UpdatePhone(putPhoneRouter, db, kv)
+						formsubmission.UpdatePhone(putPhoneRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/title", func(putTitleRouter chi.Router) {
-						formsubmission.UpdateTitle(putTitleRouter, db, kv)
+						formsubmission.UpdateTitle(putTitleRouter, db, kv, logger)
 					})
 
 					newApiIdRouter.Route("/intro", func(putIntroRouter chi.Router) {
-						formsubmission.UpdateIntro(putIntroRouter, db, kv)
+						formsubmission.UpdateIntro(putIntroRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/system", func(putSystemRouter chi.Router) {
-						formsubmission.UpdateSystem(putSystemRouter, db, kv)
+						formsubmission.UpdateSystem(putSystemRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/type", func(putTypeRouter chi.Router) {
-						formsubmission.UpdateType(putTypeRouter, db, kv)
+						formsubmission.UpdateType(putTypeRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/description", func(putDescriptionRouter chi.Router) {
-						formsubmission.UpdateDescription(putDescriptionRouter, db, kv)
+						formsubmission.UpdateDescription(putDescriptionRouter, db, kv, logger)
 					})
 
 					// should be age-group
 					newApiIdRouter.Route("/ageGroup", func(putAgeGroupRouter chi.Router) {
-						formsubmission.UpdateAgeGroup(putAgeGroupRouter, db, kv)
+						formsubmission.UpdateAgeGroup(putAgeGroupRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/runtime", func(putRuntimeRouter chi.Router) {
-						formsubmission.UpdateRuntime(putRuntimeRouter, db, kv)
+						formsubmission.UpdateRuntime(putRuntimeRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/beginner-friendly", func(putBeginnerFriendlyRouter chi.Router) {
-						formsubmission.UpdateBeginnerFriendly(putBeginnerFriendlyRouter, db, kv)
+						formsubmission.UpdateBeginnerFriendly(putBeginnerFriendlyRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/can-be-run-in-english", func(putCanBeRunInEnglishRouter chi.Router) {
-						formsubmission.UpdateCanBeRunInEnglish(putCanBeRunInEnglishRouter, db, kv)
+						formsubmission.UpdateCanBeRunInEnglish(putCanBeRunInEnglishRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/max-players", func(putMaxPlayersRouter chi.Router) {
-						formsubmission.UpdateMaxPlayers(putMaxPlayersRouter, db, kv)
+						formsubmission.UpdateMaxPlayers(putMaxPlayersRouter, db, kv, logger)
 					})
 					newApiIdRouter.Route("/notes", func(putNotesRouter chi.Router) {
-						formsubmission.UpdateNotes(putNotesRouter, db, kv)
+						formsubmission.UpdateNotes(putNotesRouter, db, kv, logger)
 					})
 
 					newApiIdRouter.Route("/upload", func(uploadRouter chi.Router) {
@@ -237,7 +235,7 @@ func SetupMyEventsRoute(router chi.Router, store sessions.Store, ns *embeddednat
 						eventimgupload.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, logger)
 					})
 					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
-						formsubmission.SubmitFormRoute(newApiIdRouter, db, kv, baseLogger)
+						formsubmission.SubmitFormRoute(newApiIdRouter, db, kv, logger)
 					})
 				})
 

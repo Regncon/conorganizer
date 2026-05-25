@@ -6,9 +6,9 @@ import (
 )
 
 templ singleEvent(event models.EventCardModel) {
-	{{ eventLink := "my-events/new/" + event.Id }}
-	if event.Status == models.EventStatusPublished || event.Status == models.EventStatusSubmitted {
-		{{ eventLink = "event/" + event.Id }}
+	{{ eventLink := "/my-events/new/" + event.Id }}
+	if event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusApproved || event.Status == models.EventStatusPublished {
+		{{ eventLink = "/event/" + event.Id }}
 	}
 	<a href={ eventLink } class="item-card profile-event-bar">
 		if event.Title == "" {
