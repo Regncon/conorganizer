@@ -281,7 +281,7 @@ func deleteEmailFromBillettholderRoute(
 }
 
 templ billettholderCard(billettholder models.Billettholder, searchTerm string, interestSections []billettholderInterestPuljeSection) {
-	<div class="card" style="display:flex; flex-direction:column; gap:0.75rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
+	<div class="card billettholder-card" style="display:flex; flex-direction:column; gap:0.75rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		<p style="margin:0;">
 			<strong>Bestilling: </strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
 		</p>

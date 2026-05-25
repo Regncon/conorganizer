@@ -10,6 +10,10 @@ import (
 
 templ billettholderInterestSummaryStyles() {
 	<style>
+		.billettholder-card {
+			container: billettholder-card / inline-size;
+		}
+
 		.billettholder-status-strip {
 			display: grid;
 			grid-template-columns: 1fr;
@@ -24,40 +28,40 @@ templ billettholderInterestSummaryStyles() {
 			padding: var(--spacing-1x) var(--spacing-2x);
 			border: 1px solid var(--bg-item-border);
 			border-radius: var(--border-radius-1x);
-			background: rgb(41, 45, 68);
+			background: color-mix(in srgb, var(--bg-item) 88%, black);
 			color: var(--color-text-strong);
 			font-size: 12px;
 			line-height: 1.25;
-		}
 
-		.billettholder-status-badge.is-muted {
-			color: var(--color-text-soft);
-		}
+			&.is-muted {
+				color: var(--color-text-soft);
+			}
 
-		.billettholder-status-badge.is-gm {
-			border-color: var(--color-success);
-			color: var(--color-success);
-		}
+			&.is-gm {
+				border-color: var(--color-success);
+				color: var(--color-success);
+			}
 
-		.billettholder-status-badge.is-warning {
-			border-color: var(--color-warning);
-			color: var(--color-warning);
+			&.is-warning {
+				border-color: var(--color-warning);
+				color: var(--color-warning);
+			}
 		}
 
 		.billettholder-interest-open {
 			width: 100%;
 			justify-content: space-between;
 			gap: var(--spacing-2x);
+
+			& .billettholder-interest-open-counts {
+				display: inline-flex;
+				flex-wrap: wrap;
+				align-items: center;
+				gap: var(--spacing-2x);
+			}
 		}
 
-		.billettholder-interest-open-counts {
-			display: inline-flex;
-			flex-wrap: wrap;
-			align-items: center;
-			gap: var(--spacing-2x);
-		}
-
-		@media (min-width: 36rem) {
+		@container billettholder-card (min-width: 36rem) {
 			.billettholder-status-strip {
 				grid-template-columns: 1fr 1fr;
 			}

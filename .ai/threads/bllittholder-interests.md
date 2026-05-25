@@ -893,4 +893,55 @@ Note: filter state follows the existing package-global `searchTerm` pattern. `.a
 
 Time: 2026-05-25 14:19:29
 --- Next Prompt ---
+Let's double check that the css follows the project css rules:
+
+## CSS rules
+
+### Required CSS style
+- Use native CSS nesting.
+- Use container queries for responsive component styling.
+- Prefer component-based responsiveness over viewport-based media queries.
+- Use modern CSS features where appropriate:
+  - custom properties
+  - logical properties
+  - `:has()`
+  - `clamp()`
+  - `min()`
+  - `max()`
+  - `color-mix()`
+  - container query units like `cqw`, `cqh`, `cqi`, `cqb`
+- Keep selectors shallow and readable.
+- Avoid Sass-style CSS that does not work natively in browsers.
+- Avoid viewport media queries for components. Use `@container` instead.
+- Use viewport media queries only for page-level/global layout concerns.
+
+
+
+Time: 2026-05-25 14:40:41
+--- Codex Run ---
+
+Codex output:
+I’ll audit the CSS in the billettholder admin components first, then patch any component CSS that still uses viewport-style responsiveness or avoidable deep selectors.
+I found three component-level viewport media queries in the interest UI (`summary`, `tabs`, `row`). I’m going to convert those to container queries and use native nesting in the component style blocks; the existing add-billettholder page media query is unrelated legacy CSS.
+I’m going to make the component CSS mobile-first where it matters, add named containers, and replace the component `@media` rules with `@container` rules. I’ll also clean up a small invalid hover border declaration in the row CSS while I’m there.
+The CSS patch is in. I’m regenerating templ and running the focused tests now; then I’ll re-scan for remaining component media queries.
+Checked and cleaned up the CSS for the billettholder interest/admin overview components.
+
+I changed the component CSS to better match the rules:
+- Replaced component `@media` rules with named `@container` queries.
+- Added component containers for `billettholder-card`, `billettholder-interest-dialog`, and overview.
+- Converted the relevant style blocks to native CSS nesting.
+- Swapped fixed physical sizing in the dialog for logical properties like `inline-size`, `min-block-size`, and `max-block-size`.
+- Used `color-mix()` for the derived row/status backgrounds.
+- Removed an invalid duplicate hover `border` declaration in the interest row CSS.
+
+The only remaining `@media` under `pages/admin/billettholder_admin` is in the existing add-billettholder page, which I left alone because it is unrelated legacy CSS.
+
+Verification passed:
+- `go tool templ generate`
+- `GOCACHE=/tmp/conorganizer-go-build-cache go test -count=1 ./service/billettholder ./pages/admin/billettholder_admin`
+- `git diff --check -- pages/admin/billettholder_admin service/billettholder`
+
+Time: 2026-05-25 14:40:41
+--- Next Prompt ---
 

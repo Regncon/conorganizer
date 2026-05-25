@@ -12,7 +12,7 @@ templ billettholderInterestTabsStyles() {
 	<style>
 		.billettholder-interest-tabs {
 			display: grid;
-			grid-template-columns: repeat(4, minmax(0, 1fr));
+			grid-template-columns: 1fr;
 			gap: var(--spacing-2x);
 			border-bottom: 1px solid var(--bg-item-border);
 			padding-bottom: var(--spacing-3x);
@@ -31,44 +31,44 @@ templ billettholderInterestTabsStyles() {
 			cursor: pointer;
 			text-align: left;
 			transition: var(--btn-transition);
-		}
 
-		.billettholder-interest-tab:hover,
-		.billettholder-interest-tab:focus-visible,
-		.billettholder-interest-tab.selected {
-			border-color: var(--color-primary);
-			background: var(--bg-item-hover);
-			color: var(--color-text-strong);
-			outline: none;
-		}
+			&:hover,
+			&:focus-visible,
+			&.selected {
+				border-color: var(--color-primary);
+				background: var(--bg-item-hover);
+				color: var(--color-text-strong);
+				outline: none;
+			}
 
-		.billettholder-interest-tab-title {
-			display: flex;
-			align-items: center;
-			gap: var(--spacing-1x);
-			font-size: 12px;
-			font-weight: 700;
-		}
+			& .billettholder-interest-tab-title {
+				display: flex;
+				align-items: center;
+				gap: var(--spacing-1x);
+				font-size: 12px;
+				font-weight: 700;
+			}
 
-		.billettholder-interest-tab-gm {
-			color: var(--color-success);
-		}
+			& .billettholder-interest-tab-gm {
+				color: var(--color-success);
+			}
 
-		.billettholder-interest-tab-counts {
-			display: flex;
-			flex-wrap: wrap;
-			gap: var(--spacing-1x);
-			font-size: 12px;
-		}
-
-		.billettholder-interest-tab-panel.hidden {
-			display: none;
+			& .billettholder-interest-tab-counts {
+				display: flex;
+				flex-wrap: wrap;
+				gap: var(--spacing-1x);
+				font-size: 12px;
+			}
 		}
 
 		.billettholder-interest-tab-panel {
 			display: flex;
 			flex-direction: column;
 			gap: var(--spacing-3x);
+
+			&.hidden {
+				display: none;
+			}
 		}
 
 		.billettholder-interest-pulje-title {
@@ -78,23 +78,23 @@ templ billettholderInterestTabsStyles() {
 			margin: 0;
 			font-size: var(--text-heading-3);
 			color: var(--color-primary);
+
+			&::after {
+				content: "";
+				flex: 1;
+				border-top: 1px solid var(--bg-item-border);
+			}
 		}
 
-		.billettholder-interest-pulje-title::after {
-			content: "";
-			flex: 1;
-			border-top: 1px solid var(--bg-item-border);
-		}
-
-		@media (max-width: 48rem) {
+		@container billettholder-interest-dialog (min-width: 36rem) {
 			.billettholder-interest-tabs {
 				grid-template-columns: repeat(2, minmax(0, 1fr));
 			}
 		}
 
-		@media (max-width: 36rem) {
+		@container billettholder-interest-dialog (min-width: 48rem) {
 			.billettholder-interest-tabs {
-				grid-template-columns: 1fr;
+				grid-template-columns: repeat(4, minmax(0, 1fr));
 			}
 		}
 	</style>

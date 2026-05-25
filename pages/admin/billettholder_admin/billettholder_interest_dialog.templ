@@ -98,63 +98,63 @@ func billettholderInterestLabel(level models.InterestLevel) string {
 templ billettholderInterestDialogStyles() {
 	<style>
 		.billettholder-interest-dialog {
-			width: min(56rem, calc(100vw - 2rem));
-            min-height: 70vh;
-			max-height: min(52rem, calc(100vh - 2rem));
+			inline-size: min(56rem, calc(100dvw - 2rem));
+			min-block-size: 70dvh;
+			max-block-size: min(52rem, calc(100dvh - 2rem));
 			padding: 0;
 			border: none;
 			border-radius: var(--border-radius-2x);
 			background: var(--bg-surface);
 			color: var(--color-text-strong);
 			box-shadow: var(--shadow-dialog);
-		}
 
-		.billettholder-interest-dialog::backdrop {
-			background: hsl(0deg 0% 0% / 55%);
-		}
+			&::backdrop {
+				background: hsl(0deg 0% 0% / 55%);
+			}
 
-		.billettholder-interest-dialog-shell {
-			display: flex;
-			flex-direction: column;
-			max-height: min(52rem, calc(100vh - 2rem));
-		}
+			& .billettholder-interest-dialog-shell {
+				display: flex;
+				flex-direction: column;
+				max-block-size: min(52rem, calc(100dvh - 2rem));
+			}
 
-		.billettholder-interest-dialog-header {
-			display: flex;
-			align-items: start;
-			justify-content: space-between;
-			gap: var(--spacing-4x);
-			padding: var(--spacing-4x);
-			border-bottom: 1px solid var(--bg-item-border);
-		}
+			& .billettholder-interest-dialog-header {
+				display: flex;
+				align-items: start;
+				justify-content: space-between;
+				gap: var(--spacing-4x);
+				padding: var(--spacing-4x);
+				border-bottom: 1px solid var(--bg-item-border);
+			}
 
-		.billettholder-interest-dialog-title {
-			margin: 0;
-			font-size: var(--text-heading-3);
-		}
+			& .billettholder-interest-dialog-title {
+				margin: 0;
+				font-size: var(--text-heading-3);
+			}
 
-		.billettholder-interest-dialog-subtitle {
-			margin: var(--spacing-1x) 0 0;
-			color: var(--color-text-soft);
-			font-size: var(--text-body-small);
-		}
+			& .billettholder-interest-dialog-subtitle {
+				margin: var(--spacing-1x) 0 0;
+				color: var(--color-text-soft);
+				font-size: var(--text-body-small);
+			}
 
-		.billettholder-interest-dialog-content {
-			display: flex;
-			flex-direction: column;
-			gap: var(--spacing-4x);
-			padding: var(--spacing-4x);
-			overflow: auto;
-		}
+			& .billettholder-interest-dialog-content {
+				container: billettholder-interest-dialog / inline-size;
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-4x);
+				padding: var(--spacing-4x);
+				overflow: auto;
+			}
 
-		.billettholder-interest-summary-counts {
-			display: flex;
-			flex-wrap: wrap;
-			gap: var(--spacing-3x);
-			margin: 0;
-			color: var(--color-text-soft);
+			& .billettholder-interest-summary-counts {
+				display: flex;
+				flex-wrap: wrap;
+				gap: var(--spacing-3x);
+				margin: 0;
+				color: var(--color-text-soft);
+			}
 		}
-
 	</style>
 	<script>
 		window.addEventListener("pageshow", () => {
