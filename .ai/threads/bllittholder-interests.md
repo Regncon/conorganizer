@@ -606,4 +606,257 @@ I did not touch `.ai/threads/bllittholder-interests.md`.
 
 Time: 2026-05-25 12:43:13
 --- Next Prompt ---
+There is a bug, in order to find out if the event on a row is published or not, we need to look up the status for that specific pulje. Not the event. The eventStatus Published is something else. We need to check the `is_published` boolean in `relation_event_puljer` for the specific pulje.
+First we should make the test fail by changing the test to reflect the correct behavior.
+Let's have a discussion about the implementation of this fix before you go ahead and implement it.
+
+Time: 2026-05-25 13:00:47
+--- Codex Run ---
+
+Codex output:
+I’ll change only the existing data-layer test so it encodes pulje-specific publication state from `relation_event_puljer.is_published`. I’ll leave the production loader untouched, then run the focused test to confirm it fails red before we discuss the implementation.
+The test now models `relation_event_puljer.is_published`, including a same-event/different-pulje fixture so the future query has to join on both `event_id` and `pulje_id`. I’m formatting and running the focused test to capture the red state.
+I changed the test only. It is now red for the correct reason:
+
+```text
+row.IsPublished undefined (type billettholderInterestEventRow has no field or method IsPublished)
+```
+
+Changed test behavior in [billettholder_interest_dialog_test.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog_test.go:12):
+- Expected rows now include `IsPublished`.
+- Fixtures now seed `relation_event_puljer.is_published`.
+- The fixture includes `saturday-high-interest` in two puljer with different publication values, so the implementation must join on both `event_id` and `pulje_id`.
+
+Implementation proposal:
+
+1. Add `IsPublished bool` to `billettholderInterestEventRow`.
+
+2. Update the loader query to join `relation_event_puljer` in both UNION branches:
+
+```sql
+LEFT JOIN relation_event_puljer AS ep
+  ON ep.event_id = ...
+ AND ep.pulje_id = ...
+```
+
+Use `COALESCE(ep.is_published, 0)` so missing pulje relation rows render as not published rather than disappearing.
+
+3. Scan `is_published` into the row and map `1` to `true`.
+
+4. Update the UI row styling to use `row.IsPublished`, not `row.EventStatus == models.EventStatusPublished`.
+
+5. Change the label text from event-status language to pulje-publication language:
+- `Publisert i pulje`
+- `Ikke publisert i pulje`
+
+I’d keep `EventStatus` on the row for now because it may still be useful context later, but it should not drive the muted styling.
+
+Time: 2026-05-25 13:00:47
+--- Next Prompt ---
+Ok, go ahead and implement the fix.
+
+Time: 2026-05-25 13:09:05
+--- Codex Run ---
+
+Codex output:
+I’ll make the loader return pulje-specific publication state, then switch the row rendering to use that boolean for muted styling and text. The existing red test should move from compile failure to passing.
+The loader now joins `relation_event_puljer` by both event and pulje and exposes `IsPublished`; the row UI now keys muted styling and label text off that boolean. I’m regenerating templ and running the red test now.
+Implemented the pulje-specific publication fix.
+
+Changed:
+- [billettholder_interest_data.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_data.go:11): added `IsPublished` to each interest row.
+- [billettholder_interest_data.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_data.go:59): joins `relation_event_puljer` by both `event_id` and `pulje_id`, using `COALESCE(ep.is_published, 0)`.
+- [billettholder_interest_row.templ](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_row.templ:161): muted styling and row text now use `row.IsPublished`, not `EventStatus`.
+- [billettholder_interest_dialog_test.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog_test.go:12): test now covers pulje-specific publication, including the same event in two puljer with different `is_published` values.
+
+Verification passed:
+```sh
+go tool templ generate
+GOCACHE=/tmp/conorganizer-go-build-cache go test -count=1 ./pages/admin/billettholder_admin
+git diff --check -- pages/admin/billettholder_admin
+```
+
+I did not touch `.ai/threads/bllittholder-interests.md`.
+
+text
+2026-05-25T11:07:54.005485Z ERROR codex_models_manager::manager: failed to refresh available models: timeout waiting for child process to exit
+
+Time: 2026-05-25 13:09:05
+--- Next Prompt ---
+
+Let's add a small feature. On the page itself where the text `Her kan du se en oversikt over alle billettholdere` is, let's add a counter that shows the total number of billettholdere, and the total number of billettholdere without `har fått førstevalg`. And a filter to easily filter the list to only show billettholdere without `har fått førstevalg and another filter to only GM/DM billettholdere. 
+Let's discuss the implementation of this feature before you go ahead and implement it.
+
+Time: 2026-05-25 13:15:20
+--- Codex Run ---
+
+Codex output:
+Recommended implementation:
+
+Add a compact stats/filter strip directly under the page help text.
+
+Behavior:
+- Show `Totalt: N`
+- Show `Uten førstevalg: M`
+- Add two checkbox/toggle filters:
+  - `Uten førstevalg`
+  - `GM/DM`
+- If both filters are active, use AND logic: show only billettholdere who are both GM/DM and without first choice.
+
+Data source:
+- Reuse the already loaded `interestSectionsByBillettholderID`.
+- `Uten førstevalg` should use the existing `!billettholderHasFirstChoice(sections)`.
+- `GM/DM` should use the existing `billettholderHasGMOrDM(sections)`.
+
+I’d keep this client-side with Datastar signals:
+- The page already has all cards and all interest data loaded.
+- No new route, no server state, no extra DB query.
+- Each card can get a `data-show` expression based on two page-level filter signals.
+- The counters stay stable and show totals for the full loaded list, not just the currently filtered list.
+
+Code shape:
+- Add a small helper to calculate page stats:
+  - total billettholdere
+  - total without first choice
+- Add a small component or inline block near the help text for the counters and filters.
+- Update `billettholderCard(...)` to compute `hasFirstChoice` and `hasGMOrDM` from its sections and add the Datastar `data-show`.
+
+One decision to confirm: I’d make the filters combine with AND logic. That means enabling both filters shows “GM/DM billettholdere without first choice,” which is usually the most useful interpretation.
+
+Time: 2026-05-25 13:15:20
+--- Next Prompt ---
+Yes, combining with AND logic makes the most sense.
+Let's make this it's own component and file. 
+I disagree with doing the calculation client side. Just add the query to the new component and have the component render the correct numbers. 
+Even though this is a simple query, let's add a test to make sure we get the correct numbers in the component. 
+The count should not include førsevalg and GM's in not published events. Make sure to include that in the test. 
+It looks like the dialog dosn't take into account the publication status of the event when it comes to the GM/DM or førstevalg status. We should fix that as well. 
+Let's continue the discussion about the implementation of this feature before generating the code for it.
+
+Time: 2026-05-25 13:30:07
+--- Codex Run ---
+
+Codex output:
+Agreed on the AND logic.
+
+I’d split this into two related fixes because they share the same definition of “counts as published”:
+
+**1. Overview Component**
+Create a new component file, probably:
+
+`pages/admin/billettholder_admin/billettholder_admin_overview.templ`
+
+It would render the block under:
+
+`Her kan du se en oversikt over alle billettholdere`
+
+Content:
+- `Totalt: N`
+- `Uten førstevalg: M`
+- Filter toggle: `Uten førstevalg`
+- Filter toggle: `GM/DM`
+
+I’d also consider showing `GM/DM: G` in the filter label, because you specifically called out excluding GM assignments in unpublished events. That gives us a visible value to test and helps the admin understand the filter scope.
+
+**2. Server-Side Count Query**
+The component should call a query helper, for example:
+
+`getBillettholderAdminOverviewCounts(db)`
+
+The query should define:
+
+- `total`: all rows from `billettholdere`
+- `with_first_choice`: distinct billettholdere assigned as `Player` to a pulje-published event where their interest for that exact event/pulje is `Veldig interessert`
+- `without_first_choice`: `total - with_first_choice`
+- `gm_dm`: distinct billettholdere assigned as `GM` to a pulje-published event
+
+Important join:
+
+```sql
+JOIN relation_event_puljer ep
+  ON ep.event_id = rep.event_id
+ AND ep.pulje_id = rep.pulje_id
+ AND ep.is_published = 1
+```
+
+So unpublished pulje assignments do not count as GM/DM or first choice.
+
+**3. Fix Existing Status Helpers**
+The current helpers should also respect `row.IsPublished`:
+
+- `billettholderSectionHasGMOrDM`
+- `billettholderHasGMOrDM`
+- `billettholderHasFirstChoice`
+
+That will fix:
+- the card `Spilleder (GM/DM)` badge
+- the `Har fått førstevalg` badge
+- the GM icon in pulje tabs
+- the new filters, if they use those helpers
+
+Assigned rows can still show “Tildelt som GM” because that is factual, but the aggregate GM/DM status should only count published pulje assignments.
+
+**4. Filtering**
+I’d still make the actual show/hide filter client-side with Datastar signals, but not calculate the counts client-side.
+
+Reason: the server renders each card with precomputed booleans:
+- matches `Uten førstevalg`
+- matches `GM/DM`
+
+The browser only toggles visibility. The numbers come from the server query.
+
+**Test Plan**
+Add a test for the overview count query/component with fixtures like:
+
+- billettholder A: player + high interest in published pulje => has first choice
+- billettholder B: player + high interest in unpublished pulje => does not have first choice
+- billettholder C: GM in published pulje => counts as GM/DM
+- billettholder D: GM in unpublished pulje => does not count as GM/DM
+- billettholder E: no assignment => without first choice
+
+Expected:
+- total includes all five
+- without first choice includes B, C, D, E
+- GM/DM includes only C
+
+That test should fail first, then we implement the query/component and update the existing helpers.
+
+Time: 2026-05-25 13:30:07
+--- Next Prompt ---
+Let's do the filtering server side as well. We can get the datastar signal from the filter buttons, the change the query we use to get the billettholders to only return the billettholdere that match the filter.
+Go ahead and implement the firs failing test. 
+
+Time: 2026-05-25 13:41:17
+--- Codex Run ---
+
+Codex output:
+I’ll add the first red test around the billettholder list query, not the UI yet. I’m going to inspect the existing billettholder service shape and nearby tests so the failing test targets the function we’ll actually need to change.
+I’ll make the first red test target the service-level billettholder query with both filters enabled. The fixture will include published and unpublished first-choice/GM cases, and the expected result will require AND semantics.
+The red test is in place with five billettholder fixtures covering published first choice, unpublished first choice, published GM, unpublished GM, and GM with first choice. I’ll format it and run the service package test to capture the expected failure.
+Added the first failing test in [billettholder_admin_filter_test.go](/home/cinmay/Documents/conorganizer/service/billettholder/billettholder_admin_filter_test.go:11).
+
+It covers server-side AND filtering for:
+- `WithoutFirstChoice`
+- `GM/DM`
+
+The fixture intentionally includes:
+- a billettholder with published first choice
+- a billettholder with only unpublished first choice
+- a billettholder who is GM in a published pulje and has no published first choice
+- a billettholder who is GM only in an unpublished pulje
+- a billettholder who is GM in a published pulje but also has published first choice
+
+Expected result with both filters enabled: only billettholder `3`.
+
+Current red failure is intentional:
+
+```text
+undefined: BillettholderFilters
+undefined: GetBillettholdereWithFilters
+```
+
+That gives us the next implementation target: add a filter type and a filtered billettholder query that uses `relation_event_puljer.is_published = 1` for both first-choice and GM/DM semantics.
+
+Time: 2026-05-25 13:41:17
+--- Next Prompt ---
 
