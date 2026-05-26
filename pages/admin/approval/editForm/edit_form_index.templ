@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/components/toast"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
@@ -35,6 +36,7 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 }
 
 templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	@toast.Toast()
 	<div
 		id="edit-form-container"
 		class="formsubmission-css-container"

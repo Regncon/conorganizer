@@ -1,0 +1,17 @@
+package toast
+
+import "github.com/Regncon/conorganizer/components/icons"
+
+templ Toast() {
+	<toast-message class="toast-region" role="status" aria-live="polite" aria-atomic="false">
+		<template>
+			<div class="toast">
+				<span class="toast-icon" aria-hidden="true">
+					@icons.Icon(icons.ProgressComplete, icons.Size16)
+				</span>
+				<span data-toast-message-text></span>
+			</div>
+		</template>
+	</toast-message>
+	<script type="module" src="/static/web_components/toast.js"></script>
+}

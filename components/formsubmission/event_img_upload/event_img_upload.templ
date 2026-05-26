@@ -12,6 +12,7 @@ import (
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
+	"github.com/Regncon/conorganizer/components/toast"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -27,10 +28,11 @@ func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logge
 		}
 		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(ctx)
+		showUploadToast := r.URL.Query().Get("uploaded") == "source"
 		if err := layouts.Base(
 			"Last opp blide",
 			userInfo,
-			page(eventId, db, eventImageDir, logger),
+			page(eventId, db, eventImageDir, logger, showUploadToast),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render event image page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
 		}
@@ -81,7 +83,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
 
-		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/", eventID), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/?uploaded=source", eventID), http.StatusSeeOther)
 	})
 }
 
@@ -179,7 +181,7 @@ func getUploadedSourceImageURL(eventID string, eventImageDir *string) string {
 	return ""
 }
 
-templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
 	<style>
 		.img-upload-form-content {
 			display: flex;
@@ -250,6 +252,19 @@ if eventErr == nil && event != nil {
 		return
 	}
 	<script src="/static/web_components/banner_cropper.js"></script>
+	@toast.Toast()
+	if showUploadToast {
+		<script>
+			window.addEventListener("DOMContentLoaded", () => {
+				document.dispatchEvent(new CustomEvent("toast", {
+					detail: { message: "Lagret" },
+				}));
+				const url = new URL(window.location.href);
+				url.searchParams.delete("uploaded");
+				window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+			});
+		</script>
+	}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Mine arrangementer", Url: "/my-events/"},

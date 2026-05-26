@@ -53,6 +53,7 @@ templ statusCard(event *models.Event, isAdmin bool) {
 				class="input"
 				data-signals={ dataSignals(map[string]models.EventStatus{"status": event.Status}) }
 				data-bind="status"
+				data-indicator={ fmt.Sprintf("toastMessageStatus%s", event.ID) }
 				data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/status')", event.ID) }
 				required
 			>
