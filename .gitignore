@@ -48,7 +48,7 @@ go.work.sum
 # env file
 .env
 
-bbin/
+bin/
 !configuration-as-code/stow/scripts/usr/local/bin/
 !configuration-as-code/stow/scripts/usr/local/bin/*in/
 tmp/
