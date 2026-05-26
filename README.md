@@ -300,6 +300,3 @@ New-Item -ItemType SymbolicLink -Path "$agentSkillsFolder" -Target ".agents\skil
 - [Go Documentation](https://go.dev/doc/)
 - [Docker Documentation](https://docs.docker.com/)
 
-## Tmp force build 
-This line is here to force a build and deploy of the app to make sure that the latest changes in the deployment process are working correctly.
-Just delete it when you see it.
