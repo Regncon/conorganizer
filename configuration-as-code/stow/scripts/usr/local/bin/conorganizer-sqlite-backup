@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+sqlite_database_path="/mnt/HC_Volume_103911252/environments/main/database/events.db"
+backup_directory="/mnt/HC_Volume_103911252/backups/sqlite"
+backup_retention_days="90"
+
+timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+backup_file="${backup_directory}/events-${timestamp}.db"
+compressed_backup_file="${backup_file}.zst"
+
+mkdir -p "$backup_directory"
+
+if [[ ! -f "$sqlite_database_path" ]]; then
+    echo "SQLite database does not exist: ${sqlite_database_path}"
+    exit 1
+fi
+
+sqlite3 "$sqlite_database_path" ".backup '${backup_file}'"
+
+integrity_result="$(sqlite3 "$backup_file" "PRAGMA integrity_check;")"
+
+if [[ "$integrity_result" != "ok" ]]; then
+    echo "SQLite integrity check failed:"
+    echo "$integrity_result"
+    rm -f "$backup_file"
+    exit 1
+fi
+
+zstd --quiet --rm "$backup_file"
+
+find "$backup_directory" \
+    -type f \
+    -name 'events-*.db.zst' \
+    -mtime "+${backup_retention_days}" \
+    -delete
+
+echo "SQLite backup created: ${compressed_backup_file}"
