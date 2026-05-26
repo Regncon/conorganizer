@@ -11,8 +11,8 @@ EnvironmentFile=/etc/conorganizer/env
 Environment=PORT=%PORT%
 
 ExecStart=/opt/conorganizer/%SAFE_NAME%/conorganizer-%SAFE_NAME% \
-  -dbp /mnt/HC_Volume_103911252/%SAFE_NAME%/database/events.db \
-  -image-path /mnt/HC_Volume_103911252/%SAFE_NAME%/event-images
+  -dbp /mnt/HC_Volume_103911252/environments/%SAFE_NAME%/database/events.db \
+  -image-path /mnt/HC_Volume_103911252/environments/%SAFE_NAME%/event-images
 
 Restart=always
 RestartSec=5
