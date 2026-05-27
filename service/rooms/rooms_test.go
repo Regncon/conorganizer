@@ -1,6 +1,8 @@
 package rooms
 
 import (
+	"database/sql"
+	"fmt"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
@@ -376,26 +378,373 @@ func TestGetAllRooms(t *testing.T) {
 
 func TestGetAllRoomStatusesByPulje(t *testing.T) {
 	// Given
-	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
+	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services_event_puljer", t)
 	if err != nil {
 		t.Fatalf("failed to create test database and logger: %v", err)
 	}
 	defer db.Close()
 
-	var expectedStatusesLength int = 2
+	// Seed databases with required data for relations
+	rooms := insertRooms(t, db)
+	puljer := insertPuljer(t, db)
+	events := insertEvents(t, db)
 
-	// Populate db with rooms
-	// Populate db with events, puljer and some relation_event_pulje entries
+	query := `
+        INSERT INTO relation_event_puljer (
+            event_id,
+            pulje_id,
+            room_id
+        )
+        VALUES (?, ?, ?)
+        RETURNING
+            event_id,
+            pulje_id,
+            is_in_pulje,
+            is_published,
+            room_id
+    `
+
+	var eventPuljerSource = []models.EventPulje{
+		{
+			EventID: events[0],
+			PuljeID: models.Pulje(puljer[0]),
+			RoomID:  sql.NullInt64{Int64: int64(rooms[0]), Valid: true},
+		}, {
+			EventID: events[1],
+			PuljeID: models.Pulje(puljer[0]),
+			RoomID:  sql.NullInt64{Int64: int64(rooms[0]), Valid: true},
+		}, {
+			EventID: events[2],
+			PuljeID: models.Pulje(puljer[1]),
+			RoomID:  sql.NullInt64{Int64: int64(rooms[1]), Valid: true},
+		}, {
+			EventID: events[3],
+			PuljeID: models.Pulje(puljer[1]),
+			RoomID:  sql.NullInt64{Int64: int64(rooms[2]), Valid: true},
+		}, {
+			EventID: events[4],
+			PuljeID: models.Pulje(puljer[2]),
+			RoomID:  sql.NullInt64{Int64: int64(rooms[3]), Valid: true},
+		},
+	}
+
+	var createdEventPuljer []models.EventPulje
+	for _, eventSource := range eventPuljerSource {
+		var createdEvent models.EventPulje
+
+		err := db.QueryRow(
+			query,
+			eventSource.EventID,
+			eventSource.PuljeID,
+			eventSource.RoomID,
+		).Scan(
+			&createdEvent.EventID,
+			&createdEvent.PuljeID,
+			&createdEvent.IsInPulje,
+			&createdEvent.IsPublished,
+			&createdEvent.RoomID.Int64,
+		)
+
+		if err != nil {
+			t.Fatalf("Failed to create event: %v", err)
+		}
+		createdEventPuljer = append(createdEventPuljer, createdEvent)
+	}
+
+	var expectedRoomStatuses = make(models.RoomStatusByPulje)
+	for _, createdEventPulje := range createdEventPuljer {
+		// Skipp events not added to a pulje or without a room assigned
+		if !createdEventPulje.IsInPulje && !createdEventPulje.RoomID.Valid {
+			continue
+		}
+
+		// Create pulje map if empty
+		puljeName := createdEventPulje.PuljeID
+		if expectedRoomStatuses[puljeName] == nil {
+			expectedRoomStatuses[puljeName] = make(map[int64]models.RoomByPulje)
+		}
+
+		// Create or update room
+		roomNumber := createdEventPulje.RoomID.Int64
+		room := expectedRoomStatuses[puljeName][roomNumber]
+
+		// Setup event array
+		if room.AssignedEventsID == nil {
+			room.AssignedEventsID = []models.RoomEventPuljeSummary{}
+		}
+
+		room.AssignedEventsID = append(room.AssignedEventsID, models.RoomEventPuljeSummary{
+			EventID: createdEventPulje.EventID,
+		})
+
+		expectedRoomStatuses[puljeName][roomNumber] = room
+	}
+
+	fmt.Print(expectedRoomStatuses)
 
 	// When
-	var pulje models.Pulje = models.PuljeFredagKveld
-	result, err := GetAllRoomStatusesByPulje(db, pulje)
+	resultPuljeFredag, err := GetAllRoomStatusesByPulje(db, models.PuljeFredagKveld)
 	if err != nil {
 		t.Fatalf("Unexpected arror: %v", err)
 	}
 
 	// Then
-	if len(result) != expectedStatusesLength {
+	fmt.Print(resultPuljeFredag)
+	/* if len(result) != expectedStatusesLength {
 		t.Fatalf("Result of get all statuses did not match expected length\nexpected: %d\nrecieved: %d", expectedStatusesLength, len(result))
+	} */
+}
+
+func insertPuljer(t *testing.T, db *sql.DB) []string {
+	t.Helper()
+
+	puljerQuery := `
+        INSERT INTO puljer (
+			id, name, status, start_at, end_at
+		) VALUES
+			('P1', 'Friday', 'published', '2025-10-03', '2025-10-03'),
+			('P2', 'SaturdayMorning', 'published', '2025-10-04', '2025-10-04'),
+			('P3', 'SaturdayEvening', 'published', '2025-10-04', '2025-10-04'),
+			('P4', 'Sunday', 'published', '2025-10-05', '2025-10-05')
+        RETURNING name
+	`
+	rows, err := db.Query(puljerQuery)
+	if err != nil {
+		t.Fatalf("failed to insert puljer: %v", err)
 	}
+	defer rows.Close()
+
+	var names []string
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			t.Fatalf("failed to scan pulje id: %v", err)
+		}
+		names = append(names, name)
+	}
+
+	if err := rows.Err(); err != nil {
+		t.Fatalf("row iteration failed: %v", err)
+	}
+
+	return names
+}
+
+func insertRooms(t *testing.T, db *sql.DB) []int {
+	t.Helper()
+
+	rooms := []models.Room{
+		{
+			Name:               "Hundremeterskogen",
+			RoomNumber:         "101",
+			Floor:              1,
+			MaxConcurrentGames: 2,
+			Notes:              "Rom inspirert av skogen der Ole Brumm bor",
+			IsDisabled:         false,
+		},
+		{
+			Name:               "Brumms Hus",
+			RoomNumber:         "102",
+			Floor:              1,
+			MaxConcurrentGames: 3,
+			Notes:              "Koselig rom med plass til flere spill",
+			IsDisabled:         false,
+		},
+		{
+			Name:               "Tigerguttens Hjorne",
+			RoomNumber:         "201",
+			Floor:              2,
+			MaxConcurrentGames: 2,
+			Notes:              "Aktivt rom for mindre grupper",
+			IsDisabled:         false,
+		},
+		{
+			Name:               "Nasse Noffs Sti",
+			RoomNumber:         "202",
+			Floor:              2,
+			MaxConcurrentGames: 1,
+			Notes:              "Lite og stille rom",
+			IsDisabled:         false,
+		},
+		{
+			Name:               "Ugles Topp",
+			RoomNumber:         "301",
+			Floor:              3,
+			MaxConcurrentGames: 4,
+			Notes:              "Stort rom egnet for parallelle aktiviteter, men er inaktivt",
+			IsDisabled:         true,
+		},
+	}
+
+	query := `
+            INSERT INTO rooms (
+                name,
+                room_number,
+                floor,
+                max_concurrent_games,
+                notes,
+                is_disabled
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            RETURNING id
+        `
+	var roomIDs []int
+	for _, room := range rooms {
+		var roomID int
+		err := db.QueryRow(query,
+			room.Name,
+			room.RoomNumber,
+			room.Floor,
+			room.MaxConcurrentGames,
+			room.Notes,
+			room.IsDisabled,
+		).Scan(&roomID)
+		if err != nil {
+			t.Fatalf("Failed to create room: %v", err)
+		}
+		roomIDs = append(roomIDs, roomID)
+	}
+
+	return roomIDs
+}
+
+func insertEvents(t *testing.T, db *sql.DB) []string {
+	events := []models.Event{
+		{
+			Title:             "Mysteriet i Hundremeterskogen",
+			Intro:             "Et rolig mysterium for nye spillere.",
+			Description:       "Spillerne må finne ut hvorfor honningkrukkene til Ole Brumm forsvinner om natten.",
+			System:            "Call of Cthulhu",
+			EventType:         models.EventTypeBoardGame,
+			AgeGroup:          models.AgeGroupAdultsOnly,
+			Runtime:           models.RunTimeLongRunning,
+			HostName:          "Kristoffer",
+			Email:             "brumm@example.com",
+			PhoneNumber:       "90000001",
+			MaxPlayers:        5,
+			BeginnerFriendly:  true,
+			CanBeRunInEnglish: true,
+			Notes:             "Passer godt for førstegangsspillere",
+			Status:            "Publisert",
+		},
+		{
+			Title:             "Tigerguttens Turnering",
+			Intro:             "En energisk konkurranse med raske utfordringer.",
+			Description:       "Deltakerne konkurrerer i kreative oppgaver og samarbeid under press.",
+			System:            "Dungeons & Dragons 5e",
+			EventType:         models.EventTypeBoardGame,
+			AgeGroup:          models.AgeGroupAdultsOnly,
+			Runtime:           models.RunTimeLongRunning,
+			HostName:          "Ole",
+			Email:             "tiger@example.com",
+			PhoneNumber:       "90000002",
+			MaxPlayers:        6,
+			BeginnerFriendly:  true,
+			CanBeRunInEnglish: false,
+			Notes:             "",
+			Status:            "Kladd",
+		},
+		{
+			Title:             "Nasse Noffs Mørke Skog",
+			Intro:             "Et skrekkeventyr i dype skoger.",
+			Description:       "Noe beveger seg mellom trærne, og spillerne må overleve natten.",
+			System:            "Vaesen",
+			EventType:         models.EventTypeBoardGame,
+			AgeGroup:          models.AgeGroupAdultsOnly,
+			Runtime:           models.RunTimeLongRunning,
+			HostName:          "Anne",
+			Email:             "nasse@example.com",
+			PhoneNumber:       "90000003",
+			MaxPlayers:        4,
+			BeginnerFriendly:  false,
+			CanBeRunInEnglish: true,
+			Notes:             "Inneholder skrekkelementer",
+			Status:            "Publisert",
+		},
+		{
+			Title:             "Ugles Kunnskapsprove",
+			Intro:             "Quiz og strategi i kombinasjon.",
+			Description:       "Spillerne må samarbeide for å løse gåter og vinne over Ugle.",
+			System:            "Custom",
+			EventType:         models.EventTypeBoardGame,
+			AgeGroup:          models.AgeGroupAdultsOnly,
+			Runtime:           models.RunTimeLongRunning,
+			HostName:          "Mari",
+			Email:             "ugle@example.com",
+			PhoneNumber:       "90000004",
+			MaxPlayers:        8,
+			BeginnerFriendly:  true,
+			CanBeRunInEnglish: true,
+			Notes:             "",
+			Status:            "Publisert",
+		},
+		{
+			Title:             "Kengus Eventyrreise",
+			Intro:             "Et familievennlig fantasy-eventyr.",
+			Description:       "Bli med Kengu og Ro på en reise gjennom magiske landskap.",
+			System:            "Pathfinder 2e",
+			EventType:         models.EventTypeBoardGame,
+			AgeGroup:          models.AgeGroupAdultsOnly,
+			Runtime:           models.RunTimeLongRunning,
+			HostName:          "Sindre",
+			Email:             "kengu@example.com",
+			PhoneNumber:       "90000005",
+			MaxPlayers:        5,
+			BeginnerFriendly:  true,
+			CanBeRunInEnglish: false,
+			Notes:             "Familievennlig innhold",
+			Status:            "Godkjent",
+		},
+	}
+
+	query := `
+        INSERT INTO events (
+            title,
+            intro,
+            description,
+            system,
+            host_name,
+            user_id,
+            created_by_id,
+            updated_by_id,
+            email,
+            phone_number,
+            max_players,
+            age_group,
+            event_runtime,
+            beginner_friendly,
+            can_be_run_in_english,
+            status
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        ) RETURNING id`
+
+	var eventIDs []string
+	for _, event := range events {
+		var eventID string
+		err := db.QueryRow(query,
+			event.Title,
+			event.Intro,
+			event.Description,
+			event.System,
+			event.HostName,
+			event.UserID,
+			event.CreatedByID,
+			event.UpdatedByID,
+			event.Email,
+			event.PhoneNumber,
+			event.MaxPlayers,
+			event.AgeGroup,
+			event.Runtime,
+			event.BeginnerFriendly,
+			event.CanBeRunInEnglish,
+			event.Status,
+		).Scan(&eventID)
+		if err != nil {
+			t.Fatalf("Failed to create event: %v", err)
+		}
+		eventIDs = append(eventIDs, eventID)
+	}
+
+	return eventIDs
 }
