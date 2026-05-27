@@ -44,3 +44,7 @@ type RoomByPulje struct {
 	MaxConcurrentGames int
 	Notes              string
 }
+
+// RoomStatusByPulje is a map of puljer containing room statuses, such as which games are assigned to that room
+// You can access status by keys: [Pulje][RoomID]
+type RoomStatusByPulje = map[Pulje]map[int64]RoomByPulje
