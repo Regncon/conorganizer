@@ -3,7 +3,7 @@ set -euo pipefail
 
 sqlite_database_path="/mnt/HC_Volume_103911252/environments/main/database/events.db"
 backup_directory="/mnt/HC_Volume_103911252/backups/sqlite"
-backup_retention_days="90"
+backup_retention_days="14"
 
 timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
 backup_file="${backup_directory}/events-${timestamp}.db"
@@ -23,6 +23,21 @@ integrity_result="$(sqlite3 "$backup_file" "PRAGMA integrity_check;")"
 if [[ "$integrity_result" != "ok" ]]; then
     echo "SQLite integrity check failed:"
     echo "$integrity_result"
+    rm -f "$backup_file"
+    exit 1
+fi
+
+expected_table_count="$(
+    sqlite3 "$backup_file" "
+        SELECT COUNT(*)
+        FROM sqlite_master
+        WHERE type = 'table'
+          AND name IN ('schema_migrations', 'events', 'users');
+    "
+)"
+
+if [[ "$expected_table_count" != "3" ]]; then
+    echo "SQLite backup sanity check failed: expected core tables are missing"
     rm -f "$backup_file"
     exit 1
 fi
