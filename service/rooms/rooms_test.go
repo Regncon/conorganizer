@@ -511,6 +511,58 @@ func TestGetAllRoomStatusesByPulje(t *testing.T) {
 	}
 }
 
+func TestAssignRoomToRelationEventPuljer(t *testing.T) {
+	// Given
+	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services_assignment", t)
+	if err != nil {
+		t.Fatalf("failed to create test database and logger: %v", err)
+	}
+	defer db.Close()
+
+	// Seed databases with required data for relations
+	rooms := insertRooms(t, db)
+	puljer := insertPuljer(t, db)
+	events := insertEvents(t, db)
+
+	// Simplified relatinal insert
+	eventID := events[0]
+	puljeID := puljer[0]
+
+	_, err = db.Exec(`
+		INSERT INTO relation_event_puljer (event_id, pulje_id)
+		VALUES (?, ?)
+	`, eventID, puljeID)
+	if err != nil {
+		t.Fatalf("failed to insert relation: %v", err)
+	}
+
+	// When
+	result, err := AssignRoomToRelationEventPuljer(db, rooms[0], eventID)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// Thenn
+	if result.EventID != eventID {
+		t.Fatalf("Event ID did not match between input and ouptut\nexpected:\t%s\nrecieved:\t%s", eventID, result.EventID)
+	}
+	if result.PuljeID != models.Pulje(puljeID) {
+		t.Fatalf("Pulje ID did not match between input and ouptut\nexpected:\t%s\nrecieved:\t%s", models.Pulje(puljeID), result.PuljeID)
+	}
+
+	if !result.RoomID.Valid {
+		t.Fatalf("expected room_id to be set")
+	}
+
+	if result.RoomID.Int64 != int64(rooms[0]) {
+		t.Fatalf(
+			"Room number did not update\nexpected:\t%d\nrecieved:\t%d",
+			rooms[0],
+			result.RoomID.Int64,
+		)
+	}
+}
+
 func insertPuljer(t *testing.T, db *sql.DB) []string {
 	t.Helper()
 
@@ -546,7 +598,7 @@ func insertPuljer(t *testing.T, db *sql.DB) []string {
 	return ids
 }
 
-func insertRooms(t *testing.T, db *sql.DB) []int {
+func insertRooms(t *testing.T, db *sql.DB) []int64 {
 	t.Helper()
 
 	rooms := []models.Room{
@@ -604,9 +656,9 @@ func insertRooms(t *testing.T, db *sql.DB) []int {
             VALUES (?, ?, ?, ?, ?, ?)
             RETURNING id
         `
-	var roomIDs []int
+	var roomIDs []int64
 	for _, room := range rooms {
-		var roomID int
+		var roomID int64
 		err := db.QueryRow(query,
 			room.Name,
 			room.RoomNumber,
