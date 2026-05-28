@@ -12,20 +12,20 @@ import (
 // CreateRoom creates a room, on success updates `ID` with its entry ID
 func CreateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
 	if strings.TrimSpace(data.RoomNumber) == "" {
-		return nil, fmt.Errorf("Room number is required")
+		return nil, fmt.Errorf("room number is required")
 	}
 
 	// We can disable this check if we want, if so, remember to update test
 	if !strings.HasPrefix(data.RoomNumber, fmt.Sprintf("%d", data.Floor)) {
 		return nil, fmt.Errorf(
-			"Room number must start with the floor number, eg: %dxx, got: %s",
+			"room number must start with the floor number, eg: %dxx, got: %s",
 			data.Floor,
 			data.RoomNumber,
 		)
 	}
 
 	if data.MaxConcurrentGames < 1 {
-		return nil, fmt.Errorf("Max concurrent events must be greater than 0, got: %d", data.MaxConcurrentGames)
+		return nil, fmt.Errorf("max concurrent events must be greater than 0, got: %d", data.MaxConcurrentGames)
 	}
 
 	query := `
@@ -42,12 +42,12 @@ func CreateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
 
 	result, err := db.Exec(query, data.Name, data.RoomNumber, data.Floor, data.MaxConcurrentGames, data.Notes, data.IsDisabled)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create room: %w", err)
+		return nil, fmt.Errorf("failed to create room: %w", err)
 	}
 
 	id, err := result.LastInsertId()
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get created room id: %w", err)
+		return nil, fmt.Errorf("failed to get created room id: %w", err)
 	}
 
 	data.ID = int(id)
@@ -57,20 +57,20 @@ func CreateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
 // UpdateRoom updates a room based on its ID with new Room type data
 func UpdateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
 	if strings.TrimSpace(data.RoomNumber) == "" {
-		return nil, fmt.Errorf("Room number is required")
+		return nil, fmt.Errorf("room number is required")
 	}
 
 	// We can disable this check if we want, if so, remember to update test
 	if !strings.HasPrefix(data.RoomNumber, fmt.Sprintf("%d", data.Floor)) {
 		return nil, fmt.Errorf(
-			"Room number must start with the floor number, eg: %dxx, got: %s",
+			"room number must start with the floor number, eg: %dxx, got: %s",
 			data.Floor,
 			data.RoomNumber,
 		)
 	}
 
 	if data.MaxConcurrentGames < 1 {
-		return nil, fmt.Errorf("Max concurrent events must be greater than 0, got: %d", data.MaxConcurrentGames)
+		return nil, fmt.Errorf("max concurrent events must be greater than 0, got: %d", data.MaxConcurrentGames)
 	}
 
 	query := `
@@ -111,7 +111,7 @@ func UpdateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
 // UpdateRoom updates a room based on its ID with partial new information
 func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, error) {
 	if data.ID < 1 {
-		return nil, fmt.Errorf("Room ID is required and must be a valid positive number")
+		return nil, fmt.Errorf("room ID is required and must be a valid positive number")
 	}
 
 	// Set up params based on partial data
@@ -161,7 +161,7 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, error) 
 	}
 
 	if len(args) == 0 {
-		return nil, fmt.Errorf("Update room called without any updated data")
+		return nil, fmt.Errorf("update room called without any updated data")
 	}
 
 	// Construct query based on partial data
@@ -445,7 +445,7 @@ func AssignRoomToRelationEventPuljer(db *sql.DB, roomID int64, relationEventPulj
 			)
 		}
 		return models.EventPulje{}, fmt.Errorf(
-			"Error assigning room to relation_event_puljer: %w",
+			"error assigning room to relation_event_puljer: %w",
 			err,
 		)
 	}
