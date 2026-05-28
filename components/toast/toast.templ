@@ -2,13 +2,30 @@ package toast
 
 import "github.com/Regncon/conorganizer/components/icons"
 
-templ Toast() {
-	<toast-message class="toast-region" role="status" aria-live="polite" aria-atomic="false">
+const (
+	DefaultMessage = "Lagret"
+)
+
+templ Toast(message string, icon icons.IconType) {
+	{{
+	if message == "" {
+		message = DefaultMessage
+	}
+	}}
+	<toast-message
+		class="toast-region"
+		role="status"
+		aria-live="polite"
+		aria-atomic="false"
+		indicator-message={ message }
+	>
 		<template>
 			<div class="toast">
-				<span class="toast-icon" aria-hidden="true">
-					@icons.Icon(icons.ProgressComplete, icons.Size16)
-				</span>
+				if icon != "" {
+					<span class="toast-icon" aria-hidden="true">
+						@icons.Icon(icon, icons.Size16)
+					</span>
+				}
 				<span data-toast-message-text></span>
 			</div>
 		</template>

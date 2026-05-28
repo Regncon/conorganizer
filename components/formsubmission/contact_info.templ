@@ -110,7 +110,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					type="text"
 					name="name"
 					data-bind="name"
-					data-indicator="toastMessageName"
+					data-indicator="toastName"
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/name')", eventId) }
 					class="input"
 					placeholder="Ditt navn"
@@ -127,7 +127,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					data-signals={ dataSignals(map[string]string{"email": email}) }
 					type="email"
 					data-bind="email"
-					data-indicator="toastMessageEmail"
+					data-indicator="toastEmail"
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/email')", eventId) }
 					name="email"
 					class="input"
@@ -142,7 +142,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					type="tel"
 					data-signals={ dataSignals(map[string]string{"phone": phone}) }
 					data-bind="phone"
-					data-indicator="toastMessagePhone"
+					data-indicator="toastPhone"
 					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/phone')", eventId) }
 					name="phone"
 					class="input"

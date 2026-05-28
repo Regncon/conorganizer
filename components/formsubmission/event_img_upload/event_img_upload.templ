@@ -12,6 +12,7 @@ import (
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/toast"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/eventService"
@@ -252,7 +253,7 @@ if eventErr == nil && event != nil {
 		return
 	}
 	<script src="/static/web_components/banner_cropper.js"></script>
-	@toast.Toast()
+	@toast.Toast(toast.DefaultMessage, "")
 	if showUploadToast {
 		<script>
 			window.addEventListener("DOMContentLoaded", () => {
