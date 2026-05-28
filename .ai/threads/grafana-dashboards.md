@@ -769,3 +769,30 @@ May 28 08:53:10 ubuntu-4gb-hel1-3 systemd[1]: conorganizer-images-backup.service
 May 28 08:53:10 ubuntu-4gb-hel1-3 systemd[1]: Finished conorganizer-images-backup.service - Back up Conorganizer event images.
 May 28 08:53:10 ubuntu-4gb-hel1-3 systemd[1]: conorganizer-images-backup.service: Consumed 495ms CPU time over 344ms wall clock time, 147M memory peak.
 ```
+
+Time: 2026-05-28 12:38:48
+--- Codex Run ---
+
+Codex output:
+That output gives enough new facts to tighten the docs: Prometheus/node_exporter/blackbox_exporter are not installed or listening, Loki is actually on `3500`, Promtail is active with `job=varlogs`, and the server does not have `jq`. I’ll update the local dashboard README so its validation commands and assumptions match what you just observed.
+I updated [README.md](/home/cinmay/Documents/conorganizer/configuration-as-code/grafana-dashboards/README.md) with the server findings.
+
+What your output confirms:
+
+- Loki is healthy on `127.0.0.1:3500`.
+- Promtail is running and using `job=varlogs`.
+- Prometheus is not installed/running.
+- node_exporter is not installed/running.
+- blackbox_exporter is not installed/running.
+- `jq` is not installed, so I changed the README command examples to use `python3 -m json.tool`.
+- SQLite backups are healthy and recent.
+- Image backup has completed successfully today.
+- The old Promtail `no space left on device` errors are from May 16, not the current startup.
+
+Practical dashboard impact: the Loki/log panels are the useful ones right now. The Prometheus panels will import but show no data until Prometheus plus node_exporter/blackbox_exporter/systemd metrics are installed/configured.
+
+Validated the dashboard JSON again after the README update.
+
+Time: 2026-05-28 12:38:48
+--- Next Prompt ---
+

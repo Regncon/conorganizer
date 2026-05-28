@@ -27,7 +27,7 @@ They are intentionally kept outside `configuration-as-code/stow/` for now. Do no
 - Prometheus datasource for node_exporter, blackbox_exporter, optional systemd metrics, and optional future app/custom metrics.
 - Loki datasource for app logs, backup logs, Caddy/systemd error logs, and log-derived HTTP behavior.
 
-The checked-in repo contains Grafana, Loki, Promtail, Caddy, backup scripts, and systemd unit files. It does not contain Prometheus configuration, blackbox_exporter configuration, node_exporter configuration, app Prometheus instrumentation, `/metrics`, `/healthz`, or `/readyz`.
+The checked-in repo contains Grafana, Loki, Promtail, Caddy, backup scripts, and systemd unit files. It does not contain Prometheus configuration, blackbox_exporter configuration, node_exporter configuration, app Prometheus instrumentation, `/metrics`, `/healthz`, or `/readyz`. As of the manual server check on 2026-05-28, Prometheus, node_exporter, and blackbox_exporter were not running on the server.
 
 ## Repo Observations
 
@@ -41,6 +41,19 @@ The checked-in repo contains Grafana, Loki, Promtail, Caddy, backup scripts, and
 - The image backup timer runs daily at 03:30.
 - The checked-in Promtail config labels logs as `job=varlogs` and scrapes `/var/log/messages`.
 - The checked-in Loki config listens on HTTP port `3500`, while the checked-in Promtail client points to `http://localhost:3100/loki/api/v1/push`; verify the actual server config before relying on Loki panels.
+
+## Manual Server Check Results
+
+From the developer-run checks on 2026-05-28:
+
+- Loki is ready on `http://127.0.0.1:3500`.
+- Promtail is active and currently tails `/var/log/messages` with `job=varlogs`.
+- Promtail has old `no space left on device` position-file errors from 2026-05-16, but the latest 2026-05-28 startup logs are clean.
+- `prometheus.service`, `node_exporter.service`, and `blackbox_exporter.service` were not found.
+- Ports `9090`, `9100`, and `9115` were not listening.
+- `jq` was not installed on the server, so command examples use `python3 -m json.tool` instead.
+- SQLite backup is running every 15 minutes and recent runs completed successfully.
+- Image backup has run successfully and the next timer is scheduled for the following 03:30 UTC window.
 
 ## Panel Dependencies
 
@@ -139,30 +152,35 @@ systemctl status node_exporter.service --no-pager
 curl -fsS http://127.0.0.1:9115/metrics | head
 systemctl status blackbox_exporter.service --no-pager
 
-# Systemd metrics in Prometheus.
+# Systemd metrics in Prometheus. Expected to fail until Prometheus/node_exporter are installed.
 curl -G http://127.0.0.1:9090/api/v1/query \
-  --data-urlencode 'query=node_systemd_unit_state{name="conorganizer-main.service",state="active"}' | jq .
+  --data-urlencode 'query=node_systemd_unit_state{name="conorganizer-main.service",state="active"}' \
+  | python3 -m json.tool
 
-# Node filesystem metrics for the mounted volume.
+# Node filesystem metrics for the mounted volume. Expected to fail until Prometheus/node_exporter are installed.
 curl -G http://127.0.0.1:9090/api/v1/query \
-  --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}' | jq .
+  --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}' \
+  | python3 -m json.tool
 
-# Blackbox TLS metrics.
+# Blackbox TLS metrics. Expected to fail until Prometheus/blackbox_exporter are installed.
 curl -G http://127.0.0.1:9090/api/v1/query \
-  --data-urlencode 'query=(probe_ssl_earliest_cert_expiry{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"} - time()) / 86400' | jq .
+  --data-urlencode 'query=(probe_ssl_earliest_cert_expiry{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"} - time()) / 86400' \
+  | python3 -m json.tool
 
 # Loki labels and job values.
-curl -fsS "$LOKI_URL/loki/api/v1/labels" | jq .
-curl -fsS "$LOKI_URL/loki/api/v1/label/job/values" | jq .
+curl -fsS "$LOKI_URL/loki/api/v1/labels" | python3 -m json.tool
+curl -fsS "$LOKI_URL/loki/api/v1/label/job/values" | python3 -m json.tool
 
 # Loki backup log checks.
 curl -G "$LOKI_URL/loki/api/v1/query_range" \
   --data-urlencode 'query={job=~".+"} |= "conorganizer-sqlite-backup:"' \
-  --data-urlencode 'limit=20' | jq .
+  --data-urlencode 'limit=20' \
+  | python3 -m json.tool
 
 curl -G "$LOKI_URL/loki/api/v1/query_range" \
   --data-urlencode 'query={job=~".+"} |= "conorganizer-images-backup:"' \
-  --data-urlencode 'limit=20' | jq .
+  --data-urlencode 'limit=20' \
+  | python3 -m json.tool
 
 # Backup timers, service logs, and files.
 systemctl list-timers 'conorganizer-*backup*' --no-pager
