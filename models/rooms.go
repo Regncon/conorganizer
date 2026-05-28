@@ -47,6 +47,21 @@ type RoomByPulje struct {
 	Notes              string
 }
 
+// Helper function for getting currently assigned events to a room in a pulje
+func (r RoomByPulje) CurrentOccupancy() int {
+	return len(r.AssignedEventsID)
+}
+
+// Helper function for getting available free slots for a room in a pulje
+func (r RoomByPulje) RemainingCapacity() int {
+	return r.MaxConcurrentGames - len(r.AssignedEventsID)
+}
+
+// Helper function for quickly checking if a room is full in a pulje
+func (r RoomByPulje) IsFull() bool {
+	return len(r.AssignedEventsID) >= r.MaxConcurrentGames
+}
+
 // RoomStatusByPulje is a map of puljer containing room statuses, such as which games are assigned to that room
 // You can access status by keys: [Pulje][RoomID]
 type RoomStatusByPulje = map[Pulje]map[int64]RoomByPulje
