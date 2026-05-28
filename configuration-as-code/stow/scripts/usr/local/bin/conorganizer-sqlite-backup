@@ -11,8 +11,10 @@ compressed_backup_file="${backup_file}.zst"
 
 mkdir -p "$backup_directory"
 
+echo "conorganizer-sqlite-backup: started"
+
 if [[ ! -f "$sqlite_database_path" ]]; then
-    echo "SQLite database does not exist: ${sqlite_database_path}"
+    echo "conorganizer-sqlite-backup: database does not exist: ${sqlite_database_path}"
     exit 1
 fi
 
@@ -21,7 +23,7 @@ sqlite3 "$sqlite_database_path" ".backup '${backup_file}'"
 integrity_result="$(sqlite3 "$backup_file" "PRAGMA integrity_check;")"
 
 if [[ "$integrity_result" != "ok" ]]; then
-    echo "SQLite integrity check failed:"
+    echo "conorganizer-sqlite-backup: integrity check failed"
     echo "$integrity_result"
     rm -f "$backup_file"
     exit 1
@@ -37,7 +39,7 @@ expected_table_count="$(
 )"
 
 if [[ "$expected_table_count" != "2" ]]; then
-    echo "SQLite backup sanity check failed: expected core tables are missing"
+    echo "conorganizer-sqlite-backup: sanity check failed, expected core tables are missing"
     rm -f "$backup_file"
     exit 1
 fi
@@ -55,4 +57,6 @@ find "$backup_directory" \
     -mtime "+${backup_retention_days}" \
     -delete
 
-echo "SQLite backup created: ${compressed_backup_file}"
+echo "conorganizer-sqlite-backup: created ${compressed_backup_file}"
+echo "conorganizer-sqlite-backup: completed successfully"
+
