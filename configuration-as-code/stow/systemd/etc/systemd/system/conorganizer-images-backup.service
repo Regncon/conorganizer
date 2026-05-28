@@ -1,0 +1,6 @@
+[Unit]
+Description=Back up Conorganizer event images
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/conorganizer-images-backup
