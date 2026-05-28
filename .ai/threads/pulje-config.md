@@ -742,4 +742,32 @@ Both passed. Your existing `.ai/threads/pulje-config.md` change is still untouch
 
 Time: 2026-05-24 10:56:50
 --- Next Prompt ---
+I'm encontering an errors when the tests build.
+
+Time: 2026-05-28 14:39:28
+--- Codex Run ---
+
+Codex output:
+I’ll reproduce the test build locally first, then trace the compile errors back to the recent status/schema changes.
+The build failure is from tests added or merged after the pulje status cleanup. They still seed puljer with `models.PuljeStatusPublished`, which no longer exists. I’m updating those fixtures to use the current neutral state, `PuljeStatusOpen`.
+The failing fixtures were using the old `Published` pulje status only to satisfy the `puljer.status` foreign key. I’ve changed those to `Open`, which is the current valid default, then I’ll rerun the suite.
+`go test ./...` is green now. I’m also running the project’s `task test` wrapper so we verify the same path that regenerates `schema.sql` before testing.
+Fixed the test build errors.
+
+The failing tests were still using the removed `models.PuljeStatusPublished` constant when seeding `puljer.status`. I changed those fixtures to `models.PuljeStatusOpen` in:
+
+- [billettholder_admin_filter_test.go](/home/cinmay/Documents/conorganizer/service/billettholder/billettholder_admin_filter_test.go:68)
+- [billettholder_admin_overview_test.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_admin_overview_test.go:58)
+- [billettholder_interest_dialog_test.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog_test.go:193)
+
+That keeps the tests aligned with the new pulje lifecycle model. The “published/unpublished” behavior in these tests still comes from `relation_event_puljer.is_published`, not `puljer.status`.
+
+Verification passed:
+- `GOCACHE=/tmp/go-build go test ./...`
+- `GOCACHE=/tmp/go-build go tool task test`
+
+Your existing `.ai/threads/pulje-config.md` change is still separate.
+
+Time: 2026-05-28 14:39:28
+--- Next Prompt ---
 

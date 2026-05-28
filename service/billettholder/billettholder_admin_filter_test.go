@@ -65,7 +65,7 @@ func seedBillettholderFilterLookups(t *testing.T, db *sql.DB) {
 	mustExecBillettholderFilterTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
 	mustExecBillettholderFilterTest(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
 	mustExecBillettholderFilterTest(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?)`, models.InterestLevelHigh)
-	mustExecBillettholderFilterTest(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusPublished)
+	mustExecBillettholderFilterTest(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusOpen)
 }
 
 func seedBillettholderFilterBillettholdere(t *testing.T, db *sql.DB) {
@@ -105,7 +105,7 @@ func seedBillettholderFilterPuljer(t *testing.T, db *sql.DB) {
 			id, name, status, start_at, end_at
 		) VALUES
 			(?, 'Fredag kveld', ?, '2026-10-09T18:00:00Z', '2026-10-09T23:00:00Z')
-	`, models.PuljeFredagKveld, models.PuljeStatusPublished)
+	`, models.PuljeFredagKveld, models.PuljeStatusOpen)
 }
 
 func seedBillettholderFilterEvents(t *testing.T, db *sql.DB) {
