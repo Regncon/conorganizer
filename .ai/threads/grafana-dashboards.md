@@ -1186,4 +1186,60 @@ curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=probe_success
 
 Time: 2026-05-28 15:57:16
 --- Next Prompt ---
+The stow files are in  configuration-as-code/stow/prometheus/etc/prometheus go ahead and modify theme as needed. 
+Ill add /etc/default/prometheus only if we need to.
+
+Time: 2026-05-28 16:14:27
+--- Codex Run ---
+
+Codex output:
+Understood. I’ll keep the stow package to `/etc/prometheus/*` only for now, remove the `/etc/default/*` files from the repo, and adjust the README so `/etc/default` changes are documented as optional follow-up only when local-only binding or node_exporter systemd metrics are needed.
+The repo state already reflects your preference: only the two `/etc/prometheus` files are present under the Prometheus stow package. I’ll replace the sample Prometheus/blackbox configs with the dashboard-oriented config and update the installer to stow the `prometheus` package without adding `/etc/default` files.
+Done. I kept the Prometheus stow package limited to:
+
+- [prometheus.yml](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/etc/prometheus/prometheus.yml)
+- [blackbox.yml](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/etc/prometheus/blackbox.yml)
+
+I removed the `/etc/default/*` stow files from the working tree and updated [README.md](/home/cinmay/Documents/conorganizer/configuration-as-code/grafana-dashboards/README.md) so `/etc/default` overrides are treated as optional follow-up only.
+
+I also updated [install.sh](/home/cinmay/Documents/conorganizer/configuration-as-code/install.sh) to include the `prometheus` stow package and skip missing stow packages instead of failing.
+
+Validated:
+- Prometheus YAML parses.
+- Blackbox YAML parses.
+- `install.sh` passes `bash -n`.
+- Dashboard JSON still validates.
+
+One caveat: without `/etc/default/prometheus-node-exporter`, `node_systemd_unit_state` may not appear if the package does not enable the systemd collector by default. We can add only that override later if the systemd panels show no data.
+
+**Commands for the developer to run on the server**
+```bash
+cd /home/cinmay/Documents/conorganizer
+
+sudo apt-get update
+sudo apt-get install -y stow prometheus prometheus-node-exporter prometheus-blackbox-exporter
+
+sudo cp -a /etc/prometheus/prometheus.yml "/etc/prometheus/prometheus.yml.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+sudo cp -a /etc/prometheus/blackbox.yml "/etc/prometheus/blackbox.yml.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+sudo rm -f /etc/prometheus/prometheus.yml /etc/prometheus/blackbox.yml
+
+cd /home/cinmay/Documents/conorganizer/configuration-as-code/stow
+sudo stow --target=/ prometheus
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now prometheus prometheus-node-exporter prometheus-blackbox-exporter
+sudo systemctl restart prometheus prometheus-node-exporter prometheus-blackbox-exporter
+
+curl -fsS http://127.0.0.1:9090/-/ready
+curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=up' | jq .
+curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}' | jq .
+curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=node_systemd_unit_state{name="conorganizer-main.service",state="active"}' | jq .
+curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=probe_success{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"}' | jq .
+```
+
+text
+2026-05-28T14:12:47.777723Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to read /home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/etc/default/prometheus: No such file or directory (os error 2)
+
+Time: 2026-05-28 16:14:27
+--- Next Prompt ---
 

@@ -85,8 +85,10 @@ The dashboards need a Grafana datasource that can answer PromQL queries. There a
 
 1. Local Prometheus on the VPS.
    - Install and run Prometheus.
+   - Use the stow-owned Prometheus config files in `configuration-as-code/stow/prometheus/etc/prometheus/`.
    - Configure Prometheus as a Grafana datasource.
    - Scrape node/system metrics and blackbox probes either from standalone exporters or from Alloy-generated exporter targets.
+   - Add `/etc/default/*` overrides later only if package defaults need local-only bind addresses or node_exporter needs explicit systemd collector flags.
 
 2. Alloy as collector plus a Prometheus-compatible backend.
    - Configure Alloy `prometheus.exporter.unix` for node filesystem, CPU, memory, load, network, and systemd metrics.
@@ -195,6 +197,24 @@ If Loki has systemd labels such as `unit`, `systemd_unit`, or `__journal__system
 Do not run all of these blindly; use the relevant checks for the exporter or panel you are validating.
 
 ```bash
+# Install local Prometheus and standalone exporters.
+sudo apt-get update
+sudo apt-get install -y stow prometheus prometheus-node-exporter prometheus-blackbox-exporter
+
+# Back up package-created /etc/prometheus config before replacing it with stow symlinks.
+sudo cp -a /etc/prometheus/prometheus.yml "/etc/prometheus/prometheus.yml.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+sudo cp -a /etc/prometheus/blackbox.yml "/etc/prometheus/blackbox.yml.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+sudo rm -f /etc/prometheus/prometheus.yml /etc/prometheus/blackbox.yml
+
+# Stow only the Prometheus config files from this repo.
+cd /home/cinmay/Documents/conorganizer/configuration-as-code/stow
+sudo stow --target=/ prometheus
+
+# Start/restart services with the stowed config.
+sudo systemctl daemon-reload
+sudo systemctl enable --now prometheus prometheus-node-exporter prometheus-blackbox-exporter
+sudo systemctl restart prometheus prometheus-node-exporter prometheus-blackbox-exporter
+
 # Loki readiness. Use 3100 instead if that is the actual configured HTTP port.
 LOKI_URL=http://127.0.0.1:3500
 curl -fsS "$LOKI_URL/ready"
@@ -209,21 +229,22 @@ systemctl status prometheus.service --no-pager
 
 # node_exporter.
 curl -fsS http://127.0.0.1:9100/metrics | head
-systemctl status node_exporter.service --no-pager
+systemctl status prometheus-node-exporter.service --no-pager
 
 # blackbox_exporter, if installed.
 curl -fsS http://127.0.0.1:9115/metrics | head
-systemctl status blackbox_exporter.service --no-pager
+systemctl status prometheus-blackbox-exporter.service --no-pager
 
-# Systemd metrics in Prometheus. Expected to fail until Prometheus/node_exporter are installed.
+# Systemd metrics in Prometheus. If this returns no data after install,
+# add a node_exporter /etc/default override to enable --collector.systemd.
 curl -G http://127.0.0.1:9090/api/v1/query \
   --data-urlencode 'query=node_systemd_unit_state{name="conorganizer-main.service",state="active"}' | jq .
 
-# Node filesystem metrics for the mounted volume. Expected to fail until Prometheus/node_exporter are installed.
+# Node filesystem metrics for the mounted volume.
 curl -G http://127.0.0.1:9090/api/v1/query \
   --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}' | jq .
 
-# Blackbox TLS metrics. Expected to fail until Prometheus/blackbox_exporter are installed.
+# Blackbox TLS metrics.
 curl -G http://127.0.0.1:9090/api/v1/query \
   --data-urlencode 'query=(probe_ssl_earliest_cert_expiry{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"} - time()) / 86400' | jq .
 
