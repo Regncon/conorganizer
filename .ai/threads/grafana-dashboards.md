@@ -955,4 +955,168 @@ So right now Alloy is helping with logs, not the Prometheus panels. I updated [R
 
 Time: 2026-05-28 12:51:10
 --- Next Prompt ---
+Ok, is there any additional setup I need to do to get the Prometheus panels working?
+
+Time: 2026-05-28 13:02:46
+--- Codex Run ---
+
+Codex output:
+I’ll add a short setup section to the README that separates the two viable paths: local Prometheus, or Alloy as collector plus a Prometheus-compatible remote-write backend.
+Yes. With your current server state, additional setup is required.
+
+You need two things for the Prometheus panels:
+
+1. A Prometheus-compatible metrics backend that Grafana can query.
+   - Local Prometheus.
+   - Grafana Cloud Metrics.
+   - Mimir.
+   - Another Prometheus-compatible backend.
+
+2. Metrics collection for the signals the dashboards query.
+   - Node/system metrics: `node_filesystem_*`, CPU, memory, load, network.
+   - Systemd unit metrics: `node_systemd_unit_state`.
+   - Blackbox probe metrics: `probe_success`, TLS expiry, probe duration/status.
+
+Your current Alloy config does **not** provide those yet. It only has:
+
+- `loki.write`
+- `loki.source.journal`
+
+So right now Alloy is helping with logs, not Prometheus-style metrics.
+
+Practical paths:
+
+- **Simplest local VPS path:** install Prometheus and configure it as Grafana’s Prometheus datasource, then add node/system and blackbox scraping.
+- **Alloy path:** configure Alloy with `prometheus.exporter.unix`, `prometheus.exporter.blackbox`, `prometheus.scrape`, and `prometheus.remote_write`, then send metrics to Grafana Cloud Metrics, Mimir, or another backend Grafana can query.
+
+Relevant docs:
+- Alloy Prometheus scrape: https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.scrape/
+- Alloy remote write: https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.remote_write/
+- Alloy Unix exporter: https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.exporter.unix/
+- Alloy blackbox exporter: https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.exporter.blackbox/
+
+I updated [README.md](/home/cinmay/Documents/conorganizer/configuration-as-code/grafana-dashboards/README.md) with a `Getting Prometheus Panels Working` checklist and revalidated the dashboard JSON.
+
+Time: 2026-05-28 13:02:46
+--- Next Prompt ---
+
+Ok, guide me through the installation of Prometheus on the server and configuring it to be the datasource for the Grafana dashboards.
+
+Time: 2026-05-28 13:05:16
+--- Codex Run ---
+
+Codex output:
+Yes. Given your current setup, the fastest path is: install local Prometheus plus standalone node_exporter and blackbox_exporter, then add Prometheus as a Grafana datasource at `http://127.0.0.1:9090`.
+
+I’d do this first instead of folding metrics into Alloy immediately. It is simpler to validate, and the dashboards already use standard Prometheus/node/blackbox metric names.
+
+After the commands below, configure Grafana manually:
+
+1. Grafana -> **Connections** -> **Data sources**.
+2. Add **Prometheus**.
+3. URL: `http://127.0.0.1:9090`.
+4. Save & test.
+5. Re-import or edit the dashboards and map `DS_PROMETHEUS` to that datasource.
+
+The optional SQLite file-size/backup-age panels still need custom textfile metrics later. The core server, systemd, disk, TLS, and probe panels should work after this.
+
+**Commands for the developer to run on the server**
+```bash
+sudo apt-get update
+sudo apt-get install -y prometheus prometheus-node-exporter prometheus-blackbox-exporter
+
+# Back up existing package configs.
+sudo cp -a /etc/prometheus/prometheus.yml "/etc/prometheus/prometheus.yml.$(date -u +%Y%m%dT%H%M%SZ).bak"
+sudo cp -a /etc/prometheus/blackbox.yml "/etc/prometheus/blackbox.yml.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+
+# Keep metrics services local-only.
+sudo tee /etc/default/prometheus >/dev/null <<'EOF'
+ARGS="--web.listen-address=127.0.0.1:9090 --storage.tsdb.retention.time=30d"
+EOF
+
+sudo tee /etc/default/prometheus-node-exporter >/dev/null <<'EOF'
+ARGS="--web.listen-address=127.0.0.1:9100 --collector.systemd"
+EOF
+
+sudo tee /etc/default/prometheus-blackbox-exporter >/dev/null <<'EOF'
+ARGS="--web.listen-address=127.0.0.1:9115"
+EOF
+
+# Blackbox HTTPS probe config.
+sudo tee /etc/prometheus/blackbox.yml >/dev/null <<'EOF'
+modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      follow_redirects: true
+      preferred_ip_protocol: ip4
+      fail_if_not_ssl: true
+EOF
+
+# Prometheus scrape config for local node/system metrics and public HTTPS probes.
+sudo tee /etc/prometheus/prometheus.yml >/dev/null <<'EOF'
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["127.0.0.1:9090"]
+
+  - job_name: node
+    static_configs:
+      - targets: ["127.0.0.1:9100"]
+
+  - job_name: alloy
+    static_configs:
+      - targets: ["127.0.0.1:12345"]
+
+  - job_name: blackbox_https
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+          - https://main.lekeplassen.regncon.no/
+          - https://grafana.regncon.no/
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now prometheus prometheus-node-exporter prometheus-blackbox-exporter
+sudo systemctl restart prometheus prometheus-node-exporter prometheus-blackbox-exporter
+
+# Validate services and ports.
+systemctl status prometheus prometheus-node-exporter prometheus-blackbox-exporter --no-pager
+ss -ltnp | grep -E ':(9090|9100|9115|12345)\b'
+
+# Validate Prometheus.
+curl -fsS http://127.0.0.1:9090/-/ready
+curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=up' | jq .
+
+# Validate node/system metrics.
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}' | jq .
+
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=node_systemd_unit_state{name="conorganizer-main.service",state="active"}' | jq .
+
+# Validate blackbox and TLS metrics.
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=probe_success{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"}' | jq .
+
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=(probe_ssl_earliest_cert_expiry{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"} - time()) / 86400' | jq .
+```
+
+Time: 2026-05-28 13:05:16
+--- Next Prompt ---
 

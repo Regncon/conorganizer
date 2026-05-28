@@ -79,6 +79,45 @@ Useful references:
 - https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.exporter.blackbox/
 - https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.journal/
 
+## Getting Prometheus Panels Working
+
+The dashboards need a Grafana datasource that can answer PromQL queries. There are two practical paths:
+
+1. Local Prometheus on the VPS.
+   - Install and run Prometheus.
+   - Configure Prometheus as a Grafana datasource.
+   - Scrape node/system metrics and blackbox probes either from standalone exporters or from Alloy-generated exporter targets.
+
+2. Alloy as collector plus a Prometheus-compatible backend.
+   - Configure Alloy `prometheus.exporter.unix` for node filesystem, CPU, memory, load, network, and systemd metrics.
+   - Enable the systemd collector in the Unix exporter so `node_systemd_unit_state` exists.
+   - Configure Alloy `prometheus.exporter.blackbox` for `main.lekeplassen.regncon.no` and `grafana.regncon.no`.
+   - Configure Alloy `prometheus.scrape` to scrape those exporter targets.
+   - Configure Alloy `prometheus.remote_write` to send metrics to Grafana Cloud Metrics, Mimir, or another Prometheus-compatible remote-write backend.
+   - Configure that backend as the Grafana `DS_PROMETHEUS` datasource.
+
+Minimum metrics needed by the current dashboards:
+
+- `node_filesystem_*`
+- `node_cpu_seconds_total`
+- `node_memory_*`
+- `node_load1`
+- `node_network_*`
+- `node_systemd_unit_state`
+- `probe_success`
+- `probe_duration_seconds`
+- `probe_http_status_code`
+- `probe_ssl_earliest_cert_expiry`
+
+Optional future custom metrics:
+
+- `conorganizer_sqlite_db_size_bytes`
+- `conorganizer_sqlite_wal_size_bytes`
+- `conorganizer_sqlite_backup_size_bytes`
+- `conorganizer_sqlite_backup_last_success_timestamp_seconds`
+- `conorganizer_images_backup_last_success_timestamp_seconds`
+- `conorganizer_backup_directory_size_bytes`
+
 ## Panel Dependencies
 
 Prometheus panels:
