@@ -182,25 +182,9 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, error) 
 	// Construct args based on partial data
 	args = append(args, data.ID)
 
-	_, err := db.Exec(query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update room: %w", err)
-	}
-
+	// Update and return data
 	var updated models.Room
-
-	err = db.QueryRow(`
-		SELECT
-			id,
-			name,
-			room_number,
-			floor,
-			max_concurrent_games,
-			notes,
-			is_disabled
-		FROM rooms
-		WHERE id = ?
-	`, data.ID).Scan(
+	err := db.QueryRow(query, args...).Scan(
 		&updated.ID,
 		&updated.Name,
 		&updated.RoomNumber,
