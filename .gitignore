@@ -49,6 +49,8 @@ go.work.sum
 .env
 
 bin/
+!configuration-as-code/stow/scripts/usr/local/bin/
+!configuration-as-code/stow/scripts/usr/local/bin/*in/
 tmp/
 # ------------------------------------------------------------------
 # Templ

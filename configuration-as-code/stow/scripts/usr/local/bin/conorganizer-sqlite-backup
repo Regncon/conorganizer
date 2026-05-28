@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+sqlite_database_path="/mnt/HC_Volume_103911252/environments/main/database/events.db"
+backup_directory="/mnt/HC_Volume_103911252/backups/sqlite"
+backup_retention_days="14"
+
+timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+backup_file="${backup_directory}/events-${timestamp}.db"
+compressed_backup_file="${backup_file}.zst"
+
+mkdir -p "$backup_directory"
+
+echo "conorganizer-sqlite-backup: started"
+
+if [[ ! -f "$sqlite_database_path" ]]; then
+    echo "conorganizer-sqlite-backup: database does not exist: ${sqlite_database_path}"
+    exit 1
+fi
+
+sqlite3 "$sqlite_database_path" ".backup '${backup_file}'"
+
+integrity_result="$(sqlite3 "$backup_file" "PRAGMA integrity_check;")"
+
+if [[ "$integrity_result" != "ok" ]]; then
+    echo "conorganizer-sqlite-backup: integrity check failed"
+    echo "$integrity_result"
+    rm -f "$backup_file"
+    exit 1
+fi
+
+expected_table_count="$(
+    sqlite3 "$backup_file" "
+        SELECT COUNT(*)
+        FROM sqlite_master
+        WHERE type = 'table'
+          AND name IN ('users', 'events');
+    "
+)"
+
+if [[ "$expected_table_count" != "2" ]]; then
+    echo "conorganizer-sqlite-backup: sanity check failed, expected core tables are missing"
+    rm -f "$backup_file"
+    exit 1
+fi
+
+sqlite3 "$backup_file" "
+    SELECT COUNT(*) FROM users;
+    SELECT COUNT(*) FROM events;
+" > /dev/null
+
+zstd --quiet --rm "$backup_file"
+
+find "$backup_directory" \
+    -type f \
+    -name 'events-*.db.zst' \
+    -mtime "+${backup_retention_days}" \
+    -delete
+
+echo "conorganizer-sqlite-backup: created ${compressed_backup_file}"
+echo "conorganizer-sqlite-backup: completed successfully"
+

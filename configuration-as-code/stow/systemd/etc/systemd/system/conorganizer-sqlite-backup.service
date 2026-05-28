@@ -1,0 +1,6 @@
+[Unit]
+Description=Back up Conorganizer SQLite database
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/conorganizer-sqlite-backup
