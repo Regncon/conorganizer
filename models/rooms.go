@@ -1,5 +1,7 @@
 package models
 
+import "database/sql"
+
 type Room struct {
 	ID                 int    `json:"id"`
 	Name               string `json:"name"`
@@ -48,3 +50,16 @@ type RoomByPulje struct {
 // RoomStatusByPulje is a map of puljer containing room statuses, such as which games are assigned to that room
 // You can access status by keys: [Pulje][RoomID]
 type RoomStatusByPulje = map[Pulje]map[int64]RoomByPulje
+
+type RoomStatusRow struct {
+	PuljeID Pulje
+
+	RoomID             int64
+	RoomName           string
+	RoomNumber         string
+	MaxConcurrentGames int
+	RoomNotes          string
+
+	EventID    sql.NullString
+	EventTitle sql.NullString
+}
