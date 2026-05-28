@@ -1119,4 +1119,71 @@ curl -G http://127.0.0.1:9090/api/v1/query \
 
 Time: 2026-05-28 13:05:16
 --- Next Prompt ---
+I want to use stow and keep the prometheus config files in /home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/ 
+
+Time: 2026-05-28 15:57:16
+--- Codex Run ---
+
+Codex output:
+I’ll put the Prometheus, blackbox, and package default config under `configuration-as-code/stow/prometheus/`, then update the stow installer and dashboard README so the manual server steps use the repo-owned files.
+I noticed the existing `install.sh` still references a missing `stow/conorganizer` package, so I’ll make the installer skip absent packages rather than failing, and I’ll keep the server instructions focused on `stow prometheus` directly.
+Added the Prometheus stow package under `configuration-as-code/stow/prometheus/`.
+
+Created:
+- [prometheus.yml](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/etc/prometheus/prometheus.yml)
+- [blackbox.yml](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/etc/prometheus/blackbox.yml)
+- [prometheus default args](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/etc/default/prometheus)
+- [node exporter default args](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/etc/default/prometheus-node-exporter)
+- [blackbox exporter default args](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/etc/default/prometheus-blackbox-exporter)
+
+Also updated:
+- [install.sh](/home/cinmay/Documents/conorganizer/configuration-as-code/install.sh) to stow `prometheus` and skip missing stow packages instead of failing.
+- [dashboard README](/home/cinmay/Documents/conorganizer/configuration-as-code/grafana-dashboards/README.md) with the stow-based install flow.
+
+Validated:
+- Prometheus/blackbox YAML parses.
+- `configuration-as-code/install.sh` passes `bash -n`.
+- Both dashboard JSON files still validate.
+
+After the server commands, add Grafana datasource manually:
+- Type: Prometheus
+- URL: `http://127.0.0.1:9090`
+- Then map dashboard variable `DS_PROMETHEUS` to it.
+
+**Commands for the developer to run on the server**
+```bash
+cd /home/cinmay/Documents/conorganizer
+
+sudo apt-get update
+sudo apt-get install -y stow prometheus prometheus-node-exporter prometheus-blackbox-exporter
+
+# Back up package-created config before replacing it with stow symlinks.
+sudo cp -a /etc/prometheus/prometheus.yml "/etc/prometheus/prometheus.yml.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+sudo cp -a /etc/prometheus/blackbox.yml "/etc/prometheus/blackbox.yml.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+sudo cp -a /etc/default/prometheus "/etc/default/prometheus.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+sudo cp -a /etc/default/prometheus-node-exporter "/etc/default/prometheus-node-exporter.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+sudo cp -a /etc/default/prometheus-blackbox-exporter "/etc/default/prometheus-blackbox-exporter.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+
+# Remove files so stow can create symlinks.
+sudo rm -f /etc/prometheus/prometheus.yml /etc/prometheus/blackbox.yml
+sudo rm -f /etc/default/prometheus /etc/default/prometheus-node-exporter /etc/default/prometheus-blackbox-exporter
+
+# Stow the repo-owned Prometheus config.
+cd /home/cinmay/Documents/conorganizer/configuration-as-code/stow
+sudo stow --target=/ prometheus
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now prometheus prometheus-node-exporter prometheus-blackbox-exporter
+sudo systemctl restart prometheus prometheus-node-exporter prometheus-blackbox-exporter
+
+# Validate.
+systemctl status prometheus prometheus-node-exporter prometheus-blackbox-exporter --no-pager
+curl -fsS http://127.0.0.1:9090/-/ready
+curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=up' | jq .
+curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=node_systemd_unit_state{name="conorganizer-main.service",state="active"}' | jq .
+curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=probe_success{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"}' | jq .
+```
+
+Time: 2026-05-28 15:57:16
+--- Next Prompt ---
 
