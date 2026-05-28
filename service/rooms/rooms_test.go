@@ -570,10 +570,10 @@ func insertPuljer(t *testing.T, db *sql.DB) []string {
         INSERT INTO puljer (
 			id, name, status, start_at, end_at
 		) VALUES
-			('Friday', 'Fredag kveld', 'published', '2025-10-03', '2025-10-03'),
-			('SaturdayMorning', 'Lørdag morgen', 'published', '2025-10-04', '2025-10-04'),
-			('SaturdayEvening', 'Lørdag kveld', 'published', '2025-10-04', '2025-10-04'),
-			('Sunday', 'Søndag morgen', 'published', '2025-10-05', '2025-10-05')
+			('Friday', 'Fredag kveld', 'Open', '2025-10-03', '2025-10-03'),
+			('SaturdayMorning', 'Lørdag morgen', 'Open', '2025-10-04', '2025-10-04'),
+			('SaturdayEvening', 'Lørdag kveld', 'Open', '2025-10-04', '2025-10-04'),
+			('Sunday', 'Søndag morgen', 'Open', '2025-10-05', '2025-10-05')
         RETURNING id
 	`
 	rows, err := db.Query(puljerQuery)
