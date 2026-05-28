@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+image_directory="/mnt/HC_Volume_103911252/environments/main/event-images"
+backup_directory="/mnt/HC_Volume_103911252/backups/images"
+backup_retention_days="14"
+
+timestamp="$(date -u +%Y%m%dT%H%M%SZ)"
+backup_file="${backup_directory}/event-images-${timestamp}.tar.zst"
+
+mkdir -p "$backup_directory"
+
+echo "conorganizer-images-backup: started"
+
+if [[ ! -d "$image_directory" ]]; then
+    echo "conorganizer-images-backup: image directory does not exist: ${image_directory}"
+    exit 1
+fi
+
+tar --create \
+    --zstd \
+    --file "$backup_file" \
+    --directory "$image_directory" \
+    .
+
+find "$backup_directory" \
+    -type f \
+    -name 'event-images-*.tar.zst' \
+    -mtime "+${backup_retention_days}" \
+    -delete
+
+echo "conorganizer-images-backup: created ${backup_file}"
+echo "conorganizer-images-backup: completed successfully"

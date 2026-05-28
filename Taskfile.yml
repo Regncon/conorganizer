@@ -19,7 +19,7 @@ tasks:
             - build:templ
         #parallel: true
 
-    # Use this task to debug your project with the delve debugger
+        # Use this task to debug your project with the delve debugger
     debug:
         cmds:
             - go tool dlv exec ./bin/main
@@ -29,29 +29,30 @@ tasks:
     # The `start:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
     start:templ:
         cmds:
-            - go tool templ generate --watch --proxybind="0.0.0.0" --proxy="http://localhost:8080" --open-browser=false -v
+            - go tool templ generate --watch --proxybind="0.0.0.0"
+              --proxy="http://localhost:8080" --open-browser=false -v
 
     start:server:
         cmds:
             - |
-                go tool air \
-                --build.cmd "go build -tags dev -o tmp/bin/main" \
-                --build.bin "tmp/bin/main" \
-                --build.delay "20" \
-                --build.include_ext "go" \
-                --build.stop_on_error "false" \
-                --misc.clean_on_exit true
+              go tool air \
+              --build.cmd "go build -tags dev -o tmp/bin/main" \
+              --build.bin "tmp/bin/main" \
+              --build.delay "20" \
+              --build.include_ext "go" \
+              --build.stop_on_error "false" \
+              --misc.clean_on_exit true
 
     start:reload:
         cmds:
             - |
-                go tool air \
-                --build.cmd "go tool templ generate --notify-proxy" \
-                --build.bin "true" \
-                --build.delay "100" \
-                --build.exclude_dir "" \
-                --build.include_dir "$STATIC_DIR" \
-                --build.include_ext "js,css,env"
+              go tool air \
+              --build.cmd "go tool templ generate --notify-proxy" \
+              --build.bin "true" \
+              --build.delay "100" \
+              --build.exclude_dir "" \
+              --build.include_dir "$STATIC_DIR" \
+              --build.include_ext "js,css,env"
 
     start:
         deps:
@@ -88,11 +89,11 @@ tasks:
     download:db:
         cmds:
             - |
-                set -eu
-                : "${DB_SSH_USER:?Set DB_SSH_USER in .env}"
-                mkdir -p database
-                scp -P 22 "${DB_SSH_USER}@46.62.159.49:/mnt/HC_Volume_103911252/main/database/events.db" "database/events.db.download"
-                mv "database/events.db.download" "database/events.db"
+              set -eu
+              : "${DB_SSH_USER:?Set DB_SSH_USER in .env}"
+              mkdir -p database
+              scp -P 22 "${DB_SSH_USER}@46.62.159.49:/mnt/HC_Volume_103911252/environments/main/database/events.db" "database/events.db.download"
+              mv "database/events.db.download" "database/events.db"
 
     # Download local copies of production event images
     download:images:
@@ -100,7 +101,9 @@ tasks:
             # Create local-event-images directory if it doesn't exist
             - mkdir -p ./local-event-images
             ## Download all event images from https://program.regncon.no/event-images/ and save them to ./local-event-images
-            - wget -r -np -nH -N -R html,tmp --cut-dirs=1 -P ./local-event-images https://main.lekeplassen.regncon.no/event-images/
+            - wget -r -np -nH -N -R html,tmp --cut-dirs=1 -P
+              ./local-event-images
+              https://main.lekeplassen.regncon.no/event-images/
 
     # Kill all running air, templ and taks processes
     kill:

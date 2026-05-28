@@ -1,0 +1,205 @@
+package billettholderadmin
+
+import (
+	"fmt"
+	"strconv"
+
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
+)
+
+templ billettholderInterestRowStyles() {
+	<style>
+		.billettholder-interest-group {
+			display: flex;
+			flex-direction: column;
+			gap: 0;
+
+			& .billettholder-interest-group-title {
+				margin: 0 0 var(--spacing-1x);
+				color: var(--color-text-soft);
+				font-size: 12px;
+				font-weight: 700;
+			}
+		}
+
+		.billettholder-interest-assigned-title {
+			color: var(--color-primary);
+		}
+
+		.billettholder-interest-row {
+			display: grid;
+			grid-template-columns: 1fr;
+			align-items: start;
+			gap: var(--spacing-2x);
+			min-height: 2.5rem;
+			padding: var(--spacing-2x) var(--spacing-3x);
+			border: 1px solid var(--bg-item-border);
+			background: var(--bg-item);
+			color: var(--color-text-strong);
+			text-decoration: none;
+			transition: var(--btn-transition);
+
+			&:first-of-type {
+				border-start-start-radius: var(--border-radius-1x);
+				border-start-end-radius: var(--border-radius-1x);
+			}
+
+			&:last-of-type {
+				border-end-start-radius: var(--border-radius-1x);
+				border-end-end-radius: var(--border-radius-1x);
+			}
+
+			&:nth-of-type(odd) {
+				background: var(--bg-item);
+			}
+
+			&:nth-of-type(even) {
+				background: color-mix(in srgb, var(--bg-item) 95%, white);
+			}
+
+			&:hover,
+			&:focus-visible {
+				border-color: var(--color-primary);
+				background: var(--bg-item-hover);
+				outline: none;
+			}
+
+			&.is-unpublished {
+				opacity: 0.55;
+			}
+
+			& .billettholder-interest-row-title {
+				display: block;
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				font-weight: 700;
+			}
+
+			& .billettholder-interest-row-meta {
+				display: flex;
+				flex-wrap: wrap;
+				gap: var(--spacing-2x);
+				justify-content: flex-start;
+				overflow: hidden;
+				color: var(--color-text-soft);
+				font-size: 12px;
+				text-align: left;
+
+				& span {
+					white-space: nowrap;
+				}
+			}
+
+			& .billettholder-interest-assigned-role {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--spacing-1x);
+
+				&.is-gm {
+					color: var(--color-success);
+					font-weight: 700;
+				}
+			}
+
+			& .billettholder-interest-row-chip {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				gap: var(--spacing-1x);
+				width: fit-content;
+				min-height: 1.75rem;
+				padding: 0 var(--spacing-2x);
+				border: 1px solid var(--bg-surface-border);
+				border-radius: var(--border-radius-1x);
+				background: var(--bg-surface);
+				color: var(--color-text-strong);
+				font-size: 12px;
+				font-weight: 700;
+				white-space: nowrap;
+
+				&.is-gm {
+					border-color: var(--color-success);
+					color: var(--color-success);
+				}
+			}
+		}
+
+		@container billettholder-interest-dialog (min-width: 36rem) {
+			.billettholder-interest-row {
+				grid-template-columns: minmax(10rem, 1fr) minmax(12rem, auto) max-content;
+				align-items: center;
+
+				& .billettholder-interest-row-meta {
+					flex-wrap: nowrap;
+					justify-content: flex-end;
+					text-align: right;
+				}
+
+				& .billettholder-interest-row-chip {
+					width: auto;
+				}
+			}
+		}
+	</style>
+}
+
+templ billettholderInterestGroup(title string, rows []billettholderInterestEventRow) {
+	if len(rows) > 0 {
+		<div class="billettholder-interest-group">
+			<h4 class="billettholder-interest-group-title">{ title } ({ strconv.Itoa(len(rows)) })</h4>
+			for _, row := range rows {
+				@billettholderInterestRow(row, false)
+			}
+		</div>
+	}
+}
+
+templ billettholderInterestRow(row billettholderInterestEventRow, isAssigned bool) {
+	{{
+		rowClass := "billettholder-interest-row"
+		if !row.IsPublished {
+			rowClass += " is-unpublished"
+		}
+		assignedRoleClass := "billettholder-interest-assigned-role"
+		chipClass := "billettholder-interest-row-chip"
+		if isAssigned && row.AssignedRole == models.EventPlayerRoleGM {
+			assignedRoleClass += " is-gm"
+			chipClass += " is-gm"
+		}
+	}}
+	<a
+		class={ rowClass }
+		href={ templ.URL(fmt.Sprintf("/admin/approval/edit/%s", row.EventID)) }
+		data-on:click="document.querySelector('.billettholder-interest-dialog[open]')?.close()"
+	>
+		<span class="billettholder-interest-row-title">{ row.EventTitle }</span>
+		<span class="billettholder-interest-row-meta">
+			if isAssigned {
+				<span class={ assignedRoleClass }>
+					if row.AssignedRole == models.EventPlayerRoleGM {
+						@icons.Icon(icons.Gamemaster, icons.Size16)
+					}
+					Tildelt som { billettholderInterestRoleLabel(row.AssignedRole) }
+				</span>
+			}
+			<span>{ billettholderInterestLevelIcon(row.InterestLevel) } { billettholderInterestLabel(row.InterestLevel) }</span>
+			if !row.IsPublished {
+				<span>Ikke publisert i pulje</span>
+			} else {
+				<span>Publisert i pulje</span>
+			}
+		</span>
+		<span class={ chipClass }>
+			if isAssigned {
+				if row.AssignedRole == models.EventPlayerRoleGM {
+					@icons.Icon(icons.Gamemaster, icons.Size16)
+				}
+				{ billettholderInterestRoleLabel(row.AssignedRole) }
+			} else {
+				{ row.InterestLevel.Label() }
+			}
+		</span>
+	</a>
+}

@@ -3,6 +3,7 @@ package billettholderadmin
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -13,6 +14,7 @@ import (
 )
 
 var searchTerm = ""
+var billettholderFilters = billettholderService.BillettholderFilters{}
 
 func billettholdereSearchRoute(
 	router chi.Router,
@@ -27,7 +29,9 @@ func billettholdereSearchRoute(
 		}
 
 		var payload struct {
-			Search string `json:"search"`
+			Search                   string `json:"search"`
+			FilterWithoutFirstChoice bool   `json:"filterWithoutFirstChoice"`
+			FilterGMOrDM             bool   `json:"filterGmOrDm"`
 		}
 		if err := json.Unmarshal([]byte(datastarRaw), &payload); err != nil {
 			http.Error(w, "invalid ?datastar JSON", http.StatusBadRequest)
@@ -35,6 +39,10 @@ func billettholdereSearchRoute(
 		}
 
 		searchTerm = payload.Search
+		billettholderFilters = billettholderService.BillettholderFilters{
+			WithoutFirstChoice: payload.FilterWithoutFirstChoice,
+			GMOrDM:             payload.FilterGMOrDM,
+		}
 
 		sessionID, _ := upsertSessionID(store, r, w)
 		if notifyUpdate != nil {
@@ -55,7 +63,17 @@ func billettholdereSearchRoute(
 */
 
 templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
-	{{ bilettholdere, err := billettholderService.GetBillettholdere("", db) }}
+	{{
+		bilettholdere, err := billettholderService.GetBillettholdereWithFilters("", db, billettholderFilters)
+		interestSectionsByBillettholderID := map[int][]billettholderInterestPuljeSection{}
+		if err == nil {
+			var interestErr error
+			interestSectionsByBillettholderID, interestErr = getBillettholderInterestSectionsByBillettholderID(db, billettholderIDs(bilettholdere))
+			if interestErr != nil {
+				logger.Error(fmt.Errorf("failed to load billettholder interests: %w", interestErr).Error())
+			}
+		}
+	}}
 	if err != nil {
 		{{ logger.Error(err.Error()) }}
 	}
@@ -73,7 +91,11 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 					class="btn btn--cta"
 				>Legg til billettholder</a>
 			</div>
-			<p class="page-heading-help-text">Her kan du se en oversikt over alle billettholdere</p>
+			@billettholderAdminOverview(db, logger, billettholderFilters)
+			@billettholderInterestSummaryStyles()
+			@billettholderInterestDialogStyles()
+			@billettholderInterestTabsStyles()
+			@billettholderInterestRowStyles()
 			<div class="billettholder-admin-grid">
 				<style>
 					.billettholder-admin-grid {
@@ -89,7 +111,7 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 					<p>Failed to load billettholdere.</p>
 				} else {
 					for _, billettholder := range bilettholdere {
-						@billettholderCard(billettholder, searchTerm)
+						@billettholderCard(billettholder, searchTerm, interestSectionsByBillettholderID[billettholder.ID])
 					}
 				}
 			</div>

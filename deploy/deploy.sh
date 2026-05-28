@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-DATA_ROOT="/mnt/HC_Volume_103911252"
+DATA_ROOT="/mnt/HC_Volume_103911252/environments"
 MAIN_DATA_DIR="$DATA_ROOT/main"
 
 SAFE_NAME="${1:-}"

@@ -1,0 +1,9 @@
+[Unit]
+Description=Run Conorganizer SQLite database backup
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+
+[Install]
+WantedBy=timers.target

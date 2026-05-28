@@ -280,8 +280,8 @@ func deleteEmailFromBillettholderRoute(
 	})
 }
 
-templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
-	<div class="card" style="display:flex; flex-direction:column; gap:0.5rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
+templ billettholderCard(billettholder models.Billettholder, searchTerm string, interestSections []billettholderInterestPuljeSection) {
+	<div class="card billettholder-card" style="display:flex; flex-direction:column; gap:0.75rem; padding: 1rem; border-radius: 8px; background: rgb(49, 53, 78); color: #ffffff;">
 		<p style="margin:0;">
 			<strong>Bestilling: </strong> @templ.Raw(highlightSearchTerm(strconv.Itoa(billettholder.OrderID), searchTerm))
 		</p>
@@ -313,6 +313,7 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string) {
 				<p><strong>Alder:</strong> Under 18</p>
 			}
 		</div>
+		@billettholderInterestSummary(billettholder, searchTerm, interestSections)
 		<span>Andre epostadresser på samme bestilling:</span>
 		for _, email := range billettholder.Emails {
 			if email.Kind == models.BillettholderEmailKindAssociated || email.Kind == models.BillettholderEmailKindManual {

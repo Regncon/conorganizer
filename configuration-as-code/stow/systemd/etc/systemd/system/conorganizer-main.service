@@ -1,0 +1,21 @@
+[Unit]
+Description=Conorganizer (main)
+After=network.target
+
+[Service]
+User=deploy
+Group=www-data
+WorkingDirectory=/opt/conorganizer/main
+
+EnvironmentFile=/etc/conorganizer/env
+Environment=PORT=18856
+
+ExecStart=/opt/conorganizer/main/conorganizer-main \
+  -dbp /mnt/HC_Volume_103911252/environments/main/database/events.db \
+  -image-path /mnt/HC_Volume_103911252/environments/main/event-images
+
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
