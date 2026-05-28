@@ -129,17 +129,22 @@ CREATE TABLE
     puljer (
         id TEXT NOT NULL PRIMARY KEY,
         name TEXT NOT NULL,
-        status TEXT NOT NULL CHECK (
+        status TEXT NOT NULL DEFAULT 'Open' CHECK (
             status IN (
-                'not_published',
-                'published',
-                'locked',
-                'completed'
+                'Open',
+                'Locked',
+                'Completed'
             )
         ),
         start_at TEXT NOT NULL,
         end_at TEXT NOT NULL,
         FOREIGN KEY (status) REFERENCES pulje_statuses (status) ON UPDATE CASCADE
+    ) STRICT;
+
+CREATE TABLE
+    program_publishing_state (
+        id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+        is_published INTEGER NOT NULL DEFAULT 0 CHECK (is_published IN (0, 1))
     ) STRICT;
 
 CREATE TABLE
@@ -226,10 +231,9 @@ VALUES
 INSERT INTO
     pulje_statuses (status)
 VALUES
-    ('not_published'),
-    ('published'),
-    ('locked'),
-    ('completed');
+    ('Open'),
+    ('Locked'),
+    ('Completed');
 
 INSERT INTO
     puljer (id, name, status, start_at, end_at)
@@ -237,31 +241,36 @@ VALUES
     (
         'FredagKveld',
         'Fredag kveld',
-        'not_published',
+        'Open',
         '2025-10-10T18:00:00Z',
         '2025-10-10T23:00:00Z'
     ),
     (
         'LordagMorgen',
         'Lørdag morgen',
-        'not_published',
+        'Open',
         '2025-10-11T10:00:00Z',
         '2025-10-11T15:00:00Z'
     ),
     (
         'LordagKveld',
         'Lørdag kveld',
-        'not_published',
+        'Open',
         '2025-10-11T18:00:00Z',
         '2025-10-11T23:00:00Z'
     ),
     (
         'SondagMorgen',
         'Søndag morgen',
-        'not_published',
+        'Open',
         '2025-10-12T10:00:00Z',
         '2025-10-12T15:00:00Z'
     );
+
+INSERT INTO
+    program_publishing_state (id, is_published)
+VALUES
+    (1, 0);
 
 -- Views information /database/views.md
 

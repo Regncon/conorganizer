@@ -47,21 +47,15 @@ func ValidPuljeValues() []string {
 type PuljeStatus string
 
 const (
-	PuljeStatusOpen         PuljeStatus = "open"
-	PuljeStatusNotPublished PuljeStatus = "not_published"
-	PuljeStatusPublished    PuljeStatus = "published"
-	PuljeStatusLocked       PuljeStatus = "locked"
-	PuljeStatusCompleted    PuljeStatus = "completed"
+	PuljeStatusOpen      PuljeStatus = "Open"
+	PuljeStatusLocked    PuljeStatus = "Locked"
+	PuljeStatusCompleted PuljeStatus = "Completed"
 )
 
 func (status PuljeStatus) Label() string {
 	switch status {
 	case PuljeStatusOpen:
 		return "Åpen"
-	case PuljeStatusNotPublished:
-		return "Ikke publisert"
-	case PuljeStatusPublished:
-		return "Publisert"
 	case PuljeStatusLocked:
 		return "Låst"
 	case PuljeStatusCompleted:

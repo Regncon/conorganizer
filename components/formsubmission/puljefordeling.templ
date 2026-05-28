@@ -191,7 +191,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 					/>
 				</label>
 				<label class="checkbox-background form-group-checkbox">
-					<span>{ models.PuljeStatusPublished.Label() }</span>
+					<span>Publisert</span>
 					<input
 						if eventPulje.IsPublished {
 							checked
