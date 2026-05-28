@@ -2,7 +2,6 @@ package rooms
 
 import (
 	"database/sql"
-	"fmt"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
@@ -424,7 +423,7 @@ func TestGetAllRoomStatusesByPulje(t *testing.T) {
 		}, {
 			EventID: events[4],
 			PuljeID: models.Pulje(puljer[2]),
-			RoomID:  sql.NullInt64{Int64: int64(rooms[3]), Valid: true},
+			RoomID:  sql.NullInt64{},
 		},
 	}
 
@@ -442,7 +441,7 @@ func TestGetAllRoomStatusesByPulje(t *testing.T) {
 			&createdEvent.PuljeID,
 			&createdEvent.IsInPulje,
 			&createdEvent.IsPublished,
-			&createdEvent.RoomID.Int64,
+			&createdEvent.RoomID,
 		)
 
 		if err != nil {
@@ -452,47 +451,64 @@ func TestGetAllRoomStatusesByPulje(t *testing.T) {
 	}
 
 	var expectedRoomStatuses = make(models.RoomStatusByPulje)
-	for _, createdEventPulje := range createdEventPuljer {
-		// Skipp events not added to a pulje or without a room assigned
-		if !createdEventPulje.IsInPulje && !createdEventPulje.RoomID.Valid {
+	for _, puljeID := range puljer {
+		pulje := models.Pulje(puljeID)
+
+		if expectedRoomStatuses[pulje] == nil {
+			expectedRoomStatuses[pulje] = make(map[int64]models.RoomByPulje)
+		}
+
+		for _, roomID := range rooms {
+			expectedRoomStatuses[pulje][int64(roomID)] = models.RoomByPulje{
+				ID:                 roomID,
+				Name:               "",
+				RoomNumber:         "",
+				MaxConcurrentGames: 0,
+				Notes:              "",
+				AssignedEventsID:   []models.RoomEventPuljeSummary{},
+			}
+		}
+	}
+	for _, eventPulje := range createdEventPuljer {
+		if !eventPulje.IsInPulje || !eventPulje.RoomID.Valid {
 			continue
 		}
 
-		// Create pulje map if empty
-		puljeName := createdEventPulje.PuljeID
-		if expectedRoomStatuses[puljeName] == nil {
-			expectedRoomStatuses[puljeName] = make(map[int64]models.RoomByPulje)
-		}
+		pulje := eventPulje.PuljeID
+		roomID := eventPulje.RoomID.Int64
 
-		// Create or update room
-		roomNumber := createdEventPulje.RoomID.Int64
-		room := expectedRoomStatuses[puljeName][roomNumber]
-
-		// Setup event array
-		if room.AssignedEventsID == nil {
-			room.AssignedEventsID = []models.RoomEventPuljeSummary{}
-		}
+		room := expectedRoomStatuses[pulje][roomID]
 
 		room.AssignedEventsID = append(room.AssignedEventsID, models.RoomEventPuljeSummary{
-			EventID: createdEventPulje.EventID,
+			EventID: eventPulje.EventID,
 		})
 
-		expectedRoomStatuses[puljeName][roomNumber] = room
+		expectedRoomStatuses[pulje][roomID] = room
 	}
 
-	fmt.Print(expectedRoomStatuses)
-
 	// When
-	resultPuljeFredag, err := GetAllRoomStatusesByPulje(db, models.PuljeFredagKveld)
+	result, err := GetAllRoomStatusesByPulje(db, models.PuljeFredagKveld)
 	if err != nil {
 		t.Fatalf("Unexpected arror: %v", err)
 	}
 
 	// Then
-	fmt.Print(resultPuljeFredag)
-	/* if len(result) != expectedStatusesLength {
-		t.Fatalf("Result of get all statuses did not match expected length\nexpected: %d\nrecieved: %d", expectedStatusesLength, len(result))
-	} */
+	for pulje, rooms := range expectedRoomStatuses {
+		for roomID, expectedRoom := range rooms {
+
+			actualRoom := result[pulje][roomID]
+
+			if len(actualRoom.AssignedEventsID) != len(expectedRoom.AssignedEventsID) {
+				t.Errorf(
+					"pulje=%s room=%d expected %d events, got %d",
+					pulje,
+					roomID,
+					len(expectedRoom.AssignedEventsID),
+					len(actualRoom.AssignedEventsID),
+				)
+			}
+		}
+	}
 }
 
 func insertPuljer(t *testing.T, db *sql.DB) []string {
@@ -502,11 +518,11 @@ func insertPuljer(t *testing.T, db *sql.DB) []string {
         INSERT INTO puljer (
 			id, name, status, start_at, end_at
 		) VALUES
-			('P1', 'Friday', 'published', '2025-10-03', '2025-10-03'),
-			('P2', 'SaturdayMorning', 'published', '2025-10-04', '2025-10-04'),
-			('P3', 'SaturdayEvening', 'published', '2025-10-04', '2025-10-04'),
-			('P4', 'Sunday', 'published', '2025-10-05', '2025-10-05')
-        RETURNING name
+			('Friday', 'Fredag kveld', 'published', '2025-10-03', '2025-10-03'),
+			('SaturdayMorning', 'Lørdag morgen', 'published', '2025-10-04', '2025-10-04'),
+			('SaturdayEvening', 'Lørdag kveld', 'published', '2025-10-04', '2025-10-04'),
+			('Sunday', 'Søndag morgen', 'published', '2025-10-05', '2025-10-05')
+        RETURNING id
 	`
 	rows, err := db.Query(puljerQuery)
 	if err != nil {
@@ -514,20 +530,20 @@ func insertPuljer(t *testing.T, db *sql.DB) []string {
 	}
 	defer rows.Close()
 
-	var names []string
+	var ids []string
 	for rows.Next() {
-		var name string
-		if err := rows.Scan(&name); err != nil {
+		var id string
+		if err := rows.Scan(&id); err != nil {
 			t.Fatalf("failed to scan pulje id: %v", err)
 		}
-		names = append(names, name)
+		ids = append(ids, id)
 	}
 
 	if err := rows.Err(); err != nil {
 		t.Fatalf("row iteration failed: %v", err)
 	}
 
-	return names
+	return ids
 }
 
 func insertRooms(t *testing.T, db *sql.DB) []int {
