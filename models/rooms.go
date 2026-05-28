@@ -39,7 +39,7 @@ type RoomEventPuljeSummary struct {
 // out what `max_concurrent_events` is based on a pulje, but also for the dropdown input component
 // used in assigning rooms to an event in a pulje
 type RoomByPulje struct {
-	ID                 int
+	ID                 int64
 	Name               string
 	RoomNumber         string
 	AssignedEventsID   []RoomEventPuljeSummary
