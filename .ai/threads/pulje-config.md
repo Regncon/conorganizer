@@ -770,4 +770,43 @@ Your existing `.ai/threads/pulje-config.md` change is still separate.
 
 Time: 2026-05-28 14:39:28
 --- Next Prompt ---
+When I run git:(360-publisering-av-programm) goose database/events.db up
+2026/05/28 14:47:57 goose run: no next version found
+Nothing happens. But I believe the database is not migrated to the new schema.
+
+Time: 2026-05-28 14:54:44
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the local SQLite schema, the `goose_db_version` table, and the migration files. The key question is whether Goose thinks the new migration was already applied, or whether it is not seeing the migration directory at all.
+The database is indeed still on the old `puljer.status` constraint and old values. `goose_db_version` is empty, so `no next version found` almost certainly means the CLI is not looking at this repo’s migration directory.
+There are two separate issues in the local DB: `goose_db_version` exists but has no baseline row, and `program_publishing_state` already exists even though its migration is not recorded. I’m testing the safest repair sequence on a temporary DB copy before touching `database/events.db`.
+The repair sequence worked on a copy: add Goose baseline version `0`, apply the pulje migration, mark the already-existing `program_publishing_state` migration as applied, then run the remaining migration. I’m applying that same sequence to the local DB now after making a temporary backup.
+The local DB is now migrated: `goose up` reports current version `20260524100000`, and `puljer.status` now has `Open`, `Locked`, `Completed`. I’m running the project test task once to make sure the regenerated schema and tests still line up.
+The local DB was not migrated. Goose was stuck because `goose_db_version` existed but had no baseline row, so it reported `no next version found` instead of seeing the pending migrations.
+
+I repaired `database/events.db` locally:
+
+1. Backed it up to `/tmp/conorganizer-events-before-goose-repair.db`.
+2. Added the missing Goose baseline version `0`.
+3. Ran the pulje migration up to `20260522120000`.
+4. Marked `20260522150000_program_publishing_state` as applied because that table already existed.
+5. Ran the remaining migration, `20260524100000_capitalize_pulje_statuses`.
+
+Current DB state:
+- Goose version: `20260524100000`
+- `pulje_statuses`: `Open`, `Locked`, `Completed`
+- `puljer.status` now uses the `Open | Locked | Completed` constraint.
+- Existing puljer were migrated: old `not_published` became `Open`, old `locked` became `Locked`.
+
+Verification passed:
+
+```sh
+GOCACHE=/tmp/go-build go tool task test
+```
+
+One note: `goose up` now works, but `goose status` still has a separate issue because this DB’s `goose_db_version.tstamp` column is declared as `TEXT`, while Goose expects to scan it as a timestamp.
+
+Time: 2026-05-28 14:54:44
+--- Next Prompt ---
 
