@@ -38,7 +38,7 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 }
 
 templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
-	@toast.Toast(toast.DefaultMessage, icons.ProgressComplete)
+	@toast.Render("Lagret", icons.ProgressComplete)
 	<div
 		id="edit-form-container"
 		class="formsubmission-css-container"

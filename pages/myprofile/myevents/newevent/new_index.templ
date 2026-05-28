@@ -54,7 +54,7 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 }
 
 templ newEventIndex(eventId string, userID string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
-	@toast.Toast(toast.DefaultMessage, icons.ProgressComplete)
+	@toast.Render("Lagret", icons.ProgressComplete)
 	<div
 		id="formsubmission-container"
 		class="formsubmission-css-container"

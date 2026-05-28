@@ -2,17 +2,15 @@ package toast
 
 import "github.com/Regncon/conorganizer/components/icons"
 
-const (
-	DefaultMessage = "Lagret"
-)
+const missingMessage = "Mangler toast-melding"
 
-templ Toast(message string, icon icons.IconType) {
+templ Render(message string, icon icons.IconType) {
 	{{
 	if message == "" {
-		message = DefaultMessage
+		message = missingMessage
 	}
 	}}
-	<toast-message
+	<app-toast
 		class="toast-region"
 		role="status"
 		aria-live="polite"
@@ -26,9 +24,9 @@ templ Toast(message string, icon icons.IconType) {
 						@icons.Icon(icon, icons.Size16)
 					</span>
 				}
-				<span data-toast-message-text></span>
+				<span data-toast-text></span>
 			</div>
 		</template>
-	</toast-message>
+	</app-toast>
 	<script type="module" src="/static/web_components/toast.js"></script>
 }
