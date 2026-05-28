@@ -452,7 +452,3 @@ func AssignRoomToRelationEventPuljer(db *sql.DB, roomID int64, relationEventPulj
 
 	return result, nil
 }
-
-func GetRelationEventPuljerByRoomIDAndPuljeID(db *sql.DB, roomID int, puljeID string) {
-	// This functino will return all events assigned to a room limited by the pulje
-}
