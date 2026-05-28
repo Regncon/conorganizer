@@ -312,12 +312,106 @@ func GetAllRooms(db *sql.DB) ([]*models.Room, error) {
 }
 
 // GetAllRoomStatusesByPulje Generates a list of all rooms, but unique to a pulje
-func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) ([]*models.RoomEventPuljeSummary, error) {
+func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatusByPulje, error) {
 	// This function needs to return a detailed overview of available rooms, where
 	// assigned events are limited to pulje
+	query := `
+        SELECT
+            p.id,
 
-	// Should this include complete events from event puljer, just event puljer id or just convert this to a number?
-	return nil, nil
+            r.id,
+            r.name,
+            r.room_number,
+            r.max_concurrent_games,
+            r.notes,
+
+            e.id,
+            e.title
+        FROM puljer p
+        CROSS JOIN rooms r
+        LEFT JOIN relation_event_puljer rep
+            ON rep.pulje_id = p.id
+            AND rep.room_id = r.id
+            AND rep.is_in_pulje = 1
+        LEFT JOIN events e
+            ON e.id = rep.event_id
+        WHERE
+            r.is_disabled = 0
+        ORDER BY
+            p.id,
+            r.floor,
+            r.room_number,
+            e.title;
+        `
+
+	rows, err := db.Query(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rooms statuses: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(models.RoomStatusByPulje)
+	for rows.Next() {
+		var row models.RoomStatusRow
+
+		err := rows.Scan(
+			&row.PuljeID,
+
+			&row.RoomID,
+			&row.RoomName,
+			&row.RoomNumber,
+			&row.MaxConcurrentGames,
+			&row.RoomNotes,
+
+			&row.EventID,
+			&row.EventTitle,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("scan room status row: %w", err)
+		}
+
+		// Ensure pulje exists
+		if _, exists := result[row.PuljeID]; !exists {
+			result[row.PuljeID] = make(map[int64]models.RoomByPulje)
+		}
+
+		// Create room if it doesn't exist yet
+		room, exists := result[row.PuljeID][row.RoomID]
+		if !exists {
+			room = models.RoomByPulje{
+				ID:                 int(row.RoomID),
+				Name:               row.RoomName,
+				RoomNumber:         row.RoomNumber,
+				MaxConcurrentGames: row.MaxConcurrentGames,
+				Notes:              row.RoomNotes,
+				AssignedEventsID:   []models.RoomEventPuljeSummary{},
+			}
+		}
+
+		// Add event if assigned
+		if row.EventID.Valid {
+			room.AssignedEventsID = append(
+				room.AssignedEventsID,
+				models.RoomEventPuljeSummary{
+					EventPuljeID: fmt.Sprintf(
+						"%s:%s",
+						row.EventID.String,
+						row.PuljeID,
+					),
+					EventID: row.EventID.String,
+					Title:   row.EventTitle.String,
+				},
+			)
+		}
+
+		result[row.PuljeID][row.RoomID] = room
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate room status rows: %w", err)
+	}
+
+	return result, nil
 }
 
 // SetRelationEventPuljeRoom assigns a room to an event in `relation_event_puljer`
