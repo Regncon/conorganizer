@@ -379,7 +379,7 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 		room, exists := result[row.PuljeID][row.RoomID]
 		if !exists {
 			room = models.RoomByPulje{
-				ID:                 int(row.RoomID),
+				ID:                 row.RoomID,
 				Name:               row.RoomName,
 				RoomNumber:         row.RoomNumber,
 				MaxConcurrentGames: row.MaxConcurrentGames,
@@ -415,11 +415,42 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 }
 
 // SetRelationEventPuljeRoom assigns a room to an event in `relation_event_puljer`
-func AssignRoomToRelationEventPuljer(db *sql.DB, roomID int, relationEventPuljeID string) {
-	// This function will assign a room by id to an event in relation_event_puljer
-	// Validate that the room does not exceed max events based on pulje?
+func AssignRoomToRelationEventPuljer(db *sql.DB, roomID int64, relationEventPuljeID string) (models.EventPulje, error) {
+	query := `
+		UPDATE relation_event_puljer
+		SET room_id = ?
+		WHERE event_id = ?
+		RETURNING
+			event_id,
+			pulje_id,
+			is_in_pulje,
+			is_published,
+			room_id
+	`
 
-	// Move this function to event pujer as parent...
+	var result models.EventPulje
+	err := db.QueryRow(query, roomID, relationEventPuljeID).Scan(
+		&result.EventID,
+		&result.PuljeID,
+		&result.IsInPulje,
+		&result.IsPublished,
+		&result.RoomID,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return models.EventPulje{}, fmt.Errorf(
+				"no relation_event_puljer found for event_id=%s",
+				relationEventPuljeID,
+			)
+		}
+		return models.EventPulje{}, fmt.Errorf(
+			"Error assigning room to relation_event_puljer: %w",
+			err,
+		)
+	}
+
+	return result, nil
 }
 
 func GetRelationEventPuljerByRoomIDAndPuljeID(db *sql.DB, roomID int, puljeID string) {
