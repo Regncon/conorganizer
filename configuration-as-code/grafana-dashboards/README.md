@@ -51,9 +51,33 @@ From the developer-run checks on 2026-05-28:
 - Promtail has old `no space left on device` position-file errors from 2026-05-16, but the latest 2026-05-28 startup logs are clean.
 - `prometheus.service`, `node_exporter.service`, and `blackbox_exporter.service` were not found.
 - Ports `9090`, `9100`, and `9115` were not listening.
-- `jq` was not installed on the server, so command examples use `python3 -m json.tool` instead.
+- `jq` was installed after the first check, so command examples use `jq`.
 - SQLite backup is running every 15 minutes and recent runs completed successfully.
 - Image backup has run successfully and the next timer is scheduled for the following 03:30 UTC window.
+- Alloy v1.16.1 is active and exposes its own readiness and self-metrics on `127.0.0.1:12345`.
+- The current Alloy config includes `loki.write` and `loki.source.journal`.
+- The current Alloy config does not include `prometheus.scrape`, `prometheus.remote_write`, `prometheus.exporter.unix`, or `prometheus.exporter.blackbox`, so it currently helps with logs, not the Prometheus panels in these dashboards.
+
+## Alloy Note
+
+Grafana Alloy can replace Prometheus for scrape configuration and collection pipelines. Grafana's migration guide converts Prometheus `scrape_configs` into `prometheus.scrape` components and converts `remote_write` into `prometheus.remote_write` components. It does not make Alloy a drop-in replacement for Prometheus storage, `remote_read`, rules, alerting, or the Prometheus query API that Grafana uses for historical PromQL dashboard panels.
+
+For these dashboards, Alloy only compensates for the missing Prometheus service if it forwards metrics to a Prometheus-compatible datasource that Grafana can query, such as Grafana Cloud Metrics, Mimir, or a Prometheus instance.
+
+Relevant Alloy roles:
+
+- It can replace standalone Promtail for logs if configured with `loki.source.journal` or `loki.source.file` and a `loki.write` destination.
+- It can replace standalone node_exporter collection if configured with `prometheus.exporter.unix`, `prometheus.scrape`, and a metrics write destination.
+- It can replace standalone blackbox_exporter collection if configured with `prometheus.exporter.blackbox`, `prometheus.scrape`, and a metrics write destination.
+- It still needs a metrics backend such as Prometheus, Grafana Mimir, Grafana Cloud Metrics, or another Prometheus-compatible remote-write target for Grafana dashboards to query historical metrics with PromQL.
+
+Useful references:
+
+- https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.scrape/
+- https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.remote_write/
+- https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.exporter.unix/
+- https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.exporter.blackbox/
+- https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.journal/
 
 ## Panel Dependencies
 
@@ -154,33 +178,28 @@ systemctl status blackbox_exporter.service --no-pager
 
 # Systemd metrics in Prometheus. Expected to fail until Prometheus/node_exporter are installed.
 curl -G http://127.0.0.1:9090/api/v1/query \
-  --data-urlencode 'query=node_systemd_unit_state{name="conorganizer-main.service",state="active"}' \
-  | python3 -m json.tool
+  --data-urlencode 'query=node_systemd_unit_state{name="conorganizer-main.service",state="active"}' | jq .
 
 # Node filesystem metrics for the mounted volume. Expected to fail until Prometheus/node_exporter are installed.
 curl -G http://127.0.0.1:9090/api/v1/query \
-  --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}' \
-  | python3 -m json.tool
+  --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}' | jq .
 
 # Blackbox TLS metrics. Expected to fail until Prometheus/blackbox_exporter are installed.
 curl -G http://127.0.0.1:9090/api/v1/query \
-  --data-urlencode 'query=(probe_ssl_earliest_cert_expiry{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"} - time()) / 86400' \
-  | python3 -m json.tool
+  --data-urlencode 'query=(probe_ssl_earliest_cert_expiry{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"} - time()) / 86400' | jq .
 
 # Loki labels and job values.
-curl -fsS "$LOKI_URL/loki/api/v1/labels" | python3 -m json.tool
-curl -fsS "$LOKI_URL/loki/api/v1/label/job/values" | python3 -m json.tool
+curl -fsS "$LOKI_URL/loki/api/v1/labels" | jq .
+curl -fsS "$LOKI_URL/loki/api/v1/label/job/values" | jq .
 
 # Loki backup log checks.
 curl -G "$LOKI_URL/loki/api/v1/query_range" \
   --data-urlencode 'query={job=~".+"} |= "conorganizer-sqlite-backup:"' \
-  --data-urlencode 'limit=20' \
-  | python3 -m json.tool
+  --data-urlencode 'limit=20' | jq .
 
 curl -G "$LOKI_URL/loki/api/v1/query_range" \
   --data-urlencode 'query={job=~".+"} |= "conorganizer-images-backup:"' \
-  --data-urlencode 'limit=20' \
-  | python3 -m json.tool
+  --data-urlencode 'limit=20' | jq .
 
 # Backup timers, service logs, and files.
 systemctl list-timers 'conorganizer-*backup*' --no-pager

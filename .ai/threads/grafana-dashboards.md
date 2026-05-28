@@ -795,4 +795,164 @@ Validated the dashboard JSON again after the README update.
 
 Time: 2026-05-28 12:38:48
 --- Next Prompt ---
+I have installed jq on the server.
+The server should have alloy installed. Does that compensate for Prometheus not being installed?
+
+
+Time: 2026-05-28 12:45:36
+--- Codex Run ---
+
+Codex output:
+I’ll make one small README correction now: your first check showed `jq` missing, but it is now installed, and Alloy needs a clarification because it can collect/export metrics but does not by itself provide the Prometheus query backend these dashboards need.
+Short answer: Alloy does **not** replace Prometheus as the query backend. It can replace or consolidate some collectors/exporters, but Grafana still needs a Prometheus-compatible metrics datasource to query.
+
+What Alloy can do:
+
+- Scrape metrics with `prometheus.scrape`, which forwards scraped metrics to receivers, not directly to Grafana dashboards by itself. Source: Grafana Alloy `prometheus.scrape` docs: https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.scrape/
+- Remote-write metrics with `prometheus.remote_write` to Prometheus, Mimir, Grafana Cloud Metrics, or another compatible backend. Source: https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.remote_write/
+- Replace standalone node_exporter collection via `prometheus.exporter.unix`. Source: https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.exporter.unix/
+- Replace standalone blackbox_exporter via `prometheus.exporter.blackbox`. Source: https://grafana.com/docs/alloy/latest/reference/components/prometheus/prometheus.exporter.blackbox/
+- Replace/improve Promtail-style journald collection via `loki.source.journal`. Source: https://grafana.com/docs/alloy/latest/reference/components/loki/loki.source.journal/
+
+So for these dashboards:
+
+- If Alloy remote-writes metrics to Grafana Cloud Metrics/Mimir/Prometheus, use that datasource as `DS_PROMETHEUS`.
+- If Alloy is installed but only collecting logs or only exposing local self-metrics, the Prometheus panels still will not work.
+- If Alloy has `prometheus.exporter.unix` and `prometheus.exporter.blackbox` configured but no remote-write target, it still does not give Grafana a historical PromQL datasource.
+
+I updated [README.md](/home/cinmay/Documents/conorganizer/configuration-as-code/grafana-dashboards/README.md) with an Alloy note and switched the commands back to `jq`.
+
+**Commands for the developer to run on the server**
+```bash
+systemctl status alloy.service --no-pager
+systemctl cat alloy.service
+alloy --version
+
+sudo grep -R \
+  -e 'prometheus.scrape' \
+  -e 'prometheus.remote_write' \
+  -e 'prometheus.exporter.unix' \
+  -e 'prometheus.exporter.blackbox' \
+  -e 'loki.source.journal' \
+  -e 'loki.write' \
+  /etc/alloy /etc/grafana-agent 2>/dev/null
+
+curl -fsS http://127.0.0.1:12345/-/ready
+curl -fsS http://127.0.0.1:12345/metrics | head
+```
+
+Time: 2026-05-28 12:45:36
+--- Next Prompt ---
+
+Is Alloy supposed to replace Prometheus? Have a look at the link below for a migration guide from Prometheus to Alloy.
+https://grafana.com/docs/alloy/latest/set-up/migrate/from-prometheus/
+
+
+Here is the output of the command you asked me to run:
+
+```bash
+
+ systemctl status alloy.service --no-pager
+systemctl cat alloy.service
+alloy --version
+
+sudo grep -R \
+  -e 'prometheus.scrape' \
+  -e 'prometheus.remote_write' \
+  -e 'prometheus.exporter.unix' \
+  -e 'prometheus.exporter.blackbox' \
+  -e 'loki.source.journal' \
+  -e 'loki.write' \
+  /etc/alloy /etc/grafana-agent 2>/dev/null
+
+curl -fsS http://127.0.0.1:12345/-/ready
+curl -fsS http://127.0.0.1:12345/metrics | head
+
+● alloy.service - Vendor-agnostic OpenTelemetry Collector distribution with programmable pipelines
+     Loaded: loaded (/usr/lib/systemd/system/alloy.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2026-05-26 16:29:46 UTC; 1 day 18h ago
+ Invocation: 1235a48fed954514b7fc81ead98f653c
+       Docs: https://grafana.com/docs/alloy
+   Main PID: 900 (alloy)
+      Tasks: 9 (limit: 3251)
+     Memory: 89.7M (peak: 325.8M)
+        CPU: 22min 37.247s
+     CGroup: /system.slice/alloy.service
+             └─900 /usr/bin/alloy run --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+
+May 27 16:10:49 ubuntu-4gb-hel1-3 alloy[900]: ts=2026-05-27T16:10:49.398456153Z level=info msg="reporting Alloy stats" date=2026-05-27T16:10:49.398Z
+May 27 16:10:49 ubuntu-4gb-hel1-3 alloy[900]: ts=2026-05-27T16:10:49.55788465Z level=info msg="usage report sent with success"
+May 27 20:10:49 ubuntu-4gb-hel1-3 alloy[900]: ts=2026-05-27T20:10:49.398291252Z level=info msg="reporting Alloy stats" date=2026-05-27T20:10:49.398Z
+May 27 20:10:49 ubuntu-4gb-hel1-3 alloy[900]: ts=2026-05-27T20:10:49.566511508Z level=info msg="usage report sent with success"
+May 28 00:10:49 ubuntu-4gb-hel1-3 alloy[900]: ts=2026-05-28T00:10:49.398994755Z level=info msg="reporting Alloy stats" date=2026-05-28T00:10:49.398Z
+May 28 00:10:49 ubuntu-4gb-hel1-3 alloy[900]: ts=2026-05-28T00:10:49.553462629Z level=info msg="usage report sent with success"
+May 28 04:10:49 ubuntu-4gb-hel1-3 alloy[900]: ts=2026-05-28T04:10:49.398555798Z level=info msg="reporting Alloy stats" date=2026-05-28T04:10:49.398Z
+May 28 04:10:49 ubuntu-4gb-hel1-3 alloy[900]: ts=2026-05-28T04:10:49.552740441Z level=info msg="usage report sent with success"
+May 28 08:10:49 ubuntu-4gb-hel1-3 alloy[900]: ts=2026-05-28T08:10:49.398689011Z level=info msg="reporting Alloy stats" date=2026-05-28T08:10:49.398Z
+May 28 08:10:49 ubuntu-4gb-hel1-3 alloy[900]: ts=2026-05-28T08:10:49.553811492Z level=info msg="usage report sent with success"
+# /usr/lib/systemd/system/alloy.service
+[Unit]
+Description= Vendor-agnostic OpenTelemetry Collector distribution with programmable pipelines
+Documentation=https://grafana.com/docs/alloy
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Restart=always
+User=alloy
+Environment=HOSTNAME=%H
+Environment=ALLOY_DEPLOY_MODE=deb
+EnvironmentFile=/etc/default/alloy
+WorkingDirectory=/var/lib/alloy
+ExecStart=/usr/bin/alloy run $CUSTOM_ARGS --storage.path=/var/lib/alloy/data $CONFIG_FILE
+ExecReload=/usr/bin/env kill -HUP $MAINPID
+TimeoutStopSec=20s
+
+[Install]
+WantedBy=multi-user.target
+alloy, version v1.16.1 (branch: HEAD, revision: 89d8237)
+  build user:       root@1c1c4905cb6f
+  build date:       2026-05-05T20:21:19Z
+  go version:       go1.26.2
+  platform:         linux/amd64
+  tags:             gore2regex,netgo,embedalloyui,promtail_journal_enabled
+/etc/alloy/config.alloy:loki.write "local" {
+/etc/alloy/config.alloy:  forward_to = [loki.write.local.receiver]
+/etc/alloy/config.alloy:loki.source.journal "systemd" {
+Alloy is ready.
+# HELP alloy_build_info A metric with a constant '1' value labeled by version, revision, branch, goversion from which alloy was built, and the goos and goarch for the build.
+# TYPE alloy_build_info gauge
+alloy_build_info{branch="HEAD",goarch="amd64",goos="linux",goversion="go1.26.2",revision="89d8237",tags="gore2regex,netgo,embedalloyui,promtail_journal_enabled",version="v1.16.1"} 1
+# HELP alloy_component_controller_evaluating Tracks if the controller is currently in the middle of a graph evaluation
+# TYPE alloy_component_controller_evaluating gauge
+alloy_component_controller_evaluating{controller_id="",controller_path="/"} 0
+alloy_component_controller_evaluating{controller_id="remotecfg",controller_path="/"} 0
+# HELP alloy_component_controller_running_components Total number of running components.
+# TYPE alloy_component_controller_running_components gauge
+alloy_component_controller_running_components{controller_id="",controller_path="/",health_type="healthy"} 3
+ ```
+
+
+Time: 2026-05-28 12:51:10
+--- Codex Run ---
+
+Codex output:
+The migration guide changes the wording slightly: Alloy can replace Prometheus as the scraper/config runner, but not as the local TSDB/query API that Grafana panels read from. Your actual Alloy config currently confirms it is only wired for Loki logs, so I’ll record that in the README.
+Yes, with an important distinction.
+
+Alloy can replace Prometheus as the **scraper/collector configuration runtime**. That is what the migration guide is about: it converts Prometheus `scrape_configs` into Alloy `prometheus.scrape` components and `remote_write` into Alloy `prometheus.remote_write` components. Grafana’s example still forwards scraped metrics to a remote-write backend, for example Grafana Cloud Metrics. Source: https://grafana.com/docs/alloy/latest/set-up/migrate/from-prometheus/
+
+Alloy does **not** replace Prometheus as the **metrics storage/query backend** for Grafana dashboards. The same guide lists Prometheus features that are not converted, including `storage`, `remote_read`, `rule_files`, and `alerting`. For dashboard PromQL panels, Grafana still needs a Prometheus-compatible datasource: Prometheus, Mimir, Grafana Cloud Metrics, etc.
+
+Your server output confirms the current Alloy setup does not compensate yet:
+
+- Alloy is running.
+- Alloy exposes only its own self-metrics on `127.0.0.1:12345`.
+- The config currently contains `loki.write` and `loki.source.journal`.
+- It does **not** contain `prometheus.scrape`, `prometheus.remote_write`, `prometheus.exporter.unix`, or `prometheus.exporter.blackbox`.
+
+So right now Alloy is helping with logs, not the Prometheus panels. I updated [README.md](/home/cinmay/Documents/conorganizer/configuration-as-code/grafana-dashboards/README.md) with that clarified state and revalidated the dashboard JSON.
+
+Time: 2026-05-28 12:51:10
+--- Next Prompt ---
 
