@@ -1714,4 +1714,34 @@ This assumes the Grafana datasource names/UIDs are `Prometheus` and `Loki`. If G
 
 Time: 2026-05-29 11:53:58
 --- Next Prompt ---
+In the top to the dashboard I get a warning saying the Prometheus data source is was not found. The elements that uses the data source all display a "no data" error.
+
+Time: 2026-05-29 12:04:27
+--- Codex Run ---
+
+Codex output:
+The warning means Grafana is treating `Prometheus` as a datasource **UID**, not just a display name. The JSON currently uses datasource variables in `uid` fields, so the variable value must match the actual Grafana datasource UID.
+
+I need the real datasource UIDs for Prometheus and Loki, then I’ll update the JSON files.
+
+**Commands for the developer to run on the server**
+```bash
+# Grafana usually stores datasource metadata in its sqlite DB.
+sudo sqlite3 /var/lib/grafana/grafana.db \
+  'select uid, name, type, url from data_source order by name;'
+```
+
+Expected output shape:
+
+```text
+prometheus_uid_here|Prometheus|prometheus|http://127.0.0.1:9090
+loki_uid_here|Loki|loki|http://127.0.0.1:3500
+```
+
+Send me that output and I’ll hard-wire the dashboard JSON to the correct UIDs.
+
+Time: 2026-05-29 12:04:27
+--- Next Prompt ---
+
+I connected the Prometheus datasource to Grafana and it works now.
 
