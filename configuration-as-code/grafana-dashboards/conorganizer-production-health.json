@@ -5,19 +5,23 @@
   "tags": [
     "conorganizer",
     "production",
-    "health"
+    "health",
+    "platform"
   ],
   "timezone": "browser",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "liveNow": false,
   "schemaVersion": 39,
-  "version": 1,
-  "refresh": "30s",
+  "version": 2,
+  "refresh": "1m",
   "time": {
     "from": "now-6h",
     "to": "now"
   },
   "timepicker": {
     "refresh_intervals": [
-      "10s",
       "30s",
       "1m",
       "5m",
@@ -46,13 +50,7 @@
           "text": "Prometheus",
           "value": "Prometheus"
         },
-        "options": [
-          {
-            "selected": true,
-            "text": "Prometheus",
-            "value": "Prometheus"
-          }
-        ]
+        "options": []
       },
       {
         "name": "DS_LOKI",
@@ -66,13 +64,7 @@
           "text": "Loki",
           "value": "Loki"
         },
-        "options": [
-          {
-            "selected": true,
-            "text": "Loki",
-            "value": "Loki"
-          }
-        ]
+        "options": []
       },
       {
         "name": "node_instance",
@@ -91,7 +83,8 @@
           "text": "All",
           "value": "$__all",
           "selected": true
-        }
+        },
+        "sort": 1
       },
       {
         "name": "loki_job",
@@ -110,7 +103,8 @@
           "text": "All",
           "value": "$__all",
           "selected": true
-        }
+        },
+        "sort": 1
       },
       {
         "name": "main_host",
@@ -131,18 +125,73 @@
           "text": "grafana.regncon.no",
           "value": "grafana.regncon.no"
         }
+      },
+      {
+        "name": "main_service",
+        "label": "Main service",
+        "type": "constant",
+        "query": "conorganizer-main.service",
+        "current": {
+          "text": "conorganizer-main.service",
+          "value": "conorganizer-main.service"
+        }
+      },
+      {
+        "name": "caddy_service",
+        "label": "Caddy service",
+        "type": "constant",
+        "query": "caddy.service",
+        "current": {
+          "text": "caddy.service",
+          "value": "caddy.service"
+        }
+      },
+      {
+        "name": "volume_mountpoint",
+        "label": "Hetzner volume mountpoint",
+        "type": "constant",
+        "query": "/mnt/HC_Volume_103911252",
+        "current": {
+          "text": "/mnt/HC_Volume_103911252",
+          "value": "/mnt/HC_Volume_103911252"
+        }
       }
     ]
   },
   "annotations": {
     "list": []
   },
-  "links": [],
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Production Health",
+      "tooltip": "Open the production platform dashboard",
+      "type": "dashboard",
+      "url": "/d/conorganizer-production-health/conorganizer-production-health"
+    },
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": [],
+      "targetBlank": false,
+      "title": "Main Service Debugging",
+      "tooltip": "Open the main service debugging dashboard",
+      "type": "dashboard",
+      "url": "/d/conorganizer-main-service-debugging/conorganizer-main-service-debugging"
+    }
+  ],
   "panels": [
     {
       "id": 1,
       "type": "row",
-      "title": "Overall status",
+      "title": "Dashboard notes",
       "collapsed": false,
       "gridPos": {
         "h": 1,
@@ -153,9 +202,39 @@
       "panels": []
     },
     {
+      "id": 2,
+      "type": "text",
+      "title": "How to use this dashboard",
+      "description": "Dashboard notes and operating guidance.",
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "### Purpose\nAt-a-glance production platform health and restore confidence for Conorganizer.\n\nUse this dashboard from top to bottom: **current status -> backups -> filesystem capacity -> VPS resources -> SQLite -> HTTP/TLS -> system errors**.\n\nDesign choices:\n- Infrastructure panels follow USE: utilization, saturation, and errors.\n- Service-facing panels use public blackbox probes for symptoms before digging into causes.\n- Loki panels should work with broad `job` labels; narrow `loki_job` after import if labels are available.\n- Prometheus panels require node_exporter, blackbox_exporter, and systemd collector metrics.\n- Optional SQLite/backup size panels require future textfile/custom metrics.\n\nUseful external examples:\n- Node Exporter Full: https://grafana.com/grafana/dashboards/1860-node-exporter-full/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/\n- Caddy Monitoring: https://grafana.com/grafana/dashboards/22806-caddy-monitoring/\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/"
+      }
+    },
+    {
+      "id": 3,
+      "type": "row",
+      "title": "Overall status",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 8
+      },
+      "panels": []
+    },
+    {
+      "id": 4,
       "type": "stat",
-      "title": "Main website probe status",
-      "description": "Requires blackbox_exporter scraping the public main host. The repo does not include blackbox configuration.",
+      "title": "Main website probe",
+      "description": "Requires blackbox_exporter. Shows whether the public main website probe is currently succeeding.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -164,7 +243,7 @@
         "h": 4,
         "w": 4,
         "x": 0,
-        "y": 1
+        "y": 9
       },
       "targets": [
         {
@@ -224,13 +303,13 @@
         },
         "textMode": "auto",
         "wideLayout": true
-      },
-      "id": 2
+      }
     },
     {
+      "id": 5,
       "type": "stat",
-      "title": "Grafana probe status",
-      "description": "Requires blackbox_exporter scraping the Grafana public host.",
+      "title": "Grafana probe",
+      "description": "Requires blackbox_exporter. Shows whether the public Grafana probe is currently succeeding.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -239,7 +318,7 @@
         "h": 4,
         "w": 4,
         "x": 4,
-        "y": 1
+        "y": 9
       },
       "targets": [
         {
@@ -299,13 +378,13 @@
         },
         "textMode": "auto",
         "wideLayout": true
-      },
-      "id": 3
+      }
     },
     {
+      "id": 6,
       "type": "stat",
-      "title": "caddy.service active",
-      "description": "Requires node_exporter systemd collector metrics.",
+      "title": "Caddy active",
+      "description": "Requires node_exporter systemd collector metrics. Alert candidate: Caddy not active.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -314,12 +393,12 @@
         "h": 4,
         "w": 4,
         "x": 8,
-        "y": 1
+        "y": 9
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "max(node_systemd_unit_state{instance=~\"$node_instance\",name=\"caddy.service\",state=\"active\"})",
+          "expr": "max(node_systemd_unit_state{instance=~\"$node_instance\",name=\"$caddy_service\",state=\"active\"})",
           "queryType": "timeSeriesQuery"
         }
       ],
@@ -374,13 +453,13 @@
         },
         "textMode": "auto",
         "wideLayout": true
-      },
-      "id": 4
+      }
     },
     {
+      "id": 7,
       "type": "stat",
-      "title": "conorganizer-main.service active",
-      "description": "Requires node_exporter systemd collector metrics. Service name comes from configuration-as-code/stow/systemd.",
+      "title": "Main service active",
+      "description": "Requires node_exporter systemd collector metrics. Alert candidate: conorganizer-main.service not active.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -389,12 +468,12 @@
         "h": 4,
         "w": 4,
         "x": 12,
-        "y": 1
+        "y": 9
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "max(node_systemd_unit_state{instance=~\"$node_instance\",name=\"conorganizer-main.service\",state=\"active\"})",
+          "expr": "max(node_systemd_unit_state{instance=~\"$node_instance\",name=\"$main_service\",state=\"active\"})",
           "queryType": "timeSeriesQuery"
         }
       ],
@@ -449,62 +528,55 @@
         },
         "textMode": "auto",
         "wideLayout": true
-      },
-      "id": 5
+      }
     },
     {
+      "id": 8,
       "type": "stat",
-      "title": "SQLite backup fresh",
-      "description": "Counts successful SQLite backup log lines in the last 2 hours. The timer runs every 15 minutes in the checked-in systemd config.",
+      "title": "SQLite backup age",
+      "description": "Optional future custom/textfile metric. Expected SQLite backup cadence is every 15 minutes. Alert candidate: older than 2 hours.",
       "datasource": {
-        "type": "loki",
-        "uid": "${DS_LOKI}"
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 4,
         "w": 4,
         "x": 16,
-        "y": 1
+        "y": 9
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"conorganizer-sqlite-backup: completed successfully\" [2h]))",
-          "queryType": "range"
+          "expr": "(time() - conorganizer_sqlite_backup_last_success_timestamp_seconds) / 3600",
+          "queryType": "timeSeriesQuery"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "h",
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [
-            {
-              "type": "range",
-              "options": {
-                "from": 1,
-                "to": 1000000,
-                "result": {
-                  "text": "RECENT",
-                  "color": "green"
-                }
-              }
-            }
-          ],
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
-                "color": "green",
-                "value": 1
+                "color": "yellow",
+                "value": 2
+              },
+              {
+                "color": "red",
+                "value": 4
               }
             ]
-          }
+          },
+          "decimals": 1
         },
         "overrides": []
       },
@@ -522,27 +594,163 @@
         },
         "textMode": "auto",
         "wideLayout": true
-      },
-      "id": 6
+      }
     },
     {
+      "id": 9,
       "type": "stat",
-      "title": "Image backup fresh",
-      "description": "Counts successful image backup log lines in the last 26 hours. The checked-in timer runs daily at 03:30.",
+      "title": "Image backup age",
+      "description": "Optional future custom/textfile metric. Expected image backup cadence is daily around 03:30 UTC. Alert candidate: older than 26 hours.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 20,
+        "y": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(time() - conorganizer_images_backup_last_success_timestamp_seconds) / 3600",
+          "queryType": "timeSeriesQuery"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 26
+              },
+              {
+                "color": "red",
+                "value": 36
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 10,
+      "type": "stat",
+      "title": "Mounted volume usage",
+      "description": "Requires node_exporter filesystem metrics with /mnt not excluded. Alert candidate: >80%, critical around 90%.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 0,
+        "y": 13
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (1 - (node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"} / node_filesystem_size_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"}))",
+          "queryType": "timeSeriesQuery"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "Backup failures, 24h",
+      "description": "Log-derived backup failure count from the stable backup script prefixes. Green should be zero.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
       "gridPos": {
         "h": 4,
-        "w": 4,
-        "x": 20,
-        "y": 1
+        "w": 6,
+        "x": 6,
+        "y": 13
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"conorganizer-images-backup: completed successfully\" [26h]))",
+          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"conorganizer-\" |~ \"failed|does not exist|sanity check failed|integrity check failed|ERROR|error\" [24h]))",
           "queryType": "range"
         }
       ],
@@ -552,28 +760,16 @@
           "color": {
             "mode": "thresholds"
           },
-          "mappings": [
-            {
-              "type": "range",
-              "options": {
-                "from": 1,
-                "to": 1000000,
-                "result": {
-                  "text": "RECENT",
-                  "color": "green"
-                }
-              }
-            }
-          ],
+          "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
+                "color": "green",
                 "value": null
               },
               {
-                "color": "green",
+                "color": "red",
                 "value": 1
               }
             ]
@@ -595,11 +791,137 @@
         },
         "textMode": "auto",
         "wideLayout": true
-      },
-      "id": 7
+      }
     },
     {
-      "id": 8,
+      "id": 12,
+      "type": "stat",
+      "title": "Critical system log signal, 1h",
+      "description": "Broad platform error search. Treat non-zero as a prompt to inspect the System errors row.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 12,
+        "y": 13
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"Failed to start|failed with result|Start request repeated too quickly|kernel.*error|no space left on device|panic\" [1h]))",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 13,
+      "type": "stat",
+      "title": "TLS days: main",
+      "description": "Requires blackbox_exporter TLS probe metrics. Alert candidate: less than 14 days.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 6,
+        "x": 18,
+        "y": 13
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(max(probe_ssl_earliest_cert_expiry{instance=~\".*${main_host:regex}.*\"}) - time()) / 86400",
+          "queryType": "timeSeriesQuery"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "d",
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 14
+              },
+              {
+                "color": "green",
+                "value": 30
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      }
+    },
+    {
+      "id": 14,
       "type": "row",
       "title": "Backups and restore confidence",
       "collapsed": false,
@@ -607,14 +929,15 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 5
+        "y": 17
       },
       "panels": []
     },
     {
+      "id": 15,
       "type": "logs",
       "title": "SQLite backup logs",
-      "description": "Uses backup script prefixes from configuration-as-code/stow/scripts/usr/local/bin/conorganizer-sqlite-backup.",
+      "description": "Stable prefix emitted by the SQLite backup script. Use this to confirm recent backup activity and integrity-check output.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -623,7 +946,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 6
+        "y": 18
       },
       "targets": [
         {
@@ -641,13 +964,13 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
-      },
-      "id": 9
+      }
     },
     {
+      "id": 16,
       "type": "logs",
       "title": "Image backup logs",
-      "description": "Uses backup script prefixes from configuration-as-code/stow/scripts/usr/local/bin/conorganizer-images-backup.",
+      "description": "Stable prefix emitted by the image backup script. Use this to confirm daily image backup activity.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -656,7 +979,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 6
+        "y": 18
       },
       "targets": [
         {
@@ -674,13 +997,332 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
-      },
-      "id": 10
+      }
     },
     {
+      "id": 17,
+      "type": "timeseries",
+      "title": "Backup failure count",
+      "description": "Log-derived backup failure trend. Non-zero values should be investigated.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 26
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"conorganizer-\" |~ \"failed|does not exist|sanity check failed|integrity check failed|ERROR|error\" [15m]))",
+          "legendFormat": "failures",
+          "queryType": "range"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 18,
+      "type": "timeseries",
+      "title": "SQLite backup age",
+      "description": "Optional future metric from textfile collector/custom exporter. Shows hours since last successful SQLite backup.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 26
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(time() - conorganizer_sqlite_backup_last_success_timestamp_seconds) / 3600",
+          "legendFormat": "sqlite backup age"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 19,
+      "type": "timeseries",
+      "title": "Image backup age",
+      "description": "Optional future metric from textfile collector/custom exporter. Shows hours since last successful image backup.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 26
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(time() - conorganizer_images_backup_last_success_timestamp_seconds) / 3600",
+          "legendFormat": "image backup age"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 20,
+      "type": "timeseries",
+      "title": "Backup directory size",
+      "description": "Optional future metric for /mnt/HC_Volume_103911252/backups. Useful for restore confidence and capacity trend tracking.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "conorganizer_backup_directory_size_bytes{instance=~\"$node_instance\"}",
+          "legendFormat": "backup dir"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 21,
       "type": "logs",
       "title": "Backup failure logs",
-      "description": "Broad backup failure search using the known backup script prefixes and failure text.",
+      "description": "Detailed logs for backup failures. This uses broad filters so it works before journal labels are refined.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -688,13 +1330,13 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 0,
-        "y": 14
+        "x": 12,
+        "y": 32
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |= \"conorganizer-\" |~ \"failed|does not exist|sanity check failed|integrity check failed\"",
+          "expr": "{job=~\"$loki_job\"} |= \"conorganizer-\" |~ \"failed|does not exist|sanity check failed|integrity check failed|ERROR|error\"",
           "queryType": "range"
         }
       ],
@@ -707,92 +1349,26 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
-      },
-      "id": 11
+      }
     },
     {
-      "type": "timeseries",
-      "title": "Optional: SQLite backup age",
-      "description": "Optional future metric. Requires a textfile collector, script-emitted metric, or custom exporter.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
+      "id": 22,
+      "type": "row",
+      "title": "Disk and volume",
+      "collapsed": false,
       "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 12,
-        "y": 14
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 40
       },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "(time() - conorganizer_sqlite_backup_last_success_timestamp_seconds{instance=~\"$node_instance\"}) / 3600",
-          "legendFormat": "{{instance}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "h",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "barAlignment": 0,
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false,
-            "showPoints": "never",
-            "pointSize": 5,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": []
-        }
-      },
-      "id": 12
+      "panels": []
     },
     {
+      "id": 23,
       "type": "timeseries",
-      "title": "Optional: Image backup age",
-      "description": "Optional future metric. Requires a textfile collector, script-emitted metric, or custom exporter.",
+      "title": "Root filesystem usage",
+      "description": "node_exporter filesystem usage for /. Watch for sustained growth.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -801,18 +1377,18 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 20
+        "y": 41
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "(time() - conorganizer_images_backup_last_success_timestamp_seconds{instance=~\"$node_instance\"}) / 3600",
-          "legendFormat": "{{instance}}"
+          "expr": "100 * (1 - (node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"/\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"} / node_filesystem_size_bytes{instance=~\"$node_instance\",mountpoint=\"/\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"}))",
+          "legendFormat": "root"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "h",
+          "unit": "percent",
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
@@ -848,9 +1424,22 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
               }
             ]
-          }
+          },
+          "decimals": 1
         },
         "overrides": []
       },
@@ -865,13 +1454,13 @@
           "placement": "bottom",
           "calcs": []
         }
-      },
-      "id": 13
+      }
     },
     {
+      "id": 24,
       "type": "timeseries",
-      "title": "Optional: Backup directory size",
-      "description": "Optional future metric for /mnt/HC_Volume_103911252/backups/sqlite and /mnt/HC_Volume_103911252/backups/images. node_exporter filesystem metrics do not expose per-directory size.",
+      "title": "Mounted volume usage",
+      "description": "node_exporter filesystem usage for the Hetzner volume. Requires node_exporter to include /mnt mountpoints.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -880,18 +1469,18 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 20
+        "y": 41
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "sum by (backup_type) (conorganizer_backup_directory_size_bytes{instance=~\"$node_instance\",backup_type=~\"sqlite|images\"})",
-          "legendFormat": "{{backup_type}}"
+          "expr": "100 * (1 - (node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"} / node_filesystem_size_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"}))",
+          "legendFormat": "volume"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "bytes",
+          "unit": "percent",
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
@@ -927,9 +1516,22 @@
               {
                 "color": "green",
                 "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
               }
             ]
-          }
+          },
+          "decimals": 1
         },
         "overrides": []
       },
@@ -944,281 +1546,28 @@
           "placement": "bottom",
           "calcs": []
         }
-      },
-      "id": 14
+      }
     },
     {
-      "id": 15,
-      "type": "row",
-      "title": "Disk and volume",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 20
-      },
-      "panels": []
-    },
-    {
-      "type": "gauge",
-      "title": "Root filesystem usage",
-      "description": "Requires node_exporter filesystem collector.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 0,
-        "y": 21
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "100 - ((node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"} * 100) / node_filesystem_size_bytes{instance=~\"$node_instance\",mountpoint=\"/\",fstype!~\"tmpfs|overlay\"})"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "id": 16
-    },
-    {
-      "type": "gauge",
-      "title": "Mounted volume usage",
-      "description": "Requires node_exporter filesystem metrics for the Hetzner mounted volume.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 6,
-        "y": 21
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "100 - ((node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"/mnt/HC_Volume_103911252\",fstype!~\"tmpfs|overlay\"} * 100) / node_filesystem_size_bytes{instance=~\"$node_instance\",mountpoint=\"/mnt/HC_Volume_103911252\",fstype!~\"tmpfs|overlay\"})"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "id": 17
-    },
-    {
-      "type": "gauge",
-      "title": "Root inode usage",
-      "description": "Requires node_exporter filesystem collector.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 12,
-        "y": 21
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "100 - ((node_filesystem_files_free{instance=~\"$node_instance\",mountpoint=\"/\"} * 100) / node_filesystem_files{instance=~\"$node_instance\",mountpoint=\"/\"})"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "id": 18
-    },
-    {
-      "type": "gauge",
-      "title": "Mounted volume inode usage",
-      "description": "Requires node_exporter filesystem metrics for /mnt/HC_Volume_103911252.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 6,
-        "x": 18,
-        "y": 21
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "100 - ((node_filesystem_files_free{instance=~\"$node_instance\",mountpoint=\"/mnt/HC_Volume_103911252\"} * 100) / node_filesystem_files{instance=~\"$node_instance\",mountpoint=\"/mnt/HC_Volume_103911252\"})"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "min": 0,
-          "max": 100,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 85
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "orientation": "auto",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showThresholdLabels": false,
-        "showThresholdMarkers": true,
-        "sizing": "auto"
-      },
-      "id": 19
-    },
-    {
+      "id": 25,
       "type": "timeseries",
       "title": "Mounted volume available bytes",
-      "description": "Available bytes on the Hetzner mounted volume.",
+      "description": "Available bytes on the mounted Hetzner volume.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
-        "h": 5,
-        "w": 24,
-        "x": 0,
-        "y": 26
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 41
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"/mnt/HC_Volume_103911252\",fstype!~\"tmpfs|overlay\"}",
-          "legendFormat": "{{instance}}"
+          "expr": "node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"}",
+          "legendFormat": "available"
         }
       ],
       "fieldConfig": {
@@ -1276,26 +1625,13 @@
           "placement": "bottom",
           "calcs": []
         }
-      },
-      "id": 20
+      }
     },
     {
-      "id": 21,
-      "type": "row",
-      "title": "VPS resources",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 31
-      },
-      "panels": []
-    },
-    {
+      "id": 26,
       "type": "timeseries",
-      "title": "CPU usage",
-      "description": "Requires node_exporter CPU metrics.",
+      "title": "Root inode usage",
+      "description": "Inode exhaustion can break writes even when bytes are still available.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -1304,7 +1640,283 @@
         "h": 6,
         "w": 8,
         "x": 0,
-        "y": 32
+        "y": 47
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (1 - (node_filesystem_files_free{instance=~\"$node_instance\",mountpoint=\"/\"} / node_filesystem_files{instance=~\"$node_instance\",mountpoint=\"/\"}))",
+          "legendFormat": "root inodes"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 27,
+      "type": "timeseries",
+      "title": "Mounted volume inode usage",
+      "description": "Inode usage on the mounted Hetzner volume.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 47
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "100 * (1 - (node_filesystem_files_free{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\"} / node_filesystem_files{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\"}))",
+          "legendFormat": "volume inodes"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 70
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 28,
+      "type": "timeseries",
+      "title": "Filesystem growth proxy",
+      "description": "Approximate daily used-byte growth on the mounted volume. Negative values can happen after cleanup.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 47
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "increase(node_filesystem_size_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"}[24h]) - increase(node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"}[24h])",
+          "legendFormat": "used growth"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 29,
+      "type": "row",
+      "title": "VPS resources",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 53
+      },
+      "panels": []
+    },
+    {
+      "id": 30,
+      "type": "timeseries",
+      "title": "CPU usage",
+      "description": "CPU utilization from node_exporter. This is a USE utilization signal.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 54
       },
       "targets": [
         {
@@ -1353,7 +1965,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 1
         },
         "overrides": []
       },
@@ -1368,13 +1981,13 @@
           "placement": "bottom",
           "calcs": []
         }
-      },
-      "id": 22
+      }
     },
     {
+      "id": 31,
       "type": "timeseries",
       "title": "Memory usage",
-      "description": "Requires node_exporter memory metrics.",
+      "description": "Memory capacity utilization from node_exporter.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -1383,18 +1996,178 @@
         "h": 6,
         "w": 8,
         "x": 8,
-        "y": 32
+        "y": 54
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "(1 - (node_memory_MemAvailable_bytes{instance=~\"$node_instance\"} / node_memory_MemTotal_bytes{instance=~\"$node_instance\"})) * 100",
+          "expr": "100 * (1 - (node_memory_MemAvailable_bytes{instance=~\"$node_instance\"} / node_memory_MemTotal_bytes{instance=~\"$node_instance\"}))",
           "legendFormat": "{{instance}}"
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 1
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 32,
+      "type": "timeseries",
+      "title": "Load average 1m",
+      "description": "CPU saturation proxy. Compare with CPU count in node_cpu_seconds_total if this becomes concerning.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 16,
+        "y": 54
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "node_load1{instance=~\"$node_instance\"}",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 33,
+      "type": "timeseries",
+      "title": "Network receive rate",
+      "description": "Network ingress throughput excluding common local/container interfaces.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 0,
+        "y": 60
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (instance) (rate(node_network_receive_bytes_total{instance=~\"$node_instance\",device!~\"lo|veth.*|docker.*|br-.*\"}[5m]))",
+          "legendFormat": "rx {{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
           "custom": {
             "drawStyle": "line",
             "lineInterpolation": "linear",
@@ -1447,13 +2220,263 @@
           "placement": "bottom",
           "calcs": []
         }
-      },
-      "id": 23
+      }
     },
     {
+      "id": 34,
       "type": "timeseries",
-      "title": "Load average",
-      "description": "Requires node_exporter load metrics.",
+      "title": "Network transmit rate",
+      "description": "Network egress throughput excluding common local/container interfaces.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 12,
+        "x": 12,
+        "y": 60
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum by (instance) (rate(node_network_transmit_bytes_total{instance=~\"$node_instance\",device!~\"lo|veth.*|docker.*|br-.*\"}[5m]))",
+          "legendFormat": "tx {{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 35,
+      "type": "row",
+      "title": "SQLite",
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 66
+      },
+      "panels": []
+    },
+    {
+      "id": 36,
+      "type": "timeseries",
+      "title": "SQLite DB file size",
+      "description": "Optional future custom/textfile metric for /mnt/HC_Volume_103911252/environments/main/database/events.db.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 67
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "conorganizer_sqlite_db_size_bytes{instance=~\"$node_instance\"}",
+          "legendFormat": "db"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 37,
+      "type": "timeseries",
+      "title": "SQLite WAL file size",
+      "description": "Optional future custom/textfile metric. A fast-growing WAL can indicate checkpoint or write pressure issues.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 8,
+        "y": 67
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "conorganizer_sqlite_wal_size_bytes{instance=~\"$node_instance\"}",
+          "legendFormat": "wal"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 38,
+      "type": "timeseries",
+      "title": "SQLite backup size",
+      "description": "Optional future custom/textfile metric. Useful for spotting backup truncation or unusual DB growth.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -1462,13 +2485,93 @@
         "h": 6,
         "w": 8,
         "x": 16,
-        "y": 32
+        "y": 67
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "node_load1{instance=~\"$node_instance\"}",
-          "legendFormat": "{{instance}}"
+          "expr": "conorganizer_sqlite_backup_size_bytes{instance=~\"$node_instance\"}",
+          "legendFormat": "backup"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "bytes",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 39,
+      "type": "timeseries",
+      "title": "Database symptom count",
+      "description": "Log-derived database symptom count from app and backup logs.",
+      "datasource": {
+        "type": "loki",
+        "uid": "${DS_LOKI}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 8,
+        "x": 0,
+        "y": 73
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"sqlite|SQLite|database is locked|database is busy|integrity check|constraint failed|FOREIGN KEY\" [5m]))",
+          "legendFormat": "db symptoms",
+          "queryType": "range"
         }
       ],
       "fieldConfig": {
@@ -1526,435 +2629,27 @@
           "placement": "bottom",
           "calcs": []
         }
-      },
-      "id": 24
+      }
     },
     {
-      "type": "timeseries",
-      "title": "Network receive rate",
-      "description": "Requires node_exporter network metrics.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 38
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "rate(node_network_receive_bytes_total{instance=~\"$node_instance\",device!~\"lo\"}[5m])",
-          "legendFormat": "{{instance}} {{device}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "barAlignment": 0,
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false,
-            "showPoints": "never",
-            "pointSize": 5,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": []
-        }
-      },
-      "id": 25
-    },
-    {
-      "type": "timeseries",
-      "title": "Network transmit rate",
-      "description": "Requires node_exporter network metrics.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 38
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "rate(node_network_transmit_bytes_total{instance=~\"$node_instance\",device!~\"lo\"}[5m])",
-          "legendFormat": "{{instance}} {{device}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "Bps",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "barAlignment": 0,
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false,
-            "showPoints": "never",
-            "pointSize": 5,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": []
-        }
-      },
-      "id": 26
-    },
-    {
-      "id": 27,
-      "type": "row",
-      "title": "SQLite",
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 44
-      },
-      "panels": []
-    },
-    {
-      "type": "timeseries",
-      "title": "Optional: SQLite DB file size",
-      "description": "Optional future metric for /mnt/HC_Volume_103911252/environments/main/database/events.db. Requires textfile collector, script-emitted metric, or custom exporter.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 0,
-        "y": 45
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "conorganizer_sqlite_db_size_bytes{instance=~\"$node_instance\",environment=\"main\"}",
-          "legendFormat": "{{instance}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "barAlignment": 0,
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false,
-            "showPoints": "never",
-            "pointSize": 5,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": []
-        }
-      },
-      "id": 28
-    },
-    {
-      "type": "timeseries",
-      "title": "Optional: SQLite WAL file size",
-      "description": "Optional future metric for the SQLite WAL file. Requires textfile collector, script-emitted metric, or custom exporter.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 8,
-        "y": 45
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "conorganizer_sqlite_wal_size_bytes{instance=~\"$node_instance\",environment=\"main\"}",
-          "legendFormat": "{{instance}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "barAlignment": 0,
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false,
-            "showPoints": "never",
-            "pointSize": 5,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": []
-        }
-      },
-      "id": 29
-    },
-    {
-      "type": "timeseries",
-      "title": "Optional: SQLite backup size trend",
-      "description": "Optional future metric for compressed SQLite backup file sizes under /mnt/HC_Volume_103911252/backups/sqlite.",
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 8,
-        "x": 16,
-        "y": 45
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "expr": "conorganizer_sqlite_backup_size_bytes{instance=~\"$node_instance\",environment=\"main\"}",
-          "legendFormat": "{{instance}}"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "bytes",
-          "custom": {
-            "drawStyle": "line",
-            "lineInterpolation": "linear",
-            "barAlignment": 0,
-            "lineWidth": 1,
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "spanNulls": false,
-            "showPoints": "never",
-            "pointSize": 5,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "axisPlacement": "auto",
-            "axisLabel": "",
-            "axisColorMode": "text",
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        },
-        "legend": {
-          "showLegend": true,
-          "displayMode": "list",
-          "placement": "bottom",
-          "calcs": []
-        }
-      },
-      "id": 30
-    },
-    {
+      "id": 40,
       "type": "logs",
-      "title": "SQLite error logs",
-      "description": "Broad Loki fallback for SQLite/database symptoms in app and backup logs.",
+      "title": "SQLite and database logs",
+      "description": "Detailed DB symptom logs. This catches app errors and backup integrity-check messages.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
       },
       "gridPos": {
         "h": 8,
-        "w": 24,
-        "x": 0,
-        "y": 51
+        "w": 16,
+        "x": 8,
+        "y": 73
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"sqlite|SQLite|database is locked|database is busy|integrity check\"",
+          "expr": "{job=~\"$loki_job\"} |~ \"sqlite|SQLite|database is locked|database is busy|integrity check|constraint failed|FOREIGN KEY\"",
           "queryType": "range"
         }
       ],
@@ -1967,11 +2662,10 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
-      },
-      "id": 31
+      }
     },
     {
-      "id": 32,
+      "id": 41,
       "type": "row",
       "title": "TLS and HTTP health",
       "collapsed": false,
@@ -1979,23 +2673,24 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 59
+        "y": 81
       },
       "panels": []
     },
     {
+      "id": 42,
       "type": "timeseries",
-      "title": "Days until main TLS expiry",
-      "description": "Requires blackbox_exporter TLS probing for the main host. Alert candidate: less than 14 days.",
+      "title": "TLS days remaining: main",
+      "description": "Blackbox TLS expiry for the public main host. Red below 14 days, yellow below 30.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 6,
-        "w": 12,
+        "w": 6,
         "x": 0,
-        "y": 60
+        "y": 82
       },
       "targets": [
         {
@@ -2040,11 +2735,20 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 14
+              },
+              {
+                "color": "green",
+                "value": 30
               }
             ]
-          }
+          },
+          "decimals": 1
         },
         "overrides": []
       },
@@ -2059,22 +2763,22 @@
           "placement": "bottom",
           "calcs": []
         }
-      },
-      "id": 33
+      }
     },
     {
+      "id": 43,
       "type": "timeseries",
-      "title": "Days until Grafana TLS expiry",
-      "description": "Requires blackbox_exporter TLS probing for the Grafana host. Alert candidate: less than 14 days.",
+      "title": "TLS days remaining: Grafana",
+      "description": "Blackbox TLS expiry for Grafana. Red below 14 days, yellow below 30.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 60
+        "w": 6,
+        "x": 6,
+        "y": 82
       },
       "targets": [
         {
@@ -2119,11 +2823,20 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
+              },
+              {
+                "color": "yellow",
+                "value": 14
+              },
+              {
+                "color": "green",
+                "value": 30
               }
             ]
-          }
+          },
+          "decimals": 1
         },
         "overrides": []
       },
@@ -2138,22 +2851,22 @@
           "placement": "bottom",
           "calcs": []
         }
-      },
-      "id": 34
+      }
     },
     {
+      "id": 44,
       "type": "timeseries",
       "title": "HTTP probe duration",
-      "description": "Requires blackbox_exporter HTTP probing.",
+      "description": "Blackbox probe duration for the public entrypoints.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 6,
-        "w": 12,
-        "x": 0,
-        "y": 66
+        "w": 6,
+        "x": 12,
+        "y": 82
       },
       "targets": [
         {
@@ -2202,7 +2915,8 @@
                 "value": null
               }
             ]
-          }
+          },
+          "decimals": 3
         },
         "overrides": []
       },
@@ -2217,22 +2931,22 @@
           "placement": "bottom",
           "calcs": []
         }
-      },
-      "id": 35
+      }
     },
     {
+      "id": 45,
       "type": "timeseries",
-      "title": "HTTP probe status code",
-      "description": "Requires blackbox_exporter HTTP probing. If this metric is not present, use probe_success panels above.",
+      "title": "HTTP status code",
+      "description": "Blackbox HTTP status code for the public entrypoints.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
       },
       "gridPos": {
         "h": 6,
-        "w": 12,
-        "x": 12,
-        "y": 66
+        "w": 6,
+        "x": 18,
+        "y": 82
       },
       "targets": [
         {
@@ -2296,11 +3010,89 @@
           "placement": "bottom",
           "calcs": []
         }
-      },
-      "id": 36
+      }
     },
     {
-      "id": 37,
+      "id": 46,
+      "type": "timeseries",
+      "title": "HTTP probe success",
+      "description": "Blackbox probe success over time. This is the user-facing symptom signal.",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${DS_PROMETHEUS}"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 88
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "probe_success{instance=~\".*(${main_host:regex}|${grafana_host:regex}).*\"}",
+          "legendFormat": "{{instance}}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "linear",
+            "barAlignment": 0,
+            "lineWidth": 1,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": false,
+            "showPoints": "never",
+            "pointSize": 5,
+            "stacking": {
+              "mode": "none",
+              "group": "A"
+            },
+            "axisPlacement": "auto",
+            "axisLabel": "",
+            "axisColorMode": "text",
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "options": {
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "legend": {
+          "showLegend": true,
+          "displayMode": "list",
+          "placement": "bottom",
+          "calcs": []
+        }
+      }
+    },
+    {
+      "id": 47,
       "type": "row",
       "title": "System errors",
       "collapsed": false,
@@ -2308,14 +3100,15 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 72
+        "y": 94
       },
       "panels": []
     },
     {
+      "id": 48,
       "type": "logs",
       "title": "Recent Caddy errors",
-      "description": "Broad Caddy-related error search. If Promtail exposes systemd unit labels, narrow this to caddy.service.",
+      "description": "Caddy errors, failed reloads, and gateway errors. Prefer exact journal labels after import if they exist.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2324,12 +3117,12 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 73
+        "y": 95
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |= \"caddy\" |~ \"error|failed|502|panic\"",
+          "expr": "{job=~\"$loki_job\"} |~ \"caddy|Caddy\" |~ \"error|ERROR|failed|502|503|panic|reload\"",
           "queryType": "range"
         }
       ],
@@ -2342,13 +3135,13 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
-      },
-      "id": 38
+      }
     },
     {
+      "id": 49,
       "type": "logs",
       "title": "Recent systemd/service failures",
-      "description": "Broad systemd failure search for services, including conorganizer-main.service.",
+      "description": "Broad systemd failure search from journal/syslog logs.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2357,12 +3150,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 73
+        "y": 95
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"Failed to start|failed with result|Start request repeated too quickly|conorganizer-main.service\"",
+          "expr": "{job=~\"$loki_job\"} |~ \"Failed to start|failed with result|Start request repeated too quickly|Main process exited|code=exited\"",
           "queryType": "range"
         }
       ],
@@ -2375,13 +3168,13 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
-      },
-      "id": 39
+      }
     },
     {
+      "id": 50,
       "type": "logs",
-      "title": "Recent Loki/Promtail errors",
-      "description": "Useful for checking ingestion path failures.",
+      "title": "Recent Loki/Promtail/Alloy errors",
+      "description": "Logging pipeline errors. Important because broken logging can hide app and backup failures.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2390,12 +3183,12 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 81
+        "y": 103
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"loki|promtail\" |~ \"error|failed|connection refused\"",
+          "expr": "{job=~\"$loki_job\"} |~ \"loki|promtail|alloy|Alloy\" |~ \"error|ERROR|failed|connection refused|no space left on device\"",
           "queryType": "range"
         }
       ],
@@ -2408,13 +3201,13 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
-      },
-      "id": 40
+      }
     },
     {
+      "id": 51,
       "type": "logs",
       "title": "Recent critical logs",
-      "description": "Broad critical log search across ingested logs.",
+      "description": "High-signal platform failures that can affect recovery confidence.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2423,12 +3216,12 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 81
+        "y": 103
       },
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"panic|fatal|critical|segfault|out of memory|OOM|No space left on device\"",
+          "expr": "{job=~\"$loki_job\"} |~ \"critical|CRITICAL|panic|no space left on device|read-only file system|segfault|OOM|Out of memory\"",
           "queryType": "range"
         }
       ],
@@ -2441,8 +3234,7 @@
         "showTime": true,
         "sortOrder": "Descending",
         "wrapLogMessage": false
-      },
-      "id": 41
+      }
     }
   ]
 }
