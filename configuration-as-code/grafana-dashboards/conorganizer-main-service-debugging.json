@@ -41,7 +41,18 @@
         "query": "prometheus",
         "refresh": 1,
         "hide": 0,
-        "current": {}
+        "current": {
+          "selected": true,
+          "text": "Prometheus",
+          "value": "Prometheus"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "Prometheus",
+            "value": "Prometheus"
+          }
+        ]
       },
       {
         "name": "DS_LOKI",
@@ -50,7 +61,18 @@
         "query": "loki",
         "refresh": 1,
         "hide": 0,
-        "current": {}
+        "current": {
+          "selected": true,
+          "text": "Loki",
+          "value": "Loki"
+        },
+        "options": [
+          {
+            "selected": true,
+            "text": "Loki",
+            "value": "Loki"
+          }
+        ]
       },
       {
         "name": "node_instance",

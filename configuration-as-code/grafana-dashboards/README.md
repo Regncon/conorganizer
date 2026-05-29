@@ -15,6 +15,7 @@ They are intentionally kept outside `configuration-as-code/stow/` for now. Do no
 4. When Grafana asks for variables, choose:
    - `DS_PROMETHEUS`: the Prometheus datasource.
    - `DS_LOKI`: the Loki datasource.
+   - The JSON defaults these to `Prometheus` and `Loki` for overwrite/import workflows.
 5. Import the dashboard.
 6. Use the dashboard variables at the top:
    - `node_instance`: the node_exporter instance to inspect.
@@ -59,6 +60,7 @@ From the developer-run checks on 2026-05-28:
 - The current Alloy config does not include `prometheus.scrape`, `prometheus.remote_write`, `prometheus.exporter.unix`, or `prometheus.exporter.blackbox`, so it currently helps with logs, not the Prometheus panels in these dashboards.
 - Prometheus, node_exporter, and blackbox_exporter were later installed and are scrapeable.
 - The package default node_exporter filesystem settings did not expose `/mnt/HC_Volume_103911252`, so the stow package includes `/etc/default/prometheus-node-exporter` to keep `/mnt` visible and enable systemd metrics.
+- After stowing `/etc/default/prometheus-node-exporter`, Prometheus sees `/mnt/HC_Volume_103911252` and returns `node_filesystem_avail_bytes` / `node_filesystem_size_bytes` for `/dev/sdb`.
 
 ## Alloy Note
 

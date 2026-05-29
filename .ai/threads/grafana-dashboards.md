@@ -1584,3 +1584,134 @@ curl -G http://127.0.0.1:9090/api/v1/query \
 Time: 2026-05-28 17:11:10
 --- Next Prompt ---
 
+Here is the output of the command you asked me to run:
+
+```bash
+stow git:(50-pordsette-main) ls -lha /etc/default/prometheus-node-exporter
+lrwxrwxrwx 1 root root 123 May 29 09:45 /etc/default/prometheus-node-exporter -> ../../mnt/HC_Volume_103911252/repos/conorganizer/configuration-as-code/stow/prometheus/etc/default/prometheus-node-exporter
+
+
+stow git:(50-pordsette-main) curl -fsS http://127.0.0.1:9090/api/v1/label/mountpoint/values | jq .
+
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}' | jq .
+
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=node_filesystem_size_bytes{mountpoint="/mnt/HC_Volume_103911252"}' | jq .
+
+{
+  "status": "success",
+  "data": [
+    "/",
+    "/boot/efi",
+    "/mnt/HC_Volume_103911252",
+    "/tmp"
+  ]
+}
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+100    271 100    271   0      0 113.4k      0                              0
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "node_filesystem_avail_bytes",
+          "device": "/dev/sdb",
+          "fstype": "ext4",
+          "instance": "127.0.0.1:9100",
+          "job": "node",
+          "mountpoint": "/mnt/HC_Volume_103911252"
+        },
+        "value": [
+          1780048099.631,
+          "8369467392"
+        ]
+      }
+    ]
+  }
+}
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+100    271 100    271   0      0  93448      0                              0
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "node_filesystem_size_bytes",
+          "device": "/dev/sdb",
+          "fstype": "ext4",
+          "instance": "127.0.0.1:9100",
+          "job": "node",
+          "mountpoint": "/mnt/HC_Volume_103911252"
+        },
+        "value": [
+          1780048099.647,
+          "10464022528"
+        ]
+      }
+    ]
+  }
+}
+➜  stow git:(50-pordsette-main)
+```
+
+
+Time: 2026-05-29 11:50:22
+--- Codex Run ---
+
+Codex output:
+That confirms the last core Prometheus gap is closed: node_exporter now exposes the Hetzner volume mountpoint, so the disk/volume dashboard panels should populate. I’ll record that current server state in the README.
+Good. The Prometheus side is now healthy for the core dashboard panels.
+
+Confirmed working:
+
+- Prometheus ready.
+- node_exporter scrape working.
+- systemd metrics working.
+- blackbox probe working.
+- TLS expiry metric working.
+- `/mnt/HC_Volume_103911252` filesystem metrics now working.
+
+The mounted volume currently reports:
+
+- Size: `10,464,022,528` bytes
+- Available: `8,369,467,392` bytes
+- Prometheus-style usage: about `20%`
+
+I updated [README.md](/home/cinmay/Documents/conorganizer/configuration-as-code/grafana-dashboards/README.md) with the final volume-metric result and revalidated the dashboard JSON/YAML.
+
+Next step in Grafana: add/select the Prometheus datasource at `http://127.0.0.1:9090`, then map `DS_PROMETHEUS` when importing or editing the dashboards. The optional custom SQLite file-size/backup-age panels will still be empty until we add custom textfile metrics.
+
+Time: 2026-05-29 11:50:22
+--- Next Prompt ---
+
+Can you set the data source for the dashboards in the .json files so that I can overwrite the existing dashboards? 
+
+Time: 2026-05-29 11:53:58
+--- Codex Run ---
+
+Codex output:
+I’ll set concrete default datasource selections in the dashboard JSON while keeping the datasource variables in place. That preserves portability, but avoids an empty datasource mapping when you overwrite/import. I’ll assume the Grafana datasource names are `Prometheus` and `Loki`; if their UIDs differ, Grafana can still remap the variables at import time.
+Done. I set the dashboard datasource variables in both JSON files to default to:
+
+- `DS_PROMETHEUS` -> `Prometheus`
+- `DS_LOKI` -> `Loki`
+
+Updated:
+- [conorganizer-production-health.json](/home/cinmay/Documents/conorganizer/configuration-as-code/grafana-dashboards/conorganizer-production-health.json)
+- [conorganizer-main-service-debugging.json](/home/cinmay/Documents/conorganizer/configuration-as-code/grafana-dashboards/conorganizer-main-service-debugging.json)
+- [README.md](/home/cinmay/Documents/conorganizer/configuration-as-code/grafana-dashboards/README.md)
+
+Both dashboard JSON files still validate.
+
+This assumes the Grafana datasource names/UIDs are `Prometheus` and `Loki`. If Grafana generated different datasource UIDs, send me those UIDs and I’ll hard-wire the JSON to them.
+
+Time: 2026-05-29 11:53:58
+--- Next Prompt ---
+
