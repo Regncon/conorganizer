@@ -1243,3 +1243,344 @@ text
 Time: 2026-05-28 16:14:27
 --- Next Prompt ---
 
+Here is the output of the command you asked me to run:
+
+```bash
+stow git:(50-pordsette-main) curl -fsS http://127.0.0.1:9090/-/ready
+
+Prometheus Server is Ready.
+➜  stow git:(50-pordsette-main) curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=up' | jq .
+
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+100    824 100    824   0      0 98.19k      0                              0
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "up",
+          "instance": "localhost:9100",
+          "job": "node"
+        },
+        "value": [
+          1779977867.170,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "instance": "localhost:9090",
+          "job": "prometheus"
+        },
+        "value": [
+          1779977867.170,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "instance": "https://grafana.regncon.no/",
+          "job": "blackbox_https"
+        },
+        "value": [
+          1779977867.170,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "instance": "https://main.lekeplassen.regncon.no/",
+          "job": "blackbox_https"
+        },
+        "value": [
+          1779977867.170,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "instance": "127.0.0.1:9090",
+          "job": "prometheus"
+        },
+        "value": [
+          1779977867.170,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "instance": "127.0.0.1:12345",
+          "job": "alloy"
+        },
+        "value": [
+          1779977867.170,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "up",
+          "instance": "127.0.0.1:9100",
+          "job": "node"
+        },
+        "value": [
+          1779977867.170,
+          "1"
+        ]
+      }
+    ]
+  }
+}
+➜  stow git:(50-pordsette-main) curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}' | jq .
+
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+100     63 100     63   0      0  18562      0                              0
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": []
+  }
+}
+➜  stow git:(50-pordsette-main) curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=node_systemd_unit_state{name="conorganizer-main.service",state="active"}' | jq .
+
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+100    438 100    438   0      0 149.1k      0                              0
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "node_systemd_unit_state",
+          "instance": "localhost:9100",
+          "job": "node",
+          "name": "conorganizer-main.service",
+          "state": "active",
+          "type": "simple"
+        },
+        "value": [
+          1779977885.352,
+          "1"
+        ]
+      },
+      {
+        "metric": {
+          "__name__": "node_systemd_unit_state",
+          "instance": "127.0.0.1:9100",
+          "job": "node",
+          "name": "conorganizer-main.service",
+          "state": "active",
+          "type": "simple"
+        },
+        "value": [
+          1779977885.352,
+          "1"
+        ]
+      }
+    ]
+  }
+}
+➜  stow git:(50-pordsette-main) curl -G http://127.0.0.1:9090/api/v1/query --data-urlencode 'query=probe_success{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"}' | jq .
+
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+100    204 100    204   0      0 113.8k      0                              0
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "__name__": "probe_success",
+          "instance": "https://main.lekeplassen.regncon.no/",
+          "job": "blackbox_https"
+        },
+        "value": [
+          1779977893.327,
+          "1"
+        ]
+      }
+    ]
+  }
+}
+```
+
+
+Time: 2026-05-28 16:21:43
+--- Codex Run ---
+
+Codex output:
+Prometheus is mostly working now.
+
+What is good:
+
+- Prometheus is ready.
+- `up` confirms Prometheus, node_exporter, Alloy, and blackbox probes are being scraped.
+- `node_systemd_unit_state{name="conorganizer-main.service", state="active"}` works, so the systemd panels should work.
+- `probe_success` for `main.lekeplassen.regncon.no` works, so the blackbox availability panels should work.
+
+Two things need attention:
+
+1. You have duplicate `prometheus` and `node` targets:
+   - `localhost:9090` and `127.0.0.1:9090`
+   - `localhost:9100` and `127.0.0.1:9100`
+
+   That usually means the server config still contains package default scrape jobs in addition to the stowed config.
+
+2. The mounted volume query returned no data:
+   - `node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}` is empty.
+   - We need to inspect the actual `mountpoint` label node_exporter is exposing.
+
+**Commands for the developer to run on the server**
+```bash
+# Confirm /etc/prometheus files are stowed from the repo.
+ls -l /etc/prometheus/prometheus.yml /etc/prometheus/blackbox.yml
+
+sudo diff -u \
+  /home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/etc/prometheus/prometheus.yml \
+  /etc/prometheus/prometheus.yml || true
+
+# If the diff shows package-default scrape jobs still present, restow cleanly.
+sudo rm -f /etc/prometheus/prometheus.yml /etc/prometheus/blackbox.yml
+cd /home/cinmay/Documents/conorganizer/configuration-as-code/stow
+sudo stow --restow --target=/ prometheus
+sudo systemctl restart prometheus
+
+# Check the real filesystem mount and the labels Prometheus sees.
+findmnt /mnt/HC_Volume_103911252 || true
+df -hT | grep -E 'Filesystem|HC_Volume|/mnt'
+
+curl -fsS http://127.0.0.1:9090/api/v1/label/mountpoint/values | jq .
+
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint=~".*HC.*|/mnt.*"}' | jq .
+
+# Also validate TLS expiry, since blackbox success is already working.
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=(probe_ssl_earliest_cert_expiry{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"} - time()) / 86400' | jq .
+```
+
+Time: 2026-05-28 16:21:43
+--- Next Prompt ---
+
+
+  stow git:(50-pordsette-main) ls -l /etc/prometheus/prometheus.yml /etc/prometheus/blackbox.yml
+lrwxrwxrwx 1 root root 114 May 28 14:07 /etc/prometheus/blackbox.yml -> ../../mnt/HC_Volume_103911252/repos/conorganizer/configuration-as-code/stow/prometheus/etc/prometheus/blackbox.yml
+lrwxrwxrwx 1 root root 116 May 28 14:07 /etc/prometheus/prometheus.yml -> ../../mnt/HC_Volume_103911252/repos/conorganizer/configuration-as-code/stow/prometheus/etc/prometheus/prometheus.yml
+
+
+
+➜  stow git:(50-pordsette-main) findmnt /mnt/HC_Volume_103911252 || true
+
+TARGET                   SOURCE   FSTYPE OPTIONS
+/mnt/HC_Volume_103911252 /dev/sdb ext4   rw,relatime,discard
+➜  stow git:(50-pordsette-main) df -hT | grep -E 'Filesystem|HC_Volume|/mnt'
+
+curl -fsS http://127.0.0.1:9090/api/v1/label/mountpoint/values | jq .
+
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint=~".*HC.*|/mnt.*"}' | jq .
+
+# Also validate TLS expiry, since blackbox success is already working.
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=(probe_ssl_earliest_cert_expiry{instance=~".*main\\.lekeplassen\\.regncon\\.no.*"} - time()) / 86400' | jq .
+
+Filesystem     Type   Size  Used Avail Use% Mounted on
+/dev/sdb       ext4   9.8G  1.3G  8.0G  14% /mnt/HC_Volume_103911252
+{
+  "status": "success",
+  "data": [
+    "/",
+    "/boot/efi",
+    "/tmp"
+  ]
+}
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+100     63 100     63   0      0  12101      0                              0
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": []
+  }
+}
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+100    194 100    194   0      0  23208      0                              0
+{
+  "status": "success",
+  "data": {
+    "resultType": "vector",
+    "result": [
+      {
+        "metric": {
+          "instance": "https://main.lekeplassen.regncon.no/",
+          "job": "blackbox_https"
+        },
+        "value": [
+          1779980951.503,
+          "31.850954826388644"
+        ]
+      }
+    ]
+  }
+}
+
+Time: 2026-05-28 17:11:10
+--- Codex Run ---
+
+Codex output:
+The volume is mounted, but node_exporter is not exporting `/mnt` mountpoints. That means we do need one `/etc/default` override now, not for Prometheus itself, but for `prometheus-node-exporter`, to stop the package default filesystem exclude from hiding `/mnt/HC_Volume_103911252`.
+Good. Current state:
+
+- Prometheus is ready.
+- Blackbox TLS works: main cert has about `31.85` days left.
+- `conorganizer-main.service` systemd metric works.
+- The missing piece is the mounted volume metric.
+
+`findmnt` proves `/mnt/HC_Volume_103911252` is mounted, but Prometheus only sees filesystem mountpoints `/`, `/boot/efi`, and `/tmp`. That means node_exporter is filtering out `/mnt`, most likely through the package default filesystem mountpoint exclude.
+
+I added one stow file for that, and only for node_exporter:
+
+[configuration-as-code/stow/prometheus/etc/default/prometheus-node-exporter](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/prometheus/etc/default/prometheus-node-exporter)
+
+It does not add `/etc/default/prometheus`.
+
+**Commands for the developer to run on the server**
+```bash
+cd /home/cinmay/Documents/conorganizer/configuration-as-code/stow
+
+sudo cp -a /etc/default/prometheus-node-exporter "/etc/default/prometheus-node-exporter.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+sudo rm -f /etc/default/prometheus-node-exporter
+
+sudo stow --restow --target=/ prometheus
+
+sudo systemctl restart prometheus-node-exporter
+sleep 5
+
+curl -fsS http://127.0.0.1:9090/api/v1/label/mountpoint/values | jq .
+
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=node_filesystem_avail_bytes{mountpoint="/mnt/HC_Volume_103911252"}' | jq .
+
+curl -G http://127.0.0.1:9090/api/v1/query \
+  --data-urlencode 'query=node_filesystem_size_bytes{mountpoint="/mnt/HC_Volume_103911252"}' | jq .
+```
+
+Time: 2026-05-28 17:11:10
+--- Next Prompt ---
+

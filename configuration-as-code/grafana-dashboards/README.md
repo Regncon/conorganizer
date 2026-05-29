@@ -57,6 +57,8 @@ From the developer-run checks on 2026-05-28:
 - Alloy v1.16.1 is active and exposes its own readiness and self-metrics on `127.0.0.1:12345`.
 - The current Alloy config includes `loki.write` and `loki.source.journal`.
 - The current Alloy config does not include `prometheus.scrape`, `prometheus.remote_write`, `prometheus.exporter.unix`, or `prometheus.exporter.blackbox`, so it currently helps with logs, not the Prometheus panels in these dashboards.
+- Prometheus, node_exporter, and blackbox_exporter were later installed and are scrapeable.
+- The package default node_exporter filesystem settings did not expose `/mnt/HC_Volume_103911252`, so the stow package includes `/etc/default/prometheus-node-exporter` to keep `/mnt` visible and enable systemd metrics.
 
 ## Alloy Note
 
@@ -88,7 +90,7 @@ The dashboards need a Grafana datasource that can answer PromQL queries. There a
    - Use the stow-owned Prometheus config files in `configuration-as-code/stow/prometheus/etc/prometheus/`.
    - Configure Prometheus as a Grafana datasource.
    - Scrape node/system metrics and blackbox probes either from standalone exporters or from Alloy-generated exporter targets.
-   - Add `/etc/default/*` overrides later only if package defaults need local-only bind addresses or node_exporter needs explicit systemd collector flags.
+   - Use the stow-owned `/etc/default/prometheus-node-exporter` override because the package default filesystem exclude hid the mounted Hetzner volume.
 
 2. Alloy as collector plus a Prometheus-compatible backend.
    - Configure Alloy `prometheus.exporter.unix` for node filesystem, CPU, memory, load, network, and systemd metrics.
@@ -201,10 +203,12 @@ Do not run all of these blindly; use the relevant checks for the exporter or pan
 sudo apt-get update
 sudo apt-get install -y stow prometheus prometheus-node-exporter prometheus-blackbox-exporter
 
-# Back up package-created /etc/prometheus config before replacing it with stow symlinks.
+# Back up package-created config before replacing it with stow symlinks.
 sudo cp -a /etc/prometheus/prometheus.yml "/etc/prometheus/prometheus.yml.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
 sudo cp -a /etc/prometheus/blackbox.yml "/etc/prometheus/blackbox.yml.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
+sudo cp -a /etc/default/prometheus-node-exporter "/etc/default/prometheus-node-exporter.$(date -u +%Y%m%dT%H%M%SZ).bak" 2>/dev/null || true
 sudo rm -f /etc/prometheus/prometheus.yml /etc/prometheus/blackbox.yml
+sudo rm -f /etc/default/prometheus-node-exporter
 
 # Stow only the Prometheus config files from this repo.
 cd /home/cinmay/Documents/conorganizer/configuration-as-code/stow
@@ -235,8 +239,7 @@ systemctl status prometheus-node-exporter.service --no-pager
 curl -fsS http://127.0.0.1:9115/metrics | head
 systemctl status prometheus-blackbox-exporter.service --no-pager
 
-# Systemd metrics in Prometheus. If this returns no data after install,
-# add a node_exporter /etc/default override to enable --collector.systemd.
+# Systemd metrics in Prometheus.
 curl -G http://127.0.0.1:9090/api/v1/query \
   --data-urlencode 'query=node_systemd_unit_state{name="conorganizer-main.service",state="active"}' | jq .
 
