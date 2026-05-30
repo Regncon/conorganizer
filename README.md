@@ -281,13 +281,13 @@ Look for the host path that contains `events.db` or maps the database folder int
 Example:
 
 ```text
-/mnt/DC_Hardware_13377331/1337-merge/database:/app/database
+/mnt/HC_Volume_103911252/environments/1337-merge/database:/app/database
 ```
 
 In that case the database path is:
 
 ```bash
-/mnt/DC_Hardware_13377331/1337-merge/database/events.db
+/mnt/HC_Volume_103911252/environments/1337-merge/database/events.db
 ```
 
 #### 3. Replace The Database
