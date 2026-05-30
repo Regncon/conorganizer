@@ -49,13 +49,16 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow) {
             flex: 0 0 auto;
         }
 
-        .event-interest-helper.pulje-interest-state--warning,
-        .event-interest-helper.pulje-interest-state--urgent-warning {
+        .event-interest-helper.pulje-interest-state--warning {
             color: var(--color-warning, var(--color-error));
         }
 
-        .event-interest-helper.pulje-interest-state--locked {
+        .event-interest-helper.pulje-interest-state--urgent-warning {
             color: var(--color-error);
+        }
+
+        .event-interest-helper.pulje-interest-state--locked {
+            color: var(--color-accent-blue);
         }
 
         .event-interest-helper.pulje-interest-state--completed {

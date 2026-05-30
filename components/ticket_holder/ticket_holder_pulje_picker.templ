@@ -47,14 +47,18 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
                 }
             }
 
-            .pulje-interest-state--warning,
-            .pulje-interest-state--urgent-warning {
+            .pulje-interest-state--warning {
                 color: var(--color-warning, var(--color-error));
                 border-color: currentColor;
             }
 
-            .pulje-interest-state--locked {
+            .pulje-interest-state--urgent-warning {
                 color: var(--color-error);
+                border-color: currentColor;
+            }
+
+            .pulje-interest-state--locked {
+                color: var(--color-accent-blue);
                 border-color: currentColor;
             }
 

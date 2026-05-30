@@ -59,13 +59,16 @@ templ TicketHolderInterestPicker(
 				color: var(--color-text-soft);
 			}
 
-			.pulje-status-message--warning,
-			.pulje-status-message--urgent-warning {
+			.pulje-status-message--warning {
 				color: var(--color-warning, var(--color-error));
 			}
 
-			.pulje-status-message--locked {
+			.pulje-status-message--urgent-warning {
 				color: var(--color-error);
+			}
+
+			.pulje-status-message--locked {
+				color: var(--color-accent-blue);
 			}
 
 			.pulje-status-message--completed {

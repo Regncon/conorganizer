@@ -1233,3 +1233,34 @@ There is still an unrelated modified `.ai/threads/pulje-config.md` file in the w
 Time: 2026-05-30 18:14:53
 --- Next Prompt ---
 
+Ok, Let's have the `Låses straks` be --color-error and the `Låst` state be --color-accent-blue. Let's also have the lock text be friendly and say something like "Puljen er låst, du kan ikke melder interesse mer, vijobber med å fordele spillere or something like that.
+Let's have the låses snart text include the time when the pulje will be locked. For example, "Puljen låses snart, kl 18:00". We can compute the time based on the `puljer.start_at` field in the database minus 30 minutes.
+
+Time: 2026-05-30 18:41:00
+--- Codex Run ---
+
+Codex output:
+I’ll adjust the mock UI behavior directly: separate the urgent/locked colors, make the locked copy friendlier, and derive the “låses snart” time from `puljer.start_at - 30 minutes` so the mock already follows the intended rule.
+I found the three places where those state colors are duplicated, plus the mock text generator. I’m keeping this scoped to the UI mock layer so the later real status implementation can replace it cleanly.
+The copy and color rules are updated. I’m regenerating templ output and running the Go tests now, since these changes affect generated render code.
+Updated the UI mock state handling.
+
+Changes:
+- `Låses straks` now uses `--color-error`.
+- `Låst` now uses `--color-accent-blue`.
+- Locked copy is now friendlier: “Puljen er låst. Du kan ikke melde eller endre interesse lenger. Vi jobber med å fordele spillere.”
+- `Låses snart` now derives the lock time from `puljer.start_at - 30 minutes`, rendered like `Puljen låses snart, kl 18:00.`
+
+Main files touched:
+- [ticket_holder.go](/home/cinmay/Documents/conorganizer/components/ticket_holder/ticket_holder.go)
+- [ticket_holder_pulje_picker.templ](/home/cinmay/Documents/conorganizer/components/ticket_holder/ticket_holder_pulje_picker.templ)
+- [ticket_holder_interest_picker.templ](/home/cinmay/Documents/conorganizer/components/ticket_holder/ticket_holder_interest_picker.templ)
+- [event_interest_panel.templ](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ)
+
+Verification:
+- `go tool templ generate` passed.
+- `GOCACHE=/tmp/go-build go test ./...` passed.
+
+Time: 2026-05-30 18:41:00
+--- Next Prompt ---
+

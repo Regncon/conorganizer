@@ -83,7 +83,7 @@ func MockPuljeInterestState(pulje models.PuljeRow) PuljeInterestState {
 	switch pulje.ID {
 	case models.PuljeFredagKveld:
 		state.Availability = PuljeInterestWarning
-		state.Message = fmt.Sprintf("%s låses snart. Husk å melde interesse før puljen låses.", pulje.Name)
+		state.Message = mockPuljeLockMessage(pulje)
 		state.Priority = 2
 	case models.PuljeLordagMorgen:
 		state.Availability = PuljeInterestUrgentWarning
@@ -91,7 +91,7 @@ func MockPuljeInterestState(pulje models.PuljeRow) PuljeInterestState {
 		state.Priority = 3
 	case models.PuljeLordagKveld:
 		state.Availability = PuljeInterestLocked
-		state.Message = "Puljen er låst, du kan ikke endre interessen din."
+		state.Message = "Puljen er låst. Du kan ikke melde eller endre interesse lenger. Vi jobber med å fordele spillere."
 		state.CanEdit = false
 		state.Priority = 1
 	case models.PuljeSondagMorgen:
@@ -103,6 +103,14 @@ func MockPuljeInterestState(pulje models.PuljeRow) PuljeInterestState {
 	}
 
 	return state
+}
+
+func mockPuljeLockMessage(pulje models.PuljeRow) string {
+	if pulje.StartAt.IsZero() {
+		return "Puljen låses snart."
+	}
+	lockTimeLabel := pulje.StartAt.TimeOrZero().Add(-30 * time.Minute).Format("15:04")
+	return fmt.Sprintf("Puljen låses snart, kl %s.", lockTimeLabel)
 }
 
 func MockSelectedPuljeInterestState(puljer []models.PuljeRow, puljeID string) PuljeInterestState {
