@@ -13,7 +13,7 @@
 6. [Linux/Mac Setup Guide](#linuxmac-setup-guide)
     - [Prerequisites](#prerequisites)
     - [Verification and Startup](#verification-and-startup)
-7. [Migrations](#-Migrations-with-goose)
+7. [Migrations](#migrations-with-goose)
     - [Running Goose manually](#running-goose-manually)
     - [Pushing migrations to prod](#pushing-migrations-to-prod-and-services)
     - [Step by step](#step-by-step-to-update-db)
@@ -23,7 +23,7 @@
 
 ## Description
 
-This is a spike exploring Go, Data-Star and Templ using the Northstar template.
+This is a spike exploring Go, Datastar and Templ using the Northstar template.
 
 For more details, visit:
 
@@ -168,13 +168,6 @@ source ~/.zshrc
 go install github.com/a-h/templ/cmd/templ@latest
 ```
 
-### Update Go Modules
-
-```bash
-go get -u
-go mod tidy
-```
-
 ### Verification and Startup
 
 1. **Verify Tool Installation**:
@@ -230,7 +223,7 @@ http://localhost:7331
 > [!NOTE]
 > Goose will try to read some basic variables from `.env`, make sure that this file is updated with the most recent version from discord before running any commands.
 
-We're using [Goose](https://pressly.github.io/goose/) in our migration process for its simplicity and reliability. While Goose is available as a go dependency for programatically migrating databases, we're mostly using its CLI tool for manual updates.
+We're using [Goose](https://pressly.github.io/goose/) in our migration process for its simplicity and reliability. While Goose is available as a go dependency for programmatically migrating databases, we're mostly using its CLI tool for manual updates.
 
 ### Running Goose manually
 
@@ -288,7 +281,7 @@ Look for the host path that contains `events.db` or maps the database folder int
 Example:
 
 ```text
-/mnt/DC_Hardware_13377331/308-merge/database:/app/database
+/mnt/DC_Hardware_13377331/1337-merge/database:/app/database
 ```
 
 In that case the database path is:
@@ -370,7 +363,7 @@ New-Item -ItemType SymbolicLink -Path "$agentSkillsFolder" -Target ".agents\skil
 Update all Go dependencies:
 
 ```bash
-go get -u ./...
+go get -u
 go mod tidy
 ```
 
