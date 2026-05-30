@@ -214,7 +214,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "### Purpose\nFocused debugging for `conorganizer-main.service` and the public main website.\n\nRecommended workflow:\n1. Confirm the service is active.\n2. Check the current error signal.\n3. Inspect error/panic/database logs.\n4. Look at request rate, status codes, and latency.\n5. Use slow/failing request logs to find concrete routes and request IDs.\n\nDesign choices:\n- Service panels follow RED / Golden Signals: request rate, errors, duration/latency, and saturation proxies.\n- HTTP behavior is log-derived from `msg=\"http request completed\"`, `component=\"http\"`, `method`, `path`, `status_code`, `duration_ms`, and optional `request_id`.\n- The repo does not currently define app `/metrics`, `/healthz`, or `/readyz`; public probe panels check the main host through blackbox_exporter.\n- No app Prometheus metric names are invented. Optional app-metric panels can be added later when `/metrics` exists.\n- Loki queries start broad enough for `job=varlogs`; narrow `loki_job` or replace with exact journal labels after import.\n\nUseful external examples:\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/\n- Logging Dashboard via Loki v2: https://grafana.com/grafana/dashboards/18042-logging-dashboard-via-loki-v2/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/"
+        "content": "### Purpose\nFocused debugging for `conorganizer-main.service` and the public main website.\n\nRecommended workflow:\n1. Confirm the service is active.\n2. Check the current error signal.\n3. Inspect error/panic/database logs.\n4. Look at request rate, status codes, and latency.\n5. Use slow/failing request logs to find concrete routes and request IDs.\n\nDesign choices:\n- Service panels follow RED / Golden Signals: request rate, errors, duration/latency, and saturation proxies.\n- HTTP behavior is log-derived from `msg=\"http request completed\"`, `component=\"http\"`, `method`, `path`, `status_code`, `duration_ms`, and optional `request_id`.\n- The repo defines app `/healthz` and `/readyz`, but no `/metrics`; public probe panels still check the main host through blackbox_exporter.\n- No app Prometheus metric names are invented. Optional app-metric panels can be added later when `/metrics` exists.\n- Loki queries start broad enough for `job=varlogs`; narrow `loki_job` or replace with exact journal labels after import.\n\nUseful external examples:\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/\n- Logging Dashboard via Loki v2: https://grafana.com/grafana/dashboards/18042-logging-dashboard-via-loki-v2/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/"
       }
     },
     {
@@ -388,7 +388,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Public main probe success",
-      "description": "Public blackbox probe for the main host. This is the symptom check when no app health endpoint exists.",
+      "description": "Public blackbox probe for the main host. This is the outside-in symptom check alongside the app health endpoints.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"

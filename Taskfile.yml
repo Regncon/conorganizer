@@ -91,8 +91,27 @@ tasks:
             - |
               set -eu
               : "${DB_SSH_USER:?Set DB_SSH_USER in .env}"
+              remote_host="${DB_SSH_USER}@46.62.159.49"
+              remote_db="/mnt/HC_Volume_103911252/environments/main/database/events.db"
+              remote_snapshot_dir="/mnt/HC_Volume_103911252/backups/tmp"
+              remote_snapshot="${remote_snapshot_dir}/events-download-$(date -u +%Y%m%dT%H%M%SZ)-$$.db"
+
+              cleanup_remote_snapshot() {
+                ssh -p 22 "$remote_host" "rm -f '$remote_snapshot'" >/dev/null 2>&1 || true
+              }
+              trap cleanup_remote_snapshot EXIT
+
               mkdir -p database
-              scp -P 22 "${DB_SSH_USER}@46.62.159.49:/mnt/HC_Volume_103911252/environments/main/database/events.db" "database/events.db.download"
+              rm -f "database/events.db.download"
+
+              ssh -p 22 "$remote_host" "
+                set -eu
+                mkdir -p '$remote_snapshot_dir'
+                sqlite3 '$remote_db' \".backup '$remote_snapshot'\"
+                test \"\$(sqlite3 '$remote_snapshot' 'PRAGMA quick_check;')\" = ok
+              "
+
+              scp -P 22 "${remote_host}:${remote_snapshot}" "database/events.db.download"
               mv "database/events.db.download" "database/events.db"
 
     # Download local copies of production event images

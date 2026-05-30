@@ -54,10 +54,13 @@ Follow the [Linux/Mac Setup Guide](#linuxmac-setup-guide) below.
 > [!NOTE]
 > To get the latest backup of the database and all the images from prod run:
 > The database download requires `DB_SSH_USER` in your `.env` file or shell environment.
+> The database task creates a temporary SQLite backup snapshot on the server; it does not copy the live WAL-mode database file directly.
 
 ```bash
 task download
 ```
+
+Production SQLite operational notes are in [documentation/sqlite-production.md](documentation/sqlite-production.md).
 
 To get the latest schema of the database, run:
 
@@ -233,6 +236,7 @@ We're using [Goose](https://pressly.github.io/goose/) in our migration process f
 > [!WARNING]
 > Before running Goose, run `task download` to fetch the newest version of the database!
 > You can install Goose CLI tool from [here](https://pressly.github.io/goose/installation/), afterwards you should have `goose` globally available in your terminal.
+> Migrations are manual only. Do not add automatic migrations to application startup, health checks, readiness checks, or systemd startup.
 
 To create a new migration file you can run the following command, read [here](https://pressly.github.io/goose/documentation/annotations/) for more annotation examples.
 
@@ -299,4 +303,3 @@ New-Item -ItemType SymbolicLink -Path "$agentSkillsFolder" -Target ".agents\skil
 - [Northstar Template Documentation](https://github.com/zangster300/northstar)
 - [Go Documentation](https://go.dev/doc/)
 - [Docker Documentation](https://docs.docker.com/)
-

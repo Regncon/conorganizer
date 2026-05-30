@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"errors"
+	"database/sql"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -10,8 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
-	"database/sql"
 
 	"github.com/Regncon/conorganizer/service"
 	"github.com/Regncon/conorganizer/service/applog"
@@ -39,9 +37,10 @@ func main() {
 
 	db, dbErr := service.InitDB(*dsn)
 	if dbErr != nil {
-		logger.Error(fmt.Errorf("could not initialize DB at %q; starting in degraded mode: %w", *dsn, dbErr).Error())
-		db = nil
+		logger.Error(fmt.Errorf("could not initialize DB at %q: %w", *dsn, dbErr).Error())
+		os.Exit(1)
 	}
+	logger.Info("SQLite database initialized", "path", *dsn, "max_open_connections", db.Stats().MaxOpenConnections)
 	defer func() {
 		if db != nil {
 			db.Close()
@@ -61,25 +60,26 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx, baseLogger, getPort(), eventImageDir, db, dbErr); err != nil {
+	if err := run(ctx, baseLogger, getPort(), eventImageDir, db); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB, dbErr error) error {
+func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB) error {
 	g, ctx := errgroup.WithContext(ctx)
-	g.Go(startServer(ctx, logger, port, eventImageDir, db, dbErr))
+	g.Go(startServer(ctx, logger, port, eventImageDir, db))
 	if err := g.Wait(); err != nil {
 		return fmt.Errorf("error running server: %w", err)
 	}
 	return nil
 }
-func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB, dbErr error) func() error {
+func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB) func() error {
 	return func() error {
 		baseLogger := logger
 		logger = logger.With("component", "http_server")
 		router := chi.NewRouter()
+		readiness := newReadinessState(db, baseLogger)
 
 		router.Use(
 			middleware.RequestID,
@@ -87,34 +87,37 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 			middleware.Recoverer,
 		)
 
+		mountHealthRoutes(router, readiness, baseLogger)
+
 		var imgErr error
 		if eventImageDir != nil && *eventImageDir != "" {
-			if _, statErr := os.Stat(*eventImageDir); os.IsNotExist(statErr) {
-				imgErr = fmt.Errorf("event image directory %q does not exist; create it and run task start again: %w", *eventImageDir, statErr)
-				logger.Error(imgErr.Error())
-			} else if statErr != nil {
-				imgErr = fmt.Errorf("unable to access event image directory %q: %w", *eventImageDir, statErr)
-				logger.Error(imgErr.Error())
+			if err := service.CheckWritableDirectory(*eventImageDir); err != nil {
+				imgErr = fmt.Errorf("event image directory startup check failed: %w", err)
 			}
 		} else {
 			imgErr = fmt.Errorf("event image directory path is empty")
-			logger.Error(imgErr.Error())
 		}
 
-		degradedErr := errors.Join(dbErr, imgErr)
+		degradedErr := imgErr
 		fullMode := degradedErr == nil && db != nil
+		if degradedErr != nil {
+			readiness.MarkDegraded(degradedErr)
+		}
 
 		if fullMode {
 			router.Use(authctx.AuthMiddleware(baseLogger))
 		}
 
-		router.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
+		if eventImageDir != nil && *eventImageDir != "" {
+			router.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
+		}
 		router.Handle("/static/*", http.StripPrefix("/static/", static(baseLogger)))
 
 		if fullMode {
 			cleanup, err := setupRoutes(ctx, baseLogger, router, db, eventImageDir)
 			if err != nil {
 				logger.Error(fmt.Errorf("error setting up routes; falling back to degraded mode: %w", err).Error())
+				readiness.MarkDegraded(err)
 				mountDBErrorRoutes(router, err)
 			} else if cleanup != nil {
 				defer func() {
@@ -124,7 +127,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 				}()
 			}
 		} else {
-			// Show a single degraded page that can list both reasons (DB + images)
+			// Show a single degraded page without exposing operational details.
 			mountDBErrorRoutes(router, degradedErr)
 		}
 
@@ -142,19 +145,14 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 	}
 }
 
-func mountDBErrorRoutes(r chi.Router, cause error) {
-	errMsg := "The application database could not be opened."
-	if cause != nil {
-		errMsg = cause.Error()
-	}
-
+func mountDBErrorRoutes(r chi.Router, _ error) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		fmt.Fprintf(w, `<!doctype html>
+		fmt.Fprint(w, `<!doctype html>
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Database unavailable</title>
+<title>Application unavailable</title>
 <style>
   :root { color-scheme: light dark; }
   body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji; margin:0; padding:2rem; }
@@ -165,12 +163,12 @@ func mountDBErrorRoutes(r chi.Router, cause error) {
 </style>
 <body>
   <div class="card">
-    <h1>Database unavailable</h1>
-    <p>The server is running, but the database is not available. Please check that the file exists, the directory path is correct, and the process has permission to access it.</p>
-    <p class="muted"><strong>Reason:</strong> <code>%s</code></p>
+    <h1>Application unavailable</h1>
+    <p>The server is running, but the application is not ready. Please try again later.</p>
+    <p class="muted">Operational details are available in the service logs.</p>
   </div>
 </body>
-</html>`, errMsg)
+</html>`)
 	})
 
 	r.Get("/", handler)

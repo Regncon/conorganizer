@@ -65,7 +65,7 @@ The JSON defaults datasource variable values to `Prometheus` and `Loki` for norm
 - `conorganizer-main.service` runs `/opt/conorganizer/main/conorganizer-main` on `PORT=18856`, with the SQLite DB at `/mnt/HC_Volume_103911252/environments/main/database/events.db` and images at `/mnt/HC_Volume_103911252/environments/main/event-images`.
 - The app uses JSON `slog` logs to stdout. `LOG_LEVEL` supports `DEBUG`, `INFO`, `WARN`/`WARNING`, and `ERROR`.
 - Request logs are emitted with `msg="http request completed"`, `component="http"`, `method`, `path`, `status_code`, `duration_ms`, and optional `request_id`.
-- No app Prometheus instrumentation, `/metrics`, `/healthz`, or `/readyz` route was found in the Go code. Public health panels therefore use blackbox probes rather than an app-native health endpoint.
+- No app Prometheus instrumentation or `/metrics` route exists. The app now exposes `/healthz` and `/readyz`; existing public health panels still use blackbox probes for outside-in symptoms.
 - SQLite backups run every 15 minutes from `conorganizer-sqlite-backup.timer`.
 - Image backups run daily at `03:30:00` from `conorganizer-images-backup.timer`; systemd calendar times use the server's local timezone unless configured otherwise.
 - Backup scripts emit stable prefixes:
