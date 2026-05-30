@@ -1263,4 +1263,79 @@ Verification:
 
 Time: 2026-05-30 18:41:00
 --- Next Prompt ---
+Ok, go ahead and wright some failing tests. There should be examples of how the tests are structured in AGENTS.MD. 
+Please note, not all tests have been updated to reflect the new test structure yet. Se if you can find some good examples. 
+Remember you can test both function that gets the data and you can also test what components are rendered. 
+
+
+Let's continue our discussion. Ask any clarifying questions. 
+
+Time: 2026-05-30 20:38:52
+--- Codex Run ---
+
+Codex output:
+I’ll first read the repo testing guidance and find the newer examples before proposing the first failing tests. Then I’ll pin down which behavior we want to lock in before adding tests.
+Done reading AGENTS.MD file. The strongest current examples are `pages/root/root_page_test.go` for rendered component assertions and `pages/admin/billettholder_admin/billettholder_interest_dialog_test.go` for database-backed behavior with focused helpers.
+I found the test guidance and the newer examples. The best patterns to copy are:
+
+- [pages/root/root_page_test.go](/home/cinmay/Documents/conorganizer/pages/root/root_page_test.go): rendered component assertions with `templtest`.
+- [pages/admin/billettholder_admin/billettholder_interest_dialog_test.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog_test.go): database-backed behavior tests with local SQL helpers.
+
+I would start with failing tests that describe the real behavior, not the temporary mock. My proposed first red tests:
+
+1. `updateInterest` rejects changes when the selected pulje is `Locked`, and keeps the existing interest unchanged.
+2. `updateInterest` rejects changes when the selected pulje is `Completed`, and keeps the existing interest unchanged.
+3. A pulje interest state function returns warning text with lock time computed as `puljer.start_at - 30 minutes`, for example `Puljen låses snart, kl 18:00.`
+4. A rendered component test verifies locked/completed puljer render disabled interest choices and the correct status message/profile link.
+
+Clarifying questions before I write them:
+
+1. Should the first red tests include server-side enforcement in `updateInterest`, or do you want to start only with UI/component behavior?
+2. For time warnings, should we encode the full rule now as: lock time is `start_at - 30m`, warning starts `2h` before lock time, urgent starts `30m` before lock time?
+3. Do you want the new data function to replace `MockPuljeInterestState` immediately in the test names, for example `BuildPuljeInterestState(pulje, now)`, even though it will fail until implemented?
+
+Time: 2026-05-30 20:38:52
+--- Next Prompt ---
+1. You can do both.
+2. Please give some examples.
+3. Yes, use the final function name in the test names.
+Delete any mock data. 
+
+Time: 2026-05-30 20:46:30
+--- Codex Run ---
+
+Codex output:
+I’ll add the red tests against final function names and remove the hardcoded mock state mapping from production code. The tests will be intentional failures: they describe the next implementation, while the production function is only a neutral placeholder so the tree still compiles.
+I’m going to cover both sides with red tests: pure pulje state derivation, rendered event helper output, and server-side `updateInterest` rejection for locked/completed puljer. The time examples I’ll encode are: start `18:30`, lock `18:00`, warning from `16:00`, urgent from `17:30`.
+The hardcoded mock mapping is gone; production now uses the final `BuildPuljeInterestState` naming with a neutral placeholder implementation. I’m regenerating templ now, then I’ll run the targeted tests to confirm they fail for the intended reasons.
+Implemented the red-test step and removed the hardcoded mock pulje mapping.
+
+What changed:
+- Replaced `MockPuljeInterestState` naming with final functions:
+  - `BuildPuljeInterestState(pulje, now)`
+  - `BuildSelectedPuljeInterestState(puljer, puljeID, now)`
+  - `BuildMostUrgentPuljeInterestState(puljer, now)`
+- The implementation is intentionally neutral for now, so the tests fail red.
+- Updated UI components to call the final function names.
+- Added failing tests in:
+  - [ticket_holder_test.go](/home/cinmay/Documents/conorganizer/components/ticket_holder/ticket_holder_test.go)
+  - [event_interest_test.go](/home/cinmay/Documents/conorganizer/pages/event/event_interest_test.go)
+
+Examples encoded in tests:
+- Pulje starts `18:30`.
+- Pulje locks at `18:00` (`start_at - 30m`).
+- Warning example: `16:15` should show `Puljen låses snart, kl 18:00.`
+- Urgent example: `17:45` should show `Puljen låses straks, kl 18:00...`
+
+Verification:
+- `go tool templ generate` passed.
+- `GOCACHE=/tmp/go-build go test ./components/ticket_holder ./pages/event` fails intentionally with the new red tests:
+  - pulje state still returns `open`
+  - event helper is not rendered yet
+  - `updateInterest` still allows locked/completed pulje edits
+
+Unrelated `.ai/threads/pulje-config.md` is still modified and untouched.
+
+Time: 2026-05-30 20:46:30
+--- Next Prompt ---
 

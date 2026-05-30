@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/Regncon/conorganizer/components/icons"
 )
@@ -90,7 +91,7 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 			<p class="label">Velg pulje for arrangementet</p>
 			<div class="pulje-wrapper">
 				for _, pulje := range puljer {
-					{{ puljeState := MockPuljeInterestState(pulje) }}
+					{{ puljeState := BuildPuljeInterestState(pulje, time.Now()) }}
 					<div
 						role="button"
 						data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : '0'", pulje.ID) }

@@ -70,67 +70,34 @@ func (state PuljeInterestState) SignalPatch() string {
 	)
 }
 
-func MockPuljeInterestState(pulje models.PuljeRow) PuljeInterestState {
-	// Temporary UI mock until pulje status and time warning logic is wired to real data.
-	state := PuljeInterestState{
+func BuildPuljeInterestState(pulje models.PuljeRow, now time.Time) PuljeInterestState {
+	return PuljeInterestState{
 		PuljeID:      pulje.ID,
 		PuljeName:    pulje.Name,
 		Availability: PuljeInterestOpen,
 		CanEdit:      true,
 		Priority:     0,
 	}
-
-	switch pulje.ID {
-	case models.PuljeFredagKveld:
-		state.Availability = PuljeInterestWarning
-		state.Message = mockPuljeLockMessage(pulje)
-		state.Priority = 2
-	case models.PuljeLordagMorgen:
-		state.Availability = PuljeInterestUrgentWarning
-		state.Message = fmt.Sprintf("%s kan bli låst når som helst. Gjør endringer nå hvis du vil endre interessen din.", pulje.Name)
-		state.Priority = 3
-	case models.PuljeLordagKveld:
-		state.Availability = PuljeInterestLocked
-		state.Message = "Puljen er låst. Du kan ikke melde eller endre interesse lenger. Vi jobber med å fordele spillere."
-		state.CanEdit = false
-		state.Priority = 1
-	case models.PuljeSondagMorgen:
-		state.Availability = PuljeInterestCompleted
-		state.Message = "Puljefordelingen er klar. Se hva du fikk på profilen din."
-		state.CanEdit = false
-		state.ShowProfileLink = true
-		state.Priority = 0
-	}
-
-	return state
 }
 
-func mockPuljeLockMessage(pulje models.PuljeRow) string {
-	if pulje.StartAt.IsZero() {
-		return "Puljen låses snart."
-	}
-	lockTimeLabel := pulje.StartAt.TimeOrZero().Add(-30 * time.Minute).Format("15:04")
-	return fmt.Sprintf("Puljen låses snart, kl %s.", lockTimeLabel)
-}
-
-func MockSelectedPuljeInterestState(puljer []models.PuljeRow, puljeID string) PuljeInterestState {
+func BuildSelectedPuljeInterestState(puljer []models.PuljeRow, puljeID string, now time.Time) PuljeInterestState {
 	for _, pulje := range puljer {
 		if string(pulje.ID) == puljeID {
-			return MockPuljeInterestState(pulje)
+			return BuildPuljeInterestState(pulje, now)
 		}
 	}
 	if len(puljer) > 0 {
-		return MockPuljeInterestState(puljer[0])
+		return BuildPuljeInterestState(puljer[0], now)
 	}
 	return PuljeInterestState{Availability: PuljeInterestOpen, CanEdit: true}
 }
 
-func MockMostUrgentPuljeInterestState(puljer []models.PuljeRow) (PuljeInterestState, bool) {
+func BuildMostUrgentPuljeInterestState(puljer []models.PuljeRow, now time.Time) (PuljeInterestState, bool) {
 	var selected PuljeInterestState
 	hasSelected := false
 
 	for _, pulje := range puljer {
-		state := MockPuljeInterestState(pulje)
+		state := BuildPuljeInterestState(pulje, now)
 		if !state.HasMessage() {
 			continue
 		}

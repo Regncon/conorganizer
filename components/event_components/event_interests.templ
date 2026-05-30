@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
@@ -22,7 +23,7 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		if puljerErr != nil {
 			logger.Error(puljerErr.Error(), "event_id", eventId)
 		}
-		selectedPuljeState := ticketholder.MockSelectedPuljeInterestState(puljer, puljeId)
+		selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
 	}}
 	<style>
 		.dialog-container {

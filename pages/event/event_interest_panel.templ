@@ -1,13 +1,15 @@
 package event
 
 import (
+	"time"
+
 	"github.com/Regncon/conorganizer/components/icons"
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
 )
 
 templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow) {
-	{{ helperState, hasHelperState := ticketholder.MockMostUrgentPuljeInterestState(puljerForEvent) }}
+	{{ helperState, hasHelperState := ticketholder.BuildMostUrgentPuljeInterestState(puljerForEvent, time.Now()) }}
 	<style>
     .event-interest-picker-container {
         container-type: inline-size;
