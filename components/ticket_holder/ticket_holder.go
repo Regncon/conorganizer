@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/Regncon/conorganizer/models"
@@ -17,6 +18,134 @@ type BillettHolder struct {
 	Name  string
 	Id    int
 	Color string
+}
+
+type PuljeInterestAvailability string
+
+const (
+	PuljeInterestOpen          PuljeInterestAvailability = "open"
+	PuljeInterestWarning       PuljeInterestAvailability = "warning"
+	PuljeInterestUrgentWarning PuljeInterestAvailability = "urgent-warning"
+	PuljeInterestLocked        PuljeInterestAvailability = "locked"
+	PuljeInterestCompleted     PuljeInterestAvailability = "completed"
+)
+
+type PuljeInterestState struct {
+	PuljeID         models.Pulje
+	PuljeName       string
+	Availability    PuljeInterestAvailability
+	Message         string
+	CanEdit         bool
+	ShowProfileLink bool
+	Priority        int
+}
+
+func (state PuljeInterestState) ClassName() string {
+	return fmt.Sprintf("pulje-interest-state--%s", state.Availability)
+}
+
+func (state PuljeInterestState) HasMessage() bool {
+	return state.Message != ""
+}
+
+func (state PuljeInterestState) IsWarning() bool {
+	return state.Availability == PuljeInterestWarning || state.Availability == PuljeInterestUrgentWarning
+}
+
+func (state PuljeInterestState) IsLocked() bool {
+	return state.Availability == PuljeInterestLocked
+}
+
+func (state PuljeInterestState) IsCompleted() bool {
+	return state.Availability == PuljeInterestCompleted
+}
+
+func (state PuljeInterestState) SignalPatch() string {
+	return fmt.Sprintf(
+		"$puljeAvailability = %q; $puljeCanEdit = %t; $puljeStatusMessage = %q; $puljeShowProfileLink = %t;",
+		state.Availability,
+		state.CanEdit,
+		state.Message,
+		state.ShowProfileLink,
+	)
+}
+
+func MockPuljeInterestState(pulje models.PuljeRow) PuljeInterestState {
+	// Temporary UI mock until pulje status and time warning logic is wired to real data.
+	state := PuljeInterestState{
+		PuljeID:      pulje.ID,
+		PuljeName:    pulje.Name,
+		Availability: PuljeInterestOpen,
+		CanEdit:      true,
+		Priority:     0,
+	}
+
+	switch pulje.ID {
+	case models.PuljeFredagKveld:
+		state.Availability = PuljeInterestWarning
+		state.Message = fmt.Sprintf("%s låses snart. Husk å melde interesse før puljen låses.", pulje.Name)
+		state.Priority = 2
+	case models.PuljeLordagMorgen:
+		state.Availability = PuljeInterestUrgentWarning
+		state.Message = fmt.Sprintf("%s kan bli låst når som helst. Gjør endringer nå hvis du vil endre interessen din.", pulje.Name)
+		state.Priority = 3
+	case models.PuljeLordagKveld:
+		state.Availability = PuljeInterestLocked
+		state.Message = "Puljen er låst, du kan ikke endre interessen din."
+		state.CanEdit = false
+		state.Priority = 1
+	case models.PuljeSondagMorgen:
+		state.Availability = PuljeInterestCompleted
+		state.Message = "Puljefordelingen er klar. Se hva du fikk på profilen din."
+		state.CanEdit = false
+		state.ShowProfileLink = true
+		state.Priority = 0
+	}
+
+	return state
+}
+
+func MockSelectedPuljeInterestState(puljer []models.PuljeRow, puljeID string) PuljeInterestState {
+	for _, pulje := range puljer {
+		if string(pulje.ID) == puljeID {
+			return MockPuljeInterestState(pulje)
+		}
+	}
+	if len(puljer) > 0 {
+		return MockPuljeInterestState(puljer[0])
+	}
+	return PuljeInterestState{Availability: PuljeInterestOpen, CanEdit: true}
+}
+
+func MockMostUrgentPuljeInterestState(puljer []models.PuljeRow) (PuljeInterestState, bool) {
+	var selected PuljeInterestState
+	hasSelected := false
+
+	for _, pulje := range puljer {
+		state := MockPuljeInterestState(pulje)
+		if !state.HasMessage() {
+			continue
+		}
+		if !hasSelected || state.Priority > selected.Priority {
+			selected = state
+			hasSelected = true
+			continue
+		}
+		if state.Priority == selected.Priority && pulje.StartAt.TimeOrZero().Before(selectedStartTime(puljer, selected.PuljeID)) {
+			selected = state
+		}
+	}
+
+	return selected, hasSelected
+}
+
+func selectedStartTime(puljer []models.PuljeRow, puljeID models.Pulje) time.Time {
+	for _, pulje := range puljer {
+		if pulje.ID == puljeID {
+			return pulje.StartAt.TimeOrZero()
+		}
+	}
+	return time.Time{}
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]BillettHolder, error) {

@@ -1,6 +1,13 @@
 package event
 
-templ EventInterestPanel(hasTickets bool) {
+import (
+	"github.com/Regncon/conorganizer/components/icons"
+	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/models"
+)
+
+templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow) {
+	{{ helperState, hasHelperState := ticketholder.MockMostUrgentPuljeInterestState(puljerForEvent) }}
 	<style>
     .event-interest-picker-container {
         container-type: inline-size;
@@ -28,6 +35,31 @@ templ EventInterestPanel(hasTickets bool) {
                 text-decoration: underline;
                 width: max(fit-content, 100%);
             }
+        }
+
+        .event-interest-helper {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2x);
+            width: 100%;
+            color: var(--color-text-soft);
+        }
+
+        .event-interest-helper .inline-icon {
+            flex: 0 0 auto;
+        }
+
+        .event-interest-helper.pulje-interest-state--warning,
+        .event-interest-helper.pulje-interest-state--urgent-warning {
+            color: var(--color-warning, var(--color-error));
+        }
+
+        .event-interest-helper.pulje-interest-state--locked {
+            color: var(--color-error);
+        }
+
+        .event-interest-helper.pulje-interest-state--completed {
+            color: var(--color-success);
         }
     }
 
@@ -79,6 +111,18 @@ templ EventInterestPanel(hasTickets bool) {
 						<span class="link-icon">&#9432;</span>
 					</a>
 				</div>
+				if hasHelperState {
+					<p class={ "event-interest-helper", helperState.ClassName() }>
+						if helperState.IsWarning() {
+							@icons.Icon(icons.Warning, icons.Size16)
+						} else if helperState.IsLocked() {
+							@icons.Icon(icons.Lock, icons.Size16)
+						} else if helperState.IsCompleted() {
+							@icons.Icon(icons.ProgressComplete, icons.Size16)
+						}
+						<span>{ helperState.Message }</span>
+					</p>
+				}
 				<button
 					class="btn btn--cta"
 					data-on:click="$_interestIsOpen = true"

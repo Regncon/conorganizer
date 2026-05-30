@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
+
+	"github.com/Regncon/conorganizer/components/icons"
 )
 
 templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger *slog.Logger) {
@@ -34,6 +36,31 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
                 p + p {
                     margin: 0;
                 }
+
+                .pulje-picker-status {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: var(--spacing-1x);
+                    font-size: 11px;
+                    line-height: 1.1;
+                }
+            }
+
+            .pulje-interest-state--warning,
+            .pulje-interest-state--urgent-warning {
+                color: var(--color-warning, var(--color-error));
+                border-color: currentColor;
+            }
+
+            .pulje-interest-state--locked {
+                color: var(--color-error);
+                border-color: currentColor;
+            }
+
+            .pulje-interest-state--completed {
+                color: var(--color-success);
+                border-color: currentColor;
             }
         }
 
@@ -59,14 +86,35 @@ templ TicketHolderPuljePicker(eventId string, puljeId string, db *sql.DB, logger
 			<p class="label">Velg pulje for arrangementet</p>
 			<div class="pulje-wrapper">
 				for _, pulje := range puljer {
+					{{ puljeState := MockPuljeInterestState(pulje) }}
 					<div
 						role="button"
 						data-attr:tabindex={ fmt.Sprintf("$puljeId == '%s' ? '-1' : '0'", pulje.ID) }
-						class="card-clickable card-clickable-item"
+						class={ "card-clickable", "card-clickable-item", puljeState.ClassName() }
 						data-class:selected={ fmt.Sprintf("$puljeId == '%s'", pulje.ID) }
-						data-on:click={ fmt.Sprintf("$puljeId = '%s';  @put('/event/api/%s/interest/selected-interest')", pulje.ID, eventId) }
+						data-on:click={ fmt.Sprintf("$puljeId = '%s'; %s @put('/event/api/%s/interest/selected-interest')", pulje.ID, puljeState.SignalPatch(), eventId) }
 					>
 						<p>{ pulje.Name }</p>
+						if puljeState.Availability != PuljeInterestOpen {
+							<span class="pulje-picker-status">
+								if puljeState.IsWarning() {
+									@icons.Icon(icons.Warning, icons.Size16)
+								} else if puljeState.IsLocked() {
+									@icons.Icon(icons.Lock, icons.Size16)
+								} else if puljeState.IsCompleted() {
+									@icons.Icon(icons.ProgressComplete, icons.Size16)
+								}
+								if puljeState.Availability == PuljeInterestWarning {
+									<span>Låses snart</span>
+								} else if puljeState.Availability == PuljeInterestUrgentWarning {
+									<span>Låses straks</span>
+								} else if puljeState.IsLocked() {
+									<span>Låst</span>
+								} else if puljeState.IsCompleted() {
+									<span>Klar</span>
+								}
+							</span>
+						}
 					</div>
 				}
 			</div>

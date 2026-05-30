@@ -809,4 +809,427 @@ One note: `goose up` now works, but `goose status` still has a separate issue be
 
 Time: 2026-05-28 14:54:44
 --- Next Prompt ---
+Ok, the even page and the profile page are unblocked now.
+
+Let's start with the event page and the lock and publish feature. When a pulje is locked, the billettholder should not be able to edit their interest and the interests button should be replaced with a text that says "Låst, Puljefordeling pågår. Vendt i spenning."  Add a lock icon, perhaps we should use the --color-error color to show that the interests are locked.
+When the pulje is completed, the interests button should be replaced with a text that says "Puljefordelingen er klar se hva du fikk!" and it should link to the profile page so that the user can see what they got. We can use the --color-success color to show that the pulje is completed.
+
+Let's discuss the implementation before we start coding. Ask any clarifying questions. 
+
+Time: 2026-05-30 17:15:33
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the event page interest controls and related pulje lookup code so we can discuss the implementation against the actual component structure.
+I found the relevant shape of the code.
+
+The visible CTA is in [pages/event/event_interest_panel.templ](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ:3). It currently only knows `hasTickets`, so it can only choose between:
+
+- `Meld interesse`
+- `Hent billett`
+
+The selected pulje is resolved in [pages/event/event_page.templ](/home/cinmay/Documents/conorganizer/pages/event/event_page.templ:41), and `puljerForEvent` already includes `PuljeRow.Status`. So we can pass the selected pulje status down to the interest panel and render three states:
+
+- `Open`: current behavior.
+- `Locked`: no button, locked message with error color.
+- `Completed`: link to `/profile`, success color.
+
+I would also add a server-side guard in `updateInterest` in [pages/event/event.go](/home/cinmay/Documents/conorganizer/pages/event/event.go:326). Hiding the button is not enough; someone could still call the API. The update query should join `puljer` and reject updates unless `puljer.status = 'Open'`.
+
+Recommended implementation:
+
+1. Resolve `selectedPulje` instead of only `selectedPuljeId`.
+2. Pass `selectedPulje.Status` into `Event_mobile`.
+3. Pass it into `EventInterestPanel`.
+4. Render:
+   - locked: `Låst, Puljefordeling pågår. Vent i spenning.`
+   - completed: link/button to `/profile` with `Puljefordelingen er klar se hva du fikk!`
+5. Add backend validation in `updateInterest`.
+6. Add tests:
+   - event interest panel renders button when `Open`.
+   - renders locked message and no interest button when `Locked`.
+   - renders profile link and no interest button when `Completed`.
+   - `updateInterest` rejects locked/completed puljer.
+
+A few clarifying questions before coding:
+
+1. Should I correct the text from `Vendt i spenning` to `Vent i spenning`?
+2. For completed puljer, should the link be `/profile` or `/profile#mitt-festivalprogram` if we add an anchor later?
+3. If an event belongs to multiple puljer with different statuses, should the CTA follow the selected `?pulje=` context? I think yes, because the page already resolves a selected pulje.
+4. Should locked/completed status override the “Hent billett” CTA for users without tickets? My recommendation is yes: if the pulje is locked/completed, interest registration is closed regardless of ticket state.
+
+Time: 2026-05-30 17:15:33
+--- Next Prompt ---
+1. Yes, correct typos.
+2. No, the profile page will soon undergo a redesign. Just link to `/profile` for now. 
+3. We need to rethink this. 
+4. No, if the user does not have a ticket, they should see the CTA to get a ticket regardless of the pulje status.
+
+Ok, we need to rethink this a little. The meld interesse button needs to be there even for locked and completed puljer because there can be multiple puljer or billettholderes. 
+We need to discuss if the interest button or it's sorundings should have some helper text to explain the situation to the user. 
+The interesse velger should have the status, but we need to show the puljer that are locked and completed but the interesse velger should be disabled for those puljer.
+The pulje buttons should also have a lock icon and a color to show that they are locked or completed.
+We also need a time based warnigng. Two hours before the pulje is locked, we should show a warning to the user that the pulje is about to be locked.
+30 minutes before the pulje is locked, we should show a more urgent warning to the user that the pulje is about to be locked at any moment.
+
+We need to make a plan for the implementation of this.
+I want to first implement the UI changes, then wen we are happy with the UI, we can write the tests in a TDD fashion.
+
+Let's continue our discussion. Ask any clarifying questions. 
+
+
+Time: 2026-05-30 17:35:02
+--- Codex Run ---
+
+Codex output:
+I’ll check the current pulje picker and interest picker components so the plan names the exact pieces we would change, especially where disabled/read-only state should live.
+Agreed, this changes the shape of the feature. The event page should not replace the `Meld interesse` button based only on one selected pulje. The button should stay available for users with tickets, and the modal should become status-aware.
+
+**Recommended UI Model**
+Keep the outer event CTA simple:
+
+- If user has no ticket: keep current `Hent billett` CTA, regardless of pulje status.
+- If user has tickets: always show `Meld interesse`.
+- Add helper text around the button when relevant:
+  - some puljer locked/completed
+  - pulje is close to locking
+  - all puljer are closed/read-only
+
+Inside the interest dialog:
+
+- Show all event puljer.
+- Pulje buttons remain selectable, even when locked/completed.
+- Pulje buttons get status styling:
+  - `Open`: normal
+  - `Locked`: lock icon + `--color-error`
+  - `Completed`: check/progress icon + `--color-success`
+  - warning/urgent warning: warning styling while still editable
+- The interest level picker becomes disabled/read-only when the selected pulje is `Locked` or `Completed`.
+- Existing selected interest should still be visible for locked/completed puljer.
+- For completed puljer, show a link to `/profile`.
+
+This means the disabled state belongs in `TicketHolderInterestPicker`, not on the `Meld interesse` button.
+
+**Implementation Plan**
+1. Update `TicketHolderPuljePicker` to expose selected pulje metadata as Datastar signals:
+   - `$puljeId`
+   - `$puljeStatus`
+   - maybe `$puljeLockWarningLevel`
+
+2. Update pulje buttons:
+   - show status icon/badge
+   - use error/success/warning color
+   - still selectable
+
+3. Update `TicketHolderInterestPicker`:
+   - render normal buttons when selected pulje is open
+   - render disabled/read-only state when locked/completed
+   - show status helper text above the disabled buttons
+
+4. Update `EventInterestPanel`:
+   - keep `Meld interesse` for ticket holders
+   - add aggregate helper text based on all puljer for the event
+
+5. Add backend guard later before shipping:
+   - `updateInterest` must reject updates when selected pulje status is not `Open`
+   - UI alone is not enough
+
+6. Then write tests once the UI shape is approved.
+
+**Clarifying Questions**
+1. What is the source of truth for “two hours before the pulje is locked”?  
+   Right now we only have `puljer.start_at`, `end_at`, and manual `status`. There is no `lock_at`.
+
+2. Should the warning be based on pulje start time for now? Example:
+   - warning: `now >= start_at - 2h`
+   - urgent: `now >= start_at - 30m`
+
+3. For a locked pulje, should the disabled interest picker show the user’s current selected interest, or only the locked message?
+
+4. For completed puljer, should the dialog still show the previous interest choice, or only the profile link?
+
+Time: 2026-05-30 17:35:02
+--- Next Prompt ---
+1. The start time for the pulje is `puljer.start_at`
+2. Yes, that makes sense. We need to add time zone information to the time in the database. Also, the server should render the time based warnings based on the server time, not the client time.
+3. For a locked pulje, the interest picker should show the user's current selected interest, but it should be disabled and there should be a message that says "Puljen er låst, du kan ikke endre interessen din."
+4. For completed puljer, the dialog should show the previous interest choice, and the link to the profile page. 
+
+The helper text around the button should also display the time based warnings.
+
+The time based warnings should not display when the pulje is already locked or completed.
+
+Let's continue our discussion. Ask any clarifying questions. 
+
+Time: 2026-05-30 17:57:11
+--- Codex Run ---
+
+Codex output:
+This is a better model: keep the entry point available, then make the pulje-specific state clear inside the dialog.
+
+**State Model**
+I’d model each pulje for the event as one of these UI states:
+
+- `Open`: editable
+- `Warning`: editable, but within 2 hours of `puljer.start_at`
+- `UrgentWarning`: editable, but within 30 minutes of `puljer.start_at`
+- `Locked`: not editable, shows current selected interest
+- `Completed`: not editable, shows current selected interest and `/profile` link
+
+Important: time warnings are only visual. They should not block editing. Only `Locked` and `Completed` should block editing.
+
+**Rendering Rules**
+Outer event panel:
+
+- If user has no ticket: keep `Hent billett`.
+- If user has tickets: always show `Meld interesse`.
+- Helper text around the button should summarize relevant pulje state:
+  - warnings for open puljer near start
+  - closed/completed puljer if relevant
+  - no time warning for locked/completed puljer
+
+Interest dialog:
+
+- Pulje buttons remain selectable.
+- Pulje buttons show:
+  - lock icon + error color for locked
+  - success/check icon + success color for completed
+  - warning styling for time warnings
+- Interest choices stay visible.
+- Interest choices are disabled when selected pulje is locked/completed.
+- Locked message: `Puljen er låst, du kan ikke endre interessen din.`
+- Completed message: show previous interest and link to `/profile`.
+
+**Implementation Plan**
+1. Add a small server-side helper that computes pulje UI state from:
+   - `pulje.Status`
+   - `pulje.StartAt`
+   - `time.Now()` on the server
+
+2. Pass pulje status metadata into the event interest dialog.
+
+3. Update `TicketHolderPuljePicker`:
+   - show status icons/colors
+   - keep locked/completed puljes selectable
+   - update Datastar signals when selected:
+     - `$puljeId`
+     - `$puljeStatus`
+     - `$puljeWarningLevel`
+
+4. Update `TicketHolderInterestPicker`:
+   - disable click actions when selected pulje is locked/completed
+   - keep selected interest visible
+   - show locked/completed message
+
+5. Update `EventInterestPanel` helper text:
+   - aggregate warnings across all event puljer
+   - keep `Meld interesse` available for users with tickets
+
+6. Later, add tests around the helper and rendered states.
+
+**Timezone**
+For the database, I’d store `puljer.start_at` and `end_at` as RFC3339 strings with an explicit Oslo offset, for example:
+
+```text
+2026-10-09T18:00:00+02:00
+```
+
+Not a separate timezone column. The server can parse this correctly and compare it to `time.Now()`.
+
+**Clarifying Questions**
+1. Should existing `Z` pulje times be treated as Oslo wall time and rewritten with Oslo offset? Example: `18:00:00Z` becomes `18:00:00+02:00`, not `20:00:00+02:00`.
+
+2. Should warning text update live while the page is open, or is it enough that it is correct on server render/page refresh? Live server-based updates would require a timer/SSE refresh path.
+
+3. Do you want warning copy like this?
+   - 2 hour warning: `Puljen starter snart. Husk å melde interesse før puljen låses.`
+   - 30 minute warning: `Puljen kan bli låst når som helst. Gjør endringer nå hvis du vil endre interessen din.`
+
+Time: 2026-05-30 17:57:11
+--- Next Prompt ---
+1. Yes, the existing `Z` times should be treated as Oslo wall time and rewritten with Oslo offset.
+2. Yes, the warning text should update live while the page is open.
+3. Yes, that copy looks good.
+
+We need to make sure that the pulje status is broadcast and updated via nats when the status changes. 
+
+
+Time: 2026-05-30 18:04:19
+--- Codex Run ---
+
+Codex output:
+I’ll check the current NATS/key-value update pattern for event pages and the admin pulje status endpoint, because “broadcast and updated live” depends on what bucket/key each page is watching.
+Good. With those answers, the implementation should split into two live-update mechanisms:
+
+- Pulje status changes: update through existing NATS/JetStream KV broadcast.
+- Time warning transitions: update through a server-side timer in the event page SSE stream.
+
+**NATS Status Updates**
+The admin pulje status endpoint already calls:
+
+```go
+keyvalue.BroadcastUpdate(kv, r)
+```
+
+in `pages/admin/puljefordeling.templ`.
+
+The event page already has a Datastar/SSE stream at `/event/api/{id}` and watches the same JetStream KV bucket. So when admin changes a pulje status, the event page should already receive a patch, as long as the user has the event page open and the SSE connection is active.
+
+We should keep that pattern and verify it while implementing. If it does not update reliably, the issue is likely in the shared KV/session update mechanism, not in the pulje status endpoint.
+
+**Live Time Warnings**
+For the warning thresholds, NATS is not enough because no database row changes when time passes.
+
+I recommend adding a server-side timer to the event page SSE loop:
+
+1. When `/event/api/{eventId}` opens, compute the next warning threshold for the event’s open puljer.
+2. Start a `time.Timer` until the next threshold.
+3. In the SSE select loop, listen for:
+   - NATS/KV updates
+   - timer firing
+   - request context cancellation
+4. When the timer fires, re-render the event page from the server and patch it.
+5. Recompute the next timer after every render.
+
+That keeps the warnings server-time based and live while the page is open.
+
+**Warning Rules**
+Only for puljer with status `Open`:
+
+- `now >= start_at - 2h`: warning
+- `now >= start_at - 30m`: urgent warning
+- locked/completed puljer never show time warnings
+
+If a pulje is still `Open` after `start_at - 30m`, it remains urgent until admin locks/completes it.
+
+**Timezone**
+Use RFC3339 strings with explicit Oslo offset in `puljer.start_at` and `puljer.end_at`.
+
+Example:
+
+```text
+2026-10-09T18:00:00+02:00
+```
+
+We should add a migration that rewrites existing `Z` values as Oslo wall time, preserving the visible clock time. So:
+
+```text
+2026-10-09T18:00:00Z
+```
+
+becomes:
+
+```text
+2026-10-09T18:00:00+02:00
+```
+
+not `20:00:00+02:00`.
+
+**UI Plan**
+Outer event CTA:
+
+- No ticket: show `Hent billett`, no matter pulje status.
+- Has ticket: always show `Meld interesse`.
+- Helper text below/near the CTA summarizes:
+  - open puljes near lock threshold
+  - locked/completed puljes if relevant
+
+Dialog:
+
+- Pulje buttons stay selectable.
+- Pulje buttons show status/warning styling.
+- Interest options stay visible.
+- Interest options are disabled if selected pulje is `Locked` or `Completed`.
+- Locked message: `Puljen er låst, du kan ikke endre interessen din.`
+- Completed message: previous interest + `/profile` link.
+
+**One Clarifying Question**
+For the outer helper text, should we show a compact summary for all affected puljer, for example:
+
+`Fredag kveld låses snart. Lørdag morgen er låst. Søndag morgen er ferdig fordelt.`
+
+Or should we only show the most urgent message across all puljer to keep the panel quiet?
+
+Time: 2026-05-30 18:04:19
+--- Next Prompt ---
+No, we only need to show the most urgent message across all puljer. For example, Lørdag morgen låses snart. even if there are other puljer that are already locked or completed.
+
+Time: 2026-05-30 18:07:39
+--- Codex Run ---
+
+Codex output:
+Understood. We’ll make the outer helper a single prioritized message, not a full status summary.
+
+**Outer Helper Priority**
+For users with tickets, the event panel will show only the highest-priority message across all puljer for that event:
+
+1. `UrgentWarning` for any open pulje within 30 minutes of `start_at`
+2. `Warning` for any open pulje within 2 hours of `start_at`
+3. `Locked` if no warnings exist, but at least one pulje is locked
+4. `Completed` if no warnings/locked puljer exist, but at least one pulje is completed
+5. No helper message
+
+If multiple puljer have the same priority, choose the one with the earliest `start_at`.
+
+Example:
+
+```text
+Lørdag morgen låses snart.
+```
+
+This means a warning for one open pulje will take precedence over other puljer that are already locked/completed.
+
+**Dialog Behavior Stays Per Pulje**
+Inside the interest dialog we still show the full state per pulje:
+
+- each pulje button gets its own status/warning visual state
+- selected pulje controls whether the interest picker is editable
+- locked/completed puljer remain selectable so users can see their existing interest
+
+**Live Updates**
+The event page should update from two triggers:
+
+- Admin changes status: existing NATS/KV broadcast rerenders the event page.
+- Time threshold passes: event page SSE timer rerenders from server time.
+
+I think the plan is now clear enough to start UI implementation first.
+
+Time: 2026-05-30 18:07:39
+--- Next Prompt ---
+Ok, let's start with the UI implementation. Use temporary hardcoded mock values where needed to show the different states.
+
+Time: 2026-05-30 18:14:53
+--- Codex Run ---
+
+Codex output:
+I’ll wire the UI with temporary per-pulje mock states so we can see warning, urgent, locked, and completed styling immediately. I’ll keep the server/API behavior unchanged for now, as requested, and focus on the visible flow.
+The mock UI states are in place now: warning, urgent, locked, and completed are derived temporarily from pulje IDs so the dialog can show all visual states. I’m generating templ output to catch syntax issues before checking the page.
+I’ll do a quick sanity check of the working tree and the run command now. The UI code is in place with hardcoded per-pulje mock states, and the Go test suite passed after generating templ output.
+There is one unrelated modified thread note file in the tree, so I’m leaving that alone. I’m checking the app startup path next so I can give you a live URL if the local dev command starts cleanly.
+The diff matches the requested UI-only step: no database wiring yet, and the lock/completed behavior is mocked from pulje IDs so the dialog can demonstrate each state. I’m starting the app on a non-default port to make it easier to try without disturbing any existing local process.
+The local server cannot bind sockets in this sandbox, so I can’t keep a preview server running from here. I’m doing one final compile/test pass instead so we at least know the templ output and Go code are coherent.
+Implemented the UI pass with temporary mock pulje states.
+
+Changed:
+- Event interest panel now receives puljer and shows the most urgent helper message.
+- Interest dialog shows pulje status, disables interest choices for locked/completed puljer, and links completed puljer to `/profile`.
+- Pulje picker cards now show lock/warning/completed indicators.
+- Added lock and warning icons.
+- Mock state mapping is currently:
+  - `FredagKveld`: warning
+  - `LordagMorgen`: urgent warning
+  - `LordagKveld`: locked
+  - `SondagMorgen`: completed
+
+Touched files include [ticket_holder.go](/home/cinmay/Documents/conorganizer/components/ticket_holder/ticket_holder.go), [event_interest_panel.templ](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ), [event_interests.templ](/home/cinmay/Documents/conorganizer/components/event_components/event_interests.templ), and the ticket holder picker components.
+
+Verification:
+- `go tool templ generate` passed.
+- `GOCACHE=/tmp/go-build go test ./...` passed.
+- I tried starting the app on `PORT=8090`, but this sandbox cannot bind sockets: `socket: operation not permitted`.
+
+There is still an unrelated modified `.ai/threads/pulje-config.md` file in the worktree; I left it untouched.
+
+Time: 2026-05-30 18:14:53
+--- Next Prompt ---
 
