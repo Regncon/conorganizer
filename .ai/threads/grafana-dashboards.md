@@ -1744,4 +1744,29 @@ Time: 2026-05-29 12:04:27
 --- Next Prompt ---
 
 I connected the Prometheus datasource to Grafana and it works now.
+Let's discuss this berfore you make any changes. Please ask any clarifying questions. 
+
+Time: 2026-05-30 15:52:43
+--- Codex Run ---
+
+Codex output:
+Understood. I won’t make changes yet.
+
+The main decision is whether the dashboard JSON should stay portable or be pinned to this Grafana instance.
+
+Clarifying questions:
+
+1. Do you still see the “Prometheus data source was not found” warning now that the datasource works, or is the warning gone?
+
+2. Do you want the dashboard JSON to keep datasource variables (`DS_PROMETHEUS`, `DS_LOKI`) so it stays portable across Grafana instances?
+
+3. Or do you want the JSON hard-wired to this server’s actual datasource UIDs so overwrite/import is frictionless for this Grafana only?
+
+4. What are the current Grafana datasource names and UIDs for Prometheus and Loki?  
+   The UID is the important part if we hard-wire them.
+
+5. Should these files remain only in `configuration-as-code/grafana-dashboards/` for manual import, or are we now moving toward stowed/provisioned Grafana dashboards later?
+
+Time: 2026-05-30 15:52:43
+--- Next Prompt ---
 

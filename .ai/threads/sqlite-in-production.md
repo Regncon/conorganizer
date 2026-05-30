@@ -635,4 +635,75 @@ If that now fails at the `sqlite3 "$remote_db"` step, the remaining issue is lik
 
 Time: 2026-05-30 15:08:45
 --- Next Prompt ---
+Let's reduce the complexity of the status pages. 
+Do we need pages? Can't we just have a route that returns 200 OK if the app is healthy and 500 Internal Server Error with a message if the app is not healthy?
+
+Let's discuss this berfore you make any changes. Please ask any clarifying questions. 
+
+Time: 2026-05-30 16:01:13
+--- Codex Run ---
+
+Codex output:
+We can simplify. We do not need a styled HTML status page for degraded mode unless you want a human-friendly browser page when the main app cannot start fully.
+
+My recommendation:
+
+- Keep `/healthz`: `200 OK` with `ok\n` if the process is alive.
+- Keep `/readyz`: `200 OK` with `ok\n` when ready, `503 Service Unavailable` with `not ready\n` when not ready.
+- Remove the HTML degraded page and replace degraded app routes with a plain text response.
+- Do not use `500` for readiness failure unless you strongly prefer it. `503` is the normal signal for “service is running but not ready/available”; `500` usually means an unexpected handler failure.
+
+Clarifying questions before changes:
+
+1. For failed readiness, do you want `503 Service Unavailable` instead of `500 Internal Server Error`?
+   My recommendation is `503`.
+
+2. Should the failure body stay generic, like `not ready\n`, or include a short reason like `not ready: image directory unavailable\n`?
+   My recommendation is generic, with details only in logs, to avoid exposing paths/internal state.
+
+3. When the app is degraded, should all normal app routes return the same plain text status response instead of an HTML page?
+   My recommendation is yes: keep it boring and operationally clear.
+
+Time: 2026-05-30 16:01:13
+--- Next Prompt ---
+1. Your right, we should return 503 for not ready.
+2.  We can make the body of the 503 response with simple details like "not ready: image directory not writable"  and "not ready: database not available" etc but leave the detailed internal errors in the logs. This way, if someone hits the endpoint directly, they get a bit more context without exposing sensitive detail.
+3. No, the status page is there to give the public and users a friendly message when the app is degraded. We can keep it simple and friendly.
+
+
+Time: 2026-05-30 16:13:40
+--- Codex Run ---
+
+Codex output:
+I’ll make that change now: keep `/healthz` as plain `ok`, make `/readyz` return `503` with a sanitized reason, and simplify the friendly degraded page without exposing internal errors.
+Implemented the status simplification.
+
+Changed behavior:
+- `/healthz`: still `200 OK` with `ok\n`.
+- `/readyz`: returns `503 Service Unavailable` with sanitized context:
+  - `not ready: image directory not writable`
+  - `not ready: database not available`
+  - `not ready: application startup incomplete`
+- Detailed internal errors and paths stay in logs.
+- The degraded public page stays, but is now simpler and friendlier.
+
+Updated:
+- [health.go](/home/cinmay/Documents/conorganizer/health.go)
+- [health_test.go](/home/cinmay/Documents/conorganizer/health_test.go)
+- [main.go](/home/cinmay/Documents/conorganizer/main.go)
+- [documentation/sqlite-production.md](/home/cinmay/Documents/conorganizer/documentation/sqlite-production.md)
+
+Validation:
+```bash
+GOCACHE=/tmp/conorganizer-go-build go test ./...
+GOCACHE=/tmp/conorganizer-go-build go build -o /tmp/conorganizer-main .
+git diff --check -- . ':(exclude).ai/**'
+```
+
+All passed. The build still prints the same non-fatal Go stat-cache warning because the sandbox module cache is read-only.
+
+Current git status also shows `.ai/threads/...` files changed by the thread logging; I did not edit those.
+
+Time: 2026-05-30 16:13:40
+--- Next Prompt ---
 

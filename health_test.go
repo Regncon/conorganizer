@@ -49,9 +49,9 @@ func TestReadyzReturnsOKWhenStartupAndLiveCheckPass(t *testing.T) {
 	}
 }
 
-func TestReadyzReturnsGenericFailureWhenDegraded(t *testing.T) {
+func TestReadyzReturnsSanitizedFailureReasonWhenDegraded(t *testing.T) {
 	state := newReadinessState(nil, testLogger())
-	state.MarkDegraded(fmt.Errorf("event image directory /secret/path is not writable"))
+	state.MarkDegraded(notReadyImageReason, fmt.Errorf("event image directory /secret/path is not writable"))
 
 	router := chi.NewRouter()
 	mountHealthRoutes(router, state, testLogger())
@@ -64,11 +64,27 @@ func TestReadyzReturnsGenericFailureWhenDegraded(t *testing.T) {
 		t.Fatalf("/readyz status = %d, want %d", recorder.Code, http.StatusServiceUnavailable)
 	}
 	body := recorder.Body.String()
-	if body != "not ready\n" {
-		t.Fatalf("/readyz body = %q, want generic not ready", body)
+	if body != "not ready: image directory not writable\n" {
+		t.Fatalf("/readyz body = %q, want sanitized not ready reason", body)
 	}
 	if strings.Contains(body, "/secret/path") {
 		t.Fatalf("/readyz exposed internal path: %q", body)
+	}
+}
+
+func TestReadyzReturnsDatabaseReasonWhenLiveCheckFails(t *testing.T) {
+	router := chi.NewRouter()
+	mountHealthRoutes(router, newReadinessState(nil, testLogger()), testLogger())
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/readyz", nil)
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusServiceUnavailable {
+		t.Fatalf("/readyz status = %d, want %d", recorder.Code, http.StatusServiceUnavailable)
+	}
+	if recorder.Body.String() != "not ready: database not available\n" {
+		t.Fatalf("/readyz body = %q, want database not available reason", recorder.Body.String())
 	}
 }
 

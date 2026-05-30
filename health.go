@@ -12,14 +12,22 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-const readinessLiveCheckTimeout = 250 * time.Millisecond
+const (
+	readinessLiveCheckTimeout = 250 * time.Millisecond
+
+	notReadyApplicationReason = "application startup incomplete"
+	notReadyDatabaseReason    = "database not available"
+	notReadyImageReason       = "image directory not writable"
+	notReadyMultipleReason    = "multiple startup checks failed"
+)
 
 type readinessState struct {
 	db     *sql.DB
 	logger *slog.Logger
 
-	mu          sync.RWMutex
-	degradedErr error
+	mu             sync.RWMutex
+	degradedErr    error
+	degradedReason string
 }
 
 func newReadinessState(db *sql.DB, logger *slog.Logger) *readinessState {
@@ -29,9 +37,12 @@ func newReadinessState(db *sql.DB, logger *slog.Logger) *readinessState {
 	}
 }
 
-func (state *readinessState) MarkDegraded(err error) {
+func (state *readinessState) MarkDegraded(reason string, err error) {
 	if err == nil {
 		return
+	}
+	if reason == "" {
+		reason = notReadyApplicationReason
 	}
 
 	state.mu.Lock()
@@ -39,17 +50,21 @@ func (state *readinessState) MarkDegraded(err error) {
 
 	if state.degradedErr != nil {
 		state.degradedErr = fmt.Errorf("%v; %w", state.degradedErr, err)
+		if state.degradedReason != reason {
+			state.degradedReason = notReadyMultipleReason
+		}
 		return
 	}
 
 	state.degradedErr = err
+	state.degradedReason = reason
 	state.logger.Warn("application marked not ready", "error", err.Error())
 }
 
-func (state *readinessState) DegradedError() error {
+func (state *readinessState) DegradedReason() (string, bool) {
 	state.mu.RLock()
 	defer state.mu.RUnlock()
-	return state.degradedErr
+	return state.degradedReason, state.degradedErr != nil
 }
 
 func (state *readinessState) CheckLive(ctx context.Context) error {
@@ -87,16 +102,16 @@ func mountHealthRoutes(router chi.Router, readiness *readinessState, logger *slo
 	router.Get("/readyz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 
-		if err := readiness.DegradedError(); err != nil {
+		if reason, degraded := readiness.DegradedReason(); degraded {
 			w.WriteHeader(http.StatusServiceUnavailable)
-			_, _ = w.Write([]byte("not ready\n"))
+			_, _ = fmt.Fprintf(w, "not ready: %s\n", reason)
 			return
 		}
 
 		if err := readiness.CheckLive(r.Context()); err != nil {
 			logger.Warn("readiness check failed", "error", err.Error())
 			w.WriteHeader(http.StatusServiceUnavailable)
-			_, _ = w.Write([]byte("not ready\n"))
+			_, _ = fmt.Fprintf(w, "not ready: %s\n", notReadyDatabaseReason)
 			return
 		}
 

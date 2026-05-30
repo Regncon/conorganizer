@@ -22,7 +22,7 @@ Health endpoints:
 
 - `/healthz` means the process is alive.
 - `/readyz` means startup checks passed and a cheap DB live check succeeds.
-- Public health responses are generic. Look at service logs for details.
+- Failed `/readyz` responses include a short sanitized reason. Detailed internal errors stay in logs.
 
 Basic restore/download notes:
 
@@ -171,7 +171,7 @@ The app still has degraded-mode routing for non-DB startup problems such as an u
 
 DB open/configuration/schema failure is fatal. The process exits instead of serving a degraded page with no usable database.
 
-When degraded mode is entered, `readinessState.MarkDegraded` caches the failure and logs it. Public HTTP responses stay generic.
+When degraded mode is entered, `readinessState.MarkDegraded` caches a sanitized public reason and logs the detailed failure.
 
 `/healthz`:
 
@@ -181,11 +181,12 @@ When degraded mode is entered, `readinessState.MarkDegraded` caches the failure 
 
 `/readyz`:
 
-- returns `503 not ready` if startup marked the app degraded
+- returns `503` with a body like `not ready: image directory not writable` if startup marked the app degraded
+- returns `503` with `not ready: database not available` if the live DB check fails
 - otherwise performs only `SELECT 1` with a short timeout
 - does not run migrations
 - does not run schema-changing PRAGMAs
-- does not expose internal paths or error strings in the response body
+- does not expose internal paths or raw error strings in the response body
 
 ### Safe database download
 
