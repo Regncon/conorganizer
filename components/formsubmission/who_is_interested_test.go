@@ -2,7 +2,6 @@ package formsubmission
 
 import (
 	"database/sql"
-	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
@@ -212,7 +211,7 @@ func indexInterests(t *testing.T, interests []InterestWithHolder) map[int]Intere
 func seedBaseTables(t *testing.T, db *sql.DB) {
 	t.Helper()
 
-	puljeStatus := puljeStatusForTestSchema(t, db)
+	puljeStatus := models.PuljeStatusOpen
 
 	mustExec(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?)`, models.EventStatusApproved)
 	mustExec(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
@@ -246,26 +245,6 @@ func seedBaseTables(t *testing.T, db *sql.DB) {
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
 	)
-}
-
-func puljeStatusForTestSchema(t *testing.T, db *sql.DB) models.PuljeStatus {
-	t.Helper()
-
-	var createTableSQL string
-	err := db.QueryRow(`
-		SELECT sql
-		FROM sqlite_schema
-		WHERE type = 'table' AND name = 'puljer'
-	`).Scan(&createTableSQL)
-	if err != nil {
-		t.Fatalf("failed to read puljer schema: %v", err)
-	}
-
-	if strings.Contains(createTableSQL, "'open'") {
-		return models.PuljeStatusOpen
-	}
-
-	return models.PuljeStatusPublished
 }
 
 func playerFixtures() []billettholderFixture {

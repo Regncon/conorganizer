@@ -55,7 +55,7 @@ func seedBillettholderOverviewLookups(t *testing.T, db *sql.DB) {
 	mustExecBillettholderOverviewTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
 	mustExecBillettholderOverviewTest(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
 	mustExecBillettholderOverviewTest(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?)`, models.InterestLevelHigh)
-	mustExecBillettholderOverviewTest(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusPublished)
+	mustExecBillettholderOverviewTest(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusOpen)
 }
 
 func seedBillettholderOverviewBillettholdere(t *testing.T, db *sql.DB) {
@@ -78,7 +78,7 @@ func seedBillettholderOverviewPuljer(t *testing.T, db *sql.DB) {
 			id, name, status, start_at, end_at
 		) VALUES
 			(?, 'Fredag kveld', ?, '2026-10-09T18:00:00Z', '2026-10-09T23:00:00Z')
-	`, models.PuljeFredagKveld, models.PuljeStatusPublished)
+	`, models.PuljeFredagKveld, models.PuljeStatusOpen)
 }
 
 func seedBillettholderOverviewEvents(t *testing.T, db *sql.DB) {

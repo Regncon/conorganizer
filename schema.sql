@@ -65,17 +65,6 @@ CREATE TABLE relation_event_puljer(
   FOREIGN KEY(pulje_id) REFERENCES puljer(id) ON UPDATE CASCADE,
   FOREIGN KEY(room_id) REFERENCES rooms(id) ON DELETE SET NULL
 ) STRICT;
-CREATE TABLE puljer(
-  id TEXT NOT NULL PRIMARY KEY,
-  name TEXT NOT NULL,
-  status TEXT NOT NULL CHECK(status IN('not_published',
-'published',
-'locked',
-'completed')),
-  start_at TEXT NOT NULL,
-  end_at TEXT NOT NULL,
-  FOREIGN KEY(status) REFERENCES pulje_statuses(status) ON UPDATE CASCADE
-) STRICT;
 CREATE TABLE relation_events_players(
   event_id TEXT NOT NULL,
   pulje_id TEXT NOT NULL,
@@ -268,4 +257,12 @@ WHERE
 CREATE TABLE program_publishing_state(
   id INTEGER NOT NULL PRIMARY KEY CHECK(id = 1),
   is_published INTEGER NOT NULL DEFAULT 0 CHECK(is_published IN(0, 1))
+) STRICT;
+CREATE TABLE "puljer"(
+  id TEXT NOT NULL PRIMARY KEY,
+  name TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'Open' CHECK(status IN('Open', 'Locked', 'Completed')),
+  start_at TEXT NOT NULL,
+  end_at TEXT NOT NULL,
+  FOREIGN KEY(status) REFERENCES pulje_statuses(status) ON UPDATE CASCADE
 ) STRICT;
