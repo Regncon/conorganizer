@@ -14,7 +14,7 @@
   "graphTooltip": 1,
   "liveNow": false,
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "1m",
   "time": {
     "from": "now-6h",
@@ -214,7 +214,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "### Purpose\nAt-a-glance production platform health and restore confidence for Conorganizer.\n\nUse this dashboard from top to bottom: **current status -> backups -> filesystem capacity -> VPS resources -> SQLite -> HTTP/TLS -> system errors**.\n\nDesign choices:\n- Infrastructure panels follow USE: utilization, saturation, and errors.\n- Service-facing panels use public blackbox probes for symptoms before digging into causes.\n- Loki panels should work with broad `job` labels; narrow `loki_job` after import if labels are available.\n- Prometheus panels require node_exporter, blackbox_exporter, and systemd collector metrics.\n- Optional SQLite/backup size panels require future textfile/custom metrics.\n\nUseful external examples:\n- Node Exporter Full: https://grafana.com/grafana/dashboards/1860-node-exporter-full/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/\n- Caddy Monitoring: https://grafana.com/grafana/dashboards/22806-caddy-monitoring/\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/"
+        "content": "### Purpose\nAt-a-glance production platform health and restore confidence for Conorganizer.\n\nUse this dashboard from top to bottom: **current status -> backups -> filesystem capacity -> VPS resources -> SQLite -> HTTP/TLS -> system errors**.\n\nDesign choices:\n- Infrastructure panels follow USE: utilization, saturation, and errors.\n- Service-facing panels use public blackbox probes for symptoms before digging into causes.\n- Backup freshness status uses Loki success logs first; precise backup age panels require future custom/textfile metrics.\n- Loki panels should work with broad `job` labels; narrow `loki_job` after import if labels are available.\n- Prometheus panels require node_exporter, blackbox_exporter, and systemd collector metrics.\n- Optional SQLite/backup size panels require future textfile/custom metrics.\n\nUseful external examples:\n- Node Exporter Full: https://grafana.com/grafana/dashboards/1860-node-exporter-full/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/\n- Caddy Monitoring: https://grafana.com/grafana/dashboards/22806-caddy-monitoring/\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/"
       }
     },
     {
@@ -533,11 +533,11 @@
     {
       "id": 8,
       "type": "stat",
-      "title": "SQLite backup age",
-      "description": "Optional future custom/textfile metric. Expected SQLite backup cadence is every 15 minutes. Alert candidate: older than 2 hours.",
+      "title": "SQLite backups, 2h",
+      "description": "Log-derived count of successful SQLite backups in the last 2 hours using the stable backup prefix. Green means at least one recent success; the precise age panel below requires a future metric.",
       "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "type": "loki",
+        "uid": "${DS_LOKI}"
       },
       "gridPos": {
         "h": 4,
@@ -548,13 +548,13 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(time() - conorganizer_sqlite_backup_last_success_timestamp_seconds) / 3600",
-          "queryType": "timeSeriesQuery"
+          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"conorganizer-sqlite-backup: completed successfully\" [2h]))",
+          "queryType": "range"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "h",
+          "unit": "short",
           "color": {
             "mode": "thresholds"
           },
@@ -563,20 +563,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 2
-              },
-              {
-                "color": "red",
-                "value": 4
+                "color": "green",
+                "value": 1
               }
             ]
           },
-          "decimals": 1
+          "decimals": 0
         },
         "overrides": []
       },
@@ -599,11 +595,11 @@
     {
       "id": 9,
       "type": "stat",
-      "title": "Image backup age",
-      "description": "Optional future custom/textfile metric. Expected image backup cadence is daily around 03:30 UTC. Alert candidate: older than 26 hours.",
+      "title": "Image backups, 26h",
+      "description": "Log-derived count of successful image backups in the last 26 hours using the stable backup prefix. Green means at least one recent success; exact age requires a future metric.",
       "datasource": {
-        "type": "prometheus",
-        "uid": "${DS_PROMETHEUS}"
+        "type": "loki",
+        "uid": "${DS_LOKI}"
       },
       "gridPos": {
         "h": 4,
@@ -614,13 +610,13 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "(time() - conorganizer_images_backup_last_success_timestamp_seconds) / 3600",
-          "queryType": "timeSeriesQuery"
+          "expr": "sum(count_over_time({job=~\"$loki_job\"} |= \"conorganizer-images-backup: completed successfully\" [26h]))",
+          "queryType": "range"
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "h",
+          "unit": "short",
           "color": {
             "mode": "thresholds"
           },
@@ -629,20 +625,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": null
               },
               {
-                "color": "yellow",
-                "value": 26
-              },
-              {
-                "color": "red",
-                "value": 36
+                "color": "green",
+                "value": 1
               }
             ]
           },
-          "decimals": 1
+          "decimals": 0
         },
         "overrides": []
       },
@@ -1814,8 +1806,8 @@
     {
       "id": 28,
       "type": "timeseries",
-      "title": "Filesystem growth proxy",
-      "description": "Approximate daily used-byte growth on the mounted volume. Negative values can happen after cleanup.",
+      "title": "Mounted volume used bytes",
+      "description": "Used bytes on the mounted Hetzner volume. This avoids counter functions on filesystem gauges and shows the capacity trend directly.",
       "datasource": {
         "type": "prometheus",
         "uid": "${DS_PROMETHEUS}"
@@ -1829,8 +1821,8 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "increase(node_filesystem_size_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"}[24h]) - increase(node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"}[24h])",
-          "legendFormat": "used growth"
+          "expr": "node_filesystem_size_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"} - node_filesystem_avail_bytes{instance=~\"$node_instance\",mountpoint=\"$volume_mountpoint\",fstype!~\"tmpfs|overlay|squashfs|ramfs\"}",
+          "legendFormat": "used bytes"
         }
       ],
       "fieldConfig": {

@@ -14,7 +14,7 @@
   "graphTooltip": 1,
   "liveNow": false,
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -214,7 +214,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "### Purpose\nFocused debugging for `conorganizer-main.service` and the public main website.\n\nRecommended workflow:\n1. Confirm the service is active.\n2. Check the current error signal.\n3. Inspect error/panic/database logs.\n4. Look at request rate, status codes, and latency.\n5. Use slow/failing request logs to find concrete routes and request IDs.\n\nDesign choices:\n- Service panels follow RED / Golden Signals: request rate, errors, duration/latency, and saturation proxies.\n- HTTP behavior is log-derived from `msg=\"http request completed\"`, `component=\"http\"`, `method`, `path`, `status_code`, `duration_ms`, and optional `request_id`.\n- No app Prometheus metric names are invented. Optional app-metric panels can be added later when `/metrics` exists.\n- Loki queries start broad enough for `job=varlogs`; narrow `loki_job` or replace with exact journal labels after import.\n\nUseful external examples:\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/\n- Logging Dashboard via Loki v2: https://grafana.com/grafana/dashboards/18042-logging-dashboard-via-loki-v2/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/"
+        "content": "### Purpose\nFocused debugging for `conorganizer-main.service` and the public main website.\n\nRecommended workflow:\n1. Confirm the service is active.\n2. Check the current error signal.\n3. Inspect error/panic/database logs.\n4. Look at request rate, status codes, and latency.\n5. Use slow/failing request logs to find concrete routes and request IDs.\n\nDesign choices:\n- Service panels follow RED / Golden Signals: request rate, errors, duration/latency, and saturation proxies.\n- HTTP behavior is log-derived from `msg=\"http request completed\"`, `component=\"http\"`, `method`, `path`, `status_code`, `duration_ms`, and optional `request_id`.\n- The repo does not currently define app `/metrics`, `/healthz`, or `/readyz`; public probe panels check the main host through blackbox_exporter.\n- No app Prometheus metric names are invented. Optional app-metric panels can be added later when `/metrics` exists.\n- Loki queries start broad enough for `job=varlogs`; narrow `loki_job` or replace with exact journal labels after import.\n\nUseful external examples:\n- Loki Dashboard: https://grafana.com/grafana/dashboards/13186-loki-dashboard/\n- Logging Dashboard via Loki v2: https://grafana.com/grafana/dashboards/18042-logging-dashboard-via-loki-v2/\n- Prometheus Blackbox Exporter: https://grafana.com/grafana/dashboards/14928-prometheus-blackbox-exporter/"
       }
     },
     {
@@ -629,7 +629,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"conorganizer-main|http request completed|database is locked|database is busy|panic|failed|error|ERROR|status_code\" |~ \"ERROR|error|failed|panic|status_code.:5[0-9][0-9]|database is locked|database is busy\" [5m]))",
+          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"conorganizer-main.service|conorganizer-main|http request completed|level.:.ERROR|database is locked|database is busy|panic\" |~ \"ERROR|error|failed|panic|status_code.:5[0-9][0-9]|database is locked|database is busy\" [5m]))",
           "queryType": "range"
         }
       ],
@@ -690,7 +690,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"conorganizer-main|http request completed|database is locked|database is busy|panic|failed|error|ERROR|status_code\" |~ \"ERROR|error|failed|panic|status_code.:5[0-9][0-9]|database is locked|database is busy\" [5m]))",
+          "expr": "sum(count_over_time({job=~\"$loki_job\"} |~ \"conorganizer-main.service|conorganizer-main|http request completed|level.:.ERROR|database is locked|database is busy|panic\" |~ \"ERROR|error|failed|panic|status_code.:5[0-9][0-9]|database is locked|database is busy\" [5m]))",
           "legendFormat": "errors",
           "queryType": "range"
         }
@@ -770,7 +770,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"conorganizer-main|http request completed|ERROR|error|failed|status_code\" |~ \"ERROR|error|failed|status_code.:5[0-9][0-9]\"",
+          "expr": "{job=~\"$loki_job\"} |~ \"conorganizer-main.service|conorganizer-main|http request completed|level.:.ERROR|database is locked|database is busy|panic\" |~ \"ERROR|error|failed|panic|status_code.:5[0-9][0-9]\"",
           "queryType": "range"
         }
       ],
@@ -1009,7 +1009,7 @@
       "id": 19,
       "type": "timeseries",
       "title": "Status code rate",
-      "description": "Log-derived HTTP status-code rate. Requires JSON app request logs with status_code.",
+      "description": "Log-derived HTTP status-code rate. Requires JSON app request logs with status_code. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1089,7 +1089,7 @@
       "id": 20,
       "type": "timeseries",
       "title": "5xx count",
-      "description": "Log-derived 5xx count. Alert candidate: greater than 0.",
+      "description": "Log-derived 5xx count. Alert candidate: greater than 0. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1169,7 +1169,7 @@
       "id": 21,
       "type": "timeseries",
       "title": "Top failing routes",
-      "description": "Groups 5xx request logs by path. Requires JSON request logs with path and status_code.",
+      "description": "Groups 5xx request logs by path. Requires JSON request logs with path and status_code. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1249,7 +1249,7 @@
       "id": 22,
       "type": "timeseries",
       "title": "4xx count",
-      "description": "Client-error trend. Useful for spotting broken links, auth/session problems, or bots.",
+      "description": "Client-error trend. Useful for spotting broken links, auth/session problems, or bots. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1422,7 +1422,7 @@
       "id": 25,
       "type": "timeseries",
       "title": "p50 request latency",
-      "description": "Log-derived p50 latency from duration_ms.",
+      "description": "Log-derived p50 latency from duration_ms. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1503,7 +1503,7 @@
       "id": 26,
       "type": "timeseries",
       "title": "p95 request latency",
-      "description": "Log-derived p95 latency from duration_ms. Tail latency is often the first useful saturation symptom.",
+      "description": "Log-derived p95 latency from duration_ms. Tail latency is often the first useful saturation symptom. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1584,7 +1584,7 @@
       "id": 27,
       "type": "timeseries",
       "title": "p99 request latency",
-      "description": "Log-derived p99 latency from duration_ms. Investigate spikes with the slow request logs below.",
+      "description": "Log-derived p99 latency from duration_ms. Investigate spikes with the slow request logs below. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1665,7 +1665,7 @@
       "id": 28,
       "type": "logs",
       "title": "Slow request logs > 1000 ms",
-      "description": "Request logs slower than 1 second. Inspect path, method, status_code, duration_ms, and request_id.",
+      "description": "Request logs slower than 1 second. Inspect path, method, status_code, duration_ms, and request_id. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1791,7 +1791,7 @@
       "id": 31,
       "type": "timeseries",
       "title": "Requests by route",
-      "description": "Top request paths from JSON request logs.",
+      "description": "Top request paths from JSON request logs. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1871,7 +1871,7 @@
       "id": 32,
       "type": "timeseries",
       "title": "Requests by method",
-      "description": "HTTP methods from JSON request logs.",
+      "description": "HTTP methods from JSON request logs. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -1951,7 +1951,7 @@
       "id": 33,
       "type": "timeseries",
       "title": "Top slow routes",
-      "description": "Maximum duration_ms by path in the last 15 minutes. Use with caution: a single outlier can dominate.",
+      "description": "Maximum duration_ms by path in the last 15 minutes. Use with caution: a single outlier can dominate. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2032,7 +2032,7 @@
       "id": 34,
       "type": "logs",
       "title": "Recent failed requests",
-      "description": "All recent 4xx/5xx request logs. Use path, status_code, duration_ms, and request_id to investigate.",
+      "description": "All recent 4xx/5xx request logs. Use path, status_code, duration_ms, and request_id to investigate. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
@@ -2534,7 +2534,7 @@
       "targets": [
         {
           "refId": "A",
-          "expr": "{job=~\"$loki_job\"} |~ \"conorganizer-main|http request completed|WARN|ERROR|warning|error|failed|panic\"",
+          "expr": "{job=~\"$loki_job\"} |~ \"conorganizer-main.service|conorganizer-main|http request completed|level.:.WARN|level.:.ERROR|panic|failed|error\" |~ \"WARN|ERROR|warning|error|failed|panic|status_code.:5[0-9][0-9]\"",
           "queryType": "range"
         }
       ],
@@ -2553,7 +2553,7 @@
       "id": 45,
       "type": "logs",
       "title": "Recent request logs",
-      "description": "Raw request-completion logs parsed as JSON. Use this to confirm path/status/duration fields are present.",
+      "description": "Raw request-completion logs parsed as JSON. Use this to confirm path/status/duration fields are present. Requires request logs to reach Loki as parseable JSON; otherwise use the text-only log panels and adjust selectors after import.",
       "datasource": {
         "type": "loki",
         "uid": "${DS_LOKI}"
