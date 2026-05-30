@@ -56,10 +56,13 @@ Follow the [Linux/Mac Setup Guide](#linuxmac-setup-guide) below.
 > [!NOTE]
 > To get the latest backup of the database and all the images from prod run:
 > The database download requires `DB_SSH_USER` in your `.env` file or shell environment.
+> The database task creates a temporary SQLite backup snapshot on the server; it does not copy the live WAL-mode database file directly.
 
 ```bash
-task download
+go tool task download
 ```
+
+Production SQLite operational notes are in [documentation/sqlite-production.md](documentation/sqlite-production.md).
 
 To get the latest schema of the database, run:
 
@@ -193,7 +196,7 @@ go install github.com/a-h/templ/cmd/templ@latest
     Check Task installation:
 
     ```bash
-    task --version
+    go tool task --version
     ```
 
 > [!TIP]
@@ -228,8 +231,9 @@ We're using [Goose](https://pressly.github.io/goose/) in our migration process f
 ### Running Goose manually
 
 > [!WARNING]
-> Before running Goose, run `task download` to fetch the newest version of the database!
+> Before running Goose, run `go tool task download` to fetch the newest version of the database!
 > You can install Goose CLI tool from [here](https://pressly.github.io/goose/installation/), afterwards you should have `goose` globally available in your terminal.
+> Migrations are manual only. Do not add automatic migrations to application startup, health checks, readiness checks, or systemd startup.
 
 To create a new migration file you can run the following command, read [here](https://pressly.github.io/goose/documentation/annotations/) for more annotation examples.
 
