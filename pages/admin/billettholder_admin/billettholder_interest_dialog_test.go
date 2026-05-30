@@ -190,7 +190,7 @@ func seedBillettholderInterestLookups(t *testing.T, db *sql.DB) {
 	mustExecBillettholderInterestTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
 	mustExecBillettholderInterestTest(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
 	mustExecBillettholderInterestTest(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
-	mustExecBillettholderInterestTest(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusPublished)
+	mustExecBillettholderInterestTest(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusOpen)
 }
 
 func seedBillettholderInterestBillettholdere(t *testing.T, db *sql.DB, billettholderID int) {
@@ -214,7 +214,7 @@ func seedBillettholderInterestPuljer(t *testing.T, db *sql.DB) {
 		) VALUES
 			(?, 'Fredag kveld', ?, '2026-10-09T18:00:00Z', '2026-10-09T23:00:00Z'),
 			(?, 'Lørdag morgen', ?, '2026-10-10T10:00:00Z', '2026-10-10T14:00:00Z')
-	`, models.PuljeFredagKveld, models.PuljeStatusPublished, models.PuljeLordagMorgen, models.PuljeStatusPublished)
+	`, models.PuljeFredagKveld, models.PuljeStatusOpen, models.PuljeLordagMorgen, models.PuljeStatusOpen)
 }
 
 func seedBillettholderInterestEvents(t *testing.T, db *sql.DB) {

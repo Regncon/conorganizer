@@ -13,15 +13,17 @@
 6. [Linux/Mac Setup Guide](#linuxmac-setup-guide)
     - [Prerequisites](#prerequisites)
     - [Verification and Startup](#verification-and-startup)
-7. [Migrations](#-Migrations-with-goose)
+7. [Migrations](#migrations-with-goose)
     - [Running Goose manually](#running-goose-manually)
     - [Pushing migrations to prod](#pushing-migrations-to-prod-and-services)
+    - [Step by step](#step-by-step-to-update-db)
 8. [Agent Skills Path Compatibility](#agent-skills-path-compatibility)
-9. [Additional Resources](#additional-resources)
+9. [Update go dependencies](#update-dependencies)
+10. [Additional Resources](#additional-resources)
 
 ## Description
 
-This is a spike exploring Go, Data-Star and Templ using the Northstar template.
+This is a spike exploring Go, Datastar and Templ using the Northstar template.
 
 For more details, visit:
 
@@ -110,8 +112,8 @@ Common issues and solutions:
 
 - **Manual generate templ**: If you encounter issues with Templ, run:
 
-````bash
-    templ generate && go build -buildvcs=false -o tmp/main .
+```bash
+templ generate && go build -buildvcs=false -o tmp/main .
 ```
 
 - **Tool not found**: Ensure `$HOME/go/bin` is in your PATH
@@ -146,7 +148,7 @@ echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc  # or ~/.bash_profile for mac
 
 # Apply changes
 source ~/.bashrc  # or source ~/.bash_profile for macOS
-````
+```
 
 </details>
 
@@ -162,16 +164,11 @@ source ~/.zshrc
 ```
 
 </details>
+
 ### Update templ
+
 ```bash
 go install github.com/a-h/templ/cmd/templ@latest
-```
-
-### Update Go Modules
-
-```bash
-go get -u
-go mod tidy
 ```
 
 ### Verification and Startup
@@ -229,7 +226,7 @@ http://localhost:7331
 > [!NOTE]
 > Goose will try to read some basic variables from `.env`, make sure that this file is updated with the most recent version from discord before running any commands.
 
-We're using [Goose](https://pressly.github.io/goose/) in our migration process for its simplicity and reliability. While Goose is available as a go dependency for programatically migrating databases, we're mostly using its CLI tool for manual updates.
+We're using [Goose](https://pressly.github.io/goose/) in our migration process for its simplicity and reliability. While Goose is available as a go dependency for programmatically migrating databases, we're mostly using its CLI tool for manual updates.
 
 ### Running Goose manually
 
@@ -253,36 +250,102 @@ goose up
 ### Pushing migrations to prod and services
 
 > [!CAUTION]
-> Make sure that you can do all of the following steps before you start. These actions require goose, flyctl and wget be installed.
+> Make sure that you can do all of the following steps before you start. These actions require goose, account on server.
 
-Since our site and services are linked to S3 it's important that we update all the relevant secrets and variables to point to this new database before we run the manual deployment. These are the steps we need to do when running this manually
+1. Run goose on local db (preferably a copy)
+2. make a backup on server
+3. upload to server.
+5. profit
 
-1. Check our S3 bucket for the current active `dbPrefix` -> https://fly.io/dashboard/regncon/tigris
-2. Update the `DB_PREFIX` variable
+### Step By Step To Update DB
 
-- local `.env` files
-- litestream config in `.flyio/litestream.yml`
-- Regncon secret: https://fly.io/apps/regncon/secrets
-- Backup-service secret: https://fly.io/apps/backup-service/secrets
+#### 1. Find The Correct Service Name
+
+```bash
+systemctl list-units --type=service | grep -i conorganizer
+systemctl list-unit-files | grep -i conorganizer
+```
+
+#### 2. Inspect The Service
+
+Set the service name:
+
+```bash
+SERVICE=conorganizer-{service-name}.service
+```
+
+Check the service command and find the mounted database path:
+
+```bash
+systemctl show "$SERVICE" -p ExecStart --value | fold -s -w 120
+```
+
+Look for the host path that contains `events.db` or maps the database folder into the app.
+
+Example:
+
+```text
+/mnt/HC_Volume_103911252/environments/1337-merge/database:/app/database
+```
+
+In that case the database path is:
+
+```bash
+/mnt/HC_Volume_103911252/environments/1337-merge/database/events.db
+```
+
+#### 3. Replace The Database
+
+Set the paths:
+
+```bash
+DB_PATH="{mounted path to db}/events.db"
+UPLOADED_DB="/home/{account-name}/events.db"
+```
+
+Stop the service:
+
+```bash
+sudo systemctl stop "$SERVICE"
+```
+
+Back up the current database:
+
+```bash
+sudo cp -a "$DB_PATH" "$DB_PATH.bak.$(date +%Y%m%d-%H%M%S)"
+```
+
+Move the uploaded database into place:
+
+```bash
+sudo mv "$UPLOADED_DB" "$DB_PATH"
+```
+
+Fix ownership and permissions:
+
+```bash
+sudo chown deploy:deploy "$DB_PATH"
+sudo chmod 644 "$DB_PATH"
+```
+
+Start the service again:
+
+```bash
+sudo systemctl start "$SERVICE"
+sudo systemctl status "$SERVICE"
+```
+
+Check logs:
+
+```bash
+journalctl -u "$SERVICE" -n 100 --no-pager
+```
 
 <!--
 !!!Dont run this unless you know all caveats, this can affect prod negatively!!!
 docker compose -f compose-restore.yaml down && docker image rm regncon-migration
 docker compose -f compose-restore.yaml up
 -->
-
-3. Take down the website
-4. Run `go tool task download` and apply migrations with `goose up`
-5. Start deployment with `flyctl deploy`
-    ```console
-    flyctl -c .flyio/migration.toml deploy
-    ```
-6. Update backup-service `DB_PREFIX` value with the new database version
-    ```console
-    fly -a backup-service secrets set DB_PREFIX=eventsdb_1_x_x
-    ```
-7. ???
-8. Profit
 
 ## Agent Skills Path Compatibility
 
@@ -297,6 +360,44 @@ $agentSkillsFolder = ".codex\skills"  # replace with your agent's skills folder
 New-Item -ItemType Directory -Force -Path $agentSkillsFolder | Out-Null
 New-Item -ItemType SymbolicLink -Path "$agentSkillsFolder" -Target ".agents\skills"
 ```
+
+
+## Update Dependencies
+
+Update all Go dependencies:
+
+```bash
+go get -u
+go mod tidy
+```
+
+Check what changed:
+
+```bash
+git diff go.mod go.sum
+```
+
+Verify tool versions used by the repo:
+
+```bash
+go tool templ version
+go tool task --version
+go tool air -v
+```
+
+If `templ` was updated, make sure workflow pins match the new version where relevant, especially:
+
+```text
+.github/workflows/golangci-lint.yml
+```
+
+Look for hardcoded commands like:
+
+```bash
+go install github.com/a-h/templ/cmd/templ@v0.3.1020
+```
+
+and update the version to match `go.mod`.
 
 ## Additional Resources
 

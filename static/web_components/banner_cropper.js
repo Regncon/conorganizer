@@ -200,6 +200,11 @@ class BannerCropper extends HTMLElement {
                 throw new Error(`HTTP ${res.status} ${res.statusText}${text ? `: ${text}` : ''}`);
             }
             this._status('Uploaded ✓');
+            this.dispatchEvent(new CustomEvent('toast', {
+                bubbles: true,
+                composed: true,
+                detail: { message: 'Lagret' },
+            }));
             this.dispatchEvent(new CustomEvent('uploadsuccess', { detail: { url: detail.url, filename } }));
         } catch (err) {
             console.error('Upload failed:', err);
