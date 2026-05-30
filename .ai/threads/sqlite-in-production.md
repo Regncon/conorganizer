@@ -496,5 +496,77 @@ Migrations remain manual only. Startup and health/readiness checks validate stat
 Time: 2026-05-30 14:16:05
 --- Next Prompt ---
 You can run commands locally, bout you do not have server access.
+Go ahead and run commands you need locally and Ill run the server commands for you once you are done locally. 
 
+Time: 2026-05-30 14:25:05
+--- Codex Run ---
+
+Codex output:
+I’ll run the remaining local-only validation now: full tests, build, Taskfile dry-run, script/JSON checks, and a local health/readiness smoke test against the app using the local DB and a temp image directory. No server commands will be run.
+Most local checks are running or passed. `git diff --check` is currently failing only on the pre-existing untracked `.ai/threads/sqlite-in-production.md` thread file, not on the implementation files; I’ll rerun that check excluding `.ai` so we validate the repo changes without touching the thread artifact.
+The local DB is currently in `delete` journal mode when inspected directly, which is expected before the app opens it with the new DSN. I’ll run a short local smoke test with the built binary so startup applies WAL and the health endpoints are exercised through real HTTP.
+The local smoke test found a real issue: Chi panics if `Use` is called after routes are mounted. I mounted health before the app auth middleware, so I’m changing the app auth to use a routed middleware chain instead of mutating the root router after `/healthz` and `/readyz` exist.
+The local HTTP smoke test cannot bind sockets in this sandbox (`operation not permitted` on both free-port probing and `0.0.0.0:18081`). It did get past the earlier Chi middleware-order panic, and the endpoint behavior remains covered by `httptest` unit tests.
+Local validation is done.
+
+I also found and fixed one local startup issue: Chi panicked because `/healthz`/`/readyz` were mounted before calling `router.Use(...)` for auth. I changed that to use an authenticated `appRouter` chain, leaving health/readiness on the root router.
+
+Local results:
+```bash
+GOCACHE=/tmp/conorganizer-go-build go test ./...
+# pass
+
+GOCACHE=/tmp/conorganizer-go-build go build -o /tmp/conorganizer-main .
+# pass, with a non-fatal Go stat-cache warning from the read-only module cache
+
+GOCACHE=/tmp/conorganizer-go-build go tool task --dry download:db
+# pass
+
+bash -n deploy/deploy.sh configuration-as-code/stow/scripts/usr/local/bin/conorganizer-sqlite-backup configuration-as-code/stow/scripts/usr/local/bin/conorganizer-images-backup
+# pass
+
+jq empty configuration-as-code/grafana-dashboards/conorganizer-main-service-debugging.json configuration-as-code/grafana-dashboards/conorganizer-production-health.json
+# pass
+
+git diff --check -- . ':(exclude).ai/**'
+# pass
+```
+
+I tried a real local HTTP smoke test, but this sandbox blocks listening sockets (`operation not permitted`). The app got past the previous Chi panic before the sandbox blocked socket binding. `/healthz` and `/readyz` behavior is covered by `httptest` tests.
+
+**Commands for the developer to run on the server**
+```bash
+DB=/mnt/HC_Volume_103911252/environments/main/database/events.db
+IMG=/mnt/HC_Volume_103911252/environments/main/event-images
+TMP=/mnt/HC_Volume_103911252/backups/tmp
+
+ls -lh "$DB" "$DB-wal" "$DB-shm" 2>/dev/null || true
+sudo -u deploy test -r "$DB"
+sudo -u deploy test -w "$(dirname "$DB")"
+sudo -u deploy test -d "$IMG"
+sudo -u deploy test -w "$IMG"
+
+sqlite3 "$DB" 'PRAGMA journal_mode;'
+sqlite3 "$DB" 'PRAGMA foreign_keys=ON; PRAGMA foreign_keys; PRAGMA foreign_key_check;'
+sqlite3 "$DB" 'PRAGMA integrity_check;'
+
+systemctl status conorganizer-main.service --no-pager
+journalctl -u conorganizer-main.service -n 100 --no-pager
+curl -i http://127.0.0.1:18856/healthz
+curl -i http://127.0.0.1:18856/readyz
+
+mkdir -p "$TMP"
+SNAP="$TMP/manual-verify-$(date -u +%Y%m%dT%H%M%SZ).db"
+sqlite3 "$DB" ".backup '$SNAP'"
+sqlite3 "$SNAP" 'PRAGMA quick_check; SELECT COUNT(*) FROM users; SELECT COUNT(*) FROM events;'
+rm -f "$SNAP"
+
+systemctl start conorganizer-sqlite-backup.service
+journalctl -u conorganizer-sqlite-backup.service -n 50 --no-pager
+```
+
+Current git status also shows `.ai/threads/sqlite-in-production.md` changed by the prompt/thread log; I did not touch it as part of the implementation.
+
+Time: 2026-05-30 14:25:05
+--- Next Prompt ---
 

@@ -104,17 +104,18 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 			readiness.MarkDegraded(degradedErr)
 		}
 
+		var appRouter chi.Router = router
 		if fullMode {
-			router.Use(authctx.AuthMiddleware(baseLogger))
+			appRouter = router.With(authctx.AuthMiddleware(baseLogger))
 		}
 
 		if eventImageDir != nil && *eventImageDir != "" {
-			router.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
+			appRouter.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
 		}
-		router.Handle("/static/*", http.StripPrefix("/static/", static(baseLogger)))
+		appRouter.Handle("/static/*", http.StripPrefix("/static/", static(baseLogger)))
 
 		if fullMode {
-			cleanup, err := setupRoutes(ctx, baseLogger, router, db, eventImageDir)
+			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir)
 			if err != nil {
 				logger.Error(fmt.Errorf("error setting up routes; falling back to degraded mode: %w", err).Error())
 				readiness.MarkDegraded(err)
