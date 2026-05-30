@@ -15,7 +15,7 @@ Operational rules:
 - WAL mode is enabled and required for the app database.
 - Foreign keys are enabled and required.
 - Do not copy or download the live `events.db` file directly. In WAL mode, live state may also be in `events.db-wal` and `events.db-shm`.
-- Use `task download:db` or `task download`; the task creates a temporary SQLite `.backup` snapshot on the server and downloads that snapshot.
+- Use `go tool task download:db` or `go tool task download`; the task creates a temporary SQLite `.backup` snapshot on the server and downloads that snapshot.
 - Scheduled SQLite backups use `/usr/local/bin/conorganizer-sqlite-backup`, which also uses SQLite `.backup`.
 
 Health endpoints:
@@ -189,19 +189,19 @@ When degraded mode is entered, `readinessState.MarkDegraded` caches the failure 
 
 ### Safe database download
 
-`task download:db` must not `scp` the live production DB file directly.
+`go tool task download:db` must not `scp` the live production DB file directly.
 
 Current flow:
 
 1. SSH to the server.
-2. Create `/mnt/HC_Volume_103911252/backups/tmp`.
-3. Run SQLite `.backup` from the live production DB to a uniquely named temporary snapshot.
+2. Create a unique snapshot path with remote `mktemp` under the SSH user's temp directory.
+3. Run SQLite `.backup` from the live production DB to that temporary snapshot.
 4. Run `PRAGMA quick_check;` on the snapshot.
 5. Download the snapshot to `database/events.db.download`.
 6. Move it into `database/events.db`.
 7. Remove the temporary server snapshot via a local shell trap.
 
-This intentionally uses a separate temp directory from the scheduled backup script, so developer downloads do not conflict with retained local backups.
+This intentionally avoids the scheduled backup directory, because the SSH user used for developer downloads may not be allowed to write there.
 
 ### Branch environment cloning
 

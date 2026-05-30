@@ -57,7 +57,7 @@ Follow the [Linux/Mac Setup Guide](#linuxmac-setup-guide) below.
 > The database task creates a temporary SQLite backup snapshot on the server; it does not copy the live WAL-mode database file directly.
 
 ```bash
-task download
+go tool task download
 ```
 
 Production SQLite operational notes are in [documentation/sqlite-production.md](documentation/sqlite-production.md).
@@ -199,7 +199,7 @@ go mod tidy
     Check Task installation:
 
     ```bash
-    task --version
+    go tool task --version
     ```
 
 > [!TIP]
@@ -211,7 +211,7 @@ go mod tidy
 
 2. **Start Development Server**:
     ```bash
-    task live
+    go tool task start
     ```
 
 > [!NOTE]
@@ -234,7 +234,7 @@ We're using [Goose](https://pressly.github.io/goose/) in our migration process f
 ### Running Goose manually
 
 > [!WARNING]
-> Before running Goose, run `task download` to fetch the newest version of the database!
+> Before running Goose, run `go tool task download` to fetch the newest version of the database!
 > You can install Goose CLI tool from [here](https://pressly.github.io/goose/installation/), afterwards you should have `goose` globally available in your terminal.
 > Migrations are manual only. Do not add automatic migrations to application startup, health checks, readiness checks, or systemd startup.
 
@@ -272,7 +272,7 @@ docker compose -f compose-restore.yaml up
 -->
 
 3. Take down the website
-4. Run `task download` and apply migrations with `goose up`
+4. Run `go tool task download` and apply migrations with `goose up`
 5. Start deployment with `flyctl deploy`
     ```console
     flyctl -c .flyio/migration.toml deploy

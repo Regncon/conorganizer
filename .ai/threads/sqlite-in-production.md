@@ -569,4 +569,70 @@ Current git status also shows `.ai/threads/sqlite-in-production.md` changed by t
 
 Time: 2026-05-30 14:25:05
 --- Next Prompt ---
+There is a problem with the download script. Also I changed the command to go tool task download as this will use the correct version of task from the Go toolchain.
+
+```bash
+ conorganizer git:(50-pordsette-main) ✗ go tool task download:db
+task: [download:db] set -eu
+: "${DB_SSH_USER:?Set DB_SSH_USER in .env}"
+remote_host="${DB_SSH_USER}@46.62.159.49"
+remote_db="/mnt/HC_Volume_103911252/environments/main/database/events.db"
+remote_snapshot_dir="/mnt/HC_Volume_103911252/backups/tmp"
+remote_snapshot="${remote_snapshot_dir}/events-download-$(date -u +%Y%m%dT%H%M%SZ)-$$.db"
+
+cleanup_remote_snapshot() {
+  ssh -p 22 "$remote_host" "rm -f '$remote_snapshot'" >/dev/null 2>&1 || true
+}
+trap cleanup_remote_snapshot EXIT
+
+mkdir -p database
+rm -f "database/events.db.download"
+
+ssh -p 22 "$remote_host" "
+  set -eu
+  mkdir -p '$remote_snapshot_dir'
+  sqlite3 '$remote_db' \".backup '$remote_snapshot'\"
+  test \"\$(sqlite3 '$remote_snapshot' 'PRAGMA quick_check;')\" = ok
+"
+
+scp -P 22 "${remote_host}:${remote_snapshot}" "database/events.db.download"
+mv "database/events.db.download" "database/events.db"
+
+gerhard@46.62.159.49's password:
+mkdir: Permission denied
+```
+
+
+Time: 2026-05-30 15:08:45
+--- Codex Run ---
+
+Codex output:
+The failure is from trying to create `/mnt/HC_Volume_103911252/backups/tmp` as the SSH user. That directory is an ops backup area, not guaranteed writable for `DB_SSH_USER`, so I’ll change the download task to create a per-run snapshot with `mktemp` in the remote user’s temp directory and clean it up after download.
+Fixed the download task.
+
+The issue was that `download:db` tried to create `/mnt/HC_Volume_103911252/backups/tmp` over SSH, but the SSH user does not have permission there. The task now creates the temporary snapshot with remote `mktemp` under the SSH user’s temp directory, runs SQLite `.backup` into that file, downloads it, then removes it.
+
+Updated:
+- [Taskfile.yml](/home/cinmay/Documents/conorganizer/Taskfile.yml)
+- [documentation/sqlite-production.md](/home/cinmay/Documents/conorganizer/documentation/sqlite-production.md)
+
+I also updated the docs to use `go tool task download` / `go tool task download:db`.
+
+Local validation:
+```bash
+GOCACHE=/tmp/conorganizer-go-build go tool task --dry download:db
+git diff --check -- Taskfile.yml documentation/sqlite-production.md README.md
+```
+
+Both passed.
+
+Please retry locally:
+```bash
+go tool task download:db
+```
+
+If that now fails at the `sqlite3 "$remote_db"` step, the remaining issue is likely that `DB_SSH_USER` can write `/tmp` but cannot read the production DB file. In that case, use an SSH user with read access to `/mnt/HC_Volume_103911252/environments/main/database/events.db`, such as the deploy user or a user in the right group.
+
+Time: 2026-05-30 15:08:45
+--- Next Prompt ---
 
