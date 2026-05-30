@@ -71,13 +71,60 @@ func (state PuljeInterestState) SignalPatch() string {
 }
 
 func BuildPuljeInterestState(pulje models.PuljeRow, now time.Time) PuljeInterestState {
-	return PuljeInterestState{
+	state := PuljeInterestState{
 		PuljeID:      pulje.ID,
 		PuljeName:    pulje.Name,
 		Availability: PuljeInterestOpen,
 		CanEdit:      true,
 		Priority:     0,
 	}
+
+	switch pulje.Status {
+	case models.PuljeStatusLocked:
+		state.Availability = PuljeInterestLocked
+		state.Message = "Puljen er låst. Du kan ikke melde eller endre interesse lenger. Vi jobber med å fordele spillere."
+		state.CanEdit = false
+		state.Priority = 1
+		return state
+	case models.PuljeStatusCompleted:
+		state.Availability = PuljeInterestCompleted
+		state.Message = "Puljefordelingen er klar. Se hva du fikk på profilen din."
+		state.CanEdit = false
+		state.ShowProfileLink = true
+		state.Priority = 0
+		return state
+	}
+
+	lockAt, hasLockAt := puljeLockAt(pulje)
+	if !hasLockAt {
+		return state
+	}
+
+	urgentStartsAt := lockAt.Add(-30 * time.Minute)
+	warningStartsAt := lockAt.Add(-2 * time.Hour)
+	lockTimeLabel := lockAt.Format("15:04")
+
+	if !now.Before(urgentStartsAt) {
+		state.Availability = PuljeInterestUrgentWarning
+		state.Message = fmt.Sprintf("Puljen låses straks, kl %s. Gjør endringer nå hvis du vil endre interessen din.", lockTimeLabel)
+		state.Priority = 3
+		return state
+	}
+	if !now.Before(warningStartsAt) {
+		state.Availability = PuljeInterestWarning
+		state.Message = fmt.Sprintf("Puljen låses snart, kl %s.", lockTimeLabel)
+		state.Priority = 2
+		return state
+	}
+
+	return state
+}
+
+func puljeLockAt(pulje models.PuljeRow) (time.Time, bool) {
+	if pulje.StartAt.IsZero() {
+		return time.Time{}, false
+	}
+	return pulje.StartAt.TimeOrZero().Add(-30 * time.Minute), true
 }
 
 func BuildSelectedPuljeInterestState(puljer []models.PuljeRow, puljeID string, now time.Time) PuljeInterestState {

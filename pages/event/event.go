@@ -46,6 +46,12 @@ func interestErrorMessageFromError(err error) string {
 	if strings.Contains(err.Error(), "is not active and published for event") {
 		return "Denne pulja er ikkje tilgjengeleg for dette arrangementet."
 	}
+	if strings.Contains(err.Error(), "is locked for event") {
+		return "Pulja er låst. Du kan ikkje melde eller endre interesse lenger medan vi fordeler spelarar."
+	}
+	if strings.Contains(err.Error(), "is completed for event") {
+		return "Puljefordelinga er klar. Gå til profilen din for å sjå kva du fekk."
+	}
 	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
 }
 
@@ -345,14 +351,28 @@ func updateInterest(
 		return fmt.Errorf("interest level is required")
 	}
 
-	puljeQuery := `SELECT EXISTS (SELECT 1 FROM relation_event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_in_pulje = 1 AND is_published = 1)`
-	var puljeExists bool
-	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId).Scan(&puljeExists)
+	puljeQuery := `
+		SELECT p.status
+		FROM relation_event_puljer ep
+		JOIN puljer p ON p.id = ep.pulje_id
+		WHERE ep.event_id = $1
+			AND ep.pulje_id = $2
+			AND ep.is_in_pulje = 1
+			AND ep.is_published = 1
+	`
+	var puljeStatus models.PuljeStatus
+	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId).Scan(&puljeStatus)
 	if puljerErr != nil {
+		if puljerErr == sql.ErrNoRows {
+			return fmt.Errorf("pulje %s is not active and published for event %s", puljeId, eventID)
+		}
 		return fmt.Errorf("failed to check if pulje %s exists for event %s: %w", puljeId, eventID, puljerErr)
 	}
-	if !puljeExists {
-		return fmt.Errorf("pulje %s is not active and published for event %s", puljeId, eventID)
+	if puljeStatus == models.PuljeStatusLocked {
+		return fmt.Errorf("pulje %s is locked for event %s", puljeId, eventID)
+	}
+	if puljeStatus == models.PuljeStatusCompleted {
+		return fmt.Errorf("pulje %s is completed for event %s", puljeId, eventID)
 	}
 
 	userHasAccessToBillettHolderIdQuery := `
