@@ -253,7 +253,11 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			<section id="main-menu-usermenu">
 				if UserInfo.IsLoggedIn {
 					<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end;">
-						<details class="menu-btn-container">
+						<details
+							id="main-menu-user-details"
+							class="menu-btn-container"
+							data-on:click__outside="document.getElementById('main-menu-user-details')?.removeAttribute('open')"
+						>
 							<summary class="btn btn--ghost menu-btn">
 								@icons.Icon(icons.Menu, icons.Size20)
 								<span class="menu-btn-text">Meny</span>

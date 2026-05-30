@@ -3,10 +3,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/stow"
 
-sudo stow --target=/ scripts
-sudo stow --target=/ conorganizer
-sudo stow --target=/ caddy
-sudo stow --target=/ grafana
+for package in scripts conorganizer caddy grafana prometheus; do
+    if [[ -d "$package" ]]; then
+        sudo stow --target=/ "$package"
+    else
+        echo "Skipping missing stow package: $package"
+    fi
+done
 
 sudo systemctl daemon-reload
-

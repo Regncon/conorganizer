@@ -29,7 +29,9 @@ CADDY_SITE_DEST="/etc/caddy/sites-enabled/conorganizer-${SAFE_NAME}.caddy"
 
 BRANCH_DATA_DIR="$DATA_ROOT/$SAFE_NAME"
 BRANCH_DB_DIR="$BRANCH_DATA_DIR/database"
+BRANCH_DB_FILE="$BRANCH_DB_DIR/events.db"
 BRANCH_IMG_DIR="$BRANCH_DATA_DIR/event-images"
+MAIN_DB_FILE="$MAIN_DATA_DIR/database/events.db"
 
 SERVICE_USER="deploy"
 SERVICE_GROUP="www-data"
@@ -64,12 +66,28 @@ if [[ "$SAFE_NAME" != "main" ]]; then
   echo "[deploy] Ensuring data directory for branch: $BRANCH_DATA_DIR"
   mkdir -p "$BRANCH_DATA_DIR"
 
-  if [[ ! -d "$BRANCH_DB_DIR" ]]; then
-    echo "[deploy] Copying database from main to $BRANCH_DB_DIR"
-    mkdir -p "$BRANCH_DATA_DIR"
-    cp -a "$MAIN_DATA_DIR/database" "$BRANCH_DATA_DIR/"
+  if [[ ! -f "$BRANCH_DB_FILE" ]]; then
+    echo "[deploy] Creating SQLite backup snapshot from main for $BRANCH_DB_FILE"
+    if [[ ! -f "$MAIN_DB_FILE" ]]; then
+      echo "[deploy] ERROR: main database $MAIN_DB_FILE does not exist; cannot clone data." >&2
+      exit 1
+    fi
+    mkdir -p "$BRANCH_DB_DIR"
+    tmp_branch_db="${BRANCH_DB_FILE}.tmp.$$"
+    rm -f "$tmp_branch_db"
+    if ! sqlite3 "$MAIN_DB_FILE" ".backup '$tmp_branch_db'"; then
+      rm -f "$tmp_branch_db"
+      echo "[deploy] ERROR: failed to create SQLite backup snapshot for branch database." >&2
+      exit 1
+    fi
+    if [[ "$(sqlite3 "$tmp_branch_db" "PRAGMA quick_check;")" != "ok" ]]; then
+      rm -f "$tmp_branch_db"
+      echo "[deploy] ERROR: branch database snapshot failed quick_check." >&2
+      exit 1
+    fi
+    mv "$tmp_branch_db" "$BRANCH_DB_FILE"
   else
-    echo "[deploy] Database dir already exists for branch: $BRANCH_DB_DIR (skipping copy)"
+    echo "[deploy] Database already exists for branch: $BRANCH_DB_FILE (skipping copy)"
   fi
 
   if [[ ! -d "$BRANCH_IMG_DIR" ]]; then
@@ -79,6 +97,8 @@ if [[ "$SAFE_NAME" != "main" ]]; then
   else
     echo "[deploy] Event-images dir already exists for branch: $BRANCH_IMG_DIR (skipping copy)"
   fi
+
+  chown -R "$SERVICE_USER:$SERVICE_GROUP" "$BRANCH_DATA_DIR"
 else
   echo "[deploy] SAFE_NAME=main, not cloning data directories."
 fi
