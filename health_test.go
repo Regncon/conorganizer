@@ -15,77 +15,99 @@ import (
 )
 
 func TestHealthzReturnsGenericOK(t *testing.T) {
+	// Given the process is serving HTTP,
+	// when the health endpoint is requested,
+	// then it returns a generic OK response.
+
+	// Given
+	expectedStatusCode := http.StatusOK
+	expectedBody := "ok\n"
+
 	router := chi.NewRouter()
 	mountHealthRoutes(router, newReadinessState(nil, testLogger()), testLogger())
 
+	// When
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	router.ServeHTTP(recorder, request)
 
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("/healthz status = %d, want %d", recorder.Code, http.StatusOK)
-	}
-	if recorder.Body.String() != "ok\n" {
-		t.Fatalf("/healthz body = %q, want generic ok", recorder.Body.String())
-	}
+	// Then
+	assertHTTPStatusAndBody(t, recorder, expectedStatusCode, expectedBody)
 }
 
 func TestReadyzReturnsOKWhenStartupAndLiveCheckPass(t *testing.T) {
+	// Given startup checks have passed and the database answers a live check,
+	// when the readiness endpoint is requested,
+	// then it returns a generic OK response.
+
+	// Given
+	expectedStatusCode := http.StatusOK
+	expectedBody := "ok\n"
+
 	db := openMemoryDB(t)
 	defer db.Close()
 
 	router := chi.NewRouter()
 	mountHealthRoutes(router, newReadinessState(db, testLogger()), testLogger())
 
+	// When
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 	router.ServeHTTP(recorder, request)
 
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("/readyz status = %d, want %d", recorder.Code, http.StatusOK)
-	}
-	if recorder.Body.String() != "ok\n" {
-		t.Fatalf("/readyz body = %q, want generic ok", recorder.Body.String())
-	}
+	// Then
+	assertHTTPStatusAndBody(t, recorder, expectedStatusCode, expectedBody)
 }
 
 func TestReadyzReturnsSanitizedFailureReasonWhenDegraded(t *testing.T) {
+	// Given the app is degraded because image storage is unavailable,
+	// when the readiness endpoint is requested,
+	// then it returns a sanitized reason without exposing internal paths.
+
+	// Given
+	expectedStatusCode := http.StatusServiceUnavailable
+	expectedBody := "not ready: image directory not writable\n"
+	internalPath := "/secret/path"
+
 	state := newReadinessState(nil, testLogger())
-	state.MarkDegraded(notReadyImageReason, fmt.Errorf("event image directory /secret/path is not writable"))
+	state.MarkDegraded(notReadyImageReason, fmt.Errorf("event image directory %s is not writable", internalPath))
 
 	router := chi.NewRouter()
 	mountHealthRoutes(router, state, testLogger())
 
+	// When
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 	router.ServeHTTP(recorder, request)
 
-	if recorder.Code != http.StatusServiceUnavailable {
-		t.Fatalf("/readyz status = %d, want %d", recorder.Code, http.StatusServiceUnavailable)
-	}
+	// Then
+	assertHTTPStatusAndBody(t, recorder, expectedStatusCode, expectedBody)
+
 	body := recorder.Body.String()
-	if body != "not ready: image directory not writable\n" {
-		t.Fatalf("/readyz body = %q, want sanitized not ready reason", body)
-	}
-	if strings.Contains(body, "/secret/path") {
+	if strings.Contains(body, internalPath) {
 		t.Fatalf("/readyz exposed internal path: %q", body)
 	}
 }
 
 func TestReadyzReturnsDatabaseReasonWhenLiveCheckFails(t *testing.T) {
+	// Given no database is available for the live readiness check,
+	// when the readiness endpoint is requested,
+	// then it returns a sanitized database unavailable reason.
+
+	// Given
+	expectedStatusCode := http.StatusServiceUnavailable
+	expectedBody := "not ready: database not available\n"
+
 	router := chi.NewRouter()
 	mountHealthRoutes(router, newReadinessState(nil, testLogger()), testLogger())
 
+	// When
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/readyz", nil)
 	router.ServeHTTP(recorder, request)
 
-	if recorder.Code != http.StatusServiceUnavailable {
-		t.Fatalf("/readyz status = %d, want %d", recorder.Code, http.StatusServiceUnavailable)
-	}
-	if recorder.Body.String() != "not ready: database not available\n" {
-		t.Fatalf("/readyz body = %q, want database not available reason", recorder.Body.String())
-	}
+	// Then
+	assertHTTPStatusAndBody(t, recorder, expectedStatusCode, expectedBody)
 }
 
 func openMemoryDB(t *testing.T) *sql.DB {
@@ -104,4 +126,15 @@ func openMemoryDB(t *testing.T) *sql.DB {
 
 func testLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
+func assertHTTPStatusAndBody(t *testing.T, recorder *httptest.ResponseRecorder, expectedStatusCode int, expectedBody string) {
+	t.Helper()
+
+	if recorder.Code != expectedStatusCode {
+		t.Fatalf("HTTP status mismatch\nexpected: %d\nactual:   %d", expectedStatusCode, recorder.Code)
+	}
+	if recorder.Body.String() != expectedBody {
+		t.Fatalf("HTTP body mismatch\nexpected: %q\nactual:   %q", expectedBody, recorder.Body.String())
+	}
 }

@@ -101,7 +101,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		degradedErr := imgErr
 		fullMode := degradedErr == nil && db != nil
 		if degradedErr != nil {
-			readiness.MarkDegraded(degradedErr)
+			readiness.MarkDegraded(notReadyImageReason, degradedErr)
 		}
 
 		var appRouter chi.Router = router
@@ -118,8 +118,8 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir)
 			if err != nil {
 				logger.Error(fmt.Errorf("error setting up routes; falling back to degraded mode: %w", err).Error())
-				readiness.MarkDegraded(err)
-				mountDBErrorRoutes(router, err)
+				readiness.MarkDegraded(notReadyApplicationReason, err)
+				mountDegradedRoutes(router)
 			} else if cleanup != nil {
 				defer func() {
 					if err := cleanup(); err != nil {
@@ -129,7 +129,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 			}
 		} else {
 			// Show a single degraded page without exposing operational details.
-			mountDBErrorRoutes(router, degradedErr)
+			mountDegradedRoutes(router)
 		}
 
 		srv := &http.Server{
@@ -146,28 +146,25 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 	}
 }
 
-func mountDBErrorRoutes(r chi.Router, _ error) {
+func mountDegradedRoutes(r chi.Router) {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		fmt.Fprint(w, `<!doctype html>
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Application unavailable</title>
+<title>Conorganizer is temporarily unavailable</title>
 <style>
   :root { color-scheme: light dark; }
-  body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, Apple Color Emoji, Segoe UI Emoji; margin:0; padding:2rem; }
-  .card { max-width: 56ch; margin: 5vh auto; border: 1px solid rgba(127,127,127,.35); border-radius: .75rem; padding: 1.5rem; }
-  h1 { margin: 0 0 .5rem; }
-  code { padding: .15rem .35rem; border-radius: .35rem; background: rgba(127,127,127,.15); }
-  .muted { opacity: .8; }
+  body { font-family: system-ui, sans-serif; margin: 0; padding: 2rem; line-height: 1.5; }
+  main { max-width: 42rem; margin: 10vh auto; }
 </style>
 <body>
-  <div class="card">
-    <h1>Application unavailable</h1>
-    <p>The server is running, but the application is not ready. Please try again later.</p>
-    <p class="muted">Operational details are available in the service logs.</p>
-  </div>
+  <main>
+    <h1>Conorganizer is temporarily unavailable</h1>
+    <p>The service is running, but it is not ready to show the program right now.</p>
+    <p>Please try again later.</p>
+  </main>
 </body>
 </html>`)
 	})

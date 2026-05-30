@@ -706,4 +706,40 @@ Current git status also shows `.ai/threads/...` files changed by the thread logg
 
 Time: 2026-05-30 16:13:40
 --- Next Prompt ---
+Rewright the tests to comply width the projects coding standards as outlined in AGENTS.MD  
+Pleas note, that not all tests in the project are compliant with the new coding standards, so you may have to look for tests that have been updated to match the new standards to see examples of the new style.
+
+
+Time: 2026-05-30 16:30:12
+--- Codex Run ---
+
+Codex output:
+I’ll inspect `AGENTS.MD` and a few recently updated tests first, then I’ll adjust the new/changed tests to match the project’s preferred style.
+Done reading AGENTS.MD file. I found the newer BDD/Given-When-Then style in files like `pages/root/root_page_test.go` and `pages/admin/billettholder_admin/*_test.go`; I’ll bring the SQLite and health tests into that shape.
+The main gaps are our new tests: they lack the BDD summary comments and explicit `// Given`, `// When`, `// Then` sections. I’ll rewrite those tests in place and add small local helpers where that keeps the intent readable.
+Rewrote the new tests to match the `AGENTS.MD` Go test style:
+
+- Added BDD-style intent comments.
+- Split tests into `// Given`, `// When`, `// Then`.
+- Put expected results first in `// Given`.
+- Moved repeated assertions into local helpers.
+
+Updated in this pass:
+- [health_test.go](/home/cinmay/Documents/conorganizer/health_test.go)
+- [service/database_test.go](/home/cinmay/Documents/conorganizer/service/database_test.go)
+- [service/startup_checks_test.go](/home/cinmay/Documents/conorganizer/service/startup_checks_test.go)
+
+Validation:
+```bash
+GOCACHE=/tmp/conorganizer-go-build go test ./service .
+GOCACHE=/tmp/conorganizer-go-build go test ./...
+git diff --check -- . ':(exclude).ai/**'
+```
+
+All passed.
+
+`main.go` is still modified from the earlier status/readiness change. `.ai/threads/sqlite-in-production.md` is still a thread-log artifact and I did not edit it.
+
+Time: 2026-05-30 16:30:12
+--- Next Prompt ---
 

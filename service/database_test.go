@@ -11,58 +11,45 @@ import (
 )
 
 func TestInitDBAppliesProductionSQLiteSettings(t *testing.T) {
+	// Given a database with the required production schema,
+	// when the application opens it,
+	// then SQLite is configured with the required production settings.
+
+	// Given
+	expectedForeignKeys := 1
+	expectedJournalMode := "wal"
+	expectedBusyTimeoutMillis := defaultSQLiteBusyTimeoutMillis
+	expectedSynchronous := 1
+	expectedMaxOpenConnections := 1
+
 	dbPath := filepath.Join(t.TempDir(), "events.db")
 	createMinimalProductionDB(t, dbPath)
 
+	// When
 	db, err := InitDB(dbPath)
+
+	// Then
 	if err != nil {
-		t.Fatalf("InitDB() error = %v", err)
+		t.Fatalf("expected database initialization to succeed: %v", err)
 	}
 	defer db.Close()
 
-	var foreignKeys int
-	if err := db.QueryRow("PRAGMA foreign_keys;").Scan(&foreignKeys); err != nil {
-		t.Fatalf("query foreign_keys pragma: %v", err)
-	}
-	if foreignKeys != 1 {
-		t.Fatalf("foreign_keys = %d, want 1", foreignKeys)
-	}
-
-	var journalMode string
-	if err := db.QueryRow("PRAGMA journal_mode;").Scan(&journalMode); err != nil {
-		t.Fatalf("query journal_mode pragma: %v", err)
-	}
-	if !strings.EqualFold(journalMode, "wal") {
-		t.Fatalf("journal_mode = %q, want WAL", journalMode)
-	}
-
-	var busyTimeoutMillis int
-	if err := db.QueryRow("PRAGMA busy_timeout;").Scan(&busyTimeoutMillis); err != nil {
-		t.Fatalf("query busy_timeout pragma: %v", err)
-	}
-	if busyTimeoutMillis < defaultSQLiteBusyTimeoutMillis {
-		t.Fatalf("busy_timeout = %d, want at least %d", busyTimeoutMillis, defaultSQLiteBusyTimeoutMillis)
-	}
-
-	var synchronous int
-	if err := db.QueryRow("PRAGMA synchronous;").Scan(&synchronous); err != nil {
-		t.Fatalf("query synchronous pragma: %v", err)
-	}
-	if synchronous != 1 {
-		t.Fatalf("synchronous = %d, want 1 for NORMAL", synchronous)
-	}
-
-	if _, err := db.Exec("INSERT INTO child(parent_id) VALUES (999);"); err == nil {
-		t.Fatalf("insert violating foreign key succeeded, want failure")
-	}
-
-	stats := db.Stats()
-	if stats.MaxOpenConnections != 1 {
-		t.Fatalf("MaxOpenConnections = %d, want 1", stats.MaxOpenConnections)
-	}
+	assertSQLitePragmaInt(t, db, "foreign_keys", expectedForeignKeys)
+	assertSQLitePragmaString(t, db, "journal_mode", expectedJournalMode)
+	assertSQLitePragmaAtLeast(t, db, "busy_timeout", expectedBusyTimeoutMillis)
+	assertSQLitePragmaInt(t, db, "synchronous", expectedSynchronous)
+	assertForeignKeysRejectInvalidChild(t, db)
+	assertMaxOpenConnections(t, db, expectedMaxOpenConnections)
 }
 
 func TestInitDBSupportsRelativeDatabasePath(t *testing.T) {
+	// Given a relative database path with the required schema,
+	// when the application opens it,
+	// then SQLite is configured the same way as for absolute paths.
+
+	// Given
+	expectedJournalMode := "wal"
+
 	dir := t.TempDir()
 	if err := os.Mkdir(filepath.Join(dir, "database"), 0o755); err != nil {
 		t.Fatalf("create database dir: %v", err)
@@ -71,22 +58,26 @@ func TestInitDBSupportsRelativeDatabasePath(t *testing.T) {
 	createMinimalProductionDB(t, dbPath)
 	t.Chdir(dir)
 
+	// When
 	db, err := InitDB(filepath.Join("database", "events.db"))
+
+	// Then
 	if err != nil {
-		t.Fatalf("InitDB() with relative path error = %v", err)
+		t.Fatalf("expected relative database initialization to succeed: %v", err)
 	}
 	defer db.Close()
 
-	var journalMode string
-	if err := db.QueryRow("PRAGMA journal_mode;").Scan(&journalMode); err != nil {
-		t.Fatalf("query journal_mode pragma: %v", err)
-	}
-	if !strings.EqualFold(journalMode, "wal") {
-		t.Fatalf("journal_mode = %q, want WAL", journalMode)
-	}
+	assertSQLitePragmaString(t, db, "journal_mode", expectedJournalMode)
 }
 
 func TestInitDBFailsWhenRequiredTableMissing(t *testing.T) {
+	// Given a database missing a required core table,
+	// when the application opens it,
+	// then initialization fails without modifying the schema.
+
+	// Given
+	expectedErrorText := `required SQLite table "events" is missing`
+
 	dbPath := filepath.Join(t.TempDir(), "events.db")
 	db := openSQLiteForTest(t, dbPath)
 	if _, err := db.Exec(`
@@ -100,24 +91,91 @@ func TestInitDBFailsWhenRequiredTableMissing(t *testing.T) {
 		t.Fatalf("close setup db: %v", err)
 	}
 
+	// When
 	_, err := InitDB(dbPath)
-	if err == nil {
-		t.Fatalf("InitDB() error = nil, want missing table error")
-	}
-	if !strings.Contains(err.Error(), `required SQLite table "events" is missing`) {
-		t.Fatalf("InitDB() error = %v, want missing events table", err)
-	}
+
+	// Then
+	assertErrorContains(t, err, expectedErrorText)
 }
 
 func TestInitDBFailsWhenDatabaseFileMissing(t *testing.T) {
+	// Given the configured database file does not exist,
+	// when the application opens it,
+	// then initialization fails instead of creating an empty database.
+
+	// Given
+	expectedErrorText := "database file does not exist"
+
 	dbPath := filepath.Join(t.TempDir(), "missing.db")
 
+	// When
 	_, err := InitDB(dbPath)
-	if err == nil {
-		t.Fatalf("InitDB() error = nil, want missing database file error")
+
+	// Then
+	assertErrorContains(t, err, expectedErrorText)
+}
+
+func assertSQLitePragmaInt(t *testing.T, db *sql.DB, pragmaName string, expected int) {
+	t.Helper()
+
+	var actual int
+	if err := db.QueryRow("PRAGMA " + pragmaName + ";").Scan(&actual); err != nil {
+		t.Fatalf("query %s pragma: %v", pragmaName, err)
 	}
-	if !strings.Contains(err.Error(), "database file does not exist") {
-		t.Fatalf("InitDB() error = %v, want missing database file error", err)
+	if actual != expected {
+		t.Fatalf("%s pragma mismatch\nexpected: %d\nactual:   %d", pragmaName, expected, actual)
+	}
+}
+
+func assertSQLitePragmaAtLeast(t *testing.T, db *sql.DB, pragmaName string, expectedMinimum int) {
+	t.Helper()
+
+	var actual int
+	if err := db.QueryRow("PRAGMA " + pragmaName + ";").Scan(&actual); err != nil {
+		t.Fatalf("query %s pragma: %v", pragmaName, err)
+	}
+	if actual < expectedMinimum {
+		t.Fatalf("%s pragma too low\nexpected at least: %d\nactual:            %d", pragmaName, expectedMinimum, actual)
+	}
+}
+
+func assertSQLitePragmaString(t *testing.T, db *sql.DB, pragmaName string, expected string) {
+	t.Helper()
+
+	var actual string
+	if err := db.QueryRow("PRAGMA " + pragmaName + ";").Scan(&actual); err != nil {
+		t.Fatalf("query %s pragma: %v", pragmaName, err)
+	}
+	if !strings.EqualFold(actual, expected) {
+		t.Fatalf("%s pragma mismatch\nexpected: %q\nactual:   %q", pragmaName, expected, actual)
+	}
+}
+
+func assertForeignKeysRejectInvalidChild(t *testing.T, db *sql.DB) {
+	t.Helper()
+
+	if _, err := db.Exec("INSERT INTO child(parent_id) VALUES (999);"); err == nil {
+		t.Fatalf("expected foreign key enforcement to reject invalid child row")
+	}
+}
+
+func assertMaxOpenConnections(t *testing.T, db *sql.DB, expected int) {
+	t.Helper()
+
+	actual := db.Stats().MaxOpenConnections
+	if actual != expected {
+		t.Fatalf("max open connections mismatch\nexpected: %d\nactual:   %d", expected, actual)
+	}
+}
+
+func assertErrorContains(t *testing.T, err error, expectedText string) {
+	t.Helper()
+
+	if err == nil {
+		t.Fatalf("expected error containing %q, got nil", expectedText)
+	}
+	if !strings.Contains(err.Error(), expectedText) {
+		t.Fatalf("error mismatch\nexpected to contain: %q\nactual:              %v", expectedText, err)
 	}
 }
 
