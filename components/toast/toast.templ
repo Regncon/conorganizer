@@ -1,0 +1,32 @@
+package toast
+
+import "github.com/Regncon/conorganizer/components/icons"
+
+const missingMessage = "Mangler toast-melding"
+
+templ Render(message string, icon icons.IconType) {
+	{{
+	if message == "" {
+		message = missingMessage
+	}
+	}}
+	<app-toast
+		class="toast-region"
+		role="status"
+		aria-live="polite"
+		aria-atomic="false"
+		indicator-message={ message }
+	>
+		<template>
+			<div class="toast">
+				if icon != "" {
+					<span class="toast-icon" aria-hidden="true">
+						@icons.Icon(icon, icons.Size16)
+					</span>
+				}
+				<span data-toast-text></span>
+			</div>
+		</template>
+	</app-toast>
+	<script type="module" src="/static/web_components/toast.js"></script>
+}
