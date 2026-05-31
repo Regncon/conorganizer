@@ -397,7 +397,12 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"is_disabled":          false,
 							"error":                "",
 						})
-						sse.PatchSignals(payload)
+
+						if err = sse.PatchSignals(payload); err != nil {
+							logger.Error("Failed to patch signals", "error", err)
+							http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							return
+						}
 					})
 
 					createRoomRoute.Post("/", func(w http.ResponseWriter, r *http.Request) {
@@ -420,7 +425,10 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 								"error": err.Error(),
 							})
 
-							sse.PatchSignals(payload)
+							if err = sse.PatchSignals(payload); err != nil {
+								logger.Error("Failed to patch signals", "error", err)
+								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							}
 							return
 						}
 
@@ -467,7 +475,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"is_disabled":          room.IsDisabled,
 							"error":                "",
 						})
-						sse.PatchSignals(payload)
+						if err = sse.PatchSignals(payload); err != nil {
+							logger.Error("Failed to patch signals", "error", err)
+							http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							return
+						}
 					})
 
 					updateRoomRoute.Post("/", func(w http.ResponseWriter, r *http.Request) {
@@ -495,7 +507,10 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 								"error": err.Error(),
 							})
 
-							sse.PatchSignals(payload)
+							if err = sse.PatchSignals(payload); err != nil {
+								logger.Error("Failed to patch signals", "error", err)
+								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							}
 							return
 						}
 						store.ID = int(parsedID)
@@ -507,12 +522,20 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 								"error": err.Error(),
 							})
 
-							sse.PatchSignals(payload)
+							if err = sse.PatchSignals(payload); err != nil {
+								logger.Error("Failed to patch signals", "error", err)
+								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+
+							}
 							return
 						}
 
 						// Ridirect on success
-						sse.Redirect("/admin/rooms")
+						if err = sse.Redirect("/admin/rooms"); err != nil {
+							logger.Error("Failed to patch signals", "error", err)
+							http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							return
+						}
 					})
 				})
 			})
