@@ -9,7 +9,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/Regncon/conorganizer/service/puljer"
-    "github.com/Regncon/conorganizer/service/rooms"
+	"github.com/Regncon/conorganizer/service/rooms"
 	"github.com/go-chi/chi/v5"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -205,7 +205,8 @@ func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventP
                 event_id,
                 pulje_id,
                 is_in_pulje,
-                is_published
+                is_published,
+                room_id
             FROM relation_event_puljer
             WHERE event_id = ? AND pulje_id = ?
             `
@@ -222,6 +223,7 @@ func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventP
 			&event.PuljeID,
 			&event.IsInPulje,
 			&event.IsPublished,
+			&event.RoomID,
 		); err != nil {
 			return models.EventPulje{}, err
 		}
@@ -235,7 +237,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 		<p>Error fetching event pulje: { err.Error() }</p>
 		return
 	}
-    {{ roomStatus, err := rooms.GetAllRoomStatusesByPulje(db, pulje.ID) }}
+	{{ roomStatus, err := rooms.GetAllRoomStatusesByPulje(db, pulje.ID) }}
 	if err != nil {
 		<p>Error fetching rooms: { err.Error() }</p>
 		return
@@ -275,7 +277,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 						class="checkbox input"
 					/>
 				</label>
-                <label
+				<label
 					class="checkbox-background form-group-checkbox"
 					style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
 				>
