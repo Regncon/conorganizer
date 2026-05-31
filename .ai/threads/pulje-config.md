@@ -1578,4 +1578,266 @@ Unrelated `.ai/threads/pulje-config.md` is still modified and untouched.
 
 Time: 2026-05-31 07:18:23
 --- Next Prompt ---
+Next I want to change the `EventStatusPublished` to `EventStatusAnnounced` both in the database and in the code. The word "published" is overloaded in our domain and used multiple times with different meanings. "Announced" will be used for an event that is displayed to the public and the users before the program is published.
+Find out what code changes are needed to make this happen and what database changes are needed.
+
+Let's discuss the implementation before you start coding. Ask any clarifying questions.
+
+Time: 2026-05-31 07:46:37
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the current status constants, schema, seed data, migrations, and references to `Publisert`/`EventStatusPublished` so we can scope the rename cleanly before coding.
+I’ll map the rename through the current code and DB shape first, then we can decide the exact semantics before any edits.
+I found the current `EventStatusPublished` usage and also a separate set of “published” concepts around pulje/program visibility. The important part is to keep those separate so this rename doesn’t accidentally change pulje publication behavior.
+I found three separate “published” meanings in the codebase, and we should only rename one of them unless you want a wider behavior change.
+
+**Target rename**
+`models.EventStatusPublished` currently lives in [models/event-model.go](/home/cinmay/Documents/conorganizer/models/event-model.go:14) with DB/display value `Publisert`.
+
+Likely change:
+
+```go
+EventStatusAnnounced EventStatus = "Annonsert"
+```
+
+Then update direct references in:
+
+- [components/formsubmission/statusCard.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/statusCard.templ:64)
+- [components/profile/my_events.templ](/home/cinmay/Documents/conorganizer/components/profile/my_events.templ:10)
+- [pages/admin/billettholder_admin/billettholder_interest_dialog_test.go](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_interest_dialog_test.go:27)
+- [service/rooms/rooms_test.go](/home/cinmay/Documents/conorganizer/service/rooms/rooms_test.go:696)
+
+**Important overloaded case**
+[components/event_card.templ](/home/cinmay/Documents/conorganizer/components/event_card.templ:29) currently shows `EventStatusPublished.Label()` when `eventCard.IsPublished` is true. That `IsPublished` comes from pulje/program publication, not the event status. After the rename, showing `Annonsert` there would probably be wrong. I would change that UI copy to something explicit like `Publisert i pulje` or similar, while keeping the event status rename separate.
+
+**Database changes**
+`schema.sql` probably does not need a structural change for this specific rename because `events.status` references `event_statuses(status)` and there is no `CHECK` with `Publisert`.
+
+But these do need changes:
+
+- [initialize.sql](/home/cinmay/Documents/conorganizer/initialize.sql:194): replace seeded `Publisert` with `Annonsert`.
+- Add a goose migration to move existing data:
+
+```sql
+-- +goose Up
+INSERT INTO event_statuses(status) VALUES ('Annonsert')
+ON CONFLICT(status) DO NOTHING;
+
+UPDATE events SET status = 'Annonsert' WHERE status = 'Publisert';
+
+DELETE FROM event_statuses WHERE status = 'Publisert';
+
+-- +goose Down
+INSERT INTO event_statuses(status) VALUES ('Publisert')
+ON CONFLICT(status) DO NOTHING;
+
+UPDATE events SET status = 'Publisert' WHERE status = 'Annonsert';
+
+DELETE FROM event_statuses WHERE status = 'Annonsert';
+```
+
+I’d use explicit insert/update/delete instead of relying only on `ON UPDATE CASCADE`; it is easier to reason about across SQLite migration contexts.
+
+Clarifying questions before coding:
+
+1. Should the DB/display value be Norwegian `Annonsert`? That matches the existing status values: `Kladd`, `Innsendt`, `Godkjent`, `Forkastet`.
+2. Is this a pure rename of the existing `Publisert` event status, or should front-page visibility change so public event lists use `Annonsert` instead of `Godkjent`?
+3. Should pulje/program publication terms like `relation_event_puljer.is_published`, `program_publishing_state.is_published`, and “Publisert i pulje” stay as-is?
+4. Do you want the old Go constant removed completely, or should we keep a temporary compatibility alias? My recommendation is to remove it completely so stale usage fails fast.
+
+Time: 2026-05-31 07:46:37
+--- Next Prompt ---
+
+1. Yes, the DB/display value should be `Annonsert` 
+2. The front-page should only show events with `Annonsert` status when the program is not published. 
+Unannounced events should only be visible to admins and the user who created the event. The status should be clearly visible for the admins and the creator. 
+3. Yes, the pulje/program publication terms should stay as-is. The event status `Annonsert` should be separate from the pulje/program publication status. 
+4. Yes, the old Go constant should be removed completely. 
+
+
+Also update the `initialize.sql` file to reflect the new status value. 
+
+Let's continue our discussion. Ask any clarifying questions.
+
+Time: 2026-05-31 07:55:23
+--- Codex Run ---
+
+Codex output:
+I’ll check the front-page query path and event access rules now, because your answer changes this from a simple rename into a visibility rule change for unannounced events.
+The visibility rule reaches the SQL views too: the active pulje view currently hardcodes `Godkjent`, so program-published mode would otherwise still show approved events instead of announced events.
+That changes the scope in a good way: `Annonsert` becomes the public event status, while `Godkjent` becomes an internal/admin status.
+
+I’d implement it as four related changes.
+
+**1. Event status rename**
+In [models/event-model.go](/home/cinmay/Documents/conorganizer/models/event-model.go:14):
+
+```go
+EventStatusAnnounced EventStatus = "Annonsert"
+```
+
+and remove `EventStatusPublished` completely.
+
+Then update direct usages in the status dropdown, profile event links, tests, and status badge rendering. The badge component in [components/ui/button/eventStatus.templ](/home/cinmay/Documents/conorganizer/components/ui/button/eventStatus.templ:20) should handle `annonsert` instead of `publisert`.
+
+**2. Public front-page visibility**
+The flat front-page query in [pages/root/event_list.templ](/home/cinmay/Documents/conorganizer/pages/root/event_list.templ:19) should become something like `GetAnnouncedEventsAlphabetically` and query `models.EventStatusAnnounced`, not `Godkjent`.
+
+The pulje/program view also needs a DB-level update because [schema.sql](/home/cinmay/Documents/conorganizer/schema.sql:153) and [initialize.sql](/home/cinmay/Documents/conorganizer/initialize.sql:293) define `v_events_by_pulje_active` with:
+
+```sql
+e.status = 'Godkjent'
+```
+
+That should become:
+
+```sql
+e.status = 'Annonsert'
+```
+
+So when program publishing is on, the visible events must be both:
+
+- `events.status = 'Annonsert'`
+- `relation_event_puljer.is_published = 1`
+
+**3. Direct event-page access**
+Right now `/event/{id}` loads any event by ID through [pages/event/event_index.templ](/home/cinmay/Documents/conorganizer/pages/event/event_index.templ:18) and [service/eventService/event_helpers.go](/home/cinmay/Documents/conorganizer/service/eventService/event_helpers.go:11). We need an access check:
+
+- public users can see `Annonsert`
+- admins can see all statuses
+- the event creator can see their own unannounced events
+- everyone else should be denied
+
+I’d apply the same rule to the initial event page route and the `/event/api/{id}` SSE endpoint, so Datastar updates cannot render hidden event content either.
+
+**4. Database migration**
+Add a migration that:
+
+- inserts `Annonsert` into `event_statuses`
+- updates existing `events.status = 'Publisert'` to `Annonsert`
+- deletes `Publisert` from `event_statuses`
+- recreates `v_events_by_pulje_active` with `e.status = 'Annonsert'`
+
+Also update [initialize.sql](/home/cinmay/Documents/conorganizer/initialize.sql:194) to seed `Annonsert` instead of `Publisert`.
+
+Clarifying questions before coding:
+
+1. Should existing `Godkjent` events stay hidden after this change, or should we migrate current `Godkjent` events to `Annonsert` for continuity?
+2. For unauthorized direct event URLs, should we return `404 Not Found` to avoid revealing that the event exists, or `403 Forbidden`?
+3. Should the creator be able to view unannounced events only from `/profile`, or also by direct `/event/{id}` URL? I assume both.
+4. Should `Annonsert` events be editable by the creator, or does the current behavior remain: once submitted/approved/announced, the creator views the public-style event page rather than the edit form?
+
+Time: 2026-05-31 07:55:23
+--- Next Prompt ---
+1. Let's migrate existing `Godkjent` events to `Annonsert` for continuity.
+2. For unauthorized direct event URLs, we should display a friendly message saying that the event you are looking for is not yet announced, or something like that. It should be warm and friendly, not a cold 404 or 403.
+3. The creator should be able to view unannounced events from both `/profile` and direct `/event/{id}` URL.
+4. `Annonsert` events should not be editable by the creator. When an event is godkjent the ownership is transferred to the sheaf editor team, and the creator should not be able to edit the event anymore. The link on the profile page should go directly to the public-style event page, not the edit form. 
+
+Let's make a plan for the implementation. 
+I would like to do tdd style implementation for this. Perhaps we need to change the database first? 
+
+Let's discuss the implementation before you start coding. Ask any clarifying questions.
+
+Time: 2026-05-31 08:03:50
+--- Codex Run ---
+
+Codex output:
+I’ll outline this as a TDD sequence and separate the schema/data migration work from the behavior tests, because those fail for different reasons and are easier to keep understandable when isolated.
+Yes, we can do this TDD style. The main nuance is that tests use [schema.sql](/home/cinmay/Documents/conorganizer/schema.sql), not migrations or `initialize.sql`, when creating temporary DBs. So anything involving views must eventually update `schema.sql` before the tests can pass.
+
+I’d use this plan:
+
+1. Write failing front-page tests first.
+   - Program publishing off: only `Annonsert` events are rendered.
+   - Program publishing off: `Godkjent`, `Innsendt`, `Kladd`, etc. are hidden.
+   - Program publishing on: only `Annonsert` events that are also `relation_event_puljer.is_published = 1` are rendered.
+   - This should fail because the code and `v_events_by_pulje_active` still use `Godkjent`.
+
+2. Write failing event-access tests.
+   - Anonymous/non-owner user opening an unannounced event sees the friendly “not announced yet” message.
+   - Creator opening their own unannounced event sees the public-style event page.
+   - Admin opening an unannounced event sees the public-style event page.
+   - Anonymous user opening an `Annonsert` event sees the event page.
+   - These will probably need a small access helper around the event route/rendering logic.
+
+3. Write/update status rendering tests.
+   - `Annonsert` renders as a normal event status.
+   - The creator/admin can clearly see status for unannounced events.
+   - The old `Publisert` event status is gone from code paths.
+
+4. Implement the model and UI rename.
+   - `EventStatusPublished` removed.
+   - `EventStatusAnnounced = "Annonsert"` added.
+   - Status dropdown uses `Annonsert`.
+   - Profile links treat `Annonsert` like `Godkjent`: it goes to `/event/{id}`, not edit.
+   - Pulje/program publication labels stay as `Publisert` / `Publisert i pulje`.
+
+5. Implement DB migration and schema updates.
+   - Add `Annonsert`.
+   - Migrate existing `Publisert` events to `Annonsert`.
+   - Migrate existing `Godkjent` events to `Annonsert`.
+   - Delete `Publisert`.
+   - Recreate `v_events_by_pulje_active` with `e.status = 'Annonsert'`.
+   - Update [initialize.sql](/home/cinmay/Documents/conorganizer/initialize.sql:194).
+   - Run migration locally, then `go tool task test` so `schema.sql` is regenerated from the migrated local DB.
+
+6. Make tests pass and run full verification.
+   - `go test ./...`
+   - `go tool task test`
+   - likely `templ generate` if generated files are affected.
+
+Clarifying questions before coding:
+
+1. What should the friendly hidden-event message say? Suggested copy:  
+   `Dette arrangementet er ikke annonsert ennå. Kom tilbake senere, så får du se hva som venter.`
+2. Should that message use the normal site layout with breadcrumbs/header, or just a simple page content block inside the normal layout?
+3. For “creator”, should we use `events.user_id` as the owner field? That matches the current profile query, so I think yes.
+4. Should the admin approval page still have a `Godkjent` section, and admins then manually move events from `Godkjent` to `Annonsert` when ready? My recommendation is yes: `Godkjent` remains internal editorial approval; `Annonsert` is the deliberate public visibility step.
+
+Time: 2026-05-31 08:03:50
+--- Next Prompt ---
+Let's dot he database migration first.
+1. That text sounds good for the friendly message.
+2. Yes, just see if you can render a component on the existing event page that shows that message.
+3. Yes, using `events.user_id` as the owner field makes sense.
+4. Yes, let's keep the `Godkjent` status in the admin approval page. 
+
+
+Time: 2026-05-31 09:08:58
+--- Codex Run ---
+
+Codex output:
+I’ll make the DB-side change first: a goose migration plus `initialize.sql`. I’ll keep the old pulje/program `is_published` concepts untouched and only change event status data plus the active pulje view filter.
+I’m going to make the migration explicit and conservative: insert `Annonsert`, move both existing `Publisert` and `Godkjent` events to `Annonsert`, keep `Godkjent` as a valid internal status, remove `Publisert`, and recreate the active pulje view to filter on `Annonsert`.
+The migration file and `initialize.sql` are updated. Next I’ll try applying the migration to the local database so `schema.sql` can reflect the new view definition, then I’ll verify the resulting status rows and view filter.
+The local migration applied and `schema.sql` now has the active pulje view filtering `Annonsert`. I’ll do a DB-only sanity check rather than full Go tests yet, because the application code still references the old status and the root-page tests are expected to fail until the TDD/code steps are done.
+One nuance: the down migration cannot distinguish events that used to be `Publisert` from events that used to be `Godkjent` after both are moved to `Annonsert`. I’m adding a short comment there so future readers understand why rollback maps back to `Godkjent`.
+I’m going to test the migration’s down/up path on a temporary copy of the database, so the local working database stays migrated while we still catch SQL mistakes in the rollback block.
+Database migration first is done.
+
+I added [20260531080000_rename_published_event_status_to_announced.sql](/home/cinmay/Documents/conorganizer/migrations/20260531080000_rename_published_event_status_to_announced.sql:1). It:
+
+- adds `Annonsert`
+- migrates existing `Publisert` and `Godkjent` events to `Annonsert`
+- removes `Publisert` from `event_statuses`
+- keeps `Godkjent` as an internal/admin status
+- recreates `v_events_by_pulje_active` to filter on `e.status = 'Annonsert'`
+
+I also updated [initialize.sql](/home/cinmay/Documents/conorganizer/initialize.sql:197) and regenerated [schema.sql](/home/cinmay/Documents/conorganizer/schema.sql:225) from the migrated local DB.
+
+Verification done:
+
+- Applied migration locally with `GOOSE_DBSTRING=database/events.db goose up`
+- `event_statuses` now contains `Annonsert`, `Forkastet`, `Godkjent`, `Innsendt`, `Kladd`
+- Local events are now `Annonsert|54`, `Forkastet|6`, `Kladd|67`
+- `PRAGMA foreign_key_check` returned clean
+- `goose validate` passed
+- Tested `goose down && goose up` on a temporary DB copy
+
+I did not run `go test ./...` yet because the code and tests still expect `Godkjent`/`EventStatusPublished` in several places. The next TDD step should be writing the failing front-page tests for `Annonsert` visibility. Unrelated `.ai/threads/pulje-config.md` is still modified and untouched.
+
+Time: 2026-05-31 09:08:58
+--- Next Prompt ---
 
