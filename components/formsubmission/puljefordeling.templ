@@ -180,7 +180,6 @@ func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, kv jetstream.KeyValue,
 			inputByPulje[models.PuljeSondagMorgen] = store.IsInRoomSondagMorgen
 
 			var roomID = inputByPulje[models.Pulje(puljeId)]
-			fmt.Println(roomID, eventID, puljeId)
 
 			if err := updateRoomInRelationEventPuljeWithAudit(r.Context(), db, logger, eventID, puljeId, roomID); err != nil {
 				logger.Error(fmt.Errorf("failed to upsert room %s in relation_event_puljer for event %s and pulje %s: %w", roomID, eventID, puljeId, err).Error())
@@ -289,7 +288,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 							disabled
 						}
 					>
-						<option value="">Ikke tildelt</option>
+						<option value="lol git gud">Ikke tildelt</option>
 						for _,room := range roomStatus[pulje.ID] {
 							<option
 								value={ room.ID }
