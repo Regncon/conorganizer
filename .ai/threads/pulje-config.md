@@ -1876,4 +1876,70 @@ No `EventStatusPublished` references remain in code. `.ai/threads/pulje-config.m
 
 Time: 2026-05-31 09:26:23
 --- Next Prompt ---
+Ok, next, we need to hide the interest dialog for unpublished events. The interest dialog should only be visible for events that are published in a pulje and the program is published.
+
+Let's discuss the implementation before you start coding. Ask any clarifying questions.
+
+Time: 2026-05-31 09:32:28
+--- Codex Run ---
+
+Codex output:
+I’ll look at the current event interest rendering path and the program publishing lookup so we can decide where the visibility guard belongs without touching the interest update rules yet.
+I see two separate UI pieces involved:
+
+- [EventInterestPanel](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ:10): the visible card/button that opens interest selection.
+- [EventInterests](/home/cinmay/Documents/conorganizer/components/event_components/event_interests.templ:15): the actual `<dialog class="interest-dialog">`.
+
+Right now both are effectively rendered whenever the event page is rendered.
+
+I’d implement the guard on the event page before rendering either piece:
+
+```text
+showInterestControls =
+  program_publishing_state.is_published = 1
+  AND event has at least one relation_event_puljer row where:
+      is_in_pulje = 1
+      is_published = 1
+```
+
+The event page already loads `puljerForEvent` through `GetPujerForEvent`, and that service only returns puljer where the event is published in a pulje. So the pulje part can probably be:
+
+```go
+len(puljerForEvent) > 0
+```
+
+Then we only need to query the global program publishing state on the event page.
+
+Implementation shape I’d suggest:
+
+1. Add a small event-page-local helper for program publishing state.
+   - I would keep it in `pages/event`, not export/reuse the root/admin helpers yet. The codebase currently duplicates this tiny DB read, and that matches the “high cohesion, low abstraction” preference.
+
+2. Compute `showInterestControls` in [event_page.templ](/home/cinmay/Documents/conorganizer/pages/event/event_page.templ:24).
+
+3. Pass `showInterestControls` into [Event_mobile](/home/cinmay/Documents/conorganizer/pages/event/event_mobile.templ:13).
+
+4. Update [EventInterestPanel](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ:10) so the “Meld interesse” card/button is hidden or replaced when interest is unavailable.
+
+5. Render `@event_components.EventInterests(...)` only when `showInterestControls` is true, so the dialog is not present in the DOM.
+
+6. Add tests:
+   - Program unpublished: interest dialog is not rendered.
+   - Program published + event not published in any pulje: interest dialog is not rendered.
+   - Program published + event published in pulje: interest dialog is rendered.
+   - Ideally also assert the “Meld interesse” button follows the same rule.
+
+One security note: hiding the dialog is UI-only. The update endpoint already checks that the event is published in a pulje, but it does not currently check global program publishing. I recommend we also block interest updates when `program_publishing_state.is_published = 0`, otherwise a crafted request could still save interest while the UI is hidden.
+
+Clarifying questions:
+
+1. When interest is unavailable, should we hide the whole interest panel/card, or show a small message like “Interessevalg åpner når programmet er publisert”?
+2. If the user has no ticket, should the “Hent billett” CTA still show even when interest is unavailable? Earlier we kept ticket CTA visible regardless of pulje lock status, but this is slightly different because program publishing may be off.
+3. Should I include the backend guard for interest updates in this pass, or keep this strictly to rendering the dialog/UI?
+
+Time: 2026-05-31 09:32:28
+--- Next Prompt ---
+1. I think it would be better to show a message instead of hiding the whole interest panel/card.
+2. Yes, the “Hent billett” CTA should still show even when interest is unavailable.
+3. Let's include the backend guard for interest updates in this pass. Add test coverage for that as well if its not already covered.
 
