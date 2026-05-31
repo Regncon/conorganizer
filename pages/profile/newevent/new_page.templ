@@ -1,0 +1,70 @@
+package newevent
+
+import (
+	"context"
+	"database/sql"
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/formsubmission"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/pages/event"
+	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/eventService"
+	"log/slog"
+)
+
+templ NewEventFormPage(eventId string, userId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	<div id="formsubmission-container" class="formsubmission-css-container">
+		@NewEventFormPageContent(eventId, userId, ctx, db, eventImageDir, logger)
+	</div>
+}
+
+templ NewEventFormPageContent(eventId string, userId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	{{
+		isAdmin := authctx.GetAdminFromUserToken(ctx)
+		eventData, eventErr := eventservice.GetEventById(eventId, db)
+		isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
+		puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db)
+	}}
+	if eventErr != nil {
+		{{ logger.Error(eventErr.Error(), "event_id", eventId) }}
+		<p>Error fetching events: { eventErr.Error() }</p>
+		return
+	}
+	if puljerErr != nil {
+		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
+		<p>Error fetching event puljer: { puljerErr.Error() }</p>
+		return
+	}
+	if eventData == nil {
+		{{ logger.Warn("Event not found for new event form", "event_id", eventId) }}
+		<p>Event not found</p>
+		return
+	}
+	if isAdmin == false && eventData.Status == models.EventStatusApproved {
+		{{ logger.Warn("Attempt to edit an already approved or published event", "event_id", eventId) }}
+		<h1>Arrangementet er allerede godkjent eller publisert</h1>
+		<h2>Ta kontakt med RegnCon styret på Dicord eller via epost om du ønsker å gjøre endringer på arrangementet.</h2>
+	} else {
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Min Side", Url: "/profile"},
+			{Name: "Nytt arrangement", Url: ""},
+		})
+		<div style="display: flex;">
+			<form
+				class="formsubmission-wrapper page-content-container"
+				action={ "/profile/api/new/" + eventData.ID + "/submit" }
+				method="post"
+			>
+				<h1 class="page-heading">Nytt arrangement</h1>
+				@formsubmission.FormBody(eventData, isAdmin, db)
+				@formsubmission.SubmitSection()
+			</form>
+			if isAdmin {
+				<div style="padding:2rem;">
+					@event.Event_mobile(eventData, isRemovedPreviousNext, puljerForEvent, false, eventImageDir)
+				</div>
+			}
+		</div>
+	}
+}

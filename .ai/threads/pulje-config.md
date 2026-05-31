@@ -1,5 +1,5 @@
 --- Codex Session ---
-ID: 019e4a64-6111-7443-8b1c-92510edfb0d5
+ID: 019e7d43-3590-7af3-b149-444c2ab1aed8
 
 # Pulje configuration
 
@@ -1942,4 +1942,47 @@ Time: 2026-05-31 09:32:28
 1. I think it would be better to show a message instead of hiding the whole interest panel/card.
 2. Yes, the “Hent billett” CTA should still show even when interest is unavailable.
 3. Let's include the backend guard for interest updates in this pass. Add test coverage for that as well if its not already covered.
+
+
+Time: 2026-05-31 10:55:52
+--- Codex Run ---
+
+Codex output:
+I’ll implement this in the same TDD style: add failing UI tests for the event page and mutation tests for `updateInterest`, then wire the guard through the page and backend.
+I’m adding the red tests now: panel behavior for unavailable interest, event-page dialog presence/absence, and backend rejection when global program publishing is off.
+I’m wiring the guard in three places now: the event-page render decision, the interest panel state, and the `updateInterest` mutation path.
+The full event page tests were anonymous, so the panel correctly showed the ticket CTA instead of the ticket-holder unavailable message. I’ll adjust those page-level tests to assert “no dialog, ticket CTA still present”; the component-level test already covers the unavailable message for ticket holders.
+The event package now passes with the UI and backend guards. I’m running the full task test so schema regeneration and all packages are checked together.
+The event changes exposed two compile sites that call `Event_mobile` directly; I’ll update those with `showInterestControls=false`. There’s also a new missing `pages/profile/newevent` import that was not caused by this change, so I’ll inspect it before deciding whether it’s unrelated or generated-code fallout..ai/puj
+Implemented the interest availability guard.
+
+What changed:
+- Added event-page interest availability helper in [interest_availability.go](/home/cinmay/Documents/conorganizer/pages/event/interest_availability.go:11).
+- The event page now only renders the interest dialog when the program is published and the event has at least one published pulje relation.
+- [EventInterestPanel](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ:11) now shows a message for ticket holders when interest is unavailable, while still showing the “Hent billett” CTA for users without tickets.
+- [updateInterest](/home/cinmay/Documents/conorganizer/pages/event/event.go:360) now rejects updates when program publishing is off, and also requires the event to be `Annonsert` and published in the selected pulje.
+- Updated direct `Event_mobile` call sites in admin edit and print-friendly pages to keep interest controls off there.
+
+Tests added/updated for:
+- unavailable interest panel message
+- no-ticket CTA still visible
+- dialog hidden when program publishing is off
+- dialog hidden when event is not published in pulje
+- dialog rendered when both program and pulje publication are active
+- backend rejection when program publishing is off
+- backend rejection when event is not published in pulje
+
+Verification:
+```sh
+GOCACHE=/tmp/go-build go test -count=1 ./pages/event
+GOCACHE=/tmp/go-build go test ./pages/event ./pages/admin/approval/editForm ./pages/print-friendly
+```
+
+Both passed.
+
+`go test ./...` and `go tool task test` are currently blocked by an existing missing package import: `pages/profile/profile.go` imports `github.com/Regncon/conorganizer/pages/profile/newevent`, but there are no package files under `pages/profile/newevent`.
+
+Time: 2026-05-31 10:55:52
+--- Next Prompt ---
+Some of the files where missing in the last merge. They are back now, please continue. 
 

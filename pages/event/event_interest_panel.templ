@@ -8,7 +8,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow) {
+templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, interestAvailable bool) {
 	{{ helperState, hasHelperState := ticketholder.BuildMostUrgentPuljeInterestState(puljerForEvent, time.Now()) }}
 	<style>
     .event-interest-picker-container {
@@ -104,36 +104,42 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow) {
 	<div class="event-interest-picker-container">
 		<div class="card event-interest-picker">
 			if hasTickets {
-				<div>
-					Tenker du dette arrangementet ser spennende ut?
-					Husk å melde interesse i god tid, aller senest en time før puljen til arrangementet starter.
-					<a
-						class="inline-link"
-						href="https://www.regncon.no/vanlege-sporsmal/"
-						target="_blank"
+				if interestAvailable {
+					<div>
+						Tenker du dette arrangementet ser spennende ut?
+						Husk å melde interesse i god tid, aller senest en time før puljen til arrangementet starter.
+						<a
+							class="inline-link"
+							href="https://www.regncon.no/vanlege-sporsmal/"
+							target="_blank"
+						>
+							<span class="link-text">Hvordan fungerer interessevalget?</span>
+							<span class="link-icon">&#9432;</span>
+						</a>
+					</div>
+					if hasHelperState {
+						<p class={ "event-interest-helper", helperState.ClassName() }>
+							if helperState.IsWarning() {
+								@icons.Icon(icons.Warning, icons.Size16)
+							} else if helperState.IsLocked() {
+								@icons.Icon(icons.Lock, icons.Size16)
+							} else if helperState.IsCompleted() {
+								@icons.Icon(icons.ProgressComplete, icons.Size16)
+							}
+							<span>{ helperState.Message }</span>
+						</p>
+					}
+					<button
+						class="btn btn--cta event-interest-open-button"
+						data-on:click="$_interestIsOpen = true"
 					>
-						<span class="link-text">Hvordan fungerer interessevalget?</span>
-						<span class="link-icon">&#9432;</span>
-					</a>
-				</div>
-				if hasHelperState {
-					<p class={ "event-interest-helper", helperState.ClassName() }>
-						if helperState.IsWarning() {
-							@icons.Icon(icons.Warning, icons.Size16)
-						} else if helperState.IsLocked() {
-							@icons.Icon(icons.Lock, icons.Size16)
-						} else if helperState.IsCompleted() {
-							@icons.Icon(icons.ProgressComplete, icons.Size16)
-						}
-						<span>{ helperState.Message }</span>
+						Meld interesse
+					</button>
+				} else {
+					<p class="event-interest-unavailable-message color-strong">
+						Interessevalg er ikke åpnet for dette arrangementet ennå.
 					</p>
 				}
-				<button
-					class="btn btn--cta"
-					data-on:click="$_interestIsOpen = true"
-				>
-					Meld interesse
-				</button>
 			} else {
 				<p class="color-strong">
 					Før å kunne melde interesse må du først hente billetten din.

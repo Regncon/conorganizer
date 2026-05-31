@@ -2,6 +2,7 @@ package event
 
 import (
 	"database/sql"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -32,7 +33,7 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
 	}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, true))
 	helper := doc.Find(".event-interest-helper")
 	actualHelperVisible := helper.Length() > 0
 	actualMessage := strings.Join(strings.Fields(helper.Text()), " ")
@@ -69,7 +70,7 @@ func TestEventInterestPanel_WhenCurrentTimeIsBeforeWarningThreshold_RendersNoWar
 	}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, true))
 	actualHelperVisible := doc.Find(".event-interest-helper").Length() > 0
 
 	// Then
@@ -105,7 +106,7 @@ func TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarn
 	}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, true))
 	helper := doc.Find(".event-interest-helper")
 	actualHelperVisible := helper.Length() > 0
 	actualMessage := strings.Join(strings.Fields(helper.Text()), " ")
@@ -121,6 +122,49 @@ func TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarn
 	if !strings.Contains(actualMessage, expectedMessagePart) {
 		t.Fatalf("helper message mismatch\nexpected to contain: %q\nactual:              %q", expectedMessagePart, actualMessage)
 	}
+}
+
+func TestEventInterestPanel_WhenInterestIsUnavailableForTicketHolder_RendersUnavailableMessage(t *testing.T) {
+	// Gitt at interessevalg ikke er åpnet for arrangementet og brukeren har billett,
+	// når interessepanelet rendres,
+	// så skal panelet vise en melding i stedet for knappen for å melde interesse.
+
+	// Given
+	expectedMessages := []string{"Interessevalg er ikke åpnet for dette arrangementet ennå."}
+	expectedInterestButtonVisible := false
+
+	puljer := []models.PuljeRow{}
+
+	// When
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, false))
+	actualMessages := templtest.CollectTexts(doc, ".event-interest-unavailable-message")
+	actualInterestButtonVisible := doc.Find(".event-interest-open-button").Length() > 0
+
+	// Then
+	if !slices.Equal(expectedMessages, actualMessages) {
+		t.Fatalf("unavailable message mismatch\nexpected: %v\nactual:   %v", expectedMessages, actualMessages)
+	}
+	if actualInterestButtonVisible != expectedInterestButtonVisible {
+		t.Fatalf("interest button visibility mismatch\nexpected: %v\nactual:   %v", expectedInterestButtonVisible, actualInterestButtonVisible)
+	}
+}
+
+func TestEventInterestPanel_WhenInterestIsUnavailableAndUserHasNoTicket_RendersTicketCTA(t *testing.T) {
+	// Gitt at interessevalg ikke er åpnet for arrangementet og brukeren ikke har billett,
+	// når interessepanelet rendres,
+	// så skal brukeren fortsatt se lenken for å hente billett.
+
+	// Given
+	expectedHrefs := []string{"/profile/tickets"}
+
+	puljer := []models.PuljeRow{}
+
+	// When
+	doc := templtest.Render(t, EventInterestPanel(false, puljer, false))
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
+
+	// Then
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
 }
 
 func TestUpdateInterest_WhenPuljeIsOpen_UpdatesInterest(t *testing.T) {
@@ -148,6 +192,80 @@ func TestUpdateInterest_WhenPuljeIsOpen_UpdatesInterest(t *testing.T) {
 	// Then
 	if err != nil {
 		t.Fatalf("expected open pulje interest update to succeed: %v", err)
+	}
+	if actualInterest != expectedInterest {
+		t.Fatalf("interest level mismatch\nexpected: %s\nactual:   %s", expectedInterest, actualInterest)
+	}
+}
+
+func TestUpdateInterest_WhenProgramPublishingIsOff_RejectsInterestChangeAndKeepsExistingInterest(t *testing.T) {
+	// Gitt at publisering av program er skrudd av,
+	// når interessen forsøkes endret,
+	// så skal endringen avvises og eksisterende interesse beholdes.
+
+	// Given
+	expectedInterest := models.InterestLevelHigh
+	expectedErrorText := "program"
+
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, expectedInterest)
+	setEventInterestProgramPublishing(t, db, false)
+
+	// When
+	err := updateInterest(
+		fixture.userExternalID,
+		fixture.billettholderID,
+		fixture.eventID,
+		models.InterestLevelLow,
+		string(fixture.puljeID),
+		db,
+	)
+	actualInterest := getEventInterestTestInterest(t, db, fixture.eventID, fixture.billettholderID, fixture.puljeID)
+
+	// Then
+	if err == nil {
+		t.Errorf("expected unpublished program to reject interest update")
+	} else if !strings.Contains(strings.ToLower(err.Error()), expectedErrorText) {
+		t.Errorf("error mismatch\nexpected to contain: %q\nactual:              %v", expectedErrorText, err)
+	}
+	if actualInterest != expectedInterest {
+		t.Fatalf("interest level mismatch\nexpected: %s\nactual:   %s", expectedInterest, actualInterest)
+	}
+}
+
+func TestUpdateInterest_WhenEventIsNotPublishedInPulje_RejectsInterestChangeAndKeepsExistingInterest(t *testing.T) {
+	// Gitt at arrangementet ikke er publisert i puljen,
+	// når interessen forsøkes endret,
+	// så skal endringen avvises og eksisterende interesse beholdes.
+
+	// Given
+	expectedInterest := models.InterestLevelHigh
+	expectedErrorText := "published"
+
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, expectedInterest)
+	mustExecEventInterestTest(t, db, `
+		UPDATE relation_event_puljer
+		SET is_published = 0
+		WHERE event_id = ? AND pulje_id = ?
+	`, fixture.eventID, fixture.puljeID)
+
+	// When
+	err := updateInterest(
+		fixture.userExternalID,
+		fixture.billettholderID,
+		fixture.eventID,
+		models.InterestLevelLow,
+		string(fixture.puljeID),
+		db,
+	)
+	actualInterest := getEventInterestTestInterest(t, db, fixture.eventID, fixture.billettholderID, fixture.puljeID)
+
+	// Then
+	if err == nil {
+		t.Errorf("expected unpublished event pulje relation to reject interest update")
+	} else if !strings.Contains(strings.ToLower(err.Error()), expectedErrorText) {
+		t.Errorf("error mismatch\nexpected to contain: %q\nactual:              %v", expectedErrorText, err)
 	}
 	if actualInterest != expectedInterest {
 		t.Fatalf("interest level mismatch\nexpected: %s\nactual:   %s", expectedInterest, actualInterest)
@@ -249,12 +367,13 @@ func createEventInterestTestDB(t *testing.T) *sql.DB {
 func seedEventInterestLookups(t *testing.T, db *sql.DB) {
 	t.Helper()
 
-	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?)`, models.EventStatusApproved)
+	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?), (?)`, models.EventStatusApproved, models.EventStatusAnnounced)
 	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
 	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
 	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
 	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
 	mustExecEventInterestTest(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?), (?), (?)`, models.PuljeStatusOpen, models.PuljeStatusLocked, models.PuljeStatusCompleted)
+	setEventInterestProgramPublishing(t, db, true)
 }
 
 func seedEventInterestUpdateFixture(
@@ -296,7 +415,7 @@ func seedEventInterestUpdateFixture(
 			max_players, beginner_friendly, can_be_run_in_english,
 			status
 		) VALUES (?, 'Interest Event', 'intro', 'description', '', ?, ?, ?, 'Host', 'host@example.com', '11111111', 4, 1, 1, ?)
-	`, fixture.eventID, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved)
+	`, fixture.eventID, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusAnnounced)
 	mustExecEventInterestTest(t, db, `
 		INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published)
 		VALUES (?, ?, 1, 1)
@@ -317,6 +436,21 @@ func getEventInterestTestInterest(t *testing.T, db *sql.DB, eventID string, bill
 		t.Fatalf("failed to get selected interest: %v", err)
 	}
 	return interest
+}
+
+func setEventInterestProgramPublishing(t *testing.T, db *sql.DB, programPublished bool) {
+	t.Helper()
+
+	isPublished := 0
+	if programPublished {
+		isPublished = 1
+	}
+
+	mustExecEventInterestTest(t, db, `
+		INSERT INTO program_publishing_state(id, is_published)
+		VALUES (1, ?)
+		ON CONFLICT(id) DO UPDATE SET is_published = excluded.is_published
+	`, isPublished)
 }
 
 func buildEventInterestTestPulje(id models.Pulje, name string, status models.PuljeStatus, startAt time.Time) models.PuljeRow {

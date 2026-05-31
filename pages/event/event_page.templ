@@ -63,6 +63,13 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 			selectedPuljeId = string(puljerForEvent[0].ID)
 		}
 	}}
+	{{ programPublished, programPublishedErr := getProgramPublished(db) }}
+	if programPublishedErr != nil {
+		{{ logger.Error(programPublishedErr.Error(), "event_id", eventId) }}
+		<p>Error fetching program publishing state: { programPublishedErr.Error() }</p>
+		return
+	}
+	{{ showInterestControls := canShowInterestControls(programPublished, puljerForEvent) }}
 	{{ evnetsByPulje, eventsByPuljeErr := root.GetEventsByPulje(db) }}
 	if eventsByPuljeErr != nil {
 		{{ logger.Error(fmt.Errorf("failed to load event navigation data for event %s: %w", eventId, eventsByPuljeErr).Error()) }}
@@ -93,8 +100,10 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 			style="margin:1rem;"
 		>Administrator - rediger arrangementer</a>
 	}
-	@Event_mobile(event, previousNextData, puljerForEvent, hasTickets, eventImageDir)
-	@event_components.EventInterests(userInfo, eventId, selectedPuljeId, db, r, logger)
+	@Event_mobile(event, previousNextData, puljerForEvent, hasTickets, showInterestControls, eventImageDir)
+	if showInterestControls {
+		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, db, r, logger)
+	}
 }
 
 templ eventNotAnnounced() {

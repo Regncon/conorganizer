@@ -14,6 +14,7 @@ templ Event_mobile(
 	previousNextData components.PreviousNext,
 	puljerForEvent []models.PuljeRow,
 	hasTickets bool,
+	showInterestControls bool,
 	eventImageDir *string) {
 	{{ imageCardUrl := eventimage.GetEventImageUrl(event.ID, "card", eventImageDir) }}
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.ID, "banner", eventImageDir) }}
@@ -343,7 +344,7 @@ templ Event_mobile(
 			</header>
 		</div>
 		<div class="event-information">
-			@EventInterestPanel(hasTickets, puljerForEvent)
+			@EventInterestPanel(hasTickets, puljerForEvent, showInterestControls)
 			<section class="surface-pane event-details-pane">
 				<h2 class="surface-pane-title">Detaljer om arrangementet</h2>
 				<div class="event-details">

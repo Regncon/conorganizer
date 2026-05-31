@@ -52,6 +52,9 @@ func interestErrorMessageFromError(err error) string {
 	if strings.Contains(err.Error(), "is completed for event") {
 		return "Puljefordelinga er klar. Gå til profilen din for å sjå kva du fekk."
 	}
+	if strings.Contains(err.Error(), "program is not published") {
+		return "Interessevalget er ikke åpnet ennå."
+	}
 	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
 }
 
@@ -354,17 +357,27 @@ func updateInterest(
 		return fmt.Errorf("interest level is required")
 	}
 
+	programPublished, programPublishedErr := getProgramPublished(db)
+	if programPublishedErr != nil {
+		return fmt.Errorf("failed to check program publishing state: %w", programPublishedErr)
+	}
+	if !programPublished {
+		return fmt.Errorf("program is not published")
+	}
+
 	puljeQuery := `
 		SELECT p.status
 		FROM relation_event_puljer ep
 		JOIN puljer p ON p.id = ep.pulje_id
+		JOIN events e ON e.id = ep.event_id
 		WHERE ep.event_id = $1
 			AND ep.pulje_id = $2
 			AND ep.is_in_pulje = 1
 			AND ep.is_published = 1
+			AND e.status = $3
 	`
 	var puljeStatus models.PuljeStatus
-	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId).Scan(&puljeStatus)
+	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId, models.EventStatusAnnounced).Scan(&puljeStatus)
 	if puljerErr != nil {
 		if puljerErr == sql.ErrNoRows {
 			return fmt.Errorf("pulje %s is not active and published for event %s", puljeId, eventID)
