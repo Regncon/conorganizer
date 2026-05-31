@@ -1,5 +1,5 @@
 const STYLE_URLS = window.conorganizerSharedStyles.getStyleUrls();
-
+const UPLOAD_ERROR_MESSAGE = 'Klarte ikkje å lagre endringa. Prøv igjen. Kontakt styret dersom problemet held fram.';
 // ---- component --------------------------------------------------------------
 class BannerCropper extends HTMLElement {
     static get observedAttributes() {
@@ -43,13 +43,10 @@ class BannerCropper extends HTMLElement {
                      class="btn btn--outline"
                      type="button"
                      >Lagre</button>
-                  <div>
-                  <div>
-                     <span id="status" aria-live="polite" style="margin-left:8px;"></span>
-                  </div>
-                </div>
+                  <span id="statusInline" aria-live="polite"></span>
                </div>
-                  <span id="cameraIcon" style="display:none">
+               <span id="statusError" aria-live="polite" style="display:block;"></span>
+               <span id="cameraIcon" style="display:none">
                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="200" height="200">
                         <path fill="currentColor" d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM4 4h3.2l1.6-2h6.4l1.6 2H20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v12h16V6h-3.2l-1.6 2H8.8L7.2 6H4Z"/>
                      </svg>
@@ -64,7 +61,8 @@ class BannerCropper extends HTMLElement {
         this.cameraIcon = root.getElementById('cameraIcon');
         this.zoom = root.getElementById('zoom');
         this.exportButton = root.getElementById('exportButton');
-        this.statusEl = root.getElementById('status');
+        this.statusInlineEl = root.getElementById('statusInline');
+        this.statusErrorEl = root.getElementById('statusError');
 
         // Bind handlers once
         this.handleZoomInput = this.handleZoomInput.bind(this);
@@ -152,25 +150,25 @@ class BannerCropper extends HTMLElement {
 
     async handleExport() {
         if (!this.imageLoaded) {
-            this._status('No image to save.', true);
+            this._status('Ikkje noko bilete å lagre.', true);
             return;
         }
 
         const eventId = this.getAttribute('event-id');
         if (!eventId) {
-            this._status('Missing event-id attribute.', true);
+            this._status('Manglar event-id.', true);
             console.error('BannerCropper: missing event-id attribute.');
             return;
         }
 
         const kind = this._normalizedKind();
         this.exportButton.disabled = true;
-        this._status('Preparing image...');
+        this._status('Klargjer bilete...');
 
         const quality = 0.9;
         const blob = await this._canvasToWebpBlob(quality);
         if (!blob) {
-            this._status('Your browser could not create a WebP image.', true);
+            this._status('Nettlesaren kunne ikkje lage WebP-bilete.', true);
             this.exportButton.disabled = false;
             return;
         }
@@ -188,14 +186,14 @@ class BannerCropper extends HTMLElement {
         const ev = new CustomEvent('beforeupload', { detail, cancelable: true });
         if (!this.dispatchEvent(ev)) {
             // The page will handle the upload
-            this._status('Upload handled externally.');
+            this._status('Opplastinga blir handtert av sida.');
             this.exportButton.disabled = false;
             return;
         }
 
         // Do the upload
         try {
-            this._status('Uploading...');
+            this._status('Lastar opp...');
             console.log('Uploading to', detail.url, 'with method', detail.method);
             const res = await fetch(detail.url, {
                 method: detail.method,
@@ -207,7 +205,7 @@ class BannerCropper extends HTMLElement {
                 const text = await res.text().catch(() => '');
                 throw new Error(`HTTP ${res.status} ${res.statusText}${text ? `: ${text}` : ''}`);
             }
-            this._status('Uploaded ✓');
+            this._status('Lasta opp');
             this.dispatchEvent(new CustomEvent('toast', {
                 bubbles: true,
                 composed: true,
@@ -220,7 +218,7 @@ class BannerCropper extends HTMLElement {
             }));
         } catch (err) {
             console.error('Upload failed:', err);
-            this._status('Upload failed.', true);
+            this._status(UPLOAD_ERROR_MESSAGE, true);
             this.dispatchEvent(new CustomEvent('uploaderror', {
                 bubbles: true,
                 composed: true,
@@ -315,9 +313,21 @@ class BannerCropper extends HTMLElement {
     }
 
     _status(msg, isError = false) {
-        if (!this.statusEl) return;
-        this.statusEl.textContent = msg || '';
-        this.statusEl.style.color = isError ? 'red' : 'inherit';
+        const text = msg || '';
+        if (isError) {
+            if (this.statusInlineEl) this.statusInlineEl.textContent = '';
+            if (this.statusErrorEl) {
+                this.statusErrorEl.textContent = text;
+                this.statusErrorEl.style.color = 'var(--color-error)';
+            }
+            return;
+        }
+
+        if (this.statusErrorEl) this.statusErrorEl.textContent = '';
+        if (this.statusInlineEl) {
+            this.statusInlineEl.textContent = text;
+            this.statusInlineEl.style.color = 'inherit';
+        }
     }
 
     setInitialView() {
