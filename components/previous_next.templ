@@ -101,44 +101,30 @@ templ PreviousNextBar(previousNextData PreviousNext) {
 			}
 		}
 	</style>
-	<div class="prev-next-button-container no-print">
-		<div class="previous-next-buttons">
-			if previousNextData.PreviousUrl != "" {
-				<a
-					href={ fmt.Sprintf("%s", templ.URL(previousNextData.PreviousUrl)) }
-					class={ previousNextCard() }
-					title={ previousNextData.PreviousTitle }
-				>
-					@previousButton(previousNextData.PreviousTitle, false, previousNextData.PreviousImageURL)
-				</a>
-			} else {
-				<a
-					class={ previousNextCard() }
-					aria-disabled="true"
-					title={ previousNextData.PreviousTitle }
-				>
-					@previousButton("Ingen flere arrangementer", true, "")
-				</a>
-			}
-			if previousNextData.NextUrl != "" {
-				<a
-					href={ fmt.Sprintf("%s", templ.URL(previousNextData.NextUrl)) }
-					title={ previousNextData.NextTitle }
-					class={ previousNextCard() }
-				>
-					@nextButton(previousNextData.NextTitle, false, previousNextData.NextImageURL)
-				</a>
-			} else {
-				<a
-					class={ previousNextCard() }
-					title={ previousNextData.NextTitle }
-					aria-disabled="true"
-				>
-					@nextButton("Ingen flere arrangementer", true, "")
-				</a>
-			}
+	if previousNextData.PreviousUrl != "" || previousNextData.NextUrl != "" {
+		<div class="prev-next-button-container no-print">
+			<div class="previous-next-buttons">
+				if previousNextData.PreviousUrl != "" {
+					<a
+						href={ fmt.Sprintf("%s", templ.URL(previousNextData.PreviousUrl)) }
+						class={ previousNextCard() }
+						title={ previousNextData.PreviousTitle }
+					>
+						@previousButton(previousNextData.PreviousTitle, false, previousNextData.PreviousImageURL)
+					</a>
+				}
+				if previousNextData.NextUrl != "" {
+					<a
+						href={ fmt.Sprintf("%s", templ.URL(previousNextData.NextUrl)) }
+						title={ previousNextData.NextTitle }
+						class={ previousNextCard() }
+					>
+						@nextButton(previousNextData.NextTitle, false, previousNextData.NextImageURL)
+					</a>
+				}
+			</div>
 		</div>
-	</div>
+	}
 }
 
 templ previousButton(title string, disabled bool, imgurl string) {

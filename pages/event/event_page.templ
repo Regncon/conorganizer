@@ -9,7 +9,6 @@ import (
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
-	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
 )
@@ -70,18 +69,12 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		return
 	}
 	{{ showInterestControls := canShowInterestControls(programPublished, puljerForEvent) }}
-	{{ evnetsByPulje, eventsByPuljeErr := root.GetEventsByPulje(db) }}
-	if eventsByPuljeErr != nil {
-		{{ logger.Error(fmt.Errorf("failed to load event navigation data for event %s: %w", eventId, eventsByPuljeErr).Error()) }}
-		<p>Error fetching event navigation: { eventsByPuljeErr.Error() }</p>
-		return
-	}
 	{{ associatedTicketHolders, ticketHoldersErr := ticketholder.GetTicketHolders(userInfo, db) }}
 	if ticketHoldersErr != nil {
 		{{ logger.Error(ticketHoldersErr.Error(), "event_id", eventId, "user_id", userInfo.Id) }}
 	}
 	{{ hasTickets := len(associatedTicketHolders) > 0 }}
-	{{ previousNextData, previousNextErr := eventservice.GetPreviousNextByPuljeSimple(ctx, evnetsByPulje, eventId, true, r, eventImageDir) }}
+	{{ previousNextData, previousNextErr := eventservice.GetPreviousNextForRootEventList(ctx, db, eventId, programPublished, r, eventImageDir) }}
 	if previousNextErr != nil {
 		{{ logger.Error(previousNextErr.Error(), "event_id", eventId) }}
 		<p>Error fetching event navigation: { previousNextErr.Error() }</p>
@@ -91,7 +84,9 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		{Name: "Hjem", Url: "/"},
 		{Name: event.Title, Url: ""},
 	}) {
-		@components.BreadcrumbNavButtons(previousNextData)
+		if previousNextData.PreviousUrl != "" || previousNextData.NextUrl != "" {
+			@components.BreadcrumbNavButtons(previousNextData)
+		}
 	}
 	if isAdmin {
 		<a
