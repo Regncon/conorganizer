@@ -21,6 +21,10 @@ grafana.regncon.no {
 	reverse_proxy 127.0.0.1:3400
 }
 
+program.regncon.no {
+    reverse_proxy 127.0.0.1:18856
+}
+
 # Load all per-site configs from this directory:
 import /etc/caddy/sites-enabled/*.caddy
 
