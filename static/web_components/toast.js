@@ -21,11 +21,11 @@ class AppToast extends HTMLElement {
         }
     }
 
-    /** @type {Set<string>} */
-    #activeIndicators = new Set()
+    /** @type {Map<string, { activeCount: number, failed: boolean }>} */
+    #indicatorStates = new Map()
 
     /** @type {(event: Event) => void} */
-    #onDatastarSignalPatch = (event) => this.#handleDatastarSignalPatch(event)
+    #onDatastarFetch = (event) => this.#handleDatastarFetch(event)
 
     /** @type {(event: Event) => void} */
     #onToastEvent = (event) => this.#handleToastEvent(event)
@@ -44,7 +44,7 @@ class AppToast extends HTMLElement {
         }
 
         activeAppToast = this
-        document.addEventListener("datastar-signal-patch", this.#onDatastarSignalPatch)
+        document.addEventListener("datastar-fetch", this.#onDatastarFetch)
         document.addEventListener("toast", this.#onToastEvent)
     }
 
@@ -54,7 +54,7 @@ class AppToast extends HTMLElement {
             return
         }
 
-        document.removeEventListener("datastar-signal-patch", this.#onDatastarSignalPatch)
+        document.removeEventListener("datastar-fetch", this.#onDatastarFetch)
         document.removeEventListener("toast", this.#onToastEvent)
         activeAppToast = null
     }
@@ -70,30 +70,70 @@ class AppToast extends HTMLElement {
     }
 
     /**
-     * Shows a toast when a tracked Datastar indicator goes from active to idle.
+     * Shows a toast when a tracked Datastar request finishes without an error.
      * @param {Event} event
      * @returns {void}
      */
-    #handleDatastarSignalPatch(event) {
+    #handleDatastarFetch(event) {
         const detail = event instanceof CustomEvent ? event.detail : null
+        const indicator = detail?.el instanceof HTMLElement
+            ? detail.el.dataset.indicator?.trim()
+            : ""
 
-        for (const [path, value] of AppToast.#flattenSignalPatch(detail)) {
-            if (!path.startsWith(this.#indicatorPrefix)) {
-                continue
-            }
-
-            if (value === true) {
-                this.#activeIndicators.add(path)
-                continue
-            }
-
-            if (value === false && this.#activeIndicators.has(path)) {
-                this.#activeIndicators.delete(path)
-                this.#showToast(this.#indicatorMessage)
-            }
+        if (!indicator?.startsWith(this.#indicatorPrefix)) {
+            return
         }
+
+        if (detail.type === "started") {
+            const state = this.#getIndicatorState(indicator)
+            if (state.activeCount === 0) {
+                state.failed = false
+            }
+            state.activeCount += 1
+            return
+        }
+
+        if (detail.type === "error" || detail.type === "retries-failed") {
+            this.#getIndicatorState(indicator).failed = true
+            return
+        }
+
+        if (detail.type !== "finished") {
+            return
+        }
+
+        const state = this.#indicatorStates.get(indicator)
+        if (!state) {
+            return
+        }
+
+        state.activeCount = Math.max(0, state.activeCount - 1)
+        if (state.activeCount > 0) {
+            return
+        }
+
+        this.#indicatorStates.delete(indicator)
+        if (state.failed) {
+            return
+        }
+
+        this.#showToast(this.#indicatorMessage)
     }
 
+    /**
+     * @param {string} indicator
+     * @returns {{ activeCount: number, failed: boolean }}
+     */
+    #getIndicatorState(indicator) {
+        const state = this.#indicatorStates.get(indicator)
+        if (state) {
+            return state
+        }
+
+        const newState = { activeCount: 0, failed: false }
+        this.#indicatorStates.set(indicator, newState)
+        return newState
+    }
     /**
      * Public event API for manual toasts from other web components or page scripts.
      * @param {Event} event
@@ -151,24 +191,4 @@ class AppToast extends HTMLElement {
         window.setTimeout(() => toast.remove(), AppToast.#toastExitMs)
     }
 
-    /**
-     * Datastar signal patches can be nested objects. Flatten them into dot
-     * paths so both `toastName` and nested signal paths can be handled.
-     * @param {unknown} signals
-     * @param {string} [prefix]
-     * @returns {Array<[string, unknown]>}
-     */
-    static #flattenSignalPatch(signals, prefix = "") {
-        if (!signals || typeof signals !== "object") {
-            return []
-        }
-
-        return Object.entries(signals).flatMap(([key, value]) => {
-            const path = prefix ? `${ prefix }.${ key }` : key
-            if (value && typeof value === "object" && !Array.isArray(value)) {
-                return AppToast.#flattenSignalPatch(value, path)
-            }
-            return [[path, value]]
-        })
-    }
 }

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
@@ -18,6 +19,7 @@ import (
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
@@ -82,11 +84,20 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			http.Error(w, "Failed to update event image audit", http.StatusInternalServerError)
 			return
 		}
-		logger.Info("Image uploaded successfully", "path", imagePath)
+			logger.Info("Image uploaded successfully", "path", imagePath)
 
-		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/?uploaded=source", eventID), http.StatusSeeOther)
-	})
-}
+			if r.Header.Get("Datastar-Request") == "true" {
+				sse := datastar.NewSSE(w, r)
+				sourceImageURL := cacheBustedImageURL(getUploadedSourceImageURL(eventID, eventImageDir))
+				if err := sse.MarshalAndPatchSignals(map[string]string{"sourceImageUrl": sourceImageURL}); err != nil {
+					logger.Error("Failed to patch source image URL after upload", "error", err, "event_id", eventID)
+				}
+				return
+			}
+
+			http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/?uploaded=source", eventID), http.StatusSeeOther)
+		})
+	}
 
 func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
@@ -182,6 +193,17 @@ func getUploadedSourceImageURL(eventID string, eventImageDir *string) string {
 	return ""
 }
 
+func cacheBustedImageURL(imageURL string) string {
+	if imageURL == "" {
+		return ""
+	}
+	separator := "?"
+	if strings.Contains(imageURL, "?") {
+		separator = "&"
+	}
+	return fmt.Sprintf("%s%sv=%d", imageURL, separator, time.Now().UnixNano())
+}
+
 templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
 	<style>
 		.img-upload-form-content {
@@ -252,9 +274,10 @@ if eventErr == nil && event != nil {
 		<p>Event not found</p>
 		return
 	}
-	<script src="/static/web_components/banner_cropper.js"></script>
-	@toast.Render("Lagret", icons.ProgressComplete)
-	if showUploadToast {
+		<script src="/static/web_components/banner_cropper.js"></script>
+		@toast.Render("Lagret", icons.ProgressComplete)
+		@formsubmission.SaveFeedback(false)
+		if showUploadToast {
 		<script>
 			window.addEventListener("DOMContentLoaded", () => {
 				document.dispatchEvent(new CustomEvent("toast", {
@@ -272,9 +295,12 @@ if eventErr == nil && event != nil {
 		{Name: "Nytt arrangement", Url: "/my-events/new/" + eventId + "/"},
 		{Name: "Last opp bilde", Url: ""},
 	})
-	<article class="page-content-container">
-		<h1 class="page-heading">Last opp bilde</h1>
-		<div class="img-upload-form-content">
+		<article class="page-content-container">
+			<h1 class="page-heading">Last opp bilde</h1>
+			<div
+				class="img-upload-form-content"
+				data-signals={ formsubmission.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
+			>
 			<div class="back-button-container">
 				<a
 					href="javascript:window.history.back();"
@@ -296,12 +322,15 @@ if eventErr == nil && event != nil {
 						og promotere spillet/systemet du skal bruke på arrangementet.
 					</p>
 				</div>
-				<form
-					method="post"
-					action={ "/my-events/api/new/" + eventId + "/upload" }
-					enctype="multipart/form-data"
-					class="image-upload-file-form"
-				>
+					<form
+						method="post"
+						action={ "/my-events/api/new/" + eventId + "/upload" }
+						enctype="multipart/form-data"
+						class="image-upload-file-form"
+						data-indicator="toastSourceImage"
+						data-save-error-key="sourceImage"
+						data-on:submit={ fmt.Sprintf("@post('/my-events/api/new/%s/upload', {contentType: 'form'})", eventId) }
+					>
 					<label>
 						Velg bilde:
 						<input
@@ -312,10 +341,11 @@ if eventErr == nil && event != nil {
 						/>
 					</label>
 					<button
-						class="btn btn--primary"
-						type="submit"
-					>Last opp</button>
-				</form>
+							class="btn btn--primary"
+							type="submit"
+						>Last opp</button>
+						@formsubmission.SaveError("sourceImage")
+					</form>
 			</div>
 			<section class="surface-pane">
 				<h4 class="surface-pane-title">Mobil og gruppevisning</h4>
@@ -323,10 +353,16 @@ if eventErr == nil && event != nil {
 					<banner-cropper
 						event-id={ eventId }
 						width="600"
-						height="350"
-						image-kind="card"
-						image-url={ imageUrl }
-					></banner-cropper>
+							height="350"
+							image-kind="card"
+							image-url={ imageUrl }
+							data-attr:image-url="$sourceImageUrl"
+							data-save-error-key="cardImage"
+							data-on:beforeupload={ formsubmission.ClearSaveErrorExpression("cardImage") }
+							data-on:uploadsuccess={ formsubmission.ClearSaveErrorExpression("cardImage") }
+							data-on:uploaderror={ formsubmission.SetSaveErrorExpression("cardImage", false) }
+						></banner-cropper>
+						@formsubmission.SaveError("cardImage")
 					<div class="event-image-title-preview">
 						<h1>{ title }</h1>
 						<i>{ intro }</i>
@@ -339,10 +375,16 @@ if eventErr == nil && event != nil {
 					<banner-cropper
 						event-id={ eventId }
 						width="1360"
-						height="400"
-						image-kind="banner"
-						image-url={ imageUrl }
-					></banner-cropper>
+							height="400"
+							image-kind="banner"
+							image-url={ imageUrl }
+							data-attr:image-url="$sourceImageUrl"
+							data-save-error-key="bannerImage"
+							data-on:beforeupload={ formsubmission.ClearSaveErrorExpression("bannerImage") }
+							data-on:uploadsuccess={ formsubmission.ClearSaveErrorExpression("bannerImage") }
+							data-on:uploaderror={ formsubmission.SetSaveErrorExpression("bannerImage", false) }
+						></banner-cropper>
+						@formsubmission.SaveError("bannerImage")
 					<div class="event-image-title-preview banner-image">
 						<h1>{ title }</h1>
 						<i>{ intro }</i>

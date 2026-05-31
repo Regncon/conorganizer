@@ -110,6 +110,14 @@ class BannerCropper extends HTMLElement {
                 console.warn('Invalid image-kind; expected "card" or "banner". Falling back to "banner".');
             }
         }
+
+        if (name === 'image-url' && this.isConnected) {
+            if (newValue) {
+                this._loadImage(newValue);
+            } else {
+                this._clearImage();
+            }
+        }
     }
 
     // --- UI handlers ---
@@ -205,11 +213,19 @@ class BannerCropper extends HTMLElement {
                 composed: true,
                 detail: { message: 'Lagret' },
             }));
-            this.dispatchEvent(new CustomEvent('uploadsuccess', { detail: { url: detail.url, filename } }));
+            this.dispatchEvent(new CustomEvent('uploadsuccess', {
+                bubbles: true,
+                composed: true,
+                detail: { url: detail.url, filename, kind },
+            }));
         } catch (err) {
             console.error('Upload failed:', err);
             this._status('Upload failed.', true);
-            this.dispatchEvent(new CustomEvent('uploaderror', { detail: { error: String(err) } }));
+            this.dispatchEvent(new CustomEvent('uploaderror', {
+                bubbles: true,
+                composed: true,
+                detail: { error: String(err), kind },
+            }));
         } finally {
             console.log('Upload complete');
             this.exportButton.disabled = false;
@@ -248,6 +264,7 @@ class BannerCropper extends HTMLElement {
 
     _loadImage(url) {
         this.cameraIcon.style.display = 'none';
+        this.imageLoaded = false;
         this.image.onload = () => {
             this.imageLoaded = true;
             this.setInitialView();
@@ -259,6 +276,14 @@ class BannerCropper extends HTMLElement {
             this.redraw();
         };
         this.image.src = url;
+    }
+
+    _clearImage() {
+        this.imageLoaded = false;
+        this.image.removeAttribute('src');
+        this.cameraIcon.style.display = 'block';
+        this.zoom.disabled = true;
+        this.redraw();
     }
 
     async _canvasToWebpBlob(quality) {

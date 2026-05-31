@@ -1,0 +1,79 @@
+package formsubmission
+
+import (
+	"encoding/json"
+	"fmt"
+)
+
+const saveFeedbackUserErrorMessage = "Kunne ikke lagre endringen. Prøv igjen. Kontakt styret hvis problemet fortsetter."
+const saveFeedbackAdminErrorMessage = "Kunne ikke lagre endringen. Prøv igjen. Sjekk logger hvis problemet fortsetter."
+
+func saveErrorMessage(isAdmin bool) string {
+	if isAdmin {
+		return saveFeedbackAdminErrorMessage
+	}
+	return saveFeedbackUserErrorMessage
+}
+
+func jsString(value string) string {
+	b, err := json.Marshal(value)
+	if err != nil {
+		return `""`
+	}
+	return string(b)
+}
+
+func saveErrorSignalExpression(key string) string {
+	return fmt.Sprintf("$saveErrors[%s]", jsString(key))
+}
+
+func ClearSaveErrorExpression(key string) string {
+	return fmt.Sprintf("$saveErrors[%s] = ''", jsString(key))
+}
+
+func SetSaveErrorExpression(key string, isAdmin bool) string {
+	return fmt.Sprintf("$saveErrors[%s] = %s", jsString(key), jsString(saveErrorMessage(isAdmin)))
+}
+
+func saveFeedbackFetchExpression(isAdmin bool) string {
+	return fmt.Sprintf(`
+const key = evt.detail?.el?.dataset?.saveErrorKey;
+if (!key) {
+	return;
+}
+if (evt.detail.type === 'started') {
+	$saveErrors[key] = '';
+	$saveFailedDuringRequest[key] = false;
+	return;
+}
+if (evt.detail.type === 'retrying') {
+	$saveErrors[key] = %s;
+	return;
+}
+if (evt.detail.type === 'error' || evt.detail.type === 'retries-failed') {
+	$saveErrors[key] = %s;
+	$saveFailedDuringRequest[key] = true;
+	return;
+}
+if (evt.detail.type === 'finished' && !$saveFailedDuringRequest[key]) {
+	$saveErrors[key] = '';
+}
+	`, jsString(saveErrorMessage(isAdmin)), jsString(saveErrorMessage(isAdmin)))
+}
+
+templ SaveFeedback(isAdmin bool) {
+	<div
+		data-signals={ dataSignals(map[string]any{"saveErrors": map[string]string{}, "saveFailedDuringRequest": map[string]bool{}}) }
+		data-on:datastar-fetch={ saveFeedbackFetchExpression(isAdmin) }
+		hidden
+	></div>
+}
+
+templ SaveError(key string) {
+	<span
+		class="save-error"
+		data-show={ saveErrorSignalExpression(key) }
+		data-text={ saveErrorSignalExpression(key) }
+		aria-live="polite"
+	></span>
+}

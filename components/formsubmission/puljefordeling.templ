@@ -168,47 +168,59 @@ func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventP
 }
 
 templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
-	{{ eventPulje, err := getEvenPulje(eventId, pulje.ID, db) }}
+	{{
+		eventPulje, err := getEvenPulje(eventId, pulje.ID, db)
+		membershipErrorKey := fmt.Sprintf("puljeMembership%s", pulje.ID)
+		publishedErrorKey := fmt.Sprintf("puljePublished%s", pulje.ID)
+	}}
 	if err != nil {
 		<p>Error fetching event pulje: { err.Error() }</p>
 		return
 	}
 	<div style="display: flex; gap: 1rem; align-items: center;">
 		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
-			<h3>{ pulje.Name } <span>({ pulje.TimeRange() })</span></h3>
-			<div style="display: flex; gap: 1rem;">
-				<label class="checkbox-background form-group-checkbox">
-					<span>Legg til i pulje </span>
-					<input
-						if eventPulje.IsInPulje {
-							checked
-						}
-						data-bind={ fmt.Sprintf("isInPulje%s", pulje.ID) }
-						data-indicator={ fmt.Sprintf("toastPuljeMembership%s", pulje.ID) }
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/event-in-pulje/%s')", eventId, pulje.ID) }
-						type="checkbox"
-						name="pulje"
-						class="checkbox input"
-					/>
-				</label>
-				<label class="checkbox-background form-group-checkbox">
-					<span>Publisert</span>
-					<input
-						if eventPulje.IsPublished {
-							checked
-						}
-						if eventPulje.IsInPulje == false {
-							disabled
-						}
-						data-bind={ fmt.Sprintf("isPublished%s", pulje.ID) }
-						data-indicator={ fmt.Sprintf("toastPuljePublished%s", pulje.ID) }
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/is-published/%s')", eventId, pulje.ID) }
-						type="checkbox"
-						name="pulje"
-						class="checkbox input"
-					/>
-				</label>
-			</div>
+				<h3>{ pulje.Name } <span>({ pulje.TimeRange() })</span></h3>
+				<div style="display: flex; gap: 1rem;">
+					<div class="save-control-group">
+						<label class="checkbox-background form-group-checkbox">
+							<span>Legg til i pulje </span>
+							<input
+								if eventPulje.IsInPulje {
+									checked
+								}
+								data-bind={ fmt.Sprintf("isInPulje%s", pulje.ID) }
+								data-indicator={ fmt.Sprintf("toastPuljeMembership%s", pulje.ID) }
+								data-save-error-key={ membershipErrorKey }
+								data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/event-in-pulje/%s')", eventId, pulje.ID) }
+								type="checkbox"
+								name="pulje"
+								class="checkbox input"
+							/>
+						</label>
+						@SaveError(membershipErrorKey)
+					</div>
+					<div class="save-control-group">
+						<label class="checkbox-background form-group-checkbox">
+							<span>Publisert</span>
+							<input
+								if eventPulje.IsPublished {
+									checked
+								}
+								if eventPulje.IsInPulje == false {
+									disabled
+								}
+								data-bind={ fmt.Sprintf("isPublished%s", pulje.ID) }
+								data-indicator={ fmt.Sprintf("toastPuljePublished%s", pulje.ID) }
+								data-save-error-key={ publishedErrorKey }
+								data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/is-published/%s')", eventId, pulje.ID) }
+								type="checkbox"
+								name="pulje"
+								class="checkbox input"
+							/>
+						</label>
+						@SaveError(publishedErrorKey)
+					</div>
+				</div>
 		</div>
 	</div>
 }

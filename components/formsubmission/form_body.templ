@@ -326,8 +326,9 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 				}
 			}
 		}
-	</style>
-	@statusCard(event, isAdmin)
+		</style>
+		@SaveFeedback(isAdmin)
+		@statusCard(event, isAdmin)
 	if isAdmin {
 		@puljefordeling(event.ID, db)
 	}
