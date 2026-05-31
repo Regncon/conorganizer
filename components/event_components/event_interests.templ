@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
@@ -17,6 +18,13 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 	db *sql.DB,
 	r *http.Request,
 	logger *slog.Logger) {
+	{{
+		puljer, puljerErr := ticketholder.GetPuljerFromEventId(eventId, db)
+		if puljerErr != nil {
+			logger.Error(puljerErr.Error(), "event_id", eventId)
+		}
+		selectedPuljeState := ticketholder.BuildSelectedPuljeInterestState(puljer, puljeId, time.Now())
+	}}
 	<style>
 		.dialog-container {
 			container-type: inline-size;
@@ -115,6 +123,10 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 			class="interest-dialog"
 			data-attr:open="$_interestIsOpen ? true : false"
 			data-signals:pulje-id={ fmt.Sprintf("'%s'", puljeId) }
+			data-signals:pulje-availability={ fmt.Sprintf("'%s'", selectedPuljeState.Availability) }
+			data-signals:pulje-can-edit={ fmt.Sprintf("%t", selectedPuljeState.CanEdit) }
+			data-signals:pulje-status-message={ fmt.Sprintf("%q", selectedPuljeState.Message) }
+			data-signals:pulje-show-profile-link={ fmt.Sprintf("%t", selectedPuljeState.ShowProfileLink) }
 		>
 		<div class="dialog-container">
 			<header class="dialog-header">

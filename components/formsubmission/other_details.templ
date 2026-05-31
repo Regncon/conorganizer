@@ -204,10 +204,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				<select
 					id="age-group"
 					data-signals={ dataSignals(map[string]models.AgeGroup{"ageGroup": ageGroup}) }
-						data-bind="ageGroup"
-						data-indicator="toastAgeGroup"
-						data-save-error-key="ageGroup"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/ageGroup')", eventId) }
+                    data-save-error-key="ageGroup"
+					data-bind="ageGroup"
+					data-indicator="toastAgeGroup"
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/ageGroup')", eventId) }
 					name="age-group"
 					class="input"
 				>
@@ -228,10 +228,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					name="runtime"
 					class="input"
 					data-signals={ dataSignals(map[string]models.Runtime{"runtime": runtime}) }
-						data-bind="runtime"
-						data-indicator="toastRuntime"
-						data-save-error-key="runtime"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/runtime')", eventId) }
+                    data-save-error-key="runtime"
+					data-bind="runtime"
+					data-indicator="toastRuntime"
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/runtime')", eventId) }
 				>
 					<option value={ models.RunTimeNormal } selected>{ models.RunTimeNormal.Label() }</option>
 					<option value={ models.RunTimeShortRunning }>{ models.RunTimeShortRunning.Label() }</option>
@@ -261,10 +261,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						if beginnerFriendly {
 							checked
 						}
-							data-bind="beginnerFriendly"
-							data-indicator="toastBeginnerFriendly"
-							data-save-error-key="beginnerFriendly"
-							data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/beginner-friendly')", eventId) }
+                        data-save-error-key="beginnerFriendly"
+						data-bind="beginnerFriendly"
+						data-indicator="toastBeginnerFriendly"
+						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/beginner-friendly')", eventId) }
 						type="checkbox"
 						/>
 						Arrangementet er nybegynnervennlig
@@ -289,10 +289,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						if canBeRunInEnglish {
 							checked
 						}
-							data-bind="canBeRunInEnglish"
-							data-indicator="toastCanBeRunInEnglish"
-							data-save-error-key="canBeRunInEnglish"
-							data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/can-be-run-in-english')", eventId) }
+                        data-save-error-key="canBeRunInEnglish"
+						data-bind="canBeRunInEnglish"
+						data-indicator="toastCanBeRunInEnglish"
+						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/can-be-run-in-english')", eventId) }
 						type="checkbox"
 						name="english-label"
 						class="checkbox input"
@@ -314,10 +314,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					name="max-players"
 					class="input"
 					data-signals={ dataSignals(map[string]int{"maxPlayers": maxPlayers}) }
-						data-bind="maxPlayers"
-						data-indicator="toastMaxPlayers"
-						data-save-error-key="maxPlayers"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/max-players')", eventId) }
+                    data-save-error-key="maxPlayers"
+					data-bind="maxPlayers"
+					data-indicator="toastMaxPlayers"
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/max-players')", eventId) }
 					type="number"
 					min="4"
 						step="1"
@@ -338,10 +338,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				<textarea
 					name="other-notes"
 					data-signals={ dataSignals(map[string]string{"notes": notes}) }
-						data-bind="notes"
-						data-indicator="toastNotes"
-						data-save-error-key="notes"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/notes')", eventId) }
+                    data-save-error-key="notes"
+					data-bind="notes"
+					data-indicator="toastNotes"
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/notes')", eventId) }
 					class="input"
 					rows="5"
 					placeholder="Skriv eventuelle merknader her…"

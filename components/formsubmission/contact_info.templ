@@ -109,11 +109,11 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 				<input
 					type="text"
 					name="name"
-						data-bind="name"
-						data-indicator="toastName"
-						data-save-error-key="name"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/name')", eventId) }
-						class="input"
+                    data-save-error-key="name"
+					data-bind="name"
+					data-indicator="toastName"
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/name')", eventId) }
+					class="input"
 					placeholder="Ditt navn"
 					required
 					pattern=".{2,}"
@@ -127,11 +127,11 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 				E-post
 				<input
 					data-signals={ dataSignals(map[string]string{"email": email}) }
-						type="email"
-						data-bind="email"
-						data-indicator="toastEmail"
-						data-save-error-key="email"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/email')", eventId) }
+                    data-save-error-key="email"
+					type="email"
+					data-bind="email"
+					data-indicator="toastEmail"
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/email')", eventId) }
 					name="email"
 					class="input"
 					placeholder="Din e-post"
@@ -145,10 +145,10 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 				<input
 					type="tel"
 					data-signals={ dataSignals(map[string]string{"phone": phone}) }
-						data-bind="phone"
-						data-indicator="toastPhone"
-						data-save-error-key="phone"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/phone')", eventId) }
+                    data-save-error-key="phone"
+					data-bind="phone"
+					data-indicator="toastPhone"
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/phone')", eventId) }
 					name="phone"
 					class="input"
 					placeholder="Ditt telefonnummer"

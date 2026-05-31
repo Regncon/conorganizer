@@ -3,6 +3,7 @@ package keyvalue
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -11,10 +12,15 @@ import (
 )
 
 func BroadcastUpdate(kv jetstream.KeyValue, r *http.Request) error {
+	return BroadcastUpdateContext(r.Context(), kv)
+}
 
-	ctx := r.Context()
+func BroadcastUpdateContext(ctx context.Context, kv jetstream.KeyValue) error {
 	allKeys, err := kv.Keys(ctx)
 	if err != nil {
+		if errors.Is(err, jetstream.ErrNoKeysFound) {
+			return nil
+		}
 		return fmt.Errorf("failed to retrieve keys: %w", err)
 	}
 	/* fmt.Printf("All keys in the KeyValue store: %v\n", allKeys) */

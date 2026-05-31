@@ -24,7 +24,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 				{
 					EventID:       "assigned-gm-without-interest",
 					EventTitle:    "Assigned GM Without Interest",
-					EventStatus:   models.EventStatusPublished,
+					EventStatus:   models.EventStatusAnnounced,
 					IsPublished:   true,
 					InterestLevel: models.InterestLevelNone,
 					AssignedRole:  models.EventPlayerRoleGM,
@@ -32,7 +32,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 				{
 					EventID:       "assigned-player-first-choice",
 					EventTitle:    "Assigned Player First Choice",
-					EventStatus:   models.EventStatusPublished,
+					EventStatus:   models.EventStatusAnnounced,
 					IsPublished:   true,
 					InterestLevel: models.InterestLevelHigh,
 					AssignedRole:  models.EventPlayerRolePlayer,
@@ -42,7 +42,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 				{
 					EventID:       "high-interest",
 					EventTitle:    "High Interest",
-					EventStatus:   models.EventStatusPublished,
+					EventStatus:   models.EventStatusAnnounced,
 					IsPublished:   false,
 					InterestLevel: models.InterestLevelHigh,
 				},
@@ -73,7 +73,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 				{
 					EventID:       "saturday-assigned-player",
 					EventTitle:    "Saturday Assigned Player",
-					EventStatus:   models.EventStatusPublished,
+					EventStatus:   models.EventStatusAnnounced,
 					IsPublished:   true,
 					InterestLevel: models.InterestLevelNone,
 					AssignedRole:  models.EventPlayerRolePlayer,
@@ -185,7 +185,7 @@ func normalizeBillettholderInterestRows(rows []billettholderInterestEventRow) []
 func seedBillettholderInterestLookups(t *testing.T, db *sql.DB) {
 	t.Helper()
 
-	mustExecBillettholderInterestTest(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?), (?), (?)`, models.EventStatusPublished, models.EventStatusApproved, models.EventStatusDraft)
+	mustExecBillettholderInterestTest(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?), (?), (?)`, models.EventStatusAnnounced, models.EventStatusApproved, models.EventStatusDraft)
 	mustExecBillettholderInterestTest(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
 	mustExecBillettholderInterestTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
 	mustExecBillettholderInterestTest(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
@@ -236,14 +236,14 @@ func seedBillettholderInterestEvents(t *testing.T, db *sql.DB) {
 			('saturday-high-interest', 'Saturday High Interest', 'intro', 'description', '', ?, ?, ?, 'Host', 'host@example.com', '11111111', 4, 1, 1, ?),
 			('other-billettholder-interest', 'Other Billettholder Interest', 'intro', 'description', '', ?, ?, ?, 'Host', 'host@example.com', '11111111', 4, 1, 1, ?)
 	`,
-		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusPublished,
-		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusPublished,
-		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusPublished,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusAnnounced,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusAnnounced,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusAnnounced,
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusDraft,
-		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusPublished,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusAnnounced,
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
-		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusPublished,
+		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusAnnounced,
 	)
 }
 

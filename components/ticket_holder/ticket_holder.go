@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/Regncon/conorganizer/models"
@@ -17,6 +18,156 @@ type BillettHolder struct {
 	Name  string
 	Id    int
 	Color string
+}
+
+type PuljeInterestAvailability string
+
+const (
+	PuljeInterestOpen          PuljeInterestAvailability = "open"
+	PuljeInterestWarning       PuljeInterestAvailability = "warning"
+	PuljeInterestUrgentWarning PuljeInterestAvailability = "urgent-warning"
+	PuljeInterestLocked        PuljeInterestAvailability = "locked"
+	PuljeInterestCompleted     PuljeInterestAvailability = "completed"
+)
+
+type PuljeInterestState struct {
+	PuljeID         models.Pulje
+	PuljeName       string
+	Availability    PuljeInterestAvailability
+	Message         string
+	CanEdit         bool
+	ShowProfileLink bool
+	Priority        int
+}
+
+func (state PuljeInterestState) ClassName() string {
+	return fmt.Sprintf("pulje-interest-state--%s", state.Availability)
+}
+
+func (state PuljeInterestState) HasMessage() bool {
+	return state.Message != ""
+}
+
+func (state PuljeInterestState) IsWarning() bool {
+	return state.Availability == PuljeInterestWarning || state.Availability == PuljeInterestUrgentWarning
+}
+
+func (state PuljeInterestState) IsLocked() bool {
+	return state.Availability == PuljeInterestLocked
+}
+
+func (state PuljeInterestState) IsCompleted() bool {
+	return state.Availability == PuljeInterestCompleted
+}
+
+func (state PuljeInterestState) SignalPatch() string {
+	return fmt.Sprintf(
+		"$puljeAvailability = %q; $puljeCanEdit = %t; $puljeStatusMessage = %q; $puljeShowProfileLink = %t;",
+		state.Availability,
+		state.CanEdit,
+		state.Message,
+		state.ShowProfileLink,
+	)
+}
+
+func BuildPuljeInterestState(pulje models.PuljeRow, now time.Time) PuljeInterestState {
+	state := PuljeInterestState{
+		PuljeID:      pulje.ID,
+		PuljeName:    pulje.Name,
+		Availability: PuljeInterestOpen,
+		CanEdit:      true,
+		Priority:     0,
+	}
+
+	switch pulje.Status {
+	case models.PuljeStatusLocked:
+		state.Availability = PuljeInterestLocked
+		state.Message = "Puljen er låst. Du kan ikke melde eller endre interesse lenger. Vi jobber med å fordele spillere."
+		state.CanEdit = false
+		state.Priority = 1
+		return state
+	case models.PuljeStatusCompleted:
+		state.Availability = PuljeInterestCompleted
+		state.Message = "Puljefordelingen er klar. Se hva du fikk på profilen din."
+		state.CanEdit = false
+		state.ShowProfileLink = true
+		state.Priority = 0
+		return state
+	}
+
+	lockAt, hasLockAt := puljeLockAt(pulje)
+	if !hasLockAt {
+		return state
+	}
+
+	urgentStartsAt := lockAt.Add(-30 * time.Minute)
+	warningStartsAt := lockAt.Add(-2 * time.Hour)
+	lockTimeLabel := lockAt.Format("15:04")
+
+	if !now.Before(urgentStartsAt) {
+		state.Availability = PuljeInterestUrgentWarning
+		state.Message = fmt.Sprintf("Puljen låses straks, kl %s. Gjør endringer nå hvis du vil endre interessen din.", lockTimeLabel)
+		state.Priority = 3
+		return state
+	}
+	if !now.Before(warningStartsAt) {
+		state.Availability = PuljeInterestWarning
+		state.Message = fmt.Sprintf("Puljen låses snart, kl %s.", lockTimeLabel)
+		state.Priority = 2
+		return state
+	}
+
+	return state
+}
+
+func puljeLockAt(pulje models.PuljeRow) (time.Time, bool) {
+	if pulje.StartAt.IsZero() {
+		return time.Time{}, false
+	}
+	return pulje.StartAt.TimeOrZero().Add(-30 * time.Minute), true
+}
+
+func BuildSelectedPuljeInterestState(puljer []models.PuljeRow, puljeID string, now time.Time) PuljeInterestState {
+	for _, pulje := range puljer {
+		if string(pulje.ID) == puljeID {
+			return BuildPuljeInterestState(pulje, now)
+		}
+	}
+	if len(puljer) > 0 {
+		return BuildPuljeInterestState(puljer[0], now)
+	}
+	return PuljeInterestState{Availability: PuljeInterestOpen, CanEdit: true}
+}
+
+func BuildMostUrgentPuljeInterestState(puljer []models.PuljeRow, now time.Time) (PuljeInterestState, bool) {
+	var selected PuljeInterestState
+	hasSelected := false
+
+	for _, pulje := range puljer {
+		state := BuildPuljeInterestState(pulje, now)
+		if !state.HasMessage() {
+			continue
+		}
+		if !hasSelected || state.Priority > selected.Priority {
+			selected = state
+			hasSelected = true
+			continue
+		}
+		if state.Priority == selected.Priority && pulje.StartAt.TimeOrZero().Before(selectedStartTime(puljer, selected.PuljeID)) {
+			selected = state
+		}
+	}
+
+	return selected, hasSelected
+}
+
+func selectedStartTime(puljer []models.PuljeRow, puljeID models.Pulje) time.Time {
+	for _, pulje := range puljer {
+		if pulje.ID == puljeID {
+			return pulje.StartAt.TimeOrZero()
+		}
+	}
+	return time.Time{}
 }
 
 func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]BillettHolder, error) {

@@ -149,8 +149,8 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 	}
 
 	query := `
-			SELECT
-				i.event_id,
+		SELECT
+			i.event_id,
 			e.title,
 			CASE MIN(CASE i.interest_level
 				WHEN ? THEN 1
@@ -168,19 +168,30 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 		JOIN events e ON i.event_id = e.id
 		JOIN relation_billettholdere_users bu ON bu.billettholder_id = i.billettholder_id
 		JOIN users u ON u.id = bu.user_id
-			JOIN relation_event_puljer ep ON ep.event_id = i.event_id
-				AND ep.pulje_id = i.pulje_id
-			WHERE i.billettholder_id = ?
-				AND u.external_id = ?
-				AND e.status = ?
-				AND ep.is_in_pulje = 1
-				AND ep.is_published = 1
-				AND NOT EXISTS (
-					SELECT 1
-					FROM relation_events_players assigned
-					WHERE assigned.billettholder_id = i.billettholder_id
-						AND assigned.pulje_id = i.pulje_id
-				)
+		JOIN relation_event_puljer ep ON ep.event_id = i.event_id
+			AND ep.pulje_id = i.pulje_id
+		WHERE i.billettholder_id = ?
+			AND u.external_id = ?
+			AND e.status = ?
+			AND ep.is_in_pulje = 1
+			AND ep.is_published = 1
+			AND NOT EXISTS (
+				SELECT 1
+				FROM relation_events_players assigned
+				JOIN events assigned_event ON assigned_event.id = assigned.event_id
+				JOIN relation_event_puljer assigned_event_pulje ON assigned_event_pulje.event_id = assigned.event_id
+					AND assigned_event_pulje.pulje_id = assigned.pulje_id
+				JOIN puljer assigned_pulje ON assigned_pulje.id = assigned.pulje_id
+				WHERE assigned.billettholder_id = i.billettholder_id
+					AND assigned.pulje_id = i.pulje_id
+					AND assigned_event.status = ?
+					AND assigned_event_pulje.is_in_pulje = 1
+					AND assigned_event_pulje.is_published = 1
+					AND (
+						assigned.role = ?
+						OR assigned_pulje.status = ?
+					)
+			)
 		GROUP BY i.event_id, e.title, i.pulje_id
 		ORDER BY i.pulje_id ASC,
 			MIN(CASE i.interest_level
@@ -202,7 +213,10 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 		models.InterestLevelNone,
 		selectedBillettholderID,
 		userInfo.Id,
-		models.EventStatusApproved,
+		models.EventStatusAnnounced,
+		models.EventStatusAnnounced,
+		models.EventPlayerRoleGM,
+		models.PuljeStatusCompleted,
 		models.InterestLevelHigh,
 		models.InterestLevelMedium,
 		models.InterestLevelLow,
@@ -245,39 +259,51 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 	}
 
 	query := `
-			SELECT
-				ep.event_id,
+		SELECT
+			ep.event_id,
 			e.title,
 			COALESCE(e.intro, '') as intro,
 			COALESCE(e.description, '') as description,
-				COALESCE(e.user_id, 0) as user_id,
-				e.event_type,
-				ep.pulje_id,
-				MAX(ep.role = ?) AS is_gamemaster
-			FROM relation_events_players ep
-			JOIN relation_billettholdere_users bu ON bu.billettholder_id = ep.billettholder_id
+			COALESCE(e.user_id, 0) as user_id,
+			e.event_type,
+			ep.pulje_id,
+			MAX(ep.role = ?) AS is_gamemaster
+		FROM relation_events_players ep
+		JOIN relation_billettholdere_users bu ON bu.billettholder_id = ep.billettholder_id
 		JOIN users u ON u.id = bu.user_id
 		JOIN events e ON ep.event_id = e.id
-			JOIN relation_event_puljer event_pulje ON event_pulje.event_id = ep.event_id
-				AND event_pulje.pulje_id = ep.pulje_id
-			JOIN puljer p ON ep.pulje_id = p.id
-			WHERE ep.billettholder_id = ?
-				AND u.external_id = ?
-				AND e.status = ?
-				AND event_pulje.is_in_pulje = 1
-				AND event_pulje.is_published = 1
+		JOIN relation_event_puljer event_pulje ON event_pulje.event_id = ep.event_id
+			AND event_pulje.pulje_id = ep.pulje_id
+		JOIN puljer p ON ep.pulje_id = p.id
+		WHERE ep.billettholder_id = ?
+			AND u.external_id = ?
+			AND e.status = ?
+			AND event_pulje.is_in_pulje = 1
+			AND event_pulje.is_published = 1
+			AND (
+				ep.role = ?
+				OR p.status = ?
+			)
 		GROUP BY
 			ep.event_id,
 			e.title,
 			e.intro,
-				e.description,
-				e.user_id,
-				e.event_type,
-				ep.pulje_id
-				ORDER BY p.start_at ASC, e.title ASC
-				`
+			e.description,
+			e.user_id,
+			e.event_type,
+			ep.pulje_id
+		ORDER BY p.start_at ASC, e.title ASC
+	`
 
-	rows, queryErr := db.Query(query, models.EventPlayerRoleGM, selectedBillettholderID, userInfo.Id, models.EventStatusApproved)
+	rows, queryErr := db.Query(
+		query,
+		models.EventPlayerRoleGM,
+		selectedBillettholderID,
+		userInfo.Id,
+		models.EventStatusAnnounced,
+		models.EventPlayerRoleGM,
+		models.PuljeStatusCompleted,
+	)
 	if queryErr != nil {
 		return nil, fmt.Errorf("unable to query events for user %s: %w", userInfo.Id, queryErr)
 	}

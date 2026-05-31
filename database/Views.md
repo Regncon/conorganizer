@@ -33,11 +33,11 @@ rows, err := db.Query("SELECT billettholder_id FROM v_get_user_billettholder WHE
 
 # Database View: `v_events_by_pulje_active`
 
-**Purpose:** Approved events joined with active pulje metadata and optional room metadata for event listings.
+**Purpose:** Announced events joined with active pulje metadata and optional room metadata for event listings.
 
 **Filters:**
 
-- `events.status = 'Godkjent'`
+- `events.status = 'Annonsert'`
 - `relation_event_puljer.is_in_pulje = 1`
 
 **Columns:**
@@ -108,7 +108,7 @@ rows, err := db.Query("SELECT id, title, pulje_id, pulje_start_at, room_number, 
 **Go usage example:**
 
 ```go
-rows, err := db.Query("SELECT id, title, status FROM v_event_summary WHERE status = $1", "Godkjent")
+rows, err := db.Query("SELECT id, title, status FROM v_event_summary WHERE status = $1", "Annonsert")
 ```
 
 ---

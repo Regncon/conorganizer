@@ -181,7 +181,7 @@ class BannerCropper extends HTMLElement {
 
         // Give the app a chance to modify or handle upload
         const method = 'POST';
-        const url = `/my-events/api/new/${encodeURIComponent(eventId)}/upload-cropped`;
+        const url = `/profile/api/new/${encodeURIComponent(eventId)}/upload-cropped`;
         const detail = { url, method, formData: form, filename, contentType: 'image/webp' };
         const ev = new CustomEvent('beforeupload', { detail, cancelable: true });
         if (!this.dispatchEvent(ev)) {
@@ -309,7 +309,7 @@ class BannerCropper extends HTMLElement {
     _computeUploadUrl(eventId, kind) {
         const attr = this.getAttribute('upload-url');
         if (attr && attr.trim()) return attr;
-        return `/my-events/api/new/${encodeURIComponent(eventId)}/upload-cropped`;
+        return `/profile/api/new/${encodeURIComponent(eventId)}/upload-cropped`;
     }
 
     _status(msg, isError = false) {

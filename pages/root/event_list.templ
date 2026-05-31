@@ -16,7 +16,7 @@ type PuljeBlock struct {
 
 type EventsByPulje map[models.Pulje]*PuljeBlock
 
-func GetApprovedEventsAlphabetically(db *sql.DB) ([]models.EventCardModel, error) {
+func GetAnnouncedEventsAlphabetically(db *sql.DB) ([]models.EventCardModel, error) {
 	const q = `
 		SELECT
 			e.id,
@@ -36,9 +36,9 @@ func GetApprovedEventsAlphabetically(db *sql.DB) ([]models.EventCardModel, error
 		ORDER BY e.title COLLATE NOCASE ASC, e.id ASC
 	`
 
-	rows, err := db.Query(q, models.EventStatusApproved)
+	rows, err := db.Query(q, models.EventStatusAnnounced)
 	if err != nil {
-		return nil, fmt.Errorf("query approved events alphabetically: %w", err)
+		return nil, fmt.Errorf("query announced events alphabetically: %w", err)
 	}
 	defer rows.Close()
 
@@ -59,13 +59,13 @@ func GetApprovedEventsAlphabetically(db *sql.DB) ([]models.EventCardModel, error
 			&event.BeginnerFriendly,
 			&event.CanBeRunInEnglish,
 		); err != nil {
-			return nil, fmt.Errorf("scan approved event row: %w", err)
+			return nil, fmt.Errorf("scan announced event row: %w", err)
 		}
 		events = append(events, event)
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate approved event rows: %w", err)
+		return nil, fmt.Errorf("iterate announced event rows: %w", err)
 	}
 
 	return events, nil
@@ -162,21 +162,18 @@ templ flatEventList(events []models.EventCardModel, eventImageDir *string, isAdm
 	</div>
 }
 
-templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *string, isAdmin bool) {
-	{{ block := byPulje[pulje] }}
-	if block != nil {
-		<section class="container-inner-padding program-pulje-section" id={ pulje }>
-			<h2 class="pulje-heading">
-				{ block.Pulje.Name }
-				<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
-			</h2>
-			<div class="page-wide-eventcard-grid">
-				for _, event := range block.Events {
-					@components.EventCard(event, eventImageDir, isAdmin, string(pulje))
-				}
-			</div>
-		</section>
-	}
+templ eventPuljeBlock(block PuljeBlock, eventImageDir *string, isAdmin bool) {
+	<section class="container-inner-padding program-pulje-section" id={ block.Pulje.ID }>
+		<h2 class="pulje-heading">
+			{ block.Pulje.Name }
+			<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
+		</h2>
+		<div class="page-wide-eventcard-grid">
+			for _, event := range block.Events {
+				@components.EventCard(event, eventImageDir, isAdmin, string(block.Pulje.ID))
+			}
+		</div>
+	</section>
 }
 
 templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublished bool) {
@@ -222,23 +219,17 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublishe
 	<div class="page-content-container event-pulje-overview">
 		if programPublished {
 			{{
-				eventsByPulje, err := GetEventsByPulje(db)
-				puljer, puljerErr := puljerService.GetAllPuljer(db)
+				puljeBlocks, err := GetPublishedEventPuljeBlocks(db)
 			}}
-			if err != nil || puljerErr != nil {
-				{{
-					if puljerErr != nil {
-						err = puljerErr
-					}
-				}}
+			if err != nil {
 				<p>Error fetching events: { err.Error() }</p>
 			} else {
-				for _, pulje := range puljer {
-					@eventPulje(pulje.ID, eventsByPulje, eventImageDir, isAdmin)
+				for _, block := range puljeBlocks {
+					@eventPuljeBlock(block, eventImageDir, isAdmin)
 				}
 			}
 		} else {
-			{{ events, err := GetApprovedEventsAlphabetically(db) }}
+			{{ events, err := GetAnnouncedEventsAlphabetically(db) }}
 			if err != nil {
 				<p>Error fetching events: { err.Error() }</p>
 			} else {

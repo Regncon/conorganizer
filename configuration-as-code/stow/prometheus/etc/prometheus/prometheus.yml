@@ -1,0 +1,38 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - 127.0.0.1:9090
+
+  - job_name: node
+    static_configs:
+      - targets:
+          - 127.0.0.1:9100
+
+  - job_name: alloy
+    static_configs:
+      - targets:
+          - 127.0.0.1:12345
+
+  - job_name: blackbox_https
+    metrics_path: /probe
+    params:
+      module:
+        - http_2xx
+    static_configs:
+      - targets:
+          - https://main.lekeplassen.regncon.no/
+          - https://grafana.regncon.no/
+    relabel_configs:
+      - source_labels:
+          - __address__
+        target_label: __param_target
+      - source_labels:
+          - __param_target
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115

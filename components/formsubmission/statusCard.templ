@@ -52,17 +52,17 @@ templ statusCard(event *models.Event, isAdmin bool) {
 				name="status"
 				class="input"
 				data-signals={ dataSignals(map[string]models.EventStatus{"status": event.Status}) }
-					data-bind="status"
-					data-indicator="toastStatus"
-					data-save-error-key="status"
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/status')", event.ID) }
+                data-save-error-key="status"
+				data-bind="status"
+				data-indicator="toastStatus"
+				data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/status')", event.ID) }
 				required
 			>
 				if isAdmin {
 					<option value={ models.EventStatusDraft } selected>{ models.EventStatusDraft.Label() }</option>
 					<option value={ models.EventStatusSubmitted } selected>{ models.EventStatusSubmitted.Label() }</option>
 					<option value={ models.EventStatusApproved } selected>{ models.EventStatusApproved.Label() } ( Du er administrator )</option>
-					<option value={ models.EventStatusPublished } selected>{ models.EventStatusPublished.Label() } ( Du er administrator )</option>
+					<option value={ models.EventStatusAnnounced } selected>{ models.EventStatusAnnounced.Label() } ( Du er administrator )</option>
 					<option value={ models.EventStatusArchived } selected>{ models.EventStatusArchived.Label() }</option>
 				} else {
 					if event.Status == models.EventStatusDraft || event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusArchived {
