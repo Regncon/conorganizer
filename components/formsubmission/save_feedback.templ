@@ -5,17 +5,73 @@ import (
 	"fmt"
 )
 
-const saveFeedbackUserErrorMessage = "Kunne ikke lagre endringen. Prøv igjen. Kontakt styret hvis problemet fortsetter."
-const saveFeedbackAdminErrorMessage = "Kunne ikke lagre endringen. Prøv igjen. Sjekk logger hvis problemet fortsetter."
+const (
+	userErrorMessage  = "Kunne ikke lagre endringen. Prøv igjen. Kontakt styret hvis problemet fortsetter."
+	adminErrorMessage = "Kunne ikke lagre endringen. Prøv igjen. Sjekk logger hvis problemet fortsetter."
 
-func saveErrorMessage(isAdmin bool) string {
-	if isAdmin {
-		return saveFeedbackAdminErrorMessage
-	}
-	return saveFeedbackUserErrorMessage
+	// `retrying` shows a temporary error. `finished` clears it unless the
+	// request ended with a final error.
+	fetchExpressionTemplate = `
+const saveErrorKey = evt.detail?.el?.dataset?.saveErrorKey;
+if (!saveErrorKey) {
+	return;
 }
 
-func jsString(value string) string {
+const saveErrors = %s;
+const requestHadFinalError = %s;
+const errorMessage = %s;
+
+const clearError = () => {
+	saveErrors[saveErrorKey] = '';
+	requestHadFinalError[saveErrorKey] = false;
+};
+
+const showError = () => {
+	saveErrors[saveErrorKey] = errorMessage;
+};
+
+switch (evt.detail.type) {
+case 'started':
+	clearError();
+	break;
+case 'retrying':
+	showError();
+	break;
+case 'error':
+case 'retries-failed':
+	showError();
+	requestHadFinalError[saveErrorKey] = true;
+	break;
+case 'finished':
+	if (!requestHadFinalError[saveErrorKey]) {
+		clearError();
+	}
+	break;
+}
+`
+)
+
+type feedbackSignals struct {
+	Errors               map[string]string `json:"saveErrors"`
+	RequestHadFinalError map[string]bool   `json:"saveRequestHadFinalError"`
+}
+
+func errorMessage(isAdmin bool) string {
+	if isAdmin {
+		return adminErrorMessage
+	}
+	return userErrorMessage
+}
+
+func newFeedbackSignals() feedbackSignals {
+	return feedbackSignals{
+		Errors:               map[string]string{},
+		RequestHadFinalError: map[string]bool{},
+	}
+}
+
+// jsStringLiteral turns raw text like `Kunne ikke lagre "Tittel"` into `"Kunne ikke lagre \"Tittel\""`.
+func jsStringLiteral(value string) string {
 	b, err := json.Marshal(value)
 	if err != nil {
 		return `""`
@@ -23,48 +79,31 @@ func jsString(value string) string {
 	return string(b)
 }
 
-func saveErrorSignalExpression(key string) string {
-	return fmt.Sprintf("$saveErrors[%s]", jsString(key))
+func errorSignalExpression(key string) string {
+	return fmt.Sprintf("$saveErrors[%s]", jsStringLiteral(key))
 }
 
 func ClearSaveErrorExpression(key string) string {
-	return fmt.Sprintf("$saveErrors[%s] = ''", jsString(key))
+	return fmt.Sprintf("%s = ''", errorSignalExpression(key))
 }
 
 func SetSaveErrorExpression(key string, isAdmin bool) string {
-	return fmt.Sprintf("$saveErrors[%s] = %s", jsString(key), jsString(saveErrorMessage(isAdmin)))
+	return fmt.Sprintf("%s = %s", errorSignalExpression(key), jsStringLiteral(errorMessage(isAdmin)))
 }
 
-func saveFeedbackFetchExpression(isAdmin bool) string {
-	return fmt.Sprintf(`
-const key = evt.detail?.el?.dataset?.saveErrorKey;
-if (!key) {
-	return;
-}
-if (evt.detail.type === 'started') {
-	$saveErrors[key] = '';
-	$saveFailedDuringRequest[key] = false;
-	return;
-}
-if (evt.detail.type === 'retrying') {
-	$saveErrors[key] = %s;
-	return;
-}
-if (evt.detail.type === 'error' || evt.detail.type === 'retries-failed') {
-	$saveErrors[key] = %s;
-	$saveFailedDuringRequest[key] = true;
-	return;
-}
-if (evt.detail.type === 'finished' && !$saveFailedDuringRequest[key]) {
-	$saveErrors[key] = '';
-}
-	`, jsString(saveErrorMessage(isAdmin)), jsString(saveErrorMessage(isAdmin)))
+func fetchExpression(isAdmin bool) string {
+	return fmt.Sprintf(
+		fetchExpressionTemplate,
+		"$saveErrors",
+		"$saveRequestHadFinalError",
+		jsStringLiteral(errorMessage(isAdmin)),
+	)
 }
 
 templ SaveFeedback(isAdmin bool) {
 	<div
-		data-signals={ dataSignals(map[string]any{"saveErrors": map[string]string{}, "saveFailedDuringRequest": map[string]bool{}}) }
-		data-on:datastar-fetch={ saveFeedbackFetchExpression(isAdmin) }
+		data-signals={ dataSignals(newFeedbackSignals()) }
+		data-on:datastar-fetch={ fetchExpression(isAdmin) }
 		hidden
 	></div>
 }
@@ -72,8 +111,8 @@ templ SaveFeedback(isAdmin bool) {
 templ SaveError(key string) {
 	<span
 		class="save-error"
-		data-show={ saveErrorSignalExpression(key) }
-		data-text={ saveErrorSignalExpression(key) }
+		data-show={ errorSignalExpression(key) }
+		data-text={ errorSignalExpression(key) }
 		aria-live="polite"
 	></span>
 }
