@@ -4,6 +4,9 @@ const CUSTOM_ELEMENT_TAG_NAME = "app-toast"
 
 /**
  * @typedef {{ message?: unknown }} ToastEventDetail
+ * @typedef {"started" | "finished" | "error" | "retrying" | "retries-failed"} DatastarFetchType
+ * @typedef {{ type: DatastarFetchType, el: Element | null }} DatastarFetchEventDetail
+ * @typedef {{ activeCount: number, failed: boolean }} IndicatorState
  */
 
 /** @type {AppToast | null} */
@@ -21,7 +24,7 @@ class AppToast extends HTMLElement {
         }
     }
 
-    /** @type {Map<string, { activeCount: number, failed: boolean }>} */
+    /** @type {Map<string, IndicatorState>} */
     #indicatorStates = new Map()
 
     /** @type {(event: Event) => void} */
@@ -75,8 +78,12 @@ class AppToast extends HTMLElement {
      * @returns {void}
      */
     #handleDatastarFetch(event) {
-        const detail = event instanceof CustomEvent ? event.detail : null
-        const indicator = detail?.el instanceof HTMLElement
+        const detail = AppToast.#getDatastarFetchDetail(event)
+        if (!detail) {
+            return
+        }
+
+        const indicator = detail.el instanceof HTMLElement
             ? detail.el.dataset.indicator?.trim()
             : ""
 
@@ -122,7 +129,7 @@ class AppToast extends HTMLElement {
 
     /**
      * @param {string} indicator
-     * @returns {{ activeCount: number, failed: boolean }}
+     * @returns {IndicatorState}
      */
     #getIndicatorState(indicator) {
         const state = this.#indicatorStates.get(indicator)
@@ -134,16 +141,55 @@ class AppToast extends HTMLElement {
         this.#indicatorStates.set(indicator, newState)
         return newState
     }
+
+    /**
+     * @param {Event} event
+     * @returns {DatastarFetchEventDetail | null}
+     */
+    static #getDatastarFetchDetail(event) {
+        if (!(event instanceof CustomEvent)) {
+            return null
+        }
+
+        /** @type {unknown} */
+        const detail = event.detail
+        return AppToast.#isDatastarFetchDetail(detail) ? detail : null
+    }
+
+    /**
+     * @param {unknown} detail
+     * @returns {detail is DatastarFetchEventDetail}
+     */
+    static #isDatastarFetchDetail(detail) {
+        if (!detail || typeof detail !== "object") {
+            return false
+        }
+
+        /** @type {{ type?: unknown, el?: unknown }} */
+        const candidate = detail
+        return AppToast.#isDatastarFetchType(candidate.type)
+            && (candidate.el === null || candidate.el instanceof Element)
+    }
+
+    /**
+     * @param {unknown} type
+     * @returns {type is DatastarFetchType}
+     */
+    static #isDatastarFetchType(type) {
+        return type === "started"
+            || type === "finished"
+            || type === "error"
+            || type === "retrying"
+            || type === "retries-failed"
+    }
+
     /**
      * Public event API for manual toasts from other web components or page scripts.
      * @param {Event} event
      * @returns {void}
      */
     #handleToastEvent(event) {
-        /** @type {ToastEventDetail | null} */
-        const detail = event instanceof CustomEvent && event.detail && typeof event.detail === "object"
-            ? event.detail
-            : null
+        const detail = AppToast.#getToastEventDetail(event)
         const message = detail?.message
         if (typeof message !== "string" || message.trim() === "") {
             console.warn("toast event requires detail.message")
@@ -151,6 +197,20 @@ class AppToast extends HTMLElement {
         }
 
         this.#showToast(message)
+    }
+
+    /**
+     * @param {Event} event
+     * @returns {ToastEventDetail | null}
+     */
+    static #getToastEventDetail(event) {
+        if (!(event instanceof CustomEvent)) {
+            return null
+        }
+
+        /** @type {unknown} */
+        const detail = event.detail
+        return detail && typeof detail === "object" ? detail : null
     }
 
     /**
