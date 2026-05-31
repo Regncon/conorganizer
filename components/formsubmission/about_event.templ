@@ -191,7 +191,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					type="text"
 					data-bind="title"
 					data-indicator="toastTitle"
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/title')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/title')", eventId) }
 					placeholder="Tittel på arrangementet"
 					required
 					pattern=".{3,}"
@@ -205,7 +205,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					class="input"
 					data-bind="intro"
 					data-indicator="toastIntro"
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/intro')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/intro')", eventId) }
 					rows="2"
 					placeholder="Kjapp introduksjon til arrangementet"
 					required
@@ -221,7 +221,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					data-signals={ dataSignals(map[string]models.EventType{"type": eventType}) }
 					data-bind="type"
 					data-indicator="toastType"
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/type')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/type')", eventId) }
 					name="type"
 					class="input"
 				>
@@ -232,7 +232,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				</select>
 			</label>
 			<a
-				href={ "/my-events/new/" + eventId + "/image/" }
+				href={ "/profile/new/" + eventId + "/image/" }
 				class="btn btn--primary"
 				style="place-self: center end; margin-right:  1rem"
 			>
@@ -249,7 +249,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					type="text"
 					data-bind="system"
 					data-indicator="toastSystem"
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/system')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/system')", eventId) }
 					placeholder="Hva system er det?"
 					required
 					pattern=".{2,}"
@@ -263,7 +263,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					class="input"
 					data-bind="description"
 					data-indicator="toastDescription"
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/description')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/description')", eventId) }
 					rows="15"
 					placeholder="Beskrivelse av arrangementet"
 					required

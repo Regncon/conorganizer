@@ -1,6 +1,6 @@
 # Mine arrangementer
 
-Denne sjekklisten dekker `/my-events`, altså oversikten over brukerens egne arrangementer og inngangen til å opprette eller åpne arrangementer for videre arbeid.
+Denne sjekklisten dekker `/profile`, altså oversikten over brukerens egne arrangementer og inngangen til å opprette eller åpne arrangementer for videre arbeid.
 
 ## Roller
 

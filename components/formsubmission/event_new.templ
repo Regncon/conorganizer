@@ -144,7 +144,7 @@ templ inputValidationComponent(label string, inputType InputType, field string, 
 			}
 			class={ "input input-bordered" , templ.KV("input-error",!isValid) }
 			data-bind={ field }
-			data-on:keydown__debounce.500ms={ "@get('/my-events/api/new/inline_validation/data')" }
+			data-on:keydown__debounce.500ms={ "@get('/profile/api/new/inline_validation/data')" }
 			data-testid={ "input_" + field }
 			if field=="system" {
 				placeholder="f.eks. D&D 5e, Pathfinder, etc."
@@ -175,7 +175,7 @@ templ checkboxValidationComponent(label, field string, isValid bool, isNotValidE
 				type="checkbox"
 				class="toggle"
 				data-bind={ field }
-				data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
+				data-on:click__debounce.100ms={ "@get('/profile/api/new/inline_validation/data')" }
 				data-testid={ field + "_input" }
 				disabled?={ isDisabled }
 			/>
@@ -202,7 +202,7 @@ templ radioValidationComponent(label, field string, puljer []models.PuljeRow, is
 						value={ string(pulje.ID) }
 						class="radio"
 						data-bind={ field }
-						data-on:click__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
+						data-on:click__debounce.100ms={ "@get('/profile/api/new/inline_validation/data')" }
 						data-testid={ field + "_" + string(pulje.ID) }
 					/>
 					<span>{ pulje.Name } ({ pulje.TimeRange() })</span>
@@ -230,7 +230,7 @@ templ radioGroupValidationComponent(groupLabel string, options [2]string, fields
 					class="radio"
 					data-bind={ fields[0] }
 					data-on:click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[1]) }
-					data-on:change__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
+					data-on:change__debounce.100ms={ "@get('/profile/api/new/inline_validation/data')" }
 					checked?={ values[0] }
 				/>
 				<span>{ options[0] }</span>
@@ -242,7 +242,7 @@ templ radioGroupValidationComponent(groupLabel string, options [2]string, fields
 					class="radio"
 					data-bind={ fields[1] }
 					data-on:click__debounce.100ms={ fmt.Sprintf("$%s=false", fields[0]) }
-					data-on:change__debounce.100ms={ "@get('/my-events/api/new/inline_validation/data')" }
+					data-on:change__debounce.100ms={ "@get('/profile/api/new/inline_validation/data')" }
 					checked?={ values[1] }
 				/>
 				<span>{ options[1] }</span>
@@ -259,7 +259,7 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 		id="inline_validation"
 		class="flex flex-col gap-4"
 		data-signals__ifmissing={ templ.JSONString(eventForm) }
-		data-on:submit={ "@put('/my-events/api/new/inline_validation/data')" }
+		data-on:submit={ "@put('/profile/api/new/inline_validation/data')" }
 	>
 		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
 		<div>

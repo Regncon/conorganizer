@@ -11,12 +11,16 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Regncon/conorganizer/components/formsubmission"
+	eventimgupload "github.com/Regncon/conorganizer/components/formsubmission/event_img_upload"
 	profilecomponent "github.com/Regncon/conorganizer/components/profile"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/pages/profile/newevent"
 	profileticketspage "github.com/Regncon/conorganizer/pages/profile/tickets"
 	"github.com/Regncon/conorganizer/pages/root"
 	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
+	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -167,11 +171,150 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 					}
 				}
 			})
+
+			profileApiRouter.Post("/create", func(w http.ResponseWriter, r *http.Request) {
+				createNewEventFormSubmission(db, kv, logger, w, r)
+			})
+
+			profileApiRouter.Route("/new", func(newApiRouter chi.Router) {
+				newApiRouter.Route("/{id}", func(newApiIdRouter chi.Router) {
+					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						sessionID, mvc, err := profileSession(w, r)
+						if err != nil {
+							http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
+							return
+						}
+
+						eventId := chi.URLParam(r, "id")
+						if eventId == "" {
+							http.Error(w, "Event ID is required. Got: "+eventId, http.StatusBadRequest)
+							return
+						}
+
+						sse := datastar.NewSSE(w, r)
+
+						ctx := r.Context()
+						watcher, err := kv.Watch(ctx, sessionID)
+						if err != nil {
+							http.Error(w, err.Error(), http.StatusInternalServerError)
+							return
+						}
+						defer func() {
+							if err := watcher.Stop(); err != nil {
+								logger.Error(fmt.Errorf("failed to stop new-event watcher: %w", err).Error())
+							}
+						}()
+
+						for {
+							select {
+							case <-ctx.Done():
+								return
+							case entry := <-watcher.Updates():
+
+								if entry == nil {
+									continue
+								}
+								if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+									http.Error(w, err.Error(), http.StatusInternalServerError)
+									return
+								}
+
+								userId := userctx.GetUserRequestInfo(r.Context()).Id
+
+								c := newevent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, logger)
+								if err := sse.PatchElementTempl(c); err != nil {
+									_ = sse.ConsoleError(err)
+									return
+								}
+							}
+						}
+					})
+					if err := formsubmission.SetupExampleInlineValidation(db, newApiIdRouter, logger); err != nil {
+						logger.Error(fmt.Errorf("failed to set up inline validation: %w", err).Error())
+					}
+
+					newApiIdRouter.Route("/event-in-pulje", func(putEventInPuljeRouter chi.Router) {
+						formsubmission.UpdateEventInPulje(putEventInPuljeRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/is-published", func(putIsPublishedRouter chi.Router) {
+						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, kv, logger)
+					})
+
+					newApiIdRouter.Route("/status", func(putStatusRouter chi.Router) {
+						formsubmission.UpdateStatus(putStatusRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/name", func(putNameRouter chi.Router) {
+						formsubmission.UpdateName(putNameRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/email", func(putEmailRouter chi.Router) {
+						formsubmission.UpdateEmail(putEmailRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/phone", func(putPhoneRouter chi.Router) {
+						formsubmission.UpdatePhone(putPhoneRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/title", func(putTitleRouter chi.Router) {
+						formsubmission.UpdateTitle(putTitleRouter, db, kv, logger)
+					})
+
+					newApiIdRouter.Route("/intro", func(putIntroRouter chi.Router) {
+						formsubmission.UpdateIntro(putIntroRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/system", func(putSystemRouter chi.Router) {
+						formsubmission.UpdateSystem(putSystemRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/type", func(putTypeRouter chi.Router) {
+						formsubmission.UpdateType(putTypeRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/description", func(putDescriptionRouter chi.Router) {
+						formsubmission.UpdateDescription(putDescriptionRouter, db, kv, logger)
+					})
+
+					// should be age-group
+					newApiIdRouter.Route("/ageGroup", func(putAgeGroupRouter chi.Router) {
+						formsubmission.UpdateAgeGroup(putAgeGroupRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/runtime", func(putRuntimeRouter chi.Router) {
+						formsubmission.UpdateRuntime(putRuntimeRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/beginner-friendly", func(putBeginnerFriendlyRouter chi.Router) {
+						formsubmission.UpdateBeginnerFriendly(putBeginnerFriendlyRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/can-be-run-in-english", func(putCanBeRunInEnglishRouter chi.Router) {
+						formsubmission.UpdateCanBeRunInEnglish(putCanBeRunInEnglishRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/max-players", func(putMaxPlayersRouter chi.Router) {
+						formsubmission.UpdateMaxPlayers(putMaxPlayersRouter, db, kv, logger)
+					})
+					newApiIdRouter.Route("/notes", func(putNotesRouter chi.Router) {
+						formsubmission.UpdateNotes(putNotesRouter, db, kv, logger)
+					})
+
+					newApiIdRouter.Route("/upload", func(uploadRouter chi.Router) {
+						eventimgupload.EventImageFormSubmission(uploadRouter, db, eventImageDir, logger)
+					})
+					newApiIdRouter.Route("/upload-cropped", func(uploadCroppedRouter chi.Router) {
+						eventimgupload.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, logger)
+					})
+					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
+						formsubmission.SubmitFormRoute(newApiIdRouter, db, kv, logger)
+					})
+				})
+			})
 		})
 
 		profileTicketsErr = profileticketspage.ProfileTicketsRoute(profileRouter, store, ns, db, logger)
-	})
 
+		profileRouter.Route("/new", func(newRouter chi.Router) {
+			newRouter.Route("/{id}", func(newIdRoute chi.Router) {
+				newevent.NewEventLayoutRoute(newIdRoute, db, eventImageDir, logger)
+
+				newIdRoute.Route("/image", func(imageRouter chi.Router) {
+					eventimgupload.EventImageRoute(imageRouter, db, eventImageDir, logger)
+				})
+			})
+		})
+
+	})
 	if profileTicketsErr != nil {
 		return fmt.Errorf("error setting up profile tickets route: %w", profileTicketsErr)
 	}
@@ -290,4 +433,47 @@ func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWrite
 		}
 	}
 	return id, nil
+}
+
+func createNewEventFormSubmission(db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger, w http.ResponseWriter, r *http.Request) {
+	logger = logger.With("component", "my_events")
+	logger.Info("Creating new event form submission")
+	userInfo := userctx.GetUserRequestInfo(r.Context())
+	if userInfo.Id == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	userID, insertError := userctx.GetUserIDFromExternalID(userInfo.Id, db, logger)
+	if insertError != nil {
+		logger.Error(fmt.Errorf("failed to resolve user_id for external_id %q: %w", userInfo.Id, insertError).Error())
+		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)
+		return
+	}
+
+	logger.Info("Found user info for event creation", "external_id", userInfo.Id, "user_id", userID)
+	logger.Info("Inserting new event form submission")
+
+	// Todo: Use database relations to get foreign keys, event_type etc.
+	query := `
+	INSERT INTO events (
+		user_id, created_by_id, updated_by_id, email, status, title, intro, description, host_name, phone_number, max_players,
+		event_type, beginner_friendly,
+		can_be_run_in_english
+	) VALUES (
+		$1, $1, $1, $2, $3, '', '', '', '', '', 6, $4, false, false
+	) RETURNING id`
+
+	var eventId string
+	insertError = db.QueryRow(query, userID, userInfo.Email, models.EventStatusDraft, models.EventTypeRoleplay).Scan(&eventId)
+	if insertError != nil {
+		logger.Error(fmt.Errorf("failed to create new event form submission for user %q: %w", userInfo.Id, insertError).Error())
+		return
+	}
+
+	logger.Info("New event form submission created", "event_id", eventId, "user_id", userInfo.Id)
+	if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		logger.Error(fmt.Errorf("failed to broadcast new event creation: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
+	}
+	http.Redirect(w, r, fmt.Sprintf("/profile/new/%s", eventId), http.StatusSeeOther)
 }
