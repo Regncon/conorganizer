@@ -1986,3 +1986,27 @@ Time: 2026-05-31 10:55:52
 --- Next Prompt ---
 Some of the files where missing in the last merge. They are back now, please continue. 
 
+
+Time: 2026-05-31 12:06:53
+--- Codex Run ---
+
+Codex output:
+I’ll pick up from the previous stopping point by rerunning the full suite now that the missing profile files are back, then I’ll fix any failures caused by the interest availability changes.
+The missing package is back, and the remaining build break is exactly the direct `Event_mobile` signature change from the previous pass. I’m updating the restored `pages/profile/newevent` caller to pass `showInterestControls=false`, since the profile preview/edit flow should not expose the public interest dialog.
+That caller is fixed in the templ source. I’m regenerating templ output now, because the build error came from the generated `new_page_templ.go` file.
+The compile break is resolved and the full test suite is still running. So far the restored profile packages build cleanly; I’m waiting on the remaining service tests before running the project task wrapper.
+Continued and fixed the restored missing-file build break.
+
+The restored [new_page.templ](/home/cinmay/Documents/conorganizer/pages/profile/newevent/new_page.templ:65) still called `Event_mobile` with the old signature. I updated it to pass `showInterestControls=false`, since the admin/profile preview should not render the public interest dialog.
+
+Verification passed:
+
+```sh
+go tool templ generate
+GOCACHE=/tmp/go-build go test ./...
+GOCACHE=/tmp/go-build go tool task test
+```
+
+Time: 2026-05-31 12:06:53
+--- Next Prompt ---
+
