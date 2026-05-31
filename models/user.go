@@ -5,5 +5,5 @@ type User struct {
 	ExternalID string     `json:"external_id"`
 	Email      string     `json:"email"`
 	IsAdmin    bool       `json:"is_admin"`
-	InsertedAt DBDateTime `json:"inserted_at,omitempty"`
+	InsertedAt DBDateTime `json:"inserted_at"`
 }

@@ -233,7 +233,7 @@ func uniquePositiveBillettholderIDs(ids []int) []int {
 
 func valuesPlaceholders(count int) string {
 	placeholders := make([]string, 0, count)
-	for i := 0; i < count; i++ {
+	for range count {
 		placeholders = append(placeholders, "(?)")
 	}
 	return strings.Join(placeholders, ", ")
