@@ -21,8 +21,6 @@ const (
 	puljeScheduledBroadcastConsumer        = "events-pulje-schedule-broadcast"
 )
 
-var puljeScheduledBroadcastConsumeContext jetstream.ConsumeContext
-
 type puljeScheduledBroadcast struct {
 	PuljeID    models.Pulje `json:"pulje_id"`
 	Threshold  string       `json:"threshold"`
@@ -55,7 +53,7 @@ func setupPuljeScheduledBroadcasts(ctx context.Context, js jetstream.JetStream, 
 		return fmt.Errorf("create pulje schedule consumer: %w", err)
 	}
 
-	consumeContext, err := consumer.Consume(func(msg jetstream.Msg) {
+	if _, err := consumer.Consume(func(msg jetstream.Msg) {
 		if err := keyvalue.BroadcastUpdateContext(context.Background(), kv); err != nil {
 			logger.Error(fmt.Errorf("failed to broadcast scheduled pulje update: %w", err).Error())
 			if nakErr := msg.NakWithDelay(10 * time.Second); nakErr != nil {
@@ -68,11 +66,9 @@ func setupPuljeScheduledBroadcasts(ctx context.Context, js jetstream.JetStream, 
 		}
 	}, jetstream.ConsumeErrHandler(func(_ jetstream.ConsumeContext, err error) {
 		logger.Error(fmt.Errorf("pulje scheduled update consumer error: %w", err).Error())
-	}))
-	if err != nil {
+	})); err != nil {
 		return fmt.Errorf("consume pulje schedule messages: %w", err)
 	}
-	puljeScheduledBroadcastConsumeContext = consumeContext
 
 	puljer, err := puljerService.GetAllPuljer(db)
 	if err != nil {
