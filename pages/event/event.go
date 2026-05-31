@@ -78,6 +78,9 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	if err != nil {
 		return fmt.Errorf("error creating key value: %w", err)
 	}
+	if err := setupPuljeScheduledBroadcasts(context.Background(), js, kv, db, logger); err != nil {
+		return fmt.Errorf("error setting up pulje scheduled broadcasts: %w", err)
+	}
 
 	resetMVC := func(mvc *root.TodoMVC) {
 		mvc.Mode = root.TodoViewModeAll

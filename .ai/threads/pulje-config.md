@@ -1371,3 +1371,140 @@ The running dev server at `http://localhost:7331/` should pick this up through t
 Time: 2026-05-30 20:55:44
 --- Next Prompt ---
 
+Ok, continue. 
+
+Time: 2026-05-30 21:05:18
+--- Codex Run ---
+
+Codex output:
+I’ll keep moving on the remaining event-page behavior. The next gap is live updates: pulje status changes already rerender through the event SSE flow, but time-based warnings need a server-side timer so the page updates as warning thresholds pass while it is open.
+The event page already opens a Datastar SSE stream on load. I’m adding a server-side ticker to that stream so it rerenders the event page periodically, which lets warning text change when the server clock crosses the warning thresholds.
+I adjusted the ticker to patch only the event interest panel instead of the whole event page, so an open interest dialog is not reset every 30 seconds. Admin/NATS updates still patch the full event page.
+Continued with live event-page updates.
+
+Implemented:
+- The event SSE stream now has a server-side `30s` ticker.
+- On each tick it patches only `#event-interest-panel`, so time-based warnings can change while the page is open without resetting the whole event page or closing the interest dialog.
+- Admin/NATS-triggered updates still patch the full event page, so pulje status changes from admin continue to refresh the full view.
+
+Touched:
+- [event.go](/home/cinmay/Documents/conorganizer/pages/event/event.go)
+- [event_interest_panel.templ](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ)
+
+Verification:
+- `go tool templ generate` passed.
+- `GOCACHE=/tmp/go-build go test ./pages/event ./components/ticket_holder` passed.
+- `GOCACHE=/tmp/go-build go test ./...` passed.
+
+The running server at `http://localhost:7331/` should live reload the changes.
+
+text
+2026-05-30T19:03:23.012707Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/pages/event/event.go:
+				}
+
+				for {
+					select {
+					case <-ctx.Done():
+						return
+					case entry := <-watcher.Updates():
+						if entry == nil {
+							continue
+						}
+						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+							http.Error(w, err.Error(), http.StatusInternalServerError)
+							return
+						}
+						isAdmin := authctx.GetAdminFromUserToken(ctx)
+						c := event_page(eventID, isAdmin, logger, db, eventImageDir, r)
+
+						if err := sse.PatchElementTempl(c); err != nil {
+							_ = sse.ConsoleError(err)
+							return
+						}
+
+Time: 2026-05-30 21:05:18
+--- Next Prompt ---
+No... let's find another solution for the live updates. Ill discard the changes you made in git. 
+Perhaps we can use nats scheduled messages to trigger the event page? 
+Let's discuss the implementation before you start coding. Ask any clarifying questions.
+
+
+Time: 2026-05-30 21:09:10
+--- Codex Run ---
+
+Codex output:
+Understood; I’ll treat the ticker change as discarded and only discuss alternatives. I’m going to check the NATS/JetStream versions and current usage in this repo so the proposal matches what we actually have available.
+Agreed. A periodic ticker is too blunt.
+
+I checked the local dependency: this repo has `github.com/nats-io/nats.go v1.52.0`, and the JetStream API includes scheduled publish options like `WithScheduleAt`, `WithScheduleTarget`, `WithScheduleEvery`, and `WithScheduleCron`. So NATS scheduled messages are available.
+
+**Possible Designs**
+
+**Option A: NATS Scheduled Pulje Threshold Events**
+This is probably the best NATS-based version.
+
+Flow:
+1. On startup, query open puljer.
+2. For each pulje, compute:
+   - `lockAt = puljer.start_at - 30m`
+   - `warningAt = lockAt - 2h`
+   - `urgentAt = lockAt - 30m`
+3. Schedule NATS messages for `warningAt` and `urgentAt`.
+4. When a scheduled message fires, a subscriber broadcasts an update through the existing `events` KV bucket.
+5. Open event pages already watching the KV bucket rerender from server state.
+
+This avoids per-client timers and updates all open event pages at the same domain moment.
+
+**Option B: Per-Connection One-Shot Timer**
+Instead of a ticker, each event SSE connection computes the next relevant threshold for that event and sets one `time.Timer`. When it fires, it patches only the interest panel and schedules the next threshold.
+
+This is simpler and scoped, but it is local to the current process and current browser connection.
+
+**My Recommendation**
+Use Option A if we want this to behave like a domain event: “the pulje entered warning/urgent state.” That matches the existing NATS-driven update model better than client/session timers.
+
+I would not make the scheduled message change the pulje status. It should only trigger a UI refresh. Admins still explicitly change `Open | Locked | Completed`.
+
+Clarifying questions:
+
+1. Should scheduled messages trigger a global `events` KV broadcast, or should we make it more scoped so only event pages for affected puljer update?
+2. Do pulje `start_at` times ever change after startup? If yes, we need a rescheduling strategy when admins edit puljer.
+3. Should we schedule only `warningAt` and `urgentAt`, or also `lockAt` even though the pulje does not automatically become locked?
+
+Time: 2026-05-30 21:09:10
+--- Next Prompt ---
+1. It should trigger a global `events` KV broadcast.
+2. No, the `start_at` times are fixed before the site is launched. 
+3. No. `lockAt` should not be scheduled. 
+
+Time: 2026-05-30 21:20:27
+--- Codex Run ---
+
+Codex output:
+I’ll implement the NATS scheduled-message version now, using global `events` KV broadcasts and only scheduling warning/urgent thresholds. First I’m checking whether your discard already removed the previous ticker patch so I don’t build on stale code.
+I’ll add a small event scheduler that creates a JetStream stream with message schedules enabled, schedules warning/urgent broadcasts at startup from fixed `puljer.start_at`, and consumes the due messages to touch the existing `events` KV bucket globally.
+The scheduler is now in place: it schedules only warning and urgent thresholds, and due messages use the existing global `events` KV broadcast path. I added tests for the schedule calculation so we do not accidentally schedule `lockAt`.
+Implemented the NATS scheduled-message approach.
+
+What changed:
+- Added [pulje_scheduled_broadcast.go](/home/cinmay/Documents/conorganizer/pages/event/pulje_scheduled_broadcast.go)
+  - Creates a JetStream stream with `AllowMsgSchedules`.
+  - Schedules only `warning` and `urgent` messages from fixed `puljer.start_at`.
+  - Does not schedule `lockAt`.
+  - Consumes due messages and triggers a global `events` KV broadcast.
+- Updated [event.go](/home/cinmay/Documents/conorganizer/pages/event/event.go) to initialize the scheduler during event route setup.
+- Updated [broadcast.go](/home/cinmay/Documents/conorganizer/service/keyvalue/broadcast.go)
+  - Added `BroadcastUpdateContext`.
+  - Treats `ErrNoKeysFound` as a no-op so scheduled updates do not fail when nobody has an open page.
+- Added schedule calculation tests in [pulje_scheduled_broadcast_test.go](/home/cinmay/Documents/conorganizer/pages/event/pulje_scheduled_broadcast_test.go).
+
+Verification:
+- `go tool templ generate` passed.
+- `GOCACHE=/tmp/go-build go test ./pages/event ./service/keyvalue` passed.
+- `GOCACHE=/tmp/go-build go test ./...` passed.
+
+Unrelated `.ai/threads/pulje-config.md` is still modified and untouched.
+
+Time: 2026-05-30 21:20:27
+--- Next Prompt ---
+
