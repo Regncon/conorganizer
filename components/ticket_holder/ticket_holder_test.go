@@ -42,6 +42,40 @@ func TestBuildPuljeInterestState_WhenPuljeIsLocked_ReturnsLockedStateAndDisables
 	}
 }
 
+func TestBuildPuljeInterestState_WhenOpenPuljeIsBeforeWarningWindow_ReturnsOpenStateWithoutWarning(t *testing.T) {
+	// Gitt at en åpen pulje ikke nærmer seg låsing,
+	// når interessetilstanden bygges,
+	// så skal billettholderen ikke se noen låseadvarsel.
+
+	// Given
+	expectedAvailability := PuljeInterestOpen
+	expectedCanEdit := true
+	expectedMessage := ""
+
+	pulje := buildPuljeInterestStateTestPulje(
+		t,
+		models.PuljeFredagKveld,
+		"Fredag kveld",
+		models.PuljeStatusOpen,
+		"2026-10-09T18:30:00+02:00",
+	)
+	now := parsePuljeInterestStateTestTime(t, "2026-10-09T15:59:00+02:00")
+
+	// When
+	actualState := BuildPuljeInterestState(pulje, now)
+
+	// Then
+	if actualState.Availability != expectedAvailability {
+		t.Fatalf("pulje availability mismatch\nexpected: %s\nactual:   %s", expectedAvailability, actualState.Availability)
+	}
+	if actualState.CanEdit != expectedCanEdit {
+		t.Fatalf("can edit mismatch\nexpected: %v\nactual:   %v", expectedCanEdit, actualState.CanEdit)
+	}
+	if actualState.Message != expectedMessage {
+		t.Fatalf("message mismatch\nexpected: %q\nactual:   %q", expectedMessage, actualState.Message)
+	}
+}
+
 func TestBuildPuljeInterestState_WhenOpenPuljeIsInWarningWindow_ReturnsWarningWithLockTime(t *testing.T) {
 	// Gitt at en åpen pulje nærmer seg låsing,
 	// når interessetilstanden bygges,

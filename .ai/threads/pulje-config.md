@@ -1507,4 +1507,29 @@ Unrelated `.ai/threads/pulje-config.md` is still modified and untouched.
 
 Time: 2026-05-30 21:20:27
 --- Next Prompt ---
+Add a test case to verify that there is no warning displayed before the warning threshold.
+//Gitt at en åpen pulje ikke nærmer seg låsing, or something like that.
+
+Time: 2026-05-31 07:03:21
+--- Codex Run ---
+
+Codex output:
+I’ll add that as a focused component-level test against `BuildPuljeInterestState`, since that is where the warning threshold behavior is defined.
+Added the test case in [ticket_holder_test.go](/home/cinmay/Documents/conorganizer/components/ticket_holder/ticket_holder_test.go).
+
+It covers:
+- Open pulje
+- Current time is before the warning threshold
+- Expected state remains `open`
+- Editing is still allowed
+- No warning message is shown
+
+Verification:
+- `GOCACHE=/tmp/go-build go test ./components/ticket_holder` passed.
+- `GOCACHE=/tmp/go-build go test ./...` passed.
+
+Unrelated `.ai/threads/pulje-config.md` is still modified and untouched.
+
+Time: 2026-05-31 07:03:21
+--- Next Prompt ---
 
