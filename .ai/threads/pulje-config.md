@@ -1840,4 +1840,40 @@ I did not run `go test ./...` yet because the code and tests still expect `Godkj
 
 Time: 2026-05-31 09:08:58
 --- Next Prompt ---
+Ok, continue. 
+
+Time: 2026-05-31 09:26:23
+--- Codex Run ---
+
+Codex output:
+I’ll continue with the TDD path: first update the front-page tests to describe `Annonsert` visibility, run them to confirm the expected red state, then make the smallest code changes to move the front page over.
+I’m editing the existing root page tests now. The intent is to make `Godkjent` explicitly hidden from public program views and `Annonsert` the only public event status.
+The red test confirms the intended gap: the front page still queries `Godkjent`. I’m moving the model constant and root query code to `Annonsert` now, while leaving pulje/program `is_published` language alone.
+The `.templ` files changed, so I’m regenerating the templ Go files before running tests. Otherwise stale generated code would still reference the removed constant.
+Front-page tests are green now after the model/query change. I’m moving to the event-page visibility tests: first I’ll check the request context shape so the owner check uses the right user identifier.
+I’m adding the event visibility tests before the helper/UI exists. These should fail on missing behavior first, then I’ll wire the event page to use the same access rule.
+I’m adding a small access helper keyed on `events.user_id`, then the event page will render the friendly unannounced message before loading puljer, navigation, or interest controls.
+The event access tests are green. I’m scanning for stale `EventStatusPublished` and old event-status copy now, then I’ll handle any remaining tests that still assume `Publisert` as an event status.
+The remaining old event-status references are gone from code; the remaining “Publisert” strings are pulje/program publication labels, which we agreed to keep. I also updated the database view documentation to say `Annonsert`.
+I spotted one more public-user path: the profile program view still filters user assignments/interests by `Godkjent`. Since `Godkjent` is now internal, I’m switching those profile queries to `Annonsert` as well.
+All targeted packages are passing, and templ output has been regenerated. I’m running the full Go test suite now to catch the remaining references and behavioral assumptions across packages.
+`go test ./...` passes. I’m running the project task as the final verification because it also regenerates `schema.sql` from the local database before testing.
+I noticed the new event visibility test was creating an extra throwaway database just to get a logger. I’m tightening that up to use the existing stub logger directly.
+The event package still passes after the test cleanup. I’ll run the full project task one more time so the final verification reflects the current files.
+Implemented the `Annonsert` event-status flow.
+
+Changed the code from `EventStatusPublished` to `EventStatusAnnounced = "Annonsert"` in [event-model.go](/home/cinmay/Documents/conorganizer/models/event-model.go:14). The front page now uses announced events, and the root tests verify that `Godkjent` events stay hidden from public listings. Profile program queries also now use `Annonsert`, while pulje/program publication labels still say `Publisert` / `Publisert i pulje`.
+
+Added event-page visibility handling in [event_visibility.go](/home/cinmay/Documents/conorganizer/pages/event/event_visibility.go:1) and [event_page.templ](/home/cinmay/Documents/conorganizer/pages/event/event_page.templ:24): announced events are public, admins can see unannounced events, creators can see their own unannounced events, and everyone else gets the friendly “not announced yet” message.
+
+Verification passed:
+
+```sh
+GOCACHE=/tmp/go-build go tool task test
+```
+
+No `EventStatusPublished` references remain in code. `.ai/threads/pulje-config.md` is still modified separately and left untouched.
+
+Time: 2026-05-31 09:26:23
+--- Next Prompt ---
 

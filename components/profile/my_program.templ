@@ -202,7 +202,7 @@ func getAllInterestsForUser(userInfo requestctx.UserRequestInfo, selectedBillett
 		models.InterestLevelNone,
 		selectedBillettholderID,
 		userInfo.Id,
-		models.EventStatusApproved,
+		models.EventStatusAnnounced,
 		models.InterestLevelHigh,
 		models.InterestLevelMedium,
 		models.InterestLevelLow,
@@ -277,7 +277,7 @@ func GetAllEventsForUser(userInfo requestctx.UserRequestInfo, selectedBilletthol
 				ORDER BY p.start_at ASC, e.title ASC
 				`
 
-	rows, queryErr := db.Query(query, models.EventPlayerRoleGM, selectedBillettholderID, userInfo.Id, models.EventStatusApproved)
+	rows, queryErr := db.Query(query, models.EventPlayerRoleGM, selectedBillettholderID, userInfo.Id, models.EventStatusAnnounced)
 	if queryErr != nil {
 		return nil, fmt.Errorf("unable to query events for user %s: %w", userInfo.Id, queryErr)
 	}

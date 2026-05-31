@@ -26,7 +26,7 @@ templ EventCard(eventCard models.EventCardModel, eventImageDir *string, showStat
 				if eventCard.IsPublished {
 					<div style="color:var(--color-success);display: flex;align-items: center; gap: 0.5rem;">
 						@icons.Icon(icons.ProgressComplete, icons.Size20)
-						<span>{ models.EventStatusPublished.Label() }</span>
+						<span>Publisert i pulje</span>
 					</div>
 				} else if eventCard.Status == models.EventStatusDraft {
 					<div style="color:var(--color-soft-text);display: flex;align-items: center; gap: 0.5rem;">

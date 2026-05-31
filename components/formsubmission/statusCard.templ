@@ -61,7 +61,7 @@ templ statusCard(event *models.Event, isAdmin bool) {
 					<option value={ models.EventStatusDraft } selected>{ models.EventStatusDraft.Label() }</option>
 					<option value={ models.EventStatusSubmitted } selected>{ models.EventStatusSubmitted.Label() }</option>
 					<option value={ models.EventStatusApproved } selected>{ models.EventStatusApproved.Label() } ( Du er administrator )</option>
-					<option value={ models.EventStatusPublished } selected>{ models.EventStatusPublished.Label() } ( Du er administrator )</option>
+					<option value={ models.EventStatusAnnounced } selected>{ models.EventStatusAnnounced.Label() } ( Du er administrator )</option>
 					<option value={ models.EventStatusArchived } selected>{ models.EventStatusArchived.Label() }</option>
 				} else {
 					if event.Status == models.EventStatusDraft || event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusArchived {

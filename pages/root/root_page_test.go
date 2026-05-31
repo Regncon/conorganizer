@@ -33,21 +33,22 @@ func TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav(t *testing.T)
 	}
 }
 
-func TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsApprovedEvents(t *testing.T) {
+func TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsAnnouncedEvents(t *testing.T) {
 	// Gitt at publisering av program er skrudd av,
 	// når forsiden vises,
-	// så skal den flate arrangementslisten bare vise godkjente arrangementer.
+	// så skal den flate arrangementslisten bare vise annonserte arrangementer.
 
 	// Given
-	expectedTitles := []string{"Alpha Approved", "Beta Approved"}
+	expectedTitles := []string{"Alpha Announced", "Beta Announced"}
 
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)
 	setProgramPublishing(t, db, false)
 	insertRootPageEvent(t, db, "draft-event", "Draft Event", models.EventStatusDraft)
 	insertRootPageEvent(t, db, "submitted-event", "Submitted Event", models.EventStatusSubmitted)
-	insertRootPageEvent(t, db, "beta-approved", "Beta Approved", models.EventStatusApproved)
-	insertRootPageEvent(t, db, "alpha-approved", "Alpha Approved", models.EventStatusApproved)
+	insertRootPageEvent(t, db, "approved-event", "Approved Event", models.EventStatusApproved)
+	insertRootPageEvent(t, db, "beta-announced", "Beta Announced", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced)
 
 	// When
 	doc := templtest.Render(t, rootPageContent(db, false, nil))
@@ -82,26 +83,28 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsScrollnav(t *testing.T) 
 	}
 }
 
-func TestRootPageContent_WhenProgramPublishingIsOn_OnlyShowsPublishedPuljeEvents(t *testing.T) {
+func TestRootPageContent_WhenProgramPublishingIsOn_OnlyShowsAnnouncedPublishedPuljeEvents(t *testing.T) {
 	// Gitt at publisering av program er skrudd på,
 	// når forsiden vises,
-	// så skal puljevisningen bare vise godkjente arrangementer som er publisert i en pulje.
+	// så skal puljevisningen bare vise annonserte arrangementer som er publisert i en pulje.
 
 	// Given
-	expectedTitles := []string{"Published Approved"}
+	expectedTitles := []string{"Published Announced"}
 
 	db := createRootPageTestDB(t)
 	seedRootPageLookups(t, db)
 	setProgramPublishing(t, db, true)
 	insertRootPagePulje(t, db)
 
-	insertRootPageEvent(t, db, "published-approved", "Published Approved", models.EventStatusApproved)
-	insertRootPageEventPulje(t, db, "published-approved", models.PuljeFredagKveld, true)
+	insertRootPageEvent(t, db, "published-announced", "Published Announced", models.EventStatusAnnounced)
+	insertRootPageEventPulje(t, db, "published-announced", models.PuljeFredagKveld, true)
 
-	insertRootPageEvent(t, db, "unpublished-approved", "Unpublished Approved", models.EventStatusApproved)
-	insertRootPageEventPulje(t, db, "unpublished-approved", models.PuljeFredagKveld, false)
+	insertRootPageEvent(t, db, "unpublished-announced", "Unpublished Announced", models.EventStatusAnnounced)
+	insertRootPageEventPulje(t, db, "unpublished-announced", models.PuljeFredagKveld, false)
 
 	insertRootPageEvent(t, db, "unrelated-approved", "Unrelated Approved", models.EventStatusApproved)
+	insertRootPageEvent(t, db, "published-approved", "Published Approved", models.EventStatusApproved)
+	insertRootPageEventPulje(t, db, "published-approved", models.PuljeFredagKveld, true)
 
 	insertRootPageEvent(t, db, "published-submitted", "Published Submitted", models.EventStatusSubmitted)
 	insertRootPageEventPulje(t, db, "published-submitted", models.PuljeFredagKveld, true)
@@ -133,10 +136,10 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersPuljeSectionsInTimeOrd
 	insertRootPagePuljeWithDetails(t, db, models.PuljeFredagKveld, "Fredag kveld", "2026-10-09T18:00:00Z", "2026-10-09T23:00:00Z")
 	insertRootPagePuljeWithDetails(t, db, models.PuljeLordagMorgen, "Lordag morgen", "2026-10-10T10:00:00Z", "2026-10-10T14:00:00Z")
 
-	insertRootPageEvent(t, db, "lordag-event", "Lordag Event", models.EventStatusApproved)
+	insertRootPageEvent(t, db, "lordag-event", "Lordag Event", models.EventStatusAnnounced)
 	insertRootPageEventPulje(t, db, "lordag-event", models.PuljeLordagMorgen, true)
 
-	insertRootPageEvent(t, db, "fredag-event", "Fredag Event", models.EventStatusApproved)
+	insertRootPageEvent(t, db, "fredag-event", "Fredag Event", models.EventStatusAnnounced)
 	insertRootPageEventPulje(t, db, "fredag-event", models.PuljeFredagKveld, true)
 
 	// When
@@ -162,10 +165,10 @@ func TestRootPageContent_WhenProgramPublishingIsOn_SortsEventsAlphabeticallyWith
 	setProgramPublishing(t, db, true)
 	insertRootPagePulje(t, db)
 
-	insertRootPageEvent(t, db, "beta-event", "Beta Event", models.EventStatusApproved)
+	insertRootPageEvent(t, db, "beta-event", "Beta Event", models.EventStatusAnnounced)
 	insertRootPageEventPulje(t, db, "beta-event", models.PuljeFredagKveld, true)
 
-	insertRootPageEvent(t, db, "alpha-event", "Alpha Event", models.EventStatusApproved)
+	insertRootPageEvent(t, db, "alpha-event", "Alpha Event", models.EventStatusAnnounced)
 	insertRootPageEventPulje(t, db, "alpha-event", models.PuljeFredagKveld, true)
 
 	// When
@@ -202,6 +205,7 @@ func seedRootPageLookups(t *testing.T, db *sql.DB) {
 		models.EventStatusSubmitted,
 		models.EventStatusApproved,
 		models.EventStatusArchived,
+		models.EventStatusAnnounced,
 	} {
 		mustExec(t, db, `INSERT INTO event_statuses(status) VALUES (?) ON CONFLICT(status) DO NOTHING`, status)
 	}

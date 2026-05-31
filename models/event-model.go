@@ -11,7 +11,7 @@ const (
 	EventStatusSubmitted EventStatus = "Innsendt"
 	EventStatusApproved  EventStatus = "Godkjent"
 	EventStatusArchived  EventStatus = "Forkastet"
-	EventStatusPublished EventStatus = "Publisert"
+	EventStatusAnnounced EventStatus = "Annonsert"
 )
 
 func (status EventStatus) Label() string {

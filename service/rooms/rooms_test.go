@@ -693,7 +693,7 @@ func insertEvents(t *testing.T, db *sql.DB) []string {
 			BeginnerFriendly:  true,
 			CanBeRunInEnglish: true,
 			Notes:             "Passer godt for førstegangsspillere",
-			Status:            "Publisert",
+			Status:            "Annonsert",
 		},
 		{
 			Title:             "Tigerguttens Turnering",
@@ -727,7 +727,7 @@ func insertEvents(t *testing.T, db *sql.DB) []string {
 			BeginnerFriendly:  false,
 			CanBeRunInEnglish: true,
 			Notes:             "Inneholder skrekkelementer",
-			Status:            "Publisert",
+			Status:            "Annonsert",
 		},
 		{
 			Title:             "Ugles Kunnskapsprove",
@@ -744,7 +744,7 @@ func insertEvents(t *testing.T, db *sql.DB) []string {
 			BeginnerFriendly:  true,
 			CanBeRunInEnglish: true,
 			Notes:             "",
-			Status:            "Publisert",
+			Status:            "Annonsert",
 		},
 		{
 			Title:             "Kengus Eventyrreise",
