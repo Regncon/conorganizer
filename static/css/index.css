@@ -341,8 +341,22 @@ hr {
 
 .input:focus-visible {
     outline: 0;
-    border: 1px solid var(--color-primary-hover);
+    border: 1px solid var(--color-primary);
     box-shadow: 0 0 0 0.25rem hsl(from var(--color-primary-hover) h s l / 25%);
+}
+
+.input:user-invalid,
+.form-group:has(.save-error.is-visible) .input,
+.save-control-group:has(.save-error.is-visible) .input {
+    border-color: #DC3545;
+    box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 18%);
+}
+
+.save-control-group:has(.save-error.is-visible) .input:focus-visible,
+.input:user-invalid:focus-visible,
+.form-group:has(.save-error.is-visible) .input:focus-visible {
+    border-color: var(#DC3545);
+    box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 28%);
 }
 
 .slider {

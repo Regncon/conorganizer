@@ -111,6 +111,7 @@ templ SaveFeedback(isAdmin bool) {
 templ SaveError(key string) {
 	<span
 		class="save-error"
+		data-class:is-visible={ errorSignalExpression(key) }
 		data-show={ errorSignalExpression(key) }
 		data-text={ errorSignalExpression(key) }
 		aria-live="polite"
