@@ -1,6 +1,6 @@
 # Arrangementsskjema
 
-Denne sjekklisten dekker opprettelse og redigering av arrangementer i skjemaet under `/my-events/new/{id}` og adminredigering av arrangementer fra godkjenningsflyten. Filen dekker også inngangen til skjemaet fra `Send inn arrangement`.
+Denne sjekklisten dekker opprettelse og redigering av arrangementer i skjemaet under `/profile/new/{id}` og adminredigering av arrangementer fra godkjenningsflyten. Filen dekker også inngangen til skjemaet fra `Send inn arrangement`.
 
 ## Roller
 

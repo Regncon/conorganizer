@@ -41,11 +41,45 @@ templ TicketHolderInterestPicker(
                 place-items: center;
                 width: 100%;
 			}
+
+			&.is-disabled {
+				.card-clickable {
+					cursor: not-allowed;
+					opacity: 0.65;
+				}
+			}
+
+			.pulje-status-message {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-2x);
+				padding: var(--spacing-3x);
+				border: 1px solid currentColor;
+				border-radius: var(--border-radius-1x);
+				color: var(--color-text-soft);
+			}
+
+			.pulje-status-message--warning {
+				color: var(--color-warning, var(--color-error));
+			}
+
+			.pulje-status-message--urgent-warning {
+				color: var(--color-error);
+			}
+
+			.pulje-status-message--locked {
+				color: var(--color-accent-blue);
+			}
+
+			.pulje-status-message--completed {
+				color: var(--color-success);
+			}
 		}
 	</style>
 	{{ pendingChoice := "Pending choice" }}
 	<div
 		class="interest-buttons"
+		data-class:is-disabled="!$puljeCanEdit"
 		data-signals:current-interest-level-choice={ fmt.Sprintf("'%s'", pendingChoice) }
 		data-signals:selected-interest-level={ fmt.Sprintf("'%s'", models.InterestLevelNone) }
 	>
@@ -55,11 +89,29 @@ templ TicketHolderInterestPicker(
 			data-text="$interestErrorMessage"
 		></strong>
 		<div
+			class="pulje-status-message"
+			data-show="$puljeStatusMessage"
+			data-class:pulje-status-message--warning="$puljeAvailability === 'warning'"
+			data-class:pulje-status-message--urgent-warning="$puljeAvailability === 'urgent-warning'"
+			data-class:pulje-status-message--locked="$puljeAvailability === 'locked'"
+			data-class:pulje-status-message--completed="$puljeAvailability === 'completed'"
+		>
+			<span data-text="$puljeStatusMessage"></span>
+			<a
+				href="/profile"
+				class="btn btn--outline"
+				data-show="$puljeShowProfileLink"
+			>
+				Se profilen din
+			</a>
+		</div>
+		<div
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelHigh, models.InterestLevelHigh) }
-			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelHigh) }
-			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelHigh, eventId) }
+			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
+			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelHigh) }
+			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelHigh, eventId) }
 		>
 			<span class="emoji">🤩</span> { models.InterestLevelHigh.Label() }
 		</div>
@@ -67,8 +119,9 @@ templ TicketHolderInterestPicker(
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelMedium, models.InterestLevelMedium) }
-			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelMedium) }
-			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelMedium, eventId) }
+			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
+			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelMedium) }
+			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelMedium, eventId) }
 		>
 			<span class="emoji">🙂</span> { models.InterestLevelMedium.Label() }
 		</div>
@@ -76,8 +129,9 @@ templ TicketHolderInterestPicker(
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelLow, models.InterestLevelLow) }
-			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelLow) }
-			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelLow, eventId) }
+			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
+			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelLow) }
+			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelLow, eventId) }
 		>
 			<span class="emoji">🤨</span> { models.InterestLevelLow.Label() }
 		</div>
@@ -85,8 +139,9 @@ templ TicketHolderInterestPicker(
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelNone, models.InterestLevelNone) }
-			data-attr:tabindex={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelNone) }
-			data-on:click={ fmt.Sprintf("$currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest')", models.InterestLevelNone, eventId) }
+			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
+			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelNone) }
+			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelNone, eventId) }
 		>
 			<span class="emoji">😑</span> { models.InterestLevelNone.Label() }
 		</div>

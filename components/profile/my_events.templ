@@ -7,7 +7,7 @@ import (
 
 templ singleEvent(event models.EventCardModel) {
 	{{ eventLink := "/my-events/new/" + event.Id }}
-	if event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusApproved || event.Status == models.EventStatusPublished {
+	if event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusApproved || event.Status == models.EventStatusAnnounced {
 		{{ eventLink = "/event/" + event.Id }}
 	}
 	<a href={ eventLink } class="item-card profile-event-bar">
@@ -21,7 +21,7 @@ templ singleEvent(event models.EventCardModel) {
 }
 
 templ MyEvents(events []models.EventCardModel) {
- <style>
+	<style>
     .submit-event-message {
         display: flex;
         width: 100%;
@@ -53,7 +53,8 @@ templ MyEvents(events []models.EventCardModel) {
 				@singleEvent(event)
 			}
 		}
-		<form action="/my-events/api/create" method="post" class="submit-event-message">
+		<form action="/profile/api/create" method="post" class="submit-event-message">
+			profile
 			<p>
 				Ønsker du å arrangere noe under festivalen? Dørene er fortsatt åpne for nye arrangementer, la oss høre fra
 				deg!

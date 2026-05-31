@@ -12,8 +12,6 @@ import (
 	billettholderadmin "github.com/Regncon/conorganizer/pages/admin/billettholder_admin"
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/login"
-	"github.com/Regncon/conorganizer/pages/myprofile"
-	"github.com/Regncon/conorganizer/pages/myprofile/myevents"
 	"github.com/Regncon/conorganizer/pages/print-friendly"
 	profilepage "github.com/Regncon/conorganizer/pages/profile"
 	"github.com/Regncon/conorganizer/pages/root"
@@ -61,9 +59,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db, eventImageDir),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
 		event.SetupEventRoute(router, sessionStore, ns, db, logger, eventImageDir),
-		myevents.SetupMyEventsRoute(isLoggedInRouter, sessionStore, ns, db, eventImageDir, logger),
 		login.SetupAuthRoute(router, db, logger),
-		myprofile.SetupMyProfileRoute(isLoggedInRouter, sessionStore, ns, db, logger),
 		profilepage.SetupProfileRoute(isLoggedInRouter, sessionStore, ns, db, eventImageDir, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)

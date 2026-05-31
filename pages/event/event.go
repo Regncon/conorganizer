@@ -46,6 +46,15 @@ func interestErrorMessageFromError(err error) string {
 	if strings.Contains(err.Error(), "is not active and published for event") {
 		return "Denne pulja er ikkje tilgjengeleg for dette arrangementet."
 	}
+	if strings.Contains(err.Error(), "is locked for event") {
+		return "Pulja er låst. Du kan ikkje melde eller endre interesse lenger medan vi fordeler spelarar."
+	}
+	if strings.Contains(err.Error(), "is completed for event") {
+		return "Puljefordelinga er klar. Gå til profilen din for å sjå kva du fekk."
+	}
+	if strings.Contains(err.Error(), "program is not published") {
+		return "Interessevalget er ikke åpnet ennå."
+	}
 	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
 }
 
@@ -71,6 +80,9 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 
 	if err != nil {
 		return fmt.Errorf("error creating key value: %w", err)
+	}
+	if err := setupPuljeScheduledBroadcasts(context.Background(), js, kv, db, logger); err != nil {
+		return fmt.Errorf("error setting up pulje scheduled broadcasts: %w", err)
 	}
 
 	resetMVC := func(mvc *root.TodoMVC) {
@@ -184,7 +196,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					}
 
 					sse := datastar.NewSSE(w, r)
-					signalJSON := []byte(fmt.Sprintf(`{"selectedInterestLevel": %q, "currentInterestLevelChoice": "Pending choice"}`, interest))
+					signalJSON := fmt.Appendf(nil, `{"selectedInterestLevel": %q, "currentInterestLevelChoice": "Pending choice"}`, interest)
 					if err := sse.PatchSignals(signalJSON); err != nil {
 						logger.Error(fmt.Errorf("failed to patch selected interest signal: %w", err).Error(), "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "selectedInterestLevel", interest)
 					}
@@ -345,14 +357,38 @@ func updateInterest(
 		return fmt.Errorf("interest level is required")
 	}
 
-	puljeQuery := `SELECT EXISTS (SELECT 1 FROM relation_event_puljer WHERE event_id = $1 AND pulje_id = $2 AND is_in_pulje = 1 AND is_published = 1)`
-	var puljeExists bool
-	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId).Scan(&puljeExists)
+	programPublished, programPublishedErr := getProgramPublished(db)
+	if programPublishedErr != nil {
+		return fmt.Errorf("failed to check program publishing state: %w", programPublishedErr)
+	}
+	if !programPublished {
+		return fmt.Errorf("program is not published")
+	}
+
+	puljeQuery := `
+		SELECT p.status
+		FROM relation_event_puljer ep
+		JOIN puljer p ON p.id = ep.pulje_id
+		JOIN events e ON e.id = ep.event_id
+		WHERE ep.event_id = $1
+			AND ep.pulje_id = $2
+			AND ep.is_in_pulje = 1
+			AND ep.is_published = 1
+			AND e.status = $3
+	`
+	var puljeStatus models.PuljeStatus
+	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId, models.EventStatusAnnounced).Scan(&puljeStatus)
 	if puljerErr != nil {
+		if puljerErr == sql.ErrNoRows {
+			return fmt.Errorf("pulje %s is not active and published for event %s", puljeId, eventID)
+		}
 		return fmt.Errorf("failed to check if pulje %s exists for event %s: %w", puljeId, eventID, puljerErr)
 	}
-	if !puljeExists {
-		return fmt.Errorf("pulje %s is not active and published for event %s", puljeId, eventID)
+	if puljeStatus == models.PuljeStatusLocked {
+		return fmt.Errorf("pulje %s is locked for event %s", puljeId, eventID)
+	}
+	if puljeStatus == models.PuljeStatusCompleted {
+		return fmt.Errorf("pulje %s is completed for event %s", puljeId, eventID)
 	}
 
 	userHasAccessToBillettHolderIdQuery := `

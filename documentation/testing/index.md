@@ -10,7 +10,7 @@ Denne mappen inneholder launch-sjekklistene for manuell testing av Conorganizer.
 - [Autentisering](./auth.md)
 - [Min Side](./profile.md)
 - [Billetter på Min Side](./profile-tickets.md)
-- [Mine arrangementer](./my-events.md)
+- [Mine arrangementer](./profile.md)
 - [Arrangementsskjema](./event-form.md)
 - [Arrangementsdetaljer](./event-details.md)
 - [Admin](./admin.md)

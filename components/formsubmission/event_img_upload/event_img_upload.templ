@@ -84,7 +84,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
 
-		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/?uploaded=source", eventID), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/profile/new/%s/image/?uploaded=source", eventID), http.StatusSeeOther)
 	})
 }
 
@@ -132,7 +132,7 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
-		http.Redirect(w, r, fmt.Sprintf("/my-events/new/%s/image/", eventID), http.StatusSeeOther)
+		http.Redirect(w, r, fmt.Sprintf("/profile/new/%s/image/", eventID), http.StatusSeeOther)
 	})
 }
 
@@ -234,13 +234,14 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			z-index: 2;
 		}
 	</style>
-	{{event, eventErr := eventservice.GetEventById(eventId, db)
-var title, intro string
-imageUrl := getUploadedSourceImageURL(eventId, eventImageDir)
-if eventErr == nil && event != nil {
-	title = event.Title
-	intro = event.Intro
-}
+	{{
+		event, eventErr := eventservice.GetEventById(eventId, db)
+		var title, intro string
+		imageUrl := getUploadedSourceImageURL(eventId, eventImageDir)
+		if eventErr == nil && event != nil {
+			title = event.Title
+			intro = event.Intro
+		}
 	}}
 	if eventErr != nil {
 		{{ logger.Error(fmt.Errorf("failed to load event image page for event %s: %w", eventId, eventErr).Error()) }}
@@ -268,8 +269,8 @@ if eventErr == nil && event != nil {
 	}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
-		{Name: "Mine arrangementer", Url: "/my-events/"},
-		{Name: "Nytt arrangement", Url: "/my-events/new/" + eventId + "/"},
+		{Name: "Mine arrangementer", Url: "/profile/"},
+		{Name: "Nytt arrangement", Url: "/profile/new/" + eventId + "/"},
 		{Name: "Last opp bilde", Url: ""},
 	})
 	<article class="page-content-container">
@@ -298,7 +299,7 @@ if eventErr == nil && event != nil {
 				</div>
 				<form
 					method="post"
-					action={ "/my-events/api/new/" + eventId + "/upload" }
+					action={ "/profile/api/new/" + eventId + "/upload" }
 					enctype="multipart/form-data"
 					class="image-upload-file-form"
 				>

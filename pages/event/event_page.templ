@@ -33,6 +33,17 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		<p>Event not found</p>
 		return
 	}
+	{{ userInfo.IsAdmin = userInfo.IsAdmin || isAdmin }}
+	{{ canView, canViewErr := canViewEvent(event, userInfo, db) }}
+	if canViewErr != nil {
+		{{ logger.Error(canViewErr.Error(), "event_id", eventId, "user_id", userInfo.Id) }}
+		<p>Error checking event access: { canViewErr.Error() }</p>
+		return
+	}
+	if !canView {
+		@eventNotAnnounced()
+		return
+	}
 	{{ puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db) }}
 	if puljerErr != nil {
 		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
@@ -52,6 +63,13 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 			selectedPuljeId = string(puljerForEvent[0].ID)
 		}
 	}}
+	{{ programPublished, programPublishedErr := getProgramPublished(db) }}
+	if programPublishedErr != nil {
+		{{ logger.Error(programPublishedErr.Error(), "event_id", eventId) }}
+		<p>Error fetching program publishing state: { programPublishedErr.Error() }</p>
+		return
+	}
+	{{ showInterestControls := canShowInterestControls(programPublished, puljerForEvent) }}
 	{{ evnetsByPulje, eventsByPuljeErr := root.GetEventsByPulje(db) }}
 	if eventsByPuljeErr != nil {
 		{{ logger.Error(fmt.Errorf("failed to load event navigation data for event %s: %w", eventId, eventsByPuljeErr).Error()) }}
@@ -82,6 +100,30 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 			style="margin:1rem;"
 		>Administrator - rediger arrangementer</a>
 	}
-	@Event_mobile(event, previousNextData, puljerForEvent, hasTickets, eventImageDir)
-	@event_components.EventInterests(userInfo, eventId, selectedPuljeId, db, r, logger)
+	@Event_mobile(event, previousNextData, puljerForEvent, hasTickets, showInterestControls, eventImageDir)
+	if showInterestControls {
+		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, db, r, logger)
+	}
+}
+
+templ eventNotAnnounced() {
+	<style>
+		.event-not-announced {
+			margin-top: var(--responsive-top-of-page-spacing);
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+			text-align: center;
+		}
+		.event-not-announced h1,
+		.event-not-announced p {
+			margin: 0;
+		}
+	</style>
+	<div class="page-content-container">
+		<section class="container-inner-padding event-not-announced">
+			<h1>Arrangementet er ikke annonsert ennå</h1>
+			<p class="event-not-announced-message">{ eventNotAnnouncedMessage }</p>
+		</section>
+	</div>
 }

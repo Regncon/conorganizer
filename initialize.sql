@@ -197,7 +197,7 @@ VALUES
     ('Innsendt'),
     ('Godkjent'),
     ('Forkastet'),
-    ('Publisert');
+    ('Annonsert');
 
 INSERT INTO
     events_types (event_type)
@@ -328,7 +328,7 @@ FROM
     INNER JOIN puljer p ON p.id = ep.pulje_id
     LEFT JOIN rooms r ON r.id = ep.room_id
 WHERE
-    e.status = 'Godkjent'
+    e.status = 'Annonsert'
     AND ep.is_in_pulje = 1;
 
 CREATE VIEW

@@ -9,7 +9,7 @@ import (
 // 1. Define the abstraction used by production code
 // ————————————————————————————
 type Logger interface {
-	Info(msg string, keysAndValues ...interface{})
+	Info(msg string, keysAndValues ...any)
 }
 
 // ————————————————————————————
@@ -18,14 +18,14 @@ type Logger interface {
 type StubLogger struct {
 	calls []struct {
 		msg           string
-		keysAndValues []interface{}
+		keysAndValues []any
 	}
 }
 
-func (s *StubLogger) Info(msg string, keysAndValues ...interface{}) {
+func (s *StubLogger) Info(msg string, keysAndValues ...any) {
 	s.calls = append(s.calls, struct {
 		msg           string
-		keysAndValues []interface{}
+		keysAndValues []any
 	}{msg, keysAndValues})
 }
 
@@ -44,7 +44,7 @@ func (h *stubLoggerHandler) Handle(ctx context.Context, r slog.Record) error {
 	msg := r.Message
 
 	// Extract key-value pairs
-	var keyValues []interface{}
+	var keyValues []any
 	r.Attrs(func(attr slog.Attr) bool {
 		keyValues = append(keyValues, attr.Key, attr.Value.Any())
 		return true
