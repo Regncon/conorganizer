@@ -11,8 +11,75 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestEventInterestPanel_WhenUrgentWarningExists_RendersMostUrgentPuljeMessage(t *testing.T) {
-	// Gitt at en billettholder kan melde interesse og en pulje snart låses,
+func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *testing.T) {
+	// Gitt at den planlagte varselmeldingen for en åpen pulje har blitt sendt,
+	// når interessepanelet rendres på nytt,
+	// så skal billettholderen se varselstatus ved knappen.
+
+	// Given
+	expectedHelperVisible := true
+	expectedHelperClass := "pulje-interest-state--warning"
+	expectedMessagePart := "låses snart"
+
+	now := time.Now()
+	puljer := []models.PuljeRow{
+		buildEventInterestTestPulje(
+			models.PuljeFredagKveld,
+			"Fredag kveld",
+			models.PuljeStatusOpen,
+			now.Add(2*time.Hour),
+		),
+	}
+
+	// When
+	doc := templtest.Render(t, EventInterestPanel(true, puljer))
+	helper := doc.Find(".event-interest-helper")
+	actualHelperVisible := helper.Length() > 0
+	actualMessage := strings.Join(strings.Fields(helper.Text()), " ")
+	actualHasExpectedClass := helper.HasClass(expectedHelperClass)
+
+	// Then
+	if actualHelperVisible != expectedHelperVisible {
+		t.Fatalf("helper visibility mismatch\nexpected: %v\nactual:   %v", expectedHelperVisible, actualHelperVisible)
+	}
+	if !actualHasExpectedClass {
+		t.Fatalf("helper class mismatch\nexpected helper to have class: %s", expectedHelperClass)
+	}
+	if !strings.Contains(actualMessage, expectedMessagePart) {
+		t.Fatalf("helper message mismatch\nexpected to contain: %q\nactual:              %q", expectedMessagePart, actualMessage)
+	}
+}
+
+func TestEventInterestPanel_WhenCurrentTimeIsBeforeWarningThreshold_RendersNoWarningState(t *testing.T) {
+	// Gitt at en åpen pulje ikke nærmer seg låsing,
+	// når interessepanelet rendres,
+	// så skal ingen låseadvarsel vises ved knappen.
+
+	// Given
+	expectedHelperVisible := false
+
+	now := time.Now()
+	puljer := []models.PuljeRow{
+		buildEventInterestTestPulje(
+			models.PuljeFredagKveld,
+			"Fredag kveld",
+			models.PuljeStatusOpen,
+			now.Add(4*time.Hour),
+		),
+	}
+
+	// When
+	doc := templtest.Render(t, EventInterestPanel(true, puljer))
+	actualHelperVisible := doc.Find(".event-interest-helper").Length() > 0
+
+	// Then
+	if actualHelperVisible != expectedHelperVisible {
+		t.Fatalf("helper visibility mismatch\nexpected: %v\nactual:   %v", expectedHelperVisible, actualHelperVisible)
+	}
+}
+
+func TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarningState(t *testing.T) {
+	// Gitt at den planlagte hastevarselmeldingen for en åpen pulje har blitt sendt,
 	// når interessepanelet rendres,
 	// så skal den mest presserende puljemeldingen vises ved knappen.
 
@@ -53,6 +120,37 @@ func TestEventInterestPanel_WhenUrgentWarningExists_RendersMostUrgentPuljeMessag
 	}
 	if !strings.Contains(actualMessage, expectedMessagePart) {
 		t.Fatalf("helper message mismatch\nexpected to contain: %q\nactual:              %q", expectedMessagePart, actualMessage)
+	}
+}
+
+func TestUpdateInterest_WhenPuljeIsOpen_UpdatesInterest(t *testing.T) {
+	// Gitt at en billettholder har meldt interesse i en åpen pulje,
+	// når interessen endres,
+	// så skal den nye interessen lagres.
+
+	// Given
+	expectedInterest := models.InterestLevelLow
+
+	db := createEventInterestTestDB(t)
+	fixture := seedEventInterestUpdateFixture(t, db, models.PuljeStatusOpen, models.InterestLevelHigh)
+
+	// When
+	err := updateInterest(
+		fixture.userExternalID,
+		fixture.billettholderID,
+		fixture.eventID,
+		expectedInterest,
+		string(fixture.puljeID),
+		db,
+	)
+	actualInterest := getEventInterestTestInterest(t, db, fixture.eventID, fixture.billettholderID, fixture.puljeID)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected open pulje interest update to succeed: %v", err)
+	}
+	if actualInterest != expectedInterest {
+		t.Fatalf("interest level mismatch\nexpected: %s\nactual:   %s", expectedInterest, actualInterest)
 	}
 }
 

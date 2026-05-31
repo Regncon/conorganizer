@@ -1531,5 +1531,51 @@ Verification:
 Unrelated `.ai/threads/pulje-config.md` is still modified and untouched.
 
 Time: 2026-05-31 07:03:21
+--- Next Prompt --
+Ok, now make UI tests that verify the correct rendering of the warning and urgent states based on the scheduled messages.
+
+Time: 2026-05-31 07:09:06
+--- Codex Run ---
+
+Codex output:
+I’ll add rendered-component tests around the event interest panel, using pulje start times that line up with the scheduled warning and urgent thresholds. First I’m checking the current event UI tests so I don’t duplicate existing coverage.
+There is already one rendered urgent-helper test, but it is not framed around the scheduled threshold. I’ll make the UI coverage explicit by adding a warning-state render test and tightening the urgent test name/comment so both describe the scheduled-message rerender scenario.
+Added UI coverage in [event_interest_test.go](/home/cinmay/Documents/conorganizer/pages/event/event_interest_test.go).
+
+Changes:
+- Added `TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState`
+  - Verifies warning class: `pulje-interest-state--warning`
+  - Verifies warning text contains `låses snart`
+- Renamed/tightened the urgent test to describe the scheduled urgent rerender case:
+  - `TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarningState`
+
+Verification:
+- `GOCACHE=/tmp/go-build go test ./pages/event` passed.
+- `GOCACHE=/tmp/go-build go test ./...` passed.
+
+Unrelated `.ai/threads/pulje-config.md` is still modified and untouched.
+
+Time: 2026-05-31 07:09:06
+--- Next Prompt ---
+Add a happy path test in the `pages/event/event_interest_test.go` file that verifies that no warning is rendered when the current time is before the warning threshold.
+Add a happy path test in the `pages/event/event_interest_test.go` file that verifies that a user can successfully update their interest for an open pulje. 
+
+Time: 2026-05-31 07:18:23
+--- Codex Run ---
+
+Codex output:
+I’ll add both happy-path tests in `pages/event/event_interest_test.go`: one rendered UI test for “before warning threshold,” and one service-level update test for an open pulje.
+Added both happy-path tests in [event_interest_test.go](/home/cinmay/Documents/conorganizer/pages/event/event_interest_test.go):
+
+- `TestEventInterestPanel_WhenCurrentTimeIsBeforeWarningThreshold_RendersNoWarningState`
+- `TestUpdateInterest_WhenPuljeIsOpen_UpdatesInterest`
+
+Verification:
+- `GOCACHE=/tmp/go-build go test ./pages/event` passed.
+- `GOCACHE=/tmp/go-build go test ./...` passed.
+
+Unrelated `.ai/threads/pulje-config.md` is still modified and untouched.
+
+Time: 2026-05-31 07:18:23
 --- Next Prompt ---
 
