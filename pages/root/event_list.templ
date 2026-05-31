@@ -162,21 +162,18 @@ templ flatEventList(events []models.EventCardModel, eventImageDir *string, isAdm
 	</div>
 }
 
-templ eventPulje(pulje models.Pulje, byPulje EventsByPulje, eventImageDir *string, isAdmin bool) {
-	{{ block := byPulje[pulje] }}
-	if block != nil {
-		<section class="container-inner-padding program-pulje-section" id={ pulje }>
-			<h2 class="pulje-heading">
-				{ block.Pulje.Name }
-				<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
-			</h2>
-			<div class="page-wide-eventcard-grid">
-				for _, event := range block.Events {
-					@components.EventCard(event, eventImageDir, isAdmin, string(pulje))
-				}
-			</div>
-		</section>
-	}
+templ eventPuljeBlock(block PuljeBlock, eventImageDir *string, isAdmin bool) {
+	<section class="container-inner-padding program-pulje-section" id={ block.Pulje.ID }>
+		<h2 class="pulje-heading">
+			{ block.Pulje.Name }
+			<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
+		</h2>
+		<div class="page-wide-eventcard-grid">
+			for _, event := range block.Events {
+				@components.EventCard(event, eventImageDir, isAdmin, string(block.Pulje.ID))
+			}
+		</div>
+	</section>
 }
 
 templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublished bool) {
@@ -222,19 +219,13 @@ templ eventList(db *sql.DB, isAdmin bool, eventImageDir *string, programPublishe
 	<div class="page-content-container event-pulje-overview">
 		if programPublished {
 			{{
-				eventsByPulje, err := GetEventsByPulje(db)
-				puljer, puljerErr := puljerService.GetAllPuljer(db)
+				puljeBlocks, err := GetPublishedEventPuljeBlocks(db)
 			}}
-			if err != nil || puljerErr != nil {
-				{{
-					if puljerErr != nil {
-						err = puljerErr
-					}
-				}}
+			if err != nil {
 				<p>Error fetching events: { err.Error() }</p>
 			} else {
-				for _, pulje := range puljer {
-					@eventPulje(pulje.ID, eventsByPulje, eventImageDir, isAdmin)
+				for _, block := range puljeBlocks {
+					@eventPuljeBlock(block, eventImageDir, isAdmin)
 				}
 			}
 		} else {

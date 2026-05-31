@@ -6,7 +6,7 @@ import (
 )
 
 templ singleEvent(event models.EventCardModel) {
-	{{ eventLink := "/my-events/new/" + event.Id }}
+	{{ eventLink := "/profile/new/" + event.Id }}
 	if event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusApproved || event.Status == models.EventStatusAnnounced {
 		{{ eventLink = "/event/" + event.Id }}
 	}
