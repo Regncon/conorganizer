@@ -64,6 +64,14 @@ templ adminPage(db *sql.DB) {
 					<section class="admin-panel-card">
 						@puljefordeling(db)
 					</section>
+                    @adminCard(
+						"Administrer rom",
+						"Her kan du ligge til, modifisere og få en oversikt over tilgjengelige rom",
+						"/static/call-to-action-avatar.webp",
+						"Administrate rooms",
+					) {
+						<a role="button" href="/admin/rooms/" class="btn btn--outline">Gå til rom-oversikt</a>
+					}
 				</div>
 			</div>
 		</div>

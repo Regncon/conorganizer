@@ -239,6 +239,9 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 					newApiIdRouter.Route("/is-published", func(putIsPublishedRouter chi.Router) {
 						formsubmission.UpdateIsPublished(putIsPublishedRouter, db, kv, logger)
 					})
+					newApiIdRouter.Route("/assign-room", func(putAssignedRoomRouter chi.Router) {
+						formsubmission.UpdateRoomInPulje(putAssignedRoomRouter, db, kv, logger)
+					})
 
 					newApiIdRouter.Route("/status", func(putStatusRouter chi.Router) {
 						formsubmission.UpdateStatus(putStatusRouter, db, kv, logger)
