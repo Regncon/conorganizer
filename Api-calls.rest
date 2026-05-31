@@ -1,2 +1,2 @@
 ### Cropp image
-http://localhost:7331/my-events/api/new/a512abb409a2af35/upload-cropped
+http://localhost:7331/profile/api/new/a512abb409a2af35/upload-cropped

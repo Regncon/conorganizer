@@ -206,7 +206,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-signals={ dataSignals(map[string]models.AgeGroup{"ageGroup": ageGroup}) }
 					data-bind="ageGroup"
 					data-indicator="toastAgeGroup"
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/ageGroup')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/ageGroup')", eventId) }
 					name="age-group"
 					class="input"
 				>
@@ -228,7 +228,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-signals={ dataSignals(map[string]models.Runtime{"runtime": runtime}) }
 					data-bind="runtime"
 					data-indicator="toastRuntime"
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/runtime')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/runtime')", eventId) }
 				>
 					<option value={ models.RunTimeNormal } selected>{ models.RunTimeNormal.Label() }</option>
 					<option value={ models.RunTimeShortRunning }>{ models.RunTimeShortRunning.Label() }</option>
@@ -259,7 +259,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						}
 						data-bind="beginnerFriendly"
 						data-indicator="toastBeginnerFriendly"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/beginner-friendly')", eventId) }
+						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/beginner-friendly')", eventId) }
 						type="checkbox"
 					/>
 					Arrangementet er nybegynnervennlig
@@ -285,7 +285,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						}
 						data-bind="canBeRunInEnglish"
 						data-indicator="toastCanBeRunInEnglish"
-						data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/can-be-run-in-english')", eventId) }
+						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/can-be-run-in-english')", eventId) }
 						type="checkbox"
 						name="english-label"
 						class="checkbox input"
@@ -308,7 +308,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-signals={ dataSignals(map[string]int{"maxPlayers": maxPlayers}) }
 					data-bind="maxPlayers"
 					data-indicator="toastMaxPlayers"
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/max-players')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/max-players')", eventId) }
 					type="number"
 					min="4"
 					step="1"
@@ -330,7 +330,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-signals={ dataSignals(map[string]string{"notes": notes}) }
 					data-bind="notes"
 					data-indicator="toastNotes"
-					data-on:change={ fmt.Sprintf("@put('/my-events/api/new/%s/notes')", eventId) }
+					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/notes')", eventId) }
 					class="input"
 					rows="5"
 					placeholder="Skriv eventuelle merknader her…"

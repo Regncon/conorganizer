@@ -1,4 +1,4 @@
-package newEvent
+package newevent
 
 import (
 	"context"
@@ -58,7 +58,7 @@ templ newEventIndex(eventId string, userID string, ctx context.Context, db *sql.
 	<div
 		id="formsubmission-container"
 		class="formsubmission-css-container"
-		data-init={ fmt.Sprintf("@get('/my-events/api/new/%s',{requestCancellation: 'disabled'})", eventId) }
+		data-init={ fmt.Sprintf("@get('/profile/api/new/%s',{requestCancellation: 'disabled'})", eventId) }
 	>
 		@NewEventFormPageContent(eventId, userID, ctx, db, eventImageDir, logger)
 	</div>
