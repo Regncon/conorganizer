@@ -168,7 +168,11 @@ func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventP
 }
 
 templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
-	{{ eventPulje, err := getEvenPulje(eventId, pulje.ID, db) }}
+	{{
+		eventPulje, err := getEvenPulje(eventId, pulje.ID, db)
+		membershipErrorKey := fmt.Sprintf("puljeMembership%s", pulje.ID)
+		publishedErrorKey := fmt.Sprintf("puljePublished%s", pulje.ID)
+	}}
 	if err != nil {
 		<p>Error fetching event pulje: { err.Error() }</p>
 		return
@@ -185,7 +189,8 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 						}
 						data-bind={ fmt.Sprintf("isInPulje%s", pulje.ID) }
 						data-indicator={ fmt.Sprintf("toastPuljeMembership%s", pulje.ID) }
-						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/event-in-pulje/%s')", eventId, pulje.ID) }
+						data-save-error-key={ membershipErrorKey }
+                        data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/event-in-pulje/%s')", eventId, pulje.ID) }
 						type="checkbox"
 						name="pulje"
 						class="checkbox input"
@@ -202,6 +207,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 						}
 						data-bind={ fmt.Sprintf("isPublished%s", pulje.ID) }
 						data-indicator={ fmt.Sprintf("toastPuljePublished%s", pulje.ID) }
+                        data-save-error-key={ publishedErrorKey }
 						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/is-published/%s')", eventId, pulje.ID) }
 						type="checkbox"
 						name="pulje"

@@ -204,6 +204,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				<select
 					id="age-group"
 					data-signals={ dataSignals(map[string]models.AgeGroup{"ageGroup": ageGroup}) }
+                    data-save-error-key="ageGroup"
 					data-bind="ageGroup"
 					data-indicator="toastAgeGroup"
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/ageGroup')", eventId) }
@@ -212,9 +213,10 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				>
 					<option value={ models.AgeGroupDefault } selected>{ models.AgeGroupDefault.Label() }</option>
 					<option value={ models.AgeGroupChildFriendly }>{ models.AgeGroupChildFriendly.Label() }</option>
-					<option value={ models.AgeGroupAdultsOnly }>{ models.AgeGroupAdultsOnly.Label() }</option>
-				</select>
-			</label>
+						<option value={ models.AgeGroupAdultsOnly }>{ models.AgeGroupAdultsOnly.Label() }</option>
+					</select>
+					@SaveError("ageGroup")
+				</label>
 			<article class="item-card age-group-description">
 				<p class="label">Hvilke alder anbefales arrangementet for</p>
 				<p>Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. tandard aldersgrensen på Regncon er 13+. Søndag morgen kjøres barneprogramene.</p>
@@ -226,15 +228,17 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					name="runtime"
 					class="input"
 					data-signals={ dataSignals(map[string]models.Runtime{"runtime": runtime}) }
+                    data-save-error-key="runtime"
 					data-bind="runtime"
 					data-indicator="toastRuntime"
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/runtime')", eventId) }
 				>
 					<option value={ models.RunTimeNormal } selected>{ models.RunTimeNormal.Label() }</option>
 					<option value={ models.RunTimeShortRunning }>{ models.RunTimeShortRunning.Label() }</option>
-					<option value={ models.RunTimeLongRunning }>{ models.RunTimeLongRunning.Label() }</option>
-				</select>
-			</label>
+						<option value={ models.RunTimeLongRunning }>{ models.RunTimeLongRunning.Label() }</option>
+					</select>
+					@SaveError("runtime")
+				</label>
 			<article class="item-card runtime-description">
 				<p class="label">Fire til fem timer </p>
 				<p>
@@ -257,14 +261,16 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						if beginnerFriendly {
 							checked
 						}
+                        data-save-error-key="beginnerFriendly"
 						data-bind="beginnerFriendly"
 						data-indicator="toastBeginnerFriendly"
 						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/beginner-friendly')", eventId) }
 						type="checkbox"
-					/>
-					Arrangementet er nybegynnervennlig
-				</label>
-			</section>
+						/>
+						Arrangementet er nybegynnervennlig
+					</label>
+					@SaveError("beginnerFriendly")
+				</section>
 			<section class="item-card beginner-friendly-description">
 				<p class="label">Arrangementet er nybegynnervennlig </p>
 				<p>
@@ -283,16 +289,18 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						if canBeRunInEnglish {
 							checked
 						}
+                        data-save-error-key="canBeRunInEnglish"
 						data-bind="canBeRunInEnglish"
 						data-indicator="toastCanBeRunInEnglish"
 						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/can-be-run-in-english')", eventId) }
 						type="checkbox"
 						name="english-label"
 						class="checkbox input"
-					/>
-					Arrangementet kan holdes på engelsk
-				</label>
-			</section>
+						/>
+						Arrangementet kan holdes på engelsk
+					</label>
+					@SaveError("canBeRunInEnglish")
+				</section>
 			<article class="item-card" id="english-description">
 				<p class="label">Arrangementet kan holdes på engelsk </p>
 				<p>
@@ -306,14 +314,16 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					name="max-players"
 					class="input"
 					data-signals={ dataSignals(map[string]int{"maxPlayers": maxPlayers}) }
+                    data-save-error-key="maxPlayers"
 					data-bind="maxPlayers"
 					data-indicator="toastMaxPlayers"
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/max-players')", eventId) }
 					type="number"
 					min="4"
-					step="1"
-				/>
-			</label>
+						step="1"
+					/>
+					@SaveError("maxPlayers")
+				</label>
 			<article class="item-card" id="player-count-description">
 				<p class="label">Hvor mange kan være med å spille </p>
 				<p>
@@ -328,16 +338,18 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				<textarea
 					name="other-notes"
 					data-signals={ dataSignals(map[string]string{"notes": notes}) }
+                    data-save-error-key="notes"
 					data-bind="notes"
 					data-indicator="toastNotes"
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/notes')", eventId) }
 					class="input"
 					rows="5"
 					placeholder="Skriv eventuelle merknader her…"
-				>
-					{ shouldShowStringValue(notes) }
-				</textarea>
-			</label>
+					>
+						{ shouldShowStringValue(notes) }
+					</textarea>
+					@SaveError("notes")
+				</label>
 		</section>
 	</article>
 }

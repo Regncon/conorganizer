@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
@@ -18,6 +19,7 @@ import (
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
@@ -83,6 +85,15 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
+
+		if r.Header.Get("Datastar-Request") == "true" {
+			sse := datastar.NewSSE(w, r)
+			sourceImageURL := cacheBustedImageURL(getUploadedSourceImageURL(eventID, eventImageDir))
+			if err := sse.MarshalAndPatchSignals(map[string]string{"sourceImageUrl": sourceImageURL}); err != nil {
+				logger.Error("Failed to patch source image URL after upload", "error", err, "event_id", eventID)
+			}
+			return
+		}
 
 		http.Redirect(w, r, fmt.Sprintf("/profile/new/%s/image/?uploaded=source", eventID), http.StatusSeeOther)
 	})
@@ -182,6 +193,17 @@ func getUploadedSourceImageURL(eventID string, eventImageDir *string) string {
 	return ""
 }
 
+func cacheBustedImageURL(imageURL string) string {
+	if imageURL == "" {
+		return ""
+	}
+	separator := "?"
+	if strings.Contains(imageURL, "?") {
+		separator = "&"
+	}
+	return fmt.Sprintf("%s%sv=%d", imageURL, separator, time.Now().UnixNano())
+}
+
 templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
 	<style>
 		.img-upload-form-content {
@@ -198,6 +220,11 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			flex-direction: column;
 			gap: var(--spacing-5x);
 		}
+
+        .image-upload-container .save-error {
+            place-self: end;
+        }
+
 		.image-upload-info-label {
 			font-size: 14px;
 			font-weight: 600;
@@ -255,6 +282,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	}
 	<script src="/static/web_components/banner_cropper.js"></script>
 	@toast.Render("Lagret", icons.ProgressComplete)
+	@formsubmission.SaveFeedback(false)
 	if showUploadToast {
 		<script>
 			window.addEventListener("DOMContentLoaded", () => {
@@ -275,7 +303,10 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	})
 	<article class="page-content-container">
 		<h1 class="page-heading">Last opp bilde</h1>
-		<div class="img-upload-form-content">
+		<div
+			class="img-upload-form-content"
+			data-signals={ formsubmission.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
+		>
 			<div class="back-button-container">
 				<a
 					href="javascript:window.history.back();"
@@ -302,6 +333,9 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					action={ "/profile/api/new/" + eventId + "/upload" }
 					enctype="multipart/form-data"
 					class="image-upload-file-form"
+					data-indicator="toastSourceImage"
+					data-save-error-key="sourceImage"
+					data-on:submit={ fmt.Sprintf("@post('/my-events/api/new/%s/upload', {contentType: 'form'})", eventId) }
 				>
 					<label>
 						Velg bilde:
@@ -317,6 +351,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						type="submit"
 					>Last opp</button>
 				</form>
+				@formsubmission.SaveError("sourceImage")
 			</div>
 			<section class="surface-pane">
 				<h4 class="surface-pane-title">Mobil og gruppevisning</h4>
@@ -327,6 +362,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						height="350"
 						image-kind="card"
 						image-url={ imageUrl }
+						data-attr:image-url="$sourceImageUrl"
 					></banner-cropper>
 					<div class="event-image-title-preview">
 						<h1>{ title }</h1>
@@ -343,6 +379,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						height="400"
 						image-kind="banner"
 						image-url={ imageUrl }
+						data-attr:image-url="$sourceImageUrl"
 					></banner-cropper>
 					<div class="event-image-title-preview banner-image">
 						<h1>{ title }</h1>
