@@ -109,6 +109,46 @@ func updateEventPuljeMembershipWithAudit(ctx context.Context, db *sql.DB, logger
 	return nil
 }
 
+func updateRoomInRelationEventPuljeWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, roomIDstring string) error {
+	updatedByID, err := currentUserDBID(ctx, db, logger)
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("start room update transaction for event %q and pulje %q: %w", eventID, puljeID, err)
+	}
+	defer tx.Rollback()
+
+	// convert roomID from string to sql.NullInt64
+	var roomID sql.NullInt64
+	if parsedRoomID, err := strconv.ParseInt(roomIDstring, 10, 64); err == nil {
+		roomID = sql.NullInt64{
+			Int64: parsedRoomID,
+			Valid: true,
+		}
+	}
+
+	// change
+	const upsert = `
+		UPDATE relation_event_puljer
+		SET room_id = ?
+		WHERE event_id = ? AND pulje_id = ?
+	`
+
+	if _, err := tx.ExecContext(ctx, upsert, roomID, eventID, puljeID); err != nil {
+		return fmt.Errorf("upsert relation_event_puljer for event %q and pulje %q room %v: %w", eventID, puljeID, roomID, err)
+	}
+	if err := touchEventUpdatedAtWithUserID(ctx, tx, eventID, updatedByID); err != nil {
+		return fmt.Errorf("touch event after pulje update for event %q and pulje %q room %v: %w", eventID, puljeID, roomID, err)
+	}
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit pulje update for event %q and pulje %q with room %v: %w", eventID, puljeID, roomID, err)
+	}
+	return nil
+}
+
 func touchEventUpdatedAtWithUserID(ctx context.Context, executor eventAuditExecutor, eventID string, updatedByID int64) error {
 	query := `UPDATE events SET updated_at = ` + models.DBDateTimeNowSQL + `, updated_by_id = ? WHERE id = ?`
 	if _, err := executor.ExecContext(ctx, query, updatedByID, eventID); err != nil {

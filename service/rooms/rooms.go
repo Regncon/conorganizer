@@ -245,7 +245,7 @@ func GetRoomByID(db *sql.DB, roomID int) (*models.Room, error) {
 }
 
 // GetAllRooms returns a list of all rooms stored in DB
-func GetAllRooms(db *sql.DB) ([]*models.Room, error) {
+func GetAllRooms(db *sql.DB) ([]models.Room, error) {
 	query := `
 		SELECT
 			id,
@@ -265,7 +265,7 @@ func GetAllRooms(db *sql.DB) ([]*models.Room, error) {
 	}
 	defer rows.Close()
 
-	var rooms []*models.Room
+	var rooms []models.Room
 
 	for rows.Next() {
 
@@ -285,7 +285,7 @@ func GetAllRooms(db *sql.DB) ([]*models.Room, error) {
 			return nil, fmt.Errorf("failed to scan room: %w", err)
 		}
 
-		rooms = append(rooms, &room)
+		rooms = append(rooms, room)
 	}
 
 	if err := rows.Err(); err != nil {
