@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -20,8 +21,10 @@ import (
 	roomService "github.com/Regncon/conorganizer/service/rooms"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
+	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -96,42 +99,147 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		puljefordelingStatusRoute(adminRouter, db, kv, logger)
 		programPublishingRoute(adminRouter, db, kv, logger)
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
+			requestID := middleware.GetReqID(r.Context())
+			_, connectionsCookieErr := r.Cookie("connections")
+			connectionsCookiePresent := connectionsCookieErr == nil
+			if connectionsCookiePresent {
+				logger.Debug(
+					"admin live update stream starting",
+					"request_id", requestID,
+					"connections_cookie_present", true,
+				)
+			} else {
+				logger.Warn(
+					"admin live update stream missing connections cookie",
+					"request_id", requestID,
+					"connections_cookie_present", false,
+				)
+			}
+
 			sse := datastar.NewSSE(w, r)
 
 			sessionID, mvc, err := mvcSession(w, r)
 			if err != nil {
+				logger.Error(
+					err.Error(),
+					"request_id", requestID,
+					"connections_cookie_present", connectionsCookiePresent,
+				)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 			ctx := r.Context()
 			watcher, err := kv.Watch(ctx, sessionID)
 			if err != nil {
+				logger.Error(
+					fmt.Errorf("failed to create admin watcher: %w", err).Error(),
+					"request_id", requestID,
+					"connections_cookie_present", connectionsCookiePresent,
+				)
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
+			logger.Debug(
+				"admin watcher started",
+				"request_id", requestID,
+				"connections_cookie_present", connectionsCookiePresent,
+			)
 			defer func() {
 				if err := watcher.Stop(); err != nil {
-					logger.Error(fmt.Errorf("failed to stop admin watcher: %w", err).Error())
+					if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
+						logger.Debug(
+							"admin watcher already stopped",
+							"request_id", requestID,
+							"connections_cookie_present", connectionsCookiePresent,
+							"error", err.Error(),
+						)
+						return
+					}
+					logger.Error(
+						fmt.Errorf("failed to stop admin watcher: %w", err).Error(),
+						"request_id", requestID,
+						"connections_cookie_present", connectionsCookiePresent,
+					)
 				}
 			}()
 
+			patchSent := false
 			for {
 				select {
 				case <-ctx.Done():
+					logger.Debug(
+						"admin live update stream closed",
+						"request_id", requestID,
+						"connections_cookie_present", connectionsCookiePresent,
+						"reason", ctx.Err().Error(),
+					)
 					return
-				case entry := <-watcher.Updates():
+				case entry, ok := <-watcher.Updates():
+					if !ok {
+						if ctx.Err() != nil {
+							logger.Debug(
+								"admin watcher updates channel closed",
+								"request_id", requestID,
+								"connections_cookie_present", connectionsCookiePresent,
+								"reason", ctx.Err().Error(),
+							)
+							return
+						}
+						logger.Warn(
+							"admin watcher updates channel closed",
+							"request_id", requestID,
+							"connections_cookie_present", connectionsCookiePresent,
+						)
+						return
+					}
 					if entry == nil {
+						if !patchSent {
+							logger.Warn(
+								"admin watcher delivered no initial state",
+								"request_id", requestID,
+								"connections_cookie_present", connectionsCookiePresent,
+							)
+							continue
+						}
+						logger.Debug(
+							"admin watcher initial values delivered",
+							"request_id", requestID,
+							"connections_cookie_present", connectionsCookiePresent,
+						)
 						continue
 					}
 					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+						logger.Error(
+							fmt.Errorf("failed to unmarshal admin live update state: %w", err).Error(),
+							"request_id", requestID,
+							"connections_cookie_present", connectionsCookiePresent,
+							"operation", entry.Operation().String(),
+							"revision", entry.Revision(),
+							"value_bytes", len(entry.Value()),
+						)
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
 					c := adminPage(db)
 					if err := sse.PatchElementTempl(c); err != nil {
+						logger.Error(
+							fmt.Errorf("failed to patch admin live update: %w", err).Error(),
+							"request_id", requestID,
+							"connections_cookie_present", connectionsCookiePresent,
+							"operation", entry.Operation().String(),
+							"revision", entry.Revision(),
+						)
 						_ = sse.ConsoleError(err)
 						return
 					}
+					logger.Debug(
+						"admin live update patch sent",
+						"request_id", requestID,
+						"connections_cookie_present", connectionsCookiePresent,
+						"operation", entry.Operation().String(),
+						"revision", entry.Revision(),
+					)
+					patchSent = true
 				}
 			}
 		})
