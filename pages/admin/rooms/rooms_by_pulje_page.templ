@@ -1,0 +1,21 @@
+package rooms
+
+import (
+	"database/sql"
+	"github.com/Regncon/conorganizer/models"
+	"log/slog"
+)
+
+templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+	<style>
+		.rooms-layout {
+			display: flex;
+			flex-direction: column;
+			gap: var(--responsive-page-section-spacing);
+            margin-top: var(--responsive-page-section-spacing);
+		}
+	</style>
+	<div class="rooms-layout">
+		<h2>test { pulje }</h2>
+	</div>
+}
