@@ -49,6 +49,8 @@ sqlite3 "$backup_file" "
     SELECT COUNT(*) FROM events;
 " > /dev/null
 
+cp "$backup_file" "$backup_directory/events-latest.db"
+
 zstd --quiet --rm "$backup_file"
 
 find "$backup_directory" \
