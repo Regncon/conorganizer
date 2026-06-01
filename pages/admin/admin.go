@@ -7,14 +7,17 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/admin/approval"
 	edit_form "github.com/Regncon/conorganizer/pages/admin/approval/editForm"
+	"github.com/Regncon/conorganizer/pages/admin/rooms"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/keyvalue"
+	roomService "github.com/Regncon/conorganizer/service/rooms"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -371,6 +374,168 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				})
 			})
 			approval.ApprovalLayoutRoute(approvalRouter, db, baseLogger, err)
+		})
+
+		adminRouter.Route("/rooms", func(roomRouter chi.Router) {
+			roomRouter.Route("/api", func(roomApiRouter chi.Router) {
+				roomApiRouter.Route("/create", func(createRoomRoute chi.Router) {
+					createRoomRoute.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						// Reset form bindings before creating new room
+						sse := datastar.NewSSE(w, r)
+						payload, _ := json.Marshal(map[string]any{
+							"mode":         "create",
+							"form_title":   "Legg til rom",
+							"button_label": "Opprett rom",
+							"submit_url":   "/admin/rooms/api/create",
+
+							"id":                   0,
+							"name":                 "",
+							"room_number":          "",
+							"floor":                0,
+							"max_concurrent_games": 0,
+							"notes":                "",
+							"is_disabled":          false,
+							"error":                "",
+						})
+
+						if err = sse.PatchSignals(payload); err != nil {
+							logger.Error("Failed to patch signals", "error", err.Error())
+							http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							return
+						}
+					})
+
+					createRoomRoute.Post("/", func(w http.ResponseWriter, r *http.Request) {
+						// Read data-star post submission
+						store := &models.Room{}
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							fmt.Println(readSignalErr.Error())
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+						}
+
+						// Get ready to broadcast responses to client
+						sse := datastar.NewSSE(w, r)
+
+						// Validate input
+
+						// Create room
+						_, err := roomService.CreateRoom(db, *store)
+						if err != nil {
+							payload, _ := json.Marshal(map[string]string{
+								"error": err.Error(),
+							})
+
+							if err = sse.PatchSignals(payload); err != nil {
+								logger.Error("Failed to patch signals", "error", err.Error())
+								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							}
+							return
+						}
+
+						// Ridirect on success
+						_ = sse.Redirect("/admin/rooms")
+					})
+				})
+
+				roomApiRouter.Route("/edit/{id}", func(updateRoomRoute chi.Router) {
+					updateRoomRoute.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						// Read url for room id
+						roomID := chi.URLParam(r, "id")
+						if roomID == "" {
+							http.Error(w, "Room ID is required. Got: "+roomID, http.StatusBadRequest)
+							return
+						}
+						id, err := strconv.ParseInt(roomID, 10, 0)
+						if err != nil {
+							http.Error(w, "", http.StatusBadRequest)
+							return
+						}
+
+						// Get room from id in url param
+						room, err := roomService.GetRoomByID(db, int(id))
+						if err != nil {
+							http.Error(w, "", http.StatusBadRequest)
+							return
+						}
+
+						// Update formbindings with room data
+						sse := datastar.NewSSE(w, r)
+						payload, _ := json.Marshal(map[string]any{
+							"mode":         "edit",
+							"form_title":   "Rediger rom",
+							"button_label": "Lagre endringer",
+							"submit_url":   fmt.Sprintf("/admin/rooms/api/edit/%d", room.ID),
+
+							"id":                   room.ID,
+							"name":                 room.Name,
+							"room_number":          room.RoomNumber,
+							"floor":                room.Floor,
+							"max_concurrent_games": room.MaxConcurrentGames,
+							"notes":                room.Notes,
+							"is_disabled":          room.IsDisabled,
+							"error":                "",
+						})
+						if err = sse.PatchSignals(payload); err != nil {
+							logger.Error("Failed to patch signals", "error", err.Error())
+							http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							return
+						}
+					})
+
+					updateRoomRoute.Post("/", func(w http.ResponseWriter, r *http.Request) {
+						// Read url for room id
+						roomID := chi.URLParam(r, "id")
+						if roomID == "" {
+							http.Error(w, "Room ID is required. Got: "+roomID, http.StatusBadRequest)
+							return
+						}
+
+						// Read data-star post submission
+						store := &models.Room{}
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							fmt.Println(readSignalErr.Error())
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+						}
+
+						// Get ready to broadcast responses to client
+						sse := datastar.NewSSE(w, r)
+
+						// Validate input
+						parsedID, err := strconv.ParseInt(roomID, 10, 0)
+						if err != nil {
+							payload, _ := json.Marshal(map[string]string{
+								"error": err.Error(),
+							})
+
+							if err = sse.PatchSignals(payload); err != nil {
+								logger.Error("Failed to patch signals", "error", err.Error())
+								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							}
+							return
+						}
+						store.ID = int(parsedID)
+
+						// Update room
+						_, err = roomService.UpdateRoom(db, *store)
+						if err != nil {
+							payload, _ := json.Marshal(map[string]string{
+								"error": err.Error(),
+							})
+
+							if err = sse.PatchSignals(payload); err != nil {
+								logger.Error("Failed to patch signals", "error", err.Error())
+								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+
+							}
+							return
+						}
+
+						// Ridirect on success
+						_ = sse.Redirect("/admin/rooms")
+					})
+				})
+			})
+			rooms.RoomsLayoutRoute(roomRouter, db, baseLogger, err)
 		})
 	})
 
