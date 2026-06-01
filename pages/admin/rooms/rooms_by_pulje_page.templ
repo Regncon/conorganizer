@@ -2,9 +2,128 @@ package rooms
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/Regncon/conorganizer/models"
+	roomService "github.com/Regncon/conorganizer/service/rooms"
 	"log/slog"
+	"sort"
 )
+
+type FloorGroupPulje struct {
+	Floor int
+	Rooms []models.RoomByPulje
+}
+
+func getRoomsPuljeByFloor(db *sql.DB, logger *slog.Logger, pulje models.Pulje) []FloorGroupPulje {
+	allRooms, err := roomService.GetAllRoomStatusesByPulje(db, pulje)
+	if err != nil {
+		logger.Error(fmt.Errorf("failed to get rooms for pulje %s: %w", pulje, err).Error())
+	}
+
+	allRoomsInPulje := allRooms[pulje]
+
+	floorMap := make(map[int][]models.RoomByPulje)
+	for _, room := range allRoomsInPulje {
+		floorMap[room.Floor] = append(floorMap[room.Floor], room)
+	}
+
+	var result []FloorGroupPulje
+	for floor, rooms := range floorMap {
+		result = append(result, FloorGroupPulje{
+			Floor: floor,
+			Rooms: rooms,
+		})
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Floor > result[j].Floor
+	})
+
+	return result
+}
+
+func getEventInPuljeWithoutRoom(db *sql.DB, logger *slog.Logger, pulje models.Pulje) []models.RoomEventPuljeSummaryJson {
+	query := `
+        SELECT
+            e.title,
+            e.max_players,
+            rep.event_id,
+            rep.pulje_id
+        FROM relation_event_puljer rep
+        JOIN events e ON e.id = rep.event_id
+        WHERE rep.pulje_id = ?
+        AND rep.is_in_pulje = 1
+        AND rep.room_id IS NULL;
+    `
+
+	rows, err := db.Query(query, pulje)
+	if err != nil {
+		logger.Error(fmt.Errorf("failed to get events without room: %w", err).Error())
+		return nil
+	}
+	defer rows.Close()
+
+	var events []models.RoomEventPuljeSummaryJson
+	for rows.Next() {
+		var event models.RoomEventPuljeSummaryJson
+
+		err := rows.Scan(
+			&event.Title,
+			&event.MaxPlayers,
+			&event.EventID,
+			&event.EventPuljeID,
+		)
+		if err != nil {
+			logger.Error(fmt.Errorf("failed to scan event: %w", err).Error())
+			continue
+		}
+
+		events = append(events, event)
+	}
+
+	fmt.Println(events, pulje)
+
+	if err := rows.Err(); err != nil {
+		logger.Error(fmt.Errorf("error iterating rows: %w", err).Error())
+	}
+
+	return events
+}
+
+templ roomPuljeContainer(room models.RoomByPulje) {
+	<div
+		class="room-container"
+	>
+		<h3>{ room.RoomNumber } </h3>
+		if room.Name == "" {
+			<p style="text-align:center; font-style: italic; color: gray;">Mangler romnavn</p>
+		} else {
+			<p style="text-align:center; font-style: italic;">{ room.Name }</p>
+		}
+		<hr/>
+		<div>
+			<h4>Tildelte spill: { len(room.AssignedEventsID) }/{ room.MaxConcurrentGames }</h4>
+			if len(room.AssignedEventsID) > 0 {
+				for _, event := range room.AssignedEventsID {
+					<p>{ event.Title }</p>
+				}
+			} else {
+				<p style="font-style: italic; color: gray;">Ingen tildelte spill</p>
+			}
+		</div>
+	</div>
+}
+
+templ floorPuljeContainer(floor int, rooms []models.RoomByPulje) {
+	<div class="floor-row">
+		<h2>{ floor }. Etg</h2>
+		<div class="floor-list">
+			for _, room := range rooms {
+				@roomPuljeContainer(room)
+			}
+		</div>
+	</div>
+}
 
 templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
 	<style>
@@ -14,8 +133,61 @@ templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulj
 			gap: var(--responsive-page-section-spacing);
             margin-top: var(--responsive-page-section-spacing);
 		}
+        .room-container {
+            display: flex;
+            flex-flow: column nowrap;
+            gap: var(--spacing-1x);
+            padding: var(--spacing-2x);
+            border: 1px solid var(--color-accent-blue);
+            border-radius: var(--border-radius-1x);
+            background-color: transparent;
+
+            h3 {
+                text-align: center;
+            }
+
+            p+p {
+                margin-top: auto;
+            }
+        }
+
+        .floor-row {
+            display: flex;
+            flex-flow: column nowrap;
+            gap: var(--spacing-2x)
+        }
+
+        .floor-list {
+            display: flex;
+            flex-flow: row wrap;
+            gap: var(--spacing-2x)
+        }
+        .event-list {
+            display: flex;
+            flex-flow: row wrap;
+            gap: var(--spacing-2x)
+        }
 	</style>
 	<div class="rooms-layout">
-		<h2>test { pulje }</h2>
+		<h2>Eventer i pulje uten tildelt rom</h2>
+		{{ events := getEventInPuljeWithoutRoom(db, logger, pulje) }}
+		if len(events) > 0 {
+			<div class="event-list">
+				for _, event := range events {
+					<a
+						role="button"
+						href={ "/admin/approval/edit/" + event.EventID }
+						class="btn btn--outline"
+					>{ event.Title } ({ event.MaxPlayers })</a>
+				}
+			</div>
+		}
+		<h2>Romfordelig for { pulje }</h2>
+		{{ floors := getRoomsPuljeByFloor(db, logger, pulje) }}
+		if len(floors) > 0 {
+			for _, floorGroup := range floors {
+				@floorPuljeContainer(floorGroup.Floor, floorGroup.Rooms)
+			}
+		}
 	</div>
 }
