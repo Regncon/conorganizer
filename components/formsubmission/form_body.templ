@@ -161,6 +161,24 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 				flex-direction: column;
 				gap: 0.3rem;
 			}
+
+			.form-group:has(.feedback-error.is-visible) .input,
+			.feedback-control-group:has(.feedback-error.is-visible) .input {
+				border-color: #DC3545;
+				box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 18%);
+			}
+
+			.feedback-control-group:has(.feedback-error.is-visible) .input:focus-visible,
+			.form-group:has(.feedback-error.is-visible) .input:focus-visible {
+				border-color: #DC3545;
+				box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 28%);
+			}
+
+			.feedback-control-group {
+				display: grid;
+				gap: var(--spacing-1x);
+			}
+
 			.form-group-checkbox {
 				display: flex;
 				gap: 0.3rem;

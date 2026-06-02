@@ -1,12 +1,33 @@
 // @ts-check
 
-const fallbackMessage = "Klarte ikkje å lagre endringa. Prøv igjen."
-const rootSelector = "form, dialog"
+const fallbackFeedbackMessage = "Klarte ikkje å lagre endringa. Prøv igjen."
+const feedbackRootSelector = "form, dialog"
+const feedbackTargetSelector = "[data-feedback-for]"
 
 /**
  * @typedef {"started" | "finished" | "error" | "retrying" | "retries-failed"} DatastarFetchType
- * @typedef {{ type: DatastarFetchType, el: Element | null }} DatastarFetchEventDetail
+ * @typedef {{
+ *     readonly type: DatastarFetchType,
+ *     readonly el: Element | null,
+ *     readonly argsRaw?: Record<string, string>,
+ * }} DatastarFetchEventDetail
  */
+
+// Datastar emits `finished` after both success and failure; these triggers keep their error visible.
+/** @type {WeakSet<HTMLElement>} */
+const failedRequestTriggers = new WeakSet()
+
+/** @type {ReadonlySet<DatastarFetchType>} */
+const datastarFetchTypes = new Set([
+    "started",
+    "finished",
+    "error",
+    "retrying",
+    "retries-failed",
+])
+
+/** @type {ReadonlySet<DatastarFetchType>} */
+const lastingFailureTypes = new Set(["error", "retries-failed"])
 
 document.addEventListener("datastar-fetch", handleDatastarFetch)
 
@@ -16,22 +37,35 @@ document.addEventListener("datastar-fetch", handleDatastarFetch)
  */
 function handleDatastarFetch(event) {
     const detail = getDatastarFetchDetail(event)
-    if (!detail || !(detail.el instanceof HTMLElement)) {
+    const trigger = detail?.el
+    if (!(trigger instanceof HTMLElement)) {
         return
     }
 
-    const key = detail.el.dataset.feedbackKey?.trim()
+    const key = trigger.dataset.feedbackKey?.trim()
     if (!key) {
         return
     }
 
     if (detail.type === "started") {
-        updateFeedback(detail.el, key, "")
+        failedRequestTriggers.delete(trigger)
+        updateFeedback(trigger, key, "")
         return
     }
 
-    if (detail.type === "error" || detail.type === "retrying" || detail.type === "retries-failed") {
-        updateFeedback(detail.el, key, feedbackMessage(detail.el))
+    if (detail.type === "retrying") {
+        updateFeedback(trigger, key, feedbackMessage(trigger))
+        return
+    }
+
+    if (lastingFailureTypes.has(detail.type)) {
+        failedRequestTriggers.add(trigger)
+        updateFeedback(trigger, key, feedbackMessage(trigger))
+        return
+    }
+
+    if (detail.type === "finished" && !failedRequestTriggers.has(trigger)) {
+        updateFeedback(trigger, key, "")
     }
 }
 
@@ -69,11 +103,7 @@ function isDatastarFetchDetail(detail) {
  * @returns {type is DatastarFetchType}
  */
 function isDatastarFetchType(type) {
-    return type === "started"
-        || type === "finished"
-        || type === "error"
-        || type === "retrying"
-        || type === "retries-failed"
+    return typeof type === "string" && datastarFetchTypes.has(/** @type {DatastarFetchType} */ (type))
 }
 
 /**
@@ -84,7 +114,7 @@ function feedbackMessage(trigger) {
     const root = feedbackRoot(trigger)
     return trigger.dataset.feedbackMessage?.trim()
         || (root instanceof HTMLElement ? root.dataset.feedbackDefaultMessage?.trim() : "")
-        || fallbackMessage
+        || fallbackFeedbackMessage
 }
 
 /**
@@ -108,7 +138,7 @@ function updateFeedback(trigger, key, message) {
  */
 function feedbackTargets(trigger, key) {
     const root = feedbackRoot(trigger)
-    return [...root.querySelectorAll("[data-feedback-for]")].filter((target) => (
+    return [...root.querySelectorAll(feedbackTargetSelector)].filter((target) => (
         target instanceof HTMLElement && target.dataset.feedbackFor === key
     ))
 }
@@ -118,5 +148,5 @@ function feedbackTargets(trigger, key) {
  * @returns {Document | HTMLElement}
  */
 function feedbackRoot(trigger) {
-    return trigger.closest(rootSelector) || document
+    return trigger.closest(feedbackRootSelector) || document
 }
