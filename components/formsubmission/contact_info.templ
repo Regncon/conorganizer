@@ -109,7 +109,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 				<input
 					type="text"
 					name="name"
-                    data-save-error-key="name"
+					data-save-error-key="name"
 					data-bind="name"
 					data-indicator="toastName"
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/name')", eventId) }
@@ -119,15 +119,15 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					pattern=".{2,}"
 					title="Bruk minst 2 tegn"
 					autocomplete="name"
-					/>
-					<div data-signals={ dataSignals(map[string]string{"name": name}) }></div>
-					@SaveError("name")
-				</label>
+				/>
+				<div data-signals={ dataSignals(map[string]string{"name": name}) }></div>
+				@SaveError("name")
+			</label>
 			<label class="label color-strong form-group">
 				E-post
 				<input
 					data-signals={ dataSignals(map[string]string{"email": email}) }
-                    data-save-error-key="email"
+					data-save-error-key="email"
 					type="email"
 					data-bind="email"
 					data-indicator="toastEmail"
@@ -136,16 +136,16 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					class="input"
 					placeholder="Din e-post"
 					required
-						autocomplete="email"
-					/>
-					@SaveError("email")
-				</label>
+					autocomplete="email"
+				/>
+				@SaveError("email")
+			</label>
 			<label class="label color-strong form-group">
 				Telefon
 				<input
 					type="tel"
 					data-signals={ dataSignals(map[string]string{"phone": phone}) }
-                    data-save-error-key="phone"
+					data-save-error-key="phone"
 					data-bind="phone"
 					data-indicator="toastPhone"
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/phone')", eventId) }
@@ -155,10 +155,10 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					required
 					pattern=".{2,}"
 					title="Bruk 8 siffer, eventuelt med +47 foran"
-						autocomplete="tel"
-					/>
-					@SaveError("phone")
-				</label>
+					autocomplete="tel"
+				/>
+				@SaveError("phone")
+			</label>
 		</section>
 	</article>
 }

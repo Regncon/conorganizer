@@ -29,14 +29,14 @@ func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}
-			if r.Header.Get("Datastar-Request") == "true" {
-				sse := datastar.NewSSE(w, r)
-				if err := sse.Redirect("/profile/"); err != nil {
-					logger.Error("Failed to redirect after submit", "error", err, "event_id", eventID)
-				}
-				return
+		if r.Header.Get("Datastar-Request") == "true" {
+			sse := datastar.NewSSE(w, r)
+			if err := sse.Redirect("/profile/"); err != nil {
+				logger.Error("Failed to redirect after submit", "error", err, "event_id", eventID)
 			}
-			http.Redirect(w, r, "/profile/", http.StatusSeeOther)
+			return
+		}
+		http.Redirect(w, r, "/profile/", http.StatusSeeOther)
 	})
 }
 
@@ -45,9 +45,9 @@ templ SubmitSection() {
 		<p>
 			Kladden blir lagret automatisk. Når du er klar til å sende arrangementet inn, trenger du bare å klikke på på knappen her!
 		</p>
-			<button type="submit" class="btn btn--cta">
-				Send inn
-			</button>
-			@SaveError("submit")
-		</article>
-	}
+		<button type="submit" class="btn btn--cta">
+			Send inn
+		</button>
+		@SaveError("submit")
+	</article>
+}

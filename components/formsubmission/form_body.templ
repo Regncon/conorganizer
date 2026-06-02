@@ -131,10 +131,20 @@ func currentUserDBID(ctx context.Context, db *sql.DB, logger *slog.Logger) (int6
 
 templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 	<style>
-		.formsubmission-wrapper {
-			> * + .form-card {
-				margin-block-start: 1rem;
+			/* Chrome drops native validation bubbles during smooth-scroll to invalid fields. */
+			html:has(.formsubmission-wrapper) {
+				scroll-behavior: auto;
+				scroll-padding-block-start: calc(var(--nav-height) + var(--spacing-4x));
 			}
+
+			.formsubmission-wrapper {
+				.input {
+					scroll-margin-block-start: calc(var(--nav-height) + var(--spacing-4x));
+				}
+
+				> * + .form-card {
+					margin-block-start: 1rem;
+				}
 
 			.label {
 				font-weight: 600;
@@ -327,8 +337,8 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 			}
 		}
 		</style>
-		@SaveFeedback(isAdmin)
-		@statusCard(event, isAdmin)
+	@SaveFeedback(isAdmin)
+	@statusCard(event, isAdmin)
 	if isAdmin {
 		@puljefordeling(event.ID, db)
 	}
