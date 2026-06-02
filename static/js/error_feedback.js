@@ -13,7 +13,8 @@ const feedbackRootSelector = "form, dialog"
  *     readonly el: Element | null,
  *     readonly argsRaw?: Record<string, string>,
  * }} DatastarFetchEventDetail
- * @typedef {Record<string, unknown>} DatastarSignalPatchDetail
+ * @typedef {Record<string, string>} FeedbackErrors
+ * @typedef {{ feedbackErrors?: FeedbackErrors }} DatastarSignalPatchDetail
  */
 
 /** @type {Map<HTMLElement, string>} */
@@ -81,13 +82,19 @@ function handleDatastarFetch(event) {
 }
 
 /**
+ * Datastar custom backend feedback arrives as signal patches:
+ * `{ feedbackErrors: { [key]: message } }`.
+ * The message elements render the signal directly; this listener only marks active
+ * requests with patched errors so the later `finished` fetch event does not clear
+ * the backend message.
+ *
  * @param {Event} event
  * @returns {void}
  */
 function handleDatastarSignalPatch(event) {
     const detail = getDatastarSignalPatchDetail(event)
     const feedbackErrors = detail?.[feedbackSignalName]
-    if (!isFeedbackErrors(feedbackErrors)) {
+    if (!feedbackErrors) {
         return
     }
 
@@ -142,17 +149,33 @@ function getDatastarSignalPatchDetail(event) {
 
     /** @type {unknown} */
     const detail = event.detail
-    return detail && typeof detail === "object"
+    return isDatastarSignalPatchDetail(detail)
         ? /** @type {DatastarSignalPatchDetail} */ (detail)
         : null
 }
 
 /**
+ * @param {unknown} detail
+ * @returns {detail is DatastarSignalPatchDetail}
+ */
+function isDatastarSignalPatchDetail(detail) {
+    if (!detail || typeof detail !== "object") {
+        return false
+    }
+
+    /** @type {{ feedbackErrors?: unknown }} */
+    const candidate = detail
+    return candidate.feedbackErrors === undefined || isFeedbackErrors(candidate.feedbackErrors)
+}
+
+/**
  * @param {unknown} feedbackErrors
- * @returns {feedbackErrors is Record<string, unknown>}
+ * @returns {feedbackErrors is FeedbackErrors}
  */
 function isFeedbackErrors(feedbackErrors) {
-    return !!feedbackErrors && typeof feedbackErrors === "object"
+    return !!feedbackErrors
+        && typeof feedbackErrors === "object"
+        && Object.values(feedbackErrors).every((message) => typeof message === "string")
 }
 
 /**
@@ -167,13 +190,13 @@ function feedbackMessage(trigger) {
 }
 
 /**
- * @param {Record<string, unknown>} feedbackErrors
+ * @param {FeedbackErrors} feedbackErrors
  * @returns {void}
  */
 function markActiveTriggersWithPatchedErrors(feedbackErrors) {
     for (const [trigger, key] of activeRequestTriggers.entries()) {
         const message = feedbackErrors[key]
-        if (typeof message === "string" && message.trim() !== "") {
+        if (message && message.trim() !== "") {
             failedRequestTriggers.add(trigger)
         }
     }

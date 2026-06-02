@@ -6,7 +6,8 @@ const CUSTOM_ELEMENT_TAG_NAME = "app-toast"
  * @typedef {{ message?: unknown }} ToastEventDetail
  * @typedef {"started" | "finished" | "error" | "retrying" | "retries-failed"} DatastarFetchType
  * @typedef {{ type: DatastarFetchType, el: Element | null }} DatastarFetchEventDetail
- * @typedef {{ feedbackErrors?: unknown }} DatastarSignalPatchDetail
+ * @typedef {Record<string, string>} FeedbackErrors
+ * @typedef {{ feedbackErrors?: FeedbackErrors }} DatastarSignalPatchDetail
  * @typedef {{ activeCount: number, failed: boolean }} IndicatorState
  */
 
@@ -134,7 +135,9 @@ class AppToast extends HTMLElement {
     }
 
     /**
-     * Server-patched feedback errors mean the request completed, but not as a save success.
+     * Datastar custom backend feedback arrives as signal patches. Non-empty
+     * `feedbackErrors` marks active requests as failed so their later `finished`
+     * fetch event does not show a saved toast.
      * @param {Event} event
      * @returns {void}
      */
@@ -216,17 +219,41 @@ class AppToast extends HTMLElement {
 
         /** @type {unknown} */
         const detail = event.detail
-        return detail && typeof detail === "object"
+        return AppToast.#isDatastarSignalPatchDetail(detail)
             ? /** @type {DatastarSignalPatchDetail} */ (detail)
             : null
     }
 
     /**
+     * @param {unknown} detail
+     * @returns {detail is DatastarSignalPatchDetail}
+     */
+    static #isDatastarSignalPatchDetail(detail) {
+        if (!detail || typeof detail !== "object") {
+            return false
+        }
+
+        /** @type {{ feedbackErrors?: unknown }} */
+        const candidate = detail
+        return candidate.feedbackErrors === undefined || AppToast.#isFeedbackErrors(candidate.feedbackErrors)
+    }
+
+    /**
      * @param {unknown} feedbackErrors
+     * @returns {feedbackErrors is FeedbackErrors}
+     */
+    static #isFeedbackErrors(feedbackErrors) {
+        return !!feedbackErrors
+            && typeof feedbackErrors === "object"
+            && Object.values(feedbackErrors).every((message) => typeof message === "string")
+    }
+
+    /**
+     * @param {FeedbackErrors | undefined} feedbackErrors
      * @returns {boolean}
      */
     static #hasFeedbackErrors(feedbackErrors) {
-        if (!feedbackErrors || typeof feedbackErrors !== "object") {
+        if (!feedbackErrors) {
             return false
         }
 
