@@ -361,7 +361,6 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						width="600"
 						height="350"
 						image-kind="card"
-						image-url={ imageUrl }
 						data-attr:image-url="$sourceImageUrl"
 					></banner-cropper>
 					<div class="event-image-title-preview">
@@ -378,7 +377,6 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						width="1360"
 						height="400"
 						image-kind="banner"
-						image-url={ imageUrl }
 						data-attr:image-url="$sourceImageUrl"
 					></banner-cropper>
 					<div class="event-image-title-preview banner-image">
