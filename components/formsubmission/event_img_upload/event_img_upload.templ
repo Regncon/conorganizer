@@ -335,7 +335,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					class="image-upload-file-form"
 					data-indicator="toastSourceImage"
 					data-save-error-key="sourceImage"
-					data-on:submit={ fmt.Sprintf("@post('/my-events/api/new/%s/upload', {contentType: 'form'})", eventId) }
+					data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/upload', {contentType: 'form'})", eventId) }
 				>
 					<label>
 						Velg bilde:
