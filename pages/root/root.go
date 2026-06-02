@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
+	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -65,6 +67,26 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 		mvc.EditingIdx = -1
 	}
 
+	resetAndSaveMVC := func(ctx context.Context, sessionID string, mvc *TodoMVC) error {
+		resetMVC(mvc)
+		if err := saveMVC(ctx, sessionID, mvc); err != nil {
+			return fmt.Errorf("failed to save mvc: %w", err)
+		}
+		return nil
+	}
+
+	applyMVCEntry := func(ctx context.Context, sessionID string, mvc *TodoMVC, entry jetstream.KeyValueEntry) error {
+		if entry.Operation() != jetstream.KeyValuePut {
+			logger.Debug("resetting root live update state after KV operation", "operation", entry.Operation().String())
+			return resetAndSaveMVC(ctx, sessionID, mvc)
+		}
+		if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+			logger.Debug("resetting root live update state after invalid KV value", "error", err.Error())
+			return resetAndSaveMVC(ctx, sessionID, mvc)
+		}
+		return nil
+	}
+
 	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
@@ -77,14 +99,12 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 			if err != jetstream.ErrKeyNotFound {
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
 			}
-			resetMVC(mvc)
-
-			if err := saveMVC(ctx, sessionID, mvc); err != nil {
-				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
+			if err := resetAndSaveMVC(ctx, sessionID, mvc); err != nil {
+				return "", nil, err
 			}
 		} else {
-			if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-				return "", nil, fmt.Errorf("failed to unmarshal mvc: %w", err)
+			if err := applyMVCEntry(ctx, sessionID, mvc, entry); err != nil {
+				return "", nil, err
 			}
 		}
 		return sessionID, mvc, nil
@@ -94,8 +114,6 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 	router.Route("/root", func(rootRouter chi.Router) {
 		rootRouter.Route("/api", func(rootApiRouter chi.Router) {
 			rootApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				sse := datastar.NewSSE(w, r)
-
 				sessionID, mvc, err := mvcSession(w, r)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -109,26 +127,38 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
+						if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
+							return
+						}
 						logger.Error(fmt.Errorf("failed to stop root watcher: %w", err).Error())
 					}
 				}()
+				sse := datastar.NewSSE(w, r)
+				renderRootPage := func() error {
+					isAdmin := authctx.GetAdminFromUserToken(ctx)
+					return sse.PatchElementTempl(rootPage(db, isAdmin, eventImageDir))
+				}
+				if err := renderRootPage(); err != nil {
+					_ = sse.ConsoleError(err)
+					return
+				}
 
 				for {
 					select {
 					case <-ctx.Done():
 						return
-					case entry := <-watcher.Updates():
+					case entry, ok := <-watcher.Updates():
+						if !ok {
+							return
+						}
 						if entry == nil {
 							continue
 						}
-						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+						if err := applyMVCEntry(ctx, sessionID, mvc, entry); err != nil {
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						var ctx = r.Context()
-						isAdmin := authctx.GetAdminFromUserToken(ctx)
-						c := rootPage(db, isAdmin, eventImageDir)
-						if err := sse.PatchElementTempl(c); err != nil {
+						if err := renderRootPage(); err != nil {
 							_ = sse.ConsoleError(err)
 							return
 						}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -16,6 +17,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
+	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -52,6 +54,26 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 		}
 	}
 
+	resetAndSaveMVC := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
+		*mvc = root.TodoMVC{}
+		if err := saveMVC(ctx, mvc, sessionID, kv, notifyUpdate); err != nil {
+			return fmt.Errorf("failed to save mvc: %w", err)
+		}
+		return nil
+	}
+
+	applyMVCEntry := func(ctx context.Context, mvc *root.TodoMVC, sessionID string, entry jetstream.KeyValueEntry) error {
+		if entry.Operation() != jetstream.KeyValuePut {
+			logger.Debug("resetting billettholder admin live update state after KV operation", "operation", entry.Operation().String())
+			return resetAndSaveMVC(ctx, mvc, sessionID)
+		}
+		if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+			logger.Debug("resetting billettholder admin live update state after invalid KV value", "error", err.Error())
+			return resetAndSaveMVC(ctx, mvc, sessionID)
+		}
+		return nil
+	}
+
 	session := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
@@ -65,12 +87,12 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
 			}
 			// first visit ⇒ create an empty snapshot so the SSE loop can unmarshal
-			if err := saveMVC(ctx, mvc, sessionID, kv, notifyUpdate); err != nil {
-				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
+			if err := resetAndSaveMVC(ctx, mvc, sessionID); err != nil {
+				return "", nil, err
 			}
 		} else {
-			if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-				return "", nil, fmt.Errorf("failed to unmarshal mvc: %w", err)
+			if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
+				return "", nil, err
 			}
 		}
 		return sessionID, mvc, nil
@@ -80,7 +102,6 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 
 	router.Route("/admin/billettholder/api/", func(billettholderAdminRouter chi.Router) {
 		billettholderAdminRouter.With(authctx.RequireAdmin(baseLogger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
-			sse := datastar.NewSSE(w, r)
 			sessionID, _, err := session(w, r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -96,9 +117,13 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			}
 			defer func() {
 				if err := sub.Unsubscribe(); err != nil {
+					if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
+						return
+					}
 					logger.Error(fmt.Errorf("failed to unsubscribe billettholder admin stream: %w", err).Error())
 				}
 			}()
+			sse := datastar.NewSSE(w, r)
 
 			// send the first render immediately
 			if err := sse.PatchElementTempl(BillettholderAdminPage(db, logger)); err != nil {
@@ -125,7 +150,6 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 
 	router.Route("/admin/billettholder/add/api/", func(addBillettholderRouter chi.Router) {
 		addBillettholderRouter.With(authctx.RequireAdmin(baseLogger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
-			sse := datastar.NewSSE(w, r)
 			sessionID, _, err := session(w, r)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -142,9 +166,13 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 			}
 			defer func() {
 				if err := sub.Unsubscribe(); err != nil {
+					if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
+						return
+					}
 					logger.Error(fmt.Errorf("failed to unsubscribe add-billettholder stream: %w", err).Error())
 				}
 			}()
+			sse := datastar.NewSSE(w, r)
 
 			// initial render
 			if err := sse.PatchElementTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {

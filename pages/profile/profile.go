@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -27,6 +28,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
+	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -53,6 +55,26 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 		return fmt.Errorf("error creating key value: %w", err)
 	}
 
+	resetAndSaveMVC := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
+		*mvc = root.TodoMVC{}
+		if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
+			return fmt.Errorf("failed to save mvc: %w", err)
+		}
+		return nil
+	}
+
+	applyMVCEntry := func(ctx context.Context, mvc *root.TodoMVC, sessionID string, entry jetstream.KeyValueEntry) error {
+		if entry.Operation() != jetstream.KeyValuePut {
+			logger.Debug("resetting profile live update state after KV operation", "operation", entry.Operation().String())
+			return resetAndSaveMVC(ctx, mvc, sessionID)
+		}
+		if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+			logger.Debug("resetting profile live update state after invalid KV value", "error", err.Error())
+			return resetAndSaveMVC(ctx, mvc, sessionID)
+		}
+		return nil
+	}
+
 	profileSession := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
@@ -66,12 +88,12 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
 			}
 
-			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
+			if err := resetAndSaveMVC(ctx, mvc, sessionID); err != nil {
+				return "", nil, err
 			}
 		} else {
-			if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-				return "", nil, fmt.Errorf("failed to unmarshal mvc: %w", err)
+			if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
+				return "", nil, err
 			}
 		}
 		return sessionID, mvc, nil
@@ -123,7 +145,6 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 					return
 				}
 
-				sse := datastar.NewSSE(w, r)
 				ctx := r.Context()
 				user := userctx.GetUserRequestInfo(ctx)
 				watcher, err := kv.Watch(ctx, sessionID)
@@ -133,9 +154,13 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
+						if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
+							return
+						}
 						requestLogger.Error(fmt.Errorf("failed to stop profile watcher: %w", err).Error())
 					}
 				}()
+				sse := datastar.NewSSE(w, r)
 
 				renderProfileMainColumn := func() error {
 					events := GetEventsByExternalID(user.Id, db, requestLogger)
@@ -156,11 +181,14 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 					select {
 					case <-ctx.Done():
 						return
-					case entry := <-watcher.Updates():
+					case entry, ok := <-watcher.Updates():
+						if !ok {
+							return
+						}
 						if entry == nil {
 							continue
 						}
-						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+						if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
@@ -191,8 +219,6 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 							return
 						}
 
-						sse := datastar.NewSSE(w, r)
-
 						ctx := r.Context()
 						watcher, err := kv.Watch(ctx, sessionID)
 						if err != nil {
@@ -201,28 +227,40 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 						}
 						defer func() {
 							if err := watcher.Stop(); err != nil {
+								if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
+									return
+								}
 								logger.Error(fmt.Errorf("failed to stop new-event watcher: %w", err).Error())
 							}
 						}()
+						sse := datastar.NewSSE(w, r)
+						renderNewEventForm := func() error {
+							userId := userctx.GetUserRequestInfo(r.Context()).Id
+							return sse.PatchElementTempl(newevent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, logger))
+						}
+						if err := renderNewEventForm(); err != nil {
+							_ = sse.ConsoleError(err)
+							return
+						}
 
 						for {
 							select {
 							case <-ctx.Done():
 								return
-							case entry := <-watcher.Updates():
+							case entry, ok := <-watcher.Updates():
+								if !ok {
+									return
+								}
 
 								if entry == nil {
 									continue
 								}
-								if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+								if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
 									http.Error(w, err.Error(), http.StatusInternalServerError)
 									return
 								}
 
-								userId := userctx.GetUserRequestInfo(r.Context()).Id
-
-								c := newevent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, logger)
-								if err := sse.PatchElementTempl(c); err != nil {
+								if err := renderNewEventForm(); err != nil {
 									_ = sse.ConsoleError(err)
 									return
 								}

@@ -69,13 +69,13 @@ func handleError(responder Responder, dispalyText string, errorText string) {
 		return
 	}
 
+	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
 	sse := datastar.NewSSE(responder.w, responder.r)
 	if err := sse.PatchSignals(b); err != nil {
 		responder.Logger.Error("Failed to patch signals", "error", err)
 		http.Error(responder.w, "Failed to patch signals", http.StatusInternalServerError)
 		return
 	}
-	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
 	if responder.NotifyUpdate != nil {
 		responder.NotifyUpdate(sessionID)
 	}
@@ -98,6 +98,7 @@ func handleSuccess(responder Responder, successText string) {
 		return
 	}
 
+	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
 	sse := datastar.NewSSE(responder.w, responder.r)
 	if err := sse.PatchSignals(b); err != nil {
 		responder.Logger.Error("Failed to patch signals", "error", err)
@@ -105,7 +106,6 @@ func handleSuccess(responder Responder, successText string) {
 		return
 	}
 
-	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
 	if responder.NotifyUpdate != nil {
 		responder.NotifyUpdate(sessionID)
 	}

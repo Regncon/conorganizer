@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -19,6 +20,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
+	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -97,6 +99,26 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		mvc.EditingIdx = -1
 	}
 
+	resetAndSaveMVC := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
+		resetMVC(mvc)
+		if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
+			return fmt.Errorf("failed to save mvc: %w", err)
+		}
+		return nil
+	}
+
+	applyMVCEntry := func(ctx context.Context, mvc *root.TodoMVC, sessionID string, entry jetstream.KeyValueEntry) error {
+		if entry.Operation() != jetstream.KeyValuePut {
+			logger.Debug("resetting event live update state after KV operation", "operation", entry.Operation().String())
+			return resetAndSaveMVC(ctx, mvc, sessionID)
+		}
+		if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+			logger.Debug("resetting event live update state after invalid KV value", "error", err.Error())
+			return resetAndSaveMVC(ctx, mvc, sessionID)
+		}
+		return nil
+	}
+
 	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
@@ -109,14 +131,12 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 			if err != jetstream.ErrKeyNotFound {
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
 			}
-			resetMVC(mvc)
-
-			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
+			if err := resetAndSaveMVC(ctx, mvc, sessionID); err != nil {
+				return "", nil, err
 			}
 		} else {
-			if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-				return "", nil, fmt.Errorf("failed to unmarshal mvc: %w", err)
+			if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
+				return "", nil, err
 			}
 		}
 		return sessionID, mvc, nil
@@ -135,9 +155,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 					return
 				}
 
-				sse := datastar.NewSSE(w, r)
-
-				// Watch for updates
 				ctx := r.Context()
 				watcher, err := kv.Watch(ctx, sessionID)
 				if err != nil {
@@ -146,26 +163,38 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 				}
 				defer func() {
 					if err := watcher.Stop(); err != nil {
+						if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
+							return
+						}
 						logger.Error(fmt.Errorf("failed to stop event watcher: %w", err).Error())
 					}
 				}()
+				sse := datastar.NewSSE(w, r)
+				renderEventPage := func() error {
+					isAdmin := authctx.GetAdminFromUserToken(ctx)
+					return sse.PatchElementTempl(event_page(eventID, isAdmin, logger, db, eventImageDir, r))
+				}
+				if err := renderEventPage(); err != nil {
+					_ = sse.ConsoleError(err)
+					return
+				}
 
 				for {
 					select {
 					case <-ctx.Done():
 						return
-					case entry := <-watcher.Updates():
+					case entry, ok := <-watcher.Updates():
+						if !ok {
+							return
+						}
 						if entry == nil {
 							continue
 						}
-						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+						if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
 							http.Error(w, err.Error(), http.StatusInternalServerError)
 							return
 						}
-						isAdmin := authctx.GetAdminFromUserToken(ctx)
-						c := event_page(eventID, isAdmin, logger, db, eventImageDir, r)
-
-						if err := sse.PatchElementTempl(c); err != nil {
+						if err := renderEventPage(); err != nil {
 							_ = sse.ConsoleError(err)
 							return
 						}
@@ -220,6 +249,10 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						}
 						ctx := r.Context()
 						userInfo := userctx.GetUserRequestInfo(ctx)
+						if _, _, mvcErr := mvcSession(w, r); mvcErr != nil {
+							http.Error(w, mvcErr.Error(), http.StatusInternalServerError)
+							return
+						}
 						sse := datastar.NewSSE(w, r)
 
 						eventId := chi.URLParam(r, "idx")
@@ -242,13 +275,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							if err := patchInterestErrorSignal(sse, "Vel pulje f\u00f8r du melder interesse."); err != nil {
 								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
 							}
-							return
-						}
-
-						_, _, mvcErr := mvcSession(w, r)
-
-						if mvcErr != nil {
-							http.Error(w, mvcErr.Error(), http.StatusInternalServerError)
 							return
 						}
 

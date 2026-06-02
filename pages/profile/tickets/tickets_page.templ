@@ -30,9 +30,10 @@ func getTicketsRouter(
 	notifyUpdate func(string),
 ) {
 	router.Post("/get-tickets", func(w http.ResponseWriter, r *http.Request) {
-		sse := datastar.NewSSE(w, r)
 		var ctx = r.Context()
 		var user = userctx.GetUserRequestInfo(ctx)
+		sessionID, _ := upsertSessionID(store, r, w)
+		sse := datastar.NewSSE(w, r)
 
 		var errorMessage = ""
 
@@ -76,7 +77,6 @@ func getTicketsRouter(
 			return
 		}
 
-		sessionID, _ := upsertSessionID(store, r, w)
 		if notifyUpdate != nil {
 			notifyUpdate(sessionID)
 		}

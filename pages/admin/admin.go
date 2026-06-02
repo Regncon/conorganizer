@@ -66,6 +66,26 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		mvc.EditingIdx = -1
 	}
 
+	resetAndSaveMVC := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
+		resetMVC(mvc)
+		if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
+			return fmt.Errorf("failed to save mvc: %w", err)
+		}
+		return nil
+	}
+
+	applyMVCEntry := func(ctx context.Context, mvc *root.TodoMVC, sessionID string, entry jetstream.KeyValueEntry) error {
+		if entry.Operation() != jetstream.KeyValuePut {
+			logger.Debug("resetting admin live update state after KV operation", "operation", entry.Operation().String())
+			return resetAndSaveMVC(ctx, mvc, sessionID)
+		}
+		if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+			logger.Debug("resetting admin live update state after invalid KV value", "error", err.Error())
+			return resetAndSaveMVC(ctx, mvc, sessionID)
+		}
+		return nil
+	}
+
 	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
 		ctx := r.Context()
 		sessionID, err := upsertSessionID(store, r, w)
@@ -78,14 +98,12 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 			if err != jetstream.ErrKeyNotFound {
 				return "", nil, fmt.Errorf("failed to get key value: %w", err)
 			}
-			resetMVC(mvc)
-
-			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
+			if err := resetAndSaveMVC(ctx, mvc, sessionID); err != nil {
+				return "", nil, err
 			}
 		} else {
-			if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-				return "", nil, fmt.Errorf("failed to unmarshal mvc: %w", err)
+			if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
+				return "", nil, err
 			}
 		}
 		return sessionID, mvc, nil
@@ -102,21 +120,11 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 			requestID := middleware.GetReqID(r.Context())
 			_, connectionsCookieErr := r.Cookie("connections")
 			connectionsCookiePresent := connectionsCookieErr == nil
-			if connectionsCookiePresent {
-				logger.Debug(
-					"admin live update stream starting",
-					"request_id", requestID,
-					"connections_cookie_present", true,
-				)
-			} else {
-				logger.Warn(
-					"admin live update stream missing connections cookie",
-					"request_id", requestID,
-					"connections_cookie_present", false,
-				)
-			}
-
-			sse := datastar.NewSSE(w, r)
+			logger.Debug(
+				"admin live update stream starting",
+				"request_id", requestID,
+				"connections_cookie_present", connectionsCookiePresent,
+			)
 
 			sessionID, mvc, err := mvcSession(w, r)
 			if err != nil {
@@ -139,11 +147,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
-			logger.Debug(
-				"admin watcher started",
-				"request_id", requestID,
-				"connections_cookie_present", connectionsCookiePresent,
-			)
 			defer func() {
 				if err := watcher.Stop(); err != nil {
 					if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
@@ -162,8 +165,22 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					)
 				}
 			}()
+			sse := datastar.NewSSE(w, r)
+			if err := sse.PatchElementTempl(adminPage(db)); err != nil {
+				logger.Error(
+					fmt.Errorf("failed to patch initial admin live update: %w", err).Error(),
+					"request_id", requestID,
+					"connections_cookie_present", connectionsCookiePresent,
+				)
+				_ = sse.ConsoleError(err)
+				return
+			}
+			logger.Debug(
+				"admin watcher started",
+				"request_id", requestID,
+				"connections_cookie_present", connectionsCookiePresent,
+			)
 
-			patchSent := false
 			for {
 				select {
 				case <-ctx.Done():
@@ -193,14 +210,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						return
 					}
 					if entry == nil {
-						if !patchSent {
-							logger.Warn(
-								"admin watcher delivered no initial state",
-								"request_id", requestID,
-								"connections_cookie_present", connectionsCookiePresent,
-							)
-							continue
-						}
 						logger.Debug(
 							"admin watcher initial values delivered",
 							"request_id", requestID,
@@ -208,9 +217,9 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						)
 						continue
 					}
-					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+					if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
 						logger.Error(
-							fmt.Errorf("failed to unmarshal admin live update state: %w", err).Error(),
+							err.Error(),
 							"request_id", requestID,
 							"connections_cookie_present", connectionsCookiePresent,
 							"operation", entry.Operation().String(),
@@ -220,8 +229,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
-					c := adminPage(db)
-					if err := sse.PatchElementTempl(c); err != nil {
+					if err := sse.PatchElementTempl(adminPage(db)); err != nil {
 						logger.Error(
 							fmt.Errorf("failed to patch admin live update: %w", err).Error(),
 							"request_id", requestID,
@@ -239,7 +247,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						"operation", entry.Operation().String(),
 						"revision", entry.Revision(),
 					)
-					patchSent = true
 				}
 			}
 		})
@@ -247,8 +254,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		adminRouter.Route("/approval/", func(approvalRouter chi.Router) {
 			approvalRouter.Route("/api/", func(apiRouter chi.Router) {
 				apiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-					sse := datastar.NewSSE(w, r)
-
 					sessionID, mvc, err := mvcSession(w, r)
 					if err != nil {
 						logger.Error(fmt.Errorf("failed to get approval MVC session: %w", err).Error())
@@ -264,24 +269,34 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					}
 					defer func() {
 						if err := watcher.Stop(); err != nil {
+							if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
+								return
+							}
 							logger.Error(fmt.Errorf("failed to stop approval watcher: %w", err).Error())
 						}
 					}()
+					sse := datastar.NewSSE(w, r)
+					if err := sse.PatchElementTempl(approval.ApprovalPage(db, baseLogger)); err != nil {
+						_ = sse.ConsoleError(err)
+						return
+					}
 
 					for {
 						select {
 						case <-ctx.Done():
 							return
-						case entry := <-watcher.Updates():
+						case entry, ok := <-watcher.Updates():
+							if !ok {
+								return
+							}
 							if entry == nil {
 								continue
 							}
-							if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+							if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
 								http.Error(w, err.Error(), http.StatusInternalServerError)
 								return
 							}
-							c := approval.ApprovalPage(db, baseLogger)
-							if err := sse.PatchElementTempl(c); err != nil {
+							if err := sse.PatchElementTempl(approval.ApprovalPage(db, baseLogger)); err != nil {
 								_ = sse.ConsoleError(err)
 								return
 							}
@@ -443,8 +458,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							return
 						}
 
-						sse := datastar.NewSSE(w, r)
-
 						ctx := r.Context()
 						watcher, err := kv.Watch(ctx, sessionID)
 						if err != nil {
@@ -453,20 +466,31 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 						defer func() {
 							if err := watcher.Stop(); err != nil {
+								if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
+									return
+								}
 								logger.Error(fmt.Errorf("failed to stop edit-form watcher: %w", err).Error())
 							}
 						}()
+						sse := datastar.NewSSE(w, r)
+						if err := sse.PatchElementTempl(edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, baseLogger)); err != nil {
+							_ = sse.ConsoleError(err)
+							return
+						}
 
 						for {
 							select {
 							case <-ctx.Done():
 								return
-							case entry := <-watcher.Updates():
+							case entry, ok := <-watcher.Updates():
+								if !ok {
+									return
+								}
 
 								if entry == nil {
 									continue
 								}
-								if err := json.Unmarshal(entry.Value(), mvc); err != nil {
+								if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
 									http.Error(w, err.Error(), http.StatusInternalServerError)
 									return
 								}
