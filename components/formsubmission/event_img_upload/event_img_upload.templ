@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/toast"
@@ -221,19 +222,20 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			gap: var(--spacing-5x);
 		}
 
-        .image-upload-container .save-error {
-            place-self: end;
-        }
-
 		.image-upload-info-label {
 			font-size: 14px;
 			font-weight: 600;
 		}
 		.image-upload-file-form {
-			display: flex;
-			align-items: center;
-			justify-content: flex-end;
-			gap: var(--spacing-5x);
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) auto;
+			place-items: center end;
+			gap: var(--spacing-2x);
+            margin-inline-start: auto;
+		}
+		.image-upload-file-form .feedback-error {
+			grid-column: 1 / -1;
+			justify-self: end;
 		}
 		.event-image-thumbnail-display {
 			max-width: 600px;
@@ -282,7 +284,6 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	}
 	<script src="/static/web_components/banner_cropper.js"></script>
 	@toast.Render("Lagret", icons.ProgressComplete)
-	@formsubmission.SaveFeedback(false)
 	if showUploadToast {
 		<script>
 			window.addEventListener("DOMContentLoaded", () => {
@@ -333,8 +334,9 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					action={ "/profile/api/new/" + eventId + "/upload" }
 					enctype="multipart/form-data"
 					class="image-upload-file-form"
+					{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(false))... }
 					data-indicator="toastSourceImage"
-					data-save-error-key="sourceImage"
+					{ errorfeedback.Attrs("sourceImage")... }
 					data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/upload', {contentType: 'form'})", eventId) }
 				>
 					<label>
@@ -350,8 +352,8 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						class="btn btn--primary"
 						type="submit"
 					>Last opp</button>
+					@errorfeedback.Message("sourceImage")
 				</form>
-				@formsubmission.SaveError("sourceImage")
 			</div>
 			<section class="surface-pane">
 				<h4 class="surface-pane-title">Mobil og gruppevisning</h4>
