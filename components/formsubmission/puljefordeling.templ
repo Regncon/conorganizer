@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/Regncon/conorganizer/service/puljer"
@@ -181,39 +182,45 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
 			<h3>{ pulje.Name } <span>({ pulje.TimeRange() })</span></h3>
 			<div style="display: flex; gap: 1rem;">
-				<label class="checkbox-background form-group-checkbox">
-					<span>Legg til i pulje </span>
-					<input
-						if eventPulje.IsInPulje {
-							checked
-						}
-						data-bind={ fmt.Sprintf("isInPulje%s", pulje.ID) }
-						data-indicator={ fmt.Sprintf("toastPuljeMembership%s", pulje.ID) }
-						data-save-error-key={ membershipErrorKey }
-                        data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/event-in-pulje/%s')", eventId, pulje.ID) }
-						type="checkbox"
-						name="pulje"
-						class="checkbox input"
-					/>
-				</label>
-				<label class="checkbox-background form-group-checkbox">
-					<span>Publisert</span>
-					<input
-						if eventPulje.IsPublished {
-							checked
-						}
-						if eventPulje.IsInPulje == false {
-							disabled
-						}
-						data-bind={ fmt.Sprintf("isPublished%s", pulje.ID) }
-						data-indicator={ fmt.Sprintf("toastPuljePublished%s", pulje.ID) }
-                        data-save-error-key={ publishedErrorKey }
-						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/is-published/%s')", eventId, pulje.ID) }
-						type="checkbox"
-						name="pulje"
-						class="checkbox input"
-					/>
-				</label>
+				<div class="feedback-control-group">
+					<label class="checkbox-background form-group-checkbox">
+						<span>Legg til i pulje </span>
+						<input
+							if eventPulje.IsInPulje {
+								checked
+							}
+							data-bind={ fmt.Sprintf("isInPulje%s", pulje.ID) }
+							data-indicator={ fmt.Sprintf("toastPuljeMembership%s", pulje.ID) }
+							{ errorfeedback.Attrs(membershipErrorKey)... }
+							data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/event-in-pulje/%s')", eventId, pulje.ID) }
+							type="checkbox"
+							name="pulje"
+							class="checkbox input"
+						/>
+					</label>
+					@errorfeedback.Message(membershipErrorKey)
+				</div>
+				<div class="feedback-control-group">
+					<label class="checkbox-background form-group-checkbox">
+						<span>Publisert</span>
+						<input
+							if eventPulje.IsPublished {
+								checked
+							}
+							if eventPulje.IsInPulje == false {
+								disabled
+							}
+							data-bind={ fmt.Sprintf("isPublished%s", pulje.ID) }
+							data-indicator={ fmt.Sprintf("toastPuljePublished%s", pulje.ID) }
+							{ errorfeedback.Attrs(publishedErrorKey)... }
+							data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/is-published/%s')", eventId, pulje.ID) }
+							type="checkbox"
+							name="pulje"
+							class="checkbox input"
+						/>
+					</label>
+					@errorfeedback.Message(publishedErrorKey)
+				</div>
 			</div>
 		</div>
 	</div>

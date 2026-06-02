@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/event"
@@ -56,7 +57,8 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 					class="formsubmission-wrapper page-content-container"
 					action={ "/profile/api/new/" + eventData.ID + "/submit" }
 					method="post"
-					data-save-error-key="submit"
+					{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(isAdmin))... }
+					{ errorfeedback.Attrs("submit")... }
 					data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/submit', {contentType: 'form'})", eventData.ID) }
 				>
 				<h1 class="page-heading">Nytt arrangement</h1>

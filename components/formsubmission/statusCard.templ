@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/go-chi/chi/v5"
@@ -52,7 +53,7 @@ templ statusCard(event *models.Event, isAdmin bool) {
 				name="status"
 				class="input"
 				data-signals={ dataSignals(map[string]models.EventStatus{"status": event.Status}) }
-                data-save-error-key="status"
+				{ errorfeedback.Attrs("status")... }
 				data-bind="status"
 				data-indicator="toastStatus"
 				data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/status')", event.ID) }
@@ -72,7 +73,7 @@ templ statusCard(event *models.Event, isAdmin bool) {
 					}
 					}
 				</select>
-				@SaveError("status")
+				@errorfeedback.Message("status")
 			</section>
 	</article>
 }

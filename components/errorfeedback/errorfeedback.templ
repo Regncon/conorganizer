@@ -1,0 +1,26 @@
+package errorfeedback
+
+func DefaultMessage(message string) templ.Attributes {
+	return templ.Attributes{
+		"data-feedback-default-message": message,
+	}
+}
+
+func Attrs(key string, message ...string) templ.Attributes {
+	attrs := templ.Attributes{
+		"data-feedback-key": key,
+	}
+	if len(message) > 0 && message[0] != "" {
+		attrs["data-feedback-message"] = message[0]
+	}
+	return attrs
+}
+
+templ Message(key string) {
+	<span
+		class="feedback-error"
+		data-feedback-for={ key }
+		hidden
+		aria-live="polite"
+	></span>
+}

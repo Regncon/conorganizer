@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/go-chi/chi/v5"
 	"github.com/nats-io/nats.go/jetstream"
@@ -48,6 +49,6 @@ templ SubmitSection() {
 		<button type="submit" class="btn btn--cta">
 			Send inn
 		</button>
-		@SaveError("submit")
+		@errorfeedback.Message("submit")
 	</article>
 }
