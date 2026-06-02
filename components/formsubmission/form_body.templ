@@ -138,221 +138,216 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 			}
 
 			.formsubmission-wrapper {
-				.input {
-					scroll-margin-block-start: calc(var(--nav-height) + var(--spacing-4x));
-				}
+            .input {
+                scroll-margin-block-start: calc(var(--nav-height) + var(--spacing-4x));
+            }
 
-				> * + .form-card {
-					margin-block-start: 1rem;
-				}
+            > * + .form-card {
+                margin-block-start: 1rem;
+            }
 
-			.label {
-				font-weight: 600;
-				font-size: var(--text-body-small);
-			}
+            .label {
+                font-weight: 600;
+                font-size: var(--text-body-small);
+            }
 
-			.label-small {
-				font-weight: 600;
-				font-size: 12px;
-			}
+            .label-small {
+                font-weight: 600;
+                font-size: 12px;
+            }
 
-			.form-group {
-				display: flex;
-				flex-direction: column;
-				gap: 0.3rem;
-			}
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 0.3rem;
+            }
 
-			.form-group:has(.feedback-error.is-visible) .input,
-			.feedback-control-group:has(.feedback-error.is-visible) .input {
-				border-color: #DC3545;
-				box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 18%);
-			}
+            .feedback-control-group {
+                display: grid;
+                gap: var(--spacing-1x);
+            }
 
-			.feedback-control-group:has(.feedback-error.is-visible) .input:focus-visible,
-			.form-group:has(.feedback-error.is-visible) .input:focus-visible {
-				border-color: #DC3545;
-				box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 28%);
-			}
+            :is(.form-group, .feedback-control-group):has(.feedback-error.is-visible) {
+                .input:not([type="checkbox"]) {
+                    border-color: #DC3545;
+                    box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 25%);
+                }
+            }
 
-			.feedback-control-group {
-				display: grid;
-				gap: var(--spacing-1x);
-			}
+            .form-group-checkbox {
+                display: flex;
+                gap: 0.3rem;
+                place-items: center;
+            }
 
-			.form-group-checkbox {
-				display: flex;
-				gap: 0.3rem;
-				place-items: center;
-			}
+            .form-card {
+                display: grid;
 
-			.form-card {
-				display: grid;
+                .organizer-section {
+                    display: grid;
+                    gap: 1.25rem;
+                }
 
-				.organizer-section {
-					display: grid;
-					gap: 1.25rem;
-				}
+                .about-section {
+                    display: grid;
+                    gap: 1.25rem;
 
-				.about-section {
-					display: grid;
-					gap: 1.25rem;
+                    .img {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 1.2rem;
 
-					.img {
-						display: flex;
-						flex-direction: column;
-						gap: 1.2rem;
+                        img {
+                            width: 100%;
+                            height: 100%;
+                            border-radius: var(--border-radius-2x);
+                            object-fit: cover;
+                        }
+                    }
+                }
 
-						img {
-							width: 100%;
-							height: 100%;
-							border-radius: var(--border-radius-2x);
-							object-fit: cover;
-						}
-					}
-				}
+                .puljefordeling-section {
+                    display: grid;
+                    gap: 1.25rem;
+                }
+                .details-section {
+                    display: grid;
+                    gap: 1.25rem;
+                }
+                .checkbox-background {
+                    background-color: var(--bg-item);
+                    border: 1px solid var(--bg-item-border);
+                    padding: 0.75rem 0.5rem;
+                    border-radius: var(--border-radius-2x);
+                }
+            }
 
-				.puljefordeling-section {
-					display: grid;
-					gap: 1.25rem;
-				}
-				.details-section {
-					display: grid;
-					gap: 1.25rem;
-				}
-				.checkbox-background {
-					background-color: var(--bg-item);
-					border: 1px solid var(--bg-item-border);
-					padding: 0.75rem 0.5rem;
-					border-radius: var(--border-radius-2x);
-				}
-			}
+            .submit-section {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin-block-start: 1rem;
+                min-height: 6.125rem;
+                place-content: center;
 
-			.submit-section {
-				display: grid;
-				grid-template-columns: 1fr;
-				gap: 1rem;
-				margin-block-start: 1rem;
-				min-height: 6.125rem;
-				place-content: center;
+                p {
+                    margin: 0;
+                    place-self: center;
+                }
+            }
 
-				p {
-					margin: 0;
-					place-self: center;
-				}
-			}
+            @container formsubmission-css-container (width > 600px) {
+                .submit-section {
+                    grid-template-columns: 1fr 200px;
+                    gap: 2rem;
+                }
+            }
 
-			@container formsubmission-css-container (width > 600px) {
-				.submit-section {
-					grid-template-columns: 1fr 200px;
-					gap: 2rem;
-				}
-			}
+            @container formsubmission-css-container (width > 800px) {
+                .form-card:is(:not(.submit-section)) {
+                    display: block;
 
-			@container formsubmission-css-container (width > 800px) {
-				.form-card:is(:not(.submit-section)) {
-					display: block;
+                    .organizer-section {
+                        display: flex;
+                        gap: var(--spacing-5x);
+                        .form-group {
+                            gap: 0.5rem;
+                            flex-grow: 1;
+                        }
+                    }
 
-					.organizer-section {
-						display: flex;
-						gap: var(--spacing-5x);
-						.form-group {
-							gap: 0.5rem;
-							flex-grow: 1;
-						}
-					}
+                    .about-section {
+                        margin-block-start: 1rem;
+                        grid-template-columns: 0.5fr 0.5fr;
+                        grid-template-areas:
+                            "title img"
+                            "intro img"
+                            "type system"
+                            "description description";
+                        .title {
+                            grid-area: title;
+                        }
 
-					.about-section {
-						margin-block-start: 1rem;
-						grid-template-columns: 0.5fr 0.5fr;
-						grid-template-areas:
-							"title img"
-							"intro img"
-							"type system"
-							"description description";
-						.title {
-							grid-area: title;
-						}
+                        .intro {
+                            grid-area: intro;
+                        }
 
-						.intro {
-							grid-area: intro;
-						}
+                        .type {
+                            grid-area: type;
+                        }
 
-						.type {
-							grid-area: type;
-						}
+                        .img {
+                            grid-area: img;
+                        }
 
-						.img {
-							grid-area: img;
-						}
+                        .system {
+                            grid-area: system;
+                        }
 
-						.system {
-							grid-area: system;
-						}
+                        .description {
+                            grid-area: description;
+                        }
+                    }
 
-						.description {
-							grid-area: description;
-						}
-					}
+                    .details-section {
+                        grid-template-columns: minmax(7.5rem, 0.4fr) minmax(
+                                12.5rem,
+                                0.6fr
+                            );
+                        grid-template-areas:
+                            "age-group age-group-description"
+                            "duration duration-description"
+                            "beginner-friendly beginner-friendly-description"
+                            "english english-description"
+                            "player-count player-count-description"
+                            "other-notes other-notes";
 
-					.details-section {
-						grid-template-columns: minmax(7.5rem, 0.4fr) minmax(
-								12.5rem,
-								0.6fr
-							);
-						grid-template-areas:
-							"age-group age-group-description"
-							"duration duration-description"
-							"beginner-friendly beginner-friendly-description"
-							"english english-description"
-							"player-count player-count-description"
-							"other-notes other-notes";
+                        .age-group {
+                            grid-area: age-group;
+                        }
 
-						.age-group {
-							grid-area: age-group;
-						}
+                        .age-group-description {
+                            grid-area: age-group-description;
+                        }
 
-						.age-group-description {
-							grid-area: age-group-description;
-						}
+                        .duration {
+                            grid-area: duration;
+                        }
 
-						.duration {
-							grid-area: duration;
-						}
+                        .duration-description {
+                            grid-area: duration-description;
+                        }
 
-						.duration-description {
-							grid-area: duration-description;
-						}
+                        .beginner-friendly {
+                            grid-area: beginner-friendly;
+                        }
 
-						.beginner-friendly {
-							grid-area: beginner-friendly;
-						}
+                        .beginner-friendly-description {
+                            grid-area: beginner-friendly-description;
+                        }
 
-						.beginner-friendly-description {
-							grid-area: beginner-friendly-description;
-						}
+                        .can-be-english {
+                            grid-area: can-be-english;
+                        }
 
-						.can-be-english {
-							grid-area: can-be-english;
-						}
+                        .can-be-english-description {
+                            grid-area: can-be-english-description;
+                        }
 
-						.can-be-english-description {
-							grid-area: can-be-english-description;
-						}
+                        .player-count {
+                            grid-area: player-count;
+                        }
 
-						.player-count {
-							grid-area: player-count;
-						}
+                        .player-count-description {
+                            grid-area: player-count-description;
+                        }
 
-						.player-count-description {
-							grid-area: player-count-description;
-						}
-
-						.other-notes {
-							grid-area: other-notes;
-						}
-					}
-				}
-			}
+                        .other-notes {
+                            grid-area: other-notes;
+                        }
+                    }
+                }
+            }
 		}
 		</style>
 	@statusCard(event, isAdmin)

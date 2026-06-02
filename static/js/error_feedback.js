@@ -37,11 +37,11 @@ document.addEventListener("datastar-fetch", handleDatastarFetch)
  */
 function handleDatastarFetch(event) {
     const detail = getDatastarFetchDetail(event)
-    const trigger = detail?.el
-    if (!(trigger instanceof HTMLElement)) {
+    if (!detail || !(detail.el instanceof HTMLElement)) {
         return
     }
 
+    const trigger = detail.el
     const key = trigger.dataset.feedbackKey?.trim()
     if (!key) {
         return
@@ -103,7 +103,7 @@ function isDatastarFetchDetail(detail) {
  * @returns {type is DatastarFetchType}
  */
 function isDatastarFetchType(type) {
-    return typeof type === "string" && datastarFetchTypes.has(/** @type {DatastarFetchType} */ (type))
+    return typeof type === "string" && datastarFetchTypes.has(/** @type {DatastarFetchType} */(type))
 }
 
 /**
@@ -139,8 +139,17 @@ function updateFeedback(trigger, key, message) {
 function feedbackTargets(trigger, key) {
     const root = feedbackRoot(trigger)
     return [...root.querySelectorAll(feedbackTargetSelector)].filter((target) => (
-        target instanceof HTMLElement && target.dataset.feedbackFor === key
+        isFeedbackTargetForKey(target, key)
     ))
+}
+
+/**
+ * @param {Element} target
+ * @param {string} key
+ * @returns {target is HTMLElement}
+ */
+function isFeedbackTargetForKey(target, key) {
+    return target instanceof HTMLElement && target.dataset.feedbackFor === key
 }
 
 /**
