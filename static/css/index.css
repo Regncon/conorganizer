@@ -346,16 +346,16 @@ hr {
 }
 
 .input:user-invalid,
-.form-group:has(.save-error.is-visible) .input,
-.save-control-group:has(.save-error.is-visible) .input {
+.form-group:has(.feedback-error.is-visible) .input,
+.feedback-control-group:has(.feedback-error.is-visible) .input {
     border-color: #DC3545;
     box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 18%);
 }
 
-.save-control-group:has(.save-error.is-visible) .input:focus-visible,
+.feedback-control-group:has(.feedback-error.is-visible) .input:focus-visible,
 .input:user-invalid:focus-visible,
-.form-group:has(.save-error.is-visible) .input:focus-visible {
-    border-color: var(#DC3545);
+.form-group:has(.feedback-error.is-visible) .input:focus-visible {
+    border-color: #DC3545;
     box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 28%);
 }
 
@@ -531,7 +531,7 @@ input {
     color: var(--color-success);
 }
 
-.save-error {
+.feedback-error {
     display: block;
     color: var(--color-error);
     font-size: var(--text-body-small);
@@ -539,7 +539,11 @@ input {
     line-height: 1.3;
 }
 
-.save-control-group {
+.feedback-error[hidden] {
+    display: none;
+}
+
+.feedback-control-group {
     display: grid;
     gap: var(--spacing-1x);
 }
