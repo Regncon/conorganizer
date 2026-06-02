@@ -394,10 +394,7 @@ input {
 .checkbox {
     height: 1rem;
     width: 1rem;
-}
-
-.checkbox:checked {
-    background-color: var(--color-primary);
+    accent-color: var(--color-primary);
     color: var(--color-text-strong);
 }
 
