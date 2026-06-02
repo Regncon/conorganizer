@@ -1,6 +1,8 @@
 // @ts-check
 
 const CUSTOM_ELEMENT_TAG_NAME = "app-toast"
+const localFeedbackPatchStartEventName = "feedback-errors-local-patch-start"
+const localFeedbackPatchEndEventName = "feedback-errors-local-patch-end"
 
 /**
  * @typedef {{ message?: unknown }} ToastEventDetail
@@ -29,11 +31,24 @@ class AppToast extends HTMLElement {
     /** @type {Map<string, IndicatorState>} */
     #indicatorStates = new Map()
 
+    /** @type {number} */
+    #localFeedbackPatchDepth = 0
+
     /** @type {(event: Event) => void} */
     #onDatastarFetch = (event) => this.#handleDatastarFetch(event)
 
     /** @type {(event: Event) => void} */
     #onDatastarSignalPatch = (event) => this.#handleDatastarSignalPatch(event)
+
+    /** @type {() => void} */
+    #onLocalFeedbackPatchStart = () => {
+        this.#localFeedbackPatchDepth += 1
+    }
+
+    /** @type {() => void} */
+    #onLocalFeedbackPatchEnd = () => {
+        this.#localFeedbackPatchDepth = Math.max(0, this.#localFeedbackPatchDepth - 1)
+    }
 
     /** @type {(event: Event) => void} */
     #onToastEvent = (event) => this.#handleToastEvent(event)
@@ -54,6 +69,8 @@ class AppToast extends HTMLElement {
         activeAppToast = this
         document.addEventListener("datastar-fetch", this.#onDatastarFetch)
         document.addEventListener("datastar-signal-patch", this.#onDatastarSignalPatch)
+        document.addEventListener(localFeedbackPatchStartEventName, this.#onLocalFeedbackPatchStart)
+        document.addEventListener(localFeedbackPatchEndEventName, this.#onLocalFeedbackPatchEnd)
         document.addEventListener("toast", this.#onToastEvent)
     }
 
@@ -65,6 +82,8 @@ class AppToast extends HTMLElement {
 
         document.removeEventListener("datastar-fetch", this.#onDatastarFetch)
         document.removeEventListener("datastar-signal-patch", this.#onDatastarSignalPatch)
+        document.removeEventListener(localFeedbackPatchStartEventName, this.#onLocalFeedbackPatchStart)
+        document.removeEventListener(localFeedbackPatchEndEventName, this.#onLocalFeedbackPatchEnd)
         document.removeEventListener("toast", this.#onToastEvent)
         activeAppToast = null
     }
@@ -136,12 +155,17 @@ class AppToast extends HTMLElement {
 
     /**
      * Datastar custom backend feedback arrives as signal patches. Non-empty
-     * `feedbackErrors` marks active requests as failed so their later `finished`
-     * fetch event does not show a saved toast.
+     * backend-patched `feedbackErrors` marks active requests as failed so their
+     * later `finished` fetch event does not show a saved toast. Local fallback
+     * patches are ignored here.
      * @param {Event} event
      * @returns {void}
      */
     #handleDatastarSignalPatch(event) {
+        if (this.#localFeedbackPatchDepth > 0) {
+            return
+        }
+
         const detail = AppToast.#getDatastarSignalPatchDetail(event)
         if (!detail || !AppToast.#hasFeedbackErrors(detail.feedbackErrors)) {
             return

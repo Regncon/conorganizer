@@ -3,6 +3,8 @@
 import { mergePatch } from "/static/datastar.js"
 
 const feedbackSignalName = "feedbackErrors"
+const localFeedbackPatchStartEventName = "feedback-errors-local-patch-start"
+const localFeedbackPatchEndEventName = "feedback-errors-local-patch-end"
 const fallbackFeedbackMessage = "Klarte ikkje å lagre endringa. Prøv igjen."
 const feedbackRootSelector = "form, dialog"
 
@@ -19,6 +21,9 @@ const feedbackRootSelector = "form, dialog"
 
 /** @type {Map<HTMLElement, string>} */
 const activeRequestTriggers = new Map()
+
+/** @type {number} */
+let localFeedbackPatchDepth = 0
 
 // Datastar emits `finished` after both success and failure; these triggers keep their error visible.
 /** @type {WeakSet<HTMLElement>} */
@@ -85,13 +90,17 @@ function handleDatastarFetch(event) {
  * Datastar custom backend feedback arrives as signal patches:
  * `{ feedbackErrors: { [key]: message } }`.
  * The message elements render the signal directly; this listener only marks active
- * requests with patched errors so the later `finished` fetch event does not clear
- * the backend message.
+ * requests with backend-patched errors so the later `finished` fetch event does
+ * not clear the backend message. Local fallback patches are ignored here.
  *
  * @param {Event} event
  * @returns {void}
  */
 function handleDatastarSignalPatch(event) {
+    if (localFeedbackPatchDepth > 0) {
+        return
+    }
+
     const detail = getDatastarSignalPatchDetail(event)
     const feedbackErrors = detail?.[feedbackSignalName]
     if (!feedbackErrors) {
@@ -208,11 +217,18 @@ function markActiveTriggersWithPatchedErrors(feedbackErrors) {
  * @returns {void}
  */
 function patchFeedbackError(key, message) {
-    mergePatch({
-        [feedbackSignalName]: {
-            [key]: message,
-        },
-    })
+    localFeedbackPatchDepth += 1
+    document.dispatchEvent(new CustomEvent(localFeedbackPatchStartEventName))
+    try {
+        mergePatch({
+            [feedbackSignalName]: {
+                [key]: message,
+            },
+        })
+    } finally {
+        document.dispatchEvent(new CustomEvent(localFeedbackPatchEndEventName))
+        localFeedbackPatchDepth = Math.max(0, localFeedbackPatchDepth - 1)
+    }
 }
 
 /**
