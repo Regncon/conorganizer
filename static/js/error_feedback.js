@@ -16,7 +16,6 @@ document.addEventListener("datastar-fetch", handleDatastarFetch)
  */
 function handleDatastarFetch(event) {
     const detail = getDatastarFetchDetail(event)
-    console.log("HERERE", detail)
     if (!detail || !(detail.el instanceof HTMLElement)) {
         return
     }
