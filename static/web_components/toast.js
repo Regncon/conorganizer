@@ -6,6 +6,7 @@ const CUSTOM_ELEMENT_TAG_NAME = "app-toast"
  * @typedef {{ message?: unknown }} ToastEventDetail
  * @typedef {"started" | "finished" | "error" | "retrying" | "retries-failed"} DatastarFetchType
  * @typedef {{ type: DatastarFetchType, el: Element | null }} DatastarFetchEventDetail
+ * @typedef {{ feedbackErrors?: unknown }} DatastarSignalPatchDetail
  * @typedef {{ activeCount: number, failed: boolean }} IndicatorState
  */
 
@@ -31,6 +32,9 @@ class AppToast extends HTMLElement {
     #onDatastarFetch = (event) => this.#handleDatastarFetch(event)
 
     /** @type {(event: Event) => void} */
+    #onDatastarSignalPatch = (event) => this.#handleDatastarSignalPatch(event)
+
+    /** @type {(event: Event) => void} */
     #onToastEvent = (event) => this.#handleToastEvent(event)
 
     /** @returns {void} */
@@ -48,6 +52,7 @@ class AppToast extends HTMLElement {
 
         activeAppToast = this
         document.addEventListener("datastar-fetch", this.#onDatastarFetch)
+        document.addEventListener("datastar-signal-patch", this.#onDatastarSignalPatch)
         document.addEventListener("toast", this.#onToastEvent)
     }
 
@@ -58,6 +63,7 @@ class AppToast extends HTMLElement {
         }
 
         document.removeEventListener("datastar-fetch", this.#onDatastarFetch)
+        document.removeEventListener("datastar-signal-patch", this.#onDatastarSignalPatch)
         document.removeEventListener("toast", this.#onToastEvent)
         activeAppToast = null
     }
@@ -128,6 +134,22 @@ class AppToast extends HTMLElement {
     }
 
     /**
+     * Server-patched feedback errors mean the request completed, but not as a save success.
+     * @param {Event} event
+     * @returns {void}
+     */
+    #handleDatastarSignalPatch(event) {
+        const detail = AppToast.#getDatastarSignalPatchDetail(event)
+        if (!detail || !AppToast.#hasFeedbackErrors(detail.feedbackErrors)) {
+            return
+        }
+
+        for (const state of this.#indicatorStates.values()) {
+            state.failed = true
+        }
+    }
+
+    /**
      * @param {string} indicator
      * @returns {IndicatorState}
      */
@@ -181,6 +203,36 @@ class AppToast extends HTMLElement {
             || type === "error"
             || type === "retrying"
             || type === "retries-failed"
+    }
+
+    /**
+     * @param {Event} event
+     * @returns {DatastarSignalPatchDetail | null}
+     */
+    static #getDatastarSignalPatchDetail(event) {
+        if (!(event instanceof CustomEvent)) {
+            return null
+        }
+
+        /** @type {unknown} */
+        const detail = event.detail
+        return detail && typeof detail === "object"
+            ? /** @type {DatastarSignalPatchDetail} */ (detail)
+            : null
+    }
+
+    /**
+     * @param {unknown} feedbackErrors
+     * @returns {boolean}
+     */
+    static #hasFeedbackErrors(feedbackErrors) {
+        if (!feedbackErrors || typeof feedbackErrors !== "object") {
+            return false
+        }
+
+        return Object.values(feedbackErrors).some((message) => (
+            typeof message === "string" && message.trim() !== ""
+        ))
     }
 
     /**
