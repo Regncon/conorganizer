@@ -26,6 +26,18 @@ const missingMessage = "Mangler toast-melding"
 //		detail: { message: "Lagret" },
 //	}))
 //
+// A Datastar click can dispatch the same event for a custom message:
+//
+//	<button
+//		data-on:click="evt.target.dispatchEvent(new CustomEvent('toast', {
+//			bubbles: true,
+//			composed: true,
+//			detail: { message: 'Kopiert' }
+//		}))"
+//	>
+//		Kopier
+//	</button>
+//
 // Backend error feedback suppresses the saved toast when the same Datastar
 // request receives non-empty feedbackErrors before its finished event.
 templ Render(message string, icon icons.IconType) {
