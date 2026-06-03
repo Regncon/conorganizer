@@ -109,7 +109,7 @@ func updateEventPuljeMembershipWithAudit(ctx context.Context, db *sql.DB, logger
 	return nil
 }
 
-func updateRoomInRelationEventPuljeWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, roomID int64) error {
+func updateRoomInRelationEventPuljeWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, roomIDstring string) error {
 	updatedByID, err := currentUserDBID(ctx, db, logger)
 	if err != nil {
 		return err
@@ -121,10 +121,11 @@ func updateRoomInRelationEventPuljeWithAudit(ctx context.Context, db *sql.DB, lo
 	}
 	defer tx.Rollback()
 
-	var roomIDValue sql.NullInt64
-	if roomID > 0 {
-		roomIDValue = sql.NullInt64{
-			Int64: roomID,
+	// convert roomID from string to sql.NullInt64
+	var roomID sql.NullInt64
+	if parsedRoomID, err := strconv.ParseInt(roomIDstring, 10, 64); err == nil {
+		roomID = sql.NullInt64{
+			Int64: parsedRoomID,
 			Valid: true,
 		}
 	}
@@ -135,7 +136,7 @@ func updateRoomInRelationEventPuljeWithAudit(ctx context.Context, db *sql.DB, lo
 		WHERE event_id = ? AND pulje_id = ?
 	`
 
-	if _, err := tx.ExecContext(ctx, upsert, roomIDValue, eventID, puljeID); err != nil {
+	if _, err := tx.ExecContext(ctx, upsert, roomID, eventID, puljeID); err != nil {
 		return fmt.Errorf("upsert relation_event_puljer for event %q and pulje %q room %v: %w", eventID, puljeID, roomID, err)
 	}
 	if err := touchEventUpdatedAtWithUserID(ctx, tx, eventID, updatedByID); err != nil {
