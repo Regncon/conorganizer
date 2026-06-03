@@ -10,15 +10,28 @@ import (
 
 const feedbackErrorsSignalName = "feedbackErrors"
 
-// FeedbackErrors collects backend validation messages for inline feedback.
+// Error feedback has two supported paths:
 //
-// Example:
+// 1. Datastar request fallback:
 //
+//	<form { errorfeedback.DefaultMessage("Could not save. Try again.")... }>
+//		<input
+//			data-on:change="@put('/api/name')"
+//			{ errorfeedback.Attrs("name")... }
+//		/>
+//		@errorfeedback.Message("name")
+//	</form>
+//
+// The JS clears feedbackErrors["name"] when the request starts. If the request
+// fails before backend code can answer, it sets the fallback message.
+//
+// 2. Custom backend feedback:
+//
+//	sse := datastar.NewSSE(w, r)
 //	feedback := errorfeedback.New("name", "email")
 //	feedback.Set("name", "Name must be filled in.")
-//	if feedback.HasErrors() {
-//		return feedback.Patch(sse)
-//	}
+//	feedback.Clear("email")
+//	return feedback.Patch(sse)
 //
 // Patch sends this Datastar signal shape:
 //
@@ -33,6 +46,15 @@ const feedbackErrorsSignalName = "feedbackErrors"
 //
 //	<input { errorfeedback.Attrs("name")... } />
 //	@errorfeedback.Message("name")
+//
+// Normal input value signals are separate from error feedback. Initialize them
+// with the page/component's normal data-signals helper, not this package.
+//
+//	data-signals={ dataSignals(map[string]string{"name": ""}) }
+//
+// Feedback keys live in one shared page signal:
+//
+//	feedbackErrors["name"]
 type FeedbackErrors struct {
 	messages map[string]string
 }
