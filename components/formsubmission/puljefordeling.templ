@@ -277,11 +277,12 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 					/>
 				</label>
 				<label
-					class="checkbox-background form-group-checkbox"
+					class="form-group"
 					style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
 				>
-					<span>Legg til rom</span>
+					<span class="label-small color-strong">Legg til rom</span>
 					<select
+						class="input"
 						data-bind={ fmt.Sprintf("isInRoom%s", pulje.ID) }
 						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/assign-room/%s', {contentType: 'json'})", eventId, pulje.ID) }
 						if !eventPulje.IsInPulje {
@@ -293,7 +294,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 							<option
 								value={ room.ID }
 								style={ templ.KV("color: yellow;", room.IsFull()), templ.KV("color: red", room.CurrentOccupancy()>room.MaxConcurrentGames) }
-								if eventPulje.RoomID.Valid && eventPulje.RoomID.Int64 == int64(room.ID) {
+								if eventPulje.RoomID.Valid && eventPulje.RoomID.Int64 == room.ID {
 									selected
 								}
 							>
