@@ -131,6 +131,13 @@ templ floorPuljeContainer(floor int, rooms []models.RoomByPulje) {
 }
 
 templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+	<script>
+        window.addEventListener("pageshow", e => {
+            if (e.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
 	<style>
 		.rooms-layout {
 			display: flex;
