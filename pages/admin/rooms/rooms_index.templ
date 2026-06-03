@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	"log/slog"
@@ -13,24 +14,96 @@ import (
 
 func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
 	logger = logger.With("component", "rooms")
+
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(r.Context())
 		if err := layouts.Base(
 			"Rom oversikt",
 			userInfo,
-			roomsIndex(db, logger),
+			roomsIndex(db, logger, RoomsPageContent(db, logger), "/"),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
 		}
 	})
+
+	router.Route("/{pulje}", func(roomByPuljeRouter chi.Router) {
+		roomByPuljeRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			var ctx = r.Context()
+			userInfo := userctx.GetUserRequestInfo(r.Context())
+
+			puljeQuery := chi.URLParam(r, "pulje")
+			if puljeQuery == "" {
+				http.Error(w, "Valid pulje is required. Got: "+puljeQuery, http.StatusBadRequest)
+				return
+			}
+
+			var pulje = models.Pulje(puljeQuery)
+
+			if err := layouts.Base(
+				"Rom oversikt",
+				userInfo,
+				roomsIndex(db, logger, RoomsByPuljePageContent(db, logger, models.Pulje(pulje)), pulje),
+			).Render(ctx, w); err != nil {
+				logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
+			}
+		})
+
+	})
 }
 
-templ roomsIndex(db *sql.DB, logger *slog.Logger) {
+templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, puljeQuery models.Pulje) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Admin", Url: "/admin/"},
 		{Name: "Oversikt over rom", Url: ""},
 	})
-	@RoomsPageContent(db, logger)
+	<div class="page-content-container flex flex-col" style="gap: 1rem;">
+		<style>
+            .tabs {
+                display: flex;
+                gap: 0.5rem;
+                overflow-x: auto;
+                padding-bottom: 0.25rem;
+                border-bottom: 1px solid var(--color-accent-blue);
+            }
+
+            .tabs a {
+                white-space: nowrap;
+                text-decoration: none;
+                padding: 0.75rem 1rem;
+                border-radius: 8px;
+                color: var(--color-primary-text);
+                font-weight: 500;
+            }
+
+            .tabs a:hover {
+                color: var(--color-primary-hover);
+            }
+
+            .tabs a.active {
+                background: var(--primary);
+                color: var(--color-primary);
+            }
+            .tabs a.active a:hover {
+                background: var(--primary);
+                color: var(--color-primary-hover);
+            }
+        </style>
+		<h1 class="page-heading has-helptext" style="text-align: center;">Administrer rom</h1>
+		<p class="page-heading-help-text">
+			Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom
+		</p>
+		<div class="tabs">
+			<a role="button" href="/admin/rooms/" class={ templ.KV("active", puljeQuery == "/") }>Rediger rom</a>
+			for _,pulje := range models.AllPuljer() {
+				<a
+					role="button"
+					href={ "/admin/rooms/" + pulje }
+					class={ templ.KV("active", puljeQuery == pulje) }
+				>{ pulje }</a>
+			}
+		</div>
+		@children
+	</div>
 }

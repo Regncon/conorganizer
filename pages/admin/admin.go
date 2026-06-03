@@ -535,6 +535,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					})
 				})
 			})
+
 			rooms.RoomsLayoutRoute(roomRouter, db, baseLogger, err)
 		})
 	})

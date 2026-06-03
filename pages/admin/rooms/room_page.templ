@@ -218,29 +218,23 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
         }
         }
 	</style>
-	<div class="page-content-container">
-		<h1 class="page-heading has-helptext">Administrer rom</h1>
-		<p class="page-heading-help-text">
-			Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom
-		</p>
-		<button
-			type="button"
-			class="btn btn--outline"
-			data-on:click="
+	<button
+		type="button"
+		class="btn btn--outline"
+		data-on:click="
                 @get('/admin/rooms/api/create/');
                 document.getElementById('room-dialog').showModal()
             "
-		>Ligg til nytt rom</button>
-		@formModal()
-		<div class="rooms-layout">
-			{{ floors := getRoomsByFloor(db, logger) }}
-			if len(floors) > 0 {
-				for _, floorGroup := range floors {
-					@floorContainer(floorGroup.Floor, floorGroup.Rooms)
-				}
-			} else {
-				<p>No room data found, be the first to insert now!</p>
+	>Ligg til nytt rom</button>
+	@formModal()
+	<div class="rooms-layout">
+		{{ floors := getRoomsByFloor(db, logger) }}
+		if len(floors) > 0 {
+			for _, floorGroup := range floors {
+				@floorContainer(floorGroup.Floor, floorGroup.Rooms)
 			}
-		</div>
+		} else {
+			<p>No room data found, be the first to insert now!</p>
+		}
 	</div>
 }

@@ -306,6 +306,7 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
             r.id,
             r.name,
             r.room_number,
+            r.floor,
             r.max_concurrent_games,
             r.notes,
 
@@ -344,6 +345,7 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 			&row.RoomID,
 			&row.RoomName,
 			&row.RoomNumber,
+			&row.Floor,
 			&row.MaxConcurrentGames,
 			&row.RoomNotes,
 
@@ -366,6 +368,7 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 				ID:                 row.RoomID,
 				Name:               row.RoomName,
 				RoomNumber:         row.RoomNumber,
+				Floor:              row.Floor,
 				MaxConcurrentGames: row.MaxConcurrentGames,
 				Notes:              row.RoomNotes,
 				AssignedEventsID:   []models.RoomEventPuljeSummary{},

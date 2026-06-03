@@ -130,7 +130,6 @@ func updateRoomInRelationEventPuljeWithAudit(ctx context.Context, db *sql.DB, lo
 		}
 	}
 
-	// change
 	const upsert = `
 		UPDATE relation_event_puljer
 		SET room_id = ?
