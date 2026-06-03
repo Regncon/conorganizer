@@ -1,6 +1,4 @@
-// @ts-check
-
-import { mergePatch } from "/static/datastar.js"
+import { mergePatch } from "../datastar.js"
 
 const feedbackSignalName = "feedbackErrors"
 const localFeedbackPatchStartEventName = "feedback-errors-local-patch-start"
