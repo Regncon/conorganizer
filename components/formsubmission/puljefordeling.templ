@@ -160,35 +160,24 @@ func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, kv jetstream.KeyValue,
 
 			// todo: convert this struct to nested json?
 			type Store struct {
-				IsInRoomFredagKveld  string `json:"isInRoomFredagKveld"`
-				IsInRoomLordagMorgen string `json:"isInRoomLordagMorgen"`
-				IsInRoomLordagKveld  string `json:"isInRoomLordagKveld"`
-				IsInRoomSondagMorgen string `json:"isInRoomSondagMorgen"`
+				RoomAssignment map[models.Pulje]int64 `json:"roomAssignment"`
 			}
 			store := &Store{}
-
 			if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
 				fmt.Println(readSignalErr.Error())
 				http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 			}
 
-			// Ugly hack to make data indexable
-			var inputByPulje = make(map[models.Pulje]string)
-			inputByPulje[models.PuljeFredagKveld] = store.IsInRoomFredagKveld
-			inputByPulje[models.PuljeLordagMorgen] = store.IsInRoomLordagMorgen
-			inputByPulje[models.PuljeLordagKveld] = store.IsInRoomLordagKveld
-			inputByPulje[models.PuljeSondagMorgen] = store.IsInRoomSondagMorgen
-
-			var roomID = inputByPulje[models.Pulje(puljeId)]
+			roomID := store.RoomAssignment[models.Pulje(puljeId)]
 
 			if err := updateRoomInRelationEventPuljeWithAudit(r.Context(), db, logger, eventID, puljeId, roomID); err != nil {
-				logger.Error(fmt.Errorf("failed to upsert room %s in relation_event_puljer for event %s and pulje %s: %w", roomID, eventID, puljeId, err).Error())
+				logger.Error(fmt.Errorf("failed to upsert room %d in relation_event_puljer for event %s and pulje %s: %w", roomID, eventID, puljeId, err).Error())
 				http.Error(w, "Failed to update room in relation_event_puljer", http.StatusInternalServerError)
 				return
 			}
 
 			if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
-				logger.Error(fmt.Errorf("failed to broadcast room %s update for event %s and pulje %s: %w", roomID, eventID, puljeId, err).Error())
+				logger.Error(fmt.Errorf("failed to broadcast room %d update for event %s and pulje %s: %w", roomID, eventID, puljeId, err).Error())
 				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 				return
 			}
@@ -279,26 +268,26 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 				<label
 					class="form-group"
 					style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
+                    if eventPulje.RoomID.Valid {
+					    data-signals={ fmt.Sprintf("{roomAssignment:  {%s: %d}}", pulje.ID, eventPulje.RoomID.Int64) }
+                    }
 				>
 					<span class="label-small color-strong">Legg til rom</span>
 					<select
 						class="input"
-						data-bind={ fmt.Sprintf("isInRoom%s", pulje.ID) }
-						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/assign-room/%s', {contentType: 'json'})", eventId, pulje.ID) }
+						data-bind={ fmt.Sprintf("roomAssignment.%s", pulje.ID) }
+						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/assign-room/%s')", eventId, pulje.ID) }
 						if !eventPulje.IsInPulje {
 							disabled
 						}
 					>
-						<option value="lol git gud">Ikke tildelt</option>
+						<option value={ int64(0) }>Ikke tildelt</option>
 						for _,room := range roomStatus[pulje.ID] {
 							<option
 								value={ room.ID }
 								style={ templ.KV("color: yellow;", room.IsFull()), templ.KV("color: red", room.CurrentOccupancy()>room.MaxConcurrentGames) }
-								if eventPulje.RoomID.Valid && eventPulje.RoomID.Int64 == room.ID {
-									selected
-								}
 							>
-								{ room.RoomNumber } ({ room.CurrentOccupancy() }/{ room.MaxConcurrentGames })
+								#{ room.ID } { room.RoomNumber } ({ room.CurrentOccupancy() }/{ room.MaxConcurrentGames })
 							</option>
 						}
 					</select>
