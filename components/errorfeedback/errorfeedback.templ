@@ -32,8 +32,20 @@ type FeedbackErrors struct {
 	messages map[string]string
 }
 
-// New initializes all known feedback keys as empty, so Patch clears old messages
-// for keys that are not given a new error message.
+// New initializes all feedback keys this response is responsible for.
+// Passing keys up front matters: Patch sends empty strings for keys without a
+// new error, which clears any old message already visible on the page.
+//
+//	feedback := errorfeedback.New("name", "email")
+//	if name == "" {
+//		feedback.Set("name", "Name must be filled in.")
+//	}
+//	if emailIsValid {
+//		feedback.Clear("email") // Optional; New already initialized it as clear.
+//	}
+//	return feedback.Patch(sse)
+//
+// If you omit a key from New, Patch will not clear that key on the frontend.
 func New(keys ...string) *FeedbackErrors {
 	feedback := &FeedbackErrors{
 		messages: make(map[string]string, len(keys)),
@@ -47,6 +59,10 @@ func New(keys ...string) *FeedbackErrors {
 }
 
 // Set adds or replaces the message for one feedback key.
+//
+//	if name == "" {
+//		feedback.Set("name", "Name must be filled in.")
+//	}
 func (feedback *FeedbackErrors) Set(key string, message string) {
 	if feedback == nil || key == "" {
 		return
@@ -56,11 +72,19 @@ func (feedback *FeedbackErrors) Set(key string, message string) {
 }
 
 // Clear marks one feedback key as having no error.
+//
+//	if emailIsValid {
+//		feedback.Clear("email")
+//	}
 func (feedback *FeedbackErrors) Clear(key string) {
 	feedback.Set(key, "")
 }
 
 // HasErrors reports whether any feedback key has a non-empty message.
+//
+//	if feedback.HasErrors() {
+//		return feedback.Patch(sse)
+//	}
 func (feedback *FeedbackErrors) HasErrors() bool {
 	if feedback == nil {
 		return false
@@ -74,6 +98,12 @@ func (feedback *FeedbackErrors) HasErrors() bool {
 }
 
 // Patch sends the collected feedback messages as a Datastar signal patch.
+// Call it when you want to show errors, or when you want initialized empty keys
+// from New to clear old visible messages.
+//
+//	if err := feedback.Patch(sse); err != nil {
+//		return err
+//	}
 func (feedback *FeedbackErrors) Patch(sse *datastar.ServerSentEventGenerator) error {
 	if sse == nil {
 		return fmt.Errorf("patch feedback errors: sse is nil")
