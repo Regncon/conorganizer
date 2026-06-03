@@ -39,8 +39,12 @@ func (g *flowGraph) addEdge(from, to, capacity, cost int) {
 	g.edges = append(g.edges, edge{from, 0, -cost, 0})
 }
 
-// minCostFlow runs successive shortest-path augmentation until no
-// augmenting path remains. It returns (totalFlow, totalCost).
+// minCostFlow runs successive shortest-path augmentation, pushing flow only
+// while it improves total value, and returns (totalFlow, totalCost). Because
+// the participation bonus is baked into the assignment-edge costs, this stops
+// once the cheapest remaining augmenting path is non-negative — i.e. it fills
+// chairs only when a new seat is worth more than it costs, rather than always
+// pushing to maximum flow.
 func (g *flowGraph) minCostFlow(s, t int) (int, int) {
 	totalFlow, totalCost := 0, 0
 	for {
@@ -96,7 +100,13 @@ func (g *flowGraph) spfaAugment(s, t int) (int, int, bool) {
 		}
 	}
 
-	if dist[t] == math.MaxInt {
+	// Stop when no welfare-improving augmentation remains. A path with
+	// non-negative total cost would not increase total value (the
+	// participation bonus is already folded into the edge costs), so we leave
+	// the remaining seats empty rather than make a losing trade. SSP visits
+	// augmenting paths in non-decreasing cost order, so once the cheapest is
+	// non-negative we are at the optimal flow value.
+	if dist[t] == math.MaxInt || dist[t] >= 0 {
 		return 0, 0, false
 	}
 

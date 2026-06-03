@@ -14,14 +14,24 @@ import (
 	smodel "github.com/Regncon/conorganizer/service/puljefordeling/solver/model"
 )
 
+// AssignedPlayer is one seated participant, with enough context for the UI to
+// show how much they wanted this game, whether they carry the DM bump, and
+// whether they were bumped off a stronger preference to make room for others.
+type AssignedPlayer struct {
+	Name  string
+	IsDM  bool                 // runs at least one game in the weekend (DM bump)
+	Level models.InterestLevel // their interest in the game they got
+	Moved bool                 // seated below their best wish this pulje (made room for others)
+}
+
 // EmulatedEvent is the proposed seating for a single event within a pulje.
 type EmulatedEvent struct {
 	EventID         string
 	Title           string
 	Capacity        int
-	GMName          string   // empty if the event has no GM assigned
-	AssignedPlayers []string // participant names, sorted
-	Undersubscribed bool     // fewer than the solver's viable-player threshold
+	GMName          string           // empty if the event has no GM assigned
+	AssignedPlayers []AssignedPlayer // sorted by name
+	Undersubscribed bool             // fewer than the solver's viable-player threshold
 }
 
 // EmulatedPulje is the proposed seating for one pulje (time slot).
@@ -49,9 +59,8 @@ type eligibleEvent struct {
 
 // EmulateSeatings builds the solver model from the database, runs the
 // distribution for every pulje in chronological order, and returns the
-// proposed seating. lateBoost holds the per-pulje late-boost toggle (a missing
-// or false entry means no boost). It performs only reads.
-func EmulateSeatings(db *sql.DB, lateBoost map[models.Pulje]bool) (Emulation, error) {
+// proposed seating. It performs only reads.
+func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	puljer, err := loadPuljer(db)
 	if err != nil {
 		return Emulation{}, err
@@ -102,27 +111,35 @@ func EmulateSeatings(db *sql.DB, lateBoost map[models.Pulje]bool) (Emulation, er
 		})
 	}
 
+	// Players who run any game in the weekend carry the DM bump.
+	dmSet := make(map[int]bool, len(gms))
+	for _, bhID := range gms {
+		dmSet[bhID] = true
+	}
+
 	year := puljer[0].StartAt.TimeOrZero().Year()
 	state := solver.NewState(year, weekend)
 
 	emulation := Emulation{Year: year, PlayerCount: len(players)}
 	for i, slot := range weekend.Slots {
 		pulje := puljer[i]
-		res := state.SolveSlot(slot, players, lateBoost[pulje.ID])
-		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names))
+		res := state.SolveSlot(slot, players)
+		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, prefs, dmSet))
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
 
 	return emulation, nil
 }
 
-// shapePulje resolves the solver's ID-based result into display-ready names.
+// shapePulje resolves the solver's ID-based result into display-ready data.
 func shapePulje(
 	pulje models.PuljeRow,
 	slot smodel.Slot,
 	res smodel.SlotResult,
 	gms map[string]int,
 	names map[int]string,
+	prefs map[int]map[string]map[string]smodel.Score,
+	dmSet map[int]bool,
 ) EmulatedPulje {
 	under := make(map[string]bool, len(res.UndersubscribedEvents))
 	for _, eid := range res.UndersubscribedEvents {
@@ -142,7 +159,7 @@ func shapePulje(
 			EventID:         ev.ID,
 			Title:           ev.Name,
 			Capacity:        ev.Capacity,
-			AssignedPlayers: playerIDsToNames(res.Assignments[ev.ID], names),
+			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet),
 			Undersubscribed: under[ev.ID],
 		}
 		if gmID, ok := gms[eventPuljeKey(ev.ID, pulje.ID)]; ok {
@@ -152,6 +169,59 @@ func shapePulje(
 	}
 
 	return out
+}
+
+// assignedPlayers turns solver player IDs into display rows: name, DM flag, and
+// the interest level the player had for the game they were seated in.
+func assignedPlayers(
+	ids []string,
+	eventID, puljeID string,
+	names map[int]string,
+	prefs map[int]map[string]map[string]smodel.Score,
+	dmSet map[int]bool,
+) []AssignedPlayer {
+	if len(ids) == 0 {
+		return nil
+	}
+	out := make([]AssignedPlayer, 0, len(ids))
+	for _, id := range ids {
+		bh, err := strconv.Atoi(id)
+		if err != nil {
+			out = append(out, AssignedPlayer{Name: id})
+			continue
+		}
+		ap := AssignedPlayer{Name: names[bh], IsDM: dmSet[bh]}
+		if byPulje, ok := prefs[bh]; ok {
+			got := byPulje[puljeID][eventID]
+			ap.Level = levelFromScore(got)
+			// "Moved" = seated below the best interest they expressed this
+			// pulje, i.e. they gave up a stronger wish so others could be seated.
+			var best smodel.Score
+			for _, sc := range byPulje[puljeID] {
+				if sc > best {
+					best = sc
+				}
+			}
+			ap.Moved = got < best
+		}
+		out = append(out, ap)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
+	return out
+}
+
+// levelFromScore reverses the InterestLevel.Score() mapping for display.
+func levelFromScore(score smodel.Score) models.InterestLevel {
+	switch score {
+	case 5:
+		return models.InterestLevelHigh
+	case 3:
+		return models.InterestLevelMedium
+	case 1:
+		return models.InterestLevelLow
+	default:
+		return models.InterestLevelNone
+	}
 }
 
 // --- data loading -----------------------------------------------------------
@@ -277,8 +347,8 @@ func loadPrefs(
 			return nil, fmt.Errorf("scan interest row: %w", err)
 		}
 
-		// Skip interests for events not placed in this pulje, so the solver's
-		// opportunity counting only sees real, seatable choices.
+		// Skip interests for events not placed in this pulje, so the solver
+		// only sees real, seatable choices.
 		if _, ok := events[pulje][eventID]; !ok {
 			continue
 		}

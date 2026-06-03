@@ -7,10 +7,55 @@ import (
 	"github.com/Regncon/conorganizer/service/puljefordeling/solver/model"
 )
 
-// dmBonus is the flat adjustment added to every edge involving a player who
-// runs at least one event during the weekend. It rewards their contribution
-// by giving them priority for the slots in which they themselves are players.
-const dmBonus = 10
+// Weight bands for the assignment graph. The solver maximises total weight
+// among the assignments it makes, so these constants encode the priority order
+// we want. Bands are spaced by 200, and every within-band bump
+// (miss / never-seated / DM) sums to less than that — so the declared order
+// below can never be broken by a bump.
+//
+// Declared priority, highest first (bumps break ties within a band):
+//
+//	1. unsatisfied + top choice (Veldig)   — the satisfaction goal
+//	2. satisfied   + top choice
+//	3. medium interest (Middels)           — satisfied or not, same band
+//	4. low interest    (Litt)              — satisfied or not, same band
+//
+// The unsatisfied advantage exists ONLY on the top choice (the satisfaction
+// goal); Middels/Litt are valued the same whether or not the player is
+// satisfied, which shrinks the surface for "stay unsatisfied" gaming.
+const (
+	bandUnsatVeldig = 800
+	bandSatVeldig   = 600
+	bandMiddels     = 400
+	bandLitt        = 200
+)
+
+// Within-band bumps (all small relative to the 200 band gap).
+const (
+	// dmBump rewards a player who runs at least one event in the weekend. It
+	// stays within the band, so a regular player's unmet top choice (≥800)
+	// always outranks a DM's medium/low interest (≤470).
+	dmBump = 60
+
+	// neverSeatedBump nudges a player who has not been given any seat yet this
+	// weekend. Small and self-limiting (to stay never-seated you must forgo
+	// seats you'd have wanted), so it is not worth gaming.
+	neverSeatedBump = 10
+
+	// missStep / missCap implement the (un-gameable) scarcity bonus: priority
+	// for a top choice grows with the number of prior puljer in which a player
+	// wanted a top choice but did not get one. It is backward-looking on locked
+	// results, so it cannot be farmed by concentrating declarations.
+	missStep = 20
+	missCap  = 60
+)
+
+// participationBonus prices "one more attendee seated" in the same units as the
+// weights. It is added to every assignment edge; the flow stops filling chairs
+// once the next seat would cost more than this in total preference (see
+// flowGraph.minCostFlow). Raise toward infinity to recover "fill every chair";
+// lower toward zero for pure welfare-maximisation.
+const participationBonus = 300
 
 // minViablePlayers is the threshold below which an event is flagged for
 // organiser review (not cancelled). Three players is enough for most
@@ -18,13 +63,16 @@ const dmBonus = 10
 // at the assignment and decide.
 const minViablePlayers = 3
 
-// State carries satisfaction data and seeding parameters forward across slots.
-// A player is satisfied once they have received at least one assignment
-// to an event they scored 5.
+// State carries fairness data forward across slots:
+//   - satisfied: has received a top-choice (score-5) assignment
+//   - seated:    has received any assignment at all this weekend
+//   - misses:    number of prior puljer the player wanted a top choice and
+//     missed (drives the scarcity bonus)
 type State struct {
 	satisfied map[string]bool
+	seated    map[string]bool
+	misses    map[string]int
 	year      int
-	slotIDs   []string
 	slotIndex int
 
 	// dmSlots[playerID] is the set of slot IDs in which playerID is DMing
@@ -33,7 +81,7 @@ type State struct {
 	dmSlots map[string]map[string]bool
 
 	// isDM[playerID] is true if playerID DMs at least one event anywhere
-	// in the weekend. Such players receive a fixed bonus on every edge.
+	// in the weekend. Such players receive a fixed bump on every edge.
 	isDM map[string]bool
 }
 
@@ -42,16 +90,12 @@ type State struct {
 // year is used to derive per-slot tie-breaking seeds (seed = year×1000 + slotIndex),
 // making results deterministic within a year but different across years.
 //
-// weekend provides the full slot schedule so the solver can: (1) compute the
-// number of remaining score-5 opportunities for each unsatisfied player,
-// (2) recognise which players DM events in which slots, and (3) apply the DM
-// bonus across the weekend.
+// weekend provides the full slot schedule so the solver can recognise which
+// players DM events in which slots and apply the DM bump across the weekend.
 func NewState(year int, weekend model.Weekend) *State {
-	slotIDs := make([]string, len(weekend.Slots))
 	dmSlots := make(map[string]map[string]bool)
 	isDM := make(map[string]bool)
-	for i, sl := range weekend.Slots {
-		slotIDs[i] = sl.ID
+	for _, sl := range weekend.Slots {
 		for _, ev := range sl.Events {
 			if ev.DMID == "" {
 				continue
@@ -65,8 +109,9 @@ func NewState(year int, weekend model.Weekend) *State {
 	}
 	return &State{
 		satisfied: make(map[string]bool),
+		seated:    make(map[string]bool),
+		misses:    make(map[string]int),
 		year:      year,
-		slotIDs:   slotIDs,
 		dmSlots:   dmSlots,
 		isDM:      isDM,
 	}
@@ -87,21 +132,19 @@ func (s *State) IsDM(playerID string) bool {
 	return s.isDM[playerID]
 }
 
-// SolveSlot assigns players to events for one slot, updates the satisfaction
+// SolveSlot assigns players to events for one slot, updates the fairness
 // state, and returns the result.
 //
 // Players who are DMing any event in this slot are excluded from the player
 // pool — they cannot also be assigned as participants in the same slot.
 //
-// lateBoost, when true, doubles all scores for unsatisfied non-DM players (in
-// addition to the permanent score-5 doubling that always applies).
+// Participation is priced (see participationBonus): a chair is filled only when
+// doing so is worth the welfare it costs, so an interested player may be left
+// unseated rather than dragged off a strong preference to fill a seat.
 //
-// Events whose MinPlayers threshold is not met are NOT cancelled — they are
-// reported in UndersubscribedEvents for the organiser to review manually.
-// This deliberately avoids the cascading edge cases that automated
-// cancellation could produce; organisers can talk to players, allow swaps,
-// merge groups, or accept a smaller table at their discretion.
-func (s *State) SolveSlot(slot model.Slot, players []model.Player, lateBoost bool) model.SlotResult {
+// Events whose minViablePlayers threshold is not met are NOT cancelled — they
+// are reported in UndersubscribedEvents for the organiser to review manually.
+func (s *State) SolveSlot(slot model.Slot, players []model.Player) model.SlotResult {
 	currentIndex := s.slotIndex
 	seed := int64(s.year)*1000 + int64(currentIndex)
 	s.slotIndex++
@@ -134,19 +177,14 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player, lateBoost boo
 		return result
 	}
 
-	// Shuffle players before building the graph so that equal-score ties are
+	// Shuffle players before building the graph so that equal-weight ties are
 	// broken randomly but reproducibly.
 	rng := rand.New(rand.NewPCG(uint64(seed), 0)) //nolint:gosec
 	rng.Shuffle(len(interested), func(i, j int) {
 		interested[i], interested[j] = interested[j], interested[i]
 	})
 
-	// Compute remaining score-5 opportunities (including current slot) for
-	// each unsatisfied player, excluding slots where the player is DMing.
-	opportunities := s.remainingOpportunities(currentIndex, interested)
-
-	// Single MCMF run — no cancellation cascade.
-	assignments := s.runMCMF(slot.ID, slot.Events, interested, lateBoost, opportunities)
+	assignments := s.runMCMF(slot.ID, slot.Events, interested)
 	result.Assignments = assignments
 
 	// Flag events with fewer than minViablePlayers for human review.
@@ -156,12 +194,13 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player, lateBoost boo
 		}
 	}
 
-	// Update satisfaction state and collect totals.
+	// Update satisfaction/seated state and collect totals.
 	assigned := make(map[string]bool, len(interested))
 	for evID, playerIDs := range assignments {
 		for _, pid := range playerIDs {
 			score := s.lookupScore(pid, slot.ID, evID, interested)
 			result.TotalScore += int(score)
+			s.seated[pid] = true
 			if score == model.MaxScore && !s.satisfied[pid] {
 				s.satisfied[pid] = true
 				result.NewlySatisfied = append(result.NewlySatisfied, pid)
@@ -170,7 +209,20 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player, lateBoost boo
 		}
 	}
 
-	// Collect unassigned players (had interest but no seat was available).
+	// Record a "miss" for every still-unsatisfied player who wanted a top
+	// choice this slot but did not get one — this drives the scarcity bonus in
+	// future slots. It is backward-looking on the locked result, so it cannot
+	// be gamed by how a player declares future interests.
+	for _, p := range interested {
+		if s.satisfied[p.ID] {
+			continue
+		}
+		if wantedTopChoice(p, slot.ID) {
+			s.misses[p.ID]++
+		}
+	}
+
+	// Collect unassigned players (had interest but no seat).
 	for _, p := range interested {
 		if !assigned[p.ID] {
 			result.Unassigned = append(result.Unassigned, p.ID)
@@ -188,35 +240,15 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player, lateBoost boo
 	return result
 }
 
-// remainingOpportunities counts, for each unsatisfied player, how many of the
-// remaining slots (starting at fromIndex) contain at least one event they
-// scored 5 — excluding slots in which the player is DMing. Satisfied players
-// get 0.
-func (s *State) remainingOpportunities(fromIndex int, players []model.Player) map[string]int {
-	out := make(map[string]int, len(players))
-	if fromIndex >= len(s.slotIDs) {
-		return out
-	}
-	remaining := s.slotIDs[fromIndex:]
-	for _, p := range players {
-		if s.satisfied[p.ID] {
-			continue
+// wantedTopChoice reports whether the player rated any event in this slot as a
+// top choice (score 5).
+func wantedTopChoice(p model.Player, slotID string) bool {
+	for _, score := range p.Prefs[slotID] {
+		if score == model.MaxScore {
+			return true
 		}
-		n := 0
-		for _, sid := range remaining {
-			if s.dmSlots[p.ID][sid] {
-				continue
-			}
-			for _, score := range p.Prefs[sid] {
-				if score == model.MaxScore {
-					n++
-					break
-				}
-			}
-		}
-		out[p.ID] = n
 	}
-	return out
+	return false
 }
 
 // runMCMF builds and solves the flow network for the given events and players,
@@ -225,8 +257,6 @@ func (s *State) runMCMF(
 	slotID string,
 	events []model.Event,
 	players []model.Player,
-	lateBoost bool,
-	opportunities map[string]int,
 ) map[string][]string {
 	assignments := make(map[string][]string)
 	if len(events) == 0 {
@@ -261,8 +291,17 @@ func (s *State) runMCMF(
 			if !ok {
 				continue
 			}
-			adj := adjustScore(score, s.satisfied[p.ID], lateBoost, opportunities[p.ID], s.isDM[p.ID])
-			g.addEdge(i+1, P+1+j, 1, -adj)
+			w := adjustScore(
+				score,
+				s.satisfied[p.ID],
+				!s.seated[p.ID],
+				s.isDM[p.ID],
+				s.misses[p.ID],
+			)
+			// Cost is negated (we minimise cost = maximise weight). The
+			// participation bonus is folded into every assignment edge so the
+			// flow stops once a new seat would cost more than it is worth.
+			g.addEdge(i+1, P+1+j, 1, -(w + participationBonus))
 		}
 	}
 
@@ -292,37 +331,42 @@ func (s *State) lookupScore(playerID, slotID, eventID string, players []model.Pl
 	return 0
 }
 
-// adjustScore returns the adjusted edge weight for a (player, event) pair.
+// adjustScore returns the priority weight for a (player, event) edge. Larger =
+// higher priority for that seat. See the band constants for the declared order.
 //
-//   - Satisfied players use their raw score.
-//   - Unsatisfied players on a score-5 edge get base 10 plus a scarcity bonus
-//     max(0, 5 - opportunities). Fewer remaining score-5 opportunities means
-//     higher priority.
-//   - Unsatisfied players on score 1–4 edges get those scores doubled when
-//     lateBoost is enabled, otherwise raw.
-//   - DMs (any player running at least one event in the weekend) receive a
-//     flat +dmBonus on every edge, rewarding their contribution.
-func adjustScore(score model.Score, satisfied, lateBoost bool, opportunities int, isDM bool) int {
-	base := rawAdjusted(score, satisfied, lateBoost, opportunities)
-	if isDM {
-		base += dmBonus
+//   - The unsatisfied advantage applies only to the top choice (Veldig).
+//   - The scarcity (miss) bonus and never-seated bump apply only while the
+//     player is unsatisfied.
+//   - The DM bump applies to every edge but stays within its band.
+func adjustScore(score model.Score, satisfied, neverSeated, isDM bool, misses int) int {
+	w := bandBase(score, satisfied)
+
+	if !satisfied && score == model.MaxScore {
+		bonus := misses * missStep
+		if bonus > missCap {
+			bonus = missCap
+		}
+		w += bonus
 	}
-	return base
+	if !satisfied && neverSeated {
+		w += neverSeatedBump
+	}
+	if isDM {
+		w += dmBump
+	}
+	return w
 }
 
-func rawAdjusted(score model.Score, satisfied, lateBoost bool, opportunities int) int {
-	if satisfied {
-		return int(score)
+// bandBase returns the category base weight for an edge.
+func bandBase(score model.Score, satisfied bool) int {
+	switch {
+	case score == model.MaxScore && !satisfied:
+		return bandUnsatVeldig
+	case score == model.MaxScore:
+		return bandSatVeldig
+	case score >= 3:
+		return bandMiddels
+	default:
+		return bandLitt
 	}
-	if score == model.MaxScore {
-		bonus := 5 - opportunities
-		if bonus < 0 {
-			bonus = 0
-		}
-		return int(model.MaxScore)*2 + bonus
-	}
-	if lateBoost {
-		return int(score) * 2
-	}
-	return int(score)
 }

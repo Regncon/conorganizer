@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/Regncon/conorganizer/components"
-	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
 )
 
@@ -17,55 +16,29 @@ templ emulatePage(em puljefordeling.Emulation, emErr error) {
 			{Name: "Puljefordeling – Emulering", Url: ""},
 		})
 		@emulateStyles()
-		<section
-			class="page-content-container"
-			data-signals="{boostFredagKveld:false,boostLordagMorgen:false,boostLordagKveld:false,boostSondagMorgen:false}"
-		>
+		<section class="page-content-container">
 			<h1 class="page-heading">Emulér puljefordeling</h1>
 			<p class="emulate-intro">
 				Forhåndsvis hvordan deltakere ville blitt fordelt på arrangementer i hver pulje,
 				basert på påmeldte ønsker. Dette er kun en simulering – ingenting lagres.
 			</p>
-			if len(em.Puljer) > 0 {
-				<div class="emulate-controls">
-					<span class="emulate-controls-label">Sen-boost (prioriter deltakere uten førstevalg):</span>
-					for _, p := range em.Puljer {
-						@boostToggle(p.PuljeID, p.Name)
-					}
+			<p class="emulate-legend">
+				🔥 Veldig interessert · 👍 Middels · 🤷 Litt · <span class="emulate-dm">Turkis</span> = spilleder et annet sted · <span class="emulate-moved-legend">Rød strek</span> = flyttet ned for å gi plass til andre
+			</p>
+			if emErr != nil {
+				<p class="emulate-error">Kunne ikke beregne fordeling: { emErr.Error() }</p>
+			} else if len(em.Puljer) == 0 {
+				<p class="emulate-empty">Ingen puljer å vise ennå.</p>
+			} else {
+				<div class="emulate-summary">
+					<span>{ fmt.Sprintf("%d deltakere med ønsker", em.PlayerCount) }</span>
+					<span>{ fmt.Sprintf("%d fikk førstevalg totalt", em.SatisfiedTotal) }</span>
 				</div>
+				for _, p := range em.Puljer {
+					@puljeResult(p)
+				}
 			}
-			@emulationResults(em, emErr)
 		</section>
-	</div>
-}
-
-templ boostToggle(pulje models.Pulje, name string) {
-	<label class="emulate-toggle">
-		<input
-			type="checkbox"
-			class="checkbox input"
-			data-bind={ boostSignal(pulje) }
-			data-on:change="@post('/admin/puljefordeling-emulate/api/run')"
-		/>
-		<span>{ name }</span>
-	</label>
-}
-
-templ emulationResults(em puljefordeling.Emulation, emErr error) {
-	<div id="emulation-results" class="emulation-results">
-		if emErr != nil {
-			<p class="emulate-error">Kunne ikke beregne fordeling: { emErr.Error() }</p>
-		} else if len(em.Puljer) == 0 {
-			<p class="emulate-empty">Ingen puljer å vise ennå.</p>
-		} else {
-			<div class="emulate-summary">
-				<span>{ fmt.Sprintf("%d deltakere med ønsker", em.PlayerCount) }</span>
-				<span>{ fmt.Sprintf("%d fikk førstevalg totalt", em.SatisfiedTotal) }</span>
-			</div>
-			for _, p := range em.Puljer {
-				@puljeResult(p)
-			}
-		}
 	</div>
 }
 
@@ -108,8 +81,11 @@ templ eventCard(ev puljefordeling.EmulatedEvent) {
 		}
 		if len(ev.AssignedPlayers) > 0 {
 			<ul class="emulate-players">
-				for _, name := range ev.AssignedPlayers {
-					<li>{ name }</li>
+				for _, pl := range ev.AssignedPlayers {
+					<li class={ templ.KV("emulate-moved", pl.Moved) }>
+						<span class="emulate-emoji">{ pl.Level.Emoji() }</span>
+						<span class={ templ.KV("emulate-dm", pl.IsDM) }>{ pl.Name }</span>
+					</li>
 				}
 			</ul>
 		} else {
@@ -124,42 +100,22 @@ templ emulateStyles() {
 			color: var(--color-text-soft);
 			max-width: 72ch;
 		}
-		.emulate-controls {
-			display: flex;
-			flex-wrap: wrap;
-			align-items: center;
-			gap: var(--spacing-4x);
-			margin: var(--spacing-5x) 0;
-			padding: var(--spacing-4x);
-			background-color: var(--bg-surface);
-			border-radius: var(--border-radius-2x);
-		}
-		.emulate-controls-label {
+		.emulate-legend {
 			color: var(--color-text-soft);
-			flex-basis: 100%;
-		}
-		.emulate-toggle {
-			display: flex;
-			align-items: center;
-			gap: var(--spacing-2x);
-			color: var(--color-text-soft);
-			cursor: pointer;
-		}
-		.emulation-results {
-			display: flex;
-			flex-direction: column;
-			gap: var(--spacing-5x);
+			font-size: var(--text-small, 0.85rem);
 		}
 		.emulate-summary {
 			display: flex;
 			gap: var(--spacing-4x);
 			flex-wrap: wrap;
 			color: var(--color-text-strong);
+			margin: var(--spacing-4x) 0;
 		}
 		.emulate-pulje {
 			display: flex;
 			flex-direction: column;
 			gap: var(--spacing-4x);
+			margin-bottom: var(--spacing-5x);
 		}
 		.emulate-pulje-header {
 			display: flex;
@@ -217,8 +173,33 @@ templ emulateStyles() {
 		}
 		.emulate-players {
 			margin: 0;
-			padding-left: var(--spacing-5x);
+			padding: 0;
+			list-style: none;
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-1x);
 			color: var(--color-text-soft);
+		}
+		.emulate-players li {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-2x);
+		}
+		.emulate-emoji {
+			flex: 0 0 auto;
+			width: 1.4em;
+			text-align: center;
+		}
+		.emulate-dm {
+			color: turquoise;
+		}
+		.emulate-moved {
+			border-left: 3px solid #e05050;
+			padding-left: var(--spacing-2x);
+		}
+		.emulate-moved-legend {
+			border-left: 3px solid #e05050;
+			padding-left: var(--spacing-1x);
 		}
 		.emulate-empty {
 			color: var(--color-text-soft-50);

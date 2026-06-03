@@ -45,6 +45,21 @@ func (level InterestLevel) Score() int {
 	}
 }
 
+// Emoji returns a short glyph for an interest level, used to show at a glance
+// how much a seated participant wanted the game they got.
+func (level InterestLevel) Emoji() string {
+	switch level {
+	case InterestLevelHigh:
+		return "🔥"
+	case InterestLevelMedium:
+		return "👍"
+	case InterestLevelLow:
+		return "🤷"
+	default:
+		return ""
+	}
+}
+
 func (level InterestLevel) Valid() bool {
 	switch level {
 	case InterestLevelHigh, InterestLevelMedium, InterestLevelLow, InterestLevelNone:

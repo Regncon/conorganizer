@@ -82,6 +82,14 @@ func findEvent(p EmulatedPulje, eventID string) (EmulatedEvent, bool) {
 	return EmulatedEvent{}, false
 }
 
+func playerNames(aps []AssignedPlayer) []string {
+	out := make([]string, len(aps))
+	for i, ap := range aps {
+		out[i] = ap.Name
+	}
+	return out
+}
+
 func TestEmulateSeatings(t *testing.T) {
 	db, _, err := testutil.CreateTemporaryDBAndLogger("test_emulate", t)
 	if err != nil {
@@ -122,7 +130,7 @@ func TestEmulateSeatings(t *testing.T) {
 	// The GM also expresses interest in evA, but must NOT be seated (busy).
 	seedInterest(t, db, 99, "evA", fredag, models.InterestLevelHigh)
 
-	em, err := EmulateSeatings(db, nil)
+	em, err := EmulateSeatings(db)
 	if err != nil {
 		t.Fatalf("EmulateSeatings: %v", err)
 	}
@@ -148,8 +156,14 @@ func TestEmulateSeatings(t *testing.T) {
 		t.Errorf("evA capacity 2: want 2 seated, got %v", evA.AssignedPlayers)
 	}
 	// GM must never be seated as a participant in their own slot.
-	if slices.Contains(evA.AssignedPlayers, "Game Master") {
-		t.Errorf("GM should not be seated as a player, got %v", evA.AssignedPlayers)
+	if slices.Contains(playerNames(evA.AssignedPlayers), "Game Master") {
+		t.Errorf("GM should not be seated as a player, got %v", playerNames(evA.AssignedPlayers))
+	}
+	// Everyone seated in evA wanted it highly → 🔥 level surfaced.
+	for _, ap := range evA.AssignedPlayers {
+		if ap.Level != models.InterestLevelHigh {
+			t.Errorf("evA seat %q: want level High, got %q", ap.Name, ap.Level)
+		}
 	}
 
 	// GM name surfaced on the event they run.
@@ -169,6 +183,13 @@ func TestEmulateSeatings(t *testing.T) {
 	evB, _ := findEvent(p, "evB")
 	if len(evB.AssignedPlayers) != 1 {
 		t.Errorf("evB should seat the 1 evA loser, got %v", evB.AssignedPlayers)
+	}
+	// That evB occupant wanted evA (High) but landed on evB (Low) → flagged as
+	// moved/bumped below their top wish.
+	if len(evB.AssignedPlayers) == 1 {
+		if got := evB.AssignedPlayers[0]; !got.Moved {
+			t.Errorf("evB occupant %q wanted evA higher and should be marked Moved", got.Name)
+		}
 	}
 
 	// Two regulars got their top-choice (evA score 5) → newly satisfied.
