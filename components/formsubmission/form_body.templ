@@ -370,7 +370,6 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 	if isAdmin {
 		@puljefordeling(event.ID, db)
 	}
-	<pre data-json-signals="{include: /room/}"></pre>
 	@contactInfo(
 		event.ID,
 		event.HostName,

@@ -29,6 +29,9 @@ func getRoomsPuljeByFloor(db *sql.DB, logger *slog.Logger, pulje models.Pulje) [
 
 	var result []FloorGroupPulje
 	for floor, rooms := range floorMap {
+		sort.Slice(rooms, func(i, j int) bool {
+			return rooms[i].RoomNumber < rooms[j].RoomNumber
+		})
 		result = append(result, FloorGroupPulje{
 			Floor: floor,
 			Rooms: rooms,
@@ -104,9 +107,11 @@ templ roomPuljeContainer(room models.RoomByPulje) {
 		<div>
 			<h4>Tildelte spill: { len(room.AssignedEventsID) }/{ room.MaxConcurrentGames }</h4>
 			if len(room.AssignedEventsID) > 0 {
-				for _, event := range room.AssignedEventsID {
-					<p>{ event.Title }</p>
-				}
+				<ul>
+					for _, event := range room.AssignedEventsID {
+						<li>{ event.Title }</li>
+					}
+				</ul>
 			} else {
 				<p style="font-style: italic; color: gray;">Ingen tildelte spill</p>
 			}

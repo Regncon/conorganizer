@@ -218,17 +218,40 @@ func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventP
 	return event, nil
 }
 
-func RoomsFromMapSortedByNumber(m map[int64]models.RoomByPulje) []models.RoomByPulje {
-	rooms := make([]models.RoomByPulje, 0, len(m))
-	for _, r := range m {
-		rooms = append(rooms, r)
+type FloorGroupPulje struct {
+	Floor int
+	Rooms []models.RoomByPulje
+}
+
+func getRoomsPuljeByFloor(db *sql.DB, pulje models.Pulje) []FloorGroupPulje {
+	var result []FloorGroupPulje
+	allRooms, err := rooms.GetAllRoomStatusesByPulje(db, pulje)
+	if err != nil {
+		return result
 	}
 
-	sort.Slice(rooms, func(i, j int) bool {
-		return rooms[i].RoomNumber < rooms[j].RoomNumber
+	allRoomsInPulje := allRooms[pulje]
+
+	floorMap := make(map[int][]models.RoomByPulje)
+	for _, room := range allRoomsInPulje {
+		floorMap[room.Floor] = append(floorMap[room.Floor], room)
+	}
+
+	for floor, rooms := range floorMap {
+		sort.Slice(rooms, func(i, j int) bool {
+			return rooms[i].RoomNumber < rooms[j].RoomNumber
+		})
+		result = append(result, FloorGroupPulje{
+			Floor: floor,
+			Rooms: rooms,
+		})
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Floor > result[j].Floor
 	})
 
-	return rooms
+	return result
 }
 
 templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
@@ -237,10 +260,9 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 		<p>Error fetching event pulje: { err.Error() }</p>
 		return
 	}
-	{{ roomStatus, err := rooms.GetAllRoomStatusesByPulje(db, pulje.ID) }}
-	if err != nil {
-		<p>Error fetching rooms: { err.Error() }</p>
-		return
+	{{ roomStatus := getRoomsPuljeByFloor(db, pulje.ID) }}
+	if len(roomStatus) == 0 {
+		<p style="color: red;">Error fetching rooms</p>
 	}
 	<div style="display: flex; gap: 1rem; align-items: center;">
 		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
@@ -298,13 +320,17 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 						}
 					>
 						<option value="0">Ikke tildelt</option>
-						for _, room := range RoomsFromMapSortedByNumber(roomStatus[pulje.ID]) {
-							<option
-								value={ fmt.Sprintf("%d", room.ID) }
-								style={ templ.KV("color: yellow;", room.IsFull()), templ.KV("color: red", room.CurrentOccupancy()>room.MaxConcurrentGames) }
-							>
-								#{ fmt.Sprintf("%d", room.ID) } { room.RoomNumber } ({ room.CurrentOccupancy() }/{ room.MaxConcurrentGames })
-							</option>
+						for _, floor := range roomStatus {
+							<optgroup label={ fmt.Sprintf("%d. Etg", floor.Floor) }>
+								for _, room := range floor.Rooms {
+									<option
+										value={ fmt.Sprintf("%d", room.ID) }
+										style={ templ.KV("color: yellow;", room.IsFull()), templ.KV("color: red", room.CurrentOccupancy()>room.MaxConcurrentGames) }
+									>
+										{ room.RoomNumber } ({ room.CurrentOccupancy() }/{ room.MaxConcurrentGames })
+									</option>
+								}
+							</optgroup>
 						}
 					</select>
 				</label>
