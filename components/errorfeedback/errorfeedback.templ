@@ -19,7 +19,7 @@ const feedbackErrorsSignalName = "feedbackErrors"
 //			data-on:change="@put('/api/name')"
 //			{ errorfeedback.Attrs("name")... }
 //		/>
-//		@errorfeedback.Message("name")
+//		@errorfeedback.RenderMessage("name")
 //	</form>
 //
 // The JS clears feedbackErrors["name"] when the request starts. If the request
@@ -45,7 +45,7 @@ const feedbackErrorsSignalName = "feedbackErrors"
 // Pair backend keys with matching markup:
 //
 //	<input { errorfeedback.Attrs("name")... } />
-//	@errorfeedback.Message("name")
+//	@errorfeedback.RenderMessage("name")
 //
 // Normal input value signals are separate from error feedback. Initialize them
 // with the page/component's normal data-signals helper, not this package.
@@ -182,9 +182,9 @@ func jsonString(value any) string {
 	return string(bytes)
 }
 
-// Message renders inline feedback for one key.
+// RenderMessage renders inline feedback for one key.
 // It supports request fallback errors from Attrs and backend messages from Patch.
-templ Message(key string) {
+templ RenderMessage(key string) {
 	<span
 		class="feedback-error"
 		data-signals__ifmissing={ messageSignals(key) }

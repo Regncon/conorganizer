@@ -199,7 +199,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					pattern=".{3,}"
 					title="Bruk minst 3 tegn"
 				/>
-				@errorfeedback.Message("title")
+				@errorfeedback.RenderMessage("title")
 			</label>
 			<label class="label-small color-strong form-group intro">
 				Kjapp introduksjon
@@ -218,7 +218,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				>
 					{ shouldShowStringValue(intro) }
 				</textarea>
-				@errorfeedback.Message("intro")
+				@errorfeedback.RenderMessage("intro")
 			</label>
 			<label class="label-small color-strong form-group type">
 				Type arrangement
@@ -236,7 +236,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					<option value={ models.EventTypeCardGame }>{ models.EventTypeCardGame.Label() }</option>
 					<option value={ models.EventTypeOther }>{ models.EventTypeOther.Label() }</option>
 				</select>
-				@errorfeedback.Message("type")
+				@errorfeedback.RenderMessage("type")
 			</label>
 			<a
 				href={ "/profile/new/" + eventId + "/image/" }
@@ -263,7 +263,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					pattern=".{2,}"
 					title="Bruk minst 2 tegn"
 				/>
-				@errorfeedback.Message("system")
+				@errorfeedback.RenderMessage("system")
 			</label>
 			<label class="label-small color-strong form-group description">
 				Beskrivelse av arrangementet
@@ -281,7 +281,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				>
 					{ shouldShowStringValue(description) }
 				</textarea>
-				@errorfeedback.Message("description")
+				@errorfeedback.RenderMessage("description")
 			</label>
 		</section>
 	</article>

@@ -198,7 +198,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 							class="checkbox input"
 						/>
 					</label>
-					@errorfeedback.Message(membershipErrorKey)
+					@errorfeedback.RenderMessage(membershipErrorKey)
 				</div>
 				<div class="feedback-control-group">
 					<label class="checkbox-background form-group-checkbox">
@@ -219,7 +219,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 							class="checkbox input"
 						/>
 					</label>
-					@errorfeedback.Message(publishedErrorKey)
+					@errorfeedback.RenderMessage(publishedErrorKey)
 				</div>
 			</div>
 		</div>

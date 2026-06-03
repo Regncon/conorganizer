@@ -352,7 +352,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						class="btn btn--primary"
 						type="submit"
 					>Last opp</button>
-					@errorfeedback.Message("sourceImage")
+					@errorfeedback.RenderMessage("sourceImage")
 				</form>
 			</div>
 			<section class="surface-pane">

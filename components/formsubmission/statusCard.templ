@@ -73,7 +73,7 @@ templ statusCard(event *models.Event, isAdmin bool) {
 					}
 					}
 				</select>
-				@errorfeedback.Message("status")
+				@errorfeedback.RenderMessage("status")
 			</section>
 	</article>
 }
