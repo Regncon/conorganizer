@@ -1,5 +1,30 @@
 // @ts-check
 
+/**
+ * <app-toast> is a light-DOM toast host.
+ *
+ * How to use from templ:
+ *
+ *   @toast.Render("Lagret", icons.ProgressComplete)
+ *
+ * Datastar save toasts:
+ * - Add data-indicator="toastSomething" on a Datastar trigger.
+ * - The default indicator prefix is "toast"; override it with
+ *   indicator-prefix="..." on <app-toast> if needed.
+ * - When the request reaches datastar-fetch "finished" without "error",
+ *   "retries-failed", or backend feedbackErrors, the host shows the
+ *   indicator-message attribute from <app-toast>.
+ *
+ * Manual toasts:
+ * - Dispatch a bubbling CustomEvent("toast", { detail: { message } }).
+ * - This is the API for web components or page scripts that are not ordinary
+ *   Datastar save requests.
+ *
+ * The component moves itself to document.body so fixed positioning is not
+ * affected by parent layout containment. If a page renders several hosts,
+ * only the first active host listens to global events.
+ */
+
 const CUSTOM_ELEMENT_TAG_NAME = "app-toast"
 const localFeedbackPatchStartEventName = "feedback-errors-local-patch-start"
 const localFeedbackPatchEndEventName = "feedback-errors-local-patch-end"

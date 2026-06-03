@@ -4,6 +4,30 @@ import "github.com/Regncon/conorganizer/components/icons"
 
 const missingMessage = "Mangler toast-melding"
 
+// Render mounts the page toast host.
+//
+// Use it once on pages that need toast feedback:
+//
+//	@toast.Render("Lagret", icons.ProgressComplete)
+//
+// Datastar save toast:
+// Add a data-indicator that starts with the default prefix "toast". When that
+// Datastar request finishes successfully, the host shows indicator-message.
+//
+//	<input data-indicator="toastName" data-on:change="@put('/api/name')" />
+//
+// Manual toast:
+// Dispatch a bubbling "toast" event from JS or a web component. This is useful
+// for non-Datastar flows like cropper uploads.
+//
+//	this.dispatchEvent(new CustomEvent("toast", {
+//		bubbles: true,
+//		composed: true,
+//		detail: { message: "Lagret" },
+//	}))
+//
+// Backend error feedback suppresses the saved toast when the same Datastar
+// request receives non-empty feedbackErrors before its finished event.
 templ Render(message string, icon icons.IconType) {
 	{{
 	if message == "" {
