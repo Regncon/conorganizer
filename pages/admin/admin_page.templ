@@ -72,6 +72,14 @@ templ adminPage(db *sql.DB) {
 					) {
 						<a role="button" href="/admin/rooms/" class="btn btn--outline">Gå til rom-oversikt</a>
 					}
+					@adminCard(
+						"Emulér puljefordeling",
+						"Forhåndsvis hvordan deltakere ville blitt fordelt på arrangementer i puljene, basert på påmeldte ønsker. Ingenting lagres.",
+						"/static/call-to-action-avatar.webp",
+						"Emulate seatings",
+					) {
+						<a role="button" href="/admin/puljefordeling-emulate/" class="btn btn--outline">Emulér fordeling</a>
+					}
 				</div>
 			</div>
 		</div>

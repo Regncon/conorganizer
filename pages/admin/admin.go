@@ -14,6 +14,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/admin/approval"
 	edit_form "github.com/Regncon/conorganizer/pages/admin/approval/editForm"
+	"github.com/Regncon/conorganizer/pages/admin/puljefordeling_emulate"
 	"github.com/Regncon/conorganizer/pages/admin/rooms"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/keyvalue"
@@ -95,6 +96,10 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		adminLayoutRoute(adminRouter, db, logger, err)
 		puljefordelingStatusRoute(adminRouter, db, kv, logger)
 		programPublishingRoute(adminRouter, db, kv, logger)
+
+		adminRouter.Route("/puljefordeling-emulate", func(emulateRouter chi.Router) {
+			puljefordeling_emulate.SetupPuljefordelingEmulateRoute(emulateRouter, db, baseLogger)
+		})
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			sse := datastar.NewSSE(w, r)
 

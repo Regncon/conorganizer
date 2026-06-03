@@ -28,6 +28,23 @@ func (level InterestLevel) Label() string {
 	}
 }
 
+// Score maps an interest level onto the puljefordeling solver's 1–5 preference
+// scale. "Veldig interessert" is the top choice (5) and is the threshold the
+// solver uses for participant satisfaction; "Middels" is 3 and "Litt" is 1.
+// No/invalid interest returns 0, meaning no edge in the assignment graph.
+func (level InterestLevel) Score() int {
+	switch level {
+	case InterestLevelHigh:
+		return 5
+	case InterestLevelMedium:
+		return 3
+	case InterestLevelLow:
+		return 1
+	default:
+		return 0
+	}
+}
+
 func (level InterestLevel) Valid() bool {
 	switch level {
 	case InterestLevelHigh, InterestLevelMedium, InterestLevelLow, InterestLevelNone:
