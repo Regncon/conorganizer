@@ -84,12 +84,36 @@ templ formModal() {
 				/>
 			</label>
 			<p data-text="$error" style="color: red; width: 100%; word-break: break-all;"></p>
-			<button
-				type="button"
-				data-text="$button_label"
-				data-on:click="@post($submit_url)"
-				class="btn btn--outline"
-			></button>
+			<span class="button-group">
+				<button
+					type="button"
+					class="btn btn--outline"
+					style="color: var(--color-error); border-color: var(--color-error);"
+					data-show="$mode === 'edit'"
+					data-on:click="document.getElementById('room-delete-dialog').showModal()"
+				>Slett rom</button>
+				<dialog id="room-delete-dialog" closedBy="any" style="gap: 1rem;">
+					<h2 style="text-align: center;">Slett rom</h2>
+					<p>Er du sikker på at du vill slette dette rommet?</p>
+					<button
+						type="button"
+						class="btn btn--outline"
+						data-on:click="document.getElementById('room-delete-dialog').close()"
+					>Avbryt</button>
+					<button
+						type="button"
+						class="btn btn--outline"
+						style="color: var(--color-error); border-color: var(--color-error);"
+						data-on:click="@post($delete_url)"
+					>Slett rom</button>
+				</dialog>
+				<button
+					type="button"
+					data-text="$button_label"
+					data-on:click="@post($submit_url)"
+					class="btn btn--outline"
+				></button>
+			</span>
 		</form>
 		<button style="position: absolute; top: 4px; right: 4px;" commandfor="room-dialog" command="close">Close</button>
 	</dialog>
@@ -214,8 +238,15 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
                     width: 100%;
                     resize: vertical;
                 }
+                .button-group {
+                    display: flex;
+                    gap: var(--spacing-2x)
+                }
+
+                .button-group > button {
+                    flex: 1;
+                }
             }
-        }
         }
 	</style>
 	<button
