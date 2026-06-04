@@ -31,6 +31,7 @@ BRANCH_DATA_DIR="$DATA_ROOT/$SAFE_NAME"
 BRANCH_DB_DIR="$BRANCH_DATA_DIR/database"
 BRANCH_DB_FILE="$BRANCH_DB_DIR/events.db"
 BRANCH_IMG_DIR="$BRANCH_DATA_DIR/event-images"
+BRANCH_NATS_DIR="$BRANCH_DATA_DIR/nats"
 MAIN_DB_FILE="$MAIN_DATA_DIR/database/events.db"
 
 SERVICE_USER="deploy"
@@ -97,6 +98,11 @@ if [[ "$SAFE_NAME" != "main" ]]; then
   else
     echo "[deploy] Event-images dir already exists for branch: $BRANCH_IMG_DIR (skipping copy)"
   fi
+
+  # Each environment needs its own NATS JetStream store; never clone main's store
+  # (sharing/locking it across instances is the bug we are fixing, see issue #386).
+  echo "[deploy] Ensuring NATS store directory for branch: $BRANCH_NATS_DIR"
+  mkdir -p "$BRANCH_NATS_DIR"
 
   chown -R "$SERVICE_USER:$SERVICE_GROUP" "$BRANCH_DATA_DIR"
 else

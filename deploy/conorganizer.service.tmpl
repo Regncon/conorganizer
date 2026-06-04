@@ -12,7 +12,8 @@ Environment=PORT=%PORT%
 
 ExecStart=/opt/conorganizer/%SAFE_NAME%/conorganizer-%SAFE_NAME% \
   -dbp /mnt/HC_Volume_103911252/environments/%SAFE_NAME%/database/events.db \
-  -image-path /mnt/HC_Volume_103911252/environments/%SAFE_NAME%/event-images
+  -image-path /mnt/HC_Volume_103911252/environments/%SAFE_NAME%/event-images \
+  -nats-store /mnt/HC_Volume_103911252/environments/%SAFE_NAME%/nats
 
 Restart=always
 RestartSec=5

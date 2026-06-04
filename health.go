@@ -18,6 +18,7 @@ const (
 	notReadyApplicationReason = "application startup incomplete"
 	notReadyDatabaseReason    = "database not available"
 	notReadyImageReason       = "image directory not writable"
+	notReadyNatsReason        = "nats store directory not writable"
 	notReadyMultipleReason    = "multiple startup checks failed"
 )
 

@@ -48,7 +48,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 		Bucket:      "events",
 		Description: "Regncon Event Store",
 		Compression: true,
-		TTL:         time.Hour,
+		TTL:         24 * time.Hour, // match the "connections" cookie lifetime so open pages keep state
 		MaxBytes:    16 * 1024 * 1024,
 	})
 	if err != nil {

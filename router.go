@@ -24,20 +24,32 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 )
 
-func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB, eventImageDir *string) (cleanup func() error, err error) {
+func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB, eventImageDir *string, natsStoreDir *string) (cleanup func() error, err error) {
 	natsPort, err := toolbelt.FreePort()
 	if err != nil {
 		return nil, fmt.Errorf("error getting free port: %w", err)
 	}
 
+	storeDir := ""
+	if natsStoreDir != nil {
+		storeDir = *natsStoreDir
+	}
+
+	// StoreDir must be set explicitly: when left empty NATS defaults JetStream storage to
+	// os.TempDir()/jetstream, which every co-located instance shares and locks against each
+	// other, and which /tmp cleanup wipes. A per-instance persistent dir keeps live updates
+	// stable. See https://github.com/Regncon/conorganizer/issues/386.
 	ns, err := embeddednats.New(ctx, embeddednats.WithNATSServerOptions(&natsserver.Options{
 		JetStream: true,
 		Port:      natsPort,
+		StoreDir:  storeDir,
 	}))
 
 	if err != nil {
 		return nil, fmt.Errorf("error creating embedded nats server: %w", err)
 	}
+
+	logger.Info("embedded NATS JetStream initialized", "store_dir", storeDir, "port", natsPort)
 
 	ns.WaitForServer()
 

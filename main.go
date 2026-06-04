@@ -33,6 +33,7 @@ func main() {
 
 	dsn := flag.String("dbp", "database/events.db", "absolute path to database file")
 	eventImageDir := flag.String("image-path", "local-event-images", "directory to store event images")
+	natsStoreDir := flag.String("nats-store", "data/nats", "directory for embedded NATS JetStream storage")
 	flag.Parse()
 
 	db, dbErr := service.InitDB(*dsn)
@@ -60,21 +61,21 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx, baseLogger, getPort(), eventImageDir, db); err != nil {
+	if err := run(ctx, baseLogger, getPort(), eventImageDir, natsStoreDir, db); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB) error {
+func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, natsStoreDir *string, db *sql.DB) error {
 	g, ctx := errgroup.WithContext(ctx)
-	g.Go(startServer(ctx, logger, port, eventImageDir, db))
+	g.Go(startServer(ctx, logger, port, eventImageDir, natsStoreDir, db))
 	if err := g.Wait(); err != nil {
 		return fmt.Errorf("error running server: %w", err)
 	}
 	return nil
 }
-func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB) func() error {
+func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, natsStoreDir *string, db *sql.DB) func() error {
 	return func() error {
 		baseLogger := logger
 		logger = logger.With("component", "http_server")
@@ -98,11 +99,27 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 			imgErr = fmt.Errorf("event image directory path is empty")
 		}
 
+		var natsErr error
+		if natsStoreDir != nil && *natsStoreDir != "" {
+			// NATS would create this itself, but pre-creating lets the writable check run
+			// and fail loudly here instead of NATS silently falling back to a temp dir.
+			if err := os.MkdirAll(*natsStoreDir, 0o755); err != nil {
+				natsErr = fmt.Errorf("could not create NATS store directory %q: %w", *natsStoreDir, err)
+			} else if err := service.CheckWritableDirectory(*natsStoreDir); err != nil {
+				natsErr = fmt.Errorf("NATS store directory startup check failed: %w", err)
+			}
+		} else {
+			natsErr = fmt.Errorf("NATS store directory path is empty")
+		}
+
 		degradedErr := imgErr
-		fullMode := degradedErr == nil && db != nil
 		if degradedErr != nil {
 			readiness.MarkDegraded(notReadyImageReason, degradedErr)
+		} else if natsErr != nil {
+			degradedErr = natsErr
+			readiness.MarkDegraded(notReadyNatsReason, degradedErr)
 		}
+		fullMode := degradedErr == nil && db != nil
 
 		var appRouter chi.Router = router
 		if fullMode {
@@ -115,7 +132,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		appRouter.Handle("/static/*", http.StripPrefix("/static/", static(baseLogger)))
 
 		if fullMode {
-			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir)
+			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir, natsStoreDir)
 			if err != nil {
 				logger.Error(fmt.Errorf("error setting up routes; falling back to degraded mode: %w", err).Error())
 				readiness.MarkDegraded(notReadyApplicationReason, err)
