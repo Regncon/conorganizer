@@ -465,6 +465,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"form_title":   "Rediger rom",
 							"button_label": "Lagre endringer",
 							"submit_url":   fmt.Sprintf("/admin/rooms/api/edit/%d", room.ID),
+							"delete_url":   fmt.Sprintf("/admin/rooms/api/delete/%d", room.ID),
 
 							"id":                   room.ID,
 							"name":                 room.Name,
@@ -517,6 +518,59 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 
 						// Update room
 						_, err = roomService.UpdateRoom(db, *store)
+						if err != nil {
+							payload, _ := json.Marshal(map[string]string{
+								"error": err.Error(),
+							})
+
+							if err = sse.PatchSignals(payload); err != nil {
+								logger.Error("Failed to patch signals", "error", err.Error())
+								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+
+							}
+							return
+						}
+
+						// Ridirect on success
+						_ = sse.Redirect("/admin/rooms")
+					})
+				})
+
+				roomApiRouter.Route("/delete/{id}", func(deleteRoomRoute chi.Router) {
+					deleteRoomRoute.Post("/", func(w http.ResponseWriter, r *http.Request) {
+						// Read url for room id
+						roomID := chi.URLParam(r, "id")
+						if roomID == "" {
+							http.Error(w, "Room ID is required. Got: "+roomID, http.StatusBadRequest)
+							return
+						}
+
+						// Read data-star post submission
+						store := &models.Room{}
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							fmt.Println(readSignalErr.Error())
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+						}
+
+						// Get ready to broadcast responses to client
+						sse := datastar.NewSSE(w, r)
+
+						// Validate input
+						parsedID, err := strconv.ParseInt(roomID, 10, 0)
+						if err != nil {
+							payload, _ := json.Marshal(map[string]string{
+								"error": err.Error(),
+							})
+
+							if err = sse.PatchSignals(payload); err != nil {
+								logger.Error("Failed to patch signals", "error", err.Error())
+								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							}
+							return
+						}
+
+						// delete room
+						err = roomService.DeleteRoom(db, int(parsedID))
 						if err != nil {
 							payload, _ := json.Marshal(map[string]string{
 								"error": err.Error(),

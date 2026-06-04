@@ -54,6 +54,27 @@ func CreateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
 	return &data, nil
 }
 
+// DeleteRoom removes a room given an ID, since pragma is enabled the change will cascade
+func DeleteRoom(db *sql.DB, roomID int) error {
+	query := `DELETE FROM rooms WHERE id = ?`
+
+	result, err := db.Exec(query, roomID)
+	if err != nil {
+		return fmt.Errorf("delete room %d: %w", roomID, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("room %d not found", roomID)
+	}
+
+	return nil
+}
+
 // UpdateRoom updates a room based on its ID with new Room type data
 func UpdateRoom(db *sql.DB, data models.Room) (*models.Room, error) {
 	if strings.TrimSpace(data.RoomNumber) == "" {
