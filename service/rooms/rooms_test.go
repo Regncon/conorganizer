@@ -75,6 +75,75 @@ func TestCreateRoom(t *testing.T) {
 	}
 }
 
+func TestDeleteRoom(t *testing.T) {
+	// Given
+	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
+	if err != nil {
+		t.Fatalf("failed to create test database and logger: %v", err)
+	}
+	defer db.Close()
+
+	createdRoom1 := insertRoom(t, db, models.Room{
+		RoomNumber:         "101",
+		Floor:              1,
+		MaxConcurrentGames: 2,
+	})
+	createdRoom2 := insertRoom(t, db, models.Room{
+		RoomNumber:         "101",
+		Floor:              1,
+		MaxConcurrentGames: 2,
+	})
+
+	var createdRoomCountBefore int
+	err = db.QueryRow(`SELECT COUNT(*) FROM rooms`).Scan(&createdRoomCountBefore)
+	if err != nil {
+		t.Fatalf("failed to count rooms: %v", err)
+	}
+	if createdRoomCountBefore != 2 {
+		t.Fatalf("expected 2 rooms before delete, got %d", createdRoomCountBefore)
+	}
+
+	// When
+	err = DeleteRoom(db, createdRoom1.ID)
+	if err != nil {
+		t.Fatalf("expected no error when deleting, got %v", err)
+	}
+
+	// Then
+	var createdRoomCountAfter int
+	err = db.QueryRow(`SELECT COUNT(*) FROM rooms`).Scan(&createdRoomCountAfter)
+	if err != nil {
+		t.Fatalf("failed to count rooms after delete: %v", err)
+	}
+	if createdRoomCountAfter != 1 {
+		t.Fatalf("expected 1 room after delete, got %d", createdRoomCountAfter)
+	}
+
+	var doesRoomExist int
+	err = db.QueryRow(
+		`SELECT COUNT(*) FROM rooms WHERE id = ?`,
+		createdRoom1.ID,
+	).Scan(&doesRoomExist)
+	if err != nil {
+		t.Fatalf("failed checking deleted room: %v", err)
+	}
+	if doesRoomExist != 0 {
+		t.Fatalf("expected deleted room to not exist")
+	}
+
+	err = db.QueryRow(
+		`SELECT COUNT(*) FROM rooms WHERE id = ?`,
+		createdRoom2.ID,
+	).Scan(&doesRoomExist)
+	if err != nil {
+		t.Fatalf("failed checking remaining room: %v", err)
+	}
+
+	if doesRoomExist != 1 {
+		t.Fatalf("expected remaining room to still exist")
+	}
+}
+
 func TestUpdateRoom(t *testing.T) {
 	// Given
 	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
@@ -561,6 +630,51 @@ func TestAssignRoomToRelationEventPuljer(t *testing.T) {
 			result.RoomID.Int64,
 		)
 	}
+}
+
+func insertRoom(t *testing.T, db *sql.DB, input models.Room) models.Room {
+	t.Helper()
+
+	query := `
+        INSERT INTO rooms (
+            name,
+			room_number,
+			floor,
+			max_concurrent_games,
+			notes,
+			is_disabled
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        RETURNING
+            id,
+            name,
+			room_number,
+			floor,
+			max_concurrent_games,
+			notes,
+			is_disabled
+    `
+
+	var room models.Room
+	err := db.QueryRow(query,
+		input.Name,
+		input.RoomNumber,
+		input.Floor,
+		input.MaxConcurrentGames,
+		input.Notes,
+		input.IsDisabled,
+	).Scan(
+		&room.ID,
+		&room.Name,
+		&room.RoomNumber,
+		&room.Floor,
+		&room.MaxConcurrentGames,
+		&room.Notes,
+		&room.IsDisabled)
+	if err != nil {
+		t.Fatalf("Failed to create room: %v", err)
+	}
+	return room
 }
 
 func insertPuljer(t *testing.T, db *sql.DB) []string {

@@ -33,6 +33,13 @@ type RoomEventPuljeSummary struct {
 	EventPuljeID string
 	EventID      string
 	Title        string
+	MaxPlayers   string
+}
+type RoomEventPuljeSummaryJson struct {
+	EventPuljeID string `json:"pulje_id"`
+	EventID      string `json:"event_id"`
+	Title        string `json:"title"`
+	MaxPlayers   int    `json:"max_players"`
 }
 
 // RoomByPulje is a snapshot of room delegation for a specific pulje, this is mainly used for figuring
@@ -42,6 +49,7 @@ type RoomByPulje struct {
 	ID                 int64
 	Name               string
 	RoomNumber         string
+	Floor              int
 	AssignedEventsID   []RoomEventPuljeSummary
 	MaxConcurrentGames int
 	Notes              string
@@ -72,6 +80,7 @@ type RoomStatusRow struct {
 	RoomID             int64
 	RoomName           string
 	RoomNumber         string
+	Floor              int
 	MaxConcurrentGames int
 	RoomNotes          string
 
