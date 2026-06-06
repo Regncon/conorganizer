@@ -664,4 +664,55 @@ Note: `.ai/threads/bug-no-live-update.md` is still modified in the worktree, but
 
 Time: 2026-06-02 09:25:58
 --- Next Prompt ---
+I got some logs from production when the issue happened again. The code running is the extra logging you added. The fix we have implemented is not yet deployed.
+
+{"time":"2026-06-04T05:10:24.584461592Z","level":"ERROR","msg":"http request completed","component":"http","method":"GET","path":"/admin/api/","status_code":500,"duration_ms":5021,"request_id":"ubuntu-4gb-hel1-3/7d1qnW1tq1-000217"}
+
+{"time":"2026-06-04T05:10:24.58438645Z","level":"ERROR","msg":"failed to save mvc: failed to put key value: context deadline exceeded","component":"admin","request_id":"ubuntu-4gb-hel1-3/7d1qnW1tq1-000217","connections_cookie_present":true}
+
+
+Time: 2026-06-04 07:34:22
+--- Codex Run ---
+
+Codex output:
+Those logs change the diagnosis: the visible failure is not the missing cookie on that request. The `connections` cookie was present, the KV entry was missing/expired, and recreating it blocked for about 5 seconds before NATS returned `context deadline exceeded`. I’m going to adjust the local fix so KV save/watch failures degrade live updates instead of blocking the initial SSE patch.
+The production log points at a different failure mode than the original missing-cookie theory: NATS KV `Put` timed out while rebuilding the session, and the handler returned 500 before it could send the SSE patch. I’m going to adjust the mitigation so rebuilding KV state is best-effort and the initial patch is sent before watcher/subscription setup where that route depends on SSE.
+I’ve confirmed the current local patch still treats KV rebuild as fatal in the same path as the production timeout. The next edits are narrow: make that rebuild best-effort, then reorder live streams so NATS watch/subscribe setup can fail without preventing the first patch.
+There’s an extra practical point in the log: if the request context or NATS request times out at about 5 seconds, “non-fatal after the timeout” may still be too late for the admin patch. I’m going to split cookie setup from KV recovery so the first SSE patch can be sent before any NATS KV `Get`/`Put` work.
+I’m editing the route setup now. The important change is that `upsertSessionID` remains before `NewSSE` so the browser gets the `connections` cookie, but the KV recovery/load moves behind the first rendered patch.
+I’ve finished the root/event shape and am applying the same pattern to admin. Admin is the critical route because its visible page body is delivered by the SSE patch, so it must not wait on KV recovery before rendering.
+The unused combined “get cookie + touch KV” helpers are now removed from the stream paths. The stream handlers use a simpler sequence: set/read cookie, start SSE, send first patch, then try KV load/watch or NATS subscribe.
+One more refinement: when a KV `Get` itself fails, trying a KV `Put` immediately after is likely to burn more time. I’m changing that branch to reset only in memory; missing keys and corrupt/delete entries still attempt a best-effort write because that is the normal recovery path.
+I’m checking the logging guidance before running the full build because the patch adds a few warning/error paths. The aim is to keep warnings actionable without logging session IDs or other sensitive state.
+The logging pass is consistent with the repo rules: no cookies/tokens/session IDs are logged, only request IDs and domain IDs where they already existed. KV recovery failures are warnings because the page can still render; watcher/subscribe failures stay errors because live updates are degraded.
+The implementation edits are in place. I’m formatting the touched Go files, regenerating templ output, then I’ll run the full test suite with the temporary Go cache as before.
+Tests are running now. The main thing I’m watching for is whether removing the combined session helpers left any unused local functions or generated templ mismatches.
+The early packages are passing. I’m waiting on the longer route/service tests before doing the final diff and whitespace checks.
+The full Go test suite passed. I’m doing the last mechanical checks now: diff scan, generated templ confirmation, and `diff --check` for whitespace issues.
+The remaining scan shows the debug purge code is gone. It also shows the page-level data-init routes are now the cookie creation boundary for root/admin, while the billettholder/tickets subpage handlers still set the cookie before opening SSE.
+I found a related cleanup in the touched subpage handlers: some action/search handlers were still ignoring `upsertSessionID` errors and would notify an empty subject if the cookie could not be created. I’m going to tighten those because it directly supports the cookie fix and avoids silent bad notifications.
+I’m keeping this second cleanup focused on places that publish live-update notifications. If session creation fails there, returning a normal error is better than publishing to an empty per-session subject.
+The subpage search route now has the same session error handling as the stream routes. I’m applying the same treatment to the add-ticket and ticket-profile actions.
+The ignored session errors are cleaned up. I’m regenerating templ again because several `.templ` handlers changed, then I’ll rerun the same test suite.
+The second test run is underway after the templ regeneration. If it stays green, I’ll do one final status/diff check and summarize the mitigation.
+The full suite passed again. I’m doing the final repository check now, including verifying that no debug purge endpoint remains.
+Implemented the mitigation based on the production logs.
+
+What changed:
+- Admin/root/event/profile SSE handlers now send the first patch before NATS KV load/watch work.
+- Missing/corrupt/purged KV state now resets best-effort instead of returning 500.
+- KV `Get` failures reset only in memory to avoid immediately doing another likely-failing KV `Put`.
+- Watch/subscribe failures after the first patch now degrade the live stream instead of blocking page load.
+- Subpage live-update routes got the same ordering.
+- Ignored `upsertSessionID` errors in billettholder/ticket subpage actions are now handled before publishing updates.
+
+Validation:
+- `go tool templ generate`
+- `GOCACHE=/tmp/conorganizer-go-build go test ./...`
+- `git diff --check -- <touched code files>`
+
+No debug purge endpoint remains. `.ai/threads/bug-no-live-update.md` is still modified in the worktree, but I left it untouched.
+
+Time: 2026-06-04 07:34:22
+--- Next Prompt ---
 

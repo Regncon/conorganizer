@@ -102,7 +102,7 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	resetAndSaveMVC := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
 		resetMVC(mvc)
 		if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-			return fmt.Errorf("failed to save mvc: %w", err)
+			logger.Warn("failed to save event live update state; continuing without KV session", "error", err.Error())
 		}
 		return nil
 	}
@@ -119,27 +119,22 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return nil
 	}
 
-	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
-		ctx := r.Context()
-		sessionID, err := upsertSessionID(store, r, w)
-		if err != nil {
-			return "", nil, fmt.Errorf("failed to get session id: %w", err)
-		}
-
-		mvc := &root.TodoMVC{}
+	loadMVCSession := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
-				return "", nil, fmt.Errorf("failed to get key value: %w", err)
+				logger.Warn("failed to load event live update state; resetting", "error", err.Error())
+				resetMVC(mvc)
+				return nil
 			}
 			if err := resetAndSaveMVC(ctx, mvc, sessionID); err != nil {
-				return "", nil, err
+				return err
 			}
 		} else {
 			if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
-				return "", nil, err
+				return err
 			}
 		}
-		return sessionID, mvc, nil
+		return nil
 	}
 
 	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
@@ -149,16 +144,32 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		eventApiRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
 			eventIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				eventID := chi.URLParam(r, "idx")
-				sessionID, mvc, err := mvcSession(w, r)
+				sessionID, err := upsertSessionID(store, r, w)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 
 				ctx := r.Context()
+				mvc := &root.TodoMVC{}
+				sse := datastar.NewSSE(w, r)
+				renderEventPage := func() error {
+					isAdmin := authctx.GetAdminFromUserToken(ctx)
+					return sse.PatchElementTempl(event_page(eventID, isAdmin, logger, db, eventImageDir, r))
+				}
+				if err := renderEventPage(); err != nil {
+					_ = sse.ConsoleError(err)
+					return
+				}
+				if err := loadMVCSession(ctx, mvc, sessionID); err != nil {
+					logger.Error(fmt.Errorf("failed to load event live update session: %w", err).Error(), "event_id", eventID)
+					_ = sse.ConsoleError(err)
+					return
+				}
 				watcher, err := kv.Watch(ctx, sessionID)
 				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
+					logger.Error(fmt.Errorf("failed to create event watcher: %w", err).Error(), "event_id", eventID)
+					_ = sse.ConsoleError(err)
 					return
 				}
 				defer func() {
@@ -169,15 +180,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						logger.Error(fmt.Errorf("failed to stop event watcher: %w", err).Error())
 					}
 				}()
-				sse := datastar.NewSSE(w, r)
-				renderEventPage := func() error {
-					isAdmin := authctx.GetAdminFromUserToken(ctx)
-					return sse.PatchElementTempl(event_page(eventID, isAdmin, logger, db, eventImageDir, r))
-				}
-				if err := renderEventPage(); err != nil {
-					_ = sse.ConsoleError(err)
-					return
-				}
 
 				for {
 					select {
@@ -191,7 +193,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							continue
 						}
 						if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
+							logger.Error(fmt.Errorf("failed to apply event live update state: %w", err).Error(), "event_id", eventID)
+							_ = sse.ConsoleError(err)
 							return
 						}
 						if err := renderEventPage(); err != nil {
@@ -249,8 +252,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 						}
 						ctx := r.Context()
 						userInfo := userctx.GetUserRequestInfo(ctx)
-						if _, _, mvcErr := mvcSession(w, r); mvcErr != nil {
-							http.Error(w, mvcErr.Error(), http.StatusInternalServerError)
+						if _, sessionErr := upsertSessionID(store, r, w); sessionErr != nil {
+							http.Error(w, fmt.Errorf("failed to get session id: %w", sessionErr).Error(), http.StatusInternalServerError)
 							return
 						}
 						sse := datastar.NewSSE(w, r)

@@ -69,7 +69,12 @@ func handleError(responder Responder, dispalyText string, errorText string) {
 		return
 	}
 
-	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
+	sessionID, sessionErr := upsertSessionID(responder.Store, responder.r, responder.w)
+	if sessionErr != nil {
+		responder.Logger.Error(fmt.Errorf("failed to get billettholder admin error session id: %w", sessionErr).Error(), "billettholder_id", responder.BillettholderID)
+		http.Error(responder.w, sessionErr.Error(), http.StatusInternalServerError)
+		return
+	}
 	sse := datastar.NewSSE(responder.w, responder.r)
 	if err := sse.PatchSignals(b); err != nil {
 		responder.Logger.Error("Failed to patch signals", "error", err)
@@ -98,7 +103,12 @@ func handleSuccess(responder Responder, successText string) {
 		return
 	}
 
-	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
+	sessionID, sessionErr := upsertSessionID(responder.Store, responder.r, responder.w)
+	if sessionErr != nil {
+		responder.Logger.Error(fmt.Errorf("failed to get billettholder admin success session id: %w", sessionErr).Error(), "billettholder_id", responder.BillettholderID)
+		http.Error(responder.w, sessionErr.Error(), http.StatusInternalServerError)
+		return
+	}
 	sse := datastar.NewSSE(responder.w, responder.r)
 	if err := sse.PatchSignals(b); err != nil {
 		responder.Logger.Error("Failed to patch signals", "error", err)

@@ -46,7 +46,12 @@ func CheckInTicketsSearchRoute(
 		searchTerm = payload.Search
 		logger.Debug("Updated billettholder search term")
 
-		sessionID, _ := upsertSessionID(store, r, w)
+		sessionID, err := upsertSessionID(store, r, w)
+		if err != nil {
+			logger.Error(fmt.Errorf("failed to get add-billettholder search session id: %w", err).Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		if notifyUpdate != nil {
 			notifyUpdate(sessionID)
 		}

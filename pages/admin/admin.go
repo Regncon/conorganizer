@@ -69,7 +69,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 	resetAndSaveMVC := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
 		resetMVC(mvc)
 		if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-			return fmt.Errorf("failed to save mvc: %w", err)
+			logger.Warn("failed to save admin live update state; continuing without KV session", "error", err.Error())
 		}
 		return nil
 	}
@@ -86,27 +86,22 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		return nil
 	}
 
-	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
-		ctx := r.Context()
-		sessionID, err := upsertSessionID(store, r, w)
-		if err != nil {
-			return "", nil, fmt.Errorf("failed to get session id: %w", err)
-		}
-
-		mvc := &root.TodoMVC{}
+	loadMVCSession := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
-				return "", nil, fmt.Errorf("failed to get key value: %w", err)
+				logger.Warn("failed to load admin live update state; resetting", "error", err.Error())
+				resetMVC(mvc)
+				return nil
 			}
 			if err := resetAndSaveMVC(ctx, mvc, sessionID); err != nil {
-				return "", nil, err
+				return err
 			}
 		} else {
 			if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
-				return "", nil, err
+				return err
 			}
 		}
-		return sessionID, mvc, nil
+		return nil
 	}
 
 	// eventLayoutRoute(router, db, err)
@@ -126,10 +121,10 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				"connections_cookie_present", connectionsCookiePresent,
 			)
 
-			sessionID, mvc, err := mvcSession(w, r)
+			sessionID, err := upsertSessionID(store, r, w)
 			if err != nil {
 				logger.Error(
-					err.Error(),
+					fmt.Errorf("failed to get session id: %w", err).Error(),
 					"request_id", requestID,
 					"connections_cookie_present", connectionsCookiePresent,
 				)
@@ -137,6 +132,26 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				return
 			}
 			ctx := r.Context()
+			mvc := &root.TodoMVC{}
+			sse := datastar.NewSSE(w, r)
+			if err := sse.PatchElementTempl(adminPage(db)); err != nil {
+				logger.Error(
+					fmt.Errorf("failed to patch initial admin live update: %w", err).Error(),
+					"request_id", requestID,
+					"connections_cookie_present", connectionsCookiePresent,
+				)
+				_ = sse.ConsoleError(err)
+				return
+			}
+			if err := loadMVCSession(ctx, mvc, sessionID); err != nil {
+				logger.Error(
+					fmt.Errorf("failed to load admin live update session: %w", err).Error(),
+					"request_id", requestID,
+					"connections_cookie_present", connectionsCookiePresent,
+				)
+				_ = sse.ConsoleError(err)
+				return
+			}
 			watcher, err := kv.Watch(ctx, sessionID)
 			if err != nil {
 				logger.Error(
@@ -144,7 +159,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					"request_id", requestID,
 					"connections_cookie_present", connectionsCookiePresent,
 				)
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				_ = sse.ConsoleError(err)
 				return
 			}
 			defer func() {
@@ -165,16 +180,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					)
 				}
 			}()
-			sse := datastar.NewSSE(w, r)
-			if err := sse.PatchElementTempl(adminPage(db)); err != nil {
-				logger.Error(
-					fmt.Errorf("failed to patch initial admin live update: %w", err).Error(),
-					"request_id", requestID,
-					"connections_cookie_present", connectionsCookiePresent,
-				)
-				_ = sse.ConsoleError(err)
-				return
-			}
 			logger.Debug(
 				"admin watcher started",
 				"request_id", requestID,
@@ -219,14 +224,14 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 					}
 					if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
 						logger.Error(
-							err.Error(),
+							fmt.Errorf("failed to apply admin live update state: %w", err).Error(),
 							"request_id", requestID,
 							"connections_cookie_present", connectionsCookiePresent,
 							"operation", entry.Operation().String(),
 							"revision", entry.Revision(),
 							"value_bytes", len(entry.Value()),
 						)
-						http.Error(w, err.Error(), http.StatusInternalServerError)
+						_ = sse.ConsoleError(err)
 						return
 					}
 					if err := sse.PatchElementTempl(adminPage(db)); err != nil {
@@ -254,17 +259,28 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 		adminRouter.Route("/approval/", func(approvalRouter chi.Router) {
 			approvalRouter.Route("/api/", func(apiRouter chi.Router) {
 				apiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-					sessionID, mvc, err := mvcSession(w, r)
+					sessionID, err := upsertSessionID(store, r, w)
 					if err != nil {
-						logger.Error(fmt.Errorf("failed to get approval MVC session: %w", err).Error())
+						logger.Error(fmt.Errorf("failed to get approval session id: %w", err).Error())
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
 					ctx := r.Context()
+					mvc := &root.TodoMVC{}
+					sse := datastar.NewSSE(w, r)
+					if err := sse.PatchElementTempl(approval.ApprovalPage(db, baseLogger)); err != nil {
+						_ = sse.ConsoleError(err)
+						return
+					}
+					if err := loadMVCSession(ctx, mvc, sessionID); err != nil {
+						logger.Error(fmt.Errorf("failed to load approval live update session: %w", err).Error())
+						_ = sse.ConsoleError(err)
+						return
+					}
 					watcher, err := kv.Watch(ctx, sessionID)
 					if err != nil {
 						logger.Error(fmt.Errorf("failed to create approval watcher: %w", err).Error())
-						http.Error(w, err.Error(), http.StatusInternalServerError)
+						_ = sse.ConsoleError(err)
 						return
 					}
 					defer func() {
@@ -275,11 +291,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							logger.Error(fmt.Errorf("failed to stop approval watcher: %w", err).Error())
 						}
 					}()
-					sse := datastar.NewSSE(w, r)
-					if err := sse.PatchElementTempl(approval.ApprovalPage(db, baseLogger)); err != nil {
-						_ = sse.ConsoleError(err)
-						return
-					}
 
 					for {
 						select {
@@ -293,7 +304,8 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 								continue
 							}
 							if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
-								http.Error(w, err.Error(), http.StatusInternalServerError)
+								logger.Error(fmt.Errorf("failed to apply approval live update state: %w", err).Error())
+								_ = sse.ConsoleError(err)
 								return
 							}
 							if err := sse.PatchElementTempl(approval.ApprovalPage(db, baseLogger)); err != nil {
@@ -446,7 +458,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				})
 				editEventRouter.Route("/api/{id}", func(newApiIdRouter chi.Router) {
 					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-						sessionID, mvc, err := mvcSession(w, r)
+						sessionID, err := upsertSessionID(store, r, w)
 						if err != nil {
 							http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
 							return
@@ -459,9 +471,21 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						}
 
 						ctx := r.Context()
+						mvc := &root.TodoMVC{}
+						sse := datastar.NewSSE(w, r)
+						if err := sse.PatchElementTempl(edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, baseLogger)); err != nil {
+							_ = sse.ConsoleError(err)
+							return
+						}
+						if err := loadMVCSession(ctx, mvc, sessionID); err != nil {
+							logger.Error(fmt.Errorf("failed to load edit-form live update session: %w", err).Error(), "event_id", eventId)
+							_ = sse.ConsoleError(err)
+							return
+						}
 						watcher, err := kv.Watch(ctx, sessionID)
 						if err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
+							logger.Error(fmt.Errorf("failed to create edit-form watcher: %w", err).Error(), "event_id", eventId)
+							_ = sse.ConsoleError(err)
 							return
 						}
 						defer func() {
@@ -472,11 +496,6 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 								logger.Error(fmt.Errorf("failed to stop edit-form watcher: %w", err).Error())
 							}
 						}()
-						sse := datastar.NewSSE(w, r)
-						if err := sse.PatchElementTempl(edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, baseLogger)); err != nil {
-							_ = sse.ConsoleError(err)
-							return
-						}
 
 						for {
 							select {
@@ -491,7 +510,8 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 									continue
 								}
 								if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
-									http.Error(w, err.Error(), http.StatusInternalServerError)
+									logger.Error(fmt.Errorf("failed to apply edit-form live update state: %w", err).Error(), "event_id", eventId)
+									_ = sse.ConsoleError(err)
 									return
 								}
 

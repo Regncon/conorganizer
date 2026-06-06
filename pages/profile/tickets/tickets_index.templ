@@ -57,7 +57,7 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 	resetAndSaveMVC := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
 		*mvc = root.TodoMVC{}
 		if err := saveMVC(ctx, mvc, sessionID, kv, notifyUpdate); err != nil {
-			return fmt.Errorf("failed to save mvc: %w", err)
+			logger.Warn("failed to save profile tickets live update state; continuing without KV session", "error", err.Error())
 		}
 		return nil
 	}
@@ -74,29 +74,25 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 		return nil
 	}
 
-	session := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
-		ctx := r.Context()
-		sessionID, err := upsertSessionID(store, r, w)
-		if err != nil {
-			return "", nil, fmt.Errorf("failed to get session id: %w", err)
-		}
-
-		mvc := &root.TodoMVC{}
+	loadSession := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
-				return "", nil, fmt.Errorf("failed to get key value: %w", err)
+				logger.Warn("failed to load profile tickets live update state; resetting", "error", err.Error())
+				*mvc = root.TodoMVC{}
+				return nil
 			}
 			// first visit ⇒ create an empty snapshot so the SSE loop can unmarshal
 			if err := resetAndSaveMVC(ctx, mvc, sessionID); err != nil {
-				return "", nil, err
+				return err
 			}
 		} else {
 			if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
-				return "", nil, err
+				return err
 			}
 		}
-		return sessionID, mvc, nil
+		return nil
 	}
+
 	router.Route("/tickets", func(profileRouter chi.Router) {
 		profileRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
@@ -112,17 +108,31 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 		})
 		profileRouter.Route("/api", func(billettholderAdminRouter chi.Router) {
 			billettholderAdminRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				sessionID, _, err := session(w, r)
+				sessionID, err := upsertSessionID(store, r, w)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 
 				ctx := r.Context()
+				var user = userctx.GetUserRequestInfo(ctx)
+				sse := datastar.NewSSE(w, r)
+				// send the first render immediately
+				if err := sse.PatchElementTempl(profileTicketsPage(user.Id, db, logger)); err != nil {
+					_ = sse.ConsoleError(err)
+					return
+				}
+				mvc := &root.TodoMVC{}
+				if err := loadSession(ctx, mvc, sessionID); err != nil {
+					logger.Error(fmt.Errorf("failed to load profile tickets live update session: %w", err).Error())
+					_ = sse.ConsoleError(err)
+					return
+				}
 				subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
 				sub, err := nc.SubscribeSync(subj)
 				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
+					logger.Error(fmt.Errorf("failed to subscribe profile tickets stream: %w", err).Error())
+					_ = sse.ConsoleError(err)
 					return
 				}
 				defer func() {
@@ -133,14 +143,6 @@ func ProfileTicketsRoute(router chi.Router, store sessions.Store, ns *embeddedna
 						logger.Error(fmt.Errorf("failed to unsubscribe profile tickets stream: %w", err).Error())
 					}
 				}()
-
-				var user = userctx.GetUserRequestInfo(ctx)
-				sse := datastar.NewSSE(w, r)
-				// send the first render immediately
-				if err := sse.PatchElementTempl(profileTicketsPage(user.Id, db, logger)); err != nil {
-					_ = sse.ConsoleError(err)
-					return
-				}
 
 				for {
 					if _, err := sub.NextMsgWithContext(ctx); err != nil {

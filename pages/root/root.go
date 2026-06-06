@@ -70,7 +70,7 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 	resetAndSaveMVC := func(ctx context.Context, sessionID string, mvc *TodoMVC) error {
 		resetMVC(mvc)
 		if err := saveMVC(ctx, sessionID, mvc); err != nil {
-			return fmt.Errorf("failed to save mvc: %w", err)
+			logger.Warn("failed to save root live update state; continuing without KV session", "error", err.Error())
 		}
 		return nil
 	}
@@ -87,42 +87,54 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 		return nil
 	}
 
-	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *TodoMVC, error) {
-		ctx := r.Context()
-		sessionID, err := upsertSessionID(store, r, w)
-		if err != nil {
-			return "", nil, fmt.Errorf("failed to get session id: %w", err)
-		}
-
-		mvc := &TodoMVC{}
+	loadMVCSession := func(ctx context.Context, sessionID string, mvc *TodoMVC) error {
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
-				return "", nil, fmt.Errorf("failed to get key value: %w", err)
+				logger.Warn("failed to load root live update state; resetting", "error", err.Error())
+				resetMVC(mvc)
+				return nil
 			}
 			if err := resetAndSaveMVC(ctx, sessionID, mvc); err != nil {
-				return "", nil, err
+				return err
 			}
 		} else {
 			if err := applyMVCEntry(ctx, sessionID, mvc, entry); err != nil {
-				return "", nil, err
+				return err
 			}
 		}
-		return sessionID, mvc, nil
+		return nil
 	}
+
 	rootLayoutRoute(router, db, logger, eventImageDir, err)
 
 	router.Route("/root", func(rootRouter chi.Router) {
 		rootRouter.Route("/api", func(rootApiRouter chi.Router) {
 			rootApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-				sessionID, mvc, err := mvcSession(w, r)
+				sessionID, err := upsertSessionID(store, r, w)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
 				}
 				ctx := r.Context()
+				mvc := &TodoMVC{}
+				sse := datastar.NewSSE(w, r)
+				renderRootPage := func() error {
+					isAdmin := authctx.GetAdminFromUserToken(ctx)
+					return sse.PatchElementTempl(rootPage(db, isAdmin, eventImageDir))
+				}
+				if err := renderRootPage(); err != nil {
+					_ = sse.ConsoleError(err)
+					return
+				}
+				if err := loadMVCSession(ctx, sessionID, mvc); err != nil {
+					logger.Error(fmt.Errorf("failed to load root live update session: %w", err).Error())
+					_ = sse.ConsoleError(err)
+					return
+				}
 				watcher, err := kv.Watch(ctx, sessionID)
 				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
+					logger.Error(fmt.Errorf("failed to create root watcher: %w", err).Error())
+					_ = sse.ConsoleError(err)
 					return
 				}
 				defer func() {
@@ -133,15 +145,6 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 						logger.Error(fmt.Errorf("failed to stop root watcher: %w", err).Error())
 					}
 				}()
-				sse := datastar.NewSSE(w, r)
-				renderRootPage := func() error {
-					isAdmin := authctx.GetAdminFromUserToken(ctx)
-					return sse.PatchElementTempl(rootPage(db, isAdmin, eventImageDir))
-				}
-				if err := renderRootPage(); err != nil {
-					_ = sse.ConsoleError(err)
-					return
-				}
 
 				for {
 					select {
@@ -155,7 +158,8 @@ func SetupRootRoute(router chi.Router, store sessions.Store, logger *slog.Logger
 							continue
 						}
 						if err := applyMVCEntry(ctx, sessionID, mvc, entry); err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
+							logger.Error(fmt.Errorf("failed to apply root live update state: %w", err).Error())
+							_ = sse.ConsoleError(err)
 							return
 						}
 						if err := renderRootPage(); err != nil {

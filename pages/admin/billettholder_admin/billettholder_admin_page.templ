@@ -20,6 +20,7 @@ func billettholdereSearchRoute(
 	router chi.Router,
 	store sessions.Store,
 	notifyUpdate func(string),
+	logger *slog.Logger,
 ) {
 	router.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
 		datastarRaw := r.URL.Query().Get("datastar")
@@ -44,7 +45,12 @@ func billettholdereSearchRoute(
 			GMOrDM:             payload.FilterGMOrDM,
 		}
 
-		sessionID, _ := upsertSessionID(store, r, w)
+		sessionID, err := upsertSessionID(store, r, w)
+		if err != nil {
+			logger.Error(fmt.Errorf("failed to get billettholder admin search session id: %w", err).Error())
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 		if notifyUpdate != nil {
 			notifyUpdate(sessionID)
 		}

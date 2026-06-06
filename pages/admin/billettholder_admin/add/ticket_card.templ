@@ -63,7 +63,12 @@ func ConvertTicketToBillettholderRoute(
 				return
 			}
 
-			sessionID, _ := upsertSessionID(store, r, w)
+			sessionID, sessionErr := upsertSessionID(store, r, w)
+			if sessionErr != nil {
+				logger.Error(fmt.Errorf("failed to get convert-ticket session id: %w", sessionErr).Error(), "ticket_id", ticketID)
+				http.Error(w, sessionErr.Error(), http.StatusInternalServerError)
+				return
+			}
 			if notifyUpdate != nil {
 				notifyUpdate(sessionID)
 			}

@@ -57,7 +57,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 	resetAndSaveMVC := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
 		*mvc = root.TodoMVC{}
 		if err := saveMVC(ctx, mvc, sessionID, kv, notifyUpdate); err != nil {
-			return fmt.Errorf("failed to save mvc: %w", err)
+			logger.Warn("failed to save billettholder admin live update state; continuing without KV session", "error", err.Error())
 		}
 		return nil
 	}
@@ -74,45 +74,54 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 		return nil
 	}
 
-	session := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
-		ctx := r.Context()
-		sessionID, err := upsertSessionID(store, r, w)
-		if err != nil {
-			return "", nil, fmt.Errorf("failed to get session id: %w", err)
-		}
-
-		mvc := &root.TodoMVC{}
+	loadSession := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
-				return "", nil, fmt.Errorf("failed to get key value: %w", err)
+				logger.Warn("failed to load billettholder admin live update state; resetting", "error", err.Error())
+				*mvc = root.TodoMVC{}
+				return nil
 			}
 			// first visit ⇒ create an empty snapshot so the SSE loop can unmarshal
 			if err := resetAndSaveMVC(ctx, mvc, sessionID); err != nil {
-				return "", nil, err
+				return err
 			}
 		} else {
 			if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
-				return "", nil, err
+				return err
 			}
 		}
-		return sessionID, mvc, nil
+		return nil
 	}
 
 	indexRoute(router, db, logger, err)
 
 	router.Route("/admin/billettholder/api/", func(billettholderAdminRouter chi.Router) {
 		billettholderAdminRouter.With(authctx.RequireAdmin(baseLogger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
-			sessionID, _, err := session(w, r)
+			sessionID, err := upsertSessionID(store, r, w)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
 			ctx := r.Context()
+			sse := datastar.NewSSE(w, r)
+
+			// send the first render immediately
+			if err := sse.PatchElementTempl(BillettholderAdminPage(db, logger)); err != nil {
+				_ = sse.ConsoleError(err)
+				return
+			}
+			mvc := &root.TodoMVC{}
+			if err := loadSession(ctx, mvc, sessionID); err != nil {
+				logger.Error(fmt.Errorf("failed to load billettholder admin live update session: %w", err).Error())
+				_ = sse.ConsoleError(err)
+				return
+			}
 			subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
 			sub, err := nc.SubscribeSync(subj)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				logger.Error(fmt.Errorf("failed to subscribe billettholder admin stream: %w", err).Error())
+				_ = sse.ConsoleError(err)
 				return
 			}
 			defer func() {
@@ -123,13 +132,6 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 					logger.Error(fmt.Errorf("failed to unsubscribe billettholder admin stream: %w", err).Error())
 				}
 			}()
-			sse := datastar.NewSSE(w, r)
-
-			// send the first render immediately
-			if err := sse.PatchElementTempl(BillettholderAdminPage(db, logger)); err != nil {
-				_ = sse.ConsoleError(err)
-				return
-			}
 
 			for {
 				if _, err := sub.NextMsgWithContext(ctx); err != nil {
@@ -141,7 +143,7 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 				}
 			}
 		})
-		billettholdereSearchRoute(billettholderAdminRouter, store, notifyUpdate)
+		billettholdereSearchRoute(billettholderAdminRouter, store, notifyUpdate, logger)
 		addEmailToBilettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
 		deleteEmailFromBillettholderRoute(billettholderAdminRouter, db, logger, store, notifyUpdate)
 	})
@@ -150,18 +152,32 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 
 	router.Route("/admin/billettholder/add/api/", func(addBillettholderRouter chi.Router) {
 		addBillettholderRouter.With(authctx.RequireAdmin(baseLogger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
-			sessionID, _, err := session(w, r)
+			sessionID, err := upsertSessionID(store, r, w)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
 
 			ctx := r.Context()
+			sse := datastar.NewSSE(w, r)
+
+			// initial render
+			if err := sse.PatchElementTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
+				_ = sse.ConsoleError(err)
+				return
+			}
+			mvc := &root.TodoMVC{}
+			if err := loadSession(ctx, mvc, sessionID); err != nil {
+				logger.Error(fmt.Errorf("failed to load add-billettholder live update session: %w", err).Error())
+				_ = sse.ConsoleError(err)
+				return
+			}
 			subj := fmt.Sprintf("billettholder.%s.updated", sessionID)
 			logger.Debug("Subscribing add billettholder page")
 			sub, err := nc.SubscribeSync(subj)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				logger.Error(fmt.Errorf("failed to subscribe add-billettholder stream: %w", err).Error())
+				_ = sse.ConsoleError(err)
 				return
 			}
 			defer func() {
@@ -172,13 +188,6 @@ func SetupBillettholderAdminRoute(router chi.Router, store sessions.Store, ns *e
 					logger.Error(fmt.Errorf("failed to unsubscribe add-billettholder stream: %w", err).Error())
 				}
 			}()
-			sse := datastar.NewSSE(w, r)
-
-			// initial render
-			if err := sse.PatchElementTempl(addbillettholder.AddBillettholderAdminPage(db, logger)); err != nil {
-				_ = sse.ConsoleError(err)
-				return
-			}
 
 			for {
 				if _, err := sub.NextMsgWithContext(ctx); err != nil {

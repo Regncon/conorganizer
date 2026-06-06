@@ -58,7 +58,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 	resetAndSaveMVC := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
 		*mvc = root.TodoMVC{}
 		if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-			return fmt.Errorf("failed to save mvc: %w", err)
+			logger.Warn("failed to save profile live update state; continuing without KV session", "error", err.Error())
 		}
 		return nil
 	}
@@ -75,28 +75,23 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 		return nil
 	}
 
-	profileSession := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
-		ctx := r.Context()
-		sessionID, err := upsertSessionID(store, r, w)
-		if err != nil {
-			return "", nil, fmt.Errorf("failed to get session id: %w", err)
-		}
-
-		mvc := &root.TodoMVC{}
+	loadProfileSession := func(ctx context.Context, mvc *root.TodoMVC, sessionID string) error {
 		if entry, err := kv.Get(ctx, sessionID); err != nil {
 			if err != jetstream.ErrKeyNotFound {
-				return "", nil, fmt.Errorf("failed to get key value: %w", err)
+				logger.Warn("failed to load profile live update state; resetting", "error", err.Error())
+				*mvc = root.TodoMVC{}
+				return nil
 			}
 
 			if err := resetAndSaveMVC(ctx, mvc, sessionID); err != nil {
-				return "", nil, err
+				return err
 			}
 		} else {
 			if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
-				return "", nil, err
+				return err
 			}
 		}
-		return sessionID, mvc, nil
+		return nil
 	}
 
 	var profileTicketsErr error
@@ -139,7 +134,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 		profileRouter.Route("/api", func(profileApiRouter chi.Router) {
 			profileApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				requestLogger := logger.With("component", "profile")
-				sessionID, mvc, err := profileSession(w, r)
+				sessionID, err := upsertSessionID(store, r, w)
 				if err != nil {
 					http.Error(w, err.Error(), http.StatusInternalServerError)
 					return
@@ -147,19 +142,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 
 				ctx := r.Context()
 				user := userctx.GetUserRequestInfo(ctx)
-				watcher, err := kv.Watch(ctx, sessionID)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				defer func() {
-					if err := watcher.Stop(); err != nil {
-						if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
-							return
-						}
-						requestLogger.Error(fmt.Errorf("failed to stop profile watcher: %w", err).Error())
-					}
-				}()
+				mvc := &root.TodoMVC{}
 				sse := datastar.NewSSE(w, r)
 
 				renderProfileMainColumn := func() error {
@@ -176,6 +159,25 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 					_ = sse.ConsoleError(err)
 					return
 				}
+				if err := loadProfileSession(ctx, mvc, sessionID); err != nil {
+					requestLogger.Error(fmt.Errorf("failed to load profile live update session: %w", err).Error())
+					_ = sse.ConsoleError(err)
+					return
+				}
+				watcher, err := kv.Watch(ctx, sessionID)
+				if err != nil {
+					requestLogger.Error(fmt.Errorf("failed to create profile watcher: %w", err).Error())
+					_ = sse.ConsoleError(err)
+					return
+				}
+				defer func() {
+					if err := watcher.Stop(); err != nil {
+						if errors.Is(err, nats.ErrBadSubscription) || ctx.Err() != nil {
+							return
+						}
+						requestLogger.Error(fmt.Errorf("failed to stop profile watcher: %w", err).Error())
+					}
+				}()
 
 				for {
 					select {
@@ -189,7 +191,8 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 							continue
 						}
 						if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
+							requestLogger.Error(fmt.Errorf("failed to apply profile live update state: %w", err).Error())
+							_ = sse.ConsoleError(err)
 							return
 						}
 						if err := renderProfileMainColumn(); err != nil {
@@ -207,7 +210,7 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 			profileApiRouter.Route("/new", func(newApiRouter chi.Router) {
 				newApiRouter.Route("/{id}", func(newApiIdRouter chi.Router) {
 					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-						sessionID, mvc, err := profileSession(w, r)
+						sessionID, err := upsertSessionID(store, r, w)
 						if err != nil {
 							http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
 							return
@@ -220,9 +223,25 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 						}
 
 						ctx := r.Context()
+						mvc := &root.TodoMVC{}
+						sse := datastar.NewSSE(w, r)
+						renderNewEventForm := func() error {
+							userId := userctx.GetUserRequestInfo(r.Context()).Id
+							return sse.PatchElementTempl(newevent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, logger))
+						}
+						if err := renderNewEventForm(); err != nil {
+							_ = sse.ConsoleError(err)
+							return
+						}
+						if err := loadProfileSession(ctx, mvc, sessionID); err != nil {
+							logger.Error(fmt.Errorf("failed to load new-event live update session: %w", err).Error(), "event_id", eventId)
+							_ = sse.ConsoleError(err)
+							return
+						}
 						watcher, err := kv.Watch(ctx, sessionID)
 						if err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
+							logger.Error(fmt.Errorf("failed to create new-event watcher: %w", err).Error(), "event_id", eventId)
+							_ = sse.ConsoleError(err)
 							return
 						}
 						defer func() {
@@ -233,15 +252,6 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 								logger.Error(fmt.Errorf("failed to stop new-event watcher: %w", err).Error())
 							}
 						}()
-						sse := datastar.NewSSE(w, r)
-						renderNewEventForm := func() error {
-							userId := userctx.GetUserRequestInfo(r.Context()).Id
-							return sse.PatchElementTempl(newevent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, logger))
-						}
-						if err := renderNewEventForm(); err != nil {
-							_ = sse.ConsoleError(err)
-							return
-						}
 
 						for {
 							select {
@@ -256,7 +266,8 @@ func SetupProfileRoute(router chi.Router, store sessions.Store, ns *embeddednats
 									continue
 								}
 								if err := applyMVCEntry(ctx, mvc, sessionID, entry); err != nil {
-									http.Error(w, err.Error(), http.StatusInternalServerError)
+									logger.Error(fmt.Errorf("failed to apply new-event live update state: %w", err).Error(), "event_id", eventId)
+									_ = sse.ConsoleError(err)
 									return
 								}
 
