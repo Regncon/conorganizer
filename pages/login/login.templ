@@ -5,14 +5,15 @@ templ loginForm() {
 	<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
 	<script src="https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js"></script>
 	<style>
-        div, form {
+        .descope-login-wrapper,
+        .descope-login-wrapper > form {
             display: flex;
             place-content: center;
-            descope-wc {
+            > descope-wc {
                 max-width: 35.3125rem;
             }
             @media screen and (width <= 26.5625rem) {
-                descope-wc {
+                > descope-wc {
                         --descope-container-align-items__override: auto;
                         --descope-container-horizontal-padding__override: var(--spacing-2x);
                         --descope-container-host-width__override: 100%;
@@ -20,7 +21,7 @@ templ loginForm() {
             }
         }
     </style>
-	<div>
+	<div class="descope-login-wrapper">
 		<descope-wc
 			project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
 			flow-id="sign-up-or-in-passwords-social"
