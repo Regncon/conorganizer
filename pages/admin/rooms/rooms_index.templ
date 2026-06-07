@@ -105,7 +105,7 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
         </style>
 		<h1 class="page-heading has-helptext" style="text-align: center;">Administrer rom og fordeling</h1>
 		<p class="page-heading-help-text">
-			Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom for konvensjonen. Hovedsakelig brukt for å endre detaljer som maksimum spill for et rom eller detaljer som romnummer og romnavn som vises på dører og branninstruksjoner. Du kan bruke knappene under for å navigere seksjoner hvis du skal fordele eventer et rom i en gitt pulje.
+			Du kan bruke knappene under for å navigere seksjoner hvis du skal fordele eventer et rom i en gitt pulje.
 		</p>
 		<div class="tabs">
 			<a role="button" href="/admin/rooms/" class={ templ.KV("active", puljeQuery == "/") }>Rediger rom</a>
