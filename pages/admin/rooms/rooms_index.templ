@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
+func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
 	logger = logger.With("component", "rooms")
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +43,7 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err er
 			if err := layouts.Base(
 				"Rom oversikt",
 				userInfo,
-				roomsIndex(db, logger, RoomsByPuljePageContent(db, logger, models.Pulje(pulje)), pulje),
+				roomsIndex(db, logger, RoomsByPuljePageContent(db, logger, models.Pulje(pulje), eventImageDir), pulje),
 			).Render(ctx, w); err != nil {
 				logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
 			}
