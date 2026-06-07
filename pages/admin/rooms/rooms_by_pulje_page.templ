@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventimage"
 	roomService "github.com/Regncon/conorganizer/service/rooms"
 	"log/slog"
 	"sort"
@@ -84,8 +85,6 @@ func getEventInPuljeWithoutRoom(db *sql.DB, logger *slog.Logger, pulje models.Pu
 		events = append(events, event)
 	}
 
-	fmt.Println(events, pulje)
-
 	if err := rows.Err(); err != nil {
 		logger.Error(fmt.Errorf("error iterating rows: %w", err).Error())
 	}
@@ -93,21 +92,23 @@ func getEventInPuljeWithoutRoom(db *sql.DB, logger *slog.Logger, pulje models.Pu
 	return events
 }
 
-templ roomEventCard(event models.RoomEventPuljeSummary) {
+templ roomEventCard(event models.RoomEventPuljeSummary, eventImageDir *string) {
+	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
 	<a
 		role="button"
 		href={ "/admin/approval/edit/" + event.EventID }
+		class="room-event"
 	>
 		<img
-			src="/static/banner-test.jpg"
+			src={ imageBannerUrl }
 			alt={ event.Title }
 		/>
 		<h4>{ event.Title }s</h4>
-		<p>6 Spillere</p>
+		<p>{ event.MaxPlayers } Spillere</p>
 	</a>
 }
 
-templ roomPuljeContainer(room models.RoomByPulje) {
+templ roomPuljeContainer(room models.RoomByPulje, eventImageDir *string) {
 	<div
 		class="room"
 	>
@@ -139,9 +140,9 @@ templ roomPuljeContainer(room models.RoomByPulje) {
 			</p>
 		</span>
 		if len(room.AssignedEventsID) > 0 {
-			<div class="room-events">
+			<div class="room-event-container">
 				for _, event := range room.AssignedEventsID {
-					@roomEventCard(event)
+					@roomEventCard(event, eventImageDir)
 				}
 			</div>
 		} else {
@@ -154,14 +155,14 @@ templ roomPuljeContainer(room models.RoomByPulje) {
 	</div>
 }
 
-templ floorPuljeContainer(floor int, rooms []models.RoomByPulje) {
+templ floorPuljeContainer(floor int, rooms []models.RoomByPulje, eventImageDir *string) {
 	<h2>{ floor }. Etg</h2>
 	for _, room := range rooms {
-		@roomPuljeContainer(room)
+		@roomPuljeContainer(room, eventImageDir)
 	}
 }
 
-templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
 	<script>
         /* Todo: remove this section asap when NATS has been fixed */
         window.addEventListener("pageshow", e => {
@@ -195,6 +196,8 @@ templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulj
             border-radius: var(--border-radius-1x);
             background-color: var(--bg-item);
 
+            transition: border-color 300ms ease-in-out;
+
             h3 {
                 text-align: center;
             }
@@ -210,6 +213,10 @@ templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulj
             }
         }
 
+        .room:hover {
+            border-color: var(--bg-item-border-hover);
+        }
+
         @media screen and (width > 1200px) {
             .rooms-container {
                 grid-template-columns: repeat(2, 1fr);
@@ -222,65 +229,87 @@ templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulj
             }
         }
 
-        .room-events {
+        .room-event-container {
             display: flex;
             flex-flow: column nowrap;
             gap: var(--spacing-1x);
             margin: 0;
             padding: var(--spacing-1x) 0;
+        }
+        .room-event {
+            position: relative;
+            overflow: hidden;
 
-            a {
-                position: relative;
-                overflow: hidden;
+            display: flex;
+            flex-flow: column nowrap;
+            justify-content: center;
 
-                display: flex;
-                flex-flow: column nowrap;
-                justify-content: center;
-
-                padding: var(--spacing-1x);
-                border: 2px solid var(--bg-item-border);
-                border-radius: var(--border-radius-2x);
-                text-decoration: none;
-                color: var(--color-primary-text);
-            }
-
-            a:hover {
-                border-color: var(--bg-item-border-hover);
-            }
+            padding: var(--spacing-1x);
+            border: 1px solid var(--bg-item-border);
+            border-radius: var(--border-radius-2x);
+            text-decoration: none;
+            color: var(--color-primary-text);
 
             img {
                 position: absolute;
                 inset: 0;
                 width: 100%;
                 height: 100%;
-
                 object-fit: cover;
-                transition: filter 200ms ease;
-
-                filter:opacity(0.2);
             }
-
-            a:hover img {
-                filter:opacity(0.1);
-            }
-
-
-
 
             h4 {
                 font-size: medium;
                 text-align: center;
+                z-index: 3;
             }
 
             p {
                 font-size: small;
                 text-align: end;
+                z-index: 3;
             }
         }
+
+        .room-event::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+
+            background: linear-gradient(
+                to right,
+                rgba(53, 57, 74, 0.5) 0%,
+                rgba(53, 57, 74, 0.8) 20%,
+                rgba(53, 57, 74, 1) 60%
+            );
+        }
+        .room-event::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            opacity: 0;
+
+            background: linear-gradient(
+                to right,
+                rgba(53, 57, 74, 0.5) 0%,
+                rgba(53, 57, 74, 0.8) 100%,
+                rgba(53, 57, 74, 1) 50%
+            );
+
+            transition: opacity 300ms ease-in-out;
+        }
+        .room-event:hover {
+            border-color: var(--bg-item-border-hover);
+        }
+        .room-event:hover::after {
+            opacity: 1;
+        }
 	</style>
-	<h2>Eventer i pulje uten tildelt rom</h2>
 	{{ events := getEventInPuljeWithoutRoom(db, logger, pulje) }}
 	if len(events) > 0 {
+		<h2>{ len(events) } Eventer i pulje uten tildelt rom</h2>
 		<div class="event-list">
 			for _, event := range events {
 				<a
@@ -292,12 +321,14 @@ templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulj
 		</div>
 	}
 	<h2>Romfordelig for { pulje }</h2>
-	<div class="rooms-container">
-		{{ floors := getRoomsPuljeByFloor(db, logger, pulje) }}
-		if len(floors) > 0 {
+	{{ floors := getRoomsPuljeByFloor(db, logger, pulje) }}
+	if len(floors) > 0 {
+		<div class="rooms-container">
 			for _, floorGroup := range floors {
-				@floorPuljeContainer(floorGroup.Floor, floorGroup.Rooms)
+				@floorPuljeContainer(floorGroup.Floor, floorGroup.Rooms, eventImageDir)
 			}
-		}
-	</div>
+		</div>
+	} else {
+		<p style="text-align: center;">Ingen rom funnet, vær den førte til å <a href="/admin/rooms/">ligge inn</a> et rom nå!</p>
+	}
 }

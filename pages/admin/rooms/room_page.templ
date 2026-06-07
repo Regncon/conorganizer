@@ -338,16 +338,16 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
 	</style>
 	@formModal()
 	<p>Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom for konvensjonen. Hovedsakelig brukt for å endre detaljer som maksimum spill for et rom eller detaljer som romnummer og romnavn som vises på dører og branninstruksjoner.</p>
-	<div class="rooms-container">
-		{{ floors := getRoomsByFloor(db, logger) }}
-		if len(floors) > 0 {
+	{{ floors := getRoomsByFloor(db, logger) }}
+	if len(floors) > 0 {
+		<div class="rooms-container">
 			for _, floorGroup := range floors {
 				@floor(floorGroup.Floor, floorGroup.Rooms)
 			}
-		} else {
-			<p>No room data found, be the first to insert now!</p>
-		}
-	</div>
+		</div>
+	} else {
+		<p style="text-align: center;">Ingen rom funnet, vær den førte til å et rom nå!</p>
+	}
 	<button
 		type="button"
 		class="btn btn--outline"
