@@ -103,10 +103,7 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
                 background-color: var(--bg-surface);
             }
         </style>
-		<h1 class="page-heading has-helptext" style="text-align: center;">Administrer rom og fordeling</h1>
-		<p class="page-heading-help-text">
-			Du kan bruke knappene under for å navigere seksjoner hvis du skal fordele eventer et rom i en gitt pulje.
-		</p>
+		<h1 class="page-heading" style="text-align: center;">Administrer rom og fordeling av events</h1>
 		<div class="tabs">
 			<a role="button" href="/admin/rooms/" class={ templ.KV("active", puljeQuery == "/") }>Rediger rom</a>
 			for _,pulje := range models.AllPuljer() {
