@@ -33,7 +33,7 @@ type RoomEventPuljeSummary struct {
 	EventPuljeID string
 	EventID      string
 	Title        string
-	MaxPlayers   string
+	MaxPlayers   int
 }
 type RoomEventPuljeSummaryJson struct {
 	EventPuljeID string `json:"pulje_id"`
@@ -50,9 +50,9 @@ type RoomByPulje struct {
 	Name               string
 	RoomNumber         string
 	Floor              int
-	AssignedEventsID   []RoomEventPuljeSummary
 	MaxConcurrentGames int
 	Notes              string
+	AssignedEventsID   []RoomEventPuljeSummary
 }
 
 // Helper function for getting currently assigned events to a room in a pulje
@@ -84,6 +84,7 @@ type RoomStatusRow struct {
 	MaxConcurrentGames int
 	RoomNotes          string
 
-	EventID    sql.NullString
-	EventTitle sql.NullString
+	EventID         sql.NullString
+	EventTitle      sql.NullString
+	EventMaxPlayers sql.NullInt32
 }
