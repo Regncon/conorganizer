@@ -13,7 +13,16 @@ import (
 
 templ formModal() {
 	<dialog id="room-dialog" closedBy="any">
-		<form id="room-form">
+		<form
+			id="room-form"
+			data-signals='{
+                errors: {
+                    room_number: "",
+                    max_concurrent_games: "",
+                    error: ""
+                }
+            }'
+		>
 			<h2 data-text="$form_title"></h2>
 			<label class="label color-strong form-group">
 				<p>Navn</p>
@@ -37,6 +46,7 @@ templ formModal() {
 					pattern=".{2,}"
 					title="Bruk minst 2 tegn"
 				/>
+				<p data-text="$errors.room_number" class="input-error"></p>
 			</label>
 			<label class="label color-strong form-group">
 				<p>Etasje</p>
@@ -63,6 +73,7 @@ templ formModal() {
 					pattern=".{2,}"
 					title="Hvor mangen spill kan forekomme parallelt på et rom i en pulje"
 				/>
+				<p data-text="$errors.max_concurrent_games" class="input-error"></p>
 			</label>
 			<label class="label color-strong form-group">
 				<p>Notater</p>
@@ -84,7 +95,6 @@ templ formModal() {
 				/>
 				<p>Skal rom være skjult i puljefordeling?</p>
 			</label>
-			<p data-text="$error" style="color: red; width: 100%; word-break: break-all;"></p>
 			<span class="button-group">
 				<button
 					type="button"
@@ -115,6 +125,7 @@ templ formModal() {
 					class="btn btn--outline"
 				></button>
 			</span>
+			<p data-text="$errors.error" class="input-error"></p>
 		</form>
 		<button class="modal-close-button icon-size-24" commandfor="room-dialog" command="close">
 			@icons.Icon(icons.Close, icons.Size24)
