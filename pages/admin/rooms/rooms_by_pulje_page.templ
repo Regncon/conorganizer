@@ -124,6 +124,8 @@ templ roomEventCard(event models.RoomEventPuljeSummary, eventImageDir *string) {
 templ roomPuljeContainer(room models.RoomByPulje, eventImageDir *string) {
 	<div
 		class="room"
+		style={ templ.KV("background-color: var(--bg-surface)", room.IsDisabled),
+        templ.KV("border-color: var(--color-error)", room.IsDisabled && len(room.AssignedEventsID)>0) }
 	>
 		<h3>{ room.RoomNumber }</h3>
 		<span>
@@ -138,9 +140,6 @@ templ roomPuljeContainer(room models.RoomByPulje, eventImageDir *string) {
 			<p>Anbefalt max spill</p>
 			<p>{ room.MaxConcurrentGames }</p>
 		</span>
-		if room.MaxConcurrentGames == 0 {
-			<p style="color: var(--color-error); text-align: center;">Rommet er ikke tilgjengelig, men har eventer tildelt!</p>
-		}
 		<span>
 			<p>
 				Tildelte spill
@@ -160,6 +159,13 @@ templ roomPuljeContainer(room models.RoomByPulje, eventImageDir *string) {
 				<p>Spillere og GMs</p>
 				<p>&#126;{ calculatePopulation(room.AssignedEventsID) }</p>
 			</span>
+			if room.IsDisabled {
+				<p style="color: var(--color-error); text-align: center; padding: 1rem 0">
+					Rommet er satt til ikke tilgjengelig, men har blitt tildelt eventer!
+					<br/>
+					Du kan trykke inn på eventene under for å skifte rom.
+				</p>
+			}
 			<div class="room-event-container">
 				for _, event := range room.AssignedEventsID {
 					@roomEventCard(event, eventImageDir)
@@ -176,9 +182,13 @@ templ roomPuljeContainer(room models.RoomByPulje, eventImageDir *string) {
 }
 
 templ floorPuljeContainer(floor int, rooms []models.RoomByPulje, eventImageDir *string) {
-	<h2>{ floor }. Etg</h2>
-	for _, room := range rooms {
-		@roomPuljeContainer(room, eventImageDir)
+	for index, room := range rooms {
+		if !room.IsDisabled || len(room.AssignedEventsID) > 0 {
+			if index == 0 {
+				<h2>{ floor }. Etg</h2>
+			}
+			@roomPuljeContainer(room, eventImageDir)
+		}
 	}
 }
 

@@ -51,6 +51,7 @@ type RoomByPulje struct {
 	RoomNumber         string
 	Floor              int
 	MaxConcurrentGames int
+	IsDisabled         bool
 	Notes              string
 	AssignedEventsID   []RoomEventPuljeSummary
 }
@@ -82,6 +83,7 @@ type RoomStatusRow struct {
 	RoomNumber         string
 	Floor              int
 	MaxConcurrentGames int
+	IsDisabled         bool
 	RoomNotes          string
 
 	EventID         sql.NullString
