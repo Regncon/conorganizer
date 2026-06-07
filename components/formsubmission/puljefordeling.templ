@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"sort"
+	"strconv"
 
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/Regncon/conorganizer/service/puljer"
@@ -13,8 +16,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
-	"sort"
-	"strconv"
 )
 
 func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
@@ -255,7 +256,12 @@ func getRoomsPuljeByFloor(db *sql.DB, pulje models.Pulje) []FloorGroupPulje {
 }
 
 templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
-	{{ eventPulje, err := getEvenPulje(eventId, pulje.ID, db) }}
+	{{
+		eventPulje, err := getEvenPulje(eventId, pulje.ID, db)
+		membershipErrorKey := fmt.Sprintf("puljeMembership%s", pulje.ID)
+		publishedErrorKey := fmt.Sprintf("puljePublished%s", pulje.ID)
+		roomErrorKey := fmt.Sprintf("puljeRoom%s", pulje.ID)
+	}}
 	if err != nil {
 		<p>Error fetching event pulje: { err.Error() }</p>
 		return
@@ -268,75 +274,88 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
 			<h3>{ pulje.Name } <span>({ pulje.TimeRange() })</span></h3>
 			<div style="display: flex; gap: 1rem;">
-				<label class="checkbox-background form-group-checkbox">
-					<span>Legg til i pulje </span>
-					<input
-						if eventPulje.IsInPulje {
-							checked
-						}
-						data-bind={ fmt.Sprintf("isInPulje%s", pulje.ID) }
-						data-indicator={ fmt.Sprintf("toastPuljeMembership%s", pulje.ID) }
-						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/event-in-pulje/%s')", eventId, pulje.ID) }
-						type="checkbox"
-						name="pulje"
-						class="checkbox input"
-					/>
-				</label>
-				<label class="checkbox-background form-group-checkbox">
-					<span>Publisert</span>
-					<input
-						if eventPulje.IsPublished {
-							checked
-						}
-						if eventPulje.IsInPulje == false {
-							disabled
-						}
-						data-bind={ fmt.Sprintf("isPublished%s", pulje.ID) }
-						data-indicator={ fmt.Sprintf("toastPuljePublished%s", pulje.ID) }
-						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/is-published/%s')", eventId, pulje.ID) }
-						type="checkbox"
-						name="pulje"
-						class="checkbox input"
-					/>
-				</label>
+				<div class="feedback-control-group">
+					<label class="checkbox-background form-group-checkbox">
+						<span>Legg til i pulje </span>
+						<input
+							if eventPulje.IsInPulje {
+								checked
+							}
+							data-bind={ fmt.Sprintf("isInPulje%s", pulje.ID) }
+							data-indicator={ fmt.Sprintf("toastPuljeMembership%s", pulje.ID) }
+							{ errorfeedback.Attrs(membershipErrorKey)... }
+							data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/event-in-pulje/%s')", eventId, pulje.ID) }
+							type="checkbox"
+							name="pulje"
+							class="checkbox input"
+						/>
+					</label>
+					@errorfeedback.RenderMessage(membershipErrorKey)
+				</div>
+				<div class="feedback-control-group">
+					<label class="checkbox-background form-group-checkbox">
+						<span>Publisert</span>
+						<input
+							if eventPulje.IsPublished {
+								checked
+							}
+							if eventPulje.IsInPulje == false {
+								disabled
+							}
+							data-bind={ fmt.Sprintf("isPublished%s", pulje.ID) }
+							data-indicator={ fmt.Sprintf("toastPuljePublished%s", pulje.ID) }
+							{ errorfeedback.Attrs(publishedErrorKey)... }
+							data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/is-published/%s')", eventId, pulje.ID) }
+							type="checkbox"
+							name="pulje"
+							class="checkbox input"
+						/>
+					</label>
+					@errorfeedback.RenderMessage(publishedErrorKey)
+				</div>
 				{{
 					var assignedRoomNonNullable string = "0"
 					if eventPulje.RoomID.Valid {
 						assignedRoomNonNullable = strconv.FormatInt(eventPulje.RoomID.Int64, 10)
 					}
 				}}
-				<label
-					class="form-group"
-					style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
-					data-signals={ fmt.Sprintf("{roomAssignment:  {%s: '%s'}}", pulje.ID, assignedRoomNonNullable) }
-				>
-					<span class="label-small color-strong">Legg til rom</span>
-					<select
-						class="input"
-						data-bind={ fmt.Sprintf("roomAssignment.%s", pulje.ID) }
-						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/assign-room/%s')", eventId, pulje.ID) }
-						if !eventPulje.IsInPulje {
-							disabled
-						}
+				<div class="feedback-control-group">
+					<label
+						class="form-group"
+						style={ templ.KV("opacity: 0.5; border-color: gray;", !eventPulje.IsInPulje) }
+						data-signals={ fmt.Sprintf("{roomAssignment:  {%s: '%s'}}", pulje.ID, assignedRoomNonNullable) }
 					>
-						<option value="0">Ikke tildelt</option>
-						for _, floor := range roomStatus {
-							<optgroup label={ fmt.Sprintf("%d. Etg", floor.Floor) }>
-								for _, room := range floor.Rooms {
-									<option
-										value={ fmt.Sprintf("%d", room.ID) }
-										style={ templ.KV("color: yellow;", room.IsFull()), templ.KV("color: red", room.CurrentOccupancy()>room.MaxConcurrentGames) }
-										if room.IsDisabled {
-											disabled
-										}
-									>
-										{ room.RoomNumber } ({ room.CurrentOccupancy() }/{ room.MaxConcurrentGames })
-									</option>
-								}
-							</optgroup>
-						}
-					</select>
-				</label>
+						<span class="label-small color-strong">Legg til rom</span>
+						<select
+							class="input"
+							data-bind={ fmt.Sprintf("roomAssignment.%s", pulje.ID) }
+							data-indicator={ fmt.Sprintf("toastPuljeRoom%s", pulje.ID) }
+							{ errorfeedback.Attrs(roomErrorKey)... }
+							data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/assign-room/%s')", eventId, pulje.ID) }
+							if !eventPulje.IsInPulje {
+								disabled
+							}
+						>
+							<option value="0">Ikke tildelt</option>
+							for _, floor := range roomStatus {
+								<optgroup label={ fmt.Sprintf("%d. Etg", floor.Floor) }>
+									for _, room := range floor.Rooms {
+										<option
+											value={ fmt.Sprintf("%d", room.ID) }
+											style={ templ.KV("color: yellow;", room.IsFull()), templ.KV("color: red", room.CurrentOccupancy()>room.MaxConcurrentGames) }
+											if room.IsDisabled {
+												disabled
+											}
+										>
+											{ room.RoomNumber } ({ room.CurrentOccupancy() }/{ room.MaxConcurrentGames })
+										</option>
+									}
+								</optgroup>
+							}
+						</select>
+					</label>
+					@errorfeedback.RenderMessage(roomErrorKey)
+				</div>
 			</div>
 		</div>
 	</div>

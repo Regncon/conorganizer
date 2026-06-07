@@ -1,0 +1,260 @@
+package errorfeedback
+
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+
+	datastar "github.com/starfederation/datastar-go/datastar"
+)
+
+const feedbackErrorsSignalName = "feedbackErrors"
+
+// FeedbackErrors collects backend validation messages for inline feedback.
+//
+//	sse := datastar.NewSSE(w, r)
+//	feedback := errorfeedback.New("name", "email")
+//	feedback.Set("name", "Name must be filled in.")
+//	feedback.Clear("email")
+//	return feedback.Patch(sse)
+//
+// Patch sends this Datastar signal shape:
+//
+//	{
+//		"feedbackErrors": {
+//			"name": "Name must be filled in.",
+//			"email": ""
+//		}
+//	}
+//
+// RenderMessage documents the matching frontend markup.
+type FeedbackErrors struct {
+	messages map[string]string
+}
+
+// New initializes all feedback keys this response is responsible for.
+// Passing keys up front matters: Patch sends empty strings for keys without a
+// new error, which clears any old message already visible on the page.
+//
+//	feedback := errorfeedback.New("name", "email")
+//	if name == "" {
+//		feedback.Set("name", "Name must be filled in.")
+//	}
+//	if emailIsValid {
+//		feedback.Clear("email") // Optional; New already initialized it as clear.
+//	}
+//	return feedback.Patch(sse)
+//
+// If you omit a key from New, Patch will not clear that key on the frontend.
+func New(keys ...string) *FeedbackErrors {
+	feedback := &FeedbackErrors{
+		messages: make(map[string]string, len(keys)),
+	}
+	for _, key := range keys {
+		if key != "" {
+			feedback.messages[key] = ""
+		}
+	}
+	return feedback
+}
+
+// Set adds or replaces the message for one feedback key.
+//
+//	if name == "" {
+//		feedback.Set("name", "Name must be filled in.")
+//	}
+func (feedback *FeedbackErrors) Set(key string, message string) {
+	if feedback == nil || key == "" {
+		return
+	}
+	feedback.ensureMessages()
+	feedback.messages[key] = message
+}
+
+// Clear marks one feedback key as having no error.
+//
+//	if emailIsValid {
+//		feedback.Clear("email")
+//	}
+func (feedback *FeedbackErrors) Clear(key string) {
+	feedback.Set(key, "")
+}
+
+// HasErrors reports whether any feedback key has a non-empty message.
+//
+//	if feedback.HasErrors() {
+//		return feedback.Patch(sse)
+//	}
+func (feedback *FeedbackErrors) HasErrors() bool {
+	if feedback == nil {
+		return false
+	}
+	for _, message := range feedback.messages {
+		if message != "" {
+			return true
+		}
+	}
+	return false
+}
+
+// Patch sends the collected feedback messages as a Datastar signal patch.
+// Call it when you want to show errors, or when you want initialized empty keys
+// from New to clear old visible messages.
+//
+//	if err := feedback.Patch(sse); err != nil {
+//		return err
+//	}
+func (feedback *FeedbackErrors) Patch(sse *datastar.ServerSentEventGenerator) error {
+	if sse == nil {
+		return fmt.Errorf("patch feedback errors: sse is nil")
+	}
+
+	messages := map[string]string{}
+	if feedback != nil {
+		for key, message := range feedback.messages {
+			messages[key] = message
+		}
+	}
+	return sse.MarshalAndPatchSignals(map[string]any{
+		feedbackErrorsSignalName: messages,
+	})
+}
+
+func (feedback *FeedbackErrors) ensureMessages() {
+	if feedback.messages == nil {
+		feedback.messages = map[string]string{}
+	}
+}
+
+// DefaultMessage sets a shared fallback message for child triggers.
+// It is optional; use Attrs(key, message) for a one-off fallback message.
+// DefaultMessage is useful when several fields in the same form or dialog should
+// show the same text if a Datastar request fails before backend code can answer.
+func DefaultMessage(message string) templ.Attributes {
+	return templ.Attributes{
+		"data-feedback-default-message": message,
+	}
+}
+
+// Attrs connects one Datastar trigger to one feedback key.
+// Put it on the element that starts the Datastar request. The key must match
+// the RenderMessage key rendered near that control.
+//
+//	<input
+//		data-on:change="@put('/api/name')"
+//		{ errorfeedback.Attrs("name")... }
+//	/>
+//	@errorfeedback.RenderMessage("name")
+//
+// Pass an optional second argument for a one-off fallback message:
+//
+//	<input
+//		data-on:change="@put('/api/name')"
+//		{ errorfeedback.Attrs("name", "Could not save name. Try again.")... }
+//	/>
+//
+// Produces data-feedback-key and, when provided, data-feedback-message.
+func Attrs(key string, message ...string) templ.Attributes {
+	attrs := templ.Attributes{
+		"data-feedback-key": key,
+	}
+	if len(message) > 0 && message[0] != "" {
+		attrs["data-feedback-message"] = message[0]
+	}
+	return attrs
+}
+
+// Clear returns a Datastar expression that clears one feedback key on the frontend.
+// Use it for local UI actions that should clear a visible error without waiting
+// for backend feedback.
+//
+//	<button data-on:click={ errorfeedback.Clear("name") }>
+//		Reset name error
+//	</button>
+//
+// Produces an expression like:
+//
+//	$feedbackErrors["name"] = ''
+func Clear(key string) string {
+	if key == "" {
+		return ""
+	}
+	return signalExpression(key) + " = ''"
+}
+
+// ClearMany returns one Datastar expression that clears several feedback keys.
+// Use it when one local action resets several controls or an entire section.
+//
+//	<button data-on:click={ errorfeedback.ClearMany("name", "email", "phone") }>
+//		Reset contact errors
+//	</button>
+//
+// Produces an expression like:
+//
+//	$feedbackErrors["name"] = ''; $feedbackErrors["email"] = ''; $feedbackErrors["phone"] = ''
+func ClearMany(keys ...string) string {
+	expressions := make([]string, 0, len(keys))
+	for _, key := range keys {
+		if expression := Clear(key); expression != "" {
+			expressions = append(expressions, expression)
+		}
+	}
+	return strings.Join(expressions, "; ")
+}
+
+func messageSignals(key string) string {
+	return jsonString(map[string]any{
+		feedbackErrorsSignalName: map[string]string{
+			key: "",
+		},
+	})
+}
+
+func signalExpression(key string) string {
+	return "$" + feedbackErrorsSignalName + "[" + jsonString(key) + "]"
+}
+
+func jsonString(value any) string {
+	bytes, err := json.Marshal(value)
+	if err != nil {
+		return "{}"
+	}
+	return string(bytes)
+}
+
+// RenderMessage renders inline feedback for one feedback key.
+//
+// Pair it with Attrs on the Datastar trigger that owns the request:
+//
+//	<form { errorfeedback.DefaultMessage("Could not save. Try again.")... }>
+//		<input
+//			data-on:change="@put('/api/name')"
+//			{ errorfeedback.Attrs("name")... }
+//		/>
+//		@errorfeedback.RenderMessage("name")
+//	</form>
+//
+// Attrs lets the fallback JS know which feedback key to update if the Datastar
+// request fails before backend code can return a custom feedbackErrors patch.
+// RenderMessage initializes and displays that key from the shared page signal:
+//
+//	feedbackErrors["name"]
+//
+// Backend code can set or clear the same key with FeedbackErrors.Patch.
+//
+// Normal input value signals are separate from error feedback. Initialize them
+// with the page/component's normal data-signals helper, not this package:
+//
+//	data-signals={ dataSignals(map[string]string{"name": ""}) }
+templ RenderMessage(key string) {
+	<span
+		class="feedback-error"
+		data-signals__ifmissing={ messageSignals(key) }
+		data-feedback-for={ key }
+		data-text={ signalExpression(key) }
+		data-attr:hidden={ "!" + signalExpression(key) }
+		data-class:is-visible={ signalExpression(key) }
+		hidden
+		aria-live="polite"
+	></span>
+}

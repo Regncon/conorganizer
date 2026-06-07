@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/keyvalue"
@@ -191,12 +192,14 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					type="text"
 					data-bind="title"
 					data-indicator="toastTitle"
+					{ errorfeedback.Attrs("title")... }
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/title')", eventId) }
 					placeholder="Tittel på arrangementet"
 					required
 					pattern=".{3,}"
 					title="Bruk minst 3 tegn"
 				/>
+				@errorfeedback.RenderMessage("title")
 			</label>
 			<label class="label-small color-strong form-group intro">
 				Kjapp introduksjon
@@ -205,6 +208,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					class="input"
 					data-bind="intro"
 					data-indicator="toastIntro"
+					{ errorfeedback.Attrs("intro")... }
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/intro')", eventId) }
 					rows="2"
 					placeholder="Kjapp introduksjon til arrangementet"
@@ -214,6 +218,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				>
 					{ shouldShowStringValue(intro) }
 				</textarea>
+				@errorfeedback.RenderMessage("intro")
 			</label>
 			<label class="label-small color-strong form-group type">
 				Type arrangement
@@ -221,6 +226,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					data-signals={ dataSignals(map[string]models.EventType{"type": eventType}) }
 					data-bind="type"
 					data-indicator="toastType"
+					{ errorfeedback.Attrs("type")... }
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/type')", eventId) }
 					name="type"
 					class="input"
@@ -230,6 +236,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					<option value={ models.EventTypeCardGame }>{ models.EventTypeCardGame.Label() }</option>
 					<option value={ models.EventTypeOther }>{ models.EventTypeOther.Label() }</option>
 				</select>
+				@errorfeedback.RenderMessage("type")
 			</label>
 			<a
 				href={ "/profile/new/" + eventId + "/image/" }
@@ -249,12 +256,14 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					type="text"
 					data-bind="system"
 					data-indicator="toastSystem"
+					{ errorfeedback.Attrs("system")... }
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/system')", eventId) }
 					placeholder="Hva system er det?"
 					required
 					pattern=".{2,}"
 					title="Bruk minst 2 tegn"
 				/>
+				@errorfeedback.RenderMessage("system")
 			</label>
 			<label class="label-small color-strong form-group description">
 				Beskrivelse av arrangementet
@@ -263,6 +272,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					class="input"
 					data-bind="description"
 					data-indicator="toastDescription"
+					{ errorfeedback.Attrs("description")... }
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/description')", eventId) }
 					rows="15"
 					placeholder="Beskrivelse av arrangementet"
@@ -271,6 +281,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				>
 					{ shouldShowStringValue(description) }
 				</textarea>
+				@errorfeedback.RenderMessage("description")
 			</label>
 		</section>
 	</article>
