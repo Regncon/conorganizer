@@ -180,11 +180,11 @@ func getRoomsByFloor(db *sql.DB, logger *slog.Logger) []FloorGroup {
 
 templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
 	<style>
-		.rooms-layout {
+		.floors-container{
 			display: flex;
 			flex-direction: column;
-			gap: var(--responsive-page-section-spacing);
             margin-top: var(--responsive-page-section-spacing);
+			gap: var(--responsive-page-section-spacing);
 		}
 
         .room-container {
@@ -249,16 +249,8 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
             }
         }
 	</style>
-	<button
-		type="button"
-		class="btn btn--outline"
-		data-on:click="
-                @get('/admin/rooms/api/create/');
-                document.getElementById('room-dialog').showModal()
-            "
-	>Ligg til nytt rom</button>
 	@formModal()
-	<div class="rooms-layout">
+	<div class="floors-container">
 		{{ floors := getRoomsByFloor(db, logger) }}
 		if len(floors) > 0 {
 			for _, floorGroup := range floors {
@@ -268,4 +260,11 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
 			<p>No room data found, be the first to insert now!</p>
 		}
 	</div>
+	<button
+		type="button"
+		class="btn btn--outline"
+		data-on:click="@get('/admin/rooms/api/create/'); document.getElementById('room-dialog').showModal()"
+	>
+		Ligg til nytt rom
+	</button>
 }
