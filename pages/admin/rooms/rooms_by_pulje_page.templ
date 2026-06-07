@@ -92,6 +92,19 @@ func getEventInPuljeWithoutRoom(db *sql.DB, logger *slog.Logger, pulje models.Pu
 	return events
 }
 
+func calculatePopulation(rooms []models.RoomEventPuljeSummary) int {
+	if len(rooms) > 0 {
+		var count int
+		for _, room := range rooms {
+			count = count + room.MaxPlayers + 1
+		}
+
+		return count
+	}
+
+	return 0
+}
+
 templ roomEventCard(event models.RoomEventPuljeSummary, eventImageDir *string) {
 	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
 	<a
@@ -129,24 +142,31 @@ templ roomPuljeContainer(room models.RoomByPulje, eventImageDir *string) {
 			<p style="color: var(--color-error); text-align: center;">Rommet er ikke tilgjengelig, men har eventer tildelt!</p>
 		}
 		<span>
-			<p>Tildelte spill</p>
+			<p>
+				Tildelte spill
+			</p>
 			<p
 				style={
 					templ.KV("color: var(--color-error);", len(room.AssignedEventsID) > room.MaxConcurrentGames),
 					templ.KV("color: var(--color-warning);", len(room.AssignedEventsID) == room.MaxConcurrentGames),
+					templ.KV("color: var(--color-disabled);", len(room.AssignedEventsID) == 0),
 				}
 			>
-				{ len(room.AssignedEventsID) } / { room.MaxConcurrentGames }
+				{ len(room.AssignedEventsID) }
 			</p>
 		</span>
 		if len(room.AssignedEventsID) > 0 {
+			<span>
+				<p>Spillere og GMs</p>
+				<p>&#126;{ calculatePopulation(room.AssignedEventsID) }</p>
+			</span>
 			<div class="room-event-container">
 				for _, event := range room.AssignedEventsID {
 					@roomEventCard(event, eventImageDir)
 				}
 			</div>
 		} else {
-			<p style="flex:1; align-self: center;font-style: italic; color: gray;">Ingen tildelte spill</p>
+			<p style="margin:auto; padding: var(--spacing-2x) 0; font-style: italic; color: gray;">Ingen tildelte spill</p>
 		}
 		if room.Notes != "" {
 			<p style="border-bottom: 1px solid var(--bg-item-border);">Notater på rom</p>
@@ -234,7 +254,7 @@ templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulj
             flex-flow: column nowrap;
             gap: var(--spacing-1x);
             margin: 0;
-            padding: var(--spacing-1x) 0;
+            padding: var(--spacing-2x) 0;
         }
         .room-event {
             position: relative;
