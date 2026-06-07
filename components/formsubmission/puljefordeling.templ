@@ -343,6 +343,9 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 										<option
 											value={ fmt.Sprintf("%d", room.ID) }
 											style={ templ.KV("color: yellow;", room.IsFull()), templ.KV("color: red", room.CurrentOccupancy()>room.MaxConcurrentGames) }
+											if room.IsDisabled {
+												disabled
+											}
 										>
 											{ room.RoomNumber } ({ room.CurrentOccupancy() }/{ room.MaxConcurrentGames })
 										</option>

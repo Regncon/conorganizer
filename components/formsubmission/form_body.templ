@@ -123,7 +123,8 @@ func updateRoomInRelationEventPuljeWithAudit(ctx context.Context, db *sql.DB, lo
 
 	// convert roomID from string to sql.NullInt64
 	var roomID sql.NullInt64
-	if parsedRoomID, err := strconv.ParseInt(roomIDstring, 10, 64); err == nil {
+	parsedRoomID, err := strconv.ParseInt(roomIDstring, 10, 64)
+	if err == nil && parsedRoomID > 0 {
 		roomID = sql.NullInt64{
 			Int64: parsedRoomID,
 			Valid: true,
