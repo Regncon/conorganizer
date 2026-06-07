@@ -318,4 +318,47 @@ No tests run since this was documentation-only. I also noticed an unrelated untr
 
 Time: 2026-06-06 12:12:59
 --- Next Prompt ---
+Copilot made a mistake. The documentation folder is actually called `documentation`, not `docs`. I have already moved the file to the correct location and deleted the `docs` folder. 
+Let's also add a bucket for interests. This will become important when some of the other deves merge their resent changes soon. 
+I'm wondering if the timestamp/nonce in the KV limits us to only global broadcasts. On the other hand we don't currently have any current use cases for a per-user or per-session KV value.
+I don't want to add dead code to the codebase. Perhaps we can add some documentation about how to implement per-user or per-session KV values if we need them in the future?
+
+Let's continue the discussion. Please share any thoughts you have on the above points and ask any clarifying questions you have.
+
+Time: 2026-06-07 10:51:10
+--- Codex Run ---
+
+Codex output:
+I’ll update the moved document in `documentation/` rather than recreating `docs/`. I’ll add `interests` as a first-class bucket and document the future path for targeted keys without putting unused implementation into the code.
+I’m adding the `interests` bucket as a real planned bucket now, and adding a “targeted updates” note that keeps the current service simple while documenting how we would evolve it if a concrete per-user use case appears.
+The doc now treats `interests` separately from `events`. My view is that this is the right boundary: event metadata and “who wants/gets what” will change for different reasons and future merges are likely to touch interest semantics independently.
+Updated [documentation/live-update-lifecycle.md](/home/cinmay/Documents/conorganizer/documentation/live-update-lifecycle.md) with:
+
+- A first-class `interests` bucket.
+- Page matrix updates for event detail, profile, admin approval, and billettholder admin.
+- `BucketInterests` in the target service constants.
+- A “Targeted Updates” section documenting future per-user/per-session key shapes without adding dead code.
+- LLM contract guidance to keep current implementation global-only until there is a concrete targeted-update use case.
+
+On the timestamp/nonce question: it does not fundamentally limit us to global broadcasts. The limitation is the key shape, not the value. With today’s key shape, `<connection-id>`, broadcasting a bucket means “wake every connection in this bucket.” Later, if needed, we can introduce namespaced keys like `user.<user-id>.<connection-id>` or `connection.<connection-id>` and target those. But I agree with you: no code for that until a feature needs it.
+
+No tests run, documentation-only.
+
+Time: 2026-06-07 10:51:10
+--- Next Prompt ---
+Add documentation about how to use json values in the KV if we need to in the future too. 
+
+Time: 2026-06-07 10:55:11
+--- Codex Run ---
+
+Codex output:
+I’ll add this as a future extension note, with the important constraint that JSON values are metadata only. For recipient selection, key shape is still the right tool because NATS KV key listing cannot query JSON contents.
+The JSON section is now documented as a future option, with guidance to keep routing based on keys and not decoded values.
+Added a “Future JSON KV Values” section to [documentation/live-update-lifecycle.md](/home/cinmay/Documents/conorganizer/documentation/live-update-lifecycle.md).
+
+It documents when JSON values would be appropriate, gives an example schema, and makes the key point explicit: use key namespaces for targeting; do not rely on scanning decoded JSON values unless there is a strong future reason.
+
+Time: 2026-06-07 10:55:11
+--- Next Prompt ---
+
 

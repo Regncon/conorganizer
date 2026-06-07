@@ -75,7 +75,8 @@ The bucket list should stay small. Pages may subscribe to multiple buckets when 
 
 | Bucket | Purpose | Typical broadcasters | Typical subscribers |
 | --- | --- | --- | --- |
-| `events` | Event, program, pulje, publishing, and event-form data. This may also temporarily include interest changes until we decide whether to split interests into a separate bucket. | Event form updates, event submission, approval changes, program publishing, pulje status updates, scheduled pulje threshold broadcasts. | Root page, event details, profile event list, profile event form, admin dashboard, admin approval, admin event edit. |
+| `events` | Event, program, pulje, publishing, and event-form data. | Event form updates, event submission, approval changes, program publishing, pulje status updates, scheduled pulje threshold broadcasts. | Root page, event details, profile event list, profile event form, admin dashboard, admin approval, admin event edit. |
+| `interests` | Interest choices, first-choice data, player/GM assignment state, and views that show who is interested in an event. | User interest updates, admin approval player assignment updates, first-choice and GM changes. | Event details, admin approval, admin billettholder filters, profile views that show interest or assignment state. |
 | `billettholders` | Ticket holder and billettholder data. | Add/remove billettholder emails, ticket conversion, ticket fetch/check-in flows, billettholder admin updates. | Profile tickets, profile overview where ticket holders are shown, admin billettholder overview, add billettholder page, possibly event details if ticket holder choices are displayed. |
 | `rooms` | Room data and room assignment choices. | Create, update, delete room; assign room to an event pulje. | Admin rooms, event form pages that show room assignment choices, admin event edit. |
 
@@ -86,18 +87,74 @@ This matrix is the starting point for the refactor. Confirm each row while migra
 | Page | Live endpoint | Buckets | Notes |
 | --- | --- | --- | --- |
 | `/` | `/root/api` | `events` | Must render full root content before Datastar connects. |
-| `/event/{id}` | `/event/api/{id}` | `events`, possibly `billettholders` | Event detail renders event state and user ticket holder choices. |
-| `/profile` | `/profile/api` | `events`, `billettholders` | Shows user's submitted events and ticket holder context. |
+| `/event/{id}` | `/event/api/{id}` | `events`, `interests`, possibly `billettholders` | Event detail renders event state, interest state, and user ticket holder choices. |
+| `/profile` | `/profile/api` | `events`, `interests`, `billettholders` | Shows user's submitted events and ticket holder context. Include `interests` if assignment or interest state is rendered. |
 | `/profile/new/{id}` | `/profile/api/new/{id}` | `events`, `rooms` | Event form renders event fields, pulje choices, and room assignment choices. |
 | `/profile/tickets` | `/profile/tickets/api` | `billettholders` | Ticket holder profile data. |
 | `/admin` | `/admin/api` | `events` | Admin dashboard currently focuses on event/program controls. |
-| `/admin/approval` | `/admin/approval/api` | `events`, `billettholders` | Approval views render event data and interested ticket holders. |
+| `/admin/approval` | `/admin/approval/api` | `events`, `interests`, `billettholders` | Approval views render event data, interest data, assignment state, and interested ticket holders. |
 | `/admin/approval/edit/{id}` | `/admin/approval/edit/api/{id}` | `events`, `rooms` | Admin event edit form. |
 | `/admin/rooms` | To be added when live updates are introduced | `rooms` | Currently not standardized with the live page lifecycle. |
-| `/admin/billettholder` | `/admin/billettholder/api` | `billettholders`, possibly `events` | Some filters depend on first-choice/event interest data. Confirm during migration. |
+| `/admin/billettholder` | `/admin/billettholder/api` | `billettholders`, `interests`, possibly `events` | Some filters depend on first-choice/event interest data. Confirm whether event metadata is also rendered during migration. |
 | `/admin/billettholder/add` | `/admin/billettholder/add/api` | `billettholders` | Add/convert ticket holder workflows. |
 | `/login` | None | None | No live updates. |
 | Print-friendly pages | None | None | Static render only. |
+
+## Targeted Updates
+
+The current live value is intentionally just a timestamp/nonce. That does not permanently limit the architecture to global broadcasts, but the current service should only implement global bucket broadcasts because there is no concrete per-user or per-session use case yet.
+
+The current key shape is:
+
+```text
+<connection-id>
+```
+
+That shape means a bucket broadcast updates every active connection subscribed to that bucket.
+
+If a future feature needs targeted updates, add it deliberately with tests and a clear use case. Two reasonable extensions are:
+
+```text
+connection.<connection-id>
+user.<user-id>.<connection-id>
+```
+
+A targeted per-user broadcast would list or watch keys matching `user.<user-id>.*` in the relevant bucket and write a fresh timestamp/nonce only to those keys. A targeted per-session broadcast would write only `connection.<connection-id>`.
+
+Do not add these key shapes before a real feature needs them. The global connection-id key is easier to reason about and is sufficient for the current app.
+
+## Future JSON KV Values
+
+The current implementation should use a plain timestamp/nonce value because it is enough to wake NATS watchers and keeps the broadcast path simple.
+
+JSON values are acceptable in the future if a concrete feature needs structured metadata, but they should not be introduced speculatively. JSON values may be useful for debugging, observability, schema evolution, or preserving small connection metadata alongside the nonce.
+
+Example future value shape:
+
+```json
+{
+  "version": 1,
+  "nonce": "01JZ...",
+  "updated_at": "2026-06-07T12:00:00Z",
+  "page": "admin.approval",
+  "user_id": "auth-provider-user-id"
+}
+```
+
+Rules for future JSON values:
+
+- Keep the value small.
+- Include a `version` field.
+- Include a fresh `nonce` or `updated_at` on every broadcast so watchers receive an update.
+- Do not store rendered HTML.
+- Do not store form state.
+- Do not store secrets or sensitive personal data.
+- Do not treat the KV value as durable application state.
+- Use typed Go structs and `encoding/json`, not string concatenation.
+- Handle corrupt or old JSON values defensively; a bad value should not break broadcasts for other connections.
+- Add tests for create, read, broadcast update, old-version handling, and corrupt-value handling before adopting JSON values.
+
+JSON values should not be used for recipient selection unless there is a strong reason. NATS can list and watch keys efficiently, but it cannot query JSON value contents. If a feature needs targeted broadcasts, prefer key namespaces such as `user.<user-id>.<connection-id>` over scanning every value and filtering decoded JSON.
 
 ## Target Service Shape
 
@@ -108,6 +165,7 @@ type Bucket string
 
 const (
 	BucketEvents         Bucket = "events"
+	BucketInterests      Bucket = "interests"
 	BucketBillettholders Bucket = "billettholders"
 	BucketRooms          Bucket = "rooms"
 )
@@ -210,6 +268,8 @@ When implementing or modifying live update code:
 - Do not store rendered page content in NATS KV.
 - Do not store form state in NATS KV for this lifecycle.
 - Store only a timestamp/nonce as the live KV value.
+- If JSON KV values are introduced later, keep them small, schema-versioned, and metadata-only.
+- Use global connection-id keys for now. Do not implement per-user or per-session key namespaces until a concrete feature needs targeted updates.
 - Use the Gorilla `connections` session cookie and the session value key `id`.
 - Ensure the session and KV key before calling `datastar.NewSSE(w, r)`.
 - Every live SSE stream must send one full patch immediately after opening.
