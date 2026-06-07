@@ -6,13 +6,23 @@ import (
 	"log/slog"
 	"sort"
 
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	roomService "github.com/Regncon/conorganizer/service/rooms"
 )
 
 templ formModal() {
 	<dialog id="room-dialog" closedBy="any">
-		<form id="room-form">
+		<form
+			id="room-form"
+			data-signals='{
+                errors: {
+                    room_number: "",
+                    max_concurrent_games: "",
+                    error: ""
+                }
+            }'
+		>
 			<h2 data-text="$form_title"></h2>
 			<label class="label color-strong form-group">
 				<p>Navn</p>
@@ -36,6 +46,7 @@ templ formModal() {
 					pattern=".{2,}"
 					title="Bruk minst 2 tegn"
 				/>
+				<p data-text="$errors.room_number" class="input-error"></p>
 			</label>
 			<label class="label color-strong form-group">
 				<p>Etasje</p>
@@ -62,6 +73,7 @@ templ formModal() {
 					pattern=".{2,}"
 					title="Hvor mangen spill kan forekomme parallelt på et rom i en pulje"
 				/>
+				<p data-text="$errors.max_concurrent_games" class="input-error"></p>
 			</label>
 			<label class="label color-strong form-group">
 				<p>Notater</p>
@@ -74,16 +86,15 @@ templ formModal() {
 					rows="4"
 				></textarea>
 			</label>
-			<label class="label color-strong form-group">
-				<p>Skal rom være skjult i puljefordeling?</p>
+			<label class="label color-strong form-group flex input" style="gap: var(--spacing-2x); align-items: center;">
 				<input
 					name="isDisabled"
 					data-bind="is_disabled"
 					type="checkbox"
-					class="checkbox-background form-group-checkbox"
+					class="checkbox input"
 				/>
+				<p>Skal rom være skjult i puljefordeling?</p>
 			</label>
-			<p data-text="$error" style="color: red; width: 100%; word-break: break-all;"></p>
 			<span class="button-group">
 				<button
 					type="button"
@@ -92,8 +103,8 @@ templ formModal() {
 					data-show="$mode === 'edit'"
 					data-on:click="document.getElementById('room-delete-dialog').showModal()"
 				>Slett rom</button>
-				<dialog id="room-delete-dialog" closedBy="any" style="gap: 1rem;">
-					<h2 style="text-align: center;">Slett rom</h2>
+				<dialog id="room-delete-dialog" closedBy="any">
+					<h2>Slett rom</h2>
 					<p>Er du sikker på at du vill slette dette rommet?</p>
 					<button
 						type="button"
@@ -114,35 +125,53 @@ templ formModal() {
 					class="btn btn--outline"
 				></button>
 			</span>
+			<p data-text="$errors.error" class="input-error"></p>
 		</form>
-		<button style="position: absolute; top: 4px; right: 4px;" commandfor="room-dialog" command="close">Close</button>
+		<button class="modal-close-button icon-size-24" commandfor="room-dialog" command="close">
+			@icons.Icon(icons.Close, icons.Size24)
+		</button>
 	</dialog>
 }
 
-templ roomContainer(room models.Room) {
+templ roomCard(room models.Room) {
 	<div
-		class="room-container"
+		class="room"
 		style={ templ.KV("opacity: 0.5; border-color: gray;", room.IsDisabled) }
 		data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/edit/%d'); ; document.getElementById('room-dialog').showModal()", room.ID) }
 	>
 		<h3>{ room.RoomNumber }</h3>
-		if room.Name == "" {
-			<p style="text-align:center; font-style: italic; color: gray;">Mangler romnavn</p>
-		} else {
-			<p style="text-align:center; font-style: italic;">{ room.Name }</p>
+		<span>
+			<p>Romnavn på døren</p>
+			if room.Name == "" {
+				<p style="font-style: italic; color: gray;">Ikke oppgitt</p>
+			} else {
+				<p>{ room.Name }</p>
+			}
+		</span>
+		<span>
+			<p>Maks aktive spill</p>
+			<p>{ room.MaxConcurrentGames }</p>
+		</span>
+		<span>
+			<p>Er rommet tilgjengelig?</p>
+			if room.IsDisabled {
+				<p style="color: var(--color-error);">Nei</p>
+			} else {
+				<p>Ja</p>
+			}
+		</span>
+		if room.Notes != "" {
+			<p style="border-bottom: 1px solid var(--bg-item-border);">Notater</p>
+			<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
 		}
 	</div>
 }
 
-templ floorContainer(floor int, rooms []models.Room) {
-	<div class="floor-row">
-		<h2>{ floor }. Etg</h2>
-		<div class="floor-list">
-			for _, room := range rooms {
-				@roomContainer(room)
-			}
-		</div>
-	</div>
+templ floor(floor int, rooms []models.Room) {
+	<h2>{ floor }. Etg</h2>
+	for _, room := range rooms {
+		@roomCard(room)
+	}
 }
 
 type FloorGroup struct {
@@ -180,21 +209,24 @@ func getRoomsByFloor(db *sql.DB, logger *slog.Logger) []FloorGroup {
 
 templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
 	<style>
-		.rooms-layout {
-			display: flex;
-			flex-direction: column;
+		.rooms-container{
+			display: grid;
+            grid-template-columns: 1fr;
 			gap: var(--responsive-page-section-spacing);
-            margin-top: var(--responsive-page-section-spacing);
+
+            h2 {
+                grid-column: 1/-1;
+            }
 		}
 
-        .room-container {
+        .room {
             display: flex;
             flex-flow: column nowrap;
             gap: var(--spacing-1x);
             padding: var(--spacing-2x);
-            border: 1px solid var(--color-accent-blue);
+            border: 1px solid var(--bg-item-border);
             border-radius: var(--border-radius-1x);
-            background-color: transparent;
+            background-color: var(--bg-item);
 
             h3 {
                 text-align: center;
@@ -203,25 +235,49 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
             p+p {
                 margin-top: auto;
             }
+
+            span {
+                display: flex;
+                justify-content: space-between;
+                gap: var(--spacing-1x)
+            }
         }
 
-        .floor-row {
-            display: flex;
-            flex-flow: column nowrap;
-            gap: var(--spacing-2x)
+        .room:hover {
+            background-color: var(--bg-item-hover);
+            border-color: var(--bg-item-border-hover);
+        }
+        @media screen and (width > 600px) {
+            .rooms-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
 
-        .floor-list {
-            display: flex;
-            flex-flow: row wrap;
-            gap: var(--spacing-2x)
+        @media screen and (width > 1200px) {
+            .rooms-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        dialog::backdrop {
+            background: rgb(0 0 0 / 33%);
         }
         dialog:open {
-            position: relative;
-            display: flex;
-            flex-flow: column nowrap;
-            border: 1px solid white;
-            border-radius: var(--border-radius-2x);
+			position: fixed;
+            inset: 0;
+			--dialog-width: min(32.5rem, calc(100% - 16px));
+			visibility: visible;
+			width: var(--dialog-width);
+			background-color: var(--bg-surface);
+			border: none;
+			border-radius: var(--border-radius-2x);
+			padding: var(--responsive-pane-padding);
+			box-shadow: var(--shadow-dialog);
+            outline:none;
+
+            &::backdrop {
+				background: hsl(0deg 0% 0% / 55%);
+			}
             form {
                 display: flex;
                 flex-flow: column nowrap;
@@ -231,7 +287,8 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
                     width: 100%
                 }
 
-                input {
+                input[type="text"],
+                input[type="number"] {
                     width: 100%;
                 }
                 textarea {
@@ -246,26 +303,56 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
                 .button-group > button {
                     flex: 1;
                 }
+
+                .input-error {
+                    color: var(--color-error);
+                }
+                .input-error:empty {
+                    display: none;
+                }
             }
         }
+
+        #room-delete-dialog:open {
+            display: flex;
+            flex-flow: column nowrap;
+            align-items: center;
+            gap: var(--responsive-pane-column-spacing);
+
+            button {
+                min-width: ;
+            }
+        }
+        .modal-close-button {
+            position: absolute;
+            top: var(--spacing-2x);
+            right: var(--spacing-1x);
+            background: transparent;
+            border: none;
+            border-radius: 100%;
+            padding: 0;
+        }
+        .modal-close-button:hover {
+            background: var(--bg-surface-hover);
+        }
 	</style>
+	@formModal()
+	<p>Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom for konvensjonen. Hovedsakelig brukt for å endre detaljer som maksimum spill for et rom eller detaljer som romnummer og romnavn som vises på dører og branninstruksjoner.</p>
+	{{ floors := getRoomsByFloor(db, logger) }}
+	if len(floors) > 0 {
+		<div class="rooms-container">
+			for _, floorGroup := range floors {
+				@floor(floorGroup.Floor, floorGroup.Rooms)
+			}
+		</div>
+	} else {
+		<p style="text-align: center;">Ingen rom funnet, vær den førte til å et rom nå!</p>
+	}
 	<button
 		type="button"
 		class="btn btn--outline"
-		data-on:click="
-                @get('/admin/rooms/api/create/');
-                document.getElementById('room-dialog').showModal()
-            "
-	>Ligg til nytt rom</button>
-	@formModal()
-	<div class="rooms-layout">
-		{{ floors := getRoomsByFloor(db, logger) }}
-		if len(floors) > 0 {
-			for _, floorGroup := range floors {
-				@floorContainer(floorGroup.Floor, floorGroup.Rooms)
-			}
-		} else {
-			<p>No room data found, be the first to insert now!</p>
-		}
-	</div>
+		data-on:click="@get('/admin/rooms/api/create/'); document.getElementById('room-dialog').showModal()"
+	>
+		Ligg til nytt rom
+	</button>
 }

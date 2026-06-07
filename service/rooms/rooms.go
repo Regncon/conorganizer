@@ -329,10 +329,12 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
             r.room_number,
             r.floor,
             r.max_concurrent_games,
+            r.is_disabled,
             r.notes,
 
             e.id,
-            e.title
+            e.title,
+            e.max_players
         FROM puljer p
         CROSS JOIN rooms r
         LEFT JOIN relation_event_puljer rep
@@ -341,8 +343,6 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
             AND rep.is_in_pulje = 1
         LEFT JOIN events e
             ON e.id = rep.event_id
-        WHERE
-            r.is_disabled = 0
         ORDER BY
             p.id,
             r.floor,
@@ -368,10 +368,12 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 			&row.RoomNumber,
 			&row.Floor,
 			&row.MaxConcurrentGames,
+			&row.IsDisabled,
 			&row.RoomNotes,
 
 			&row.EventID,
 			&row.EventTitle,
+			&row.EventMaxPlayers,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("scan room status row: %w", err)
@@ -392,6 +394,7 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 				Floor:              row.Floor,
 				MaxConcurrentGames: row.MaxConcurrentGames,
 				Notes:              row.RoomNotes,
+				IsDisabled:         row.IsDisabled,
 				AssignedEventsID:   []models.RoomEventPuljeSummary{},
 			}
 		}
@@ -406,8 +409,9 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 						row.EventID.String,
 						row.PuljeID,
 					),
-					EventID: row.EventID.String,
-					Title:   row.EventTitle.String,
+					EventID:    row.EventID.String,
+					Title:      row.EventTitle.String,
+					MaxPlayers: int(row.EventMaxPlayers.Int32),
 				},
 			)
 		}
