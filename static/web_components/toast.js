@@ -35,7 +35,7 @@ const localFeedbackPatchEndEventName = "feedback-errors-local-patch-end"
  * @typedef {{ type: DatastarFetchType, el: Element | null }} DatastarFetchEventDetail
  * @typedef {Record<string, string>} FeedbackErrors
  * @typedef {{ feedbackErrors?: FeedbackErrors }} DatastarSignalPatchDetail
- * @typedef {{ activeCount: number, failed: boolean }} IndicatorState
+ * @typedef {{ activeCount: number, failed: boolean, feedbackKeys: Set<string> }} IndicatorState
  */
 
 /** @type {AppToast | null} */
@@ -146,6 +146,14 @@ class AppToast extends HTMLElement {
             const state = this.#getIndicatorState(indicator)
             if (state.activeCount === 0) {
                 state.failed = false
+                state.feedbackKeys.clear()
+            }
+
+            const feedbackKey = detail.el instanceof HTMLElement
+                ? detail.el.dataset.feedbackKey?.trim()
+                : ""
+            if (feedbackKey) {
+                state.feedbackKeys.add(feedbackKey)
             }
             state.activeCount += 1
             return
@@ -196,8 +204,11 @@ class AppToast extends HTMLElement {
             return
         }
 
+        const feedbackErrors = detail.feedbackErrors
         for (const state of this.#indicatorStates.values()) {
-            state.failed = true
+            if (AppToast.#hasFeedbackErrorForKeys(feedbackErrors, state.feedbackKeys)) {
+                state.failed = true
+            }
         }
     }
 
@@ -211,7 +222,7 @@ class AppToast extends HTMLElement {
             return state
         }
 
-        const newState = { activeCount: 0, failed: false }
+        const newState = { activeCount: 0, failed: false, feedbackKeys: new Set() }
         this.#indicatorStates.set(indicator, newState)
         return newState
     }
@@ -309,6 +320,26 @@ class AppToast extends HTMLElement {
         return Object.values(feedbackErrors).some((message) => (
             typeof message === "string" && message.trim() !== ""
         ))
+    }
+
+    /**
+     * @param {FeedbackErrors | undefined} feedbackErrors
+     * @param {Set<string>} feedbackKeys
+     * @returns {boolean}
+     */
+    static #hasFeedbackErrorForKeys(feedbackErrors, feedbackKeys) {
+        if (!feedbackErrors || feedbackKeys.size === 0) {
+            return false
+        }
+
+        for (const key of feedbackKeys) {
+            const message = feedbackErrors[key]
+            if (typeof message === "string" && message.trim() !== "") {
+                return true
+            }
+        }
+
+        return false
     }
 
     /**
