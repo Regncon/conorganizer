@@ -361,4 +361,109 @@ It documents when JSON values would be appropriate, gives an example schema, and
 Time: 2026-06-07 10:55:11
 --- Next Prompt ---
 
+Ok, aer we ready to start implementing?
+
+Time: 2026-06-07 11:05:15
+--- Codex Run ---
+
+Codex output:
+Yes. We have enough decisions to start.
+
+I’d start with a TDD slice:
+
+1. Add `service/live` tests for `EnsureConnection`, `Broadcast`, `26h` TTL, and watcher notification.
+2. Implement the minimal live service to pass those tests.
+3. Migrate one page first, probably root, to prove the lifecycle.
+4. Then migrate event/profile/admin pages and remove all `mvc`/`TodoMVC` live-update code.
+
+One thing to keep in mind: the worktree currently reflects the doc move from `docs/` to `documentation/`, plus `.ai/threads/nats-refactor.md` is modified. I’ll avoid touching unrelated files.
+
+The next implementation step should be the `service/live` test file.
+
+Time: 2026-06-07 11:05:15
+--- Next Prompt ---
+Start.
+
+Time: 2026-06-07 11:16:40
+--- Codex Run ---
+
+Codex output:
+I’ll start with the service layer and tests, not page migration. That gives us a clean TDD baseline for connection creation, KV TTL, broadcasts, and watcher behavior before touching the duplicated route code.
+I’m going to keep the first tests close to the service contract: create/reuse session ids, recreate expired KV keys, write timestamp/nonce values, and prove a watcher receives a broadcast.
+The working tree state appears to have changed around the moved documentation file, so I’m checking the path directly before writing tests. I’ll keep my edits confined to the new `service/live` package unless the doc file is still tracked as modified.
+I’m writing the tests first against the service contract. They’ll initially fail because the package does not exist yet, which is the TDD checkpoint we want.
+The initial tests are written. I spotted one helper that ended up unnecessary, so I’m removing it before running the expected failing test pass.
+I’m running the focused package test now. It should fail at this stage because the implementation does not exist yet; that confirms the tests are driving the service shape.
+The first test run hit the sandbox because Go tried to write its build cache under the home directory. I’ll rerun with `GOCACHE` pointed at `/tmp`, which is writable here.
+The TDD failure is now the expected one: missing `Bucket`, `Manager`, `EnsureConnection`, `Broadcast`, and `DatastarInit`. I’m implementing the minimal service against those tests now.
+The implementation will keep NATS bucket creation centralized and intentionally simple: default buckets, `26h` TTL, session id as key, RFC3339Nano timestamp as value, and `Broadcast` loops keys.
+The minimal implementation is in. I’m formatting the new package and running the focused tests with the writable Go build cache.
+The sandbox does not allow opening local sockets, so embedded NATS tests cannot run here. I’m switching the service tests to an in-memory KV fake while keeping the production manager wired to real NATS; that still drives the lifecycle behavior without requiring network access.
+I’m updating the tests to use an in-memory fake that implements only the behavior the service depends on: `Put`, `Get`, `Purge`, `Keys`, `Watch`, and `Status`.
+The tests now avoid sockets completely. I’m formatting again and rerunning the focused package.
+The focused live service tests pass. I’m going to run the full Go test suite with the same writable cache to catch compile or package-level regressions from the new service package.
+The full Go test suite passes with the new service package. I’m checking the final diff now so I can summarize exactly what changed and keep unrelated work separate.
+I’m tightening the production seam now: the internal KV interface should only include methods production uses. The tests can inspect their fake directly, and the TTL check can target the bucket config helper used by `NewManager`.
+The patch context shifted after formatting, so I’m reading the specific test sections and will apply the update in smaller chunks.
+The test seam is cleaner now. I’m removing fake status code that is no longer needed after moving the TTL assertion to the production bucket config helper.
+The fake status block formatting differs after gofmt, so I’m reading the tail and removing the exact block.
+I’m rerunning the focused tests after that cleanup.
+The focused live tests pass again. I’ll rerun the full suite once more after the internal interface cleanup.
+I have the service and tests in place from the current run. I’m doing one quick cleanup pass on the new files and checking the worktree before I close this out.
+The worktree has only the thread note modified from earlier plus the two new live service files. I spotted one field that is only carried through setup, so I’m removing that small bit of dead state and then I’ll rerun the focused tests.
+That cleanup is done. I’m running `gofmt`, the focused service tests, and the full suite now so the result is based on the current files.
+The focused live tests passed. The full test suite is still running; I’m waiting on the remaining packages before I summarize anything.
+The full suite has cleared the page and component packages and is in the service packages now. No failures so far.
+All tests passed. I’m looking at the final diff now so I can call out exactly what changed and what is intentionally still not wired into pages yet.
+One design note before finalizing: the new service is deliberately not wired into existing page handlers yet. This keeps the first implementation step testable and lets us migrate one page at a time without mixing the lifecycle abstraction with page-specific rendering cleanup.
+I also checked the existing broadcast code while reviewing the new service. The old `service/keyvalue` path still has the inherited `mvc` naming; I haven’t removed that in this first service slice because that file is still tied to the old page-specific implementation.
+There are still many `mvc`/`TodoMVC` references outside the new service, mostly in the old live-update scaffolding. I’m going to leave that as the next migration slice unless you want a broader mechanical rename now, because doing it cleanly means touching root, admin, event, profile, and ticket live handlers together.
+Implemented the first live-update service slice in [service/live/live.go](/home/cinmay/Documents/conorganizer/service/live/live.go).
+
+What’s included:
+- Standardized `connections` Gorilla session handling with session value `id`.
+- Ephemeral NATS KV live buckets with `26h` TTL.
+- Buckets: `events`, `interests`, `billettholders`, `rooms`.
+- `EnsureConnection` to silently create/refresh the session-backed KV key.
+- `Broadcast` to loop all keys in selected buckets and update their timestamp nonce.
+- `Stream` to patch full page content immediately, then repatch on bucket updates.
+- `DatastarInit` helper with restart-resilient retry settings.
+
+Added behavior-focused tests in [service/live/live_test.go](/home/cinmay/Documents/conorganizer/service/live/live_test.go), covering cookie creation, KV recreation, TTL config, broadcasts, watcher updates, empty buckets, and Datastar init generation.
+
+Verification passed:
+- `GOCACHE=/tmp/go-build go test ./service/live`
+- `GOCACHE=/tmp/go-build go test ./...`
+
+I did not wire this into existing page handlers yet. The next implementation slice should migrate one page, probably `/root`, to use `service/live`, then remove that page’s old duplicated KV/session/watch code. The old codebase still has inherited `mvc`/`TodoMVC` naming in several handlers; that should be cleaned as part of those migrations.
+
+text
+2026-06-07T09:12:55.032932Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/service/live/live_test.go:
+	}
+	sessionCookie := responseCookie(t, firstRecorder, "connections")
+	kv := mustKeyValue(t, manager, expectedBucket)
+	if err := kv.Purge(context.Background(), expectedConnectionID); err != nil {
+		t.Fatalf("purge live key: %v", err)
+	}
+2026-06-07T09:13:38.854028Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/service/live/live_test.go:
+type fakeStatus struct {
+	bucket string
+	ttl    time.Duration
+}
+
+func (s *fakeStatus) Bucket() string                   { return s.bucket }
+func (s *fakeStatus) Values() uint64                   { return 0 }
+func (s *fakeStatus) History() int64                   { return 1 }
+func (s *fakeStatus) TTL() time.Duration               { return s.ttl }
+func (s *fakeStatus) BackingStore() string             { return "memory" }
+func (s *fakeStatus) Bytes() uint64                    { return 0 }
+func (s *fakeStatus) IsCompressed() bool               { return false }
+func (s *fakeStatus) LimitMarkerTTL() time.Duration    { return 0 }
+func (s *fakeStatus) Metadata() map[string]string      { return nil }
+func (s *fakeStatus) Config() jetstream.KeyValueConfig { return jetstream.KeyValueConfig{Bucket: s.bucket, TTL: s.ttl} }
+
+func cloneBytes(value []byte) []byte {
+
+Time: 2026-06-07 11:16:40
+--- Next Prompt ---
 
