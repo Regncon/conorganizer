@@ -9,8 +9,8 @@ import (
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/service/billettholder"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/sessions"
 )
 
 var searchTerm = ""
@@ -18,8 +18,7 @@ var billettholderFilters = billettholderService.BillettholderFilters{}
 
 func billettholdereSearchRoute(
 	router chi.Router,
-	store sessions.Store,
-	notifyUpdate func(string),
+	liveManager *live.Manager,
 ) {
 	router.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
 		datastarRaw := r.URL.Query().Get("datastar")
@@ -44,9 +43,8 @@ func billettholdereSearchRoute(
 			GMOrDM:             payload.FilterGMOrDM,
 		}
 
-		sessionID, _ := upsertSessionID(store, r, w)
-		if notifyUpdate != nil {
-			notifyUpdate(sessionID)
+		if _, err := liveManager.EnsureConnection(w, r, live.BucketBillettholders); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
 }

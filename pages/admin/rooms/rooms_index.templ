@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
+func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
 	logger = logger.With("component", "rooms")
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {

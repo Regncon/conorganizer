@@ -209,9 +209,13 @@ func (m *Manager) Stream(w http.ResponseWriter, r *http.Request, page Page) {
 
 func DatastarInit(url string) string {
 	escapedURL := strings.ReplaceAll(url, "'", "\\'")
+	return DatastarInitExpression(fmt.Sprintf("'%s'", escapedURL))
+}
+
+func DatastarInitExpression(urlExpression string) string {
 	return fmt.Sprintf(
-		"@get('%s', {requestCancellation: 'disabled', retryMaxCount: Infinity, retryInterval: 1000, retryMaxWaitMs: 30000})",
-		escapedURL,
+		"@get(%s, {requestCancellation: 'disabled', retryMaxCount: Infinity, retryInterval: 1000, retryMaxWaitMs: 30000})",
+		urlExpression,
 	)
 }
 

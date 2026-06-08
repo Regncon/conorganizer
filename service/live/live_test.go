@@ -204,6 +204,31 @@ func TestDatastarInit_ReturnsRestartResilientGetExpression(t *testing.T) {
 	}
 }
 
+func TestDatastarInitExpression_ReturnsRestartResilientGetExpressionWithDynamicURL(t *testing.T) {
+	// Given a live endpoint URL expression,
+	// when the Datastar init expression is generated,
+	// then the expression is passed through and retry settings are included.
+
+	// Given
+	expectedParts := []string{
+		"@get('/profile/api' + window.location.search",
+		"requestCancellation: 'disabled'",
+		"retryMaxCount: Infinity",
+		"retryInterval: 1000",
+		"retryMaxWaitMs: 30000",
+	}
+
+	// When
+	actual := DatastarInitExpression("'/profile/api' + window.location.search")
+
+	// Then
+	for _, expectedPart := range expectedParts {
+		if !strings.Contains(actual, expectedPart) {
+			t.Fatalf("Datastar init expression missing %q in %q", expectedPart, actual)
+		}
+	}
+}
+
 func newTestManager(t *testing.T) *Manager {
 	t.Helper()
 

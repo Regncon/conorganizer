@@ -8,6 +8,7 @@ import (
 	"github.com/Regncon/conorganizer/components"
 	profilecomponent "github.com/Regncon/conorganizer/components/profile"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
@@ -27,7 +28,7 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 		class="page-content-container profile-container"
 		data-profile-selected-billettholder-id={ fmt.Sprintf("%d", selectedBillettholderID) }
 		data-profile-valid-billettholder-ids={ templ.JSONString(validBillettholderIDs) }
-		data-init={ "@get('/profile/api' + window.location.search,{requestCancellation: 'disabled'})" }
+		data-init={ live.DatastarInitExpression("'/profile/api' + window.location.search") }
 	>
 		@ProfileMainColumn(user, events, selectedBillettholderID, db, logger, eventImageDir)
 		<div class="profile-content-column">

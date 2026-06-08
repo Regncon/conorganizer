@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
 )
 
-func AddBillettholderRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
+func AddBillettholderRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 	router.Get("/admin/billettholder/add/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(r.Context())
@@ -25,7 +26,7 @@ func AddBillettholderRoute(router chi.Router, db *sql.DB, logger *slog.Logger, e
 }
 
 templ indexPage() {
-	<div id="add-billettholder-admin-container" data-init={ "@get('/admin/billettholder/add/api/',{requestCancellation: 'disabled'})" }>
+	<div id="add-billettholder-admin-container" data-init={ live.DatastarInit("/admin/billettholder/add/api/") }>
 		<p>Add Billettholder Admin</p>
 		<p>If you are seeing this message, please clear your cookies and refresh the page.</p>
 	</div>

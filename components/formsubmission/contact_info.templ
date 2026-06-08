@@ -7,13 +7,12 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components/errorfeedback"
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
-	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdateName(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"name"`
@@ -35,14 +34,14 @@ func UpdateName(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logge
 			http.Error(w, "Failed to update the name for event in the database", http.StatusInternalServerError)
 			return
 		}
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}
 	})
 }
 
-func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdateEmail(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"email"`
@@ -65,13 +64,13 @@ func UpdateEmail(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logg
 			return
 		}
 
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}
 	})
 }
-func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdatePhone(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"phone"`
@@ -94,7 +93,7 @@ func UpdatePhone(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logg
 			return
 		}
 
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}

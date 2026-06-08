@@ -12,18 +12,17 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/sessions"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 type Responder struct {
 	BillettholderID string
 	Logger          *slog.Logger
-	Store           sessions.Store
+	LiveManager     *live.Manager
 	w               http.ResponseWriter
 	r               *http.Request
-	NotifyUpdate    func(string)
 }
 
 func handleError(responder Responder, dispalyText string, errorText string) {
@@ -46,10 +45,6 @@ func handleError(responder Responder, dispalyText string, errorText string) {
 		responder.Logger.Error("Failed to patch signals", "error", err)
 		http.Error(responder.w, "Failed to patch signals", http.StatusInternalServerError)
 		return
-	}
-	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
-	if responder.NotifyUpdate != nil {
-		responder.NotifyUpdate(sessionID)
 	}
 	http.Error(responder.w, "New email address is required", http.StatusBadRequest)
 }
@@ -77,9 +72,8 @@ func handleSuccess(responder Responder, successText string) {
 		return
 	}
 
-	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
-	if responder.NotifyUpdate != nil {
-		responder.NotifyUpdate(sessionID)
+	if err := responder.LiveManager.Broadcast(responder.r.Context(), live.BucketBillettholders); err != nil {
+		responder.Logger.Error("Failed to broadcast billettholder email update", "error", err, "billettholder_id", responder.BillettholderID)
 	}
 }
 
@@ -87,18 +81,16 @@ func addEmailToBilettholderRoute(
 	router chi.Router,
 	db *sql.DB,
 	logger *slog.Logger,
-	store sessions.Store,
-	notifyUpdate func(string),
+	liveManager *live.Manager,
 ) {
 	logger = logger.With("component", "profile_tickets")
 	router.Post("/new-email/{id}/", func(w http.ResponseWriter, r *http.Request) {
 		responder := Responder{
 			BillettholderID: chi.URLParam(r, "id"),
 			Logger:          logger,
-			Store:           store,
+			LiveManager:     liveManager,
 			w:               w,
 			r:               r,
-			NotifyUpdate:    notifyUpdate,
 		}
 
 		billettholderID := chi.URLParam(r, "id")
@@ -174,18 +166,16 @@ func deleteEmailFromBillettholderRoute(
 	router chi.Router,
 	db *sql.DB,
 	logger *slog.Logger,
-	store sessions.Store,
-	notifyUpdate func(string),
+	liveManager *live.Manager,
 ) {
 	logger = logger.With("component", "profile_tickets")
 	router.Post("/delete-email/{id}/{emailID}/", func(w http.ResponseWriter, r *http.Request) {
 		responder := Responder{
 			BillettholderID: chi.URLParam(r, "id"),
 			Logger:          logger,
-			Store:           store,
+			LiveManager:     liveManager,
 			w:               w,
 			r:               r,
-			NotifyUpdate:    notifyUpdate,
 		}
 
 		billettholderID := chi.URLParam(r, "id")

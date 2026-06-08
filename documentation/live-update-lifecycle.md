@@ -16,8 +16,8 @@ The live update KV data is runtime-only state. NATS does not need to persist the
 - The session value key is `id`; this id is the live connection id.
 - Do not introduce a literal `connection` cookie unless a future migration explicitly changes this.
 - Live KV values are timestamp/nonce values only.
-- Live KV values are not page state, not rendered content, and not an MVC model.
-- Do not use `mvc` or `MVC` names in live update code.
+- Live KV values are not page state, not rendered content, and not an application model.
+- Do not use inherited Northstar placeholder-state names in live update code.
 - Live KV TTL is `26h`, giving a buffer over the current `24h` Gorilla session max age.
 - NATS live connection state is ephemeral and does not need persistence across restarts.
 - Scheduled NATS messages are rebuilt from the database on startup. Missed scheduled thresholds during downtime do not need catch-up broadcasts.
@@ -102,7 +102,7 @@ This matrix is the starting point for the refactor. Confirm each row while migra
 
 ## Targeted Updates
 
-The current live value is intentionally just a timestamp/nonce. That does not permanently limit the architecture to global broadcasts, but the current service should only implement global bucket broadcasts because there is no concrete per-user or per-session use case yet.
+The current live value is intentionally just a timestamp/nonce. That does not permanently limit the architecture to bucket-wide broadcasts, but the current service should avoid new per-user or per-session key namespaces until a concrete feature needs them.
 
 The current key shape is:
 
@@ -111,6 +111,8 @@ The current key shape is:
 ```
 
 That shape means a bucket broadcast updates every active connection subscribed to that bucket.
+
+For transient per-connection UI interactions, such as search/filter endpoints that should refresh only the current open page, reuse the existing connection key instead of adding a new key namespace. The handler may call `EnsureConnection(w, r, bucket)` for the relevant bucket. Because `EnsureConnection` writes a fresh timestamp/nonce for the current `connections` session id, only the current connection key is touched.
 
 If a future feature needs targeted updates, add it deliberately with tests and a clear use case. Two reasonable extensions are:
 
@@ -184,6 +186,7 @@ func (m *Manager) EnsureConnection(w http.ResponseWriter, r *http.Request, bucke
 func (m *Manager) Stream(w http.ResponseWriter, r *http.Request, page Page)
 func (m *Manager) Broadcast(ctx context.Context, buckets ...Bucket) error
 func DatastarInit(url string) string
+func DatastarInitExpression(urlExpression string) string
 ```
 
 Expected usage in page setup:
@@ -205,6 +208,15 @@ Expected usage after mutations:
 if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 	logger.Error("failed to broadcast live update", "error", err)
 	http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+	return
+}
+```
+
+Expected usage for current-connection UI refreshes:
+
+```go
+if _, err := liveManager.EnsureConnection(w, r, live.BucketBillettholders); err != nil {
+	http.Error(w, err.Error(), http.StatusInternalServerError)
 	return
 }
 ```
@@ -263,7 +275,7 @@ This section is intentionally explicit for AI coding agents.
 
 When implementing or modifying live update code:
 
-- Do not introduce `mvc`, `MVC`, `TodoMVC`, or Todo terminology into live update code.
+- Do not introduce inherited Northstar placeholder-state or Todo terminology into live update code.
 - Treat SQLite and request context as the source of truth for rendered content.
 - Do not store rendered page content in NATS KV.
 - Do not store form state in NATS KV for this lifecycle.

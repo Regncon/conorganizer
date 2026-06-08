@@ -10,9 +10,9 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	billettholderService "github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/sessions"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -26,8 +26,7 @@ func getTicketsRouter(
 	router chi.Router,
 	db *sql.DB,
 	logger *slog.Logger,
-	store sessions.Store,
-	notifyUpdate func(string),
+	liveManager *live.Manager,
 ) {
 	router.Post("/get-tickets", func(w http.ResponseWriter, r *http.Request) {
 		sse := datastar.NewSSE(w, r)
@@ -76,9 +75,10 @@ func getTicketsRouter(
 			return
 		}
 
-		sessionID, _ := upsertSessionID(store, r, w)
-		if notifyUpdate != nil {
-			notifyUpdate(sessionID)
+		if err := liveManager.Broadcast(r.Context(), live.BucketBillettholders); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast ticket fetch update for user %q: %w", user.Id, err).Error())
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
 		}
 		http.Error(w, "OK", http.StatusOK)
 	})

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/service/live"
 	puljerService "github.com/Regncon/conorganizer/service/puljer"
 	"github.com/nats-io/nats.go/jetstream"
 )
@@ -27,7 +27,7 @@ type puljeScheduledBroadcast struct {
 	ScheduleAt time.Time    `json:"schedule_at"`
 }
 
-func setupPuljeScheduledBroadcasts(ctx context.Context, js jetstream.JetStream, kv jetstream.KeyValue, db *sql.DB, logger *slog.Logger) error {
+func setupPuljeScheduledBroadcasts(ctx context.Context, js jetstream.JetStream, liveManager *live.Manager, db *sql.DB, logger *slog.Logger) error {
 	stream, err := js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
 		Name:              puljeScheduledBroadcastStream,
 		Description:       "Scheduled event page updates for pulje warning thresholds",
@@ -54,7 +54,7 @@ func setupPuljeScheduledBroadcasts(ctx context.Context, js jetstream.JetStream, 
 	}
 
 	if _, err := consumer.Consume(func(msg jetstream.Msg) {
-		if err := keyvalue.BroadcastUpdateContext(context.Background(), kv); err != nil {
+		if err := liveManager.Broadcast(context.Background(), live.BucketEvents); err != nil {
 			logger.Error(fmt.Errorf("failed to broadcast scheduled pulje update: %w", err).Error())
 			if nakErr := msg.NakWithDelay(10 * time.Second); nakErr != nil {
 				logger.Error(fmt.Errorf("failed to nack scheduled pulje update: %w", nakErr).Error())
