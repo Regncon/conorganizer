@@ -12,7 +12,7 @@ import (
 	"net/http"
 )
 
-func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
+func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
 	logger = logger.With("component", "rooms")
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +43,7 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err er
 			if err := layouts.Base(
 				"Rom oversikt",
 				userInfo,
-				roomsIndex(db, logger, RoomsByPuljePageContent(db, logger, models.Pulje(pulje)), pulje),
+				roomsIndex(db, logger, RoomsByPuljePageContent(db, logger, models.Pulje(pulje), eventImageDir), pulje),
 			).Render(ctx, w); err != nil {
 				logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
 			}
@@ -58,21 +58,22 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
 		{Name: "Admin", Url: "/admin/"},
 		{Name: "Oversikt over rom", Url: ""},
 	})
-	<div class="page-content-container flex flex-col" style="gap: 1rem;">
+	<div class="page-content-container flex flex-col">
 		<style>
             .tabs {
                 display: flex;
-                gap: 0.5rem;
                 overflow-x: auto;
-                padding-bottom: 0.25rem;
-                border-bottom: 1px solid var(--color-accent-blue);
+                margin-top: var(--responsive-page-section-spacing);
+                margin-bottom: -2px;
+                z-index: 2;
             }
 
             .tabs a {
                 white-space: nowrap;
                 text-decoration: none;
                 padding: 0.75rem 1rem;
-                border-radius: 8px;
+                border: 2px solid transparent;
+                border-radius: var(--border-radius-2x) var(--border-radius-2x) 0 0;
                 color: var(--color-primary-text);
                 font-weight: 500;
             }
@@ -82,18 +83,27 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
             }
 
             .tabs a.active {
-                background: var(--primary);
+                background: var(--bg-surface);
+                border-color: var(--color-primary);
+                border-bottom: none;
                 color: var(--color-primary);
             }
             .tabs a.active a:hover {
                 background: var(--primary);
                 color: var(--color-primary-hover);
             }
+
+            .rooms-section {
+                display: flex;
+                flex-direction: column;
+                gap: var(--responsive-page-section-spacing);
+                border: 2px solid var(--color-primary);
+                border-radius: 0 0 var(--border-radius-2x) var(--border-radius-2x);
+                padding: var(--responsive-pane-padding);
+                background-color: var(--bg-surface);
+            }
         </style>
-		<h1 class="page-heading has-helptext" style="text-align: center;">Administrer rom</h1>
-		<p class="page-heading-help-text">
-			Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom
-		</p>
+		<h1 class="page-heading" style="text-align: center;">Administrer rom og fordeling av events</h1>
 		<div class="tabs">
 			<a role="button" href="/admin/rooms/" class={ templ.KV("active", puljeQuery == "/") }>Rediger rom</a>
 			for _,pulje := range models.AllPuljer() {
@@ -104,6 +114,8 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
 				>{ pulje }</a>
 			}
 		</div>
-		@children
+		<section class="rooms-section">
+			@children
+		</section>
 	</div>
 }

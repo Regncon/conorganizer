@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/service/keyvalue"
 	"github.com/go-chi/chi/v5"
 	"github.com/nats-io/nats.go/jetstream"
@@ -109,6 +110,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 				<input
 					type="text"
 					name="name"
+					{ errorfeedback.Attrs("name")... }
 					data-bind="name"
 					data-indicator="toastName"
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/name')", eventId) }
@@ -120,11 +122,13 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					autocomplete="name"
 				/>
 				<div data-signals={ dataSignals(map[string]string{"name": name}) }></div>
+				@errorfeedback.RenderMessage("name")
 			</label>
 			<label class="label color-strong form-group">
 				E-post
 				<input
 					data-signals={ dataSignals(map[string]string{"email": email}) }
+					{ errorfeedback.Attrs("email")... }
 					type="email"
 					data-bind="email"
 					data-indicator="toastEmail"
@@ -135,12 +139,14 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					required
 					autocomplete="email"
 				/>
+				@errorfeedback.RenderMessage("email")
 			</label>
 			<label class="label color-strong form-group">
 				Telefon
 				<input
 					type="tel"
 					data-signals={ dataSignals(map[string]string{"phone": phone}) }
+					{ errorfeedback.Attrs("phone")... }
 					data-bind="phone"
 					data-indicator="toastPhone"
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/phone')", eventId) }
@@ -152,6 +158,7 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					title="Bruk 8 siffer, eventuelt med +47 foran"
 					autocomplete="tel"
 				/>
+				@errorfeedback.RenderMessage("phone")
 			</label>
 		</section>
 	</article>

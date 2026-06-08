@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Regncon/conorganizer/components/formsubmission"
@@ -391,11 +392,15 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"id":                   0,
 							"name":                 "",
 							"room_number":          "",
-							"floor":                0,
-							"max_concurrent_games": 0,
+							"floor":                1,
+							"max_concurrent_games": 1,
 							"notes":                "",
 							"is_disabled":          false,
-							"error":                "",
+							"errors": map[string]string{
+								"room_number":          "",
+								"max_concurrent_games": "",
+								"error":                "",
+							},
 						})
 
 						if err = sse.PatchSignals(payload); err != nil {
@@ -417,12 +422,53 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						sse := datastar.NewSSE(w, r)
 
 						// Validate input
+						errors := map[string]string{
+							"room_number":          "",
+							"max_concurrent_games": "",
+							"error":                "",
+						}
+
+						if !strings.HasPrefix(store.RoomNumber, fmt.Sprintf("%d", store.Floor)) {
+							errors["room_number"] = "Romnummer må starte med etasje som første tall"
+						}
+
+						if strings.TrimSpace(store.RoomNumber) == "" {
+							errors["room_number"] = "Romnummer er påkrevd"
+						}
+
+						if store.MaxConcurrentGames < 1 {
+							errors["max_concurrent_games"] = "Maks samtidige spill må være minst 1"
+						}
+
+						hasErrors := false
+						for _, msg := range errors {
+							if msg != "" {
+								hasErrors = true
+								break
+							}
+						}
+
+						if hasErrors {
+							payload, _ := json.Marshal(map[string]any{
+								"errors": errors,
+							})
+
+							if err := sse.PatchSignals(payload); err != nil {
+								logger.Error("Failed to patch signals", "error", err.Error())
+								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							}
+							return
+						}
 
 						// Create room
 						_, err := roomService.CreateRoom(db, *store)
 						if err != nil {
-							payload, _ := json.Marshal(map[string]string{
-								"error": err.Error(),
+							payload, _ := json.Marshal(map[string]any{
+								"errors": map[string]string{
+									"room_number":          "",
+									"max_concurrent_games": "",
+									"error":                err.Error(),
+								},
 							})
 
 							if err = sse.PatchSignals(payload); err != nil {
@@ -474,8 +520,13 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"max_concurrent_games": room.MaxConcurrentGames,
 							"notes":                room.Notes,
 							"is_disabled":          room.IsDisabled,
-							"error":                "",
+							"errors": map[string]string{
+								"room_number":          "",
+								"max_concurrent_games": "",
+								"error":                "",
+							},
 						})
+
 						if err = sse.PatchSignals(payload); err != nil {
 							logger.Error("Failed to patch signals", "error", err.Error())
 							http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
@@ -502,21 +553,51 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 						sse := datastar.NewSSE(w, r)
 
 						// Validate input
+						errors := map[string]string{
+							"room_number":          "",
+							"max_concurrent_games": "",
+							"error":                "",
+						}
+
+						if !strings.HasPrefix(store.RoomNumber, fmt.Sprintf("%d", store.Floor)) {
+							errors["room_number"] = "Romnummer må starte med etasje som første tall"
+						}
+
+						if strings.TrimSpace(store.RoomNumber) == "" {
+							errors["room_number"] = "Romnummer er påkrevd"
+						}
+
+						if store.MaxConcurrentGames < 1 {
+							errors["max_concurrent_games"] = "Maks samtidige spill må være minst 1"
+						}
+
 						parsedID, err := strconv.ParseInt(roomID, 10, 0)
 						if err != nil {
-							payload, _ := json.Marshal(map[string]string{
-								"error": err.Error(),
+							errors["error"] = err.Error()
+						}
+
+						hasErrors := false
+						for _, msg := range errors {
+							if msg != "" {
+								hasErrors = true
+								break
+							}
+						}
+
+						if hasErrors {
+							payload, _ := json.Marshal(map[string]any{
+								"errors": errors,
 							})
 
-							if err = sse.PatchSignals(payload); err != nil {
+							if err := sse.PatchSignals(payload); err != nil {
 								logger.Error("Failed to patch signals", "error", err.Error())
 								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
 							}
 							return
 						}
-						store.ID = int(parsedID)
 
 						// Update room
+						store.ID = int(parsedID)
 						_, err = roomService.UpdateRoom(db, *store)
 						if err != nil {
 							payload, _ := json.Marshal(map[string]string{
@@ -590,7 +671,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				})
 			})
 
-			rooms.RoomsLayoutRoute(roomRouter, db, baseLogger, err)
+			rooms.RoomsLayoutRoute(roomRouter, db, baseLogger, eventImageDir, err)
 		})
 	})
 
