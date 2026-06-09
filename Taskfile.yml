@@ -60,6 +60,15 @@ tasks:
             - start:reload
             - start:server
 
+    # Similar to above task, but recolors log levels
+    start:logcolors:
+        cmds:
+            - |
+              go tool task start 2>&1 | sed -E \
+              -e 's/(ERROR)/\x1b[31;1m\1\x1b[0m/g' \
+              -e 's/(WARN)/\x1b[33;1m\1\x1b[0m/g' \
+              -e 's/(DEBUG)/\x1b[32;1m\1\x1b[0m/g'
+
     # Start development server
     dev:
         cmds:
