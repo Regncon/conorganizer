@@ -27,28 +27,33 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 		}
 	})
 
-	router.Route("/{pulje}", func(roomByPuljeRouter chi.Router) {
-		roomByPuljeRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			var ctx = r.Context()
-			userInfo := userctx.GetUserRequestInfo(r.Context())
-
-			puljeQuery := chi.URLParam(r, "pulje")
-			if puljeQuery == "" {
-				http.Error(w, "Valid pulje is required. Got: "+puljeQuery, http.StatusBadRequest)
-				return
-			}
-
-			var pulje = models.Pulje(puljeQuery)
-
-			if err := layouts.Base(
-				"Rom oversikt",
-				userInfo,
-				roomsIndex(db, logger, RoomsByPuljePageContent(db, logger, models.Pulje(pulje), eventImageDir), pulje),
-			).Render(ctx, w); err != nil {
-				logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
-			}
+	router.Route("/assignment", func(assignmentRouter chi.Router) {
+		// Simple redirect to ensure users go to the correct path
+		assignmentRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, fmt.Sprintf("/admin/rooms/assignment/%s", models.PuljeFredagKveld), http.StatusSeeOther)
 		})
 
+		assignmentRouter.Route("/{pulje}", func(roomByPuljeRouter chi.Router) {
+			roomByPuljeRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				var ctx = r.Context()
+				userInfo := userctx.GetUserRequestInfo(r.Context())
+
+				puljeQuery := chi.URLParam(r, "pulje")
+				puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
+				if !isPujeIDValid {
+					http.Redirect(w, r, fmt.Sprintf("/admin/rooms/assignment/%s", models.PuljeFredagKveld), http.StatusSeeOther)
+				}
+
+				if err := layouts.Base(
+					"Rom oversikt",
+					userInfo,
+					roomsIndex(db, logger, RoomsByPuljePageContent(db, logger, models.Pulje(puljeID), eventImageDir), puljeID),
+				).Render(ctx, w); err != nil {
+					logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
+				}
+			})
+
+		})
 	})
 }
 
@@ -58,6 +63,7 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
 		{Name: "Admin", Url: "/admin/"},
 		{Name: "Oversikt over rom", Url: ""},
 	})
+	<pre data-json-signals=""></pre>
 	<div class="page-content-container flex flex-col">
 		<style>
             .tabs {
@@ -109,7 +115,7 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
 			for _,pulje := range models.AllPuljer() {
 				<a
 					role="button"
-					href={ "/admin/rooms/" + pulje }
+					href={ "/admin/rooms/assignment/" + pulje }
 					class={ templ.KV("active", puljeQuery == pulje) }
 				>{ pulje }</a>
 			}
