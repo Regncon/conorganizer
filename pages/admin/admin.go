@@ -431,16 +431,61 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						})
 					})
 
-					roomsAssignmentRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
+					roomsAssignmentRouter.Post("/{event}/{room}", func(w http.ResponseWriter, r *http.Request) {
 						puljeQuery := chi.URLParam(r, "pulje")
 						puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
 						if !isPujeIDValid {
-							http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
+							http.Error(w, fmt.Sprintf("Expected a valid pulje ID: %v", puljeQuery), http.StatusBadRequest)
 							return
 						}
 
-						// todo: handle in page event assignment by clicking add to room
-						fmt.Println(puljeID)
+						eventQuery := chi.URLParam(r, "event")
+						if eventQuery == "" {
+							http.Error(w, "Event ID is required", http.StatusBadRequest)
+							return
+						}
+
+						roomQuery := chi.URLParam(r, "room")
+						if roomQuery == "" {
+							http.Error(w, "Room ID is required", http.StatusBadRequest)
+							return
+						}
+						roomID, err := strconv.ParseInt(roomQuery, 10, 0)
+						if err != nil {
+							http.Error(w, fmt.Sprintf("Unable to parse roomID: %v", err.Error()), http.StatusBadRequest)
+							return
+						}
+
+						// Check that room exists
+						_, err = roomService.GetRoomByID(db, int(roomID))
+						if err != nil {
+							http.Error(w, fmt.Sprintf("Room with id %d not found - error: %v", roomID, err.Error()), http.StatusBadRequest)
+							return
+						}
+
+						// Assign room
+						query := `
+                            UPDATE relation_event_puljer
+                            SET room_id = ?
+                            WHERE event_id = ? AND pulje_id = ?
+                        `
+
+						_, err = db.Exec(query, roomID, eventQuery, puljeID)
+						if err != nil {
+							http.Error(w, fmt.Sprintf("Unable to assign room: %v", err.Error()), http.StatusBadRequest)
+							return
+						}
+
+						// Stream update
+						if err := liveManager.Broadcast(r.Context(), live.BucketRooms); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+
+						// Close modal on success
+						sse := datastar.NewSSE(w, r)
+						_ = sse.ExecuteScript(`document.getElementById('assignment-dialog').close()`)
 					})
 				})
 			})

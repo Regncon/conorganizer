@@ -264,60 +264,6 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
             }
         }
 
-        dialog::backdrop {
-            background: rgb(0 0 0 / 33%);
-        }
-        dialog:open {
-			position: fixed;
-            inset: 0;
-			--dialog-width: min(32.5rem, calc(100% - 16px));
-			visibility: visible;
-			width: var(--dialog-width);
-			background-color: var(--bg-surface);
-			border: none;
-			border-radius: var(--border-radius-2x);
-			padding: var(--responsive-pane-padding);
-			box-shadow: var(--shadow-dialog);
-            outline:none;
-
-            &::backdrop {
-				background: hsl(0deg 0% 0% / 55%);
-			}
-            form {
-                display: flex;
-                flex-flow: column nowrap;
-                gap: var(--spacing-2x);
-
-                label {
-                    width: 100%
-                }
-
-                input[type="text"],
-                input[type="number"] {
-                    width: 100%;
-                }
-                textarea {
-                    width: 100%;
-                    resize: vertical;
-                }
-                .button-group {
-                    display: flex;
-                    gap: var(--spacing-2x)
-                }
-
-                .button-group > button {
-                    flex: 1;
-                }
-
-                .input-error {
-                    color: var(--color-error);
-                }
-                .input-error:empty {
-                    display: none;
-                }
-            }
-        }
-
         #room-delete-dialog:open {
             display: flex;
             flex-flow: column nowrap;
@@ -327,18 +273,6 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
             button {
                 min-width: ;
             }
-        }
-        .modal-close-button {
-            position: absolute;
-            top: var(--spacing-2x);
-            right: var(--spacing-1x);
-            background: transparent;
-            border: none;
-            border-radius: 100%;
-            padding: 0;
-        }
-        .modal-close-button:hover {
-            background: var(--bg-surface-hover);
         }
 	</style>
 	@formModal()
