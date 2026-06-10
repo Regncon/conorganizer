@@ -63,7 +63,6 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
 		{Name: "Admin", Url: "/admin/"},
 		{Name: "Oversikt over rom", Url: ""},
 	})
-	<pre data-json-signals=""></pre>
 	<div class="page-content-container flex flex-col">
 		<style>
             .tabs {
@@ -120,8 +119,6 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
 				>{ pulje }</a>
 			}
 		</div>
-		<section class="rooms-section">
-			@children
-		</section>
+		@children
 	</div>
 }

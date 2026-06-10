@@ -8,12 +8,25 @@ import (
 
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/live"
 	roomService "github.com/Regncon/conorganizer/service/rooms"
 )
 
 templ formModal() {
-	<dialog id="room-dialog" closedBy="any">
-		<form id="room-form">
+	<dialog
+		id="room-dialog"
+		closedBy="any"
+	>
+		<form
+			id="room-form"
+			data-signals='{
+                errors: {
+                    room_number: "",
+                    max_concurrent_games: "",
+                    error: ""
+                }
+            }'
+		>
 			<h2 data-text="$form_title"></h2>
 			<label class="label color-strong form-group">
 				<p>Navn</p>
@@ -37,7 +50,7 @@ templ formModal() {
 					pattern=".{2,}"
 					title="Bruk minst 2 tegn"
 				/>
-				<p data-text="$errors.room_number" class="input-error"></p>
+				<p id="name" data-text="$errors.room_number" class="input-error"></p>
 			</label>
 			<label class="label color-strong form-group">
 				<p>Etasje</p>
@@ -106,7 +119,7 @@ templ formModal() {
 						type="button"
 						class="btn btn--outline"
 						style="color: var(--color-error); border-color: var(--color-error);"
-						data-on:click="@post($delete_url)"
+						data-on:click="@delete('/admin/rooms/api/'+$id)"
 					>Slett rom</button>
 				</dialog>
 				<button
@@ -128,7 +141,7 @@ templ roomCard(room models.Room) {
 	<div
 		class="room"
 		style={ templ.KV("opacity: 0.5; border-color: gray;", room.IsDisabled) }
-		data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d/'); ; document.getElementById('room-dialog').showModal()", room.ID) }
+		data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d'); document.getElementById('room-dialog').showModal()", room.ID) }
 	>
 		<h3>{ room.RoomNumber }</h3>
 		<span>
@@ -199,7 +212,8 @@ func getRoomsByFloor(db *sql.DB, logger *slog.Logger) []FloorGroup {
 }
 
 templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
-	<style>
+	<section id="room-administration" class="rooms-section" data-init={ live.DatastarInit("/admin/rooms/api/") }>
+		<style>
 		.rooms-container{
 			display: grid;
             grid-template-columns: 1fr;
@@ -327,23 +341,24 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
             background: var(--bg-surface-hover);
         }
 	</style>
-	@formModal()
-	<p>Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom for konvensjonen. Hovedsakelig brukt for å endre detaljer som maksimum spill for et rom eller detaljer som romnummer og romnavn som vises på dører og branninstruksjoner.</p>
-	{{ floors := getRoomsByFloor(db, logger) }}
-	if len(floors) > 0 {
-		<div class="rooms-container">
-			for _, floorGroup := range floors {
-				@floor(floorGroup.Floor, floorGroup.Rooms)
-			}
-		</div>
-	} else {
-		<p style="text-align: center;">Ingen rom funnet, vær den førte til å et rom nå!</p>
-	}
-	<button
-		type="button"
-		class="btn btn--outline"
-		data-on:click="@get('/admin/rooms/api/0/'); document.getElementById('room-dialog').showModal()"
-	>
-		Ligg til nytt rom
-	</button>
+		@formModal()
+		<p>Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom for konvensjonen. Hovedsakelig brukt for å endre detaljer som maksimum spill for et rom eller detaljer som romnummer og romnavn som vises på dører og branninstruksjoner.</p>
+		{{ floors := getRoomsByFloor(db, logger) }}
+		if len(floors) > 0 {
+			<div class="rooms-container">
+				for _, floorGroup := range floors {
+					@floor(floorGroup.Floor, floorGroup.Rooms)
+				}
+			</div>
+		} else {
+			<p style="text-align: center;">Ingen rom funnet, vær den førte til å et rom nå!</p>
+		}
+		<button
+			type="button"
+			class="btn btn--outline"
+			data-on:click="@get('/admin/rooms/api/0'); document.getElementById('room-dialog').showModal()"
+		>
+			Ligg til nytt rom
+		</button>
+	</section>
 }
