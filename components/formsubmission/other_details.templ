@@ -213,13 +213,29 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				>
 					<option value={ models.AgeGroupDefault } selected>{ models.AgeGroupDefault.Label() }</option>
 					<option value={ models.AgeGroupChildFriendly }>{ models.AgeGroupChildFriendly.Label() }</option>
-						<option value={ models.AgeGroupAdultsOnly }>{ models.AgeGroupAdultsOnly.Label() }</option>
-					</select>
-					@errorfeedback.RenderMessage("ageGroup")
-				</label>
+					<option value={ models.AgeGroupAdultsOnly }>{ models.AgeGroupAdultsOnly.Label() }</option>
+				</select>
+				@errorfeedback.RenderMessage("ageGroup")
+			</label>
 			<article class="item-card age-group-description">
 				<p class="label">Hvilke alder anbefales arrangementet for</p>
-				<p>Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. tandard aldersgrensen på Regncon er 13+. Søndag morgen kjøres barneprogramene.</p>
+				switch ageGroup {
+					case models.AgeGroupAdultsOnly:
+						<p>
+							Hvis arrangementet ditt er skremmende eller ellers krever litt mer modne deltakere,
+							kan du velge denne for å sette en attenårsgrense.
+						</p>
+					case models.AgeGroupChildFriendly:
+						<p>
+							På Regncon teller de som er tolv år eller yngre som barn.
+							Arrangementene som passer for barn settes opp i søndagspuljen.
+						</p>
+					default:
+						<p>
+							Standard aldersgruppe. Den inkluderer de som kan delta på alle puljene,
+							altså alle som er tretten år eller eldre.
+						</p>
+				}
 			</article>
 			<label for="runtime" class="label-small color-strong form-group runtime">
 				Varighet
@@ -235,17 +251,29 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				>
 					<option value={ models.RunTimeNormal } selected>{ models.RunTimeNormal.Label() }</option>
 					<option value={ models.RunTimeShortRunning }>{ models.RunTimeShortRunning.Label() }</option>
-						<option value={ models.RunTimeLongRunning }>{ models.RunTimeLongRunning.Label() }</option>
-					</select>
-					@errorfeedback.RenderMessage("runtime")
-				</label>
+					<option value={ models.RunTimeLongRunning }>{ models.RunTimeLongRunning.Label() }</option>
+				</select>
+				@errorfeedback.RenderMessage("runtime")
+			</label>
 			<article class="item-card runtime-description">
-				<p class="label">Fire til fem timer </p>
-				<p>
-					Dette er den vanligste varigheten for arrangementer på Regncon, og det passer fint inn i en pulje. Det
-					er
-					viktig at folk får vite om arrangementet skal vare mye lengre eller kortere enn en pulje.
-				</p>
+				<p class="label">Hvor lenge varer puljen</p>
+				switch runtime {
+					case models.RunTimeShortRunning:
+						<p>
+							Velg denne hvis det er godt mulig at arrangementet varer mindre enn tre timer.
+							Så vet deltakerne at de må finne noe å gjøre mens de venter på neste pulje.
+						</p>
+					case models.RunTimeLongRunning:
+						<p>
+							Velg denne hvis det er sannsynlig at arrangementet varer seks timer eller mer –
+							så vet deltakerne at det vil påvirke nattesøvnen eller den følgende puljen.
+						</p>
+					default:
+						<p>
+							En vanlig pulje varer 4-5 timer på Regncon.
+							Erfaringsmessig er dette varigheten til de aller fleste arrangementene som holdes på connet.
+						</p>
+				}
 			</article>
 			<section class="form-group beginner-friendly">
 				<div class="checkbox-label">
@@ -266,17 +294,16 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						data-indicator="toastBeginnerFriendly"
 						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/beginner-friendly')", eventId) }
 						type="checkbox"
-						/>
-						Arrangementet er nybegynnervennlig
-					</label>
-					@errorfeedback.RenderMessage("beginnerFriendly")
-				</section>
+					/>
+					Arrangementet er nybegynnervennlig
+				</label>
+				@errorfeedback.RenderMessage("beginnerFriendly")
+			</section>
 			<section class="item-card beginner-friendly-description">
 				<p class="label">Arrangementet er nybegynnervennlig </p>
 				<p>
-					Det betyr at alle er velkomne på arrangementet og at det vil være en god opplevelse for folk som ikke
-					har
-					erfaring med denne typen spill.
+					Erfaringsmessig så stemmer dette for de fleste arrangementer – men hvis spillet er komplisert,
+					og du ikke vil bruke tid på å forklare regler, så kan du la boksen være tom.
 				</p>
 			</section>
 			<section class="form-group english">
@@ -296,16 +323,16 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						type="checkbox"
 						name="english-label"
 						class="checkbox input"
-						/>
-						Arrangementet kan holdes på engelsk
-					</label>
-					@errorfeedback.RenderMessage("canBeRunInEnglish")
-				</section>
+					/>
+					Arrangementet kan holdes på engelsk
+				</label>
+				@errorfeedback.RenderMessage("canBeRunInEnglish")
+			</section>
 			<article class="item-card" id="english-description">
 				<p class="label">Arrangementet kan holdes på engelsk </p>
 				<p>
-					Vi informerer deltakerne under festivalen om at dette arrangementet er et godt valg hvis de ikke snakker
-					norsk.
+					Velg denne hvis du kan holde arrangementet på engelsk
+					(så finner du eventuelt ut av det med deltakerne når arrangementet starter)
 				</p>
 			</article>
 			<label class="label-small color-strong form-group player-count">
@@ -320,17 +347,14 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/max-players')", eventId) }
 					type="number"
 					min="4"
-						step="1"
-					/>
-					@errorfeedback.RenderMessage("maxPlayers")
-				</label>
+					step="1"
+				/>
+				@errorfeedback.RenderMessage("maxPlayers")
+			</label>
 			<article class="item-card" id="player-count-description">
 				<p class="label">Hvor mange kan være med å spille </p>
 				<p>
-					Har du mulighet til å hjelp dine medspillere?
-					Det er mange som ønsker å spille, men vi har begrenset med rom.
-					Hvis vi har mange rollespill med bare fire spillere så bruker vi fort opp alle rommene.
-					Har du mulighet til å ha litt flere spillere enn du orginalt tenkte?
+					Hvor mange kan du ta med deg? Vi har begrenset med rom, så velg gjerne et litt høyere tall enn du hadde tenkt.
 				</p>
 			</article>
 			<label class="label-small color-strong form-group other-notes">
@@ -345,11 +369,11 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					class="input"
 					rows="5"
 					placeholder="Skriv eventuelle merknader her…"
-					>
-						{ shouldShowStringValue(notes) }
-					</textarea>
-					@errorfeedback.RenderMessage("notes")
-				</label>
+				>
+					{ shouldShowStringValue(notes) }
+				</textarea>
+				@errorfeedback.RenderMessage("notes")
+			</label>
 		</section>
 	</article>
 }
