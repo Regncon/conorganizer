@@ -344,7 +344,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 											if room.IsDisabled {
 												disabled
 											} else {
-												style={ templ.KV("color: yellow;", room.IsFull()), templ.KV("color: red", room.CurrentOccupancy()>room.MaxConcurrentGames) }
+												style={ templ.KV("color: var(--color-warning);", room.IsFull()), templ.KV("color: var(--color-error)", room.CurrentOccupancy()>room.MaxConcurrentGames) }
 											}
 										>
 											{ room.RoomNumber } ({ room.CurrentOccupancy() }/{ room.MaxConcurrentGames })
