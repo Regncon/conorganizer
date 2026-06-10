@@ -195,6 +195,50 @@ func UpdateNotes(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, 
 	})
 }
 
+func ageGroupDescription(ageGroup models.AgeGroup) string {
+	switch ageGroup {
+	case models.AgeGroupAdultsOnly:
+		return "Viss arrangementet ditt er skremmande eller krev litt meir modne deltakarar, kan du velje dette for å setje ei attenårsgrense."
+	case models.AgeGroupChildFriendly:
+		return "På Regncon tel dei som er tolv år eller yngre som barn. Arrangement som passar for barn, blir sette opp i søndagspuljen."
+	default:
+		return "Standard aldersgruppe. Ho omfattar dei som kan delta i alle puljene, altså alle som er tretten år eller eldre."
+	}
+}
+
+func ageGroupDescriptionExpression() string {
+	return fmt.Sprintf(
+		"$ageGroup == '%s' ? %q : $ageGroup == '%s' ? %q : %q",
+		models.AgeGroupAdultsOnly,
+		ageGroupDescription(models.AgeGroupAdultsOnly),
+		models.AgeGroupChildFriendly,
+		ageGroupDescription(models.AgeGroupChildFriendly),
+		ageGroupDescription(models.AgeGroupDefault),
+	)
+}
+
+func runtimeDescription(runtime models.Runtime) string {
+	switch runtime {
+	case models.RunTimeShortRunning:
+		return "Vel denne viss arrangementet truleg varer mindre enn tre timar. Då veit deltakarane at dei må finne noko å gjere medan dei ventar på neste pulje."
+	case models.RunTimeLongRunning:
+		return "Vel denne viss arrangementet truleg varer seks timar eller meir. Då veit deltakarane at det kan påverke nattesøvnen eller den neste puljen."
+	default:
+		return "Ein vanleg pulje varer 4-5 timar på Regncon. Erfaringsmessig er dette varigheita til dei aller fleste arrangementa som blir haldne på connet."
+	}
+}
+
+func runtimeDescriptionExpression() string {
+	return fmt.Sprintf(
+		"$runtime == '%s' ? %q : $runtime == '%s' ? %q : %q",
+		models.RunTimeShortRunning,
+		runtimeDescription(models.RunTimeShortRunning),
+		models.RunTimeLongRunning,
+		runtimeDescription(models.RunTimeLongRunning),
+		runtimeDescription(models.RunTimeNormal),
+	)
+}
+
 templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, canBeRunInEnglish bool, maxPlayers int, notes string) {
 	<article class="form-card">
 		<h4 class="form-card-title">Andre detaljar</h4>
@@ -219,23 +263,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 			</label>
 			<article class="item-card age-group-description">
 				<p class="label">Kva alder er arrangementet tilrådd for?</p>
-				switch ageGroup {
-					case models.AgeGroupAdultsOnly:
-						<p>
-							Viss arrangementet ditt er skremmande eller krev litt meir modne deltakarar,
-							kan du velje dette for å setje ei attenårsgrense.
-						</p>
-					case models.AgeGroupChildFriendly:
-						<p>
-							På Regncon tel dei som er tolv år eller yngre som barn.
-							Arrangement som passar for barn, blir sette opp i søndagspuljen.
-						</p>
-					default:
-						<p>
-							Standard aldersgruppe. Ho omfattar dei som kan delta i alle puljene,
-							altså alle som er tretten år eller eldre.
-						</p>
-				}
+				<p data-text={ ageGroupDescriptionExpression() }>{ ageGroupDescription(ageGroup) }</p>
 			</article>
 			<label for="runtime" class="label-small color-strong form-group runtime">
 				Varigheit
@@ -257,23 +285,7 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 			</label>
 			<article class="item-card runtime-description">
 				<p class="label">Kor lenge varer puljen?</p>
-				switch runtime {
-					case models.RunTimeShortRunning:
-						<p>
-							Vel denne viss arrangementet truleg varer mindre enn tre timar.
-							Då veit deltakarane at dei må finne noko å gjere medan dei ventar på neste pulje.
-						</p>
-					case models.RunTimeLongRunning:
-						<p>
-							Vel denne viss arrangementet truleg varer seks timar eller meir –
-							då veit deltakarane at det kan påverke nattesøvnen eller den neste puljen.
-						</p>
-					default:
-						<p>
-							Ein vanleg pulje varer 4-5 timar på Regncon.
-							Erfaringsmessig er dette varigheita til dei aller fleste arrangementa som blir haldne på connet.
-						</p>
-				}
+				<p data-text={ runtimeDescriptionExpression() }>{ runtimeDescription(runtime) }</p>
 			</article>
 			<section class="form-group beginner-friendly">
 				<div class="checkbox-label">
