@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
+	"github.com/Regncon/conorganizer/service/live"
 	roomService "github.com/Regncon/conorganizer/service/rooms"
 	"log/slog"
 	"sort"
@@ -192,15 +193,7 @@ templ floorPuljeContainer(floor int, rooms []models.RoomByPulje, eventImageDir *
 	}
 }
 
-templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
-	<script>
-        /* TODO: remove this section asap when NATS has been fixed */
-        window.addEventListener("pageshow", e => {
-            if (e.persisted) {
-                window.location.reload();
-            }
-        });
-    </script>
+templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
 	<style>
         .event-list {
             display: flex;
@@ -321,28 +314,34 @@ templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulj
             border-color: var(--color-primary);
         }
 	</style>
-	{{ events := getEventInPuljeWithoutRoom(db, logger, pulje) }}
-	if len(events) > 0 {
-		<h2>{ len(events) } Eventer i pulje uten tildelt rom</h2>
-		<div class="event-list">
-			for _, event := range events {
-				<a
-					role="button"
-					href={ "/admin/approval/edit/" + event.EventID }
-					class="btn btn--outline"
-				>{ event.Title } ({ event.MaxPlayers })</a>
-			}
-		</div>
-	}
-	<h2>Romfordelig for { pulje }</h2>
-	{{ floors := getRoomsPuljeByFloor(db, logger, pulje) }}
-	if len(floors) > 0 {
-		<div class="rooms-container">
-			for _, floorGroup := range floors {
-				@floorPuljeContainer(floorGroup.Floor, floorGroup.Rooms, eventImageDir)
-			}
-		</div>
-	} else {
-		<p style="text-align: center;">Ingen rom funnet, vær den førte til å <a href="/admin/rooms/">ligge inn</a> et rom nå!</p>
-	}
+	@RoomsAssignmentPageContent(db, logger, pulje, eventImageDir)
+}
+
+templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
+	<section id="room-assignment" class="rooms-section" data-init={ live.DatastarInit(fmt.Sprintf("/admin/rooms/api/assignment/%s", pulje)) }>
+		{{ events := getEventInPuljeWithoutRoom(db, logger, pulje) }}
+		if len(events) > 0 {
+			<h2>{ len(events) } Eventer i pulje uten tildelt rom</h2>
+			<div class="event-list">
+				for _, event := range events {
+					<a
+						role="button"
+						href={ "/admin/approval/edit/" + event.EventID }
+						class="btn btn--outline"
+					>{ event.Title } ({ event.MaxPlayers })</a>
+				}
+			</div>
+		}
+		<h2>Romfordelig for { pulje }</h2>
+		{{ floors := getRoomsPuljeByFloor(db, logger, pulje) }}
+		if len(floors) > 0 {
+			<div class="rooms-container">
+				for _, floorGroup := range floors {
+					@floorPuljeContainer(floorGroup.Floor, floorGroup.Rooms, eventImageDir)
+				}
+			</div>
+		} else {
+			<p style="text-align: center;">Ingen rom funnet, vær den førte til å <a href="/admin/rooms/">ligge inn</a> et rom nå!</p>
+		}
+	</section>
 }

@@ -385,6 +385,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 						}
 
+						// todo: add delete handler
 						fmt.Println(store)
 
 						if err := liveManager.Broadcast(r.Context(), live.BucketRooms); err != nil {
@@ -409,10 +410,11 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 								live.BucketRooms,
 							},
 							Render: func(ctx context.Context, r *http.Request) templ.Component {
-								return rooms.RoomsByPuljePageContent(db, logger, puljeID, eventImageDir)
+								return rooms.RoomsAssignmentPageContent(db, logger, puljeID, eventImageDir)
 							},
 						})
 					})
+
 					roomsAssignmentRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
 						puljeQuery := chi.URLParam(r, "pulje")
 						puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
@@ -420,6 +422,8 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
 							return
 						}
+
+						// todo: handle in page event assignment by clicking add to room
 						fmt.Println(puljeID)
 					})
 				})
