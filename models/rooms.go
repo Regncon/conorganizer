@@ -115,3 +115,10 @@ type RoomFormErrors struct {
 	MaxConcurrentGames string `json:"max_concurrent_games"`
 	Error              string `json:"error"`
 }
+
+// HasErrors is a hepler function for quickly getting if error status on create/update room details
+func (e RoomFormErrors) HasErrors() bool {
+	return e.RoomNumber != "" ||
+		e.MaxConcurrentGames != "" ||
+		e.Error != ""
+}
