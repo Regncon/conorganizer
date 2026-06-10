@@ -266,6 +266,10 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						// Patch signals
 						sse := datastar.NewSSE(w, r)
 						payload, err := json.Marshal(store)
+						if err != nil {
+							logger.Error("Failed to marshal signals", "error", err.Error())
+							http.Error(w, "Failed to marshal signals", http.StatusInternalServerError)
+						}
 
 						if err := sse.PatchSignals(payload); err != nil {
 							logger.Error("Failed to patch signals", "error", err.Error())
@@ -310,7 +314,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						validationErrors := roomService.ValidateRooms(room)
 						store.Errors = validationErrors
 
-						if err := validationErrors.HasErrors(); err == true {
+						if err := validationErrors.HasErrors(); err {
 							payload, err := json.Marshal(store)
 							if err != nil {
 								logger.Error("Failed to marshal signals", "error", err.Error())
@@ -373,7 +377,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						}
 
 						// Close modal on success
-						sse.ExecuteScript(`document.getElementById('room-dialog').close()`)
+						_ = sse.ExecuteScript(`document.getElementById('room-dialog').close()`)
 					})
 
 					roomApiRouter.Delete("/", func(w http.ResponseWriter, r *http.Request) {
@@ -404,7 +408,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 
 						// Close modal on success
 						sse := datastar.NewSSE(w, r)
-						sse.ExecuteScript(`document.getElementById('room-dialog').close()`)
+						_ = sse.ExecuteScript(`document.getElementById('room-dialog').close()`)
 					})
 				})
 
