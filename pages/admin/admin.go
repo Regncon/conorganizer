@@ -378,21 +378,34 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 					})
 
 					roomApiRouter.Delete("/", func(w http.ResponseWriter, r *http.Request) {
-						// Read data-star post submission
-						store := &models.RoomFormSignals{}
-						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
-							fmt.Println(readSignalErr.Error())
-							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+						// Validate id param from URL
+						idQuery := chi.URLParam(r, "id")
+						if idQuery == "" {
+							http.Error(w, "Room ID is required. Got: "+idQuery, http.StatusBadRequest)
+							return
+						}
+						roomID, err := strconv.ParseInt(idQuery, 10, 0)
+						if err != nil {
+							http.Error(w, "Unable to parse roomID, error: "+err.Error(), http.StatusBadRequest)
+							return
 						}
 
-						// todo: add delete handler
-						fmt.Println(store)
+						// Delete room
+						err = roomService.DeleteRoom(db, int(roomID))
+						if err != nil {
+							http.Error(w, "Unable to deleto room with ID, error: "+err.Error(), http.StatusBadRequest)
+							return
+						}
 
 						if err := liveManager.Broadcast(r.Context(), live.BucketRooms); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast update: %w", err).Error())
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
 						}
+
+						// Close modal on success
+						sse := datastar.NewSSE(w, r)
+						sse.ExecuteScript(`document.getElementById('room-dialog').close()`)
 					})
 				})
 
