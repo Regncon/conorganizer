@@ -379,7 +379,6 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             border-color: var(--color-primary);
         }
 	</style>
-	<pre data-json-signals></pre>
 	@assignEventModal(db, logger, pulje, eventImageDir)
 	@RoomsAssignmentPageContent(db, logger, pulje, eventImageDir)
 }
