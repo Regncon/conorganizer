@@ -6,6 +6,7 @@ import (
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	"log/slog"
@@ -21,7 +22,7 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 		if err := layouts.Base(
 			"Rom oversikt",
 			userInfo,
-			roomsIndex(db, logger, RoomsPageContent(db, logger), "/"),
+			roomsIndex(db, logger, RoomsPage(db, logger), "/"),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
 		}
@@ -47,7 +48,7 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 				if err := layouts.Base(
 					"Rom oversikt",
 					userInfo,
-					roomsIndex(db, logger, RoomsByPuljePageContent(db, logger, models.Pulje(puljeID), eventImageDir), puljeID),
+					roomsIndex(db, logger, RoomsAssignmentPage(db, logger, models.Pulje(puljeID), eventImageDir), puljeID),
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
 				}
@@ -121,4 +122,10 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
 		</div>
 		@children
 	</div>
+}
+
+templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
+	<section id="room-assignment" class="rooms-section" data-init={ live.DatastarInit(fmt.Sprintf("/admin/rooms/api/assignment/%s", pulje)) }>
+		@RoomsByPuljePageContent(db, logger, pulje, eventImageDir)
+	</section>
 }

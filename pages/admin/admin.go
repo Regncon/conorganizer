@@ -210,7 +210,225 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 			approval.ApprovalLayoutRoute(approvalRouter, db, baseLogger)
 		})
 
-		adminRouter.Route("/rooms", func(roomRouter chi.Router) {
+		adminRouter.Route("/rooms", func(roomsRouter chi.Router) {
+			roomsRouter.Route("/api", func(roomsApiRouter chi.Router) {
+				roomsApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+					liveManager.Stream(w, r, live.Page{
+						Buckets: []live.Bucket{
+							live.BucketRooms,
+						},
+						Render: func(ctx context.Context, r *http.Request) templ.Component {
+							return rooms.RoomsPageContent(db, logger)
+						},
+					})
+				})
+
+				roomsApiRouter.Route("/{id}", func(roomApiRouter chi.Router) {
+					// This route is used for getting form data when creating or updating rooms
+					roomApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						// Validate id param from URL
+						idQuery := chi.URLParam(r, "id")
+						if idQuery == "" {
+							http.Error(w, "Room ID is required. Got: "+idQuery, http.StatusBadRequest)
+							return
+						}
+						roomID, err := strconv.ParseInt(idQuery, 10, 0)
+						if err != nil {
+							http.Error(w, "Unable to parse roomID, error: "+err.Error(), http.StatusBadRequest)
+							return
+						}
+
+						// Handle signals depending on create or update room
+						store := models.RoomFormSignals{}
+						if roomID == 0 {
+							store.FormTitle = "Legg til et nytt rom"
+							store.ButtonLabel = "Legg til"
+							store.Mode = "create"
+						} else {
+							room, err := roomService.GetRoomByID(db, int(roomID))
+							if err != nil {
+								store.Errors.Error = "Unable to get room"
+							}
+
+							store.FormTitle = "Oppdaterer rom " + room.RoomNumber
+							store.ButtonLabel = "Oppdater"
+							store.Mode = "edit"
+
+							// Get updated values from database
+							store.ID = room.ID
+							store.Name = room.Name
+							store.RoomNumber = room.RoomNumber
+							store.Floor = room.Floor
+							store.MaxConcurrentGames = room.MaxConcurrentGames
+							store.IsDisabled = room.IsDisabled
+							store.Notes = room.Notes
+						}
+
+						// Patch signals
+						sse := datastar.NewSSE(w, r)
+						payload, err := json.Marshal(store)
+
+						if err := sse.PatchSignals(payload); err != nil {
+							logger.Error("Failed to patch signals", "error", err.Error())
+							http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							return
+						}
+					})
+
+					roomApiRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
+						// Validate id param from URL
+						idQuery := chi.URLParam(r, "id")
+						if idQuery == "" {
+							http.Error(w, "Room ID is required. Got: "+idQuery, http.StatusBadRequest)
+							return
+						}
+						roomID, err := strconv.ParseInt(idQuery, 10, 0)
+						if err != nil {
+							http.Error(w, "Unable to parse roomID, error: "+err.Error(), http.StatusBadRequest)
+							return
+						}
+
+						// Read data-star post submission
+						store := &models.RoomFormSignals{}
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+						room := models.Room{
+							ID:                 int(roomID),
+							Name:               store.Name,
+							RoomNumber:         store.RoomNumber,
+							Floor:              store.Floor,
+							MaxConcurrentGames: store.MaxConcurrentGames,
+							IsDisabled:         store.IsDisabled,
+							Notes:              store.Notes,
+						}
+
+						// Set up sse signals for form errors
+						sse := datastar.NewSSE(w, r)
+
+						// Validate form input
+						validationErrors := roomService.ValidateRooms(room)
+						store.Errors = validationErrors
+
+						if err := validationErrors.HasErrors(); err == true {
+							payload, err := json.Marshal(store)
+							if err != nil {
+								logger.Error("Failed to marshal signals", "error", err.Error())
+								http.Error(w, "Failed to marshal signals", http.StatusInternalServerError)
+							}
+
+							if err := sse.PatchSignals(payload); err != nil {
+								logger.Error("Failed to patch signals", "error", err.Error())
+								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							}
+
+							// Stop signals and let user update form
+							return
+						}
+
+						// Update database
+						if room.ID == 0 {
+							_, err := roomService.CreateRoom(db, room)
+							if err != nil {
+								store.Errors.Error = err.Error()
+								payload, err := json.Marshal(store)
+								if err != nil {
+									logger.Error("Failed to marshal signals", "error", err.Error())
+									http.Error(w, "Failed to marshal signals", http.StatusInternalServerError)
+								}
+
+								if err := sse.PatchSignals(payload); err != nil {
+									logger.Error("Failed to patch signals", "error", err.Error())
+									http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+								}
+
+								// Stop signals and let user update form
+								return
+							}
+						} else {
+							_, err := roomService.UpdateRoom(db, room)
+							if err != nil {
+								store.Errors.Error = err.Error()
+								payload, err := json.Marshal(store)
+								if err != nil {
+									logger.Error("Failed to marshal signals", "error", err.Error())
+									http.Error(w, "Failed to marshal signals", http.StatusInternalServerError)
+								}
+
+								if err := sse.PatchSignals(payload); err != nil {
+									logger.Error("Failed to patch signals", "error", err.Error())
+									http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+								}
+
+								// Stop signals and let user update form
+								return
+							}
+						}
+
+						// Broadcast that data has been changed, triggering all clients to update
+						if err := liveManager.Broadcast(r.Context(), live.BucketRooms); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+
+						// Close modal on success
+						sse.ExecuteScript(`document.getElementById('room-dialog').close()`)
+					})
+
+					roomApiRouter.Delete("/", func(w http.ResponseWriter, r *http.Request) {
+						// Read data-star post submission
+						store := &models.RoomFormSignals{}
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							fmt.Println(readSignalErr.Error())
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+						}
+
+						fmt.Println(store)
+
+						if err := liveManager.Broadcast(r.Context(), live.BucketRooms); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+					})
+				})
+
+				roomsApiRouter.Route("/assignment/{pulje}", func(roomsAssignmentRouter chi.Router) {
+					roomsAssignmentRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						puljeQuery := chi.URLParam(r, "pulje")
+						puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
+						if !isPujeIDValid {
+							http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
+							return
+						}
+
+						liveManager.Stream(w, r, live.Page{
+							Buckets: []live.Bucket{
+								live.BucketRooms,
+							},
+							Render: func(ctx context.Context, r *http.Request) templ.Component {
+								return rooms.RoomsByPuljePageContent(db, logger, puljeID, eventImageDir)
+							},
+						})
+					})
+					roomsAssignmentRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
+						puljeQuery := chi.URLParam(r, "pulje")
+						puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
+						if !isPujeIDValid {
+							http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
+							return
+						}
+						fmt.Println(puljeID)
+					})
+				})
+			})
+
+			rooms.RoomsLayoutRoute(roomsRouter, db, logger, eventImageDir)
+		})
+
+		adminRouter.Route("/rooms2", func(roomRouter chi.Router) {
 			roomRouter.Route("/api", func(roomApiRouter chi.Router) {
 				roomApiRouter.Route("/create", func(createRoomRoute chi.Router) {
 					createRoomRoute.Get("/", func(w http.ResponseWriter, r *http.Request) {

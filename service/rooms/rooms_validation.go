@@ -12,12 +12,12 @@ import (
 func ValidateRooms(room models.Room) models.RoomFormErrors {
 	errors := models.RoomFormErrors{}
 
-	if strings.TrimSpace(room.RoomNumber) == "" {
-		errors.RoomNumber = "Romnummer er påkrevd"
-	}
-
 	if !strings.HasPrefix(room.RoomNumber, strconv.Itoa(room.Floor)) {
 		errors.RoomNumber = "Romnummer må starte med etasje som første tall"
+	}
+
+	if strings.TrimSpace(room.RoomNumber) == "" {
+		errors.RoomNumber = "Romnummer er påkrevd"
 	}
 
 	if room.MaxConcurrentGames < 1 {

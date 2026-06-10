@@ -93,12 +93,6 @@ type RoomStatusRow struct {
 
 // RoomFormSignals is used in data-star input form bindings for sending signals to users
 type RoomFormSignals struct {
-	Mode        string `json:"mode"`
-	FormTitle   string `json:"form_title"`
-	ButtonLabel string `json:"button_label"`
-	SubmitURL   string `json:"submit_url"`
-	DeleteURL   string `json:"delete_url,omitempty"`
-
 	ID                 int    `json:"id"`
 	Name               string `json:"name"`
 	RoomNumber         string `json:"room_number"`
@@ -106,6 +100,10 @@ type RoomFormSignals struct {
 	MaxConcurrentGames int    `json:"max_concurrent_games"`
 	Notes              string `json:"notes"`
 	IsDisabled         bool   `json:"is_disabled"`
+
+	Mode        string `json:"mode"`
+	FormTitle   string `json:"form_title"`
+	ButtonLabel string `json:"button_label"`
 
 	Errors RoomFormErrors `json:"errors"`
 }

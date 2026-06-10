@@ -16,6 +16,7 @@ templ formModal() {
 	<dialog
 		id="room-dialog"
 		closedBy="any"
+		data-on:room-saved.window="this.close()"
 	>
 		<form
 			id="room-form"
@@ -125,7 +126,7 @@ templ formModal() {
 				<button
 					type="button"
 					data-text="$button_label"
-					data-on:click="@post($submit_url)"
+					data-on:click="@post('/admin/rooms/api/'+$id)"
 					class="btn btn--outline"
 				></button>
 			</span>
@@ -211,9 +212,8 @@ func getRoomsByFloor(db *sql.DB, logger *slog.Logger) []FloorGroup {
 	return result
 }
 
-templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
-	<section id="room-administration" class="rooms-section" data-init={ live.DatastarInit("/admin/rooms/api/") }>
-		<style>
+templ RoomsPage(db *sql.DB, logger *slog.Logger) {
+	<style>
 		.rooms-container{
 			display: grid;
             grid-template-columns: 1fr;
@@ -341,7 +341,12 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
             background: var(--bg-surface-hover);
         }
 	</style>
-		@formModal()
+	@formModal()
+	@RoomsPageContent(db, logger)
+}
+
+templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
+	<section id="room-administration" class="rooms-section" data-init={ live.DatastarInit("/admin/rooms/api/") }>
 		<p>Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom for konvensjonen. Hovedsakelig brukt for å endre detaljer som maksimum spill for et rom eller detaljer som romnummer og romnavn som vises på dører og branninstruksjoner.</p>
 		{{ floors := getRoomsByFloor(db, logger) }}
 		if len(floors) > 0 {
