@@ -6,13 +6,12 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components/errorfeedback"
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
-	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
@@ -26,7 +25,7 @@ func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 			return
 		}
 
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}

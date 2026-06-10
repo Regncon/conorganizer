@@ -10,13 +10,12 @@ import (
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
-	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func UpdateTitle(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdateTitle(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"title"`
@@ -46,14 +45,14 @@ func UpdateTitle(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logg
 			}
 		*/
 
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}
 	})
 }
 
-func UpdateIntro(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdateIntro(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"intro"`
@@ -77,14 +76,14 @@ func UpdateIntro(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logg
 			http.Error(w, "Failed to update the intro for event in the database", http.StatusInternalServerError)
 			return
 		}
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}
 	})
 }
 
-func UpdateType(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdateType(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"type"`
@@ -106,13 +105,13 @@ func UpdateType(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logge
 			http.Error(w, "Failed to update the type for event in the database", http.StatusInternalServerError)
 			return
 		}
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}
 	})
 }
-func UpdateSystem(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdateSystem(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"system"`
@@ -134,13 +133,13 @@ func UpdateSystem(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, log
 			http.Error(w, "Failed to update the system for event in the database", http.StatusInternalServerError)
 			return
 		}
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}
 	})
 }
-func UpdateDescription(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdateDescription(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"description"`
@@ -170,7 +169,7 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 			http.Error(w, "Failed to update the description for event in the database", http.StatusInternalServerError)
 			return
 		}
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}

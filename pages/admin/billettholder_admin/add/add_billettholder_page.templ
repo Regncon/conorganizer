@@ -3,7 +3,6 @@ package addbillettholder
 import (
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -11,9 +10,8 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-	"github.com/gorilla/sessions"
 )
 
 var searchTerm = ""
@@ -22,8 +20,7 @@ func CheckInTicketsSearchRoute(
 	router chi.Router,
 	db *sql.DB,
 	logger *slog.Logger,
-	store sessions.Store,
-	notifyUpdate func(string),
+	liveManager *live.Manager,
 ) {
 	logger = logger.With("component", "billettholder_admin")
 	router.Get("/search/", func(w http.ResponseWriter, r *http.Request) {
@@ -46,27 +43,10 @@ func CheckInTicketsSearchRoute(
 		searchTerm = payload.Search
 		logger.Debug("Updated billettholder search term")
 
-		sessionID, _ := upsertSessionID(store, r, w)
-		if notifyUpdate != nil {
-			notifyUpdate(sessionID)
+		if _, err := liveManager.EnsureConnection(w, r, live.BucketBillettholders); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 		}
 	})
-}
-
-func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
-	sess, err := store.Get(r, "connections")
-	if err != nil {
-		return "", fmt.Errorf("failed to get session: %w", err)
-	}
-	id, ok := sess.Values["id"].(string)
-	if !ok {
-		id = uuid.NewString()
-		sess.Values["id"] = id
-		if err := sess.Save(r, w); err != nil {
-			return "", fmt.Errorf("failed to save session: %w", err)
-		}
-	}
-	return id, nil
 }
 
 func isBillettholder(ticketID int, bilettholdere []models.Billettholder) bool {

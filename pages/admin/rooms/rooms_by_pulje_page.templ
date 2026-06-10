@@ -194,7 +194,7 @@ templ floorPuljeContainer(floor int, rooms []models.RoomByPulje, eventImageDir *
 
 templ RoomsByPuljePageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
 	<script>
-        /* Todo: remove this section asap when NATS has been fixed */
+        /* TODO: remove this section asap when NATS has been fixed */
         window.addEventListener("pageshow", e => {
             if (e.persisted) {
                 window.location.reload();

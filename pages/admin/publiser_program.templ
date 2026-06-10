@@ -7,9 +7,8 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
-	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -52,7 +51,7 @@ func updateProgramPublished(db *sql.DB, programPublished bool) error {
 	return nil
 }
 
-func programPublishingRoute(router chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func programPublishingRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	logger = logger.With("component", "admin_program_publishing")
 
 	router.Put("/api/program-publishing", func(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +71,7 @@ func programPublishingRoute(router chi.Router, db *sql.DB, kv jetstream.KeyValue
 			return
 		}
 
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			logger.Error(fmt.Errorf("failed to broadcast program publishing update: %w", err).Error(), "program_published", store.ProgramPublished)
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return

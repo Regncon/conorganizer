@@ -10,15 +10,14 @@ import (
 
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/puljer"
 	"github.com/Regncon/conorganizer/service/rooms"
 	"github.com/go-chi/chi/v5"
-	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
 		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 
@@ -69,7 +68,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 				return
 			}
 
-			if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 				logger.Error(fmt.Errorf("failed to broadcast publish update for event %s and pulje %s: %w", eventID, puljeId, err).Error())
 				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 				return
@@ -78,7 +77,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue
 	})
 }
 
-func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	eventRouter.Route("/{puljeId}", func(puljeIdRouter chi.Router) {
 		puljeIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 
@@ -130,7 +129,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 				return
 			}
 
-			if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 				logger.Error(fmt.Errorf("failed to broadcast pulje update for event %s and pulje %s: %w", eventID, puljeId, err).Error())
 				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 				return
@@ -141,7 +140,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, kv jetstream.KeyValu
 	})
 }
 
-func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	roomRouter.Route("/{puljeId}", func(roomIdRouter chi.Router) {
 		roomIdRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 			eventID := chi.URLParam(r, "id")
@@ -176,7 +175,7 @@ func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, kv jetstream.KeyValue,
 				return
 			}
 
-			if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+			if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketRooms); err != nil {
 				logger.Error(fmt.Errorf("failed to broadcast room %s update for event %s and pulje %s: %w", roomID, eventID, puljeId, err).Error())
 				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 				return

@@ -10,9 +10,9 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/gorilla/sessions"
-	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -44,8 +44,7 @@ func highlightSearchTerm(text, searchTerm string) string {
 func ConvertTicketToBillettholderRoute(
 	router chi.Router,
 	db *sql.DB,
-	store sessions.Store,
-	notifyUpdate func(string),
+	liveManager *live.Manager,
 	logger *slog.Logger,
 ) {
 	router.Route("/convert/", func(ticketIdRouter chi.Router) {
@@ -63,9 +62,10 @@ func ConvertTicketToBillettholderRoute(
 				return
 			}
 
-			sessionID, _ := upsertSessionID(store, r, w)
-			if notifyUpdate != nil {
-				notifyUpdate(sessionID)
+			if err := liveManager.Broadcast(r.Context(), live.BucketBillettholders); err != nil {
+				logger.Error("Failed to broadcast billettholder conversion", "error", err, "ticket_id", ticketID)
+				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+				return
 			}
 		})
 

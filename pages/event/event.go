@@ -8,17 +8,14 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/authctx"
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/a-h/templ"
 	"github.com/delaneyj/toolbelt/embeddednats"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -58,7 +55,7 @@ func interestErrorMessageFromError(err error) string {
 	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
 }
 
-func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.Server, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
+func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
 	logger = logger.With("component", "event")
 	nc, err := ns.Client()
 	if err != nil {
@@ -70,56 +67,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		return fmt.Errorf("error creating jetstream client: %w", err)
 	}
 
-	kv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
-		Bucket:      "events",
-		Description: "Regncon Event Store",
-		Compression: true,
-		TTL:         time.Hour,
-		MaxBytes:    16 * 1024 * 1024,
-	})
-
-	if err != nil {
-		return fmt.Errorf("error creating key value: %w", err)
-	}
-	if err := setupPuljeScheduledBroadcasts(context.Background(), js, kv, db, logger); err != nil {
+	if err := setupPuljeScheduledBroadcasts(context.Background(), js, liveManager, db, logger); err != nil {
 		return fmt.Errorf("error setting up pulje scheduled broadcasts: %w", err)
-	}
-
-	resetMVC := func(mvc *root.TodoMVC) {
-		mvc.Mode = root.TodoViewModeAll
-		mvc.Todos = []*root.Todo{
-			{Text: "Learn a backend language", Completed: true},
-			{Text: "Learn Datastar", Completed: false},
-			{Text: "Create Hypermedia", Completed: false},
-			{Text: "???", Completed: false},
-			{Text: "Profit", Completed: false},
-		}
-		mvc.EditingIdx = -1
-	}
-
-	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
-		ctx := r.Context()
-		sessionID, err := upsertSessionID(store, r, w)
-		if err != nil {
-			return "", nil, fmt.Errorf("failed to get session id: %w", err)
-		}
-
-		mvc := &root.TodoMVC{}
-		if entry, err := kv.Get(ctx, sessionID); err != nil {
-			if err != jetstream.ErrKeyNotFound {
-				return "", nil, fmt.Errorf("failed to get key value: %w", err)
-			}
-			resetMVC(mvc)
-
-			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
-			}
-		} else {
-			if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-				return "", nil, fmt.Errorf("failed to unmarshal mvc: %w", err)
-			}
-		}
-		return sessionID, mvc, nil
 	}
 
 	//TODO FIX THIS SO WE SE THE ROUTER AND PAS IT IN (hard to find if we do this)
@@ -129,48 +78,13 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 		eventApiRouter.Route("/{idx}", func(eventIdRouter chi.Router) {
 			eventIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 				eventID := chi.URLParam(r, "idx")
-				sessionID, mvc, err := mvcSession(w, r)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-
-				sse := datastar.NewSSE(w, r)
-
-				// Watch for updates
-				ctx := r.Context()
-				watcher, err := kv.Watch(ctx, sessionID)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusInternalServerError)
-					return
-				}
-				defer func() {
-					if err := watcher.Stop(); err != nil {
-						logger.Error(fmt.Errorf("failed to stop event watcher: %w", err).Error())
-					}
-				}()
-
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case entry := <-watcher.Updates():
-						if entry == nil {
-							continue
-						}
-						if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
-							return
-						}
+				liveManager.Stream(w, r, live.Page{
+					Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests},
+					Render: func(ctx context.Context, r *http.Request) templ.Component {
 						isAdmin := authctx.GetAdminFromUserToken(ctx)
-						c := event_page(eventID, isAdmin, logger, db, eventImageDir, r)
-
-						if err := sse.PatchElementTempl(c); err != nil {
-							_ = sse.ConsoleError(err)
-							return
-						}
-					}
-				}
+						return event_page(eventID, isAdmin, logger, db, eventImageDir, r)
+					},
+				})
 			})
 
 			eventIdRouter.Route("/interest", func(eventInterest chi.Router) {
@@ -245,13 +159,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							return
 						}
 
-						_, _, mvcErr := mvcSession(w, r)
-
-						if mvcErr != nil {
-							http.Error(w, mvcErr.Error(), http.StatusInternalServerError)
-							return
-						}
-
 						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, signals.CurrentInterestLevelChoice, signals.PuljeId, db); err != nil {
 							logger.Error(
 								err.Error(),
@@ -277,7 +184,8 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 							"billettholder_id", signals.BillettHolderId,
 						)
 
-						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+						if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast interest update: %w", err).Error(), "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
 						}
@@ -289,33 +197,6 @@ func SetupEventRoute(router chi.Router, store sessions.Store, ns *embeddednats.S
 	})
 
 	return nil
-}
-
-func saveMVC(ctx context.Context, mvc *root.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
-	b, err := json.Marshal(mvc)
-	if err != nil {
-		return fmt.Errorf("failed to marshal mvc: %w", err)
-	}
-	if _, err := kv.Put(ctx, sessionID, b); err != nil {
-		return fmt.Errorf("failed to put key value: %w", err)
-	}
-	return nil
-}
-
-func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
-	sess, err := store.Get(r, "connections")
-	if err != nil {
-		return "", fmt.Errorf("failed to get session: %w", err)
-	}
-	id, ok := sess.Values["id"].(string)
-	if !ok {
-		id = uuid.NewString()
-		sess.Values["id"] = id
-		if err := sess.Save(r, w); err != nil {
-			return "", fmt.Errorf("failed to save session: %w", err)
-		}
-	}
-	return id, nil
 }
 
 func hasValidInterestChoice(interest models.InterestLevel) bool {
