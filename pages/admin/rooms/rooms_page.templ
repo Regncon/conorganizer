@@ -13,16 +13,7 @@ import (
 
 templ formModal() {
 	<dialog id="room-dialog" closedBy="any">
-		<form
-			id="room-form"
-			data-signals='{
-                errors: {
-                    room_number: "",
-                    max_concurrent_games: "",
-                    error: ""
-                }
-            }'
-		>
+		<form id="room-form">
 			<h2 data-text="$form_title"></h2>
 			<label class="label color-strong form-group">
 				<p>Navn</p>
@@ -137,7 +128,7 @@ templ roomCard(room models.Room) {
 	<div
 		class="room"
 		style={ templ.KV("opacity: 0.5; border-color: gray;", room.IsDisabled) }
-		data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/edit/%d'); ; document.getElementById('room-dialog').showModal()", room.ID) }
+		data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d/'); ; document.getElementById('room-dialog').showModal()", room.ID) }
 	>
 		<h3>{ room.RoomNumber }</h3>
 		<span>
@@ -351,7 +342,7 @@ templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
 	<button
 		type="button"
 		class="btn btn--outline"
-		data-on:click="@get('/admin/rooms/api/create/'); document.getElementById('room-dialog').showModal()"
+		data-on:click="@get('/admin/rooms/api/0/'); document.getElementById('room-dialog').showModal()"
 	>
 		Ligg til nytt rom
 	</button>
