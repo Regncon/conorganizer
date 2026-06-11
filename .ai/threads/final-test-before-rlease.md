@@ -179,4 +179,27 @@ Suggested next step: start with `general.md`. Before editing it, I’d like to d
 
 Time: 2026-06-11 11:48:55
 --- Next Prompt ---
+Yes, let's remove anything that is already fully covered by the header component tests.
+
+Time: 2026-06-11 12:00:32
+--- Codex Run ---
+
+Codex output:
+For `general.md`, the header component tests fully cover the rendered menu href sets by role: anonymous, logged-in non-admin, and admin. They do not cover clicking, access-denied pages, logout effects, keyboard focus, mobile layout, or whether external links are understandable, so I’ll keep those manual checks.
+
+The only item I see as close enough to remove is the broad admin point about “all links work as expected” from the main nav, because it overlaps with menu-link coverage and is too vague. I’ll also move the external-link check out of the “Ikke innlogget bruker” subsection, since those external FAQ links only render for logged-in users/admins.
+I’m updating only `general.md` now, keeping the change scoped to the header-test overlap and the misplaced external-link check.
+The `general.md` cleanup is done. I’m checking the file and diff for the exact movement/removal before summarizing.
+Updated [general.md](/home/cinmay/Documents/conorganizer/documentation/testing/general.md).
+
+I removed the vague admin navigation item that overlapped with the header component href tests, and moved the external-link check from “ikke innlogget bruker” to “innlogget bruker”, since the FAQ link is only rendered for logged-in users/admins.
+
+I kept the remaining items because the header tests do not cover clicking, logout effects, access-denied behavior, keyboard use, mobile layout, or visual clarity.
+
+Validation: `git diff --check` passed for `general.md`.
+
+My suggestion: treat `general.md` as verified unless you want to tighten wording further. Next file in the index is `root.md`; before editing it, we should discuss which current root tests are already automated and what should stay manual.
+
+Time: 2026-06-11 12:00:32
+--- Next Prompt ---
 

@@ -26,8 +26,6 @@ Denne sjekklisten dekker oppførsel som går igjen på tvers av flere sider og f
 
 - [ ] `Gitt at brukeren bruker appen med tastatur eller andre alternative navigasjonsformer, når fokus flyttes mellom interaktive elementer i meny og brukermeny, så skal det være mulig å forstå hvor brukeren befinner seg og hvilke handlinger som kan utføres.`
 
-- [ ] `Gitt at eksterne lenker vises i brukermenyen, når brukeren åpner dem, så skal det være tydelig at brukeren forlater eller åpner innhold utenfor appens egne sider.`
-
 - [ ] `Gitt at brukeren ser navigasjonen på tvers av sider, når appen brukes som helhet, så skal navigasjonen fremstå som ferdig og konsistent uten placeholder-preg, utilsiktet språkblanding eller visuelt forstyrrende detaljer.`
 
 ### Innlogget bruker
@@ -42,11 +40,11 @@ Denne sjekklisten dekker oppførsel som går igjen på tvers av flere sider og f
 
 - [ ] `Gitt at brukeren nylig har logget ut, når brukeren navigerer videre i appen, så skal navigasjonen oppføre seg som for en ikke-innlogget bruker og ikke etterlate inntrykk av at brukeren fortsatt er innlogget.`
 
+- [ ] `Gitt at eksterne lenker vises i brukermenyen, når brukeren åpner dem, så skal det være tydelig at brukeren forlater eller åpner innhold utenfor appens egne sider.`
+
 - [ ] `Gitt at en bruker uten adminrettigheter prøver å gå direkte til en adminside, når siden åpnes, så skal brukeren ikke få tilgang og heller ikke møte en halvveis eller misvisende adminvisning.`
 
 ### Admin
 
 - [ ] `Gitt at brukeren er admin, når brukeren navigerer til Admin fra hovednavigasjonen, så skal brukeren bli sendt til adminområdet uten å møte feil rolle eller feil landingsside.`
-- [ ] `Gitt at brukeren er admin, når brukeren navigerer via hovednavigasjonen, så skal brukerne tas til relevante sider og alle linker fungere som forventet. `
-
 
