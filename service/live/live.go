@@ -94,6 +94,19 @@ func NewManager(ctx context.Context, ns *embeddednats.Server, store sessions.Sto
 }
 
 func (m *Manager) EnsureConnection(w http.ResponseWriter, r *http.Request, buckets ...Bucket) (string, error) {
+	connectionID, err := m.ensureSession(w, r)
+	if err != nil {
+		return "", err
+	}
+
+	if err := m.touchConnection(r.Context(), connectionID, buckets...); err != nil {
+		return "", err
+	}
+
+	return connectionID, nil
+}
+
+func (m *Manager) ensureSession(w http.ResponseWriter, r *http.Request) (string, error) {
 	sess, err := m.store.Get(r, sessionName)
 	if err != nil {
 		return "", fmt.Errorf("get live session: %w", err)
@@ -108,18 +121,22 @@ func (m *Manager) EnsureConnection(w http.ResponseWriter, r *http.Request, bucke
 		}
 	}
 
+	return connectionID, nil
+}
+
+func (m *Manager) touchConnection(ctx context.Context, connectionID string, buckets ...Bucket) error {
 	value := m.liveValue()
 	for _, bucket := range buckets {
 		kv, err := m.keyValue(bucket)
 		if err != nil {
-			return "", err
+			return err
 		}
-		if _, err := kv.Put(r.Context(), connectionID, value); err != nil {
-			return "", fmt.Errorf("touch live key %s in bucket %s: %w", connectionID, bucket, err)
+		if _, err := kv.Put(ctx, connectionID, value); err != nil {
+			return fmt.Errorf("touch live key %s in bucket %s: %w", connectionID, bucket, err)
 		}
 	}
 
-	return connectionID, nil
+	return nil
 }
 
 func (m *Manager) Broadcast(ctx context.Context, buckets ...Bucket) error {
@@ -148,7 +165,7 @@ func (m *Manager) Broadcast(ctx context.Context, buckets ...Bucket) error {
 }
 
 func (m *Manager) Stream(w http.ResponseWriter, r *http.Request, page Page) {
-	connectionID, err := m.EnsureConnection(w, r, page.Buckets...)
+	connectionID, err := m.ensureSession(w, r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -165,6 +182,11 @@ func (m *Manager) Stream(w http.ResponseWriter, r *http.Request, page Page) {
 	}
 
 	if err := patch(); err != nil {
+		_ = sse.ConsoleError(err)
+		return
+	}
+
+	if err := m.touchConnection(ctx, connectionID, page.Buckets...); err != nil {
 		_ = sse.ConsoleError(err)
 		return
 	}

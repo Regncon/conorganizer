@@ -2,6 +2,8 @@ package live
 
 import (
 	"context"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -9,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/a-h/templ"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 )
@@ -179,6 +182,43 @@ func TestManager_Broadcast_WhenWatcherIsOpen_SendsUpdateToWatcher(t *testing.T) 
 	assertTimestampValue(t, entry.Value())
 }
 
+func TestManager_Stream_WhenTouchConnectionFails_SendsInitialPatch(t *testing.T) {
+	// Given live key storage is temporarily unavailable,
+	// when a live stream starts,
+	// then the initial page patch is still sent instead of failing the HTTP request.
+
+	// Given
+	manager := newTestManager(t)
+	kv := mustFakeKeyValue(t, manager, BucketEvents)
+	kv.putErr = errors.New("live key store unavailable")
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/live", nil)
+
+	// When
+	manager.Stream(recorder, request, Page{
+		Buckets: []Bucket{BucketEvents},
+		Render: func(ctx context.Context, r *http.Request) templ.Component {
+			return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+				_, err := io.WriteString(w, `<div id="live-content">Ready</div>`)
+				return err
+			})
+		},
+	})
+
+	// Then
+	result := recorder.Result()
+	if result.StatusCode != http.StatusOK {
+		t.Fatalf("expected live stream to start successfully, got status %d", result.StatusCode)
+	}
+	body := recorder.Body.String()
+	for _, expectedPart := range []string{"datastar-patch-elements", "live-content", "Ready"} {
+		if !strings.Contains(body, expectedPart) {
+			t.Fatalf("expected stream body to contain %q, got %q", expectedPart, body)
+		}
+	}
+}
+
 func TestDatastarInit_ReturnsRestartResilientGetExpression(t *testing.T) {
 	// Given a live endpoint path,
 	// when the Datastar init expression is generated,
@@ -306,6 +346,7 @@ type fakeKeyValue struct {
 	values   map[string][]byte
 	watchers map[string][]*fakeWatcher
 	revision uint64
+	putErr   error
 }
 
 func newFakeKeyValue(bucket Bucket, ttl time.Duration) *fakeKeyValue {
@@ -337,6 +378,10 @@ func (kv *fakeKeyValue) Get(_ context.Context, key string) (jetstream.KeyValueEn
 func (kv *fakeKeyValue) Put(_ context.Context, key string, value []byte) (uint64, error) {
 	kv.mu.Lock()
 	defer kv.mu.Unlock()
+
+	if kv.putErr != nil {
+		return 0, kv.putErr
+	}
 
 	kv.revision++
 	stored := cloneBytes(value)
