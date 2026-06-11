@@ -51,7 +51,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	sessionStore := sessions.NewCookieStore([]byte("session-secret"))
 	sessionStore.MaxAge(int(24 * time.Hour / time.Second))
 
-	liveManager, err := live.NewManager(ctx, ns, sessionStore)
+	liveManager, err := live.NewManager(ctx, ns, sessionStore, live.WithLogger(logger))
 	if err != nil {
 		return cleanup, fmt.Errorf("error setting up live updates: %w", err)
 	}

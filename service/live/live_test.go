@@ -1,9 +1,11 @@
 package live
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -12,6 +14,7 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/gorilla/sessions"
 	"github.com/nats-io/nats.go/jetstream"
 )
@@ -189,11 +192,14 @@ func TestManager_Stream_WhenTouchConnectionFails_SendsInitialPatch(t *testing.T)
 
 	// Given
 	manager := newTestManager(t)
+	var logs bytes.Buffer
+	manager.logger = slog.New(slog.NewJSONHandler(&logs, nil)).With("component", "live")
 	kv := mustFakeKeyValue(t, manager, BucketEvents)
 	kv.putErr = errors.New("live key store unavailable")
 
 	recorder := httptest.NewRecorder()
 	request := httptest.NewRequest(http.MethodGet, "/live", nil)
+	request = request.WithContext(context.WithValue(request.Context(), middleware.RequestIDKey, "request-123"))
 
 	// When
 	manager.Stream(recorder, request, Page{
@@ -215,6 +221,19 @@ func TestManager_Stream_WhenTouchConnectionFails_SendsInitialPatch(t *testing.T)
 	for _, expectedPart := range []string{"datastar-patch-elements", "live-content", "Ready"} {
 		if !strings.Contains(body, expectedPart) {
 			t.Fatalf("expected stream body to contain %q, got %q", expectedPart, body)
+		}
+	}
+	logOutput := logs.String()
+	for _, expectedPart := range []string{
+		`"component":"live"`,
+		`"msg":"failed to touch live key before watching: touch live key in bucket events: live key store unavailable"`,
+		`"method":"GET"`,
+		`"path":"/live"`,
+		`"request_id":"request-123"`,
+		`"buckets":["events"]`,
+	} {
+		if !strings.Contains(logOutput, expectedPart) {
+			t.Fatalf("expected log output to contain %q, got %q", expectedPart, logOutput)
 		}
 	}
 }
@@ -285,6 +304,7 @@ func newTestManager(t *testing.T) *Manager {
 		buckets: buckets,
 		ttl:     DefaultTTL,
 		now:     time.Now,
+		logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 }
 
