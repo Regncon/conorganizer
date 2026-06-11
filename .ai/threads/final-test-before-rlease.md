@@ -367,3 +367,64 @@ text
 Time: 2026-06-11 12:44:15
 --- Next Prompt ---
 
+Ok, let's move on to the next file. 
+What needs to be done for `root.md` and test on the root page?
+
+Time: 2026-06-11 15:31:03
+--- Codex Run ---
+
+Codex output:
+I’ll review `root.md` against the current root page implementation and the existing `pages/root` tests, then I’ll give you a concrete gap list before changing anything.
+I have the first pass. `root.md` is mostly aligned with the current root-page tests, but it has a few manual-only visual/browser behaviors and a few items that can be covered better with focused component/query tests. I’m reading the root templates now to avoid guessing about current selectors and states.
+One important finding: `root.md` is not just stale-doc cleanup. It describes a couple of expectations the current page may not meet cleanly, especially empty/error states and placeholder text on public event cards. Those need a product decision rather than just test edits.
+For `root.md`, I’d treat it as partly valid but not finished. The current automated coverage is decent for the data-ordering behavior, but the manual checklist includes several expectations that either are not covered or may not match the current implementation.
+
+**Already Covered**
+Existing tests in [root_page_test.go](/home/cinmay/Documents/conorganizer/pages/root/root_page_test.go:13) cover:
+
+- program unpublished: scrollnav hidden
+- program unpublished: only announced events shown
+- program published: scrollnav shown
+- program published: only announced + published-in-pulje events shown
+- pulje sections ordered by start time
+- events sorted alphabetically within pulje
+
+Related root-list previous/next behavior is also covered in [previous_next_root_list_test.go](/home/cinmay/Documents/conorganizer/service/eventService/previous_next_root_list_test.go:17).
+
+**What I Think We Should Add Automatically**
+Good candidates for focused Go/component tests:
+
+- Breadcrumb renders `Hjem`.
+- CTA renders expected text, `/profile` link, and image metadata.
+- Event cards from the root link to `/event/{id}` before program publishing.
+- Event cards from published pulje sections link to `/event/{id}?pulje={pulje}`.
+- Admin vs non-admin root card status behavior, since `rootPageContent` passes `isAdmin` into event cards.
+- Empty state behavior, after we decide what the page should show when there are no visible events.
+- Error state behavior, after we decide whether raw DB errors should be replaced with a friendly message.
+
+**Manual-Only For Now**
+These should stay manual unless we add browser/e2e tests:
+
+- CTA layout on mobile/desktop.
+- Card grid behavior with real/large data.
+- Sticky scrollnav behavior while scrolling.
+- Anchor scrolling to pulje sections.
+- Back button, refresh, rapid navigation.
+- Visual overlap/readability checks.
+
+**Open Product Questions**
+I see a few places where `root.md` may be describing behavior the app does not fully provide today:
+
+1. Empty puljes: `ProgramScrollnav` lists all puljes, but the page only renders pulje sections that have published events. That can create dead scrollnav anchors. I recommend changing scrollnav to only link to rendered pulje sections.
+
+2. Empty homepage: if there are no visible events, the page appears to render no event cards and no clear empty-state message. I recommend adding a small friendly empty state.
+
+3. Error states: current templates can show raw English/internal error text like `Error fetching events: ...`. I recommend replacing that with a user-facing Bokmål message and keeping technical detail out of the page.
+
+4. Missing card data: public event cards can fall back to placeholders like `Game System` / `Arrangørnavn`. If this can happen for announced events, I’d treat it as a release bug or at least add a guard test.
+
+My suggested order: first update `root.md` to be concise and match the intended behavior, then add the straightforward component tests, then decide whether we should fix empty/error/placeholder behavior as part of this pass.
+
+Time: 2026-06-11 15:31:03
+--- Next Prompt ---
+
