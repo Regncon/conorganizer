@@ -499,29 +499,29 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 					if interest.HasOtherEventInPulje {
 						<span
 							class="other-event-indicator"
-							data-tippy-content="Tildelt annet arrangement i samme pulje"
-							aria-label="Tildelt annet arrangement i samme pulje"
+							data-tippy-content="Tildelt anna arrangement i same pulje"
+							aria-label="Tildelt anna arrangement i same pulje"
 						>
 							@icons.Icon(icons.Shield, icons.Size16)
 						</span>
 					}
 					if interest.FirstChoice {
-						<p class="first-choice">Fått førstevalg</p>
+						<p class="first-choice">Fått førsteval</p>
 					}
 					if interest.IsGamemaster {
 						<p class="is-gamemaster">
-							<span class="is-gamemaster-icon" data-tippy-content={ fmt.Sprintf("%s %s er spilleder", interest.FirstName, interest.LastName) }>
+							<span class="is-gamemaster-icon" data-tippy-content={ fmt.Sprintf("%s %s er speleleiar", interest.FirstName, interest.LastName) }>
 								@icons.Icon(icons.Gamemaster, icons.Size24)
 							</span>
-							Spilleder
+							Speleleiar
 						</p>
 					}
 					if interest.HasBeenGamemaster && !interest.IsGamemaster {
 						<p class="has-been-gamemaster">
 							<span
 								class="has-been-gamemaster-icon"
-								data-tippy-content={ "Har vært " + models.EventPlayerRoleGM.Label() }
-								aria-label={ "Har vært " + models.EventPlayerRoleGM.Label() }
+								data-tippy-content={ "Har vore " + models.EventPlayerRoleGM.Label() }
+								aria-label={ "Har vore " + models.EventPlayerRoleGM.Label() }
 							>
 								@icons.Icon(icons.Gamemaster, icons.Size24)
 							</span>
@@ -591,7 +591,7 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 				class="btn btn--secondary"
 				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_first_choice'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
 			>
-				Legg til som førstevalg
+				Legg til som førsteval
 			</button>
 		</div>
 		<script src="/static/web_components/admin_billettholder_search.js"></script>
@@ -607,9 +607,9 @@ templ puljeSection(eventId string, pulje models.PuljeRow, interests []InterestWi
 		<h2 style="margin-bottom:1rem;">{ pulje.Name } <span>({ pulje.TimeRange() })</span></h2>
 		<h2 style="margin-bottom:1rem;">Finn billettholder!</h2>
 		@billettholderAssignmentActions(eventId, puljeId, billettholdere)
-		<h2 style="margin-bottom:1rem;">Who is picked?</h2>
+		<h2 style="margin-bottom:1rem;">Kven er tildelt?</h2>
 		@playersInPulje(eventId, puljeId, assignees)
-		<h2 style="margin-bottom:1rem;">Who is interested?</h2>
+		<h2 style="margin-bottom:1rem;">Kven er interessert?</h2>
 		@interestInPulje(eventId, puljeId, interests, false)
 	</article>
 }
@@ -642,10 +642,10 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 	>
 		<article class="form-card">
 			if loadErr != nil {
-				<p>Error fetching interests: { loadErr.Error() }</p>
+				<p>Klarte ikkje å hente interesser: { loadErr.Error() }</p>
 				return
 			}
-			<h2>Spillere</h2>
+			<h2>Spelarar</h2>
 		</article>
 		for _, pulje := range puljer {
 			@puljeSection(eventId, pulje, interests, assignees, pulje.ID == models.PuljeFredagKveld, billettholdere)

@@ -21,23 +21,23 @@ func UpdateAgeGroup(eventRouter chi.Router, db *sql.DB, liveManager *live.Manage
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "age_group = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the title for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere aldersgruppa for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -51,23 +51,23 @@ func UpdateRuntime(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "event_runtime = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the runtime for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere varigheita for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -81,23 +81,23 @@ func UpdateBeginnerFriendly(eventRouter chi.Router, db *sql.DB, liveManager *liv
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "beginner_friendly = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the beginner friendly for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere nybegynnarvennleg-statusen for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -111,23 +111,23 @@ func UpdateCanBeRunInEnglish(eventRouter chi.Router, db *sql.DB, liveManager *li
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "can_be_run_in_english = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the can be run in English for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere om arrangementet kan haldast på engelsk", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -141,23 +141,23 @@ func UpdateMaxPlayers(eventRouter chi.Router, db *sql.DB, liveManager *live.Mana
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "max_players = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the max players for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere maks tal på spelarar for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -171,33 +171,77 @@ func UpdateNotes(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, 
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		normalizedInput := normalizeTextareaSubmission(store.Input)
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "notes = ?", normalizedInput); err != nil {
-			http.Error(w, "Failed to update the notes for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere merknadane for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
 }
 
+func ageGroupDescription(ageGroup models.AgeGroup) string {
+	switch ageGroup {
+	case models.AgeGroupAdultsOnly:
+		return "Viss arrangementet ditt er skremmande eller krev litt meir modne deltakarar, kan du velje dette for å setje ei attenårsgrense."
+	case models.AgeGroupChildFriendly:
+		return "På Regncon tel dei som er tolv år eller yngre som barn. Arrangement som passar for barn, blir sette opp i søndagspuljen."
+	default:
+		return "Standard aldersgruppe. Ho omfattar dei som kan delta i alle puljene, altså alle som er tretten år eller eldre."
+	}
+}
+
+func ageGroupDescriptionExpression() string {
+	return fmt.Sprintf(
+		"$ageGroup == '%s' ? %q : $ageGroup == '%s' ? %q : %q",
+		models.AgeGroupAdultsOnly,
+		ageGroupDescription(models.AgeGroupAdultsOnly),
+		models.AgeGroupChildFriendly,
+		ageGroupDescription(models.AgeGroupChildFriendly),
+		ageGroupDescription(models.AgeGroupDefault),
+	)
+}
+
+func runtimeDescription(runtime models.Runtime) string {
+	switch runtime {
+	case models.RunTimeShortRunning:
+		return "Vel denne viss arrangementet truleg varer mindre enn tre timar. Då veit deltakarane at dei må finne noko å gjere medan dei ventar på neste pulje."
+	case models.RunTimeLongRunning:
+		return "Vel denne viss arrangementet truleg varer seks timar eller meir. Då veit deltakarane at det kan påverke nattesøvnen eller den neste puljen."
+	default:
+		return "Ein vanleg pulje varer 4-5 timar på Regncon. Erfaringsmessig er dette varigheita til dei aller fleste arrangementa som blir haldne på connet."
+	}
+}
+
+func runtimeDescriptionExpression() string {
+	return fmt.Sprintf(
+		"$runtime == '%s' ? %q : $runtime == '%s' ? %q : %q",
+		models.RunTimeShortRunning,
+		runtimeDescription(models.RunTimeShortRunning),
+		models.RunTimeLongRunning,
+		runtimeDescription(models.RunTimeLongRunning),
+		runtimeDescription(models.RunTimeNormal),
+	)
+}
+
 templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runtime, beginnerFriendly bool, canBeRunInEnglish bool, maxPlayers int, notes string) {
 	<article class="form-card">
-		<h4 class="form-card-title">Øvrige Detaljer</h4>
+		<h4 class="form-card-title">Andre detaljar</h4>
 		<section class="details-section">
 			<label class="label-small color-strong form-group age-group">
 				Aldersgruppe
@@ -213,16 +257,16 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				>
 					<option value={ models.AgeGroupDefault } selected>{ models.AgeGroupDefault.Label() }</option>
 					<option value={ models.AgeGroupChildFriendly }>{ models.AgeGroupChildFriendly.Label() }</option>
-						<option value={ models.AgeGroupAdultsOnly }>{ models.AgeGroupAdultsOnly.Label() }</option>
-					</select>
-					@errorfeedback.RenderMessage("ageGroup")
-				</label>
+					<option value={ models.AgeGroupAdultsOnly }>{ models.AgeGroupAdultsOnly.Label() }</option>
+				</select>
+				@errorfeedback.RenderMessage("ageGroup")
+			</label>
 			<article class="item-card age-group-description">
-				<p class="label">Hvilke alder anbefales arrangementet for</p>
-				<p>Vi viser arrangementet til deltakerne som et hvor alle aldersgrupper, unge og voksne, er velkomne. tandard aldersgrensen på Regncon er 13+. Søndag morgen kjøres barneprogramene.</p>
+				<p class="label">Kva alder er arrangementet tilrådd for?</p>
+				<p data-text={ ageGroupDescriptionExpression() }>{ ageGroupDescription(ageGroup) }</p>
 			</article>
 			<label for="runtime" class="label-small color-strong form-group runtime">
-				Varighet
+				Varigheit
 				<select
 					id="runtime"
 					name="runtime"
@@ -235,24 +279,20 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 				>
 					<option value={ models.RunTimeNormal } selected>{ models.RunTimeNormal.Label() }</option>
 					<option value={ models.RunTimeShortRunning }>{ models.RunTimeShortRunning.Label() }</option>
-						<option value={ models.RunTimeLongRunning }>{ models.RunTimeLongRunning.Label() }</option>
-					</select>
-					@errorfeedback.RenderMessage("runtime")
-				</label>
+					<option value={ models.RunTimeLongRunning }>{ models.RunTimeLongRunning.Label() }</option>
+				</select>
+				@errorfeedback.RenderMessage("runtime")
+			</label>
 			<article class="item-card runtime-description">
-				<p class="label">Fire til fem timer </p>
-				<p>
-					Dette er den vanligste varigheten for arrangementer på Regncon, og det passer fint inn i en pulje. Det
-					er
-					viktig at folk får vite om arrangementet skal vare mye lengre eller kortere enn en pulje.
-				</p>
+				<p class="label">Kor lenge varer puljen?</p>
+				<p data-text={ runtimeDescriptionExpression() }>{ runtimeDescription(runtime) }</p>
 			</article>
 			<section class="form-group beginner-friendly">
 				<div class="checkbox-label">
 					<span class="label-small color-strong">
-						Nybegynnervennlig arrangement
+						Nybegynnarvennleg arrangement
 					</span>
-					<span class="label-small" style="text-align:end; font-weight: 400;">Valgfritt</span>
+					<span class="label-small" style="text-align:end; font-weight: 400;">Valfritt</span>
 				</div>
 				<label class="checkbox-background form-group-checkbox">
 					<input
@@ -266,23 +306,22 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						data-indicator="toastBeginnerFriendly"
 						data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/beginner-friendly')", eventId) }
 						type="checkbox"
-						/>
-						Arrangementet er nybegynnervennlig
-					</label>
-					@errorfeedback.RenderMessage("beginnerFriendly")
-				</section>
+					/>
+					Arrangementet er nybegynnarvennleg
+				</label>
+				@errorfeedback.RenderMessage("beginnerFriendly")
+			</section>
 			<section class="item-card beginner-friendly-description">
-				<p class="label">Arrangementet er nybegynnervennlig </p>
+				<p class="label">Arrangementet er nybegynnarvennleg</p>
 				<p>
-					Det betyr at alle er velkomne på arrangementet og at det vil være en god opplevelse for folk som ikke
-					har
-					erfaring med denne typen spill.
+					Erfaringsmessig stemmer dette for dei fleste arrangement – men viss spelet er komplisert,
+					og du ikkje vil bruke tid på å forklare reglar, kan du la boksen stå tom.
 				</p>
 			</section>
 			<section class="form-group english">
 				<div class="checkbox-label">
-					<span class="label-small color-strong">Kan holdes på Engelsk</span>
-					<span class="label-small" style="text-align:end; font-weight:400;">Valgfritt</span>
+					<span class="label-small color-strong">Kan haldast på engelsk</span>
+					<span class="label-small" style="text-align:end; font-weight:400;">Valfritt</span>
 				</div>
 				<label class="checkbox-background form-group-checkbox">
 					<input
@@ -296,20 +335,20 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 						type="checkbox"
 						name="english-label"
 						class="checkbox input"
-						/>
-						Arrangementet kan holdes på engelsk
-					</label>
-					@errorfeedback.RenderMessage("canBeRunInEnglish")
-				</section>
+					/>
+					Arrangementet kan haldast på engelsk
+				</label>
+				@errorfeedback.RenderMessage("canBeRunInEnglish")
+			</section>
 			<article class="item-card" id="english-description">
-				<p class="label">Arrangementet kan holdes på engelsk </p>
+				<p class="label">Arrangementet kan haldast på engelsk</p>
 				<p>
-					Vi informerer deltakerne under festivalen om at dette arrangementet er et godt valg hvis de ikke snakker
-					norsk.
+					Vel denne viss du kan halde arrangementet på engelsk
+					(så finn du eventuelt ut av det med deltakarane når arrangementet startar)
 				</p>
 			</article>
 			<label class="label-small color-strong form-group player-count">
-				Maks antall spillere (utenom arrangør)
+				Maks tal på spelarar (utanom arrangør)
 				<input
 					name="max-players"
 					class="input"
@@ -320,21 +359,18 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/max-players')", eventId) }
 					type="number"
 					min="4"
-						step="1"
-					/>
-					@errorfeedback.RenderMessage("maxPlayers")
-				</label>
+					step="1"
+				/>
+				@errorfeedback.RenderMessage("maxPlayers")
+			</label>
 			<article class="item-card" id="player-count-description">
-				<p class="label">Hvor mange kan være med å spille </p>
+				<p class="label">Kor mange kan vere med og spele?</p>
 				<p>
-					Har du mulighet til å hjelp dine medspillere?
-					Det er mange som ønsker å spille, men vi har begrenset med rom.
-					Hvis vi har mange rollespill med bare fire spillere så bruker vi fort opp alle rommene.
-					Har du mulighet til å ha litt flere spillere enn du orginalt tenkte?
+					Kor mange kan du ta med deg? Vi har avgrensa med rom, så vel gjerne eit litt høgare tal enn du hadde tenkt.
 				</p>
 			</article>
 			<label class="label-small color-strong form-group other-notes">
-				Andre merknader – er det, for eksempel, noen tidspunkter det ikke passer å holde arrangementet?
+				Andre merknader – er det til dømes nokre tidspunkt det ikkje passar å halde arrangementet?
 				<textarea
 					name="other-notes"
 					data-signals={ dataSignals(map[string]string{"notes": notes}) }
@@ -344,12 +380,12 @@ templ otherDetails(eventId string, ageGroup models.AgeGroup, runtime models.Runt
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/notes')", eventId) }
 					class="input"
 					rows="5"
-					placeholder="Skriv eventuelle merknader her…"
-					>
-						{ shouldShowStringValue(notes) }
-					</textarea>
-					@errorfeedback.RenderMessage("notes")
-				</label>
+					placeholder="Skriv eventuelle merknader her..."
+				>
+					{ shouldShowStringValue(notes) }
+				</textarea>
+				@errorfeedback.RenderMessage("notes")
+			</label>
 		</section>
 	</article>
 }

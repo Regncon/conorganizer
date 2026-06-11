@@ -24,13 +24,13 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 			puljeId := chi.URLParam(r, "puljeId")
 			if puljeId == "" {
 				logger.Warn("Pulje ID is missing in the request")
-				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
+				http.Error(w, "Pulje-ID manglar", http.StatusBadRequest)
 				return
 			}
 			eventID := chi.URLParam(r, "id")
 			if eventID == "" {
 				logger.Warn("Event ID is missing in the request")
-				http.Error(w, "Event ID is required", http.StatusBadRequest)
+				http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 				return
 			}
 
@@ -44,7 +44,7 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 
 			if err := datastar.ReadSignals(r, store); err != nil {
 				logger.Error(fmt.Errorf("failed to read signals from request: %w", err).Error())
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 				return
 			}
 			var isPublished bool
@@ -58,19 +58,19 @@ func UpdateIsPublished(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 				isPublished = store.IsPublishedSondagMorgen
 			} else {
 				logger.Warn("Invalid pulje ID", "puljeId", puljeId)
-				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+				http.Error(w, "Ugyldig pulje-ID", http.StatusBadRequest)
 				return
 			}
 
 			if err := updateEventPuljePublishedWithAudit(r.Context(), db, logger, eventID, puljeId, isPublished); err != nil {
 				logger.Error(fmt.Errorf("failed to update publish status in the database for event %s and pulje %s: %w", eventID, puljeId, err).Error())
-				http.Error(w, "Failed to update publish status in the database", http.StatusInternalServerError)
+				http.Error(w, "Klarte ikkje å oppdatere publiseringsstatusen i databasen", http.StatusInternalServerError)
 				return
 			}
 
 			if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 				logger.Error(fmt.Errorf("failed to broadcast publish update for event %s and pulje %s: %w", eventID, puljeId, err).Error())
-				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+				http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 				return
 			}
 		})
@@ -84,14 +84,14 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, liveManager *live.Ma
 			eventID := chi.URLParam(r, "id")
 			if eventID == "" {
 				logger.Warn("Event ID is missing in the request")
-				http.Error(w, "Event ID is required", http.StatusBadRequest)
+				http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 				return
 			}
 
 			puljeId := chi.URLParam(r, "puljeId")
 			if puljeId == "" {
 				logger.Warn("Pulje ID is missing in the request")
-				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
+				http.Error(w, "Pulje-ID manglar", http.StatusBadRequest)
 				return
 			}
 
@@ -105,7 +105,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, liveManager *live.Ma
 
 			if err := datastar.ReadSignals(r, store); err != nil {
 				logger.Error(fmt.Errorf("failed to read signals from request: %w", err).Error())
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 				return
 			}
 
@@ -119,19 +119,19 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, liveManager *live.Ma
 			} else if puljeId == string(models.PuljeSondagMorgen) {
 				isInPulje = store.IsInPuljeSondagMorgen
 			} else {
-				http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+				http.Error(w, "Ugyldig pulje-ID", http.StatusBadRequest)
 				return
 			}
 
 			if err := updateEventPuljeMembershipWithAudit(r.Context(), db, logger, eventID, puljeId, isInPulje); err != nil {
 				logger.Error(fmt.Errorf("failed to upsert relation_event_puljer for event %s and pulje %s: %w", eventID, puljeId, err).Error())
-				http.Error(w, "Failed to update event in pulje", http.StatusInternalServerError)
+				http.Error(w, "Klarte ikkje å oppdatere arrangementet i puljen", http.StatusInternalServerError)
 				return
 			}
 
 			if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 				logger.Error(fmt.Errorf("failed to broadcast pulje update for event %s and pulje %s: %w", eventID, puljeId, err).Error())
-				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+				http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 				return
 			}
 
@@ -146,14 +146,14 @@ func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, liveManager *live.Mana
 			eventID := chi.URLParam(r, "id")
 			if eventID == "" {
 				logger.Warn("Event ID is missing in the request")
-				http.Error(w, "Event ID is required", http.StatusBadRequest)
+				http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 				return
 			}
 
 			puljeId := chi.URLParam(r, "puljeId")
 			if puljeId == "" {
 				logger.Warn("Pulje ID is missing in the request")
-				http.Error(w, "Pulje ID is required", http.StatusBadRequest)
+				http.Error(w, "Pulje-ID manglar", http.StatusBadRequest)
 				return
 			}
 
@@ -164,20 +164,20 @@ func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, liveManager *live.Mana
 			store := &Store{}
 			if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
 				fmt.Println(readSignalErr.Error())
-				http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+				http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			}
 
 			roomID := store.RoomAssignment[models.Pulje(puljeId)]
 
 			if err := updateRoomInRelationEventPuljeWithAudit(r.Context(), db, logger, eventID, puljeId, roomID); err != nil {
 				logger.Error(fmt.Errorf("failed to upsert room %s in relation_event_puljer for event %s and pulje %s: %w", roomID, eventID, puljeId, err).Error())
-				http.Error(w, "Failed to update room in relation_event_puljer", http.StatusInternalServerError)
+				http.Error(w, "Klarte ikkje å oppdatere rommet for puljen", http.StatusInternalServerError)
 				return
 			}
 
 			if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketRooms); err != nil {
 				logger.Error(fmt.Errorf("failed to broadcast room %s update for event %s and pulje %s: %w", roomID, eventID, puljeId, err).Error())
-				http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+				http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 				return
 			}
 
@@ -262,12 +262,12 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 		roomErrorKey := fmt.Sprintf("puljeRoom%s", pulje.ID)
 	}}
 	if err != nil {
-		<p>Error fetching event pulje: { err.Error() }</p>
+		<p>Klarte ikkje å hente arrangementspulje: { err.Error() }</p>
 		return
 	}
 	{{ roomStatus := getRoomsPuljeByFloor(db, pulje.ID) }}
 	if len(roomStatus) == 0 {
-		<p style="color: red;">Error fetching rooms</p>
+		<p style="color: red;">Klarte ikkje å hente rom</p>
 	}
 	<div style="display: flex; gap: 1rem; align-items: center;">
 		<div style="display: flex; gap: 0.5rem; flex-direction: column;">
@@ -335,7 +335,7 @@ templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 								disabled
 							}
 						>
-							<option value="0">Ikke tildelt</option>
+							<option value="0">Ikkje tildelt</option>
 							for _, floor := range roomStatus {
 								<optgroup label={ fmt.Sprintf("%d. Etg", floor.Floor) }>
 									for _, room := range floor.Rooms {
@@ -367,7 +367,7 @@ templ puljefordeling(eventId string, db *sql.DB) {
 		<section class="puljefordeling-section">
 			{{ puljer, err := puljerService.GetAllPuljer(db) }}
 			if err != nil {
-				<p>Error fetching puljer: { err.Error() }</p>
+				<p>Klarte ikkje å hente puljer: { err.Error() }</p>
 				return
 			}
 			for _, pulje := range puljer {
