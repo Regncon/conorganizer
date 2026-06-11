@@ -21,6 +21,11 @@ Denne mappen inneholder launch-sjekklistene for manuell testing av Conorganizer.
 
 - [Hvordan vi skriver manuelle tester](./how-to-write-tests.md)
 
+## Automatisert testoversikt
+
+- Kjør `task test:report` lokalt for å se hvilke Go-tester som kjøres og hvilken BDD-kommentar hver test dekker.
+- GitHub Actions skriver samme rapport til CI-loggen. Rapporten lagres ikke som artefakt og skal ikke committes.
+
 ## Dekningsinventar
 
 Launch-sjekklistene dekker disse aktive sidene og flytene:
@@ -47,4 +52,4 @@ Disse rutene er bevisst ikke egne launch-sjekklister:
 
 - Start med [Generelle tester](./general.md) og [Forside](./root.md) for å verifisere grunnleggende navigasjon og synlig innhold.
 - Kjør deretter rollebaserte og funksjonelle tester i de relevante filene.
-- Se `Kan automatiseres` i hver fil for forslag til videre automatisering.
+- Bruk `task test:report` for å sammenligne manuelle sjekkpunkter med automatiserte tester.

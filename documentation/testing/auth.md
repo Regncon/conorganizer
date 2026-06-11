@@ -41,10 +41,3 @@ Denne sjekklisten dekker autentiseringsflyten på `/auth`, inkludert innlogging,
 - [ ] `Gitt at en ikke-innlogget bruker prøver å åpne en beskyttet side, når brukeren blir avvist, så skal tilgangsfeilen være forståelig og tilby en tydelig vei videre til innlogging eller tilbake til appen.`
 
 - [ ] `Gitt at en ikke-innlogget bruker står på tilgangsfeilsiden, skal lenkene til andre sider fungere og gå til rett side.` 
-## Kan automatiseres
-
-- Registrering, innlogging og glemt-passord-flyt egner seg godt for ende-til-ende-tester så lenge testmiljøet støtter stabile testkontoer og kontrollerbare bekreftelsessteg.
-- Innlogging med gyldig og ugyldig bruker egner seg godt for ende-til-ende-tester som verifiserer overgang mellom ikke-innlogget og innlogget tilstand.
-- Utlogging egner seg godt for en ende-til-ende-test som verifiserer at beskyttede sider ikke lenger er tilgjengelige etter at brukeren har logget ut.
-- Tilgangsfeil for beskyttede sider egner seg godt for ende-til-ende-tester eller integrasjonstester som verifiserer at riktig side og riktig tekst vises til ikke-innlogget bruker.
-- Post-login-flyten egner seg godt for en ende-til-ende-test som verifiserer at brukeren lander på riktig sted og faktisk kan bruke innlogget funksjonalitet etterpå.

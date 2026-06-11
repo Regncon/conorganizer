@@ -33,10 +33,3 @@ Denne sjekklisten dekker `/admin/billettholder`, der admin får oversikt over al
 - [ ] `Gitt at admin navigerer til legge til billettholder fra oversikten, når navigasjonen skjer, så skal riktig underside åpnes uten feil rolle eller feil kontekst.`
 
 - [ ] `Gitt at siden brukes på mobil eller smal skjerm, når mange billettholdere eller lange e-postadresser vises, så skal innholdet fortsatt være lesbart og trykkbart uten at kortene bryter sammen.`
-
-## Kan automatiseres
-
-- Legg til og slett manuelle e-postadresser egner seg godt for ende-til-ende-tester og integrasjonstester.
-- Feilhåndtering for tomme og dupliserte e-postadresser egner seg godt for integrasjonstester.
-- Riktig plassering av suksess- og feilmeldinger på riktig kort egner seg godt for ende-til-ende-tester.
-

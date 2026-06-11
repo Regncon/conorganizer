@@ -43,11 +43,3 @@ Denne sjekklisten dekker felles navigasjon, rolleopplevelse og tilgang på tvers
 ### Admin
 
 - [ ] `Gitt at brukeren er admin, når brukeren navigerer til Admin fra hovednavigasjonen, så skal brukeren bli sendt til adminområdet uten å møte feil rolle eller feil landingsside.`
-
-## Kan automatiseres
-
-- Riktig sett med navigasjonslenker per rolle er allerede dekket av komponenttester for hovedmenyen.
-- Tilgangsfeil for beskyttede sider egner seg for en routetest som verifiserer at ikke-innlogget bruker får statuskode, tekst og lenker som gir en tydelig vei videre.
-- Adminbeskyttelse egner seg for en routetest som verifiserer at ikke-admin ikke får tilgang til adminrutene.
-- Utlogging egner seg for en handlertest som verifiserer at sesjons- og refresh-cookies slettes.
-- Mobilvisning, tastaturfokus, raske brukerklikk og visuell tydelighet bør fortsatt testes manuelt eller med nettleserbaserte tester hvis vi senere innfører et slikt testnivå.

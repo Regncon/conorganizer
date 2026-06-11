@@ -9,5 +9,3 @@ Denne filen er lagt til som del av dekningsinventaret. Sjekklisten skal fylles u
 - Admin
 
 ## Sjekkliste
-
-## Kan automatiseres

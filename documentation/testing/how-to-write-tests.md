@@ -66,7 +66,6 @@ Hver testfil skal normalt inneholde:
 2. En kort beskrivelse av hva siden eller flyten dekker.
 3. En tydelig angivelse av hvilken rolle som skal teste der det er relevant.
 4. En sjekkliste med avkrysningspunkter i `Gitt / Når / Så`-form.
-5. En seksjon kalt `Kan automatiseres` med korte beskrivelser av hvilke punkter som egner seg for automatisering, og hva slags automatisert test de egner seg for.
 
 ## Roller
 
@@ -138,20 +137,11 @@ Mindre bra:
 
 - [ ] `Se etter CSS-feil.`
 
-## Kan automatiseres
+## Automatisering og rapport
 
-Hver fil skal avslutte med en seksjon kalt `Kan automatiseres`.
+Automatiseringskandidater skal ikke lagres som egne seksjoner i de manuelle testfilene. Slike lister blir raskt utdaterte.
 
-Denne seksjonen skal:
-
-- ikke bruke faste etiketter
-- beskrive kort hva som egner seg for automatisering
-- si noe om hvilken type automatisert test som passer
-
-Eksempler:
-
-- `Denne oppførselen egner seg godt for en ende-til-ende-test som verifiserer at riktig innhold vises for innlogget og ikke-innlogget bruker.`
-- `Denne oppførselen egner seg for en integrasjonstest som verifiserer at ugyldige data ikke lagres og at brukeren får en tydelig feiltilstand.`
+Når et manuelt punkt automatiseres, skal den automatiserte testen ha en tydelig BDD-kommentar øverst i testen. Kjør `task test:report` for å se hvilke automatiserte tester som finnes, hvilke BDD-kommentarer de har, og hvilke tester som mangler BDD-kommentar.
 
 ## For utviklere
 
@@ -175,7 +165,6 @@ Når du skriver eller oppdaterer testfiler:
 - unngå å dikte opp funksjonalitet som ikke finnes i kodebasen
 - hold deg til ruter, roller og brukerflyter som faktisk finnes
 - sørg for at edge cases og feilhåndtering er med i hver relevant fil
-- legg til en kort seksjon om hva som kan automatiseres
 
 Hvis en flyt er deprecated eller ikke en del av launch, skal den ikke inn i launch-sjekklistene.
 
@@ -191,5 +180,4 @@ Før en ny eller oppdatert testfil anses som ferdig, skal den kunne bestå denne
 - Inneholder filen edge cases og feilhåndtering?
 - Inneholder filen kosmetiske forhold der det er relevant?
 - Er det tydelig hvilken rolle som tester?
-- Har filen en seksjon for `Kan automatiseres`?
-
+- Er automatiserte punkter flyttet til automatiserte tester med BDD-kommentarer?

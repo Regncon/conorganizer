@@ -242,4 +242,128 @@ Verification:
 
 Time: 2026-06-11 12:06:50
 --- Next Prompt ---
+Let's create the automated tests, I want to remove the `## Kan automatiseres` section completely.
+
+We should discuss how to automatically generate a report of what the automated test coverage is. I don't want that in the manual test files as it will quickly become outdated.
+
+Time: 2026-06-11 12:19:22
+--- Codex Run ---
+
+Codex output:
+I’ll look at the current route/test helpers first, then I’ll propose exactly which automated tests to add and how to produce a coverage report without embedding that report in the manual docs.
+Agreed. I’d change the model:
+
+1. Manual files contain only manual checks.
+2. Automated coverage lives in code and generated reports.
+3. `## Kan automatiseres` disappears from the manual test docs and from `how-to-write-tests.md`.
+
+For the `general.md` automation, I’d add these first:
+
+- `components/header`: already covers role-based menu hrefs.
+- `service/userctx`: test the unauthorized page/component gives a clear path to login and home.
+- `service/authctx`: test `RequireAdmin` rejects non-admin and allows admin.
+- `pages/login`: test `/auth/logout` expires both `session_token` and `refresh_token` cookies.
+
+That covers the concrete automatable items from `general.md`. Mobile layout, keyboard focus, visual polish, and rapid clicking should remain manual unless we later introduce browser tests.
+
+For the report, I recommend a generated Markdown report outside the manual files, for example:
+
+- `documentation/testing/automated-coverage.md` as generated output, or
+- `tmp/automated-coverage.md` if we do not want generated reports committed.
+
+The report generator should run `go test -json ./...` and `go test -coverprofile=... ./...`, then produce:
+
+- test command and pass/fail status
+- package-level test list
+- BDD comment/intent for each test where present
+- coverage summary from `go tool cover -func`
+- uncovered packages or packages with no tests
+
+I’d prefer generating from `_test.go` names and BDD comments instead of hand-maintaining mappings in manual docs. That keeps the report current with the code.
+
+Clarifying question before I implement: should the generated automated coverage report be committed under `documentation/testing/`, or generated on demand into `tmp/`/CI artifacts only?
+
+Time: 2026-06-11 12:19:22
+--- Next Prompt ---
+
+
+Go ahead and implement the automated tests for `general.md` with the current test structure.
+
+I don't think we should commit the generated report. Let's add it to the gitHub Actions workflow so we can see the output in the CI logs. I don't think we need to generate an artifact for it.
+Let's also add it to the Taskfile.yml so we can run it locally. 
+Just to clarify, I'm actually not that interested in the coverage numbers. What I want is to see what test where run and what their BDD comments are, so we can easily see which behaviors are covered by automated tests and which are not. Perhaps we need to change something it the test structure to make sure that the BDD comments are included in the output? 
+
+Let's the discussion about the test report. 
+
+
+
+Time: 2026-06-11 12:44:15
+--- Codex Run ---
+
+Codex output:
+I’ll implement the `general.md` automated tests now and keep the report work to design discussion for this turn. First I’m checking the existing workflow/Taskfile shape and test helpers so the new tests fit the repo.
+I’ll add focused Go tests now: unauthorized page, admin middleware, and logout cookies. These map directly to the automatable behavior in `general.md` and avoid browser/E2E setup.
+I’m adding these as three small, behavior-focused tests rather than a broad router integration test. Full router setup pulls in NATS and database state, while these tests cover the actual contracts behind the general checklist directly.
+The tests are in place. I’m formatting them and running the focused packages first so any issue is quick to isolate.
+The new files are untracked, so plain `git diff` does not show them yet. I’ll run the focused tests and then inspect the files directly if a package fails.
+The focused tests pass. I’m removing the `Kan automatiseres` section from `general.md` now because those candidates are now represented by automated tests and the future report should come from test code, not manual docs.
+I’m going to run the full suite now, then I’ll review the new test files and current doc references to `Kan automatiseres` so we can separate what’s done from the remaining report/docs decision.
+I’m going to implement the report generator as a small Go command that runs `go test -json ./...`, parses `_test.go` files for the first BDD comment inside each `Test...` function, and prints a behavior report to stdout. Then I’ll wire it into `Taskfile.yml` and the CI test step.
+I added the report command and wiring, but I see one compile issue in the generator before running it: the package listing loop should decode until EOF, and one parser helper has an unused parameter. I’m fixing that now.
+I’m formatting the new Go command and running the focused tests plus the report command. The report command runs the full suite internally, so this will also validate the CI path.
+Focused tests pass. I’m running `go run ./cmd/testreport` now to verify the generated CI log output and to see whether BDD comments are being extracted as intended.
+The first report run works, but it exposed exactly the structure issue you anticipated: old tests with comments like “Arrange” were being treated as behavior comments. I’m tightening the report parser so it only accepts comments that look like real BDD text with Given/Gitt, When/Når, and Then/Så.
+I’m rerunning the report after the parser change. The expected result is that older tests without real BDD descriptions are clearly marked as missing, instead of showing setup comments as coverage descriptions.
+I’ve got the current state from the previous work. I’m going to do a quick consistency pass now: verify the new tests/report command, check formatting/diff health, and confirm `general.md` no longer carries the automation section.
+The implementation is in place. One unrelated note from the health check: `git diff --check` only complained about the `.ai/threads/...` transcript file, not the source/doc files I changed, so I’m going to leave that thread file alone and validate the actual project changes separately.
+I’m tightening the report parser slightly while I’m here. The useful behavior is “show the BDD comment at the top of each test,” so the extractor should only trust the initial comment block in a test body instead of searching the whole function for any comment that happens to contain those words.
+The report command now matches the convention more directly: it reads the first BDD block at the top of each `Test...` function, and labels tests without that block as missing. I’m formatting and running the focused validation next.
+The project diff check is clean for the files under active work. I’m running the full Go suite directly, then the new behavior report command so we know both the normal test path and the CI/local reporting path are healthy.
+The normal full test suite passes. I’m running the new report command now and checking the generated output shape, especially that the new `general.md` behaviors show up with their BDD text instead of just names.
+The report output is doing what we want: normal `go test` status plus each test’s top BDD comment, with old tests explicitly marked when the comment is missing. I also found the older manual-test convention still documented elsewhere, so I’m going to clean up those stale `Kan automatiseres` references instead of leaving contradictory guidance behind.
+The stale automation sections are all at the end of the affected manual files, so this is a mechanical docs cleanup rather than another content review pass. I’ll remove those sections and update the writing guide/index to point to the generated report instead.
+One doc patch hit a context mismatch, so I’m narrowing it instead of forcing a broad edit. I’ll inspect the exact endings of the affected files and apply smaller patches.
+The mismatch was just an extra checklist item in one file. I’m applying the cleanup by section content now, which avoids touching the checklist text itself.
+The manual docs now point at the generated behavior report rather than maintaining automation-candidate sections. I’m checking for any remaining stale references, then I’ll rerun the validations after the docs cleanup.
+The stale `Kan automatiseres` references are gone. I’m doing the final checks now: whitespace/diff hygiene, the task wrapper for the report, and a final status pass so I can separate the files I changed from the existing thread transcript change.
+One docs file has an extra blank line at EOF from removing the tail section. I’ll clean that up, then rerun the project diff check.
+The report and test files look structurally aligned with the new convention. I’m removing the extra EOF blank line in `root.md` now.
+Diff hygiene is clean for the project files, and the manual testing docs no longer contain `Kan automatiseres`. I’m running the new Taskfile entry once so the local command path is verified, not just the underlying Go command.
+`task test:report` passes and prints the expected behavior report: 105 tests run, 0 failed, 25 missing BDD comments flagged. I’m doing one final status/diff summary now.
+The only unrelated dirty file is the `.ai/threads/...` transcript file; I did not edit or clean it. The active project changes are clean on `diff --check`.
+All checks are done. I’m collecting exact file references for the final summary so the important changes are easy to review.
+Implemented.
+
+Added automated coverage for `general.md` behaviors:
+- [logout cookie clearing](/home/cinmay/Documents/conorganizer/pages/login/logout_test.go:14)
+- [admin middleware allow/deny behavior](/home/cinmay/Documents/conorganizer/service/authctx/require_admin_test.go:14)
+- [unauthorized page text and links](/home/cinmay/Documents/conorganizer/service/userctx/unauthorized_test.go:10)
+
+Added the behavior report command in [cmd/testreport/main.go](/home/cinmay/Documents/conorganizer/cmd/testreport/main.go:40). It runs `go test -json ./...`, prints each top-level test with status, and includes the first BDD comment at the top of each `Test...` function. Tests without that comment are shown as `BDD-kommentar mangler.`
+
+Wired the report into:
+- [Taskfile.yml](/home/cinmay/Documents/conorganizer/Taskfile.yml:90) as `task test:report`
+- [GitHub Actions](/home/cinmay/Documents/conorganizer/.github/workflows/buildAndTest.yml:34) so CI logs show the report without creating an artifact
+
+Also removed all `## Kan automatiseres` sections from the manual testing docs and updated the testing guide/index to point at `task test:report` instead: [index.md](/home/cinmay/Documents/conorganizer/documentation/testing/index.md:24), [how-to-write-tests.md](/home/cinmay/Documents/conorganizer/documentation/testing/how-to-write-tests.md:140).
+
+Validation passed:
+- `GOCACHE=/tmp/go-build-cache go test ./...`
+- `GOCACHE=/tmp/go-build-cache go tool task test:report`
+- `git diff --check -- . ':!.ai/threads/final-test-before-rlease.md'`
+
+The report currently shows `105` tests run, `0` failed, and `25` tests missing BDD comments. The `.ai/threads/final-test-before-rlease.md` transcript file was already dirty and remains untouched.
+
+text
+2026-06-11T10:41:16.726702Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/documentation/testing/admin-billettholders.md:
+- [ ] `Gitt at admin navigerer til legge til billettholder fra oversikten, når navigasjonen skjer, så skal riktig underside åpnes uten feil rolle eller feil kontekst.`
+
+## Kan automatiseres
+
+- Legg til og slett manuelle e-postadresser egner seg godt for ende-til-ende-tester og integrasjonstester.
+- Feilhåndtering for tomme og dupliserte e-postadresser egner seg godt for integrasjonstester.
+- Riktig plassering av suksess- og feilmeldinger på riktig kort egner seg godt for ende-til-ende-tester.
+
+Time: 2026-06-11 12:44:15
+--- Next Prompt ---
 
