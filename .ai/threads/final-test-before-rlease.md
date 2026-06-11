@@ -202,4 +202,44 @@ My suggestion: treat `general.md` as verified unless you want to tighten wording
 
 Time: 2026-06-11 12:00:32
 --- Next Prompt ---
+Before we move on, see if you can clean up the text in the `general.md` file to make it more concise and easier to read. 
+Also, double check that the test coverage is complete for all behaviors. 
+Then, double check if there is anything that can be automated. 
+
+Time: 2026-06-11 12:06:50
+--- Codex Run ---
+
+Codex output:
+I’ll re-audit `general.md` against the current header/auth route behavior and existing tests, then tighten the checklist text and add the missing automation section if needed.
+The current `general.md` is missing a `Kan automatiseres` section, and the remaining checklist is complete for the cross-cutting behavior I can see: login entry, protected-page handling, logout, admin access, responsive/menu usability, keyboard/focus, and external links. I’m going to tighten the wording and add automation notes without changing the intended coverage.
+I’ll replace the checklist with a shorter structure: shared navigation checks once, then role-specific checks. That reduces repetition while keeping the same coverage surface.
+The text is tightened and the automation section is now present. I’m doing one pass over the final file and checking the diff for formatting issues.
+The checklist now has a complete cross-cutting coverage shape and explicitly calls out what is already automated versus still manual. I’m running the header component tests once because those are the automated coverage this file now relies on.
+Header tests pass. I’m checking the working diff/status now so the final note is precise.
+Cleaned up [general.md](/home/cinmay/Documents/conorganizer/documentation/testing/general.md).
+
+I rewrote it into a tighter structure:
+- `Alle roller`
+- `Ikke innlogget bruker`
+- `Innlogget bruker`
+- `Admin`
+- `Kan automatiseres`
+
+I double-checked it against the current header tests, menu template, route setup, `UserMiddleware`, `RequireAdmin`, and the unauthorized page. Coverage now includes the cross-cutting behavior that belongs in `general.md`: navigation stability, responsive/menu usability, keyboard focus, protected-page access, logout state, external links, and admin access.
+
+I added automation notes for:
+- already-covered header role link sets
+- protected-page route tests
+- admin route protection tests
+- logout cookie-clearing handler test
+- what should remain manual/browser-based
+
+Verification:
+- `git diff --check -- documentation/testing/general.md` passed.
+- `GOCACHE=/tmp/go-build-cache go test ./components/header` passed.
+
+`general.md` is ready to treat as verified. Next up is `root.md`, and we should discuss its scope before editing.
+
+Time: 2026-06-11 12:06:50
+--- Next Prompt ---
 
