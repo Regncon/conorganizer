@@ -21,34 +21,39 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 		if err := layouts.Base(
 			"Rom oversikt",
 			userInfo,
-			roomsIndex(db, logger, RoomsPageContent(db, logger), "/"),
+			roomsIndex(db, logger, RoomsPage(db, logger), "/"),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
 		}
 	})
 
-	router.Route("/{pulje}", func(roomByPuljeRouter chi.Router) {
-		roomByPuljeRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			var ctx = r.Context()
-			userInfo := userctx.GetUserRequestInfo(r.Context())
-
-			puljeQuery := chi.URLParam(r, "pulje")
-			if puljeQuery == "" {
-				http.Error(w, "Valid pulje is required. Got: "+puljeQuery, http.StatusBadRequest)
-				return
-			}
-
-			var pulje = models.Pulje(puljeQuery)
-
-			if err := layouts.Base(
-				"Rom oversikt",
-				userInfo,
-				roomsIndex(db, logger, RoomsByPuljePageContent(db, logger, models.Pulje(pulje), eventImageDir), pulje),
-			).Render(ctx, w); err != nil {
-				logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
-			}
+	router.Route("/assignment", func(assignmentRouter chi.Router) {
+		// Simple redirect to ensure users go to the correct path
+		assignmentRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, fmt.Sprintf("/admin/rooms/assignment/%s", models.PuljeFredagKveld), http.StatusSeeOther)
 		})
 
+		assignmentRouter.Route("/{pulje}", func(roomByPuljeRouter chi.Router) {
+			roomByPuljeRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				var ctx = r.Context()
+				userInfo := userctx.GetUserRequestInfo(r.Context())
+
+				puljeQuery := chi.URLParam(r, "pulje")
+				puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
+				if !isPujeIDValid {
+					http.Redirect(w, r, fmt.Sprintf("/admin/rooms/assignment/%s", models.PuljeFredagKveld), http.StatusSeeOther)
+				}
+
+				if err := layouts.Base(
+					"Rom oversikt",
+					userInfo,
+					roomsIndex(db, logger, RoomsAssignmentPage(db, logger, models.Pulje(puljeID), eventImageDir), puljeID),
+				).Render(ctx, w); err != nil {
+					logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
+				}
+			})
+
+		})
 	})
 }
 
@@ -102,6 +107,69 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
                 padding: var(--responsive-pane-padding);
                 background-color: var(--bg-surface);
             }
+
+            dialog:open {
+                position: fixed;
+                inset: 0;
+                --dialog-width: min(32.5rem, calc(100% - 16px));
+                visibility: visible;
+                width: var(--dialog-width);
+                background-color: var(--bg-surface);
+                border: none;
+                border-radius: var(--border-radius-2x);
+                padding: var(--responsive-pane-padding);
+                box-shadow: var(--shadow-dialog);
+                outline:none;
+
+                &::backdrop {
+                    background: hsl(0deg 0% 0% / 55%);
+                }
+                form {
+                    display: flex;
+                    flex-flow: column nowrap;
+                    gap: var(--spacing-2x);
+
+                    label {
+                        width: 100%
+                    }
+
+                    input[type="text"],
+                    input[type="number"] {
+                        width: 100%;
+                    }
+                    textarea {
+                        width: 100%;
+                        resize: vertical;
+                    }
+                    .button-group {
+                        display: flex;
+                        gap: var(--spacing-2x)
+                    }
+
+                    .button-group > button {
+                        flex: 1;
+                    }
+
+                    .input-error {
+                        color: var(--color-error);
+                    }
+                    .input-error:empty {
+                        display: none;
+                    }
+                }
+            }
+            .modal-close-button {
+                position: absolute;
+                top: var(--spacing-2x);
+                right: var(--spacing-1x);
+                background: transparent;
+                border: none;
+                border-radius: 100%;
+                padding: 0;
+            }
+            .modal-close-button:hover {
+                background: var(--bg-surface-hover);
+            }
         </style>
 		<h1 class="page-heading" style="text-align: center;">Administrer rom og fordeling av events</h1>
 		<div class="tabs">
@@ -109,13 +177,11 @@ templ roomsIndex(db *sql.DB, logger *slog.Logger, children templ.Component, pulj
 			for _,pulje := range models.AllPuljer() {
 				<a
 					role="button"
-					href={ "/admin/rooms/" + pulje }
+					href={ "/admin/rooms/assignment/" + pulje }
 					class={ templ.KV("active", puljeQuery == pulje) }
 				>{ pulje }</a>
 			}
 		</div>
-		<section class="rooms-section">
-			@children
-		</section>
+		@children
 	</div>
 }
