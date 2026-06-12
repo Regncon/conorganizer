@@ -591,4 +591,78 @@ The behavior report now shows `134` tests run, `0` failed, and `0` missing BDD c
 
 Time: 2026-06-12 17:14:27
 --- Next Prompt ---
+Ok,let's move on to the next file.
+
+Time: 2026-06-12 17:18:47
+--- Codex Run ---
+
+Codex output:
+Next in the index is `profile.md`. I’ll inspect the current checklist, profile page implementation, and existing automated tests first, then summarize what should change before I edit anything.
+For `profile.md`, the main stale point is in “Mine arrangementer”: the current code links every owned event card to `/profile/new/{id}`. So the manual item saying submitted/published events open the public view no longer matches the implementation. I recommend we update the manual test to say owned events open the correct management/edit view, unless you want that behavior changed.
+
+I also found that the festival program behavior is already well covered by the refactored `MyProgram` tests, so I would avoid duplicating those in new tests. The manual file should keep only release-relevant visual/navigation checks for that area.
+
+My proposed next step for `profile.md`:
+
+- Clean up the manual test text so it is shorter and current.
+- Keep profile overview checks, own event cards, create-event flow, ticket/program summaries, responsive layout, and navigation.
+- Remove or soften checks that belong in `profile-tickets.md` or are already fully covered by component tests.
+- Add focused automated tests for:
+  - `MyEvents`: create form, event links, status/fallback display.
+  - `MyTickets`: ticket-holder summary and `/profile/tickets` link.
+  - `ProfilePage`: breadcrumb and selected billettholder data attributes.
+  - Profile billettholder selection helper: valid selection, invalid selection fallback, email match fallback, no holders.
+
+I’d skip route-level automation for creating a new event for now unless you specifically want it, because that is more integration-heavy and likely fits better when we review `event-form.md`.
+
+Time: 2026-06-12 17:18:47
+--- Next Prompt ---
+Go head and implement the proposed changes.
+
+Time: 2026-06-12 17:30:14
+--- Codex Run ---
+
+Codex output:
+I’ll update `profile.md` first to reflect the current profile behavior, then add focused tests around the profile components and selection logic using the refactored Go test style. After that I’ll run the relevant package tests plus the behavior report.
+One useful correction from the fresh read: `MyEvents` is already status-aware. Draft-like events link to `/profile/new/{id}`, while submitted/approved/announced events link to `/event/{id}`, so the manual test can keep that behavior but use clearer wording.
+I’m going to keep the docs aligned with that current status-based navigation and add tests at the component/helper layer. That gives coverage for the stable behavior without pulling in the full profile route and live streaming stack.
+I’m editing the manual file now. The goal is to leave the browser-only release checks there and move stable rendering/selection behavior into automated tests.
+I’m adding the automated coverage in small files that match the current structure: component tests stay under `components/profile`, page/render tests stay under `pages/profile`, and selection helper behavior gets its own test file.
+The event component tests now cover the create entry, status-based links, and missing-title fallback. Next I’m covering the ticket summary and profile page metadata, then I’ll run the package tests to catch any selector or rendering mismatches.
+The ticket component tests are in place. I’m adding profile-page tests for breadcrumb/selection metadata and pure helper tests for which ticket holder gets selected.
+The helper tests now cover valid URL selection, invalid/foreign IDs, fallback selection, and the no-ticket-holder case. I’m adding one missing default-selection case for an email match, then I’ll format and run tests.
+The planned test files are written. I’m formatting them and running the focused test packages first so any failures point directly at the new coverage.
+One profile behavior is worth tightening while I’m here: the create-event handler currently logs and returns without an HTTP error if the insert fails, which would make the manual “not a silent failure” check fail. I’m going to make that failure explicit and add a focused regression test for it.
+I found a small backend issue behind one of the remaining manual checks: failed event creation could produce an empty 200 response. I’m changing that to a user-facing 500 and testing the failure path through an extracted helper, without changing the successful creation flow.
+The create failure now returns the same friendly error for both user lookup and insert failures. I added a regression test for the insert failure case, then I’m formatting and running the focused packages.
+The focused changes are formatted. I’m running `components/profile` and `pages/profile` now; if they pass, I’ll run the whole suite and the behavior report.
+The new profile-focused tests pass. I’m moving to full verification now so this doesn’t accidentally break generated templ code, shared components, or the report parser.
+The full Go suite passes. I’m running the behavior report next, since that is the release-facing view of which BDD-covered tests are now in the automated suite.
+The behavior report passes with 147 tests and no missing BDD comments. I’m doing a final diff and whitespace check now, and I’ll make one more pass over the manual profile checklist against the new automated coverage.
+The final manual checklist still had one failure-path item that is now covered by the new handler test. I’m removing that from `profile.md` so the file stays focused on release checks that still need a browser/manual pass.
+The checklist now only contains the remaining manual profile checks. I’m doing the final verification pass again after that doc cleanup.
+The focused packages still pass and the diff has no whitespace issues. I’m checking the final file list so I can give you a precise summary and call out the one unrelated dirty thread file I left alone.
+The last review didn’t show anything else to adjust. I’m marking this profile pass complete in the plan.
+Done for `profile.md`.
+
+I cleaned [profile.md](/home/cinmay/Documents/conorganizer/documentation/testing/profile.md) down to the remaining manual release checks, added focused automated coverage for profile components and selection behavior, and fixed the create-event failure path in [profile.go](/home/cinmay/Documents/conorganizer/pages/profile/profile.go) so failed creation returns a friendly `500` instead of a silent empty response.
+
+Added tests for:
+- `MyEvents` create entry, status-aware links, and missing-title fallback.
+- `MyTickets` ticket summary and ticket-page link.
+- `ProfilePage` breadcrumb and selected billettholder metadata.
+- Billettholder selection fallback behavior.
+- Failed event creation returning a friendly error.
+
+Verification passed:
+- `GOCACHE=/tmp/go-build-cache go test ./components/profile`
+- `GOCACHE=/tmp/go-build-cache go test ./pages/profile`
+- `GOCACHE=/tmp/go-build-cache go test ./...`
+- `GOCACHE=/tmp/go-build-cache go tool task test:report` -> `147` tests, `0` failed, `0` missing BDD comments
+- `git diff --check` clean for the touched files
+
+I left the existing unrelated dirty file `.ai/threads/final-test-before-rlease.md` untouched. Next file in the checklist order is `profile-tickets.md`.
+
+Time: 2026-06-12 17:30:14
+--- Next Prompt ---
 
