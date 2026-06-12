@@ -12,9 +12,10 @@ import (
 	billettholderadmin "github.com/Regncon/conorganizer/pages/admin/billettholder_admin"
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/login"
-	"github.com/Regncon/conorganizer/pages/print-friendly"
+	printfriendly "github.com/Regncon/conorganizer/pages/print-friendly"
 	profilepage "github.com/Regncon/conorganizer/pages/profile"
 	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/Regncon/conorganizer/pages/venue"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -61,12 +62,13 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 
 	if err := errors.Join(
 		root.SetupRootRoute(router, logger, liveManager, db, eventImageDir),
-		printfriendly.PrintFriendlyRoute(router, db, eventImageDir, logger),
 		admin.SetupAdminRoute(routerAdmin, logger, liveManager, db, eventImageDir),
 		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, liveManager, logger, db),
 		event.SetupEventRoute(router, ns, liveManager, db, logger, eventImageDir),
 		login.SetupAuthRoute(router, db, logger),
+		printfriendly.PrintFriendlyRoute(router, db, eventImageDir, logger),
 		profilepage.SetupProfileRoute(isLoggedInRouter, liveManager, db, eventImageDir, logger),
+		venue.SetupVenueRoute(router, liveManager, db, eventImageDir, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)
 	}

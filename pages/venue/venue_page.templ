@@ -1,0 +1,25 @@
+package venue
+
+import "github.com/Regncon/conorganizer/components"
+
+templ venuePage() {
+	<div id="root-page-wrapper">
+		@components.Breadcrumbs([]components.BreadcrumbPath{
+			{Name: "Hjem", Url: "/"},
+			{Name: "Rom oversikt", Url: ""},
+		})
+		<style>
+            .venue-container {
+                width: 100%;
+                aspect-ratio: 16/9;
+                border: 2px solid var(--bg-surface-border);
+                border-radius: var(--border-radius-2x);
+                background-color: var(--bg-surface);
+            }
+        </style>
+		<div class="page-content-container">
+			<h1 class="page-heading">Oversikt over rom på hotellet</h1>
+			<div class="venue-container"></div>
+		</div>
+	</div>
+}
