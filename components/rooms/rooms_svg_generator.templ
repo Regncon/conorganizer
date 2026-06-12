@@ -1,0 +1,52 @@
+package rooms
+
+import (
+	"fmt"
+	"strings"
+)
+
+type RoomType string
+
+const (
+	Room RoomType = "Room"
+)
+
+type Coordinate struct {
+	X int
+	Y int
+}
+
+type RoomSVG struct {
+	ID          string
+	RoomType    RoomType
+	Origin      Coordinate
+	Coordinates []Coordinate
+	IsStatic    bool
+}
+
+func coordinatePointsToString(points []Coordinate) string {
+	var result []string
+
+	for _, point := range points {
+		result = append(result, fmt.Sprintf("%d,%d", point.X, point.Y))
+	}
+
+	return strings.Join(result, " ")
+}
+
+templ GenerateRoomPolygon(room RoomSVG, isStatic bool) {
+	<g
+		id={ "group-" + room.ID }
+		transform={ fmt.Sprintf("translate(%d %d)", room.Origin.X, room.Origin.Y) }
+	>
+		<polygon
+			id={ "room-" + room.ID }
+			points={ coordinatePointsToString(room.Coordinates) }
+			class="room"
+			data-class={ fmt.Sprintf("{active: $active == 'room-%s'}", room.ID) }
+			if !isStatic {
+				data-on:click={ fmt.Sprintf("$active = 'room-%s'", room.ID) }
+			}
+		></polygon>
+	</g>
+}

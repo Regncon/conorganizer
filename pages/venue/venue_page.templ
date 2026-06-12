@@ -1,6 +1,9 @@
 package venue
 
-import "github.com/Regncon/conorganizer/components"
+import (
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/rooms"
+)
 
 templ venuePage() {
 	<div id="root-page-wrapper">
@@ -18,8 +21,10 @@ templ venuePage() {
             }
         </style>
 		<div class="page-content-container">
-			<h1 class="page-heading">Oversikt over rom på hotellet</h1>
-			<div class="venue-container"></div>
+			<h1 class="page-heading">Rom oversikt for konvensjonen</h1>
+			<div class="venue-container">
+				@rooms.VenueContainer()
+			</div>
 		</div>
 	</div>
 }

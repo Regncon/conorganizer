@@ -1,0 +1,19 @@
+package rooms
+
+type FloorSVG struct {
+	Rooms []RoomSVG
+}
+
+templ GenerateFloorSVG(floor FloorSVG, isStatic bool) {
+	<svg
+		viewBox="0 0 800 500"
+		xmlns="http://www.w3.org/2000/svg"
+		fill="none"
+		stroke="black"
+		strokeWidth="2"
+	>
+		for _,room := range floor.Rooms {
+			@GenerateRoomPolygon(room, isStatic)
+		}
+	</svg>
+}

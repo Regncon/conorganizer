@@ -1,0 +1,62 @@
+package rooms
+
+var floor1 = FloorSVG{
+
+	Rooms: []RoomSVG{
+		RoomSVG{
+			ID:       "1",
+			RoomType: Room,
+			Origin:   Coordinate{X: 0, Y: 0},
+			Coordinates: []Coordinate{
+				Coordinate{X: 0, Y: 0},
+				Coordinate{X: 0, Y: 300},
+				Coordinate{X: 300, Y: 300},
+				Coordinate{X: 300, Y: 0},
+			},
+		},
+		RoomSVG{
+			ID:       "2",
+			RoomType: Room,
+			Origin:   Coordinate{X: 305, Y: 0},
+			Coordinates: []Coordinate{
+				Coordinate{X: 0, Y: 0},
+				Coordinate{X: 0, Y: 300},
+				Coordinate{X: 300, Y: 300},
+				Coordinate{X: 300, Y: 0},
+			},
+		},
+		RoomSVG{
+			ID:       "3",
+			RoomType: Room,
+			Origin:   Coordinate{X: 0, Y: 305},
+			Coordinates: []Coordinate{
+				Coordinate{X: 0, Y: 0},
+				Coordinate{X: 0, Y: 300},
+				Coordinate{X: 300, Y: 300},
+				Coordinate{X: 300, Y: 0},
+			},
+		},
+	}}
+
+templ VenueContainer() {
+	<style>
+        .room {
+            fill: rgb(255, 255, 255);
+            stroke: black;
+            transition: all 200ms ease-in-out;
+        }
+        .room:hover {
+            fill: rgb(230, 230, 230);
+            stroke: gray;
+        }
+        .room.active {
+            fill: rgb(255, 170, 170);
+        }
+        .room.active:hover {
+            fill: rgb(255, 130, 130);
+        }
+    </style>
+	<div>
+		@GenerateFloorSVG(floor1, false)
+	</div>
+}
