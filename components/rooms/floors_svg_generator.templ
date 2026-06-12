@@ -1,19 +1,30 @@
 package rooms
 
 type FloorSVG struct {
+	Floor int
+	Label string
+	Shape string
 	Rooms []RoomSVG
 }
 
-templ GenerateFloorSVG(floor FloorSVG, isStatic bool) {
+templ GenerateFloorSVG(floor FloorSVG, isStatic bool, staticRoom string) {
 	<svg
-		viewBox="0 0 800 500"
+		viewBox="0 0 2000 1125"
 		xmlns="http://www.w3.org/2000/svg"
-		fill="none"
-		stroke="black"
-		strokeWidth="2"
+		class="floor"
+		data-attr="{topdown: $mode == '2d', isometric: $mode == '3d'}"
+		if !isStatic {
+			data-on:click="$active-room = evt.target.id.includes('room') ? evt.target.id : ''"
+		}
 	>
+		/* Outer shape of the floor */
+		<path
+			d={ floor.Shape }
+			class="shape"
+		></path>
+		/* Generate room data such as area, doors, windows, travel paths*/
 		for _,room := range floor.Rooms {
-			@GenerateRoomPolygon(room, isStatic)
+			@GenerateRoomPolygon(room, isStatic, staticRoom)
 		}
 	</svg>
 }

@@ -1,45 +1,46 @@
 package rooms
 
-var floor1 = FloorSVG{
-
-	Rooms: []RoomSVG{
-		RoomSVG{
-			ID:       "1",
-			RoomType: Room,
-			Origin:   Coordinate{X: 0, Y: 0},
-			Coordinates: []Coordinate{
-				Coordinate{X: 0, Y: 0},
-				Coordinate{X: 0, Y: 300},
-				Coordinate{X: 300, Y: 300},
-				Coordinate{X: 300, Y: 0},
-			},
-		},
-		RoomSVG{
-			ID:       "2",
-			RoomType: Room,
-			Origin:   Coordinate{X: 305, Y: 0},
-			Coordinates: []Coordinate{
-				Coordinate{X: 0, Y: 0},
-				Coordinate{X: 0, Y: 300},
-				Coordinate{X: 300, Y: 300},
-				Coordinate{X: 300, Y: 0},
-			},
-		},
-		RoomSVG{
-			ID:       "3",
-			RoomType: Room,
-			Origin:   Coordinate{X: 0, Y: 305},
-			Coordinates: []Coordinate{
-				Coordinate{X: 0, Y: 0},
-				Coordinate{X: 0, Y: 300},
-				Coordinate{X: 300, Y: 300},
-				Coordinate{X: 300, Y: 0},
-			},
-		},
-	}}
-
-templ VenueContainer() {
+templ VenueContainer(isStatic bool, staticRoom string) {
 	<style>
+        /* Containers */
+        .venue-container {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .floors-container {
+            position: relative;
+            transition: all 200ms ease-in-out;
+            transform-style: preserve-3d;
+
+        }
+        .floors-container[topdown] {
+        }
+        .floors-container[isometric] {
+            perspective: 2000px;
+            perspective-origin: center;
+            transform: rotateX(60deg) rotateY(0deg) rotateZ(15deg)
+        }
+
+        /* floor svg styling */
+        .floor {
+            position: absolute;
+            stroke-width: 2px;
+            transition: all 200ms ease-in-out;
+
+        }
+        .floor[topdown] {
+            transform: rotateX(0deg);
+        }
+        .floor[isometric] {
+            transform: rotateX(10deg);
+        }
+        .floor .shape {
+            fill: white;
+        }
+
+        /* Room poly styling */
         .room {
             fill: rgb(255, 255, 255);
             stroke: black;
@@ -49,14 +50,22 @@ templ VenueContainer() {
             fill: rgb(230, 230, 230);
             stroke: gray;
         }
-        .room.active {
+        .room[active] {
             fill: rgb(255, 170, 170);
         }
-        .room.active:hover {
+        .room[active] {
             fill: rgb(255, 130, 130);
         }
     </style>
-	<div>
-		@GenerateFloorSVG(floor1, false)
+	<div
+		class="venue-container"
+	>
+		<div
+			class="floors-container"
+			data-signals="{mode: '2d', 'active-room': ''}"
+			data-attr="{topdown: $mode == '2d', isometric: $mode == '3d'}"
+		>
+			@GenerateFloorSVG(VenueData[1], isStatic, staticRoom)
+		</div>
 	</div>
 }
