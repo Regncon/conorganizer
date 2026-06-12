@@ -362,4 +362,23 @@ func mustExecPreviousNextRootList(t *testing.T, db *sql.DB, query string, args .
 
 Time: 2026-06-12 12:12:43
 --- Next Prompt ---
+Are there any other refactors or cleanups you would recommend? Or are we done for now? 
+
+
+Time: 2026-06-12 12:20:09
+--- Codex Run ---
+
+Codex output:
+I’d call this done for now.
+
+The remaining cleanup opportunities are real, but I’d keep them out of this PR:
+
+- Some packages still repeat small assertion patterns like `err != nil` checks and text/href comparisons. A tiny `testutil` assertion helper could help later, but doing it now would add churn without much reader benefit.
+- Event/root/pulje fixture setup is duplicated across `pages/event`, `pages/root`, and `service/eventService`. A shared fixture builder could reduce SQL, but it would also create a stronger cross-package test dependency. I’d only do that once we see more new tests needing the same setup.
+- The largest remaining files are mostly helper/fixture files now, especially `who_is_interested_test_helpers_test.go`. That is acceptable because the behavior test is readable and the complexity is mostly data setup.
+
+So my recommendation: stop here, review this PR, and only do another test-cleanup PR later if duplicated event/pulje fixtures keep growing.
+
+Time: 2026-06-12 12:20:09
+--- Next Prompt ---
 
