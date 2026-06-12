@@ -3,255 +3,185 @@ package checkIn
 import (
 	"testing"
 
-	"github.com/google/uuid"
-
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service"
 	"github.com/Regncon/conorganizer/testutil"
-	_ "modernc.org/sqlite"
 )
 
-func TestConvertTicketIdToNewBillettholder(t *testing.T) {
-	// ❶ Arrange
-	const ticketId = 42
+func TestConvertTicketIdToNewBillettholder_CreatesBillettholderAndEmails(t *testing.T) {
+	// Given one ticket in an order with a second ticket using another email,
+	// when the ticket is converted to a billettholder,
+	// then the billettholder stores the ticket data and both related emails.
 
+	// Given
+	const ticketID = 42
 	expectedBillettholder := models.Billettholder{
 		FirstName:    "John",
 		LastName:     "Doe",
 		TicketTypeId: 1,
 		TicketType:   "Adult",
 		OrderID:      1,
-		TicketID:     ticketId,
+		TicketID:     ticketID,
 		IsOver18:     true,
 	}
-	expectedBillettholderEmails := []models.BillettholderEmail{
-		{BillettholderID: expectedBillettholder.ID, Email: "ticket_email@test.test", Kind: models.BillettholderEmailKindTicket},
-		{BillettholderID: expectedBillettholder.ID, Email: "associated_email@test.test", Kind: models.BillettholderEmailKindAssociated},
+	expectedEmails := []models.BillettholderEmail{
+		{Email: "ticket_email@test.test", Kind: models.BillettholderEmailKindTicket},
+		{Email: "associated_email@test.test", Kind: models.BillettholderEmailKindAssociated},
 	}
-
 	tickets := []CheckInTicket{
-		{ID: ticketId,
+		{
+			ID:        ticketID,
 			OrderID:   1,
 			TypeId:    1,
 			Type:      "Adult",
 			FirstName: "John",
 			LastName:  "Doe",
 			Email:     "ticket_email@test.test",
-			IsOver18:  true},
-		{ID: 43,
+			IsOver18:  true,
+		},
+		{
+			ID:        43,
 			OrderID:   1,
 			TypeId:    2,
 			Type:      "Child",
 			FirstName: "Jane",
 			LastName:  "Doe",
 			Email:     "associated_email@test.test",
-			IsOver18:  false},
-		{ID: 44,
+			IsOver18:  false,
+		},
+		{
+			ID:        44,
 			OrderID:   2,
 			TypeId:    1,
 			Type:      "Adult",
 			FirstName: "Not",
-			LastName:  "associated",
+			LastName:  "Associated",
 			Email:     "not_associated_email@test.test",
-			IsOver18:  false},
+			IsOver18:  false,
+		},
 	}
+	db, logger := createCheckInTestDB(t)
 
-	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
-	testDBPath := "../../database/tests/" + uniqueDatabaseName
+	// When
+	err := converTicketIdToNewBillettholder(ticketID, tickets, db, logger)
 
-	db, err := service.InitTestDBFrom(testDBPath)
+	// Then
 	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
+		t.Fatalf("expected ticket conversion to succeed: %v", err)
 	}
-	defer db.Close()
-
-	// ❷ Act
-	sl := &testutil.StubLogger{}
-	slogger := testutil.NewSlogAdapter(sl)
-
-	err = converTicketIdToNewBillettholder(ticketId, tickets, db, slogger)
-	if err != nil {
-		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
-	}
-
-	// ❸ Assert
-	var billettholder models.Billettholder
-	err = db.QueryRow(`
-		SELECT id, first_name, last_name, ticket_type_id, ticket_type,
-			is_over_18, order_id, ticket_id, created_at, updated_at, created_by_id, updated_by_id
-		FROM billettholdere WHERE ticket_id = ?`, ticketId).Scan(
-		&billettholder.ID,
-		&billettholder.FirstName,
-		&billettholder.LastName,
-		&billettholder.TicketTypeId,
-		&billettholder.TicketType,
-		&billettholder.IsOver18,
-		&billettholder.OrderID,
-		&billettholder.TicketID,
-		&billettholder.CreatedAt,
-		&billettholder.UpdatedAt,
-		&billettholder.CreatedByID,
-		&billettholder.UpdatedByID,
-	)
-
-	if err != nil {
-		t.Fatalf("failed to find billettholder with ticketId %d: %v", ticketId, err)
-	}
-
-	if billettholder.FirstName != expectedBillettholder.FirstName ||
-		billettholder.LastName != expectedBillettholder.LastName ||
-		billettholder.TicketTypeId != expectedBillettholder.TicketTypeId ||
-		billettholder.TicketType != expectedBillettholder.TicketType ||
-		billettholder.IsOver18 != expectedBillettholder.IsOver18 ||
-		billettholder.OrderID != expectedBillettholder.OrderID ||
-		billettholder.TicketID != expectedBillettholder.TicketID {
-		t.Errorf("expected billettholder %+v, got %+v", expectedBillettholder, billettholder)
-	}
-
-	var billettholderEmails []models.BillettholderEmail
-	rows, err := db.Query("SELECT id, billettholder_id, email, kind, created_at, updated_at, created_by_id, updated_by_id FROM relation_billettholder_emails WHERE billettholder_id = ?", billettholder.ID)
-	if err != nil {
-		t.Fatalf("failed to query billettholder emails: %v", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var email models.BillettholderEmail
-		if err := rows.Scan(&email.ID, &email.BillettholderID, &email.Email, &email.Kind, &email.CreatedAt, &email.UpdatedAt, &email.CreatedByID, &email.UpdatedByID); err != nil {
-			t.Fatalf("failed to scan billettholder email: %v", err)
-		}
-		billettholderEmails = append(billettholderEmails, email)
-	}
-	if err := rows.Err(); err != nil {
-		t.Fatalf("error iterating over billettholder emails: %v", err)
-	}
-	if len(billettholderEmails) != len(expectedBillettholderEmails) {
-		t.Fatalf("expected %d billettholder emails, got %d", len(expectedBillettholderEmails), len(billettholderEmails))
-	}
-	for i, email := range billettholderEmails {
-		expectedEmail := expectedBillettholderEmails[i]
-		if email.Email != expectedEmail.Email || email.Kind != expectedEmail.Kind {
-			t.Errorf("expected billettholder email %+v kind %+v, got %+v kind %+v", expectedEmail.Email, expectedEmail.Kind, email.Email, email.Kind)
-		}
-	}
+	actualBillettholder := queryBillettholderByTicketID(t, db, ticketID)
+	assertBillettholderMatches(t, expectedBillettholder, actualBillettholder)
+	assertBillettholderEmails(t, db, actualBillettholder.ID, expectedEmails)
 }
 
-func TestDoNotConvertTicketsOfTypeMiddag(t *testing.T) {
-	// ❶ Arrange
-	expectedError := "cannot convert 'Middag' ticket to billettholder"
+func TestConvertTicketIdToNewBillettholder_WhenTicketIsDinner_ReturnsError(t *testing.T) {
+	// Given a dinner ticket,
+	// when it is converted to a billettholder,
+	// then conversion is rejected before database writes are attempted.
 
-	ticketId := 42
+	// Given
+	const ticketID = 42
+	expectedError := "cannot convert 'Middag' ticket to billettholder"
 	tickets := []CheckInTicket{
-		{ID: ticketId,
+		{
+			ID:        ticketID,
 			OrderID:   1,
 			TypeId:    TicketTypeMiddag,
 			Type:      "Middag",
 			FirstName: "John",
 			LastName:  "Doe",
 			Email:     "ticket_email@test.test",
-			IsOver18:  true},
+			IsOver18:  true,
+		},
 	}
 
-	// ❷ Act
-	sl := &testutil.StubLogger{}
-	slogger := testutil.NewSlogAdapter(sl)
+	// When
+	err := converTicketIdToNewBillettholder(ticketID, tickets, nil, testutil.NewTestLogger())
 
-	err := converTicketIdToNewBillettholder(ticketId, tickets, nil, slogger)
-
-	// ❸ Assert
+	// Then
 	if err == nil {
-		t.Fatalf("expected error but got nil")
+		t.Fatalf("expected dinner ticket conversion to fail")
 	}
 	if err.Error() != expectedError {
-		t.Errorf("expected error %q, got %q", expectedError, err.Error())
+		t.Fatalf("error mismatch\nexpected: %q\nactual:   %q", expectedError, err.Error())
 	}
 }
 
-func TestDontAddDuplicateAssociatedEmails(t *testing.T) {
-	// ❶ Arrange
-	const ticketId = 42
+func TestConvertTicketIdToNewBillettholder_WhenAssociatedEmailsRepeat_InsertsEachEmailOnce(t *testing.T) {
+	// Given multiple tickets in the same order with the same associated email,
+	// when the main ticket is converted to a billettholder,
+	// then each billettholder email is stored once.
 
-	expectedBillettholderEmails := []models.BillettholderEmail{
-		{BillettholderID: 0, Email: "ticket_email@test.test", Kind: models.BillettholderEmailKindTicket},
-		{BillettholderID: 0, Email: "associated_email@test.test", Kind: models.BillettholderEmailKindAssociated},
+	// Given
+	const ticketID = 42
+	expectedEmails := []models.BillettholderEmail{
+		{Email: "ticket_email@test.test", Kind: models.BillettholderEmailKindTicket},
+		{Email: "associated_email@test.test", Kind: models.BillettholderEmailKindAssociated},
 	}
-
 	tickets := []CheckInTicket{
-		{ID: ticketId,
+		{
+			ID:        ticketID,
 			OrderID:   1,
 			TypeId:    1,
 			Type:      "Adult",
 			FirstName: "John",
 			LastName:  "Doe",
 			Email:     "ticket_email@test.test",
-			IsOver18:  true},
-		{ID: 43,
+			IsOver18:  true,
+		},
+		{
+			ID:        43,
 			OrderID:   1,
 			TypeId:    2,
 			Type:      "Child",
 			FirstName: "Jane",
 			LastName:  "Doe",
 			Email:     "associated_email@test.test",
-			IsOver18:  false},
-		{ID: 44,
+			IsOver18:  false,
+		},
+		{
+			ID:        44,
 			OrderID:   1,
 			TypeId:    2,
 			Type:      "Child",
-			FirstName: "Same as previous",
-			LastName:  "associated email",
+			FirstName: "Same",
+			LastName:  "Associated",
 			Email:     "associated_email@test.test",
-			IsOver18:  false},
-		{ID: 45,
+			IsOver18:  false,
+		},
+		{
+			ID:        45,
 			OrderID:   2,
 			TypeId:    1,
 			Type:      "Adult",
 			FirstName: "Not",
-			LastName:  "associated",
+			LastName:  "Associated",
 			Email:     "not_associated_email@test.test",
-			IsOver18:  false},
+			IsOver18:  false,
+		},
 	}
+	db, logger := createCheckInTestDB(t)
 
-	uniqueDatabaseName := "test_convert_ticket_" + t.Name() + "_" + uuid.New().String() + ".db"
-	testDBPath := "../../database/tests/" + uniqueDatabaseName
+	// When
+	err := converTicketIdToNewBillettholder(ticketID, tickets, db, logger)
 
-	db, err := service.InitTestDBFrom(testDBPath)
+	// Then
 	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
+		t.Fatalf("expected ticket conversion to succeed: %v", err)
 	}
-	defer db.Close()
+	actualBillettholder := queryBillettholderByTicketID(t, db, ticketID)
+	assertBillettholderEmails(t, db, actualBillettholder.ID, expectedEmails)
+}
 
-	// ❷ Act
-	sl := &testutil.StubLogger{}
-	slogger := testutil.NewSlogAdapter(sl)
+func assertBillettholderMatches(t testing.TB, expected models.Billettholder, actual models.Billettholder) {
+	t.Helper()
 
-	err = converTicketIdToNewBillettholder(ticketId, tickets, db, slogger)
-	if err != nil {
-		t.Fatalf("failed to convert ticketId to billettholder: %v", err)
-	}
-
-	// ❸ Assert
-	var billettholderEmails []models.BillettholderEmail
-	rows, err := db.Query("SELECT id, billettholder_id, email, kind, created_at, updated_at, created_by_id, updated_by_id FROM relation_billettholder_emails")
-	if err != nil {
-		t.Fatalf("failed to query billettholder emails: %v", err)
-	}
-	defer rows.Close()
-	for rows.Next() {
-		var email models.BillettholderEmail
-		if err := rows.Scan(&email.ID, &email.BillettholderID, &email.Email, &email.Kind, &email.CreatedAt, &email.UpdatedAt, &email.CreatedByID, &email.UpdatedByID); err != nil {
-			t.Fatalf("failed to scan billettholder email: %v", err)
-		}
-		billettholderEmails = append(billettholderEmails, email)
-	}
-	if err := rows.Err(); err != nil {
-		t.Fatalf("error iterating over billettholder emails: %v", err)
-	}
-	if len(billettholderEmails) != len(expectedBillettholderEmails) {
-		t.Fatalf("expected %d billettholder emails, got %d", len(expectedBillettholderEmails), len(billettholderEmails))
-	}
-	for i, email := range billettholderEmails {
-		expectedEmail := expectedBillettholderEmails[i]
-		if email.Email != expectedEmail.Email || email.Kind != expectedEmail.Kind {
-			t.Errorf("expected billettholder email %+v kind %+v, got %+v kind %+v", expectedEmail.Email, expectedEmail.Kind, email.Email, email.Kind)
-		}
+	if actual.FirstName != expected.FirstName ||
+		actual.LastName != expected.LastName ||
+		actual.TicketTypeId != expected.TicketTypeId ||
+		actual.TicketType != expected.TicketType ||
+		actual.IsOver18 != expected.IsOver18 ||
+		actual.OrderID != expected.OrderID ||
+		actual.TicketID != expected.TicketID {
+		t.Fatalf("billettholder mismatch\nexpected: %+v\nactual:   %+v", expected, actual)
 	}
 }

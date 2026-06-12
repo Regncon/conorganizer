@@ -351,17 +351,7 @@ func TestRootPageContent_WhenEventsCannotLoad_RendersFriendlyError(t *testing.T)
 func createRootPageTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
-	db, _, err := testutil.CreateTemporaryDBAndLogger("root_page", t)
-	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("failed to close test database: %v", err)
-		}
-	})
-
-	return db
+	return testutil.CreateTestDB(t, "root_page")
 }
 
 func seedRootPageLookups(t *testing.T, db *sql.DB) {

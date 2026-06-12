@@ -281,16 +281,7 @@ func TestMyProgram_WhenGMEventIsInNotCompletedPulje_RendersGMEventOverInterests(
 func createProfileProgramTestDB(t *testing.T) (*sql.DB, *slog.Logger) {
 	t.Helper()
 
-	db, logger, err := testutil.CreateTemporaryDBAndLogger("profile_program", t)
-	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("failed to close test database: %v", err)
-		}
-	})
-
+	db, logger := testutil.CreateTestDBAndLogger(t, "profile_program")
 	seedProfileProgramLookups(t, db)
 
 	return db, logger

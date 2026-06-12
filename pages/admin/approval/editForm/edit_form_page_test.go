@@ -3,11 +3,9 @@ package edit_form
 import (
 	"context"
 	"database/sql"
-	"path/filepath"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
@@ -40,17 +38,7 @@ func TestEditEventFormPageContent_DoesNotRenderPreviousNextNavigation(t *testing
 func createEditFormNavigationTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
-	db, err := service.InitTestDBFrom(filepath.Join(t.TempDir(), "edit-form-navigation.db"))
-	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("failed to close test database: %v", err)
-		}
-	})
-
-	return db
+	return testutil.CreateTestDB(t, "edit-form-navigation")
 }
 
 func seedEditFormNavigationLookups(t *testing.T, db *sql.DB) {

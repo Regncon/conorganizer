@@ -21,12 +21,7 @@ func TestGetBillettholdereWithFilters_WhenFilteringWithoutFirstChoiceAndGM_Retur
 		GMOrDM:             true,
 	}
 
-	db, _, createDBErr := testutil.CreateTemporaryDBAndLogger("billettholder_admin_filters", t)
-	if createDBErr != nil {
-		t.Fatalf("failed to create test database: %v", createDBErr)
-	}
-	defer db.Close()
-
+	db := testutil.CreateTestDB(t, "billettholder_admin_filters")
 	seedBillettholderFilterLookups(t, db)
 	seedBillettholderFilterBillettholdere(t, db)
 	seedBillettholderFilterPuljer(t, db)

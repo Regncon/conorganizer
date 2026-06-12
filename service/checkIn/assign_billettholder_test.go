@@ -1,158 +1,95 @@
 package checkIn
 
 import (
-	"fmt"
-	"math/rand"
-	"strconv"
-	"strings"
+	"database/sql"
+	"slices"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 )
 
-func TestAssociateTicketsWithBillettholder(t *testing.T) {
-	// Arrange
-	db, slogger, err := testutil.CreateTemporaryDBAndLogger("test_associate_tickets", t)
+func TestAssociateTicketsWithBillettholder_WhenSomeMatchingTicketsAreNew_ConvertsOnlyNewTickets(t *testing.T) {
+	// Given tickets for a target email where one ticket is already converted,
+	// when the target email is associated with billettholdere,
+	// then only new non-dinner target tickets are inserted.
+
+	// Given
+	expectedBillettholderCount := 3
+	expectedTargetEmailCount := 3
+	expectedTicketIDs := []int{101, 102, 103}
+	targetEmail := "test@regncon.com"
+	tickets := []CheckInTicket{
+		{ID: 101, OrderID: 1, TypeId: 9000, Type: "Festivalpass", FirstName: "New", LastName: "Target", Email: targetEmail, IsOver18: true},
+		{ID: 102, OrderID: 2, TypeId: 9000, Type: "Festivalpass", FirstName: "Existing", LastName: "Target", Email: targetEmail, IsOver18: true},
+		{ID: 103, OrderID: 3, TypeId: 9000, Type: "Festivalpass", FirstName: "Case", LastName: "Target", Email: "TEST@REGNCON.COM", IsOver18: true},
+		{ID: 104, OrderID: 4, TypeId: 9000, Type: "Festivalpass", FirstName: "Other", LastName: "Person", Email: "other@regncon.com", IsOver18: true},
+		{ID: 105, OrderID: 5, TypeId: TicketTypeMiddag, Type: "Middag", FirstName: "Dinner", LastName: "Guest", Email: targetEmail, IsOver18: true},
+	}
+	db, logger := createCheckInTestDB(t)
+	insertCheckInBillettholder(t, db, models.Billettholder{
+		ID:           5000,
+		FirstName:    "Existing",
+		LastName:     "Target",
+		TicketTypeId: 9000,
+		TicketType:   "Festivalpass",
+		IsOver18:     true,
+		OrderID:      2,
+		TicketID:     102,
+	})
+	insertManualBillettholderEmail(t, db, 5000, targetEmail)
+
+	// When
+	err := AssociateTicketsWithBillettholder(tickets, targetEmail, db, logger)
+
+	// Then
 	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
+		t.Fatalf("expected ticket association to succeed: %v", err)
 	}
-	defer db.Close()
-
-	// Test variables
-	const targetEmail = "test@regncon.com"
-	const fakePeopleAmount = 100
-	const billettholderConversionRatio = 0.5
-
-	// Happy user will never be included in conversion!
-	var happyPerson = testutil.GenerateFakePerson()
-	happyPerson.Email = targetEmail
-	var happyPersonTicket = CheckInTicket{
-		ID:        1,
-		OrderID:   1,
-		TypeId:    8999,
-		Type:      "Manuell billett",
-		FirstName: happyPerson.FirstName,
-		LastName:  happyPerson.LastName,
-		Email:     happyPerson.Email,
-		IsOver18:  true,
+	actualBillettholderCount := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM billettholdere`)
+	if actualBillettholderCount != expectedBillettholderCount {
+		t.Fatalf("billettholder count mismatch\nexpected: %d\nactual:   %d", expectedBillettholderCount, actualBillettholderCount)
 	}
 
-	// Generate test data
-	var generatededTickets []CheckInTicket
-	generatededPeople := testutil.GeneratePeople(fakePeopleAmount)
-	for i, generatedPerson := range generatededPeople {
-		// Tie 10% of tickets with our target email
-		var emailValue = targetEmail
-		if rand.Intn(10) > 1 {
-			emailValue = generatedPerson.Email
-		}
-
-		// Start at ID 2+ to allow happy person
-		generatededTickets = append(generatededTickets, CheckInTicket{
-			ID:        i + 2,
-			OrderID:   i + 2,
-			TypeId:    9000,
-			FirstName: generatedPerson.FirstName,
-			LastName:  generatedPerson.LastName,
-			Type:      "Test billet",
-			Email:     emailValue,
-			IsOver18:  rand.Intn(10) > 2,
-		})
+	actualTargetEmailCount := testutil.QueryInt(t, db, `
+		SELECT COUNT(*)
+		FROM relation_billettholder_emails
+		WHERE email = ? COLLATE NOCASE
+	`, targetEmail)
+	if actualTargetEmailCount != expectedTargetEmailCount {
+		t.Fatalf("target email count mismatch\nexpected: %d\nactual:   %d", expectedTargetEmailCount, actualTargetEmailCount)
 	}
 
-	// Add happy ticket to the end of our tickets array
-	generatededTickets = append(generatededTickets, happyPersonTicket)
-
-	// How many tickets have the targetEmail as their email?
-	var expectedTargetEmailCount int
-	for _, targetEmailCount := range generatededTickets {
-		if targetEmailCount.Email == targetEmail {
-			expectedTargetEmailCount++
-		}
+	actualTicketIDs := queryBillettholderTicketIDs(t, db)
+	if !slices.Equal(expectedTicketIDs, actualTicketIDs) {
+		t.Fatalf("billettholder ticket IDs mismatch\nexpected: %v\nactual:   %v", expectedTicketIDs, actualTicketIDs)
 	}
+}
 
-	// Slize generated tickets from begining according to conversion
-	// ammount and write them to billettholders table
-	var conversionAmmount = fakePeopleAmount * billettholderConversionRatio
-	billettholderConversion := generatededTickets[:int(conversionAmmount)]
-	for _, ticket := range billettholderConversion {
-		// fmt.Printf("Preparing billettholder: %+v\n", ticket)
-		err = converTicketIdToNewBillettholder(ticket.ID, billettholderConversion, db, slogger)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
+func queryBillettholderTicketIDs(t testing.TB, db *sql.DB) []int {
+	t.Helper()
 
-	// How many tickets with targetedEmail was converted to existing billettholdere
-	var expectedConvertedTargetedEmailCount int
-	for _, billettholderConverted := range billettholderConversion {
-		if billettholderConverted.Email == targetEmail {
-			expectedConvertedTargetedEmailCount++
-		}
-	}
-
-	// Remaining tickets after conversion
-	// var remainingTickets = generatededTickets[int(conversionAmmount):]
-	// remainingTickets = append(remainingTickets, happyPersonTicket)
-
-	// generate some fake users
-	var expectedUsers []models.User
-	for i, holder := range generatededTickets {
-		expectedUsers = append(expectedUsers, models.User{
-			ID:         i + 1,
-			ExternalID: holder.FirstName + strconv.Itoa(i+1),
-			Email:      holder.Email,
-			IsAdmin:    rand.Intn(100) > 10,
-		})
-	}
-	var queryUsers []string
-	for _, user := range expectedUsers {
-		queryUsers = append(queryUsers, fmt.Sprintf(`(%d, "%s", "%s", %v)`, user.ID, user.ExternalID, user.Email, user.IsAdmin))
-	}
-	queryBase := fmt.Sprintf(`INSERT INTO users (id, external_id, email, is_admin) VALUES %s`, strings.Join(queryUsers, ", "))
-
-	_, err = db.Exec(queryBase)
+	rows, err := db.Query(`
+		SELECT ticket_id
+		FROM billettholdere
+		ORDER BY ticket_id
+	`)
 	if err != nil {
-		fmt.Println("failed to insert users", "error", err)
-		return
+		t.Fatalf("failed to query billettholder ticket IDs: %v", err)
 	}
+	defer rows.Close()
 
-	// Generate some fake billettholder_users
-	/* for _, expectedUser := range expectedUsers {
-		err = AssociateUserWithBillettholder(expectedUser.ExternalID, db, slogger)
-		if err != nil {
-			fmt.Println(err)
+	var ticketIDs []int
+	for rows.Next() {
+		var ticketID int
+		if err := rows.Scan(&ticketID); err != nil {
+			t.Fatalf("failed to scan billettholder ticket ID: %v", err)
 		}
-	} */
-
-	// Act
-	err = AssociateTicketsWithBillettholder(generatededTickets, targetEmail, db, slogger)
-	if err != nil {
-		t.Fatalf("failed to associate ticket with billettholder: %v", err)
+		ticketIDs = append(ticketIDs, ticketID)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("failed to iterate billettholder ticket IDs: %v", err)
 	}
 
-	// Assert
-
-	// Check that billettholder contains expected ammount
-	var resultBillettholderCount int
-	resultBillettholderRow := db.QueryRow("SELECT COUNT(id) FROM billettholdere")
-	if err := resultBillettholderRow.Scan(&resultBillettholderCount); err != nil {
-		t.Fatal(resultBillettholderRow.Err())
-	}
-	if resultBillettholderCount != (expectedTargetEmailCount-expectedConvertedTargetedEmailCount)+int(conversionAmmount) {
-		t.Fatalf("expected %d billettholders, got %d", (expectedTargetEmailCount-expectedConvertedTargetedEmailCount)+int(conversionAmmount), resultBillettholderCount)
-	}
-
-	// Check billettholder contains a certain amount of email: targetEmail
-	var resultTargetEmailCount int
-	resultTargetEmailRow := db.QueryRow("SELECT COUNT(email) FROM relation_billettholder_emails WHERE email = ?", targetEmail)
-	if err = resultTargetEmailRow.Scan(&resultTargetEmailCount); err != nil {
-		t.Fatal(resultTargetEmailRow.Err())
-	}
-	if resultTargetEmailCount != expectedTargetEmailCount {
-		t.Fatalf("expected %d billettholders_email with %s, got %d", expectedTargetEmailCount, targetEmail, resultTargetEmailCount)
-	}
-
-	// todo add more checks
+	return ticketIDs
 }

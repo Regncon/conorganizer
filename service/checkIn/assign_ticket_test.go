@@ -1,73 +1,62 @@
 package checkIn
 
 import (
-	"math/rand"
-	"strings"
+	"slices"
 	"testing"
-
-	"github.com/Regncon/conorganizer/testutil"
 )
 
-func TestAssociateTicketsWithEmail(t *testing.T) {
-	// Arrange
-	var ammountOfFakeTickets = 99
-	const targetEmail = "test@regncon.no"
-	const targetEmailUppercase = "Test@regncon.no"
+func TestAssociateTicketsWithEmail_WhenEmailMatchesCaseInsensitively_ReturnsNonDinnerTickets(t *testing.T) {
+	// Given tickets with matching, differently-cased, dinner, and unrelated emails,
+	// when tickets are associated by email,
+	// then only non-dinner tickets matching the email are returned.
 
-	var generatedTickets []CheckInTicket
-	for i := range ammountOfFakeTickets {
-		var generatedPerson = testutil.GenerateFakePerson()
-
-		// Tie 10% of tickets with our target email
-		var emailValue = targetEmail
-		if rand.Intn(10) > 1 {
-			emailValue = generatedPerson.Email
-		}
-
-		generatedTickets = append(generatedTickets, CheckInTicket{
-			OrderID:   i + 1,
-			TypeId:    i + 1,
-			FirstName: generatedPerson.FirstName,
-			LastName:  generatedPerson.LastName,
-			Type:      "Test billet",
-			Email:     emailValue,
-			IsOver18:  rand.Intn(10) > 2,
-		})
+	// Given
+	expectedTicketIDs := []int{101, 102}
+	tickets := []CheckInTicket{
+		{ID: 101, TypeId: 1, Email: "test@regncon.no"},
+		{ID: 102, TypeId: 2, Email: "Test@Regncon.no"},
+		{ID: 103, TypeId: TicketTypeMiddag, Email: "test@regncon.no"},
+		{ID: 104, TypeId: 1, Email: "other@regncon.no"},
 	}
 
-	var expectedMatches []CheckInTicket
-	for _, generatedTicket := range generatedTickets {
-		if generatedTicket.TypeId == TicketTypeMiddag {
-			continue
-		}
+	// When
+	actualTickets, err := AssociateTicketsWithEmail(tickets, "TEST@REGNCON.NO")
 
-		if strings.EqualFold(generatedTicket.Email, targetEmail) {
-			expectedMatches = append(expectedMatches, generatedTicket)
-		}
-	}
-
-	// Act
-	/* sl := &testutil.StubLogger{}
-	slogger := testutil.NewSlogAdapter(sl) */
-
-	result, err := AssociateTicketsWithEmail(generatedTickets, targetEmail)
+	// Then
 	if err != nil {
-		t.Fatalf("failed to associate email with billettholder: %v", err)
+		t.Fatalf("expected ticket association to succeed: %v", err)
+	}
+	actualTicketIDs := ticketIDs(actualTickets)
+	if !slices.Equal(expectedTicketIDs, actualTicketIDs) {
+		t.Fatalf("ticket IDs mismatch\nexpected: %v\nactual:   %v", expectedTicketIDs, actualTicketIDs)
+	}
+}
+
+func TestAssociateTicketsWithEmail_WhenNoTicketMatches_ReturnsError(t *testing.T) {
+	// Given tickets registered to other emails,
+	// when tickets are associated by an unknown email,
+	// then the caller receives an error.
+
+	// Given
+	expectedError := true
+	tickets := []CheckInTicket{
+		{ID: 101, TypeId: 1, Email: "other@regncon.no"},
 	}
 
-	// Case sensitivity
-	resultUppercase, err := AssociateTicketsWithEmail(generatedTickets, targetEmailUppercase)
-	if err != nil {
-		t.Fatalf("failed to associate email with billettholder: %v", err)
-	}
+	// When
+	_, err := AssociateTicketsWithEmail(tickets, "missing@regncon.no")
+	actualError := err != nil
 
-	// Assert
-	if len(result) != len(expectedMatches) {
-		t.Fatalf("expected %d tickets, got %d", len(expectedMatches), len(result))
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
+}
 
-	// Case sensitivity
-	if len(resultUppercase) != len(expectedMatches) {
-		t.Fatalf("expected %d uppercase tickets, got %d", len(expectedMatches), len(resultUppercase))
+func ticketIDs(tickets []CheckInTicket) []int {
+	ids := make([]int, 0, len(tickets))
+	for _, ticket := range tickets {
+		ids = append(ids, ticket.ID)
 	}
+	return ids
 }

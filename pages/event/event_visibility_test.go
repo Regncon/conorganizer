@@ -225,16 +225,7 @@ func TestEventPageContent_WhenProgramAndPuljeArePublished_RendersInterestDialog(
 func createEventVisibilityTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
-	db, _, err := testutil.CreateTemporaryDBAndLogger("event_visibility", t)
-	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("failed to close test database: %v", err)
-		}
-	})
-
+	db := testutil.CreateTestDB(t, "event_visibility")
 	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?), (?), (?)`, models.EventStatusApproved, models.EventStatusAnnounced, models.EventStatusDraft)
 	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
 	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)

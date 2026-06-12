@@ -1,40 +1,39 @@
 package checkIn
 
-import (
-	"fmt"
-	"testing"
-)
+import "testing"
 
-func TestIsOver18WhenConStarts(t *testing.T) {
-	// ❶ Arrange
-	expected := true
+func TestIsOver18_WhenBirthdayIsOnConventionStart_ReturnsTrue(t *testing.T) {
+	// Given a person who turns eighteen on the first day of Regncon,
+	// when their age is checked,
+	// then they count as over eighteen for the convention.
 
-	//Con starts 2025-10-10
-	bornYear := 2025 - 18
-	born := fmt.Sprintf("%d-10-10", bornYear)
+	// Given
+	expectedOver18 := true
+	born := "2007-10-10"
 
-	// ❷ Act
-	result := isOver18(born)
+	// When
+	actualOver18 := isOver18(born)
 
-	// ❸ Assert
-	if result != expected {
-		t.Errorf("Expected %v, but got %v", expected, result)
+	// Then
+	if actualOver18 != expectedOver18 {
+		t.Fatalf("over-18 result mismatch\nexpected: %v\nactual:   %v", expectedOver18, actualOver18)
 	}
 }
 
-func TestIsNotOver18WhenConStarts(t *testing.T) {
-	// ❶ Arrange
-	expected := false
+func TestIsOver18_WhenBirthdayIsAfterConventionStart_ReturnsFalse(t *testing.T) {
+	// Given a person who turns eighteen after the first day of Regncon,
+	// when their age is checked,
+	// then they do not count as over eighteen for the convention.
 
-	//Con starts 2025-10-10
-	bornYear := 2025 - 18
-	born := fmt.Sprintf("%d-10-11", bornYear)
+	// Given
+	expectedOver18 := false
+	born := "2007-10-11"
 
-	// ❷ Act
-	result := isOver18(born)
+	// When
+	actualOver18 := isOver18(born)
 
-	// ❸ Assert
-	if result != expected {
-		t.Errorf("Expected %v, but got %v", expected, result)
+	// Then
+	if actualOver18 != expectedOver18 {
+		t.Fatalf("over-18 result mismatch\nexpected: %v\nactual:   %v", expectedOver18, actualOver18)
 	}
 }

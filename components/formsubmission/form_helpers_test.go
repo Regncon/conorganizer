@@ -2,39 +2,50 @@ package formsubmission
 
 import "testing"
 
-func TestNormalizeTextareaSubmission(t *testing.T) {
-	tests := []struct {
-		name  string
-		input string
-		want  string
+func TestNormalizeTextareaSubmission_NormalizesOuterWhitespaceAndNewlines(t *testing.T) {
+	// Given textarea submissions with surrounding whitespace and mixed newline styles,
+	// when each submission is normalized,
+	// then only outer whitespace and Windows newlines are normalized.
+
+	// Given
+	expectedCases := []struct {
+		name     string
+		input    string
+		expected string
 	}{
 		{
-			name:  "trims leading and trailing whitespace",
-			input: "\n  hello world  \n",
-			want:  "hello world",
+			name:     "trims leading and trailing whitespace",
+			input:    "\n  hello world  \n",
+			expected: "hello world",
 		},
 		{
-			name:  "preserves interior newlines",
-			input: "first line\nsecond line\nthird line",
-			want:  "first line\nsecond line\nthird line",
+			name:     "preserves interior newlines",
+			input:    "first line\nsecond line\nthird line",
+			expected: "first line\nsecond line\nthird line",
 		},
 		{
-			name:  "normalizes windows newlines",
-			input: "\r\nfirst line\r\nsecond line\r\n",
-			want:  "first line\nsecond line",
+			name:     "normalizes windows newlines",
+			input:    "\r\nfirst line\r\nsecond line\r\n",
+			expected: "first line\nsecond line",
 		},
 		{
-			name:  "whitespace only becomes empty",
-			input: " \n\t\r\n ",
-			want:  "",
+			name:     "whitespace only becomes empty",
+			input:    " \n\t\r\n ",
+			expected: "",
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := normalizeTextareaSubmission(tt.input)
-			if got != tt.want {
-				t.Fatalf("normalizeTextareaSubmission(%q) = %q, want %q", tt.input, got, tt.want)
+	for _, tc := range expectedCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given
+			expected := tc.expected
+
+			// When
+			actual := normalizeTextareaSubmission(tc.input)
+
+			// Then
+			if actual != expected {
+				t.Fatalf("normalized submission mismatch\nexpected: %q\nactual:   %q", expected, actual)
 			}
 		})
 	}

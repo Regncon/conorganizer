@@ -23,12 +23,7 @@ func TestBillettholderAdminOverview_RendersCountsFromPublishedPuljeAssignments(t
 		"GM/DM: 1",
 	}
 
-	db, logger, createDBErr := testutil.CreateTemporaryDBAndLogger("billettholder_admin_overview", t)
-	if createDBErr != nil {
-		t.Fatalf("failed to create test database: %v", createDBErr)
-	}
-	defer db.Close()
-
+	db, logger := testutil.CreateTestDBAndLogger(t, "billettholder_admin_overview")
 	seedBillettholderOverviewLookups(t, db)
 	seedBillettholderOverviewBillettholdere(t, db)
 	seedBillettholderOverviewPuljer(t, db)

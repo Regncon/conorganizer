@@ -91,12 +91,7 @@ func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInt
 		},
 	}
 
-	db, _, createDBErr := testutil.CreateTemporaryDBAndLogger("billettholder_interests", t)
-	if createDBErr != nil {
-		t.Fatalf("failed to create test database: %v", createDBErr)
-	}
-	defer db.Close()
-
+	db := testutil.CreateTestDB(t, "billettholder_interests")
 	seedBillettholderInterestLookups(t, db)
 	seedBillettholderInterestBillettholdere(t, db, expectedBillettholderID)
 	seedBillettholderInterestPuljer(t, db)

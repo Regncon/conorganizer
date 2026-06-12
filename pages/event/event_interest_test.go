@@ -350,16 +350,7 @@ type eventInterestUpdateFixture struct {
 func createEventInterestTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
-	db, _, err := testutil.CreateTemporaryDBAndLogger("event_interest", t)
-	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("failed to close test database: %v", err)
-		}
-	})
-
+	db := testutil.CreateTestDB(t, "event_interest")
 	seedEventInterestLookups(t, db)
 	return db
 }

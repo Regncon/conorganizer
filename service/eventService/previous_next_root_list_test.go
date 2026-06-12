@@ -4,14 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"net/http/httptest"
-	"path/filepath"
 	"slices"
 	"testing"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/root"
-	"github.com/Regncon/conorganizer/service"
+	"github.com/Regncon/conorganizer/testutil"
 )
 
 func TestGetPreviousNextForRootEventList_WhenProgramIsNotPublished_UsesAnnouncedAlphabeticalRootList(t *testing.T) {
@@ -266,17 +265,7 @@ func collectPreviousNextRootListEventIDs(events []models.EventCardModel) []strin
 func createPreviousNextRootListTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
-	db, err := service.InitTestDBFrom(filepath.Join(t.TempDir(), "previous-next-root-list.db"))
-	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("failed to close test database: %v", err)
-		}
-	})
-
-	return db
+	return testutil.CreateTestDB(t, "previous-next-root-list")
 }
 
 func seedPreviousNextRootListLookups(t *testing.T, db *sql.DB) {

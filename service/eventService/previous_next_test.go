@@ -3,31 +3,90 @@ package eventservice
 import (
 	"context"
 	"database/sql"
-	"os"
 	"testing"
-	"time"
 
-	"github.com/google/uuid"
-
+	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service"
-	_ "modernc.org/sqlite"
+	"github.com/Regncon/conorganizer/testutil"
 )
 
-func TestGetPreviousNext(t *testing.T) {
-	// ========== Arrange ==========
+func TestGetPreviousNextInnsendtGodkjent_ReturnsNeighborsAmongSubmittedAndApprovedEvents(t *testing.T) {
+	// Given submitted, approved, and draft events ordered by creation time,
+	// when previous/next navigation is requested for an event,
+	// then only submitted and approved events are used as navigation neighbors.
+
+	// Given
+	expectedCases := []expectedPreviousNextCase{
+		{
+			name:      "middle event has both neighbors",
+			currentID: "e2",
+			expected:  expectedSubmittedPreviousNext{previousURL: "e3", previousTitle: "New", nextURL: "e1", nextTitle: "Old"},
+		},
+		{
+			name:      "newest event has next only",
+			currentID: "e3",
+			expected:  expectedSubmittedPreviousNext{nextURL: "e2", nextTitle: "Mid"},
+		},
+		{
+			name:      "oldest event has previous only",
+			currentID: "e1",
+			expected:  expectedSubmittedPreviousNext{previousURL: "e2", previousTitle: "Mid"},
+		},
+		{
+			name:      "draft event is excluded",
+			currentID: "e4",
+			expected:  expectedSubmittedPreviousNext{},
+		},
+		{
+			name:      "missing event has no neighbors",
+			currentID: "does-not-exist",
+			expected:  expectedSubmittedPreviousNext{},
+		},
+	}
 	ctx := context.Background()
 	imgDir := ""
+	db := testutil.CreateTestDB(t, "previous-next")
+	seedPreviousNextEvents(t, db)
 
-	db := mustInitTestDB(t)
-	defer db.Close()
+	for _, tc := range expectedCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Given
+			expected := tc.expected
 
-	mustExec(t, db, `DELETE FROM events;`)
-	mustExec(t, db, `INSERT OR IGNORE INTO event_statuses (status) VALUES (?), (?), (?);`, models.EventStatusDraft, models.EventStatusSubmitted, models.EventStatusApproved)
-	mustExec(t, db, `INSERT OR IGNORE INTO events_types (event_type) VALUES (?);`, models.EventTypeOther)
-	mustExec(t, db, `INSERT OR IGNORE INTO age_groups (age_group) VALUES (?);`, models.AgeGroupDefault)
-	mustExec(t, db, `INSERT OR IGNORE INTO event_runtimes (runtime) VALUES (?);`, models.RunTimeNormal)
-	mustExec(t, db, `
+			// When
+			actual, err := GetPreviousNextInnsendtGodkjent(ctx, db, tc.currentID, &imgDir)
+
+			// Then
+			if err != nil {
+				t.Fatalf("expected previous/next lookup to succeed: %v", err)
+			}
+			assertPreviousNext(t, expected, actual)
+		})
+	}
+}
+
+type expectedPreviousNextCase struct {
+	name      string
+	currentID string
+	expected  expectedSubmittedPreviousNext
+}
+
+type expectedSubmittedPreviousNext struct {
+	previousURL   string
+	previousTitle string
+	nextURL       string
+	nextTitle     string
+}
+
+func seedPreviousNextEvents(t testing.TB, db *sql.DB) {
+	t.Helper()
+
+	testutil.MustExec(t, db, `DELETE FROM events`)
+	testutil.MustExec(t, db, `INSERT OR IGNORE INTO event_statuses (status) VALUES (?), (?), (?)`, models.EventStatusDraft, models.EventStatusSubmitted, models.EventStatusApproved)
+	testutil.MustExec(t, db, `INSERT OR IGNORE INTO events_types (event_type) VALUES (?)`, models.EventTypeOther)
+	testutil.MustExec(t, db, `INSERT OR IGNORE INTO age_groups (age_group) VALUES (?)`, models.AgeGroupDefault)
+	testutil.MustExec(t, db, `INSERT OR IGNORE INTO event_runtimes (runtime) VALUES (?)`, models.RunTimeNormal)
+	testutil.MustExec(t, db, `
 		INSERT INTO events (
 			id,
 			title,
@@ -55,79 +114,27 @@ func TestGetPreviousNext(t *testing.T) {
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved,
 		models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusDraft,
 	)
-
-	cases := []struct {
-		name        string
-		currentID   string
-		wantPrevID  string
-		wantPrevTit string
-		wantNextID  string
-		wantNextTit string
-	}{
-		{"middle_has_both_neighbors", "e2", "e3", "New", "e1", "Old"},
-		{"first_has_next_only", "e3", "", "", "e2", "Mid"},
-		{"last_has_prev_only", "e1", "e2", "Mid", "", ""},
-		{"excluded_status_returns_empty_neighbors", "e4", "", "", "", ""},
-		{"missing_id_returns_empty_neighbors", "does-not-exist", "", "", "", ""},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			// ========== Act ==========
-			got, err := GetPreviousNextInnsendtGodkjent(ctx, db, tc.currentID, &imgDir)
-
-			// ========== Assert ==========
-			if err != nil {
-				t.Fatalf("GetPreviousNext() error = %v", err)
-			}
-			if got.PreviousUrl != tc.wantPrevID {
-				t.Errorf("PreviousUrl = %q, want %q", got.PreviousUrl, tc.wantPrevID)
-			}
-			if got.PreviousTitle != tc.wantPrevTit {
-				t.Errorf("PreviousTitle = %q, want %q", got.PreviousTitle, tc.wantPrevTit)
-			}
-			if got.NextUrl != tc.wantNextID {
-				t.Errorf("NextUrl = %q, want %q", got.NextUrl, tc.wantNextID)
-			}
-			if got.NextTitle != tc.wantNextTit {
-				t.Errorf("NextTitle = %q, want %q", got.NextTitle, tc.wantNextTit)
-			}
-			// No images present -> eventimage returns placeholder -> code blanks them
-			if got.PreviousImageURL != "" {
-				t.Errorf("PreviousImageURL = %q, want empty", got.PreviousImageURL)
-			}
-			if got.NextImageURL != "" {
-				t.Errorf("NextImageURL = %q, want empty", got.NextImageURL)
-			}
-		})
-	}
 }
 
-// ---------- helpers ----------
-
-func mustInitTestDB(t *testing.T) *sql.DB {
+func assertPreviousNext(t testing.TB, expected expectedSubmittedPreviousNext, actual components.PreviousNext) {
 	t.Helper()
 
-	uniqueDatabaseName := "test_prevnext_" + t.Name() + "_" + uuid.New().String() + ".db"
-	testDBPath := "../../database/" + uniqueDatabaseName
-
-	db, err := service.InitTestDBFrom(testDBPath)
-	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
+	if actual.PreviousUrl != expected.previousURL {
+		t.Fatalf("previous URL mismatch\nexpected: %q\nactual:   %q", expected.previousURL, actual.PreviousUrl)
 	}
-
-	t.Cleanup(func() {
-		db.Close()
-		_ = os.Remove(testDBPath)
-	})
-	return db
-}
-
-func mustExec(t *testing.T, db *sql.DB, q string, args ...any) {
-	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	if _, err := db.ExecContext(ctx, q, args...); err != nil {
-		t.Fatalf("exec failed: %v\nquery:\n%s", err, q)
+	if actual.PreviousTitle != expected.previousTitle {
+		t.Fatalf("previous title mismatch\nexpected: %q\nactual:   %q", expected.previousTitle, actual.PreviousTitle)
+	}
+	if actual.NextUrl != expected.nextURL {
+		t.Fatalf("next URL mismatch\nexpected: %q\nactual:   %q", expected.nextURL, actual.NextUrl)
+	}
+	if actual.NextTitle != expected.nextTitle {
+		t.Fatalf("next title mismatch\nexpected: %q\nactual:   %q", expected.nextTitle, actual.NextTitle)
+	}
+	if actual.PreviousImageURL != "" {
+		t.Fatalf("expected previous image URL to be empty, got %q", actual.PreviousImageURL)
+	}
+	if actual.NextImageURL != "" {
+		t.Fatalf("expected next image URL to be empty, got %q", actual.NextImageURL)
 	}
 }

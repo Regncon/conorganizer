@@ -2,931 +2,767 @@ package rooms
 
 import (
 	"database/sql"
+	"slices"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 )
 
-func TestCreateRoom(t *testing.T) {
-	// Given
-	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
-	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
-	}
-	defer db.Close()
+func TestCreateRoom_CreatesRoomWithGeneratedID(t *testing.T) {
+	// Given valid room input,
+	// when the room is created,
+	// then the persisted room is returned with a generated ID.
 
-	var validRoom = models.Room{
-		ID:                 0,
+	// Given
+	expectedRoom := models.Room{
+		ID:                 1,
 		Name:               "Hakkebakken",
 		RoomNumber:         "101",
 		Floor:              1,
 		MaxConcurrentGames: 2,
-		Notes:              "Dette er et gyldig rom",
+		Notes:              "Dette er eit gyldig rom",
 		IsDisabled:         false,
 	}
+	inputRoom := expectedRoom
+	inputRoom.ID = 0
 
-	var invalidRoomNumber = validRoom
-	invalidRoomNumber.Floor = 2
-
-	var invalidRoomConcurrency = validRoom
-	invalidRoomConcurrency.MaxConcurrentGames = 0
+	db := createRoomsTestDB(t)
 
 	// When
-	// - create room is called once
-	createRoomResult, err := CreateRoom(db, validRoom)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	// - create room is called again, tesing auto increment
-	createRoomResult2, err := CreateRoom(db, validRoom)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	// - create room is called with an invalid room number based on the floor being its prefix
-	_, errInvalidRoomNumber := CreateRoom(db, invalidRoomNumber)
-
-	// - create room is called with an invalid room number based on the floor being its prefix
-	_, errInvalidConcurrency := CreateRoom(db, invalidRoomConcurrency)
+	actualRoom, err := CreateRoom(db, inputRoom)
 
 	// Then
-	if validRoom.ID == createRoomResult.ID {
-		t.Fatalf("Room ID did not update correctly after insert\nexpected: %d\nrecieved: %d", validRoom.ID, createRoomResult.ID)
+	if err != nil {
+		t.Fatalf("expected room creation to succeed: %v", err)
 	}
+	assertRoomMatches(t, expectedRoom, *actualRoom)
+}
 
-	validRoom.ID = createRoomResult.ID
-	if validRoom != *createRoomResult {
-		t.Fatalf("createRoomResult did not match happyRoom\nexpected: \t%v\nrecieved: \t%v", validRoom, createRoomResult)
+func TestCreateRoom_WhenCalledRepeatedly_AutoIncrementsID(t *testing.T) {
+	// Given two valid room inputs,
+	// when both rooms are created,
+	// then their IDs are allocated in insert order.
+
+	// Given
+	expectedIDs := []int{1, 2}
+	db := createRoomsTestDB(t)
+	firstRoom := roomFixture("Hakkebakken", "101", 1)
+	secondRoom := roomFixture("Tangerud", "201", 2)
+
+	// When
+	firstCreated, firstErr := CreateRoom(db, firstRoom)
+	secondCreated, secondErr := CreateRoom(db, secondRoom)
+
+	// Then
+	if firstErr != nil {
+		t.Fatalf("expected first room creation to succeed: %v", firstErr)
 	}
-
-	var expectedID = createRoomResult.ID + 1
-	if createRoomResult2.ID != expectedID {
-		t.Fatalf("createRoom did not auto increment ID\nexpected: %d\nrecieved: %d", expectedID, createRoomResult2.ID)
+	if secondErr != nil {
+		t.Fatalf("expected second room creation to succeed: %v", secondErr)
 	}
-
-	if errInvalidRoomNumber == nil {
-		t.Fatal("expected error when creating room with invalid room number, but it was allowed")
-	}
-
-	if errInvalidConcurrency == nil {
-		t.Fatal("expected error when creating room with 0 or less max games, but it was allowed")
+	actualIDs := []int{firstCreated.ID, secondCreated.ID}
+	if !slices.Equal(expectedIDs, actualIDs) {
+		t.Fatalf("room IDs mismatch\nexpected: %v\nactual:   %v", expectedIDs, actualIDs)
 	}
 }
 
-func TestDeleteRoom(t *testing.T) {
+func TestCreateRoom_WhenRoomNumberDoesNotMatchFloor_ReturnsError(t *testing.T) {
+	// Given room input where the room number starts with another floor,
+	// when the room is created,
+	// then validation rejects it.
+
 	// Given
-	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
-	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
-	}
-	defer db.Close()
-
-	createdRoom1 := insertRoom(t, db, models.Room{
-		RoomNumber:         "101",
-		Floor:              1,
-		MaxConcurrentGames: 2,
-	})
-	createdRoom2 := insertRoom(t, db, models.Room{
-		RoomNumber:         "101",
-		Floor:              1,
-		MaxConcurrentGames: 2,
-	})
-
-	var createdRoomCountBefore int
-	err = db.QueryRow(`SELECT COUNT(*) FROM rooms`).Scan(&createdRoomCountBefore)
-	if err != nil {
-		t.Fatalf("failed to count rooms: %v", err)
-	}
-	if createdRoomCountBefore != 2 {
-		t.Fatalf("expected 2 rooms before delete, got %d", createdRoomCountBefore)
-	}
+	expectedError := true
+	db := createRoomsTestDB(t)
+	invalidRoom := roomFixture("Tangerud", "203", 3)
 
 	// When
-	err = DeleteRoom(db, createdRoom1.ID)
-	if err != nil {
-		t.Fatalf("expected no error when deleting, got %v", err)
-	}
+	_, err := CreateRoom(db, invalidRoom)
+	actualError := err != nil
 
 	// Then
-	var createdRoomCountAfter int
-	err = db.QueryRow(`SELECT COUNT(*) FROM rooms`).Scan(&createdRoomCountAfter)
-	if err != nil {
-		t.Fatalf("failed to count rooms after delete: %v", err)
-	}
-	if createdRoomCountAfter != 1 {
-		t.Fatalf("expected 1 room after delete, got %d", createdRoomCountAfter)
-	}
-
-	var doesRoomExist int
-	err = db.QueryRow(
-		`SELECT COUNT(*) FROM rooms WHERE id = ?`,
-		createdRoom1.ID,
-	).Scan(&doesRoomExist)
-	if err != nil {
-		t.Fatalf("failed checking deleted room: %v", err)
-	}
-	if doesRoomExist != 0 {
-		t.Fatalf("expected deleted room to not exist")
-	}
-
-	err = db.QueryRow(
-		`SELECT COUNT(*) FROM rooms WHERE id = ?`,
-		createdRoom2.ID,
-	).Scan(&doesRoomExist)
-	if err != nil {
-		t.Fatalf("failed checking remaining room: %v", err)
-	}
-
-	if doesRoomExist != 1 {
-		t.Fatalf("expected remaining room to still exist")
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
 
-func TestUpdateRoom(t *testing.T) {
+func TestCreateRoom_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testing.T) {
+	// Given room input without capacity for any events,
+	// when the room is created,
+	// then validation rejects it.
+
 	// Given
-	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
+	expectedError := true
+	db := createRoomsTestDB(t)
+	invalidRoom := roomFixture("Hakkebakken", "101", 1)
+	invalidRoom.MaxConcurrentGames = 0
+
+	// When
+	_, err := CreateRoom(db, invalidRoom)
+	actualError := err != nil
+
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
+	}
+}
+
+func TestDeleteRoom_RemovesOnlyTargetRoom(t *testing.T) {
+	// Given two stored rooms,
+	// when one room is deleted,
+	// then only the other room remains.
+
+	// Given
+	expectedRemainingRoomIDs := []int{2}
+	db := createRoomsTestDB(t)
+	roomToDelete := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+	insertRoom(t, db, roomFixture("Tangerud", "201", 2))
+
+	// When
+	err := DeleteRoom(db, roomToDelete.ID)
+
+	// Then
 	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
+		t.Fatalf("expected room deletion to succeed: %v", err)
 	}
-	defer db.Close()
-
-	var originalRoom = models.Room{
-		Name:               "Hakkebakken",
-		RoomNumber:         "101",
-		Floor:              1,
-		MaxConcurrentGames: 2,
-		Notes:              "Dette er et gyldig rom",
-		IsDisabled:         false,
+	actualRemainingRoomIDs := queryRoomIDs(t, db)
+	if !slices.Equal(expectedRemainingRoomIDs, actualRemainingRoomIDs) {
+		t.Fatalf("remaining room IDs mismatch\nexpected: %v\nactual:   %v", expectedRemainingRoomIDs, actualRemainingRoomIDs)
 	}
+}
 
-	resultCreateRoom, err := CreateRoom(db, originalRoom)
-	if err != nil {
-		t.Fatalf("unexpected error creating original room: %v", err)
+func TestDeleteRoom_WhenRoomDoesNotExist_ReturnsError(t *testing.T) {
+	// Given an empty room table,
+	// when a missing room is deleted,
+	// then the caller receives an error.
+
+	// Given
+	expectedError := true
+	db := createRoomsTestDB(t)
+
+	// When
+	err := DeleteRoom(db, 999)
+	actualError := err != nil
+
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
+}
 
-	var updatedRoom = models.Room{
-		ID:                 resultCreateRoom.ID,
+func TestUpdateRoom_UpdatesAllFieldsWithoutChangingID(t *testing.T) {
+	// Given an existing room and replacement room data,
+	// when the room is updated,
+	// then every mutable field changes while the ID stays the same.
+
+	// Given
+	db := createRoomsTestDB(t)
+	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+	expectedRoom := models.Room{
+		ID:                 existingRoom.ID,
 		Name:               "Tangerud",
 		RoomNumber:         "209",
 		Floor:              2,
 		MaxConcurrentGames: 3,
-		Notes:              "Dette er en oppdatert note",
+		Notes:              "Dette er ei oppdatert note",
 		IsDisabled:         true,
 	}
 
-	var updatedRoomInvalidRoomNumber = *resultCreateRoom
-	updatedRoomInvalidRoomNumber.RoomNumber = ""
-
-	var updatedRoomInvalidRoomConcurrency = *resultCreateRoom
-	updatedRoomInvalidRoomConcurrency.MaxConcurrentGames = -1
-
-	var updatedRoomInvalidRoomNumberFloor = *resultCreateRoom
-	updatedRoomInvalidRoomNumberFloor.Floor = 3
-	updatedRoomInvalidRoomNumberFloor.RoomNumber = "203"
-
 	// When
-	resultUpdateRoomValid, err := UpdateRoom(db, updatedRoom)
-	if err != nil {
-		t.Fatalf("unexpected error when updating valid room: %v", err)
-	}
-
-	_, errInvalidRoomNumber := UpdateRoom(db, updatedRoomInvalidRoomNumber)
-	_, errInvalidRoomConcurrency := UpdateRoom(db, updatedRoomInvalidRoomConcurrency)
-	_, errInvalidRoomNumberFloor := UpdateRoom(db, updatedRoomInvalidRoomNumberFloor)
+	actualRoom, err := UpdateRoom(db, expectedRoom)
 
 	// Then
-	if resultCreateRoom.ID != resultUpdateRoomValid.ID {
-		t.Fatalf("UpdateRoom caused room ID to change\nexpected: \t%d\nrecieved: \t%d", resultCreateRoom.ID, resultUpdateRoomValid.ID)
+	if err != nil {
+		t.Fatalf("expected room update to succeed: %v", err)
 	}
-	if resultCreateRoom.Name == resultUpdateRoomValid.Name {
-		t.Fatalf("UpdateRoom did not update name correctly\nexpected: \t%s\nrecieved: \t%s", resultCreateRoom.Name, resultUpdateRoomValid.Name)
-	}
-	if resultCreateRoom.RoomNumber == resultUpdateRoomValid.RoomNumber {
-		t.Fatalf("UpdateRoom did not update room number correctly\nexpected: \t%s\nrecieved: \t%s", resultCreateRoom.RoomNumber, resultUpdateRoomValid.RoomNumber)
-	}
-	if resultCreateRoom.Floor == resultUpdateRoomValid.Floor {
-		t.Fatalf("UpdateRoom did not update floor number correctly\nexpected: \t%d\nrecieved: \t%d", resultCreateRoom.Floor, resultUpdateRoomValid.Floor)
-	}
-	if resultCreateRoom.Notes == resultUpdateRoomValid.Notes {
-		t.Fatalf("UpdateRoom did not update notes correctly\nexpected: \t%s\nrecieved: \t%s", resultCreateRoom.Notes, resultUpdateRoomValid.Notes)
-	}
-	if resultCreateRoom.MaxConcurrentGames == resultUpdateRoomValid.MaxConcurrentGames {
-		t.Fatalf("UpdateRoom did not update max concurrent games correctly\nexpected: \t%d\nrecieved: \t%d", resultCreateRoom.MaxConcurrentGames, resultUpdateRoomValid.MaxConcurrentGames)
-	}
+	assertRoomMatches(t, expectedRoom, *actualRoom)
+}
 
-	if errInvalidRoomNumber == nil {
-		t.Fatalf("UpdateRoom allowed updating invalid room number")
-	}
-	if errInvalidRoomNumberFloor == nil {
-		t.Fatalf("UpdateRoom allowed updating with an invalid room number and floor combination")
-	}
-	if errInvalidRoomConcurrency == nil {
-		t.Fatalf("UpdateRoom allowed updating invalid max concurrent games")
+func TestUpdateRoom_WhenRoomNumberIsEmpty_ReturnsError(t *testing.T) {
+	// Given replacement room data with an empty room number,
+	// when the room is updated,
+	// then validation rejects it.
+
+	// Given
+	expectedError := true
+	db := createRoomsTestDB(t)
+	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+	invalidRoom := existingRoom
+	invalidRoom.RoomNumber = ""
+
+	// When
+	_, err := UpdateRoom(db, invalidRoom)
+	actualError := err != nil
+
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
 
-func TestUpdateRoomPartial(t *testing.T) {
+func TestUpdateRoom_WhenRoomNumberDoesNotMatchFloor_ReturnsError(t *testing.T) {
+	// Given replacement room data whose number starts with another floor,
+	// when the room is updated,
+	// then validation rejects it.
+
 	// Given
-	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
-	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
-	}
-	defer db.Close()
-
-	var originalRoom = models.Room{
-		Name:               "Hakkebakken",
-		RoomNumber:         "101",
-		Floor:              1,
-		MaxConcurrentGames: 2,
-		Notes:              "Dette er et gyldig rom",
-		IsDisabled:         false,
-	}
-	var originalRoomPartial = models.Room{
-		Name:               "Hakkebakken",
-		RoomNumber:         "101",
-		Floor:              1,
-		MaxConcurrentGames: 2,
-		Notes:              "Dette er et gyldig rom",
-		IsDisabled:         false,
-	}
-
-	createRoomResult, err := CreateRoom(db, originalRoom)
-	if err != nil {
-		t.Fatalf("unexpected error creating original room: %v", err)
-	}
-	createRoomPartialResult, err := CreateRoom(db, originalRoomPartial)
-	if err != nil {
-		t.Fatalf("unexpected error creating original room: %v", err)
-	}
+	expectedError := true
+	db := createRoomsTestDB(t)
+	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+	invalidRoom := existingRoom
+	invalidRoom.RoomNumber = "203"
+	invalidRoom.Floor = 3
 
 	// When
-	var updatedName string = "Tangerud"
-	var updatedRoomNumber string = "303"
-	var updatedFloor int = 3
-	var updatedConcurrent int = 3
-	var updatedNotes string = ""
-	var updatedDisables bool = true
-
-	var updatedRoom = models.RoomInput{
-		ID:                 createRoomResult.ID,
-		Name:               &updatedName,
-		RoomNumber:         &updatedRoomNumber,
-		Floor:              &updatedFloor,
-		MaxConcurrentGames: &updatedConcurrent,
-		Notes:              &updatedNotes,
-		IsDisabled:         &updatedDisables,
-	}
-	updatedRoomResult, err := UpdateRoomPartial(db, updatedRoom)
-	if err != nil {
-		t.Fatalf("unexpected error when updating valid room: %v", err)
-	}
-	partialUpdatedRoomResult, err := UpdateRoomPartial(db, models.RoomInput{ID: createRoomPartialResult.ID, Name: &updatedName})
-	if err != nil {
-		t.Fatalf("unexpected error when partially updating valid room: %v", err)
-	}
-
-	var invalidRoomNumber string = ""
-	var invalidName string = ""
-	var invalidConcurrent int = -1
-
-	_, errInvalidID := UpdateRoomPartial(db, models.RoomInput{})
-	_, errInvalidName := UpdateRoomPartial(db, models.RoomInput{ID: 1, Name: &invalidName})
-	_, errInvalidRoomNumber := UpdateRoomPartial(db, models.RoomInput{ID: 1, RoomNumber: &invalidRoomNumber})
-	_, errInvalidConcurrency := UpdateRoomPartial(db, models.RoomInput{ID: 1, MaxConcurrentGames: &invalidConcurrent})
+	_, err := UpdateRoom(db, invalidRoom)
+	actualError := err != nil
 
 	// Then
-	if originalRoom.Name != createRoomResult.Name {
-		t.Errorf("Original name was different to what create room returned")
-	}
-	if createRoomResult.Name == updatedRoomResult.Name {
-		t.Errorf("Room name persisted after updateRoom was called successfully\nexpected: \t%s\nrecieved: \t%s", createRoomResult.Name, updatedRoomResult.Name)
-	}
-	if createRoomPartialResult.Name == partialUpdatedRoomResult.Name {
-		t.Errorf("Room name persisted after updateRoom was called successfully\nexpected: \t%s\nrecieved: \t%s", createRoomPartialResult.Name, partialUpdatedRoomResult.Name)
-	}
-
-	if errInvalidID == nil {
-		t.Errorf("UpdateRoom allowed update when ID was omited")
-	}
-	if errInvalidName == nil {
-		t.Errorf("UpdateRoom allowed update when name was an empty string")
-	}
-	if errInvalidConcurrency == nil {
-		t.Errorf("UpdateRoom allowed update when max concurrent games was less than 1")
-	}
-	if errInvalidRoomNumber == nil {
-		t.Errorf("UpdateRoom allowed update when room number was an empty string")
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
 
-func TestGetRoomByID(t *testing.T) {
+func TestUpdateRoom_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testing.T) {
+	// Given replacement room data with invalid event capacity,
+	// when the room is updated,
+	// then validation rejects it.
+
 	// Given
-	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
-	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
-	}
-	defer db.Close()
-
-	var validRoom = models.Room{
-		Name:               "Hakkebakken",
-		RoomNumber:         "101",
-		Floor:              1,
-		MaxConcurrentGames: 2,
-		Notes:              "Dette er et gyldig rom",
-		IsDisabled:         false,
-	}
-
-	createdRoom, err := CreateRoom(db, validRoom)
-	if err != nil {
-		t.Fatalf("unexpected error creating room: %v", err)
-	}
+	expectedError := true
+	db := createRoomsTestDB(t)
+	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+	invalidRoom := existingRoom
+	invalidRoom.MaxConcurrentGames = 0
 
 	// When
-	roomResult, err := GetRoomByID(db, createdRoom.ID)
-	if err != nil {
-		t.Fatalf("unexpected error getting room by ID: %v", err)
-	}
-
-	_, errInvalidID := GetRoomByID(db, 0)
-	_, errMissingRoom := GetRoomByID(db, -1)
+	_, err := UpdateRoom(db, invalidRoom)
+	actualError := err != nil
 
 	// Then
-	if *roomResult != *createdRoom {
-		t.Fatalf(
-			"GetRoomByID did not return expected room\nexpected:\t%v\nrecieved:\t%v",
-			*createdRoom,
-			*roomResult,
-		)
-	}
-
-	if errInvalidID == nil {
-		t.Fatal("expected error when getting room with invalid ID, but it was allowed")
-	}
-	if errMissingRoom == nil {
-		t.Fatal("expected error when getting non-existing room, but it was allowed")
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
 
-func TestGetAllRooms(t *testing.T) {
-	// Given
-	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
-	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
-	}
-	defer db.Close()
+func TestUpdateRoomPartial_UpdatesProvidedFields(t *testing.T) {
+	// Given an existing room and partial input for every mutable field,
+	// when the partial update runs,
+	// then the returned room contains all supplied values.
 
-	var validRooms = []models.Room{
-		{
-			Name:               "Hakkebakken",
-			RoomNumber:         "101",
-			Floor:              1,
-			MaxConcurrentGames: 2,
-			Notes:              "Room 1",
-			IsDisabled:         false,
-		}, {
-			Name:               "Tangerud",
-			RoomNumber:         "201",
-			Floor:              2,
-			MaxConcurrentGames: 4,
-			Notes:              "Second room",
-			IsDisabled:         false,
-		}, {
-			Name:               "Hundremeter Skogen",
-			RoomNumber:         "301",
-			Floor:              3,
-			MaxConcurrentGames: 1,
-			Notes:              "Second room",
-			IsDisabled:         false,
+	// Given
+	db := createRoomsTestDB(t)
+	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+	expectedRoom := models.Room{
+		ID:                 existingRoom.ID,
+		Name:               "Tangerud",
+		RoomNumber:         "303",
+		Floor:              3,
+		MaxConcurrentGames: 3,
+		Notes:              "",
+		IsDisabled:         true,
+	}
+	input := models.RoomInput{
+		ID:                 existingRoom.ID,
+		Name:               ptr(expectedRoom.Name),
+		RoomNumber:         ptr(expectedRoom.RoomNumber),
+		Floor:              ptr(expectedRoom.Floor),
+		MaxConcurrentGames: ptr(expectedRoom.MaxConcurrentGames),
+		Notes:              ptr(expectedRoom.Notes),
+		IsDisabled:         ptr(expectedRoom.IsDisabled),
+	}
+
+	// When
+	actualRoom, err := UpdateRoomPartial(db, input)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected partial room update to succeed: %v", err)
+	}
+	assertRoomMatches(t, expectedRoom, *actualRoom)
+}
+
+func TestUpdateRoomPartial_WhenOnlyNameIsProvided_LeavesOtherFieldsUnchanged(t *testing.T) {
+	// Given an existing room and partial input with only a new name,
+	// when the partial update runs,
+	// then only the name changes.
+
+	// Given
+	db := createRoomsTestDB(t)
+	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+	expectedRoom := existingRoom
+	expectedRoom.Name = "Tangerud"
+	input := models.RoomInput{
+		ID:   existingRoom.ID,
+		Name: ptr(expectedRoom.Name),
+	}
+
+	// When
+	actualRoom, err := UpdateRoomPartial(db, input)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected partial room update to succeed: %v", err)
+	}
+	assertRoomMatches(t, expectedRoom, *actualRoom)
+}
+
+func TestUpdateRoomPartial_WhenIDIsMissing_ReturnsError(t *testing.T) {
+	// Given partial room input without a room ID,
+	// when the partial update runs,
+	// then validation rejects it.
+
+	// Given
+	expectedError := true
+	db := createRoomsTestDB(t)
+
+	// When
+	_, err := UpdateRoomPartial(db, models.RoomInput{})
+	actualError := err != nil
+
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
+	}
+}
+
+func TestUpdateRoomPartial_WhenNameIsEmpty_ReturnsError(t *testing.T) {
+	// Given partial room input with an empty name,
+	// when the partial update runs,
+	// then validation rejects it.
+
+	// Given
+	expectedError := true
+	db := createRoomsTestDB(t)
+
+	// When
+	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1, Name: ptr("")})
+	actualError := err != nil
+
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
+	}
+}
+
+func TestUpdateRoomPartial_WhenRoomNumberIsEmpty_ReturnsError(t *testing.T) {
+	// Given partial room input with an empty room number,
+	// when the partial update runs,
+	// then validation rejects it.
+
+	// Given
+	expectedError := true
+	db := createRoomsTestDB(t)
+
+	// When
+	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1, RoomNumber: ptr("")})
+	actualError := err != nil
+
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
+	}
+}
+
+func TestUpdateRoomPartial_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testing.T) {
+	// Given partial room input with invalid event capacity,
+	// when the partial update runs,
+	// then validation rejects it.
+
+	// Given
+	expectedError := true
+	db := createRoomsTestDB(t)
+
+	// When
+	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1, MaxConcurrentGames: ptr(0)})
+	actualError := err != nil
+
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
+	}
+}
+
+func TestUpdateRoomPartial_WhenNoFieldsAreProvided_ReturnsError(t *testing.T) {
+	// Given partial room input with an ID but no updated fields,
+	// when the partial update runs,
+	// then validation rejects it.
+
+	// Given
+	expectedError := true
+	db := createRoomsTestDB(t)
+
+	// When
+	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1})
+	actualError := err != nil
+
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
+	}
+}
+
+func TestGetRoomByID_ReturnsStoredRoom(t *testing.T) {
+	// Given a stored room,
+	// when it is fetched by ID,
+	// then the matching room is returned.
+
+	// Given
+	db := createRoomsTestDB(t)
+	expectedRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+
+	// When
+	actualRoom, err := GetRoomByID(db, expectedRoom.ID)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected room lookup to succeed: %v", err)
+	}
+	assertRoomMatches(t, expectedRoom, *actualRoom)
+}
+
+func TestGetRoomByID_WhenIDIsInvalid_ReturnsError(t *testing.T) {
+	// Given an invalid room ID,
+	// when it is fetched,
+	// then validation rejects it.
+
+	// Given
+	expectedError := true
+	db := createRoomsTestDB(t)
+
+	// When
+	_, err := GetRoomByID(db, 0)
+	actualError := err != nil
+
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
+	}
+}
+
+func TestGetRoomByID_WhenRoomDoesNotExist_ReturnsError(t *testing.T) {
+	// Given a positive room ID with no stored room,
+	// when it is fetched,
+	// then the caller receives an error.
+
+	// Given
+	expectedError := true
+	db := createRoomsTestDB(t)
+
+	// When
+	_, err := GetRoomByID(db, 999)
+	actualError := err != nil
+
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
+	}
+}
+
+func TestGetAllRooms_ReturnsRoomsOrderedByFloorAndNumber(t *testing.T) {
+	// Given rooms inserted outside display order,
+	// when all rooms are listed,
+	// then rooms are ordered by floor and room number.
+
+	// Given
+	expectedRoomNumbers := []string{"101", "102", "201"}
+	db := createRoomsTestDB(t)
+	insertRoom(t, db, roomFixture("Tangerud", "201", 2))
+	insertRoom(t, db, roomFixture("Brumms hus", "102", 1))
+	insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+
+	// When
+	actualRooms, err := GetAllRooms(db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected room listing to succeed: %v", err)
+	}
+	actualRoomNumbers := roomNumbers(actualRooms)
+	if !slices.Equal(expectedRoomNumbers, actualRoomNumbers) {
+		t.Fatalf("room order mismatch\nexpected: %v\nactual:   %v", expectedRoomNumbers, actualRoomNumbers)
+	}
+}
+
+func TestGetAllRoomStatusesByPulje_ReturnsRoomsAndPuljeAssignments(t *testing.T) {
+	// Given rooms, puljer, and event assignments across puljer,
+	// when room statuses are listed,
+	// then every pulje has every room with only its assigned events.
+
+	// Given
+	db := createRoomsTestDB(t)
+	seedRoomEventLookups(t, db)
+	roomOne := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+	roomTwo := insertRoom(t, db, roomFixture("Tangerud", "201", 2))
+	fridayPulje := insertPulje(t, db, models.Pulje("Friday"), "Fredag kveld")
+	saturdayPulje := insertPulje(t, db, models.Pulje("Saturday"), "Laurdag")
+	alphaEvent := insertEvent(t, db, "alpha-event", "Alpha Event", 5)
+	betaEvent := insertEvent(t, db, "beta-event", "Beta Event", 4)
+	gammaEvent := insertEvent(t, db, "gamma-event", "Gamma Event", 6)
+	insertEventPulje(t, db, alphaEvent, fridayPulje, sql.NullInt64{Int64: int64(roomOne.ID), Valid: true})
+	insertEventPulje(t, db, betaEvent, fridayPulje, sql.NullInt64{Int64: int64(roomOne.ID), Valid: true})
+	insertEventPulje(t, db, gammaEvent, saturdayPulje, sql.NullInt64{Int64: int64(roomTwo.ID), Valid: true})
+	expectedAssignments := map[models.Pulje]map[int64][]string{
+		fridayPulje: {
+			int64(roomOne.ID): []string{"Alpha Event", "Beta Event"},
+			int64(roomTwo.ID): []string{},
+		},
+		saturdayPulje: {
+			int64(roomOne.ID): []string{},
+			int64(roomTwo.ID): []string{"Gamma Event"},
 		},
 	}
 
-	var createdRooms []models.Room
-	for _, room := range validRooms {
-		createdRoom, err := CreateRoom(db, room)
-		if err != nil {
-			t.Fatalf("unexpected error creating room: %v", err)
-		}
-
-		createdRooms = append(createdRooms, *createdRoom)
-	}
-
 	// When
-	resultRooms, err := GetAllRooms(db)
-	if err != nil {
-		t.Fatalf("unexpected error getting all rooms: %v", err)
-	}
+	actualStatuses, err := GetAllRoomStatusesByPulje(db, fridayPulje)
 
 	// Then
-	// - ensure all rooms were returned
-	if len(resultRooms) != 3 {
-		t.Fatalf(
-			"expected 3 rooms, recieved: %d",
-			len(resultRooms),
-		)
+	if err != nil {
+		t.Fatalf("expected room status listing to succeed: %v", err)
 	}
-
-	// - ensure ordering is correct
-	if resultRooms[0].ID != createdRooms[0].ID {
-		t.Fatalf(
-			"expected first room ID %d, recieved %d",
-			createdRooms[0].ID,
-			resultRooms[0].ID,
-		)
-	}
-	if resultRooms[len(resultRooms)-1].ID != createdRooms[len(createdRooms)-1].ID {
-		t.Fatalf(
-			"expected last room ID %d, recieved %d",
-			createdRooms[len(createdRooms)-1].ID,
-			resultRooms[len(resultRooms)-1].ID,
-		)
-	}
+	assertRoomStatusAssignments(t, expectedAssignments, actualStatuses)
 }
 
-func TestGetAllRoomStatusesByPulje(t *testing.T) {
+func TestAssignRoomToRelationEventPuljer_AssignsRoomToEventPulje(t *testing.T) {
+	// Given an event pulje relation without a room,
+	// when a room is assigned to the event,
+	// then the relation stores that room.
+
 	// Given
-	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services_event_puljer", t)
-	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
-	}
-	defer db.Close()
-
-	// Seed databases with required data for relations
-	rooms := insertRooms(t, db)
-	puljer := insertPuljer(t, db)
-	events := insertEvents(t, db)
-
-	query := `
-        INSERT INTO relation_event_puljer (
-            event_id,
-            pulje_id,
-            room_id
-        )
-        VALUES (?, ?, ?)
-        RETURNING
-            event_id,
-            pulje_id,
-            is_in_pulje,
-            is_published,
-            room_id
-    `
-
-	var eventPuljerSource = []models.EventPulje{
-		{
-			EventID: events[0],
-			PuljeID: models.Pulje(puljer[0]),
-			RoomID:  sql.NullInt64{Int64: int64(rooms[0]), Valid: true},
-		}, {
-			EventID: events[1],
-			PuljeID: models.Pulje(puljer[0]),
-			RoomID:  sql.NullInt64{Int64: int64(rooms[0]), Valid: true},
-		}, {
-			EventID: events[2],
-			PuljeID: models.Pulje(puljer[1]),
-			RoomID:  sql.NullInt64{Int64: int64(rooms[1]), Valid: true},
-		}, {
-			EventID: events[3],
-			PuljeID: models.Pulje(puljer[1]),
-			RoomID:  sql.NullInt64{Int64: int64(rooms[2]), Valid: true},
-		}, {
-			EventID: events[4],
-			PuljeID: models.Pulje(puljer[2]),
-			RoomID:  sql.NullInt64{},
-		},
-	}
-
-	var createdEventPuljer []models.EventPulje
-	for _, eventSource := range eventPuljerSource {
-		var createdEvent models.EventPulje
-
-		err := db.QueryRow(
-			query,
-			eventSource.EventID,
-			eventSource.PuljeID,
-			eventSource.RoomID,
-		).Scan(
-			&createdEvent.EventID,
-			&createdEvent.PuljeID,
-			&createdEvent.IsInPulje,
-			&createdEvent.IsPublished,
-			&createdEvent.RoomID,
-		)
-
-		if err != nil {
-			t.Fatalf("Failed to create event: %v", err)
-		}
-		createdEventPuljer = append(createdEventPuljer, createdEvent)
-	}
-
-	var expectedRoomStatuses = make(models.RoomStatusByPulje)
-	for _, puljeID := range puljer {
-		pulje := models.Pulje(puljeID)
-
-		if expectedRoomStatuses[pulje] == nil {
-			expectedRoomStatuses[pulje] = make(map[int64]models.RoomByPulje)
-		}
-
-		for _, roomID := range rooms {
-			expectedRoomStatuses[pulje][int64(roomID)] = models.RoomByPulje{
-				ID:                 roomID,
-				Name:               "",
-				RoomNumber:         "",
-				MaxConcurrentGames: 0,
-				Notes:              "",
-				AssignedEventsID:   []models.RoomEventPuljeSummary{},
-			}
-		}
-	}
-	for _, eventPulje := range createdEventPuljer {
-		if !eventPulje.IsInPulje || !eventPulje.RoomID.Valid {
-			continue
-		}
-
-		pulje := eventPulje.PuljeID
-		roomID := eventPulje.RoomID.Int64
-
-		room := expectedRoomStatuses[pulje][roomID]
-
-		room.AssignedEventsID = append(room.AssignedEventsID, models.RoomEventPuljeSummary{
-			EventID: eventPulje.EventID,
-		})
-
-		expectedRoomStatuses[pulje][roomID] = room
+	db := createRoomsTestDB(t)
+	seedRoomEventLookups(t, db)
+	room := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
+	puljeID := insertPulje(t, db, models.Pulje("Friday"), "Fredag kveld")
+	eventID := insertEvent(t, db, "alpha-event", "Alpha Event", 5)
+	insertEventPulje(t, db, eventID, puljeID, sql.NullInt64{})
+	expectedEventPulje := models.EventPulje{
+		EventID:     eventID,
+		PuljeID:     puljeID,
+		IsInPulje:   true,
+		IsPublished: false,
+		RoomID:      sql.NullInt64{Int64: int64(room.ID), Valid: true},
 	}
 
 	// When
-	result, err := GetAllRoomStatusesByPulje(db, models.PuljeFredagKveld)
-	if err != nil {
-		t.Fatalf("Unexpected arror: %v", err)
-	}
+	actualEventPulje, err := AssignRoomToRelationEventPuljer(db, int64(room.ID), eventID)
 
 	// Then
-	for pulje, rooms := range expectedRoomStatuses {
-		for roomID, expectedRoom := range rooms {
-
-			actualRoom := result[pulje][roomID]
-
-			if len(actualRoom.AssignedEventsID) != len(expectedRoom.AssignedEventsID) {
-				t.Errorf(
-					"pulje=%s room=%d expected %d events, got %d",
-					pulje,
-					roomID,
-					len(expectedRoom.AssignedEventsID),
-					len(actualRoom.AssignedEventsID),
-				)
-			}
-		}
+	if err != nil {
+		t.Fatalf("expected room assignment to succeed: %v", err)
+	}
+	if actualEventPulje != expectedEventPulje {
+		t.Fatalf("event pulje mismatch\nexpected: %+v\nactual:   %+v", expectedEventPulje, actualEventPulje)
 	}
 }
 
-func TestAssignRoomToRelationEventPuljer(t *testing.T) {
+func TestAssignRoomToRelationEventPuljer_WhenRelationDoesNotExist_ReturnsError(t *testing.T) {
+	// Given no event pulje relation for an event,
+	// when a room is assigned to that event,
+	// then the caller receives an error.
+
 	// Given
-	db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services_assignment", t)
-	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
-	}
-	defer db.Close()
-
-	// Seed databases with required data for relations
-	rooms := insertRooms(t, db)
-	puljer := insertPuljer(t, db)
-	events := insertEvents(t, db)
-
-	// Simplified relatinal insert
-	eventID := events[0]
-	puljeID := puljer[0]
-
-	_, err = db.Exec(`
-		INSERT INTO relation_event_puljer (event_id, pulje_id)
-		VALUES (?, ?)
-	`, eventID, puljeID)
-	if err != nil {
-		t.Fatalf("failed to insert relation: %v", err)
-	}
+	expectedError := true
+	db := createRoomsTestDB(t)
 
 	// When
-	result, err := AssignRoomToRelationEventPuljer(db, rooms[0], eventID)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
+	_, err := AssignRoomToRelationEventPuljer(db, 1, "missing-event")
+	actualError := err != nil
 
-	// Thenn
-	if result.EventID != eventID {
-		t.Fatalf("Event ID did not match between input and ouptut\nexpected:\t%s\nrecieved:\t%s", eventID, result.EventID)
-	}
-	if result.PuljeID != models.Pulje(puljeID) {
-		t.Fatalf("Pulje ID did not match between input and ouptut\nexpected:\t%s\nrecieved:\t%s", models.Pulje(puljeID), result.PuljeID)
-	}
-
-	if !result.RoomID.Valid {
-		t.Fatalf("expected room_id to be set")
-	}
-
-	if result.RoomID.Int64 != int64(rooms[0]) {
-		t.Fatalf(
-			"Room number did not update\nexpected:\t%d\nrecieved:\t%d",
-			rooms[0],
-			result.RoomID.Int64,
-		)
+	// Then
+	if actualError != expectedError {
+		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
 
-func insertRoom(t *testing.T, db *sql.DB, input models.Room) models.Room {
+func createRoomsTestDB(t testing.TB) *sql.DB {
 	t.Helper()
 
-	query := `
-        INSERT INTO rooms (
-            name,
-			room_number,
-			floor,
-			max_concurrent_games,
-			notes,
-			is_disabled
-        )
-        VALUES (?, ?, ?, ?, ?, ?)
-        RETURNING
-            id,
-            name,
-			room_number,
-			floor,
-			max_concurrent_games,
-			notes,
-			is_disabled
-    `
+	return testutil.CreateTestDB(t, "rooms")
+}
+
+func roomFixture(name string, roomNumber string, floor int) models.Room {
+	return models.Room{
+		Name:               name,
+		RoomNumber:         roomNumber,
+		Floor:              floor,
+		MaxConcurrentGames: 2,
+		Notes:              "Romnotat",
+		IsDisabled:         false,
+	}
+}
+
+func insertRoom(t testing.TB, db *sql.DB, input models.Room) models.Room {
+	t.Helper()
 
 	var room models.Room
-	err := db.QueryRow(query,
-		input.Name,
-		input.RoomNumber,
-		input.Floor,
-		input.MaxConcurrentGames,
-		input.Notes,
-		input.IsDisabled,
-	).Scan(
+	err := db.QueryRow(`
+		INSERT INTO rooms (
+			name,
+			room_number,
+			floor,
+			max_concurrent_games,
+			notes,
+			is_disabled
+		)
+		VALUES (?, ?, ?, ?, ?, ?)
+		RETURNING
+			id,
+			name,
+			room_number,
+			floor,
+			max_concurrent_games,
+			notes,
+			is_disabled
+	`, input.Name, input.RoomNumber, input.Floor, input.MaxConcurrentGames, input.Notes, input.IsDisabled).Scan(
 		&room.ID,
 		&room.Name,
 		&room.RoomNumber,
 		&room.Floor,
 		&room.MaxConcurrentGames,
 		&room.Notes,
-		&room.IsDisabled)
+		&room.IsDisabled,
+	)
 	if err != nil {
-		t.Fatalf("Failed to create room: %v", err)
+		t.Fatalf("failed to insert room: %v", err)
 	}
+
 	return room
 }
 
-func insertPuljer(t *testing.T, db *sql.DB) []string {
+func queryRoomIDs(t testing.TB, db *sql.DB) []int {
 	t.Helper()
 
-	puljerQuery := `
-        INSERT INTO puljer (
-			id, name, status, start_at, end_at
-		) VALUES
-			('Friday', 'Fredag kveld', 'Open', '2025-10-03', '2025-10-03'),
-			('SaturdayMorning', 'Lørdag morgen', 'Open', '2025-10-04', '2025-10-04'),
-			('SaturdayEvening', 'Lørdag kveld', 'Open', '2025-10-04', '2025-10-04'),
-			('Sunday', 'Søndag morgen', 'Open', '2025-10-05', '2025-10-05')
-        RETURNING id
-	`
-	rows, err := db.Query(puljerQuery)
+	rows, err := db.Query(`SELECT id FROM rooms ORDER BY id`)
 	if err != nil {
-		t.Fatalf("failed to insert puljer: %v", err)
+		t.Fatalf("failed to query room IDs: %v", err)
 	}
 	defer rows.Close()
 
-	var ids []string
+	var ids []int
 	for rows.Next() {
-		var id string
+		var id int
 		if err := rows.Scan(&id); err != nil {
-			t.Fatalf("failed to scan pulje id: %v", err)
+			t.Fatalf("failed to scan room ID: %v", err)
 		}
 		ids = append(ids, id)
 	}
-
 	if err := rows.Err(); err != nil {
-		t.Fatalf("row iteration failed: %v", err)
+		t.Fatalf("failed to iterate room IDs: %v", err)
 	}
 
 	return ids
 }
 
-func insertRooms(t *testing.T, db *sql.DB) []int64 {
+func seedRoomEventLookups(t testing.TB, db *sql.DB) {
 	t.Helper()
 
-	rooms := []models.Room{
-		{
-			Name:               "Hundremeterskogen",
-			RoomNumber:         "101",
-			Floor:              1,
-			MaxConcurrentGames: 2,
-			Notes:              "Rom inspirert av skogen der Ole Brumm bor",
-			IsDisabled:         false,
-		},
-		{
-			Name:               "Brumms Hus",
-			RoomNumber:         "102",
-			Floor:              1,
-			MaxConcurrentGames: 3,
-			Notes:              "Koselig rom med plass til flere spill",
-			IsDisabled:         false,
-		},
-		{
-			Name:               "Tigerguttens Hjorne",
-			RoomNumber:         "201",
-			Floor:              2,
-			MaxConcurrentGames: 2,
-			Notes:              "Aktivt rom for mindre grupper",
-			IsDisabled:         false,
-		},
-		{
-			Name:               "Nasse Noffs Sti",
-			RoomNumber:         "202",
-			Floor:              2,
-			MaxConcurrentGames: 1,
-			Notes:              "Lite og stille rom",
-			IsDisabled:         false,
-		},
-		{
-			Name:               "Ugles Topp",
-			RoomNumber:         "301",
-			Floor:              3,
-			MaxConcurrentGames: 4,
-			Notes:              "Stort rom egnet for parallelle aktiviteter, men er inaktivt",
-			IsDisabled:         true,
-		},
-	}
-
-	query := `
-            INSERT INTO rooms (
-                name,
-                room_number,
-                floor,
-                max_concurrent_games,
-                notes,
-                is_disabled
-            )
-            VALUES (?, ?, ?, ?, ?, ?)
-            RETURNING id
-        `
-	var roomIDs []int64
-	for _, room := range rooms {
-		var roomID int64
-		err := db.QueryRow(query,
-			room.Name,
-			room.RoomNumber,
-			room.Floor,
-			room.MaxConcurrentGames,
-			room.Notes,
-			room.IsDisabled,
-		).Scan(&roomID)
-		if err != nil {
-			t.Fatalf("Failed to create room: %v", err)
-		}
-		roomIDs = append(roomIDs, roomID)
-	}
-
-	return roomIDs
+	testutil.MustExec(t, db, `INSERT INTO event_statuses(status) VALUES (?) ON CONFLICT(status) DO NOTHING`, models.EventStatusAnnounced)
+	testutil.MustExec(t, db, `INSERT INTO events_types(event_type) VALUES (?) ON CONFLICT(event_type) DO NOTHING`, models.EventTypeBoardGame)
+	testutil.MustExec(t, db, `INSERT INTO age_groups(age_group) VALUES (?) ON CONFLICT(age_group) DO NOTHING`, models.AgeGroupAdultsOnly)
+	testutil.MustExec(t, db, `INSERT INTO event_runtimes(runtime) VALUES (?) ON CONFLICT(runtime) DO NOTHING`, models.RunTimeLongRunning)
+	testutil.MustExec(t, db, `INSERT INTO pulje_statuses(status) VALUES (?) ON CONFLICT(status) DO NOTHING`, models.PuljeStatusOpen)
 }
 
-func insertEvents(t *testing.T, db *sql.DB) []string {
-	events := []models.Event{
-		{
-			Title:             "Mysteriet i Hundremeterskogen",
-			Intro:             "Et rolig mysterium for nye spillere.",
-			Description:       "Spillerne må finne ut hvorfor honningkrukkene til Ole Brumm forsvinner om natten.",
-			System:            "Call of Cthulhu",
-			EventType:         models.EventTypeBoardGame,
-			AgeGroup:          models.AgeGroupAdultsOnly,
-			Runtime:           models.RunTimeLongRunning,
-			HostName:          "Kristoffer",
-			Email:             "brumm@example.com",
-			PhoneNumber:       "90000001",
-			MaxPlayers:        5,
-			BeginnerFriendly:  true,
-			CanBeRunInEnglish: true,
-			Notes:             "Passer godt for førstegangsspillere",
-			Status:            "Annonsert",
-		},
-		{
-			Title:             "Tigerguttens Turnering",
-			Intro:             "En energisk konkurranse med raske utfordringer.",
-			Description:       "Deltakerne konkurrerer i kreative oppgaver og samarbeid under press.",
-			System:            "Dungeons & Dragons 5e",
-			EventType:         models.EventTypeBoardGame,
-			AgeGroup:          models.AgeGroupAdultsOnly,
-			Runtime:           models.RunTimeLongRunning,
-			HostName:          "Ole",
-			Email:             "tiger@example.com",
-			PhoneNumber:       "90000002",
-			MaxPlayers:        6,
-			BeginnerFriendly:  true,
-			CanBeRunInEnglish: false,
-			Notes:             "",
-			Status:            "Kladd",
-		},
-		{
-			Title:             "Nasse Noffs Mørke Skog",
-			Intro:             "Et skrekkeventyr i dype skoger.",
-			Description:       "Noe beveger seg mellom trærne, og spillerne må overleve natten.",
-			System:            "Vaesen",
-			EventType:         models.EventTypeBoardGame,
-			AgeGroup:          models.AgeGroupAdultsOnly,
-			Runtime:           models.RunTimeLongRunning,
-			HostName:          "Anne",
-			Email:             "nasse@example.com",
-			PhoneNumber:       "90000003",
-			MaxPlayers:        4,
-			BeginnerFriendly:  false,
-			CanBeRunInEnglish: true,
-			Notes:             "Inneholder skrekkelementer",
-			Status:            "Annonsert",
-		},
-		{
-			Title:             "Ugles Kunnskapsprove",
-			Intro:             "Quiz og strategi i kombinasjon.",
-			Description:       "Spillerne må samarbeide for å løse gåter og vinne over Ugle.",
-			System:            "Custom",
-			EventType:         models.EventTypeBoardGame,
-			AgeGroup:          models.AgeGroupAdultsOnly,
-			Runtime:           models.RunTimeLongRunning,
-			HostName:          "Mari",
-			Email:             "ugle@example.com",
-			PhoneNumber:       "90000004",
-			MaxPlayers:        8,
-			BeginnerFriendly:  true,
-			CanBeRunInEnglish: true,
-			Notes:             "",
-			Status:            "Annonsert",
-		},
-		{
-			Title:             "Kengus Eventyrreise",
-			Intro:             "Et familievennlig fantasy-eventyr.",
-			Description:       "Bli med Kengu og Ro på en reise gjennom magiske landskap.",
-			System:            "Pathfinder 2e",
-			EventType:         models.EventTypeBoardGame,
-			AgeGroup:          models.AgeGroupAdultsOnly,
-			Runtime:           models.RunTimeLongRunning,
-			HostName:          "Sindre",
-			Email:             "kengu@example.com",
-			PhoneNumber:       "90000005",
-			MaxPlayers:        5,
-			BeginnerFriendly:  true,
-			CanBeRunInEnglish: false,
-			Notes:             "Familievennlig innhold",
-			Status:            "Godkjent",
-		},
+func insertPulje(t testing.TB, db *sql.DB, id models.Pulje, name string) models.Pulje {
+	t.Helper()
+
+	testutil.MustExec(t, db, `
+		INSERT INTO puljer (id, name, status, start_at, end_at)
+		VALUES (?, ?, ?, ?, ?)
+	`, id, name, models.PuljeStatusOpen, "2025-10-03", "2025-10-03")
+
+	return id
+}
+
+func insertEvent(t testing.TB, db *sql.DB, eventID string, title string, maxPlayers int) string {
+	t.Helper()
+
+	testutil.MustExec(t, db, `
+		INSERT INTO events (
+			id,
+			title,
+			intro,
+			description,
+			system,
+			event_type,
+			age_group,
+			event_runtime,
+			host_name,
+			email,
+			phone_number,
+			max_players,
+			beginner_friendly,
+			can_be_run_in_english,
+			status
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, eventID, title, "Intro", "Description", "System", models.EventTypeBoardGame, models.AgeGroupAdultsOnly, models.RunTimeLongRunning, "Host", "host@example.com", "12345678", maxPlayers, true, true, models.EventStatusAnnounced)
+
+	return eventID
+}
+
+func insertEventPulje(t testing.TB, db *sql.DB, eventID string, puljeID models.Pulje, roomID sql.NullInt64) {
+	t.Helper()
+
+	testutil.MustExec(t, db, `
+		INSERT INTO relation_event_puljer (event_id, pulje_id, room_id)
+		VALUES (?, ?, ?)
+	`, eventID, puljeID, roomID)
+}
+
+func roomNumbers(rooms []models.Room) []string {
+	numbers := make([]string, 0, len(rooms))
+	for _, room := range rooms {
+		numbers = append(numbers, room.RoomNumber)
 	}
+	return numbers
+}
 
-	query := `
-        INSERT INTO events (
-            title,
-            intro,
-            description,
-            system,
-            host_name,
-            user_id,
-            created_by_id,
-            updated_by_id,
-            email,
-            phone_number,
-            max_players,
-            age_group,
-            event_runtime,
-            beginner_friendly,
-            can_be_run_in_english,
-            status
-        ) VALUES (
-            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-        ) RETURNING id`
+func assertRoomMatches(t testing.TB, expected models.Room, actual models.Room) {
+	t.Helper()
 
-	var eventIDs []string
-	for _, event := range events {
-		var eventID string
-		err := db.QueryRow(query,
-			event.Title,
-			event.Intro,
-			event.Description,
-			event.System,
-			event.HostName,
-			event.UserID,
-			event.CreatedByID,
-			event.UpdatedByID,
-			event.Email,
-			event.PhoneNumber,
-			event.MaxPlayers,
-			event.AgeGroup,
-			event.Runtime,
-			event.BeginnerFriendly,
-			event.CanBeRunInEnglish,
-			event.Status,
-		).Scan(&eventID)
-		if err != nil {
-			t.Fatalf("Failed to create event: %v", err)
+	if expected != actual {
+		t.Fatalf("room mismatch\nexpected: %+v\nactual:   %+v", expected, actual)
+	}
+}
+
+func assertRoomStatusAssignments(t testing.TB, expected map[models.Pulje]map[int64][]string, actual models.RoomStatusByPulje) {
+	t.Helper()
+
+	for expectedPulje, expectedRooms := range expected {
+		actualRooms, exists := actual[expectedPulje]
+		if !exists {
+			t.Fatalf("expected pulje %s to exist in room statuses", expectedPulje)
 		}
-		eventIDs = append(eventIDs, eventID)
-	}
 
-	return eventIDs
+		for expectedRoomID, expectedTitles := range expectedRooms {
+			actualRoom, exists := actualRooms[expectedRoomID]
+			if !exists {
+				t.Fatalf("expected room %d to exist in pulje %s", expectedRoomID, expectedPulje)
+			}
+
+			actualTitles := roomStatusEventTitles(actualRoom)
+			if !slices.Equal(expectedTitles, actualTitles) {
+				t.Fatalf(
+					"assigned event titles mismatch for pulje %s room %d\nexpected: %v\nactual:   %v",
+					expectedPulje,
+					expectedRoomID,
+					expectedTitles,
+					actualTitles,
+				)
+			}
+		}
+	}
+}
+
+func roomStatusEventTitles(room models.RoomByPulje) []string {
+	titles := make([]string, 0, len(room.AssignedEventsID))
+	for _, assignedEvent := range room.AssignedEventsID {
+		titles = append(titles, assignedEvent.Title)
+	}
+	return titles
+}
+
+func ptr[T any](value T) *T {
+	return &value
 }
