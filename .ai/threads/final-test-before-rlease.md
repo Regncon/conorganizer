@@ -427,4 +427,86 @@ My suggested order: first update `root.md` to be concise and match the intended 
 
 Time: 2026-06-11 15:31:03
 --- Next Prompt ---
+Would it be possible to create a general test for the breadcrumb? It's on most pages. Perhaps it should be moved to `general.md`? if we can't automate it?
+
+1. and 2.  I may not understand what you are asking, but, we will never be in a state where there are no events in a pulje or that there are no announced events
+
+3. Yes, make the error message user-friendly.
+
+4. How would you treat this as a release bug?
+
+
+
+Time: 2026-06-12 10:39:39
+--- Codex Run ---
+
+Codex output:
+Good clarifications. I’ll keep this as design discussion first and won’t edit yet. The main shift is that we can remove the impossible empty-state cases from `root.md` and focus the automated work on actual release-relevant behavior.
+Yes, breadcrumb can be automated.
+
+I’d split it like this:
+
+- Add a component test for `components.Breadcrumbs` once, to verify link crumbs, current crumb, separators, and mobile return behavior.
+- Add a small page-level assertion as we touch each page, because the component test cannot prove that `/` actually passes `Hjem`, `/profile` passes `Min Side`, etc.
+- Keep the root-specific breadcrumb check in `root.md`; it is still a root-page behavior. `general.md` can have a broader “breadcrumbs are consistent across pages” manual point, but that should not replace page-specific checks unless we decide not to automate them.
+
+For points 1 and 2: if the release data invariant is “there is always at least one announced event, and every pulje has events,” then those empty-state checks should come out of `root.md`. They are not useful manual release tests if the tester cannot realistically reach the state. I also would not add automation for them right now.
+
+For 3: agreed. I’d change the root page to show a Bokmål, user-facing message instead of raw text like `Error fetching events: ...`. I’d also add a test that forces a DB/query failure and verifies the friendly message is shown and raw technical details are not.
+
+For 4: I’d treat placeholder public card text as a release bug if an announced/public event can show values like `Game System`, `Arrangørnavn`, `Legg til en kort beskrivelse`, or `Nytt arrangement` on the front page. Those labels are form/editor placeholders, not user-facing program content. For release, public event cards should either show real data or intentionally omit optional missing fields. So I’d handle it as:
+
+- If the data model requires these fields before announcement: add/verify validation so an event cannot become announced with placeholder-worthy missing data.
+- If some fields are genuinely optional: update the card rendering so public/root cards hide optional empty fields instead of showing editor placeholders.
+- Add an automated test for root event cards that proves announced events with complete data render real title/intro/host/system and root links correctly. A separate validation/rendering test can cover the missing-data rule once we choose which behavior we want.
+
+Suggested next step: update `root.md` to remove the impossible empty-state checks, keep manual visual/browser checks, add the root automated tests for breadcrumb/CTA/card links/error message, and make the root error messages friendly.
+
+Time: 2026-06-12 10:39:39
+--- Next Prompt ---
+
+Let's not do any tests for placeholder data. I believe that the submission form already requires these fields. The admin can override that validation, but the admin is also personally responsible for the content, so I don't think we need to add extra guards for that.
+
+If you are ready then proceed. 
+
+Time: 2026-06-12 10:50:55
+--- Codex Run ---
+
+Codex output:
+I’ll proceed with the scoped version: no placeholder-data tests, remove the impossible empty-state checks from `root.md`, add automated coverage for breadcrumb/CTA/root card links/friendly root errors, and add a reusable breadcrumb component test.
+The working tree is clean except for the existing `.ai/threads/...` transcript. I’m going to make the root-page changes in the templ source and tests, then regenerate templ output if this repo tracks generated files.
+There are no tracked generated `_templ.go` files listed, so I’ll edit the `.templ` sources and run templ generation before tests if needed. The existing helper set has enough DOM utilities for the planned assertions.
+I’m going to keep the UI messages as package constants so the templates and tests share the same expected wording without duplicating raw strings across several places. The tests will still assert that technical error text is not leaked.
+I’m about to edit four areas: root messages/templates, root manual checklist text, root tests, and the breadcrumb component test. After that I’ll regenerate templ output and run the focused plus full test/report checks.
+I’m adding root tests as separate behaviors instead of one broad test: breadcrumb, CTA, pre/post-publish card URLs, and two friendly-error cases. That keeps the behavior report readable.
+I’m also adding the generic breadcrumb component coverage we discussed. The root test will still verify that the root page supplies `Hjem`; the component test verifies the shared breadcrumb rendering rules.
+The source edits are in place. I’m regenerating templ output now so the generated Go files match the `.templ` changes, then I’ll run the focused tests.
+Templ regeneration completed. I’m formatting the touched Go files and then I’ll run the root/components test packages first.
+Formatting and diff hygiene are clean for the project files. I’m running `components` and `pages/root` now; if those pass I’ll run the full suite/report.
+The focused tests pass. I’m running the full Go suite now, then the behavior report so the BDD output stays verified after adding these tests.
+Full Go tests pass. I’m running `task test:report` next to confirm the new BDD comments appear in the behavior report.
+The behavior report passes and now includes the new root and breadcrumb BDD entries. I’m checking the final diff/status and making sure no stale technical error text remains in root rendering.
+The project diff is clean. One thing to note: generated templ files are ignored in this repo, so the tracked changes are the `.templ` sources and tests; CI already runs `go tool templ generate` before the report command.
+`root.md` now has the impossible empty-state and placeholder-data checks removed, while the release-relevant manual browser checks remain. The generated templ files are ignored by `*_templ.go`, which matches the repo’s CI flow.
+Everything is verified. I’m collecting exact line references for the final summary now.
+Implemented the `root.md` pass.
+
+Changes made:
+- Tightened [root.md](/home/cinmay/Documents/conorganizer/documentation/testing/root.md:13): removed impossible empty-state checks and placeholder-data checks, updated wording to “publiserte arrangementer,” and kept the browser/manual checks that still need human verification.
+- Added user-friendly root-page error messages in [root.go](/home/cinmay/Documents/conorganizer/pages/root/root.go:16), [root_page.templ](/home/cinmay/Documents/conorganizer/pages/root/root_page.templ:42), and [event_list.templ](/home/cinmay/Documents/conorganizer/pages/root/event_list.templ:224).
+- Added root-page automated tests for breadcrumb, CTA, event-card URLs with/without pulje context, and friendly error rendering in [root_page_test.go](/home/cinmay/Documents/conorganizer/pages/root/root_page_test.go:15).
+- Added general breadcrumb component tests in [breadcrumbs_test.go](/home/cinmay/Documents/conorganizer/components/breadcrumbs_test.go:10).
+
+I did not add placeholder-data tests, per your decision.
+
+Validation passed:
+- `go tool templ generate`
+- `GOCACHE=/tmp/go-build-cache go test ./components ./pages/root`
+- `GOCACHE=/tmp/go-build-cache go test ./...`
+- `GOCACHE=/tmp/go-build-cache go tool task test:report`
+
+Behavior report now shows `113` tests run, `0` failed, `25` missing BDD comments. The existing `.ai/threads/final-test-before-rlease.md` file is still dirty and untouched.
+
+Time: 2026-06-12 10:50:55
+--- Next Prompt ---
 

@@ -3,12 +3,74 @@ package root
 import (
 	"database/sql"
 	"slices"
+	"strings"
 	"testing"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
+
+func TestRootPageContent_RendersHomeBreadcrumb(t *testing.T) {
+	// Gitt at brukeren åpner forsiden,
+	// når forsiden vises,
+	// så skal brødsmulestien vise Hjem som gjeldende side.
+
+	// Given
+	expectedBreadcrumb := []string{"Hjem"}
+
+	db := createRootPageTestDB(t)
+	setProgramPublishing(t, db, false)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualBreadcrumb := templtest.CollectTexts(doc, ".breadcrumb-end")
+
+	// Then
+	if !slices.Equal(expectedBreadcrumb, actualBreadcrumb) {
+		t.Fatalf("breadcrumb mismatch\nexpected: %v\nactual:   %v", expectedBreadcrumb, actualBreadcrumb)
+	}
+}
+
+func TestRootPageContent_RendersSubmitEventCallToAction(t *testing.T) {
+	// Gitt at brukeren åpner forsiden,
+	// når innsendingseksjonen vises,
+	// så skal den gi en tydelig inngang til å sende inn arrangement.
+
+	// Given
+	expectedTextParts := []string{
+		"Vil du arrangere noe under Regncon?",
+		"Send inn arrangement",
+	}
+	expectedHref := "/profile"
+	expectedImageSrc := "/static/call-to-action-avatar.webp"
+	expectedImageAlt := "Sent inn arrangement"
+
+	db := createRootPageTestDB(t)
+	setProgramPublishing(t, db, false)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualText := strings.Join(templtest.CollectTexts(doc, ".call-to-action"), " ")
+	actualHref, actualHrefExists := doc.Find(".call-to-action a").Attr("href")
+	actualImageSrc, actualImageSrcExists := doc.Find(".call-to-action img.call-to-action-avatar").Attr("src")
+	actualImageAlt, actualImageAltExists := doc.Find(".call-to-action img.call-to-action-avatar").Attr("alt")
+
+	// Then
+	for _, expectedTextPart := range expectedTextParts {
+		assertTextContains(t, actualText, expectedTextPart)
+	}
+	if !actualHrefExists || actualHref != expectedHref {
+		t.Fatalf("CTA href mismatch\nexpected: %q\nactual:   %q", expectedHref, actualHref)
+	}
+	if !actualImageSrcExists || actualImageSrc != expectedImageSrc {
+		t.Fatalf("CTA image src mismatch\nexpected: %q\nactual:   %q", expectedImageSrc, actualImageSrc)
+	}
+	if !actualImageAltExists || actualImageAlt != expectedImageAlt {
+		t.Fatalf("CTA image alt mismatch\nexpected: %q\nactual:   %q", expectedImageAlt, actualImageAlt)
+	}
+}
 
 func TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav(t *testing.T) {
 	// Gitt at publisering av program er skrudd av,
@@ -57,6 +119,30 @@ func TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsAnnouncedEvents(t *
 	// Then
 	if !slices.Equal(expectedTitles, actualTitles) {
 		t.Fatalf("event titles mismatch\nexpected: %v\nactual:   %v", expectedTitles, actualTitles)
+	}
+}
+
+func TestRootPageContent_WhenProgramPublishingIsOff_RendersEventLinksWithoutPulje(t *testing.T) {
+	// Gitt at programmet ikke er publisert,
+	// når annonserte arrangementer vises på forsiden,
+	// så skal arrangementskortene lenke direkte til arrangementssidene uten puljekontekst.
+
+	// Given
+	expectedHrefs := []string{"/event/alpha-announced", "/event/beta-announced"}
+
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, false)
+	insertRootPageEvent(t, db, "beta-announced", "Beta Announced", models.EventStatusAnnounced)
+	insertRootPageEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualHrefs := collectRootPageHrefs(doc, ".event-card-container")
+
+	// Then
+	if !slices.Equal(expectedHrefs, actualHrefs) {
+		t.Fatalf("event card hrefs mismatch\nexpected: %v\nactual:   %v", expectedHrefs, actualHrefs)
 	}
 }
 
@@ -119,6 +205,31 @@ func TestRootPageContent_WhenProgramPublishingIsOn_OnlyShowsAnnouncedPublishedPu
 	}
 }
 
+func TestRootPageContent_WhenProgramPublishingIsOn_RendersEventLinksWithPulje(t *testing.T) {
+	// Gitt at programmet er publisert,
+	// når publiserte puljearrangementer vises på forsiden,
+	// så skal arrangementskortene lenke til arrangementssiden med valgt puljekontekst.
+
+	// Given
+	expectedHrefs := []string{"/event/alpha-event?pulje=FredagKveld"}
+
+	db := createRootPageTestDB(t)
+	seedRootPageLookups(t, db)
+	setProgramPublishing(t, db, true)
+	insertRootPagePulje(t, db)
+	insertRootPageEvent(t, db, "alpha-event", "Alpha Event", models.EventStatusAnnounced)
+	insertRootPageEventPulje(t, db, "alpha-event", models.PuljeFredagKveld, true)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualHrefs := collectRootPageHrefs(doc, ".event-card-container")
+
+	// Then
+	if !slices.Equal(expectedHrefs, actualHrefs) {
+		t.Fatalf("event card hrefs mismatch\nexpected: %v\nactual:   %v", expectedHrefs, actualHrefs)
+	}
+}
+
 func TestRootPageContent_WhenProgramPublishingIsOn_RendersPuljeSectionsInTimeOrder(t *testing.T) {
 	// Gitt at publisering av program er skrudd på,
 	// når forsiden vises,
@@ -178,6 +289,62 @@ func TestRootPageContent_WhenProgramPublishingIsOn_SortsEventsAlphabeticallyWith
 	// Then
 	if !slices.Equal(expectedTitles, actualTitles) {
 		t.Fatalf("event titles mismatch\nexpected: %v\nactual:   %v", expectedTitles, actualTitles)
+	}
+}
+
+func TestRootPageContent_WhenProgramPublishingStateCannotLoad_RendersFriendlyError(t *testing.T) {
+	// Gitt at forsiden ikke kan lese publiseringsstatus,
+	// når forsiden vises,
+	// så skal brukeren se en vennlig feil uten tekniske detaljer.
+
+	// Given
+	expectedTextPart := rootPageLoadErrorMessage
+	unexpectedTextParts := []string{
+		"Error fetching",
+		"program_publishing_state",
+		"query program publishing state",
+		"no such table",
+	}
+
+	db := createRootPageTestDB(t)
+	mustExec(t, db, `DROP TABLE program_publishing_state`)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualText := rootPageText(doc)
+
+	// Then
+	assertTextContains(t, actualText, expectedTextPart)
+	for _, unexpectedTextPart := range unexpectedTextParts {
+		assertTextDoesNotContain(t, actualText, unexpectedTextPart)
+	}
+}
+
+func TestRootPageContent_WhenEventsCannotLoad_RendersFriendlyError(t *testing.T) {
+	// Gitt at forsiden ikke kan lese arrangementslisten,
+	// når forsiden vises,
+	// så skal brukeren se en vennlig feil uten tekniske detaljer.
+
+	// Given
+	expectedTextPart := rootEventsLoadErrorMessage
+	unexpectedTextParts := []string{
+		"Error fetching",
+		"query announced events",
+		"no such table",
+	}
+
+	db := createRootPageTestDB(t)
+	setProgramPublishing(t, db, false)
+	mustExec(t, db, `DROP TABLE events`)
+
+	// When
+	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	actualText := rootPageText(doc)
+
+	// Then
+	assertTextContains(t, actualText, expectedTextPart)
+	for _, unexpectedTextPart := range unexpectedTextParts {
+		assertTextDoesNotContain(t, actualText, unexpectedTextPart)
 	}
 }
 
@@ -291,5 +458,37 @@ func mustExec(t *testing.T, db *sql.DB, query string, args ...any) {
 
 	if _, err := db.Exec(query, args...); err != nil {
 		t.Fatalf("failed to execute query: %v\nquery: %s", err, query)
+	}
+}
+
+func collectRootPageHrefs(doc *goquery.Document, selector string) []string {
+	hrefs := make([]string, 0)
+	doc.Find(selector).Each(func(_ int, selection *goquery.Selection) {
+		href, exists := selection.Attr("href")
+		if exists {
+			hrefs = append(hrefs, href)
+		}
+	})
+	slices.Sort(hrefs)
+	return hrefs
+}
+
+func rootPageText(doc *goquery.Document) string {
+	return strings.Join(strings.Fields(doc.Text()), " ")
+}
+
+func assertTextContains(t *testing.T, actualText string, expectedTextPart string) {
+	t.Helper()
+
+	if !strings.Contains(actualText, expectedTextPart) {
+		t.Fatalf("text mismatch\nexpected text to contain: %q\nactual text:              %q", expectedTextPart, actualText)
+	}
+}
+
+func assertTextDoesNotContain(t *testing.T, actualText string, unexpectedTextPart string) {
+	t.Helper()
+
+	if strings.Contains(actualText, unexpectedTextPart) {
+		t.Fatalf("text mismatch\nexpected text not to contain: %q\nactual text:                  %q", unexpectedTextPart, actualText)
 	}
 }
