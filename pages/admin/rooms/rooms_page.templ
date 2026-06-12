@@ -7,6 +7,7 @@ import (
 	"sort"
 
 	"github.com/Regncon/conorganizer/components/icons"
+	roomComponents "github.com/Regncon/conorganizer/components/rooms"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
 	roomService "github.com/Regncon/conorganizer/service/rooms"
@@ -169,6 +170,9 @@ templ roomCard(room models.Room) {
 			<p style="border-bottom: 1px solid var(--bg-item-border);">Notater</p>
 			<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
 		}
+		<div style="width: 50%; aspect-ratio: 16/9; margin: 0 auto; margin-top: auto;">
+			@roomComponents.VenueContainer(true, room.RoomNumber)
+		</div>
 	</div>
 }
 
