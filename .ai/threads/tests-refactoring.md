@@ -176,4 +176,190 @@ Note: `.ai/threads/tests-refactoring.md` was already untracked before I started,
 
 Time: 2026-06-12 11:33:39
 --- Next Prompt ---
+Next, have a look at all the test files and see if any are a bit too large. Consider splitting them into smaller files if it would improve readability and maintainability.
+
+Time: 2026-06-12 12:12:43
+--- Codex Run ---
+
+Codex output:
+I’ll treat this as a follow-up cleanup on the current refactor. I’m going to review test file sizes and split only where the new file boundary is obvious enough to improve navigation, without creating tiny fragments.
+The size scan shows a few remaining large files, with `service/rooms/rooms_test.go` still the clear outlier after the earlier refactor. I’m checking the current git state now because the status output suggests the previous refactor may already be part of the working baseline, while `.ai/threads/tests-refactoring.md` has changed separately.
+The current baseline already includes the previous refactor as commit `62537d6b Refactor tests`, so I’ll only make new splitting changes from here. The clear split target is `service/rooms/rooms_test.go`; I’ll separate CRUD, update, status/assignment, and helpers into focused files first, then reassess the next largest files.
+I’m splitting the rooms tests into four files: CRUD/list tests stay in `rooms_test.go`, update tests move to `rooms_update_test.go`, pulje assignment/status tests move to `rooms_status_test.go`, and shared fixtures/assertions move to `rooms_test_helpers_test.go`.
+The rooms split is in place. I’m formatting and running the rooms package before deciding whether additional large files deserve splitting.
+`service/rooms` is green and now split into files under ~260 lines each. I’m rescanning the whole suite to pick the next useful split rather than splitting just for line count.
+`pages/event/event_interest_test.go` has a clean boundary: render-state tests, update-interest behavior, and DB fixtures. I’m splitting those next into panel tests, update tests, and helpers.
+I’m adding the event interest update tests and shared fixture helpers as separate files now.
+The event interest split is in place. I’m formatting and running the event page tests.
+`pages/event` now has no oversized individual test file. Next clear split is `components/profile/my_program_test.go`: data-query tests, render tests, and fixture helpers are currently in one file.
+For profile program, I’m keeping the data-query behavior tests in the original file, moving render behavior to a render-specific file, and moving shared setup/assertions to helpers.
+I’m adding the profile render tests and shared helpers as separate files.
+The profile split is ready. I’m formatting and running that package.
+The root page test file is the next one over 400 lines, mostly because its helper block is embedded after the tests. I’m moving those helpers out so the test file stays focused on behavior.
+I’m adding the root page helper file now.
+The root helper split is in place. I’m formatting and testing that package.
+Two files still stand out: the formsubmission first-choice test and the live manager test. For `who_is_interested`, the split is mostly fixtures/helpers, so I’m moving those out of the behavior file.
+I’ve finished the main page/service splits and am continuing with one more large test where the behavior test is buried above a long fixture/helper section. I’m moving only shared setup and assertions into a helper test file so the behavior stays visible.
+The form-submission test now has the long fixture matrix separated from the single behavioral test. I’m formatting and running that package next, then I’ll re-check the remaining largest test files before deciding whether more splits are worth the churn.
+That package still passes. The largest file left is in `service/live`, so I’m checking whether it has the same “tests plus a long helper/fake implementation” shape or whether it is already cohesive.
+`service/live/live_test.go` is a good split candidate: the first half is the actual behavior checks and the second half is a fake JetStream KV plus assertions. I’m moving the fake/test support into `live_test_helpers_test.go`; that should make the manager and Datastar tests much easier to scan.
+The live tests are split now. I’m formatting and running the live package test, then I’ll inspect the remaining large files by content rather than line count alone.
+`service/live` passes. I’m reviewing the remaining 300+ line files now; for these I’m looking for natural boundaries like helper sections or unrelated behavior groups, not just chasing a lower line count.
+The remaining large files mostly have clear helper boundaries or distinct behavior groups. I’m going to split the helper-heavy ones first, then separate the root-page tests by publishing state so each file has one reader-facing theme.
+I’m moving only fixture/assertion support out of `previous_next_root_list_test.go`; the two scenario tests stay together because they are complementary states of the same navigation behavior.
+The helper file is in place for previous/next root navigation. I’m pruning the original file now so it contains just the two high-level scenarios.
+`billettholder_interest_dialog_test.go` is one behavior with a large expected fixture and a long set of database seeders. I’m leaving the behavior and expected shape up front, and moving normalization plus SQL setup helpers out.
+For event visibility, the core tests are already specific, but the fixture functions take a third of the file. I’m moving those to a helper file and keeping the access/page-rendering cases together.
+The root page file is large because it covers three different concerns: general chrome, unpublished-program listing, and published-program listing. I’m splitting those publishing-state cases into separate files and keeping the error/chrome checks in the original.
+The root page publishing tests are now grouped by state. I’m formatting the changed files and running the directly affected packages so import mistakes or duplicate helpers surface immediately.
+Formatting succeeded; the largest behavior files are now substantially smaller. I’m running the packages that changed in this pass, then I’ll do a full test run and a final line-count scan.
+The affected package tests pass. I’m doing one more scan of test-file sizes to see what remains genuinely large after the structural splits.
+After the split, the remaining largest files are around 250 lines and are either helper-heavy support files or single themed behavior groups. I’m spot-checking the two biggest behavior files before I stop, to avoid leaving an obvious split on the table.
+I found one more worthwhile split: `rooms_update_test.go` mixes full updates and partial updates. I’m separating `UpdateRoomPartial` into its own file so each update path has a focused test file.
+The navigation test file has a small helper block at the bottom; I’m moving that support code out too so the file reads as just the rendered navigation scenarios.
+The last two small splits are done. I’m formatting them and rerunning the affected packages before the full suite.
+Formatting is clean and the split sizes look reasonable. I’m running `service/rooms` and `pages/event` again, then the full test suite.
+The targeted package tests pass. I’m running `go test ./...` now with the writable cache path, followed by `git diff --check` for whitespace.
+Full tests pass and `git diff --check` is clean. I’m taking a final status and line-count snapshot so I can summarize exactly what changed.
+Done. I split the large test files where there was a clear maintainability win:
+
+- Separated behavior tests from helpers/fixtures in form submission, live, event visibility, event navigation, previous/next root list, billettholder interest dialog, profile program, and root page tests.
+- Split root page tests by publishing state.
+- Split room tests further so `UpdateRoom` and `UpdateRoomPartial` are in separate files, including [rooms_partial_update_test.go](/home/cinmay/Documents/conorganizer/service/rooms/rooms_partial_update_test.go).
+
+I also re-scanned all `*_test.go` files afterward. The remaining largest files are now mostly helper/fixture files or cohesive behavior groups, so I stopped there rather than splitting for line count alone.
+
+Verification passed:
+
+```sh
+GOCACHE=/tmp/conorganizer-go-build go test ./...
+git diff --check
+```
+
+Note: `.ai/threads/tests-refactoring.md` is still modified in the worktree, but I left it untouched.
+
+text
+2026-06-12T10:04:11.254427Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/service/eventService/previous_next_root_list_test.go:
+		}
+	}
+}
+
+type expectedPreviousNext struct {
+	previousURL   string
+	previousTitle string
+	nextURL       string
+	nextTitle     string
+}
+
+func assertPreviousNextMatches(t *testing.T, expected expectedPreviousNext, actual components.PreviousNext) {
+	t.Helper()
+
+	if actual.PreviousUrl != expected.previousURL {
+		t.Fatalf("previous URL mismatch\nexpected: %q\nactual:   %q", expected.previousURL, actual.PreviousUrl)
+	}
+	if actual.PreviousTitle != expected.previousTitle {
+		t.Fatalf("previous title mismatch\nexpected: %q\nactual:   %q", expected.previousTitle, actual.PreviousTitle)
+	}
+	if actual.NextUrl != expected.nextURL {
+		t.Fatalf("next URL mismatch\nexpected: %q\nactual:   %q", expected.nextURL, actual.NextUrl)
+	}
+	if actual.NextTitle != expected.nextTitle {
+		t.Fatalf("next title mismatch\nexpected: %q\nactual:   %q", expected.nextTitle, actual.NextTitle)
+	}
+}
+
+func collectPreviousNextRootListEventIDs(events []models.EventCardModel) []string {
+	ids := make([]string, 0, len(events))
+	for _, event := range events {
+		ids = append(ids, event.Id)
+	}
+	return ids
+}
+
+func createPreviousNextRootListTestDB(t *testing.T) *sql.DB {
+	t.Helper()
+
+	return testutil.CreateTestDB(t, "previous-next-root-list")
+}
+
+func seedPreviousNextRootListLookups(t *testing.T, db *sql.DB) {
+	t.Helper()
+
+	for _, status := range []models.EventStatus{
+		models.EventStatusDraft,
+		models.EventStatusSubmitted,
+		models.EventStatusApproved,
+		models.EventStatusArchived,
+		models.EventStatusAnnounced,
+	} {
+		mustExecPreviousNextRootList(t, db, `INSERT INTO event_statuses(status) VALUES (?) ON CONFLICT(status) DO NOTHING`, status)
+	}
+
+	mustExecPreviousNextRootList(t, db, `INSERT INTO events_types(event_type) VALUES (?) ON CONFLICT(event_type) DO NOTHING`, models.EventTypeOther)
+	mustExecPreviousNextRootList(t, db, `INSERT INTO age_groups(age_group) VALUES (?) ON CONFLICT(age_group) DO NOTHING`, models.AgeGroupDefault)
+	mustExecPreviousNextRootList(t, db, `INSERT INTO event_runtimes(runtime) VALUES (?) ON CONFLICT(runtime) DO NOTHING`, models.RunTimeNormal)
+	mustExecPreviousNextRootList(t, db, `INSERT INTO pulje_statuses(status) VALUES (?) ON CONFLICT(status) DO NOTHING`, models.PuljeStatusOpen)
+}
+
+func seedPreviousNextRootListPulje(t *testing.T, db *sql.DB, puljeID models.Pulje, name string, startAt string, endAt string) {
+	t.Helper()
+
+	mustExecPreviousNextRootList(t, db, `
+		INSERT INTO puljer(id, name, status, start_at, end_at)
+		VALUES(?, ?, ?, ?, ?)
+	`, puljeID, name, models.PuljeStatusOpen, startAt, endAt)
+}
+
+func seedPreviousNextRootListEvent(t *testing.T, db *sql.DB, id string, title string, status models.EventStatus) {
+	t.Helper()
+
+	mustExecPreviousNextRootList(t, db, `
+		INSERT INTO events(
+			id,
+			title,
+			intro,
+			description,
+			event_type,
+			age_group,
+			event_runtime,
+			host_name,
+			email,
+			phone_number,
+			max_players,
+			beginner_friendly,
+			can_be_run_in_english,
+			status
+		)
+		VALUES(?, ?, 'Intro', 'Description', ?, ?, ?, 'Host', 'host@example.com', '12345678', 4, 1, 1, ?)
+	`, id, title, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, status)
+}
+
+func seedPreviousNextRootListEventPulje(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, isInPulje bool, isPublished bool) {
+	t.Helper()
+
+	inPulje := 0
+	if isInPulje {
+		inPulje = 1
+	}
+	published := 0
+	if isPublished {
+		published = 1
+	}
+
+	mustExecPreviousNextRootList(t, db, `
+		INSERT INTO relation_event_puljer(event_id, pulje_id, is_in_pulje, is_published)
+		VALUES(?, ?, ?, ?)
+	`, eventID, puljeID, inPulje, published)
+}
+
+func mustExecPreviousNextRootList(t *testing.T, db *sql.DB, query string, args ...any) {
+	t.Helper()
+
+	if _, err := db.Exec(query, args...); err != nil {
+		t.Fatalf("exec failed: %v\nquery:\n%s", err, query)
+	}
+}
+
+Time: 2026-06-12 12:12:43
+--- Next Prompt ---
 
