@@ -510,3 +510,85 @@ Behavior report now shows `113` tests run, `0` failed, `25` missing BDD comments
 Time: 2026-06-12 10:50:55
 --- Next Prompt ---
 
+Please note that we have just refactored all the automated tests in the codebase so look at the new structure of the tests before you add new ones.
+
+Proceed with the next file.
+
+Time: 2026-06-12 16:59:29
+--- Codex Run ---
+
+Codex output:
+Understood. I’ll treat the test structure as changed and re-read current tests before adding anything. Next file after `root.md` is `auth.md`, so I’ll inspect the manual checklist, current auth/login code, and the freshly refactored tests before proposing changes.
+I see the refactor: root tests are split into behavior files like `root_page_program_unpublished_test.go` and `root_page_program_published_test.go`, with shared helpers elsewhere. For `auth.md`, I’ll use that same file-per-behavior style if we add tests.
+For the next file, `auth.md`, I read the current tests first. The new pattern seems to be split by behavior/file where useful, for example:
+
+- `pages/root/root_page_test.go` for common root behavior
+- `pages/root/root_page_program_unpublished_test.go`
+- `pages/root/root_page_program_published_test.go`
+- shared helpers in `pages/root/root_page_test_helpers_test.go`
+
+I’ll follow that style for auth tests instead of adding one large test file.
+
+What I think needs doing for `auth.md`:
+
+1. Clean up the manual checklist
+- It is currently too broad and repetitive.
+- Registration, login, email verification, and password reset are Descope widget/provider flows. We can keep them as manual checks, but they should be shorter and framed as “the embedded auth flow works and gives clear feedback.”
+- Remove or reduce items already covered by existing automated tests:
+  - logout cookie clearing: already covered in `pages/login/logout_test.go`
+  - unauthorized page links/text: already covered in `service/userctx/unauthorized_test.go`
+  - header login/logout links: already covered in header tests
+- Keep manual browser checks for mobile layout, third-party widget failure, back/refresh, and full real login/logout behavior.
+
+2. Add/keep automated tests where the app owns the behavior
+Good automated candidates:
+- `/auth` renders the Descope widget with expected project/flow/theme and includes the `/auth/post-login` success redirect script.
+- logout already exists; no need to duplicate.
+- post-login local user sync: first login creates a local user, later login updates admin state. This can be tested without exercising Descope itself.
+- unauthorized middleware/page behavior is already partly covered; we may add a middleware test only if there is a real gap after reading `UserMiddleware`.
+
+3. Do not try to unit-test Descope’s actual registration/password-reset/email-code UX
+That belongs in manual testing or a later browser/e2e suite with stable provider test accounts. A Go unit test can verify that we embed and wire the widget, but not that Descope’s hosted flow works end to end.
+
+The one clarification I need before editing: should the Descope-controlled flows remain in `auth.md` as manual release checks? My recommendation is yes, but much more concise.
+
+Time: 2026-06-12 16:59:29
+--- Next Prompt ---
+Yes, the Descope flows should remain as manual release checks. We have a lot of control over the Descope configuration and our Descope configuration needs testing. 
+Proceed.
+
+Time: 2026-06-12 17:14:27
+--- Codex Run ---
+
+Codex output:
+I’ll keep the Descope-controlled flows as manual checks, but make them less sprawling. For automation I’ll focus on app-owned pieces: the `/auth` widget wiring and the local user sync done after login.
+I’m going to add two auth test files following the refactored split: one for the login form/widget wiring, one for post-login user persistence. I’ll also extract the post-login sync logic into a small helper so the route and tests exercise the same behavior without calling Descope.
+The route now delegates local user persistence to `syncPostLoginUser`, preserving the existing redirect-on-query-error behavior and keeping Descope out of the unit tests. Next I’m adding the focused tests.
+The focused auth tests are in place. I’m rewriting `auth.md` now to keep Descope release checks, remove duplication, and keep only manual checks that still add value.
+I noticed one Markdown issue from using inline code inside the checklist’s backticked sentence. I’ll fix that before running tests.
+The auth checklist is cleaned up and still keeps the Descope-controlled flows as manual release checks. I’m formatting and running the new login tests now.
+Formatting and diff hygiene are clean. I’m running the login package tests first to catch any route/helper issues before the full suite.
+The login package passes. I’m running the full suite and then the behavior report to verify the new BDD entries.
+The full Go suite passes. I’m running the behavior report now; this should add the new auth behaviors to the CI-style output.
+The behavior report now shows zero missing BDD comments across the suite after the refactor, and the new auth tests are included. I’m doing a final status/diff check.
+The final diff is clean aside from the existing `.ai` transcript. I’m collecting line references for the changed auth files for the close-out.
+Done for `auth.md`.
+
+I updated [auth.md](/home/cinmay/Documents/conorganizer/documentation/testing/auth.md:1) to keep the Descope flows as manual release checks, but made the checklist more concise and removed duplicate/fully-covered detail.
+
+Automated changes:
+- Added [login_form_test.go](/home/cinmay/Documents/conorganizer/pages/login/login_form_test.go:12) to verify the Descope widget config, script sources, cookie names, and `/auth/post-login` redirect wiring.
+- Added [post_login_user_test.go](/home/cinmay/Documents/conorganizer/pages/login/post_login_user_test.go:16) to verify first-login local user creation and admin-status updates without duplicate users.
+- Extracted `syncPostLoginUser` in [login.go](/home/cinmay/Documents/conorganizer/pages/login/login.go:122) so the route and tests share the same app-owned post-login behavior.
+
+Validation passed:
+- `GOCACHE=/tmp/go-build-cache go test ./pages/login`
+- `GOCACHE=/tmp/go-build-cache go test ./...`
+- `GOCACHE=/tmp/go-build-cache go tool task test:report`
+- `git diff --check -- . ':!.ai/threads/final-test-before-rlease.md'`
+
+The behavior report now shows `134` tests run, `0` failed, and `0` missing BDD comments. The `.ai/threads/final-test-before-rlease.md` transcript is still the only unrelated dirty file.
+
+Time: 2026-06-12 17:14:27
+--- Next Prompt ---
+
