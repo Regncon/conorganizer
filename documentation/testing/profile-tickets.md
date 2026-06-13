@@ -8,16 +8,73 @@ Denne sjekklisten dekker `/profile/tickets`, der innlogget bruker kan hente bill
 
 ## Sjekkliste
 
-- [ ] `Gitt at brukeren trykker på Hent billetter, når billettene faktisk kan hentes, så skal billettholdere dukke opp uten at siden havner i en stille eller uavklart tilstand.`
-- [ ] `Gitt at brukeren trykker på Hent billetter, når henting pågår, så skal knappen og lasteindikatoren oppføre seg på en måte som gjør det tydelig at en handling er i gang.`
-- [ ] `Gitt at henting av billetter feiler, når brukeren forsøker å hente billetter, så skal brukeren få en tydelig feilmelding og ikke en falsk bekreftelse på at alt gikk bra.`
-- [ ] `Gitt at brukeren trykker på Hent billetter flere ganger raskt, når siden håndterer forespørslene, så skal det ikke oppstå duplisering eller åpenbart ustabil oppførsel i resultatet.`
-- [ ] `Gitt at brukeren legger til en ny manuell e-postadresse på en billettholder, når handlingen lykkes, så skal brukeren få en tydelig bekreftelse og se at e-postadressen faktisk er lagt til riktig billettholder.`
-- [ ] `Gitt at brukeren forsøker å legge til en tom e-postadresse, når handlingen sendes inn, så skal brukeren få en tydelig feilmelding og ingen ny e-postadresse skal legges til.`
-- [ ] `Gitt at brukeren forsøker å legge til en e-postadresse som allerede finnes på samme billettholder, når handlingen sendes inn, så skal brukeren få en forståelig feilmelding og ingen duplikatadresse skal opprettes.`
-- [ ] `Gitt at brukeren legger til en ny e-postadresse, når siden oppdateres, så skal tidligere data på siden fortsatt være intakte og ikke forsvinne eller byttes om mellom kortene.`
-- [ ] `Gitt at en manuell e-postadresse finnes på en billettholder, når brukeren velger å slette den, så skal den slettes fra riktig billettholder og brukeren skal få en tydelig bekreftelse.`
-- [ ] `Gitt at sletting av e-postadresse feiler, når brukeren forsøker å slette, så skal brukeren få en feilmelding som gjør det tydelig at endringen ikke ble fullført.`
-- [ ] `Gitt at siden viser meldinger om vellykket eller mislykket endring, når flere handlinger utføres etter hverandre, så skal meldingene høre til riktig billettholder og ikke lekke over til andre kort.`
-- [ ] `Gitt at brukeren bruker billettsiden på mobil, når mange billettholderkort eller lange e-postadresser vises, så skal innholdet fortsatt være lesbart og brukbart uten overlapp eller horisontal kollaps.`
-- [ ] `Gitt at brukeren refresher siden etter å ha hentet billetter eller endret e-postadresser, når siden lastes på nytt, så skal resultatet samsvare med faktisk lagret tilstand.`
+### Hente billetter
+
+- [ ] **Hent billetter viser hentede billettholdere**<br>
+  **Gitt** at brukeren trykker på Hent billetter.<br>
+  **Når** billettene faktisk kan hentes.<br>
+  **Så** skal billettholdere dukke opp uten at siden havner i en stille eller uavklart tilstand.
+
+- [ ] **Henting har tydelig ventetilstand**<br>
+  **Gitt** at brukeren trykker på Hent billetter.<br>
+  **Når** henting pågår.<br>
+  **Så** skal knappen og lasteindikatoren oppføre seg på en måte som gjør det tydelig at en handling er i gang.
+
+- [ ] **Hentefeil gir tydelig feilmelding**<br>
+  **Gitt** at henting av billetter feiler.<br>
+  **Når** brukeren forsøker å hente billetter.<br>
+  **Så** skal brukeren få en tydelig feilmelding og ikke en falsk bekreftelse på at alt gikk bra.
+
+- [ ] **Raske henteklikk skaper ikke duplikater**<br>
+  **Gitt** at brukeren trykker på Hent billetter flere ganger raskt.<br>
+  **Når** siden håndterer forespørslene.<br>
+  **Så** skal det ikke oppstå duplisering eller åpenbart ustabil oppførsel i resultatet.
+
+### E-postadresser
+
+- [ ] **Ny e-postadresse legges til riktig billettholder**<br>
+  **Gitt** at brukeren legger til en ny manuell e-postadresse på en billettholder.<br>
+  **Når** handlingen lykkes.<br>
+  **Så** skal brukeren få en tydelig bekreftelse og se at e-postadressen faktisk er lagt til riktig billettholder.
+
+- [ ] **Tom e-postadresse avvises**<br>
+  **Gitt** at brukeren forsøker å legge til en tom e-postadresse.<br>
+  **Når** handlingen sendes inn.<br>
+  **Så** skal brukeren få en tydelig feilmelding og ingen ny e-postadresse skal legges til.
+
+- [ ] **Duplikatadresse avvises**<br>
+  **Gitt** at brukeren forsøker å legge til en e-postadresse som allerede finnes på samme billettholder.<br>
+  **Når** handlingen sendes inn.<br>
+  **Så** skal brukeren få en forståelig feilmelding og ingen duplikatadresse skal opprettes.
+
+- [ ] **Oppdatering bevarer eksisterende kortdata**<br>
+  **Gitt** at brukeren legger til en ny e-postadresse.<br>
+  **Når** siden oppdateres.<br>
+  **Så** skal tidligere data på siden fortsatt være intakte og ikke forsvinne eller byttes om mellom kortene.
+
+- [ ] **Sletting fjerner riktig e-postadresse**<br>
+  **Gitt** at en manuell e-postadresse finnes på en billettholder.<br>
+  **Når** brukeren velger å slette den.<br>
+  **Så** skal den slettes fra riktig billettholder og brukeren skal få en tydelig bekreftelse.
+
+- [ ] **Slettefeil viser ufullført endring**<br>
+  **Gitt** at sletting av e-postadresse feiler.<br>
+  **Når** brukeren forsøker å slette.<br>
+  **Så** skal brukeren få en feilmelding som gjør det tydelig at endringen ikke ble fullført.
+
+### Meldinger og responsivitet
+
+- [ ] **Meldinger hører til riktig billettholder**<br>
+  **Gitt** at siden viser meldinger om vellykket eller mislykket endring.<br>
+  **Når** flere handlinger utføres etter hverandre.<br>
+  **Så** skal meldingene høre til riktig billettholder og ikke lekke over til andre kort.
+
+- [ ] **Billettsiden fungerer på mobil**<br>
+  **Gitt** at brukeren bruker billettsiden på mobil.<br>
+  **Når** mange billettholderkort eller lange e-postadresser vises.<br>
+  **Så** skal innholdet fortsatt være lesbart og brukbart uten overlapp eller horisontal kollaps.
+
+- [ ] **Refresh viser lagret billett- og e-posttilstand**<br>
+  **Gitt** at brukeren refresher siden etter å ha hentet billetter eller endret e-postadresser.<br>
+  **Når** siden lastes på nytt.<br>
+  **Så** skal resultatet samsvare med faktisk lagret tilstand.

@@ -8,20 +8,53 @@ Denne sjekklisten dekker `/admin/billettholder`, der admin får oversikt over al
 
 ## Sjekkliste
 
-- [ ] `Gitt at billettholderoversikten inneholder mange deltakere, når siden vises, så skal grid være responsive og kort forbli lesbare og brukbare uten sammenfallende innhold.`
+### Oversikt
 
-- [ ] `Gitt at admin legger til en manuell e-postadresse på en billettholder, når handlingen lykkes, så skal bekreftelsen vises på riktig kort og den nye adressen vises på riktig billettholder.`
+- [ ] **Billettholdergrid er responsivt og lesbart**<br>
+  **Gitt** at billettholderoversikten inneholder mange deltakere.<br>
+  **Når** siden vises.<br>
+  **Så** skal grid være responsive og kort forbli lesbare og brukbare uten sammenfallende innhold.
 
-- [ ] `Gitt at admin forsøker å legge til en tom e-postadresse, når handlingen utføres, så skal admin få en tydelig feilmelding og ingen adresse skal legges til.`
+### E-postvedlikehold
 
-- [ ] `Gitt at admin forsøker å legge til en e-postadresse som allerede finnes på samme billettholder, når handlingen utføres, så skal siden avvise duplikatet tydelig og uten å skape uklar tilstand.`
+- [ ] **Ny e-postadresse vises på riktig kort**<br>
+  **Gitt** at admin legger til en manuell e-postadresse på en billettholder.<br>
+  **Når** handlingen lykkes.<br>
+  **Så** skal bekreftelsen vises på riktig kort og den nye adressen vises på riktig billettholder.
 
-- [ ] `Gitt at admin sletter en manuell e-postadresse, når handlingen lykkes, så skal adressen fjernes fra riktig kort og ikke bli stående igjen på siden som om den fortsatt eksisterer.`
+- [ ] **Tom e-postadresse avvises**<br>
+  **Gitt** at admin forsøker å legge til en tom e-postadresse.<br>
+  **Når** handlingen utføres.<br>
+  **Så** skal admin få en tydelig feilmelding og ingen adresse skal legges til.
 
-- [ ] `Gitt at sletting av e-postadresse medfører at bruker-tilknytning må ryddes opp, når handlingen lykkes, så skal resultatet fremstå konsistent og ikke etterlate spor av delvis sletting i brukeropplevelsen.`
+- [ ] **Duplikatadresse avvises tydelig**<br>
+  **Gitt** at admin forsøker å legge til en e-postadresse som allerede finnes på samme billettholder.<br>
+  **Når** handlingen utføres.<br>
+  **Så** skal siden avvise duplikatet tydelig og uten å skape uklar tilstand.
 
-- [ ] `Gitt at en add- eller delete-handling feiler, når admin utfører endringen, så skal feilmeldingen være tydelig og ikke etterlate inntrykk av at endringen likevel ble lagret.`
+- [ ] **Sletting fjerner riktig adresse**<br>
+  **Gitt** at admin sletter en manuell e-postadresse.<br>
+  **Når** handlingen lykkes.<br>
+  **Så** skal adressen fjernes fra riktig kort og ikke bli stående igjen på siden som om den fortsatt eksisterer.
 
-- [ ] `Gitt at admin jobber med flere billettholderkort på samme side, når flere endringer skjer etter hverandre, så skal meldinger og oppdateringer tilhøre riktig kort og ikke lekke til andre kort.`
+- [ ] **Brukertilknytning ryddes opp ved sletting**<br>
+  **Gitt** at sletting av e-postadresse medfører at bruker-tilknytning må ryddes opp.<br>
+  **Når** handlingen lykkes.<br>
+  **Så** skal resultatet fremstå konsistent og ikke etterlate spor av delvis sletting i brukeropplevelsen.
 
-- [ ] `Gitt at siden brukes på mobil eller smal skjerm, når mange billettholdere eller lange e-postadresser vises, så skal innholdet fortsatt være lesbart og trykkbart uten at kortene bryter sammen.`
+- [ ] **Add- og delete-feil er tydelige**<br>
+  **Gitt** at en add- eller delete-handling feiler.<br>
+  **Når** admin utfører endringen.<br>
+  **Så** skal feilmeldingen være tydelig og ikke etterlate inntrykk av at endringen likevel ble lagret.
+
+### Stabilitet og layout
+
+- [ ] **Meldinger hører til riktig kort**<br>
+  **Gitt** at admin jobber med flere billettholderkort på samme side.<br>
+  **Når** flere endringer skjer etter hverandre.<br>
+  **Så** skal meldinger og oppdateringer tilhøre riktig kort og ikke lekke til andre kort.
+
+- [ ] **Billettholderkort fungerer på mobil**<br>
+  **Gitt** at siden brukes på mobil eller smal skjerm.<br>
+  **Når** mange billettholdere eller lange e-postadresser vises.<br>
+  **Så** skal innholdet fortsatt være lesbart og trykkbart uten at kortene bryter sammen.

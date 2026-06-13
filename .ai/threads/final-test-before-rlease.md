@@ -723,4 +723,151 @@ The existing unrelated `.ai/threads/final-test-before-rlease.md` dirty file is s
 
 Time: 2026-06-13 10:26:39
 --- Next Prompt ---
+Are we done? 
+Do you want to make a short summary of what we have done? 
+
+Time: 2026-06-13 10:32:14
+--- Codex Run ---
+
+Codex output:
+Yes, we’re done with the testing pass.
+
+Short summary:
+
+- Built a coverage inventory in `documentation/testing/index.md`.
+- Added/updated all manual release test files, including the new `admin-rooms.md`.
+- Merged and cleaned the profile-related manual checks.
+- Removed stale automation-candidate sections from manual docs.
+- Added `task test:report` and CI output for behavior coverage via BDD comments.
+- Added automated tests across root, auth, profile, tickets, event pages, event form access, admin, approval, billettholders, add-billettholder, and rooms.
+- Fixed a few release-relevant issues found while testing, including friendlier user-facing errors and silent create-event failure handling.
+- Kept Descope flows as manual release checks.
+- Verified the full suite.
+
+Current automated report result:
+
+`167` tests run, `0` failed, `0` missing BDD comments.
+
+The remaining manual files now focus on things that should actually be checked manually: external integrations, full browser flows, visual layout, live-update behavior, mobile usability, and multi-step workflows.
+
+Time: 2026-06-13 10:32:14
+--- Next Prompt ---
+Let's see if we can do something about the formatting of the manual files. They are a little wall of text right now. Perhaps we can add a title for each test.
+Let's also split the bdd style text in to three lines. 
+Example:
+Gitt at billettholderoversikten inneholder mange deltakere.
+Når siden vises.
+Så skal grid være responsive og kort forbli lesbare og brukbare uten sammenfallende
+innhold.
+
+It's important to keep the check marks.
+What formating improvements do you suggest?
+Show me some examples of how the markdown would look. 
+Let's have a discussion about the formatting before you implement it. If you have any clarifying questions or suggestions, please share them.
+
+Time: 2026-06-13 10:58:22
+--- Codex Run ---
+
+Codex output:
+Yes. I’d improve the manual files by changing each checklist item from a single inline-code sentence into a small structured block.
+
+My recommended format:
+
+```md
+- [ ] **Mange deltakere**  
+  **Gitt** at billettholderoversikten inneholder mange deltakere.  
+  **Når** siden vises.  
+  **Så** skal grid være responsive og kort forbli lesbare og brukbare uten sammenfallende innhold.
+```
+
+Why I prefer this:
+
+- Keeps the checkbox.
+- Adds a scan-friendly title.
+- Removes the backtick “code” styling, which is part of why it feels like a wall.
+- Keeps the BDD shape explicit.
+- Still works well in plain Markdown, GitHub, and printed/PDF output.
+
+A few examples:
+
+```md
+### Oversikt
+
+- [ ] **Siden laster uten brutte seksjoner**  
+  **Gitt** at en innlogget bruker åpner Min Side.  
+  **Når** siden lastes.  
+  **Så** skal siden vises som en helhetlig oversikt uten brutte seksjoner eller tydelig manglende innhold.
+
+- [ ] **Mange arrangementer er lesbare**  
+  **Gitt** at brukeren har mange arrangementer.  
+  **Når** seksjonen for Mine arrangementer vises.  
+  **Så** skal kortene fortsatt være lesbare og navigerbare uten å skape kaotisk layout.
+```
+
+For admin:
+
+```md
+### Navigasjon
+
+- [ ] **Underliggende adminområder åpner riktig**  
+  **Gitt** at en admin velger å gå til et underliggende adminområde.  
+  **Når** navigasjonen skjer.  
+  **Så** skal riktig underside åpnes uten feil rolle eller uventet mellomtilstand.
+
+- [ ] **Adminforsiden fungerer på mobil**  
+  **Gitt** at adminforsiden brukes på mobil og større skjerm.  
+  **Når** kortene vises.  
+  **Så** skal de være lesbare, klikkbare og visuelt stabile uten at tekst eller bilder kolliderer.
+```
+
+For longer “Så” lines, I’d let Markdown wrap naturally rather than manually breaking mid-sentence. If we need hard line breaks, we can use two trailing spaces, as above.
+
+I would not use a table. These tests are too text-heavy, and tables become unpleasant on mobile and in diffs.
+
+My suggestion: use checkbox + bold title + three bold BDD lines for every manual checklist item.
+
+Time: 2026-06-13 10:58:22
+--- Next Prompt ---
+
+Ok, go ahead and implement the formatting improvements. Also see if you can group the tests in to sections with titles.
+
+
+Time: 2026-06-13 11:10:25
+--- Codex Run ---
+
+Codex output:
+I’ll apply this across the launch checklist files, not `index.md` or the general writing guide except where the guide should show the new style. I’ll keep every checkbox, remove the inline-code blocks, split BDD into `Gitt/Når/Så`, and add or refine section headings where files are currently flat.
+I’m going to use a mechanical transform for the repetitive BDD split, then inspect the output and manually adjust headings/titles where the generated shape is too awkward. That keeps the diff consistent across all files without hand-editing hundreds of repeated commas.
+The current files have 124 checklist items. I’ll first convert the formatting consistently, then I’ll add section headings mainly to files that are still flat: auth, profile tickets, event details, admin billettholders, add-billettholder, and rooms.
+The mechanical BDD split is done. I’m checking the result now for missed checklist lines, awkward sections, and any Markdown shape that would render poorly.
+The split format is readable, but the generated titles are still repetitive in a few files and list items run together without blank lines. I’m going to add spacing between tests, then add section titles to the flat files so the checklists scan by workflow.
+I’m adding workflow sections now, mostly around overview, actions, navigation/stability, and mobile/layout. This should make each file scannable without changing the actual checklist content.
+I’ve done the broad mechanical pass and added section anchors to the larger files. I’m going to inspect a few representative files now, then update the writing guide so the documented format matches what the release checklist actually uses.
+The first pass is readable, but the generated titles repeat whenever several tests share the same setup. I’m going to tighten those titles so each checklist item scans by expected behavior, then I’ll update the guide with the new pattern.
+The section grouping is now in place across the checklist files. I found that the guide still shows the old one-line checkbox style, so I’ll bring that in line after tightening the actual titles.
+I’m going to make one more mechanical pass over the checkbox titles. The body text stays as-is; the goal is that the bold title tells you the behavior being checked before you read the BDD lines.
+The checklist titles are now behavior-oriented and unique enough to scan quickly. Next I’m changing the authoring guide so future edits don’t drift back to the old one-line style.
+The guide now documents the same pattern the files use: section headings, bold test titles, and BDD split over separate lines. I’ll run a few structural checks next: old checkbox format, checkbox counts, and whitespace issues.
+`git diff --check` caught the Markdown hard-break spaces. I’m going to switch those to explicit `<br>` breaks so the rendered docs still show separate BDD lines without leaving trailing whitespace in the files.
+The format now uses explicit Markdown line breaks instead of invisible trailing spaces. I’m doing one more guide cleanup so its wording examples do not look like old checklist entries.
+The old one-line BDD examples are gone from the guide. I’m checking the resulting source and counts now before I call this done.
+The structural checks are clean now: no old backticked checklist lines, no trailing-space hard breaks, and `git diff --check` passes for the testing docs. I’ll do one final status/diff summary so I can report exactly what changed.
+Implemented the formatting pass across the manual testing docs.
+
+Changed:
+- Added bold titles to each checklist item.
+- Split each BDD check into separate `Gitt`, `Når`, `Så` lines.
+- Preserved all `- [ ]` checkmarks.
+- Grouped the checklist items into `###` sections across the manual test files.
+- Updated [how-to-write-tests.md](/home/cinmay/Documents/conorganizer/documentation/testing/how-to-write-tests.md) so the guide matches the new format.
+
+Verified:
+- All manual test files have matching counts for checkboxes, `Gitt`, `Når`, and `Så`.
+- `git diff --check -- documentation/testing` passes.
+- No old backticked one-line checklist items remain.
+
+I did not run Go tests since this was a docs-only formatting change. The existing unrelated `.ai/threads/final-test-before-rlease.md` change is still untouched.
+
+Time: 2026-06-13 11:10:25
+--- Next Prompt ---
 
