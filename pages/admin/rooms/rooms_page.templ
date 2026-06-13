@@ -141,36 +141,38 @@ templ formModal() {
 
 templ roomCard(room models.Room) {
 	<div
-		class="room"
+		class="rooms-item"
 		style={ templ.KV("opacity: 0.5; border-color: gray;", room.IsDisabled) }
 		data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d'); document.getElementById('room-dialog').showModal()", room.ID) }
 	>
 		<h3>{ room.RoomNumber }</h3>
-		<span>
-			<p>Romnavn på døren</p>
-			if room.Name == "" {
-				<p style="font-style: italic; color: gray;">Ikke oppgitt</p>
-			} else {
-				<p>{ room.Name }</p>
+		<div class="rooms-description">
+			<span>
+				<p>Romnavn på døren</p>
+				if room.Name == "" {
+					<p style="font-style: italic; color: gray;">Ikke oppgitt</p>
+				} else {
+					<p>{ room.Name }</p>
+				}
+			</span>
+			<span>
+				<p>Maks aktive spill</p>
+				<p>{ room.MaxConcurrentGames }</p>
+			</span>
+			<span>
+				<p>Er rommet tilgjengelig?</p>
+				if room.IsDisabled {
+					<p style="color: var(--color-error);">Nei</p>
+				} else {
+					<p>Ja</p>
+				}
+			</span>
+			if room.Notes != "" {
+				<p style="border-bottom: 1px solid var(--bg-item-border); font-weight: bold;">Notater</p>
+				<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
 			}
-		</span>
-		<span>
-			<p>Maks aktive spill</p>
-			<p>{ room.MaxConcurrentGames }</p>
-		</span>
-		<span>
-			<p>Er rommet tilgjengelig?</p>
-			if room.IsDisabled {
-				<p style="color: var(--color-error);">Nei</p>
-			} else {
-				<p>Ja</p>
-			}
-		</span>
-		if room.Notes != "" {
-			<p style="border-bottom: 1px solid var(--bg-item-border);">Notater</p>
-			<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
-		}
-		<div style="width: 50%; aspect-ratio: 16/9; margin: 0 auto; margin-top: auto;">
+		</div>
+		<div style="aspect-ratio: 4/3; pointer-events: none;">
 			@roomComponents.VenueContainer(true, room.RoomNumber)
 		</div>
 	</div>
@@ -222,16 +224,23 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
 			display: grid;
             grid-template-columns: 1fr;
 			gap: var(--responsive-page-section-spacing);
+            width: 100%;
 
             h2 {
                 grid-column: 1/-1;
             }
 		}
+        @media screen and (width > 1200px) {
+            .rooms-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
 
-        .room {
-            display: flex;
-            flex-flow: column nowrap;
-            gap: var(--spacing-1x);
+        .rooms-item {
+            display: grid;
+            gap: var(--spacing-2x);
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            width: 100%;
             padding: var(--spacing-2x);
             border: 1px solid var(--bg-item-border);
             border-radius: var(--border-radius-1x);
@@ -239,33 +248,33 @@ templ RoomsPage(db *sql.DB, logger *slog.Logger) {
 
             h3 {
                 text-align: center;
+                grid-column: 1 / -1;
             }
 
             p+p {
                 margin-top: auto;
             }
 
-            span {
-                display: flex;
-                justify-content: space-between;
-                gap: var(--spacing-1x)
+            p:first-child {
+                font-weight: bold;
             }
         }
 
-        .room:hover {
+        .rooms-item:hover {
             background-color: var(--bg-item-hover);
             border-color: var(--bg-item-border-hover);
         }
-        @media screen and (width > 600px) {
-            .rooms-container {
-                grid-template-columns: repeat(2, 1fr);
+
+        @media screen and (width < 475px) {
+            .rooms-item {
+                grid-template-columns: auto;
             }
         }
 
-        @media screen and (width > 1200px) {
-            .rooms-container {
-                grid-template-columns: repeat(3, 1fr);
-            }
+        .rooms-description {
+            display: flex;
+            flex-flow: column nowrap;
+            gap: var(--spacing-2x);
         }
 
         #room-delete-dialog:open {
