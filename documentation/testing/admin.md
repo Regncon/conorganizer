@@ -9,11 +9,8 @@ Denne sjekklisten dekker hovedsiden for admin på `/admin`, altså inngangen til
 
 ## Sjekkliste
 
-- [ ] `Gitt at en admin åpner adminforsiden, når siden lastes, så skal adminområdets hovedvalg vises tydelig og uten brutte paneler eller feil rolleopplevelse.`
-- [ ] `Gitt at en admin åpner adminforsiden, når siden er ferdig lastet, så skal brødsmulestien tydelig vise at brukeren er i adminområdet.`
-- [ ] `Gitt at en admin står på adminforsiden, når kortene for videre adminarbeid vises, så skal det være tydelig hva hvert valg leder til.`
-- [ ] `Gitt at en admin velger å gå til godkjenning av arrangementer, når navigasjonen skjer, så skal brukeren havne på riktig underside uten å møte feil eller uventet mellomtilstand.`
-- [ ] `Gitt at en admin velger å gå til billettholderoversikten, når navigasjonen skjer, så skal brukeren havne på riktig underside uten feil rolle eller feil side.`
+- [ ] `Gitt at en admin åpner adminforsiden, når siden lastes ferdig etter liveoppdatering, så skal adminområdets hovedvalg vises uten brutte paneler eller feil rolleopplevelse.`
+- [ ] `Gitt at en admin velger å gå til et underliggende adminområde, når navigasjonen skjer, så skal riktig underside åpnes uten feil rolle eller uventet mellomtilstand.`
 - [ ] `Gitt at adminforsiden brukes på mobil og større skjerm, når kortene vises, så skal de være lesbare, klikkbare og visuelt stabile uten at tekst eller bilder kolliderer.`
 - [ ] `Gitt at en bruker uten adminrettigheter prøver å åpne adminforsiden direkte, når siden lastes, så skal brukeren ikke få tilgang og heller ikke møte en misvisende halvveis adminvisning.`
 - [ ] `Gitt at adminforsiden ikke kan laste nødvendig innhold som forventet, når siden vises, så skal brukeren ikke bli stående med en tilsynelatende tom adminside uten forklaring.`

@@ -665,4 +665,62 @@ I left the existing unrelated dirty file `.ai/threads/final-test-before-rlease.m
 
 Time: 2026-06-12 17:30:14
 --- Next Prompt ---
+I think we are in a good place now and understand the structure of the tests. Let's do all the remaining files in one go.
+If you have any questions or clarifications just ask. Otherswise, proceed with the implementation of the remaining files.
+
+Time: 2026-06-13 10:26:39
+--- Codex Run ---
+
+Codex output:
+I’ll treat the remaining checklist files as one batch now: first I’ll inventory what each manual file still asserts, then I’ll map that to existing code/tests and add focused automated coverage where it is stable enough to be useful. I’ll keep the manual files limited to browser/release checks that automation does not already cover.
+I’ve pulled the first half of the remaining docs. A lot of items are still broad manual UX checks, but several stable behaviors look automatable around admin overview links, approval lists, ticket/email validation, and room service/page behavior. I’m reading the remaining docs and the owning code before editing.
+I’m going to bias toward low-flake tests here: render tests for deterministic pages/components and service/helper tests for durable behavior. I’ll avoid trying to automate visual layout, live-update race cases, and external Check-in/Descope style flows in this pass.
+A few implementation details stand out: the profile/admin ticket email flows share the same logic pattern, existing service tests already cover conversion and user association, and room service behavior is already well covered. The main gaps are page/component rendering and a couple of helper functions that can be tested without live infrastructure.
+I’m narrowing the test additions now. For event forms and event details, most functional behavior is already covered by existing event/formsubmission tests, so I’m only going to add small tests for access/friendly render behavior where the docs still pointed at release-risk.
+I’ve got enough context to start editing. The doc updates will be broad but mechanical: remove items that are now covered by automated tests, keep manual checks for visual layout, external service behavior, live update feel, and multi-step browser workflows. Then I’ll add the focused tests.
+I’m updating the manual files now. For `admin-rooms.md` I’m replacing the placeholder with a real checklist, and for the others I’m trimming checks that are already covered by the existing or planned automated suite.
+The docs are now updated, including the new room checklist. I’m moving into test additions and will reuse existing test helpers where the package already has them, rather than creating new broad integration scaffolding.
+I’m starting with render-level tests for admin, approval, profile tickets, admin ticket cards, and rooms. These are deterministic and give the behavior report useful coverage without depending on external services or browser timing.
+The remaining new tests will be split by package ownership: `pages/admin`, `pages/admin/approval`, `pages/profile/tickets`, `pages/admin/billettholder_admin`, `pages/admin/billettholder_admin/add`, `pages/admin/rooms`, `pages/profile/newevent`, and `pages/event`.
+One test helper used a non-existent local type; I’ll correct that when formatting the package. I’m continuing with the rest of the test files first, then I’ll run targeted packages and fix compile issues together.
+The ticket-card render tests now cover the “what is visible” parts that were removed from the manual files. Next I’m adding the admin add-billettholder card tests, including dinner and already-converted behavior.
+The add-billettholder test used a constant that doesn’t exist; I’ll switch that to a normal non-dinner type ID before running. Next I’m adding room page/helper tests.
+I’m adding room tests around the page grouping and assignment helpers, since the lower-level create/update/delete/validation service behavior is already covered in `service/rooms`.
+The room helper test also used a type alias that doesn’t exist; I’ll convert those helpers to plain `*sql.DB` before running. I’m adding the event-form access tests next.
+The event-form tests cover the ownership guard and locked approved-event message. I’m adding event-detail tests for the admin edit entry and friendly interest error mapping next.
+I’ll correct that event test before running: the helper maps inactive/unpublished pulje errors to the specific “not available for this event” message, while the route uses “Vel pulje” only when no pulje was selected.
+I’m fixing the two helper type mistakes now, then I’ll run the targeted packages and address any selector/output mismatches from the rendered HTML.
+The new test files are ready for a compile pass. I’m formatting them and running only the touched packages first, which should surface any assumptions about generated templ output quickly.
+The new files are formatted. I’m running the touched packages now; failures here are expected to be mostly selector/text mismatches rather than design issues.
+The targeted package tests pass. I noticed one route wording issue while checking the room docs: the room assignment route is `/admin/rooms/assignment/{pulje}`, not `/admin/rooms/{pulje}`, so I’m correcting that in the docs/index before the full run.
+I’m doing a documentation sanity pass now: checking that no automation sections crept back in, that the new route names line up, and that the manual files still have checklist items.
+The checklist counts look good. I found the old `Min Side og mine arrangementer` label only in the coverage inventory, so I’m updating that to match the renamed file.
+The docs are aligned now. I’m running the full Go suite next, then the behavior report so we can confirm every new test has a BDD comment in the generated output.
+The full suite passes. I’m running the report now; the expected count should be higher than the previous 147 because of the added page/component tests.
+The behavior report passes with `167` tests and no missing BDD comments. I’m doing the final diff and whitespace check now, then I’ll summarize exactly what changed.
+Whitespace checks are clean. The only unrelated dirty file is still `.ai/threads/final-test-before-rlease.md`, and I left it untouched.
+Implemented the remaining testing pass in one batch.
+
+Updated the remaining manual files under `documentation/testing/` to remove checks now covered by automated tests and keep the manual checklists focused on browser, visual, live-update, external-service, and multi-step release behavior. I also filled out `admin-rooms.md` and corrected the room assignment route in docs/index to `/admin/rooms/assignment/{pulje}`.
+
+Added focused automated tests for:
+- Admin landing page links and breadcrumb.
+- Approval page grouping and edit links.
+- Profile ticket empty state and ticket-card e-mail behavior.
+- Admin billettholder card details, manual-email delete behavior, and safe search highlighting.
+- Admin add-billettholder ticket card states: convertable, dinner, already converted.
+- Room page grouping, assignment rendering, and population calculation.
+- Event form ownership guard and approved-event lock message.
+- Event detail admin edit link and friendly interest error messages.
+
+Verification passed:
+- `GOCACHE=/tmp/go-build-cache go test ./...`
+- `GOCACHE=/tmp/go-build-cache go tool task test:report`
+- Report result: `167` tests, `0` failed, `0` missing BDD comments.
+- `git diff --check -- . ':!.ai/threads/final-test-before-rlease.md'`
+
+The existing unrelated `.ai/threads/final-test-before-rlease.md` dirty file is still untouched.
+
+Time: 2026-06-13 10:26:39
+--- Next Prompt ---
 

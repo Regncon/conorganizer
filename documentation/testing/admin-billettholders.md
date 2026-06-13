@@ -8,13 +8,7 @@ Denne sjekklisten dekker `/admin/billettholder`, der admin får oversikt over al
 
 ## Sjekkliste
 
-- [ ] `Gitt at en admin åpner billettholderoversikten, når siden lastes, så skal oversikten vises med tydelig brødsmulesti, overskrift og innhold uten brutte kort eller tydelig manglende data.`
-
 - [ ] `Gitt at billettholderoversikten inneholder mange deltakere, når siden vises, så skal grid være responsive og kort forbli lesbare og brukbare uten sammenfallende innhold.`
-
-- [ ] `Gitt at en billettholder vises i adminoversikten, når kortet leses, så skal bestilling, type, navn, alder og relevante e-postadresser fremstå tydelig.`
-
-- [ ] `Gitt at en billettholder har flere e-postadresser, når kortet vises, så skal det være forståelig hvilke som er billettadresse og hvilke som er andre tilknyttede adresser.`
 
 - [ ] `Gitt at admin legger til en manuell e-postadresse på en billettholder, når handlingen lykkes, så skal bekreftelsen vises på riktig kort og den nye adressen vises på riktig billettholder.`
 
@@ -29,7 +23,5 @@ Denne sjekklisten dekker `/admin/billettholder`, der admin får oversikt over al
 - [ ] `Gitt at en add- eller delete-handling feiler, når admin utfører endringen, så skal feilmeldingen være tydelig og ikke etterlate inntrykk av at endringen likevel ble lagret.`
 
 - [ ] `Gitt at admin jobber med flere billettholderkort på samme side, når flere endringer skjer etter hverandre, så skal meldinger og oppdateringer tilhøre riktig kort og ikke lekke til andre kort.`
-
-- [ ] `Gitt at admin navigerer til legge til billettholder fra oversikten, når navigasjonen skjer, så skal riktig underside åpnes uten feil rolle eller feil kontekst.`
 
 - [ ] `Gitt at siden brukes på mobil eller smal skjerm, når mange billettholdere eller lange e-postadresser vises, så skal innholdet fortsatt være lesbart og trykkbart uten at kortene bryter sammen.`

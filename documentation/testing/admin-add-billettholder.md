@@ -9,9 +9,6 @@ Denne sjekklisten dekker `/admin/billettholder/add`, der admin kan se billetter 
 ## Sjekkliste
 
 - [ ] `Gitt at en admin åpner siden for å legge til billettholder, når siden lastes, så skal oversikten over billetter vises uten brutte kort eller uforståelige feilmeldinger.`
-- [ ] `Gitt at billetter vises på siden, når admin leser kortene, så skal bestilling, type, navn, e-post og alder være tydelige og høre til riktig billett.`
-- [ ] `Gitt at en billett allerede er konvertert til billettholder, når kortet vises, så skal siden gjøre dette tydelig og ikke gi inntrykk av at samme billett kan konverteres på nytt uten videre.`
-- [ ] `Gitt at en billett er en middagsbillett, når kortet vises, så skal siden tydelig markere dette og ikke presentere billetten som en vanlig deltakerbillett som enkelt kan konverteres.`
 - [ ] `Gitt at en billett kan konverteres, når admin velger å konvertere den, så skal billetten bli til riktig billettholder uten at admin må gjette om handlingen faktisk lyktes.`
 - [ ] `Gitt at konvertering av billett feiler, når admin forsøker å konvertere, så skal admin få en tydelig feiltilstand og ikke stå igjen med en side som ser oppdatert ut uten at endringen faktisk ble gjort.`
 - [ ] `Gitt at admin konverterer flere billetter etter hverandre, når siden oppdateres fortløpende, så skal riktig status vises på riktige kort og ikke blandes mellom billetter.`

@@ -7,7 +7,7 @@ Denne mappen inneholder launch-sjekklistene for manuell testing av Conorganizer.
 - [ ] [Generelle tester](./general.md)
 - [ ] [Forside](./root.md)
 - [ ] [Autentisering](./auth.md)
-- [ ] [Min Side og mine arrangementer](./profile.md)
+- [ ] [Min Side](./profile.md)
 - [ ] [Billetter på Min Side](./profile-tickets.md)
 - [ ] [Arrangementsskjema](./event-form.md)
 - [ ] [Arrangementsdetaljer](./event-details.md)
@@ -32,7 +32,7 @@ Launch-sjekklistene dekker disse aktive sidene og flytene:
 
 - `/` og oppdatert forsidestruktur fra `/root/api/` dekkes av [Forside](./root.md).
 - `/auth`, `/auth/post-login` og `/auth/logout` dekkes av [Autentisering](./auth.md).
-- `/profile` dekkes av [Min Side og mine arrangementer](./profile.md).
+- `/profile` dekkes av [Min Side](./profile.md).
 - `/profile/tickets` dekkes av [Billetter på Min Side](./profile-tickets.md).
 - `/profile/new/{id}` og tilhørende skjema- og bildeopplastingsflyt dekkes av [Arrangementsskjema](./event-form.md).
 - `/event/{id}` og interesseflyten under `/event/api/{id}` dekkes av [Arrangementsdetaljer](./event-details.md).
@@ -40,7 +40,7 @@ Launch-sjekklistene dekker disse aktive sidene og flytene:
 - `/admin/approval` og `/admin/approval/edit/{id}` dekkes av [Godkjenning av arrangementer](./admin-approval.md).
 - `/admin/billettholder` dekkes av [Billettholdere i admin](./admin-billettholders.md).
 - `/admin/billettholder/add` dekkes av [Legg til billettholder i admin](./admin-add-billettholder.md).
-- `/admin/rooms` og `/admin/rooms/{pulje}` dekkes av [Romadministrasjon i admin](./admin-rooms.md).
+- `/admin/rooms` og `/admin/rooms/assignment/{pulje}` dekkes av [Romadministrasjon i admin](./admin-rooms.md).
 
 Disse rutene er bevisst ikke egne launch-sjekklister:
 
