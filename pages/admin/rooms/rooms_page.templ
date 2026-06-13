@@ -167,14 +167,16 @@ templ roomCard(room models.Room) {
 					<p>Ja</p>
 				}
 			</span>
-			if room.Notes != "" {
-				<p style="border-bottom: 1px solid var(--bg-item-border); font-weight: bold;">Notater</p>
-				<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
-			}
 		</div>
 		<div style="aspect-ratio: 4/3; pointer-events: none;">
 			@roomComponents.VenueContainer(true, room.RoomNumber)
 		</div>
+		if room.Notes != "" {
+			<span style="grid-column: 1/-1;">
+				<p style="border-bottom: 1px solid var(--bg-item-border); font-weight: bold;">Notater</p>
+				<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
+			</span>
+		}
 	</div>
 }
 
