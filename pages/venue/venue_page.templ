@@ -14,10 +14,18 @@ templ venuePage() {
 		<style>
             .venue-container-box {
                 width: 100%;
-                aspect-ratio: 16/9;
+                aspect-ratio: 4/3;
                 border: 2px solid var(--bg-surface-border);
                 border-radius: var(--border-radius-2x);
                 background-color: var(--bg-surface);
+            }
+            .test-label {
+                color: red;
+                position: absolute;
+                position-anchor: --room-713;
+
+                left: anchor(center);
+                top: anchor(center);
             }
         </style>
 		<div class="page-content-container">
@@ -25,6 +33,7 @@ templ venuePage() {
 			<div class="venue-container-box">
 				@rooms.VenueContainer(false, "")
 			</div>
+			<label class="test-label">Test</label>
 			<div>
 				<button data-on:click="$mode = $mode == '2d' ? '3d':'2d'">toggle view</button>
 			</div>

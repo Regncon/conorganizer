@@ -11,7 +11,8 @@ templ VenueContainer(isStatic bool, staticRoom string) {
 
         .floors-container {
             position: relative;
-            transition: all 200ms ease-in-out;
+            perspective-origin: center;
+            transition: transform 500ms ease-in-out;
             transform-style: preserve-3d;
 
         }
@@ -19,7 +20,6 @@ templ VenueContainer(isStatic bool, staticRoom string) {
         }
         .floors-container[isometric] {
             perspective: 2000px;
-            perspective-origin: center;
             transform: rotateX(60deg) rotateY(0deg) rotateZ(15deg)
         }
 
@@ -34,6 +34,7 @@ templ VenueContainer(isStatic bool, staticRoom string) {
             transform: rotateX(0deg);
         }
         .floor[isometric] {
+            shape-rendering: geometricPrecision;
             transform: rotateX(10deg);
         }
         .floor .shape {
@@ -45,6 +46,8 @@ templ VenueContainer(isStatic bool, staticRoom string) {
             fill: rgb(255, 255, 255);
             stroke: black;
             transition: all 200ms ease-in-out;
+
+            --room-713: "713";
         }
         .room:hover {
             fill: rgb(230, 230, 230);

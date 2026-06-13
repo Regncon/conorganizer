@@ -8,7 +8,11 @@ import (
 type RoomType string
 
 const (
-	Room RoomType = "Room"
+	Room     RoomType = "room"
+	Toilet   RoomType = "toilet"
+	Stairs   RoomType = "stairs"
+	Elevator RoomType = "elevator"
+	Utility  RoomType = "utility"
 )
 
 type Coordinate struct {
@@ -21,6 +25,7 @@ type RoomSVG struct {
 	RoomType    RoomType
 	Origin      Coordinate
 	Coordinates []Coordinate
+	Center      Coordinate
 	IsStatic    bool
 }
 
@@ -39,8 +44,9 @@ templ GenerateRoomPolygon(room RoomSVG, isStatic bool, staticRoom string) {
 		id={ "group-" + room.ID }
 		transform={ fmt.Sprintf("translate(%d %d)", room.Origin.X, room.Origin.Y) }
 	>
+		/* Draw room shape */
 		<polygon
-			id={ "room-" + room.ID }
+			id={ fmt.Sprintf("%s-%s", room.RoomType, room.ID) }
 			points={ coordinatePointsToString(room.Coordinates) }
 			class="room"
 			if isStatic {
@@ -48,8 +54,18 @@ templ GenerateRoomPolygon(room RoomSVG, isStatic bool, staticRoom string) {
 					active
 				}
 			} else {
-				data-attr={ fmt.Sprintf("{active: $active-room == 'room-%s'}", room.ID) }
+				data-attr={ fmt.Sprintf("{active: $active-room == '%s-%s'}", room.RoomType, room.ID) }
 			}
 		></polygon>
+		/* Room centre, used for labels via css anchor */
+		<circle
+			class="room-anchor"
+			cx={ room.Center.X }
+			cy={ room.Center.Y }
+			r="1"
+			opacity="1"
+			fill="red"
+			style={ fmt.Sprintf("anchor-name: --room-%s;", room.ID) }
+		></circle>
 	</g>
 }
