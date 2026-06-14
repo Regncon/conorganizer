@@ -20,22 +20,22 @@ func UpdateName(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, l
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "host_name = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the name for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere namnet for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -49,23 +49,23 @@ func UpdateEmail(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, 
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "email = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the email for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere e-posten for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -78,23 +78,23 @@ func UpdatePhone(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, 
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "phone_number = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the phone for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere telefonnummeret for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -114,10 +114,10 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					data-indicator="toastName"
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/name')", eventId) }
 					class="input"
-					placeholder="Ditt navn"
+					placeholder="Namnet ditt"
 					required
 					pattern=".{2,}"
-					title="Bruk minst 2 tegn"
+					title="Bruk minst 2 teikn"
 					autocomplete="name"
 				/>
 				<div data-signals={ dataSignals(map[string]string{"name": name}) }></div>
@@ -151,10 +151,10 @@ templ contactInfo(eventId string, name string, email string, phone string) {
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/phone')", eventId) }
 					name="phone"
 					class="input"
-					placeholder="Ditt telefonnummer"
+					placeholder="Telefonnummeret ditt"
 					required
 					pattern=".{2,}"
-					title="Bruk 8 siffer, eventuelt med +47 foran"
+					title="Bruk 8 siffer, eventuelt med +47 framfor"
 					autocomplete="tel"
 				/>
 				@errorfeedback.RenderMessage("phone")

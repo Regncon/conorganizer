@@ -7,12 +7,15 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestGetBillettholdereWithFilters_WhenFilteringWithoutFirstChoiceAndGM_ReturnsPublishedGMWithoutPublishedFirstChoice(t *testing.T) {
-	// Given expected billettholdere who are GM/DM in a published pulje and have not received a published first choice,
-	// when the admin billettholder query applies both filters,
-	// then only billettholdere matching both published-event filters are returned.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given expected billettholdere who are GM/DM in a published pulje and have not received a published first choice.",
+		When:  "When the admin billettholder query applies both filters.",
+		Then:  "Then only billettholdere matching both published-event filters are returned.",
+	})
 
 	// Given
 	expectedBillettholderIDs := []int{3}
@@ -21,12 +24,7 @@ func TestGetBillettholdereWithFilters_WhenFilteringWithoutFirstChoiceAndGM_Retur
 		GMOrDM:             true,
 	}
 
-	db, _, createDBErr := testutil.CreateTemporaryDBAndLogger("billettholder_admin_filters", t)
-	if createDBErr != nil {
-		t.Fatalf("failed to create test database: %v", createDBErr)
-	}
-	defer db.Close()
-
+	db := testutil.CreateTestDB(t, "billettholder_admin_filters")
 	seedBillettholderFilterLookups(t, db)
 	seedBillettholderFilterBillettholdere(t, db)
 	seedBillettholderFilterPuljer(t, db)

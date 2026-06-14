@@ -13,6 +13,11 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const (
+	rootPageLoadErrorMessage   = "Vi klarte ikke å laste forsiden akkurat nå. Prøv igjen om litt."
+	rootEventsLoadErrorMessage = "Vi klarte ikke å laste arrangementene akkurat nå. Prøv igjen om litt."
+)
+
 func SetupRootRoute(router chi.Router, logger *slog.Logger, liveManager *live.Manager, db *sql.DB, eventImageDir *string) error {
 	logger = logger.With("component", "root")
 	rootLayoutRoute(router, db, logger, eventImageDir)

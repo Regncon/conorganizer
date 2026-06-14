@@ -9,19 +9,36 @@ Denne sjekklisten dekker hovedsiden for admin på `/admin`, altså inngangen til
 
 ## Sjekkliste
 
-- [ ] `Gitt at en admin åpner adminforsiden, når siden lastes, så skal adminområdets hovedvalg vises tydelig og uten brutte paneler eller feil rolleopplevelse.`
-- [ ] `Gitt at en admin åpner adminforsiden, når siden er ferdig lastet, så skal brødsmulestien tydelig vise at brukeren er i adminområdet.`
-- [ ] `Gitt at en admin står på adminforsiden, når kortene for videre adminarbeid vises, så skal det være tydelig hva hvert valg leder til.`
-- [ ] `Gitt at en admin velger å gå til godkjenning av arrangementer, når navigasjonen skjer, så skal brukeren havne på riktig underside uten å møte feil eller uventet mellomtilstand.`
-- [ ] `Gitt at en admin velger å gå til billettholderoversikten, når navigasjonen skjer, så skal brukeren havne på riktig underside uten feil rolle eller feil side.`
-- [ ] `Gitt at adminforsiden brukes på mobil og større skjerm, når kortene vises, så skal de være lesbare, klikkbare og visuelt stabile uten at tekst eller bilder kolliderer.`
-- [ ] `Gitt at en bruker uten adminrettigheter prøver å åpne adminforsiden direkte, når siden lastes, så skal brukeren ikke få tilgang og heller ikke møte en misvisende halvveis adminvisning.`
-- [ ] `Gitt at adminforsiden ikke kan laste nødvendig innhold som forventet, når siden vises, så skal brukeren ikke bli stående med en tilsynelatende tom adminside uten forklaring.`
-- [ ] `Gitt at admin går frem og tilbake mellom adminforsiden og underliggende adminsider, når brukeren bruker tilbakeknapp og refresh, så skal adminområdet fortsatt oppføre seg konsistent og tydelig som adminområde.`
+### Hovedvalg og navigasjon
 
-## Kan automatiseres
+- [ ] **Adminforsiden viser hovedvalg**<br>
+  **Gitt** at en admin åpner adminforsiden.<br>
+  **Når** siden lastes ferdig etter liveoppdatering.<br>
+  **Så** skal adminområdets hovedvalg vises uten brutte paneler eller feil rolleopplevelse.
 
-- Tilgangskontroll til adminforsiden egner seg godt for ende-til-ende-tester.
-- Navigasjon fra adminforsiden til underliggende adminsider egner seg godt for ende-til-ende-tester.
-- Responsiv presentasjon av adminkortene egner seg godt for nettleserbaserte ende-til-ende-tester på ulike skjermstørrelser.
+- [ ] **Adminvalg åpner riktig underside**<br>
+  **Gitt** at en admin velger å gå til et underliggende adminområde.<br>
+  **Når** navigasjonen skjer.<br>
+  **Så** skal riktig underside åpnes uten feil rolle eller uventet mellomtilstand.
 
+- [ ] **Adminkort fungerer på alle skjermstørrelser**<br>
+  **Gitt** at adminforsiden brukes på mobil og større skjerm.<br>
+  **Når** kortene vises.<br>
+  **Så** skal de være lesbare, klikkbare og visuelt stabile uten at tekst eller bilder kolliderer.
+
+### Tilgang og robusthet
+
+- [ ] **Ikke-admin avvises tydelig**<br>
+  **Gitt** at en bruker uten adminrettigheter prøver å åpne adminforsiden direkte.<br>
+  **Når** siden lastes.<br>
+  **Så** skal brukeren ikke få tilgang og heller ikke møte en misvisende halvveis adminvisning.
+
+- [ ] **Lastingsfeil forklares**<br>
+  **Gitt** at adminforsiden ikke kan laste nødvendig innhold som forventet.<br>
+  **Når** siden vises.<br>
+  **Så** skal brukeren ikke bli stående med en tilsynelatende tom adminside uten forklaring.
+
+- [ ] **Tilbakeknapp og refresh bevarer adminkontekst**<br>
+  **Gitt** at admin går frem og tilbake mellom adminforsiden og underliggende adminsider.<br>
+  **Når** brukeren bruker tilbakeknapp og refresh.<br>
+  **Så** skal adminområdet fortsatt oppføre seg konsistent og tydelig som adminområde.

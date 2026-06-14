@@ -123,3 +123,275 @@ Logging anti-pattern scans in the touched areas also came back clean. Note: `.ai
 Time: 2026-06-11 16:13:45
 --- Next Prompt ---
 
+There is a merge conflict after the latest merge from main. Can you resolve the conflict in the service/live/live_test.go 
+
+
+Time: 2026-06-14 20:11:54
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the conflicted test and current status first, then resolve only `service/live/live_test.go` so I don’t disturb the rest of the merge.
+The conflict is between the new helper-file split from `main` and the local stream/logging test additions. I’ll keep the BDD/test-helper refactor from `main`, keep the stream/logging regression test, and remove the duplicated helper block from `live_test.go` because those helpers now live in `service/live/live_test_helpers_test.go`.
+I’m resolving the file by keeping the new imports needed by the retained logging test, removing conflict markers, and deleting the duplicated fake KV helper block from `live_test.go`. Then I’ll put the local `putErr` and discard logger support into the new helper file.
+The large patch did not match because the conflict block content differed slightly. I’ll resolve it in smaller, safer hunks: imports first, then the duplicated helper section.
+I’ll remove the duplicated helper block in chunks. That keeps the new helper file from `main` as the single source for the fake KV/test setup.
+I’ll first remove the duplicate setup/assertion helpers, then the duplicate fake KV implementation.
+Now I’m removing the duplicate fake KV/watchers from `live_test.go`; the helper file already owns these definitions after the merge.
+The conflict markers are gone from `live_test.go`. I’m moving the local fake KV failure hook and quiet test logger into `live_test_helpers_test.go` so the retained logging test still compiles and stays quiet.
+I’m checking the resolved files for remaining conflict markers and import drift before running tests.
+The files are structurally clean now. I’m running `gofmt` on the resolved test files and then the focused live package tests.
+Formatting completed. I’m running `go test ./service/live` with the writable cache.
+The focused live tests pass. I’m checking merge status now; if Git still marks the file unmerged, I’ll stage only the resolved live test files to mark the conflict resolved.
+Git still marks `service/live/live_test.go` as unmerged, so I’m staging the resolved live test files only. That marks this conflict resolved without touching the rest of the merge.
+The file content is resolved, but staging failed because `.git/index.lock` cannot be created in this sandbox: `.git` is read-only here. I’ll verify there are no conflict markers left and report that you’ll need to run `git add` locally.
+Resolved the conflict content in `service/live/live_test.go`.
+
+I kept the `origin/main` BDD/helper-file refactor, retained the local NATS touch/logging regression test, and moved the fake KV `putErr` plus discard logger support into `service/live/live_test_helpers_test.go`.
+
+Verification passed:
+
+`GOCACHE=/tmp/conorganizer-gocache go test ./service/live`
+
+No conflict markers remain. I could not run `git add` because `.git` is read-only in this sandbox, so Git still reports the file as unmerged. Run this locally to mark it resolved:
+
+```bash
+git add service/live/live_test.go service/live/live_test_helpers_test.go
+```
+
+text
+2026-06-14T18:09:45.804213Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/service/live/live_test.go:
+	for _, expectedPart := range expectedParts {
+		if !strings.Contains(actual, expectedPart) {
+			t.Fatalf("Datastar init expression missing %q in %q", expectedPart, actual)
+		}
+	}
+}
+<<<<<<< HEAD
+
+func newTestManager(t *testing.T) *Manager {
+	t.Helper()
+
+	store := sessions.NewCookieStore([]byte("live-test-session-secret"))
+	store.MaxAge(int((24 * time.Hour) / time.Second))
+
+	buckets := make(map[Bucket]keyValue)
+	for _, bucket := range allBuckets {
+		buckets[bucket] = newFakeKeyValue(bucket, DefaultTTL)
+	}
+
+	return &Manager{
+		store:   store,
+		buckets: buckets,
+		ttl:     DefaultTTL,
+		now:     time.Now,
+		logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}
+}
+
+func mustFakeKeyValue(t *testing.T, manager *Manager, bucket Bucket) *fakeKeyValue {
+	t.Helper()
+
+	kv, err := manager.keyValue(bucket)
+	if err != nil {
+		t.Fatalf("get key value bucket %s: %v", bucket, err)
+	}
+	fakeKV, ok := kv.(*fakeKeyValue)
+	if !ok {
+		t.Fatalf("expected fake key value bucket %s, got %T", bucket, kv)
+	}
+	return fakeKV
+}
+
+func assertResponseHasCookie(t *testing.T, recorder *httptest.ResponseRecorder, name string) {
+	t.Helper()
+
+	_ = responseCookie(t, recorder, name)
+}
+
+func responseCookie(t *testing.T, recorder *httptest.ResponseRecorder, name string) *http.Cookie {
+	t.Helper()
+
+	for _, cookie := range recorder.Result().Cookies() {
+		if cookie.Name == name {
+			return cookie
+		}
+	}
+	t.Fatalf("expected response cookie %q", name)
+	return nil
+}
+
+func assertLiveKeyExists(t *testing.T, manager *Manager, bucket Bucket, key string) {
+	t.Helper()
+
+	kv := mustFakeKeyValue(t, manager, bucket)
+	entry, err := kv.Get(context.Background(), key)
+	if err != nil {
+		t.Fatalf("expected live key %s in bucket %s: %v", key, bucket, err)
+	}
+	assertTimestampValue(t, entry.Value())
+}
+
+func assertTimestampValue(t *testing.T, value []byte) {
+	t.Helper()
+
+	if _, err := time.Parse(time.RFC3339Nano, string(value)); err != nil {
+		t.Fatalf("expected RFC3339Nano timestamp value, got %q: %v", string(value), err)
+	}
+}
+
+type fakeKeyValue struct {
+	mu       sync.Mutex
+	bucket   Bucket
+	ttl      time.Duration
+	values   map[string][]byte
+	watchers map[string][]*fakeWatcher
+	revision uint64
+	putErr   error
+}
+
+func newFakeKeyValue(bucket Bucket, ttl time.Duration) *fakeKeyValue {
+	return &fakeKeyValue{
+		bucket:   bucket,
+		ttl:      ttl,
+		values:   make(map[string][]byte),
+		watchers: make(map[string][]*fakeWatcher),
+	}
+}
+
+func (kv *fakeKeyValue) Get(_ context.Context, key string) (jetstream.KeyValueEntry, error) {
+	kv.mu.Lock()
+	defer kv.mu.Unlock()
+
+	value, ok := kv.values[key]
+	if !ok {
+		return nil, jetstream.ErrKeyNotFound
+	}
+	return &fakeEntry{
+		bucket:   string(kv.bucket),
+		key:      key,
+		value:    cloneBytes(value),
+		revision: kv.revision,
+		created:  time.Now(),
+	}, nil
+}
+
+func (kv *fakeKeyValue) Put(_ context.Context, key string, value []byte) (uint64, error) {
+	kv.mu.Lock()
+	defer kv.mu.Unlock()
+
+	if kv.putErr != nil {
+		return 0, kv.putErr
+	}
+
+	kv.revision++
+	stored := cloneBytes(value)
+	kv.values[key] = stored
+	entry := &fakeEntry{
+		bucket:   string(kv.bucket),
+		key:      key,
+		value:    cloneBytes(stored),
+		revision: kv.revision,
+		created:  time.Now(),
+	}
+	for _, watcher := range kv.watchers[key] {
+		watcher.send(entry)
+	}
+	return kv.revision, nil
+}
+
+func (kv *fakeKeyValue) Purge(_ context.Context, key string, _ ...jetstream.KVDeleteOpt) error {
+	kv.mu.Lock()
+	defer kv.mu.Unlock()
+
+	delete(kv.values, key)
+	return nil
+}
+
+func (kv *fakeKeyValue) Keys(_ context.Context, _ ...jetstream.WatchOpt) ([]string, error) {
+	kv.mu.Lock()
+	defer kv.mu.Unlock()
+
+	if len(kv.values) == 0 {
+		return nil, jetstream.ErrNoKeysFound
+	}
+	keys := make([]string, 0, len(kv.values))
+	for key := range kv.values {
+		keys = append(keys, key)
+	}
+	return keys, nil
+}
+
+func (kv *fakeKeyValue) Watch(_ context.Context, key string, _ ...jetstream.WatchOpt) (jetstream.KeyWatcher, error) {
+	kv.mu.Lock()
+	defer kv.Unlock()
+
+	watcher := &fakeWatcher{updates: make(chan jetstream.KeyValueEntry, 16)}
+	kv.watchers[key] = append(kv.watchers[key], watcher)
+	return watcher, nil
+}
+
+type fakeWatcher struct {
+	updates chan jetstream.KeyValueEntry
+}
+
+func (w *fakeWatcher) Updates() <-chan jetstream.KeyValueEntry {
+	return w.updates
+}
+
+func (w *fakeWatcher) Stop() error {
+	close(w.updates)
+	return nil
+}
+
+func (w *fakeWatcher) send(entry jetstream.KeyValueEntry) {
+	select {
+	case w.updates <- entry:
+	default:
+	}
+}
+
+type fakeEntry struct {
+	bucket   string
+	key      string
+	value    []byte
+	revision uint64
+	created  time.Time
+}
+
+func (e *fakeEntry) Bucket() string                  { return e.bucket }
+func (e *fakeEntry) Key() string                     { return e.key }
+func (e *fakeEntry) Value() []byte                   { return cloneBytes(e.value) }
+func (e *fakeEntry) Revision() uint64                { return e.revision }
+func (e *fakeEntry) Created() time.Time              { return e.created }
+func (e *fakeEntry) Delta() uint64                   { return 0 }
+func (e *fakeEntry) Operation() jetstream.KeyValueOp { return jetstream.KeyValuePut }
+
+func cloneBytes(value []byte) []byte {
+	cloned := make([]byte, len(value))
+	copy(cloned, value)
+	return cloned
+}
+
+func waitForWatcherUpdate(t *testing.T, watcher jetstream.KeyWatcher) jetstream.KeyValueEntry {
+	t.Helper()
+
+	timer := time.NewTimer(2 * time.Second)
+	defer timer.Stop()
+
+	for {
+		select {
+		case entry := <-watcher.Updates():
+			if entry != nil {
+				return entry
+			}
+		case <-timer.C:
+			t.Fatalf("timed out waiting for watcher update")
+		}
+	}
+}
+=======
+>>>>>>> origin/main
+
+Time: 2026-06-14 20:11:54
+--- Next Prompt ---
+
