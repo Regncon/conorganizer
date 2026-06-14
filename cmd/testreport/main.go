@@ -12,8 +12,10 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 type packageInfo struct {
@@ -134,7 +136,8 @@ func firstBDDCommentInFunction(groups []*ast.CommentGroup, functionDeclaration *
 			continue
 		}
 
-		text := normalizeCommentText(group.Text())
+		lines := normalizeCommentLines(group.Text())
+		text := strings.Join(lines, " ")
 		if text == "" || isSectionComment(text) {
 			continue
 		}
@@ -142,13 +145,13 @@ func firstBDDCommentInFunction(groups []*ast.CommentGroup, functionDeclaration *
 			return ""
 		}
 
-		return text
+		return strings.Join(lines, "\n")
 	}
 
 	return ""
 }
 
-func normalizeCommentText(text string) string {
+func normalizeCommentLines(text string) []string {
 	lines := strings.Split(strings.TrimSpace(text), "\n")
 	normalized := make([]string, 0, len(lines))
 	for _, line := range lines {
@@ -157,7 +160,7 @@ func normalizeCommentText(text string) string {
 			normalized = append(normalized, line)
 		}
 	}
-	return strings.Join(normalized, " ")
+	return normalized
 }
 
 func isSectionComment(text string) bool {
@@ -212,6 +215,10 @@ func runTests() (map[string][]testResult, error) {
 }
 
 func printReport(results map[string][]testResult, comments map[string]string) {
+	writeReport(os.Stdout, results, comments)
+}
+
+func writeReport(writer io.Writer, results map[string][]testResult, comments map[string]string) {
 	packages := make([]string, 0, len(results))
 	totalTests := 0
 	failedTests := 0
@@ -238,17 +245,17 @@ func printReport(results map[string][]testResult, comments map[string]string) {
 	}
 	sort.Strings(packages)
 
-	fmt.Println("# Automated Behavior Test Report")
-	fmt.Println()
-	fmt.Println("Generated from `go test -json ./...` and the first BDD comment in each `Test...` function.")
-	fmt.Println()
-	fmt.Println("## Summary")
-	fmt.Printf("- Packages with tests: %d\n", len(packages))
-	fmt.Printf("- Tests run: %d\n", totalTests)
-	fmt.Printf("- Failed: %d\n", failedTests)
-	fmt.Printf("- Skipped: %d\n", skippedTests)
-	fmt.Printf("- Tests missing BDD comments: %d\n", missingBDDComments)
-	fmt.Println()
+	fmt.Fprintln(writer, "# Automated Behavior Test Report")
+	fmt.Fprintln(writer)
+	fmt.Fprintln(writer, "Generated from `go test -json ./...` and the first BDD comment in each `Test...` function.")
+	fmt.Fprintln(writer)
+	fmt.Fprintln(writer, "## Summary")
+	fmt.Fprintf(writer, "- Packages with tests: %d\n", len(packages))
+	fmt.Fprintf(writer, "- Tests run: %d\n", totalTests)
+	fmt.Fprintf(writer, "- Failed: %d\n", failedTests)
+	fmt.Fprintf(writer, "- Skipped: %d\n", skippedTests)
+	fmt.Fprintf(writer, "- Tests missing BDD comments: %d\n", missingBDDComments)
+	fmt.Fprintln(writer)
 
 	for _, packagePath := range packages {
 		packageResults := results[packagePath]
@@ -256,24 +263,79 @@ func printReport(results map[string][]testResult, comments map[string]string) {
 			return packageResults[i].Name < packageResults[j].Name
 		})
 
-		fmt.Printf("## %s\n", packagePath)
+		fmt.Fprintf(writer, "## %s\n\n", packagePath)
 		for _, result := range packageResults {
-			fmt.Printf("- `%s` %s", result.Name, strings.ToUpper(result.Status))
+			fmt.Fprintf(writer, "- `%s` %s", result.Name, strings.ToUpper(result.Status))
 			if result.Elapsed > 0 {
-				fmt.Printf(" (%.2fs)", result.Elapsed)
+				fmt.Fprintf(writer, " (%.2fs)", result.Elapsed)
 			}
-			fmt.Println()
+			fmt.Fprintln(writer)
+			fmt.Fprintln(writer)
 
 			comment := comments[testKey(packagePath, result.Name)]
 			if comment == "" {
 				comment = "BDD-kommentar mangler."
 			}
-			fmt.Printf("  %s\n", comment)
+			for _, line := range formatBDDComment(comment) {
+				fmt.Fprintf(writer, "  %s\n", line)
+			}
+			fmt.Fprintln(writer)
 		}
-		fmt.Println()
 	}
 }
 
 func testKey(packagePath string, testName string) string {
 	return packagePath + "." + testName
+}
+
+var bddSplitPatterns = []*regexp.Regexp{
+	regexp.MustCompile(`(?i)^(.+?),\s*(when\s+.+?),\s*(then\s+.+)$`),
+	regexp.MustCompile(`(?i)^(.+?),\s*(når\s+.+?),\s*(så\s+.+)$`),
+}
+
+func formatBDDComment(comment string) []string {
+	lines := normalizeCommentLines(comment)
+	if len(lines) == 1 {
+		if splitLines, ok := splitSingleLineBDDComment(lines[0]); ok {
+			lines = splitLines
+		}
+	}
+
+	for i, line := range lines {
+		lines[i] = cleanBDDReportLine(line)
+	}
+
+	return lines
+}
+
+func splitSingleLineBDDComment(comment string) ([]string, bool) {
+	for _, pattern := range bddSplitPatterns {
+		matches := pattern.FindStringSubmatch(comment)
+		if len(matches) == 4 {
+			return []string{matches[1], matches[2], matches[3]}, true
+		}
+	}
+
+	return nil, false
+}
+
+func cleanBDDReportLine(line string) string {
+	line = strings.TrimSpace(line)
+	line = strings.TrimSuffix(line, ",")
+	line = strings.TrimSpace(line)
+	line = capitalizeFirstRune(line)
+	if line == "" || strings.HasSuffix(line, ".") || strings.HasSuffix(line, "!") || strings.HasSuffix(line, "?") {
+		return line
+	}
+	return line + "."
+}
+
+func capitalizeFirstRune(text string) string {
+	if text == "" {
+		return text
+	}
+
+	runes := []rune(text)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
 }

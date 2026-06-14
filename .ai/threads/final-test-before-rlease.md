@@ -909,4 +909,87 @@ Så skal grid være responsive ...
 
 Time: 2026-06-13 11:39:08
 --- Next Prompt ---
+Let's see if we can do something about the formatting of generated report. The test are currently all in one line and it is hard to read.
+Can we split BDD style text in to three lines like we did in the manual files?
+Let's also add a empty line between each test to make it more readable.
+Please let me know if you have any questions or suggestions about the formatting before you implement it.
+
+
+Time: 2026-06-14 11:51:21
+--- Codex Run ---
+
+Codex output:
+I’ll look at the current report generator and a sample of its output first, then I’ll propose the smallest formatting change before editing anything.
+I found the report generator at `cmd/testreport` and an untracked `documentation/testing/report.md` sample. I’m reading the generator now so the proposal maps to the actual output code.
+The generator already stores each BDD comment as normalized text, so the formatting fix can be isolated to report rendering. The main design choice is how much we want the report to preserve the original test comment style versus inferring BDD parts from one sentence.
+One useful constraint from the existing tests: many comments are already written as three comment lines in the Go source, but the report generator deliberately collapses them with `strings.Fields`. We can either preserve those source lines or split the normalized sentence at the BDD keywords.
+I’d suggest this format for the generated report:
+
+```md
+- `TestMenu_AdminUserReceivesUserAndAdminNavigation` PASS
+
+  Gitt at brukeren er admin,
+  når hovednavigasjonen vises,
+  så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.
+
+- `TestMenu_AnonymousUserOnlyReceivesPublicNavigation` PASS
+
+  Gitt at brukeren ikke er innlogget,
+  når hovednavigasjonen vises,
+  så skal brukeren bare få navigasjonslenker til forsiden og innlogging.
+```
+
+My recommendation:
+
+- Preserve the three-line BDD comments from the Go source where they already exist.
+- Add a fallback splitter for old one-line comments using `given/when/then` and `gitt/når/så`.
+- Add one empty line after each test block.
+- Keep the report plain, without `<br>` or bold `**Gitt**`, because this report is primarily read in CI logs where raw Markdown syntax adds noise.
+
+No blocking questions from me. If you agree with that output shape, I’ll update `cmd/testreport` and verify with `task test:report`.
+
+Time: 2026-06-14 11:51:21
+--- Next Prompt ---
+Ok, go ahead and implement the formatting.
+
+Time: 2026-06-14 12:03:04
+--- Codex Run ---
+
+Codex output:
+I’ll update the report generator itself and add focused tests around the formatting. The implementation will preserve source comment line breaks, split older one-line BDD comments as a fallback, and print a blank line between test blocks.
+The generator now has the core formatting functions. I’m adding small tests around the line splitting and report spacing so this doesn’t regress the next time the report code changes.
+The formatting tests are in place. I’ll run `gofmt`, then the command package tests before running the full report task.
+The package-level formatting tests are ready and formatted. I’m running them now; after that I’ll run the report task to inspect the real output shape.
+The first test run hit the sandbox because Go tried to use the default cache under the home directory. I’ll rerun with `GOCACHE` under `/tmp`, which is writable here.
+The Norwegian fallback did not split because the regex word-boundary was too strict around `når`/`så`. I’m simplifying that matcher and rerunning the tests.
+The fallback splitter is adjusted. I’ll run the testreport package again with the writable Go cache.
+The focused tests pass. I’m going to run the actual `test:report` task with a writable Go cache and capture its output to `/tmp` so I can inspect the real report without dumping hundreds of lines into the session.
+The report task completed. I’ll inspect the start of the generated report and a Norwegian package section to confirm the spacing and split lines look right.
+The real report output now has the expected shape: each test title, a blank line, then three BDD lines, then another blank line before the next test. I’m doing a final diff/check pass now.
+Implemented the report formatting in [cmd/testreport/main.go](/home/cinmay/Documents/conorganizer/cmd/testreport/main.go) and added coverage in [cmd/testreport/main_test.go](/home/cinmay/Documents/conorganizer/cmd/testreport/main_test.go).
+
+What changed:
+- Preserves existing three-line BDD comments from Go tests.
+- Splits one-line `Given/when/then` and `Gitt/når/så` comments as a fallback.
+- Normalizes each BDD clause into readable sentence lines.
+- Adds an empty line between each test block in the generated report.
+
+Verified:
+- `GOCACHE=/tmp/conorganizer-go-build go test ./cmd/testreport`
+- `GOCACHE=/tmp/conorganizer-go-build go tool task test:report > /tmp/conorganizer-test-report.out`
+
+The report now renders like:
+
+```md
+- `TestMenu_AdminUserReceivesUserAndAdminNavigation` PASS
+
+  Gitt at brukeren er admin.
+  Når hovednavigasjonen vises.
+  Så skal brukeren få navigasjonslenker ...
+```
+
+I left the existing untracked `documentation/testing/report.md` alone since we agreed generated reports should not be committed.
+
+Time: 2026-06-14 12:03:04
+--- Next Prompt ---
 
