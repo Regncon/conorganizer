@@ -871,3 +871,42 @@ I did not run Go tests since this was a docs-only formatting change. The existin
 Time: 2026-06-13 11:10:25
 --- Next Prompt ---
 
+The markdown to pdf script doesn't handle the new line breaks well. The markdown looks fine so I think the problem is in the script.
+
+documentation/testing/build-pdfs.sh
+
+Oversikt
+□ Billettholdergrid er responsivt og lesbart Gitt at billettholderoversikten inneholder
+mange deltakere. Når siden vises. Så skal grid være responsive og kort forbli lesbare og
+brukbare uten sammenfallende innhold.
+
+Time: 2026-06-13 11:39:08
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the PDF build script and the Markdown conversion path first. The symptom suggests the converter is stripping or flattening `<br>` inside task-list items before PDF generation.
+The script currently sends the Markdown straight to Pandoc’s LaTeX writer. Pandoc parses `<br>` as raw HTML, then drops it when producing LaTeX, so the list item becomes one paragraph in the PDF. I’ll fix that at the Pandoc layer rather than changing the Markdown format.
+Pandoc 3.6 has Lua filters available, which is the cleanest fix here. I’m adding a tiny temporary filter in the script that turns HTML `<br>` in the Markdown AST into Pandoc line breaks before LaTeX/PDF generation.
+I’m also going to make the script run relative to its own directory, so calling `documentation/testing/build-pdfs.sh` from the repo root behaves the same as running it inside `documentation/testing`.
+The script change is in place. I’m regenerating the PDFs and checking the extracted text for the specific billettholder example so we verify the actual PDF output, not just the script.
+PDF generation completed successfully. I’m checking the converted text now to confirm the title and BDD lines no longer collapse into one paragraph.
+Fixed [build-pdfs.sh](/home/cinmay/Documents/conorganizer/documentation/testing/build-pdfs.sh).
+
+What changed:
+- The script now runs relative to `documentation/testing`, even when called from repo root.
+- It adds a small Pandoc Lua filter that converts Markdown `<br>` HTML nodes into real Pandoc line breaks before LaTeX/PDF generation.
+
+Verified by regenerating PDFs and checking `admin-billettholders.pdf` with `pdftotext`. The output now shows:
+
+```text
+□ Billettholdergrid er responsivt og lesbart
+Gitt at billettholderoversikten inneholder mange deltakere.
+Når siden vises.
+Så skal grid være responsive ...
+```
+
+`git diff --check` passes for the script and testing docs.
+
+Time: 2026-06-13 11:39:08
+--- Next Prompt ---
+
