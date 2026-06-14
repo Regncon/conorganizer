@@ -1,12 +1,18 @@
 package live
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/a-h/templ"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/nats-io/nats.go/jetstream"
 
 	"github.com/Regncon/conorganizer/testutil/bdd"
@@ -188,6 +194,59 @@ func TestManager_Broadcast_WhenWatcherIsOpen_SendsUpdateToWatcher(t *testing.T) 
 		t.Fatalf("watcher key mismatch\nexpected: %s\nactual:   %s", expectedKey, entry.Key())
 	}
 	assertTimestampValue(t, entry.Value())
+}
+
+func TestManager_Stream_WhenTouchConnectionFails_SendsInitialPatch(t *testing.T) {
+	// Given live key storage is temporarily unavailable,
+	// when a live stream starts,
+	// then the initial page patch is still sent instead of failing the HTTP request.
+
+	// Given
+	manager := newTestManager(t)
+	var logs bytes.Buffer
+	manager.logger = slog.New(slog.NewJSONHandler(&logs, nil)).With("component", "live")
+	kv := mustFakeKeyValue(t, manager, BucketEvents)
+	kv.putErr = errors.New("live key store unavailable")
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/live", nil)
+	request = request.WithContext(context.WithValue(request.Context(), middleware.RequestIDKey, "request-123"))
+
+	// When
+	manager.Stream(recorder, request, Page{
+		Buckets: []Bucket{BucketEvents},
+		Render: func(ctx context.Context, r *http.Request) templ.Component {
+			return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+				_, err := io.WriteString(w, `<div id="live-content">Ready</div>`)
+				return err
+			})
+		},
+	})
+
+	// Then
+	result := recorder.Result()
+	if result.StatusCode != http.StatusOK {
+		t.Fatalf("expected live stream to start successfully, got status %d", result.StatusCode)
+	}
+	body := recorder.Body.String()
+	for _, expectedPart := range []string{"datastar-patch-elements", "live-content", "Ready"} {
+		if !strings.Contains(body, expectedPart) {
+			t.Fatalf("expected stream body to contain %q, got %q", expectedPart, body)
+		}
+	}
+	logOutput := logs.String()
+	for _, expectedPart := range []string{
+		`"component":"live"`,
+		`"msg":"failed to touch live key before watching: touch live key in bucket events: live key store unavailable"`,
+		`"method":"GET"`,
+		`"path":"/live"`,
+		`"request_id":"request-123"`,
+		`"buckets":["events"]`,
+	} {
+		if !strings.Contains(logOutput, expectedPart) {
+			t.Fatalf("expected log output to contain %q, got %q", expectedPart, logOutput)
+		}
+	}
 }
 
 func TestDatastarInit_ReturnsRestartResilientGetExpression(t *testing.T) {
