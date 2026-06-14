@@ -73,8 +73,3 @@ Denne sjekklisten dekker `/profile/tickets`, der innlogget bruker kan hente bill
   **Gitt** at brukeren bruker billettsiden på mobil.<br>
   **Når** mange billettholderkort eller lange e-postadresser vises.<br>
   **Så** skal innholdet fortsatt være lesbart og brukbart uten overlapp eller horisontal kollaps.
-
-- [ ] **Refresh viser lagret billett- og e-posttilstand**<br>
-  **Gitt** at brukeren refresher siden etter å ha hentet billetter eller endret e-postadresser.<br>
-  **Når** siden lastes på nytt.<br>
-  **Så** skal resultatet samsvare med faktisk lagret tilstand.
