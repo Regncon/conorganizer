@@ -2,6 +2,8 @@ package live
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"sync"
@@ -28,6 +30,7 @@ func newTestManager(t *testing.T) *Manager {
 		buckets: buckets,
 		ttl:     DefaultTTL,
 		now:     time.Now,
+		logger:  slog.New(slog.NewTextHandler(io.Discard, nil)),
 	}
 }
 
@@ -89,6 +92,7 @@ type fakeKeyValue struct {
 	values   map[string][]byte
 	watchers map[string][]*fakeWatcher
 	revision uint64
+	putErr   error
 }
 
 func newFakeKeyValue(bucket Bucket, ttl time.Duration) *fakeKeyValue {
@@ -120,6 +124,10 @@ func (kv *fakeKeyValue) Get(_ context.Context, key string) (jetstream.KeyValueEn
 func (kv *fakeKeyValue) Put(_ context.Context, key string, value []byte) (uint64, error) {
 	kv.mu.Lock()
 	defer kv.mu.Unlock()
+
+	if kv.putErr != nil {
+		return 0, kv.putErr
+	}
 
 	kv.revision++
 	stored := cloneBytes(value)
