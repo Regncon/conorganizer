@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -104,6 +106,64 @@ func TestWriteReport_AddsBlankLineBetweenTests(t *testing.T) {
 	if !strings.Contains(report.String(), expectedSnippet) {
 		t.Fatalf("expected report to contain formatted test blocks:\n%s\n\nactual report:\n%s", expectedSnippet, report.String())
 	}
+}
+
+func TestCollectFileBDDComments_PrefersStructuredBehaviorMetadata(t *testing.T) {
+	// Given a test with structured BDD metadata and an older fallback BDD comment,
+	// when BDD comments are collected from the source file,
+	// then the structured metadata is used for the generated report.
+
+	// Given
+	expectedLines := []string{
+		"Gitt at strukturert metadata finnes.",
+		"Når rapporten samles.",
+		"Så skal strukturert metadata brukes.",
+	}
+	source := `package sample
+
+import (
+	"testing"
+
+	"github.com/Regncon/conorganizer/testutil"
+)
+
+func TestStructuredBehavior(t *testing.T) {
+	testutil.Behavior(t, testutil.BDD{
+		Given: "Gitt at strukturert metadata finnes.",
+		When:  "Når rapporten samles.",
+		Then:  "Så skal strukturert metadata brukes.",
+	})
+
+	// Gitt at gammel kommentar finnes,
+	// når rapporten samles,
+	// så skal denne ikke brukes.
+
+	// Given
+	expected := true
+
+	// When
+	actual := true
+
+	// Then
+	if actual != expected {
+		t.Fatal("expected true")
+	}
+}
+`
+	path := filepath.Join(t.TempDir(), "structured_test.go")
+	if err := os.WriteFile(path, []byte(source), 0o644); err != nil {
+		t.Fatalf("write test source: %v", err)
+	}
+
+	// When
+	comments, err := collectFileBDDComments(path)
+
+	// Then
+	if err != nil {
+		t.Fatalf("collect BDD comments: %v", err)
+	}
+	actualLines := formatBDDComment(comments["TestStructuredBehavior"])
+	assertLines(t, expectedLines, actualLines)
 }
 
 func assertLines(t *testing.T, expectedLines []string, actualLines []string) {

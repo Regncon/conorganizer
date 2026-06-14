@@ -4,13 +4,16 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
-	// Gitt at brukeren ikke er innlogget,
-	// når hovednavigasjonen vises,
-	// så skal brukeren bare få navigasjonslenker til forsiden og innlogging.
+	testutil.Behavior(t, testutil.BDD{
+		Given: "Gitt at brukeren ikke er innlogget.",
+		When:  "Når hovednavigasjonen vises.",
+		Then:  "Så skal brukeren bare få navigasjonslenker til forsiden og innlogging.",
+	})
 
 	// Given
 	expectedHrefs := []string{"/", "/auth"}
@@ -25,9 +28,11 @@ func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
 }
 
 func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
-	// Gitt at brukeren er innlogget uten adminrettigheter,
-	// når hovednavigasjonen vises,
-	// så skal brukeren bare få navigasjonslenker til forsiden, egen profil, utlogging og vanlege spørsmål.
+	testutil.Behavior(t, testutil.BDD{
+		Given: "Gitt at brukeren er innlogget uten adminrettigheter.",
+		When:  "Når hovednavigasjonen vises.",
+		Then:  "Så skal brukeren bare få navigasjonslenker til forsiden, egen profil, utlogging og vanlege spørsmål.",
+	})
 
 	// Given
 	expectedHrefs := []string{
@@ -50,9 +55,11 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 }
 
 func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
-	// Gitt at brukeren er admin,
-	// når hovednavigasjonen vises,
-	// så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.
+	testutil.Behavior(t, testutil.BDD{
+		Given: "Gitt at brukeren er admin.",
+		When:  "Når hovednavigasjonen vises.",
+		Then:  "Så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.",
+	})
 
 	// Given
 	expectedHrefs := []string{

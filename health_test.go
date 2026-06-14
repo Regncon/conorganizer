@@ -10,14 +10,17 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Regncon/conorganizer/testutil"
 	"github.com/go-chi/chi/v5"
 	_ "modernc.org/sqlite"
 )
 
 func TestHealthzReturnsGenericOK(t *testing.T) {
-	// Given the process is serving HTTP,
-	// when the health endpoint is requested,
-	// then it returns a generic OK response.
+	testutil.Behavior(t, testutil.BDD{
+		Given: "Given the process is serving HTTP.",
+		When:  "When the health endpoint is requested.",
+		Then:  "Then it returns a generic OK response.",
+	})
 
 	// Given
 	expectedStatusCode := http.StatusOK

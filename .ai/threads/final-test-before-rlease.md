@@ -992,4 +992,95 @@ I left the existing untracked `documentation/testing/report.md` alone since we a
 
 Time: 2026-06-14 12:03:04
 --- Next Prompt ---
+Is there a way to add some more structure to the BDD comments in the Go source? Perhaps we can create a struct that holds the Gitt/Når/Så parts and then we can use that struct to generate the report? 
+The goal would be to have a more structured way of writing the BDD comments in the Go source, which would make it easier to generate the report.
+Please let me know if you have any questions or suggestions about this idea before you implement it.
+
+Time: 2026-06-14 12:24:24
+--- Codex Run ---
+
+Codex output:
+Yes, that is feasible, but I would treat it as structured test metadata rather than “comments”.
+
+My suggested shape:
+
+```go
+func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
+	testutil.Behavior(t, testutil.BDD{
+		Given: "Gitt at brukeren er admin.",
+		When:  "Når hovednavigasjonen vises.",
+		Then:  "Så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.",
+	})
+
+	// Given
+	expectedHrefs := []string{"/", "/profile", "/auth/logout", "/admin", ...}
+
+	// When
+	...
+
+	// Then
+	...
+}
+```
+
+My recommendation:
+
+- Add a small `testutil.BDD` struct with `Given`, `When`, `Then`.
+- Add a `testutil.Behavior(t, testutil.BDD{...})` helper that validates all three fields are present.
+- Update `cmd/testreport` to read that struct from the AST.
+- Keep the current comment parser as a fallback while we migrate existing tests gradually.
+- Store the full rendered lines in the struct values, including `Gitt`, `Når`, `Så`, instead of trying to generate Norwegian/English grammar automatically.
+
+I would not migrate every test in the first pass. I’d implement the helper + report support, convert a small representative set of tests, and verify the report output. Then we can decide whether to bulk-convert the rest.
+
+Time: 2026-06-14 12:24:24
+--- Next Prompt ---
+Ok, implement your proposed changes.
+
+Time: 2026-06-14 12:29:54
+--- Codex Run ---
+
+Codex output:
+I’ll add the structured BDD helper in `testutil`, teach the report generator to read it from the Go AST, and convert a small representative set of tests so we verify both structured metadata and the existing comment fallback.
+I’m adding the helper as a lightweight test utility first. It validates that all three BDD fields are present, but otherwise has no effect on test behavior.
+Next I’m teaching `cmd/testreport` to prefer the structured `testutil.Behavior(t, testutil.BDD{...})` call when it exists, while keeping the existing comment parser as fallback.
+The AST reader now understands structured BDD metadata. I’m adding a generator test that proves structured metadata wins over an old fallback comment in the same test.
+I’m converting the header menu tests to the structured form. That gives us a small Norwegian example set without touching the broader suite yet.
+I’ll convert one English root-level test as well, so the structured path is exercised with both languages in the real report.
+The representative conversions are done. I’m formatting the touched Go files, then I’ll run the focused package tests before the full report task.
+The structured examples look clean after `gofmt`. I’ll run the affected packages and the report generator tests with the writable Go cache.
+The focused tests pass. I’m running the actual report task again and checking that the converted tests still appear correctly alongside fallback comment-based tests.
+The report task completed. I’ll inspect the structured header/health entries and run a final diff check.
+The summary is clean: 172 tests, 0 missing BDD comments. The last sample command clipped one package boundary awkwardly, so I’m checking the relevant sections directly.
+The report still says it only reads BDD comments, which is no longer accurate. I’m updating that text and the testing guide so the new structured helper is documented alongside the fallback comment support.
+I’m going to keep the old parser names mostly intact internally, but update the user-facing report language to “BDD metadata” so it covers both structured helper calls and fallback comments.
+I’m updating the repository guidance to describe the new structured helper as the preferred report metadata format, with comments still supported for existing tests.
+The guide and report wording now match the structured metadata approach. I’ll format and run the focused tests plus the full report again.
+The focused tests and diff check pass. I’m running `task test:report` one more time to verify the final report wording and metadata count.
+The final report task passed. I’ll inspect the header and changed report entries, then gather the final status.
+One more polish pass: the AGENTS example still shows only the old comment style, which undercuts the new recommendation. I’m updating that example to use the structured helper.
+I’m also tightening the AST matcher slightly so it only reads composite literals whose type is named `BDD`, not any arbitrary struct with `Given`, `When`, and `Then` fields.
+That matcher change is in. I’ll run formatting and the final verification set once more.
+The focused tests pass. I’ll run the report task one last time after the matcher tightening.
+The report task passed. I’m collecting the final status and a small report sample for the close-out.
+Implemented the structured BDD metadata path.
+
+Changed:
+- Added [testutil/bdd.go](/home/cinmay/Documents/conorganizer/testutil/bdd.go) with `testutil.BDD` and `testutil.Behavior(t, ...)`.
+- Updated [cmd/testreport/main.go](/home/cinmay/Documents/conorganizer/cmd/testreport/main.go) to prefer structured `testutil.Behavior(t, testutil.BDD{...})` metadata, with existing BDD comments as fallback.
+- Added parser coverage in [cmd/testreport/main_test.go](/home/cinmay/Documents/conorganizer/cmd/testreport/main_test.go).
+- Converted representative tests in [components/header/menu_test.go](/home/cinmay/Documents/conorganizer/components/header/menu_test.go) and [health_test.go](/home/cinmay/Documents/conorganizer/health_test.go).
+- Updated [AGENTS.MD](/home/cinmay/Documents/conorganizer/AGENTS.MD) and [how-to-write-tests.md](/home/cinmay/Documents/conorganizer/documentation/testing/how-to-write-tests.md) to document the new preferred format.
+
+Verified:
+- `GOCACHE=/tmp/conorganizer-go-build go test ./cmd/testreport . ./components/header ./testutil`
+- `GOCACHE=/tmp/conorganizer-go-build go tool task test:report > /tmp/conorganizer-test-report.out`
+- `git diff --check ...`
+
+The report now says it is generated from structured BDD metadata or fallback comments, and shows `Tests missing BDD metadata: 0`.
+
+I left the existing unrelated `.ai/threads/final-test-before-rlease.md` and untracked generated `documentation/testing/report.md` untouched.
+
+Time: 2026-06-14 12:29:54
+--- Next Prompt ---
 

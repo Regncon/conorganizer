@@ -14,6 +14,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 )
@@ -48,7 +49,7 @@ func main() {
 
 	comments, err := collectBDDComments(packages)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "collect BDD comments: %v\n", err)
+		fmt.Fprintf(os.Stderr, "collect BDD metadata: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -117,12 +118,112 @@ func collectFileBDDComments(path string) (map[string]string, error) {
 			continue
 		}
 
-		comment := firstBDDCommentInFunction(parsedFile.Comments, functionDeclaration)
+		comment := firstBDDTextInFunction(parsedFile.Comments, functionDeclaration)
 		if comment != "" {
 			comments[functionDeclaration.Name.Name] = comment
 		}
 	}
 	return comments, nil
+}
+
+func firstBDDTextInFunction(groups []*ast.CommentGroup, functionDeclaration *ast.FuncDecl) string {
+	if structuredBDD := firstStructuredBDDInFunction(functionDeclaration); structuredBDD != "" {
+		return structuredBDD
+	}
+
+	return firstBDDCommentInFunction(groups, functionDeclaration)
+}
+
+func firstStructuredBDDInFunction(functionDeclaration *ast.FuncDecl) string {
+	for _, statement := range functionDeclaration.Body.List {
+		expressionStatement, ok := statement.(*ast.ExprStmt)
+		if !ok {
+			continue
+		}
+
+		callExpression, ok := expressionStatement.X.(*ast.CallExpr)
+		if !ok || !isBehaviorCall(callExpression) {
+			continue
+		}
+
+		if bdd := bddFromBehaviorCall(callExpression); bdd != "" {
+			return bdd
+		}
+	}
+
+	return ""
+}
+
+func isBehaviorCall(callExpression *ast.CallExpr) bool {
+	switch function := callExpression.Fun.(type) {
+	case *ast.SelectorExpr:
+		return function.Sel.Name == "Behavior"
+	case *ast.Ident:
+		return function.Name == "Behavior"
+	default:
+		return false
+	}
+}
+
+func bddFromBehaviorCall(callExpression *ast.CallExpr) string {
+	for _, argument := range callExpression.Args {
+		compositeLiteral, ok := argument.(*ast.CompositeLit)
+		if !ok || !isBDDCompositeLiteral(compositeLiteral) {
+			continue
+		}
+
+		if bdd := bddFromCompositeLiteral(compositeLiteral); bdd != "" {
+			return bdd
+		}
+	}
+
+	return ""
+}
+
+func isBDDCompositeLiteral(compositeLiteral *ast.CompositeLit) bool {
+	switch literalType := compositeLiteral.Type.(type) {
+	case *ast.SelectorExpr:
+		return literalType.Sel.Name == "BDD"
+	case *ast.Ident:
+		return literalType.Name == "BDD"
+	default:
+		return false
+	}
+}
+
+func bddFromCompositeLiteral(compositeLiteral *ast.CompositeLit) string {
+	lines := map[string]string{}
+	for _, element := range compositeLiteral.Elts {
+		keyValue, ok := element.(*ast.KeyValueExpr)
+		if !ok {
+			continue
+		}
+
+		key, ok := keyValue.Key.(*ast.Ident)
+		if !ok {
+			continue
+		}
+
+		value, ok := keyValue.Value.(*ast.BasicLit)
+		if !ok || value.Kind != token.STRING {
+			continue
+		}
+
+		text, err := strconv.Unquote(value.Value)
+		if err != nil {
+			continue
+		}
+		lines[key.Name] = strings.Join(strings.Fields(text), " ")
+	}
+
+	given := strings.TrimSpace(lines["Given"])
+	when := strings.TrimSpace(lines["When"])
+	then := strings.TrimSpace(lines["Then"])
+	if given == "" || when == "" || then == "" {
+		return ""
+	}
+
+	return strings.Join([]string{given, when, then}, "\n")
 }
 
 func firstBDDCommentInFunction(groups []*ast.CommentGroup, functionDeclaration *ast.FuncDecl) string {
@@ -223,7 +324,7 @@ func writeReport(writer io.Writer, results map[string][]testResult, comments map
 	totalTests := 0
 	failedTests := 0
 	skippedTests := 0
-	missingBDDComments := 0
+	missingBDDMetadata := 0
 
 	for packagePath, packageResults := range results {
 		if len(packageResults) == 0 {
@@ -239,7 +340,7 @@ func writeReport(writer io.Writer, results map[string][]testResult, comments map
 				skippedTests++
 			}
 			if comments[testKey(packagePath, result.Name)] == "" {
-				missingBDDComments++
+				missingBDDMetadata++
 			}
 		}
 	}
@@ -247,14 +348,14 @@ func writeReport(writer io.Writer, results map[string][]testResult, comments map
 
 	fmt.Fprintln(writer, "# Automated Behavior Test Report")
 	fmt.Fprintln(writer)
-	fmt.Fprintln(writer, "Generated from `go test -json ./...` and the first BDD comment in each `Test...` function.")
+	fmt.Fprintln(writer, "Generated from `go test -json ./...` and the first structured BDD metadata or BDD comment in each `Test...` function.")
 	fmt.Fprintln(writer)
 	fmt.Fprintln(writer, "## Summary")
 	fmt.Fprintf(writer, "- Packages with tests: %d\n", len(packages))
 	fmt.Fprintf(writer, "- Tests run: %d\n", totalTests)
 	fmt.Fprintf(writer, "- Failed: %d\n", failedTests)
 	fmt.Fprintf(writer, "- Skipped: %d\n", skippedTests)
-	fmt.Fprintf(writer, "- Tests missing BDD comments: %d\n", missingBDDComments)
+	fmt.Fprintf(writer, "- Tests missing BDD metadata: %d\n", missingBDDMetadata)
 	fmt.Fprintln(writer)
 
 	for _, packagePath := range packages {
@@ -274,7 +375,7 @@ func writeReport(writer io.Writer, results map[string][]testResult, comments map
 
 			comment := comments[testKey(packagePath, result.Name)]
 			if comment == "" {
-				comment = "BDD-kommentar mangler."
+				comment = "BDD-metadata mangler."
 			}
 			for _, line := range formatBDDComment(comment) {
 				fmt.Fprintf(writer, "  %s\n", line)
