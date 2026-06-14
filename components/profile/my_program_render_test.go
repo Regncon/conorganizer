@@ -22,6 +22,7 @@ func TestMyProgram_WhenPuljeIsNotCompleted_RendersInterestsAndHidesPlayerResult(
 
 	db, logger := createProfileProgramTestDB(t)
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgram(t, db, true)
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusOpen)
 	insertProfileProgramPublishedEvent(t, db, "hidden-player-result", hiddenVisibleText)
 	insertProfileProgramPublishedEvent(t, db, "visible-wish-event", expectedVisibleText)
@@ -57,6 +58,7 @@ func TestMyProgram_WhenPuljeIsCompleted_RendersPlayerResult(t *testing.T) {
 
 	db, logger := createProfileProgramTestDB(t)
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgram(t, db, true)
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
 	insertProfileProgramPublishedEvent(t, db, "completed-player-result", expectedVisibleText)
 	insertProfileProgramPublishedEvent(t, db, "completed-wish-event", hiddenVisibleText)
@@ -89,6 +91,7 @@ func TestMyProgram_WhenGMEventIsInNotCompletedPulje_RendersGMEventOverInterests(
 
 	db, logger := createProfileProgramTestDB(t)
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
+	insertProfileProgram(t, db, true)
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusLocked)
 	insertProfileProgramPublishedEvent(t, db, "locked-gm-event", expectedVisibleText)
 	insertProfileProgramPublishedEvent(t, db, "locked-wish-event", hiddenVisibleText)
