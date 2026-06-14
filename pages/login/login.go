@@ -22,13 +22,27 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 	router.Route("/auth", func(authRouter chi.Router) {
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
-			if err := layouts.Base(
-				"Innlogging til Regncon 2025!",
-				userctx.GetUserRequestInfo(ctx),
-				loginForm(),
-			).Render(ctx, w); err != nil {
-				logger.Error(fmt.Errorf("failed to render login page: %w", err).Error())
+			userToken, _ := authctx.GetUserTokenFromContext(r.Context())
+
+			if userToken != nil {
+				if err := layouts.Base(
+					"Velkomen tilbake til Regncon 2025!",
+					userctx.GetUserRequestInfo(ctx),
+					alreadyLogedIn(),
+				).Render(ctx, w); err != nil {
+					logger.Error(fmt.Errorf("failed to render already loged in page: %w", err).Error())
+				}
+			} else {
+				if err := layouts.Base(
+					"Innlogging til Regncon 2025!",
+					userctx.GetUserRequestInfo(ctx),
+					loginForm(),
+				).Render(ctx, w); err != nil {
+					logger.Error(fmt.Errorf("failed to render login page: %w", err).Error())
+				}
+
 			}
+
 		})
 
 		authRouter.Group(func(protectedRoute chi.Router) {
