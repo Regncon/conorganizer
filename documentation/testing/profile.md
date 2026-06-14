@@ -1,6 +1,6 @@
 # Min Side
 
-Denne sjekklisten dekker `/profile`, altså den innloggede oversiktssiden med egne arrangementer, eget festivalprogram og lenke videre til billettadministrasjon.
+Denne sjekklisten dekker `/profile`: innlogget oversikt, egne arrangementer, kort oppsummering av billetter, eget festivalprogram og lenke videre til billettadministrasjon.
 
 ## Roller
 
@@ -8,28 +8,70 @@ Denne sjekklisten dekker `/profile`, altså den innloggede oversiktssiden med eg
 
 ## Sjekkliste
 
-- [ ] `Gitt at en innlogget bruker åpner Min Side, når siden lastes, så skal siden vises som en helhetlig oversikt uten brutte seksjoner eller tydelig manglende innhold.`
-- [ ] `Gitt at en innlogget bruker åpner Min Side, når siden er ferdig lastet, så skal brødsmulestien tydelig vise at brukeren befinner seg på Min Side.`
-- [ ] `Gitt at brukeren har egne arrangementer, når seksjonen for egne arrangementer vises, så skal arrangementene fremstå som brukerens egne og ha lenker som passer arrangementets status.`
-- [ ] `Gitt at brukeren ikke har egne arrangementer, når Min Side vises, så skal seksjonen for egne arrangementer håndteres på en forståelig måte uten å se ødelagt eller tom ut på en utilsiktet måte.`
-- [ ] `Gitt at brukeren har et arrangement i kladd eller ikke-ferdig status, når brukeren åpner det fra Min Side, så skal brukeren sendes til redigering og ikke til den publiserte arrangementsvisningen.`
-- [ ] `Gitt at brukeren har et innsendt eller publisert arrangement, når brukeren åpner det fra Min Side, så skal brukeren bli sendt til riktig arrangementsvisning og ikke til feil redigeringsflyt.`
-- [ ] `Gitt at brukeren har billettinnehavere knyttet til seg, når seksjonen for billetter vises på Min Side, så skal navn, billettype og e-post fremstå lesbart og uten å kuttes eller blandes sammen.`
-- [ ] `Gitt at brukeren ikke har billettinnehavere knyttet til seg, når Min Side vises, så skal billettseksjonen håndteres uten at hele siden fremstår som feil eller mangelfull.`
-- [ ] `Gitt at brukeren åpner Min Side, når seksjonen for festivalprogram vises, så skal tildelte arrangementer eller registrerte interesser vises i riktig pulje der det finnes data.`
-- [ ] `Gitt at brukeren ikke har noe i en eller flere puljer i sitt festivalprogram, når Min Side vises, så skal tomtilstanden være forståelig og ikke se ut som om data har forsvunnet.`
-- [ ] `Gitt at brukeren både har tildelte arrangementer og registrerte interesser, når festivalprogrammet vises, så skal tildelte arrangementer og interesser presenteres på en måte som ikke skaper tvil om hva som er faktisk tildeling og hva som bare er interesse.`
-- [ ] `Gitt at datagrunnlaget for Min Side er ufullstendig eller delvis mangler, når siden vises, så skal siden fortsatt være brukbar og ikke bryte layouten eller stoppe all visning.`
-- [ ] `Gitt at brukeren trykker seg videre til billettsiden fra Min Side, når navigasjonen skjer, så skal brukeren ende på riktig underside for billetter uten feil kontekst eller feil rolle.`
-- [ ] `Gitt at brukeren bruker Min Side på mobil, når de ulike seksjonene vises under hverandre, så skal kort, paneler og overskrifter være lesbare og ikke overlappe.`
-- [ ] `Gitt at brukeren bruker Min Side på større skjerm, når innholdet fordeles i kolonner, så skal seksjonene fremstå balansert og uten uventede tomrom eller kollisjon mellom paneler.`
-- [ ] `Gitt at brukeren refresher Min Side eller kommer tilbake fra en underside, når siden vises igjen, så skal innholdet fortsatt stemme med brukerens faktiske data og rolle.`
-- [ ] `Gitt at brukeren ser Min Side som helhet, når siden er ferdig lastet, så skal den fremstå som en ferdig del av produktet uten placeholder-preg eller visuelt forstyrrende detaljer.`
+### Oversikt
 
-## Kan automatiseres
+- [ ] **Min Side viser en helhetlig oversikt**<br>
+  **Gitt** at en innlogget bruker åpner Min Side.<br>
+  **Når** siden lastes.<br>
+  **Så** skal siden vises som en helhetlig oversikt uten brutte seksjoner eller tydelig manglende innhold.
 
-- Visning av egne arrangementer, billetter og festivalprogram egner seg godt for ende-til-ende-tester der brukeren seedes med forskjellige datakombinasjoner.
-- Riktig lenkeoppførsel fra egne arrangementer egner seg godt for ende-til-ende-tester som verifiserer at status bestemmer hvor brukeren sendes.
-- Tomtilstander og delvise data egner seg godt for integrasjonstester eller ende-til-ende-tester med seedet database.
-- Layout og rekkefølge mellom seksjonene egner seg godt for nettleserbaserte ende-til-ende-tester på mobil og desktop.
+### Mine arrangementer
 
+- [ ] **Nytt arrangement åpner riktig skjema**<br>
+  **Gitt** at brukeren velger å legge til nytt arrangement fra Min Side.<br>
+  **Når** handlingen lykkes.<br>
+  **Så** skal brukeren få opprettet et nytt arrangement og sendes videre til riktig skjema for det nye arrangementet.
+
+- [ ] **Mange arrangementer forblir lesbare**<br>
+  **Gitt** at brukeren har mange arrangementer.<br>
+  **Når** seksjonen for Mine arrangementer vises.<br>
+  **Så** skal kortene fortsatt være lesbare og navigerbare uten å skape kaotisk layout.
+
+- [ ] **Refresh viser lagret arrangementstilstand**<br>
+  **Gitt** at brukeren refresher siden etter å ha opprettet eller endret arrangementer.<br>
+  **Når** siden vises igjen.<br>
+  **Så** skal oversikten samsvare med faktisk lagret tilstand.
+
+- [ ] **Tilbakeknapp bevarer stabil Min Side**<br>
+  **Gitt** at brukeren bruker tilbakeknapp mellom Min Side og underliggende arrangementsider.<br>
+  **Når** brukeren kommer tilbake til Min Side.<br>
+  **Så** skal siden fortsatt fremstå stabil og oppdatert.
+
+### Billetter og festivalprogram
+
+- [ ] **Billettseksjonen håndterer manglende billettholdere**<br>
+  **Gitt** at brukeren ikke har billettinnehavere knyttet til seg.<br>
+  **Når** Min Side vises.<br>
+  **Så** skal billettseksjonen håndteres uten at hele siden fremstår som feil eller mangelfull.
+
+- [ ] **Tomme programpunkter forklares tydelig**<br>
+  **Gitt** at brukeren ikke har noe i en eller flere puljer i sitt festivalprogram.<br>
+  **Når** Min Side vises.<br>
+  **Så** skal tomtilstanden være forståelig og ikke se ut som om data har forsvunnet.
+
+- [ ] **Billettlenken åpner riktig underside**<br>
+  **Gitt** at brukeren trykker seg videre til billettsiden fra Min Side.<br>
+  **Når** navigasjonen skjer.<br>
+  **Så** skal brukeren ende på riktig underside for billetter uten feil kontekst eller feil rolle.
+
+### Visning og navigasjon
+
+- [ ] **Min Side fungerer på mobil**<br>
+  **Gitt** at brukeren bruker Min Side på mobil.<br>
+  **Når** de ulike seksjonene vises under hverandre.<br>
+  **Så** skal kort, paneler og overskrifter være lesbare og ikke overlappe.
+
+- [ ] **Kolonner er balansert på større skjerm**<br>
+  **Gitt** at brukeren bruker Min Side på større skjerm.<br>
+  **Når** innholdet fordeles i kolonner.<br>
+  **Så** skal seksjonene fremstå balansert og uten uventede tomrom eller kollisjon mellom paneler.
+
+- [ ] **Refresh og retur viser riktige brukerdata**<br>
+  **Gitt** at brukeren refresher Min Side eller kommer tilbake fra en underside.<br>
+  **Når** siden vises igjen.<br>
+  **Så** skal innholdet fortsatt stemme med brukerens faktiske data og rolle.
+
+- [ ] **Min Side fremstår ferdig**<br>
+  **Gitt** at brukeren ser Min Side som helhet.<br>
+  **Når** siden er ferdig lastet.<br>
+  **Så** skal den fremstå som en ferdig del av produktet uten placeholder-preg eller visuelt forstyrrende detaljer.

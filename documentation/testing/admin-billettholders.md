@@ -8,35 +8,53 @@ Denne sjekklisten dekker `/admin/billettholder`, der admin får oversikt over al
 
 ## Sjekkliste
 
-- [ ] `Gitt at en admin åpner billettholderoversikten, når siden lastes, så skal oversikten vises med tydelig brødsmulesti, overskrift og innhold uten brutte kort eller tydelig manglende data.`
+### Oversikt
 
-- [ ] `Gitt at billettholderoversikten inneholder mange deltakere, når siden vises, så skal grid være responsive og kort forbli lesbare og brukbare uten sammenfallende innhold.`
+- [ ] **Billettholdergrid er responsivt og lesbart**<br>
+  **Gitt** at billettholderoversikten inneholder mange deltakere.<br>
+  **Når** siden vises.<br>
+  **Så** skal grid være responsive og kort forbli lesbare og brukbare uten sammenfallende innhold.
 
-- [ ] `Gitt at en billettholder vises i adminoversikten, når kortet leses, så skal bestilling, type, navn, alder og relevante e-postadresser fremstå tydelig.`
+### E-postvedlikehold
 
-- [ ] `Gitt at en billettholder har flere e-postadresser, når kortet vises, så skal det være forståelig hvilke som er billettadresse og hvilke som er andre tilknyttede adresser.`
+- [ ] **Ny e-postadresse vises på riktig kort**<br>
+  **Gitt** at admin legger til en manuell e-postadresse på en billettholder.<br>
+  **Når** handlingen lykkes.<br>
+  **Så** skal bekreftelsen vises på riktig kort og den nye adressen vises på riktig billettholder.
 
-- [ ] `Gitt at admin legger til en manuell e-postadresse på en billettholder, når handlingen lykkes, så skal bekreftelsen vises på riktig kort og den nye adressen vises på riktig billettholder.`
+- [ ] **Tom e-postadresse avvises**<br>
+  **Gitt** at admin forsøker å legge til en tom e-postadresse.<br>
+  **Når** handlingen utføres.<br>
+  **Så** skal admin få en tydelig feilmelding og ingen adresse skal legges til.
 
-- [ ] `Gitt at admin forsøker å legge til en tom e-postadresse, når handlingen utføres, så skal admin få en tydelig feilmelding og ingen adresse skal legges til.`
+- [ ] **Duplikatadresse avvises tydelig**<br>
+  **Gitt** at admin forsøker å legge til en e-postadresse som allerede finnes på samme billettholder.<br>
+  **Når** handlingen utføres.<br>
+  **Så** skal siden avvise duplikatet tydelig og uten å skape uklar tilstand.
 
-- [ ] `Gitt at admin forsøker å legge til en e-postadresse som allerede finnes på samme billettholder, når handlingen utføres, så skal siden avvise duplikatet tydelig og uten å skape uklar tilstand.`
+- [ ] **Sletting fjerner riktig adresse**<br>
+  **Gitt** at admin sletter en manuell e-postadresse.<br>
+  **Når** handlingen lykkes.<br>
+  **Så** skal adressen fjernes fra riktig kort og ikke bli stående igjen på siden som om den fortsatt eksisterer.
 
-- [ ] `Gitt at admin sletter en manuell e-postadresse, når handlingen lykkes, så skal adressen fjernes fra riktig kort og ikke bli stående igjen på siden som om den fortsatt eksisterer.`
+- [ ] **Brukertilknytning ryddes opp ved sletting**<br>
+  **Gitt** at sletting av e-postadresse medfører at bruker-tilknytning må ryddes opp.<br>
+  **Når** handlingen lykkes.<br>
+  **Så** skal resultatet fremstå konsistent og ikke etterlate spor av delvis sletting i brukeropplevelsen.
 
-- [ ] `Gitt at sletting av e-postadresse medfører at bruker-tilknytning må ryddes opp, når handlingen lykkes, så skal resultatet fremstå konsistent og ikke etterlate spor av delvis sletting i brukeropplevelsen.`
+- [ ] **Add- og delete-feil er tydelige**<br>
+  **Gitt** at en add- eller delete-handling feiler.<br>
+  **Når** admin utfører endringen.<br>
+  **Så** skal feilmeldingen være tydelig og ikke etterlate inntrykk av at endringen likevel ble lagret.
 
-- [ ] `Gitt at en add- eller delete-handling feiler, når admin utfører endringen, så skal feilmeldingen være tydelig og ikke etterlate inntrykk av at endringen likevel ble lagret.`
+### Stabilitet og layout
 
-- [ ] `Gitt at admin jobber med flere billettholderkort på samme side, når flere endringer skjer etter hverandre, så skal meldinger og oppdateringer tilhøre riktig kort og ikke lekke til andre kort.`
+- [ ] **Meldinger hører til riktig kort**<br>
+  **Gitt** at admin jobber med flere billettholderkort på samme side.<br>
+  **Når** flere endringer skjer etter hverandre.<br>
+  **Så** skal meldinger og oppdateringer tilhøre riktig kort og ikke lekke til andre kort.
 
-- [ ] `Gitt at admin navigerer til legge til billettholder fra oversikten, når navigasjonen skjer, så skal riktig underside åpnes uten feil rolle eller feil kontekst.`
-
-- [ ] `Gitt at siden brukes på mobil eller smal skjerm, når mange billettholdere eller lange e-postadresser vises, så skal innholdet fortsatt være lesbart og trykkbart uten at kortene bryter sammen.`
-
-## Kan automatiseres
-
-- Legg til og slett manuelle e-postadresser egner seg godt for ende-til-ende-tester og integrasjonstester.
-- Feilhåndtering for tomme og dupliserte e-postadresser egner seg godt for integrasjonstester.
-- Riktig plassering av suksess- og feilmeldinger på riktig kort egner seg godt for ende-til-ende-tester.
-
+- [ ] **Billettholderkort fungerer på mobil**<br>
+  **Gitt** at siden brukes på mobil eller smal skjerm.<br>
+  **Når** mange billettholdere eller lange e-postadresser vises.<br>
+  **Så** skal innholdet fortsatt være lesbart og trykkbart uten at kortene bryter sammen.

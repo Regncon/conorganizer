@@ -1,6 +1,6 @@
 # Generelle tester
 
-Denne sjekklisten dekker oppførsel som går igjen på tvers av flere sider og flyter. Dette er tester som ikke hører naturlig hjemme bare på én side, og som bør vurderes samlet for å sikre en konsistent brukeropplevelse i hele appen.
+Denne sjekklisten dekker felles navigasjon, rolleopplevelse og tilgang på tvers av appen.
 
 ## Roller
 
@@ -10,43 +10,75 @@ Denne sjekklisten dekker oppførsel som går igjen på tvers av flere sider og f
 
 ## Sjekkliste
 
+### Alle roller
+
+- [ ] **Hovednavigasjonen er stabil og lesbar**<br>
+  **Gitt** at brukeren åpner sider med hovednavigasjon.<br>
+  **Når** sidene er ferdig lastet.<br>
+  **Så** skal navigasjonen være stabil, lesbar og uten brutte eller uferdige elementer.
+
+- [ ] **Navigasjon og brukermeny passer på alle skjermstørrelser**<br>
+  **Gitt** at brukeren bruker appen på mobil og større skjerm.<br>
+  **Når** hovednavigasjonen og brukermenyen vises.<br>
+  **Så** skal lenker, knapper og menyer være lesbare og ikke overlappe eller havne utenfor skjermen.
+
+- [ ] **Fokus og alternative navigasjonsformer er tydelige**<br>
+  **Gitt** at brukeren navigerer med tastatur eller andre alternative navigasjonsformer.<br>
+  **Når** fokus flyttes i hovednavigasjon og brukermeny.<br>
+  **Så** skal det være tydelig hvor fokus er og hvilke handlinger som kan utføres.
+
+- [ ] **Rolle- og innloggingsstatus holder seg konsistent**<br>
+  **Gitt** at brukeren navigerer via meny, tilbakeknapp og refresh.<br>
+  **Når** rolle eller innloggingsstatus endres underveis.<br>
+  **Så** skal appen ikke vise feil menytilstand eller ødelagte sider.
+
+- [ ] **Raske sidebytter skaper ikke ustabilitet**<br>
+  **Gitt** at brukeren klikker raskt mellom tilgjengelige sider.<br>
+  **Når** flere navigasjonshandlinger skjer tett etter hverandre.<br>
+  **Så** skal appen ikke havne i duplikathandlinger, feilnavigasjon eller tydelig ustabil tilstand.
+
+- [ ] **Navigasjonen fremstår ferdig og konsistent**<br>
+  **Gitt** at brukeren ser navigasjonen på tvers av sider.<br>
+  **Når** appen brukes som helhet.<br>
+  **Så** skal navigasjonen fremstå som ferdig og konsistent uten placeholder-preg, utilsiktet språkblanding eller visuelt forstyrrende detaljer.
+
 ### Ikke innlogget bruker
 
-- [ ] `Gitt at brukeren ikke er innlogget, når innloggingsknappen vises i hovednavigasjonen, så skal det være tydelig at dette er riktig inngang til innlogging.`
+- [ ] **Innloggingsinngangen åpner riktig flyt**<br>
+  **Gitt** at brukeren ikke er innlogget.<br>
+  **Når** innloggingsinngangen brukes fra hovednavigasjonen.<br>
+  **Så** skal brukeren komme til innloggingsflyten uten uventede feil eller feil side.
 
-- [ ] `Gitt at brukeren ikke er innlogget, når brukeren trykker på innloggingsknappen fra hovednavigasjonen, så skal brukeren bli sendt til innloggingsflyten uten å møte uventede feilmeldinger eller feil side.`
-
-- [ ] `Gitt at en ikke-innlogget bruker prøver å gå direkte til en beskyttet side, når siden åpnes, så skal brukeren møte en tydelig tilgangsfeil med en forståelig vei videre til innlogging eller tilbake til appen.`
-
-- [ ] `Gitt at en ikke-innlogget bruker havner på en tilgangsfeil, når siden vises, så skal teksten og handlingene på siden være tydelige nok til at brukeren forstår hvorfor siden ikke er tilgjengelig.`
-
-- [ ] `Gitt at brukeren navigerer mellom sider via hovednavigasjon og brukermeny, når brukeren bruker tilbakeknapp og refresh, så skal appen oppføre seg stabilt og ikke vise feil rolle, feil menyvalg eller ødelagte tilstander.`
-
-- [ ] `Gitt at brukeren navigerer raskt mellom tilgjengelige sider via menyen, når flere klikk skjer tett etter hverandre, så skal appen ikke havne i duplikathandlinger, feilnavigasjon eller tydelig ustabil tilstand.`
-
-- [ ] `Gitt at brukeren bruker appen med tastatur eller andre alternative navigasjonsformer, når fokus flyttes mellom interaktive elementer i meny og brukermeny, så skal det være mulig å forstå hvor brukeren befinner seg og hvilke handlinger som kan utføres.`
-
-- [ ] `Gitt at eksterne lenker vises i brukermenyen, når brukeren åpner dem, så skal det være tydelig at brukeren forlater eller åpner innhold utenfor appens egne sider.`
-
-- [ ] `Gitt at brukeren ser navigasjonen på tvers av sider, når appen brukes som helhet, så skal navigasjonen fremstå som ferdig og konsistent uten placeholder-preg, utilsiktet språkblanding eller visuelt forstyrrende detaljer.`
+- [ ] **Beskyttede sider forklarer avvist tilgang**<br>
+  **Gitt** at en ikke-innlogget bruker åpner en beskyttet side direkte.<br>
+  **Når** tilgang avvises.<br>
+  **Så** skal brukeren få en tydelig forklaring og en forståelig vei videre til innlogging eller tilbake til appen.
 
 ### Innlogget bruker
 
-- [ ] `Gitt at brukeren åpner en side med hovednavigasjon, når siden er ferdig lastet, så skal navigasjonen fremstå som en stabil og konsistent del av appen uten brutte elementer, feil plassering eller visuelt uferdige tilstander.`
+- [ ] **Utlogging endrer appen til utlogget tilstand**<br>
+  **Gitt** at brukeren er innlogget.<br>
+  **Når** brukeren logger ut fra brukermenyen.<br>
+  **Så** skal appen tydelig gå over til utlogget tilstand.
 
-- [ ] `Gitt at brukeren åpner appen på mobil, når hovednavigasjonen brukes på tvers av relevante sider, så skal menyen være lesbar, trykkbar og stabil uten overlapp, avkuttede etiketter eller elementer som havner utenfor skjermen.`
+- [ ] **Tidligere beskyttede sider forblir avvist etter utlogging**<br>
+  **Gitt** at brukeren nylig har logget ut.<br>
+  **Når** brukeren refresher eller åpner en tidligere beskyttet side.<br>
+  **Så** skal appen fortsatt behandle brukeren som utlogget.
 
-- [ ] `Gitt at brukeren åpner appen på større skjerm, når hovednavigasjonen brukes på tvers av relevante sider, så skal logo, menyknapper og brukermeny oppføre seg konsistent og uten visuelle brudd.`
+- [ ] **Eksterne menylenker markeres tydelig**<br>
+  **Gitt** at eksterne lenker vises i brukermenyen.<br>
+  **Når** brukeren åpner dem.<br>
+  **Så** skal det være tydelig at innholdet ligger utenfor appen.
 
-- [ ] `Gitt at brukeren er innlogget, når brukeren velger å logge ut fra brukermenyen, så skal brukeren bli logget ut og etterpå møte en tilstand som tydelig viser at brukeren ikke lenger er innlogget.`
-
-- [ ] `Gitt at brukeren nylig har logget ut, når brukeren navigerer videre i appen, så skal navigasjonen oppføre seg som for en ikke-innlogget bruker og ikke etterlate inntrykk av at brukeren fortsatt er innlogget.`
-
-- [ ] `Gitt at en bruker uten adminrettigheter prøver å gå direkte til en adminside, når siden åpnes, så skal brukeren ikke få tilgang og heller ikke møte en halvveis eller misvisende adminvisning.`
+- [ ] **Ikke-admin får ingen halvveis adminvisning**<br>
+  **Gitt** at en bruker uten adminrettigheter åpner en adminside direkte.<br>
+  **Når** tilgang avvises.<br>
+  **Så** skal brukeren ikke se en halvveis eller misvisende adminvisning.
 
 ### Admin
 
-- [ ] `Gitt at brukeren er admin, når brukeren navigerer til Admin fra hovednavigasjonen, så skal brukeren bli sendt til adminområdet uten å møte feil rolle eller feil landingsside.`
-- [ ] `Gitt at brukeren er admin, når brukeren navigerer via hovednavigasjonen, så skal brukerne tas til relevante sider og alle linker fungere som forventet. `
-
-
+- [ ] **Adminlenken åpner adminområdet riktig**<br>
+  **Gitt** at brukeren er admin.<br>
+  **Når** brukeren navigerer til Admin fra hovednavigasjonen.<br>
+  **Så** skal brukeren bli sendt til adminområdet uten å møte feil rolle eller feil landingsside.

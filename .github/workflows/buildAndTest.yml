@@ -31,8 +31,8 @@ jobs:
             - name: Generate template files (templ via go.mod tool)
               run: go tool templ generate
 
-            - name: Run tests
-              run: go test ./...
+            - name: Run tests with behavior report
+              run: go run ./cmd/testreport
 
             - name: Build binary
               run: go build -o conorganizer

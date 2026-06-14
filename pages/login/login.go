@@ -73,16 +73,11 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				userID, _ := authctx.GetUserIDFromToken(r.Context())
 
 				if emailOk && email != "" && userID != "" {
-					exists, err := userExistsByEmail(db, email)
-					if err != nil {
-						logger.Error(fmt.Errorf("failed to check if user %q exists: %w", userID, err).Error())
+					if err := syncPostLoginUser(db, userID, email, isAdmin, logger); err != nil {
+						logger.Error(fmt.Errorf("failed to sync post-login user %q: %w", userID, err).Error())
 						http.Redirect(w, r, "/auth", http.StatusSeeOther)
 						return
 					}
-					if !exists {
-						insertUser(db, userID, email, isAdmin, logger)
-					}
-					updateUserAdmin(db, userID, isAdmin, logger)
 				}
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 			})
@@ -121,6 +116,18 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 		})
 	})
 
+	return nil
+}
+
+func syncPostLoginUser(db *sql.DB, userID string, email string, isAdmin bool, logger *slog.Logger) error {
+	exists, err := userExistsByEmail(db, email)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		insertUser(db, userID, email, isAdmin, logger)
+	}
+	updateUserAdmin(db, userID, isAdmin, logger)
 	return nil
 }
 

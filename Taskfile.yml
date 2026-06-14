@@ -87,6 +87,11 @@ tasks:
             - sqlite3 database/events.db ".schema --indent --nosys" > schema.sql
             - go test ./...
 
+    # Run tests and print the BDD behavior report used in CI logs
+    test:report:
+        cmds:
+            - go run ./cmd/testreport
+
     # Download local copies of production assets
     download:
         deps:
