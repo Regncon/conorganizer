@@ -66,12 +66,4 @@ Denne sjekklisten dekker `/profile`: innlogget oversikt, egne arrangementer, kor
   **Når** innholdet fordeles i kolonner.<br>
   **Så** skal seksjonene fremstå balansert og uten uventede tomrom eller kollisjon mellom paneler.
 
-- [ ] **Refresh og retur viser riktige brukerdata**<br>
-  **Gitt** at brukeren refresher Min Side eller kommer tilbake fra en underside.<br>
-  **Når** siden vises igjen.<br>
-  **Så** skal innholdet fortsatt stemme med brukerens faktiske data og rolle.
 
-- [ ] **Min Side fremstår ferdig**<br>
-  **Gitt** at brukeren ser Min Side som helhet.<br>
-  **Når** siden er ferdig lastet.<br>
-  **Så** skal den fremstå som en ferdig del av produktet uten placeholder-preg eller visuelt forstyrrende detaljer.
