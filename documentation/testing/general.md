@@ -69,12 +69,6 @@ Denne sjekklisten dekker felles navigasjon, rolleopplevelse og tilgang på tvers
   **Når** tilgang avvises.<br>
   **Så** skal brukeren ikke se en halvveis eller misvisende adminvisning.
 
-### Admin
-
-- [ ] **Adminlenken åpner adminområdet riktig**<br>
-  **Gitt** at brukeren er admin.<br>
-  **Når** brukeren navigerer til Admin fra hovednavigasjonen.<br>
-  **Så** skal brukeren bli sendt til adminområdet uten å møte feil rolle eller feil landingsside.
 
 ### Authentisering
 
@@ -146,3 +140,8 @@ Denne sjekklisten dekker felles navigasjon, rolleopplevelse og tilgang på tvers
   **Gitt** at en ikke-innlogget bruker åpner en beskyttet side direkte.<br>
   **Når** tilgang avvises.<br>
   **Så** skal brukeren få en tydelig forklaring og en forståelig vei videre til innlogging eller tilbake til appen.
+
+- [ ] **Adminlenken åpner adminområdet riktig**<br>
+  **Gitt** at brukeren er admin.<br>
+  **Når** brukeren navigerer til Admin fra hovednavigasjonen.<br>
+  **Så** skal brukeren bli sendt til adminområdet uten å møte feil rolle eller feil landingsside.
