@@ -8,13 +8,16 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/billettholder"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestBillettholderAdminOverview_RendersCountsFromPublishedPuljeAssignments(t *testing.T) {
-	// Given expected overview counts where unpublished first-choice and GM assignments do not count,
-	// when the billettholder admin overview component renders,
-	// then the visible counts reflect only published-pulje first-choice and GM/DM status.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given expected overview counts where unpublished first-choice and GM assignments do not count.",
+		When:  "When the billettholder admin overview component renders.",
+		Then:  "Then the visible counts reflect only published-pulje first-choice and GM/DM status.",
+	})
 
 	// Given
 	expectedTexts := []string{

@@ -5,13 +5,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestRootPageContent_RendersHomeBreadcrumb(t *testing.T) {
-	// Gitt at brukeren åpner forsiden,
-	// når forsiden vises,
-	// så skal brødsmulestien vise Hjem som gjeldende side.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren åpner forsiden.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal brødsmulestien vise Hjem som gjeldende side.",
+	})
 
 	// Given
 	expectedBreadcrumb := []string{"Hjem"}
@@ -30,9 +33,11 @@ func TestRootPageContent_RendersHomeBreadcrumb(t *testing.T) {
 }
 
 func TestRootPageContent_RendersSubmitEventCallToAction(t *testing.T) {
-	// Gitt at brukeren åpner forsiden,
-	// når innsendingseksjonen vises,
-	// så skal den gi en tydelig inngang til å sende inn arrangement.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren åpner forsiden.",
+		When:  "Når innsendingseksjonen vises.",
+		Then:  "Så skal den gi en tydelig inngang til å sende inn arrangement.",
+	})
 
 	// Given
 	expectedTextParts := []string{
@@ -69,9 +74,11 @@ func TestRootPageContent_RendersSubmitEventCallToAction(t *testing.T) {
 }
 
 func TestRootPageContent_WhenProgramPublishingStateCannotLoad_RendersFriendlyError(t *testing.T) {
-	// Gitt at forsiden ikke kan lese publiseringsstatus,
-	// når forsiden vises,
-	// så skal brukeren se en vennlig feil uten tekniske detaljer.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at forsiden ikke kan lese publiseringsstatus.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal brukeren se en vennlig feil uten tekniske detaljer.",
+	})
 
 	// Given
 	expectedTextPart := rootPageLoadErrorMessage
@@ -97,9 +104,11 @@ func TestRootPageContent_WhenProgramPublishingStateCannotLoad_RendersFriendlyErr
 }
 
 func TestRootPageContent_WhenEventsCannotLoad_RendersFriendlyError(t *testing.T) {
-	// Gitt at forsiden ikke kan lese arrangementslisten,
-	// når forsiden vises,
-	// så skal brukeren se en vennlig feil uten tekniske detaljer.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at forsiden ikke kan lese arrangementslisten.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal brukeren se en vennlig feil uten tekniske detaljer.",
+	})
 
 	// Given
 	expectedTextPart := rootEventsLoadErrorMessage

@@ -4,12 +4,15 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestGetAllEventsForUser_WhenPlayerAssignmentIsInOpenPulje_ReturnsInterestsInstead(t *testing.T) {
-	// Given a player assignment in an open pulje,
-	// when the profile program data is loaded,
-	// then the player result is hidden and the user's interests are returned.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a player assignment in an open pulje.",
+		When:  "When the profile program data is loaded.",
+		Then:  "Then the player result is hidden and the user's interests are returned.",
+	})
 
 	// Given
 	expectedEventTitles := []string{}
@@ -39,9 +42,11 @@ func TestGetAllEventsForUser_WhenPlayerAssignmentIsInOpenPulje_ReturnsInterestsI
 }
 
 func TestGetAllEventsForUser_WhenPlayerAssignmentIsInLockedPulje_ReturnsInterestsInstead(t *testing.T) {
-	// Given a player assignment in a locked pulje,
-	// when the profile program data is loaded,
-	// then the player result is hidden and the user's interests are returned.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a player assignment in a locked pulje.",
+		When:  "When the profile program data is loaded.",
+		Then:  "Then the player result is hidden and the user's interests are returned.",
+	})
 
 	// Given
 	expectedEventTitles := []string{}
@@ -71,9 +76,11 @@ func TestGetAllEventsForUser_WhenPlayerAssignmentIsInLockedPulje_ReturnsInterest
 }
 
 func TestGetAllEventsForUser_WhenPlayerAssignmentIsInCompletedPulje_ReturnsPlayerResult(t *testing.T) {
-	// Given a player assignment in a completed pulje,
-	// when the profile program data is loaded,
-	// then the assigned event is returned as the user's program.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a player assignment in a completed pulje.",
+		When:  "When the profile program data is loaded.",
+		Then:  "Then the assigned event is returned as the user's program.",
+	})
 
 	// Given
 	expectedEventTitles := []string{"Completed Assigned Event"}
@@ -103,9 +110,11 @@ func TestGetAllEventsForUser_WhenPlayerAssignmentIsInCompletedPulje_ReturnsPlaye
 }
 
 func TestGetAllEventsForUser_WhenGMEventIsInOpenPulje_ReturnsGMEvent(t *testing.T) {
-	// Given a GM assignment in an open pulje,
-	// when the profile program data is loaded,
-	// then the GM event is returned.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a GM assignment in an open pulje.",
+		When:  "When the profile program data is loaded.",
+		Then:  "Then the GM event is returned.",
+	})
 
 	// Given
 	expectedEventTitles := []string{"Open GM Event"}
@@ -128,9 +137,11 @@ func TestGetAllEventsForUser_WhenGMEventIsInOpenPulje_ReturnsGMEvent(t *testing.
 }
 
 func TestGetAllEventsForUser_WhenGMEventIsInLockedPulje_ReturnsGMEvent(t *testing.T) {
-	// Given a GM assignment in a locked pulje,
-	// when the profile program data is loaded,
-	// then the GM event is returned.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a GM assignment in a locked pulje.",
+		When:  "When the profile program data is loaded.",
+		Then:  "Then the GM event is returned.",
+	})
 
 	// Given
 	expectedEventTitles := []string{"Locked GM Event"}
@@ -153,9 +164,11 @@ func TestGetAllEventsForUser_WhenGMEventIsInLockedPulje_ReturnsGMEvent(t *testin
 }
 
 func TestGetAllEventsForUser_WhenGMEventIsInCompletedPulje_ReturnsGMEvent(t *testing.T) {
-	// Given a GM assignment in a completed pulje,
-	// when the profile program data is loaded,
-	// then the GM event is returned.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a GM assignment in a completed pulje.",
+		When:  "When the profile program data is loaded.",
+		Then:  "Then the GM event is returned.",
+	})
 
 	// Given
 	expectedEventTitles := []string{"Completed GM Event"}

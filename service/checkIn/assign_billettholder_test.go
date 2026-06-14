@@ -7,12 +7,15 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestAssociateTicketsWithBillettholder_WhenSomeMatchingTicketsAreNew_ConvertsOnlyNewTickets(t *testing.T) {
-	// Given tickets for a target email where one ticket is already converted,
-	// when the target email is associated with billettholdere,
-	// then only new non-dinner target tickets are inserted.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given tickets for a target email where one ticket is already converted.",
+		When:  "When the target email is associated with billettholdere.",
+		Then:  "Then only new non-dinner target tickets are inserted.",
+	})
 
 	// Given
 	expectedBillettholderCount := 3

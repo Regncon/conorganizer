@@ -10,13 +10,16 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestEventPageContent_WhenAdminOpensEvent_RendersAdminEditLink(t *testing.T) {
-	// Gitt at admin åpner en arrangementsdetaljside,
-	// når siden rendres,
-	// så skal inngangen til administrativ redigering vises uten å erstatte den vanlige visningen.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at admin åpner en arrangementsdetaljside.",
+		When:  "Når siden rendres.",
+		Then:  "Så skal inngangen til administrativ redigering vises uten å erstatte den vanlige visningen.",
+	})
 
 	// Given
 	expectedHref := "/admin/approval/edit/admin-visible-event"
@@ -44,9 +47,11 @@ func TestEventPageContent_WhenAdminOpensEvent_RendersAdminEditLink(t *testing.T)
 }
 
 func TestInterestErrorMessageFromError_ReturnsFriendlyMessages(t *testing.T) {
-	// Gitt at interesseoppdatering feiler av kjente årsaker,
-	// når feilen oversettes til brukerbeskjed,
-	// så skal meldingen være handlingsrettet og uten tekniske detaljer.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at interesseoppdatering feiler av kjente årsaker.",
+		When:  "Når feilen oversettes til brukerbeskjed.",
+		Then:  "Så skal meldingen være handlingsrettet og uten tekniske detaljer.",
+	})
 
 	// Given
 	expectedMessages := []string{

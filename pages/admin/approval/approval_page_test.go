@@ -7,13 +7,16 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestSplitEventsByStatusMap_ReturnsSubmittedAndApprovedOnly(t *testing.T) {
-	// Gitt arrangementer med kladd, innsendt, godkjent og annonsert status,
-	// når godkjenningssiden grupperer arrangementer,
-	// så skal bare innsendte og godkjente arrangementer vises i sine seksjoner.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt arrangementer med kladd, innsendt, godkjent og annonsert status.",
+		When:  "Når godkjenningssiden grupperer arrangementer.",
+		Then:  "Så skal bare innsendte og godkjente arrangementer vises i sine seksjoner.",
+	})
 
 	// Given
 	expectedSubmittedIDs := []string{"submitted-event"}
@@ -40,9 +43,11 @@ func TestSplitEventsByStatusMap_ReturnsSubmittedAndApprovedOnly(t *testing.T) {
 }
 
 func TestApprovalPageContent_RendersSectionsAndEditLinks(t *testing.T) {
-	// Gitt at det finnes innsendte og godkjente arrangementer,
-	// når godkjenningssiden rendres,
-	// så skal hvert arrangement vises i riktig seksjon med lenke til adminredigering.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at det finnes innsendte og godkjente arrangementer.",
+		When:  "Når godkjenningssiden rendres.",
+		Then:  "Så skal hvert arrangement vises i riktig seksjon med lenke til adminredigering.",
+	})
 
 	// Given
 	expectedSectionTitles := []string{

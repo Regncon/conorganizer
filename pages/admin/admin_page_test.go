@@ -5,13 +5,16 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestAdminPage_RendersBreadcrumbAndAdminAreaLinks(t *testing.T) {
-	// Gitt at adminforsiden er lastet inn,
-	// når admininnholdet rendres,
-	// så skal brødsmulesti og lenker til de viktigste adminområdene være synlige.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at adminforsiden er lastet inn.",
+		When:  "Når admininnholdet rendres.",
+		Then:  "Så skal brødsmulesti og lenker til de viktigste adminområdene være synlige.",
+	})
 
 	// Given
 	expectedBreadcrumb := []string{"Admin"}

@@ -1084,3 +1084,65 @@ I left the existing unrelated `.ai/threads/final-test-before-rlease.md` and untr
 Time: 2026-06-14 12:29:54
 --- Next Prompt ---
 
+Ok, go ahead and implement the rest of the tests.
+
+Time: 2026-06-14 12:41:52
+--- Codex Run ---
+
+Codex output:
+I’ll migrate the remaining top-of-test BDD comments to the structured `testutil.Behavior` helper in bulk, then run the report to catch anything that still relies on comments or is missing metadata.
+I’m going to use a temporary Go migration script for this rather than regex-editing raw files. It will parse Go AST positions, replace only real top-of-test BDD comment groups, add the `testutil` import when needed, and leave raw string examples alone.
+The migration converted 165 remaining top-of-test BDD comment blocks across 53 files. I’m scanning for any remaining report-style BDD comments before running the test suite.
+The migration left only embedded/raw-string examples and a few nested subtest `// Given` comments; the top-level report metadata is now structured. I also noticed the temporary script added imports without goimports-style grouping, so I’m checking whether `goimports` is available before I clean that up.
+Three remaining real top-level BDD comments had a four-line Given clause, so the migration skipped them. I’m converting those manually by folding the extra `og ...` line into the structured `Given` field.
+The four-line cases are converted. I’ll run `gofmt` over the changed tests and confirm no top-of-test BDD comment blocks remain.
+The converted files compile as Go source, but without `goimports` available the import blocks are not grouped cleanly. I’m applying a small local import-group formatter to the changed Go files so standard-library and project imports are separated consistently.
+Import grouping is cleaned. I’ll inspect a couple of representative files, then run the full report and tests.
+The remaining `Gitt` match is inside the parser test’s sample source string, not a real top-level test comment. I’m running the full suite now because this touched many test imports and every migrated test executes the new helper.
+The full suite found an import cycle in the `service` package: root `testutil` imports `service`, so service tests cannot import root `testutil`. I’m moving the BDD helper into a leaf package under `testutil/bdd` and updating the migrated tests to use `bdd.Behavior`, which avoids that cycle.
+I’m going to apply this as a mechanical rewrite: replace the helper calls with `bdd.Behavior`, add the leaf-package import, remove root `testutil` imports where they are no longer used, and regroup imports.
+The rewrite script tripped over the deleted old helper path from `git diff --name-only`. I’ll rerun it skipping files that no longer exist.
+The helper call rewrite completed. I’m updating the docs/guidelines to reference the leaf `bdd` package name, then I’ll run the suite again.
+The code now uses `github.com/Regncon/conorganizer/testutil/bdd`. I’m aligning the documentation examples with that package name.
+The docs are aligned. I’ll run `gofmt` across changed Go files and then rerun the full test suite.
+Two issues remain: `gofmt` was handed the deleted old helper path, and the header tests were already migrated before this bulk pass so they still used the old root `testutil` helper. I’m correcting those and rerunning.
+Header is now on the leaf `bdd` helper too. I’ll format only existing changed Go files and rerun the full suite.
+The full `go test ./...` run passes now. I’m running `task test:report` to verify the report still sees all BDD metadata and no fallback gaps.
+The report task completed. I’ll inspect the summary and scan for remaining old-style top-level comments before final checks.
+The report shows 172 tests and 0 missing metadata. The only remaining old-style BDD comment match is inside the parser test’s sample source string, which is intentional. I’m running final diff checks and gathering status.
+Implemented the remaining migration to structured BDD metadata.
+
+What changed:
+- Moved the helper to leaf package [testutil/bdd/bdd.go](/home/cinmay/Documents/conorganizer/testutil/bdd/bdd.go) to avoid the `service -> testutil -> service` import cycle.
+- Converted the remaining top-of-test BDD comments across the automated test suite to:
+
+```go
+bdd.Behavior(t, bdd.BDD{
+	Given: "...",
+	When:  "...",
+	Then:  "...",
+})
+```
+
+- Updated `AGENTS.MD` and [how-to-write-tests.md](/home/cinmay/Documents/conorganizer/documentation/testing/how-to-write-tests.md) to reference `bdd.Behavior`.
+- Kept the test report parser’s fallback comment support. The only remaining old-style BDD match is intentionally inside `cmd/testreport`’s sample source string.
+
+Verified:
+- `GOCACHE=/tmp/conorganizer-go-build go test ./...`
+- `GOCACHE=/tmp/conorganizer-go-build go tool task test:report > /tmp/conorganizer-test-report.out`
+- `git diff --check ...`
+
+Report summary now shows:
+
+```text
+Tests run: 172
+Failed: 0
+Skipped: 0
+Tests missing BDD metadata: 0
+```
+
+I left the existing unrelated `.ai/threads/final-test-before-rlease.md` and untracked generated `documentation/testing/report.md` untouched.
+
+Time: 2026-06-14 12:41:52
+--- Next Prompt ---
+

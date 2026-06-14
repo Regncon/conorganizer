@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 type postLoginUser struct {
@@ -14,9 +15,11 @@ type postLoginUser struct {
 }
 
 func TestSyncPostLoginUser_WhenUserDoesNotExist_CreatesLocalUser(t *testing.T) {
-	// Gitt at en Descope-bruker logger inn for første gang,
-	// når post-login synkroniserer brukeren,
-	// så skal brukeren lagres lokalt med riktig e-post og adminstatus.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en Descope-bruker logger inn for første gang.",
+		When:  "Når post-login synkroniserer brukeren.",
+		Then:  "Så skal brukeren lagres lokalt med riktig e-post og adminstatus.",
+	})
 
 	// Given
 	expectedUser := postLoginUser{
@@ -38,9 +41,11 @@ func TestSyncPostLoginUser_WhenUserDoesNotExist_CreatesLocalUser(t *testing.T) {
 }
 
 func TestSyncPostLoginUser_WhenUserExists_UpdatesAdminStatusWithoutDuplicatingUser(t *testing.T) {
-	// Gitt at en lokal bruker finnes fra før,
-	// når post-login synkroniserer en endret adminstatus,
-	// så skal eksisterende bruker oppdateres uten duplikat.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en lokal bruker finnes fra før.",
+		When:  "Når post-login synkroniserer en endret adminstatus.",
+		Then:  "Så skal eksisterende bruker oppdateres uten duplikat.",
+	})
 
 	// Given
 	expectedUser := postLoginUser{

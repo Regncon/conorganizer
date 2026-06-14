@@ -9,12 +9,16 @@ import (
 	"testing"
 
 	"github.com/descope/go-sdk/descope"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestRequireAdmin_WhenUserIsNotAdmin_ReturnsForbidden(t *testing.T) {
-	// Gitt at en innlogget bruker mangler adminrolle,
-	// når brukeren åpner en adminbeskyttet rute,
-	// så skal tilgangen avvises før handleren kjøres.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en innlogget bruker mangler adminrolle.",
+		When:  "Når brukeren åpner en adminbeskyttet rute.",
+		Then:  "Så skal tilgangen avvises før handleren kjøres.",
+	})
 
 	// Given
 	expectedStatusCode := http.StatusForbidden
@@ -46,9 +50,11 @@ func TestRequireAdmin_WhenUserIsNotAdmin_ReturnsForbidden(t *testing.T) {
 }
 
 func TestRequireAdmin_WhenUserIsAdmin_AllowsRequest(t *testing.T) {
-	// Gitt at en innlogget bruker har adminrolle,
-	// når brukeren åpner en adminbeskyttet rute,
-	// så skal handleren få behandle forespørselen.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en innlogget bruker har adminrolle.",
+		When:  "Når brukeren åpner en adminbeskyttet rute.",
+		Then:  "Så skal handleren få behandle forespørselen.",
+	})
 
 	// Given
 	expectedStatusCode := http.StatusOK

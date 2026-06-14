@@ -5,12 +5,15 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestCreateRoom_CreatesRoomWithGeneratedID(t *testing.T) {
-	// Given valid room input,
-	// when the room is created,
-	// then the persisted room is returned with a generated ID.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given valid room input.",
+		When:  "When the room is created.",
+		Then:  "Then the persisted room is returned with a generated ID.",
+	})
 
 	// Given
 	expectedRoom := models.Room{
@@ -38,9 +41,11 @@ func TestCreateRoom_CreatesRoomWithGeneratedID(t *testing.T) {
 }
 
 func TestCreateRoom_WhenCalledRepeatedly_AutoIncrementsID(t *testing.T) {
-	// Given two valid room inputs,
-	// when both rooms are created,
-	// then their IDs are allocated in insert order.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given two valid room inputs.",
+		When:  "When both rooms are created.",
+		Then:  "Then their IDs are allocated in insert order.",
+	})
 
 	// Given
 	expectedIDs := []int{1, 2}
@@ -66,9 +71,11 @@ func TestCreateRoom_WhenCalledRepeatedly_AutoIncrementsID(t *testing.T) {
 }
 
 func TestCreateRoom_WhenRoomNumberDoesNotMatchFloor_ReturnsError(t *testing.T) {
-	// Given room input where the room number starts with another floor,
-	// when the room is created,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given room input where the room number starts with another floor.",
+		When:  "When the room is created.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true
@@ -86,9 +93,11 @@ func TestCreateRoom_WhenRoomNumberDoesNotMatchFloor_ReturnsError(t *testing.T) {
 }
 
 func TestCreateRoom_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testing.T) {
-	// Given room input without capacity for any events,
-	// when the room is created,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given room input without capacity for any events.",
+		When:  "When the room is created.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true
@@ -107,9 +116,11 @@ func TestCreateRoom_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testing.T) {
 }
 
 func TestDeleteRoom_RemovesOnlyTargetRoom(t *testing.T) {
-	// Given two stored rooms,
-	// when one room is deleted,
-	// then only the other room remains.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given two stored rooms.",
+		When:  "When one room is deleted.",
+		Then:  "Then only the other room remains.",
+	})
 
 	// Given
 	expectedRemainingRoomIDs := []int{2}
@@ -131,9 +142,11 @@ func TestDeleteRoom_RemovesOnlyTargetRoom(t *testing.T) {
 }
 
 func TestDeleteRoom_WhenRoomDoesNotExist_ReturnsError(t *testing.T) {
-	// Given an empty room table,
-	// when a missing room is deleted,
-	// then the caller receives an error.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an empty room table.",
+		When:  "When a missing room is deleted.",
+		Then:  "Then the caller receives an error.",
+	})
 
 	// Given
 	expectedError := true
@@ -150,9 +163,11 @@ func TestDeleteRoom_WhenRoomDoesNotExist_ReturnsError(t *testing.T) {
 }
 
 func TestGetRoomByID_ReturnsStoredRoom(t *testing.T) {
-	// Given a stored room,
-	// when it is fetched by ID,
-	// then the matching room is returned.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a stored room.",
+		When:  "When it is fetched by ID.",
+		Then:  "Then the matching room is returned.",
+	})
 
 	// Given
 	db := createRoomsTestDB(t)
@@ -169,9 +184,11 @@ func TestGetRoomByID_ReturnsStoredRoom(t *testing.T) {
 }
 
 func TestGetRoomByID_WhenIDIsInvalid_ReturnsError(t *testing.T) {
-	// Given an invalid room ID,
-	// when it is fetched,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an invalid room ID.",
+		When:  "When it is fetched.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true
@@ -188,9 +205,11 @@ func TestGetRoomByID_WhenIDIsInvalid_ReturnsError(t *testing.T) {
 }
 
 func TestGetRoomByID_WhenRoomDoesNotExist_ReturnsError(t *testing.T) {
-	// Given a positive room ID with no stored room,
-	// when it is fetched,
-	// then the caller receives an error.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a positive room ID with no stored room.",
+		When:  "When it is fetched.",
+		Then:  "Then the caller receives an error.",
+	})
 
 	// Given
 	expectedError := true
@@ -207,9 +226,11 @@ func TestGetRoomByID_WhenRoomDoesNotExist_ReturnsError(t *testing.T) {
 }
 
 func TestGetAllRooms_ReturnsRoomsOrderedByFloorAndNumber(t *testing.T) {
-	// Given rooms inserted outside display order,
-	// when all rooms are listed,
-	// then rooms are ordered by floor and room number.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given rooms inserted outside display order.",
+		When:  "When all rooms are listed.",
+		Then:  "Then rooms are ordered by floor and room number.",
+	})
 
 	// Given
 	expectedRoomNumbers := []string{"101", "102", "201"}

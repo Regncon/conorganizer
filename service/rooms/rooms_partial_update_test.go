@@ -4,12 +4,15 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestUpdateRoomPartial_UpdatesProvidedFields(t *testing.T) {
-	// Given an existing room and partial input for every mutable field,
-	// when the partial update runs,
-	// then the returned room contains all supplied values.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an existing room and partial input for every mutable field.",
+		When:  "When the partial update runs.",
+		Then:  "Then the returned room contains all supplied values.",
+	})
 
 	// Given
 	db := createRoomsTestDB(t)
@@ -44,9 +47,11 @@ func TestUpdateRoomPartial_UpdatesProvidedFields(t *testing.T) {
 }
 
 func TestUpdateRoomPartial_WhenOnlyNameIsProvided_LeavesOtherFieldsUnchanged(t *testing.T) {
-	// Given an existing room and partial input with only a new name,
-	// when the partial update runs,
-	// then only the name changes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an existing room and partial input with only a new name.",
+		When:  "When the partial update runs.",
+		Then:  "Then only the name changes.",
+	})
 
 	// Given
 	db := createRoomsTestDB(t)
@@ -69,9 +74,11 @@ func TestUpdateRoomPartial_WhenOnlyNameIsProvided_LeavesOtherFieldsUnchanged(t *
 }
 
 func TestUpdateRoomPartial_WhenIDIsMissing_ReturnsError(t *testing.T) {
-	// Given partial room input without a room ID,
-	// when the partial update runs,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given partial room input without a room ID.",
+		When:  "When the partial update runs.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true
@@ -88,9 +95,11 @@ func TestUpdateRoomPartial_WhenIDIsMissing_ReturnsError(t *testing.T) {
 }
 
 func TestUpdateRoomPartial_WhenNameIsEmpty_ReturnsError(t *testing.T) {
-	// Given partial room input with an empty name,
-	// when the partial update runs,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given partial room input with an empty name.",
+		When:  "When the partial update runs.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true
@@ -107,9 +116,11 @@ func TestUpdateRoomPartial_WhenNameIsEmpty_ReturnsError(t *testing.T) {
 }
 
 func TestUpdateRoomPartial_WhenRoomNumberIsEmpty_ReturnsError(t *testing.T) {
-	// Given partial room input with an empty room number,
-	// when the partial update runs,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given partial room input with an empty room number.",
+		When:  "When the partial update runs.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true
@@ -126,9 +137,11 @@ func TestUpdateRoomPartial_WhenRoomNumberIsEmpty_ReturnsError(t *testing.T) {
 }
 
 func TestUpdateRoomPartial_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testing.T) {
-	// Given partial room input with invalid event capacity,
-	// when the partial update runs,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given partial room input with invalid event capacity.",
+		When:  "When the partial update runs.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true
@@ -145,9 +158,11 @@ func TestUpdateRoomPartial_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testi
 }
 
 func TestUpdateRoomPartial_WhenNoFieldsAreProvided_ReturnsError(t *testing.T) {
-	// Given partial room input with an ID but no updated fields,
-	// when the partial update runs,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given partial room input with an ID but no updated fields.",
+		When:  "When the partial update runs.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true

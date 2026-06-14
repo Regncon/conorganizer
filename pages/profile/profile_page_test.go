@@ -7,13 +7,16 @@ import (
 
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestProfilePage_RendersBreadcrumbAndBillettholderSelectionMetadata(t *testing.T) {
-	// Gitt at Min Side vises med en valgt billettinnehaver,
-	// når profilsiden rendres,
-	// så skal brødsmulestien og metadata for gyldig billettvalg være tilgjengelig.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at Min Side vises med en valgt billettinnehaver.",
+		When:  "Når profilsiden rendres.",
+		Then:  "Så skal brødsmulestien og metadata for gyldig billettvalg være tilgjengelig.",
+	})
 
 	// Given
 	expectedBreadcrumb := []string{"Min Side"}

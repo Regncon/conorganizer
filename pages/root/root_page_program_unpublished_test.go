@@ -5,13 +5,16 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav(t *testing.T) {
-	// Gitt at publisering av program er skrudd av,
-	// når forsiden vises,
-	// så skal puljefilteret skjules.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at publisering av program er skrudd av.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal puljefilteret skjules.",
+	})
 
 	// Given
 	expectedScrollnavVisible := false
@@ -32,9 +35,11 @@ func TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav(t *testing.T)
 }
 
 func TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsAnnouncedEvents(t *testing.T) {
-	// Gitt at publisering av program er skrudd av,
-	// når forsiden vises,
-	// så skal den flate arrangementslisten bare vise annonserte arrangementer.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at publisering av program er skrudd av.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal den flate arrangementslisten bare vise annonserte arrangementer.",
+	})
 
 	// Given
 	expectedTitles := []string{"Alpha Announced", "Beta Announced"}
@@ -59,9 +64,11 @@ func TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsAnnouncedEvents(t *
 }
 
 func TestRootPageContent_WhenProgramPublishingIsOff_RendersEventLinksWithoutPulje(t *testing.T) {
-	// Gitt at programmet ikke er publisert,
-	// når annonserte arrangementer vises på forsiden,
-	// så skal arrangementskortene lenke direkte til arrangementssidene uten puljekontekst.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at programmet ikke er publisert.",
+		When:  "Når annonserte arrangementer vises på forsiden.",
+		Then:  "Så skal arrangementskortene lenke direkte til arrangementssidene uten puljekontekst.",
+	})
 
 	// Given
 	expectedHrefs := []string{"/event/alpha-announced", "/event/beta-announced"}

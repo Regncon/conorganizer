@@ -7,14 +7,18 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/go-chi/chi/v5"
+
+	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestLogout_ClearsSessionAndRefreshCookies(t *testing.T) {
-	// Gitt at en innlogget bruker har sesjons- og refresh-cookie,
-	// når brukeren logger ut,
-	// så skal begge cookies slettes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en innlogget bruker har sesjons- og refresh-cookie.",
+		When:  "Når brukeren logger ut.",
+		Then:  "Så skal begge cookies slettes.",
+	})
 
 	// Given
 	expectedStatusCode := http.StatusOK

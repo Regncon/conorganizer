@@ -4,13 +4,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestMyTickets_RendersTicketHolderSummaryAndTicketsLink(t *testing.T) {
-	// Gitt at brukeren har billettinnehavere knyttet til profilen,
-	// når billettseksjonen vises på Min Side,
-	// så skal navn, billettype, e-post og lenken til billettsiden være synlig.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren har billettinnehavere knyttet til profilen.",
+		When:  "Når billettseksjonen vises på Min Side.",
+		Then:  "Så skal navn, billettype, e-post og lenken til billettsiden være synlig.",
+	})
 
 	// Given
 	expectedTextParts := []string{
@@ -41,9 +44,11 @@ func TestMyTickets_RendersTicketHolderSummaryAndTicketsLink(t *testing.T) {
 }
 
 func TestMyTickets_WhenUserHasNoTicketHolders_RendersTicketsLink(t *testing.T) {
-	// Gitt at brukeren ikke har billettinnehavere knyttet til profilen,
-	// når billettseksjonen vises på Min Side,
-	// så skal brukeren fortsatt kunne gå videre til billettsiden.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren ikke har billettinnehavere knyttet til profilen.",
+		When:  "Når billettseksjonen vises på Min Side.",
+		Then:  "Så skal brukeren fortsatt kunne gå videre til billettsiden.",
+	})
 
 	// Given
 	expectedHref := "/profile/tickets"

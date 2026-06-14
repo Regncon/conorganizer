@@ -7,13 +7,16 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestEditEventFormPageContent_DoesNotRenderPreviousNextNavigation(t *testing.T) {
-	// Gitt en arrangementside i admin-godkjenning,
-	// når siden rendres,
-	// så rendres ikke forrige/neste-komponenter.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en arrangementside i admin-godkjenning.",
+		When:  "Når siden rendres.",
+		Then:  "Så rendres ikke forrige/neste-komponenter.",
+	})
 
 	// Given
 	db := createEditFormNavigationTestDB(t)

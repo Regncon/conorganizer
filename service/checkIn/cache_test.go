@@ -1,11 +1,17 @@
 package checkIn
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
+)
 
 func TestIsOver18_WhenBirthdayIsOnConventionStart_ReturnsTrue(t *testing.T) {
-	// Given a person who turns eighteen on the first day of Regncon,
-	// when their age is checked,
-	// then they count as over eighteen for the convention.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a person who turns eighteen on the first day of Regncon.",
+		When:  "When their age is checked.",
+		Then:  "Then they count as over eighteen for the convention.",
+	})
 
 	// Given
 	expectedOver18 := true
@@ -21,9 +27,11 @@ func TestIsOver18_WhenBirthdayIsOnConventionStart_ReturnsTrue(t *testing.T) {
 }
 
 func TestIsOver18_WhenBirthdayIsAfterConventionStart_ReturnsFalse(t *testing.T) {
-	// Given a person who turns eighteen after the first day of Regncon,
-	// when their age is checked,
-	// then they do not count as over eighteen for the convention.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a person who turns eighteen after the first day of Regncon.",
+		When:  "When their age is checked.",
+		Then:  "Then they do not count as over eighteen for the convention.",
+	})
 
 	// Given
 	expectedOver18 := false

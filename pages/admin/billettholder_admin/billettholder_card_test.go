@@ -5,13 +5,16 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestBillettholderCard_RendersDetailsAndOnlyAllowsManualEmailDelete(t *testing.T) {
-	// Gitt at en billettholder har billett-, tilknyttet og manuell e-post,
-	// når adminkortet rendres,
-	// så skal detaljene vises og bare manuell e-post kunne slettes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en billettholder har billett-, tilknyttet og manuell e-post.",
+		When:  "Når adminkortet rendres.",
+		Then:  "Så skal detaljene vises og bare manuell e-post kunne slettes.",
+	})
 
 	// Given
 	expectedTextParts := []string{
@@ -60,9 +63,11 @@ func TestBillettholderCard_RendersDetailsAndOnlyAllowsManualEmailDelete(t *testi
 }
 
 func TestHighlightSearchTerm_EscapesTextBeforeHighlighting(t *testing.T) {
-	// Gitt at søket matcher tekst som også inneholder HTML-tegn,
-	// når teksten markeres,
-	// så skal originalteksten escapes før markeringen settes inn.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at søket matcher tekst som også inneholder HTML-tegn.",
+		When:  "Når teksten markeres.",
+		Then:  "Så skal originalteksten escapes før markeringen settes inn.",
+	})
 
 	// Given
 	expectedTextPart := "&lt;"

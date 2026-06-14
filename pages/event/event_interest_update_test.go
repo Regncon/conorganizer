@@ -5,12 +5,15 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestUpdateInterest_WhenPuljeIsOpen_UpdatesInterest(t *testing.T) {
-	// Gitt at en billettholder har meldt interesse i en åpen pulje,
-	// når interessen endres,
-	// så skal den nye interessen lagres.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en billettholder har meldt interesse i en åpen pulje.",
+		When:  "Når interessen endres.",
+		Then:  "Så skal den nye interessen lagres.",
+	})
 
 	// Given
 	expectedInterest := models.InterestLevelLow
@@ -39,9 +42,11 @@ func TestUpdateInterest_WhenPuljeIsOpen_UpdatesInterest(t *testing.T) {
 }
 
 func TestUpdateInterest_WhenProgramPublishingIsOff_RejectsInterestChangeAndKeepsExistingInterest(t *testing.T) {
-	// Gitt at publisering av program er skrudd av,
-	// når interessen forsøkes endret,
-	// så skal endringen avvises og eksisterende interesse beholdes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at publisering av program er skrudd av.",
+		When:  "Når interessen forsøkes endret.",
+		Then:  "Så skal endringen avvises og eksisterende interesse beholdes.",
+	})
 
 	// Given
 	expectedInterest := models.InterestLevelHigh
@@ -74,9 +79,11 @@ func TestUpdateInterest_WhenProgramPublishingIsOff_RejectsInterestChangeAndKeeps
 }
 
 func TestUpdateInterest_WhenEventIsNotPublishedInPulje_RejectsInterestChangeAndKeepsExistingInterest(t *testing.T) {
-	// Gitt at arrangementet ikke er publisert i puljen,
-	// når interessen forsøkes endret,
-	// så skal endringen avvises og eksisterende interesse beholdes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er publisert i puljen.",
+		When:  "Når interessen forsøkes endret.",
+		Then:  "Så skal endringen avvises og eksisterende interesse beholdes.",
+	})
 
 	// Given
 	expectedInterest := models.InterestLevelHigh
@@ -113,9 +120,11 @@ func TestUpdateInterest_WhenEventIsNotPublishedInPulje_RejectsInterestChangeAndK
 }
 
 func TestUpdateInterest_WhenPuljeIsLocked_RejectsInterestChangeAndKeepsExistingInterest(t *testing.T) {
-	// Gitt at en billettholder allerede har meldt interesse i en låst pulje,
-	// når interessen forsøkes endret,
-	// så skal endringen avvises og eksisterende interesse beholdes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en billettholder allerede har meldt interesse i en låst pulje.",
+		When:  "Når interessen forsøkes endret.",
+		Then:  "Så skal endringen avvises og eksisterende interesse beholdes.",
+	})
 
 	// Given
 	expectedInterest := models.InterestLevelHigh
@@ -147,9 +156,11 @@ func TestUpdateInterest_WhenPuljeIsLocked_RejectsInterestChangeAndKeepsExistingI
 }
 
 func TestUpdateInterest_WhenPuljeIsCompleted_RejectsInterestChangeAndKeepsExistingInterest(t *testing.T) {
-	// Gitt at en billettholder allerede har meldt interesse i en fullført pulje,
-	// når interessen forsøkes endret,
-	// så skal endringen avvises og eksisterende interesse beholdes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en billettholder allerede har meldt interesse i en fullført pulje.",
+		When:  "Når interessen forsøkes endret.",
+		Then:  "Så skal endringen avvises og eksisterende interesse beholdes.",
+	})
 
 	// Given
 	expectedInterest := models.InterestLevelHigh

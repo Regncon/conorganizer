@@ -160,7 +160,7 @@ Mindre bra:
 
 Automatiseringskandidater skal ikke lagres som egne seksjoner i de manuelle testfilene. Slike lister blir raskt utdaterte.
 
-Når et manuelt punkt automatiseres, skal den automatiserte testen ha tydelig BDD-metadata øverst i testen. Bruk helst `testutil.Behavior(t, testutil.BDD{Given: "...", When: "...", Then: "..."})`; eldre BDD-kommentarer støttes fortsatt mens testene migreres. Kjør `task test:report` for å se hvilke automatiserte tester som finnes, hvilken BDD-metadata de har, og hvilke tester som mangler BDD-metadata.
+Når et manuelt punkt automatiseres, skal den automatiserte testen ha tydelig BDD-metadata øverst i testen. Bruk helst `bdd.Behavior(t, bdd.BDD{Given: "...", When: "...", Then: "..."})`; eldre BDD-kommentarer støttes fortsatt mens testene migreres. Kjør `task test:report` for å se hvilke automatiserte tester som finnes, hvilken BDD-metadata de har, og hvilke tester som mangler BDD-metadata.
 
 ## For utviklere
 

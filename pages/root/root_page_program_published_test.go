@@ -5,13 +5,16 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestRootPageContent_WhenProgramPublishingIsOn_ShowsScrollnav(t *testing.T) {
-	// Gitt at publisering av program er skrudd på,
-	// når forsiden vises,
-	// så skal puljefilteret vises.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at publisering av program er skrudd på.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal puljefilteret vises.",
+	})
 
 	// Given
 	expectedScrollnavVisible := true
@@ -32,9 +35,11 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsScrollnav(t *testing.T) 
 }
 
 func TestRootPageContent_WhenProgramPublishingIsOn_OnlyShowsAnnouncedPublishedPuljeEvents(t *testing.T) {
-	// Gitt at publisering av program er skrudd på,
-	// når forsiden vises,
-	// så skal puljevisningen bare vise annonserte arrangementer som er publisert i en pulje.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at publisering av program er skrudd på.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal puljevisningen bare vise annonserte arrangementer som er publisert i en pulje.",
+	})
 
 	// Given
 	expectedTitles := []string{"Published Announced"}
@@ -68,9 +73,11 @@ func TestRootPageContent_WhenProgramPublishingIsOn_OnlyShowsAnnouncedPublishedPu
 }
 
 func TestRootPageContent_WhenProgramPublishingIsOn_RendersEventLinksWithPulje(t *testing.T) {
-	// Gitt at programmet er publisert,
-	// når publiserte puljearrangementer vises på forsiden,
-	// så skal arrangementskortene lenke til arrangementssiden med valgt puljekontekst.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at programmet er publisert.",
+		When:  "Når publiserte puljearrangementer vises på forsiden.",
+		Then:  "Så skal arrangementskortene lenke til arrangementssiden med valgt puljekontekst.",
+	})
 
 	// Given
 	expectedHrefs := []string{"/event/alpha-event?pulje=FredagKveld"}
@@ -93,9 +100,11 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersEventLinksWithPulje(t 
 }
 
 func TestRootPageContent_WhenProgramPublishingIsOn_RendersPuljeSectionsInTimeOrder(t *testing.T) {
-	// Gitt at publisering av program er skrudd på,
-	// når forsiden vises,
-	// så skal arrangementene grupperes i puljer sortert etter starttidspunkt.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at publisering av program er skrudd på.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal arrangementene grupperes i puljer sortert etter starttidspunkt.",
+	})
 
 	// Given
 	expectedPuljeHeadings := []string{
@@ -126,9 +135,11 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersPuljeSectionsInTimeOrd
 }
 
 func TestRootPageContent_WhenProgramPublishingIsOn_SortsEventsAlphabeticallyWithinPulje(t *testing.T) {
-	// Gitt at publisering av program er skrudd på,
-	// når forsiden vises,
-	// så skal arrangementene sorteres alfabetisk innenfor hver pulje.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at publisering av program er skrudd på.",
+		When:  "Når forsiden vises.",
+		Then:  "Så skal arrangementene sorteres alfabetisk innenfor hver pulje.",
+	})
 
 	// Given
 	expectedTitles := []string{"Alpha Event", "Beta Event"}

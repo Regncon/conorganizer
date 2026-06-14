@@ -7,13 +7,16 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestProfileTicketsPageContent_WhenUserHasNoTicketHolders_RendersEmptyStateAndFetchAction(t *testing.T) {
-	// Gitt at brukeren ikke har billettinnehavere knyttet til profilen,
-	// når billettsiden rendres,
-	// så skal siden vise brødsmulesti, tomtilstand og handling for å hente billetter.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren ikke har billettinnehavere knyttet til profilen.",
+		When:  "Når billettsiden rendres.",
+		Then:  "Så skal siden vise brødsmulesti, tomtilstand og handling for å hente billetter.",
+	})
 
 	// Given
 	expectedBreadcrumb := []string{"Billetter"}
@@ -45,9 +48,11 @@ func TestProfileTicketsPageContent_WhenUserHasNoTicketHolders_RendersEmptyStateA
 }
 
 func TestBillettholderCard_RendersEmailKindsAndOnlyAllowsManualDelete(t *testing.T) {
-	// Gitt at en billettinnehaver har billett-, tilknyttet og manuell e-post,
-	// når billettkortet rendres,
-	// så skal e-postene vises og bare den manuelle adressen ha slettehandling.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en billettinnehaver har billett-, tilknyttet og manuell e-post.",
+		When:  "Når billettkortet rendres.",
+		Then:  "Så skal e-postene vises og bare den manuelle adressen ha slettehandling.",
+	})
 
 	// Given
 	expectedTextParts := []string{

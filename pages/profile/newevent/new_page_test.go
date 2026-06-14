@@ -8,13 +8,16 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestValidateEventExists_WhenEventBelongsToUser_Succeeds(t *testing.T) {
-	// Gitt at arrangementet tilhører brukeren,
-	// når skjema-ruten validerer tilgang,
-	// så skal arrangementet kunne åpnes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet tilhører brukeren.",
+		When:  "Når skjema-ruten validerer tilgang.",
+		Then:  "Så skal arrangementet kunne åpnes.",
+	})
 
 	// Given
 	expectedStatusCode := 200
@@ -35,9 +38,11 @@ func TestValidateEventExists_WhenEventBelongsToUser_Succeeds(t *testing.T) {
 }
 
 func TestValidateEventExists_WhenEventBelongsToAnotherUser_ReturnsNotFound(t *testing.T) {
-	// Gitt at arrangementet tilhører en annen bruker,
-	// når skjema-ruten validerer tilgang,
-	// så skal vanlig bruker ikke få åpne redigering.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet tilhører en annen bruker.",
+		When:  "Når skjema-ruten validerer tilgang.",
+		Then:  "Så skal vanlig bruker ikke få åpne redigering.",
+	})
 
 	// Given
 	expectedStatusCode := 404
@@ -58,9 +63,11 @@ func TestValidateEventExists_WhenEventBelongsToAnotherUser_ReturnsNotFound(t *te
 }
 
 func TestNewEventFormPageContent_WhenApprovedEventIsOpenedByNonAdmin_RendersLockedMessage(t *testing.T) {
-	// Gitt at et arrangement allerede er godkjent og brukeren ikke er admin,
-	// når skjemaet rendres,
-	// så skal brukeren se beskjed om at arrangementet ikke kan redigeres videre.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at et arrangement allerede er godkjent og brukeren ikke er admin.",
+		When:  "Når skjemaet rendres.",
+		Then:  "Så skal brukeren se beskjed om at arrangementet ikke kan redigeres videre.",
+	})
 
 	// Given
 	expectedTextPart := "Arrangementet er allerede godkjent eller publisert"

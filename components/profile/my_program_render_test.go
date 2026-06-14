@@ -5,13 +5,16 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestMyProgram_WhenPuljeIsNotCompleted_RendersInterestsAndHidesPlayerResult(t *testing.T) {
-	// Given a player assignment and a wish in an open pulje,
-	// when Mitt festivalprogram is rendered,
-	// then the visible HTML shows the wish and hides the player allocation.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a player assignment and a wish in an open pulje.",
+		When:  "When Mitt festivalprogram is rendered.",
+		Then:  "Then the visible HTML shows the wish and hides the player allocation.",
+	})
 
 	// Given
 	expectedVisibleText := "Visible Wish Event"
@@ -42,9 +45,11 @@ func TestMyProgram_WhenPuljeIsNotCompleted_RendersInterestsAndHidesPlayerResult(
 }
 
 func TestMyProgram_WhenPuljeIsCompleted_RendersPlayerResult(t *testing.T) {
-	// Given a player assignment in a completed pulje,
-	// when Mitt festivalprogram is rendered,
-	// then the visible HTML shows what the user is playing.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a player assignment in a completed pulje.",
+		When:  "When Mitt festivalprogram is rendered.",
+		Then:  "Then the visible HTML shows what the user is playing.",
+	})
 
 	// Given
 	expectedVisibleText := "Completed Player Result"
@@ -72,9 +77,11 @@ func TestMyProgram_WhenPuljeIsCompleted_RendersPlayerResult(t *testing.T) {
 }
 
 func TestMyProgram_WhenGMEventIsInNotCompletedPulje_RendersGMEventOverInterests(t *testing.T) {
-	// Given a GM assignment and a wish in a locked pulje,
-	// when Mitt festivalprogram is rendered,
-	// then the visible HTML shows the GM event instead of the interests.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a GM assignment and a wish in a locked pulje.",
+		When:  "When Mitt festivalprogram is rendered.",
+		Then:  "Then the visible HTML shows the GM event instead of the interests.",
+	})
 
 	// Given
 	expectedVisibleText := "Locked GM Event"

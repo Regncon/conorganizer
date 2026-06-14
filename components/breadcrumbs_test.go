@@ -4,13 +4,16 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestBreadcrumbs_RendersParentLinkCurrentStepAndMobileBackLink(t *testing.T) {
-	// Gitt at en side har en overordnet brødsmulesti og en gjeldende side,
-	// når brødsmulestien vises,
-	// så skal overordnet side være lenke og gjeldende side være tekst.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en side har en overordnet brødsmulesti og en gjeldende side.",
+		When:  "Når brødsmulestien vises.",
+		Then:  "Så skal overordnet side være lenke og gjeldende side være tekst.",
+	})
 
 	// Given
 	expectedParentTexts := []string{"Hjem"}
@@ -45,9 +48,11 @@ func TestBreadcrumbs_RendersParentLinkCurrentStepAndMobileBackLink(t *testing.T)
 }
 
 func TestBreadcrumbs_WhenOnlyCurrentStep_RendersCurrentStepWithoutNavigationLinks(t *testing.T) {
-	// Gitt at brødsmulestien bare har gjeldende side,
-	// når brødsmulestien vises,
-	// så skal den vise gjeldende side uten navigasjonslenker.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brødsmulestien bare har gjeldende side.",
+		When:  "Når brødsmulestien vises.",
+		Then:  "Så skal den vise gjeldende side uten navigasjonslenker.",
+	})
 
 	// Given
 	expectedCurrentTexts := []string{"Hjem"}

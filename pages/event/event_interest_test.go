@@ -7,13 +7,16 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *testing.T) {
-	// Gitt at den planlagte varselmeldingen for en åpen pulje har blitt sendt,
-	// når interessepanelet rendres på nytt,
-	// så skal billettholderen se varselstatus ved knappen.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at den planlagte varselmeldingen for en åpen pulje har blitt sendt.",
+		When:  "Når interessepanelet rendres på nytt.",
+		Then:  "Så skal billettholderen se varselstatus ved knappen.",
+	})
 
 	// Given
 	expectedHelperVisible := true
@@ -50,9 +53,11 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
 }
 
 func TestEventInterestPanel_WhenCurrentTimeIsBeforeWarningThreshold_RendersNoWarningState(t *testing.T) {
-	// Gitt at en åpen pulje ikke nærmer seg låsing,
-	// når interessepanelet rendres,
-	// så skal ingen låseadvarsel vises ved knappen.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en åpen pulje ikke nærmer seg låsing.",
+		When:  "Når interessepanelet rendres.",
+		Then:  "Så skal ingen låseadvarsel vises ved knappen.",
+	})
 
 	// Given
 	expectedHelperVisible := false
@@ -78,9 +83,11 @@ func TestEventInterestPanel_WhenCurrentTimeIsBeforeWarningThreshold_RendersNoWar
 }
 
 func TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarningState(t *testing.T) {
-	// Gitt at den planlagte hastevarselmeldingen for en åpen pulje har blitt sendt,
-	// når interessepanelet rendres,
-	// så skal den mest presserende puljemeldingen vises ved knappen.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at den planlagte hastevarselmeldingen for en åpen pulje har blitt sendt.",
+		When:  "Når interessepanelet rendres.",
+		Then:  "Så skal den mest presserende puljemeldingen vises ved knappen.",
+	})
 
 	// Given
 	expectedHelperVisible := true
@@ -123,9 +130,11 @@ func TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarn
 }
 
 func TestEventInterestPanel_WhenInterestIsUnavailableForTicketHolder_RendersUnavailableMessage(t *testing.T) {
-	// Gitt at interessevalg ikke er åpnet for arrangementet og brukeren har billett,
-	// når interessepanelet rendres,
-	// så skal panelet vise en melding i stedet for knappen for å melde interesse.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at interessevalg ikke er åpnet for arrangementet og brukeren har billett.",
+		When:  "Når interessepanelet rendres.",
+		Then:  "Så skal panelet vise en melding i stedet for knappen for å melde interesse.",
+	})
 
 	// Given
 	expectedMessages := []string{"Interessevalg er ikke åpnet for dette arrangementet ennå."}
@@ -148,9 +157,11 @@ func TestEventInterestPanel_WhenInterestIsUnavailableForTicketHolder_RendersUnav
 }
 
 func TestEventInterestPanel_WhenInterestIsUnavailableAndUserHasNoTicket_RendersTicketCTA(t *testing.T) {
-	// Gitt at interessevalg ikke er åpnet for arrangementet og brukeren ikke har billett,
-	// når interessepanelet rendres,
-	// så skal brukeren fortsatt se lenken for å hente billett.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at interessevalg ikke er åpnet for arrangementet og brukeren ikke har billett.",
+		When:  "Når interessepanelet rendres.",
+		Then:  "Så skal brukeren fortsatt se lenken for å hente billett.",
+	})
 
 	// Given
 	expectedHrefs := []string{"/profile/tickets"}

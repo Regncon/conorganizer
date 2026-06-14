@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 const (
@@ -34,9 +35,11 @@ const (
 //   should never show you as FirstChoice.
 
 func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
-	// Given a mix of player assignments, GM assignments, and interest levels across events,
-	// when interests and assignees are fetched for each event,
-	// then first-choice flags only come from high-interest player assignments in other events.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a mix of player assignments, GM assignments, and interest levels across events.",
+		When:  "When interests and assignees are fetched for each event.",
+		Then:  "Then first-choice flags only come from high-interest player assignments in other events.",
+	})
 
 	// Given
 	expectedAbsentFromE1 := idPlayerAssigned

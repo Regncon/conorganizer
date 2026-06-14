@@ -5,12 +5,15 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestGetBillettholderInterestSectionsByBillettholderID_ReturnsAssignedAndInterestedEventsGroupedByPulje(t *testing.T) {
-	// Given expected pulje sections with assigned rows separated from interest rows and pulje publication state,
-	// when the real billettholder interest loader reads the database,
-	// then each requested billettholder gets assigned rows first and interest rows grouped by level with the correct pulje-specific publication status.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given expected pulje sections with assigned rows separated from interest rows and pulje publication state.",
+		When:  "When the real billettholder interest loader reads the database.",
+		Then:  "Then each requested billettholder gets assigned rows first and interest rows grouped by level with the correct pulje-specific publication status.",
+	})
 
 	// Given
 	expectedBillettholderID := 42

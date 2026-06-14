@@ -5,12 +5,15 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestConvertTicketIdToNewBillettholder_CreatesBillettholderAndEmails(t *testing.T) {
-	// Given one ticket in an order with a second ticket using another email,
-	// when the ticket is converted to a billettholder,
-	// then the billettholder stores the ticket data and both related emails.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given one ticket in an order with a second ticket using another email.",
+		When:  "When the ticket is converted to a billettholder.",
+		Then:  "Then the billettholder stores the ticket data and both related emails.",
+	})
 
 	// Given
 	const ticketID = 42
@@ -74,9 +77,11 @@ func TestConvertTicketIdToNewBillettholder_CreatesBillettholderAndEmails(t *test
 }
 
 func TestConvertTicketIdToNewBillettholder_WhenTicketIsDinner_ReturnsError(t *testing.T) {
-	// Given a dinner ticket,
-	// when it is converted to a billettholder,
-	// then conversion is rejected before database writes are attempted.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a dinner ticket.",
+		When:  "When it is converted to a billettholder.",
+		Then:  "Then conversion is rejected before database writes are attempted.",
+	})
 
 	// Given
 	const ticketID = 42
@@ -107,9 +112,11 @@ func TestConvertTicketIdToNewBillettholder_WhenTicketIsDinner_ReturnsError(t *te
 }
 
 func TestConvertTicketIdToNewBillettholder_WhenAssociatedEmailsRepeat_InsertsEachEmailOnce(t *testing.T) {
-	// Given multiple tickets in the same order with the same associated email,
-	// when the main ticket is converted to a billettholder,
-	// then each billettholder email is stored once.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given multiple tickets in the same order with the same associated email.",
+		When:  "When the main ticket is converted to a billettholder.",
+		Then:  "Then each billettholder email is stored once.",
+	})
 
 	// Given
 	const ticketID = 42

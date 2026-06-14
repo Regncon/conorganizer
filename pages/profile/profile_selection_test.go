@@ -8,12 +8,15 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestSelectedBillettholderIDFromRequest_WhenQueryIDBelongsToUser_ReturnsQueryID(t *testing.T) {
-	// Gitt at URL-en peker på en billettinnehaver brukeren eier,
-	// når Min Side velger aktiv billettinnehaver,
-	// så skal URL-valget brukes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at URL-en peker på en billettinnehaver brukeren eier.",
+		When:  "Når Min Side velger aktiv billettinnehaver.",
+		Then:  "Så skal URL-valget brukes.",
+	})
 
 	// Given
 	expectedSelectedID := 202
@@ -34,9 +37,11 @@ func TestSelectedBillettholderIDFromRequest_WhenQueryIDBelongsToUser_ReturnsQuer
 }
 
 func TestSelectedBillettholderIDFromRequest_WhenQueryIDIsInvalid_UsesEmailMatch(t *testing.T) {
-	// Gitt at URL-en har en ugyldig billettinnehaver-ID,
-	// når Min Side velger aktiv billettinnehaver,
-	// så skal brukerens e-postmatch brukes som fallback.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at URL-en har en ugyldig billettinnehaver-ID.",
+		When:  "Når Min Side velger aktiv billettinnehaver.",
+		Then:  "Så skal brukerens e-postmatch brukes som fallback.",
+	})
 
 	// Given
 	expectedSelectedID := 101
@@ -57,9 +62,11 @@ func TestSelectedBillettholderIDFromRequest_WhenQueryIDIsInvalid_UsesEmailMatch(
 }
 
 func TestSelectedBillettholderIDFromRequest_WhenQueryIDIsNotRelatedToUser_UsesEmailMatch(t *testing.T) {
-	// Gitt at URL-en peker på en billettinnehaver uten brukerrelasjon,
-	// når Min Side velger aktiv billettinnehaver,
-	// så skal brukerens e-postmatch brukes som fallback.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at URL-en peker på en billettinnehaver uten brukerrelasjon.",
+		When:  "Når Min Side velger aktiv billettinnehaver.",
+		Then:  "Så skal brukerens e-postmatch brukes som fallback.",
+	})
 
 	// Given
 	expectedSelectedID := 101
@@ -80,9 +87,11 @@ func TestSelectedBillettholderIDFromRequest_WhenQueryIDIsNotRelatedToUser_UsesEm
 }
 
 func TestSelectedBillettholderIDFromRequest_WhenNoQueryAndEmailMatches_ReturnsEmailMatchedHolder(t *testing.T) {
-	// Gitt at URL-en ikke velger billettinnehaver og brukerens e-post matcher en billettinnehaver,
-	// når Min Side velger aktiv billettinnehaver,
-	// så skal e-postmatchen brukes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at URL-en ikke velger billettinnehaver og brukerens e-post matcher en billettinnehaver.",
+		When:  "Når Min Side velger aktiv billettinnehaver.",
+		Then:  "Så skal e-postmatchen brukes.",
+	})
 
 	// Given
 	expectedSelectedID := 202
@@ -103,9 +112,11 @@ func TestSelectedBillettholderIDFromRequest_WhenNoQueryAndEmailMatches_ReturnsEm
 }
 
 func TestSelectedBillettholderIDFromRequest_WhenNoQueryAndNoEmailMatch_ReturnsFirstHolder(t *testing.T) {
-	// Gitt at URL-en ikke velger billettinnehaver og ingen e-post matcher brukeren,
-	// når Min Side velger aktiv billettinnehaver,
-	// så skal første tilgjengelige billettinnehaver brukes.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at URL-en ikke velger billettinnehaver og ingen e-post matcher brukeren.",
+		When:  "Når Min Side velger aktiv billettinnehaver.",
+		Then:  "Så skal første tilgjengelige billettinnehaver brukes.",
+	})
 
 	// Given
 	expectedSelectedID := 101
@@ -126,9 +137,11 @@ func TestSelectedBillettholderIDFromRequest_WhenNoQueryAndNoEmailMatch_ReturnsFi
 }
 
 func TestSelectedBillettholderIDFromRequest_WhenUserHasNoTicketHolders_ReturnsZero(t *testing.T) {
-	// Gitt at brukeren ikke har billettinnehavere,
-	// når Min Side velger aktiv billettinnehaver,
-	// så skal ingen billettinnehaver være valgt.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren ikke har billettinnehavere.",
+		When:  "Når Min Side velger aktiv billettinnehaver.",
+		Then:  "Så skal ingen billettinnehaver være valgt.",
+	})
 
 	// Given
 	expectedSelectedID := 0

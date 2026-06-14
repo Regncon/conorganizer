@@ -4,12 +4,15 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestAssociateUserWithBillettholder_WhenEmailsMatchCaseInsensitively_CreatesUserAssociations(t *testing.T) {
-	// Given a user whose email matches multiple billettholder emails with different casing,
-	// when the user is associated with billettholdere,
-	// then the user is linked to every matching billettholder.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a user whose email matches multiple billettholder emails with different casing.",
+		When:  "When the user is associated with billettholdere.",
+		Then:  "Then the user is linked to every matching billettholder.",
+	})
 
 	// Given
 	expectedAssociations := []models.BillettholderUsers{
@@ -38,10 +41,11 @@ func TestAssociateUserWithBillettholder_WhenEmailsMatchCaseInsensitively_Creates
 }
 
 func TestAssociateUsersWithBillettholderEmail_CreatesAssociationForMatchingUserEmail(t *testing.T) {
-	// Gitt at ein billettholder har fått lagt til ei manuell e-postadresse,
-	// og ein eksisterande brukar har same e-postadresse med annan casing,
-	// når e-postadressa blir forsona mot brukarar,
-	// så skal billettholderen få ei varig brukar-tilknyting.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at ein billettholder har fått lagt til ei manuell e-postadresse, og ein eksisterande brukar har same e-postadresse med annan casing.",
+		When:  "Når e-postadressa blir forsona mot brukarar.",
+		Then:  "Så skal billettholderen få ei varig brukar-tilknyting.",
+	})
 
 	// Given
 	expectedAssociation := models.BillettholderUsers{
@@ -67,9 +71,11 @@ func TestAssociateUsersWithBillettholderEmail_CreatesAssociationForMatchingUserE
 }
 
 func TestAssociateUsersWithBillettholderEmail_DoesNotDuplicateExistingAssociation(t *testing.T) {
-	// Gitt at ein billettholder allereie er knytt til ein brukar via ei manuell e-postadresse,
-	// når same e-postforsoning køyrer på nytt,
-	// så skal det framleis berre finnast ei brukar-tilknyting.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at ein billettholder allereie er knytt til ein brukar via ei manuell e-postadresse.",
+		When:  "Når same e-postforsoning køyrer på nytt.",
+		Then:  "Så skal det framleis berre finnast ei brukar-tilknyting.",
+	})
 
 	// Given
 	expectedAssociation := models.BillettholderUsers{
@@ -96,10 +102,11 @@ func TestAssociateUsersWithBillettholderEmail_DoesNotDuplicateExistingAssociatio
 }
 
 func TestDisassociateUsersFromBillettholderEmail_RemovesAssociationWhenNoRemainingEmailMatchesUser(t *testing.T) {
-	// Gitt at ei manuell e-postadresse er fjerna frå ein billettholder,
-	// og ingen attverande e-postadresser på billettholderen samsvarer med brukaren,
-	// når e-postadressa blir forsona mot brukar-tilknytingar,
-	// så skal den varige brukar-tilknytinga fjernast.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at ei manuell e-postadresse er fjerna frå ein billettholder, og ingen attverande e-postadresser på billettholderen samsvarer med brukaren.",
+		When:  "Når e-postadressa blir forsona mot brukar-tilknytingar.",
+		Then:  "Så skal den varige brukar-tilknytinga fjernast.",
+	})
 
 	// Given
 	expectedAssociation := models.BillettholderUsers{
@@ -128,10 +135,11 @@ func TestDisassociateUsersFromBillettholderEmail_RemovesAssociationWhenNoRemaini
 }
 
 func TestDisassociateUsersFromBillettholderEmail_KeepsAssociationWhenRemainingEmailStillMatchesUser(t *testing.T) {
-	// Gitt at ei manuell e-postadresse er fjerna frå ein billettholder,
-	// men ei anna attverande e-postadresse på same billettholder framleis samsvarer med brukaren,
-	// når e-postadressa blir forsona mot brukar-tilknytingar,
-	// så skal den varige brukar-tilknytinga behaldast.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at ei manuell e-postadresse er fjerna frå ein billettholder, men ei anna attverande e-postadresse på same billettholder framleis samsvarer med brukaren.",
+		When:  "Når e-postadressa blir forsona mot brukar-tilknytingar.",
+		Then:  "Så skal den varige brukar-tilknytinga behaldast.",
+	})
 
 	// Given
 	expectedAssociation := models.BillettholderUsers{

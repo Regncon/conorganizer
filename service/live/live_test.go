@@ -8,12 +8,16 @@ import (
 	"testing"
 
 	"github.com/nats-io/nats.go/jetstream"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestManager_EnsureConnection_WhenCookieMissing_CreatesSessionCookieAndLiveKey(t *testing.T) {
-	// Given a request without the live session cookie,
-	// when the manager ensures the connection,
-	// then it creates a connection id, saves the cookie, and stores a live key.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a request without the live session cookie.",
+		When:  "When the manager ensures the connection.",
+		Then:  "Then it creates a connection id, saves the cookie, and stores a live key.",
+	})
 
 	// Given
 	expectedBucket := BucketEvents
@@ -36,9 +40,11 @@ func TestManager_EnsureConnection_WhenCookieMissing_CreatesSessionCookieAndLiveK
 }
 
 func TestManager_EnsureConnection_WhenCookieExistsAndKeyMissing_RecreatesLiveKey(t *testing.T) {
-	// Given an existing live session without a matching KV key,
-	// when the manager ensures the connection,
-	// then the same connection id is reused and the KV key is recreated.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an existing live session without a matching KV key.",
+		When:  "When the manager ensures the connection.",
+		Then:  "Then the same connection id is reused and the KV key is recreated.",
+	})
 
 	// Given
 	expectedBucket := BucketEvents
@@ -73,9 +79,11 @@ func TestManager_EnsureConnection_WhenCookieExistsAndKeyMissing_RecreatesLiveKey
 }
 
 func TestManager_BucketConfig_UsesTwentySixHourTTLForEveryLiveBucket(t *testing.T) {
-	// Given the live manager bucket configuration,
-	// when each bucket config is built,
-	// then every live bucket uses the configured 26 hour TTL.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the live manager bucket configuration.",
+		When:  "When each bucket config is built.",
+		Then:  "Then every live bucket uses the configured 26 hour TTL.",
+	})
 
 	// Given
 	expectedTTL := DefaultTTL
@@ -91,9 +99,11 @@ func TestManager_BucketConfig_UsesTwentySixHourTTLForEveryLiveBucket(t *testing.
 }
 
 func TestManager_Broadcast_WhenBucketHasKeys_WritesTimestampToEveryLiveKey(t *testing.T) {
-	// Given a live bucket with existing connection keys,
-	// when the manager broadcasts the bucket,
-	// then every connection key receives a fresh timestamp value.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a live bucket with existing connection keys.",
+		When:  "When the manager broadcasts the bucket.",
+		Then:  "Then every connection key receives a fresh timestamp value.",
+	})
 
 	// Given
 	expectedKeys := []string{"connection-a", "connection-b"}
@@ -125,9 +135,11 @@ func TestManager_Broadcast_WhenBucketHasKeys_WritesTimestampToEveryLiveKey(t *te
 }
 
 func TestManager_Broadcast_WhenBucketHasNoKeys_Succeeds(t *testing.T) {
-	// Given an empty live bucket,
-	// when the manager broadcasts the bucket,
-	// then no error is returned.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an empty live bucket.",
+		When:  "When the manager broadcasts the bucket.",
+		Then:  "Then no error is returned.",
+	})
 
 	// Given
 	manager := newTestManager(t)
@@ -142,9 +154,11 @@ func TestManager_Broadcast_WhenBucketHasNoKeys_Succeeds(t *testing.T) {
 }
 
 func TestManager_Broadcast_WhenWatcherIsOpen_SendsUpdateToWatcher(t *testing.T) {
-	// Given a watcher for a connection key,
-	// when the manager broadcasts the bucket,
-	// then the watcher receives an update for that key.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a watcher for a connection key.",
+		When:  "When the manager broadcasts the bucket.",
+		Then:  "Then the watcher receives an update for that key.",
+	})
 
 	// Given
 	expectedKey := "connection-a"
@@ -177,9 +191,11 @@ func TestManager_Broadcast_WhenWatcherIsOpen_SendsUpdateToWatcher(t *testing.T) 
 }
 
 func TestDatastarInit_ReturnsRestartResilientGetExpression(t *testing.T) {
-	// Given a live endpoint path,
-	// when the Datastar init expression is generated,
-	// then it includes retry settings that survive server restarts.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a live endpoint path.",
+		When:  "When the Datastar init expression is generated.",
+		Then:  "Then it includes retry settings that survive server restarts.",
+	})
 
 	// Given
 	expectedParts := []string{
@@ -202,9 +218,11 @@ func TestDatastarInit_ReturnsRestartResilientGetExpression(t *testing.T) {
 }
 
 func TestDatastarInitExpression_ReturnsRestartResilientGetExpressionWithDynamicURL(t *testing.T) {
-	// Given a live endpoint URL expression,
-	// when the Datastar init expression is generated,
-	// then the expression is passed through and retry settings are included.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a live endpoint URL expression.",
+		When:  "When the Datastar init expression is generated.",
+		Then:  "Then the expression is passed through and retry settings are included.",
+	})
 
 	// Given
 	expectedParts := []string{

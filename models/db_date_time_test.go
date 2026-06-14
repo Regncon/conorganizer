@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestDBDateTimeScan_WhenInputUsesSupportedFormat_ReturnsValidValue(t *testing.T) {
-	// Given timestamp inputs in every supported database format,
-	// when they are scanned into DBDateTime,
-	// then every value is accepted as valid.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given timestamp inputs in every supported database format.",
+		When:  "When they are scanned into DBDateTime.",
+		Then:  "Then every value is accepted as valid.",
+	})
 
 	// Given
 	expectedValid := true
@@ -38,9 +42,11 @@ func TestDBDateTimeScan_WhenInputUsesSupportedFormat_ReturnsValidValue(t *testin
 }
 
 func TestDBDateTimeScan_WhenInputIsNull_ReturnsInvalidValue(t *testing.T) {
-	// Given a null database timestamp,
-	// when it is scanned into DBDateTime,
-	// then the value is marked invalid without error.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a null database timestamp.",
+		When:  "When it is scanned into DBDateTime.",
+		Then:  "Then the value is marked invalid without error.",
+	})
 
 	// Given
 	expectedValid := false
@@ -59,9 +65,11 @@ func TestDBDateTimeScan_WhenInputIsNull_ReturnsInvalidValue(t *testing.T) {
 }
 
 func TestDBDateTimeScan_WhenInputIsInvalid_ReturnsError(t *testing.T) {
-	// Given an invalid timestamp string,
-	// when it is scanned into DBDateTime,
-	// then parsing fails.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an invalid timestamp string.",
+		When:  "When it is scanned into DBDateTime.",
+		Then:  "Then parsing fails.",
+	})
 
 	// Given
 	expectedError := true
@@ -78,9 +86,11 @@ func TestDBDateTimeScan_WhenInputIsInvalid_ReturnsError(t *testing.T) {
 }
 
 func TestDBDateTimeValue_WhenValid_ReturnsRFC3339NanoUTCText(t *testing.T) {
-	// Given a valid DBDateTime,
-	// when it is converted to a driver value,
-	// then it returns RFC3339Nano text in UTC.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a valid DBDateTime.",
+		When:  "When it is converted to a driver value.",
+		Then:  "Then it returns RFC3339Nano text in UTC.",
+	})
 
 	// Given
 	expectedValue := "2026-05-17T18:42:13.123Z"
@@ -99,9 +109,11 @@ func TestDBDateTimeValue_WhenValid_ReturnsRFC3339NanoUTCText(t *testing.T) {
 }
 
 func TestDBDateTimeValue_WhenInvalid_ReturnsNil(t *testing.T) {
-	// Given an invalid DBDateTime,
-	// when it is converted to a driver value,
-	// then it returns nil.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an invalid DBDateTime.",
+		When:  "When it is converted to a driver value.",
+		Then:  "Then it returns nil.",
+	})
 
 	// Given
 	var expectedValue any
@@ -119,9 +131,11 @@ func TestDBDateTimeValue_WhenInvalid_ReturnsNil(t *testing.T) {
 }
 
 func TestDBDateTimeJSON_WhenValid_RoundTripsTimestampText(t *testing.T) {
-	// Given valid timestamp JSON,
-	// when it is unmarshaled and marshaled again,
-	// then the same timestamp text is emitted.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given valid timestamp JSON.",
+		When:  "When it is unmarshaled and marshaled again.",
+		Then:  "Then the same timestamp text is emitted.",
+	})
 
 	// Given
 	expectedJSON := `"2026-05-17T18:42:13Z"`
@@ -147,9 +161,11 @@ func TestDBDateTimeJSON_WhenValid_RoundTripsTimestampText(t *testing.T) {
 }
 
 func TestDBDateTimeJSON_WhenInputIsNull_ReturnsInvalidValue(t *testing.T) {
-	// Given null timestamp JSON,
-	// when it is unmarshaled into DBDateTime,
-	// then the value is marked invalid.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given null timestamp JSON.",
+		When:  "When it is unmarshaled into DBDateTime.",
+		Then:  "Then the value is marked invalid.",
+	})
 
 	// Given
 	expectedValid := false

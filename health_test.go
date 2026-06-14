@@ -10,13 +10,14 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Regncon/conorganizer/testutil"
 	"github.com/go-chi/chi/v5"
 	_ "modernc.org/sqlite"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestHealthzReturnsGenericOK(t *testing.T) {
-	testutil.Behavior(t, testutil.BDD{
+	bdd.Behavior(t, bdd.BDD{
 		Given: "Given the process is serving HTTP.",
 		When:  "When the health endpoint is requested.",
 		Then:  "Then it returns a generic OK response.",
@@ -39,9 +40,11 @@ func TestHealthzReturnsGenericOK(t *testing.T) {
 }
 
 func TestReadyzReturnsOKWhenStartupAndLiveCheckPass(t *testing.T) {
-	// Given startup checks have passed and the database answers a live check,
-	// when the readiness endpoint is requested,
-	// then it returns a generic OK response.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given startup checks have passed and the database answers a live check.",
+		When:  "When the readiness endpoint is requested.",
+		Then:  "Then it returns a generic OK response.",
+	})
 
 	// Given
 	expectedStatusCode := http.StatusOK
@@ -63,9 +66,11 @@ func TestReadyzReturnsOKWhenStartupAndLiveCheckPass(t *testing.T) {
 }
 
 func TestReadyzReturnsSanitizedFailureReasonWhenDegraded(t *testing.T) {
-	// Given the app is degraded because image storage is unavailable,
-	// when the readiness endpoint is requested,
-	// then it returns a sanitized reason without exposing internal paths.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the app is degraded because image storage is unavailable.",
+		When:  "When the readiness endpoint is requested.",
+		Then:  "Then it returns a sanitized reason without exposing internal paths.",
+	})
 
 	// Given
 	expectedStatusCode := http.StatusServiceUnavailable
@@ -93,9 +98,11 @@ func TestReadyzReturnsSanitizedFailureReasonWhenDegraded(t *testing.T) {
 }
 
 func TestReadyzReturnsDatabaseReasonWhenLiveCheckFails(t *testing.T) {
-	// Given no database is available for the live readiness check,
-	// when the readiness endpoint is requested,
-	// then it returns a sanitized database unavailable reason.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given no database is available for the live readiness check.",
+		When:  "When the readiness endpoint is requested.",
+		Then:  "Then it returns a sanitized database unavailable reason.",
+	})
 
 	// Given
 	expectedStatusCode := http.StatusServiceUnavailable

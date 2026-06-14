@@ -4,12 +4,15 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestUpdateRoom_UpdatesAllFieldsWithoutChangingID(t *testing.T) {
-	// Given an existing room and replacement room data,
-	// when the room is updated,
-	// then every mutable field changes while the ID stays the same.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an existing room and replacement room data.",
+		When:  "When the room is updated.",
+		Then:  "Then every mutable field changes while the ID stays the same.",
+	})
 
 	// Given
 	db := createRoomsTestDB(t)
@@ -35,9 +38,11 @@ func TestUpdateRoom_UpdatesAllFieldsWithoutChangingID(t *testing.T) {
 }
 
 func TestUpdateRoom_WhenRoomNumberIsEmpty_ReturnsError(t *testing.T) {
-	// Given replacement room data with an empty room number,
-	// when the room is updated,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given replacement room data with an empty room number.",
+		When:  "When the room is updated.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true
@@ -57,9 +62,11 @@ func TestUpdateRoom_WhenRoomNumberIsEmpty_ReturnsError(t *testing.T) {
 }
 
 func TestUpdateRoom_WhenRoomNumberDoesNotMatchFloor_ReturnsError(t *testing.T) {
-	// Given replacement room data whose number starts with another floor,
-	// when the room is updated,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given replacement room data whose number starts with another floor.",
+		When:  "When the room is updated.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true
@@ -80,9 +87,11 @@ func TestUpdateRoom_WhenRoomNumberDoesNotMatchFloor_ReturnsError(t *testing.T) {
 }
 
 func TestUpdateRoom_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testing.T) {
-	// Given replacement room data with invalid event capacity,
-	// when the room is updated,
-	// then validation rejects it.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given replacement room data with invalid event capacity.",
+		When:  "When the room is updated.",
+		Then:  "Then validation rejects it.",
+	})
 
 	// Given
 	expectedError := true

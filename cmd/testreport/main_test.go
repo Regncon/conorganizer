@@ -6,12 +6,16 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestFormatBDDComment_PreservesSourceLineBreaksAsReadableSentences(t *testing.T) {
-	// Given a BDD comment already split across source comment lines,
-	// when it is formatted for the report,
-	// then the report keeps three readable BDD lines.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a BDD comment already split across source comment lines.",
+		When:  "When it is formatted for the report.",
+		Then:  "Then the report keeps three readable BDD lines.",
+	})
 
 	// Given
 	expectedLines := []string{
@@ -33,9 +37,11 @@ func TestFormatBDDComment_PreservesSourceLineBreaksAsReadableSentences(t *testin
 }
 
 func TestFormatBDDComment_SplitsNorwegianSingleLineComment(t *testing.T) {
-	// Given a legacy Norwegian BDD comment stored as one sentence,
-	// when it is formatted for the report,
-	// then the BDD clauses are split into separate readable lines.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a legacy Norwegian BDD comment stored as one sentence.",
+		When:  "When it is formatted for the report.",
+		Then:  "Then the BDD clauses are split into separate readable lines.",
+	})
 
 	// Given
 	expectedLines := []string{
@@ -53,9 +59,11 @@ func TestFormatBDDComment_SplitsNorwegianSingleLineComment(t *testing.T) {
 }
 
 func TestFormatBDDComment_SplitsEnglishSingleLineComment(t *testing.T) {
-	// Given a legacy English BDD comment stored as one sentence,
-	// when it is formatted for the report,
-	// then the BDD clauses are split into separate readable lines.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a legacy English BDD comment stored as one sentence.",
+		When:  "When it is formatted for the report.",
+		Then:  "Then the BDD clauses are split into separate readable lines.",
+	})
 
 	// Given
 	expectedLines := []string{
@@ -73,9 +81,11 @@ func TestFormatBDDComment_SplitsEnglishSingleLineComment(t *testing.T) {
 }
 
 func TestWriteReport_AddsBlankLineBetweenTests(t *testing.T) {
-	// Given multiple test results with BDD comments,
-	// when the automated behavior report is written,
-	// then each test block is separated by a blank line.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given multiple test results with BDD comments.",
+		When:  "When the automated behavior report is written.",
+		Then:  "Then each test block is separated by a blank line.",
+	})
 
 	// Given
 	expectedSnippet := strings.Join([]string{
@@ -109,9 +119,11 @@ func TestWriteReport_AddsBlankLineBetweenTests(t *testing.T) {
 }
 
 func TestCollectFileBDDComments_PrefersStructuredBehaviorMetadata(t *testing.T) {
-	// Given a test with structured BDD metadata and an older fallback BDD comment,
-	// when BDD comments are collected from the source file,
-	// then the structured metadata is used for the generated report.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a test with structured BDD metadata and an older fallback BDD comment.",
+		When:  "When BDD comments are collected from the source file.",
+		Then:  "Then the structured metadata is used for the generated report.",
+	})
 
 	// Given
 	expectedLines := []string{
@@ -128,7 +140,7 @@ import (
 )
 
 func TestStructuredBehavior(t *testing.T) {
-	testutil.Behavior(t, testutil.BDD{
+	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at strukturert metadata finnes.",
 		When:  "Når rapporten samles.",
 		Then:  "Så skal strukturert metadata brukes.",

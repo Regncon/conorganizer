@@ -6,13 +6,17 @@ import (
 	"testing"
 
 	"github.com/PuerkitoBio/goquery"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestLoginForm_RendersDescopeWidgetAndPostLoginRedirect(t *testing.T) {
-	// Gitt at en bruker åpner innloggingssiden,
-	// når innloggingskomponenten rendres,
-	// så skal Descope-widgeten være konfigurert og sende vellykket innlogging til post-login.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en bruker åpner innloggingssiden.",
+		When:  "Når innloggingskomponenten rendres.",
+		Then:  "Så skal Descope-widgeten være konfigurert og sende vellykket innlogging til post-login.",
+	})
 
 	// Given
 	expectedWidgetAttributes := map[string]string{

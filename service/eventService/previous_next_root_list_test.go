@@ -8,12 +8,15 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/root"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestGetPreviousNextForRootEventList_WhenProgramIsNotPublished_UsesAnnouncedAlphabeticalRootList(t *testing.T) {
-	// Gitt noen annonserte og interne arrangementer,
-	// når forrige/neste hentes før programmet er publisert,
-	// så brukes den flate annonserte forsidelisten i alfabetisk rekkefølge.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt noen annonserte og interne arrangementer.",
+		When:  "Når forrige/neste hentes før programmet er publisert.",
+		Then:  "Så brukes den flate annonserte forsidelisten i alfabetisk rekkefølge.",
+	})
 
 	// Given
 	expectedAnnouncedOrder := []string{"alpha-announced", "beta-announced", "delta-announced"}
@@ -96,9 +99,11 @@ func TestGetPreviousNextForRootEventList_WhenProgramIsNotPublished_UsesAnnounced
 }
 
 func TestGetPreviousNextForRootEventList_WhenProgramIsPublished_UsesPublishedRootPuljeOccurrences(t *testing.T) {
-	// Gitt publiserte, upubliserte og interne puljerader,
-	// når forrige/neste hentes etter at programmet er publisert,
-	// så brukes bare publiserte annonserte forsiderader og pulje er del av forekomsten.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt publiserte, upubliserte og interne puljerader.",
+		When:  "Når forrige/neste hentes etter at programmet er publisert.",
+		Then:  "Så brukes bare publiserte annonserte forsiderader og pulje er del av forekomsten.",
+	})
 
 	// Given
 	ctx := context.Background()

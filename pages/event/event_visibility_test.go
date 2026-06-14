@@ -9,13 +9,16 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestCanViewEvent_AllowsPublicAccessToAnnouncedEvent(t *testing.T) {
-	// Gitt at arrangementet er annonsert,
-	// når visningstilgang sjekkes,
-	// så skal alle kunne se arrangementet.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet er annonsert.",
+		When:  "Når visningstilgang sjekkes.",
+		Then:  "Så skal alle kunne se arrangementet.",
+	})
 
 	// Given
 	expectedCanView := true
@@ -37,9 +40,11 @@ func TestCanViewEvent_AllowsPublicAccessToAnnouncedEvent(t *testing.T) {
 }
 
 func TestCanViewEvent_AllowsAdminAccessToUnannouncedEvent(t *testing.T) {
-	// Gitt at arrangementet ikke er annonsert og brukeren er admin,
-	// når visningstilgang sjekkes,
-	// så skal admin kunne se arrangementet.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren er admin.",
+		When:  "Når visningstilgang sjekkes.",
+		Then:  "Så skal admin kunne se arrangementet.",
+	})
 
 	// Given
 	expectedCanView := true
@@ -61,9 +66,11 @@ func TestCanViewEvent_AllowsAdminAccessToUnannouncedEvent(t *testing.T) {
 }
 
 func TestCanViewEvent_AllowsCreatorAccessToUnannouncedEvent(t *testing.T) {
-	// Gitt at arrangementet ikke er annonsert og brukeren er eieren,
-	// når visningstilgang sjekkes,
-	// så skal eieren kunne se arrangementet.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren er eieren.",
+		When:  "Når visningstilgang sjekkes.",
+		Then:  "Så skal eieren kunne se arrangementet.",
+	})
 
 	// Given
 	expectedCanView := true
@@ -92,9 +99,11 @@ func TestCanViewEvent_AllowsCreatorAccessToUnannouncedEvent(t *testing.T) {
 }
 
 func TestCanViewEvent_DeniesAnonymousAccessToUnannouncedEvent(t *testing.T) {
-	// Gitt at arrangementet ikke er annonsert og brukeren ikke er innlogget,
-	// når visningstilgang sjekkes,
-	// så skal brukeren ikke kunne se arrangementet.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren ikke er innlogget.",
+		When:  "Når visningstilgang sjekkes.",
+		Then:  "Så skal brukeren ikke kunne se arrangementet.",
+	})
 
 	// Given
 	expectedCanView := false
@@ -116,9 +125,11 @@ func TestCanViewEvent_DeniesAnonymousAccessToUnannouncedEvent(t *testing.T) {
 }
 
 func TestEventPageContent_WhenUnannouncedEventIsHidden_RendersFriendlyMessage(t *testing.T) {
-	// Gitt at arrangementet ikke er annonsert og brukeren ikke har tilgang,
-	// når arrangementssiden vises,
-	// så skal brukeren se en vennlig melding om at arrangementet ikke er annonsert ennå.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren ikke har tilgang.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal brukeren se en vennlig melding om at arrangementet ikke er annonsert ennå.",
+	})
 
 	// Given
 	expectedMessages := []string{"Dette arrangementet er ikke annonsert ennå. Kom tilbake senere, så får du se hva som venter."}
@@ -139,9 +150,11 @@ func TestEventPageContent_WhenUnannouncedEventIsHidden_RendersFriendlyMessage(t 
 }
 
 func TestEventPageContent_WhenProgramPublishingIsOff_DoesNotRenderInterestDialog(t *testing.T) {
-	// Gitt at programmet ikke er publisert, men arrangementet er publisert i en pulje,
-	// når arrangementssiden vises,
-	// så skal dialogen ikke rendres og brukeren fortsatt se lenken for å hente billett.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at programmet ikke er publisert, men arrangementet er publisert i en pulje.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal dialogen ikke rendres og brukeren fortsatt se lenken for å hente billett.",
+	})
 
 	// Given
 	expectedDialogVisible := false
@@ -168,9 +181,11 @@ func TestEventPageContent_WhenProgramPublishingIsOff_DoesNotRenderInterestDialog
 }
 
 func TestEventPageContent_WhenEventIsNotPublishedInPulje_DoesNotRenderInterestDialog(t *testing.T) {
-	// Gitt at programmet er publisert, men arrangementet ikke er publisert i puljen,
-	// når arrangementssiden vises,
-	// så skal dialogen ikke rendres og brukeren fortsatt se lenken for å hente billett.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at programmet er publisert, men arrangementet ikke er publisert i puljen.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal dialogen ikke rendres og brukeren fortsatt se lenken for å hente billett.",
+	})
 
 	// Given
 	expectedDialogVisible := false
@@ -197,9 +212,11 @@ func TestEventPageContent_WhenEventIsNotPublishedInPulje_DoesNotRenderInterestDi
 }
 
 func TestEventPageContent_WhenProgramAndPuljeArePublished_RendersInterestDialog(t *testing.T) {
-	// Gitt at programmet er publisert og arrangementet er publisert i en pulje,
-	// når arrangementssiden vises,
-	// så skal dialogen for interessevalg rendres.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at programmet er publisert og arrangementet er publisert i en pulje.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal dialogen for interessevalg rendres.",
+	})
 
 	// Given
 	expectedDialogVisible := true

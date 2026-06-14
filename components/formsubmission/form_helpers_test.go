@@ -1,11 +1,17 @@
 package formsubmission
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
+)
 
 func TestNormalizeTextareaSubmission_NormalizesOuterWhitespaceAndNewlines(t *testing.T) {
-	// Given textarea submissions with surrounding whitespace and mixed newline styles,
-	// when each submission is normalized,
-	// then only outer whitespace and Windows newlines are normalized.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given textarea submissions with surrounding whitespace and mixed newline styles.",
+		When:  "When each submission is normalized.",
+		Then:  "Then only outer whitespace and Windows newlines are normalized.",
+	})
 
 	// Given
 	expectedCases := []struct {

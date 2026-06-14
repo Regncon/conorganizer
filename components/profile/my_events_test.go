@@ -5,13 +5,16 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestMyEvents_WhenUserHasNoEvents_RendersCreateEventEntry(t *testing.T) {
-	// Gitt at brukeren ikke har egne arrangementer,
-	// når Mine arrangementer vises,
-	// så skal brukeren fortsatt se en tydelig inngang til å sende inn arrangement.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren ikke har egne arrangementer.",
+		When:  "Når Mine arrangementer vises.",
+		Then:  "Så skal brukeren fortsatt se en tydelig inngang til å sende inn arrangement.",
+	})
 
 	// Given
 	expectedFormAction := "/profile/api/create"
@@ -37,9 +40,11 @@ func TestMyEvents_WhenUserHasNoEvents_RendersCreateEventEntry(t *testing.T) {
 }
 
 func TestMyEvents_RendersStatusAwareEventLinks(t *testing.T) {
-	// Gitt at brukeren har arrangementer i ulike statuser,
-	// når Mine arrangementer vises,
-	// så skal kladder åpne redigering og innsendte/godkjente/annonserte arrangementer åpne arrangementsvisningen.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren har arrangementer i ulike statuser.",
+		When:  "Når Mine arrangementer vises.",
+		Then:  "Så skal kladder åpne redigering og innsendte/godkjente/annonserte arrangementer åpne arrangementsvisningen.",
+	})
 
 	// Given
 	expectedHrefs := []string{
@@ -64,9 +69,11 @@ func TestMyEvents_RendersStatusAwareEventLinks(t *testing.T) {
 }
 
 func TestMyEvents_WhenEventTitleIsMissing_RendersFallbackTitle(t *testing.T) {
-	// Gitt at et av brukerens arrangementer mangler tittel,
-	// når Mine arrangementer vises,
-	// så skal kortet vise en forståelig fallback uten å miste lenken til arrangementet.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at et av brukerens arrangementer mangler tittel.",
+		When:  "Når Mine arrangementer vises.",
+		Then:  "Så skal kortet vise en forståelig fallback uten å miste lenken til arrangementet.",
+	})
 
 	// Given
 	expectedTitle := []string{"Mangler navn"}

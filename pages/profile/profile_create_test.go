@@ -8,12 +8,15 @@ import (
 
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestCreateNewEventFormSubmission_WhenInsertFails_ReturnsFriendlyError(t *testing.T) {
-	// Gitt at brukeren sender inn nytt arrangement og databasen ikke kan opprette det,
-	// når opprettelsen feiler,
-	// så skal svaret være en tydelig feil og ikke en tom vellykket respons.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren sender inn nytt arrangement og databasen ikke kan opprette det.",
+		When:  "Når opprettelsen feiler.",
+		Then:  "Så skal svaret være en tydelig feil og ikke en tom vellykket respons.",
+	})
 
 	// Given
 	expectedStatusCode := http.StatusInternalServerError

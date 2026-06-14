@@ -3,12 +3,16 @@ package checkIn
 import (
 	"slices"
 	"testing"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestAssociateTicketsWithEmail_WhenEmailMatchesCaseInsensitively_ReturnsNonDinnerTickets(t *testing.T) {
-	// Given tickets with matching, differently-cased, dinner, and unrelated emails,
-	// when tickets are associated by email,
-	// then only non-dinner tickets matching the email are returned.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given tickets with matching, differently-cased, dinner, and unrelated emails.",
+		When:  "When tickets are associated by email.",
+		Then:  "Then only non-dinner tickets matching the email are returned.",
+	})
 
 	// Given
 	expectedTicketIDs := []int{101, 102}
@@ -33,9 +37,11 @@ func TestAssociateTicketsWithEmail_WhenEmailMatchesCaseInsensitively_ReturnsNonD
 }
 
 func TestAssociateTicketsWithEmail_WhenNoTicketMatches_ReturnsError(t *testing.T) {
-	// Given tickets registered to other emails,
-	// when tickets are associated by an unknown email,
-	// then the caller receives an error.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given tickets registered to other emails.",
+		When:  "When tickets are associated by an unknown email.",
+		Then:  "Then the caller receives an error.",
+	})
 
 	// Given
 	expectedError := true

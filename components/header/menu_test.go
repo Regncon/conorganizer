@@ -4,12 +4,12 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/service/requestctx"
-	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
-	testutil.Behavior(t, testutil.BDD{
+	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren ikke er innlogget.",
 		When:  "Når hovednavigasjonen vises.",
 		Then:  "Så skal brukeren bare få navigasjonslenker til forsiden og innlogging.",
@@ -28,7 +28,7 @@ func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
 }
 
 func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
-	testutil.Behavior(t, testutil.BDD{
+	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren er innlogget uten adminrettigheter.",
 		When:  "Når hovednavigasjonen vises.",
 		Then:  "Så skal brukeren bare få navigasjonslenker til forsiden, egen profil, utlogging og vanlege spørsmål.",
@@ -55,7 +55,7 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 }
 
 func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
-	testutil.Behavior(t, testutil.BDD{
+	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren er admin.",
 		When:  "Når hovednavigasjonen vises.",
 		Then:  "Så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.",

@@ -9,13 +9,16 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestEventPageContent_WhenProgramPublishingIsOff_RendersPreviousNextForMiddleAnnouncedEvent(t *testing.T) {
-	// Gitt en midtre annonsert arrangementsside før programmet er publisert,
-	// når siden rendres,
-	// så vises forrige/neste med eksisterende etiketter og lenker uten pulje.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en midtre annonsert arrangementsside før programmet er publisert.",
+		When:  "Når siden rendres.",
+		Then:  "Så vises forrige/neste med eksisterende etiketter og lenker uten pulje.",
+	})
 
 	// Given
 	expectedHrefs := []string{"/event/alpha-announced", "/event/delta-announced"}
@@ -47,9 +50,11 @@ func TestEventPageContent_WhenProgramPublishingIsOff_RendersPreviousNextForMiddl
 }
 
 func TestEventPageContent_WhenProgramPublishingIsOff_DoesNotRenderMissingEdgeButtons(t *testing.T) {
-	// Gitt første og siste annonserte arrangement før programmet er publisert,
-	// når sidene rendres,
-	// så rendres ikke manglende forrige/neste-side som deaktivert knapp.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt første og siste annonserte arrangement før programmet er publisert.",
+		When:  "Når sidene rendres.",
+		Then:  "Så rendres ikke manglende forrige/neste-side som deaktivert knapp.",
+	})
 
 	// Given
 	db := createEventVisibilityTestDB(t)
@@ -93,9 +98,11 @@ func TestEventPageContent_WhenProgramPublishingIsOff_DoesNotRenderMissingEdgeBut
 }
 
 func TestEventPageContent_WhenProgramPublishingIsOn_RendersPuljeSpecificPreviousNextLinks(t *testing.T) {
-	// Gitt samme arrangement publisert i to puljer,
-	// når arrangementssiden rendres med ulike puljeverdier,
-	// så følger forrige/neste-lenkene den konkrete forsidelisteforekomsten.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt samme arrangement publisert i to puljer.",
+		When:  "Når arrangementssiden rendres med ulike puljeverdier.",
+		Then:  "Så følger forrige/neste-lenkene den konkrete forsidelisteforekomsten.",
+	})
 
 	// Given
 	db := createEventVisibilityTestDB(t)
@@ -155,9 +162,11 @@ func TestEventPageContent_WhenProgramPublishingIsOn_RendersPuljeSpecificPrevious
 }
 
 func TestEventPageContent_WhenProgramPublishingIsOn_DoesNotRenderNavigationForMissingOrWrongPulje(t *testing.T) {
-	// Gitt et publisert arrangement i en pulje,
-	// når siden rendres uten eller med feil puljeverdi,
-	// så rendres ikke forrige/neste-komponentene.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et publisert arrangement i en pulje.",
+		When:  "Når siden rendres uten eller med feil puljeverdi.",
+		Then:  "Så rendres ikke forrige/neste-komponentene.",
+	})
 
 	// Given
 	db := createEventVisibilityTestDB(t)

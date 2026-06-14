@@ -9,13 +9,16 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	roomService "github.com/Regncon/conorganizer/service/rooms"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestGetRoomsByFloor_ReturnsFloorsInDescendingOrder(t *testing.T) {
-	// Gitt rom i flere etasjer,
-	// når romoversikten grupperer rom etter etasje,
-	// så skal etasjene vises ovenfra og ned.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt rom i flere etasjer.",
+		When:  "Når romoversikten grupperer rom etter etasje.",
+		Then:  "Så skal etasjene vises ovenfra og ned.",
+	})
 
 	// Given
 	expectedFloors := []int{3, 2, 1}
@@ -35,9 +38,11 @@ func TestGetRoomsByFloor_ReturnsFloorsInDescendingOrder(t *testing.T) {
 }
 
 func TestRoomsPageContent_RendersRoomDetailsAndCreateAction(t *testing.T) {
-	// Gitt at rom er registrert,
-	// når romoversikten rendres,
-	// så skal romdetaljer og handling for nytt rom være synlige.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at rom er registrert.",
+		When:  "Når romoversikten rendres.",
+		Then:  "Så skal romdetaljer og handling for nytt rom være synlige.",
+	})
 
 	// Given
 	expectedTextParts := []string{
@@ -64,9 +69,11 @@ func TestRoomsPageContent_RendersRoomDetailsAndCreateAction(t *testing.T) {
 }
 
 func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *testing.T) {
-	// Gitt en pulje med ett arrangement uten rom og ett arrangement med rom,
-	// når romfordelingen rendres,
-	// så skal manglende rom og tildelt rom vises hver for seg.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en pulje med ett arrangement uten rom og ett arrangement med rom.",
+		When:  "Når romfordelingen rendres.",
+		Then:  "Så skal manglende rom og tildelt rom vises hver for seg.",
+	})
 
 	// Given
 	expectedTextParts := []string{
@@ -98,9 +105,11 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 }
 
 func TestCalculatePopulation_CountsPlayersAndGMs(t *testing.T) {
-	// Gitt arrangementer med maks antall spillere,
-	// når romfordelingen beregner omtrentlig personbelastning,
-	// så skal den telle spillere pluss en GM per arrangement.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt arrangementer med maks antall spillere.",
+		When:  "Når romfordelingen beregner omtrentlig personbelastning.",
+		Then:  "Så skal den telle spillere pluss en GM per arrangement.",
+	})
 
 	// Given
 	expectedPopulation := 11

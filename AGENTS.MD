@@ -28,7 +28,7 @@ when adding names check domeneordbok.md instead of translating to english
 When writing or cleaning up Go tests, prefer behavior-focused tests that read from intent to verification.
 
 - Add short BDD metadata at the top of each test when it improves readability. Prefer
-  `testutil.Behavior(t, testutil.BDD{Given: "...", When: "...", Then: "..."})`
+  `bdd.Behavior(t, bdd.BDD{Given: "...", When: "...", Then: "..."})`
   for tests that should appear in the automated behavior report. Existing BDD-style
   comments are still supported while older tests are migrated:
   - Given some initial context,
@@ -46,7 +46,7 @@ Example shape:
 
 ```go
 func TestService_EventProducesExpectedResult(t *testing.T) {
-	testutil.Behavior(t, testutil.BDD{
+	bdd.Behavior(t, bdd.BDD{
 		Given: "Given an existing domain object.",
 		When:  "When the service reconciles related data.",
 		Then:  "Then the expected durable relation is stored.",

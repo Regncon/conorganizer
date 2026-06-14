@@ -8,12 +8,15 @@ import (
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestGetPreviousNextInnsendtGodkjent_ReturnsNeighborsAmongSubmittedAndApprovedEvents(t *testing.T) {
-	// Given submitted, approved, and draft events ordered by creation time,
-	// when previous/next navigation is requested for an event,
-	// then only submitted and approved events are used as navigation neighbors.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given submitted, approved, and draft events ordered by creation time.",
+		When:  "When previous/next navigation is requested for an event.",
+		Then:  "Then only submitted and approved events are used as navigation neighbors.",
+	})
 
 	// Given
 	expectedCases := []expectedPreviousNextCase{

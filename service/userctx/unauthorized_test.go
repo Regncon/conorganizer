@@ -4,13 +4,16 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestUnauthorized_RendersClearLoginAndHomeLinks(t *testing.T) {
-	// Gitt at en bruker ikke har tilgang,
-	// når tilgangsfeilsiden vises,
-	// så skal brukeren få tydelige veier til innlogging og forsiden.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en bruker ikke har tilgang.",
+		When:  "Når tilgangsfeilsiden vises.",
+		Then:  "Så skal brukeren få tydelige veier til innlogging og forsiden.",
+	})
 
 	// Given
 	expectedHrefs := []string{"/", "/auth"}

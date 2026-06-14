@@ -5,12 +5,15 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestGetAllRoomStatusesByPulje_ReturnsRoomsAndPuljeAssignments(t *testing.T) {
-	// Given rooms, puljer, and event assignments across puljer,
-	// when room statuses are listed,
-	// then every pulje has every room with only its assigned events.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given rooms, puljer, and event assignments across puljer.",
+		When:  "When room statuses are listed.",
+		Then:  "Then every pulje has every room with only its assigned events.",
+	})
 
 	// Given
 	db := createRoomsTestDB(t)
@@ -47,9 +50,11 @@ func TestGetAllRoomStatusesByPulje_ReturnsRoomsAndPuljeAssignments(t *testing.T)
 }
 
 func TestAssignRoomToRelationEventPuljer_AssignsRoomToEventPulje(t *testing.T) {
-	// Given an event pulje relation without a room,
-	// when a room is assigned to the event,
-	// then the relation stores that room.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an event pulje relation without a room.",
+		When:  "When a room is assigned to the event.",
+		Then:  "Then the relation stores that room.",
+	})
 
 	// Given
 	db := createRoomsTestDB(t)
@@ -79,9 +84,11 @@ func TestAssignRoomToRelationEventPuljer_AssignsRoomToEventPulje(t *testing.T) {
 }
 
 func TestAssignRoomToRelationEventPuljer_WhenRelationDoesNotExist_ReturnsError(t *testing.T) {
-	// Given no event pulje relation for an event,
-	// when a room is assigned to that event,
-	// then the caller receives an error.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given no event pulje relation for an event.",
+		When:  "When a room is assigned to that event.",
+		Then:  "Then the caller receives an error.",
+	})
 
 	// Given
 	expectedError := true
