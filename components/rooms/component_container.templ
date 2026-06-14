@@ -42,22 +42,22 @@ templ VenueContainer(isStatic bool, staticRoom string) {
         }
 
         /* Room poly styling */
+        .rooms {
+            stroke: rgb(34, 34, 34);
+            transition: all 200ms ease-in-out;
+            fill: rgb(240, 240, 240);
+        }
         .room {
             fill: rgb(255, 255, 255);
-            stroke: black;
-            transition: all 200ms ease-in-out;
-
-            --room-713: "713";
         }
         .room:hover {
-            fill: rgb(230, 230, 230);
-            stroke: gray;
-        }
-        .room[active] {
-            fill: rgb(255, 170, 170);
+            fill: rgb(255, 220, 220);
         }
         .room[active] {
             fill: rgb(255, 130, 130);
+        }
+        .room[active]:hover {
+            fill: rgb(255, 170, 170);
         }
     </style>
 	<div

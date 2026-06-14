@@ -26,7 +26,6 @@ type RoomSVG struct {
 	Origin      Coordinate
 	Coordinates []Coordinate
 	Center      Coordinate
-	IsStatic    bool
 }
 
 func coordinatePointsToString(points []Coordinate) string {
@@ -48,24 +47,22 @@ templ GenerateRoomPolygon(room RoomSVG, isStatic bool, staticRoom string) {
 		<polygon
 			id={ fmt.Sprintf("%s-%s", room.RoomType, room.ID) }
 			points={ coordinatePointsToString(room.Coordinates) }
-			class="room"
+			class={ fmt.Sprintf("rooms %s", room.RoomType) }
 			if isStatic {
 				if staticRoom == room.ID {
 					active
 				}
 			} else {
-				data-attr={ fmt.Sprintf("{active: $active-room == '%s-%s'}", room.RoomType, room.ID) }
+				data-attr={ fmt.Sprintf("{active: $active-room == 'room-%s'}", room.ID) }
 			}
 		></polygon>
 		/* Room centre, used for labels via css anchor */
 		<circle
-			class="room-anchor"
+			style={ fmt.Sprintf("anchor-name: --room-%s;", room.ID) }
 			cx={ room.Center.X }
 			cy={ room.Center.Y }
 			r="1"
-			opacity="1"
-			fill="red"
-			style={ fmt.Sprintf("anchor-name: --room-%s;", room.ID) }
+			opacity="0"
 		></circle>
 	</g>
 }
