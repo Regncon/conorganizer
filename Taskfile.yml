@@ -34,34 +34,41 @@ tasks:
         cmds:
             - |
               set -eu
-              mkdir -p tmp
-              stamp="tmp/templ-watch.stamp"
+              mkdir -p tmp/templ-watch
 
-              touch "$stamp"
+              hash_templates() {
+                find "$1" -type f -name '*.templ' -exec sha256sum {} + 2>/dev/null \
+                  | sort \
+                  | sha256sum \
+                  | cut -d ' ' -f 1
+              }
+
+              for dir in components pages layouts service; do
+                if [ -d "$dir" ]; then
+                  hash_templates "$dir" > "tmp/templ-watch/$dir.sha256"
+                fi
+              done
 
               while true; do
-                sleep 0.5
-                changed="$(
-                  find components pages layouts service \
-                    -type f \
-                    -name '*.templ' \
-                    -newer "$stamp" \
-                    2>/dev/null \
-                    | sort
-                )"
+                for dir in components pages layouts service; do
+                  if [ ! -d "$dir" ]; then
+                    continue
+                  fi
 
-                if [ -z "$changed" ]; then
-                  continue
-                fi
+                  state="tmp/templ-watch/$dir.sha256"
+                  current_hash="$(hash_templates "$dir")"
+                  previous_hash="$(cat "$state" 2>/dev/null || true)"
 
-                printf '%s\n' "$changed" | while IFS= read -r file; do
-                  if [ -n "$file" ]; then
-                    echo "templ: generating $file"
-                    go tool templ generate -f "$file" -log-level error
+                  if [ "$current_hash" != "$previous_hash" ]; then
+                    echo "templ: generating $dir"
+                    if ! go tool templ generate -path "$dir" -log-level error; then
+                      echo "templ: generation failed for $dir" >&2
+                    fi
+                    printf '%s\n' "$current_hash" > "$state"
                   fi
                 done
 
-                touch "$stamp"
+                sleep 0.5
               done
 
     start:server:
