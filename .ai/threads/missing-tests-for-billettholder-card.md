@@ -153,3 +153,198 @@ Note: `git status` also shows unrelated `.ai/threads` changes; I left those alon
 Time: 2026-06-15 18:46:47
 --- Next Prompt ---
 
+We have observed that some times the `<p>If you are seeing this message, please clear your cookies and refresh the page.</p>` message appears on the admin page for about 5 seconds before the page loads.
+
+Let's discuss what this means. Do not make any code changes yet, just share your thoughts.
+
+
+
+
+Time: 2026-06-15 19:11:03
+--- Codex Run ---
+
+Codex output:
+I’ll look up where that exact fallback message is rendered and how the admin page initializes before giving you a grounded read. No code changes.
+That message is a server-rendered placeholder, not the real admin page.
+
+On `/admin/`, the initial HTML renders this wrapper:
+
+[pages/admin/admin_index.templ](/home/cinmay/Documents/conorganizer/pages/admin/admin_index.templ:29)
+
+It contains `data-init={ live.DatastarInit("/admin/api/") }`, so Datastar opens `/admin/api/` after the page loads. The real admin content arrives as an SSE patch from that endpoint and replaces the placeholder.
+
+So if users see the cookie message for ~5 seconds, it probably means:
+
+- the initial HTML loaded quickly,
+- Datastar did start later,
+- `/admin/api/` eventually returned the first patch,
+- but that first patch was delayed enough that the placeholder became visible.
+
+That does **not** necessarily mean cookies are broken. If cookies were actually broken, JS failed, auth failed, or the live endpoint never patched, the message would likely stay visible indefinitely. A temporary 5-second flash points more toward delayed live initialization or delayed first SSE patch.
+
+A few likely causes:
+
+- `/admin/api/` is slow to render because `adminPage(db)` or its queries are slow.
+- Datastar JS is slow to load or execute.
+- The SSE connection is delayed by auth/session setup, NATS/live manager work, or browser connection scheduling.
+- The app is recovering from a restart and Datastar retry behavior eventually reconnects.
+- The placeholder text is misleading; it frames all delayed live loading as a cookie problem.
+
+Architecturally, this also conflicts with the live update lifecycle doc, which says live pages should render full content during the normal HTTP request, then use `data-init` for live updates. Right now this admin page renders only a placeholder initially, so any delay in the live endpoint becomes visible to the user.
+
+My read: this is a UX bug and possibly a page architecture bug, not primarily a cookie bug. The next investigation step would be to measure whether the delay is in `/admin/api/` response time, Datastar startup, or the server-side render inside the live stream.
+
+Time: 2026-06-15 19:11:03
+--- Next Prompt ---
+
+Is there anything in the logs that I could look for to help narrow down the cause of this delay?
+
+It's very unlikely that it's a database query delay since we are using sqlite. The entire datastar, nats, sqlite stack is incredibly preformant and has the capability to render faster then the frame rate of the client computer. 
+Unless we have done something wrong, it's not very likely that the delay is something to do with datastar, signals, nats or sqlite.
+
+Let's continue the discussion.
+
+Time: 2026-06-15 19:20:28
+--- Codex Run ---
+
+Codex output:
+I’ll check the current live/admin logging strings so I can point to concrete messages rather than guessing. No edits.
+The current live logs mostly tell us when the stream fails, not when a successful stream is merely slow. That distinction matters here: if the patch eventually arrives, normal logs may be quiet unless there are request/access logs around `/admin/api/`.
+There is request logging middleware, so the strongest signal should be whether `/admin/` and `/admin/api/` are separated by several seconds, or whether `/admin/api/` starts immediately but completes/streams late. I’m checking that middleware’s fields next.
+One thing that stands out as more plausible than SQLite/NATS: static assets are mounted on the authenticated router in full mode, so `/static/datastar.js` also passes through auth middleware. If auth validation or refresh is slow for that request, Datastar startup itself could be delayed before the live request is even made.
+I agree with your pushback. A 5 second flash is unlikely to be “SQLite/NATS/Datastar is slow” in the normal execution path. I’d read it more as “the real Datastar initialization did not start or did not successfully connect immediately.”
+
+The strongest thing to check in current logs is request timing, especially these paths:
+
+- `/admin/`
+- `/admin/api/`
+- `/static/datastar.js`
+- `/static/js/error_feedback.js`
+- other `/static/...` assets
+
+The app has request logging with `path`, `status_code`, `duration_ms`, and `request_id` in [http_logging_middleware.go](/home/cinmay/Documents/conorganizer/http_logging_middleware.go:11). If `/static/datastar.js` is taking ~5000ms, that would explain the placeholder: Datastar cannot process `data-init` until the module is loaded.
+
+A plausible cause from the code: static assets are mounted through `appRouter`, and in full mode `appRouter` is wrapped with `authctx.AuthMiddleware` in [main.go](/home/cinmay/Documents/conorganizer/main.go:103). That means `/static/datastar.js` also passes through auth middleware. The auth middleware creates a Descope client and validates/refreshes session tokens when auth cookies are present in [service/authctx/authctx.go](/home/cinmay/Documents/conorganizer/service/authctx/authctx.go:44). If that call stalls, static JS loading can stall.
+
+Specific log messages worth searching for around the timestamp:
+
+- `path=/static/datastar.js` with high `duration_ms`
+- `path=/admin/` with high `duration_ms`
+- repeated `path=/admin/api/` with `4xx`/`5xx`
+- `failed to validate and refresh session`
+- `User is not logged in`
+- `User is not an admin`
+- `failed to ensure live session`
+- `failed to send initial live patch`
+- `failed to touch live key before watching`
+- `failed to prepare live watcher`
+- `failed to start live watcher`
+
+One caveat: successful `/admin/api/` is an SSE stream, so the normal `http request completed` log only happens when the stream closes. Its `duration_ms` is stream lifetime, not “time to first patch.” So if `/admin/api/` succeeds, logs may not directly show the initial patch delay.
+
+My first bet would be auth/static asset timing, not database or NATS. Browser Network timing would confirm this fastest: check whether `/static/datastar.js` starts or completes late, and whether `/admin/api/` is requested immediately after the placeholder page loads.
+
+Time: 2026-06-15 19:20:28
+--- Next Prompt ---
+
+Show me the code for routing the static assets without auth middleware.
+
+I have downloaded a .har file from the browser. This is from a normal page load where the placeholder only appears for a brief moment.
+/tmp/main.lekeplassen.regncon.no.har
+
+Time: 2026-06-15 19:29:20
+--- Codex Run ---
+
+Codex output:
+I’ll read the HAR timing data and then show the minimal routing shape that keeps `/static/*` outside the auth-wrapped router. I won’t edit the repo.
+The code shape would be to mount `/static/*` on the base `router`, before creating/using the auth-wrapped `appRouter`.
+
+Current shape in [main.go](/home/cinmay/Documents/conorganizer/main.go:107):
+
+```go
+var appRouter chi.Router = router
+if fullMode {
+	appRouter = router.With(authctx.AuthMiddleware(baseLogger))
+}
+
+if eventImageDir != nil && *eventImageDir != "" {
+	appRouter.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
+}
+appRouter.Handle("/static/*", http.StripPrefix("/static/", static(baseLogger)))
+
+if fullMode {
+	cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir)
+	// ...
+}
+```
+
+Static-without-auth shape:
+
+```go
+router.Handle("/static/*", http.StripPrefix("/static/", static(baseLogger)))
+
+var appRouter chi.Router = router
+if fullMode {
+	appRouter = router.With(authctx.AuthMiddleware(baseLogger))
+}
+
+if eventImageDir != nil && *eventImageDir != "" {
+	appRouter.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
+}
+
+if fullMode {
+	cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir)
+	// ...
+}
+```
+
+That keeps global middleware like request ID, request logging, and recovery, but avoids `authctx.AuthMiddleware` for `/static/*`.
+
+The HAR strongly supports this direction. On the “normal” load:
+
+- `/admin` took ~2.27s, with ~2.03s waiting.
+- `/static/datastar.js` took ~4.50s, with ~2.25s waiting and ~2.25s receiving.
+- Most first-party static assets show ~2.0-2.3s wait time before first byte.
+
+That is not SQLite/NATS/Datastar rendering cost. It looks like every first-party request is paying some common server-side or proxy-side delay before bytes start flowing. Given the current routing, auth middleware on static assets is a very plausible source.
+
+Also notable: the HAR does not show `/admin/api/`. That is probably because the SSE request stayed open and was not exported as a completed HAR entry, or because Datastar did not start until after `datastar.js` finished. Either way, the slow static module load alone is enough to explain the placeholder flash.
+
+Time: 2026-06-15 19:29:20
+--- Next Prompt ---
+
+Ok. Go ahead and move the static assets outside of the auth middleware. Also, check if the images are also being routed through the auth middleware and move them out as well.
+
+Time: 2026-06-15 19:38:43
+--- Codex Run ---
+
+Codex output:
+I’ll move both `/static/*` and `/event-images/*` onto the base router, outside the auth-wrapped `appRouter`, then add/adjust tests to pin that routing behavior.
+I found both `/static/*` and `/event-images/*` are currently registered on `appRouter`, which is auth-wrapped in full mode. I’m going to introduce a small public-asset mount helper, call it before `appRouter` is wrapped/used, and test that public asset routes do not pass through an app-level middleware.
+I’m updating `main.go` so public asset routes are mounted on the base router first. The authenticated `appRouter` will then only receive application routes.
+I’m adding a small routing test that mounts public assets, then mounts a sentinel app middleware. Static files and event images should not see the sentinel middleware, while a protected app route should.
+The test is in place. I’m formatting and running the relevant package tests first.
+The main package test passes. I’ll run the full suite now to catch any route or build fallout.
+The full suite is green. I’m checking the final diff and status so I can call out only the files touched for this change.
+Done.
+
+I moved both public asset routes onto the base router before `appRouter` is wrapped with `authctx.AuthMiddleware`:
+
+- `/static/*`
+- `/event-images/*`
+
+Code is now centralized in [main.go](/home/cinmay/Documents/conorganizer/main.go:146), and `startServer` mounts it before creating the auth-wrapped app router at [main.go](/home/cinmay/Documents/conorganizer/main.go:107).
+
+I also added a routing test in [health_test.go](/home/cinmay/Documents/conorganizer/health_test.go:125) that verifies static assets and event images bypass app middleware, while normal app routes still go through it.
+
+Verification passed:
+
+```sh
+GOCACHE=/tmp/go-build-cache go test ./...
+```
+
+Note: `git status` still shows an unrelated `.ai/threads/missing-tests-for-billettholder-card.md` change; I left it untouched.
+
+Time: 2026-06-15 19:38:43
+--- Next Prompt ---
+

@@ -13,6 +13,7 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5/middleware"
+	nats "github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 
 	"github.com/Regncon/conorganizer/testutil/bdd"
@@ -242,10 +243,60 @@ func TestManager_Stream_WhenTouchConnectionFails_SendsInitialPatch(t *testing.T)
 		`"path":"/live"`,
 		`"request_id":"request-123"`,
 		`"buckets":["events"]`,
+		`"nats_touch_duration_ms":`,
 	} {
 		if !strings.Contains(logOutput, expectedPart) {
 			t.Fatalf("expected log output to contain %q, got %q", expectedPart, logOutput)
 		}
+	}
+}
+
+func TestManager_Stream_WhenWatcherAlreadyStopped_LogsAtInfo(t *testing.T) {
+	// Given a watcher that has already stopped by the time stream cleanup runs,
+	// when the live stream exits,
+	// then the expected cleanup failure is logged at info level, not warn level.
+
+	// Given
+	manager := newTestManager(t)
+	var logs bytes.Buffer
+	manager.logger = slog.New(slog.NewJSONHandler(&logs, nil)).With("component", "live")
+	kv := mustFakeKeyValue(t, manager, BucketEvents)
+	kv.watcherStopErr = nats.ErrBadSubscription
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/live", nil)
+	ctx, cancel := context.WithCancel(request.Context())
+	defer cancel()
+	kv.onWatch = cancel
+	request = request.WithContext(context.WithValue(ctx, middleware.RequestIDKey, "request-456"))
+
+	// When
+	manager.Stream(recorder, request, Page{
+		Buckets: []Bucket{BucketEvents},
+		Render: func(ctx context.Context, r *http.Request) templ.Component {
+			return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+				_, err := io.WriteString(w, `<div id="live-content">Ready</div>`)
+				return err
+			})
+		},
+	})
+
+	// Then
+	logOutput := logs.String()
+	for _, expectedPart := range []string{
+		`"level":"INFO"`,
+		`"msg":"live watcher already stopped: nats: invalid subscription"`,
+		`"method":"GET"`,
+		`"path":"/live"`,
+		`"request_id":"request-456"`,
+		`"buckets":["events"]`,
+	} {
+		if !strings.Contains(logOutput, expectedPart) {
+			t.Fatalf("expected log output to contain %q, got %q", expectedPart, logOutput)
+		}
+	}
+	if strings.Contains(logOutput, `"level":"WARN"`) {
+		t.Fatalf("expected watcher cleanup log not to be warning, got %q", logOutput)
 	}
 }
 

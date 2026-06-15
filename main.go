@@ -104,15 +104,12 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 			readiness.MarkDegraded(notReadyImageReason, degradedErr)
 		}
 
+		mountPublicAssetRoutes(router, eventImageDir, baseLogger)
+
 		var appRouter chi.Router = router
 		if fullMode {
 			appRouter = router.With(authctx.AuthMiddleware(baseLogger))
 		}
-
-		if eventImageDir != nil && *eventImageDir != "" {
-			appRouter.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
-		}
-		appRouter.Handle("/static/*", http.StripPrefix("/static/", static(baseLogger)))
 
 		if fullMode {
 			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir)
@@ -143,6 +140,14 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		}()
 
 		return srv.ListenAndServe()
+	}
+}
+
+func mountPublicAssetRoutes(router chi.Router, eventImageDir *string, logger *slog.Logger) {
+	router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
+
+	if eventImageDir != nil && *eventImageDir != "" {
+		router.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
 	}
 }
 

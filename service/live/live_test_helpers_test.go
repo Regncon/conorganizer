@@ -86,13 +86,15 @@ func assertTimestampValue(t *testing.T, value []byte) {
 }
 
 type fakeKeyValue struct {
-	mu       sync.Mutex
-	bucket   Bucket
-	ttl      time.Duration
-	values   map[string][]byte
-	watchers map[string][]*fakeWatcher
-	revision uint64
-	putErr   error
+	mu             sync.Mutex
+	bucket         Bucket
+	ttl            time.Duration
+	values         map[string][]byte
+	watchers       map[string][]*fakeWatcher
+	revision       uint64
+	putErr         error
+	watcherStopErr error
+	onWatch        func()
 }
 
 func newFakeKeyValue(bucket Bucket, ttl time.Duration) *fakeKeyValue {
@@ -169,15 +171,24 @@ func (kv *fakeKeyValue) Keys(_ context.Context, _ ...jetstream.WatchOpt) ([]stri
 
 func (kv *fakeKeyValue) Watch(_ context.Context, key string, _ ...jetstream.WatchOpt) (jetstream.KeyWatcher, error) {
 	kv.mu.Lock()
-	defer kv.mu.Unlock()
 
-	watcher := &fakeWatcher{updates: make(chan jetstream.KeyValueEntry, 16)}
+	watcher := &fakeWatcher{
+		updates: make(chan jetstream.KeyValueEntry, 16),
+		stopErr: kv.watcherStopErr,
+	}
 	kv.watchers[key] = append(kv.watchers[key], watcher)
+	onWatch := kv.onWatch
+	kv.mu.Unlock()
+
+	if onWatch != nil {
+		onWatch()
+	}
 	return watcher, nil
 }
 
 type fakeWatcher struct {
 	updates chan jetstream.KeyValueEntry
+	stopErr error
 }
 
 func (w *fakeWatcher) Updates() <-chan jetstream.KeyValueEntry {
@@ -185,6 +196,9 @@ func (w *fakeWatcher) Updates() <-chan jetstream.KeyValueEntry {
 }
 
 func (w *fakeWatcher) Stop() error {
+	if w.stopErr != nil {
+		return w.stopErr
+	}
 	close(w.updates)
 	return nil
 }
