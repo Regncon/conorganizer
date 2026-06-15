@@ -12,15 +12,9 @@ templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB
 		associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
 		currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
 		initials := ticketholder.GetInitials(currentBillettholder.Name)
-		associatedBillettholdereJSON, _ := templ.JSONString(associatedBillettholdere)
-		currentBillettholderJSON, _ := templ.JSONString(currentBillettholder)
 	}}
-	<span
-		class="clickable-billettholder-menu"
-		data-associated-billettholdere={ associatedBillettholdereJSON }
-		data-current-billettholder={ currentBillettholderJSON }
-	>
-		@ticketholder.NameInitials(currentBillettholder.Name, initials, false)
+	<span class="clickable-billettholder-menu">
+		@ticketholder.NameInitials(currentBillettholder.Name, initials, currentBillettholder.Name, false)
 	</span>
 	<script>
 		(() => {
@@ -30,16 +24,8 @@ templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB
 				return;
 			}
 
-			const parseJSONAttribute = (attributeName, fallback) => {
-				try {
-					return JSON.parse(container.getAttribute(attributeName) ?? "");
-				} catch {
-					return fallback;
-				}
-			};
-
-			const associatedBillettholdere = parseJSONAttribute("data-associated-billettholdere", []);
-			const fallbackBillettholder = parseJSONAttribute("data-current-billettholder", null);
+			const associatedBillettholdere = {{associatedBillettholdere}}
+			const fallbackBillettholder = {{currentBillettholder}}
 
 			/**
 			 * @param {unknown} billettholderId
