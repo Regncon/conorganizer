@@ -2,7 +2,7 @@ package ticketholder
 
 import "fmt"
 
-templ NameInitials(name string, initials string) {
+templ NameInitials(name string, initials string, hasName bool) {
 	<style>
 		.name-initials {
 			display: inline-flex;
@@ -36,6 +36,8 @@ templ NameInitials(name string, initials string) {
 		>
 			{ initials }
 		</span>
-		<p class="name">{ name }</p>
+		if hasName {
+            <p class="name">{ name }</p>
+        }
 	</div>
 }

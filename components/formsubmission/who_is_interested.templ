@@ -495,7 +495,7 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 						<span>{ interest.InterestLevel.Label() }</span>
 					}
 					{{ fullName := interest.FirstName + " " + interest.LastName }}
-					@ticketholder.NameInitials(fullName, ticketholder.GetInitials(fullName))
+					@ticketholder.NameInitials(fullName, ticketholder.GetInitials(fullName), true)
 					if interest.HasOtherEventInPulje {
 						<span
 							class="other-event-indicator"
