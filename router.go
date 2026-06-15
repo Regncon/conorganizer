@@ -57,7 +57,9 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	}
 
 	isLoggedInRouter := router.With(userctx.UserMiddleware(logger))
-	routerAdmin := isLoggedInRouter.With(authctx.RequireAdmin(logger))
+	routerAdmin := isLoggedInRouter.With(
+		authctx.RequireAdmin(logger, authctx.WithForbiddenHandler(userctx.AdminForbiddenHandler(logger))),
+	)
 
 	if err := errors.Join(
 		root.SetupRootRoute(router, logger, liveManager, db, eventImageDir),

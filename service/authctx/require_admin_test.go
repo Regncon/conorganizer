@@ -22,7 +22,7 @@ func TestRequireAdmin_WhenUserIsNotAdmin_ReturnsForbidden(t *testing.T) {
 
 	// Given
 	expectedStatusCode := http.StatusForbidden
-	expectedBody := "You are not an admin\n"
+	expectedBody := "Du har ikke administratortilgang\n"
 	expectedHandlerCalled := false
 
 	handlerCalled := false
@@ -43,6 +43,52 @@ func TestRequireAdmin_WhenUserIsNotAdmin_ReturnsForbidden(t *testing.T) {
 	}
 	if recorder.Body.String() != expectedBody {
 		t.Fatalf("HTTP body mismatch\nexpected: %q\nactual:   %q", expectedBody, recorder.Body.String())
+	}
+	if handlerCalled != expectedHandlerCalled {
+		t.Fatalf("handler call mismatch\nexpected: %v\nactual:   %v", expectedHandlerCalled, handlerCalled)
+	}
+}
+
+func TestRequireAdmin_WhenUserIsNotAdmin_UsesForbiddenHandler(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en innlogget bruker mangler adminrolle og en egen avvisningshandler er satt.",
+		When:  "Når brukeren åpner en adminbeskyttet rute.",
+		Then:  "Så skal den egne avvisningshandleren behandle svaret.",
+	})
+
+	// Given
+	expectedStatusCode := http.StatusForbidden
+	expectedBody := "custom forbidden"
+	expectedForbiddenHandlerCalled := true
+	expectedHandlerCalled := false
+
+	forbiddenHandlerCalled := false
+	handlerCalled := false
+	forbiddenHandler := func(w http.ResponseWriter, r *http.Request) {
+		forbiddenHandlerCalled = true
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(expectedBody))
+	}
+	handler := RequireAdmin(discardLogger(), WithForbiddenHandler(forbiddenHandler))(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		handlerCalled = true
+		w.WriteHeader(http.StatusOK)
+	}))
+	request := httptest.NewRequest(http.MethodGet, "/admin", nil)
+	request = request.WithContext(context.WithValue(request.Context(), ctxUserToken, userTokenWithRoles("User")))
+	recorder := httptest.NewRecorder()
+
+	// When
+	handler.ServeHTTP(recorder, request)
+
+	// Then
+	if recorder.Code != expectedStatusCode {
+		t.Fatalf("HTTP status mismatch\nexpected: %d\nactual:   %d", expectedStatusCode, recorder.Code)
+	}
+	if recorder.Body.String() != expectedBody {
+		t.Fatalf("HTTP body mismatch\nexpected: %q\nactual:   %q", expectedBody, recorder.Body.String())
+	}
+	if forbiddenHandlerCalled != expectedForbiddenHandlerCalled {
+		t.Fatalf("forbidden handler call mismatch\nexpected: %v\nactual:   %v", expectedForbiddenHandlerCalled, forbiddenHandlerCalled)
 	}
 	if handlerCalled != expectedHandlerCalled {
 		t.Fatalf("handler call mismatch\nexpected: %v\nactual:   %v", expectedHandlerCalled, handlerCalled)
