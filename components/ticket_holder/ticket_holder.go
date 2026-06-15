@@ -211,7 +211,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
 			Email: email,
 			Name:  fmt.Sprintf("%s %s", firstName, lastName),
 			Id:    billettHolderId,
-			Color: ColorForName(fmt.Sprintf("%s %s", firstName, lastName)),
+			Color: ColorFromName(fmt.Sprintf("%s %s", firstName, lastName)),
 		})
 
 	}
@@ -241,7 +241,7 @@ func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders
 		return BillettHolder{
 			Email: "unknown@example.com",
 			Name:  "Unknown Ticket Holder",
-			Color: ColorForName("Unknown Ticket Holder"),
+			Color: ColorFromName("Unknown Ticket Holder"),
 		}
 	}
 

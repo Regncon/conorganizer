@@ -51,7 +51,7 @@ templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB
 				}
 
 				const name = currentBillettholder.Name ?? "";
-				const color = currentBillettholder.Color || selection.colorForName(name);
+				const color = currentBillettholder.Color || selection.colorFromName(name);
 				initialsElement.textContent = selection.getInitials(name);
 				initialsElement.style.backgroundColor = `hsl(from ${color} h s l / 0.5)`;
 				initialsElement.style.border = `1px solid ${color}`;

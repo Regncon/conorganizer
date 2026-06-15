@@ -17,7 +17,7 @@
     /**
      * @typedef {Object} BillettholderSelection
      * @property {() => void} clear
-     * @property {(name: string) => string} colorForName
+     * @property {(name: string) => string} colorFromName
      * @property {() => StoredBillettholder | null} get
      * @property {(name: string) => string} getInitials
      * @property {(associatedBillettholdere: unknown[], yourBillettholder: unknown) => StoredBillettholder | null} initialize
@@ -182,7 +182,7 @@
             }
 
             if (selectedBillettholder.Name.length > 0) {
-                return { ...selectedBillettholder, Color: colorForName(selectedBillettholder.Name) }
+                return { ...selectedBillettholder, Color: colorFromName(selectedBillettholder.Name) }
             }
 
             return selectedBillettholder
@@ -316,7 +316,7 @@
          * @param {string} name
          * @returns {string}
          */
-        function colorForName(name) {
+        function colorFromName(name) {
             let hash = 2166136261
             for (let index = 0; index < name.length; index += 1) {
                 hash ^= name.charCodeAt(index)
@@ -328,7 +328,7 @@
 
         return Object.freeze({
             clear,
-            colorForName,
+            colorFromName,
             get,
             getInitials,
             initialize,

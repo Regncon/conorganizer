@@ -17,7 +17,7 @@ var accentColors = []BillettholderColor{
 	"var(--color-accent-cyan)",
 }
 
-func ColorForName(name string) BillettholderColor {
+func ColorFromName(name string) BillettholderColor {
 	h := fnv.New32a()
 	h.Write([]byte(name))
 	idx := int(h.Sum32()) % len(accentColors)
