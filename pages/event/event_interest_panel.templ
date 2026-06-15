@@ -29,13 +29,14 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, inte
         }
 
         .inline-link {
-            display: block;
+            display: inline-flex;
+            align-items: center;
+            gap: var(--spacing-1x);
             margin-top: var(--spacing-3x);
             text-decoration: none;
             width: fit-content;
             .link-text {
                 text-decoration: underline;
-                width: max(fit-content, 100%);
             }
         }
 
@@ -112,9 +113,10 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, inte
 							class="inline-link"
 							href="https://www.regncon.no/vanlege-sporsmal/"
 							target="_blank"
+							rel="noopener noreferrer"
 						>
 							<span class="link-text">Hvordan fungerer interessevalget?</span>
-							<span class="link-icon">&#9432;</span>
+							@icons.Icon(icons.ExternalLink, icons.Size16)
 						</a>
 					</div>
 					if hasHelperState {

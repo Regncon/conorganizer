@@ -49,9 +49,13 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	// When
 	doc := templtest.Render(t, Menu(userInfo))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
+	actualExternalLinkIconVisible := doc.Find(`a[href="https://www.regncon.no/vanlege-sporsmal/"] .inline-icon`).Length() > 0
 
 	// Then
 	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+	if !actualExternalLinkIconVisible {
+		t.Fatalf("expected external FAQ link to include external link icon")
+	}
 }
 
 func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
@@ -79,7 +83,11 @@ func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	// When
 	doc := templtest.Render(t, Menu(userInfo))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
+	actualExternalLinkIconVisible := doc.Find(`a[href="https://www.regncon.no/vanlege-sporsmal/"] .inline-icon`).Length() > 0
 
 	// Then
 	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+	if !actualExternalLinkIconVisible {
+		t.Fatalf("expected external FAQ link to include external link icon")
+	}
 }
