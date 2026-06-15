@@ -93,4 +93,45 @@ One unrelated untracked file is still present and untouched: `.ai/threads/emptys
 
 Time: 2026-06-15 10:36:28
 --- Next Prompt ---
+Let's add the icon for external links to any links in the app that point to external sites. 
+There is one in components/header/menu.templ
+								<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
+
+See if you can find any others and add the icon there as well.
+
+Time: 2026-06-15 10:48:25
+--- Codex Run ---
+
+Codex output:
+I’ll scan the templates for absolute `http(s)` links and `target="_blank"` links, then add `icons.ExternalLink` consistently where those links render in the UI. After that I’ll regenerate templ output and run focused compile/tests.
+The template scan found two remaining user-facing external links: the FAQ link in the header menu and the FAQ link in the event interest panel. Asset/script/font URLs are not rendered anchors, so I’m leaving those alone.
+`components/header/menu.templ` already imports the icon package, so the header change is direct. The event panel also imports icons; I’ll replace the existing info glyph next to the external FAQ link with the external-link icon and add the same treatment to the header menu link.
+I’m keeping the scope to rendered anchors in app templates. The ticket purchase link already has the external icon from the prior change, so the two remaining additions are the header FAQ link and the event-interest FAQ link.
+The markup changes are done. I’m adding small assertions where tests already cover these components so we verify the icon wrapper is present, not just the unchanged href.
+The test assertions are in place. I’m regenerating templ output, formatting the touched tests, and then I’ll run the relevant package tests.
+Templ generation completed. I’m running the packages that cover the touched components plus the icon package.
+The header test failed because the new icon assertion landed in the anonymous-user case, where the FAQ link should not exist. I’m moving that assertion to only the logged-in/admin cases and rerunning.
+The test assertion is now only in the cases where the external FAQ link is rendered. I’m rerunning formatting, the external-link scan, and the focused tests.
+The scan now shows three rendered external anchors: tickets buy link, event FAQ link, and header FAQ link. All three have the external-link icon in their markup. I’m doing a final diff/status pass.
+The app changes are clean, but `.ai/threads/emptystaet-billettholder.md` is now showing as a modified unrelated file. I didn’t touch it for this request, so I’m checking its status only to distinguish it from the UI changes.
+I verified the unrelated `.ai` diff is just the latest prompt being appended by the local thread log. I’m doing one broader source search for rendered external anchors outside `.templ` before wrapping up.
+Done.
+
+I added the external-link icon to the remaining rendered external anchors:
+
+- Header FAQ link in [components/header/menu.templ](/home/cinmay/Documents/conorganizer/components/header/menu.templ:271)
+- Event interest FAQ link in [pages/event/event_interest_panel.templ](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ:113)
+
+The ticket purchase link already had the icon from the previous change. I also added `rel="noopener noreferrer"` to the FAQ external links and updated tests to assert the icon is present.
+
+Verified with:
+
+```sh
+GOCACHE=/tmp/conorganizer-go-cache go test ./components/icons ./components/header ./pages/event ./pages/profile/tickets
+```
+
+I also ran a broader source scan; the only rendered `target="_blank"` anchors now are those three external links. The `.ai/threads/emptystaet-billettholder.md` file still has an unrelated local thread-log diff from the prompt being appended.
+
+Time: 2026-06-15 10:48:25
+--- Next Prompt ---
 

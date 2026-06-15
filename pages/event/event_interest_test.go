@@ -22,6 +22,7 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
 	expectedHelperVisible := true
 	expectedHelperClass := "pulje-interest-state--warning"
 	expectedMessagePart := "låses snart"
+	expectedExternalLinkIconVisible := true
 
 	now := time.Now()
 	puljer := []models.PuljeRow{
@@ -39,6 +40,7 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
 	actualHelperVisible := helper.Length() > 0
 	actualMessage := strings.Join(strings.Fields(helper.Text()), " ")
 	actualHasExpectedClass := helper.HasClass(expectedHelperClass)
+	actualExternalLinkIconVisible := doc.Find(`a[href="https://www.regncon.no/vanlege-sporsmal/"] .inline-icon`).Length() > 0
 
 	// Then
 	if actualHelperVisible != expectedHelperVisible {
@@ -49,6 +51,9 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
 	}
 	if !strings.Contains(actualMessage, expectedMessagePart) {
 		t.Fatalf("helper message mismatch\nexpected to contain: %q\nactual:              %q", expectedMessagePart, actualMessage)
+	}
+	if actualExternalLinkIconVisible != expectedExternalLinkIconVisible {
+		t.Fatalf("external link icon visibility mismatch\nexpected: %v\nactual:   %v", expectedExternalLinkIconVisible, actualExternalLinkIconVisible)
 	}
 }
 
