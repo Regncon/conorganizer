@@ -29,13 +29,26 @@ func UserMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if !userInfo.IsLoggedIn {
 				logger.Warn("User is not logged in", "request_id", requestID, "path", r.URL.Path)
 				w.WriteHeader(http.StatusUnauthorized)
-				if err := layouts.Base("Unauthorized", requestctx.UserRequestInfo{}, Unauthorized()).Render(r.Context(), w); err != nil {
-					logger.Error(fmt.Errorf("failed to render unauthorized page: %w", err).Error(), "request_id", requestID)
+				if err := layouts.Base("Logg inn", requestctx.UserRequestInfo{}, Unauthenticated()).Render(r.Context(), w); err != nil {
+					logger.Error(fmt.Errorf("failed to render unauthenticated page: %w", err).Error(), "request_id", requestID)
 				}
 				return
 			}
 
 		})
+	}
+}
+
+func AdminForbiddenHandler(logger *slog.Logger) http.HandlerFunc {
+	logger = logger.With("component", "user")
+	return func(w http.ResponseWriter, r *http.Request) {
+		requestID := middleware.GetReqID(r.Context())
+		userInfo := GetUserRequestInfo(r.Context())
+
+		w.WriteHeader(http.StatusForbidden)
+		if err := layouts.Base("Ingen tilgang", userInfo, authctx.Forbidden()).Render(r.Context(), w); err != nil {
+			logger.Error(fmt.Errorf("failed to render forbidden page: %w", err).Error(), "request_id", requestID)
+		}
 	}
 }
 
