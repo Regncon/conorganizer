@@ -43,13 +43,6 @@ Denne sjekklisten dekker `/event/{id}`, altså den publiserte detaljvisningen fo
   **Når** siden vises.<br>
   **Så** skal brukeren møte en forståelig feiltilstand og ikke en halvferdig arrangementsvisning.
 
-### Navigasjon
-
-- [ ] **Tilbakeknapp bevarer forrige side**<br>
-  **Gitt** at brukeren bruker tilbakeknappen etter å ha åpnet et arrangement.<br>
-  **Når** brukeren går tilbake.<br>
-  **Så** skal forrige side fortsatt være brukbar og ikke miste tydelig kontekst.
-
 ### Interesseflyt
 
 - [ ] **Interessepanelet forklarer handlingen**<br>
