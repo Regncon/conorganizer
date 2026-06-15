@@ -32,42 +32,12 @@ Denne sjekklisten dekker `/profile/tickets`, der innlogget bruker kan hente bill
 
 ### E-postadresser
 
-- [ ] **Ny e-postadresse legges til riktig billettholder**<br>
-  **Gitt** at brukeren legger til en ny manuell e-postadresse på en billettholder.<br>
-  **Når** handlingen lykkes.<br>
-  **Så** skal brukeren få en tydelig bekreftelse og se at e-postadressen faktisk er lagt til riktig billettholder.
-
-- [ ] **Tom e-postadresse avvises**<br>
-  **Gitt** at brukeren forsøker å legge til en tom e-postadresse.<br>
-  **Når** handlingen sendes inn.<br>
-  **Så** skal brukeren få en tydelig feilmelding og ingen ny e-postadresse skal legges til.
-
-- [ ] **Duplikatadresse avvises**<br>
-  **Gitt** at brukeren forsøker å legge til en e-postadresse som allerede finnes på samme billettholder.<br>
-  **Når** handlingen sendes inn.<br>
-  **Så** skal brukeren få en forståelig feilmelding og ingen duplikatadresse skal opprettes.
-
-- [ ] **Oppdatering bevarer eksisterende kortdata**<br>
-  **Gitt** at brukeren legger til en ny e-postadresse.<br>
-  **Når** siden oppdateres.<br>
-  **Så** skal tidligere data på siden fortsatt være intakte og ikke forsvinne eller byttes om mellom kortene.
-
-- [ ] **Sletting fjerner riktig e-postadresse**<br>
-  **Gitt** at en manuell e-postadresse finnes på en billettholder.<br>
-  **Når** brukeren velger å slette den.<br>
-  **Så** skal den slettes fra riktig billettholder og brukeren skal få en tydelig bekreftelse.
-
-- [ ] **Slettefeil viser ufullført endring**<br>
-  **Gitt** at sletting av e-postadresse feiler.<br>
-  **Når** brukeren forsøker å slette.<br>
-  **Så** skal brukeren få en feilmelding som gjør det tydelig at endringen ikke ble fullført.
+- [ ] **Add- og delete-feil er tydelige**<br>
+  **Gitt** at en add- eller delete-handling feiler.<br>
+  **Når** admin utfører endringen.<br>
+  **Så** skal feilmeldingen være tydelig og ikke etterlate inntrykk av at endringen likevel ble lagret.
 
 ### Meldinger og responsivitet
-
-- [ ] **Meldinger hører til riktig billettholder**<br>
-  **Gitt** at siden viser meldinger om vellykket eller mislykket endring.<br>
-  **Når** flere handlinger utføres etter hverandre.<br>
-  **Så** skal meldingene høre til riktig billettholder og ikke lekke over til andre kort.
 
 - [ ] **Billettsiden fungerer på mobil**<br>
   **Gitt** at brukeren bruker billettsiden på mobil.<br>

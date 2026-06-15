@@ -8,18 +8,6 @@ Denne sjekklisten dekker `/admin/rooms` og `/admin/rooms/assignment/{pulje}`, de
 
 ## Sjekkliste
 
-### Romoversikt
-
-- [ ] **Romoversikten grupperer rom forståelig**<br>
-  **Gitt** at en admin åpner romoversikten.<br>
-  **Når** siden lastes.<br>
-  **Så** skal rom vises gruppert på en forståelig måte uten brutte paneler eller tomme kort.
-
-- [ ] **Tom romoversikt forklarer neste steg**<br>
-  **Gitt** at det ikke finnes rom ennå.<br>
-  **Når** romoversikten vises.<br>
-  **Så** skal tomtilstanden forklare hva admin kan gjøre videre.
-
 ### Romendringer
 
 - [ ] **Nytt rom vises i riktig etasje**<br>

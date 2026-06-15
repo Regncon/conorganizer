@@ -22,20 +22,10 @@ Denne sjekklisten dekker opprettelse og redigering av arrangementer under `/prof
   **Når** brukeren ser overskrifter og seksjoner.<br>
   **Så** skal status, arrangørinformasjon, arrangementsinformasjon og øvrige detaljer fremstå tydelig adskilt og forståelige.
 
-- [ ] **Arrangørdata lagres og beholdes**<br>
-  **Gitt** at brukeren endrer navn, e-post eller telefon i arrangørseksjonen.<br>
+- [ ] **Data relatert til arrangement og arrangør lagres og beholdes**<br>
+  **Gitt** at brukeren endrer data.<br>
   **Når** feltet lagres.<br>
   **Så** skal endringen bli værende og ikke forsvinne ved oppdatering av siden.
-
-- [ ] **Arrangementstekst og metadata persisterer**<br>
-  **Gitt** at brukeren endrer tittel, intro, type, system eller beskrivelse.<br>
-  **Når** feltene lagres.<br>
-  **Så** skal innholdet persistere og vises konsistent ved refresh og ved senere åpning av skjemaet.
-
-- [ ] **Detaljfelt vises korrekt etter lagring**<br>
-  **Gitt** at brukeren endrer alder, varighet, nybegynnervennlighet, engelskstøtte, maks antall spillere eller merknader.<br>
-  **Når** feltene lagres.<br>
-  **Så** skal endringene være synlige og korrekte ved senere visning.
 
 ### Validering og innsending
 
