@@ -3,9 +3,10 @@ package header
 import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/components/ticket_holder"
 )
 
-templ Menu(UserInfo requestctx.UserRequestInfo) {
+templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB) {
 	<style>
 		.beta-toggle {
 			display: flex;
@@ -156,6 +157,15 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			display: contents;
 		}
 
+		#main-menu-usermenu {
+			.hamburger-other {
+				display: none;
+			}
+			.hamburger-phone {
+				display: flex;
+			}
+		}
+
 		@container main (width > 600px) {
 			#main-menu-logo {
 				grid-area: logo;
@@ -175,6 +185,13 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				display: flex;
 				justify-content: flex-end;
 				width: 100%;
+
+				.hamburger-other {
+					display: flex;
+				}
+				.hamburger-phone {
+					display: none;
+				}
 			}
 
 			.main-menu-header {
@@ -238,8 +255,11 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			.main-menu {
 				grid-template-columns: 120px 1fr 120px;
 			}
+
 		}
 	</style>
+
+
 	<header class="main-menu-header no-print">
 		<nav class="main-menu page-content-container wide-content">
 			<section id="main-menu-logo">
@@ -258,9 +278,16 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 							class="menu-btn-container"
 							data-on:click__outside="document.getElementById('main-menu-user-details')?.removeAttribute('open')"
 						>
-							<summary class="btn btn--ghost menu-btn">
+							<summary>
+							<div class="btn--ghost menu-btn btn hamburger-phone">
 								@icons.Icon(icons.Menu, icons.Size20)
 								<span class="menu-btn-text">Meny</span>
+							</div>
+							<div class="btn--ghost menu-btn btn hamburger-other">
+
+								@clickableBillettholderMenu(UserInfo, db)
+								<span class="menu-btn-text">Desktop</span>
+							</div>
 							</summary>
 							<div class="dropdown-panel">
 								<a href="/auth/logout">Logg ut</a>

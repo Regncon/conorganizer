@@ -1,0 +1,79 @@
+package header
+
+import "github.com/Regncon/conorganizer/components/ticket_holder"
+import "database/sql"
+import "github.com/Regncon/conorganizer/service/requestctx"
+
+
+templ clickableBillettholderMenu(UserInfo requestctx.UserRequestInfo, db *sql.DB) {
+
+    {{ billettholdere := ticketholder.GetTicketHolders(userInfo, db) }}
+    {{ initials := ticketholder.GetInitials(currentBillettHolder.Name) }}
+	{{ shortName := ticketholder.GetFirstNameAndLastInitial(currentBillettHolder.Name) }}
+    @ticketholder.NameInitials(shortName, initials);
+
+    <script>
+        window.LSKey = {
+			SelectedBilletHolder: "selectedBillettHolder",
+		};
+        window.getSelectedBillettholderFromLocalStorage = function getSelectedBillettholderFromLocalStorage() {
+            const selectedBillettholderString = localStorage.getItem(window.LSKey.SelectedBilletHolder)
+            if (!selectedBillettholderString) {
+                return null
+            }
+
+            try {
+                const selectedBillettholder = JSON.parse(selectedBillettholderString)
+                if (!selectedBillettholder?.Id) {
+                    return null
+                }
+                return {
+                    Id: selectedBillettholder.Id,
+                    Name: selectedBillettholder.Name ?? "",
+                    Email: selectedBillettholder.Email ?? "",
+                }
+            } catch {
+                return null
+            }
+        }
+
+        window.setSelectedBillettholderInLocalStorage = function setSelectedBillettholderInLocalStorage(billettholder) {
+            if (!billettholder?.Id) {
+                return null
+            }
+
+            const selectedBillettholder = {
+                Id: billettholder.Id,
+                Name: billettholder.Name ?? "",
+                Email: billettholder.Email ?? "",
+            }
+            localStorage.setItem(window.LSKey.SelectedBilletHolder, JSON.stringify(selectedBillettholder))
+            return selectedBillettholder
+        }
+
+        window.initializeSelectedBillettholder = function initializeSelectedBillettholder(associatedBillettholdere, yourBillettholder) {
+            const findAssociatedBillettholder = (billettholderId) => associatedBillettholdere.find((billettholder) => Number(billettholder.Id) === Number(billettholderId))
+
+            const storedBillettholder = window.getSelectedBillettholderFromLocalStorage()
+            if (storedBillettholder) {
+                const selectedBillettholder = findAssociatedBillettholder(storedBillettholder.Id)
+                if (selectedBillettholder) {
+                    return window.setSelectedBillettholderInLocalStorage(selectedBillettholder)
+                }
+
+                localStorage.removeItem(window.LSKey.SelectedBilletHolder)
+            }
+
+            if (!yourBillettholder?.Id) {
+                return null
+            }
+
+            const selectedBillettholder = findAssociatedBillettholder(yourBillettholder.Id)
+            if (!selectedBillettholder) {
+                return null
+            }
+
+            return window.setSelectedBillettholderInLocalStorage(selectedBillettholder)
+        }
+	</script>
+}

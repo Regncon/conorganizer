@@ -115,7 +115,6 @@
         --responsive-h2-margin: var(--spacing-5x);
     }
 }
-
 @media screen and (width > 1200px) {
     :root {
         --responsive-top-of-page-spacing: var(--spacing-10x);
