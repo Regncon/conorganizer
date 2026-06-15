@@ -1,11 +1,23 @@
 if (!customElements.get("admin-billettholder-search")) {
+    /** @typedef {Window & typeof globalThis & {
+     *   conorganizer: {
+     *     sharedStyles: {
+     *       getStyleUrls: (names?: string[]) => string[],
+     *       applyStyleUrlsToShadowRoot: (shadowRoot: ShadowRoot, styleUrls: string[]) => void,
+     *     },
+     *   },
+     * }} AdminBillettholderSearchWindow
+     */
+
+    /** @type {AdminBillettholderSearchWindow} */
+    const typedWindow = window
     const HIGHLIGHT_ESCAPE_PATTERN = /[.*+?^${}()|[\]\\]/g
     const COMPONENT_ATTRIBUTES = Object.freeze({
         billettholdereJson: "data-billettholdere",
         clearInputVersion: "data-clear-input",
     })
     const ADMIN_BILLETTHOLDER_SEARCH_TAG = "admin-billettholder-search"
-    const STYLE_URLS = window.conorganizerSharedStyles.getStyleUrls()
+    const STYLE_URLS = typedWindow.conorganizer.sharedStyles.getStyleUrls()
     const EMPTY_SEARCH_RESULTS_TEXT = "Ingen billettholdere funnet"
 
     const ADMIN_BILLETTHOLDER_SEARCH_SHADOW_STYLES = `
@@ -272,7 +284,7 @@ if (!customElements.get("admin-billettholder-search")) {
 
             if (!this.shadowRoot) {
                 const shadowRoot = this.attachShadow({ mode: "open" })
-                window.conorganizerSharedStyles.applyStyleUrlsToShadowRoot(shadowRoot, STYLE_URLS)
+                typedWindow.conorganizer.sharedStyles.applyStyleUrlsToShadowRoot(shadowRoot, STYLE_URLS)
                 shadowRoot.append(this.#createShadowStyleElement(), this.#shadowContentRoot)
             }
 

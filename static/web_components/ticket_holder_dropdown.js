@@ -5,21 +5,25 @@ if (!customElements.get("billettholder-dropdown")) {
 
     /**
      * @typedef {Window & typeof globalThis & {
-     *   conorganizerSharedStyles?: {
-     *     getStyleUrls: (names: string[]) => string[],
-     *     applyStyleUrlsToShadowRoot: (shadowRoot: ShadowRoot, styleUrls: string[]) => void,
+     *   conorganizer: {
+     *     sharedStyles: {
+     *       getStyleUrls: (names: string[]) => string[],
+     *       applyStyleUrlsToShadowRoot: (shadowRoot: ShadowRoot, styleUrls: string[]) => void,
+     *     },
+     *     billettholderSelection: {
+     *       get: () => {Id:number, Name:string, Email:string, Color?:string} | null,
+     *       set: (billettholder: {Id:number, Name:string, Email:string, Color?:string}) => unknown,
+     *     },
      *   },
-     *   getSelectedBillettholderFromLocalStorage?: () => {Id:number, Name:string, Email:string} | null,
-     *   setSelectedBillettholderInLocalStorage?: (billettholder: {Id:number, Name:string, Email:string}) => unknown,
      * }} TicketHolderWindow
      */
 
     /** @type {TicketHolderWindow} */
     const typedWindow = window
 
-    const STYLE_URLS = typedWindow.conorganizerSharedStyles?.getStyleUrls(
+    const STYLE_URLS = typedWindow.conorganizer.sharedStyles.getStyleUrls(
         ["/static/web_components/ticket_holder_dropdown.css"]
-    ) ?? []
+    )
 
     /**
      * Type for billettholder objects expected in the input JSON array.
@@ -66,7 +70,7 @@ if (!customElements.get("billettholder-dropdown")) {
             if (!this.shadowRoot) {
                 this.attachShadow({ mode: "open" })
                 if (this.shadowRoot) {
-                    typedWindow.conorganizerSharedStyles?.applyStyleUrlsToShadowRoot(this.shadowRoot, STYLE_URLS)
+                    typedWindow.conorganizer.sharedStyles.applyStyleUrlsToShadowRoot(this.shadowRoot, STYLE_URLS)
                 }
             }
 
@@ -338,13 +342,14 @@ if (!customElements.get("billettholder-dropdown")) {
         /**
          * Builds the canonical localStorage payload from an option element.
          * @param {HTMLLIElement} optionEle
-         * @returns {{Id:number, Name:string, Email:string}}
+         * @returns {{Id:number, Name:string, Email:string, Color:string}}
          */
         toStoredBillettholder(optionEle) {
             return {
                 Id: Number(optionEle.dataset.Id ?? "0"),
                 Name: optionEle.dataset.Name ?? "",
                 Email: optionEle.dataset.Email ?? "",
+                Color: optionEle.dataset.Color ?? "",
             }
         }
 
@@ -423,7 +428,7 @@ if (!customElements.get("billettholder-dropdown")) {
                 return
             }
 
-            const selectedBillettholder = typedWindow.getSelectedBillettholderFromLocalStorage?.()
+            const selectedBillettholder = typedWindow.conorganizer.billettholderSelection.get()
             if (!selectedBillettholder?.Id) {
                 this.renderSelected(firstOptionEle)
                 return
@@ -447,7 +452,8 @@ if (!customElements.get("billettholder-dropdown")) {
          */
         handleOptionSelect(optionEle) {
             this.renderSelected(optionEle)
-            typedWindow.setSelectedBillettholderInLocalStorage?.(this.toStoredBillettholder(optionEle))
+            const storedBillettholder = this.toStoredBillettholder(optionEle)
+            typedWindow.conorganizer.billettholderSelection.set(storedBillettholder)
         }
 
         /**

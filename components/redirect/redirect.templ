@@ -19,7 +19,7 @@ templ Redirect(url string) {
 	</div>
 	<script>
 
-            localStorage.removeItem("selectedBillettHolder");
+	            window.conorganizer.billettholderSelection.clear();
             const countdownElement = document.querySelector('.redirect-countdown');
 
             const INITIAL_COUNTDOWN = 5;

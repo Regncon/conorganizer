@@ -72,26 +72,17 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 				}
 			};
 
-			const selectedRaw = localStorage.getItem("selectedBillettHolder");
-			if (!selectedRaw) {
+			const selected = window.conorganizer.billettholderSelection.get();
+			if (!selected) {
 				if (currentIDRaw && (!Number.isInteger(currentID) || !validIDSet.has(currentID))) {
 					replaceWithServerSelection();
 				}
 				return;
 			}
 
-			let selected;
-			try {
-				selected = JSON.parse(selectedRaw);
-			} catch {
-				localStorage.removeItem("selectedBillettHolder");
-				replaceWithServerSelection();
-				return;
-			}
-
 			const selectedID = Number(selected?.Id ?? 0);
 			if (!Number.isInteger(selectedID) || selectedID <= 0 || !validIDSet.has(selectedID)) {
-				localStorage.removeItem("selectedBillettHolder");
+				window.conorganizer.billettholderSelection.clear();
 				replaceWithServerSelection();
 				return;
 			}
@@ -131,4 +122,4 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 			}
 		}
 		</style>
-	}
+}

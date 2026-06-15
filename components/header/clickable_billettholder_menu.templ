@@ -1,79 +1,80 @@
 package header
 
-import "github.com/Regncon/conorganizer/components/ticket_holder"
-import "database/sql"
-import "github.com/Regncon/conorganizer/service/requestctx"
+import (
+	"database/sql"
 
+	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/service/requestctx"
+)
 
-templ clickableBillettholderMenu(UserInfo requestctx.UserRequestInfo, db *sql.DB) {
+templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB) {
+	{{
+		associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
+		currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
+		initials := ticketholder.GetInitials(currentBillettholder.Name)
+		associatedBillettholdereJSON, _ := templ.JSONString(associatedBillettholdere)
+		currentBillettholderJSON, _ := templ.JSONString(currentBillettholder)
+	}}
+	<span
+		class="clickable-billettholder-menu"
+		data-associated-billettholdere={ associatedBillettholdereJSON }
+		data-current-billettholder={ currentBillettholderJSON }
+	>
+		@ticketholder.NameInitials(currentBillettholder.Name, initials, false)
+	</span>
+	<script>
+		(() => {
+			const container = document.currentScript?.previousElementSibling;
+			const selection = window.conorganizer?.billettholderSelection;
+			if (!(container instanceof HTMLElement) || !selection) {
+				return;
+			}
 
-    {{ billettholdere := ticketholder.GetTicketHolders(userInfo, db) }}
-    {{ initials := ticketholder.GetInitials(currentBillettHolder.Name) }}
-	{{ shortName := ticketholder.GetFirstNameAndLastInitial(currentBillettHolder.Name) }}
-    @ticketholder.NameInitials(shortName, initials);
+			const parseJSONAttribute = (attributeName, fallback) => {
+				try {
+					return JSON.parse(container.getAttribute(attributeName) ?? "");
+				} catch {
+					return fallback;
+				}
+			};
 
-    <script>
-        window.LSKey = {
-			SelectedBilletHolder: "selectedBillettHolder",
-		};
-        window.getSelectedBillettholderFromLocalStorage = function getSelectedBillettholderFromLocalStorage() {
-            const selectedBillettholderString = localStorage.getItem(window.LSKey.SelectedBilletHolder)
-            if (!selectedBillettholderString) {
-                return null
-            }
+			const associatedBillettholdere = parseJSONAttribute("data-associated-billettholdere", []);
+			const fallbackBillettholder = parseJSONAttribute("data-current-billettholder", null);
 
-            try {
-                const selectedBillettholder = JSON.parse(selectedBillettholderString)
-                if (!selectedBillettholder?.Id) {
-                    return null
-                }
-                return {
-                    Id: selectedBillettholder.Id,
-                    Name: selectedBillettholder.Name ?? "",
-                    Email: selectedBillettholder.Email ?? "",
-                }
-            } catch {
-                return null
-            }
-        }
+			/**
+			 * @param {unknown} billettholderId
+			 * @returns {unknown | null}
+			 */
+			const findAssociatedBillettholder = (billettholderId) => {
+				if (!Array.isArray(associatedBillettholdere)) {
+					return null;
+				}
+				return associatedBillettholdere.find((billettholder) => Number(billettholder.Id ?? 0) === Number(billettholderId)) ?? null;
+			};
 
-        window.setSelectedBillettholderInLocalStorage = function setSelectedBillettholderInLocalStorage(billettholder) {
-            if (!billettholder?.Id) {
-                return null
-            }
+			const updateSelectedBillettholder = (billettholder) => {
+				const selectedBillettholder = billettholder?.Id ? billettholder : selection.get() ?? fallbackBillettholder;
+				if (!selectedBillettholder?.Id) {
+					return;
+				}
 
-            const selectedBillettholder = {
-                Id: billettholder.Id,
-                Name: billettholder.Name ?? "",
-                Email: billettholder.Email ?? "",
-            }
-            localStorage.setItem(window.LSKey.SelectedBilletHolder, JSON.stringify(selectedBillettholder))
-            return selectedBillettholder
-        }
+				const currentBillettholder = findAssociatedBillettholder(selectedBillettholder.Id) ?? selectedBillettholder;
+				const initialsElement = container.querySelector(".initials");
+				if (!(initialsElement instanceof HTMLElement)) {
+					return;
+				}
 
-        window.initializeSelectedBillettholder = function initializeSelectedBillettholder(associatedBillettholdere, yourBillettholder) {
-            const findAssociatedBillettholder = (billettholderId) => associatedBillettholdere.find((billettholder) => Number(billettholder.Id) === Number(billettholderId))
+				const name = currentBillettholder.Name ?? "";
+				const color = currentBillettholder.Color || selection.colorForName(name);
+				initialsElement.textContent = selection.getInitials(name);
+				initialsElement.style.backgroundColor = `hsl(from ${color} h s l / 0.5)`;
+				initialsElement.style.border = `1px solid ${color}`;
+			};
 
-            const storedBillettholder = window.getSelectedBillettholderFromLocalStorage()
-            if (storedBillettholder) {
-                const selectedBillettholder = findAssociatedBillettholder(storedBillettholder.Id)
-                if (selectedBillettholder) {
-                    return window.setSelectedBillettholderInLocalStorage(selectedBillettholder)
-                }
-
-                localStorage.removeItem(window.LSKey.SelectedBilletHolder)
-            }
-
-            if (!yourBillettholder?.Id) {
-                return null
-            }
-
-            const selectedBillettholder = findAssociatedBillettholder(yourBillettholder.Id)
-            if (!selectedBillettholder) {
-                return null
-            }
-
-            return window.setSelectedBillettholderInLocalStorage(selectedBillettholder)
-        }
+			updateSelectedBillettholder(selection.initialize(associatedBillettholdere, fallbackBillettholder));
+			window.addEventListener(selection.selectionChangeEvent, (event) => {
+				updateSelectedBillettholder(event.detail);
+			});
+		})();
 	</script>
 }
