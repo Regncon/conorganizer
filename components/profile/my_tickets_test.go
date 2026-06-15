@@ -20,7 +20,7 @@ func TestMyTickets_RendersTicketHolderSummaryAndTicketsLink(t *testing.T) {
 		"Ola Nordmann",
 		"Festivalpass",
 		"ola@example.com",
-		"Mine billettar",
+		"Mine billetter",
 	}
 	expectedHref := "/profile/tickets"
 	tickets := []TicketHolder{
@@ -43,23 +43,28 @@ func TestMyTickets_RendersTicketHolderSummaryAndTicketsLink(t *testing.T) {
 	}
 }
 
-func TestMyTickets_WhenUserHasNoTicketHolders_RendersTicketsLink(t *testing.T) {
+func TestMyTickets_WhenUserHasNoTicketHolders_RendersEmptyStateAndFetchLink(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at brukeren ikke har billettinnehavere knyttet til profilen.",
 		When:  "Når billettseksjonen vises på Min Side.",
-		Then:  "Så skal brukeren fortsatt kunne gå videre til billettsiden.",
+		Then:  "Så skal brukeren se tomtilstand og kunne gå videre til billettsiden.",
 	})
 
 	// Given
 	expectedHref := "/profile/tickets"
-	expectedLinkText := []string{"Mine billettar"}
+	expectedTextPart := "Ingen billetter er knyttet til profilen din ennå."
+	expectedLinkText := []string{"Hent billetter"}
 
 	// When
 	doc := templtest.Render(t, MyTickets(nil))
+	actualText := strings.Join(templtest.CollectTexts(doc, ".surface-pane"), " ")
 	actualLinkText := templtest.CollectTexts(doc, `a[href="/profile/tickets"]`)
 	actualHref, actualHrefExists := doc.Find(`a[href="/profile/tickets"]`).Attr("href")
 
 	// Then
+	if !strings.Contains(actualText, expectedTextPart) {
+		t.Fatalf("expected ticket empty state to contain %q\nactual text: %s", expectedTextPart, actualText)
+	}
 	if !actualHrefExists || actualHref != expectedHref {
 		t.Fatalf("ticket page href mismatch\nexpected: %q\nactual:   %q", expectedHref, actualHref)
 	}

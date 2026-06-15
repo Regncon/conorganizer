@@ -21,9 +21,10 @@ func TestProfileTicketsPageContent_WhenUserHasNoTicketHolders_RendersEmptyStateA
 	// Given
 	expectedBreadcrumb := []string{"Billetter"}
 	expectedTextParts := []string{
-		"Mine Billetter",
-		"Ingen billettar funne",
-		"Hent billettar",
+		"Mine billetter",
+		"Ingen billetter funnet",
+		"Hent billetter",
+		"Kjøp billetter",
 	}
 	db, logger := testutil.CreateTestDBAndLogger(t, "profile_tickets_page")
 
@@ -32,6 +33,8 @@ func TestProfileTicketsPageContent_WhenUserHasNoTicketHolders_RendersEmptyStateA
 	actualBreadcrumb := templtest.CollectTexts(doc, ".breadcrumb-end")
 	actualText := strings.Join(templtest.CollectTexts(doc, "#profile-tickets-page-wrapper, section"), " ")
 	actualFetchButtonVisible := templtest.HasSelector(doc, `button[data-on\:click="@post('/profile/tickets/api/get-tickets')"]`)
+	actualBuyHref, actualBuyHrefExists := doc.Find(`a[href="https://event.checkin.no/221572/regncon-xxxiv-2026"]`).Attr("href")
+	actualPlaceholderImageVisible := templtest.HasSelector(doc, `img[src="/static/sobbingtemp.png"]`)
 
 	// Then
 	if !slices.Equal(expectedBreadcrumb, actualBreadcrumb) {
@@ -44,6 +47,12 @@ func TestProfileTicketsPageContent_WhenUserHasNoTicketHolders_RendersEmptyStateA
 	}
 	if !actualFetchButtonVisible {
 		t.Fatalf("expected fetch tickets button to be visible")
+	}
+	if !actualBuyHrefExists || actualBuyHref != checkInTicketsURL {
+		t.Fatalf("buy ticket href mismatch\nexpected: %q\nactual:   %q", checkInTicketsURL, actualBuyHref)
+	}
+	if actualPlaceholderImageVisible {
+		t.Fatalf("expected placeholder image to be removed from empty state")
 	}
 }
 
