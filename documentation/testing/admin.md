@@ -26,17 +26,7 @@ Denne sjekklisten dekker hovedsiden for admin på `/admin`, altså inngangen til
   **Når** kortene vises.<br>
   **Så** skal de være lesbare, klikkbare og visuelt stabile uten at tekst eller bilder kolliderer.
 
-### Tilgang og robusthet
-
-- [ ] **Ikke-admin avvises tydelig**<br>
-  **Gitt** at en bruker uten adminrettigheter prøver å åpne adminforsiden direkte.<br>
-  **Når** siden lastes.<br>
-  **Så** skal brukeren ikke få tilgang og heller ikke møte en misvisende halvveis adminvisning.
-
-- [ ] **Lastingsfeil forklares**<br>
-  **Gitt** at adminforsiden ikke kan laste nødvendig innhold som forventet.<br>
-  **Når** siden vises.<br>
-  **Så** skal brukeren ikke bli stående med en tilsynelatende tom adminside uten forklaring.
+### Robusthet
 
 - [ ] **Tilbakeknapp og refresh bevarer adminkontekst**<br>
   **Gitt** at admin går frem og tilbake mellom adminforsiden og underliggende adminsider.<br>

@@ -141,6 +141,11 @@ Denne sjekklisten dekker felles navigasjon, rolleopplevelse og tilgang på tvers
   **Når** tilgang avvises.<br>
   **Så** skal brukeren få en tydelig forklaring og en forståelig vei videre til innlogging eller tilbake til appen.
 
+- [ ] **Ikke-admin avvises tydelig**<br>
+  **Gitt** at en bruker uten adminrettigheter prøver å åpne adminforsiden direkte.<br>
+  **Når** siden lastes.<br>
+  **Så** skal brukeren ikke få tilgang og heller ikke møte en misvisende halvveis adminvisning.
+
 - [ ] **Adminlenken åpner adminområdet riktig**<br>
   **Gitt** at brukeren er admin.<br>
   **Når** brukeren navigerer til Admin fra hovednavigasjonen.<br>
