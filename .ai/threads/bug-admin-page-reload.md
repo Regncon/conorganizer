@@ -394,4 +394,104 @@ func waitForWatcherUpdate(t *testing.T, watcher jetstream.KeyWatcher) jetstream.
 
 Time: 2026-06-14 20:11:54
 --- Next Prompt ---
+We got warnings and errors in the logs:
+
+There are a lot of warnings like this:
+{"time":"2026-06-15T11:33:51.349482701oZ","level":"WARN","msg":"failed to stop live watcher: nats: invalid subscription","component":"live","method":"GET","path":"/admin/api/","request_id":"ubuntu-4gb-hel1-3/A07wbWUiqS-003631","buckets":["events"]}
+
+{"time":"2026-06-15T16:51:18.895141362Z","level":"WARN","msg":"failed to stop live watcher: nats: invalid subscription","component":"live","method":"GET","path":"/admin/rooms/api/","request_id":"ubuntu-4gb-hel1-3/zgofCByPcE-000894","buckets":["rooms"]}
+
+
+There are also some errors, but not many:
+{"time":"2026-06-15T13:34:17.197797497Z","level":"ERROR","msg":"failed to touch live key before watching: touch live key in bucket events: context deadline exceeded","component":"live","method":"GET","path":"/admin/api/","request_id":"ubuntu-4gb-hel1-3/zgofCByPcE-000040","buckets":["events"]}
+
+
+{"time":"2026-06-15T13:26:53.657372489Z","level":"ERROR","msg":"error running server: http: Server closed","component":"main"}
+
+
+Let's have a discussion about what these logs indicate.
+
+Time: 2026-06-15 18:56:25
+--- Codex Run ---
+
+Codex output:
+I’ll use the `conorganizer-logging` skill here because this is specifically about interpreting and tuning the live-service logs. I’ll quickly re-check the relevant logging rules and the live watcher code so the discussion is grounded in the current implementation.
+I’m going to read the baseline files and the current live/server code before drawing conclusions. The likely split is cleanup noise from watcher shutdown versus a real NATS/JetStream write timeout.
+These logs point to three different things.
+
+**Watcher Warnings**
+`failed to stop live watcher: nats: invalid subscription` is probably cleanup noise, not the root bug.
+
+That happens in the deferred `watcher.Stop()` path after an SSE request ends. NATS returns `nats: invalid subscription` when the subscription is already closed/invalid by the time we try to stop it. For long-lived Datastar/SSE requests, that can happen on page navigation, browser reconnect, server shutdown, client disconnect, or NATS closing the subscription first.
+
+I would not treat these as actionable warnings. We should probably ignore `nats.ErrBadSubscription` and maybe `nats.ErrConnectionClosed` in watcher cleanup, or log them at `Debug`.
+
+**NATS Touch Error**
+This one is the real signal:
+
+`failed to touch live key before watching: touch live key in bucket events: context deadline exceeded`
+
+That means the live service tried to write the connection key into the JetStream KV bucket and did not get a response before the context/deadline expired. This is not what key expiry normally looks like. If the key expired, `Put` should recreate it. A deadline means NATS/JetStream did not respond to the write in time.
+
+Likely causes:
+- embedded NATS/JetStream was briefly stalled or unhealthy
+- publish/ack path was blocked
+- server was under load
+- shutdown/restart was in progress
+- NATS client connection was in a bad transient state
+
+Because this happens before watcher registration, that request may receive the initial patch but will not be registered for future broadcasts.
+
+**Server Closed Error**
+`error running server: http: Server closed` is usually expected during graceful shutdown. Go’s `ListenAndServe` returns `http.ErrServerClosed` when `Shutdown` is called. The current top-level code is treating that as an error. We should suppress that specific error or return nil for it.
+
+**My Read**
+The many watcher warnings are log-level noise. The occasional `context deadline exceeded` is the thing worth investigating. It does not strongly support “NATS key expired”; it points more to “NATS write timed out.”
+
+Recommended next changes:
+1. Suppress/demote invalid-subscription watcher cleanup logs.
+2. Treat `http.ErrServerClosed` as normal shutdown.
+3. Keep the NATS touch timeout error at `Error`, and maybe add one retry/reconnect path if it happens more than rarely.
+
+Time: 2026-06-15 18:56:25
+--- Next Prompt ---
+
+Les's demote the warning to info level if you think that's safe.
+Is it useful to add more logging to the error case so we can debug it better if it happens again?
+
+
+Time: 2026-06-15 19:06:55
+--- Codex Run ---
+
+Codex output:
+I’ll apply the logging skill again for this change. I’ll first check the current merge/worktree state and the live service code, then I’ll demote only the expected watcher-stop case and add low-risk context to the NATS touch error.
+I’m reading the current baseline/code now, then I’ll make the logging change. For the extra diagnostics, the useful additions are timing and NATS connection state on the touch failure; we should not log the live connection id or cookies.
+I’m going to make this as a narrow logging change: treat the known invalid-subscription cleanup as informational, and add a small amount of NATS connection context only on the touch failure path so the next incident has more signal without increasing normal log volume.
+Using the logging skill here because this touches production log levels and structured fields. I’ve confirmed the noisy line is isolated to watcher cleanup; next I’m checking the repo’s logging baseline and the live manager shape before editing so the fields match the rest of the service.
+The baseline supports this change: watcher cleanup errors in a repeated stream path should not stay at Warn when they are expected or benign. For the touch timeout, I’m going to add fields that answer “how long did the JetStream write wait?” and “what did the NATS client think its state was?” without logging cookies or live connection IDs.
+I found the current code logs the cleanup failure through the generic request warn helper. The touch failure already logs the request context and bucket; I’m editing that path to include timing and client state while leaving the existing message stable for log searches.
+I’m keeping the normal request completion log unchanged. These new fields will only appear on the NATS key touch error, so they should help distinguish a slow JetStream write from a disconnected/stale NATS client if the admin reload issue comes back.
+I’m about to edit `service/live/live.go` and the focused live test. The planned behavior is: `nats.ErrBadSubscription` from watcher `Stop()` becomes an Info log, all other stop failures remain Warn, and touch failures get extra NATS diagnostics.
+The first code change is in place. I’m tightening the field name to `natsConn` so the production code reads clearly and doesn’t visually collide with the imported NATS package.
+I’m adding a regression test for the demotion too. The test will force the fake watcher to return `nats.ErrBadSubscription` on stop, cancel the request after the watcher starts, and assert the log is Info rather than Warn.
+The helper fake needs one small extension for that test: a configurable watcher stop error and a callback when a watcher is created. That keeps the production change testable without starting a real NATS server.
+The test helper is updated. I’m now updating the live test expectations so the new diagnostics are locked in and the demoted watcher cleanup path is covered.
+The code and tests are edited. I’m formatting now, then I’ll run the focused live package tests and inspect the diff for anything noisy or misleading.
+Formatting completed cleanly. I’m checking the exact diff before running tests so I can catch accidental broad changes early.
+The diff is focused: only `service/live` changed, no conflict markers. I’m running the live package tests with a temp Go cache next.
+The focused tests pass. I’m doing one final scan of the changed log sites and the worktree status so I can summarize exactly what changed.
+The final scan looks clean: three modified live files, no conflict markers or `err` structured-field issues in the touched package. I’m checking whitespace now, then I’ll wrap up.
+Implemented the logging change.
+
+`nats.ErrBadSubscription` from watcher cleanup is now logged at Info as `live watcher already stopped...`, while other watcher stop failures still stay Warn: [service/live/live.go](/home/cinmay/Documents/conorganizer/service/live/live.go:232). I think that’s safe because it happens during stream cleanup after the watcher is already invalid, not during the actual live key write/watch setup.
+
+I also added error-only diagnostics to the NATS touch failure path: `nats_touch_duration_ms`, plus `nats_status` and `nats_last_error` when available: [service/live/live.go](/home/cinmay/Documents/conorganizer/service/live/live.go:280). That should make the next timeout easier to distinguish between “JetStream write was slow” and “the NATS client was disconnected/stale”.
+
+Added regression coverage for both the new touch-field and the Info-level watcher cleanup log.
+
+Verification:
+`GOCACHE=/tmp/conorganizer-gocache go test ./service/live` passed.
+
+Time: 2026-06-15 19:06:55
+--- Next Prompt ---
 

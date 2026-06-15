@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
+	nats "github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -54,11 +55,12 @@ func WithLogger(logger *slog.Logger) Option {
 }
 
 type Manager struct {
-	store   sessions.Store
-	buckets map[Bucket]keyValue
-	ttl     time.Duration
-	now     func() time.Time
-	logger  *slog.Logger
+	store    sessions.Store
+	buckets  map[Bucket]keyValue
+	ttl      time.Duration
+	now      func() time.Time
+	logger   *slog.Logger
+	natsConn *nats.Conn
 }
 
 type keyValue interface {
@@ -84,11 +86,12 @@ func NewManager(ctx context.Context, ns *embeddednats.Server, store sessions.Sto
 	}
 
 	manager := &Manager{
-		store:   store,
-		buckets: make(map[Bucket]keyValue),
-		ttl:     DefaultTTL,
-		now:     time.Now,
-		logger:  slog.Default().With("component", "live"),
+		store:    store,
+		buckets:  make(map[Bucket]keyValue),
+		ttl:      DefaultTTL,
+		now:      time.Now,
+		logger:   slog.Default().With("component", "live"),
+		natsConn: nc,
 	}
 	for _, opt := range opts {
 		opt(manager)
@@ -112,8 +115,9 @@ func (m *Manager) EnsureConnection(w http.ResponseWriter, r *http.Request, bucke
 		return "", err
 	}
 
+	touchStart := time.Now()
 	if err := m.touchConnection(r.Context(), connectionID, buckets...); err != nil {
-		m.logRequestError(r, buckets, "failed to touch live key", err)
+		m.logLiveKeyTouchError(r, buckets, "failed to touch live key", err, time.Since(touchStart))
 		return "", err
 	}
 
@@ -202,8 +206,9 @@ func (m *Manager) Stream(w http.ResponseWriter, r *http.Request, page Page) {
 		return
 	}
 
+	touchStart := time.Now()
 	if err := m.touchConnection(ctx, connectionID, page.Buckets...); err != nil {
-		m.logRequestError(r, page.Buckets, "failed to touch live key before watching", err)
+		m.logLiveKeyTouchError(r, page.Buckets, "failed to touch live key before watching", err, time.Since(touchStart))
 		_ = sse.ConsoleError(err)
 		return
 	}
@@ -227,6 +232,10 @@ func (m *Manager) Stream(w http.ResponseWriter, r *http.Request, page Page) {
 	defer func() {
 		for _, watcher := range watchers {
 			if err := watcher.watcher.Stop(); err != nil {
+				if errors.Is(err, nats.ErrBadSubscription) {
+					m.logRequestInfo(r, []Bucket{watcher.bucket}, "live watcher already stopped", err)
+					continue
+				}
 				m.logRequestWarn(r, []Bucket{watcher.bucket}, "failed to stop live watcher", err)
 			}
 		}
@@ -264,11 +273,34 @@ func (m *Manager) logRequestWarn(r *http.Request, buckets []Bucket, message stri
 	m.log().Warn(fmt.Errorf("%s: %w", message, err).Error(), liveRequestLogArgs(r, buckets)...)
 }
 
+func (m *Manager) logRequestInfo(r *http.Request, buckets []Bucket, message string, err error) {
+	m.log().Info(fmt.Errorf("%s: %w", message, err).Error(), liveRequestLogArgs(r, buckets)...)
+}
+
+func (m *Manager) logLiveKeyTouchError(r *http.Request, buckets []Bucket, message string, err error, duration time.Duration) {
+	args := liveRequestLogArgs(r, buckets)
+	args = append(args, "nats_touch_duration_ms", duration.Milliseconds())
+	args = append(args, m.natsLogArgs()...)
+	m.log().Error(fmt.Errorf("%s: %w", message, err).Error(), args...)
+}
+
 func (m *Manager) log() *slog.Logger {
 	if m.logger != nil {
 		return m.logger
 	}
 	return slog.Default().With("component", "live")
+}
+
+func (m *Manager) natsLogArgs() []any {
+	if m.natsConn == nil {
+		return nil
+	}
+
+	args := []any{"nats_status", m.natsConn.Status().String()}
+	if lastErr := m.natsConn.LastError(); lastErr != nil {
+		args = append(args, "nats_last_error", lastErr.Error())
+	}
+	return args
 }
 
 func liveRequestLogArgs(r *http.Request, buckets []Bucket) []any {
