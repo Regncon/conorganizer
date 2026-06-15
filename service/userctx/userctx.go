@@ -46,7 +46,7 @@ func AdminForbiddenHandler(logger *slog.Logger) http.HandlerFunc {
 		userInfo := GetUserRequestInfo(r.Context())
 
 		w.WriteHeader(http.StatusForbidden)
-		if err := layouts.Base("Ingen tilgang", userInfo, Forbidden()).Render(r.Context(), w); err != nil {
+		if err := layouts.Base("Ingen tilgang", userInfo, authctx.Forbidden()).Render(r.Context(), w); err != nil {
 			logger.Error(fmt.Errorf("failed to render forbidden page: %w", err).Error(), "request_id", requestID)
 		}
 	}
