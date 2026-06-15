@@ -96,6 +96,21 @@ func insertProfileProgramPulje(t *testing.T, db *sql.DB, puljeID models.Pulje, s
 	`, puljeID, "Fredag kveld", status, "2026-10-09T18:00:00Z", "2026-10-09T23:00:00Z")
 }
 
+func insertProfileProgram(t *testing.T, db *sql.DB, programPublished bool) {
+	t.Helper()
+
+	isPublished := 0
+	if programPublished {
+		isPublished = 1
+	}
+
+	mustExecProfileProgramTest(t, db, `
+		INSERT INTO program_publishing_state(id, is_published)
+		VALUES (1, ?)
+		ON CONFLICT(id) DO UPDATE SET is_published = excluded.is_published
+	`, isPublished)
+}
+
 func insertProfileProgramPublishedEvent(t *testing.T, db *sql.DB, eventID string, title string) {
 	t.Helper()
 
