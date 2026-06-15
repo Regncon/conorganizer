@@ -56,7 +56,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 		return cleanup, fmt.Errorf("error setting up live updates: %w", err)
 	}
 
-	isLoggedInRouter := router.With(userctx.UserMiddleware(logger))
+	isLoggedInRouter := router.With(userctx.UserMiddleware(logger, db))
 	routerAdmin := isLoggedInRouter.With(authctx.RequireAdmin(logger))
 
 	if err := errors.Join(

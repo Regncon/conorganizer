@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func UserMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
+func UserMiddleware(logger *slog.Logger, db *sql.DB) func(http.Handler) http.Handler {
 	logger = logger.With("component", "user")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +29,7 @@ func UserMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if !userInfo.IsLoggedIn {
 				logger.Warn("User is not logged in", "request_id", requestID, "path", r.URL.Path)
 				w.WriteHeader(http.StatusUnauthorized)
-				if err := layouts.Base("Unauthorized", requestctx.UserRequestInfo{}, Unauthorized()).Render(r.Context(), w); err != nil {
+				if err := layouts.Base("Unauthorized", requestctx.UserRequestInfo{}, db, Unauthorized()).Render(r.Context(), w); err != nil {
 					logger.Error(fmt.Errorf("failed to render unauthorized page: %w", err).Error(), "request_id", requestID)
 				}
 				return

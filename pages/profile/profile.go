@@ -56,6 +56,7 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 			if err := layouts.Base(
 				"Min profil side",
 				user,
+                db,
 				ProfilePage(user, events, tickets, selectedBillettholderID, validBillettholderIDs, db, requestLogger, eventImageDir),
 			).Render(ctx, w); err != nil {
 				requestLogger.Error(fmt.Errorf("failed to render profile page: %w", err).Error(), "user_id", user.Id)

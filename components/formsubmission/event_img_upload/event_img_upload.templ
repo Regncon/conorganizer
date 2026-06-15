@@ -36,6 +36,7 @@ func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logge
 		if err := layouts.Base(
 			"Last opp blide",
 			userInfo,
+            db,
 			page(eventId, db, eventImageDir, logger, showUploadToast),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render event image page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)

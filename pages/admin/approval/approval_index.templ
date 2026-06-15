@@ -19,6 +19,7 @@ func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 		if err := layouts.Base(
 			"Godkjenning av arrangementer",
 			userInfo,
+            db,
 			approvalIndex(db, logger),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render approval page: %w", err).Error(), "user_id", userInfo.Id)
