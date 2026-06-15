@@ -5,19 +5,26 @@ templ loginForm() {
 	<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>
 	<script src="https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js"></script>
 	<style>
+        .descope-login-wrapper {
+            container-type: inline-size;
+        }
+
         .descope-login-wrapper,
         .descope-login-wrapper > form {
             display: flex;
             place-content: center;
+
             > descope-wc {
                 max-width: 35.3125rem;
             }
-            @media screen and (width <= 26.5625rem) {
-                > descope-wc {
-                        --descope-container-align-items__override: auto;
-                        --descope-container-horizontal-padding__override: var(--spacing-2x);
-                        --descope-container-host-width__override: 100%;
-                }
+        }
+
+        @container (width <= 26.5625rem) {
+            .descope-login-wrapper > descope-wc,
+            .descope-login-wrapper > form > descope-wc {
+                --descope-container-align-items__override: auto;
+                --descope-container-horizontal-padding__override: var(--spacing-2x);
+                --descope-container-host-width__override: 100%;
             }
         }
     </style>
@@ -29,45 +36,80 @@ templ loginForm() {
 		></descope-wc>
 	</div>
 	<script>
-            const COOKIE_NAMES = {
-                SESSION: 'session_token',
-                REFRESH: 'refresh_token',
-            };
-
-            const DURATION = {
-                ONE_YEAR: 365 * 24 * 60 * 60 * 1000
-            };
-
-            function setCookie(name, value) {
-                const now = new Date();
-                let expires;
-
-                switch (name) {
-                    case COOKIE_NAMES.SESSION:
-                    case COOKIE_NAMES.REFRESH:
-                        expires = new Date(now.getTime() + DURATION.ONE_YEAR);
-                        break;
-                    default:
-                        console.error('Unknown cookie type:', name);
-                        return;
-                }
-
-                document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires.toUTCString()}; path=/; samesite=Lax`;
-            }
-
+            const DESCOPE_PROJECT_ID = 'P2ufzqahlYUHDIprVXtkuCx8MH5C';
+            const descopeSdk = window.Descope
+                ? Descope({ projectId: DESCOPE_PROJECT_ID, persistTokens: true, autoRefresh: true })
+                : null;
             const wcElement = document.getElementsByTagName('descope-wc')[0];
 
-            const onSuccess = (e) => {
+            function normalizeToken(token) {
+                if (typeof token !== 'string') {
+                    return '';
+                }
+                const trimmed = token.trim();
+                return trimmed.toLowerCase().startsWith('bearer ')
+                    ? trimmed.slice('bearer '.length).trim()
+                    : trimmed;
+            }
+
+            async function getTokenPair(detail) {
+                if (descopeSdk) {
+                    try {
+                        await descopeSdk.refresh();
+                    } catch (err) {
+                        console.warn('Unable to refresh Descope SDK session before app session setup:', err);
+                    }
+
+                    const sdkSessionJwt = normalizeToken(descopeSdk.getSessionToken?.());
+                    const sdkRefreshJwt = normalizeToken(descopeSdk.getRefreshToken?.());
+                    if (sdkSessionJwt && sdkRefreshJwt) {
+                        return {
+                            sessionJwt: sdkSessionJwt,
+                            refreshJwt: sdkRefreshJwt,
+                        };
+                    }
+                }
+
+                return {
+                    sessionJwt: normalizeToken(detail?.sessionJwt),
+                    refreshJwt: normalizeToken(detail?.refreshJwt),
+                };
+            }
+
+            async function establishSession(sessionJwt, refreshJwt) {
+                const response = await fetch('/auth/session', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ sessionJwt, refreshJwt }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Session setup failed with status ${response.status}`);
+                }
+            }
+
+            const onSuccess = async (e) => {
                 console.log('Login successful');
-                console.log('User:', e.detail.user.name);
-                console.log('Email:', e.detail.user.email);
+                console.log('User:', e.detail?.user?.name ?? '');
+                console.log('Email:', e.detail?.user?.email ?? '');
 
-                setCookie(COOKIE_NAMES.SESSION, e.detail.sessionJwt);
-                setCookie(COOKIE_NAMES.REFRESH, e.detail.refreshJwt);
-                wcElement.removeEventListener('success', onSuccess);
-                wcElement.removeEventListener('error', onError);
+                const { sessionJwt, refreshJwt } = await getTokenPair(e.detail);
+                if (!sessionJwt || !refreshJwt) {
+                    console.error('Login error:', new Error('Missing session tokens'));
+                    return;
+                }
 
-                window.location.href = '/auth/post-login';
+                try {
+                    await establishSession(sessionJwt, refreshJwt);
+                    wcElement.removeEventListener('success', onSuccess);
+                    wcElement.removeEventListener('error', onError);
+                    window.location.href = '/auth/post-login';
+                } catch (err) {
+                    console.error('Login error:', err);
+                }
             };
 
             const onError = (err) => {

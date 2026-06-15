@@ -3,14 +3,17 @@ version: "3"
 dotenv:
     - ".env"
 
-env:
-    STATIC_DIR: "static"
-
 tasks:
     # The `build:` tasks below are used together for "production" builds of your project
     build:templ:
         cmds:
-            - go tool templ generate
+            - |
+              set -eu
+              for dir in components pages layouts service; do
+                if [ -d "$dir" ]; then
+                  go tool templ generate -path "$dir" -log-level error
+                fi
+              done
 
     build:
         cmds:
@@ -29,35 +32,67 @@ tasks:
     # The `start:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
     start:templ:
         cmds:
-            - go tool templ generate --watch --proxybind="0.0.0.0"
-              --proxy="http://localhost:8080" --open-browser=false -v
+            - |
+              set -eu
+              mkdir -p tmp
+              stamp="tmp/templ-watch.stamp"
+
+              touch "$stamp"
+
+              while true; do
+                sleep 0.5
+                changed="$(
+                  find components pages layouts service \
+                    -type f \
+                    -name '*.templ' \
+                    -newer "$stamp" \
+                    2>/dev/null \
+                    | sort
+                )"
+
+                if [ -z "$changed" ]; then
+                  continue
+                fi
+
+                printf '%s\n' "$changed" | while IFS= read -r file; do
+                  if [ -n "$file" ]; then
+                    echo "templ: generating $file"
+                    go tool templ generate -f "$file" -log-level error
+                  fi
+                done
+
+                touch "$stamp"
+              done
 
     start:server:
         cmds:
             - |
-              go tool air \
-              --build.cmd "go build -tags dev -o tmp/bin/main" \
-              --build.bin "tmp/bin/main" \
-              --build.delay "20" \
-              --build.include_ext "go" \
-              --build.stop_on_error "false" \
-              --misc.clean_on_exit true
+              set -eu
+              for dir in components pages layouts service; do
+                if [ -d "$dir" ]; then
+                  go tool templ generate -path "$dir" -log-level error
+                fi
+              done
 
-    start:reload:
-        cmds:
-            - |
               go tool air \
-              --build.cmd "go tool templ generate --notify-proxy" \
-              --build.bin "true" \
-              --build.delay "100" \
-              --build.exclude_dir "" \
-              --build.include_dir "$STATIC_DIR" \
-              --build.include_ext "js,css,env"
+              --build.cmd "go build -buildvcs=false -tags dev -o tmp/bin/main" \
+              --build.bin "tmp/bin/main" \
+              --build.delay "1000" \
+              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
+              --build.include_ext "go,js,css,html,svg,webp,ico,png,jpg,jpeg,avif" \
+              --build.include_file ".env" \
+              --build.poll "true" \
+              --build.poll_interval "500" \
+              --build.stop_on_error "false" \
+              --proxy.enabled "true" \
+              --proxy.app_port "8080" \
+              --proxy.proxy_port "7331" \
+              --proxy.app_start_timeout "10000" \
+              --misc.clean_on_exit true
 
     start:
         deps:
             - start:templ
-            - start:reload
             - start:server
 
     # Similar to above task, but recolors log levels
