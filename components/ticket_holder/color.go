@@ -2,7 +2,10 @@ package ticketholder
 
 import "hash/fnv"
 
-var accentColors = []string{
+// BillettholderColor is a color token calculated from a billettholder name.
+type BillettholderColor string
+
+var accentColors = []BillettholderColor{
 	"var(--color-accent-blue)",
 	"var(--color-accent-purple)",
 	"var(--color-accent-pink)",
@@ -14,7 +17,7 @@ var accentColors = []string{
 	"var(--color-accent-cyan)",
 }
 
-func ColorForName(name string) string {
+func ColorForName(name string) BillettholderColor {
 	h := fnv.New32a()
 	h.Write([]byte(name))
 	idx := int(h.Sum32()) % len(accentColors)

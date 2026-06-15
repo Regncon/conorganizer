@@ -17,7 +17,7 @@ type BillettHolder struct {
 	Email string
 	Name  string
 	Id    int
-	Color string
+	Color BillettholderColor
 }
 
 type PuljeInterestAvailability string
@@ -241,6 +241,7 @@ func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders
 		return BillettHolder{
 			Email: "unknown@example.com",
 			Name:  "Unknown Ticket Holder",
+			Color: ColorForName("Unknown Ticket Holder"),
 		}
 	}
 

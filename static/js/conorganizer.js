@@ -148,6 +148,14 @@
         ])
 
         /**
+         * @param {string} color
+         * @returns {boolean}
+         */
+        function isBillettholderColor(color) {
+            return ACCENT_COLORS.includes(color)
+        }
+
+        /**
          * @param {unknown} value
          * @returns {StoredBillettholder | null}
          */
@@ -168,8 +176,13 @@
                 Email: typeof billettholder.Email === "string" ? billettholder.Email : "",
             }
 
-            if (typeof billettholder.Color === "string" && billettholder.Color.length > 0) {
-                return { ...selectedBillettholder, Color: billettholder.Color }
+            const color = typeof billettholder.Color === "string" ? billettholder.Color.trim() : ""
+            if (isBillettholderColor(color)) {
+                return { ...selectedBillettholder, Color: color }
+            }
+
+            if (selectedBillettholder.Name.length > 0) {
+                return { ...selectedBillettholder, Color: colorForName(selectedBillettholder.Name) }
             }
 
             return selectedBillettholder

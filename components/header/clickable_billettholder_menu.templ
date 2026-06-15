@@ -14,7 +14,7 @@ templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB
 		initials := ticketholder.GetInitials(currentBillettholder.Name)
 	}}
 	<span class="clickable-billettholder-menu">
-		@ticketholder.Initials(initials, currentBillettholder.Name)
+		@ticketholder.Initials(initials, currentBillettholder.Color)
 	</span>
 	<script>
 		(() => {
