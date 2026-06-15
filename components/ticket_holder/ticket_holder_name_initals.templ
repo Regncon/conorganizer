@@ -2,7 +2,29 @@ package ticketholder
 
 import "fmt"
 
-templ NameInitials(name string, initials string, hasName bool) {
+templ Initials(initials string, colorName string) {
+	<style>
+		.initials {
+			display: flex;
+			place-content: center;
+			place-items: center;
+			color: var(--color-text-strong);
+			font-size: 12px;
+			border-radius: 50%;
+			min-inline-size: 1.5rem;
+			min-block-size: 1.5rem;
+		}
+	</style>
+	<span
+		class="initials"
+		style={ templ.SafeCSS(fmt.Sprintf("background-color: hsl(from %s h s l / 0.5)", ColorForName(colorName))),
+            templ.SafeCSS(fmt.Sprintf("border: 1px solid %s;", ColorForName(colorName))) }
+	>
+		{ initials }
+	</span>
+}
+
+templ NameInitials(name string, initials string, colorName string) {
 	<style>
 		.name-initials {
 			display: inline-flex;
@@ -16,28 +38,10 @@ templ NameInitials(name string, initials string, hasName bool) {
                 overflow: clip;
                 white-space: nowrap;
 			}
-			.initials {
-				display: flex;
-				place-content: center;
-				place-items: center;
-				color: var(--color-text-strong);
-				font-size: 12px;
-				border-radius: 50%;
-				min-inline-size: 1.5rem;
-				min-block-size: 1.5rem;
-			}
 		}
 	</style>
 	<div class="name-initials">
-		<span
-			class="initials"
-			style={ templ.SafeCSS(fmt.Sprintf("background-color: hsl(from %s h s l / 0.5)", ColorForName(name))),
-            templ.SafeCSS(fmt.Sprintf("border: 1px solid %s;", ColorForName(name))) }
-		>
-			{ initials }
-		</span>
-		if hasName {
-            <p class="name">{ name }</p>
-        }
+		@Initials(initials, colorName)
+		<p class="name">{ name }</p>
 	</div>
 }
