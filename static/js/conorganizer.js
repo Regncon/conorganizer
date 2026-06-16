@@ -1,5 +1,7 @@
 // @ts-check
 
+// Shared browser helpers for templates and web components.
+// Keep this file build-free and browser-native.
 (() => {
     /**
      * @typedef {Object} StoredBillettholder
@@ -9,17 +11,20 @@
      * @property {string} [Color]
      */
     /**
+     * Shared style loading API for custom elements.
      * @typedef {Object} SharedStyles
      * @property {(urls: string[]) => Promise<CSSStyleSheet[] | null>} getStyleSheets
      * @property {(extraUrls?: string[]) => string[]} getStyleUrls
      * @property {(shadowRoot: ShadowRoot, urls: string[]) => Promise<void>} applyStyleUrlsToShadowRoot
      */
     /**
+     * Style value helpers for billettholder initials.
      * @typedef {Object} BillettholderSelectionStyle
      * @property {(color: string) => string} backgroundColor
      * @property {(color: string) => string} border
      */
     /**
+     * Shared selected-billettholder API used by templates and web components.
      * @typedef {Object} BillettholderSelection
      * @property {() => void} clear
      * @property {(name: string) => string} colorFromName
@@ -65,6 +70,7 @@
             "/static/css/buttons.css",
         ])
 
+        // Constructable stylesheets keep shared CSS deduplicated across shadow roots.
         const supportsConstructableStyleSheets =
             !!(Document.prototype && "adoptedStyleSheets" in Document.prototype) &&
             !!(CSSStyleSheet.prototype && "replace" in CSSStyleSheet.prototype)
@@ -73,7 +79,7 @@
         const sharedStyleSheetPromises = new Map()
 
         /**
-         * Load shared stylesheets once per URL combination.
+         * Public: load shared stylesheets once per URL combination.
          * @param {string[]} urls
          * @returns {Promise<CSSStyleSheet[] | null>}
          */
@@ -84,24 +90,22 @@
             const existingPromise = sharedStyleSheetPromises.get(cacheKey)
             if (existingPromise) return existingPromise
 
-            const styleSheetsPromise = (async () => {
-                const styleSheets = []
-                for (const url of urls) {
+            const styleSheetsPromise = Promise.all(
+                urls.map(async (url) => {
                     const response = await fetch(url, { credentials: "same-origin" })
                     const cssText = await response.text()
                     const styleSheet = new CSSStyleSheet()
                     await styleSheet.replace(cssText)
-                    styleSheets.push(styleSheet)
-                }
-                return styleSheets
-            })()
+                    return styleSheet
+                })
+            )
 
             sharedStyleSheetPromises.set(cacheKey, styleSheetsPromise)
             return styleSheetsPromise
         }
 
         /**
-         * Combine the shared base styles with optional component-local styles.
+         * Public: combine shared base stylesheet URLs with component-local stylesheet URLs.
          * @param {string[]} [extraUrls=[]]
          * @returns {string[]}
          */
@@ -110,8 +114,8 @@
         }
 
         /**
-         * Apply shared styles to a shadow root via adoptedStyleSheets when supported,
-         * otherwise fall back to injecting <link> elements.
+         * Public: apply shared styles to a shadow root.
+         * Uses adoptedStyleSheets when available, and falls back to <link> elements.
          * @param {ShadowRoot} shadowRoot
          * @param {string[]} urls
          * @returns {Promise<void>}
@@ -153,16 +157,19 @@
             "var(--color-accent-teal)",
             "var(--color-accent-cyan)",
         ])
+        const ACCENT_COLOR_SET = new Set(ACCENT_COLORS)
 
         /**
+         * Internal: accepts only color tokens produced by this helper.
          * @param {string} color
          * @returns {boolean}
          */
         function isBillettholderColor(color) {
-            return ACCENT_COLORS.includes(color)
+            return ACCENT_COLOR_SET.has(color)
         }
 
         /**
+         * Internal: normalize untrusted server/localStorage values into the shared shape.
          * @param {unknown} value
          * @returns {StoredBillettholder | null}
          */
@@ -188,6 +195,7 @@
                 return { ...selectedBillettholder, Color: color }
             }
 
+            // Repair older localStorage entries that have no color, or have a name stored as Color.
             if (selectedBillettholder.Name.length > 0) {
                 return { ...selectedBillettholder, Color: colorFromName(selectedBillettholder.Name) }
             }
@@ -196,6 +204,7 @@
         }
 
         /**
+         * Internal: notify all selection subscribers after storage changes.
          * @param {StoredBillettholder | null} billettholder
          * @returns {void}
          */
@@ -204,6 +213,7 @@
         }
 
         /**
+         * Public: read the current selected billettholder from localStorage.
          * @returns {StoredBillettholder | null}
          */
         function get() {
@@ -226,6 +236,7 @@
         }
 
         /**
+         * Public: store a selected billettholder and notify subscribers.
          * @param {unknown} billettholder
          * @returns {StoredBillettholder | null}
          */
@@ -245,6 +256,7 @@
         }
 
         /**
+         * Public: remove the selected billettholder and notify subscribers.
          * @returns {void}
          */
         function clear() {
@@ -257,6 +269,7 @@
         }
 
         /**
+         * Public: find the canonical associated billettholder for a selected id.
          * @param {unknown[]} associatedBillettholdere
          * @param {unknown} billettholderId
          * @returns {StoredBillettholder | null}
@@ -275,6 +288,8 @@
         }
 
         /**
+         * Public: choose the initial billettholder for the current page.
+         * Keeps localStorage only when it still matches one of the associated billettholdere.
          * @param {unknown[]} associatedBillettholdere
          * @param {unknown} yourBillettholder
          * @returns {StoredBillettholder | null}
@@ -304,10 +319,13 @@
         }
 
         /**
+         * Public: subscribe to selected-billettholder changes.
+         * Returns a cleanup function that removes this subscriber.
          * @param {(billettholder: StoredBillettholder | null) => void} callback
          * @returns {() => void}
          */
         function onChange(callback) {
+            /** @type {(event: Event) => void} */
             const handleSelectionChange = (event) => {
                 const selectionEvent = /** @type {CustomEvent<unknown>} */ (event)
                 callback(normalizeBillettholder(selectionEvent.detail))
@@ -318,6 +336,7 @@
         }
 
         /**
+         * Public: build the initials badge background value for a CSSStyleDeclaration.
          * @param {string} color
          * @returns {string}
          */
@@ -330,6 +349,7 @@
         }
 
         /**
+         * Public: build the initials badge border value for a CSSStyleDeclaration.
          * @param {string} color
          * @returns {string}
          */
@@ -348,6 +368,7 @@
         })
 
         /**
+         * Public: derive initials from a full name using first and last word.
          * @param {string} name
          * @returns {string}
          */
@@ -358,12 +379,13 @@
             }
 
             const firstInitial = words[0]?.[0] ?? "T"
-            const lastInitial = words[words.length - 1]?.[0] ?? "T"
+            const lastInitial = words.at(-1)?.[0] ?? "T"
 
             return `${letterOrFallback(firstInitial)}${letterOrFallback(lastInitial)}`.toUpperCase()
         }
 
         /**
+         * Internal: keep initials stable when a name part starts with punctuation or a digit.
          * @param {string} value
          * @returns {string}
          */
@@ -372,6 +394,7 @@
         }
 
         /**
+         * Public: derive the stable accent color token for a billettholder name.
          * @param {string} name
          * @returns {string}
          */
