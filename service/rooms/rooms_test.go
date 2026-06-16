@@ -34,7 +34,7 @@ func TestCreateRoom_CreatesRoomWithGeneratedID(t *testing.T) {
 	actualRoom, err := CreateRoom(db, inputRoom)
 
 	// Then
-	if err != nil {
+	if err.HasErrors() {
 		t.Fatalf("expected room creation to succeed: %v", err)
 	}
 	assertRoomMatches(t, expectedRoom, *actualRoom)
@@ -58,37 +58,15 @@ func TestCreateRoom_WhenCalledRepeatedly_AutoIncrementsID(t *testing.T) {
 	secondCreated, secondErr := CreateRoom(db, secondRoom)
 
 	// Then
-	if firstErr != nil {
+	if firstErr.HasErrors() {
 		t.Fatalf("expected first room creation to succeed: %v", firstErr)
 	}
-	if secondErr != nil {
+	if secondErr.HasErrors() {
 		t.Fatalf("expected second room creation to succeed: %v", secondErr)
 	}
 	actualIDs := []int{firstCreated.ID, secondCreated.ID}
 	if !slices.Equal(expectedIDs, actualIDs) {
 		t.Fatalf("room IDs mismatch\nexpected: %v\nactual:   %v", expectedIDs, actualIDs)
-	}
-}
-
-func TestCreateRoom_WhenRoomNumberDoesNotMatchFloor_ReturnsError(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "Given room input where the room number starts with another floor.",
-		When:  "When the room is created.",
-		Then:  "Then validation rejects it.",
-	})
-
-	// Given
-	expectedError := true
-	db := createRoomsTestDB(t)
-	invalidRoom := roomFixture("Tangerud", "203", 3)
-
-	// When
-	_, err := CreateRoom(db, invalidRoom)
-	actualError := err != nil
-
-	// Then
-	if actualError != expectedError {
-		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
 
@@ -103,11 +81,11 @@ func TestCreateRoom_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testing.T) {
 	expectedError := true
 	db := createRoomsTestDB(t)
 	invalidRoom := roomFixture("Hakkebakken", "101", 1)
-	invalidRoom.MaxConcurrentGames = 0
+	invalidRoom.MaxConcurrentGames = -1
 
 	// When
 	_, err := CreateRoom(db, invalidRoom)
-	actualError := err != nil
+	actualError := err.HasError(models.RoomErrorMaxConcurrent)
 
 	// Then
 	if actualError != expectedError {

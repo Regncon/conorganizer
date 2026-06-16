@@ -1,6 +1,8 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type Room struct {
 	ID                 int    `json:"id"`
@@ -106,19 +108,60 @@ type RoomFormSignals struct {
 	Mode        string `json:"mode"`
 	FormTitle   string `json:"form_title"`
 	ButtonLabel string `json:"button_label"`
-
-	Errors RoomFormErrors `json:"errors"`
 }
 
-type RoomFormErrors struct {
-	RoomNumber         string `json:"room_number"`
-	MaxConcurrentGames string `json:"max_concurrent_games"`
-	Error              string `json:"error"`
+type RoomErrorKey string
+
+const (
+	RoomError              RoomErrorKey = "error"
+	RoomErrorFloor         RoomErrorKey = "floor"
+	RoomErrorIsDisabled    RoomErrorKey = "is_disabled"
+	RoomErrorMaxConcurrent RoomErrorKey = "max_concurrent_games"
+	RoomErrorName          RoomErrorKey = "name"
+	RoomErrorNotes         RoomErrorKey = "notes"
+	RoomErrorRoomNumber    RoomErrorKey = "room_number"
+)
+
+// RoomFormErrors is used in validation and error handling when creating and updating rooms
+type RoomFormErrors map[RoomErrorKey]string
+
+// ResetErrors resets all the errors to empty strings
+func (errors RoomFormErrors) ResetErrors() {
+	errors[RoomError] = ""
+	errors[RoomErrorFloor] = ""
+	errors[RoomErrorIsDisabled] = ""
+	errors[RoomErrorMaxConcurrent] = ""
+	errors[RoomErrorName] = ""
+	errors[RoomErrorNotes] = ""
+	errors[RoomErrorRoomNumber] = ""
 }
 
-// HasErrors is a hepler function for quickly getting if error status on create/update room details
-func (e RoomFormErrors) HasErrors() bool {
-	return e.RoomNumber != "" ||
-		e.MaxConcurrentGames != "" ||
-		e.Error != ""
+// AddError is a helper function for adding an error message
+func (errors RoomFormErrors) AddError(errorKey RoomErrorKey, errorMessage string) {
+	errors[errorKey] = errorMessage
+}
+
+// HasErrors is a hepler function for quickly checking if a certain error exists
+func (errors RoomFormErrors) HasError(errorKey RoomErrorKey) bool {
+	return errors[errorKey] != ""
+}
+
+// HasErrors is a hepler function for quickly checking if any errors exists from validation
+func (errors RoomFormErrors) HasErrors() bool {
+	for _, msg := range errors {
+		if msg != "" {
+			return true
+		}
+	}
+	return false
+}
+
+func (errors RoomFormErrors) GetKeys() []string {
+	keys := make([]string, 0, len(errors))
+
+	for key := range errors {
+		keys = append(keys, string(key))
+	}
+
+	return keys
 }
