@@ -15,6 +15,11 @@
      * @property {(shadowRoot: ShadowRoot, urls: string[]) => Promise<void>} applyStyleUrlsToShadowRoot
      */
     /**
+     * @typedef {Object} BillettholderSelectionStyle
+     * @property {(color: string) => string} backgroundColor
+     * @property {(color: string) => string} border
+     */
+    /**
      * @typedef {Object} BillettholderSelection
      * @property {() => void} clear
      * @property {(name: string) => string} colorFromName
@@ -23,6 +28,7 @@
      * @property {(associatedBillettholdere: unknown[], yourBillettholder: unknown) => StoredBillettholder | null} initialize
      * @property {(callback: (billettholder: StoredBillettholder | null) => void) => () => void} onChange
      * @property {(billettholder: unknown) => StoredBillettholder | null} set
+     * @property {BillettholderSelectionStyle} style
      * @property {string} storageKey
      */
     /**
@@ -303,6 +309,36 @@
         }
 
         /**
+         * @param {string} color
+         * @returns {string}
+         */
+        function initialsBackgroundColor(color) {
+            if (!isBillettholderColor(color)) {
+                return ""
+            }
+
+            return `hsl(from ${color} h s l / 0.5)`
+        }
+
+        /**
+         * @param {string} color
+         * @returns {string}
+         */
+        function initialsBorder(color) {
+            if (!isBillettholderColor(color)) {
+                return ""
+            }
+
+            return `1px solid ${color}`
+        }
+
+        /** @type {BillettholderSelectionStyle} */
+        const style = Object.freeze({
+            backgroundColor: initialsBackgroundColor,
+            border: initialsBorder,
+        })
+
+        /**
          * @param {string} name
          * @returns {string}
          */
@@ -348,6 +384,7 @@
             initialize,
             onChange,
             set,
+            style,
             storageKey: SELECTED_BILLETTHOLDER_STORAGE_KEY,
         })
     }

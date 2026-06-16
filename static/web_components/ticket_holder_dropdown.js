@@ -13,6 +13,10 @@ if (!customElements.get("billettholder-dropdown")) {
      *     billettholderSelection: {
      *       get: () => {Id:number, Name:string, Email:string, Color?:string} | null,
      *       set: (billettholder: {Id:number, Name:string, Email:string, Color?:string}) => unknown,
+     *       style: {
+     *         backgroundColor: (color: string) => string,
+     *         border: (color: string) => string,
+     *       },
      *     },
      *   },
      * }} TicketHolderWindow
@@ -230,8 +234,8 @@ if (!customElements.get("billettholder-dropdown")) {
             const initialsEle = document.createElement("span")
             initialsEle.className = "initials"
             if (billettholder.Color) {
-                initialsEle.style.backgroundColor = `hsl(from ${ billettholder.Color } h s l / 0.5)`
-                initialsEle.style.border = `1px solid ${ billettholder.Color }`
+                initialsEle.style.backgroundColor = typedWindow.conorganizer.billettholderSelection.style.backgroundColor(billettholder.Color)
+                initialsEle.style.border = typedWindow.conorganizer.billettholderSelection.style.border(billettholder.Color)
             }
             initialsEle.textContent = this.getInitials(billettholder.Name)
 
