@@ -3,12 +3,12 @@ package admin
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
 
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/admin/approval"
@@ -240,10 +240,15 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						}
 
 						// Initiate new signals
-						store := models.RoomFormSignals{}
-						store.Errors = models.RoomFormErrors{}
-						store.Errors.ResetErrors()
+						sse := datastar.NewSSE(w, r)
 
+						// Clear error messages
+						roomErrors := models.RoomFormErrors{}
+						roomErrors.ResetErrors()
+						feedback := errorfeedback.New(roomErrors.GetKeys()...)
+
+						// Fill form bindings
+						store := models.RoomFormSignals{}
 						if roomID == 0 {
 							store.FormTitle = "Legg til et nytt rom"
 							store.ButtonLabel = "Legg til"
@@ -254,8 +259,8 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 
 							room, err := roomService.GetRoomByID(db, int(roomID))
 							if err != nil {
-								store.FormTitle = "Oppdaterer rom"
-								store.Errors.AddError(models.RoomError, err.Error())
+								store.FormTitle = "Finner ikkje rom"
+								feedback.Set("error", err.Error())
 							} else {
 								store.FormTitle = "Oppdaterer rom " + room.RoomNumber
 
@@ -270,17 +275,11 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							}
 						}
 
-						// Patch signals
-						sse := datastar.NewSSE(w, r)
-						payload, err := json.Marshal(store)
-						if err != nil {
-							logger.Error("Failed to marshal signals", "error", err.Error())
-							http.Error(w, "Failed to marshal signals", http.StatusInternalServerError)
-						}
-
-						if err := sse.PatchSignals(payload); err != nil {
-							logger.Error("Failed to patch signals", "error", err.Error())
-							http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+						// Path signals
+						feedback.Patch(sse)
+						if err := sse.MarshalAndPatchSignals(store); err != nil {
+							logger.Error("Failed to marshal and patch signals", "error", err.Error())
+							http.Error(w, "Failed to marshal and patch signals", http.StatusInternalServerError)
 							return
 						}
 					})
@@ -326,21 +325,16 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 
 						// Set up sse signals for response
 						sse := datastar.NewSSE(w, r)
+
+						feedbackKeys := roomErrors.GetKeys()
+						feedback := errorfeedback.New(feedbackKeys...)
+
 						if roomErrors.HasErrors() {
-							store.Errors = roomErrors
-
-							payload, err := json.Marshal(store)
-							if err != nil {
-								logger.Error("Failed to marshal signals", "error", err.Error())
-								http.Error(w, "Failed to marshal signals", http.StatusInternalServerError)
+							for errorKey, errorMsg := range roomErrors {
+								feedback.Set(string(errorKey), errorMsg)
 							}
 
-							if err := sse.PatchSignals(payload); err != nil {
-								logger.Error("Failed to patch signals", "error", err.Error())
-								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
-							}
-
-							// Stop and let user fix errors
+							feedback.Patch(sse)
 							return
 						}
 

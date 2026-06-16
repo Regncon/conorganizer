@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"sort"
 
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
@@ -19,88 +20,93 @@ templ formModal() {
 	>
 		<form
 			id="room-form"
-			data-signals="{
-                errors: {}
-            }"
+			{ errorfeedback.DefaultMessage("Could not save. Try again.")... }
 		>
+			<pre data-json-signals=""></pre>
 			<h2 data-text="$form_title"></h2>
 			<label class="label color-strong form-group">
 				<p>Navn</p>
 				<input
 					type="text"
 					name="name"
-					data-bind="name"
-					class="input"
 					placeholder="Kallenavn på rom"
 					title="Kallenavnet på rommet"
+					class="input"
+					data-bind="name"
+					{ errorfeedback.Attrs("name")... }
 				/>
-				<p data-text="$errors.name" class="input-error"></p>
+				@errorfeedback.RenderMessage("name")
 			</label>
 			<label class="label color-strong form-group">
 				<p>Romnummer</p>
 				<input
 					type="text"
 					name="number"
-					data-bind="room_number"
-					class="input"
+					title="Nummer på rommet basert på rom oversikt"
 					placeholder="Nummer på rom"
 					required
 					pattern=".{1,}"
-					title="Nummer på rommet basert på rom oversikt"
+					class="input"
+					data-bind="room_number"
+					{ errorfeedback.Attrs("room_number")... }
 				/>
-				<p data-text="$errors.room_number" class="input-error"></p>
+				@errorfeedback.RenderMessage("room_number")
 			</label>
 			<label class="label color-strong form-group">
 				<p>Etasje</p>
 				<input
 					type="number"
 					name="floor"
-					data-bind="floor"
-					class="input"
+					title="Etasje for rommet"
 					placeholder="Etasje for rom"
 					required
 					pattern=".{1,}"
-					title="Etasje for rommet"
+					class="input"
+					data-bind="floor"
+					{ errorfeedback.Attrs("floor")... }
 				/>
-				<p data-text="$errors.floor" class="input-error"></p>
+				@errorfeedback.RenderMessage("floor")
 			</label>
 			<label class="label color-strong form-group">
 				<p>Maks eventer i en pulje</p>
 				<input
 					type="number"
 					name="max_concurrent_games"
-					data-bind="max_concurrent_games"
-					class="input"
+					title="Hvor mangen spill kan forekomme parallelt på et rom i en pulje"
 					placeholder="Max spill på et rom"
 					required
 					pattern=".{1,}"
-					title="Hvor mangen spill kan forekomme parallelt på et rom i en pulje"
+					class="input"
+					data-bind="max_concurrent_games"
+					{ errorfeedback.Attrs("max_concurrent_games")... }
 				/>
-				<p data-text="$errors.max_concurrent_games" class="input-error"></p>
+				@errorfeedback.RenderMessage("max_concurrent_games")
 			</label>
 			<label class="label color-strong form-group">
 				<p>Notater</p>
 				<textarea
 					name="notes"
-					data-bind="notes"
-					class="input"
-					placeholder="Her kan du skrive notater for rommet"
 					title="Her kan du skrive notater for rommet"
+					placeholder="Her kan du skrive notater for rommet"
 					rows="4"
+					class="input"
+					data-bind="notes"
+					{ errorfeedback.Attrs("notes")... }
 				></textarea>
-				<p data-text="$errors.notes" class="input-error"></p>
+				@errorfeedback.RenderMessage("notes")
 			</label>
 			<label class="label color-strong form-group flex input" style="gap: var(--spacing-2x); align-items: center;">
 				<input
 					name="isDisabled"
-					data-bind="is_disabled"
 					type="checkbox"
-					class="checkbox input"
 					title="Skjul synlighet i puljefordeling for rommet"
+					class="checkbox input"
+					data-bind="is_disabled"
+					{ errorfeedback.Attrs("is_disabled")... }
 				/>
 				<p>Skal rom være skjult i puljefordeling?</p>
 			</label>
-			<p data-text="$errors.is_disabled" class="input-error"></p>
+			@errorfeedback.RenderMessage("is_disabled")
 			<span class="button-group">
 				<button
 					type="button"
@@ -131,7 +137,7 @@ templ formModal() {
 					class="btn btn--outline"
 				></button>
 			</span>
-			<p data-text="$errors.error" class="input-error"></p>
+			@errorfeedback.RenderMessage("error")
 		</form>
 		<button class="modal-close-button icon-size-24" commandfor="room-dialog" command="close">
 			@icons.Icon(icons.Close, icons.Size24)

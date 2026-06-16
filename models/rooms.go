@@ -1,6 +1,8 @@
 package models
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 type Room struct {
 	ID                 int    `json:"id"`
@@ -106,8 +108,6 @@ type RoomFormSignals struct {
 	Mode        string `json:"mode"`
 	FormTitle   string `json:"form_title"`
 	ButtonLabel string `json:"button_label"`
-
-	Errors RoomFormErrors `json:"errors"`
 }
 
 type RoomErrorKey string
@@ -154,4 +154,14 @@ func (errors RoomFormErrors) HasErrors() bool {
 		}
 	}
 	return false
+}
+
+func (errors RoomFormErrors) GetKeys() []string {
+	keys := make([]string, 0, len(errors))
+
+	for key := range errors {
+		keys = append(keys, string(key))
+	}
+
+	return keys
 }
