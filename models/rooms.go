@@ -114,16 +114,27 @@ type RoomErrorKey string
 
 const (
 	RoomError              RoomErrorKey = "error"
-	RoomErrorName          RoomErrorKey = "name"
-	RoomErrorRoomNumber    RoomErrorKey = "room_number"
-	RoomErrorMaxConcurrent RoomErrorKey = "max_concurrent_games"
 	RoomErrorFloor         RoomErrorKey = "floor"
-	RoomErrorNotes         RoomErrorKey = "notes"
 	RoomErrorIsDisabled    RoomErrorKey = "is_disabled"
+	RoomErrorMaxConcurrent RoomErrorKey = "max_concurrent_games"
+	RoomErrorName          RoomErrorKey = "name"
+	RoomErrorNotes         RoomErrorKey = "notes"
+	RoomErrorRoomNumber    RoomErrorKey = "room_number"
 )
 
 // RoomFormErrors is used in validation and error handling when creating and updating rooms
 type RoomFormErrors map[RoomErrorKey]string
+
+// ResetErrors resets all the errors to empty strings
+func (errors RoomFormErrors) ResetErrors() {
+	errors[RoomError] = ""
+	errors[RoomErrorFloor] = ""
+	errors[RoomErrorIsDisabled] = ""
+	errors[RoomErrorMaxConcurrent] = ""
+	errors[RoomErrorName] = ""
+	errors[RoomErrorNotes] = ""
+	errors[RoomErrorRoomNumber] = ""
+}
 
 // AddError is a helper function for adding an error message
 func (errors RoomFormErrors) AddError(errorKey RoomErrorKey, errorMessage string) {
@@ -137,5 +148,10 @@ func (errors RoomFormErrors) HasError(errorKey RoomErrorKey) bool {
 
 // HasErrors is a hepler function for quickly checking if any errors exists from validation
 func (errors RoomFormErrors) HasErrors() bool {
-	return len(errors) > 0
+	for _, msg := range errors {
+		if msg != "" {
+			return true
+		}
+	}
+	return false
 }

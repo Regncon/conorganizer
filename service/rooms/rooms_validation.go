@@ -10,9 +10,10 @@ import (
 // ValidateRooms validates that required entries in `room` is valid and returns all encutered errors
 func ValidateRooms(room models.Room) models.RoomFormErrors {
 	errors := models.RoomFormErrors{}
+	errors.ResetErrors()
 
 	if room.Name != "" && strings.TrimSpace(room.Name) == "" {
-		errors.AddError(models.RoomErrorRoomNumber, "Rom namn kan ikkje berre innehalde mellomrom")
+		errors.AddError(models.RoomErrorName, "Rom namn kan ikkje berre innehalde mellomrom")
 	}
 
 	if utf8.RuneCountInString(room.Name) > 50 {
