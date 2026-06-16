@@ -275,8 +275,12 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							}
 						}
 
-						// Path signals
-						feedback.Patch(sse)
+						// Patch signals
+						if err := feedback.Patch(sse); err != nil {
+							logger.Error("Failed to marshal and patch feedback signals", "error", err.Error())
+							http.Error(w, "Failed to marshal and patch feedback signals", http.StatusInternalServerError)
+							return
+						}
 						if err := sse.MarshalAndPatchSignals(store); err != nil {
 							logger.Error("Failed to marshal and patch signals", "error", err.Error())
 							http.Error(w, "Failed to marshal and patch signals", http.StatusInternalServerError)
@@ -334,7 +338,11 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 								feedback.Set(string(errorKey), errorMsg)
 							}
 
-							feedback.Patch(sse)
+							if err := feedback.Patch(sse); err != nil {
+								logger.Error("Failed to marshal and patch feedback signals", "error", err.Error())
+								http.Error(w, "Failed to marshal and patch feedback signals", http.StatusInternalServerError)
+
+							}
 							return
 						}
 
@@ -381,7 +389,10 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 
 						// Close modal on success
 						sse := datastar.NewSSE(w, r)
-						_ = sse.ExecuteScript(`document.getElementById('room-dialog').close()`)
+						if err := sse.ExecuteScript(`document.getElementById('room-dialog').close()`); err != nil {
+							logger.Error("Failed to execute sse script", "error", err.Error())
+							http.Error(w, "Failed to execute sse script", http.StatusInternalServerError)
+						}
 					})
 				})
 
