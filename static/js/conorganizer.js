@@ -21,7 +21,7 @@
      * @property {() => StoredBillettholder | null} get
      * @property {(name: string) => string} getInitials
      * @property {(associatedBillettholdere: unknown[], yourBillettholder: unknown) => StoredBillettholder | null} initialize
-     * @property {string} selectionChangeEvent
+     * @property {(callback: (billettholder: StoredBillettholder | null) => void) => () => void} onChange
      * @property {(billettholder: unknown) => StoredBillettholder | null} set
      * @property {string} storageKey
      */
@@ -289,6 +289,20 @@
         }
 
         /**
+         * @param {(billettholder: StoredBillettholder | null) => void} callback
+         * @returns {() => void}
+         */
+        function onChange(callback) {
+            const handleSelectionChange = (event) => {
+                const selectionEvent = /** @type {CustomEvent<unknown>} */ (event)
+                callback(normalizeBillettholder(selectionEvent.detail))
+            }
+
+            window.addEventListener(SELECTION_CHANGE_EVENT, handleSelectionChange)
+            return () => window.removeEventListener(SELECTION_CHANGE_EVENT, handleSelectionChange)
+        }
+
+        /**
          * @param {string} name
          * @returns {string}
          */
@@ -332,7 +346,7 @@
             get,
             getInitials,
             initialize,
-            selectionChangeEvent: SELECTION_CHANGE_EVENT,
+            onChange,
             set,
             storageKey: SELECTED_BILLETTHOLDER_STORAGE_KEY,
         })

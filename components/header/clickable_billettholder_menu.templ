@@ -58,9 +58,7 @@ templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB
 			};
 
 			updateSelectedBillettholder(selection.initialize(associatedBillettholdere, fallbackBillettholder));
-			window.addEventListener(selection.selectionChangeEvent, (event) => {
-				updateSelectedBillettholder(event.detail);
-			});
+			selection.onChange(updateSelectedBillettholder);
 		})();
 	</script>
 }
