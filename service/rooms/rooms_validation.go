@@ -24,7 +24,7 @@ func ValidateRooms(room models.Room) models.RoomFormErrors {
 	}
 
 	if strings.TrimSpace(room.RoomNumber) == "" {
-		errors.AddError(models.RoomErrorRoomNumber, "Rom nummer er påkrevd")
+		errors.AddError(models.RoomErrorRoomNumber, "Romnummer er påkravd")
 	}
 
 	if utf8.RuneCountInString(room.RoomNumber) > 10 {
@@ -37,7 +37,7 @@ func ValidateRooms(room models.Room) models.RoomFormErrors {
 	if room.MaxConcurrentGames < 0 {
 		errors.AddError(
 			models.RoomErrorMaxConcurrent,
-			"Du kan ikke bruke negative tall",
+			"Maks samtidige spel kan ikkje vere negativt",
 		)
 	}
 
