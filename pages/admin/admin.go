@@ -239,12 +239,10 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 
-						// Handle signals depending on create or update room
-						store := &models.RoomFormSignals{}
-						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
-							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
-							return
-						}
+						// Initiate new signals
+						store := models.RoomFormSignals{}
+						store.Errors = models.RoomFormErrors{}
+						store.Errors.ResetErrors()
 
 						if roomID == 0 {
 							store.FormTitle = "Legg til et nytt rom"
@@ -302,7 +300,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 
-						// Read data-star post submission
+						// Read data post submission
 						store := &models.RoomFormSignals{}
 						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
@@ -318,9 +316,6 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							Notes:              store.Notes,
 						}
 
-						// Set up sse signals for response
-						sse := datastar.NewSSE(w, r)
-
 						// Decide between create and update based on room ID
 						var roomErrors models.RoomFormErrors
 						if room.ID == 0 {
@@ -328,8 +323,12 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						} else {
 							_, roomErrors = roomService.UpdateRoom(db, room)
 						}
+
+						// Set up sse signals for response
+						sse := datastar.NewSSE(w, r)
 						if roomErrors.HasErrors() {
 							store.Errors = roomErrors
+
 							payload, err := json.Marshal(store)
 							if err != nil {
 								logger.Error("Failed to marshal signals", "error", err.Error())
@@ -341,7 +340,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
 							}
 
-							// Stop signals and let user update form
+							// Stop and let user fix errors
 							return
 						}
 
@@ -357,6 +356,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
 						}
+
 					})
 
 					roomApiRouter.Delete("/", func(w http.ResponseWriter, r *http.Request) {
