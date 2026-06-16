@@ -273,6 +273,7 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                         border: 1px solid var(--bg-item-border);
                         border-radius: var(--border-radius-2x);
                         background: var(--bg-item);
+                        height: 100%;
                     }
 
                     .image-upload__panel--has-image {
@@ -287,6 +288,7 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                             var(--image-upload-background-image);
                         background-position: center;
                         background-size: cover;
+                        height: 100%;
 
                         .image-upload__content {
                             display: none;
