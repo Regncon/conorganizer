@@ -46,18 +46,15 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		{Name: "Rediger arrangement", Url: ""},
 	}) {
 	}
-	<div class="page-content-container ultrawide-content">
-		<h1 class="page-heading">Rediger arrangement</h1>
-		@event.EventFormWithPreview() {
-			<form
-				class="formsubmission-wrapper"
-				{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(isAdmin))... }
-			>
-				@formsubmission.FormBody(eventData, isAdmin, db)
-			</form>
-			@event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
-		}
-	</div>
+	@formsubmission.EventFormPageLayout("Rediger arrangement", true) {
+		<form
+			class="formsubmission-wrapper"
+			{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(isAdmin))... }
+		>
+			@formsubmission.FormBody(eventData, isAdmin, db)
+		</form>
+		@event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
+	}
 	<div class="page-content-container wide-content">
 		@formsubmission.WhoIsInterested(eventId, db, logger)
 	</div>

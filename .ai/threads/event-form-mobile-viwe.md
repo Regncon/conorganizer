@@ -277,3 +277,204 @@ I left the unrelated `.ai/threads/event-form-mobile-viwe.md` change untouched.
 Time: 2026-06-16 20:20:31
 --- Next Prompt ---
 
+Let's see if we can refactor a little. Since both pages basically have the same layout, can we move the EventFormWithPreview into some sort of header component? 
+The code seems a little clunky with the EventFormWithPreview and the EventFormPreview in the same file since the EventFormWithPreview is basically just a wrapper for the form itself.
+
+Let's have a discussion about thing, pleas ask any clarifying questions you have and share your thoughts on the refactor before you implement it.
+
+
+Time: 2026-06-16 20:49:03
+--- Codex Run ---
+
+Codex output:
+Yes, I think there’s a better shape here.
+
+Right now `EventFormWithPreview()` and `EventFormPreview()` are low-level pieces, so the calling pages still have to remember the exact composition:
+
+```templ
+@event.EventFormWithPreview() {
+    <form>...</form>
+    @event.EventFormPreview(...)
+}
+```
+
+That’s a bit leaky. The pages care about “render this form page with an optional preview”, not about assembling the preview layout manually.
+
+My preferred refactor would be a higher-level component, something like:
+
+```templ
+@event.EventFormPageLayout(
+    "Nytt arrangement",
+    false,  // ultrawide
+    isAdmin,
+    eventData,
+    puljerForEvent,
+    eventImageDir,
+) {
+    <form class="formsubmission-wrapper">...</form>
+}
+```
+
+And for admin:
+
+```templ
+@event.EventFormPageLayout(
+    "Rediger arrangement",
+    true, // ultrawide
+    true,
+    eventData,
+    puljerForEvent,
+    eventImageDir,
+) {
+    <form class="formsubmission-wrapper">...</form>
+}
+```
+
+That component would own:
+
+- the `page-content-container`
+- the optional `ultrawide-content`
+- the page heading
+- the form/preview grid CSS
+- the optional preview rendering
+- the `event-container event-form-preview` wrapper
+
+Then the two pages only provide their form body and whether preview should show.
+
+I would probably not call it a “header component”, because it is doing more than header work. Names I’d consider:
+
+- `EventFormPageLayout`
+- `EventFormPreviewLayout`
+- `EventFormPageShell`
+- `EventFormEditorLayout`
+
+My preference is `EventFormPageLayout` because it describes the actual responsibility without implying it only renders the heading.
+
+Clarifying questions before implementing:
+
+1. Should the profile page heading move outside the `<form>`?
+   Admin already has `<h1>` outside the form. Profile currently has it inside. I’d prefer moving it outside so both pages share the same layout structure.
+
+2. Should the component live in `pages/event`, as now, or would you rather have it under `components/formsubmission`?
+   My recommendation is `pages/event` for now, because it calls `Event_mobile`. Putting it in `components/formsubmission` would make a component package import a page package, which feels backwards.
+
+3. Should the admin-only `WhoIsInterested` stay outside this layout?
+   I think yes. It is not part of the form/preview pair and keeping it separate avoids making the shared component too broad.
+
+My suggested implementation: replace the two current components with one higher-level `EventFormPageLayout(...)` component in `pages/event/event_form_preview.templ`, and update both pages to pass only the form content as `children`.
+
+Time: 2026-06-16 20:49:03
+--- Next Prompt ---
+1. Yes, moving H1 is a good idea.
+2. I think it should live in the components/formsubmission package.
+3. Yes. I agree that is not part of the form.
+
+Are they truly the same layout? Or are we doing a premature optimization by trying to unify them?
+I like following Martin Fowler's rule of three for refactors.
+
+Let's continue the discussion.
+
+Time: 2026-06-16 20:55:41
+--- Codex Run ---
+
+Codex output:
+I think they are the same layout, but only at one specific level:
+
+Same:
+- page container
+- H1
+- form as primary column
+- optional event preview as secondary column
+- same breakpoint behavior
+- same “preview only appears when present” rule
+
+Different:
+- breadcrumbs
+- form action/submit behavior
+- profile preview is conditional on admin
+- admin page has `WhoIsInterested` below
+- profile includes submit section, admin does not
+- admin uses `ultrawide-content`, profile does not
+
+So I would not unify the whole page. That would be premature and would probably make the component too clever.
+
+I do think it is reasonable to unify the layout shell, because the duplicated layout already caused the same class of bug in both places. That’s a stronger signal than plain duplication. Fowler’s rule of three is a good default, but “the same bug appeared in both copies” is usually enough reason to extract a narrow abstraction.
+
+My recommended shape:
+
+```templ
+@formsubmission.EventFormPageLayout("Nytt arrangement", false) {
+    <form class="formsubmission-wrapper">...</form>
+    if isAdmin {
+        @event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
+    }
+}
+```
+
+Admin:
+
+```templ
+@formsubmission.EventFormPageLayout("Rediger arrangement", true) {
+    <form class="formsubmission-wrapper">...</form>
+    @event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
+}
+```
+
+This puts the layout shell in `components/formsubmission`, as you prefer, without making it know about event preview internals. It owns:
+
+- `page-content-container`
+- optional `ultrawide-content`
+- H1 placement
+- the form/preview grid CSS
+- the child slot where the form and optional preview are rendered
+
+Then `event.EventFormPreview` can stay in `pages/event`, because it calls `Event_mobile`.
+
+That gives us a clean split:
+
+- `formsubmission.EventFormPageLayout`: “how event forms are laid out”
+- `event.EventFormPreview`: “how the event preview is rendered”
+
+One clarification before implementing: are you okay with the page still explicitly rendering `event.EventFormPreview(...)` inside the layout child block? That keeps package dependencies clean. The alternative is making `components/formsubmission` import `pages/event`, which I’d avoid unless we first move `Event_mobile` into a real component package.
+
+Time: 2026-06-16 20:55:41
+--- Next Prompt ---
+Yes, I'm okay with the page explicitly rendering the preview.
+
+Time: 2026-06-16 21:00:24
+--- Codex Run ---
+
+Codex output:
+I’ll split the responsibilities now: move the page/container/grid/H1 shell into `components/formsubmission`, leave the concrete event preview in `pages/event`, and update both pages to compose those two pieces explicitly.
+The layout shell is now in `components/formsubmission`. I’ll trim the event file down to only the concrete preview renderer.
+Next I’ll update the two pages to use `formsubmission.EventFormPageLayout(...)` and keep `event.EventFormPreview(...)` explicit inside the child block.
+The profile H1 is now owned by the layout component. I’ll do the same for the admin page and pass `ultrawide=true`.
+The composition now matches the discussed split. I’ll regenerate templ output to catch any component reference issues.
+Templ generation passed. I’ll run the focused tests and check for stale references to the old wrapper.
+Focused tests pass and the old `EventFormWithPreview` reference is gone. I’ll run the full suite and a scoped whitespace check.
+The full suite passed. Since the new layout file is untracked, I’m doing a direct trailing-whitespace check on it before summarizing.
+Implemented the split we discussed.
+
+The layout shell now lives in [event_form_page_layout.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/event_form_page_layout.templ:3) as `formsubmission.EventFormPageLayout(title, ultrawide)`. It owns the page container, H1, grid wrapper, and form/preview layout CSS.
+
+The concrete preview renderer stays in [event_form_preview.templ](/home/cinmay/Documents/conorganizer/pages/event/event_form_preview.templ:8) as `event.EventFormPreview(...)`.
+
+Both pages now compose them explicitly:
+
+- [new_page.templ](/home/cinmay/Documents/conorganizer/pages/profile/newevent/new_page.templ:54)
+- [edit_form_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/approval/editForm/edit_form_page.templ:49)
+
+`index.css` no longer contains the `event-form-*` layout selectors.
+
+Verification passed:
+
+```sh
+go tool templ generate
+GOCACHE=/tmp/go-build go test ./...
+```
+
+I left the unrelated `.ai/threads/event-form-mobile-viwe.md` change untouched.
+
+Time: 2026-06-16 21:00:24
+--- Next Prompt ---
+

@@ -51,17 +51,15 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 			{Name: "Min Side", Url: "/profile"},
 			{Name: "Nytt arrangement", Url: ""},
 			})
-			<div class="page-content-container">
-				@event.EventFormWithPreview() {
-					<form
-						class="formsubmission-wrapper"
-						action={ "/profile/api/new/" + eventData.ID + "/submit" }
-						method="post"
-						{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(isAdmin))... }
-						{ errorfeedback.Attrs("submit")... }
-						data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/submit', {contentType: 'form'})", eventData.ID) }
-					>
-					<h1 class="page-heading">Nytt arrangement</h1>
+			@formsubmission.EventFormPageLayout("Nytt arrangement", false) {
+				<form
+					class="formsubmission-wrapper"
+					action={ "/profile/api/new/" + eventData.ID + "/submit" }
+					method="post"
+					{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(isAdmin))... }
+					{ errorfeedback.Attrs("submit")... }
+					data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/submit', {contentType: 'form'})", eventData.ID) }
+				>
 					@formsubmission.FormBody(eventData, isAdmin, db)
 					@formsubmission.SubmitSection()
 				</form>
@@ -69,6 +67,5 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 					@event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
 				}
 			}
-		</div>
 	}
 }
