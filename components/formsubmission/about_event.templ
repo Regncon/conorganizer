@@ -238,26 +238,26 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				</select>
 				@errorfeedback.RenderMessage("type")
 			</label>
-				<section class="form-group img image-upload">
-					<p class="label-small color-strong">Arrangementbilete</p>
-					<div class="image-upload__panel">
-						<div class="image-upload__content">
-							<span class="image-upload__icon" aria-hidden="true">
-								@icons.Icon(icons.FileUpload, icons.Size40)
-							</span>
-							<p class="image-upload__text">
-								Finn eit bilete som presenterer arrangementet godt og gjer det lettare å kjenne att arrangementet.
-							</p>
-						</div>
-						<a
-							href={ "/profile/new/" + eventId + "/image/" }
-							class="btn btn--secondary image-upload__button"
-						>
-							<span>Last opp bilete</span>
-							<span class="image-upload__button-icon" aria-hidden="true">
-								@icons.Icon(icons.ArrowRight, icons.Size20)
-							</span>
-						</a>
+			<section class="form-group img image-upload">
+				<p class="label-small color-strong">Arrangementbilete</p>
+				<div class="image-upload__panel">
+					<div class="image-upload__content">
+						<span class="image-upload__icon" aria-hidden="true">
+							@icons.Icon(icons.FileUpload, icons.Size40)
+						</span>
+						<p class="image-upload__text">
+							Finn eit bilete som presenterer arrangementet godt og gjer det lettare å kjenne att arrangementet.
+						</p>
+					</div>
+					<a
+						href={ "/profile/new/" + eventId + "/image/" }
+						class="btn btn--secondary image-upload__button"
+					>
+						<span>Last opp bilete</span>
+						<span class="image-upload__button-icon" aria-hidden="true">
+							@icons.Icon(icons.ArrowRight, icons.Size20)
+						</span>
+					</a>
 				</div>
 			</section>
 			<label class="label-small color-strong form-group system">
