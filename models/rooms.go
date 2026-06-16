@@ -110,16 +110,19 @@ type RoomFormSignals struct {
 	Errors RoomFormErrors `json:"errors"`
 }
 
-// Room validation error handling
 type RoomErrorKey string
 
 const (
+	RoomError              RoomErrorKey = "error"
+	RoomErrorName          RoomErrorKey = "name"
 	RoomErrorRoomNumber    RoomErrorKey = "room_number"
 	RoomErrorMaxConcurrent RoomErrorKey = "max_concurrent_games"
 	RoomErrorFloor         RoomErrorKey = "floor"
-	RoomError              RoomErrorKey = "error"
+	RoomErrorNotes         RoomErrorKey = "notes"
+	RoomErrorIsDisabled    RoomErrorKey = "is_disabled"
 )
 
+// RoomFormErrors is used in validation and error handling when creating and updating rooms
 type RoomFormErrors map[RoomErrorKey]string
 
 // AddError is a helper function for adding an error message
