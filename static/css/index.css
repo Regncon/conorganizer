@@ -307,6 +307,11 @@ a.inline-link:active {
     height: 32px;
 }
 
+.icon-size-40 {
+    width: 40px;
+    height: 40px;
+}
+
 hr {
     width: 100%;
     height: 2px;
