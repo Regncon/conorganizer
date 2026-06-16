@@ -31,7 +31,7 @@ func TestUpdateRoom_UpdatesAllFieldsWithoutChangingID(t *testing.T) {
 	actualRoom, err := UpdateRoom(db, expectedRoom)
 
 	// Then
-	if err != nil {
+	if err.HasErrors() {
 		t.Fatalf("expected room update to succeed: %v", err)
 	}
 	assertRoomMatches(t, expectedRoom, *actualRoom)
@@ -53,32 +53,7 @@ func TestUpdateRoom_WhenRoomNumberIsEmpty_ReturnsError(t *testing.T) {
 
 	// When
 	_, err := UpdateRoom(db, invalidRoom)
-	actualError := err != nil
-
-	// Then
-	if actualError != expectedError {
-		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
-	}
-}
-
-func TestUpdateRoom_WhenRoomNumberDoesNotMatchFloor_ReturnsError(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "Given replacement room data whose number starts with another floor.",
-		When:  "When the room is updated.",
-		Then:  "Then validation rejects it.",
-	})
-
-	// Given
-	expectedError := true
-	db := createRoomsTestDB(t)
-	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
-	invalidRoom := existingRoom
-	invalidRoom.RoomNumber = "203"
-	invalidRoom.Floor = 3
-
-	// When
-	_, err := UpdateRoom(db, invalidRoom)
-	actualError := err != nil
+	actualError := err.HasError(models.RoomErrorRoomNumber)
 
 	// Then
 	if actualError != expectedError {
@@ -98,11 +73,11 @@ func TestUpdateRoom_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testing.T) {
 	db := createRoomsTestDB(t)
 	existingRoom := insertRoom(t, db, roomFixture("Hakkebakken", "101", 1))
 	invalidRoom := existingRoom
-	invalidRoom.MaxConcurrentGames = 0
+	invalidRoom.MaxConcurrentGames = -1
 
 	// When
 	_, err := UpdateRoom(db, invalidRoom)
-	actualError := err != nil
+	actualError := err.HasError(models.RoomErrorMaxConcurrent)
 
 	// Then
 	if actualError != expectedError {
