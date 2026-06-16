@@ -52,9 +52,9 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 			{Name: "Min Side", Url: "/profile"},
 			{Name: "Nytt arrangement", Url: ""},
 			})
-			<div style="display: flex;">
+			<div class="page-content-container event-form-with-preview">
 				<form
-					class="formsubmission-wrapper page-content-container"
+					class="formsubmission-wrapper"
 					action={ "/profile/api/new/" + eventData.ID + "/submit" }
 					method="post"
 					{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(isAdmin))... }
@@ -66,7 +66,7 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 				@formsubmission.SubmitSection()
 			</form>
 			if isAdmin {
-				<div style="padding:2rem;">
+				<div class="event-container event-form-preview">
 					@event.Event_mobile(eventData, isRemovedPreviousNext, puljerForEvent, false, false, eventImageDir)
 				</div>
 			}
