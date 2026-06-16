@@ -35,6 +35,8 @@ tasks:
             - |
               set -eu
               mkdir -p tmp/templ-watch
+              lock_dir="tmp/templ-watch/generating.lock"
+              rmdir "$lock_dir" 2>/dev/null || true
 
               hash_templates() {
                 find "$1" -type f -name '*.templ' -exec sha256sum {} + 2>/dev/null \
@@ -43,13 +45,34 @@ tasks:
                   | cut -d ' ' -f 1
               }
 
-              for dir in components pages layouts service; do
-                if [ -d "$dir" ]; then
-                  hash_templates "$dir" > "tmp/templ-watch/$dir.sha256"
+              generate_dirs() {
+                if [ "$#" -eq 0 ]; then
+                  return
                 fi
-              done
+
+                while ! mkdir "$lock_dir" 2>/dev/null; do
+                  sleep 0.1
+                done
+
+                for dir in "$@"; do
+                  if [ ! -d "$dir" ]; then
+                    continue
+                  fi
+
+                  echo "templ: generating $dir"
+                  if ! go tool templ generate -path "$dir" -log-level error; then
+                    echo "templ: generation failed for $dir" >&2
+                  fi
+                  hash_templates "$dir" > "tmp/templ-watch/$dir.sha256"
+                done
+
+                rmdir "$lock_dir"
+              }
+
+              generate_dirs components pages layouts service
 
               while true; do
+                changed_dirs=""
                 for dir in components pages layouts service; do
                   if [ ! -d "$dir" ]; then
                     continue
@@ -60,13 +83,13 @@ tasks:
                   previous_hash="$(cat "$state" 2>/dev/null || true)"
 
                   if [ "$current_hash" != "$previous_hash" ]; then
-                    echo "templ: generating $dir"
-                    if ! go tool templ generate -path "$dir" -log-level error; then
-                      echo "templ: generation failed for $dir" >&2
-                    fi
-                    printf '%s\n' "$current_hash" > "$state"
+                    changed_dirs="$changed_dirs $dir"
                   fi
                 done
+
+                if [ -n "$changed_dirs" ]; then
+                  generate_dirs $changed_dirs
+                fi
 
                 sleep 0.5
               done
@@ -75,16 +98,12 @@ tasks:
         cmds:
             - |
               set -eu
-              for dir in components pages layouts service; do
-                if [ -d "$dir" ]; then
-                  go tool templ generate -path "$dir" -log-level error
-                fi
-              done
+              build_cmd='set -eu; while [ -d tmp/templ-watch/generating.lock ]; do sleep 0.1; done; mkdir -p tmp/bin; out="tmp/bin/main.$$"; go build -buildvcs=false -tags dev -o "$out" .; mv "$out" tmp/bin/main'
 
               go tool air \
-              --build.cmd "go build -buildvcs=false -tags dev -o tmp/bin/main" \
+              --build.cmd "$build_cmd" \
               --build.bin "tmp/bin/main" \
-              --build.delay "1000" \
+              --build.delay "1500" \
               --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
               --build.include_ext "go,js,css,html,svg,webp,ico,png,jpg,jpeg,avif" \
               --build.include_file ".env" \
