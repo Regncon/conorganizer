@@ -432,9 +432,9 @@ input {
     min-inline-size: 0;
 }
 
-@container formsubmission-css-container (width > 800px) {
+@container formsubmission-css-container (width > 1360px) {
     .event-form-with-preview:has(.event-form-preview) {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: minmax(880px, 1fr) minmax(var(--mobile-min-width), 1fr);
         gap: var(--spacing-8x);
     }
 }

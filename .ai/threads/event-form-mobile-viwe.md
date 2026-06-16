@@ -157,4 +157,52 @@ There is an existing untracked file left untouched: `.ai/threads/event-form-mobi
 
 Time: 2026-06-16 10:49:56
 --- Next Prompt ---
+I had to remove the `--responsive-min-width` as it was causing trouble. It was not working before and introducing it caused some issues.
+
+The preview looks fin on the profile page on mobile. 
+There is an issue with the form overlapping with the preview before the 800px breakpoint. For example, the components/formsubmission/contact_info.templ overlaps quite a bit. 
+The form always needs to have about 880px of width at a minimum.
+
+On the admin approval edit form, there is sill horizontal scroll on mobile. I suspect this comes from the interests components/formsubmission/who_is_interested.templ
+
+Time: 2026-06-16 11:45:47
+--- Codex Run ---
+
+Codex output:
+I’ll re-check the current diff after your removal, then inspect the form sections and `WhoIsInterested` layout for fixed/min widths causing overflow. I’ll keep the fix mobile-first and avoid reintroducing the responsive width variable.
+Current working tree shows your code files are clean and only `.ai/threads/event-form-mobile-viwe.md` is modified, so I’m treating your removal as the current baseline and applying a fresh, narrower fix. The overlap before 800px points to the two-column form/preview switch happening too early for the form’s required minimum width.
+The form/preview breakpoint should move later than 800px if the form needs roughly 880px by itself. I’m going to make the two-column wrapper wait until it can fit an 880px form plus a mobile-width preview, and separately make the interest rows wrap/contain on narrow screens.
+I’m going to change the wrapper breakpoint from 800px to a wider threshold and enforce `880px + preview + gap` for the desktop columns. Then I’ll update the interest row CSS from nowrap rows to wrapping/mobile-stacked controls.
+Since the form’s own desktop layout also starts at 800px, I’m moving that internal form breakpoint later as well so the full-width form doesn’t switch before it has roughly the width it needs.
+I’ll update `WhoIsInterested` in two places: the row component gets mobile-stacked defaults, and the outer component becomes a named container so those rows can switch back to compact desktop rows only when there is room.
+The interest action buttons are now stacked by default and wrap on wider containers. I’m replacing the remaining inline wrapper layout with a named container so those container queries have a stable parent.
+The CSS edits are in place. I’ll run templ generation now to catch syntax issues from the nested CSS changes before testing.
+Templ generation succeeded. The diff now only changes the breakpoint behavior and the interest component layout; I’ll run the focused tests first.
+Focused tests pass. `git diff --check` only complained about trailing spaces in the existing `.ai/threads/event-form-mobile-viwe.md` notes file, which I’m leaving untouched; I’ll run the whitespace check scoped to the files I changed and then the full test suite.
+Full tests pass. I’m grabbing final line references now; the only unrelated working-tree change remains the `.ai` note file.
+Implemented the follow-up fixes.
+
+I changed the form/preview split so it no longer switches at `800px`. It now waits until `1360px` and uses columns that guarantee the form gets `880px` minimum before the preview sits beside it: [static/css/index.css](/home/cinmay/Documents/conorganizer/static/css/index.css:435).
+
+I also moved the form body’s own desktop layout breakpoint from `800px` to `920px`, so sections like `contact_info.templ` do not switch to the wider row layout before there is enough actual content width: [form_body.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/form_body.templ:286).
+
+For the admin approval mobile scroll issue, I made `WhoIsInterested` mobile-first:
+- interest rows stack by default and wrap metadata
+- action buttons become full-width stacked controls on narrow screens
+- rows switch back to compact horizontal layout only inside a named container above `720px`
+- billettholder search action buttons also stack first, then wrap on wider layouts
+
+Those changes are in [who_is_interested.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/who_is_interested.templ:415).
+
+Verification passed:
+
+```sh
+go tool templ generate
+GOCACHE=/tmp/go-build go test ./...
+```
+
+I did not reintroduce `--responsive-min-width`. One note: `git diff --check` passes for the files I changed, but the repo-wide check still reports trailing whitespace in your `.ai/threads/event-form-mobile-viwe.md` file, which I left untouched.
+
+Time: 2026-06-16 11:45:47
+--- Next Prompt ---
 

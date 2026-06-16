@@ -412,70 +412,103 @@ func UpdatePlayerStatus(eventId string,
 
 templ interestInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder, isAssigned bool) {
 	<style>
+		.interest-section {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-3x);
+			margin-bottom: var(--spacing-1x);
+			min-inline-size: 0;
 
-        .section {
+			.start {
+				display: flex;
+				flex-wrap: wrap;
+				place-items: center;
+				text-align: start;
+				gap: var(--spacing-2x) var(--spacing-3x);
+				min-inline-size: 0;
 
-            display: flex;
-            gap: 1rem;
-            place-content: space-between;
-            flex-wrap: nowrap;
-            margin-bottom: var(--spacing-1x);
+				.is-gamemaster {
+					display: flex;
+					place-content: center;
+					place-items: center;
+					.is-gamemaster-icon {
+						color: var(--color-accent-cyan);
+					}
+				}
+				.first-choice {
+					color: var(--color-error);
+					font-weight: 700;
+				}
+				.has-been-gamemaster {
+					display: flex;
+					place-content: center;
+					place-items: center;
+					.has-been-gamemaster-icon {
+						color: var(--color-success);
+					}
+				}
+				.other-event-indicator {
+					display: inline-flex;
+					align-items: center;
+					color: var(--color-warning);
+					margin-inline-start: 0.25rem;
+				}
+			}
+			.end {
+				inline-size: 100%;
+				min-inline-size: 0;
 
-	            .start {
-	                display: flex;
-	                place-items: center;
-	                text-align: center;
-	                gap: 1ch;
-                .is-gamemaster {
-                    display: flex;
-                    place-content: center;
-                    place-items: center;
-                    .is-gamemaster-icon {
-                        color: var(--color-accent-cyan);
-                    }
-                }
-	                .first-choice {
-	                    color: var(--color-error);
-	                    font-weight: 700;
-	                }
-	                .has-been-gamemaster {
-	                    display: flex;
-	                    place-content: center;
-	                    place-items: center;
-	                    .has-been-gamemaster-icon {
-	                        color: var(--color-success);
-	                    }
-	                }
-	                .other-event-indicator {
-	                    display: inline-flex;
-	                    align-items: center;
-                    color: var(--color-warning);
-                    margin-inline-start: 0.25rem;
-                }
-            }
-            .end {
-                place-self: end;
+				.btn--outline:hover {
+					background-color: var(--color-primary-hover);
+					border-color: var(--color-primary);
+				}
+				.btn {
+					inline-size: 100%;
+					min-inline-size: 0;
+				}
 
-                .btn--outline:hover {
-                    background-color: var(--color-primary-hover);
-                    border-color: var(--color-primary);
-                }
-                .btn {
-                    min-inline-size: 9.25rem;
-                }
+				.pickers {
+					display: grid;
+					grid-template-columns: 1fr;
+					gap: var(--spacing-2x);
 
-                .pickers {
-                    place-self: center;
-                    display: flex;
-                    gap: var(--spacing-8x);
+					.button-size {
+						inline-size: 100%;
+					}
+				}
+			}
+		}
 
-                        .button-size {
-                            inline-size: fit-content;
-                        }
-                }
-            }
-        }
-    </style>
+		@container who-is-interested (width > 720px) {
+			.interest-section {
+				flex-direction: row;
+				place-content: space-between;
+				gap: 1rem;
+
+				.start {
+					text-align: center;
+					gap: 1ch;
+				}
+				.end {
+					inline-size: auto;
+					place-self: end;
+
+					.btn {
+						inline-size: auto;
+						min-inline-size: 9.25rem;
+					}
+					.pickers {
+						display: flex;
+						gap: var(--spacing-8x);
+
+						.button-size {
+							inline-size: fit-content;
+						}
+					}
+				}
+			}
+		}
+	</style>
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
 			{{
@@ -488,7 +521,7 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 				buttonsInfo := []ButtonInfo{playerAction, gmAction}
 			}}
 			<section
-				class="item-card section"
+				class="item-card interest-section"
 			>
 				<div class="start">
 					if !isAssigned {
@@ -565,13 +598,31 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 		.billettholder-search {
 			margin-block-end: 2rem;
 
-            .billettholder-search-buttons {
-                display: flex;
-                gap: var(--spacing-4x);
-                margin-top: var(--spacing-4x);
-            }
+			.billettholder-search-buttons {
+				display: grid;
+				grid-template-columns: 1fr;
+				gap: var(--spacing-2x);
+				margin-top: var(--spacing-4x);
+
+				.btn {
+					inline-size: 100%;
+				}
+			}
 		}
 
+		@container who-is-interested (width > 600px) {
+			.billettholder-search {
+				.billettholder-search-buttons {
+					display: flex;
+					flex-wrap: wrap;
+					gap: var(--spacing-4x);
+
+					.btn {
+						inline-size: auto;
+					}
+				}
+			}
+		}
 	</style>
 	<div class="billettholder-search">
 		<admin-billettholder-search
@@ -615,6 +666,17 @@ templ puljeSection(eventId string, pulje models.PuljeRow, interests []InterestWi
 }
 
 templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
+	<style>
+		.who-is-interested {
+			container-type: inline-size;
+			container-name: who-is-interested;
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+			margin-block: 2rem;
+			min-inline-size: 0;
+		}
+	</style>
 	{{ interests, interestsErr := GetInterestsForEvent(eventId, db, logger) }}
 	{{ assignees, assigneesErr := GetAssigneesForEvent(eventId, db, logger) }}
 	{{ billettholdere, billettholdereErr := getBillettholdere(db, logger) }}
@@ -632,12 +694,7 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 		}
 	}}
 	<div
-		style="
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-block: 2rem;
-        "
+		class="who-is-interested"
 		data-signals={ dataSignals(map[string]any{"assignmentEventId": eventId, "assignmentBillettholderId": 0, "assignmentPuljeId": "", "assignmentIsPlayer": false, "assignmentIsGm": false, "clearInput": 0}) }
 	>
 		<article class="form-card">
