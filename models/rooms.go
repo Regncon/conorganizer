@@ -110,15 +110,29 @@ type RoomFormSignals struct {
 	Errors RoomFormErrors `json:"errors"`
 }
 
-type RoomFormErrors struct {
-	RoomNumber         string `json:"room_number"`
-	MaxConcurrentGames string `json:"max_concurrent_games"`
-	Error              string `json:"error"`
+// Room validation error handling
+type RoomErrorKey string
+
+const (
+	RoomErrorRoomNumber    RoomErrorKey = "room_number"
+	RoomErrorMaxConcurrent RoomErrorKey = "max_concurrent_games"
+	RoomErrorFloor         RoomErrorKey = "floor"
+	RoomError              RoomErrorKey = "error"
+)
+
+type RoomFormErrors map[RoomErrorKey]string
+
+// AddError is a helper function for adding an error message
+func (errors RoomFormErrors) AddError(errorKey RoomErrorKey, errorMessage string) {
+	errors[errorKey] = errorMessage
 }
 
-// HasErrors is a hepler function for quickly getting if error status on create/update room details
-func (e RoomFormErrors) HasErrors() bool {
-	return e.RoomNumber != "" ||
-		e.MaxConcurrentGames != "" ||
-		e.Error != ""
+// HasErrors is a hepler function for quickly checking if a certain error exists
+func (errors RoomFormErrors) HasError(errorKey RoomErrorKey) bool {
+	return errors[errorKey] != ""
+}
+
+// HasErrors is a hepler function for quickly checking if any errors exists from validation
+func (errors RoomFormErrors) HasErrors() bool {
+	return len(errors) > 0
 }
