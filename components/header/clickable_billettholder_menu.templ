@@ -27,24 +27,13 @@ templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB
 			const associatedBillettholdere = {{associatedBillettholdere}}
 			const fallbackBillettholder = {{currentBillettholder}}
 
-			/**
-			 * @param {unknown} billettholderId
-			 * @returns {unknown | null}
-			 */
-			const findAssociatedBillettholder = (billettholderId) => {
-				if (!Array.isArray(associatedBillettholdere)) {
-					return null;
-				}
-				return associatedBillettholdere.find((billettholder) => Number(billettholder.Id ?? 0) === Number(billettholderId)) ?? null;
-			};
-
 			const updateSelectedBillettholder = (billettholder) => {
 				const selectedBillettholder = billettholder?.Id ? billettholder : selection.get() ?? fallbackBillettholder;
 				if (!selectedBillettholder?.Id) {
 					return;
 				}
 
-				const currentBillettholder = findAssociatedBillettholder(selectedBillettholder.Id) ?? selectedBillettholder;
+				const currentBillettholder = selection.findAssociated(associatedBillettholdere, selectedBillettholder.Id) ?? selectedBillettholder;
 				const initialsElement = container.querySelector(".initials");
 				if (!(initialsElement instanceof HTMLElement)) {
 					return;

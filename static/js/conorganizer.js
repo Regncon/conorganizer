@@ -23,6 +23,7 @@
      * @typedef {Object} BillettholderSelection
      * @property {() => void} clear
      * @property {(name: string) => string} colorFromName
+     * @property {(associatedBillettholdere: unknown[], billettholderId: unknown) => StoredBillettholder | null} findAssociated
      * @property {() => StoredBillettholder | null} get
      * @property {(name: string) => string} getInitials
      * @property {(associatedBillettholdere: unknown[], yourBillettholder: unknown) => StoredBillettholder | null} initialize
@@ -257,23 +258,31 @@
 
         /**
          * @param {unknown[]} associatedBillettholdere
-         * @param {unknown} yourBillettholder
+         * @param {unknown} billettholderId
          * @returns {StoredBillettholder | null}
          */
-        function initialize(associatedBillettholdere, yourBillettholder) {
-            const candidates = Array.isArray(associatedBillettholdere) ? associatedBillettholdere : []
-            /**
-             * @param {unknown} billettholderId
-             * @returns {unknown | undefined}
-             */
-            const findAssociatedBillettholder = (billettholderId) => candidates.find((billettholder) => {
+        function findAssociated(associatedBillettholdere, billettholderId) {
+            if (!Array.isArray(associatedBillettholdere)) {
+                return null
+            }
+
+            const associatedBillettholder = associatedBillettholdere.find((billettholder) => {
                 const candidate = /** @type {{Id?: unknown}} */ (billettholder)
                 return Number(candidate.Id ?? 0) === Number(billettholderId)
             })
 
+            return normalizeBillettholder(associatedBillettholder)
+        }
+
+        /**
+         * @param {unknown[]} associatedBillettholdere
+         * @param {unknown} yourBillettholder
+         * @returns {StoredBillettholder | null}
+         */
+        function initialize(associatedBillettholdere, yourBillettholder) {
             const storedBillettholder = get()
             if (storedBillettholder) {
-                const selectedBillettholder = findAssociatedBillettholder(storedBillettholder.Id)
+                const selectedBillettholder = findAssociated(associatedBillettholdere, storedBillettholder.Id)
                 if (selectedBillettholder) {
                     return set(selectedBillettholder)
                 }
@@ -286,7 +295,7 @@
                 return null
             }
 
-            const selectedBillettholder = findAssociatedBillettholder(normalizedYourBillettholder.Id)
+            const selectedBillettholder = findAssociated(associatedBillettholdere, normalizedYourBillettholder.Id)
             if (!selectedBillettholder) {
                 return null
             }
@@ -379,6 +388,7 @@
         return Object.freeze({
             clear,
             colorFromName,
+            findAssociated,
             get,
             getInitials,
             initialize,
