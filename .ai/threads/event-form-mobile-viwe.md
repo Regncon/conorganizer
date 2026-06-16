@@ -235,4 +235,45 @@ Only unrelated working-tree change besides this remains `.ai/threads/event-form-
 
 Time: 2026-06-16 11:57:58
 --- Next Prompt ---
+Let's create a component for the event preview that can be used in both the profile page and the admin approval page.
+Then we can move the css from index.css to the component file and keep index.css clean.
+
+Time: 2026-06-16 20:20:31
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the current templ patterns for reusable components with style blocks and slots/children, then I’ll move the form-preview wrapper out of `index.css` into a dedicated component used by both pages.
+There’s an important dependency boundary here: I’ll put the reusable preview wrapper in the existing `pages/event` package, since both pages already depend on that package and it can call `Event_mobile` without making `components/formsubmission` import a page package. Then I’ll remove the wrapper CSS from `index.css`.
+The new event preview component owns the wrapper styles now. I’ll remove the same CSS block from `index.css` and update both form pages to call the component.
+I’m adjusting the component shape slightly so it owns only the form/preview grid, while callers keep their existing page container and heading structure. That avoids making the admin heading a grid item.
+Now I’ll replace the raw preview markup in both pages with `event.EventFormWithPreview` and `event.EventFormPreview`.
+The two pages now call the shared event preview component. I’ll regenerate templ output to catch any signature or child-block syntax problems.
+Templ generation passed. I’ll run tests now, including the event package since the new component lives there.
+Focused tests pass and the `event-form-*` CSS is now only in the new event component file, not `index.css`. I’ll run the full suite and scoped whitespace check.
+Full tests pass. I’m checking the new component’s final line numbers and current status so the summary is precise.
+Created the shared event form preview component in [event_form_preview.templ](/home/cinmay/Documents/conorganizer/pages/event/event_form_preview.templ:8).
+
+It now provides:
+
+- `EventFormWithPreview()` for the grid wrapper and its CSS
+- `EventFormPreview(...)` for the preview container plus `Event_mobile`
+
+Updated both callers:
+
+- Profile event form: [new_page.templ](/home/cinmay/Documents/conorganizer/pages/profile/newevent/new_page.templ:55)
+- Admin approval edit form: [edit_form_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/approval/editForm/edit_form_page.templ:51)
+
+Removed the `.event-form-with-preview` / `.event-form-preview` CSS from [index.css](/home/cinmay/Documents/conorganizer/static/css/index.css), so that layout styling is now colocated with the component.
+
+Verification passed:
+
+```sh
+go tool templ generate
+GOCACHE=/tmp/go-build go test ./...
+```
+
+I left the unrelated `.ai/threads/event-form-mobile-viwe.md` change untouched.
+
+Time: 2026-06-16 20:20:31
+--- Next Prompt ---
 

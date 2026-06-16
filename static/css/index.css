@@ -420,25 +420,6 @@ input {
     }
 }
 
-.event-form-with-preview {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--spacing-5x);
-    align-items: start;
-}
-
-.event-form-with-preview .formsubmission-wrapper,
-.event-form-preview {
-    min-inline-size: 0;
-}
-
-@container formsubmission-css-container (width > 1360px) {
-    .event-form-with-preview:has(.event-form-preview) {
-        grid-template-columns: minmax(880px, 1fr) minmax(var(--mobile-min-width), 1fr);
-        gap: var(--spacing-8x);
-    }
-}
-
 .card {
     background: var(--bg-surface);
     border-radius: var(--border-radius-1x);
