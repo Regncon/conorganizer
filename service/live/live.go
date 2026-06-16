@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/a-h/templ"
 	"github.com/delaneyj/toolbelt/embeddednats"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
+	nats "github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -43,11 +46,21 @@ func WithTTL(ttl time.Duration) Option {
 	}
 }
 
+func WithLogger(logger *slog.Logger) Option {
+	return func(m *Manager) {
+		if logger != nil {
+			m.logger = logger.With("component", "live")
+		}
+	}
+}
+
 type Manager struct {
-	store   sessions.Store
-	buckets map[Bucket]keyValue
-	ttl     time.Duration
-	now     func() time.Time
+	store    sessions.Store
+	buckets  map[Bucket]keyValue
+	ttl      time.Duration
+	now      func() time.Time
+	logger   *slog.Logger
+	natsConn *nats.Conn
 }
 
 type keyValue interface {
@@ -73,10 +86,12 @@ func NewManager(ctx context.Context, ns *embeddednats.Server, store sessions.Sto
 	}
 
 	manager := &Manager{
-		store:   store,
-		buckets: make(map[Bucket]keyValue),
-		ttl:     DefaultTTL,
-		now:     time.Now,
+		store:    store,
+		buckets:  make(map[Bucket]keyValue),
+		ttl:      DefaultTTL,
+		now:      time.Now,
+		logger:   slog.Default().With("component", "live"),
+		natsConn: nc,
 	}
 	for _, opt := range opts {
 		opt(manager)
@@ -94,6 +109,22 @@ func NewManager(ctx context.Context, ns *embeddednats.Server, store sessions.Sto
 }
 
 func (m *Manager) EnsureConnection(w http.ResponseWriter, r *http.Request, buckets ...Bucket) (string, error) {
+	connectionID, err := m.ensureSession(w, r)
+	if err != nil {
+		m.logRequestError(r, buckets, "failed to ensure live session", err)
+		return "", err
+	}
+
+	touchStart := time.Now()
+	if err := m.touchConnection(r.Context(), connectionID, buckets...); err != nil {
+		m.logLiveKeyTouchError(r, buckets, "failed to touch live key", err, time.Since(touchStart))
+		return "", err
+	}
+
+	return connectionID, nil
+}
+
+func (m *Manager) ensureSession(w http.ResponseWriter, r *http.Request) (string, error) {
 	sess, err := m.store.Get(r, sessionName)
 	if err != nil {
 		return "", fmt.Errorf("get live session: %w", err)
@@ -108,18 +139,22 @@ func (m *Manager) EnsureConnection(w http.ResponseWriter, r *http.Request, bucke
 		}
 	}
 
+	return connectionID, nil
+}
+
+func (m *Manager) touchConnection(ctx context.Context, connectionID string, buckets ...Bucket) error {
 	value := m.liveValue()
 	for _, bucket := range buckets {
 		kv, err := m.keyValue(bucket)
 		if err != nil {
-			return "", err
+			return err
 		}
-		if _, err := kv.Put(r.Context(), connectionID, value); err != nil {
-			return "", fmt.Errorf("touch live key %s in bucket %s: %w", connectionID, bucket, err)
+		if _, err := kv.Put(ctx, connectionID, value); err != nil {
+			return fmt.Errorf("touch live key in bucket %s: %w", bucket, err)
 		}
 	}
 
-	return connectionID, nil
+	return nil
 }
 
 func (m *Manager) Broadcast(ctx context.Context, buckets ...Bucket) error {
@@ -139,7 +174,7 @@ func (m *Manager) Broadcast(ctx context.Context, buckets ...Bucket) error {
 
 		for _, key := range keys {
 			if _, err := kv.Put(ctx, key, m.liveValue()); err != nil {
-				return fmt.Errorf("broadcast live key %s in bucket %s: %w", key, bucket, err)
+				return fmt.Errorf("broadcast live key in bucket %s: %w", bucket, err)
 			}
 		}
 	}
@@ -148,8 +183,9 @@ func (m *Manager) Broadcast(ctx context.Context, buckets ...Bucket) error {
 }
 
 func (m *Manager) Stream(w http.ResponseWriter, r *http.Request, page Page) {
-	connectionID, err := m.EnsureConnection(w, r, page.Buckets...)
+	connectionID, err := m.ensureSession(w, r)
 	if err != nil {
+		m.logRequestError(r, page.Buckets, "failed to ensure live session", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -165,33 +201,49 @@ func (m *Manager) Stream(w http.ResponseWriter, r *http.Request, page Page) {
 	}
 
 	if err := patch(); err != nil {
+		m.logRequestError(r, page.Buckets, "failed to send initial live patch", err)
 		_ = sse.ConsoleError(err)
 		return
 	}
 
-	watchers := make([]jetstream.KeyWatcher, 0, len(page.Buckets))
+	touchStart := time.Now()
+	if err := m.touchConnection(ctx, connectionID, page.Buckets...); err != nil {
+		m.logLiveKeyTouchError(r, page.Buckets, "failed to touch live key before watching", err, time.Since(touchStart))
+		_ = sse.ConsoleError(err)
+		return
+	}
+
+	watchers := make([]bucketWatcher, 0, len(page.Buckets))
 	for _, bucket := range page.Buckets {
 		kv, err := m.keyValue(bucket)
 		if err != nil {
+			m.logRequestError(r, []Bucket{bucket}, "failed to prepare live watcher", err)
 			_ = sse.ConsoleError(err)
 			return
 		}
 		watcher, err := kv.Watch(ctx, connectionID, jetstream.UpdatesOnly())
 		if err != nil {
+			m.logRequestError(r, []Bucket{bucket}, "failed to start live watcher", err)
 			_ = sse.ConsoleError(err)
 			return
 		}
-		watchers = append(watchers, watcher)
+		watchers = append(watchers, bucketWatcher{bucket: bucket, watcher: watcher})
 	}
 	defer func() {
 		for _, watcher := range watchers {
-			_ = watcher.Stop()
+			if err := watcher.watcher.Stop(); err != nil {
+				if errors.Is(err, nats.ErrBadSubscription) {
+					m.logRequestInfo(r, []Bucket{watcher.bucket}, "live watcher already stopped", err)
+					continue
+				}
+				m.logRequestWarn(r, []Bucket{watcher.bucket}, "failed to stop live watcher", err)
+			}
 		}
 	}()
 
 	updates := make(chan struct{}, 1)
 	for _, watcher := range watchers {
-		go forwardWatcherUpdates(ctx, watcher, updates)
+		go forwardWatcherUpdates(ctx, watcher.watcher, updates)
 	}
 
 	for {
@@ -200,11 +252,80 @@ func (m *Manager) Stream(w http.ResponseWriter, r *http.Request, page Page) {
 			return
 		case <-updates:
 			if err := patch(); err != nil {
+				m.logRequestError(r, page.Buckets, "failed to send live patch after update", err)
 				_ = sse.ConsoleError(err)
 				return
 			}
 		}
 	}
+}
+
+type bucketWatcher struct {
+	bucket  Bucket
+	watcher jetstream.KeyWatcher
+}
+
+func (m *Manager) logRequestError(r *http.Request, buckets []Bucket, message string, err error) {
+	m.log().Error(fmt.Errorf("%s: %w", message, err).Error(), liveRequestLogArgs(r, buckets)...)
+}
+
+func (m *Manager) logRequestWarn(r *http.Request, buckets []Bucket, message string, err error) {
+	m.log().Warn(fmt.Errorf("%s: %w", message, err).Error(), liveRequestLogArgs(r, buckets)...)
+}
+
+func (m *Manager) logRequestInfo(r *http.Request, buckets []Bucket, message string, err error) {
+	m.log().Info(fmt.Errorf("%s: %w", message, err).Error(), liveRequestLogArgs(r, buckets)...)
+}
+
+func (m *Manager) logLiveKeyTouchError(r *http.Request, buckets []Bucket, message string, err error, duration time.Duration) {
+	args := liveRequestLogArgs(r, buckets)
+	args = append(args, "nats_touch_duration_ms", duration.Milliseconds())
+	args = append(args, m.natsLogArgs()...)
+	m.log().Error(fmt.Errorf("%s: %w", message, err).Error(), args...)
+}
+
+func (m *Manager) log() *slog.Logger {
+	if m.logger != nil {
+		return m.logger
+	}
+	return slog.Default().With("component", "live")
+}
+
+func (m *Manager) natsLogArgs() []any {
+	if m.natsConn == nil {
+		return nil
+	}
+
+	args := []any{"nats_status", m.natsConn.Status().String()}
+	if lastErr := m.natsConn.LastError(); lastErr != nil {
+		args = append(args, "nats_last_error", lastErr.Error())
+	}
+	return args
+}
+
+func liveRequestLogArgs(r *http.Request, buckets []Bucket) []any {
+	args := make([]any, 0, 8)
+	if r != nil {
+		args = append(args, "method", r.Method)
+		if r.URL != nil {
+			args = append(args, "path", r.URL.Path)
+		}
+		if requestID := middleware.GetReqID(r.Context()); requestID != "" {
+			args = append(args, "request_id", requestID)
+		}
+	}
+	if len(buckets) > 0 {
+		args = append(args, "buckets", bucketNames(buckets))
+	}
+	return args
+}
+
+func bucketNames(buckets []Bucket) []string {
+	names := make([]string, 0, len(buckets))
+	for _, bucket := range buckets {
+		names = append(names, string(bucket))
+	}
+	return names
 }
 
 func DatastarInit(url string) string {

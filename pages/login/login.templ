@@ -1,5 +1,45 @@
 package login
 
+templ alreadyLogedIn() {
+	<style>
+    .already-logedin-wrapper {
+        display: flex;
+        flex-flow: column nowrap;
+        width: fit-content;
+        margin: auto;
+        margin-top: var(--responsive-top-of-page-spacing);
+        padding: ;
+        gap: var(--spacing-1x);
+
+        h1 {
+            text-align: center;
+        }
+    }
+    </style>
+	<div class="already-logedin-wrapper page-content-container">
+		<h1>Velkomen tilbake!</h1>
+		<p>Det ser ut til at du allereie er innlogga og du treng ikkje logge inn på nytt. </p>
+		<p>Du vert sendt vidare til framsida om <span id="countdown">5</span> sekund.</p>
+		<p>Om vidaresendinga ikkje fungerer, kan du bruke denna lenkja til <a href="/">framsida</a></p>
+	</div>
+	<script>
+        let remaining = 5
+        const countdown = document.getElementById('countdown')
+
+        const interval = setInterval(() => {
+            remaining--
+
+            if (remaining <= 0) {
+                clearInterval(interval)
+                window.location.replace('/')
+                return
+            }
+
+            countdown.textContent = remaining
+        }, 1000)
+    </script>
+}
+
 templ loginForm() {
 	<script src="https://descopecdn.com/npm/@descope/web-component@3.21.0/dist/index.js"></script>
 	<script src="https://descopecdn.com/npm/@descope/web-js-sdk@1.16.0/dist/index.umd.js"></script>

@@ -83,7 +83,7 @@ const (
 func (role EventPlayerRole) Label() string {
 	switch role {
 	case EventPlayerRolePlayer:
-		return "spiller"
+		return "spelar"
 	case EventPlayerRoleGM:
 		return "GM"
 	default:

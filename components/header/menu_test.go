@@ -4,13 +4,16 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
-	// Gitt at brukeren ikke er innlogget,
-	// når hovednavigasjonen vises,
-	// så skal brukeren bare få navigasjonslenker til forsiden og innlogging.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren ikke er innlogget.",
+		When:  "Når hovednavigasjonen vises.",
+		Then:  "Så skal brukeren bare få navigasjonslenker til forsiden og innlogging.",
+	})
 
 	// Given
 	expectedHrefs := []string{"/", "/auth"}
@@ -25,9 +28,11 @@ func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
 }
 
 func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
-	// Gitt at brukeren er innlogget uten adminrettigheter,
-	// når hovednavigasjonen vises,
-	// så skal brukeren bare få navigasjonslenker til forsiden, egen profil, utlogging og vanlege spørsmål.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren er innlogget uten adminrettigheter.",
+		When:  "Når hovednavigasjonen vises.",
+		Then:  "Så skal brukeren bare få navigasjonslenker til forsiden, egen profil, utlogging og vanlege spørsmål.",
+	})
 
 	// Given
 	expectedHrefs := []string{
@@ -44,15 +49,21 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	// When
 	doc := templtest.Render(t, Menu(userInfo))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
+	actualExternalLinkIconVisible := doc.Find(`a[href="https://www.regncon.no/vanlege-sporsmal/"] .inline-icon`).Length() > 0
 
 	// Then
 	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+	if !actualExternalLinkIconVisible {
+		t.Fatalf("expected external FAQ link to include external link icon")
+	}
 }
 
 func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
-	// Gitt at brukeren er admin,
-	// når hovednavigasjonen vises,
-	// så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren er admin.",
+		When:  "Når hovednavigasjonen vises.",
+		Then:  "Så skal brukeren få navigasjonslenker til forsiden, egen profil, utlogging, adminområdene og vanlege spørsmål.",
+	})
 
 	// Given
 	expectedHrefs := []string{
@@ -72,7 +83,11 @@ func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	// When
 	doc := templtest.Render(t, Menu(userInfo))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
+	actualExternalLinkIconVisible := doc.Find(`a[href="https://www.regncon.no/vanlege-sporsmal/"] .inline-icon`).Length() > 0
 
 	// Then
 	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+	if !actualExternalLinkIconVisible {
+		t.Fatalf("expected external FAQ link to include external link icon")
+	}
 }

@@ -34,12 +34,14 @@ type RoomEventPuljeSummary struct {
 	EventID      string
 	Title        string
 	MaxPlayers   int
+	RoomID       int64
 }
 type RoomEventPuljeSummaryJson struct {
-	EventPuljeID string `json:"pulje_id"`
-	EventID      string `json:"event_id"`
-	Title        string `json:"title"`
-	MaxPlayers   int    `json:"max_players"`
+	EventPuljeID string        `json:"pulje_id"`
+	EventID      string        `json:"event_id"`
+	Title        string        `json:"title"`
+	MaxPlayers   int           `json:"max_players"`
+	RoomID       sql.NullInt64 `json:"room_id"`
 }
 
 // RoomByPulje is a snapshot of room delegation for a specific pulje, this is mainly used for figuring
@@ -89,4 +91,34 @@ type RoomStatusRow struct {
 	EventID         sql.NullString
 	EventTitle      sql.NullString
 	EventMaxPlayers sql.NullInt32
+}
+
+// RoomFormSignals is used in data-star input form bindings for sending signals to users
+type RoomFormSignals struct {
+	ID                 int    `json:"id"`
+	Name               string `json:"name"`
+	RoomNumber         string `json:"room_number"`
+	Floor              int    `json:"floor"`
+	MaxConcurrentGames int    `json:"max_concurrent_games"`
+	Notes              string `json:"notes"`
+	IsDisabled         bool   `json:"is_disabled"`
+
+	Mode        string `json:"mode"`
+	FormTitle   string `json:"form_title"`
+	ButtonLabel string `json:"button_label"`
+
+	Errors RoomFormErrors `json:"errors"`
+}
+
+type RoomFormErrors struct {
+	RoomNumber         string `json:"room_number"`
+	MaxConcurrentGames string `json:"max_concurrent_games"`
+	Error              string `json:"error"`
+}
+
+// HasErrors is a hepler function for quickly getting if error status on create/update room details
+func (e RoomFormErrors) HasErrors() bool {
+	return e.RoomNumber != "" ||
+		e.MaxConcurrentGames != "" ||
+		e.Error != ""
 }

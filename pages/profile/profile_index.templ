@@ -33,6 +33,11 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 		@ProfileMainColumn(user, events, selectedBillettholderID, db, logger, eventImageDir)
 		<div class="profile-content-column">
 			/* @profilecomponent.UserDetails(user) */
+			<div class="surface-pane">
+				<h2 class="surface-pane-title">Kontoadministrasjon</h2>
+				<a href="/profile/descope-profile" class="btn btn--outline" style="width: fit-content; margin-inline-end: var(--spacing-8x);">Reset passord</a>
+				<a href="/auth/logout" class="btn btn--outline" style="width: fit-content; margin-left: auto;">Logg ut</a>
+			</div>
 			@profilecomponent.MyTickets(tickets)
 		</div>
 	</section>
@@ -131,4 +136,13 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 			}
 		}
 		</style>
-	}
+}
+
+templ DescopeProfilePage() {
+	<script src="https://static.descope.com/npm/@descope/user-profile-widget@0.11.7/dist/index.js"></script>
+	<descope-user-profile-widget
+		project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
+		widget-id="user-profile-widget-regncon"
+		theme="dark"
+	></descope-user-profile-widget>
+}

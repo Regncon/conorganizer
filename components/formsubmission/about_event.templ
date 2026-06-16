@@ -23,18 +23,18 @@ func UpdateTitle(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, 
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "title = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the title for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere tittelen for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 
@@ -46,7 +46,7 @@ func UpdateTitle(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, 
 		*/
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -60,24 +60,24 @@ func UpdateIntro(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, 
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		normalizedInput := normalizeTextareaSubmission(store.Input)
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "intro = ?", normalizedInput); err != nil {
-			http.Error(w, "Failed to update the intro for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere introduksjonen for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -91,22 +91,22 @@ func UpdateType(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, l
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "event_type = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the type for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere typen for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -119,22 +119,22 @@ func UpdateSystem(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager,
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "system = ?", store.Input); err != nil {
-			http.Error(w, "Failed to update the system for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere systemet for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -147,13 +147,13 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
@@ -166,11 +166,11 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "description = ?", escapedInput); err != nil {
-			http.Error(w, "Failed to update the description for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere skildringa for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -196,7 +196,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					placeholder="Tittel på arrangementet"
 					required
 					pattern=".{3,}"
-					title="Bruk minst 3 tegn"
+					title="Bruk minst 3 teikn"
 				/>
 				@errorfeedback.RenderMessage("title")
 			</label>
@@ -242,7 +242,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				class="btn btn--primary"
 				style="place-self: center end; margin-right:  1rem"
 			>
-				Last opp bilde
+				Last opp bilete
 			</a>
 			<label class="label-small color-strong form-group system">
 				System
@@ -257,15 +257,15 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					data-indicator="toastSystem"
 					{ errorfeedback.Attrs("system")... }
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/system')", eventId) }
-					placeholder="Hva system er det?"
+					placeholder="Kva system er det?"
 					required
 					pattern=".{2,}"
-					title="Bruk minst 2 tegn"
+					title="Bruk minst 2 teikn"
 				/>
 				@errorfeedback.RenderMessage("system")
 			</label>
 			<label class="label-small color-strong form-group description">
-				Beskrivelse av arrangementet
+				Skildring av arrangementet
 				<textarea
 					name="description"
 					class="input"
@@ -274,7 +274,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					{ errorfeedback.Attrs("description")... }
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/description')", eventId) }
 					rows="15"
-					placeholder="Beskrivelse av arrangementet"
+					placeholder="Skildring av arrangementet"
 					required
 					minlength="3"
 				>

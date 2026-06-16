@@ -24,6 +24,8 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+const createEventFailureMessage = "Vi klarte ikke å opprette arrangementet akkurat nå. Prøv igjen om litt."
+
 func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB, eventImageDir *string, logger *slog.Logger) error {
 	var profileTicketsErr error
 	router.Route("/profile", func(profileRouter chi.Router) {
@@ -57,6 +59,19 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 				"Min profil side",
 				user,
 				ProfilePage(user, events, tickets, selectedBillettholderID, validBillettholderIDs, db, requestLogger, eventImageDir),
+			).Render(ctx, w); err != nil {
+				requestLogger.Error(fmt.Errorf("failed to render profile page: %w", err).Error(), "user_id", user.Id)
+			}
+		})
+		profileRouter.Get("/descope-profile", func(w http.ResponseWriter, r *http.Request) {
+			requestLogger := logger.With("component", "profile")
+			ctx := r.Context()
+			user := userctx.GetUserRequestInfo(ctx)
+
+			if err := layouts.Base(
+				"Min profil side",
+				user,
+				DescopeProfilePage(),
 			).Render(ctx, w); err != nil {
 				requestLogger.Error(fmt.Errorf("failed to render profile page: %w", err).Error(), "user_id", user.Id)
 			}
@@ -287,6 +302,10 @@ func createNewEventFormSubmission(db *sql.DB, liveManager *live.Manager, logger 
 	logger = logger.With("component", "my_events")
 	logger.Info("Creating new event form submission")
 	userInfo := userctx.GetUserRequestInfo(r.Context())
+	createNewEventFormSubmissionForUser(db, liveManager, logger, w, r, userInfo)
+}
+
+func createNewEventFormSubmissionForUser(db *sql.DB, liveManager *live.Manager, logger *slog.Logger, w http.ResponseWriter, r *http.Request, userInfo requestctx.UserRequestInfo) {
 	if userInfo.Id == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
@@ -295,7 +314,7 @@ func createNewEventFormSubmission(db *sql.DB, liveManager *live.Manager, logger 
 	userID, insertError := userctx.GetUserIDFromExternalID(userInfo.Id, db, logger)
 	if insertError != nil {
 		logger.Error(fmt.Errorf("failed to resolve user_id for external_id %q: %w", userInfo.Id, insertError).Error())
-		http.Error(w, "Could not retrieve user ID", http.StatusInternalServerError)
+		http.Error(w, createEventFailureMessage, http.StatusInternalServerError)
 		return
 	}
 
@@ -316,6 +335,7 @@ func createNewEventFormSubmission(db *sql.DB, liveManager *live.Manager, logger 
 	insertError = db.QueryRow(query, userID, userInfo.Email, models.EventStatusDraft, models.EventTypeRoleplay).Scan(&eventId)
 	if insertError != nil {
 		logger.Error(fmt.Errorf("failed to create new event form submission for user %q: %w", userInfo.Id, insertError).Error())
+		http.Error(w, createEventFailureMessage, http.StatusInternalServerError)
 		return
 	}
 
