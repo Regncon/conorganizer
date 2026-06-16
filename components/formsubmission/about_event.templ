@@ -11,6 +11,7 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -177,7 +178,8 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 	})
 }
 
-templ aboutEvent(eventId string, title string, intro string, eventType models.EventType, system string, description string) {
+templ aboutEvent(eventId string, eventImageDir *string, title string, intro string, eventType models.EventType, system string, description string) {
+	{{ imgurl := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir) }}
 	<article class="form-card">
 		<h4 class="form-card-title">Om arrangementet</h4>
 		<section class="about-section">
@@ -248,6 +250,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 						<p class="image-upload__text">
 							Finn eit bilete som presenterer arrangementet godt og gjer det lettare å kjenne att arrangementet.
 						</p>
+						{ imgurl }
 					</div>
 					<a
 						href={ "/profile/new/" + eventId + "/image/" }

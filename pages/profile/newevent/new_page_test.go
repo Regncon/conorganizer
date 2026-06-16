@@ -76,7 +76,7 @@ func TestNewEventFormPageContent_WhenApprovedEventIsOpenedByNonAdmin_RendersLock
 	insertNewEventPageEvent(t, db, "approved-event", 501, models.EventStatusApproved)
 
 	// When
-	doc := templtest.Render(t, NewEventFormPageContent("approved-event", "501", context.Background(), db, nil, logger))
+	doc := templtest.Render(t, NewEventFormPageContent("approved-event", nil, "501", context.Background(), db, logger))
 	actualText := strings.Join(templtest.CollectTexts(doc, "body, h1, h2"), " ")
 
 	// Then

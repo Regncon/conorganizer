@@ -169,7 +169,7 @@ func currentUserDBID(ctx context.Context, db *sql.DB, logger *slog.Logger) (int6
 	return updatedByID, nil
 }
 
-templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
+templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql.DB) {
 	<style>
 			/* Chrome drops native validation bubbles during smooth-scroll to invalid fields. */
 			html:has(.formsubmission-wrapper) {
@@ -470,6 +470,7 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 	)
 	@aboutEvent(
 		event.ID,
+		eventImageDir,
 		event.Title,
 		event.Intro,
 		event.EventType,
