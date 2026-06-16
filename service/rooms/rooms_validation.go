@@ -33,5 +33,12 @@ func ValidateRooms(room models.Room) models.RoomFormErrors {
 		)
 	}
 
+	if room.MaxConcurrentGames < 0 {
+		errors.AddError(
+			models.RoomErrorMaxConcurrent,
+			"Du kan ikke bruke negative tall",
+		)
+	}
+
 	return errors
 }

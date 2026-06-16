@@ -141,9 +141,9 @@ func UpdateRoom(db *sql.DB, data models.Room) (*models.Room, models.RoomFormErro
 // UpdateRoom updates a room based on its ID with partial new information
 func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.RoomFormErrors) {
 	// Init error handling and check for ID before continuing
-	var errors models.RoomFormErrors
+	errors := models.RoomFormErrors{}
 	if data.ID < 1 {
-		errors.AddError(models.RoomError, "room ID is required and must be a valid positive number")
+		errors.AddError(models.RoomError, "room ID must be a valid positive number")
 		return nil, errors
 	}
 
@@ -151,7 +151,10 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.
 	setParts := []string{}
 	args := []any{}
 
-	if data.Name != nil || strings.TrimSpace(*data.Name) != "" {
+	if data.Name != nil {
+		if *data.Name != "" && strings.TrimSpace(*data.Name) == "" {
+			errors.AddError(models.RoomErrorName, "room name cannot be just spaces")
+		}
 		setParts = append(setParts, "name = ?")
 		args = append(args, *data.Name)
 	}
@@ -159,7 +162,6 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.
 	if data.RoomNumber != nil {
 		if strings.TrimSpace(*data.RoomNumber) == "" {
 			errors.AddError(models.RoomErrorRoomNumber, "room number cannot be empty")
-			return nil, errors
 		}
 
 		setParts = append(setParts, "room_number = ?")
@@ -172,9 +174,8 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.
 	}
 
 	if data.MaxConcurrentGames != nil {
-		if *data.MaxConcurrentGames < 1 {
-			errors.AddError(models.RoomErrorRoomNumber, "max concurrent games must be greater than 0")
-			return nil, errors
+		if *data.MaxConcurrentGames < 0 {
+			errors.AddError(models.RoomErrorMaxConcurrent, "max concurrent games cannot be negative")
 		}
 
 		setParts = append(setParts, "max_concurrent_games = ?")
