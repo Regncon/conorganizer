@@ -228,39 +228,48 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						// Validate id param from URL
 						idQuery := chi.URLParam(r, "id")
 						if idQuery == "" {
-							http.Error(w, "Room ID is required. Got: "+idQuery, http.StatusBadRequest)
+							logger.Error("User tried to fetch a room without ID", "url", r.URL)
+							http.Error(w, fmt.Sprintf("Room ID is required, got: %s", idQuery), http.StatusBadRequest)
 							return
 						}
 						roomID, err := strconv.ParseInt(idQuery, 10, 0)
 						if err != nil {
-							http.Error(w, "Unable to parse roomID, error: "+err.Error(), http.StatusBadRequest)
+							logger.Error("User tried to fetch a room with invalid ID", "url", r.URL, "error", err.Error())
+							http.Error(w, fmt.Sprintf("Unable to parse given room ID, error: %s", err.Error()), http.StatusBadRequest)
 							return
 						}
 
 						// Handle signals depending on create or update room
-						store := models.RoomFormSignals{}
+						store := &models.RoomFormSignals{}
+						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
+							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+
 						if roomID == 0 {
 							store.FormTitle = "Legg til et nytt rom"
 							store.ButtonLabel = "Legg til"
 							store.Mode = "create"
 						} else {
-							room, err := roomService.GetRoomByID(db, int(roomID))
-							if err != nil {
-								store.Errors.Error = "Unable to get room"
-							}
-
-							store.FormTitle = "Oppdaterer rom " + room.RoomNumber
 							store.ButtonLabel = "Oppdater"
 							store.Mode = "edit"
 
-							// Get updated values from database
-							store.ID = room.ID
-							store.Name = room.Name
-							store.RoomNumber = room.RoomNumber
-							store.Floor = room.Floor
-							store.MaxConcurrentGames = room.MaxConcurrentGames
-							store.IsDisabled = room.IsDisabled
-							store.Notes = room.Notes
+							room, err := roomService.GetRoomByID(db, int(roomID))
+							if err != nil {
+								store.FormTitle = "Oppdaterer rom"
+								store.Errors.AddError(models.RoomError, err.Error())
+							} else {
+								store.FormTitle = "Oppdaterer rom " + room.RoomNumber
+
+								// Get updated values from database
+								store.ID = room.ID
+								store.Name = room.Name
+								store.RoomNumber = room.RoomNumber
+								store.Floor = room.Floor
+								store.MaxConcurrentGames = room.MaxConcurrentGames
+								store.IsDisabled = room.IsDisabled
+								store.Notes = room.Notes
+							}
 						}
 
 						// Patch signals
@@ -282,12 +291,14 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						// Validate id param from URL
 						idQuery := chi.URLParam(r, "id")
 						if idQuery == "" {
-							http.Error(w, "Room ID is required. Got: "+idQuery, http.StatusBadRequest)
+							logger.Error("User tried to update room without ID", "url", r.URL)
+							http.Error(w, fmt.Sprintf("Room ID is required, got: %s", idQuery), http.StatusBadRequest)
 							return
 						}
 						roomID, err := strconv.ParseInt(idQuery, 10, 0)
 						if err != nil {
-							http.Error(w, "Unable to parse roomID, error: "+err.Error(), http.StatusBadRequest)
+							logger.Error("User tried to update room with invalid ID", "url", r.URL, "error", err.Error())
+							http.Error(w, fmt.Sprintf("Unable to parse given room ID, error: %s", err.Error()), http.StatusBadRequest)
 							return
 						}
 
@@ -307,14 +318,18 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							Notes:              store.Notes,
 						}
 
-						// Set up sse signals for form errors
+						// Set up sse signals for response
 						sse := datastar.NewSSE(w, r)
 
-						// Validate form input
-						validationErrors := roomService.ValidateRooms(room)
-						store.Errors = validationErrors
-
-						if err := validationErrors.HasErrors(); err {
+						// Decide between create and update based on room ID
+						var roomErrors models.RoomFormErrors
+						if room.ID == 0 {
+							_, roomErrors = roomService.CreateRoom(db, room)
+						} else {
+							_, roomErrors = roomService.UpdateRoom(db, room)
+						}
+						if roomErrors.HasErrors() {
+							store.Errors = roomErrors
 							payload, err := json.Marshal(store)
 							if err != nil {
 								logger.Error("Failed to marshal signals", "error", err.Error())
@@ -330,43 +345,10 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 
-						// Update database
-						if room.ID == 0 {
-							_, err := roomService.CreateRoom(db, room)
-							if err != nil {
-								store.Errors.Error = err.Error()
-								payload, err := json.Marshal(store)
-								if err != nil {
-									logger.Error("Failed to marshal signals", "error", err.Error())
-									http.Error(w, "Failed to marshal signals", http.StatusInternalServerError)
-								}
-
-								if err := sse.PatchSignals(payload); err != nil {
-									logger.Error("Failed to patch signals", "error", err.Error())
-									http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
-								}
-
-								// Stop signals and let user update form
-								return
-							}
-						} else {
-							_, err := roomService.UpdateRoom(db, room)
-							if err != nil {
-								store.Errors.Error = err.Error()
-								payload, err := json.Marshal(store)
-								if err != nil {
-									logger.Error("Failed to marshal signals", "error", err.Error())
-									http.Error(w, "Failed to marshal signals", http.StatusInternalServerError)
-								}
-
-								if err := sse.PatchSignals(payload); err != nil {
-									logger.Error("Failed to patch signals", "error", err.Error())
-									http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
-								}
-
-								// Stop signals and let user update form
-								return
-							}
+						// Close modal on success
+						if err := sse.ExecuteScript(`document.getElementById('room-dialog').close()`); err != nil {
+							logger.Error("Failed to execute sse script", "error", err.Error())
+							http.Error(w, "Failed to execute sse script", http.StatusInternalServerError)
 						}
 
 						// Broadcast that data has been changed, triggering all clients to update
@@ -375,9 +357,6 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
 						}
-
-						// Close modal on success
-						_ = sse.ExecuteScript(`document.getElementById('room-dialog').close()`)
 					})
 
 					roomApiRouter.Delete("/", func(w http.ResponseWriter, r *http.Request) {

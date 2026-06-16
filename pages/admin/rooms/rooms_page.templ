@@ -16,17 +16,12 @@ templ formModal() {
 	<dialog
 		id="room-dialog"
 		closedBy="any"
-		data-on:room-saved.window="this.close()"
 	>
 		<form
 			id="room-form"
-			data-signals='{
-                errors: {
-                    room_number: "",
-                    max_concurrent_games: "",
-                    error: ""
-                }
-            }'
+			data-signals="{
+                errors: {}
+            }"
 		>
 			<h2 data-text="$form_title"></h2>
 			<label class="label color-strong form-group">
@@ -37,7 +32,9 @@ templ formModal() {
 					data-bind="name"
 					class="input"
 					placeholder="Kallenavn på rom"
+					title="Kallenavnet på rommet"
 				/>
+				<p data-text="$errors.name" class="input-error"></p>
 			</label>
 			<label class="label color-strong form-group">
 				<p>Romnummer</p>
@@ -48,10 +45,10 @@ templ formModal() {
 					class="input"
 					placeholder="Nummer på rom"
 					required
-					pattern=".{2,}"
-					title="Bruk minst 2 tegn"
+					pattern=".{1,}"
+					title="Nummer på rommet basert på rom oversikt"
 				/>
-				<p id="name" data-text="$errors.room_number" class="input-error"></p>
+				<p data-text="$errors.room_number" class="input-error"></p>
 			</label>
 			<label class="label color-strong form-group">
 				<p>Etasje</p>
@@ -62,9 +59,10 @@ templ formModal() {
 					class="input"
 					placeholder="Etasje for rom"
 					required
-					pattern=".{2,}"
-					title="Bruk minst 2 tegn"
+					pattern=".{1,}"
+					title="Etasje for rommet"
 				/>
+				<p data-text="$errors.floor" class="input-error"></p>
 			</label>
 			<label class="label color-strong form-group">
 				<p>Maks eventer i en pulje</p>
@@ -75,7 +73,7 @@ templ formModal() {
 					class="input"
 					placeholder="Max spill på et rom"
 					required
-					pattern=".{2,}"
+					pattern=".{1,}"
 					title="Hvor mangen spill kan forekomme parallelt på et rom i en pulje"
 				/>
 				<p data-text="$errors.max_concurrent_games" class="input-error"></p>
@@ -90,6 +88,7 @@ templ formModal() {
 					title="Her kan du skrive notater for rommet"
 					rows="4"
 				></textarea>
+				<p data-text="$errors.notes" class="input-error"></p>
 			</label>
 			<label class="label color-strong form-group flex input" style="gap: var(--spacing-2x); align-items: center;">
 				<input
@@ -97,9 +96,11 @@ templ formModal() {
 					data-bind="is_disabled"
 					type="checkbox"
 					class="checkbox input"
+					title="Skjul synlighet i puljefordeling for rommet"
 				/>
 				<p>Skal rom være skjult i puljefordeling?</p>
 			</label>
+			<p data-text="$errors.is_disabled" class="input-error"></p>
 			<span class="button-group">
 				<button
 					type="button"
