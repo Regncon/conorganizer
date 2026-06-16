@@ -478,3 +478,68 @@ I left the unrelated `.ai/threads/event-form-mobile-viwe.md` change untouched.
 Time: 2026-06-16 21:00:24
 --- Next Prompt ---
 
+
+Nice. Is the EventFormPreview component a little small now? Should we remove it and just add the code directly in the pages?
+
+Time: 2026-06-16 21:04:09
+--- Codex Run ---
+
+Codex output:
+I’d keep `EventFormPreview`.
+
+It is small, but it hides a few details that are easy to get wrong or drift between the two pages:
+
+```templ
+{{ isRemovedPreviousNext := components.PreviousNext{IsRemoved: true} }}
+<div class="event-container event-form-preview">
+    @Event_mobile(eventData, isRemovedPreviousNext, puljerForEvent, false, false, eventImageDir)
+</div>
+```
+
+That tiny wrapper encodes real policy:
+
+- preview must be inside `.event-container`
+- preview must also have `.event-form-preview`
+- previous/next navigation is disabled
+- tickets are disabled
+- interest controls are disabled
+- both pages should render the preview the same way
+
+Inlining would make both pages noisier and duplicate the least-readable part: the `Event_mobile(..., false, false, ...)` call.
+
+So my recommendation:
+
+- Keep `formsubmission.EventFormPageLayout` as the layout shell.
+- Keep `event.EventFormPreview` as the semantic preview adapter.
+- Do not abstract further.
+
+The component is small, but it has a clear reason to exist.
+
+Time: 2026-06-16 21:04:09
+--- Next Prompt ---
+On a side note. Is the .card class from index.css being used anywhere? or can we remove it?
+
+Time: 2026-06-16 21:08:46
+--- Codex Run ---
+
+Codex output:
+I’ll search for direct `.card` usage and class combinations, then check whether anything relies on that global selector indirectly.
+There are live `.card` uses, so I’m checking the main ones to see whether they rely on the global styling or already override it inline.
+`.card` is still used, so I would not remove it as-is.
+
+Live usages include:
+
+- [event_interest_panel.templ](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ:106): `card event-interest-picker`
+- [tickets_page.templ](/home/cinmay/Documents/conorganizer/pages/profile/tickets/tickets_page.templ:147): info text card
+- [tickets_page.templ](/home/cinmay/Documents/conorganizer/pages/profile/tickets/tickets_page.templ:161): empty state card
+- [billettholder_profile_card.templ](/home/cinmay/Documents/conorganizer/pages/profile/tickets/billettholder_profile_card.templ:240)
+- [billettholder_card.templ](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/billettholder_card.templ:268)
+- [ticket_card.templ](/home/cinmay/Documents/conorganizer/pages/admin/billettholder_admin/add/ticket_card.templ:76)
+
+Some of those inline most of the visual styling already, but `event_interest_panel` and `tickets_page` appear to rely on the global `.card` styles.
+
+Recommendation: don’t delete it directly. If we want to clean it up, migrate those usages to `surface-pane` or more specific local classes first, then remove `.card` after `rg 'class=.*\\bcard\\b'` is clean.
+
+Time: 2026-06-16 21:08:46
+--- Next Prompt ---
+
