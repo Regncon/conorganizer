@@ -40,7 +40,7 @@ func TestUpdateRoomPartial_UpdatesProvidedFields(t *testing.T) {
 	actualRoom, err := UpdateRoomPartial(db, input)
 
 	// Then
-	if err != nil {
+	if err.HasErrors() {
 		t.Fatalf("expected partial room update to succeed: %v", err)
 	}
 	assertRoomMatches(t, expectedRoom, *actualRoom)
@@ -67,7 +67,7 @@ func TestUpdateRoomPartial_WhenOnlyNameIsProvided_LeavesOtherFieldsUnchanged(t *
 	actualRoom, err := UpdateRoomPartial(db, input)
 
 	// Then
-	if err != nil {
+	if err.HasErrors() {
 		t.Fatalf("expected partial room update to succeed: %v", err)
 	}
 	assertRoomMatches(t, expectedRoom, *actualRoom)
@@ -86,17 +86,17 @@ func TestUpdateRoomPartial_WhenIDIsMissing_ReturnsError(t *testing.T) {
 
 	// When
 	_, err := UpdateRoomPartial(db, models.RoomInput{})
-	actualError := err != nil
+	actualError := err.HasError(models.RoomError)
 
 	// Then
-	if actualError != expectedError {
+	if expectedError != actualError {
 		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
 
-func TestUpdateRoomPartial_WhenNameIsEmpty_ReturnsError(t *testing.T) {
+func TestUpdateRoomPartial_WhenNameIsJustSpaces_ReturnsError(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given partial room input with an empty name.",
+		Given: "Given partial room input with a name only containing spaces.",
 		When:  "When the partial update runs.",
 		Then:  "Then validation rejects it.",
 	})
@@ -106,11 +106,11 @@ func TestUpdateRoomPartial_WhenNameIsEmpty_ReturnsError(t *testing.T) {
 	db := createRoomsTestDB(t)
 
 	// When
-	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1, Name: ptr("")})
-	actualError := err != nil
+	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1, Name: ptr("    ")})
+	actualError := err.HasError(models.RoomErrorName)
 
 	// Then
-	if actualError != expectedError {
+	if expectedError != actualError {
 		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
@@ -128,10 +128,10 @@ func TestUpdateRoomPartial_WhenRoomNumberIsEmpty_ReturnsError(t *testing.T) {
 
 	// When
 	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1, RoomNumber: ptr("")})
-	actualError := err != nil
+	actualError := err.HasError(models.RoomErrorRoomNumber)
 
 	// Then
-	if actualError != expectedError {
+	if expectedError != actualError {
 		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
@@ -148,11 +148,11 @@ func TestUpdateRoomPartial_WhenMaxConcurrentGamesIsInvalid_ReturnsError(t *testi
 	db := createRoomsTestDB(t)
 
 	// When
-	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1, MaxConcurrentGames: ptr(0)})
-	actualError := err != nil
+	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1, MaxConcurrentGames: ptr(-1)})
+	actualError := err.HasError(models.RoomErrorMaxConcurrent)
 
 	// Then
-	if actualError != expectedError {
+	if expectedError != actualError {
 		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
@@ -170,10 +170,10 @@ func TestUpdateRoomPartial_WhenNoFieldsAreProvided_ReturnsError(t *testing.T) {
 
 	// When
 	_, err := UpdateRoomPartial(db, models.RoomInput{ID: 1})
-	actualError := err != nil
+	actualError := err.HasError(models.RoomError)
 
 	// Then
-	if actualError != expectedError {
+	if expectedError != actualError {
 		t.Fatalf("error presence mismatch\nexpected: %v\nactual:   %v", expectedError, actualError)
 	}
 }
