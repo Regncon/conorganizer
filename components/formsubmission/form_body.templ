@@ -244,6 +244,83 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
                             object-fit: cover;
                         }
                     }
+
+	                    .image-upload {
+	                        container-type: inline-size;
+	                        gap: 0.5rem;
+
+	                        @container (width <= 24rem) {
+	                            .image-upload__panel {
+	                                padding: var(--spacing-3x);
+	                            }
+
+	                            .image-upload__content {
+	                                grid-template-columns: 1.5rem 1fr;
+	                                gap: var(--spacing-1x);
+	                            }
+
+	                            .image-upload__icon {
+	                                inline-size: 1.5rem;
+	                                block-size: 1.5rem;
+	                            }
+
+	                            .image-upload__button {
+	                                justify-self: stretch;
+	                            }
+	                        }
+	                    }
+
+	                    .image-upload > p {
+	                        margin: 0;
+	                    }
+
+	                    .image-upload__panel {
+	                        display: grid;
+	                        gap: var(--spacing-2x);
+	                        min-block-size: 9.375rem;
+                        padding: var(--spacing-3x);
+                        align-content: space-between;
+                        border: 1px solid var(--bg-item-border);
+                        border-radius: var(--border-radius-2x);
+	                        background: var(--bg-item);
+	                    }
+
+	                    .image-upload__content {
+	                        display: grid;
+	                        grid-template-columns: 2.5rem 1fr;
+	                        gap: var(--spacing-2x);
+	                        align-items: start;
+	                    }
+
+	                    .image-upload__text {
+	                        margin: 0;
+	                        max-inline-size: 34rem;
+	                        color: var(--color-text-soft);
+                        font-size: var(--text-body-small);
+	                        line-height: 1.35;
+	                    }
+
+	                    .image-upload__icon,
+	                    .image-upload__button-icon {
+	                        display: inline-grid;
+	                        place-items: center;
+	                        flex: 0 0 auto;
+	                    }
+
+	                    .image-upload__icon {
+	                        inline-size: 2rem;
+	                        block-size: 2rem;
+	                    }
+
+	                    .image-upload__button-icon {
+	                        inline-size: 1.25rem;
+	                        block-size: 1.25rem;
+	                    }
+
+	                    .image-upload__button {
+	                        justify-self: end;
+	                        gap: var(--spacing-1x);
+	                    }
                 }
 
                 .puljefordeling-section {
