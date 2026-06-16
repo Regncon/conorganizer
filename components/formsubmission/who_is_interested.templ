@@ -413,8 +413,8 @@ func UpdatePlayerStatus(eventId string,
 templ interestInPulje(eventId string, puljeId models.Pulje, interests []InterestWithHolder, isAssigned bool) {
 	<style>
 		.interest-section {
-			display: flex;
-			flex-direction: column;
+			display: grid;
+			grid-template-columns: minmax(0, 1fr);
 			gap: var(--spacing-3x);
 			margin-bottom: var(--spacing-1x);
 			min-inline-size: 0;
@@ -481,9 +481,10 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 
 		@container who-is-interested (width > 720px) {
 			.interest-section {
-				flex-direction: row;
-				place-content: space-between;
-				gap: 1rem;
+				grid-template-columns: minmax(0, 1fr) minmax(18.75rem, max-content);
+				align-items: center;
+				column-gap: var(--spacing-4x);
+				row-gap: var(--spacing-3x);
 
 				.start {
 					text-align: center;
@@ -491,18 +492,19 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 				}
 				.end {
 					inline-size: auto;
-					place-self: end;
+					justify-self: end;
 
 					.btn {
 						inline-size: auto;
 						min-inline-size: 9.25rem;
 					}
 					.pickers {
-						display: flex;
-						gap: var(--spacing-8x);
+						display: grid;
+						grid-template-columns: repeat(2, minmax(9.25rem, 1fr));
+						gap: var(--spacing-2x);
 
 						.button-size {
-							inline-size: fit-content;
+							inline-size: 100%;
 						}
 					}
 				}

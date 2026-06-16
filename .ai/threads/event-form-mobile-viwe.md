@@ -205,4 +205,34 @@ I did not reintroduce `--responsive-min-width`. One note: `git diff --check` pas
 
 Time: 2026-06-16 11:45:47
 --- Next Prompt ---
+the `.interest-section` can't be a simple flexbox. When the content becomes squeezed, the columns start to warp and become eneven. 
+I think we need to make the section a grid.
+
+Time: 2026-06-16 11:57:58
+--- Codex Run ---
+
+Codex output:
+Agreed. The row has two logical areas, metadata and actions, so grid is a better fit than flex once width pressure starts. I’ll change `.interest-section` to a grid and keep the action column stable at the wider container breakpoint.
+The interest row is now grid-based: one column on mobile, then metadata plus a stable actions column above the container breakpoint. I’ll regenerate templ output and run the focused tests.
+Focused tests pass. I’ll run the full suite and scoped whitespace check once more.
+The grid adjustment is the only code change still showing in this turn; the earlier breakpoint edits appear to already be in the baseline or otherwise not part of the current diff. I’ll verify the relevant lines before wrapping up.
+Changed `.interest-section` from flex to grid in [who_is_interested.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/who_is_interested.templ:415).
+
+The row now behaves as:
+
+- Mobile/narrow: one-column grid, metadata above actions
+- Wider `who-is-interested` container: two-column grid with `metadata | actions`
+- Actions are also a fixed two-column grid at that width, so the buttons stay even instead of flexing unevenly
+
+Verification passed:
+
+```sh
+go tool templ generate
+GOCACHE=/tmp/go-build go test ./...
+```
+
+Only unrelated working-tree change besides this remains `.ai/threads/event-form-mobile-viwe.md`.
+
+Time: 2026-06-16 11:57:58
+--- Next Prompt ---
 
