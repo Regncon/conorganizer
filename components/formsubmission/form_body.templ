@@ -275,6 +275,29 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                         background: var(--bg-item);
                     }
 
+                    .image-upload__panel--has-image {
+                        min-block-size: clamp(8.75rem, 36cqw, 13rem);
+                        align-content: end;
+                        overflow: hidden;
+                        background:
+                            linear-gradient(
+                                hsl(from var(--bg-backdrop) h s l / 10%),
+                                hsl(from var(--bg-backdrop) h s l / 45%)
+                            ),
+                            var(--image-upload-background-image);
+                        background-position: center;
+                        background-size: cover;
+
+                        .image-upload__content {
+                            display: none;
+                        }
+
+                        .image-upload__button {
+                            background-color: color-mix(in srgb, var(--bg-item) 82%, transparent);
+                            backdrop-filter: blur(0.25rem);
+                        }
+                    }
+
                     .image-upload__content {
                         display: grid;
                         grid-template-columns: 2.5rem minmax(0, 1fr);

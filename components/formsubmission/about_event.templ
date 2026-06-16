@@ -179,7 +179,10 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 }
 
 templ aboutEvent(eventId string, eventImageDir *string, title string, intro string, eventType models.EventType, system string, description string) {
-	{{ imgurl := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir) }}
+	{{
+		imgurl := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir)
+		hasUploadedImage := imgurl != "/static/placeholder_banner.svg"
+	}}
 	<article class="form-card">
 		<h4 class="form-card-title">Om arrangementet</h4>
 		<section class="about-section">
@@ -212,7 +215,7 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 					data-indicator="toastIntro"
 					{ errorfeedback.Attrs("intro")... }
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/intro')", eventId) }
-					rows="2"
+					rows="5"
 					placeholder="Kjapp introduksjon til arrangementet"
 					required
 					minlength="3"
@@ -242,21 +245,33 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 			</label>
 			<section class="form-group img image-upload">
 				<p class="label-small color-strong">Arrangementbilete</p>
-				<div class="image-upload__panel">
+				<div
+					class={ "image-upload__panel", templ.KV("image-upload__panel--has-image", hasUploadedImage) }
+					style={ templ.KV(templ.SafeCSS(fmt.Sprintf("--image-upload-background-image: url(%s);", imgurl)), hasUploadedImage) }
+				>
 					<div class="image-upload__content">
 						<span class="image-upload__icon" aria-hidden="true">
 							@icons.Icon(icons.FileUpload, icons.Size40)
 						</span>
-						<p class="image-upload__text">
-							Finn eit bilete som presenterer arrangementet godt og gjer det lettare å kjenne att arrangementet.
-						</p>
-						{ imgurl }
+						if !hasUploadedImage {
+							<p class="image-upload__text">
+								Finn eit bilete som presenterer arrangementet godt og
+								gjer det lettare å kjenne att arrangementet.
+							</p>
+						}
 					</div>
 					<a
 						href={ "/profile/new/" + eventId + "/image/" }
 						class="btn btn--secondary image-upload__button"
 					>
-						<span>Last opp bilete</span>
+						<span>
+							if !hasUploadedImage {
+								Last opp bilete
+							}
+							if hasUploadedImage {
+								Bytt bilete
+							}
+						</span>
 						<span class="image-upload__button-icon" aria-hidden="true">
 							@icons.Icon(icons.ArrowRight, icons.Size20)
 						</span>
