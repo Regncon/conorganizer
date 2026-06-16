@@ -53,7 +53,7 @@ func CreateRoom(db *sql.DB, data models.Room) (*models.Room, models.RoomFormErro
 	}
 
 	data.ID = int(id)
-	return &data, nil
+	return &data, errors
 }
 
 // DeleteRoom removes a room given an ID, since pragma is enabled the change will cascade
@@ -135,7 +135,7 @@ func UpdateRoom(db *sql.DB, data models.Room) (*models.Room, models.RoomFormErro
 		return nil, errors
 	}
 
-	return &updated, nil
+	return &updated, errors
 }
 
 // UpdateRoom updates a room based on its ID with partial new information
@@ -237,7 +237,7 @@ func UpdateRoomPartial(db *sql.DB, data models.RoomInput) (*models.Room, models.
 		return nil, errors
 	}
 
-	return &updated, nil
+	return &updated, errors
 }
 
 // GetRoomByID returns a room pointer based on a roomID

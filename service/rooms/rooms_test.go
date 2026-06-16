@@ -34,7 +34,7 @@ func TestCreateRoom_CreatesRoomWithGeneratedID(t *testing.T) {
 	actualRoom, err := CreateRoom(db, inputRoom)
 
 	// Then
-	if err != nil {
+	if err.HasErrors() {
 		t.Fatalf("expected room creation to succeed: %v", err)
 	}
 	assertRoomMatches(t, expectedRoom, *actualRoom)
