@@ -279,10 +279,11 @@ templ aboutEvent(eventId string, eventImageDir *string, title string, intro stri
 				</div>
 			</section>
 			<label class="label-small color-strong form-group system">
-				System
-				<div
+				<p
 					data-signals={ dataSignals(map[string]string{"system": system}) }
-				></div>
+				>
+					System
+				</p>
 				<input
 					name="system"
 					class="input"
