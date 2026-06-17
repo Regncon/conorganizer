@@ -27,14 +27,6 @@ type eventViewDecision struct {
 	HiddenResponseStatusCode int
 }
 
-func canViewEvent(event *models.Event, userInfo requestctx.UserRequestInfo, db *sql.DB) (bool, error) {
-	decision, err := decideEventView(event, userInfo, db)
-	if err != nil {
-		return false, err
-	}
-	return decision.CanView, nil
-}
-
 func decideEventView(event *models.Event, userInfo requestctx.UserRequestInfo, db *sql.DB) (eventViewDecision, error) {
 	if event == nil {
 		return eventViewDecision{

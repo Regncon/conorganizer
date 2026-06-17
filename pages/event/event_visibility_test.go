@@ -30,7 +30,8 @@ func TestCanViewEvent_AllowsPublicAccessToAnnouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -56,7 +57,8 @@ func TestCanViewEvent_AllowsAdminAccessToUnannouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, IsAdmin: true}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -89,7 +91,8 @@ func TestCanViewEvent_AllowsCreatorAccessToUnannouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, Id: "creator-user"}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -115,7 +118,8 @@ func TestCanViewEvent_DeniesAnonymousAccessToUnannouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -148,7 +152,8 @@ func TestCanViewEvent_DeniesLoggedInNonOwnerAccessToUnannouncedEvent(t *testing.
 	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, Id: "someone-else"}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {

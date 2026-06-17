@@ -154,4 +154,33 @@ Note: `.ai/threads/not-announced-events.md` is modified in the worktree, but I d
 
 Time: 2026-06-17 09:19:07
 --- Next Prompt ---
+We get a linter error
+
+ conorganizer git:(426-story-refaktorere-event-er-ikke-publisert-eller-annonsert) ✗ golangci-lint run
+pages/event/event_visibility.go:30:6: func canViewEvent is unused (unused)
+func canViewEvent(event *models.Event, userInfo requestctx.UserRequestInfo, db *sql.DB) (bool, error) {
+     ^
+1 issues:
+* unused: 1
+
+Time: 2026-06-17 09:50:22
+--- Codex Run ---
+
+Codex output:
+I’ll remove the production-only wrapper and point the tests at `decideEventView` directly, since that is now the real API used by the route and component.
+The wrapper is only used by tests, so I’m deleting it from production and updating those tests to read `decision.CanView`.
+Now I’m updating the visibility tests to call the decision helper directly.
+The unused function is removed. I’ll format, run the event tests, then run the linter command you reported if it’s available here.
+Event tests pass. I’m running `golangci-lint run` now with the same writable Go cache setup.
+`golangci-lint run` now reports `0 issues`; it printed cache warnings because the default golangci cache is outside the writable sandbox. I’ll rerun with its cache under `/tmp` to get a clean signal.
+Fixed. I removed the unused `canViewEvent` wrapper from [event_visibility.go](/home/cinmay/Documents/conorganizer/pages/event/event_visibility.go:30) and updated the tests to use `decideEventView(...).CanView` directly.
+
+Verification:
+- `GOCACHE=/tmp/conorganizer-go-build go test ./pages/event`
+- `GOCACHE=/tmp/conorganizer-go-build GOLANGCI_LINT_CACHE=/tmp/conorganizer-golangci-lint golangci-lint run` → `0 issues`
+
+`.ai/threads/not-announced-events.md` is still modified in the worktree; I left it untouched.
+
+Time: 2026-06-17 09:50:22
+--- Next Prompt ---
 
