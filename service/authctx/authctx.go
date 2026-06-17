@@ -95,7 +95,7 @@ func requestIsSecure(r *http.Request) bool {
 	if r.TLS != nil {
 		return true
 	}
-	for _, proto := range strings.Split(r.Header.Get("X-Forwarded-Proto"), ",") {
+	for proto := range strings.SplitSeq(r.Header.Get("X-Forwarded-Proto"), ",") {
 		if strings.EqualFold(strings.TrimSpace(proto), "https") {
 			return true
 		}

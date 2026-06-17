@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -263,7 +264,7 @@ func adminPatchedSignals(t testing.TB, body string) map[string]string {
 	t.Helper()
 
 	signals := map[string]string{}
-	for _, line := range strings.Split(body, "\n") {
+	for line := range strings.SplitSeq(body, "\n") {
 		payload, ok := strings.CutPrefix(line, "data: signals ")
 		if !ok {
 			continue
@@ -272,9 +273,7 @@ func adminPatchedSignals(t testing.TB, body string) map[string]string {
 		if err := json.Unmarshal([]byte(payload), &patch); err != nil {
 			t.Fatalf("failed to unmarshal Datastar signal patch %q: %v", payload, err)
 		}
-		for key, value := range patch {
-			signals[key] = value
-		}
+		maps.Copy(signals, patch)
 	}
 	return signals
 }
