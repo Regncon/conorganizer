@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5/middleware"
@@ -297,6 +298,54 @@ func TestManager_Stream_WhenWatcherAlreadyStopped_LogsAtInfo(t *testing.T) {
 	}
 	if strings.Contains(logOutput, `"level":"WARN"`) {
 		t.Fatalf("expected watcher cleanup log not to be warning, got %q", logOutput)
+	}
+}
+
+func TestManager_Stream_WhenWatcherCloses_ExitsStreamForReconnect(t *testing.T) {
+	// Given a live stream with a watcher that closes unexpectedly,
+	// when the watcher closes while the request is still active,
+	// then the stream exits so Datastar can reconnect.
+
+	// Given
+	manager := newTestManager(t)
+	kv := mustFakeKeyValue(t, manager, BucketEvents)
+	watcherClosed := make(chan struct{})
+	kv.onWatchWatcher = func(watcher *fakeWatcher) {
+		watcher.close()
+		close(watcherClosed)
+	}
+
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodGet, "/live", nil)
+	ctx, cancel := context.WithCancel(request.Context())
+	defer cancel()
+	request = request.WithContext(ctx)
+
+	done := make(chan struct{})
+
+	// When
+	go func() {
+		manager.Stream(recorder, request, Page{
+			Buckets: []Bucket{BucketEvents},
+			Render: func(ctx context.Context, r *http.Request) templ.Component {
+				return templ.ComponentFunc(func(ctx context.Context, w io.Writer) error {
+					_, err := io.WriteString(w, `<div id="live-content">Ready</div>`)
+					return err
+				})
+			},
+		})
+		close(done)
+	}()
+
+	<-watcherClosed
+
+	// Then
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		cancel()
+		<-done
+		t.Fatalf("expected stream to exit when watcher closes")
 	}
 }
 

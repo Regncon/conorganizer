@@ -242,13 +242,20 @@ func (m *Manager) Stream(w http.ResponseWriter, r *http.Request, page Page) {
 	}()
 
 	updates := make(chan struct{}, 1)
+	watcherClosed := make(chan Bucket, len(watchers))
 	for _, watcher := range watchers {
-		go forwardWatcherUpdates(ctx, watcher.watcher, updates)
+		go forwardWatcherUpdates(ctx, watcher, updates, watcherClosed)
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
+			return
+		case bucket := <-watcherClosed:
+			if ctx.Err() != nil {
+				return
+			}
+			m.logRequestWarnMessage(r, []Bucket{bucket}, "live watcher closed; closing stream for reconnect")
 			return
 		case <-updates:
 			if err := patch(); err != nil {
@@ -271,6 +278,12 @@ func (m *Manager) logRequestError(r *http.Request, buckets []Bucket, message str
 
 func (m *Manager) logRequestWarn(r *http.Request, buckets []Bucket, message string, err error) {
 	m.log().Warn(fmt.Errorf("%s: %w", message, err).Error(), liveRequestLogArgs(r, buckets)...)
+}
+
+func (m *Manager) logRequestWarnMessage(r *http.Request, buckets []Bucket, message string) {
+	args := liveRequestLogArgs(r, buckets)
+	args = append(args, m.natsLogArgs()...)
+	m.log().Warn(message, args...)
 }
 
 func (m *Manager) logRequestInfo(r *http.Request, buckets []Bucket, message string, err error) {
@@ -370,13 +383,17 @@ func (m *Manager) bucketConfig(bucket Bucket) jetstream.KeyValueConfig {
 	}
 }
 
-func forwardWatcherUpdates(ctx context.Context, watcher jetstream.KeyWatcher, updates chan<- struct{}) {
+func forwardWatcherUpdates(ctx context.Context, watcher bucketWatcher, updates chan<- struct{}, watcherClosed chan<- Bucket) {
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case entry, ok := <-watcher.Updates():
+		case entry, ok := <-watcher.watcher.Updates():
 			if !ok {
+				select {
+				case <-ctx.Done():
+				case watcherClosed <- watcher.bucket:
+				}
 				return
 			}
 			if entry == nil {

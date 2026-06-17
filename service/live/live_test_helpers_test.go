@@ -95,6 +95,7 @@ type fakeKeyValue struct {
 	putErr         error
 	watcherStopErr error
 	onWatch        func()
+	onWatchWatcher func(*fakeWatcher)
 }
 
 func newFakeKeyValue(bucket Bucket, ttl time.Duration) *fakeKeyValue {
@@ -178,8 +179,12 @@ func (kv *fakeKeyValue) Watch(_ context.Context, key string, _ ...jetstream.Watc
 	}
 	kv.watchers[key] = append(kv.watchers[key], watcher)
 	onWatch := kv.onWatch
+	onWatchWatcher := kv.onWatchWatcher
 	kv.mu.Unlock()
 
+	if onWatchWatcher != nil {
+		onWatchWatcher(watcher)
+	}
 	if onWatch != nil {
 		onWatch()
 	}
@@ -187,8 +192,9 @@ func (kv *fakeKeyValue) Watch(_ context.Context, key string, _ ...jetstream.Watc
 }
 
 type fakeWatcher struct {
-	updates chan jetstream.KeyValueEntry
-	stopErr error
+	updates   chan jetstream.KeyValueEntry
+	stopErr   error
+	closeOnce sync.Once
 }
 
 func (w *fakeWatcher) Updates() <-chan jetstream.KeyValueEntry {
@@ -199,7 +205,7 @@ func (w *fakeWatcher) Stop() error {
 	if w.stopErr != nil {
 		return w.stopErr
 	}
-	close(w.updates)
+	w.close()
 	return nil
 }
 
@@ -208,6 +214,12 @@ func (w *fakeWatcher) send(entry jetstream.KeyValueEntry) {
 	case w.updates <- entry:
 	default:
 	}
+}
+
+func (w *fakeWatcher) close() {
+	w.closeOnce.Do(func() {
+		close(w.updates)
+	})
 }
 
 type fakeEntry struct {
