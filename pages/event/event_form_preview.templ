@@ -1,0 +1,13 @@
+package event
+
+import (
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/models"
+)
+
+templ EventFormPreview(eventData *models.Event, puljerForEvent []models.PuljeRow, eventImageDir *string) {
+	{{ isRemovedPreviousNext := components.PreviousNext{IsRemoved: true} }}
+	<div class="event-container event-form-preview">
+		@Event_mobile(eventData, isRemovedPreviousNext, puljerForEvent, false, false, eventImageDir)
+	</div>
+}

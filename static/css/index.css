@@ -80,7 +80,7 @@
     --border-radius-2x: 8px;
 
     /* shadow */
-    --shadow-dialog: 0 19px 38px hsl(0deg  0% 0% / 30%), 0 15px 12px hsl(0deg  0% 0% / 22%);
+    --shadow-dialog: 0 19px 38px hsl(0deg 0% 0% / 30%), 0 15px 12px hsl(0deg 0% 0% / 22%);
 
     /* content width */
     --page-content-max-width: 1440px;
@@ -345,7 +345,8 @@ hr {
     box-shadow: 0 0 0 0.25rem hsl(from var(--color-primary-hover) h s l / 25%);
 }
 
-.input:user-invalid, .input:user-invalid:focus-visible {
+.input:user-invalid,
+.input:user-invalid:focus-visible {
     border-color: #DC3545;
     box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l /25%);
 }
@@ -420,7 +421,6 @@ input {
 }
 
 .card {
-    width: var(--mobile-responsive-min-width);
     background: var(--bg-surface);
     border-radius: var(--border-radius-1x);
     box-shadow: 0 0 10px hsl(0deg 0% 0% / 10%);
@@ -590,6 +590,7 @@ input {
 }
 
 @media print {
+
     .no-print,
     .no-print * {
         display: none !important;

@@ -2,6 +2,7 @@ package event
 
 import (
 	"database/sql"
+	"net/http"
 	"net/http/httptest"
 	"slices"
 	"testing"
@@ -11,6 +12,7 @@ import (
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
+	"github.com/go-chi/chi/v5"
 )
 
 func TestCanViewEvent_AllowsPublicAccessToAnnouncedEvent(t *testing.T) {
@@ -28,7 +30,8 @@ func TestCanViewEvent_AllowsPublicAccessToAnnouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -54,7 +57,8 @@ func TestCanViewEvent_AllowsAdminAccessToUnannouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, IsAdmin: true}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -87,7 +91,8 @@ func TestCanViewEvent_AllowsCreatorAccessToUnannouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, Id: "creator-user"}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -113,7 +118,8 @@ func TestCanViewEvent_DeniesAnonymousAccessToUnannouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -121,6 +127,134 @@ func TestCanViewEvent_DeniesAnonymousAccessToUnannouncedEvent(t *testing.T) {
 	}
 	if actualCanView != expectedCanView {
 		t.Fatalf("visibility mismatch\nexpected: %v\nactual:   %v", expectedCanView, actualCanView)
+	}
+}
+
+func TestCanViewEvent_DeniesLoggedInNonOwnerAccessToUnannouncedEvent(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren er innlogget, men ikke eier.",
+		When:  "Når visningstilgang sjekkes.",
+		Then:  "Så skal brukeren ikke kunne se arrangementet.",
+	})
+
+	// Given
+	expectedCanView := false
+
+	db := createEventVisibilityTestDB(t)
+	seedEventVisibilityUser(t, db, 101, "creator-user")
+	event := &models.Event{
+		Status: models.EventStatusApproved,
+		UserID: sql.NullInt64{
+			Int64: 101,
+			Valid: true,
+		},
+	}
+	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, Id: "someone-else"}
+
+	// When
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected visibility check to succeed: %v", err)
+	}
+	if actualCanView != expectedCanView {
+		t.Fatalf("visibility mismatch\nexpected: %v\nactual:   %v", expectedCanView, actualCanView)
+	}
+}
+
+func TestDecideEventView_WhenOwnerViewsUnannouncedEvent_ShowsWarning(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren er eieren.",
+		When:  "Når visningsstatus avgjøres.",
+		Then:  "Så skal eieren kunne se arrangementet med varsel om at det ikke er annonsert.",
+	})
+
+	// Given
+	db := createEventVisibilityTestDB(t)
+	seedEventVisibilityUser(t, db, 101, "creator-user")
+	event := &models.Event{
+		Status: models.EventStatusApproved,
+		UserID: sql.NullInt64{
+			Int64: 101,
+			Valid: true,
+		},
+	}
+	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, Id: "creator-user"}
+
+	// When
+	decision, err := decideEventView(event, userInfo, db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected visibility decision to succeed: %v", err)
+	}
+	if !decision.CanView {
+		t.Fatalf("expected owner to view unannounced event")
+	}
+	if !decision.ShowUnannouncedWarning {
+		t.Fatalf("expected owner view to show unannounced warning")
+	}
+}
+
+func TestDecideEventView_WhenArchivedEventIsHidden_ReturnsGoneDecision(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet er forkastet og brukeren ikke har utvidet tilgang.",
+		When:  "Når visningsstatus avgjøres.",
+		Then:  "Så skal arrangementet skjules som Gone.",
+	})
+
+	// Given
+	expectedStatusCode := http.StatusGone
+	expectedHiddenReason := eventHiddenReasonArchivedGone
+
+	db := createEventVisibilityTestDB(t)
+	event := &models.Event{Status: models.EventStatusArchived}
+	userInfo := requestctx.UserRequestInfo{}
+
+	// When
+	decision, err := decideEventView(event, userInfo, db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected visibility decision to succeed: %v", err)
+	}
+	if decision.CanView {
+		t.Fatalf("expected archived event to be hidden")
+	}
+	if decision.HiddenResponseStatusCode != expectedStatusCode {
+		t.Fatalf("status code mismatch\nexpected: %v\nactual:   %v", expectedStatusCode, decision.HiddenResponseStatusCode)
+	}
+	if decision.HiddenReason != expectedHiddenReason {
+		t.Fatalf("hidden reason mismatch\nexpected: %v\nactual:   %v", expectedHiddenReason, decision.HiddenReason)
+	}
+}
+
+func TestDecideEventView_WhenAdminViewsArchivedEvent_ShowsArchivedWarning(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet er forkastet og brukeren er admin.",
+		When:  "Når visningsstatus avgjøres.",
+		Then:  "Så skal admin kunne se arrangementet med varsel.",
+	})
+
+	// Given
+	db := createEventVisibilityTestDB(t)
+	event := &models.Event{Status: models.EventStatusArchived}
+	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, IsAdmin: true}
+
+	// When
+	decision, err := decideEventView(event, userInfo, db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected visibility decision to succeed: %v", err)
+	}
+	if !decision.CanView {
+		t.Fatalf("expected admin to view archived event")
+	}
+	if !decision.ShowArchivedWarning {
+		t.Fatalf("expected admin view to show archived warning")
 	}
 }
 
@@ -142,10 +276,101 @@ func TestEventPageContent_WhenUnannouncedEventIsHidden_RendersFriendlyMessage(t 
 	// When
 	doc := templtest.Render(t, event_page_content("hidden-event", false, logger, db, nil, request))
 	actualMessages := templtest.CollectTexts(doc, ".event-not-announced-message")
+	actualEventContentVisible := templtest.HasSelector(doc, ".event-page-wrapper")
 
 	// Then
 	if !slices.Equal(expectedMessages, actualMessages) {
 		t.Fatalf("hidden event message mismatch\nexpected: %v\nactual:   %v", expectedMessages, actualMessages)
+	}
+	if actualEventContentVisible {
+		t.Fatalf("expected hidden unannounced event content not to render")
+	}
+}
+
+func TestEventPageContent_WhenAdminViewsUnannouncedEvent_RendersWarning(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren er admin.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal admin se arrangementet med et tydelig varsel.",
+	})
+
+	// Given
+	expectedWarnings := []string{"Arrangementet er ikke annonsert"}
+
+	db := createEventVisibilityTestDB(t)
+	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
+	seedEventVisibilityEvent(t, db, "admin-warning-event", "Admin Warning Event", models.EventStatusApproved, sqlNullInt64(501))
+	seedEventVisibilityPulje(t, db, models.PuljeFredagKveld)
+	seedEventVisibilityEventPulje(t, db, "admin-warning-event", models.PuljeFredagKveld, true)
+	request := httptest.NewRequest("GET", "/event/admin-warning-event", nil)
+
+	// When
+	doc := templtest.Render(t, event_page_content("admin-warning-event", true, logger, db, nil, request))
+	actualWarnings := templtest.CollectTexts(doc, ".event-visibility-warning-title")
+	actualEventTitles := templtest.CollectTexts(doc, "h1")
+
+	// Then
+	if !slices.Contains(actualWarnings, expectedWarnings[0]) {
+		t.Fatalf("warning title mismatch\nexpected to contain: %v\nactual:              %v", expectedWarnings, actualWarnings)
+	}
+	if !slices.Contains(actualEventTitles, "Admin Warning Event") {
+		t.Fatalf("expected rendered event title, got h1 texts: %v", actualEventTitles)
+	}
+}
+
+func TestEventPageContent_WhenArchivedEventIsHidden_RendersArchivedMessage(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet er forkastet og brukeren ikke har tilgang.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal brukeren se en melding om at arrangementet ikke er tilgjengelig.",
+	})
+
+	// Given
+	expectedMessages := []string{"Dette arrangementet er ikke tilgjengelig lenger."}
+
+	db := createEventVisibilityTestDB(t)
+	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
+	seedEventVisibilityEvent(t, db, "archived-hidden-event", "Archived Hidden Event", models.EventStatusArchived, sql.NullInt64{})
+	request := httptest.NewRequest("GET", "/event/archived-hidden-event", nil)
+
+	// When
+	doc := templtest.Render(t, event_page_content("archived-hidden-event", false, logger, db, nil, request))
+	actualMessages := templtest.CollectTexts(doc, ".event-archived-message")
+	actualEventContentVisible := templtest.HasSelector(doc, ".event-page-wrapper")
+
+	// Then
+	if !slices.Equal(expectedMessages, actualMessages) {
+		t.Fatalf("archived event message mismatch\nexpected: %v\nactual:   %v", expectedMessages, actualMessages)
+	}
+	if actualEventContentVisible {
+		t.Fatalf("expected hidden archived event content not to render")
+	}
+}
+
+func TestEventLayoutRoute_WhenArchivedEventIsHidden_ReturnsGone(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet er forkastet og brukeren ikke har tilgang.",
+		When:  "Når arrangementsruten åpnes.",
+		Then:  "Så skal HTTP-status være 410 Gone.",
+	})
+
+	// Given
+	expectedStatusCode := http.StatusGone
+
+	db := createEventVisibilityTestDB(t)
+	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
+	seedEventVisibilityEvent(t, db, "archived-route-event", "Archived Route Event", models.EventStatusArchived, sql.NullInt64{})
+	router := chi.NewRouter()
+	eventLayoutRoute(router, db, logger, nil, nil)
+	request := httptest.NewRequest(http.MethodGet, "/event/archived-route-event", nil)
+	recorder := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(recorder, request)
+
+	// Then
+	if recorder.Code != expectedStatusCode {
+		t.Fatalf("status code mismatch\nexpected: %v\nactual:   %v", expectedStatusCode, recorder.Code)
 	}
 }
 
