@@ -63,6 +63,19 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 				requestLogger.Error(fmt.Errorf("failed to render profile page: %w", err).Error(), "user_id", user.Id)
 			}
 		})
+		profileRouter.Get("/descope-profile", func(w http.ResponseWriter, r *http.Request) {
+			requestLogger := logger.With("component", "profile")
+			ctx := r.Context()
+			user := userctx.GetUserRequestInfo(ctx)
+
+			if err := layouts.Base(
+				"Min profil side",
+				user,
+				DescopeProfilePage(),
+			).Render(ctx, w); err != nil {
+				requestLogger.Error(fmt.Errorf("failed to render profile page: %w", err).Error(), "user_id", user.Id)
+			}
+		})
 
 		profileRouter.Route("/api", func(profileApiRouter chi.Router) {
 			profileApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {

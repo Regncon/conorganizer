@@ -1,9 +1,8 @@
 package rooms
 
 import (
-	"database/sql"
-	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Regncon/conorganizer/models"
 )
@@ -11,24 +10,36 @@ import (
 // ValidateRooms validates that required entries in `room` is valid and returns all encutered errors
 func ValidateRooms(room models.Room) models.RoomFormErrors {
 	errors := models.RoomFormErrors{}
+	errors.ResetErrors()
 
-	if !strings.HasPrefix(room.RoomNumber, strconv.Itoa(room.Floor)) {
-		errors.RoomNumber = "Romnummer må starte med etasje som første tall"
+	if room.Name != "" && strings.TrimSpace(room.Name) == "" {
+		errors.AddError(models.RoomErrorName, "Rom namn kan ikkje berre innehalde mellomrom")
+	}
+
+	if utf8.RuneCountInString(room.Name) > 50 {
+		errors.AddError(
+			models.RoomErrorName,
+			"Namn kan ikkje vere lengre enn 50 teikn",
+		)
 	}
 
 	if strings.TrimSpace(room.RoomNumber) == "" {
-		errors.RoomNumber = "Romnummer er påkrevd"
+		errors.AddError(models.RoomErrorRoomNumber, "Romnummer er påkravd")
 	}
 
-	if room.MaxConcurrentGames < 1 {
-		errors.MaxConcurrentGames = "Maks samtidige spill må være minst 1"
+	if utf8.RuneCountInString(room.RoomNumber) > 10 {
+		errors.AddError(
+			models.RoomErrorRoomNumber,
+			"Rom nummer kan ikkje vere lengre enn 10 teikn",
+		)
+	}
+
+	if room.MaxConcurrentGames < 0 {
+		errors.AddError(
+			models.RoomErrorMaxConcurrent,
+			"Maks samtidige spel kan ikkje vere negativt",
+		)
 	}
 
 	return errors
 }
-
-// ValidateRoomsByPulje is used for validating that a snapshot of rooms, based on a pulje, is valid (eg. assigned vs max concurrent events per pulje)
-func ValidateRoomsByPulje(db *sql.DB, puljeID string) {}
-
-// ValidateDisabledRoomsCascade Validates that room disabled status has cascaded and no orphans exist in `relation_event_puljer`
-func ValidateDisabledRoomsCascade(db *sql.DB) {}

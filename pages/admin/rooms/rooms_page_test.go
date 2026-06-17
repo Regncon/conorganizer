@@ -144,7 +144,7 @@ func createRoomsPageRoom(t *testing.T, db *sql.DB, name string, roomNumber strin
 		Floor:              floor,
 		MaxConcurrentGames: 2,
 	})
-	if err != nil {
+	if err.HasErrors() {
 		t.Fatalf("failed to create room: %v", err)
 	}
 	return *room

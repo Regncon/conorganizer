@@ -30,8 +30,11 @@ func TestLoginForm_RendersDescopeWidgetAndPostLoginRedirect(t *testing.T) {
 		"https://static.descope.com/npm/@descope/user-management-widget@0.4.116/dist/index.js",
 	}
 	expectedInlineScriptParts := []string{
-		"session_token",
-		"refresh_token",
+		"descopeSdk.getSessionToken",
+		"descopeSdk.getRefreshToken",
+		"fetch('/auth/session'",
+		"sessionJwt",
+		"refreshJwt",
 		"window.location.href = '/auth/post-login';",
 	}
 
