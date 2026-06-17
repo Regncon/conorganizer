@@ -12,7 +12,7 @@ func createEventVisibilityTestDB(t *testing.T) *sql.DB {
 	t.Helper()
 
 	db := testutil.CreateTestDB(t, "event_visibility")
-	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?), (?), (?)`, models.EventStatusApproved, models.EventStatusAnnounced, models.EventStatusDraft)
+	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?), (?), (?), (?)`, models.EventStatusApproved, models.EventStatusAnnounced, models.EventStatusDraft, models.EventStatusArchived)
 	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
 	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
 	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
