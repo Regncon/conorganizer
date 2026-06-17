@@ -119,4 +119,39 @@ I left the existing untracked `.ai/threads/not-announced-events.md` alone.
 
 Time: 2026-06-17 08:28:19
 --- Next Prompt ---
+Let's split the warning banner in two with the warning icon on the left and the text on the right. This will make the warning icon large and more visible.
+Also, let's hide the actual event content for none asmins and non-owners. 
+
+Time: 2026-06-17 09:19:07
+--- Codex Run ---
+
+Codex output:
+I’ll adjust the warning banner layout and strengthen the hidden-content tests. The access logic already hides unannounced/archived event content from non-admins and non-owners, but I’ll make that explicit in coverage while changing the visual treatment.
+The current banner is technically left icon/right text already, but the icon is too small and not visually separated. I’m changing it to a two-column panel with a dedicated icon rail and a larger warning icon.
+I’m adding explicit assertions that hidden viewers do not get the event page body. This locks in the non-admin/non-owner behavior you called out.
+The UI and test assertions are patched. I’ll format, regenerate the templ output, and rerun the event/full suites.
+Formatting is done; now I’m regenerating templ code and running tests.
+The new hidden-content assertions failed because the selector I chose is present somewhere in the rendered document path. I’m inspecting the hidden render shape and then I’ll switch the assertion to a more precise event-title/body check.
+I found the actual issue behind your second point: bare `return` in `.templ` is rendered as text, not control flow. So hidden users were getting the notice and then the event content. I’m fixing those returns as real Go control flow.
+I’m changing the early exits in `event_page_content` to real Go returns (`return nil`) inside templ code blocks. That fixes the leak instead of only testing around it.
+The early exits are patched. I’ll regenerate now; if templ rejects that syntax I’ll adjust immediately.
+Templ accepted the real returns. I’m checking the generated section once, then rerunning tests.
+The generated code now returns before event content for hidden viewers, and the event package passes. I’m running the full suite.
+Full suite passes. I see `.ai/threads/not-announced-events.md` is modified in the worktree, but this change is outside the files I edited for the refactor; I’ll leave it alone.
+Done.
+
+I updated [event_page.templ](/home/cinmay/Documents/conorganizer/pages/event/event_page.templ:172) so the warning banner is now a two-column panel: a dedicated warning-icon rail on the left with a larger icon, and the warning text on the right.
+
+I also fixed the hidden-content issue in [event_page.templ](/home/cinmay/Documents/conorganizer/pages/event/event_page.templ:43). The old bare `return` lines in the templ file were rendering as text instead of stopping rendering, so hidden users could still get the event body after the notice. Those are now real `{{ return nil }}` exits.
+
+Added assertions in [event_visibility_test.go](/home/cinmay/Documents/conorganizer/pages/event/event_visibility_test.go:256) to confirm hidden unannounced/archived views do not render `.event-page-wrapper`.
+
+Verification:
+- `GOCACHE=/tmp/conorganizer-go-build go test ./pages/event`
+- `GOCACHE=/tmp/conorganizer-go-build go test ./...`
+
+Note: `.ai/threads/not-announced-events.md` is modified in the worktree, but I did not touch it.
+
+Time: 2026-06-17 09:19:07
+--- Next Prompt ---
 

@@ -27,18 +27,18 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 	if eventErr != nil {
 		{{ logger.Error(eventErr.Error(), "event_id", eventId) }}
 		<p>Error fetching event: { eventErr.Error() }</p>
-		return
+		{{ return nil }}
 	}
 	if event == nil {
 		<p>Event not found</p>
-		return
+		{{ return nil }}
 	}
 	{{ userInfo.IsAdmin = userInfo.IsAdmin || isAdmin }}
 	{{ viewDecision, viewDecisionErr := decideEventView(event, userInfo, db) }}
 	if viewDecisionErr != nil {
 		{{ logger.Error(viewDecisionErr.Error(), "event_id", eventId, "user_id", userInfo.Id) }}
 		<p>Error checking event access: { viewDecisionErr.Error() }</p>
-		return
+		{{ return nil }}
 	}
 	if !viewDecision.CanView {
 		if viewDecision.HiddenReason == eventHiddenReasonArchivedGone {
@@ -46,13 +46,13 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		} else {
 			@eventNotAnnouncedHiddenNotice()
 		}
-		return
+		{{ return nil }}
 	}
 	{{ puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db) }}
 	if puljerErr != nil {
 		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
 		<p>Error fetching event puljer: { puljerErr.Error() }</p>
-		return
+		{{ return nil }}
 	}
 	{{
 		selectedPuljeId := puljeId
@@ -71,7 +71,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 	if programPublishedErr != nil {
 		{{ logger.Error(programPublishedErr.Error(), "event_id", eventId) }}
 		<p>Error fetching program publishing state: { programPublishedErr.Error() }</p>
-		return
+		{{ return nil }}
 	}
 	{{ showInterestControls := canShowInterestControls(programPublished, puljerForEvent) }}
 	{{ associatedTicketHolders, ticketHoldersErr := ticketholder.GetTicketHolders(userInfo, db) }}
@@ -83,7 +83,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 	if previousNextErr != nil {
 		{{ logger.Error(previousNextErr.Error(), "event_id", eventId) }}
 		<p>Error fetching event navigation: { previousNextErr.Error() }</p>
-		return
+		{{ return nil }}
 	}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
@@ -175,24 +175,36 @@ templ eventVisibilityWarning(title string, message string) {
 			margin-top: var(--spacing-4x);
 		}
 		.event-visibility-warning {
-			display: flex;
-			align-items: flex-start;
-			gap: var(--spacing-3x);
+			display: grid;
+			grid-template-columns: 4.75rem minmax(0, 1fr);
 			box-sizing: border-box;
 			border: 1px solid var(--color-warning);
 			border-radius: var(--border-radius-2x);
 			background: color-mix(in srgb, var(--color-warning) 12%, var(--bg-surface));
 			color: var(--color-warning);
-			padding: var(--spacing-4x);
+			overflow: hidden;
 		}
-		.event-visibility-warning .inline-icon {
-			flex: 0 0 auto;
-			margin-top: 0.125rem;
+		.event-visibility-warning-icon {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			border-right: 1px solid color-mix(in srgb, var(--color-warning) 60%, transparent);
+			background: color-mix(in srgb, var(--color-warning) 16%, transparent);
+		}
+		.event-visibility-warning-icon .inline-icon {
+			width: 3rem;
+			height: 3rem;
+		}
+		.event-visibility-warning-icon svg {
+			width: 100%;
+			height: 100%;
 		}
 		.event-visibility-warning-text {
 			display: flex;
 			flex-direction: column;
 			gap: var(--spacing-1x);
+			min-width: 0;
+			padding: var(--spacing-4x);
 		}
 		.event-visibility-warning-title,
 		.event-visibility-warning-message {
@@ -209,7 +221,9 @@ templ eventVisibilityWarning(title string, message string) {
 	<div class="page-content-container event-visibility-warning-wrap">
 		<section class="container-inner-padding">
 			<div class="event-visibility-warning" role="status">
-				@icons.Icon(icons.Warning, icons.Size24)
+				<div class="event-visibility-warning-icon" aria-hidden="true">
+					@icons.Icon(icons.Warning, icons.Size32)
+				</div>
 				<div class="event-visibility-warning-text">
 					<p class="event-visibility-warning-title">{ title }</p>
 					<p class="event-visibility-warning-message">{ message }</p>

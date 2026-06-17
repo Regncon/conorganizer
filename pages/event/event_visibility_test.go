@@ -271,10 +271,14 @@ func TestEventPageContent_WhenUnannouncedEventIsHidden_RendersFriendlyMessage(t 
 	// When
 	doc := templtest.Render(t, event_page_content("hidden-event", false, logger, db, nil, request))
 	actualMessages := templtest.CollectTexts(doc, ".event-not-announced-message")
+	actualEventContentVisible := templtest.HasSelector(doc, ".event-page-wrapper")
 
 	// Then
 	if !slices.Equal(expectedMessages, actualMessages) {
 		t.Fatalf("hidden event message mismatch\nexpected: %v\nactual:   %v", expectedMessages, actualMessages)
+	}
+	if actualEventContentVisible {
+		t.Fatalf("expected hidden unannounced event content not to render")
 	}
 }
 
@@ -327,10 +331,14 @@ func TestEventPageContent_WhenArchivedEventIsHidden_RendersArchivedMessage(t *te
 	// When
 	doc := templtest.Render(t, event_page_content("archived-hidden-event", false, logger, db, nil, request))
 	actualMessages := templtest.CollectTexts(doc, ".event-archived-message")
+	actualEventContentVisible := templtest.HasSelector(doc, ".event-page-wrapper")
 
 	// Then
 	if !slices.Equal(expectedMessages, actualMessages) {
 		t.Fatalf("archived event message mismatch\nexpected: %v\nactual:   %v", expectedMessages, actualMessages)
+	}
+	if actualEventContentVisible {
+		t.Fatalf("expected hidden archived event content not to render")
 	}
 }
 
