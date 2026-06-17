@@ -14,13 +14,13 @@ import (
 	"log/slog"
 )
 
-templ NewEventFormPage(eventId string, userId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+templ NewEventFormPage(eventId string, eventImageDir *string, userId string, ctx context.Context, db *sql.DB, logger *slog.Logger) {
 	<div id="formsubmission-container" class="formsubmission-css-container">
-		@NewEventFormPageContent(eventId, userId, ctx, db, eventImageDir, logger)
+		@NewEventFormPageContent(eventId, eventImageDir, userId, ctx, db, logger)
 	</div>
 }
 
-templ NewEventFormPageContent(eventId string, userId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+templ NewEventFormPageContent(eventId string, eventImageDir *string, userId string, ctx context.Context, db *sql.DB, logger *slog.Logger) {
 	{{
 		isAdmin := authctx.GetAdminFromUserToken(ctx)
 		eventData, eventErr := eventservice.GetEventById(eventId, db)
@@ -50,22 +50,22 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 			{Name: "Hjem", Url: "/"},
 			{Name: "Min Side", Url: "/profile"},
 			{Name: "Nytt arrangement", Url: ""},
-			})
-			@formsubmission.EventFormPageLayout("Nytt arrangement", false) {
-				<form
-					class="formsubmission-wrapper"
-					action={ "/profile/api/new/" + eventData.ID + "/submit" }
-					method="post"
-					{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(isAdmin))... }
-					{ errorfeedback.Attrs("submit")... }
-					data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/submit', {contentType: 'form'})", eventData.ID) }
-				>
-					@formsubmission.FormBody(eventData, isAdmin, db)
-					@formsubmission.SubmitSection()
-				</form>
-				if isAdmin {
-					@event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
-				}
+		})
+		@formsubmission.EventFormPageLayout("Nytt arrangement", false) {
+			<form
+				class="formsubmission-wrapper"
+				action={ "/profile/api/new/" + eventData.ID + "/submit" }
+				method="post"
+				{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(isAdmin))... }
+				{ errorfeedback.Attrs("submit")... }
+				data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/submit', {contentType: 'form'})", eventData.ID) }
+			>
+				@formsubmission.FormBody(eventData, eventImageDir, isAdmin, db)
+				@formsubmission.SubmitSection()
+			</form>
+			if isAdmin {
+				@event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
 			}
+		}
 	}
 }
