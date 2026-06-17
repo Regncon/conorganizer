@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/live"
@@ -37,14 +38,34 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 		var ctx = r.Context()
 		isAdmin := authctx.GetAdminFromUserToken(ctx)
 		userInfo := userctx.GetUserRequestInfo(ctx)
+		userInfo.IsAdmin = userInfo.IsAdmin || isAdmin
+		viewDecision, viewDecisionErr := decideEventView(event, userInfo, db)
+		if viewDecisionErr != nil {
+			logger.Error(viewDecisionErr.Error(), "event_id", eventID, "user_id", userInfo.Id)
+			http.Error(w, viewDecisionErr.Error(), http.StatusInternalServerError)
+			return
+		}
+		if !viewDecision.CanView && viewDecision.HiddenResponseStatusCode != http.StatusOK {
+			w.WriteHeader(viewDecision.HiddenResponseStatusCode)
+		}
 		if err := layouts.Base(
-			event.Title,
+			eventPageTitle(event, viewDecision),
 			userInfo,
 			eventIndex(event.ID, isAdmin, userInfo, logger, db, eventImageDir, r),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render event page: %w", err).Error(), "event_id", event.ID, "user_id", userInfo.Id)
 		}
 	})
+}
+
+func eventPageTitle(event *models.Event, viewDecision eventViewDecision) string {
+	if !viewDecision.CanView && viewDecision.HiddenReason == eventHiddenReasonArchivedGone {
+		return "Arrangementet er ikke tilgjengelig"
+	}
+	if !viewDecision.CanView && viewDecision.HiddenReason == eventHiddenReasonUnannounced {
+		return "Arrangementet er ikke annonsert ennå"
+	}
+	return event.Title
 }
 
 templ eventIndex(eventId string, isAdmin bool, userInfo requestctx.UserRequestInfo, logger *slog.Logger, db *sql.DB, eventImageDir *string, r *http.Request) {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/event_components"
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -33,14 +34,18 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		return
 	}
 	{{ userInfo.IsAdmin = userInfo.IsAdmin || isAdmin }}
-	{{ canView, canViewErr := canViewEvent(event, userInfo, db) }}
-	if canViewErr != nil {
-		{{ logger.Error(canViewErr.Error(), "event_id", eventId, "user_id", userInfo.Id) }}
-		<p>Error checking event access: { canViewErr.Error() }</p>
+	{{ viewDecision, viewDecisionErr := decideEventView(event, userInfo, db) }}
+	if viewDecisionErr != nil {
+		{{ logger.Error(viewDecisionErr.Error(), "event_id", eventId, "user_id", userInfo.Id) }}
+		<p>Error checking event access: { viewDecisionErr.Error() }</p>
 		return
 	}
-	if !canView {
-		@eventNotAnnounced()
+	if !viewDecision.CanView {
+		if viewDecision.HiddenReason == eventHiddenReasonArchivedGone {
+			@eventArchivedHiddenNotice()
+		} else {
+			@eventNotAnnouncedHiddenNotice()
+		}
 		return
 	}
 	{{ puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db) }}
@@ -88,6 +93,17 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 			@components.BreadcrumbNavButtons(previousNextData)
 		}
 	}
+	if viewDecision.ShowArchivedWarning {
+		@eventVisibilityWarning(
+			"Arrangementet er forkastet",
+			"Dette arrangementet er forkastet og er ikke tilgjengelig for vanlige brukere.",
+		)
+	} else if viewDecision.ShowUnannouncedWarning {
+		@eventVisibilityWarning(
+			"Arrangementet er ikke annonsert",
+			"Dette arrangementet er ikke annonsert ennå. Vanlige brukere kan ikke se det.",
+		)
+	}
 	if isAdmin {
 		<a
 			href={ fmt.Sprintf("/admin/approval/edit/%s", event.ID) }
@@ -101,24 +117,104 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 	}
 }
 
-templ eventNotAnnounced() {
+templ eventNotAnnouncedHiddenNotice() {
+	@eventHiddenNotice(
+		"Arrangementet er ikke annonsert ennå",
+		eventNotAnnouncedMessage,
+		"event-not-announced-message",
+		"event-not-announced",
+	)
+}
+
+templ eventArchivedHiddenNotice() {
+	@eventHiddenNotice(
+		"Arrangementet er ikke tilgjengelig",
+		eventArchivedMessage,
+		"event-archived-message",
+		"event-archived",
+	)
+}
+
+templ eventHiddenNotice(title string, message string, messageClass string, stateClass string) {
 	<style>
-		.event-not-announced {
+		.event-hidden-notice {
 			margin-top: var(--responsive-top-of-page-spacing);
 			display: flex;
 			flex-direction: column;
-			gap: var(--spacing-3x);
+			align-items: center;
+			gap: var(--spacing-4x);
 			text-align: center;
+			color: var(--color-text-soft);
 		}
-		.event-not-announced h1,
-		.event-not-announced p {
+		.event-hidden-notice .inline-icon {
+			color: var(--color-warning);
+		}
+		.event-hidden-notice h1,
+		.event-hidden-notice p {
 			margin: 0;
+		}
+		.event-hidden-notice h1 {
+			color: var(--color-text-strong);
+		}
+		.event-hidden-notice p {
+			max-width: 36rem;
 		}
 	</style>
 	<div class="page-content-container">
-		<section class="container-inner-padding event-not-announced">
-			<h1>Arrangementet er ikke annonsert ennå</h1>
-			<p class="event-not-announced-message">{ eventNotAnnouncedMessage }</p>
+		<section class={ "container-inner-padding event-hidden-notice", stateClass }>
+			@icons.Icon(icons.Warning, icons.Size32)
+			<h1>{ title }</h1>
+			<p class={ messageClass }>{ message }</p>
+		</section>
+	</div>
+}
+
+templ eventVisibilityWarning(title string, message string) {
+	<style>
+		.event-visibility-warning-wrap {
+			margin-top: var(--spacing-4x);
+		}
+		.event-visibility-warning {
+			display: flex;
+			align-items: flex-start;
+			gap: var(--spacing-3x);
+			box-sizing: border-box;
+			border: 1px solid var(--color-warning);
+			border-radius: var(--border-radius-2x);
+			background: color-mix(in srgb, var(--color-warning) 12%, var(--bg-surface));
+			color: var(--color-warning);
+			padding: var(--spacing-4x);
+		}
+		.event-visibility-warning .inline-icon {
+			flex: 0 0 auto;
+			margin-top: 0.125rem;
+		}
+		.event-visibility-warning-text {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-1x);
+		}
+		.event-visibility-warning-title,
+		.event-visibility-warning-message {
+			margin: 0;
+		}
+		.event-visibility-warning-title {
+			color: var(--color-text-strong);
+			font-weight: 700;
+		}
+		.event-visibility-warning-message {
+			color: var(--color-text-soft);
+		}
+	</style>
+	<div class="page-content-container event-visibility-warning-wrap">
+		<section class="container-inner-padding">
+			<div class="event-visibility-warning" role="status">
+				@icons.Icon(icons.Warning, icons.Size24)
+				<div class="event-visibility-warning-text">
+					<p class="event-visibility-warning-title">{ title }</p>
+					<p class="event-visibility-warning-message">{ message }</p>
+				</div>
+			</div>
 		</section>
 	</div>
 }
