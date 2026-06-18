@@ -8,8 +8,8 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, interestAvailable bool) {
-	{{ helperState, hasHelperState := ticketholder.BuildMostUrgentPuljeInterestState(puljerForEvent, time.Now()) }}
+templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, selectedPuljeQuery string, interestAvailable bool) {
+	{{ helperState, hasHelperState := ticketholder.BuildQueryPuljeInterestState(puljerForEvent, selectedPuljeQuery, time.Now()) }}
 	<style>
     .event-interest-picker-container {
         container-type: inline-size;

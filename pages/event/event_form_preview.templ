@@ -8,6 +8,6 @@ import (
 templ EventFormPreview(eventData *models.Event, puljerForEvent []models.PuljeRow, eventImageDir *string) {
 	{{ isRemovedPreviousNext := components.PreviousNext{IsRemoved: true} }}
 	<div class="event-container event-form-preview">
-		@Event_mobile(eventData, isRemovedPreviousNext, puljerForEvent, false, false, eventImageDir)
+		@Event_mobile(eventData, isRemovedPreviousNext, puljerForEvent, "", false, false, eventImageDir)
 	</div>
 }

@@ -111,7 +111,7 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 			style="margin:1rem;"
 		>Administrator - rediger arrangementer</a>
 	}
-	@Event_mobile(event, previousNextData, puljerForEvent, hasTickets, showInterestControls, eventImageDir)
+	@Event_mobile(event, previousNextData, puljerForEvent, puljeId, hasTickets, showInterestControls, eventImageDir)
 	if showInterestControls {
 		@event_components.EventInterests(userInfo, eventId, selectedPuljeId, db, r, logger)
 	}
