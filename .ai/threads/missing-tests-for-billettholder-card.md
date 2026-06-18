@@ -347,4 +347,53 @@ Note: `git status` still shows an unrelated `.ai/threads/missing-tests-for-bille
 
 Time: 2026-06-15 19:38:43
 --- Next Prompt ---
+Is there any other static public content that is being routed through the auth middleware? 
+What about the stuff on the cdn? is there a point to hosting it ourselves to go faster? or is the cdn the fastest way?
+Also how much does the browser cache help with this?
+
+Let's continue the discussion.
+
+Time: 2026-06-15 19:46:46
+--- Codex Run ---
+
+Codex output:
+I’ll scan the templates for remaining asset URLs and external CDN references so the discussion is based on the actual page surface, not just the admin layout we looked at.
+After the route change, the only local public asset routes I see are:
+
+- `/static/*`
+- `/event-images/*`
+
+Both are now mounted before `authctx.AuthMiddleware` in [main.go](/home/cinmay/Documents/conorganizer/main.go:107). I don’t see another local static/public file route still passing through auth middleware.
+
+External/CDN assets in the normal base layout are:
+
+- Google Fonts CSS and font files
+- `unpkg.com` Tippy CSS
+- `unpkg.com` Popper JS
+- `unpkg.com` Tippy JS
+
+Those are in [layouts/base.templ](/home/cinmay/Documents/conorganizer/layouts/base.templ:14). They do not pass through our auth middleware because the browser requests them directly from those origins.
+
+On CDN vs self-hosting: for this app, I would lean toward self-hosting the Tippy/Popper assets, or removing them from the global layout if only some pages need them. The HAR shows the unpkg URLs use redirects from broad versions like `tippy.js@5` to exact versions, and those redirects cost about ~2s in that capture. If we keep CDN, at least pin exact URLs to avoid redirects.
+
+Self-hosting would likely be faster and more predictable here because:
+
+- the browser already has a connection to our origin,
+- the files are small,
+- it avoids third-party DNS/TLS/redirects,
+- it avoids CDN variance,
+- it lets us control cache headers.
+
+Google Fonts is more nuanced. Google’s CDN is good, and font files have long cache headers, but the CSS request is still another origin and in the HAR took ~2.3s. Modern browser cache partitioning also reduces the old “everyone already has this Google font cached from another site” advantage. Self-hosting fonts can be better for predictable first paint, but it means we own font updates/subsetting.
+
+Browser cache helps a lot on repeat visits, but only if the response headers are good. In the HAR:
+
+- CDN versioned assets and font files have long `max-age`.
+- Google Fonts CSS has `max-age=86400`.
+- Our first-party `/static/...` responses did not show `Cache-Control` in the extracted HAR output.
+
+So after moving static out of auth, I’d expect a major improvement. The next likely win is adding explicit cache policy for local static assets, especially hashed/versioned ones, and either self-hosting or pinning the CDN assets.
+
+Time: 2026-06-15 19:46:46
+--- Next Prompt ---
 

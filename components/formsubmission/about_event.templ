@@ -8,8 +8,10 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components/errorfeedback"
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -176,7 +178,11 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 	})
 }
 
-templ aboutEvent(eventId string, title string, intro string, eventType models.EventType, system string, description string) {
+templ aboutEvent(eventId string, eventImageDir *string, title string, intro string, eventType models.EventType, system string, description string) {
+	{{
+		imgurl := eventimage.GetEventImageUrl(eventId, "banner", eventImageDir)
+		hasUploadedImage := imgurl != "/static/placeholder_banner.svg"
+	}}
 	<article class="form-card">
 		<h4 class="form-card-title">Om arrangementet</h4>
 		<section class="about-section">
@@ -209,7 +215,7 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 					data-indicator="toastIntro"
 					{ errorfeedback.Attrs("intro")... }
 					data-on:change={ fmt.Sprintf("@put('/profile/api/new/%s/intro')", eventId) }
-					rows="2"
+					rows="5"
 					placeholder="Kjapp introduksjon til arrangementet"
 					required
 					minlength="3"
@@ -237,18 +243,47 @@ templ aboutEvent(eventId string, title string, intro string, eventType models.Ev
 				</select>
 				@errorfeedback.RenderMessage("type")
 			</label>
-			<a
-				href={ "/profile/new/" + eventId + "/image/" }
-				class="btn btn--primary"
-				style="place-self: center end; margin-right:  1rem"
-			>
-				Last opp bilete
-			</a>
-			<label class="label-small color-strong form-group system">
-				System
+			<section class="form-group img image-upload">
+				<p class="label-small color-strong">Arrangementbilete</p>
 				<div
+					class={ "image-upload__panel", templ.KV("image-upload__panel--has-image", hasUploadedImage) }
+					style={ templ.KV(templ.SafeCSS(fmt.Sprintf("--image-upload-background-image: url(%s);", imgurl)), hasUploadedImage) }
+				>
+					<div class="image-upload__content">
+						<span class="image-upload__icon" aria-hidden="true">
+							@icons.Icon(icons.FileUpload, icons.Size40)
+						</span>
+						if !hasUploadedImage {
+							<p class="image-upload__text">
+								Finn eit bilete som presenterer arrangementet godt og
+								gjer det lettare å kjenne att arrangementet.
+							</p>
+						}
+					</div>
+					<a
+						href={ "/profile/new/" + eventId + "/image/" }
+						class="btn btn--secondary image-upload__button"
+					>
+						<span>
+							if !hasUploadedImage {
+								Last opp bilete
+							}
+							if hasUploadedImage {
+								Bytt bilete
+							}
+						</span>
+						<span class="image-upload__button-icon" aria-hidden="true">
+							@icons.Icon(icons.ArrowRight, icons.Size20)
+						</span>
+					</a>
+				</div>
+			</section>
+			<label class="label-small color-strong form-group system">
+				<p
 					data-signals={ dataSignals(map[string]string{"system": system}) }
-				></div>
+				>
+					System
+				</p>
 				<input
 					name="system"
 					class="input"

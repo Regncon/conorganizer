@@ -112,7 +112,7 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 							Buckets: []live.Bucket{live.BucketEvents, live.BucketRooms},
 							Render: func(ctx context.Context, r *http.Request) templ.Component {
 								userId := userctx.GetUserRequestInfo(r.Context()).Id
-								return newevent.NewEventFormPage(eventId, userId, ctx, db, eventImageDir, logger)
+								return newevent.NewEventFormPage(eventId, eventImageDir, userId, ctx, db, logger)
 							},
 						})
 					})

@@ -169,7 +169,7 @@ func currentUserDBID(ctx context.Context, db *sql.DB, logger *slog.Logger) (int6
 	return updatedByID, nil
 }
 
-templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
+templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql.DB) {
 	<style>
 			/* Chrome drops native validation bubbles during smooth-scroll to invalid fields. */
 			html:has(.formsubmission-wrapper) {
@@ -243,6 +243,99 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
                             border-radius: var(--border-radius-2x);
                             object-fit: cover;
                         }
+                    }
+
+                    .image-upload {
+                        container-type: inline-size;
+                        gap: 0.5rem;
+
+                        @container (width <= 24rem) {
+                            .image-upload__panel {
+                                padding: var(--spacing-3x);
+                            }
+
+                            .image-upload__button {
+                                justify-self: stretch;
+                            }
+                        }
+                    }
+
+                    .image-upload > p {
+                        margin: 0;
+                    }
+
+                    .image-upload__panel {
+                        display: grid;
+                        gap: var(--spacing-2x);
+                        min-block-size: 9.375rem;
+                        padding: var(--spacing-3x);
+                        align-content: space-between;
+                        border: 1px solid var(--bg-item-border);
+                        border-radius: var(--border-radius-2x);
+                        background: var(--bg-item);
+                        height: 100%;
+                    }
+
+                    .image-upload__panel--has-image {
+                        min-block-size: clamp(8.75rem, 36cqw, 13rem);
+                        align-content: end;
+                        overflow: hidden;
+                        background:
+                            linear-gradient(
+                                hsl(from var(--bg-backdrop) h s l / 10%),
+                                hsl(from var(--bg-backdrop) h s l / 45%)
+                            ),
+                            var(--image-upload-background-image);
+                        background-position: center;
+                        background-size: cover;
+                        height: 100%;
+
+                        .image-upload__content {
+                            display: none;
+                        }
+
+                        .image-upload__button {
+                            background-color: color-mix(in srgb, var(--bg-item) 82%, transparent);
+                            backdrop-filter: blur(0.25rem);
+                        }
+                    }
+
+                    .image-upload__content {
+                        display: grid;
+                        grid-template-columns: 2.5rem minmax(0, 1fr);
+                        gap: var(--spacing-2x);
+                        align-items: start;
+                    }
+
+                    .image-upload__text {
+                        min-inline-size: 0;
+                        margin: 0;
+                        max-inline-size: 34rem;
+                        color: var(--color-text-soft);
+                        font-size: var(--text-body-small);
+                        line-height: 1.35;
+                    }
+
+                    .image-upload__icon,
+                    .image-upload__button-icon {
+                        display: inline-grid;
+                        place-items: center;
+                        flex: 0 0 auto;
+                    }
+
+                    .image-upload__icon {
+                        inline-size: 2.5rem;
+                        block-size: 2.5rem;
+                    }
+
+                    .image-upload__button-icon {
+                        inline-size: 1.25rem;
+                        block-size: 1.25rem;
+                    }
+
+                    .image-upload__button {
+                        justify-self: end;
+                        gap: var(--spacing-1x);
                     }
                 }
 
@@ -402,6 +495,7 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 	)
 	@aboutEvent(
 		event.ID,
+		eventImageDir,
 		event.Title,
 		event.Intro,
 		event.EventType,

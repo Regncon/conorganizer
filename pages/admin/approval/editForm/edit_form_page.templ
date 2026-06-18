@@ -51,7 +51,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 			class="formsubmission-wrapper"
 			{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(isAdmin))... }
 		>
-			@formsubmission.FormBody(eventData, isAdmin, db)
+			@formsubmission.FormBody(eventData, eventImageDir, isAdmin, db)
 		</form>
 		@event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
 	}

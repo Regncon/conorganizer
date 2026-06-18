@@ -61,7 +61,7 @@ templ newEventIndex(eventId string, userID string, ctx context.Context, db *sql.
 		class="formsubmission-css-container"
 		data-init={ live.DatastarInit(fmt.Sprintf("/profile/api/new/%s", eventId)) }
 	>
-		@NewEventFormPageContent(eventId, userID, ctx, db, eventImageDir, logger)
+		@NewEventFormPageContent(eventId, eventImageDir, userID, ctx, db, logger)
 	</div>
 }
 
