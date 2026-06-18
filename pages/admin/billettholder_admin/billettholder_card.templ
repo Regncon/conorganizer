@@ -14,8 +14,8 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/checkIn"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
-	"github.com/gorilla/sessions"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -48,10 +48,9 @@ func highlightSearchTerm(text, searchTerm string) string {
 type Responder struct {
 	BillettholderID string
 	Logger          *slog.Logger
-	Store           sessions.Store
+	LiveManager     *live.Manager
 	w               http.ResponseWriter
 	r               *http.Request
-	NotifyUpdate    func(string)
 }
 
 func handleError(responder Responder, dispalyText string, errorText string) {
@@ -74,10 +73,6 @@ func handleError(responder Responder, dispalyText string, errorText string) {
 		responder.Logger.Error("Failed to patch signals", "error", err)
 		http.Error(responder.w, "Failed to patch signals", http.StatusInternalServerError)
 		return
-	}
-	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
-	if responder.NotifyUpdate != nil {
-		responder.NotifyUpdate(sessionID)
 	}
 	http.Error(responder.w, "New email address is required", http.StatusBadRequest)
 }
@@ -105,9 +100,8 @@ func handleSuccess(responder Responder, successText string) {
 		return
 	}
 
-	sessionID, _ := upsertSessionID(responder.Store, responder.r, responder.w)
-	if responder.NotifyUpdate != nil {
-		responder.NotifyUpdate(sessionID)
+	if err := responder.LiveManager.Broadcast(responder.r.Context(), live.BucketBillettholders); err != nil {
+		responder.Logger.Error("Failed to broadcast billettholder email update", "error", err, "billettholder_id", responder.BillettholderID)
 	}
 }
 
@@ -115,18 +109,16 @@ func addEmailToBilettholderRoute(
 	router chi.Router,
 	db *sql.DB,
 	logger *slog.Logger,
-	store sessions.Store,
-	notifyUpdate func(string),
+	liveManager *live.Manager,
 ) {
 	logger = logger.With("component", "billettholder_admin")
 	router.Post("/new-email/{id}/", func(w http.ResponseWriter, r *http.Request) {
 		responder := Responder{
 			BillettholderID: chi.URLParam(r, "id"),
 			Logger:          logger,
-			Store:           store,
+			LiveManager:     liveManager,
 			w:               w,
 			r:               r,
-			NotifyUpdate:    notifyUpdate,
 		}
 
 		billettholderID := chi.URLParam(r, "id")
@@ -202,18 +194,16 @@ func deleteEmailFromBillettholderRoute(
 	router chi.Router,
 	db *sql.DB,
 	logger *slog.Logger,
-	store sessions.Store,
-	notifyUpdate func(string),
+	liveManager *live.Manager,
 ) {
 	logger = logger.With("component", "billettholder_admin")
 	router.Post("/delete-email/{id}/{emailID}/", func(w http.ResponseWriter, r *http.Request) {
 		responder := Responder{
 			BillettholderID: chi.URLParam(r, "id"),
 			Logger:          logger,
-			Store:           store,
+			LiveManager:     liveManager,
 			w:               w,
 			r:               r,
-			NotifyUpdate:    notifyUpdate,
 		}
 
 		billettholderID := chi.URLParam(r, "id")
@@ -223,7 +213,8 @@ func deleteEmailFromBillettholderRoute(
 			handleError(responder, "Noe gikk galt, prøv igjen", "Missing billettholderID or emailID in delete request")
 			return
 		}
-		if _, err := strconv.Atoi(billettholderID); err != nil {
+		billettholderIDInt, err := strconv.Atoi(billettholderID)
+		if err != nil {
 			handleError(responder, "Noe gikk galt, prøv igjen", "Invalid billettholder ID in delete request")
 			return
 		}
@@ -231,7 +222,7 @@ func deleteEmailFromBillettholderRoute(
 		// Validate the email belongs to this billettholder and fetch kind/email for messages/guard
 		var email string
 		var kind models.BillettholderEmailKind
-		err := db.QueryRow(`
+		err = db.QueryRow(`
 			SELECT email, kind
 			FROM relation_billettholder_emails
 			WHERE id = ? AND billettholder_id = ?
@@ -264,14 +255,7 @@ func deleteEmailFromBillettholderRoute(
 			return
 		}
 
-		if _, err := db.Exec(`
-            DELETE FROM relation_billettholdere_users
-            WHERE billettholder_id = ? AND user_id IN (
-                SELECT u.id FROM users u
-                JOIN relation_billettholdere_users bu ON bu.user_id = u.id
-                WHERE bu.billettholder_id = ? AND u.email = ?
-            )
-        `, billettholderID, billettholderID, email); err != nil {
+		if err := checkIn.DisassociateUsersFromBillettholderEmail(billettholderIDInt, email, db, logger); err != nil {
 			handleError(responder, "Noe gikk galt ved fjerning av bruker-tilknytning", "Failed to delete user association: "+err.Error())
 			return
 		}

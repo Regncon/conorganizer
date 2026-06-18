@@ -41,7 +41,7 @@ templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	})
 	if err != nil {
 		<div class="page-content-container">
-			<p>Error fetching program publishing state: { err.Error() }</p>
+			<p class="root-page-error">{ rootPageLoadErrorMessage }</p>
 		</div>
 	} else {
 		if programPublished {

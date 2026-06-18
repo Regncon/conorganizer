@@ -139,6 +139,12 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				text-decoration: none;
 			}
 
+			.dropdown-panel a.external-link {
+				display: flex;
+				align-items: center;
+				gap: var(--spacing-1x);
+			}
+
 			.dropdown-panel a:hover {
 				background-color: hsla(0, 0%, 100%, 0.1);
 			}
@@ -265,7 +271,15 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 							<div class="dropdown-panel">
 								<a href="/auth/logout">Logg ut</a>
 								<a href="/profile">Min Profil</a>
-								<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
+								<a
+									href="https://www.regncon.no/vanlege-sporsmal/"
+									target="_blank"
+									rel="noopener noreferrer"
+									class="external-link"
+								>
+									<span>Vanlege Spørsmål</span>
+									@icons.Icon(icons.ExternalLink, icons.Size16)
+								</a>
 								if UserInfo.IsAdmin {
 									<hr/>
 									<a href="/admin/billettholder/">Billettholderoversikt</a>

@@ -3,14 +3,17 @@ version: "3"
 dotenv:
     - ".env"
 
-env:
-    STATIC_DIR: "static"
-
 tasks:
     # The `build:` tasks below are used together for "production" builds of your project
     build:templ:
         cmds:
-            - go tool templ generate
+            - |
+              set -eu
+              for dir in components pages layouts service; do
+                if [ -d "$dir" ]; then
+                  go tool templ generate -path "$dir" -log-level error
+                fi
+              done
 
     build:
         cmds:
@@ -29,36 +32,103 @@ tasks:
     # The `start:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
     start:templ:
         cmds:
-            - go tool templ generate --watch --proxybind="0.0.0.0"
-              --proxy="http://localhost:8080" --open-browser=false -v
+            - |
+              set -eu
+              mkdir -p tmp/templ-watch
+              lock_dir="tmp/templ-watch/generating.lock"
+              rmdir "$lock_dir" 2>/dev/null || true
+
+              hash_templates() {
+                find "$1" -type f -name '*.templ' -exec sha256sum {} + 2>/dev/null \
+                  | sort \
+                  | sha256sum \
+                  | cut -d ' ' -f 1
+              }
+
+              generate_dirs() {
+                if [ "$#" -eq 0 ]; then
+                  return
+                fi
+
+                while ! mkdir "$lock_dir" 2>/dev/null; do
+                  sleep 0.1
+                done
+
+                for dir in "$@"; do
+                  if [ ! -d "$dir" ]; then
+                    continue
+                  fi
+
+                  echo "templ: generating $dir"
+                  if ! go tool templ generate -path "$dir" -log-level error; then
+                    echo "templ: generation failed for $dir" >&2
+                  fi
+                  hash_templates "$dir" > "tmp/templ-watch/$dir.sha256"
+                done
+
+                rmdir "$lock_dir"
+              }
+
+              generate_dirs components pages layouts service
+
+              while true; do
+                changed_dirs=""
+                for dir in components pages layouts service; do
+                  if [ ! -d "$dir" ]; then
+                    continue
+                  fi
+
+                  state="tmp/templ-watch/$dir.sha256"
+                  current_hash="$(hash_templates "$dir")"
+                  previous_hash="$(cat "$state" 2>/dev/null || true)"
+
+                  if [ "$current_hash" != "$previous_hash" ]; then
+                    changed_dirs="$changed_dirs $dir"
+                  fi
+                done
+
+                if [ -n "$changed_dirs" ]; then
+                  generate_dirs $changed_dirs
+                fi
+
+                sleep 0.5
+              done
 
     start:server:
         cmds:
             - |
-              go tool air \
-              --build.cmd "go build -tags dev -o tmp/bin/main" \
-              --build.bin "tmp/bin/main" \
-              --build.delay "20" \
-              --build.include_ext "go" \
-              --build.stop_on_error "false" \
-              --misc.clean_on_exit true
+              set -eu
+              build_cmd='set -eu; while [ -d tmp/templ-watch/generating.lock ]; do sleep 0.1; done; mkdir -p tmp/bin; out="tmp/bin/main.$$"; go build -buildvcs=false -tags dev -o "$out" .; mv "$out" tmp/bin/main'
 
-    start:reload:
-        cmds:
-            - |
               go tool air \
-              --build.cmd "go tool templ generate --notify-proxy" \
-              --build.bin "true" \
-              --build.delay "100" \
-              --build.exclude_dir "" \
-              --build.include_dir "$STATIC_DIR" \
-              --build.include_ext "js,css,env"
+              --build.cmd "$build_cmd" \
+              --build.bin "tmp/bin/main" \
+              --build.delay "1500" \
+              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
+              --build.include_ext "go,js,css,html,svg,webp,ico,png,jpg,jpeg,avif" \
+              --build.include_file ".env" \
+              --build.poll "true" \
+              --build.poll_interval "500" \
+              --build.stop_on_error "false" \
+              --proxy.enabled "true" \
+              --proxy.app_port "8080" \
+              --proxy.proxy_port "7331" \
+              --proxy.app_start_timeout "10000" \
+              --misc.clean_on_exit true
 
     start:
         deps:
             - start:templ
-            - start:reload
             - start:server
+
+    # Similar to above task, but recolors log levels
+    start:logcolors:
+        cmds:
+            - |
+              go tool task start 2>&1 | sed -E \
+              -e 's/(ERROR)/\x1b[31;1m\1\x1b[0m/g' \
+              -e 's/(WARN)/\x1b[33;1m\1\x1b[0m/g' \
+              -e 's/(DEBUG)/\x1b[32;1m\1\x1b[0m/g'
 
     # Start development server
     dev:
@@ -77,6 +147,11 @@ tasks:
         cmds:
             - sqlite3 database/events.db ".schema --indent --nosys" > schema.sql
             - go test ./...
+
+    # Run tests and print the BDD behavior report used in CI logs
+    test:report:
+        cmds:
+            - go run ./cmd/testreport
 
     # Download local copies of production assets
     download:

@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
 )
 
-func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err error) {
+func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 	logger = logger.With("component", "approval")
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
@@ -26,7 +27,7 @@ func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, err
 }
 
 templ approvalIndex(db *sql.DB, logger *slog.Logger) {
-	<div id="approval-container" data-init={ "@get('/admin/approval/api/',{requestCancellation: 'disabled'})" }>
+	<div id="approval-container" data-init={ live.DatastarInit("/admin/approval/api/") }>
 		@ApprovalPageContent(db, logger)
 	</div>
 }

@@ -1,0 +1,309 @@
+package rooms
+
+import (
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"sort"
+
+	"github.com/Regncon/conorganizer/components/errorfeedback"
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/live"
+	roomService "github.com/Regncon/conorganizer/service/rooms"
+)
+
+templ formModal() {
+	<dialog
+		id="room-dialog"
+		closedBy="any"
+	>
+		<form
+			id="room-form"
+			{ errorfeedback.DefaultMessage("Could not save. Try again.")... }
+		>
+			<h2 data-text="$form_title"></h2>
+			<label class="label color-strong form-group">
+				<p>Navn</p>
+				<input
+					type="text"
+					name="name"
+					placeholder="Kallenavn på rom"
+					title="Kallenavnet på rommet"
+					class="input"
+					data-bind="name"
+					{ errorfeedback.Attrs("name")... }
+				/>
+				@errorfeedback.RenderMessage("name")
+			</label>
+			<label class="label color-strong form-group">
+				<p>Romnummer</p>
+				<input
+					type="text"
+					name="number"
+					title="Nummer på rommet basert på rom oversikt"
+					placeholder="Nummer på rom"
+					required
+					pattern=".{1,}"
+					class="input"
+					data-bind="room_number"
+					{ errorfeedback.Attrs("room_number")... }
+				/>
+				@errorfeedback.RenderMessage("room_number")
+			</label>
+			<label class="label color-strong form-group">
+				<p>Etasje</p>
+				<input
+					type="number"
+					name="floor"
+					title="Etasje for rommet"
+					placeholder="Etasje for rom"
+					required
+					pattern=".{1,}"
+					class="input"
+					data-bind="floor"
+					{ errorfeedback.Attrs("floor")... }
+				/>
+				@errorfeedback.RenderMessage("floor")
+			</label>
+			<label class="label color-strong form-group">
+				<p>Maks eventer i en pulje</p>
+				<input
+					type="number"
+					name="max_concurrent_games"
+					title="Hvor mangen spill kan forekomme parallelt på et rom i en pulje"
+					placeholder="Max spill på et rom"
+					required
+					pattern=".{1,}"
+					class="input"
+					data-bind="max_concurrent_games"
+					{ errorfeedback.Attrs("max_concurrent_games")... }
+				/>
+				@errorfeedback.RenderMessage("max_concurrent_games")
+			</label>
+			<label class="label color-strong form-group">
+				<p>Notater</p>
+				<textarea
+					name="notes"
+					title="Her kan du skrive notater for rommet"
+					placeholder="Her kan du skrive notater for rommet"
+					rows="4"
+					class="input"
+					data-bind="notes"
+					{ errorfeedback.Attrs("notes")... }
+				></textarea>
+				@errorfeedback.RenderMessage("notes")
+			</label>
+			<label class="label color-strong form-group flex input" style="gap: var(--spacing-2x); align-items: center;">
+				<input
+					name="isDisabled"
+					type="checkbox"
+					title="Skjul synlighet i puljefordeling for rommet"
+					class="checkbox input"
+					data-bind="is_disabled"
+					{ errorfeedback.Attrs("is_disabled")... }
+				/>
+				<p>Skal rom være skjult i puljefordeling?</p>
+			</label>
+			@errorfeedback.RenderMessage("is_disabled")
+			<span class="button-group">
+				<button
+					type="button"
+					class="btn btn--outline"
+					style="color: var(--color-error); border-color: var(--color-error);"
+					data-show="$mode === 'edit'"
+					data-on:click="document.getElementById('room-delete-dialog').showModal()"
+				>Slett rom</button>
+				<dialog id="room-delete-dialog" closedBy="any">
+					<h2>Slett rom</h2>
+					<p>Er du sikker på at du vill slette dette rommet?</p>
+					<button
+						type="button"
+						class="btn btn--outline"
+						data-on:click="document.getElementById('room-delete-dialog').close()"
+					>Avbryt</button>
+					<button
+						type="button"
+						class="btn btn--outline"
+						style="color: var(--color-error); border-color: var(--color-error);"
+						data-on:click="@delete('/admin/rooms/api/'+$id)"
+					>Slett rom</button>
+				</dialog>
+				<button
+					type="button"
+					data-text="$button_label"
+					data-on:click="@post('/admin/rooms/api/'+$id)"
+					class="btn btn--outline"
+				></button>
+			</span>
+			@errorfeedback.RenderMessage("error")
+		</form>
+		<button class="modal-close-button icon-size-24" commandfor="room-dialog" command="close">
+			@icons.Icon(icons.Close, icons.Size24)
+		</button>
+	</dialog>
+}
+
+templ roomCard(room models.Room) {
+	<div
+		class="room"
+		style={ templ.KV("opacity: 0.5; border-color: gray;", room.IsDisabled) }
+		data-on:click={ fmt.Sprintf("@get('/admin/rooms/api/%d'); document.getElementById('room-dialog').showModal()", room.ID) }
+	>
+		<h3>{ room.RoomNumber }</h3>
+		<span>
+			<p>Romnavn på døren</p>
+			if room.Name == "" {
+				<p style="font-style: italic; color: gray;">Ikke oppgitt</p>
+			} else {
+				<p>{ room.Name }</p>
+			}
+		</span>
+		<span>
+			<p>Maks aktive spill</p>
+			<p>{ room.MaxConcurrentGames }</p>
+		</span>
+		<span>
+			<p>Er rommet tilgjengelig?</p>
+			if room.IsDisabled {
+				<p style="color: var(--color-error);">Nei</p>
+			} else {
+				<p>Ja</p>
+			}
+		</span>
+		if room.Notes != "" {
+			<p style="border-bottom: 1px solid var(--bg-item-border);">Notater</p>
+			<p style="font-style: italic; font-size: var(--text-body-small);">{ room.Notes }</p>
+		}
+	</div>
+}
+
+templ floor(floor int, rooms []models.Room) {
+	<h2>{ floor }. Etg</h2>
+	for _, room := range rooms {
+		@roomCard(room)
+	}
+}
+
+type FloorGroup struct {
+	Floor int
+	Rooms []models.Room
+}
+
+func getRoomsByFloor(db *sql.DB, logger *slog.Logger) []FloorGroup {
+	floorMap := make(map[int][]models.Room)
+
+	allRooms, err := roomService.GetAllRooms(db)
+	if err != nil {
+		logger.Error(fmt.Errorf("failed to get rooms: %w", err).Error())
+		return nil
+	}
+
+	for _, room := range allRooms {
+		floorMap[room.Floor] = append(floorMap[room.Floor], room)
+	}
+
+	var result []FloorGroup
+	for floor, rooms := range floorMap {
+		result = append(result, FloorGroup{
+			Floor: floor,
+			Rooms: rooms,
+		})
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Floor > result[j].Floor
+	})
+
+	return result
+}
+
+templ RoomsPage(db *sql.DB, logger *slog.Logger) {
+	<style>
+		.rooms-container{
+			display: grid;
+            grid-template-columns: 1fr;
+			gap: var(--responsive-page-section-spacing);
+
+            h2 {
+                grid-column: 1/-1;
+            }
+		}
+
+        .room {
+            display: flex;
+            flex-flow: column nowrap;
+            gap: var(--spacing-1x);
+            padding: var(--spacing-2x);
+            border: 1px solid var(--bg-item-border);
+            border-radius: var(--border-radius-1x);
+            background-color: var(--bg-item);
+
+            h3 {
+                text-align: center;
+            }
+
+            p+p {
+                margin-top: auto;
+            }
+
+            span {
+                display: flex;
+                justify-content: space-between;
+                gap: var(--spacing-1x)
+            }
+        }
+
+        .room:hover {
+            background-color: var(--bg-item-hover);
+            border-color: var(--bg-item-border-hover);
+        }
+        @media screen and (width > 600px) {
+            .rooms-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media screen and (width > 1200px) {
+            .rooms-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        #room-delete-dialog:open {
+            display: flex;
+            flex-flow: column nowrap;
+            align-items: center;
+            gap: var(--responsive-pane-column-spacing);
+
+            button {
+                min-width: ;
+            }
+        }
+	</style>
+	@formModal()
+	@RoomsPageContent(db, logger)
+}
+
+templ RoomsPageContent(db *sql.DB, logger *slog.Logger) {
+	<section id="room-administration" class="rooms-section" data-init={ live.DatastarInit("/admin/rooms/api/") }>
+		<p>Her kan du ligge til, endre og finne en oversikt over alle tilgjengelige rom for konvensjonen. Hovedsakelig brukt for å endre detaljer som maksimum spill for et rom eller detaljer som romnummer og romnavn som vises på dører og branninstruksjoner.</p>
+		{{ floors := getRoomsByFloor(db, logger) }}
+		if len(floors) > 0 {
+			<div class="rooms-container">
+				for _, floorGroup := range floors {
+					@floor(floorGroup.Floor, floorGroup.Rooms)
+				}
+			</div>
+		} else {
+			<p style="text-align: center;">Ingen rom funnet, vær den førte til å et rom nå!</p>
+		}
+		<button
+			type="button"
+			class="btn btn--outline"
+			data-on:click="@get('/admin/rooms/api/0'); document.getElementById('room-dialog').showModal()"
+		>
+			Ligg til nytt rom
+		</button>
+	</section>
+}

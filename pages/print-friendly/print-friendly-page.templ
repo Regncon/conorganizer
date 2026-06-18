@@ -172,7 +172,7 @@ templ eventPulje(pulje models.Pulje, byPulje EventsPrintByPulje, eventImageDir *
 					<span class="pulje-heading-time">({ block.Pulje.TimeRange() })</span>
 				</h2>
 				<hr style="margin-block: 1rem;"/>
-				@event.Event_mobile(&blockEvent, components.PreviousNext{}, nil, true, false, eventImageDir)
+				@event.Event_mobile(&blockEvent, components.PreviousNext{}, nil, "", true, false, eventImageDir)
 				<div class="pagebreak"></div>
 			}
 		</div>

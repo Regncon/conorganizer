@@ -3,10 +3,12 @@ package login
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/Regncon/conorganizer/components/redirect"
 	"github.com/Regncon/conorganizer/layouts"
@@ -16,19 +18,103 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+var newSessionValidator = authctx.NewSessionValidatorFromEnv
+
+type sessionRequest struct {
+	SessionJWT string `json:"sessionJwt"`
+	RefreshJWT string `json:"refreshJwt"`
+}
+
 func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 	baseLogger := logger
 	logger = logger.With("component", "auth")
 	router.Route("/auth", func(authRouter chi.Router) {
 		authRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
 			var ctx = r.Context()
-			if err := layouts.Base(
-				"Innlogging til Regncon 2025!",
-				userctx.GetUserRequestInfo(ctx),
-				loginForm(),
-			).Render(ctx, w); err != nil {
-				logger.Error(fmt.Errorf("failed to render login page: %w", err).Error())
+			userToken, _ := authctx.GetUserTokenFromContext(r.Context())
+
+			if userToken != nil {
+				if err := layouts.Base(
+					"Velkomen tilbake til Regncon 2026!",
+					userctx.GetUserRequestInfo(ctx),
+					alreadyLogedIn(),
+				).Render(ctx, w); err != nil {
+					logger.Error(fmt.Errorf("failed to render already loged in page: %w", err).Error())
+				}
+			} else {
+				if err := layouts.Base(
+					"Innlogging til Regncon 2026!",
+					userctx.GetUserRequestInfo(ctx),
+					loginForm(),
+				).Render(ctx, w); err != nil {
+					logger.Error(fmt.Errorf("failed to render login page: %w", err).Error())
+				}
+
 			}
+
+		})
+
+		authRouter.Post("/session", func(w http.ResponseWriter, r *http.Request) {
+			request := sessionRequest{}
+			decoder := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<20))
+			decoder.DisallowUnknownFields()
+			if err := decoder.Decode(&request); err != nil {
+				http.Error(w, "invalid session request", http.StatusBadRequest)
+				return
+			}
+			if err := decoder.Decode(&struct{}{}); err != io.EOF {
+				http.Error(w, "invalid session request", http.StatusBadRequest)
+				return
+			}
+			request.SessionJWT = normalizeToken(request.SessionJWT)
+			request.RefreshJWT = normalizeToken(request.RefreshJWT)
+			if request.SessionJWT == "" || request.RefreshJWT == "" {
+				http.Error(w, "missing session tokens", http.StatusBadRequest)
+				return
+			}
+
+			sessionValidator, err := newSessionValidator()
+			if err != nil {
+				logger.Error(fmt.Errorf("failed to create auth session validator: %w", err).Error())
+				http.Error(w, "authentication unavailable", http.StatusInternalServerError)
+				return
+			}
+
+			userOK, userToken, sessionErr := sessionValidator.ValidateSessionWithToken(
+				r.Context(),
+				request.SessionJWT,
+			)
+			if sessionErr == nil && (!userOK || userToken == nil) {
+				sessionErr = fmt.Errorf("session token rejected")
+			}
+			if sessionErr != nil || !userOK || userToken == nil {
+				refreshedOK, refreshedToken, refreshErr := sessionValidator.RefreshSessionWithToken(
+					r.Context(),
+					request.RefreshJWT,
+				)
+				if refreshErr == nil && (!refreshedOK || refreshedToken == nil) {
+					refreshErr = fmt.Errorf("refresh token rejected")
+				}
+				if refreshErr != nil || !refreshedOK || refreshedToken == nil {
+					if sessionErr != nil || refreshErr != nil {
+						logger.Warn("failed to validate login session", "session_error", sessionErr, "refresh_error", refreshErr)
+					} else {
+						logger.Warn("login session was rejected")
+					}
+					http.Error(w, "invalid session", http.StatusUnauthorized)
+					return
+				}
+
+				userToken = refreshedToken
+			}
+
+			sessionJWT := request.SessionJWT
+			if userToken.JWT != "" {
+				sessionJWT = userToken.JWT
+			}
+
+			authctx.SetAuthCookies(w, r, sessionJWT, request.RefreshJWT)
+			w.WriteHeader(http.StatusNoContent)
 		})
 
 		authRouter.Group(func(protectedRoute chi.Router) {
@@ -73,16 +159,11 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				userID, _ := authctx.GetUserIDFromToken(r.Context())
 
 				if emailOk && email != "" && userID != "" {
-					exists, err := userExistsByEmail(db, email)
-					if err != nil {
-						logger.Error(fmt.Errorf("failed to check if user %q exists: %w", userID, err).Error())
+					if err := syncPostLoginUser(db, userID, email, isAdmin, logger); err != nil {
+						logger.Error(fmt.Errorf("failed to sync post-login user %q: %w", userID, err).Error())
 						http.Redirect(w, r, "/auth", http.StatusSeeOther)
 						return
 					}
-					if !exists {
-						insertUser(db, userID, email, isAdmin, logger)
-					}
-					updateUserAdmin(db, userID, isAdmin, logger)
 				}
 				http.Redirect(w, r, "/", http.StatusSeeOther)
 			})
@@ -90,25 +171,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 		})
 
 		authRouter.Get("/logout", func(w http.ResponseWriter, r *http.Request) {
-			http.SetCookie(w, &http.Cookie{
-				Name:     authctx.SessionCookieName,
-				Value:    "",
-				Path:     "/",
-				MaxAge:   -1,
-				HttpOnly: true,
-				Secure:   false,
-				SameSite: http.SameSiteLaxMode,
-			})
-
-			http.SetCookie(w, &http.Cookie{
-				Name:     authctx.RefreshCookieName,
-				Value:    "",
-				Path:     "/",
-				MaxAge:   -1,
-				HttpOnly: true,
-				Secure:   false,
-				SameSite: http.SameSiteLaxMode,
-			})
+			authctx.ClearAuthCookies(w, r)
 
 			redirectUrl := "/"
 			var ctx = r.Context()
@@ -122,6 +185,26 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 	})
 
 	return nil
+}
+
+func syncPostLoginUser(db *sql.DB, userID string, email string, isAdmin bool, logger *slog.Logger) error {
+	exists, err := userExistsByEmail(db, email)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		insertUser(db, userID, email, isAdmin, logger)
+	}
+	updateUserAdmin(db, userID, isAdmin, logger)
+	return nil
+}
+
+func normalizeToken(token string) string {
+	token = strings.TrimSpace(token)
+	if len(token) >= len("bearer ") && strings.EqualFold(token[:len("bearer ")], "bearer ") {
+		return strings.TrimSpace(token[len("bearer "):])
+	}
+	return token
 }
 
 func userExistsByEmail(db *sql.DB, email string) (bool, error) {

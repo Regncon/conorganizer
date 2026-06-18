@@ -1,0 +1,51 @@
+package authctx
+
+templ forbiddenStyles() {
+	<style>
+		.access-denied {
+			display: flex;
+			flex-direction: column;
+			gap: 1rem;
+			align-items: center;
+			justify-content: center;
+			max-width: 42rem;
+			margin-inline: auto;
+			padding: 5rem 1rem 2rem;
+			background-color: var(--color-background);
+			color: var(--color-text);
+			font-family: var(--font-sans-serif);
+			text-align: center;
+
+			h1 {
+				margin: 0;
+				font-size: 2rem;
+			}
+
+			p {
+				margin: 0;
+				font-size: 1.2rem;
+				line-height: 1.5;
+			}
+		}
+
+		.access-denied-actions {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 0.75rem;
+			justify-content: center;
+		}
+	</style>
+}
+
+templ Forbidden() {
+	@forbiddenStyles()
+	<section class="access-denied" aria-labelledby="access-denied-heading">
+		<h1 id="access-denied-heading">Du har ikke tilgang</h1>
+		<p>Du er logget inn, men denne siden krever administratortilgang.</p>
+		<div class="access-denied-actions">
+			<a href="/" class="btn btn--primary">
+				Gå til arrangementslisten
+			</a>
+		</div>
+	</section>
+}

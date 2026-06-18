@@ -8,9 +8,8 @@ import (
 	"net/http"
 
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
-	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -103,7 +102,7 @@ func updatePuljeStatus(db *sql.DB, puljeID models.Pulje, status models.PuljeStat
 	return nil
 }
 
-func puljefordelingStatusRoute(router chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	logger = logger.With("component", "admin_puljefordeling")
 
 	router.Put("/api/puljer/{puljeId}/status", func(w http.ResponseWriter, r *http.Request) {
@@ -137,7 +136,7 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, kv jetstream.KeyVa
 			return
 		}
 
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			logger.Error(fmt.Errorf("failed to broadcast pulje status update: %w", err).Error(), "pulje_id", puljeID, "pulje_status", store.PuljeStatus)
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return

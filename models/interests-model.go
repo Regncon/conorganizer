@@ -22,7 +22,7 @@ func (level InterestLevel) Label() string {
 	case InterestLevelLow:
 		return "Litt interessert"
 	case InterestLevelNone:
-		return "Ikke interessert"
+		return "Ikkje interessert"
 	default:
 		return string(level)
 	}

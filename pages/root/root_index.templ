@@ -4,13 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
 )
 
-func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string, err error) {
+func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		var ctx = r.Context()
 		userInfo := userctx.GetUserRequestInfo(r.Context())
@@ -25,7 +26,7 @@ func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventIm
 }
 
 templ rootIndex(db *sql.DB, isAdmin bool, eventImageDir *string) {
-	<div id="root-page-wrapper" data-init={ "@get('/root/api',{requestCancellation: 'disabled'})" }>
+	<div id="root-page-wrapper" data-init={ live.DatastarInit("/root/api") }>
 		@rootPageContent(db, isAdmin, eventImageDir)
 	</div>
 }

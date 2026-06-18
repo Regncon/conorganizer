@@ -6,12 +6,15 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestBuildPuljeScheduledBroadcasts_SchedulesWarningAndUrgentThresholdsButNotLockTime(t *testing.T) {
-	// Gitt at en pulje starter senere enn varslingsvinduene,
-	// når planlagte puljeoppdateringer bygges,
-	// så skal bare varsel og hastevarsel planlegges.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en pulje starter senere enn varslingsvinduene.",
+		When:  "Når planlagte puljeoppdateringer bygges.",
+		Then:  "Så skal bare varsel og hastevarsel planlegges.",
+	})
 
 	// Given
 	expectedBroadcasts := []expectedPuljeScheduledBroadcast{
@@ -39,9 +42,11 @@ func TestBuildPuljeScheduledBroadcasts_SchedulesWarningAndUrgentThresholdsButNot
 }
 
 func TestBuildPuljeScheduledBroadcasts_WhenWarningIsPast_OnlySchedulesFutureUrgentThreshold(t *testing.T) {
-	// Gitt at varselgrensen allerede har passert,
-	// når planlagte puljeoppdateringer bygges,
-	// så skal bare fremtidige terskler planlegges.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at varselgrensen allerede har passert.",
+		When:  "Når planlagte puljeoppdateringer bygges.",
+		Then:  "Så skal bare fremtidige terskler planlegges.",
+	})
 
 	// Given
 	expectedBroadcasts := []expectedPuljeScheduledBroadcast{

@@ -2,6 +2,7 @@ package event
 
 import (
 	"database/sql"
+	"net/http"
 	"net/http/httptest"
 	"slices"
 	"testing"
@@ -9,13 +10,17 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
+	"github.com/go-chi/chi/v5"
 )
 
 func TestCanViewEvent_AllowsPublicAccessToAnnouncedEvent(t *testing.T) {
-	// Gitt at arrangementet er annonsert,
-	// når visningstilgang sjekkes,
-	// så skal alle kunne se arrangementet.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet er annonsert.",
+		When:  "Når visningstilgang sjekkes.",
+		Then:  "Så skal alle kunne se arrangementet.",
+	})
 
 	// Given
 	expectedCanView := true
@@ -25,7 +30,8 @@ func TestCanViewEvent_AllowsPublicAccessToAnnouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -37,9 +43,11 @@ func TestCanViewEvent_AllowsPublicAccessToAnnouncedEvent(t *testing.T) {
 }
 
 func TestCanViewEvent_AllowsAdminAccessToUnannouncedEvent(t *testing.T) {
-	// Gitt at arrangementet ikke er annonsert og brukeren er admin,
-	// når visningstilgang sjekkes,
-	// så skal admin kunne se arrangementet.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren er admin.",
+		When:  "Når visningstilgang sjekkes.",
+		Then:  "Så skal admin kunne se arrangementet.",
+	})
 
 	// Given
 	expectedCanView := true
@@ -49,7 +57,8 @@ func TestCanViewEvent_AllowsAdminAccessToUnannouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, IsAdmin: true}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -61,9 +70,11 @@ func TestCanViewEvent_AllowsAdminAccessToUnannouncedEvent(t *testing.T) {
 }
 
 func TestCanViewEvent_AllowsCreatorAccessToUnannouncedEvent(t *testing.T) {
-	// Gitt at arrangementet ikke er annonsert og brukeren er eieren,
-	// når visningstilgang sjekkes,
-	// så skal eieren kunne se arrangementet.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren er eieren.",
+		When:  "Når visningstilgang sjekkes.",
+		Then:  "Så skal eieren kunne se arrangementet.",
+	})
 
 	// Given
 	expectedCanView := true
@@ -80,7 +91,8 @@ func TestCanViewEvent_AllowsCreatorAccessToUnannouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, Id: "creator-user"}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -92,9 +104,11 @@ func TestCanViewEvent_AllowsCreatorAccessToUnannouncedEvent(t *testing.T) {
 }
 
 func TestCanViewEvent_DeniesAnonymousAccessToUnannouncedEvent(t *testing.T) {
-	// Gitt at arrangementet ikke er annonsert og brukeren ikke er innlogget,
-	// når visningstilgang sjekkes,
-	// så skal brukeren ikke kunne se arrangementet.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren ikke er innlogget.",
+		When:  "Når visningstilgang sjekkes.",
+		Then:  "Så skal brukeren ikke kunne se arrangementet.",
+	})
 
 	// Given
 	expectedCanView := false
@@ -104,7 +118,8 @@ func TestCanViewEvent_DeniesAnonymousAccessToUnannouncedEvent(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{}
 
 	// When
-	actualCanView, err := canViewEvent(event, userInfo, db)
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
 
 	// Then
 	if err != nil {
@@ -115,10 +130,140 @@ func TestCanViewEvent_DeniesAnonymousAccessToUnannouncedEvent(t *testing.T) {
 	}
 }
 
+func TestCanViewEvent_DeniesLoggedInNonOwnerAccessToUnannouncedEvent(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren er innlogget, men ikke eier.",
+		When:  "Når visningstilgang sjekkes.",
+		Then:  "Så skal brukeren ikke kunne se arrangementet.",
+	})
+
+	// Given
+	expectedCanView := false
+
+	db := createEventVisibilityTestDB(t)
+	seedEventVisibilityUser(t, db, 101, "creator-user")
+	event := &models.Event{
+		Status: models.EventStatusApproved,
+		UserID: sql.NullInt64{
+			Int64: 101,
+			Valid: true,
+		},
+	}
+	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, Id: "someone-else"}
+
+	// When
+	decision, err := decideEventView(event, userInfo, db)
+	actualCanView := decision.CanView
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected visibility check to succeed: %v", err)
+	}
+	if actualCanView != expectedCanView {
+		t.Fatalf("visibility mismatch\nexpected: %v\nactual:   %v", expectedCanView, actualCanView)
+	}
+}
+
+func TestDecideEventView_WhenOwnerViewsUnannouncedEvent_ShowsWarning(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren er eieren.",
+		When:  "Når visningsstatus avgjøres.",
+		Then:  "Så skal eieren kunne se arrangementet med varsel om at det ikke er annonsert.",
+	})
+
+	// Given
+	db := createEventVisibilityTestDB(t)
+	seedEventVisibilityUser(t, db, 101, "creator-user")
+	event := &models.Event{
+		Status: models.EventStatusApproved,
+		UserID: sql.NullInt64{
+			Int64: 101,
+			Valid: true,
+		},
+	}
+	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, Id: "creator-user"}
+
+	// When
+	decision, err := decideEventView(event, userInfo, db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected visibility decision to succeed: %v", err)
+	}
+	if !decision.CanView {
+		t.Fatalf("expected owner to view unannounced event")
+	}
+	if !decision.ShowUnannouncedWarning {
+		t.Fatalf("expected owner view to show unannounced warning")
+	}
+}
+
+func TestDecideEventView_WhenArchivedEventIsHidden_ReturnsGoneDecision(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet er forkastet og brukeren ikke har utvidet tilgang.",
+		When:  "Når visningsstatus avgjøres.",
+		Then:  "Så skal arrangementet skjules som Gone.",
+	})
+
+	// Given
+	expectedStatusCode := http.StatusGone
+	expectedHiddenReason := eventHiddenReasonArchivedGone
+
+	db := createEventVisibilityTestDB(t)
+	event := &models.Event{Status: models.EventStatusArchived}
+	userInfo := requestctx.UserRequestInfo{}
+
+	// When
+	decision, err := decideEventView(event, userInfo, db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected visibility decision to succeed: %v", err)
+	}
+	if decision.CanView {
+		t.Fatalf("expected archived event to be hidden")
+	}
+	if decision.HiddenResponseStatusCode != expectedStatusCode {
+		t.Fatalf("status code mismatch\nexpected: %v\nactual:   %v", expectedStatusCode, decision.HiddenResponseStatusCode)
+	}
+	if decision.HiddenReason != expectedHiddenReason {
+		t.Fatalf("hidden reason mismatch\nexpected: %v\nactual:   %v", expectedHiddenReason, decision.HiddenReason)
+	}
+}
+
+func TestDecideEventView_WhenAdminViewsArchivedEvent_ShowsArchivedWarning(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet er forkastet og brukeren er admin.",
+		When:  "Når visningsstatus avgjøres.",
+		Then:  "Så skal admin kunne se arrangementet med varsel.",
+	})
+
+	// Given
+	db := createEventVisibilityTestDB(t)
+	event := &models.Event{Status: models.EventStatusArchived}
+	userInfo := requestctx.UserRequestInfo{IsLoggedIn: true, IsAdmin: true}
+
+	// When
+	decision, err := decideEventView(event, userInfo, db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected visibility decision to succeed: %v", err)
+	}
+	if !decision.CanView {
+		t.Fatalf("expected admin to view archived event")
+	}
+	if !decision.ShowArchivedWarning {
+		t.Fatalf("expected admin view to show archived warning")
+	}
+}
+
 func TestEventPageContent_WhenUnannouncedEventIsHidden_RendersFriendlyMessage(t *testing.T) {
-	// Gitt at arrangementet ikke er annonsert og brukeren ikke har tilgang,
-	// når arrangementssiden vises,
-	// så skal brukeren se en vennlig melding om at arrangementet ikke er annonsert ennå.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren ikke har tilgang.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal brukeren se en vennlig melding om at arrangementet ikke er annonsert ennå.",
+	})
 
 	// Given
 	expectedMessages := []string{"Dette arrangementet er ikke annonsert ennå. Kom tilbake senere, så får du se hva som venter."}
@@ -131,17 +276,110 @@ func TestEventPageContent_WhenUnannouncedEventIsHidden_RendersFriendlyMessage(t 
 	// When
 	doc := templtest.Render(t, event_page_content("hidden-event", false, logger, db, nil, request))
 	actualMessages := templtest.CollectTexts(doc, ".event-not-announced-message")
+	actualEventContentVisible := templtest.HasSelector(doc, ".event-page-wrapper")
 
 	// Then
 	if !slices.Equal(expectedMessages, actualMessages) {
 		t.Fatalf("hidden event message mismatch\nexpected: %v\nactual:   %v", expectedMessages, actualMessages)
 	}
+	if actualEventContentVisible {
+		t.Fatalf("expected hidden unannounced event content not to render")
+	}
+}
+
+func TestEventPageContent_WhenAdminViewsUnannouncedEvent_RendersWarning(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet ikke er annonsert og brukeren er admin.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal admin se arrangementet med et tydelig varsel.",
+	})
+
+	// Given
+	expectedWarnings := []string{"Arrangementet er ikke annonsert"}
+
+	db := createEventVisibilityTestDB(t)
+	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
+	seedEventVisibilityEvent(t, db, "admin-warning-event", "Admin Warning Event", models.EventStatusApproved, sqlNullInt64(501))
+	seedEventVisibilityPulje(t, db, models.PuljeFredagKveld)
+	seedEventVisibilityEventPulje(t, db, "admin-warning-event", models.PuljeFredagKveld, true)
+	request := httptest.NewRequest("GET", "/event/admin-warning-event", nil)
+
+	// When
+	doc := templtest.Render(t, event_page_content("admin-warning-event", true, logger, db, nil, request))
+	actualWarnings := templtest.CollectTexts(doc, ".event-visibility-warning-title")
+	actualEventTitles := templtest.CollectTexts(doc, "h1")
+
+	// Then
+	if !slices.Contains(actualWarnings, expectedWarnings[0]) {
+		t.Fatalf("warning title mismatch\nexpected to contain: %v\nactual:              %v", expectedWarnings, actualWarnings)
+	}
+	if !slices.Contains(actualEventTitles, "Admin Warning Event") {
+		t.Fatalf("expected rendered event title, got h1 texts: %v", actualEventTitles)
+	}
+}
+
+func TestEventPageContent_WhenArchivedEventIsHidden_RendersArchivedMessage(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet er forkastet og brukeren ikke har tilgang.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal brukeren se en melding om at arrangementet ikke er tilgjengelig.",
+	})
+
+	// Given
+	expectedMessages := []string{"Dette arrangementet er ikke tilgjengelig lenger."}
+
+	db := createEventVisibilityTestDB(t)
+	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
+	seedEventVisibilityEvent(t, db, "archived-hidden-event", "Archived Hidden Event", models.EventStatusArchived, sql.NullInt64{})
+	request := httptest.NewRequest("GET", "/event/archived-hidden-event", nil)
+
+	// When
+	doc := templtest.Render(t, event_page_content("archived-hidden-event", false, logger, db, nil, request))
+	actualMessages := templtest.CollectTexts(doc, ".event-archived-message")
+	actualEventContentVisible := templtest.HasSelector(doc, ".event-page-wrapper")
+
+	// Then
+	if !slices.Equal(expectedMessages, actualMessages) {
+		t.Fatalf("archived event message mismatch\nexpected: %v\nactual:   %v", expectedMessages, actualMessages)
+	}
+	if actualEventContentVisible {
+		t.Fatalf("expected hidden archived event content not to render")
+	}
+}
+
+func TestEventLayoutRoute_WhenArchivedEventIsHidden_ReturnsGone(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at arrangementet er forkastet og brukeren ikke har tilgang.",
+		When:  "Når arrangementsruten åpnes.",
+		Then:  "Så skal HTTP-status være 410 Gone.",
+	})
+
+	// Given
+	expectedStatusCode := http.StatusGone
+
+	db := createEventVisibilityTestDB(t)
+	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
+	seedEventVisibilityEvent(t, db, "archived-route-event", "Archived Route Event", models.EventStatusArchived, sql.NullInt64{})
+	router := chi.NewRouter()
+	eventLayoutRoute(router, db, logger, nil, nil)
+	request := httptest.NewRequest(http.MethodGet, "/event/archived-route-event", nil)
+	recorder := httptest.NewRecorder()
+
+	// When
+	router.ServeHTTP(recorder, request)
+
+	// Then
+	if recorder.Code != expectedStatusCode {
+		t.Fatalf("status code mismatch\nexpected: %v\nactual:   %v", expectedStatusCode, recorder.Code)
+	}
 }
 
 func TestEventPageContent_WhenProgramPublishingIsOff_DoesNotRenderInterestDialog(t *testing.T) {
-	// Gitt at programmet ikke er publisert, men arrangementet er publisert i en pulje,
-	// når arrangementssiden vises,
-	// så skal dialogen ikke rendres og brukeren fortsatt se lenken for å hente billett.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at programmet ikke er publisert, men arrangementet er publisert i en pulje.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal dialogen ikke rendres og brukeren fortsatt se lenken for å hente billett.",
+	})
 
 	// Given
 	expectedDialogVisible := false
@@ -168,9 +406,11 @@ func TestEventPageContent_WhenProgramPublishingIsOff_DoesNotRenderInterestDialog
 }
 
 func TestEventPageContent_WhenEventIsNotPublishedInPulje_DoesNotRenderInterestDialog(t *testing.T) {
-	// Gitt at programmet er publisert, men arrangementet ikke er publisert i puljen,
-	// når arrangementssiden vises,
-	// så skal dialogen ikke rendres og brukeren fortsatt se lenken for å hente billett.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at programmet er publisert, men arrangementet ikke er publisert i puljen.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal dialogen ikke rendres og brukeren fortsatt se lenken for å hente billett.",
+	})
 
 	// Given
 	expectedDialogVisible := false
@@ -197,9 +437,11 @@ func TestEventPageContent_WhenEventIsNotPublishedInPulje_DoesNotRenderInterestDi
 }
 
 func TestEventPageContent_WhenProgramAndPuljeArePublished_RendersInterestDialog(t *testing.T) {
-	// Gitt at programmet er publisert og arrangementet er publisert i en pulje,
-	// når arrangementssiden vises,
-	// så skal dialogen for interessevalg rendres.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at programmet er publisert og arrangementet er publisert i en pulje.",
+		When:  "Når arrangementssiden vises.",
+		Then:  "Så skal dialogen for interessevalg rendres.",
+	})
 
 	// Given
 	expectedDialogVisible := true
@@ -219,97 +461,5 @@ func TestEventPageContent_WhenProgramAndPuljeArePublished_RendersInterestDialog(
 	// Then
 	if actualDialogVisible != expectedDialogVisible {
 		t.Fatalf("interest dialog visibility mismatch\nexpected: %v\nactual:   %v", expectedDialogVisible, actualDialogVisible)
-	}
-}
-
-func createEventVisibilityTestDB(t *testing.T) *sql.DB {
-	t.Helper()
-
-	db, _, err := testutil.CreateTemporaryDBAndLogger("event_visibility", t)
-	if err != nil {
-		t.Fatalf("failed to create test database: %v", err)
-	}
-	t.Cleanup(func() {
-		if err := db.Close(); err != nil {
-			t.Fatalf("failed to close test database: %v", err)
-		}
-	})
-
-	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?), (?), (?)`, models.EventStatusApproved, models.EventStatusAnnounced, models.EventStatusDraft)
-	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
-	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
-	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
-	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, models.PuljeStatusOpen)
-	mustExecEventVisibilityTest(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
-	setEventVisibilityProgramPublishing(t, db, true)
-
-	return db
-}
-
-func seedEventVisibilityUser(t *testing.T, db *sql.DB, userID int, externalID string) {
-	t.Helper()
-
-	mustExecEventVisibilityTest(t, db, `
-		INSERT INTO users (id, external_id, email, is_admin)
-		VALUES (?, ?, ?, 0)
-	`, userID, externalID, externalID+"@example.com")
-}
-
-func seedEventVisibilityEvent(t *testing.T, db *sql.DB, eventID string, title string, status models.EventStatus, userID sql.NullInt64) {
-	t.Helper()
-
-	mustExecEventVisibilityTest(t, db, `
-		INSERT INTO events (
-			id, title, intro, description, system, event_type,
-			age_group, event_runtime, host_name, user_id, email, phone_number,
-			max_players, beginner_friendly, can_be_run_in_english,
-			status
-		) VALUES (?, ?, 'intro', 'description', '', ?, ?, ?, 'Host', ?, 'host@example.com', '11111111', 4, 1, 1, ?)
-	`, eventID, title, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, userID, status)
-}
-
-func seedEventVisibilityPulje(t *testing.T, db *sql.DB, puljeID models.Pulje) {
-	t.Helper()
-
-	mustExecEventVisibilityTest(t, db, `
-		INSERT INTO puljer (id, name, status, start_at, end_at)
-		VALUES (?, 'Fredag kveld', ?, '2026-10-09T18:30:00+02:00', '2026-10-09T23:00:00+02:00')
-	`, puljeID, models.PuljeStatusOpen)
-}
-
-func seedEventVisibilityEventPulje(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, published bool) {
-	t.Helper()
-
-	isPublished := 0
-	if published {
-		isPublished = 1
-	}
-
-	mustExecEventVisibilityTest(t, db, `
-		INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published)
-		VALUES (?, ?, 1, ?)
-	`, eventID, puljeID, isPublished)
-}
-
-func setEventVisibilityProgramPublishing(t *testing.T, db *sql.DB, programPublished bool) {
-	t.Helper()
-
-	isPublished := 0
-	if programPublished {
-		isPublished = 1
-	}
-
-	mustExecEventVisibilityTest(t, db, `
-		INSERT INTO program_publishing_state(id, is_published)
-		VALUES (1, ?)
-		ON CONFLICT(id) DO UPDATE SET is_published = excluded.is_published
-	`, isPublished)
-}
-
-func mustExecEventVisibilityTest(t *testing.T, db *sql.DB, query string, args ...any) {
-	t.Helper()
-
-	if _, err := db.Exec(query, args...); err != nil {
-		t.Fatalf("exec failed: %v\nquery:\n%s", err, query)
 	}
 }

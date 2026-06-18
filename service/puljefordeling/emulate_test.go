@@ -91,11 +91,7 @@ func playerNames(aps []AssignedPlayer) []string {
 }
 
 func TestEmulateSeatings(t *testing.T) {
-	db, _, err := testutil.CreateTemporaryDBAndLogger("test_emulate", t)
-	if err != nil {
-		t.Fatalf("create test db: %v", err)
-	}
-	defer db.Close()
+	db, _ := testutil.CreateTestDBAndLogger(t, "test_emulate")
 
 	const fredag = models.PuljeFredagKveld
 	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")

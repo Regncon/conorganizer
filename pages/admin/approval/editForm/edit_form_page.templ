@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/service/authctx"
@@ -18,16 +19,8 @@ templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, eventIm
 }
 
 templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
-	<style>
-		.edit-form-with-preview {
-			display: grid;
-			grid-template-columns: 1fr 1fr;
-			gap: var(--spacing-8x);
-		}
-	</style>
 	{{
 	isAdmin := authctx.GetAdminFromUserToken(ctx)
-	isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
 	puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db)
 	}}
 	if puljerErr != nil {
@@ -53,15 +46,15 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		{Name: "Rediger arrangement", Url: ""},
 	}) {
 	}
-	<div class="page-content-container ultrawide-content">
-		<h1 class="page-heading">Rediger arrangement</h1>
-		<div class="edit-form-with-preview">
-			<form class="formsubmission-wrapper">
-				@formsubmission.FormBody(eventData, isAdmin, db)
-			</form>
-			@event.Event_mobile(eventData, isRemovedPreviousNext, puljerForEvent, false, false, eventImageDir)
-		</div>
-	</div>
+	@formsubmission.EventFormPageLayout("Rediger arrangement", true) {
+		<form
+			class="formsubmission-wrapper"
+			{ errorfeedback.DefaultMessage(formsubmission.FeedbackMessage(isAdmin))... }
+		>
+			@formsubmission.FormBody(eventData, eventImageDir, isAdmin, db)
+		</form>
+		@event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
+	}
 	<div class="page-content-container wide-content">
 		@formsubmission.WhoIsInterested(eventId, db, logger)
 	</div>

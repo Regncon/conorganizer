@@ -16,6 +16,7 @@ import (
 	profilepage "github.com/Regncon/conorganizer/pages/profile"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/delaneyj/toolbelt"
 	"github.com/delaneyj/toolbelt/embeddednats"
@@ -50,17 +51,24 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	sessionStore := sessions.NewCookieStore([]byte("session-secret"))
 	sessionStore.MaxAge(int(24 * time.Hour / time.Second))
 
+	liveManager, err := live.NewManager(ctx, ns, sessionStore, live.WithLogger(logger))
+	if err != nil {
+		return cleanup, fmt.Errorf("error setting up live updates: %w", err)
+	}
+
 	isLoggedInRouter := router.With(userctx.UserMiddleware(logger))
-	routerAdmin := isLoggedInRouter.With(authctx.RequireAdmin(logger))
+	routerAdmin := isLoggedInRouter.With(
+		authctx.RequireAdmin(logger, authctx.WithForbiddenHandler(userctx.AdminForbiddenHandler(logger))),
+	)
 
 	if err := errors.Join(
-		root.SetupRootRoute(router, sessionStore, logger, ns, db, eventImageDir),
+		root.SetupRootRoute(router, logger, liveManager, db, eventImageDir),
 		printfriendly.PrintFriendlyRoute(router, db, eventImageDir, logger),
-		admin.SetupAdminRoute(routerAdmin, sessionStore, logger, ns, db, eventImageDir),
-		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, sessionStore, ns, logger, db),
-		event.SetupEventRoute(router, sessionStore, ns, db, logger, eventImageDir),
+		admin.SetupAdminRoute(routerAdmin, logger, liveManager, db, eventImageDir),
+		billettholderadmin.SetupBillettholderAdminRoute(routerAdmin, liveManager, logger, db),
+		event.SetupEventRoute(router, ns, liveManager, db, logger, eventImageDir),
 		login.SetupAuthRoute(router, db, logger),
-		profilepage.SetupProfileRoute(isLoggedInRouter, sessionStore, ns, db, eventImageDir, logger),
+		profilepage.SetupProfileRoute(isLoggedInRouter, liveManager, db, eventImageDir, logger),
 	); err != nil {
 		return cleanup, fmt.Errorf("error setting up routes: %w", err)
 	}

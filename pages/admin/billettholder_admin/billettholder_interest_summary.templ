@@ -110,7 +110,7 @@ templ billettholderInterestSummary(billettholder models.Billettholder, searchTer
 	<button
 		type="button"
 		class="btn btn--outline btn-with-icon billettholder-interest-open"
-		data-on:click={ fmt.Sprintf("$billettholderInterestActivePulje = '%s'; document.getElementById('%s')?.showModal()", firstPuljeID, dialogID) }
+		data-on:click={ fmt.Sprintf("$billettholderInterestActivePulje = '%s'; $billettholderInterestOpenDialogId = '%s'", firstPuljeID, dialogID) }
 	>
 		<span class="billettholder-interest-open-counts">
 			<span>Interesser ({ strconv.Itoa(interestLevelTotal) })</span>

@@ -2,44 +2,52 @@ package formsubmission
 
 import (
 	"database/sql"
-	"fmt"
 	"log/slog"
 	"net/http"
 
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/components/errorfeedback"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
-	"github.com/nats-io/nats.go/jetstream"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, kv jetstream.KeyValue, logger *slog.Logger) {
+func SubmitFormRoute(newEventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 		logger.Info("Submitting event", "event_id", eventID)
 
 		if err := submitEventWithAudit(r.Context(), db, logger, eventID); err != nil {
-			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere statusen for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 
-		if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
-		http.Redirect(w, r, fmt.Sprintf("/profile/"), http.StatusSeeOther)
+		if r.Header.Get("Datastar-Request") == "true" {
+			sse := datastar.NewSSE(w, r)
+			if err := sse.Redirect("/profile/"); err != nil {
+				logger.Error("Failed to redirect after submit", "error", err, "event_id", eventID)
+			}
+			return
+		}
+		http.Redirect(w, r, "/profile/", http.StatusSeeOther)
 	})
 }
 
 templ SubmitSection() {
 	<article class="submit-section form-card">
 		<p>
-			Kladden blir lagret automatisk. Når du er klar til å sende arrangementet inn, trenger du bare å klikke på på knappen her!
+			Kladden blir lagra automatisk. Når du er klar til å sende arrangementet inn, treng du berre å klikke på knappen her!
 		</p>
 		<button type="submit" class="btn btn--cta">
 			Send inn
 		</button>
+		@errorfeedback.RenderMessage("submit")
 	</article>
 }

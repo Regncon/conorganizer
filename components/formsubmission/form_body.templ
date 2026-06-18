@@ -123,14 +123,14 @@ func updateRoomInRelationEventPuljeWithAudit(ctx context.Context, db *sql.DB, lo
 
 	// convert roomID from string to sql.NullInt64
 	var roomID sql.NullInt64
-	if parsedRoomID, err := strconv.ParseInt(roomIDstring, 10, 64); err == nil {
+	parsedRoomID, err := strconv.ParseInt(roomIDstring, 10, 64)
+	if err == nil && parsedRoomID > 0 {
 		roomID = sql.NullInt64{
 			Int64: parsedRoomID,
 			Valid: true,
 		}
 	}
 
-	// change
 	const upsert = `
 		UPDATE relation_event_puljer
 		SET room_id = ?
@@ -169,204 +169,320 @@ func currentUserDBID(ctx context.Context, db *sql.DB, logger *slog.Logger) (int6
 	return updatedByID, nil
 }
 
-templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
+templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql.DB) {
 	<style>
-		.formsubmission-wrapper {
-			> * + .form-card {
-				margin-block-start: 1rem;
+			/* Chrome drops native validation bubbles during smooth-scroll to invalid fields. */
+			html:has(.formsubmission-wrapper) {
+				scroll-behavior: auto;
+				scroll-padding-block-start: calc(var(--nav-height) + var(--spacing-4x));
 			}
 
-			.label {
-				font-weight: 600;
-				font-size: var(--text-body-small);
-			}
+			.formsubmission-wrapper {
+            .input {
+                scroll-margin-block-start: calc(var(--nav-height) + var(--spacing-4x));
+            }
 
-			.label-small {
-				font-weight: 600;
-				font-size: 12px;
-			}
+            > * + .form-card {
+                margin-block-start: 1rem;
+            }
 
-			.form-group {
-				display: flex;
-				flex-direction: column;
-				gap: 0.3rem;
-			}
-			.form-group-checkbox {
-				display: flex;
-				gap: 0.3rem;
-				place-items: center;
-			}
+            .label {
+                font-weight: 600;
+                font-size: var(--text-body-small);
+            }
 
-			.form-card {
-				display: grid;
+            .label-small {
+                font-weight: 600;
+                font-size: 12px;
+            }
 
-				.organizer-section {
-					display: grid;
-					gap: 1.25rem;
-				}
+            .form-group {
+                display: flex;
+                flex-direction: column;
+                gap: 0.3rem;
+            }
 
-				.about-section {
-					display: grid;
-					gap: 1.25rem;
+            .feedback-control-group {
+                display: grid;
+                gap: var(--spacing-1x);
+            }
 
-					.img {
-						display: flex;
-						flex-direction: column;
-						gap: 1.2rem;
+            :is(.form-group, .feedback-control-group):has(.feedback-error.is-visible) {
+                .input:not([type="checkbox"]) {
+                    border-color: #DC3545;
+                    box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l / 25%);
+                }
+            }
 
-						img {
-							width: 100%;
-							height: 100%;
-							border-radius: var(--border-radius-2x);
-							object-fit: cover;
-						}
-					}
-				}
+            .form-group-checkbox {
+                display: flex;
+                gap: 0.3rem;
+                place-items: center;
+            }
 
-				.puljefordeling-section {
-					display: grid;
-					gap: 1.25rem;
-				}
-				.details-section {
-					display: grid;
-					gap: 1.25rem;
-				}
-				.checkbox-background {
-					background-color: var(--bg-item);
-					border: 1px solid var(--bg-item-border);
-					padding: 0.75rem 0.5rem;
-					border-radius: var(--border-radius-2x);
-				}
-			}
+            .form-card {
+                display: grid;
 
-			.submit-section {
-				display: grid;
-				grid-template-columns: 1fr;
-				gap: 1rem;
-				margin-block-start: 1rem;
-				min-height: 6.125rem;
-				place-content: center;
+                .organizer-section {
+                    display: grid;
+                    gap: 1.25rem;
+                }
 
-				p {
-					margin: 0;
-					place-self: center;
-				}
-			}
+                .about-section {
+                    display: grid;
+                    gap: 1.25rem;
 
-			@container formsubmission-css-container (width > 600px) {
-				.submit-section {
-					grid-template-columns: 1fr 200px;
-					gap: 2rem;
-				}
-			}
+                    .img {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 1.2rem;
 
-			@container formsubmission-css-container (width > 800px) {
-				.form-card:is(:not(.submit-section)) {
-					display: block;
+                        img {
+                            width: 100%;
+                            height: 100%;
+                            border-radius: var(--border-radius-2x);
+                            object-fit: cover;
+                        }
+                    }
 
-					.organizer-section {
-						display: flex;
-						gap: var(--spacing-5x);
-						.form-group {
-							gap: 0.5rem;
-							flex-grow: 1;
-						}
-					}
+                    .image-upload {
+                        container-type: inline-size;
+                        gap: 0.5rem;
 
-					.about-section {
-						margin-block-start: 1rem;
-						grid-template-columns: 0.5fr 0.5fr;
-						grid-template-areas:
-							"title img"
-							"intro img"
-							"type system"
-							"description description";
-						.title {
-							grid-area: title;
-						}
+                        @container (width <= 24rem) {
+                            .image-upload__panel {
+                                padding: var(--spacing-3x);
+                            }
 
-						.intro {
-							grid-area: intro;
-						}
+                            .image-upload__button {
+                                justify-self: stretch;
+                            }
+                        }
+                    }
 
-						.type {
-							grid-area: type;
-						}
+                    .image-upload > p {
+                        margin: 0;
+                    }
 
-						.img {
-							grid-area: img;
-						}
+                    .image-upload__panel {
+                        display: grid;
+                        gap: var(--spacing-2x);
+                        min-block-size: 9.375rem;
+                        padding: var(--spacing-3x);
+                        align-content: space-between;
+                        border: 1px solid var(--bg-item-border);
+                        border-radius: var(--border-radius-2x);
+                        background: var(--bg-item);
+                        height: 100%;
+                    }
 
-						.system {
-							grid-area: system;
-						}
+                    .image-upload__panel--has-image {
+                        min-block-size: clamp(8.75rem, 36cqw, 13rem);
+                        align-content: end;
+                        overflow: hidden;
+                        background:
+                            linear-gradient(
+                                hsl(from var(--bg-backdrop) h s l / 10%),
+                                hsl(from var(--bg-backdrop) h s l / 45%)
+                            ),
+                            var(--image-upload-background-image);
+                        background-position: center;
+                        background-size: cover;
+                        height: 100%;
 
-						.description {
-							grid-area: description;
-						}
-					}
+                        .image-upload__content {
+                            display: none;
+                        }
 
-					.details-section {
-						grid-template-columns: minmax(7.5rem, 0.4fr) minmax(
-								12.5rem,
-								0.6fr
-							);
-						grid-template-areas:
-							"age-group age-group-description"
-							"duration duration-description"
-							"beginner-friendly beginner-friendly-description"
-							"english english-description"
-							"player-count player-count-description"
-							"other-notes other-notes";
+                        .image-upload__button {
+                            background-color: color-mix(in srgb, var(--bg-item) 82%, transparent);
+                            backdrop-filter: blur(0.25rem);
+                        }
+                    }
 
-						.age-group {
-							grid-area: age-group;
-						}
+                    .image-upload__content {
+                        display: grid;
+                        grid-template-columns: 2.5rem minmax(0, 1fr);
+                        gap: var(--spacing-2x);
+                        align-items: start;
+                    }
 
-						.age-group-description {
-							grid-area: age-group-description;
-						}
+                    .image-upload__text {
+                        min-inline-size: 0;
+                        margin: 0;
+                        max-inline-size: 34rem;
+                        color: var(--color-text-soft);
+                        font-size: var(--text-body-small);
+                        line-height: 1.35;
+                    }
 
-						.duration {
-							grid-area: duration;
-						}
+                    .image-upload__icon,
+                    .image-upload__button-icon {
+                        display: inline-grid;
+                        place-items: center;
+                        flex: 0 0 auto;
+                    }
 
-						.duration-description {
-							grid-area: duration-description;
-						}
+                    .image-upload__icon {
+                        inline-size: 2.5rem;
+                        block-size: 2.5rem;
+                    }
 
-						.beginner-friendly {
-							grid-area: beginner-friendly;
-						}
+                    .image-upload__button-icon {
+                        inline-size: 1.25rem;
+                        block-size: 1.25rem;
+                    }
 
-						.beginner-friendly-description {
-							grid-area: beginner-friendly-description;
-						}
+                    .image-upload__button {
+                        justify-self: end;
+                        gap: var(--spacing-1x);
+                    }
+                }
 
-						.can-be-english {
-							grid-area: can-be-english;
-						}
+                .puljefordeling-section {
+                    display: grid;
+                    gap: 1.25rem;
+                }
+                .details-section {
+                    display: grid;
+                    gap: 1.25rem;
+                }
+                .checkbox-background {
+                    background-color: var(--bg-item);
+                    border: 1px solid var(--bg-item-border);
+                    padding: 0.75rem 0.5rem;
+                    border-radius: var(--border-radius-2x);
+                }
+            }
 
-						.can-be-english-description {
-							grid-area: can-be-english-description;
-						}
+            .submit-section {
+                display: grid;
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                margin-block-start: 1rem;
+                min-height: 6.125rem;
+                place-content: center;
 
-						.player-count {
-							grid-area: player-count;
-						}
+                p {
+                    margin: 0;
+                    place-self: center;
+                }
+            }
 
-						.player-count-description {
-							grid-area: player-count-description;
-						}
+            @container formsubmission-css-container (width > 600px) {
+                .submit-section {
+                    grid-template-columns: 1fr 200px;
+                    gap: 2rem;
+                }
+            }
 
-						.other-notes {
-							grid-area: other-notes;
-						}
-					}
-				}
-			}
+            @container formsubmission-css-container (width > 920px) {
+                .form-card:is(:not(.submit-section)) {
+                    display: block;
+
+                    .organizer-section {
+                        display: flex;
+                        gap: var(--spacing-5x);
+                        .form-group {
+                            gap: 0.5rem;
+                            flex-grow: 1;
+                        }
+                    }
+
+                    .about-section {
+                        margin-block-start: 1rem;
+                        grid-template-columns: 0.5fr 0.5fr;
+                        grid-template-areas:
+                            "title img"
+                            "intro img"
+                            "type system"
+                            "description description";
+                        .title {
+                            grid-area: title;
+                        }
+
+                        .intro {
+                            grid-area: intro;
+                        }
+
+                        .type {
+                            grid-area: type;
+                        }
+
+                        .img {
+                            grid-area: img;
+                        }
+
+                        .system {
+                            grid-area: system;
+                        }
+
+                        .description {
+                            grid-area: description;
+                        }
+                    }
+
+                    .details-section {
+                        grid-template-columns: minmax(7.5rem, 0.4fr) minmax(
+                                12.5rem,
+                                0.6fr
+                            );
+                        grid-template-areas:
+                            "age-group age-group-description"
+                            "duration duration-description"
+                            "beginner-friendly beginner-friendly-description"
+                            "english english-description"
+                            "player-count player-count-description"
+                            "other-notes other-notes";
+
+                        .age-group {
+                            grid-area: age-group;
+                        }
+
+                        .age-group-description {
+                            grid-area: age-group-description;
+                        }
+
+                        .duration {
+                            grid-area: duration;
+                        }
+
+                        .duration-description {
+                            grid-area: duration-description;
+                        }
+
+                        .beginner-friendly {
+                            grid-area: beginner-friendly;
+                        }
+
+                        .beginner-friendly-description {
+                            grid-area: beginner-friendly-description;
+                        }
+
+                        .can-be-english {
+                            grid-area: can-be-english;
+                        }
+
+                        .can-be-english-description {
+                            grid-area: can-be-english-description;
+                        }
+
+                        .player-count {
+                            grid-area: player-count;
+                        }
+
+                        .player-count-description {
+                            grid-area: player-count-description;
+                        }
+
+                        .other-notes {
+                            grid-area: other-notes;
+                        }
+                    }
+                }
+            }
 		}
-	</style>
+		</style>
 	@statusCard(event, isAdmin)
 	if isAdmin {
 		@puljefordeling(event.ID, db)
@@ -379,6 +495,7 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 	)
 	@aboutEvent(
 		event.ID,
+		eventImageDir,
 		event.Title,
 		event.Intro,
 		event.EventType,

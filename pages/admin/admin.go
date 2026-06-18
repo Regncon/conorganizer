@@ -3,187 +3,55 @@ package admin
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"strconv"
-	"time"
 
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/pages/admin/approval"
 	edit_form "github.com/Regncon/conorganizer/pages/admin/approval/editForm"
 	"github.com/Regncon/conorganizer/pages/admin/puljefordeling_emulate"
 	"github.com/Regncon/conorganizer/pages/admin/rooms"
-	"github.com/Regncon/conorganizer/pages/root"
-	"github.com/Regncon/conorganizer/service/keyvalue"
+	"github.com/Regncon/conorganizer/service/live"
 	roomService "github.com/Regncon/conorganizer/service/rooms"
-	"github.com/delaneyj/toolbelt/embeddednats"
+	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
-	"github.com/google/uuid"
-	"github.com/gorilla/sessions"
-	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
-func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logger, ns *embeddednats.Server, db *sql.DB, eventImageDir *string) error {
+func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.Manager, db *sql.DB, eventImageDir *string) error {
 	baseLogger := logger
 	logger = logger.With("component", "admin")
-	nc, err := ns.Client()
-	if err != nil {
-		return fmt.Errorf("error creating nats client: %w", err)
-	}
-
-	js, err := jetstream.New(nc)
-	if err != nil {
-		return fmt.Errorf("error creating jetstream client: %w", err)
-	}
-
-	kv, err := js.CreateOrUpdateKeyValue(context.Background(), jetstream.KeyValueConfig{
-		Bucket:      "events",
-		Description: "Regncon Event Store",
-		Compression: true,
-		TTL:         time.Hour,
-		MaxBytes:    16 * 1024 * 1024,
-	})
-
-	if err != nil {
-		return fmt.Errorf("error creating key value: %w", err)
-	}
-
-	resetMVC := func(mvc *root.TodoMVC) {
-		mvc.Mode = root.TodoViewModeAll
-		mvc.Todos = []*root.Todo{
-			{Text: "Learn a backend language", Completed: true},
-			{Text: "Learn Datastar", Completed: false},
-			{Text: "Create Hypermedia", Completed: false},
-			{Text: "???", Completed: false},
-			{Text: "Profit", Completed: false},
-		}
-		mvc.EditingIdx = -1
-	}
-
-	mvcSession := func(w http.ResponseWriter, r *http.Request) (string, *root.TodoMVC, error) {
-		ctx := r.Context()
-		sessionID, err := upsertSessionID(store, r, w)
-		if err != nil {
-			return "", nil, fmt.Errorf("failed to get session id: %w", err)
-		}
-
-		mvc := &root.TodoMVC{}
-		if entry, err := kv.Get(ctx, sessionID); err != nil {
-			if err != jetstream.ErrKeyNotFound {
-				return "", nil, fmt.Errorf("failed to get key value: %w", err)
-			}
-			resetMVC(mvc)
-
-			if err := saveMVC(ctx, mvc, sessionID, kv); err != nil {
-				return "", nil, fmt.Errorf("failed to save mvc: %w", err)
-			}
-		} else {
-			if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-				return "", nil, fmt.Errorf("failed to unmarshal mvc: %w", err)
-			}
-		}
-		return sessionID, mvc, nil
-	}
-
-	// eventLayoutRoute(router, db, err)
-	// newEvent.NewEventLayoutRoute(router, db, err)
 
 	router.Route("/admin", func(adminRouter chi.Router) {
-		adminLayoutRoute(adminRouter, db, logger, err)
-		puljefordelingStatusRoute(adminRouter, db, kv, logger)
-		programPublishingRoute(adminRouter, db, kv, logger)
+		adminLayoutRoute(adminRouter, db, logger)
+		puljefordelingStatusRoute(adminRouter, db, liveManager, logger)
+		programPublishingRoute(adminRouter, db, liveManager, logger)
 
 		adminRouter.Route("/puljefordeling-emulate", func(emulateRouter chi.Router) {
 			puljefordeling_emulate.SetupPuljefordelingEmulateRoute(emulateRouter, db, baseLogger)
 		})
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
-			sse := datastar.NewSSE(w, r)
-
-			sessionID, mvc, err := mvcSession(w, r)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			ctx := r.Context()
-			watcher, err := kv.Watch(ctx, sessionID)
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-			defer func() {
-				if err := watcher.Stop(); err != nil {
-					logger.Error(fmt.Errorf("failed to stop admin watcher: %w", err).Error())
-				}
-			}()
-
-			for {
-				select {
-				case <-ctx.Done():
-					return
-				case entry := <-watcher.Updates():
-					if entry == nil {
-						continue
-					}
-					if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					c := adminPage(db)
-					if err := sse.PatchElementTempl(c); err != nil {
-						_ = sse.ConsoleError(err)
-						return
-					}
-				}
-			}
+			liveManager.Stream(w, r, live.Page{
+				Buckets: []live.Bucket{live.BucketEvents},
+				Render: func(ctx context.Context, r *http.Request) templ.Component {
+					return adminPage(db)
+				},
+			})
 		})
 
 		adminRouter.Route("/approval/", func(approvalRouter chi.Router) {
 			approvalRouter.Route("/api/", func(apiRouter chi.Router) {
 				apiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-					sse := datastar.NewSSE(w, r)
-
-					sessionID, mvc, err := mvcSession(w, r)
-					if err != nil {
-						logger.Error(fmt.Errorf("failed to get approval MVC session: %w", err).Error())
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					ctx := r.Context()
-					watcher, err := kv.Watch(ctx, sessionID)
-					if err != nil {
-						logger.Error(fmt.Errorf("failed to create approval watcher: %w", err).Error())
-						http.Error(w, err.Error(), http.StatusInternalServerError)
-						return
-					}
-					defer func() {
-						if err := watcher.Stop(); err != nil {
-							logger.Error(fmt.Errorf("failed to stop approval watcher: %w", err).Error())
-						}
-					}()
-
-					for {
-						select {
-						case <-ctx.Done():
-							return
-						case entry := <-watcher.Updates():
-							if entry == nil {
-								continue
-							}
-							if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-								http.Error(w, err.Error(), http.StatusInternalServerError)
-								return
-							}
-							c := approval.ApprovalPage(db, baseLogger)
-							if err := sse.PatchElementTempl(c); err != nil {
-								_ = sse.ConsoleError(err)
-								return
-							}
-						}
-					}
+					liveManager.Stream(w, r, live.Page{
+						Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests, live.BucketBillettholders},
+						Render: func(ctx context.Context, r *http.Request) templ.Component {
+							return approval.ApprovalPage(db, baseLogger)
+						},
+					})
 				})
 
 				apiRouter.Route("/event-players", func(eventPlayersRouter chi.Router) {
@@ -224,7 +92,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"pulje_id", store.PuljeId,
 							"billettholder_id", store.BillettholderId,
 						)
-						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+						if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast add first choice update: %w", err).Error())
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
@@ -271,7 +139,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"billettholder_id", store.BillettholderId,
 							"role", models.EventPlayerRoleGM,
 						)
-						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+						if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast add GM update: %w", err).Error())
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
@@ -313,7 +181,7 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 							"assignment_is_player", store.IsPlayer,
 							"assignment_is_gm", store.IsGm,
 						)
-						if err := keyvalue.BroadcastUpdate(kv, r); err != nil {
+						if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast player status update: %w", err).Error())
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
@@ -328,248 +196,292 @@ func SetupAdminRoute(router chi.Router, store sessions.Store, logger *slog.Logge
 				})
 				editEventRouter.Route("/api/{id}", func(newApiIdRouter chi.Router) {
 					newApiIdRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-						sessionID, mvc, err := mvcSession(w, r)
-						if err != nil {
-							http.Error(w, fmt.Sprintf("failed to get session id: %v", err), http.StatusInternalServerError)
-							return
-						}
-
 						eventId := chi.URLParam(r, "id")
 						if eventId == "" {
 							http.Error(w, "Event ID is required. Got: "+eventId, http.StatusBadRequest)
 							return
 						}
 
-						sse := datastar.NewSSE(w, r)
-
-						ctx := r.Context()
-						watcher, err := kv.Watch(ctx, sessionID)
-						if err != nil {
-							http.Error(w, err.Error(), http.StatusInternalServerError)
-							return
-						}
-						defer func() {
-							if err := watcher.Stop(); err != nil {
-								logger.Error(fmt.Errorf("failed to stop edit-form watcher: %w", err).Error())
-							}
-						}()
-
-						for {
-							select {
-							case <-ctx.Done():
-								return
-							case entry := <-watcher.Updates():
-
-								if entry == nil {
-									continue
-								}
-								if err := json.Unmarshal(entry.Value(), mvc); err != nil {
-									http.Error(w, err.Error(), http.StatusInternalServerError)
-									return
-								}
-
-								c := edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, baseLogger)
-								if err := sse.PatchElementTempl(c); err != nil {
-									_ = sse.ConsoleError(err)
-									return
-								}
-							}
-						}
+						liveManager.Stream(w, r, live.Page{
+							Buckets: []live.Bucket{live.BucketEvents, live.BucketRooms},
+							Render: func(ctx context.Context, r *http.Request) templ.Component {
+								return edit_form.EditEventFormPage(ctx, eventId, db, eventImageDir, baseLogger)
+							},
+						})
 					})
 				})
 			})
-			approval.ApprovalLayoutRoute(approvalRouter, db, baseLogger, err)
+			approval.ApprovalLayoutRoute(approvalRouter, db, baseLogger)
 		})
 
-		adminRouter.Route("/rooms", func(roomRouter chi.Router) {
-			roomRouter.Route("/api", func(roomApiRouter chi.Router) {
-				roomApiRouter.Route("/create", func(createRoomRoute chi.Router) {
-					createRoomRoute.Get("/", func(w http.ResponseWriter, r *http.Request) {
-						// Reset form bindings before creating new room
-						sse := datastar.NewSSE(w, r)
-						payload, _ := json.Marshal(map[string]any{
-							"mode":         "create",
-							"form_title":   "Legg til rom",
-							"button_label": "Opprett rom",
-							"submit_url":   "/admin/rooms/api/create",
-
-							"id":                   0,
-							"name":                 "",
-							"room_number":          "",
-							"floor":                0,
-							"max_concurrent_games": 0,
-							"notes":                "",
-							"is_disabled":          false,
-							"error":                "",
-						})
-
-						if err = sse.PatchSignals(payload); err != nil {
-							logger.Error("Failed to patch signals", "error", err.Error())
-							http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
-							return
-						}
-					})
-
-					createRoomRoute.Post("/", func(w http.ResponseWriter, r *http.Request) {
-						// Read data-star post submission
-						store := &models.Room{}
-						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
-							fmt.Println(readSignalErr.Error())
-							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
-						}
-
-						// Get ready to broadcast responses to client
-						sse := datastar.NewSSE(w, r)
-
-						// Validate input
-
-						// Create room
-						_, err := roomService.CreateRoom(db, *store)
-						if err != nil {
-							payload, _ := json.Marshal(map[string]string{
-								"error": err.Error(),
-							})
-
-							if err = sse.PatchSignals(payload); err != nil {
-								logger.Error("Failed to patch signals", "error", err.Error())
-								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
-							}
-							return
-						}
-
-						// Ridirect on success
-						_ = sse.Redirect("/admin/rooms")
+		adminRouter.Route("/rooms", func(roomsRouter chi.Router) {
+			roomsRouter.Route("/api", func(roomsApiRouter chi.Router) {
+				roomsApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+					liveManager.Stream(w, r, live.Page{
+						Buckets: []live.Bucket{
+							live.BucketRooms,
+						},
+						Render: func(ctx context.Context, r *http.Request) templ.Component {
+							return rooms.RoomsPageContent(db, logger)
+						},
 					})
 				})
 
-				roomApiRouter.Route("/edit/{id}", func(updateRoomRoute chi.Router) {
-					updateRoomRoute.Get("/", func(w http.ResponseWriter, r *http.Request) {
-						// Read url for room id
-						roomID := chi.URLParam(r, "id")
-						if roomID == "" {
-							http.Error(w, "Room ID is required. Got: "+roomID, http.StatusBadRequest)
+				roomsApiRouter.Route("/{id}", func(roomApiRouter chi.Router) {
+					// This route is used for getting form data when creating or updating rooms
+					roomApiRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						// Validate id param from URL
+						idQuery := chi.URLParam(r, "id")
+						if idQuery == "" {
+							logger.Error("User tried to fetch a room without ID", "url", r.URL)
+							http.Error(w, fmt.Sprintf("Room ID is required, got: %s", idQuery), http.StatusBadRequest)
 							return
 						}
-						id, err := strconv.ParseInt(roomID, 10, 0)
+						roomID, err := strconv.ParseInt(idQuery, 10, 0)
 						if err != nil {
-							http.Error(w, "", http.StatusBadRequest)
+							logger.Error("User tried to fetch a room with invalid ID", "url", r.URL, "error", err.Error())
+							http.Error(w, fmt.Sprintf("Unable to parse given room ID, error: %s", err.Error()), http.StatusBadRequest)
 							return
 						}
 
-						// Get room from id in url param
-						room, err := roomService.GetRoomByID(db, int(id))
-						if err != nil {
-							http.Error(w, "", http.StatusBadRequest)
-							return
-						}
-
-						// Update formbindings with room data
+						// Initiate new signals
 						sse := datastar.NewSSE(w, r)
-						payload, _ := json.Marshal(map[string]any{
-							"mode":         "edit",
-							"form_title":   "Rediger rom",
-							"button_label": "Lagre endringer",
-							"submit_url":   fmt.Sprintf("/admin/rooms/api/edit/%d", room.ID),
 
-							"id":                   room.ID,
-							"name":                 room.Name,
-							"room_number":          room.RoomNumber,
-							"floor":                room.Floor,
-							"max_concurrent_games": room.MaxConcurrentGames,
-							"notes":                room.Notes,
-							"is_disabled":          room.IsDisabled,
-							"error":                "",
-						})
-						if err = sse.PatchSignals(payload); err != nil {
-							logger.Error("Failed to patch signals", "error", err.Error())
-							http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+						// Clear error messages
+						roomErrors := models.RoomFormErrors{}
+						roomErrors.ResetErrors()
+						feedback := errorfeedback.New(roomErrors.GetKeys()...)
+
+						// Fill form bindings
+						store := models.RoomFormSignals{}
+						if roomID == 0 {
+							store.FormTitle = "Legg til et nytt rom"
+							store.ButtonLabel = "Legg til"
+							store.Mode = "create"
+						} else {
+							store.ButtonLabel = "Oppdater"
+							store.Mode = "edit"
+
+							room, err := roomService.GetRoomByID(db, int(roomID))
+							if err != nil {
+								store.FormTitle = "Finner ikkje rom"
+								feedback.Set("error", err.Error())
+							} else {
+								store.FormTitle = "Oppdaterer rom " + room.RoomNumber
+
+								// Get updated values from database
+								store.ID = room.ID
+								store.Name = room.Name
+								store.RoomNumber = room.RoomNumber
+								store.Floor = room.Floor
+								store.MaxConcurrentGames = room.MaxConcurrentGames
+								store.IsDisabled = room.IsDisabled
+								store.Notes = room.Notes
+							}
+						}
+
+						// Patch signals
+						if err := feedback.Patch(sse); err != nil {
+							logger.Error("Failed to marshal and patch feedback signals", "error", err.Error())
+							http.Error(w, "Failed to marshal and patch feedback signals", http.StatusInternalServerError)
+							return
+						}
+						if err := sse.MarshalAndPatchSignals(store); err != nil {
+							logger.Error("Failed to marshal and patch signals", "error", err.Error())
+							http.Error(w, "Failed to marshal and patch signals", http.StatusInternalServerError)
 							return
 						}
 					})
 
-					updateRoomRoute.Post("/", func(w http.ResponseWriter, r *http.Request) {
-						// Read url for room id
-						roomID := chi.URLParam(r, "id")
-						if roomID == "" {
-							http.Error(w, "Room ID is required. Got: "+roomID, http.StatusBadRequest)
+					roomApiRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
+						// Validate id param from URL
+						idQuery := chi.URLParam(r, "id")
+						if idQuery == "" {
+							logger.Error("User tried to update room without ID", "url", r.URL)
+							http.Error(w, fmt.Sprintf("Room ID is required, got: %s", idQuery), http.StatusBadRequest)
+							return
+						}
+						roomID, err := strconv.ParseInt(idQuery, 10, 0)
+						if err != nil {
+							logger.Error("User tried to update room with invalid ID", "url", r.URL, "error", err.Error())
+							http.Error(w, fmt.Sprintf("Unable to parse given room ID, error: %s", err.Error()), http.StatusBadRequest)
 							return
 						}
 
-						// Read data-star post submission
-						store := &models.Room{}
+						// Read data post submission
+						store := &models.RoomFormSignals{}
 						if readSignalErr := datastar.ReadSignals(r, store); readSignalErr != nil {
-							fmt.Println(readSignalErr.Error())
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
+							return
+						}
+						room := models.Room{
+							ID:                 int(roomID),
+							Name:               store.Name,
+							RoomNumber:         store.RoomNumber,
+							Floor:              store.Floor,
+							MaxConcurrentGames: store.MaxConcurrentGames,
+							IsDisabled:         store.IsDisabled,
+							Notes:              store.Notes,
 						}
 
-						// Get ready to broadcast responses to client
+						// Decide between create and update based on room ID
+						var roomErrors models.RoomFormErrors
+						if room.ID == 0 {
+							_, roomErrors = roomService.CreateRoom(db, room)
+						} else {
+							_, roomErrors = roomService.UpdateRoom(db, room)
+						}
+
+						// Set up sse signals for response
 						sse := datastar.NewSSE(w, r)
 
-						// Validate input
-						parsedID, err := strconv.ParseInt(roomID, 10, 0)
-						if err != nil {
-							payload, _ := json.Marshal(map[string]string{
-								"error": err.Error(),
-							})
+						feedbackKeys := roomErrors.GetKeys()
+						feedback := errorfeedback.New(feedbackKeys...)
 
-							if err = sse.PatchSignals(payload); err != nil {
-								logger.Error("Failed to patch signals", "error", err.Error())
-								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+						if roomErrors.HasErrors() {
+							for errorKey, errorMsg := range roomErrors {
+								feedback.Set(string(errorKey), errorMsg)
 							}
-							return
-						}
-						store.ID = int(parsedID)
 
-						// Update room
-						_, err = roomService.UpdateRoom(db, *store)
-						if err != nil {
-							payload, _ := json.Marshal(map[string]string{
-								"error": err.Error(),
-							})
-
-							if err = sse.PatchSignals(payload); err != nil {
-								logger.Error("Failed to patch signals", "error", err.Error())
-								http.Error(w, "Failed to patch signals", http.StatusInternalServerError)
+							if err := feedback.Patch(sse); err != nil {
+								logger.Error("Failed to marshal and patch feedback signals", "error", err.Error())
+								http.Error(w, "Failed to marshal and patch feedback signals", http.StatusInternalServerError)
 
 							}
 							return
 						}
 
-						// Ridirect on success
-						_ = sse.Redirect("/admin/rooms")
+						// Close modal on success
+						if err := sse.ExecuteScript(`document.getElementById('room-dialog').close()`); err != nil {
+							logger.Error("Failed to execute sse script", "error", err.Error())
+							http.Error(w, "Failed to execute sse script", http.StatusInternalServerError)
+						}
+
+						// Broadcast that data has been changed, triggering all clients to update
+						if err := liveManager.Broadcast(r.Context(), live.BucketRooms); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+
+					})
+
+					roomApiRouter.Delete("/", func(w http.ResponseWriter, r *http.Request) {
+						// Validate id param from URL
+						idQuery := chi.URLParam(r, "id")
+						if idQuery == "" {
+							http.Error(w, "Room ID is required. Got: "+idQuery, http.StatusBadRequest)
+							return
+						}
+						roomID, err := strconv.ParseInt(idQuery, 10, 0)
+						if err != nil {
+							http.Error(w, "Unable to parse roomID, error: "+err.Error(), http.StatusBadRequest)
+							return
+						}
+
+						// Delete room
+						err = roomService.DeleteRoom(db, int(roomID))
+						if err != nil {
+							http.Error(w, "Unable to deleto room with ID, error: "+err.Error(), http.StatusBadRequest)
+							return
+						}
+
+						if err := liveManager.Broadcast(r.Context(), live.BucketRooms); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+
+						// Close modal on success
+						sse := datastar.NewSSE(w, r)
+						if err := sse.ExecuteScript(`document.getElementById('room-dialog').close()`); err != nil {
+							logger.Error("Failed to execute sse script", "error", err.Error())
+							http.Error(w, "Failed to execute sse script", http.StatusInternalServerError)
+						}
+					})
+				})
+
+				roomsApiRouter.Route("/assignment/{pulje}", func(roomsAssignmentRouter chi.Router) {
+					roomsAssignmentRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+						puljeQuery := chi.URLParam(r, "pulje")
+						puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
+						if !isPujeIDValid {
+							http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
+							return
+						}
+
+						liveManager.Stream(w, r, live.Page{
+							Buckets: []live.Bucket{
+								live.BucketRooms,
+							},
+							Render: func(ctx context.Context, r *http.Request) templ.Component {
+								return rooms.RoomsAssignmentPageContent(db, logger, puljeID, eventImageDir)
+							},
+						})
+					})
+
+					roomsAssignmentRouter.Post("/{event}/{room}", func(w http.ResponseWriter, r *http.Request) {
+						puljeQuery := chi.URLParam(r, "pulje")
+						puljeID, isPujeIDValid := models.ParsePulje(puljeQuery)
+						if !isPujeIDValid {
+							http.Error(w, fmt.Sprintf("Expected a valid pulje ID: %v", puljeQuery), http.StatusBadRequest)
+							return
+						}
+
+						eventQuery := chi.URLParam(r, "event")
+						if eventQuery == "" {
+							http.Error(w, "Event ID is required", http.StatusBadRequest)
+							return
+						}
+
+						roomQuery := chi.URLParam(r, "room")
+						if roomQuery == "" {
+							http.Error(w, "Room ID is required", http.StatusBadRequest)
+							return
+						}
+						roomID, err := strconv.ParseInt(roomQuery, 10, 0)
+						if err != nil {
+							http.Error(w, fmt.Sprintf("Unable to parse roomID: %v", err.Error()), http.StatusBadRequest)
+							return
+						}
+
+						// Check that room exists
+						_, err = roomService.GetRoomByID(db, int(roomID))
+						if err != nil {
+							http.Error(w, fmt.Sprintf("Room with id %d not found - error: %v", roomID, err.Error()), http.StatusBadRequest)
+							return
+						}
+
+						// Assign room
+						query := `
+                            UPDATE relation_event_puljer
+                            SET room_id = ?
+                            WHERE event_id = ? AND pulje_id = ?
+                        `
+
+						_, err = db.Exec(query, roomID, eventQuery, puljeID)
+						if err != nil {
+							http.Error(w, fmt.Sprintf("Unable to assign room: %v", err.Error()), http.StatusBadRequest)
+							return
+						}
+
+						// Stream update
+						if err := liveManager.Broadcast(r.Context(), live.BucketRooms); err != nil {
+							logger.Error(fmt.Errorf("failed to broadcast update: %w", err).Error())
+							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+
+						// Close modal on success
+						sse := datastar.NewSSE(w, r)
+						_ = sse.ExecuteScript(`document.getElementById('assignment-dialog').close()`)
 					})
 				})
 			})
-			rooms.RoomsLayoutRoute(roomRouter, db, baseLogger, err)
+
+			rooms.RoomsLayoutRoute(roomsRouter, db, logger, eventImageDir)
 		})
 	})
 
 	return nil
-}
-
-func saveMVC(ctx context.Context, mvc *root.TodoMVC, sessionID string, kv jetstream.KeyValue) error {
-	b, err := json.Marshal(mvc)
-	if err != nil {
-		return fmt.Errorf("failed to marshal mvc: %w", err)
-	}
-	if _, err := kv.Put(ctx, sessionID, b); err != nil {
-		return fmt.Errorf("failed to put key value: %w", err)
-	}
-	return nil
-}
-
-func upsertSessionID(store sessions.Store, r *http.Request, w http.ResponseWriter) (string, error) {
-	sess, err := store.Get(r, "connections")
-	if err != nil {
-		return "", fmt.Errorf("failed to get session: %w", err)
-	}
-	id, ok := sess.Values["id"].(string)
-	if !ok {
-		id = uuid.NewString()
-		sess.Values["id"] = id
-		if err := sess.Save(r, w); err != nil {
-			return "", fmt.Errorf("failed to save session: %w", err)
-		}
-	}
-	return id, nil
 }
