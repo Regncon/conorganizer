@@ -1,6 +1,7 @@
 package billettholderadmin
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -59,6 +60,56 @@ func TestBillettholderCard_RendersDetailsAndOnlyAllowsManualEmailDelete(t *testi
 	}
 	if !actualDeleteActionExists || actualDeleteAction != expectedDeleteAction {
 		t.Fatalf("delete action mismatch\nexpected: %q\nactual:   %q", expectedDeleteAction, actualDeleteAction)
+	}
+}
+
+func TestBillettholderCard_UsesDatastarStateForInterestDialogOpenState(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at et billettholderkort har en interessedialog.",
+		When:  "Når adminkortet rendres.",
+		Then:  "Så skal åpning styres av Datastar-state og dialogens native open-attributt bevares under live patches.",
+	})
+
+	// Given
+	billettholder := models.Billettholder{
+		ID:        42,
+		FirstName: "Kari",
+		LastName:  "Nordmann",
+	}
+	expectedDialogID := "billettholder-interests-42"
+	expectedOpenAction := fmt.Sprintf(
+		"$billettholderInterestActivePulje = '%s'; $billettholderInterestOpenDialogId = '%s'",
+		models.PuljeFredagKveld,
+		expectedDialogID,
+	)
+
+	// When
+	doc := templtest.Render(t, billettholderCard(billettholder, "", nil))
+	openButton := doc.Find(".billettholder-interest-open")
+	dialog := doc.Find("#" + expectedDialogID)
+	actualOpenAction, actualOpenActionExists := openButton.Attr("data-on:click")
+	actualPreserveAttr, actualPreserveAttrExists := dialog.Attr("data-preserve-attr")
+	actualEffect, actualEffectExists := dialog.Attr("data-effect")
+	actualCloseAction, actualCloseActionExists := dialog.Attr("data-on:close")
+
+	// Then
+	if !actualOpenActionExists || actualOpenAction != expectedOpenAction {
+		t.Fatalf("interest dialog open action mismatch\nexpected: %q\nactual:   %q", expectedOpenAction, actualOpenAction)
+	}
+	if !actualPreserveAttrExists || actualPreserveAttr != "open" {
+		t.Fatalf("dialog preserve attr mismatch\nexpected: %q\nactual:   %q", "open", actualPreserveAttr)
+	}
+	for _, expectedPart := range []string{
+		"$billettholderInterestOpenDialogId == '" + expectedDialogID + "'",
+		"el.showModal()",
+		"el.close()",
+	} {
+		if !actualEffectExists || !strings.Contains(actualEffect, expectedPart) {
+			t.Fatalf("expected dialog effect to contain %q\nactual effect: %q", expectedPart, actualEffect)
+		}
+	}
+	if !actualCloseActionExists || !strings.Contains(actualCloseAction, "$billettholderInterestOpenDialogId = ''") {
+		t.Fatalf("expected close action to reset open dialog id\nactual close action: %q", actualCloseAction)
 	}
 }
 
