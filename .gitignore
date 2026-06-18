@@ -20,6 +20,10 @@ tmp-gocache/
 # Ai folder
 .codex/*
 
+# graphify (knowledge graph tooling - local only)
+.graphifyignore
+graphify-out/
+
 # ------------------------------------------------------------------
 # Go
 # If you prefer the allow list template instead of the deny list, see community template:
