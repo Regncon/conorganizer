@@ -13,6 +13,7 @@ templ Event_mobile(
 	event *models.Event,
 	previousNextData components.PreviousNext,
 	puljerForEvent []models.PuljeRow,
+	selectedPuljeQuery string,
 	hasTickets bool,
 	showInterestControls bool,
 	eventImageDir *string) {
@@ -343,7 +344,7 @@ templ Event_mobile(
 			</header>
 		</div>
 		<div class="event-information">
-			@EventInterestPanel(hasTickets, puljerForEvent, showInterestControls)
+			@EventInterestPanel(hasTickets, puljerForEvent, selectedPuljeQuery, showInterestControls)
 			<section class="surface-pane event-details-pane">
 				<h2 class="surface-pane-title">Detaljer om arrangementet</h2>
 				<div class="event-details">
