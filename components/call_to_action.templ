@@ -3,14 +3,37 @@ package components
 templ CallToAction() {
 	<style>
 		.call-to-action {
+			position: relative;
+			overflow: hidden;
+			isolation: isolate;
 			background-color: black;
 			max-width: 1400px;
 			margin: 0 auto;
 			margin-top: var(--responsive-top-of-page-spacing);
-			display: grid;
-			grid-template-columns: 1fr;
+		}
+		.call-to-action-avatar {
+			position: absolute;
+			inset: 0;
+			width: 100%;
+			height: 100%;
+			object-fit: fill;
+			z-index: 0;
+		}
+		.call-to-action::before {
+			content: "";
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+			background: linear-gradient(
+				90deg,
+				hsla(0, 0%, 0%, 0.9) 0%,
+				hsla(0, 0%, 0%, 0.7) 35%,
+				hsla(0, 0%, 0%, 0.15) 100%
+			);
 		}
 		.call-to-action-content {
+			position: relative;
+			z-index: 2;
 			display: flex;
 			flex-direction: column;
 			justify-content: space-between;
@@ -20,28 +43,10 @@ templ CallToAction() {
 		.call-to-action-header {
 			margin-bottom: var(--spacing-3x);
 		}
-		.call-to-action-graphic {
-			display: none;
-			position: relative;
-			overflow: hidden;
-			.call-to-action-avatar {
-				position: absolute;
-				top: 0;
-				bottom: 0;
-				left: 0;
-			}
-		}
 		@container main (width > 600px) {
 			.call-to-action-content {
 				padding: var(--spacing-5x) var(--spacing-10x);
-			}
-		}
-		@container main (width > 800px) {
-			.call-to-action {
-				grid-template-columns: 4fr minmax(230px, 1fr);
-			}
-			.call-to-action-graphic {
-				display: block;
+				max-width: 65%;
 			}
 		}
 		@container main (width > 1000px) {
@@ -53,15 +58,17 @@ templ CallToAction() {
 			}
 		}
 		@container main (width > 1200px) {
-			.call-to-action {
-				grid-template-columns: 4fr minmax(330px, 1fr);
-			}
 			.call-to-action-content {
 				padding: var(--spacing-10x) 80px;
 			}
 		}
 	</style>
 	<div class="call-to-action">
+		<img
+			class="call-to-action-avatar"
+			src="/static/awesome-dragon-generated.png"
+			alt="Sent inn arrangement"
+		/>
 		<div class="call-to-action-content">
 			<div>
 				<h1 class="call-to-action-header">
@@ -80,15 +87,6 @@ templ CallToAction() {
 			>
 				Send inn arrangement
 			</a>
-		</div>
-		<div class="call-to-action-graphic">
-			<img
-				class="call-to-action-avatar"
-				height="100%"
-				width="auto"
-				src="/static/call-to-action-avatar.webp"
-				alt="Sent inn arrangement"
-			/>
 		</div>
 	</div>
 }
