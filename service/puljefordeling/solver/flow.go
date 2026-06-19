@@ -40,28 +40,37 @@ func (g *flowGraph) addEdge(from, to, capacity, cost int) {
 }
 
 // minCostFlow runs successive shortest-path augmentation, pushing flow only
-// while it improves total value, and returns (totalFlow, totalCost). Because
-// the participation bonus is baked into the assignment-edge costs, this stops
-// once the cheapest remaining augmenting path is non-negative — i.e. it fills
-// chairs only when a new seat is worth more than it costs, rather than always
-// pushing to maximum flow.
-func (g *flowGraph) minCostFlow(s, t int) (int, int) {
+// while it improves total value, and returns (totalFlow, totalCost, reduced).
+// Because the participation bonus is baked into the assignment-edge costs, this
+// stops once the cheapest remaining augmenting path is non-negative — i.e. it
+// fills chairs only when a new seat is worth more than it costs, rather than
+// always pushing to maximum flow.
+//
+// reduced lists the forward-edge ids whose flow was pushed back by a residual
+// (reverse) edge during augmentation — i.e. flow that was tentatively routed one
+// way and later rerouted to improve the global objective. The caller interprets
+// these in domain terms (which players were bumped off which events).
+func (g *flowGraph) minCostFlow(s, t int) (int, int, []int) {
 	totalFlow, totalCost := 0, 0
+	var reduced []int
 	for {
-		f, c, ok := g.spfaAugment(s, t)
+		f, c, red, ok := g.spfaAugment(s, t)
 		if !ok {
 			break
 		}
 		totalFlow += f
 		totalCost += c
+		reduced = append(reduced, red...)
 	}
-	return totalFlow, totalCost
+	return totalFlow, totalCost, reduced
 }
 
 // spfaAugment finds the minimum-cost augmenting path from s to t using SPFA,
 // pushes as much flow as the path bottleneck allows, and returns
-// (flow, cost, true). Returns (0, 0, false) when no path exists.
-func (g *flowGraph) spfaAugment(s, t int) (int, int, bool) {
+// (flow, cost, reduced, true). reduced holds the forward-edge ids whose flow was
+// pushed back along this path's reverse edges. Returns (0, 0, nil, false) when
+// no path exists.
+func (g *flowGraph) spfaAugment(s, t int) (int, int, []int, bool) {
 	dist := make([]int, g.n)
 	for i := range dist {
 		dist[i] = math.MaxInt
@@ -107,7 +116,7 @@ func (g *flowGraph) spfaAugment(s, t int) (int, int, bool) {
 	// augmenting paths in non-decreasing cost order, so once the cheapest is
 	// non-negative we are at the optimal flow value.
 	if dist[t] == math.MaxInt || dist[t] >= 0 {
-		return 0, 0, false
+		return 0, 0, nil, false
 	}
 
 	// Bottleneck capacity along the shortest path.
@@ -119,12 +128,18 @@ func (g *flowGraph) spfaAugment(s, t int) (int, int, bool) {
 		}
 	}
 
-	// Augment.
+	// Augment. A reverse edge (odd id) on the path pushes flow back along its
+	// forward edge (eid^1) — record that forward edge as reduced so the caller
+	// can see which tentative assignment was undone.
+	var reduced []int
 	for v := t; v != s; v = prevv[v] {
 		eid := preve[v]
 		g.edges[eid].flow += pushFlow
 		g.edges[eid^1].flow -= pushFlow
+		if eid&1 == 1 {
+			reduced = append(reduced, eid^1)
+		}
 	}
 
-	return pushFlow, pushFlow * dist[t], true
+	return pushFlow, pushFlow * dist[t], reduced, true
 }

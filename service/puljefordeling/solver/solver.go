@@ -184,7 +184,14 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player) model.SlotRes
 		interested[i], interested[j] = interested[j], interested[i]
 	})
 
-	assignments := s.runMCMF(slot.ID, slot.Events, interested)
+	// Index players by ID so score lookups during the totals pass are O(1)
+	// rather than a linear scan per assignment.
+	playerByID := make(map[string]model.Player, len(interested))
+	for _, p := range interested {
+		playerByID[p.ID] = p
+	}
+
+	assignments, moved := s.runMCMF(slot.ID, slot.Events, interested)
 	result.Assignments = assignments
 
 	// Flag events with fewer than minViablePlayers for human review.
@@ -198,7 +205,7 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player) model.SlotRes
 	assigned := make(map[string]bool, len(interested))
 	for evID, playerIDs := range assignments {
 		for _, pid := range playerIDs {
-			score := s.lookupScore(pid, slot.ID, evID, interested)
+			score := playerByID[pid].Prefs[slot.ID][evID]
 			result.TotalScore += int(score)
 			s.seated[pid] = true
 			if score == model.MaxScore && !s.satisfied[pid] {
@@ -206,6 +213,16 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player) model.SlotRes
 				result.NewlySatisfied = append(result.NewlySatisfied, pid)
 			}
 			assigned[pid] = true
+		}
+	}
+
+	// Players bumped off a higher-scoring event by a residual-edge augmentation
+	// and re-seated elsewhere to improve the global result. Restricted to players
+	// who still hold a seat, so it always describes a relocation, never a player
+	// who merely lost contention without ever being tentatively seated.
+	for pid := range moved {
+		if assigned[pid] {
+			result.MovedPlayers = append(result.MovedPlayers, pid)
 		}
 	}
 
@@ -233,6 +250,7 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player) model.SlotRes
 	sort.Strings(result.NewlySatisfied)
 	sort.Strings(result.Unassigned)
 	sort.Strings(result.UndersubscribedEvents)
+	sort.Strings(result.MovedPlayers)
 	for evID := range result.Assignments {
 		sort.Strings(result.Assignments[evID])
 	}
@@ -252,15 +270,16 @@ func wantedTopChoice(p model.Player, slotID string) bool {
 }
 
 // runMCMF builds and solves the flow network for the given events and players,
-// returning the raw assignment map (eventID -> []playerID, unsorted).
+// returning the raw assignment map (eventID -> []playerID, unsorted) and the set
+// of player IDs that were bumped off an event by a residual-edge augmentation.
 func (s *State) runMCMF(
 	slotID string,
 	events []model.Event,
 	players []model.Player,
-) map[string][]string {
+) (map[string][]string, map[string]bool) {
 	assignments := make(map[string][]string)
 	if len(events) == 0 {
-		return assignments
+		return assignments, nil
 	}
 
 	// Node layout:
@@ -305,7 +324,20 @@ func (s *State) runMCMF(
 		}
 	}
 
-	g.minCostFlow(source, sink)
+	_, _, reduced := g.minCostFlow(source, sink)
+
+	// A reduced forward edge ran player→event (forward at fe, its reverse at
+	// fe^1 runs event→player, so its .to is the player node). Flow pushed back
+	// along it means that player was bumped off the event.
+	moved := make(map[string]bool)
+	for _, fe := range reduced {
+		playerNode := g.edges[fe^1].to
+		eventNode := g.edges[fe].to
+		if playerNode < 1 || playerNode > P || eventNode < P+1 || eventNode > P+E {
+			continue
+		}
+		moved[players[playerNode-1].ID] = true
+	}
 
 	for i, p := range players {
 		for _, eid := range g.adj[i+1] {
@@ -318,17 +350,7 @@ func (s *State) runMCMF(
 		}
 	}
 
-	return assignments
-}
-
-// lookupScore returns the raw preference score for a player in a slot/event.
-func (s *State) lookupScore(playerID, slotID, eventID string, players []model.Player) model.Score {
-	for _, p := range players {
-		if p.ID == playerID {
-			return p.Prefs[slotID][eventID]
-		}
-	}
-	return 0
+	return assignments, moved
 }
 
 // adjustScore returns the priority weight for a (player, event) edge. Larger =

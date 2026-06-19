@@ -28,21 +28,41 @@ func (level InterestLevel) Label() string {
 	}
 }
 
-// Score maps an interest level onto the puljefordeling solver's 1–5 preference
-// scale. "Veldig interessert" is the top choice (5) and is the threshold the
-// solver uses for participant satisfaction; "Middels" is 3 and "Litt" is 1.
+// interestScores is the single source of truth mapping interest levels onto the
+// puljefordeling solver's 1–5 preference scale. "Veldig interessert" is the top
+// choice (5) and is the threshold the solver uses for participant satisfaction;
+// "Middels" is 3 and "Litt" is 1. Both Score and InterestLevelFromScore read
+// this table, so the two directions can never drift apart.
+var interestScores = []struct {
+	level InterestLevel
+	score int
+}{
+	{InterestLevelHigh, 5},
+	{InterestLevelMedium, 3},
+	{InterestLevelLow, 1},
+}
+
+// Score maps an interest level onto the solver's 1–5 preference scale.
 // No/invalid interest returns 0, meaning no edge in the assignment graph.
 func (level InterestLevel) Score() int {
-	switch level {
-	case InterestLevelHigh:
-		return 5
-	case InterestLevelMedium:
-		return 3
-	case InterestLevelLow:
-		return 1
-	default:
-		return 0
+	for _, m := range interestScores {
+		if m.level == level {
+			return m.score
+		}
 	}
+	return 0
+}
+
+// InterestLevelFromScore reverses Score: it maps a solver preference score back
+// to the interest level it came from, returning InterestLevelNone for any score
+// that is not one of the defined levels (including 0).
+func InterestLevelFromScore(score int) InterestLevel {
+	for _, m := range interestScores {
+		if m.score == score {
+			return m.level
+		}
+	}
+	return InterestLevelNone
 }
 
 // Emoji returns a short glyph for an interest level, used to show at a glance

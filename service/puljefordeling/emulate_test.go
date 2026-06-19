@@ -180,11 +180,13 @@ func TestEmulateSeatings(t *testing.T) {
 	if len(evB.AssignedPlayers) != 1 {
 		t.Errorf("evB should seat the 1 evA loser, got %v", evB.AssignedPlayers)
 	}
-	// That evB occupant wanted evA (High) but landed on evB (Low) → flagged as
-	// moved/bumped below their top wish.
+	// The evB occupant simply lost the evA lottery and took their fallback — they
+	// were never tentatively seated in evA, so no reverse-edge bump occurred and
+	// they must NOT be flagged as moved. (Moved is reserved for players the solver
+	// actively relocated off a higher-scoring seat; see the solver's bump test.)
 	if len(evB.AssignedPlayers) == 1 {
-		if got := evB.AssignedPlayers[0]; !got.Moved {
-			t.Errorf("evB occupant %q wanted evA higher and should be marked Moved", got.Name)
+		if got := evB.AssignedPlayers[0]; got.Moved {
+			t.Errorf("evB occupant %q only lost contention and should not be marked Moved", got.Name)
 		}
 	}
 

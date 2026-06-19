@@ -21,7 +21,7 @@ type AssignedPlayer struct {
 	Name  string
 	IsDM  bool                 // runs at least one game in the weekend (DM bump)
 	Level models.InterestLevel // their interest in the game they got
-	Moved bool                 // seated below their best wish this pulje (made room for others)
+	Moved bool                 // relocated off a higher-scoring event by the solver to make room for others
 }
 
 // EmulatedEvent is the proposed seating for a single event within a pulje.
@@ -146,6 +146,11 @@ func shapePulje(
 		under[eid] = true
 	}
 
+	moved := make(map[string]bool, len(res.MovedPlayers))
+	for _, pid := range res.MovedPlayers {
+		moved[pid] = true
+	}
+
 	out := EmulatedPulje{
 		PuljeID:        pulje.ID,
 		Name:           pulje.Name,
@@ -159,7 +164,7 @@ func shapePulje(
 			EventID:         ev.ID,
 			Title:           ev.Name,
 			Capacity:        ev.Capacity,
-			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet),
+			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet, moved),
 			Undersubscribed: under[ev.ID],
 		}
 		if gmID, ok := gms[eventPuljeKey(ev.ID, pulje.ID)]; ok {
@@ -171,14 +176,16 @@ func shapePulje(
 	return out
 }
 
-// assignedPlayers turns solver player IDs into display rows: name, DM flag, and
-// the interest level the player had for the game they were seated in.
+// assignedPlayers turns solver player IDs into display rows: name, DM flag, the
+// interest level the player had for the game they were seated in, and whether
+// the solver relocated them off a higher-scoring event (the moved set).
 func assignedPlayers(
 	ids []string,
 	eventID, puljeID string,
 	names map[int]string,
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
+	moved map[string]bool,
 ) []AssignedPlayer {
 	if len(ids) == 0 {
 		return nil
@@ -190,38 +197,15 @@ func assignedPlayers(
 			out = append(out, AssignedPlayer{Name: id})
 			continue
 		}
-		ap := AssignedPlayer{Name: names[bh], IsDM: dmSet[bh]}
+		ap := AssignedPlayer{Name: names[bh], IsDM: dmSet[bh], Moved: moved[id]}
 		if byPulje, ok := prefs[bh]; ok {
 			got := byPulje[puljeID][eventID]
-			ap.Level = levelFromScore(got)
-			// "Moved" = seated below the best interest they expressed this
-			// pulje, i.e. they gave up a stronger wish so others could be seated.
-			var best smodel.Score
-			for _, sc := range byPulje[puljeID] {
-				if sc > best {
-					best = sc
-				}
-			}
-			ap.Moved = got < best
+			ap.Level = models.InterestLevelFromScore(int(got))
 		}
 		out = append(out, ap)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
-}
-
-// levelFromScore reverses the InterestLevel.Score() mapping for display.
-func levelFromScore(score smodel.Score) models.InterestLevel {
-	switch score {
-	case 5:
-		return models.InterestLevelHigh
-	case 3:
-		return models.InterestLevelMedium
-	case 1:
-		return models.InterestLevelLow
-	default:
-		return models.InterestLevelNone
-	}
 }
 
 // --- data loading -----------------------------------------------------------

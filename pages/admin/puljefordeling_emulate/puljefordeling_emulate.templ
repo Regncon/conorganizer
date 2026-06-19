@@ -48,6 +48,7 @@ templ puljeResult(p puljefordeling.EmulatedPulje) {
 			<h2>{ p.Name }</h2>
 			<div class="emulate-pulje-stats">
 				<span>{ fmt.Sprintf("%d fikk førstevalg", p.NewlySatisfied) }</span>
+				<span>{ fmt.Sprintf("%d interessepoeng", p.TotalScore) }</span>
 				if len(p.Unassigned) > 0 {
 					<span class="emulate-warn">{ fmt.Sprintf("%d uten plass", len(p.Unassigned)) }</span>
 				}

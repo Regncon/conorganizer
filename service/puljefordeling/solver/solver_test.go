@@ -429,6 +429,51 @@ func TestSolveSlot_DMExcludedFromOwnSlot(t *testing.T) {
 	}
 }
 
+func TestSolveSlot_ReverseEdgeBumpMarksMoved(t *testing.T) {
+	// "a" runs a game in another slot (DM bump), so it outranks "b" for the
+	// single X seat and is tentatively seated there first. "b" wants only X, so
+	// the solver bumps "a" off X — via a reverse/residual edge — down to its Y
+	// fallback to seat "b". "a" is therefore "moved"; "b" got its top wish
+	// directly and is not.
+	sl1 := slot("s1", event("X", 1), event("Y", 1))
+	sl2 := slot("s2", model.Event{ID: "Z", Name: "Z", Capacity: 4, DMID: "a"})
+
+	a := model.Player{ID: "a", Name: "a", Prefs: map[string]map[string]model.Score{"s1": {"X": 5, "Y": 3}}}
+	b := model.Player{ID: "b", Name: "b", Prefs: map[string]map[string]model.Score{"s1": {"X": 5}}}
+
+	st := NewState(2026, weekendOf(sl1, sl2))
+	result := st.SolveSlot(sl1, []model.Player{a, b})
+
+	if !slices.Contains(assigned(result, "X"), "b") {
+		t.Errorf("b should win the X seat, got %v", assigned(result, "X"))
+	}
+	if !slices.Contains(assigned(result, "Y"), "a") {
+		t.Errorf("a should be bumped down to its Y fallback, got %v", assigned(result, "Y"))
+	}
+	if !slices.Contains(result.MovedPlayers, "a") {
+		t.Errorf("a was bumped off X by a reverse edge and must be marked moved, got %v", result.MovedPlayers)
+	}
+	if slices.Contains(result.MovedPlayers, "b") {
+		t.Errorf("b got its top wish directly and must not be marked moved, got %v", result.MovedPlayers)
+	}
+}
+
+func TestSolveSlot_NoBumpLeavesMovedEmpty(t *testing.T) {
+	// Two players, two disjoint top choices: each is seated directly, no reverse
+	// edge is ever used, so nobody is marked moved.
+	sl := slot("s1", event("A", 1), event("B", 1))
+	players := []model.Player{
+		player("alice", prefs("s1", map[string]model.Score{"A": 5})),
+		player("bob", prefs("s1", map[string]model.Score{"B": 5})),
+	}
+
+	result := NewState(2026, weekendOf(sl)).SolveSlot(sl, players)
+
+	if len(result.MovedPlayers) != 0 {
+		t.Errorf("no contention means no bumps, want empty MovedPlayers, got %v", result.MovedPlayers)
+	}
+}
+
 func TestSolveSlot_DMPriorityBeatsRegularPlayer(t *testing.T) {
 	// dm runs a game elsewhere; both want the single A seat at the top level.
 	// The DM bump should win it.
