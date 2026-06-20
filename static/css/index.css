@@ -2,6 +2,7 @@
     --color-text-strong: #f1f3f9;
     --color-text-soft: #ccd1e9;
     --color-text-soft-50: hsl(from var(--color-text-soft) h s l / 50%);
+    --color-text-soft-20: hsl(from var(--color-text-soft) h s l / 20%);
 
     --color-primary-text: var(--color-text-soft);
     --color-primary: #e7a965;
@@ -92,7 +93,7 @@
     --mobile-max-width: 600px;
 
     /* nav */
-    --nav-height: 4rem;
+    --nav-height: 4.6875rem;
 
     /* z-index */
     --nav-z-index: 50;
