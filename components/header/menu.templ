@@ -4,6 +4,7 @@ import (
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"database/sql"
 	"log/slog"
+	"github.com/Regncon/conorganizer/components/icons"
 )
 
 templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
@@ -189,27 +190,51 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				justify-content: flex-end;
 				width: 100%;
 
-				.clickable-billettholder-menu-wrapper {
-                    display: flex;
-                    place-items: center;
-                    cursor: pointer;
-                    gap: var(--spacing-3x);
+                #main-menu-user-details {
+                    padding: var(--spacing-2x);
 
-                    .clickable-billettholder-menu-name {
-                        p {
-                            margin: 0;
+                    &[open], &:hover {
+                        background-color: var(--color-text-soft-20);
+                        border-radius: var(--border-radius-1x);
+                    }
+
+                    .clickable-billettholder-menu-wrapper {
+                        display: flex;
+                        place-items: center;
+                        cursor: pointer;
+                        gap: var(--spacing-3x);
+
+                        .clickable-billettholder-menu-name {
+                            max-width: 180px;
+                            p {
+                                margin: 0;
+                            }
+                            p:first-child {
+                                font-weight: 700;
+                                overflow: clip;
+                                white-space: nowrap;
+                            }
+                            p:last-child {
+                                font-size: 12px;
+                                color: var(--color-text-soft-50);
+                                text-align: end;
+                            }
+
                         }
 
-                    }
-
-                    .initials {
-                        width: 40px;
-                        height: 40px;
+                        .initials {
+                            width: 40px;
+                            height: 40px;
+                        }
                     }
                 }
+
 				.hamburger-phone {
 					display: none;
 				}
+                .hamburger-other {
+                    display: block;
+                }
 			}
 
 			.main-menu-header {
@@ -263,7 +288,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 				.dropdown-panel {
 					bottom: unset;
-					top: 46px;
+					top: 61px;
 					max-width: 320px;
 				}
 			}
@@ -297,11 +322,13 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 							data-on:click__outside="document.getElementById('main-menu-user-details')?.removeAttribute('open')"
 						>
 							<summary>
-							// <div class="btn--ghost menu-btn btn hamburger-phone">
-							// 	@icons.Icon(icons.Menu, icons.Size20)
-							// 	<span class="menu-btn-text">Meny</span>
-							// </div>
+							<div class="btn--ghost menu-btn btn hamburger-phone">
+								@icons.Icon(icons.Menu, icons.Size20)
+								<span class="menu-btn-text">Meny</span>
+							</div>
+                            <div class="hamburger-other">
 								@clickableBillettholderMenu(UserInfo, db, logger)
+                            </div>
 							</summary>
 							<div class="dropdown-panel">
 								<a href="/auth/logout">Logg ut</a>
