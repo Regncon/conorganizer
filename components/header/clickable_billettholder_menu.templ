@@ -2,9 +2,11 @@ package header
 
 import (
 	"database/sql"
+    "log/sLog"
 
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/requestctx"
+	"fmt"
 )
 
 templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB) {
@@ -50,4 +52,14 @@ templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB
 			selection.onChange(updateSelectedBillettholder);
 		})();
 	</script>
+}
+
+func getNameAndTicketType(db *sql.DB, billettholderId int, logger *slog.Logger) (string, string) {
+	var firstName, lastName, ticketType string
+	err := db.QueryRow("SELECT first_name, last_name, ticket_type FROM billettholdere WHERE id = ?", billettholderId).Scan(&firstName, &lastName, &ticketType)
+	if err != nil {
+		logger.Error(fmt.Errorf("Failed to fetch billettholder info: %w", err).Error())
+		return "", ""
+	}
+	return firstName + " " + lastName, ticketType
 }
