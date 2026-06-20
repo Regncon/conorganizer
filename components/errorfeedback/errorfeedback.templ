@@ -109,15 +109,39 @@ func (feedback *FeedbackErrors) Patch(sse *datastar.ServerSentEventGenerator) er
 		return fmt.Errorf("patch feedback errors: sse is nil")
 	}
 
+	return sse.MarshalAndPatchSignals(feedback.Signals())
+}
+
+// Signals returns the Datastar signal payload without sending it.
+// Use this when the same response also needs to patch other signals.
+//
+// Example: start with ordinary Datastar signals, merge feedback errors into the
+// same map, and send one patch.
+//
+//	signals := map[string]any{
+//		"formTitle": "Edit user",
+//	}
+//
+//	feedback := errorfeedback.New("name", "email")
+//	feedback.Set("email", "Email must be valid.")
+//
+//	// feedback.Signals() returns {"feedbackErrors": {...}}, so the wrapper is kept.
+//	for key, value := range feedback.Signals() {
+//		signals[key] = value
+//	}
+//
+//	return sse.MarshalAndPatchSignals(signals)
+func (feedback *FeedbackErrors) Signals() map[string]any {
 	messages := map[string]string{}
 	if feedback != nil {
 		for key, message := range feedback.messages {
 			messages[key] = message
 		}
 	}
-	return sse.MarshalAndPatchSignals(map[string]any{
+
+	return map[string]any{
 		feedbackErrorsSignalName: messages,
-	})
+	}
 }
 
 func (feedback *FeedbackErrors) ensureMessages() {
