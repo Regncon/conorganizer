@@ -5,11 +5,14 @@ import (
 	"database/sql"
 	"log/slog"
 	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/components/ticket_holder"
 )
 
 templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
     {{
         logger := logger.With("component", "Menu")
+        associatedBillettholdere, _ := ticketholder.GetTicketHolders(UserInfo, db)
+        currentBillettholder := ticketholder.GetYourBillettHolderInfo(UserInfo, associatedBillettholdere)
      }}
 	<style>
 		.beta-toggle {
@@ -326,9 +329,16 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 								@icons.Icon(icons.Menu, icons.Size20)
 								<span class="menu-btn-text">Meny</span>
 							</div>
-                            <div class="hamburger-other">
-								@clickableBillettholderMenu(UserInfo, db, logger)
-                            </div>
+                            if currentBillettholder.Id != 0 {
+                                <div class="hamburger-other">
+                                    @clickableBillettholderMenu(UserInfo, db, logger)
+                                </div>
+                            }
+                            if currentBillettholder.Id == 0 {
+                                <div class="hamburger-other">
+                                    @icons.Icon(icons.Menu, icons.Size20)
+                                </div>
+                            }
 							</summary>
 							<div class="dropdown-panel">
 								<a href="/auth/logout">Logg ut</a>
