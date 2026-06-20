@@ -9,22 +9,21 @@ import (
 	"log/slog"
 )
 
-templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB) {
+templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	{{
 		associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
 		currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
 		initials := ticketholder.GetInitials(currentBillettholder.Name)
+        // name, ticketType := getNameAndTicketType(db, currentBillettholder.Id, logger)
 	}}
 
-    <style>
-        </style>
-    <div>
-        <p>Hansen Humor</p>
-        <p>Fredagsbillett</p>
+    <div class="clickable-billettholder-menu-wrapper">
+        <div class="clickable-billettholder-menu-name">
+            <p>Hansen</p>
+            <p>Hårfagre</p>
+        </div>
+        @ticketholder.Initials(initials, currentBillettholder.Color)
     </div>
-	<span class="clickable-billettholder-menu">
-		@ticketholder.Initials(initials, currentBillettholder.Color)
-	</span>
 	<script>
 		(() => {
 			const container = document.currentScript?.previousElementSibling;

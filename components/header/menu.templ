@@ -1,13 +1,15 @@
 package header
 
 import (
-	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"database/sql"
 	"log/slog"
 )
 
 templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+    {{
+        logger := logger.With("component", "Menu")
+     }}
 	<style>
 		.beta-toggle {
 			display: flex;
@@ -187,9 +189,24 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				justify-content: flex-end;
 				width: 100%;
 
-				.hamburger-other {
-					display: flex;
-				}
+				.clickable-billettholder-menu-wrapper {
+                    display: flex;
+                    place-items: center;
+                    cursor: pointer;
+                    gap: var(--spacing-3x);
+
+                    .clickable-billettholder-menu-name {
+                        p {
+                            margin: 0;
+                        }
+
+                    }
+
+                    .initials {
+                        width: 40px;
+                        height: 40px;
+                    }
+                }
 				.hamburger-phone {
 					display: none;
 				}
@@ -280,15 +297,11 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 							data-on:click__outside="document.getElementById('main-menu-user-details')?.removeAttribute('open')"
 						>
 							<summary>
-							<div class="btn--ghost menu-btn btn hamburger-phone">
-								@icons.Icon(icons.Menu, icons.Size20)
-								<span class="menu-btn-text">Meny</span>
-							</div>
-							<div class="btn--ghost menu-btn btn hamburger-other">
-
-								@clickableBillettholderMenu(UserInfo, db)
-								<span class="menu-btn-text">Desktop</span>
-							</div>
+							// <div class="btn--ghost menu-btn btn hamburger-phone">
+							// 	@icons.Icon(icons.Menu, icons.Size20)
+							// 	<span class="menu-btn-text">Meny</span>
+							// </div>
+								@clickableBillettholderMenu(UserInfo, db, logger)
 							</summary>
 							<div class="dropdown-panel">
 								<a href="/auth/logout">Logg ut</a>
