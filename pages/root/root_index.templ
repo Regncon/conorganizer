@@ -19,6 +19,7 @@ func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventIm
 			"Regncon program",
 			userInfo,
             db,
+            logger,
 			rootIndex(db, userInfo.IsAdmin, eventImageDir),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render root page: %w", err).Error(), "user_id", userInfo.Id)

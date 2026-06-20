@@ -19,6 +19,7 @@ func adminLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 			"Admin Page",
 			userInfo,
             db,
+            logger,
 			adminIndex(),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render admin page: %w", err).Error(), "user_id", userInfo.Id)

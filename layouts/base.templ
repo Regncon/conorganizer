@@ -5,9 +5,10 @@ import (
 
 	"github.com/Regncon/conorganizer/components/header"
 	"github.com/Regncon/conorganizer/service/requestctx"
+	"log/slog"
 )
 
-templ Base(title string, userInfo requestctx.UserRequestInfo, db *sql.DB, children templ.Component) {
+templ Base(title string, userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, children templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en" data-theme="dark">
 		<head>
@@ -43,7 +44,7 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, db *sql.DB, childr
 		</head>
 		<body>
 			<main>
-				@header.Menu(userInfo, db)
+				@header.Menu(userInfo, db, logger)
 				@children
 			</main>
 		</body>

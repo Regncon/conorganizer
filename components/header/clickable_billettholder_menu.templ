@@ -2,11 +2,11 @@ package header
 
 import (
 	"database/sql"
-    "log/sLog"
 
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"fmt"
+	"log/slog"
 )
 
 templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB) {
@@ -15,6 +15,13 @@ templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB
 		currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
 		initials := ticketholder.GetInitials(currentBillettholder.Name)
 	}}
+
+    <style>
+        </style>
+    <div>
+        <p>Hansen Humor</p>
+        <p>Fredagsbillett</p>
+    </div>
 	<span class="clickable-billettholder-menu">
 		@ticketholder.Initials(initials, currentBillettholder.Color)
 	</span>

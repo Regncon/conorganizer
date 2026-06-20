@@ -23,7 +23,7 @@ func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
 	userInfo := requestctx.UserRequestInfo{}
 
 	// When
-	doc := templtest.Render(t, Menu(userInfo, db))
+	doc := templtest.Render(t, Menu(userInfo, db, nil))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then
@@ -53,7 +53,7 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	}
 
 	// When
-	doc := templtest.Render(t, Menu(userInfo, db))
+	doc := templtest.Render(t, Menu(userInfo, db, nil))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then
@@ -86,7 +86,7 @@ func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	}
 
 	// When
-	doc := templtest.Render(t, Menu(userInfo, db))
+	doc := templtest.Render(t, Menu(userInfo, db, nil))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then

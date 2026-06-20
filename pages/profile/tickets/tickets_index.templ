@@ -24,6 +24,7 @@ func ProfileTicketsRoute(router chi.Router, liveManager *live.Manager, db *sql.D
 				"Mine Billetter",
 				user,
                 db,
+                logger,
 				profileTicketsIndex(user.Id, db, logger),
 			).Render(ctx, w); err != nil {
 				logger.Error(fmt.Errorf("failed to render profile tickets page: %w", err).Error(), "user_id", user.Id)

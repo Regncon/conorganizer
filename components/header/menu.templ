@@ -4,9 +4,10 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"database/sql"
+	"log/slog"
 )
 
-templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB) {
+templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	<style>
 		.beta-toggle {
 			display: flex;
@@ -271,10 +272,6 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB) {
 				@MainMenuButtons(UserInfo)
 			</section>
 			<section id="main-menu-usermenu">
-
-                <section>
-                    
-                </section>
 				if UserInfo.IsLoggedIn {
 					<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end;">
 						<details
