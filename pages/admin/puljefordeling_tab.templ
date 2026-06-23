@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	pf "github.com/Regncon/conorganizer/service/puljefordeling"
@@ -46,9 +47,10 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 				@puljefordelingTabStatusControls(models.PuljeRow{ID: pulje, Name: em.Name, Status: status})
 			</header>
 			@puljefordelingTabLegend()
+			{{ removableAll := puljeIsLocked(status) || puljeIsCompleted(status) }}
 			<div class="puljefordeling-tab-grid">
 				for _, ev := range em.Events {
-					@puljefordelingTabEventCard(ev)
+					@puljefordelingTabEventCard(ev, pulje, removableAll)
 				}
 			</div>
 			if len(em.Unassigned) > 0 {
@@ -106,7 +108,7 @@ templ puljefordelingTabLegend() {
 	</p>
 }
 
-templ puljefordelingTabEventCard(ev pf.EmulatedEvent) {
+templ puljefordelingTabEventCard(ev pf.EmulatedEvent, pulje models.Pulje, removableAll bool) {
 	<div class="item-card puljefordeling-tab-event">
 		<div class="puljefordeling-tab-event-top">
 			<h3>{ ev.Title }</h3>
@@ -127,12 +129,28 @@ templ puljefordelingTabEventCard(ev pf.EmulatedEvent) {
 						if pl.Pinned {
 							<span class="puljefordeling-tab-pinned" title="Manuelt plassert">📌</span>
 						}
+						if (removableAll || pl.Pinned) && pl.BillettholderID > 0 {
+							<button
+								type="button"
+								class="puljefordeling-tab-remove"
+								title="Fjern fra spillet"
+								data-on:click={ fmt.Sprintf(
+									"$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/event-players/update_status')",
+									ev.EventID, string(pulje), pl.BillettholderID,
+								) }
+							>×</button>
+						}
 					</li>
 				}
 			</ul>
 		} else {
 			<p class="puljefordeling-tab-empty">Ingen deltakere</p>
 		}
+		<button
+			type="button"
+			class="btn btn--outline puljefordeling-tab-add"
+			data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; document.getElementById('pulje-assignment-dialog').showModal()", ev.EventID) }
+		>+</button>
 	</div>
 }
 
@@ -221,6 +239,7 @@ templ puljefordelingTabStyles() {
 			display: flex;
 			align-items: center;
 			gap: var(--spacing-2x);
+			justify-content: flex-start;
 		}
 		.puljefordeling-tab-emoji {
 			flex: 0 0 auto;
@@ -250,6 +269,21 @@ templ puljefordelingTabStyles() {
 		}
 		.puljefordeling-tab-error {
 			color: var(--color-text-error, #e05050);
+		}
+		.puljefordeling-tab-remove {
+			margin-left: auto;
+			background: transparent;
+			border: none;
+			color: var(--color-text-error, #e05050);
+			cursor: pointer;
+			font-size: 1.1rem;
+			line-height: 1;
+			padding: 0 var(--spacing-1x);
+		}
+		.puljefordeling-tab-add {
+			align-self: center;
+			margin-top: var(--spacing-2x);
+			min-width: 3rem;
 		}
 	</style>
 }
@@ -302,7 +336,25 @@ templ puljefordelingTabIndex(children templ.Component, puljeQuery models.Pulje) 
 }
 
 templ PuljefordelingTabPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
-	@PuljefordelingTabContent(db, logger, pulje)
+	<div
+		class="puljefordeling-tab-shell"
+		data-signals:assignment-event-id="''"
+		data-signals:assignment-pulje-id={ fmt.Sprintf("'%s'", string(pulje)) }
+		data-signals:assignment-billettholder-id="0"
+		data-signals:assignment-is-player="false"
+		data-signals:assignment-is-gm="false"
+		data-signals:clear-input="0"
+	>
+		@puljefordelingAssignmentDialog(db, logger, pulje)
+		@PuljefordelingTabContent(db, logger, pulje)
+	</div>
+}
+
+templ puljefordelingAssignmentDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+	<dialog id="pulje-assignment-dialog" closedBy="any">
+		@formsubmission.PuljeAssignmentSearch(db, logger, pulje)
+		<button type="button" class="btn btn--outline" data-on:click="document.getElementById('pulje-assignment-dialog').close()">Lukk</button>
+	</dialog>
 }
 
 func SetupPuljefordelingTabRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {

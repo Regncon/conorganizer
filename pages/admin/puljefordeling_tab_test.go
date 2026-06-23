@@ -81,3 +81,38 @@ func seedTabInterest(t *testing.T, db *sql.DB, bhID int, eventID string, pulje m
 		t.Fatalf("seed interest bh=%d ev=%s: %v", bhID, eventID, err)
 	}
 }
+
+func TestPuljefordelingTabContent_RemoveGatedByState(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "test_tab_remove_gating")
+
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedTabEvent(t, db, "evF", "Fredagsspill", 4, fredag)
+	seedTabParticipant(t, db, 1, "Anna", "A")
+	seedTabInterest(t, db, 1, "evF", fredag, models.InterestLevelHigh)
+
+	// Open pulje: Anna is solver-placed (not pinned) -> no remove button.
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, fredag))
+	if doc.Find(".puljefordeling-tab-remove").Length() != 0 {
+		t.Errorf("open pulje: solver-placed player must not have a remove button")
+	}
+	if doc.Find(".puljefordeling-tab-add").Length() == 0 {
+		t.Errorf("expected an add (+) button on the game card")
+	}
+
+	// Lock the pulje: every seated player becomes removable.
+	if _, err := db.Exec(`UPDATE puljer SET status = 'Locked' WHERE id = ?`, string(fredag)); err != nil {
+		t.Fatalf("lock pulje: %v", err)
+	}
+	// Persist Anna as a committed seat so the locked view shows her.
+	if _, err := db.Exec(
+		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		 VALUES ('evF', ?, 1, 'Player', 'solver')`, string(fredag),
+	); err != nil {
+		t.Fatalf("seed committed seat: %v", err)
+	}
+	docLocked := templtest.Render(t, PuljefordelingTabContent(db, logger, fredag))
+	if docLocked.Find(".puljefordeling-tab-remove").Length() == 0 {
+		t.Errorf("locked pulje: seated player must have a remove button")
+	}
+}
