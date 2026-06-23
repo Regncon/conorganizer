@@ -338,6 +338,15 @@ func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *
 		return fmt.Errorf("upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr)
 	}
 
+	removeOtherPlayerAssignmentsQuery := `
+		DELETE FROM relation_events_players
+		WHERE pulje_id = ? AND billettholder_id = ? AND role = ? AND event_id <> ?
+	`
+	if _, execErr := tx.Exec(removeOtherPlayerAssignmentsQuery, Pid, bid, models.EventPlayerRolePlayer, eId); execErr != nil {
+		logger.Error(fmt.Errorf("failed to remove other player assignments for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
+		return fmt.Errorf("remove other player assignments for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr)
+	}
+
 	upsertPlayerQuery := `
 		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
 		VALUES (?, ?, ?, '` + string(models.EventPlayerRolePlayer) + `', '` + models.EventPlayerSourceManual + `')
@@ -370,15 +379,26 @@ func UpdatePlayerStatus(eventId string,
 		return fmt.Errorf("player assignment cannot be both %s and %s", models.EventPlayerRolePlayer, models.EventPlayerRoleGM)
 	}
 
+	tx, txErr := db.Begin()
+	if txErr != nil {
+		logger.Error(fmt.Errorf("failed to begin player status transaction (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, txErr).Error())
+		return fmt.Errorf("begin player status transaction (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, txErr)
+	}
+	defer tx.Rollback()
+
 	if !isPlayer && !isGM {
 		query := `
 			DELETE FROM relation_events_players
 			WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ?
 		`
-		_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId)
+		_, updatePlayerStatusErr := tx.Exec(query, eventId, puljeId, billettholderId)
 		if updatePlayerStatusErr != nil {
 			logger.Error(fmt.Errorf("failed to remove player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, updatePlayerStatusErr).Error())
 			return fmt.Errorf("remove player status (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, updatePlayerStatusErr)
+		}
+		if commitErr := tx.Commit(); commitErr != nil {
+			logger.Error(fmt.Errorf("failed to commit player status removal (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, commitErr).Error())
+			return fmt.Errorf("commit player status removal (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, commitErr)
 		}
 		return nil
 	}
@@ -386,6 +406,17 @@ func UpdatePlayerStatus(eventId string,
 	role := models.EventPlayerRolePlayer
 	if isGM {
 		role = models.EventPlayerRoleGM
+	}
+
+	if isPlayer {
+		removeOtherPlayerAssignmentsQuery := `
+			DELETE FROM relation_events_players
+			WHERE pulje_id = ? AND billettholder_id = ? AND role = ? AND event_id <> ?
+		`
+		if _, updatePlayerStatusErr := tx.Exec(removeOtherPlayerAssignmentsQuery, puljeId, billettholderId, models.EventPlayerRolePlayer, eventId); updatePlayerStatusErr != nil {
+			logger.Error(fmt.Errorf("failed to remove other player assignments in the database (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, updatePlayerStatusErr).Error())
+			return fmt.Errorf("remove other player assignments (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, updatePlayerStatusErr)
+		}
 	}
 
 	query := `
@@ -396,7 +427,7 @@ func UpdatePlayerStatus(eventId string,
 			source = EXCLUDED.source,
 			inserted_at = ` + models.DBDateTimeNowSQL + `
 	`
-	_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId)
+	_, updatePlayerStatusErr := tx.Exec(query, eventId, puljeId, billettholderId)
 	if updatePlayerStatusErr != nil {
 		logger.Error(fmt.Errorf("failed to update player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d, isPlayer=%t, isGM=%t): %w", eventId, puljeId, billettholderId, isPlayer, isGM, updatePlayerStatusErr).Error())
 		return fmt.Errorf(
@@ -408,6 +439,10 @@ func UpdatePlayerStatus(eventId string,
 			isGM,
 			updatePlayerStatusErr,
 		)
+	}
+	if commitErr := tx.Commit(); commitErr != nil {
+		logger.Error(fmt.Errorf("failed to commit player status update (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, commitErr).Error())
+		return fmt.Errorf("commit player status update (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, commitErr)
 	}
 	return nil
 }

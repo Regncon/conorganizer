@@ -1,6 +1,7 @@
 package formsubmission
 
 import (
+	"database/sql"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
@@ -229,5 +230,108 @@ func TestUpdatePlayerStatus_ReclaimsSourceManual(t *testing.T) {
 	}
 	if sourceAfter != models.EventPlayerSourceManual {
 		t.Errorf("expected source='manual' after admin upsert, got %q", sourceAfter)
+	}
+}
+
+func TestUpdatePlayerStatus_ReplacesOtherPlayerAssignmentInSamePulje(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A billettholder already assigned as player to one event in a pulje.",
+		When:  "The same billettholder is assigned as player to another event in that pulje.",
+		Then:  "Only the new player assignment remains for that pulje.",
+	})
+
+	const (
+		oldEventID = "OLD"
+		newEventID = "NEW"
+		puljeID    = "PX"
+		bhID       = 101
+	)
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "replace-other-player-assignment")
+	seedPlayerAssignmentInvariantRows(t, db, puljeID, oldEventID, newEventID, bhID)
+	mustExec(t, db, `
+		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES (?, ?, ?, ?, ?)
+	`, oldEventID, puljeID, bhID, models.EventPlayerRolePlayer, models.EventPlayerSourceSolver)
+
+	if err := UpdatePlayerStatus(newEventID, puljeID, bhID, true, false, db, logger); err != nil {
+		t.Fatalf("UpdatePlayerStatus returned error: %v", err)
+	}
+
+	assertSinglePlayerAssignment(t, db, puljeID, bhID, newEventID)
+}
+
+func TestAddPlayersFirstChoice_ReplacesOtherPlayerAssignmentInSamePulje(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A billettholder already assigned as player to one event in a pulje.",
+		When:  "The same billettholder is added as first choice to another event in that pulje.",
+		Then:  "Only the new player assignment remains for that pulje.",
+	})
+
+	const (
+		oldEventID = "OLD"
+		newEventID = "NEW"
+		puljeID    = "PX"
+		bhID       = 102
+	)
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "first-choice-replace-other-player-assignment")
+	seedPlayerAssignmentInvariantRows(t, db, puljeID, oldEventID, newEventID, bhID)
+	mustExec(t, db, `
+		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES (?, ?, ?, ?, ?)
+	`, oldEventID, puljeID, bhID, models.EventPlayerRolePlayer, models.EventPlayerSourceSolver)
+
+	if err := AddPlayersFirstChoice(bhID, newEventID, puljeID, db, logger); err != nil {
+		t.Fatalf("AddPlayersFirstChoice returned error: %v", err)
+	}
+
+	assertSinglePlayerAssignment(t, db, puljeID, bhID, newEventID)
+}
+
+func seedPlayerAssignmentInvariantRows(t *testing.T, db *sql.DB, puljeID string, oldEventID string, newEventID string, bhID int) {
+	t.Helper()
+
+	puljeStatus := models.PuljeStatusOpen
+	mustExec(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?)`, models.EventStatusApproved)
+	mustExec(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
+	mustExec(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
+	mustExec(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
+	mustExec(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
+	mustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, puljeStatus)
+	mustExec(t, db, `
+		INSERT INTO puljer (id, name, status, start_at, end_at)
+		VALUES (?, 'Test Pulje', ?, '2025-10-03', '2025-10-03')
+	`, puljeID, puljeStatus)
+	for _, eventID := range []string{oldEventID, newEventID} {
+		mustExec(t, db, `
+			INSERT INTO events (
+				id, title, intro, description, system, event_type,
+				age_group, event_runtime, host_name, email, phone_number,
+				max_players, beginner_friendly, can_be_run_in_english, status
+			) VALUES (?, ?, 'intro', 'desc', '', ?, ?, ?, 'Host X', 'hx@test.no', '00000000', 4, 1, 1, ?)
+		`, eventID, eventID, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved)
+	}
+	mustExec(t, db, `
+		INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id)
+		VALUES (?, 'Test', 'Player', 1, 'Test', 1, ?, ?)
+	`, bhID, 1000+bhID, 2000+bhID)
+}
+
+func assertSinglePlayerAssignment(t *testing.T, db *sql.DB, puljeID string, bhID int, expectedEventID string) {
+	t.Helper()
+
+	var count int
+	var eventID string
+	if err := db.QueryRow(
+		`SELECT COUNT(*), COALESCE(MAX(event_id), '') FROM relation_events_players WHERE pulje_id = ? AND billettholder_id = ? AND role = ?`,
+		puljeID,
+		bhID,
+		models.EventPlayerRolePlayer,
+	).Scan(&count, &eventID); err != nil {
+		t.Fatalf("read player assignments: %v", err)
+	}
+	if count != 1 || eventID != expectedEventID {
+		t.Fatalf("player assignment mismatch\nexpected count/event: 1/%s\nactual count/event:   %d/%s", expectedEventID, count, eventID)
 	}
 }

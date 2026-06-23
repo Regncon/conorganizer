@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/Regncon/conorganizer/components"
@@ -105,7 +106,11 @@ templ puljefordelingTabStatusControls(pulje models.PuljeRow) {
 }
 
 templ puljefordelingTabEventCard(ev pf.EmulatedEvent, pulje models.Pulje, removableAll bool) {
-	<div class="item-card puljefordeling-tab-event">
+	<div
+		class="item-card puljefordeling-tab-event"
+		data-dnd-accept="pulje-player"
+		data-dnd-drop-url-template={ fmt.Sprintf("/admin/puljefordeling/api/%s/move/%s/{id}", string(pulje), ev.EventID) }
+	>
 		<h3>{ ev.Title }</h3>
 		<span>
 			<p>Spillere</p>
@@ -123,7 +128,14 @@ templ puljefordelingTabEventCard(ev pf.EmulatedEvent, pulje models.Pulje, remova
 		if len(ev.AssignedPlayers) > 0 {
 			<ul class="puljefordeling-tab-players">
 				for _, pl := range ev.AssignedPlayers {
-					<li class={ templ.KV("puljefordeling-tab-moved", pl.Moved) }>
+					<li
+						class={ templ.KV("puljefordeling-tab-moved", pl.Moved) }
+						if pl.BillettholderID > 0 {
+							draggable="true"
+							data-dnd-kind="pulje-player"
+							data-dnd-id={ fmt.Sprintf("%d", pl.BillettholderID) }
+						}
+					>
 						<span class="puljefordeling-tab-emoji">{ pl.Level.Emoji() }</span>
 						<span class={ templ.KV("puljefordeling-tab-dm", pl.IsDM) }>{ pl.Name }</span>
 						if pl.Pinned {
@@ -135,7 +147,7 @@ templ puljefordelingTabEventCard(ev pf.EmulatedEvent, pulje models.Pulje, remova
 								class="puljefordeling-tab-remove"
 								title="Fjern fra spillet"
 								data-on:click={ fmt.Sprintf(
-									"$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/event-players/update_status')",
+									"$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; $assignmentRefreshPuljefordeling = true; @put('/admin/approval/api/event-players/update_status')",
 									ev.EventID, string(pulje), pl.BillettholderID,
 								) }
 							>×</button>
@@ -229,6 +241,10 @@ templ puljefordelingTabStyles() {
 		.puljefordeling-tab-event:hover {
 			border-color: var(--bg-item-border-hover);
 		}
+		.puljefordeling-tab-event.is-drag-over {
+			border-color: var(--color-primary);
+			background-color: var(--bg-item-hover);
+		}
 		.puljefordeling-tab-badge {
 			align-self: flex-start;
 			padding: 0 var(--spacing-2x);
@@ -257,6 +273,12 @@ templ puljefordelingTabStyles() {
 		}
 		.puljefordeling-tab-players li:hover {
 			border-color: var(--color-primary);
+		}
+		.puljefordeling-tab-players li[draggable="true"] {
+			cursor: grab;
+		}
+		.puljefordeling-tab-players li.is-dragging {
+			opacity: 0.5;
 		}
 		.puljefordeling-tab-emoji {
 			flex: 0 0 auto;
@@ -366,8 +388,10 @@ templ PuljefordelingTabPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje)
 		data-signals:assignment-billettholder-id="0"
 		data-signals:assignment-is-player="false"
 		data-signals:assignment-is-gm="false"
+		data-signals:assignment-refresh-puljefordeling="true"
 		data-signals:clear-input="0"
 	>
+		<script type="module" src="/static/js/admin_drag_drop.js"></script>
 		@puljefordelingAssignmentDialog(db, logger, pulje)
 		@PuljefordelingTabContent(db, logger, pulje)
 	</div>
@@ -419,6 +443,54 @@ func SetupPuljefordelingTabRoute(router chi.Router, db *sql.DB, liveManager *liv
 		})
 	})
 
+	router.Post("/api/{pulje}/move/{event}/{billettholder}", func(w http.ResponseWriter, r *http.Request) {
+		puljeQuery := chi.URLParam(r, "pulje")
+		puljeID, ok := models.ParsePulje(puljeQuery)
+		if !ok {
+			http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
+			return
+		}
+
+		eventID := chi.URLParam(r, "event")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+
+		billettholderID, err := strconv.Atoi(chi.URLParam(r, "billettholder"))
+		if err != nil || billettholderID <= 0 {
+			http.Error(w, "Expected a valid billettholder ID", http.StatusBadRequest)
+			return
+		}
+
+		if err := movePuljePlayerAssignment(db, puljeID, eventID, billettholderID); err != nil {
+			logger.Error(
+				fmt.Errorf("move puljefordeling assignment: %w", err).Error(),
+				"pulje_id", puljeID,
+				"event_id", eventID,
+				"billettholder_id", billettholderID,
+			)
+			http.Error(w, "Failed to move assignment", http.StatusInternalServerError)
+			return
+		}
+
+		if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
+			logger.Error(fmt.Errorf("broadcast interests after assignment move: %w", err).Error(), "pulje_id", puljeID)
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+
+		if r.Header.Get("Conorganizer-Dnd") == "true" {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			if err := PuljefordelingTabContent(db, logger, puljeID).Render(r.Context(), w); err != nil {
+				logger.Error(fmt.Errorf("render puljefordeling after assignment move: %w", err).Error(), "pulje_id", puljeID)
+			}
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	router.Put("/api/{pulje}/rerun", func(w http.ResponseWriter, r *http.Request) {
 		puljeQuery := chi.URLParam(r, "pulje")
 		puljeID, ok := models.ParsePulje(puljeQuery)
@@ -459,4 +531,50 @@ func SetupPuljefordelingTabRoute(router chi.Router, db *sql.DB, liveManager *liv
 		}
 		w.WriteHeader(http.StatusNoContent)
 	})
+}
+
+func movePuljePlayerAssignment(db *sql.DB, puljeID models.Pulje, eventID string, billettholderID int) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin move assignment transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	var eventInPulje int
+	if err := tx.QueryRow(
+		`SELECT COUNT(*) FROM relation_event_puljer WHERE event_id = ? AND pulje_id = ? AND is_in_pulje = 1`,
+		eventID,
+		string(puljeID),
+	).Scan(&eventInPulje); err != nil {
+		return fmt.Errorf("check event in pulje: %w", err)
+	}
+	if eventInPulje == 0 {
+		return fmt.Errorf("event %s is not in pulje %s", eventID, puljeID)
+	}
+
+	if _, err := tx.Exec(
+		`DELETE FROM relation_events_players WHERE pulje_id = ? AND billettholder_id = ? AND role = ?`,
+		string(puljeID),
+		billettholderID,
+		models.EventPlayerRolePlayer,
+	); err != nil {
+		return fmt.Errorf("remove existing player assignment: %w", err)
+	}
+
+	if _, err := tx.Exec(
+		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		 VALUES (?, ?, ?, ?, ?)`,
+		eventID,
+		string(puljeID),
+		billettholderID,
+		models.EventPlayerRolePlayer,
+		models.EventPlayerSourceManual,
+	); err != nil {
+		return fmt.Errorf("insert moved player assignment: %w", err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit move assignment transaction: %w", err)
+	}
+	return nil
 }

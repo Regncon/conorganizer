@@ -147,3 +147,78 @@ func TestPuljefordelingTabContent_RemoveGatedByState(t *testing.T) {
 		t.Errorf("locked pulje: seated player must have a remove button")
 	}
 }
+
+func TestPuljefordelingTabContent_RendersDragDropWiring(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "test_tab_drag_drop_wiring")
+
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedTabEvent(t, db, "evF", "Fredagsspill", 4, fredag)
+	seedTabParticipant(t, db, 1, "Anna", "A")
+	seedTabInterest(t, db, 1, "evF", fredag, models.InterestLevelHigh)
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, fredag))
+
+	eventCard := doc.Find(`.puljefordeling-tab-event[data-dnd-accept="pulje-player"]`)
+	if eventCard.Length() == 0 {
+		t.Fatal("expected puljefordeling event card to be a player drop target")
+	}
+	if got := eventCard.AttrOr("data-dnd-drop-url-template", ""); got != "/admin/puljefordeling/api/FredagKveld/move/evF/{id}" {
+		t.Fatalf("drop url template mismatch\nexpected: %s\nactual:   %s", "/admin/puljefordeling/api/FredagKveld/move/evF/{id}", got)
+	}
+
+	player := doc.Find(`.puljefordeling-tab-players li[draggable="true"][data-dnd-kind="pulje-player"][data-dnd-id="1"]`)
+	if player.Length() == 0 {
+		t.Fatal("expected assigned player to be draggable")
+	}
+}
+
+func TestMovePuljePlayerAssignment_MovesPlayerOnlyAssignment(t *testing.T) {
+	db, _ := testutil.CreateTestDBAndLogger(t, "test_move_pulje_player_assignment")
+
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedTabEvent(t, db, "old-event", "Old Event", 4, fredag)
+	seedTabEvent(t, db, "new-event", "New Event", 4, fredag)
+	seedTabEvent(t, db, "gm-event", "GM Event", 4, fredag)
+	seedTabParticipant(t, db, 1, "Anna", "A")
+	if _, err := db.Exec(
+		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		 VALUES ('old-event', ?, 1, 'Player', 'solver')`, string(fredag),
+	); err != nil {
+		t.Fatalf("seed old player assignment: %v", err)
+	}
+	if _, err := db.Exec(
+		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		 VALUES ('gm-event', ?, 1, 'GM', 'manual')`, string(fredag),
+	); err != nil {
+		t.Fatalf("seed gm assignment: %v", err)
+	}
+
+	if err := movePuljePlayerAssignment(db, fredag, "new-event", 1); err != nil {
+		t.Fatalf("move player assignment: %v", err)
+	}
+
+	var playerEvent string
+	var playerSource string
+	if err := db.QueryRow(
+		`SELECT event_id, source FROM relation_events_players WHERE pulje_id = ? AND billettholder_id = 1 AND role = 'Player'`,
+		string(fredag),
+	).Scan(&playerEvent, &playerSource); err != nil {
+		t.Fatalf("read moved player assignment: %v", err)
+	}
+	if playerEvent != "new-event" || playerSource != models.EventPlayerSourceManual {
+		t.Fatalf("moved player mismatch\nexpected event/source: new-event/%s\nactual event/source:   %s/%s", models.EventPlayerSourceManual, playerEvent, playerSource)
+	}
+
+	var gmCount int
+	if err := db.QueryRow(
+		`SELECT COUNT(*) FROM relation_events_players WHERE event_id = 'gm-event' AND pulje_id = ? AND billettholder_id = 1 AND role = 'GM'`,
+		string(fredag),
+	).Scan(&gmCount); err != nil {
+		t.Fatalf("count gm assignment: %v", err)
+	}
+	if gmCount != 1 {
+		t.Fatalf("expected GM assignment to be preserved, got %d", gmCount)
+	}
+}

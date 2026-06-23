@@ -56,9 +56,10 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 				apiRouter.Route("/event-players", func(eventPlayersRouter chi.Router) {
 					eventPlayersRouter.Post("/post/add_first_choice", func(w http.ResponseWriter, r *http.Request) {
 						type Store struct {
-							BillettholderId int    `json:"assignmentBillettholderId"`
-							EventId         string `json:"assignmentEventId"`
-							PuljeId         string `json:"assignmentPuljeId"`
+							BillettholderId                 int    `json:"assignmentBillettholderId"`
+							EventId                         string `json:"assignmentEventId"`
+							PuljeId                         string `json:"assignmentPuljeId"`
+							AssignmentRefreshPuljefordeling bool   `json:"assignmentRefreshPuljefordeling"`
 						}
 
 						store := &Store{}
@@ -96,14 +97,18 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
 						}
+						if renderPuljefordelingAssignmentRefresh(w, r, db, logger, store.PuljeId, store.AssignmentRefreshPuljefordeling) {
+							return
+						}
 
 					})
 					eventPlayersRouter.Post("/post/add_gm", func(w http.ResponseWriter, r *http.Request) {
 
 						type Store struct {
-							BillettholderId int    `json:"assignmentBillettholderId"`
-							EventId         string `json:"assignmentEventId"`
-							PuljeId         string `json:"assignmentPuljeId"`
+							BillettholderId                 int    `json:"assignmentBillettholderId"`
+							EventId                         string `json:"assignmentEventId"`
+							PuljeId                         string `json:"assignmentPuljeId"`
+							AssignmentRefreshPuljefordeling bool   `json:"assignmentRefreshPuljefordeling"`
 						}
 						store := &Store{}
 
@@ -143,14 +148,18 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 							return
 						}
+						if renderPuljefordelingAssignmentRefresh(w, r, db, logger, store.PuljeId, store.AssignmentRefreshPuljefordeling) {
+							return
+						}
 					})
 					eventPlayersRouter.Put("/update_status", func(w http.ResponseWriter, r *http.Request) {
 						type Store struct {
-							BillettholderId int    `json:"assignmentBillettholderId"`
-							EventId         string `json:"assignmentEventId"`
-							PuljeId         string `json:"assignmentPuljeId"`
-							IsPlayer        bool   `json:"assignmentIsPlayer"`
-							IsGm            bool   `json:"assignmentIsGm"`
+							BillettholderId                 int    `json:"assignmentBillettholderId"`
+							EventId                         string `json:"assignmentEventId"`
+							PuljeId                         string `json:"assignmentPuljeId"`
+							IsPlayer                        bool   `json:"assignmentIsPlayer"`
+							IsGm                            bool   `json:"assignmentIsGm"`
+							AssignmentRefreshPuljefordeling bool   `json:"assignmentRefreshPuljefordeling"`
 						}
 						store := &Store{}
 
@@ -183,6 +192,9 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 						if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
 							logger.Error(fmt.Errorf("failed to broadcast player status update: %w", err).Error())
 							http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+							return
+						}
+						if renderPuljefordelingAssignmentRefresh(w, r, db, logger, store.PuljeId, store.AssignmentRefreshPuljefordeling) {
 							return
 						}
 					})
@@ -471,6 +483,14 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 
+						if r.Header.Get("Conorganizer-Dnd") == "true" {
+							w.Header().Set("Content-Type", "text/html; charset=utf-8")
+							if err := rooms.RoomsAssignmentPageContent(db, logger, puljeID, eventImageDir).Render(r.Context(), w); err != nil {
+								logger.Error(fmt.Errorf("failed to render rooms assignment after drag/drop: %w", err).Error(), "pulje_id", puljeID)
+							}
+							return
+						}
+
 						// Close modal on success
 						sse := datastar.NewSSE(w, r)
 						_ = sse.ExecuteScript(`document.getElementById('assignment-dialog').close()`)
@@ -483,4 +503,29 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 	})
 
 	return nil
+}
+
+func renderPuljefordelingAssignmentRefresh(
+	w http.ResponseWriter,
+	r *http.Request,
+	db *sql.DB,
+	logger *slog.Logger,
+	puljeIDRaw string,
+	shouldRefresh bool,
+) bool {
+	if !shouldRefresh {
+		return false
+	}
+
+	puljeID, ok := models.ParsePulje(puljeIDRaw)
+	if !ok {
+		http.Error(w, "Expected a valid pulje ID, got: "+puljeIDRaw, http.StatusBadRequest)
+		return true
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	if err := PuljefordelingTabContent(db, logger, puljeID).Render(r.Context(), w); err != nil {
+		logger.Error(fmt.Errorf("render puljefordeling after assignment update: %w", err).Error(), "pulje_id", puljeID)
+	}
+	return true
 }

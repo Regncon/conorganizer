@@ -102,6 +102,20 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 			t.Fatalf("expected room assignment text to contain %q\nactual text: %s", expectedTextPart, actualText)
 		}
 	}
+
+	roomDropTarget := doc.Find(`.room[data-dnd-accept="room-event"]`)
+	if roomDropTarget.Length() == 0 {
+		t.Fatal("expected room to be an event drop target")
+	}
+	if got := roomDropTarget.AttrOr("data-dnd-drop-url-template", ""); got != "/admin/rooms/api/assignment/FredagKveld/{id}/1" {
+		t.Fatalf("room drop url template mismatch\nexpected: %s\nactual:   %s", "/admin/rooms/api/assignment/FredagKveld/{id}/1", got)
+	}
+	if doc.Find(`.room-event[draggable="true"][data-dnd-kind="room-event"][data-dnd-id="assigned-room-event"]`).Length() == 0 {
+		t.Fatal("expected assigned room event card to be draggable")
+	}
+	if doc.Find(`.event-list a[draggable="true"][data-dnd-kind="room-event"][data-dnd-id="missing-room-event"]`).Length() == 0 {
+		t.Fatal("expected missing-room event link to be draggable")
+	}
 }
 
 func TestCalculatePopulation_CountsPlayersAndGMs(t *testing.T) {
