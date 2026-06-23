@@ -550,3 +550,38 @@ func TestSolveSlot_NilFixedRegression(t *testing.T) {
 		t.Error("high scorer should still win with nil fixed")
 	}
 }
+
+func TestApplyActual_SeedsFairnessFromRealSeats(t *testing.T) {
+	// Replay slot 1 where alice actually got her top choice (A) and bob actually
+	// missed his top choice. Then in slot 2 (same single seat) bob — now carrying a
+	// miss and never satisfied — should beat the already-satisfied alice.
+	sl1 := slot("s1", event("A", 1))
+	sl2 := slot("s2", event("A", 1))
+
+	alice := model.Player{ID: "alice", Name: "alice", Prefs: map[string]map[string]model.Score{
+		"s1": {"A": 5}, "s2": {"A": 5},
+	}}
+	bob := model.Player{ID: "bob", Name: "bob", Prefs: map[string]map[string]model.Score{
+		"s1": {"A": 5}, "s2": {"A": 5},
+	}}
+
+	st := NewState(2026, weekendOf(sl1, sl2))
+
+	// Replay the actual slot-1 result: alice seated in A, bob unseated.
+	r1 := st.ApplyActual(sl1, []model.Player{alice, bob}, map[string][]string{"A": {"alice"}})
+	if !slices.Contains(r1.Assignments["A"], "alice") {
+		t.Fatalf("ApplyActual should echo the actual assignment, got %v", r1.Assignments["A"])
+	}
+	if !st.IsSatisfied("alice") {
+		t.Error("alice got her top choice in the replayed slot → satisfied")
+	}
+	if st.IsSatisfied("bob") {
+		t.Error("bob was not seated → not satisfied")
+	}
+
+	// Now solve slot 2: bob (unsatisfied + a miss) should win over satisfied alice.
+	r2 := st.SolveSlot(sl2, []model.Player{alice, bob})
+	if !slices.Contains(assigned(r2, "A"), "bob") {
+		t.Errorf("bob (missed + unsatisfied) should win slot 2 over satisfied alice, got %v", assigned(r2, "A"))
+	}
+}
