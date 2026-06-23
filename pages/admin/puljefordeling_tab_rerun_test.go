@@ -78,3 +78,31 @@ func TestRerun_InvalidPuljeBadRequest(t *testing.T) {
 		t.Errorf("expected 400 for invalid pulje, got %d", rec.Code)
 	}
 }
+
+func TestRerun_CompletedPuljeStaysCompleted(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "test_rerun_completed")
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedTabEvent(t, db, "evF", "Fredagsspill", 4, fredag)
+	seedTabParticipant(t, db, 1, "Anna", "A")
+	seedTabInterest(t, db, 1, "evF", fredag, models.InterestLevelHigh)
+	if _, err := db.Exec(`UPDATE puljer SET status = 'Completed' WHERE id = ?`, string(fredag)); err != nil {
+		t.Fatalf("complete pulje: %v", err)
+	}
+
+	router := setupRerunRouter(db, logger)
+	req := httptest.NewRequest(http.MethodPut, "/admin/puljefordeling/api/FredagKveld/rerun", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("expected 204, got %d", rec.Code)
+	}
+	var status string
+	if err := db.QueryRow(`SELECT status FROM puljer WHERE id = ?`, string(fredag)).Scan(&status); err != nil {
+		t.Fatalf("read status: %v", err)
+	}
+	if status != string(models.PuljeStatusCompleted) {
+		t.Errorf("expected pulje to stay Completed after rerun, got %s", status)
+	}
+}

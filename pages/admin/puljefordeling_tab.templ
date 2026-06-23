@@ -429,7 +429,7 @@ func SetupPuljefordelingTabRoute(router chi.Router, db *sql.DB, liveManager *liv
 		}
 
 		// Temporarily reopen the pulje so CommitPuljeAssignments uses the solver
-		// path (SolveSlotFixed) rather than ApplyActual on empty persisted seats.
+		// path (SolveSlotFixed) rather than ApplyActual on the persisted seats.
 		if _, err := db.Exec(`UPDATE puljer SET status = ? WHERE id = ?`, string(models.PuljeStatusOpen), string(puljeID)); err != nil {
 			logger.Error(fmt.Errorf("reopen pulje for rerun: %w", err).Error(), "pulje_id", puljeID)
 			http.Error(w, "Failed to re-run fordeling", http.StatusInternalServerError)
@@ -438,8 +438,23 @@ func SetupPuljefordelingTabRoute(router chi.Router, db *sql.DB, liveManager *liv
 
 		if err := pf.CommitPuljeAssignments(db, puljeID, logger); err != nil {
 			logger.Error(fmt.Errorf("rerun commit for %s: %w", puljeID, err).Error(), "pulje_id", puljeID)
+			// Restore the pre-rerun status so a failed re-solve does not strand the
+			// pulje in Open (which would silently unlock/unpublish it).
+			if _, restoreErr := db.Exec(`UPDATE puljer SET status = ? WHERE id = ?`, string(status), string(puljeID)); restoreErr != nil {
+				logger.Error(fmt.Errorf("restore pulje status after failed rerun: %w", restoreErr).Error(), "pulje_id", puljeID)
+			}
 			http.Error(w, "Failed to re-run fordeling", http.StatusInternalServerError)
 			return
+		}
+
+		// CommitPuljeAssignments always leaves the pulje Locked. If it was Completed
+		// (published) before, restore that so rerun re-solves without unpublishing.
+		if status == models.PuljeStatusCompleted {
+			if _, err := db.Exec(`UPDATE puljer SET status = ? WHERE id = ?`, string(models.PuljeStatusCompleted), string(puljeID)); err != nil {
+				logger.Error(fmt.Errorf("restore completed status after rerun: %w", err).Error(), "pulje_id", puljeID)
+				http.Error(w, "Failed to finalize re-run", http.StatusInternalServerError)
+				return
+			}
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
