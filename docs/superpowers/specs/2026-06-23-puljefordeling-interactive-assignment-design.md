@@ -13,9 +13,8 @@ to remove a seat. Manual additions are pins (`source='manual'`) that the solver
 already honors by reducing the game's effective capacity. A locked pulje gains a
 **"Rerun fordeling"** button that re-solves around the remaining pins.
 
-This also restores the per-pulje lock/publish status cards on the `/admin/`
-dashboard that the tabbed-view work removed (keeping them in *both* the dashboard
-and the tab header).
+Lock/publish controls stay where the tabbed-view work put them — in the tab
+header only; the dashboard remains a single "Gå til puljefordeling" link.
 
 Almost all backend already exists; the only new endpoint is the rerun action.
 
@@ -126,28 +125,12 @@ The interactive card needs, per render:
 - `event_id`, `pulje_id`, `billettholder_id` for each "+"/"×" action — all present
   in the render.
 
-## Dashboard lock/publish restoration
+## Lock/publish controls (unchanged)
 
-The tabbed-view work (`refactor(admin): collapse puljefordeling status + emulate
-cards into one tab entry`) removed the inline per-pulje status cards and the
-`puljefordeling` / `puljeStatusCard` templ funcs, migrating the remaining helpers
-to `pages/admin/puljefordeling.go`. This spec restores the dashboard controls:
-
-- Re-create the `puljefordeling` (status grid) and `puljeStatusCard` templ
-  rendering — the per-pulje cards with "Puljefordeling lukket" / "Puljefordeling
-  publisert" toggles. The helpers they depend on (`puljeStatusUpdateAction`,
-  `puljeIsLocked`, `puljeIsCompleted`, `getPuljer`-equivalent) either still exist in
-  `puljefordeling.go` or are re-added as needed. Because templ markup cannot live in
-  a `.go` file, the restored templs go in a `.templ` file (placement decided in the
-  plan).
-- Re-add the inline status section to `pages/admin/admin_page.templ`.
-- **Keep** the "Gå til puljefordeling" link card so the dashboard still routes into
-  the tabbed page.
-- **Keep** the lock/publish control in each tab header.
-
-Both the dashboard cards and the tab-header control write the same
-`/admin/api/puljer/{id}/status` endpoint and stay in sync via the live broadcast —
-intentional duplication for two convenient entry points.
+Lock/publish stays in the tab header only, exactly as the tabbed-view work left it.
+The `/admin/` dashboard remains a single "Gå til puljefordeling" link card — the
+inline status grid is **not** restored. No change to the status endpoint or to
+`pages/admin/admin_page.templ` for this work.
 
 ## Testing
 
@@ -157,8 +140,6 @@ intentional duplication for two convenient entry points.
 - **Card render:** "×" appears only on pinned players when the pulje is open, and on
   all seated players when locked; the "+" wires the correct `assignmentEventId` /
   `assignmentPuljeId`; the "Rerun fordeling" button shows only when locked/completed.
-- **Dashboard:** the restored status grid renders one card per pulje with the
-  lock/publish toggles, and the "Gå til puljefordeling" link card is still present.
 - Reuse the existing `event-players` and `CommitPuljeAssignments` test coverage; do
   not duplicate it.
 - **Verification gate:** `go test ./...` and `golangci-lint run` both clean.
