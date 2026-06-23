@@ -133,6 +133,14 @@ This also bounds the per-render cost of the live view.
 - Keep the existing puljefordeling solver/commit/emulate tests passing; update
   any test that referenced the removed emulate route or the moved status route.
 
+### Verification gate
+
+Before the work is considered complete, both must pass clean:
+
+- `go test ./...`
+- `golangci-lint run` (matches the `.github/workflows/golangci-lint.yml` CI job;
+  installed locally at `/usr/bin/golangci-lint`)
+
 ## Out of scope
 
 - Manual seat editing within the tab (handled by the rooms-assignment page).
