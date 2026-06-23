@@ -82,23 +82,34 @@ func seedTabInterest(t *testing.T, db *sql.DB, bhID int, eventID string, pulje m
 	}
 }
 
-func TestPuljefordelingTabContent_RerunButtonOnlyWhenLocked(t *testing.T) {
+func TestPuljefordelingTabContent_RerunButtonStates(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "test_tab_rerun_button")
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
 	seedTabEvent(t, db, "evF", "Fredagsspill", 4, fredag)
 
-	if templtest.Render(t, PuljefordelingTabContent(db, logger, fredag)).
-		Find(".puljefordeling-tab-rerun").Length() != 0 {
-		t.Errorf("open pulje must not show the rerun button")
+	// Open pulje: the button is present but disabled and reads "Auto fordeling".
+	openBtn := templtest.Render(t, PuljefordelingTabContent(db, logger, fredag)).Find(".puljefordeling-tab-rerun")
+	if openBtn.Length() == 0 {
+		t.Fatal("open pulje must still show the (disabled) auto-fordeling button")
+	}
+	if _, disabled := openBtn.Attr("disabled"); !disabled {
+		t.Errorf("open pulje button must be disabled")
+	}
+	if strings.TrimSpace(openBtn.Text()) != "Auto fordeling" {
+		t.Errorf("open pulje button must read 'Auto fordeling', got %q", openBtn.Text())
 	}
 
+	// Locked pulje: the button is enabled and reads "Rerun fordeling".
 	if _, err := db.Exec(`UPDATE puljer SET status = 'Locked' WHERE id = ?`, string(fredag)); err != nil {
 		t.Fatalf("lock pulje: %v", err)
 	}
-	if templtest.Render(t, PuljefordelingTabContent(db, logger, fredag)).
-		Find(".puljefordeling-tab-rerun").Length() == 0 {
-		t.Errorf("locked pulje must show the rerun button")
+	lockedBtn := templtest.Render(t, PuljefordelingTabContent(db, logger, fredag)).Find(".puljefordeling-tab-rerun")
+	if _, disabled := lockedBtn.Attr("disabled"); disabled {
+		t.Errorf("locked pulje button must be enabled")
+	}
+	if strings.TrimSpace(lockedBtn.Text()) != "Rerun fordeling" {
+		t.Errorf("locked pulje button must read 'Rerun fordeling', got %q", lockedBtn.Text())
 	}
 }
 

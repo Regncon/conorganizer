@@ -42,6 +42,13 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 						class="btn btn--outline puljefordeling-tab-rerun"
 						data-on:click={ fmt.Sprintf("@put('/admin/puljefordeling/api/%s/rerun')", pulje) }
 					>Rerun fordeling</button>
+				} else {
+					<button
+						type="button"
+						class="btn btn--outline puljefordeling-tab-rerun"
+						disabled
+						title="Åpne puljer fordeles automatisk live"
+					>Auto fordeling</button>
 				}
 			</header>
 			{{ removableAll := puljeIsLocked(em.Status) }}
@@ -151,12 +158,38 @@ templ puljefordelingTabStyles() {
 	<style>
 		.puljefordeling-tab-header {
 			display: flex;
-			align-items: flex-start;
+			align-items: center;
 			justify-content: space-between;
 			gap: var(--spacing-4x);
 			flex-wrap: wrap;
 			border-bottom: 1px solid var(--bg-item-border);
 			padding-bottom: var(--spacing-2x);
+		}
+		.puljefordeling-status-controls {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-2x);
+			align-items: center;
+			text-align: center;
+			margin-inline: auto;
+			padding: var(--spacing-2x) var(--spacing-3x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-1x);
+			background-color: var(--bg-item);
+		}
+		.puljefordeling-status-control {
+			display: flex;
+			align-items: center;
+			gap: var(--spacing-2x);
+			cursor: pointer;
+		}
+		.puljefordeling-tab-rerun {
+			min-width: 11rem;
+			white-space: nowrap;
+		}
+		.puljefordeling-tab-rerun:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
 		}
 		.puljefordeling-tab-grid {
 			display: grid;
