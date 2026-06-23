@@ -38,7 +38,7 @@ func CommitPuljeAssignments(db *sql.DB, target models.Pulje, logger *slog.Logger
 	if err != nil {
 		return fmt.Errorf("begin commit tx for %s: %w", target, err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if _, err := tx.Exec(
 		`DELETE FROM relation_events_players WHERE pulje_id = ? AND role = ? AND source = 'solver'`,
@@ -92,7 +92,7 @@ func RevertPuljeAssignments(db *sql.DB, target models.Pulje) error {
 	if err != nil {
 		return fmt.Errorf("begin revert tx for %s: %w", target, err)
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 
 	if _, err := tx.Exec(
 		`DELETE FROM relation_events_players WHERE pulje_id = ? AND role = ? AND source = 'solver'`,
