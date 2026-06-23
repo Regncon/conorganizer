@@ -439,3 +439,59 @@ func bandBase(score model.Score, satisfied bool) int {
 		return bandLitt
 	}
 }
+
+// ApplyActual seeds the fairness state from a known persisted assignment for a slot
+// without running the solver. It advances the slot index (so subsequent seeds stay
+// aligned), echoes the assignment into the returned result, and updates
+// seated/satisfied/misses exactly as a solved slot would. Used to replay frozen
+// puljer so later puljer are seeded from what actually happened.
+func (s *State) ApplyActual(slot model.Slot, players []model.Player, assignments map[string][]string) model.SlotResult {
+	currentIndex := s.slotIndex
+	seed := int64(s.year)*1000 + int64(currentIndex)
+	s.slotIndex++
+
+	// Copy the assignment so sorting/appends never mutate the caller's map.
+	clone := make(map[string][]string, len(assignments))
+	for evID, pids := range assignments {
+		clone[evID] = append([]string(nil), pids...)
+	}
+
+	result := model.SlotResult{
+		SlotID:      slot.ID,
+		Assignments: clone,
+		Seed:        seed,
+	}
+
+	dmingHere := make(map[string]bool)
+	for _, ev := range slot.Events {
+		if ev.DMID != "" {
+			dmingHere[ev.DMID] = true
+		}
+	}
+
+	interested := make([]model.Player, 0, len(players))
+	for _, p := range players {
+		if dmingHere[p.ID] {
+			continue
+		}
+		if len(p.Prefs[slot.ID]) > 0 {
+			interested = append(interested, p)
+		}
+	}
+
+	playerByID := make(map[string]model.Player, len(players))
+	for _, p := range players {
+		playerByID[p.ID] = p
+	}
+
+	s.applyResult(&result, slot.ID, interested, playerByID, result.Assignments)
+
+	for _, ev := range slot.Events {
+		if len(result.Assignments[ev.ID]) < minViablePlayers {
+			result.UndersubscribedEvents = append(result.UndersubscribedEvents, ev.ID)
+		}
+	}
+
+	sortSlotResult(&result)
+	return result
+}
