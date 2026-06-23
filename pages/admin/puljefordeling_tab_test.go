@@ -82,6 +82,26 @@ func seedTabInterest(t *testing.T, db *sql.DB, bhID int, eventID string, pulje m
 	}
 }
 
+func TestPuljefordelingTabContent_RerunButtonOnlyWhenLocked(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "test_tab_rerun_button")
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedTabEvent(t, db, "evF", "Fredagsspill", 4, fredag)
+
+	if templtest.Render(t, PuljefordelingTabContent(db, logger, fredag)).
+		Find(".puljefordeling-tab-rerun").Length() != 0 {
+		t.Errorf("open pulje must not show the rerun button")
+	}
+
+	if _, err := db.Exec(`UPDATE puljer SET status = 'Locked' WHERE id = ?`, string(fredag)); err != nil {
+		t.Fatalf("lock pulje: %v", err)
+	}
+	if templtest.Render(t, PuljefordelingTabContent(db, logger, fredag)).
+		Find(".puljefordeling-tab-rerun").Length() == 0 {
+		t.Errorf("locked pulje must show the rerun button")
+	}
+}
+
 func TestPuljefordelingTabContent_RemoveGatedByState(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "test_tab_remove_gating")
 

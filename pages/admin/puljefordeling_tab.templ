@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -45,6 +46,13 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 					</div>
 				</div>
 				@puljefordelingTabStatusControls(models.PuljeRow{ID: pulje, Name: em.Name, Status: status})
+				if puljeIsLocked(status) || puljeIsCompleted(status) {
+					<button
+						type="button"
+						class="btn btn--outline puljefordeling-tab-rerun"
+						data-on:click={ fmt.Sprintf("@put('/admin/puljefordeling/api/%s/rerun')", pulje) }
+					>Rerun fordeling</button>
+				}
 			</header>
 			@puljefordelingTabLegend()
 			{{ removableAll := puljeIsLocked(status) || puljeIsCompleted(status) }}
@@ -394,5 +402,52 @@ func SetupPuljefordelingTabRoute(router chi.Router, db *sql.DB, liveManager *liv
 				return PuljefordelingTabContent(db, logger, puljeID)
 			},
 		})
+	})
+
+	router.Put("/api/{pulje}/rerun", func(w http.ResponseWriter, r *http.Request) {
+		puljeQuery := chi.URLParam(r, "pulje")
+		puljeID, ok := models.ParsePulje(puljeQuery)
+		if !ok {
+			http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
+			return
+		}
+
+		var raw string
+		if err := db.QueryRow(`SELECT status FROM puljer WHERE id = ?`, string(puljeID)).Scan(&raw); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				http.Error(w, "Pulje not found", http.StatusNotFound)
+				return
+			}
+			logger.Error(fmt.Errorf("read pulje status for rerun: %w", err).Error(), "pulje_id", puljeID)
+			http.Error(w, "Failed to read pulje status", http.StatusInternalServerError)
+			return
+		}
+		status := models.PuljeStatus(raw)
+		if status == models.PuljeStatusOpen {
+			http.Error(w, "Open puljer re-solve live; rerun applies to locked puljer", http.StatusConflict)
+			return
+		}
+
+		// Temporarily reopen the pulje so CommitPuljeAssignments uses the solver
+		// path (SolveSlotFixed) rather than ApplyActual on empty persisted seats.
+		if _, err := db.Exec(`UPDATE puljer SET status = ? WHERE id = ?`, string(models.PuljeStatusOpen), string(puljeID)); err != nil {
+			logger.Error(fmt.Errorf("reopen pulje for rerun: %w", err).Error(), "pulje_id", puljeID)
+			http.Error(w, "Failed to re-run fordeling", http.StatusInternalServerError)
+			return
+		}
+
+		if err := pf.CommitPuljeAssignments(db, puljeID, logger); err != nil {
+			logger.Error(fmt.Errorf("rerun commit for %s: %w", puljeID, err).Error(), "pulje_id", puljeID)
+			http.Error(w, "Failed to re-run fordeling", http.StatusInternalServerError)
+			return
+		}
+
+		if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
+			logger.Error(fmt.Errorf("broadcast interests after rerun: %w", err).Error(), "pulje_id", puljeID)
+		}
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			logger.Error(fmt.Errorf("broadcast events after rerun: %w", err).Error(), "pulje_id", puljeID)
+		}
+		w.WriteHeader(http.StatusNoContent)
 	})
 }
