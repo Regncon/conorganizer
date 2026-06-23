@@ -70,12 +70,16 @@ Per tab:
 Dialog body: reuse the existing
 `components/formsubmission.billettholderAssignmentActions(eventId, puljeId,
 billettholdere)` — the `<admin-billettholder-search>` searchable picker over all
-billettholdere plus "Legg til som spiller" / "Legg til som SL" buttons. Because
-the card sets `$assignmentEventId` before opening, the dialog targets the right
-game. (If `billettholderAssignmentActions` hard-codes its own `eventId`, the plan
-will either parameterise the dialog per render or bind it to the
-`$assignmentEventId` signal — to be resolved in the plan against the component's
-actual markup.)
+billettholdere plus "Legg til som spiller" / "Legg til som SL" buttons.
+
+The component's add buttons read `$assignmentEventId` and `$assignmentBillettholderId`
+from **signals** (only the pulje is baked in as a literal — and the pulje is constant
+per tab), confirmed in `who_is_interested.templ:639-650`. So one shared dialog per
+tab works without adapting the component: the card's "+" sets `$assignmentEventId =
+'<eventID>'` and opens the dialog; the search sets `$assignmentBillettholderId`; the
+add button posts using those signals plus the baked pulje. The only requirement is
+that the `assignment*` signals are declared on a container wrapping both the game
+cards and the dialog.
 
 ## Backend
 
@@ -155,11 +159,11 @@ inline status grid is **not** restored. No change to the status endpoint or to
 
 ## Risks / watch-items
 
-- **Dialog targeting:** the reused `billettholderAssignmentActions` was written for
-  a single event-edit page where `eventId` is fixed. Driving one shared dialog from
-  many game cards relies on the `$assignmentEventId` signal being set before the
-  dialog opens; the plan must confirm the component reads the signal (not a
-  hard-coded id) or adapt it. This is the main integration risk.
+- **Shared-dialog signal scope:** the `assignment*` signals must be declared on a
+  container that wraps *both* the game cards and the dialog, so the "+" click and
+  the dialog's buttons share them. A minor wiring detail (the targeting concern
+  itself is resolved — the picker reads `$assignmentEventId` from a signal, not a
+  baked id), but worth getting right so the dialog posts to the clicked game.
 - **Live solver cost** (inherited from the tabbed-view spec): an open pulje re-runs
   the scoped solver on every `BucketInterests` broadcast; each "+"/"×" triggers one.
   Bounded by the per-pulje scope; revisit with caching only if it shows up.
