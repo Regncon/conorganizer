@@ -80,6 +80,12 @@ const (
 	EventPlayerRoleGM     EventPlayerRole = "GM"
 )
 
+// Source of a relation_events_players Player assignment.
+const (
+	EventPlayerSourceManual = "manual"
+	EventPlayerSourceSolver = "solver"
+)
+
 func (role EventPlayerRole) Label() string {
 	switch role {
 	case EventPlayerRolePlayer:

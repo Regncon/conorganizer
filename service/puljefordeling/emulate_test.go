@@ -95,7 +95,7 @@ func TestEmulateSeatings_FrozenPuljeSeedsNext(t *testing.T) {
 		t.Fatalf("EmulateSeatings: %v", err)
 	}
 
-	// In pulje 2, Bob (unsatisfied) should win e1's single seat over satisfied Alice.
+	// In pulje 2, Bob (unsatisfied) should win e2's single seat over satisfied Alice.
 	var p2res EmulatedPulje
 	for _, p := range em.Puljer {
 		if p.PuljeID == p2 {

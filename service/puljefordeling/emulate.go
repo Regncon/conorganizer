@@ -278,7 +278,7 @@ func loadSeatingData(db *sql.DB) (*seatingData, error) {
 			d.actual[s.pulje] = make(map[string][]string)
 		}
 		d.actual[s.pulje][s.event] = append(d.actual[s.pulje][s.event], s.playerID)
-		if s.source == "manual" {
+		if s.source == models.EventPlayerSourceManual {
 			if d.manualFixed[s.pulje] == nil {
 				d.manualFixed[s.pulje] = make(map[string]string)
 			}
@@ -311,7 +311,7 @@ func loadSeatingData(db *sql.DB) (*seatingData, error) {
 		playerIDs[bh] = true
 	}
 	for _, s := range seats {
-		if s.source != "manual" {
+		if s.source != models.EventPlayerSourceManual {
 			continue
 		}
 		if bh, err := strconv.Atoi(s.playerID); err == nil {
