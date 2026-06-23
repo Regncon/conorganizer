@@ -55,6 +55,44 @@ type Emulation struct {
 	SatisfiedTotal int // distinct participants satisfied across the weekend
 }
 
+// EmulationMeta carries the page-level numbers a per-pulje view needs that are
+// not specific to one pulje.
+type EmulationMeta struct {
+	Year        int
+	PlayerCount int // distinct participants with at least one interest
+}
+
+// EmulatePulje solves chronologically only up to (and including) puljeID and
+// returns just that pulje's distribution. Earlier puljer are solved as needed
+// (locked ones contribute their persisted seats); later puljer are never
+// computed.
+func EmulatePulje(db *sql.DB, puljeID models.Pulje) (EmulatedPulje, EmulationMeta, error) {
+	d, err := loadSeatingData(db)
+	if err != nil {
+		return EmulatedPulje{}, EmulationMeta{}, err
+	}
+
+	idx := -1
+	for i := range d.puljer {
+		if d.puljer[i].ID == puljeID {
+			idx = i
+			break
+		}
+	}
+	if idx < 0 {
+		return EmulatedPulje{}, EmulationMeta{}, fmt.Errorf("pulje %q not found", puljeID)
+	}
+
+	_, results := d.solveChronological(idx)
+	pid := string(d.puljer[idx].ID)
+	shaped := shapePulje(
+		d.puljer[idx], d.weekend.Slots[idx], results[idx],
+		d.gms, d.names, d.prefs, d.dmSet, d.pinnedSet[pid],
+	)
+
+	return shaped, EmulationMeta{Year: d.year, PlayerCount: len(d.prefs)}, nil
+}
+
 type eligibleEvent struct {
 	title    string
 	capacity int
