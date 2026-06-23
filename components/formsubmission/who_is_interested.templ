@@ -594,6 +594,19 @@ templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestW
 	@interestInPulje(eventId, puljeId, interests, true)
 }
 
+// PuljeAssignmentSearch renders the searchable billettholder picker and the
+// "add as player / add as GM" buttons for one pulje, for reuse outside the
+// event-edit page (e.g. the puljefordeling tab). The target event is taken from
+// the $assignmentEventId signal set by the caller before opening the dialog.
+templ PuljeAssignmentSearch(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+	{{ billettholdere, err := getBillettholdere(db, logger) }}
+	if err != nil {
+		<p style="color: var(--color-error);">Kunne ikke hente billettholdere</p>
+	} else {
+		@billettholderAssignmentActions("", pulje, billettholdere)
+	}
+}
+
 templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
 	<style>
