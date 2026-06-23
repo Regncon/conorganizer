@@ -1,14 +1,20 @@
 package admin
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"net/http"
 	"strings"
 
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	pf "github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
 )
 
 templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
@@ -246,4 +252,95 @@ templ puljefordelingTabStyles() {
 			color: var(--color-text-error, #e05050);
 		}
 	</style>
+}
+
+templ puljefordelingTabIndex(children templ.Component, puljeQuery models.Pulje) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Admin", Url: "/admin/"},
+		{Name: "Puljefordeling", Url: ""},
+	})
+	<div class="page-content-container flex flex-col">
+		<style>
+            .tabs {
+                display: flex;
+                overflow-x: auto;
+                margin-top: var(--responsive-page-section-spacing);
+                margin-bottom: -2px;
+                z-index: 2;
+            }
+            .tabs a {
+                white-space: nowrap;
+                text-decoration: none;
+                padding: 0.75rem 1rem;
+                border: 2px solid transparent;
+                border-radius: var(--border-radius-2x) var(--border-radius-2x) 0 0;
+                color: var(--color-primary-text);
+                font-weight: 500;
+            }
+            .tabs a:hover {
+                color: var(--color-primary-hover);
+            }
+            .tabs a.active {
+                background: var(--bg-surface);
+                border-color: var(--color-primary);
+                border-bottom: none;
+                color: var(--color-primary);
+            }
+		</style>
+		<div class="tabs">
+			for _, pulje := range models.AllPuljer() {
+				<a
+					role="button"
+					href={ templ.SafeURL("/admin/puljefordeling/" + string(pulje)) }
+					class={ templ.KV("active", puljeQuery == pulje) }
+				>{ string(pulje) }</a>
+			}
+		</div>
+		@children
+	</div>
+}
+
+templ PuljefordelingTabPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+	@PuljefordelingTabContent(db, logger, pulje)
+}
+
+func SetupPuljefordelingTabRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
+	logger = logger.With("component", "puljefordeling_tab")
+
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, fmt.Sprintf("/admin/puljefordeling/%s", models.PuljeFredagKveld), http.StatusSeeOther)
+	})
+
+	router.Get("/{pulje}", func(w http.ResponseWriter, r *http.Request) {
+		userInfo := userctx.GetUserRequestInfo(r.Context())
+		puljeQuery := chi.URLParam(r, "pulje")
+		puljeID, ok := models.ParsePulje(puljeQuery)
+		if !ok {
+			http.Redirect(w, r, fmt.Sprintf("/admin/puljefordeling/%s", models.PuljeFredagKveld), http.StatusSeeOther)
+			return
+		}
+		if err := layouts.Base(
+			"Puljefordeling",
+			userInfo,
+			puljefordelingTabIndex(PuljefordelingTabPage(db, logger, puljeID), puljeID),
+		).Render(r.Context(), w); err != nil {
+			logger.Error(fmt.Errorf("render puljefordeling tab: %w", err).Error(), "user_id", userInfo.Id)
+		}
+	})
+
+	router.Get("/api/{pulje}", func(w http.ResponseWriter, r *http.Request) {
+		puljeQuery := chi.URLParam(r, "pulje")
+		puljeID, ok := models.ParsePulje(puljeQuery)
+		if !ok {
+			http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
+			return
+		}
+		liveManager.Stream(w, r, live.Page{
+			Buckets: []live.Bucket{live.BucketInterests, live.BucketEvents},
+			Render: func(ctx context.Context, r *http.Request) templ.Component {
+				return PuljefordelingTabContent(db, logger, puljeID)
+			},
+		})
+	})
 }
