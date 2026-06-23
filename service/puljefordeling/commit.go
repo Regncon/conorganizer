@@ -15,6 +15,26 @@ import (
 // source='solver' Player rows for the pulje, inserts the fresh ones, and sets the
 // pulje status to Locked. Manual and GM rows are left untouched. Idempotent.
 func CommitPuljeAssignments(db *sql.DB, target models.Pulje, logger *slog.Logger) error {
+	return rewriteSolverSeats(db, target, models.PuljeStatusLocked, logger)
+}
+
+// RerunPuljeAssignments re-solves an already-frozen pulje (Locked or Completed)
+// around its remaining manual pins and rewrites its source='solver' seats —
+// reseating players freed by manual removals — while preserving the pulje's
+// current status (a re-run never unpublishes a Completed pulje). The whole
+// operation is one transaction; the status is never temporarily changed.
+func RerunPuljeAssignments(db *sql.DB, target models.Pulje, logger *slog.Logger) error {
+	return rewriteSolverSeats(db, target, "", logger)
+}
+
+// rewriteSolverSeats solves the target pulje and replaces its source='solver'
+// Player rows in a single transaction. The target is always solved via the
+// solver path (even if its persisted status is frozen) by overriding the status
+// in the in-memory snapshot only — the stored status is left as-is unless
+// endStatus is non-empty, in which case it is set within the same transaction.
+// Earlier puljer keep their real status (frozen ones replay their actual seats).
+// Manual and GM rows are left untouched. Idempotent.
+func rewriteSolverSeats(db *sql.DB, target models.Pulje, endStatus models.PuljeStatus, logger *slog.Logger) error {
 	d, err := loadSeatingData(db)
 	if err != nil {
 		return fmt.Errorf("load seating data: %w", err)
@@ -30,13 +50,17 @@ func CommitPuljeAssignments(db *sql.DB, target models.Pulje, logger *slog.Logger
 		return fmt.Errorf("pulje %s not found", target)
 	}
 
+	// Force the solver path for the target regardless of its persisted status
+	// (in-memory only — the stored status is governed by endStatus below).
+	d.puljer[idx].Status = models.PuljeStatusOpen
+
 	_, results := d.solveChronological(idx)
 	res := results[idx]
 	manual := d.manualFixed[string(target)]
 
 	tx, err := db.Begin()
 	if err != nil {
-		return fmt.Errorf("begin commit tx for %s: %w", target, err)
+		return fmt.Errorf("begin rewrite tx for %s: %w", target, err)
 	}
 	defer func() { _ = tx.Rollback() }()
 
@@ -72,15 +96,17 @@ func CommitPuljeAssignments(db *sql.DB, target models.Pulje, logger *slog.Logger
 		}
 	}
 
-	if _, err := tx.Exec(`UPDATE puljer SET status = ? WHERE id = ?`, string(models.PuljeStatusLocked), string(target)); err != nil {
-		return fmt.Errorf("lock pulje %s: %w", target, err)
+	if endStatus != "" {
+		if _, err := tx.Exec(`UPDATE puljer SET status = ? WHERE id = ?`, string(endStatus), string(target)); err != nil {
+			return fmt.Errorf("set status for %s: %w", target, err)
+		}
 	}
 
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit seats for %s: %w", target, err)
 	}
 	if logger != nil {
-		logger.Info("committed puljefordeling", "pulje_id", target, "solver_seats", inserted)
+		logger.Info("rewrote puljefordeling solver seats", "pulje_id", target, "solver_seats", inserted, "end_status", string(endStatus))
 	}
 	return nil
 }

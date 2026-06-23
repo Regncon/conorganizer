@@ -20,14 +20,11 @@ import (
 )
 
 templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
-	{{
-		em, _, emErr := pf.EmulatePulje(db, pulje)
-		status := puljeStatusFor(db, pulje)
-	}}
+	{{ em, _, emErr := pf.EmulatePulje(db, pulje) }}
 	<section
 		id="puljefordeling-tab"
 		class="rooms-section"
-		data-signals:pulje-status={ fmt.Sprintf("'%s'", string(status)) }
+		data-signals:pulje-status={ fmt.Sprintf("'%s'", string(em.Status)) }
 		data-init={ live.DatastarInit(fmt.Sprintf("/admin/puljefordeling/api/%s", pulje)) }
 	>
 		@puljefordelingTabStyles()
@@ -38,8 +35,8 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 				<div class="puljefordeling-tab-heading">
 					<h1 class="page-heading">{ em.Name }</h1>
 				</div>
-				@puljefordelingTabStatusControls(models.PuljeRow{ID: pulje, Name: em.Name, Status: status})
-				if puljeIsLocked(status) || puljeIsCompleted(status) {
+				@puljefordelingTabStatusControls(models.PuljeRow{ID: pulje, Name: em.Name, Status: em.Status})
+				if puljeIsLocked(em.Status) {
 					<button
 						type="button"
 						class="btn btn--outline puljefordeling-tab-rerun"
@@ -47,7 +44,7 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 					>Rerun fordeling</button>
 				}
 			</header>
-			{{ removableAll := puljeIsLocked(status) || puljeIsCompleted(status) }}
+			{{ removableAll := puljeIsLocked(em.Status) }}
 			<div class="puljefordeling-tab-grid">
 				for _, ev := range em.Events {
 					@puljefordelingTabEventCard(ev, pulje, removableAll)
@@ -150,17 +147,6 @@ templ puljefordelingTabEventCard(ev pf.EmulatedEvent, pulje models.Pulje, remova
 	</div>
 }
 
-// puljeStatusFor reads a single pulje's current status, defaulting to Open on
-// any error (the content render is best-effort; a status read failure should
-// not blank the page).
-func puljeStatusFor(db *sql.DB, pulje models.Pulje) models.PuljeStatus {
-	var raw string
-	if err := db.QueryRow(`SELECT status FROM puljer WHERE id = ?`, string(pulje)).Scan(&raw); err != nil {
-		return models.PuljeStatusOpen
-	}
-	return models.PuljeStatus(raw)
-}
-
 templ puljefordelingTabStyles() {
 	<style>
 		.puljefordeling-tab-header {
@@ -177,12 +163,12 @@ templ puljefordelingTabStyles() {
 			grid-template-columns: 1fr;
 			gap: var(--responsive-page-section-spacing);
 		}
-		@media screen and (width > 1200px) {
+		@container puljefordeling-panel (width > 1200px) {
 			.puljefordeling-tab-grid {
 				grid-template-columns: repeat(2, 1fr);
 			}
 		}
-		@media screen and (width > 1800px) {
+		@container puljefordeling-panel (width > 1800px) {
 			.puljefordeling-tab-grid {
 				grid-template-columns: repeat(3, 1fr);
 			}
@@ -316,6 +302,7 @@ templ puljefordelingTabIndex(children templ.Component, puljeQuery models.Pulje) 
                 color: var(--color-primary);
             }
             .rooms-section {
+                container: puljefordeling-panel / inline-size;
                 display: flex;
                 flex-direction: column;
                 gap: var(--responsive-page-section-spacing);
@@ -423,33 +410,12 @@ func SetupPuljefordelingTabRoute(router chi.Router, db *sql.DB, liveManager *liv
 			return
 		}
 
-		// Temporarily reopen the pulje so CommitPuljeAssignments uses the solver
-		// path (SolveSlotFixed) rather than ApplyActual on the persisted seats.
-		if _, err := db.Exec(`UPDATE puljer SET status = ? WHERE id = ?`, string(models.PuljeStatusOpen), string(puljeID)); err != nil {
-			logger.Error(fmt.Errorf("reopen pulje for rerun: %w", err).Error(), "pulje_id", puljeID)
+		// Re-solve and rewrite the solver seats in one transaction, preserving the
+		// pulje's status (a Completed pulje stays Completed — rerun never unpublishes).
+		if err := pf.RerunPuljeAssignments(db, puljeID, logger); err != nil {
+			logger.Error(fmt.Errorf("rerun for %s: %w", puljeID, err).Error(), "pulje_id", puljeID)
 			http.Error(w, "Failed to re-run fordeling", http.StatusInternalServerError)
 			return
-		}
-
-		if err := pf.CommitPuljeAssignments(db, puljeID, logger); err != nil {
-			logger.Error(fmt.Errorf("rerun commit for %s: %w", puljeID, err).Error(), "pulje_id", puljeID)
-			// Restore the pre-rerun status so a failed re-solve does not strand the
-			// pulje in Open (which would silently unlock/unpublish it).
-			if _, restoreErr := db.Exec(`UPDATE puljer SET status = ? WHERE id = ?`, string(status), string(puljeID)); restoreErr != nil {
-				logger.Error(fmt.Errorf("restore pulje status after failed rerun: %w", restoreErr).Error(), "pulje_id", puljeID)
-			}
-			http.Error(w, "Failed to re-run fordeling", http.StatusInternalServerError)
-			return
-		}
-
-		// CommitPuljeAssignments always leaves the pulje Locked. If it was Completed
-		// (published) before, restore that so rerun re-solves without unpublishing.
-		if status == models.PuljeStatusCompleted {
-			if _, err := db.Exec(`UPDATE puljer SET status = ? WHERE id = ?`, string(models.PuljeStatusCompleted), string(puljeID)); err != nil {
-				logger.Error(fmt.Errorf("restore completed status after rerun: %w", err).Error(), "pulje_id", puljeID)
-				http.Error(w, "Failed to finalize re-run", http.StatusInternalServerError)
-				return
-			}
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {

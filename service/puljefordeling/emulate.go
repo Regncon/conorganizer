@@ -42,6 +42,7 @@ type EmulatedEvent struct {
 type EmulatedPulje struct {
 	PuljeID        models.Pulje
 	Name           string
+	Status         models.PuljeStatus // the pulje's current lifecycle status
 	Events         []EmulatedEvent
 	Unassigned     []string // names of interested participants who got no seat
 	NewlySatisfied int      // participants who got a top-choice seat this pulje
@@ -151,6 +152,7 @@ func shapePulje(
 	out := EmulatedPulje{
 		PuljeID:        pulje.ID,
 		Name:           pulje.Name,
+		Status:         pulje.Status,
 		NewlySatisfied: len(res.NewlySatisfied),
 		TotalScore:     res.TotalScore,
 		Unassigned:     playerIDsToNames(res.Unassigned, names),
