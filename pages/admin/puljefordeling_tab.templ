@@ -21,7 +21,7 @@ import (
 
 templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
 	{{
-		em, meta, emErr := pf.EmulatePulje(db, pulje)
+		em, _, emErr := pf.EmulatePulje(db, pulje)
 		status := puljeStatusFor(db, pulje)
 	}}
 	<section
@@ -37,13 +37,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			<header class="puljefordeling-tab-header">
 				<div class="puljefordeling-tab-heading">
 					<h1 class="page-heading">{ em.Name }</h1>
-					<div class="puljefordeling-tab-stats">
-						<span>{ fmt.Sprintf("%d deltakere med ønsker", meta.PlayerCount) }</span>
-						<span>{ fmt.Sprintf("%d fikk førstevalg", em.NewlySatisfied) }</span>
-						if len(em.Unassigned) > 0 {
-							<span class="puljefordeling-tab-warn">{ fmt.Sprintf("%d uten plass", len(em.Unassigned)) }</span>
-						}
-					</div>
 				</div>
 				@puljefordelingTabStatusControls(models.PuljeRow{ID: pulje, Name: em.Name, Status: status})
 				if puljeIsLocked(status) || puljeIsCompleted(status) {
@@ -54,7 +47,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 					>Rerun fordeling</button>
 				}
 			</header>
-			@puljefordelingTabLegend()
 			{{ removableAll := puljeIsLocked(status) || puljeIsCompleted(status) }}
 			<div class="puljefordeling-tab-grid">
 				for _, ev := range em.Events {
@@ -108,22 +100,18 @@ templ puljefordelingTabStatusControls(pulje models.PuljeRow) {
 	</div>
 }
 
-templ puljefordelingTabLegend() {
-	<p class="puljefordeling-tab-legend">
-		🔥 Veldig interessert · 👍 Middels · 🤷 Litt · 📌 Manuelt plassert ·
-		<span class="puljefordeling-tab-dm">Turkis</span> = spilleder et annet sted ·
-		<span class="puljefordeling-tab-moved-legend">Rød strek</span> = flyttet ned for å gi plass til andre
-	</p>
-}
-
 templ puljefordelingTabEventCard(ev pf.EmulatedEvent, pulje models.Pulje, removableAll bool) {
 	<div class="item-card puljefordeling-tab-event">
-		<div class="puljefordeling-tab-event-top">
-			<h3>{ ev.Title }</h3>
-			<span class="puljefordeling-tab-cap">{ fmt.Sprintf("%d / %d", len(ev.AssignedPlayers), ev.Capacity) }</span>
-		</div>
+		<h3>{ ev.Title }</h3>
+		<span>
+			<p>Spillere</p>
+			<p>{ fmt.Sprintf("%d / %d", len(ev.AssignedPlayers), ev.Capacity) }</p>
+		</span>
 		if ev.GMName != "" {
-			<p class="puljefordeling-tab-gm">Spilleder: { ev.GMName }</p>
+			<span>
+				<p>Spilleder</p>
+				<p>{ ev.GMName }</p>
+			</span>
 		}
 		if ev.Undersubscribed {
 			<span class="puljefordeling-tab-badge">Få deltakere</span>
@@ -184,54 +172,43 @@ templ puljefordelingTabStyles() {
 			border-bottom: 1px solid var(--bg-item-border);
 			padding-bottom: var(--spacing-2x);
 		}
-		.puljefordeling-tab-stats {
-			display: flex;
-			gap: var(--spacing-4x);
-			color: var(--color-text-soft);
-			flex-wrap: wrap;
-		}
-		.puljefordeling-tab-warn {
-			color: var(--color-text-warning, #e0a030);
-		}
-		.puljefordeling-tab-legend {
-			color: var(--color-text-soft);
-			font-size: var(--text-small, 0.85rem);
-		}
 		.puljefordeling-tab-grid {
 			display: grid;
-			grid-template-columns: repeat(auto-fit, minmax(var(--mobile-min-width), 1fr));
-			gap: var(--spacing-4x);
+			grid-template-columns: 1fr;
+			gap: var(--responsive-page-section-spacing);
+		}
+		@media screen and (width > 1200px) {
+			.puljefordeling-tab-grid {
+				grid-template-columns: repeat(2, 1fr);
+			}
+		}
+		@media screen and (width > 1800px) {
+			.puljefordeling-tab-grid {
+				grid-template-columns: repeat(3, 1fr);
+			}
 		}
 		.puljefordeling-tab-event {
 			display: flex;
-			flex-direction: column;
-			gap: var(--spacing-2x);
+			flex-flow: column nowrap;
+			gap: var(--spacing-1x);
 			padding: var(--spacing-2x);
 			border: 1px solid var(--bg-item-border);
 			border-radius: var(--border-radius-1x);
 			background-color: var(--bg-item);
 			transition: border-color 300ms ease-in-out;
 		}
-		.puljefordeling-tab-event:hover {
-			border-color: var(--bg-item-border-hover);
-		}
-		.puljefordeling-tab-event-top {
-			display: flex;
-			align-items: baseline;
-			justify-content: space-between;
-			gap: var(--spacing-2x);
-		}
-		.puljefordeling-tab-event-top h3 {
+		.puljefordeling-tab-event h3 {
+			text-align: center;
 			color: var(--color-text-strong);
 			font-size: var(--text-body);
 		}
-		.puljefordeling-tab-cap {
-			color: var(--color-text-soft);
-			white-space: nowrap;
+		.puljefordeling-tab-event > span {
+			display: flex;
+			justify-content: space-between;
+			gap: var(--spacing-1x);
 		}
-		.puljefordeling-tab-gm {
-			color: var(--color-text-soft);
-			font-style: italic;
+		.puljefordeling-tab-event:hover {
+			border-color: var(--bg-item-border-hover);
 		}
 		.puljefordeling-tab-badge {
 			align-self: flex-start;
@@ -248,7 +225,6 @@ templ puljefordelingTabStyles() {
 			display: flex;
 			flex-direction: column;
 			gap: var(--spacing-1x);
-			color: var(--color-text-soft);
 		}
 		.puljefordeling-tab-players li {
 			display: flex;
@@ -277,10 +253,6 @@ templ puljefordelingTabStyles() {
 		.puljefordeling-tab-moved {
 			border-left: 3px solid #e05050;
 			padding-left: var(--spacing-2x);
-		}
-		.puljefordeling-tab-moved-legend {
-			border-left: 3px solid #e05050;
-			padding-left: var(--spacing-1x);
 		}
 		.puljefordeling-tab-empty {
 			color: var(--color-text-soft-50);
@@ -342,6 +314,15 @@ templ puljefordelingTabIndex(children templ.Component, puljeQuery models.Pulje) 
                 border-color: var(--color-primary);
                 border-bottom: none;
                 color: var(--color-primary);
+            }
+            .rooms-section {
+                display: flex;
+                flex-direction: column;
+                gap: var(--responsive-page-section-spacing);
+                border: 2px solid var(--color-primary);
+                border-radius: 0 0 var(--border-radius-2x) var(--border-radius-2x);
+                padding: var(--responsive-pane-padding);
+                background-color: var(--bg-surface);
             }
 		</style>
 		<div class="tabs">

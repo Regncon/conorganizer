@@ -210,3 +210,6 @@ dist
 .yarn/install-state.gz
 .pnp.*
 # ------------------------------------------------------------------
+
+# Local planning/spec artifacts (superpowers) — not tracked
+docs/superpowers/
