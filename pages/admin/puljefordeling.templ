@@ -9,6 +9,7 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
+	pf "github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
@@ -126,18 +127,49 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.
 			return
 		}
 
-		if err := updatePuljeStatus(db, puljeID, store.PuljeStatus); err != nil {
-			if errors.Is(err, errPuljeNotFound) {
+		// Read the current status to decide the transition side-effects.
+		var currentRaw string
+		if err := db.QueryRow(`SELECT status FROM puljer WHERE id = ?`, string(puljeID)).Scan(&currentRaw); err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
 				http.Error(w, "Pulje not found", http.StatusNotFound)
 				return
 			}
-			logger.Error(err.Error(), "pulje_id", puljeID, "pulje_status", store.PuljeStatus)
+			logger.Error(fmt.Errorf("read current pulje status: %w", err).Error(), "pulje_id", puljeID)
+			http.Error(w, "Failed to read pulje status", http.StatusInternalServerError)
+			return
+		}
+		current := models.PuljeStatus(currentRaw)
+		next := store.PuljeStatus
+
+		var transitionErr error
+		switch {
+		case current == models.PuljeStatusOpen && next == models.PuljeStatusLocked:
+			// Lock: commit the distribution and set status (atomic, inside the service).
+			transitionErr = pf.CommitPuljeAssignments(db, puljeID, logger)
+		case current == models.PuljeStatusLocked && next == models.PuljeStatusOpen:
+			// Unlock: drop solver seats and reopen (atomic, inside the service).
+			transitionErr = pf.RevertPuljeAssignments(db, puljeID)
+		default:
+			// Locked↔Completed and any no-op: status only.
+			transitionErr = updatePuljeStatus(db, puljeID, next)
+		}
+		if transitionErr != nil {
+			if errors.Is(transitionErr, errPuljeNotFound) {
+				http.Error(w, "Pulje not found", http.StatusNotFound)
+				return
+			}
+			logger.Error(transitionErr.Error(), "pulje_id", puljeID, "pulje_status", next)
 			http.Error(w, "Failed to update pulje status", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			logger.Error(fmt.Errorf("failed to broadcast pulje status update: %w", err).Error(), "pulje_id", puljeID, "pulje_status", store.PuljeStatus)
+			logger.Error(fmt.Errorf("failed to broadcast pulje status update: %w", err).Error(), "pulje_id", puljeID, "pulje_status", next)
+			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			return
+		}
+		if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast interests update: %w", err).Error(), "pulje_id", puljeID, "pulje_status", next)
 			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
 			return
 		}
