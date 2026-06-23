@@ -9,6 +9,108 @@ import (
 	"github.com/Regncon/conorganizer/testutil"
 )
 
+func seedAssignment(t *testing.T, db *sql.DB, eventID string, pulje models.Pulje, bhID int, source string) {
+	t.Helper()
+	_, err := db.Exec(
+		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source) VALUES (?, ?, ?, 'Player', ?)`,
+		eventID, string(pulje), bhID, source,
+	)
+	if err != nil {
+		t.Fatalf("seed assignment bh=%d ev=%s: %v", bhID, eventID, err)
+	}
+}
+
+func setPuljeStatus(t *testing.T, db *sql.DB, pulje models.Pulje, status models.PuljeStatus) {
+	t.Helper()
+	if _, err := db.Exec(`UPDATE puljer SET status = ? WHERE id = ?`, string(status), string(pulje)); err != nil {
+		t.Fatalf("set pulje %s status: %v", pulje, err)
+	}
+}
+
+func TestEmulateSeatings_ManualPlacementPinnedAndMarked(t *testing.T) {
+	db, _ := testutil.CreateTestDBAndLogger(t, "test_emulate_pinned")
+
+	const fredag = models.PuljeFredagKveld
+	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedEvent(t, db, "evA", "Alpha", 1, fredag) // capacity 1
+
+	seedParticipant(t, db, 1, "Anna", "A")
+	seedParticipant(t, db, 2, "Kid", "K")
+
+	// Anna wants evA highly. Kid has NO interest but is manually placed in evA.
+	seedInterest(t, db, 1, "evA", fredag, models.InterestLevelHigh)
+	seedAssignment(t, db, "evA", fredag, 2, "manual")
+
+	em, err := EmulateSeatings(db)
+	if err != nil {
+		t.Fatalf("EmulateSeatings: %v", err)
+	}
+
+	evA, ok := findEvent(em.Puljer[0], "evA")
+	if !ok {
+		t.Fatal("evA missing")
+	}
+	names := playerNames(evA.AssignedPlayers)
+	if !slices.Contains(names, "Kid K") {
+		t.Errorf("manually placed Kid must be seated in evA, got %v", names)
+	}
+	// evA capacity is 1 and the pin took it, so Anna cannot also be seated there.
+	if slices.Contains(names, "Anna A") {
+		t.Errorf("Anna should not fit (pin took the only seat), got %v", names)
+	}
+	// The pinned seat must be marked.
+	for _, ap := range evA.AssignedPlayers {
+		if ap.Name == "Kid K" && !ap.Pinned {
+			t.Error("Kid's seat should be marked Pinned")
+		}
+	}
+}
+
+func TestEmulateSeatings_FrozenPuljeSeedsNext(t *testing.T) {
+	db, _ := testutil.CreateTestDBAndLogger(t, "test_emulate_seed")
+
+	const p1 = models.PuljeFredagKveld
+	const p2 = models.PuljeLordagMorgen
+	seedPulje(t, db, p1, "Pulje 1", "2026-09-04T18:00:00Z")
+	seedPulje(t, db, p2, "Pulje 2", "2026-09-05T09:00:00Z")
+
+	seedEvent(t, db, "e1", "Event 1", 1, p1)
+	seedEvent(t, db, "e2", "Event 2", 1, p2)
+
+	seedParticipant(t, db, 1, "Alice", "A")
+	seedParticipant(t, db, 2, "Bob", "B")
+
+	// Both want their pulje-1 event (cap 1) and the pulje-2 event (cap 1).
+	seedInterest(t, db, 1, "e1", p1, models.InterestLevelHigh)
+	seedInterest(t, db, 2, "e1", p1, models.InterestLevelHigh)
+	seedInterest(t, db, 1, "e2", p2, models.InterestLevelHigh)
+	seedInterest(t, db, 2, "e2", p2, models.InterestLevelHigh)
+
+	// Pulje 1 is frozen with Alice actually seated in e1 (she's now satisfied).
+	setPuljeStatus(t, db, p1, models.PuljeStatusCompleted)
+	seedAssignment(t, db, "e1", p1, 1, "solver")
+
+	em, err := EmulateSeatings(db)
+	if err != nil {
+		t.Fatalf("EmulateSeatings: %v", err)
+	}
+
+	// In pulje 2, Bob (unsatisfied) should win e1's single seat over satisfied Alice.
+	var p2res EmulatedPulje
+	for _, p := range em.Puljer {
+		if p.PuljeID == p2 {
+			p2res = p
+		}
+	}
+	e2, ok := findEvent(p2res, "e2")
+	if !ok {
+		t.Fatal("e2 missing")
+	}
+	if !slices.Contains(playerNames(e2.AssignedPlayers), "Bob B") {
+		t.Errorf("unsatisfied Bob should win pulje-2 seat (Alice satisfied in frozen pulje 1), got %v", playerNames(e2.AssignedPlayers))
+	}
+}
+
 func seedPulje(t *testing.T, db *sql.DB, id models.Pulje, name, startAt string) {
 	t.Helper()
 	_, err := db.Exec(

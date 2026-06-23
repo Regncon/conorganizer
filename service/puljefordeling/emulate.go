@@ -18,10 +18,11 @@ import (
 // show how much they wanted this game, whether they carry the DM bump, and
 // whether they were bumped off a stronger preference to make room for others.
 type AssignedPlayer struct {
-	Name  string
-	IsDM  bool                 // runs at least one game in the weekend (DM bump)
-	Level models.InterestLevel // their interest in the game they got
-	Moved bool                 // relocated off a higher-scoring event by the solver to make room for others
+	Name   string
+	IsDM   bool                 // runs at least one game in the weekend (DM bump)
+	Level  models.InterestLevel // their interest in the game they got
+	Moved  bool                 // relocated off a higher-scoring event by the solver to make room for others
+	Pinned bool                 // manually placed (source=manual); honored by the solver, not chosen by it
 }
 
 // EmulatedEvent is the proposed seating for a single event within a pulje.
@@ -61,73 +62,27 @@ type eligibleEvent struct {
 // distribution for every pulje in chronological order, and returns the
 // proposed seating. It performs only reads.
 func EmulateSeatings(db *sql.DB) (Emulation, error) {
-	puljer, err := loadPuljer(db)
+	d, err := loadSeatingData(db)
 	if err != nil {
 		return Emulation{}, err
 	}
-	if len(puljer) == 0 {
+	if len(d.puljer) == 0 {
 		return Emulation{}, nil
 	}
 
-	events, err := loadEligibleEvents(db) // [pulje][eventID] -> eligibleEvent
-	if err != nil {
-		return Emulation{}, err
-	}
-	gms, err := loadGMs(db) // [eventPuljeKey] -> billettholderID
-	if err != nil {
-		return Emulation{}, err
-	}
-	names, err := loadParticipantNames(db) // billettholderID -> display name
-	if err != nil {
-		return Emulation{}, err
-	}
-	prefs, err := loadPrefs(db, events) // billettholderID -> pulje -> eventID -> score
-	if err != nil {
-		return Emulation{}, err
-	}
+	state, results := d.solveChronological(len(d.puljer) - 1)
 
-	// Build the solver's Weekend in chronological pulje order.
-	weekend := smodel.Weekend{Slots: make([]smodel.Slot, 0, len(puljer))}
-	for _, p := range puljer {
-		slot := smodel.Slot{ID: string(p.ID), Name: p.Name}
-		for _, eid := range sortedEventIDs(events[p.ID]) {
-			e := events[p.ID][eid]
-			ev := smodel.Event{ID: eid, Name: e.title, Capacity: e.capacity}
-			if gmID, ok := gms[eventPuljeKey(eid, p.ID)]; ok {
-				ev.DMID = strconv.Itoa(gmID)
-			}
-			slot.Events = append(slot.Events, ev)
-		}
-		weekend.Slots = append(weekend.Slots, slot)
-	}
-
-	// Players are the participants who expressed at least one interest.
-	players := make([]smodel.Player, 0, len(prefs))
-	for _, bhID := range sortedIntKeys(prefs) {
-		players = append(players, smodel.Player{
-			ID:    strconv.Itoa(bhID),
-			Name:  names[bhID],
-			Prefs: prefs[bhID],
-		})
-	}
-
-	// Players who run any game in the weekend carry the DM bump.
-	dmSet := make(map[int]bool, len(gms))
-	for _, bhID := range gms {
-		dmSet[bhID] = true
-	}
-
-	year := puljer[0].StartAt.TimeOrZero().Year()
-	state := solver.NewState(year, weekend)
-
-	emulation := Emulation{Year: year, PlayerCount: len(players)}
-	for i, slot := range weekend.Slots {
-		pulje := puljer[i]
-		res := state.SolveSlot(slot, players)
-		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, prefs, dmSet))
+	// PlayerCount is distinct participants with at least one interest (unchanged
+	// semantics — excludes manual-only placements with no interest).
+	emulation := Emulation{Year: d.year, PlayerCount: len(d.prefs)}
+	for i := range d.puljer {
+		pid := string(d.puljer[i].ID)
+		emulation.Puljer = append(emulation.Puljer, shapePulje(
+			d.puljer[i], d.weekend.Slots[i], results[i],
+			d.gms, d.names, d.prefs, d.dmSet, d.pinnedSet[pid],
+		))
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
-
 	return emulation, nil
 }
 
@@ -140,6 +95,7 @@ func shapePulje(
 	names map[int]string,
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
+	pinned map[string]bool,
 ) EmulatedPulje {
 	under := make(map[string]bool, len(res.UndersubscribedEvents))
 	for _, eid := range res.UndersubscribedEvents {
@@ -164,7 +120,7 @@ func shapePulje(
 			EventID:         ev.ID,
 			Title:           ev.Name,
 			Capacity:        ev.Capacity,
-			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet, moved),
+			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet, moved, pinned),
 			Undersubscribed: under[ev.ID],
 		}
 		if gmID, ok := gms[eventPuljeKey(ev.ID, pulje.ID)]; ok {
@@ -177,8 +133,9 @@ func shapePulje(
 }
 
 // assignedPlayers turns solver player IDs into display rows: name, DM flag, the
-// interest level the player had for the game they were seated in, and whether
-// the solver relocated them off a higher-scoring event (the moved set).
+// interest level the player had for the game they were seated in, whether
+// the solver relocated them off a higher-scoring event (the moved set), and
+// whether the seat was manually placed (pinned).
 func assignedPlayers(
 	ids []string,
 	eventID, puljeID string,
@@ -186,6 +143,7 @@ func assignedPlayers(
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
 	moved map[string]bool,
+	pinned map[string]bool,
 ) []AssignedPlayer {
 	if len(ids) == 0 {
 		return nil
@@ -197,7 +155,12 @@ func assignedPlayers(
 			out = append(out, AssignedPlayer{Name: id})
 			continue
 		}
-		ap := AssignedPlayer{Name: names[bh], IsDM: dmSet[bh], Moved: moved[id]}
+		ap := AssignedPlayer{
+			Name:   names[bh],
+			IsDM:   dmSet[bh],
+			Moved:  moved[id],
+			Pinned: pinned[seatKey(eventID, id)],
+		}
 		if byPulje, ok := prefs[bh]; ok {
 			got := byPulje[puljeID][eventID]
 			ap.Level = models.InterestLevelFromScore(int(got))
@@ -206,6 +169,191 @@ func assignedPlayers(
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
 	return out
+}
+
+// --- seating data -----------------------------------------------------------
+
+// puljeFrozen reports whether a pulje's seats are committed and no longer
+// auto-solved (Locked or Completed).
+func puljeFrozen(status models.PuljeStatus) bool {
+	return status == models.PuljeStatusLocked || status == models.PuljeStatusCompleted
+}
+
+func seatKey(eventID, playerID string) string {
+	return eventID + "\x00" + playerID
+}
+
+type persistedSeat struct {
+	pulje    string
+	event    string
+	playerID string
+	source   string
+}
+
+// loadPersistedPlayerSeats returns every role=Player row (manual and solver).
+func loadPersistedPlayerSeats(db *sql.DB) ([]persistedSeat, error) {
+	const query = `
+		SELECT event_id, pulje_id, billettholder_id, source
+		FROM relation_events_players
+		WHERE role = ?
+	`
+	rows, err := db.Query(query, models.EventPlayerRolePlayer)
+	if err != nil {
+		return nil, fmt.Errorf("query player seats: %w", err)
+	}
+	defer rows.Close()
+
+	var seats []persistedSeat
+	for rows.Next() {
+		var s persistedSeat
+		var bhID int
+		if err := rows.Scan(&s.event, &s.pulje, &bhID, &s.source); err != nil {
+			return nil, fmt.Errorf("scan player seat: %w", err)
+		}
+		s.playerID = strconv.Itoa(bhID)
+		seats = append(seats, s)
+	}
+	return seats, rows.Err()
+}
+
+// seatingData holds everything needed to run the seeded chronological solve.
+type seatingData struct {
+	puljer      []models.PuljeRow
+	weekend     smodel.Weekend
+	players     []smodel.Player
+	gms         map[string]int
+	names       map[int]string
+	prefs       map[int]map[string]map[string]smodel.Score
+	dmSet       map[int]bool
+	actual      map[string]map[string][]string // puljeID -> eventID -> []playerID (all Player rows)
+	manualFixed map[string]map[string]string   // puljeID -> playerID -> eventID (source=manual)
+	pinnedSet   map[string]map[string]bool      // puljeID -> seatKey(event,player) (source=manual)
+	year        int
+}
+
+// loadSeatingData loads puljer, events, GMs, names, prefs, and persisted Player
+// seats, and assembles the solver model. Players include every participant with an
+// interest plus anyone holding a manual placement (even without an interest).
+func loadSeatingData(db *sql.DB) (*seatingData, error) {
+	puljer, err := loadPuljer(db)
+	if err != nil {
+		return nil, err
+	}
+	if len(puljer) == 0 {
+		return &seatingData{}, nil
+	}
+	events, err := loadEligibleEvents(db)
+	if err != nil {
+		return nil, err
+	}
+	gms, err := loadGMs(db)
+	if err != nil {
+		return nil, err
+	}
+	names, err := loadParticipantNames(db)
+	if err != nil {
+		return nil, err
+	}
+	prefs, err := loadPrefs(db, events)
+	if err != nil {
+		return nil, err
+	}
+	seats, err := loadPersistedPlayerSeats(db)
+	if err != nil {
+		return nil, err
+	}
+
+	d := &seatingData{
+		puljer:      puljer,
+		gms:         gms,
+		names:       names,
+		prefs:       prefs,
+		actual:      make(map[string]map[string][]string),
+		manualFixed: make(map[string]map[string]string),
+		pinnedSet:   make(map[string]map[string]bool),
+	}
+
+	for _, s := range seats {
+		if d.actual[s.pulje] == nil {
+			d.actual[s.pulje] = make(map[string][]string)
+		}
+		d.actual[s.pulje][s.event] = append(d.actual[s.pulje][s.event], s.playerID)
+		if s.source == "manual" {
+			if d.manualFixed[s.pulje] == nil {
+				d.manualFixed[s.pulje] = make(map[string]string)
+			}
+			d.manualFixed[s.pulje][s.playerID] = s.event
+			if d.pinnedSet[s.pulje] == nil {
+				d.pinnedSet[s.pulje] = make(map[string]bool)
+			}
+			d.pinnedSet[s.pulje][seatKey(s.event, s.playerID)] = true
+		}
+	}
+
+	// Build the solver's Weekend in chronological pulje order.
+	d.weekend = smodel.Weekend{Slots: make([]smodel.Slot, 0, len(puljer))}
+	for _, p := range puljer {
+		slot := smodel.Slot{ID: string(p.ID), Name: p.Name}
+		for _, eid := range sortedEventIDs(events[p.ID]) {
+			e := events[p.ID][eid]
+			ev := smodel.Event{ID: eid, Name: e.title, Capacity: e.capacity}
+			if gmID, ok := gms[eventPuljeKey(eid, p.ID)]; ok {
+				ev.DMID = strconv.Itoa(gmID)
+			}
+			slot.Events = append(slot.Events, ev)
+		}
+		d.weekend.Slots = append(d.weekend.Slots, slot)
+	}
+
+	// Players: everyone with an interest, plus anyone holding a manual seat.
+	playerIDs := make(map[int]bool, len(prefs))
+	for bh := range prefs {
+		playerIDs[bh] = true
+	}
+	for _, s := range seats {
+		if s.source != "manual" {
+			continue
+		}
+		if bh, err := strconv.Atoi(s.playerID); err == nil {
+			playerIDs[bh] = true
+		}
+	}
+	for _, bh := range sortedIntKeys(playerIDs) { // sortedIntKeys is generic over map[int]V
+		d.players = append(d.players, smodel.Player{
+			ID:    strconv.Itoa(bh),
+			Name:  names[bh],
+			Prefs: prefs[bh],
+		})
+	}
+
+	d.dmSet = make(map[int]bool, len(gms))
+	for _, bhID := range gms {
+		d.dmSet[bhID] = true
+	}
+
+	d.year = puljer[0].StartAt.TimeOrZero().Year()
+	return d, nil
+}
+
+// solveChronological threads one State across slots[0..upTo] inclusive: frozen
+// puljer are replayed from their persisted seats (ApplyActual); open puljer are
+// solved with their manual placements pinned (SolveSlotFixed). Returns the State
+// and per-slot results index-aligned with d.puljer[0..upTo].
+func (d *seatingData) solveChronological(upTo int) (*solver.State, []smodel.SlotResult) {
+	state := solver.NewState(d.year, d.weekend)
+	results := make([]smodel.SlotResult, 0, upTo+1)
+	for i := 0; i <= upTo; i++ {
+		slot := d.weekend.Slots[i]
+		pid := string(d.puljer[i].ID)
+		var res smodel.SlotResult
+		if puljeFrozen(d.puljer[i].Status) {
+			res = state.ApplyActual(slot, d.players, d.actual[pid])
+		} else {
+			res = state.SolveSlotFixed(slot, d.players, d.manualFixed[pid])
+		}
+		results = append(results, res)
+	}
+	return state, results
 }
 
 // --- data loading -----------------------------------------------------------
