@@ -206,7 +206,14 @@ templ puljefordelingTabStyles() {
 			display: flex;
 			flex-direction: column;
 			gap: var(--spacing-2x);
+			padding: var(--spacing-2x);
 			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-1x);
+			background-color: var(--bg-item);
+			transition: border-color 300ms ease-in-out;
+		}
+		.puljefordeling-tab-event:hover {
+			border-color: var(--bg-item-border-hover);
 		}
 		.puljefordeling-tab-event-top {
 			display: flex;
@@ -248,6 +255,13 @@ templ puljefordelingTabStyles() {
 			align-items: center;
 			gap: var(--spacing-2x);
 			justify-content: flex-start;
+			padding: var(--spacing-1x);
+			border: 2px solid var(--bg-item-border);
+			border-radius: var(--border-radius-2x);
+			transition: border-color 300ms ease-in-out;
+		}
+		.puljefordeling-tab-players li:hover {
+			border-color: var(--color-primary);
 		}
 		.puljefordeling-tab-emoji {
 			flex: 0 0 auto;
