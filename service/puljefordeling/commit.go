@@ -60,6 +60,9 @@ func CommitPuljeAssignments(db *sql.DB, target models.Pulje, logger *slog.Logger
 			}
 			bh, convErr := strconv.Atoi(pid)
 			if convErr != nil {
+				if logger != nil {
+					logger.Warn("skipping non-integer player id in commit", "pid", pid, "pulje_id", target)
+				}
 				continue
 			}
 			if _, err := tx.Exec(insert, evID, string(target), bh, models.EventPlayerRolePlayer); err != nil {
