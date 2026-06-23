@@ -70,7 +70,7 @@ CREATE TABLE relation_events_players(
   pulje_id TEXT NOT NULL,
   billettholder_id INTEGER NOT NULL,
   role TEXT NOT NULL DEFAULT 'Player' CHECK(role IN('Player', 'GM')),
-  source TEXT NOT NULL DEFAULT 'manual' CHECK(source IN('manual','solver')),
+  source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual','solver')),
   inserted_at TEXT DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   PRIMARY KEY(billettholder_id, event_id, pulje_id),
   FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
