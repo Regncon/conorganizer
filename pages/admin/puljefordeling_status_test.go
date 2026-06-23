@@ -26,6 +26,9 @@ func putPuljeStatus(t *testing.T, router http.Handler, pulje models.Pulje, statu
 	req.Header.Set("Content-Type", "application/json")
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, req)
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("PUT status: want 204, got %d; body: %s", rec.Code, rec.Body.String())
+	}
 }
 
 func TestPuljeStatusHandler_LockCommitsUnlockReverts(t *testing.T) {

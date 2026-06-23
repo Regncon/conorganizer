@@ -163,15 +163,13 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.
 			return
 		}
 
+		// Live broadcasts are best-effort: the status transition is already
+		// committed, so a failed broadcast is logged but does not fail the request.
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
 			logger.Error(fmt.Errorf("failed to broadcast pulje status update: %w", err).Error(), "pulje_id", puljeID, "pulje_status", next)
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
-			return
 		}
 		if err := liveManager.Broadcast(r.Context(), live.BucketInterests); err != nil {
 			logger.Error(fmt.Errorf("failed to broadcast interests update: %w", err).Error(), "pulje_id", puljeID, "pulje_status", next)
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
-			return
 		}
 
 		w.WriteHeader(http.StatusNoContent)
