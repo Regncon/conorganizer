@@ -19,12 +19,18 @@ templ emulatePage(em puljefordeling.Emulation, emErr error) {
 		<section class="page-content-container">
 			<h1 class="page-heading">Emulér puljefordeling</h1>
 			<p class="emulate-intro">
-				Forhåndsvis hvordan deltakere ville blitt fordelt på arrangementer i hver pulje,
-				basert på påmeldte ønsker. Dette er kun en simulering – ingenting lagres.
+				Forhåndsvis fordelingen for hver pulje. Åpne puljer er en live simulering du kan
+				kjøre på nytt så ofte du vil; når en pulje låses, lagres fordelingen og videre
+				endringer gjøres manuelt. Låste og fullførte puljer viser den faktiske fordelingen.
 			</p>
 			<p class="emulate-legend">
-				🔥 Veldig interessert · 👍 Middels · 🤷 Litt · <span class="emulate-dm">Turkis</span> = spilleder et annet sted · <span class="emulate-moved-legend">Rød strek</span> = flyttet ned for å gi plass til andre
+				🔥 Veldig interessert · 👍 Middels · 🤷 Litt · 📌 Manuelt plassert ·
+				<span class="emulate-dm">Turkis</span> = spilleder et annet sted ·
+				<span class="emulate-moved-legend">Rød strek</span> = flyttet ned for å gi plass til andre
 			</p>
+			<a role="button" href="/admin/puljefordeling-emulate/" class="btn btn--outline emulate-rerun">
+				Kjør fordeling på nytt
+			</a>
 			if emErr != nil {
 				<p class="emulate-error">Kunne ikke beregne fordeling: { emErr.Error() }</p>
 			} else if len(em.Puljer) == 0 {
@@ -86,6 +92,9 @@ templ eventCard(ev puljefordeling.EmulatedEvent) {
 					<li class={ templ.KV("emulate-moved", pl.Moved) }>
 						<span class="emulate-emoji">{ pl.Level.Emoji() }</span>
 						<span class={ templ.KV("emulate-dm", pl.IsDM) }>{ pl.Name }</span>
+						if pl.Pinned {
+							<span class="emulate-pinned" title="Manuelt plassert">📌</span>
+						}
 					</li>
 				}
 			</ul>
@@ -193,6 +202,13 @@ templ emulateStyles() {
 		}
 		.emulate-dm {
 			color: turquoise;
+		}
+		.emulate-pinned {
+			flex: 0 0 auto;
+		}
+		.emulate-rerun {
+			align-self: flex-start;
+			margin-bottom: var(--spacing-4x);
 		}
 		.emulate-moved {
 			border-left: 3px solid #e05050;
