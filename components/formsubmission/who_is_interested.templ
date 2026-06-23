@@ -339,10 +339,11 @@ func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *
 	}
 
 	upsertPlayerQuery := `
-		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role)
-		VALUES (?, ?, ?, '` + string(models.EventPlayerRolePlayer) + `')
+		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES (?, ?, ?, '` + string(models.EventPlayerRolePlayer) + `', '` + models.EventPlayerSourceManual + `')
 		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
 			role = EXCLUDED.role,
+			source = EXCLUDED.source,
 			inserted_at = ` + models.DBDateTimeNowSQL + `
 	`
 	if _, execErr := tx.Exec(upsertPlayerQuery, eId, Pid, bid); execErr != nil {
@@ -388,10 +389,11 @@ func UpdatePlayerStatus(eventId string,
 	}
 
 	query := `
-		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role)
-		VALUES (?, ?, ?, '` + string(role) + `')
+		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES (?, ?, ?, '` + string(role) + `', '` + models.EventPlayerSourceManual + `')
 		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
 			role = EXCLUDED.role,
+			source = EXCLUDED.source,
 			inserted_at = ` + models.DBDateTimeNowSQL + `
 	`
 	_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId)

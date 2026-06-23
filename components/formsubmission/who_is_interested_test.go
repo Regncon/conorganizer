@@ -3,6 +3,7 @@ package formsubmission
 import (
 	"testing"
 
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
@@ -149,4 +150,84 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			expectFirstChoice(t, actualE4Interests, tc)
 		}
 	})
+}
+
+// TestUpdatePlayerStatus_ReclaimsSourceManual proves that when an admin calls
+// UpdatePlayerStatus to toggle a player ON for a seat that was previously
+// written by the solver (source='solver'), the upsert resets source to 'manual'
+// so the row survives a subsequent RevertPuljeAssignments (which only deletes
+// source='solver' rows).
+func TestUpdatePlayerStatus_ReclaimsSourceManual(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "A relation_events_players row seeded with source='solver' for a player.",
+		When:  "UpdatePlayerStatus is called to toggle the player on (isPlayer=true).",
+		Then:  "The row's source column is updated to 'manual', so it survives unlock/revert.",
+	})
+
+	const (
+		testEventID = "EX"
+		testPuljeID = "PX"
+		testBHID    = 99
+	)
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "reclaim-source-manual")
+
+	// Seed required lookup rows and the event/pulje/billettholder.
+	puljeStatus := models.PuljeStatusOpen
+	mustExec(t, db, `INSERT OR IGNORE INTO event_statuses(status) VALUES (?)`, models.EventStatusApproved)
+	mustExec(t, db, `INSERT OR IGNORE INTO events_types(event_type) VALUES (?)`, models.EventTypeOther)
+	mustExec(t, db, `INSERT OR IGNORE INTO age_groups(age_group) VALUES (?)`, models.AgeGroupDefault)
+	mustExec(t, db, `INSERT OR IGNORE INTO event_runtimes(runtime) VALUES (?)`, models.RunTimeNormal)
+	mustExec(t, db, `INSERT OR IGNORE INTO interest_levels(interest_level) VALUES (?), (?), (?)`, models.InterestLevelHigh, models.InterestLevelMedium, models.InterestLevelLow)
+	mustExec(t, db, `INSERT OR IGNORE INTO pulje_statuses(status) VALUES (?)`, puljeStatus)
+	mustExec(t, db, `
+		INSERT INTO puljer (id, name, status, start_at, end_at)
+		VALUES (?, 'Test Pulje', ?, '2025-10-03', '2025-10-03')
+	`, testPuljeID, puljeStatus)
+	mustExec(t, db, `
+		INSERT INTO events (
+			id, title, intro, description, system, event_type,
+			age_group, event_runtime, host_name, email, phone_number,
+			max_players, beginner_friendly, can_be_run_in_english, status
+		) VALUES (?, 'Event X', 'intro', 'desc', '', ?, ?, ?, 'Host X', 'hx@test.no', '00000000', 4, 1, 1, ?)
+	`, testEventID, models.EventTypeOther, models.AgeGroupDefault, models.RunTimeNormal, models.EventStatusApproved)
+	mustExec(t, db, `
+		INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, is_over_18, order_id, ticket_id)
+		VALUES (?, 'Test', 'Player', 1, 'Test', 1, 1099, 2099)
+	`, testBHID)
+
+	// Seed a solver-written row (source='solver').
+	mustExec(t, db, `
+		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES (?, ?, ?, ?, ?)
+	`, testEventID, testPuljeID, testBHID, models.EventPlayerRolePlayer, models.EventPlayerSourceSolver)
+
+	// Verify the pre-condition: source is 'solver'.
+	var sourceBefore string
+	if err := db.QueryRow(
+		`SELECT source FROM relation_events_players WHERE event_id=? AND pulje_id=? AND billettholder_id=?`,
+		testEventID, testPuljeID, testBHID,
+	).Scan(&sourceBefore); err != nil {
+		t.Fatalf("pre-condition query failed: %v", err)
+	}
+	if sourceBefore != models.EventPlayerSourceSolver {
+		t.Fatalf("pre-condition: expected source='solver', got %q", sourceBefore)
+	}
+
+	// When: admin toggles player ON via UpdatePlayerStatus.
+	if err := UpdatePlayerStatus(testEventID, testPuljeID, testBHID, true, false, db, logger); err != nil {
+		t.Fatalf("UpdatePlayerStatus returned error: %v", err)
+	}
+
+	// Then: source must now be 'manual'.
+	var sourceAfter string
+	if err := db.QueryRow(
+		`SELECT source FROM relation_events_players WHERE event_id=? AND pulje_id=? AND billettholder_id=?`,
+		testEventID, testPuljeID, testBHID,
+	).Scan(&sourceAfter); err != nil {
+		t.Fatalf("post-condition query failed: %v", err)
+	}
+	if sourceAfter != models.EventPlayerSourceManual {
+		t.Errorf("expected source='manual' after admin upsert, got %q", sourceAfter)
+	}
 }

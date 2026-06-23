@@ -2,6 +2,7 @@ package solver // solver is defined in flow.go
 
 import (
 	"math/rand/v2"
+	"slices"
 	"sort"
 
 	"github.com/Regncon/conorganizer/service/puljefordeling/solver/model"
@@ -411,10 +412,7 @@ func adjustScore(score model.Score, satisfied, neverSeated, isDM bool, misses in
 	w := bandBase(score, satisfied)
 
 	if !satisfied && score == model.MaxScore {
-		bonus := misses * missStep
-		if bonus > missCap {
-			bonus = missCap
-		}
+		bonus := min(misses*missStep, missCap)
 		w += bonus
 	}
 	if !satisfied && neverSeated {
@@ -453,7 +451,7 @@ func (s *State) ApplyActual(slot model.Slot, players []model.Player, assignments
 	// Copy the assignment so sorting/appends never mutate the caller's map.
 	clone := make(map[string][]string, len(assignments))
 	for evID, pids := range assignments {
-		clone[evID] = append([]string(nil), pids...)
+		clone[evID] = slices.Clone(pids)
 	}
 
 	result := model.SlotResult{

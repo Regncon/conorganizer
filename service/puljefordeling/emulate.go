@@ -1,6 +1,8 @@
 // Package puljefordeling runs the seating-distribution solver against live
-// conorganizer data to produce a read-only preview of how participants would
-// be assigned to events in each pulje. It never writes to the database.
+// conorganizer data. EmulateSeatings produces a read-only preview of how
+// participants would be assigned to events in each pulje. The package also
+// provides commit and revert operations that persist or delete solver
+// assignments in the database.
 package puljefordeling
 
 import (
