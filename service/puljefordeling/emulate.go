@@ -20,11 +20,12 @@ import (
 // show how much they wanted this game, whether they carry the DM bump, and
 // whether they were bumped off a stronger preference to make room for others.
 type AssignedPlayer struct {
-	Name   string
-	IsDM   bool                 // runs at least one game in the weekend (DM bump)
-	Level  models.InterestLevel // their interest in the game they got
-	Moved  bool                 // relocated off a higher-scoring event by the solver to make room for others
-	Pinned bool                 // manually placed (source=manual); honored by the solver, not chosen by it
+	Name            string
+	BillettholderID int                  // billettholder id of the seated player (0 if non-numeric)
+	IsDM            bool                 // runs at least one game in the weekend (DM bump)
+	Level           models.InterestLevel // their interest in the game they got
+	Moved           bool                 // relocated off a higher-scoring event by the solver to make room for others
+	Pinned          bool                 // manually placed (source=manual); honored by the solver, not chosen by it
 }
 
 // EmulatedEvent is the proposed seating for a single event within a pulje.
@@ -196,10 +197,11 @@ func assignedPlayers(
 			continue
 		}
 		ap := AssignedPlayer{
-			Name:   names[bh],
-			IsDM:   dmSet[bh],
-			Moved:  moved[id],
-			Pinned: pinned[seatKey(eventID, id)],
+			Name:            names[bh],
+			BillettholderID: bh,
+			IsDM:            dmSet[bh],
+			Moved:           moved[id],
+			Pinned:          pinned[seatKey(eventID, id)],
 		}
 		if byPulje, ok := prefs[bh]; ok {
 			got := byPulje[puljeID][eventID]

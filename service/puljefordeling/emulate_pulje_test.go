@@ -72,3 +72,28 @@ func TestEmulatePulje_MatchesFullEmulationForLastPulje(t *testing.T) {
 		t.Errorf("scoped=%+v want=%+v", scoped, want)
 	}
 }
+
+func TestEmulatePulje_AssignedPlayerHasBillettholderID(t *testing.T) {
+	db, _ := testutil.CreateTestDBAndLogger(t, "test_emulate_pulje_bhid")
+
+	const fredag = models.PuljeFredagKveld
+	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedEvent(t, db, "evF", "Fredagsspill", 4, fredag)
+	seedParticipant(t, db, 7, "Anna", "A")
+	seedInterest(t, db, 7, "evF", fredag, models.InterestLevelHigh)
+
+	pulje, _, err := EmulatePulje(db, fredag)
+	if err != nil {
+		t.Fatalf("EmulatePulje: %v", err)
+	}
+	ev, ok := findEvent(pulje, "evF")
+	if !ok {
+		t.Fatal("evF missing")
+	}
+	if len(ev.AssignedPlayers) != 1 {
+		t.Fatalf("expected 1 assigned player, got %d", len(ev.AssignedPlayers))
+	}
+	if ev.AssignedPlayers[0].BillettholderID != 7 {
+		t.Errorf("expected BillettholderID 7, got %d", ev.AssignedPlayers[0].BillettholderID)
+	}
+}
