@@ -165,6 +165,45 @@ func TestPuljefordelingTabContent_PublishedHidesAssignmentControls(t *testing.T)
 	}
 }
 
+func TestPuljefordelingTabContent_PlayerTilesDragToEventBoxes(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en pulje med et seatet arrangement.",
+		When:  "Når fanen rendres.",
+		Then:  "Så skal spillerflisene kunne dras og arrangementsboksene være slippmål.",
+	})
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_dragdrop")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	seedTabEventWithInterest(t, db, "evA", "Alpha", models.PuljeFredagKveld)
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+
+	tile := doc.Find(".pulje-players li[draggable='true']")
+	if tile.Length() == 0 {
+		t.Fatal("expected a draggable player tile")
+	}
+	if got := tile.AttrOr("data-on:dragstart", ""); !strings.Contains(got, "$draggedBillettholderId = 1") {
+		t.Errorf("tile dragstart should set the dragged billettholder id; got %q", got)
+	}
+
+	drop := doc.Find(".pulje-event").AttrOr("data-on:drop__prevent", "")
+	if !strings.Contains(drop, "/admin/api/puljefordeling/assign") {
+		t.Errorf("event box should be a drop target posting to the assign endpoint; got %q", drop)
+	}
+}
+
+func TestPuljefordelingTabContent_PublishedTilesNotDraggable(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_dragdrop_published")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
+	seedTabEventWithInterest(t, db, "evA", "Alpha", models.PuljeFredagKveld)
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+
+	if n := doc.Find(".pulje-players li[draggable='true']").Length(); n != 0 {
+		t.Errorf("published pulje must not allow dragging, found %d draggable tiles", n)
+	}
+}
+
 func TestPuljeStatusToggles_ReflectLockedAndCompletedState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en pulje som er publisert (Completed).",

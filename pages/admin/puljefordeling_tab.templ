@@ -217,6 +217,8 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje)
 		data-signals:assignment-pulje-id="''"
 		data-signals:assignment-billettholder-id="0"
 		data-signals:clear-input="0"
+		data-signals:dragged-billettholder-id="0"
+		data-signals:drag-over-event="''"
 	>
 		<style>
             .tabs {
@@ -358,6 +360,16 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         }
         .pulje-event:hover {
             border-color: var(--bg-item-border-hover);
+        }
+        .pulje-event.is-drag-over {
+            border-color: var(--color-primary);
+            background-color: var(--bg-surface);
+        }
+        .pulje-players li[draggable="true"] {
+            cursor: grab;
+        }
+        .pulje-players li.is-dragging {
+            opacity: 0.5;
         }
         .pulje-event-top {
             display: flex;
@@ -580,7 +592,17 @@ templ puljeStatusToggles(pulje models.PuljeRow) {
 }
 
 templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, published bool) {
-	<div class={ "pulje-event", templ.KV("missing-dm", ev.GMName == "") }>
+	{{
+		// A non-published event box is a drop target: dropping a dragged player
+		// pins them here via the assign endpoint (mirrors the rooms drag-and-drop).
+		dropAttrs := templ.Attributes{}
+		if !published {
+			dropAttrs["data-on:dragover__prevent"] = fmt.Sprintf("$dragOverEvent = '%s'", ev.EventID)
+			dropAttrs["data-on:drop__prevent"] = fmt.Sprintf("$dragOverEvent = ''; $draggedBillettholderId && (($assignmentBillettholderId = $draggedBillettholderId), ($assignmentEventId = '%s'), ($assignmentPuljeId = '%s'), @post('/admin/api/puljefordeling/assign'))", ev.EventID, string(pulje))
+			dropAttrs["data-class:is-drag-over"] = fmt.Sprintf("$dragOverEvent === '%s'", ev.EventID)
+		}
+	}}
+	<div class={ "pulje-event", templ.KV("missing-dm", ev.GMName == "") } { dropAttrs... }>
 		<div class="pulje-event-top">
 			<h3>{ ev.Title }</h3>
 			<span class="pulje-cap">{ fmt.Sprintf("%d / %d", len(ev.AssignedPlayers), ev.Capacity) }</span>
@@ -596,7 +618,16 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 		if len(ev.AssignedPlayers) > 0 {
 			<ul class="pulje-players">
 				for _, pl := range ev.AssignedPlayers {
-					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) }>
+					{{
+						tileAttrs := templ.Attributes{}
+						if !published {
+							tileAttrs["draggable"] = "true"
+							tileAttrs["data-on:dragstart"] = fmt.Sprintf("$draggedBillettholderId = %d", pl.BillettholderID)
+							tileAttrs["data-on:dragend"] = "$draggedBillettholderId = 0; $dragOverEvent = ''"
+							tileAttrs["data-class:is-dragging"] = fmt.Sprintf("$draggedBillettholderId === %d", pl.BillettholderID)
+						}
+					}}
+					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) } { tileAttrs... }>
 						<span class="pulje-emoji">{ pl.Level.Emoji() }</span>
 						<span class={ templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
 						if pl.Manual && !published {
