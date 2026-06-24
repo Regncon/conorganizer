@@ -1,21 +1,5 @@
 # Con Organizer
 
-## Table of Contents
-
-1. [Why](#why)
-2. [Quick Start](#quick-start)
-    - [Mac/Linux Setup](#maclinux-setup)
-    - [Docker Setup](#docker-setup-recommended-for-windows)
-    - [Direct Installation](#direct-installation)
-3. [Access the Application](#access-the-application)
-4. [Database Issues: events.db Troubleshooting](#database-issues-eventsdb-troubleshooting)
-5. [IDE Setup](#ide-setup)
-    - [Troubleshooting](#troubleshooting)
-6. [Migrations](#migrations)
-7. [Agent Skills Path Compatibility](#agent-skills-path-compatibility)
-8. [Update Dependencies](#update-dependencies)
-9. [Additional Resources](#additional-resources)
-
 ## Why
 
 The main purpose of this project is to help the Regncon festival achieve its goals of having all the players get to play at least one game that they are very interested in during the festival.
