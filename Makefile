@@ -1,13 +1,3 @@
-# Makefile — convenience wrapper around the project's Taskfile (go-task).
-#
-# The authoritative task runner is Taskfile.yml (`go tool task ...`). The dev
-# hot-reload, templ-watch and asset-download flows live there; this Makefile
-# delegates to them so there is a single source of truth, and adds a few plain
-# `go` shortcuts (lint/fmt/vet/tidy/check) that the Taskfile does not define.
-#
-# `task` is declared as a go tool, so `go tool task` works without a global
-# install. Run `make` or `make help` for the list of targets.
-
 TASK := go tool task
 
 .DEFAULT_GOAL := help
@@ -20,8 +10,6 @@ help: ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
 		| sort \
 		| awk 'BEGIN {FS = ":.*?## "} {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
-
-# --- delegated to Taskfile.yml (go-task) -----------------------------------
 
 build: ## Production build to bin/main (generates templ first)
 	$(TASK) build
@@ -48,8 +36,6 @@ download: ## Download local copies of prod DB + event images
 
 kill: ## Kill stray main/templ/air/task processes
 	$(TASK) kill
-
-# --- plain go helpers (not in Taskfile) ------------------------------------
 
 lint: ## Run golangci-lint (external binary)
 	@command -v golangci-lint >/dev/null 2>&1 \
