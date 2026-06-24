@@ -61,9 +61,14 @@ templ adminPage(db *sql.DB) {
 					) {
 						<a role="button" href="/admin/billettholder/" class="btn btn--outline">Gå til billettholdere</a>
 					}
-					<section class="admin-panel-card">
-						@puljefordeling(db)
-					</section>
+					@adminCard(
+						"Puljefordeling",
+						"Se hvordan deltakere fordeles på arrangementer i hver pulje, og lås eller publiser fordelingen.",
+						"/static/call-to-action-avatar.webp",
+						"Pulje distribution",
+					) {
+						<a role="button" href="/admin/puljefordeling/" class="btn btn--outline">Gå til puljefordeling</a>
+					}
                     @adminCard(
 						"Administrer rom",
 						"Her kan du ligge til, modifisere og få en oversikt over tilgjengelige rom",
@@ -71,14 +76,6 @@ templ adminPage(db *sql.DB) {
 						"Administrate rooms",
 					) {
 						<a role="button" href="/admin/rooms/" class="btn btn--outline">Gå til rom-oversikt</a>
-					}
-					@adminCard(
-						"Emulér puljefordeling",
-						"Forhåndsvis hvordan deltakere ville blitt fordelt på arrangementer i puljene, basert på påmeldte ønsker. Ingenting lagres.",
-						"/static/call-to-action-avatar.webp",
-						"Emulate seatings",
-					) {
-						<a role="button" href="/admin/puljefordeling-emulate/" class="btn btn--outline">Emulér fordeling</a>
 					}
 				</div>
 			</div>
