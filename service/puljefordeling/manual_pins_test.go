@@ -66,6 +66,36 @@ func manualSeatCount(t *testing.T, db interface {
 	return n
 }
 
+func TestAddManualSeat_CreatesPinWithoutTouchingInterest(t *testing.T) {
+	db, _ := testutil.CreateTestDBAndLogger(t, "add_manual_seat")
+
+	const fredag = models.PuljeFredagKveld
+	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedEvent(t, db, "evA", "Alpha", 4, fredag)
+	seedParticipant(t, db, 1, "Kari", "Nordmann")
+
+	if err := AddManualSeat(db, fredag, "evA", 1); err != nil {
+		t.Fatalf("AddManualSeat: %v", err)
+	}
+
+	// A manual player pin is created.
+	if got := manualSeatCount(t, db, "evA", fredag, 1); got != 1 {
+		t.Fatalf("want 1 manual seat, got %d", got)
+	}
+
+	// Crucially, no interest is fabricated: unpinning later must revert the player
+	// to pure emulation based on their real interests.
+	var interests int
+	if err := db.QueryRow(
+		`SELECT COUNT(*) FROM interests WHERE event_id='evA' AND billettholder_id=1`,
+	).Scan(&interests); err != nil {
+		t.Fatalf("count interests: %v", err)
+	}
+	if interests != 0 {
+		t.Fatalf("manual pin must not create an interest, found %d", interests)
+	}
+}
+
 func TestRemoveManualSeat_DeletesManualPlayerSeat(t *testing.T) {
 	db, _ := testutil.CreateTestDBAndLogger(t, "remove_manual_seat")
 

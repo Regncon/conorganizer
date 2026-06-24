@@ -599,11 +599,11 @@ templ PuljeAssignmentSearch(db *sql.DB, logger *slog.Logger, pulje models.Pulje)
 	if err != nil {
 		<p style="color: var(--color-error);">Kunne ikke hente billettholdere</p>
 	} else {
-		@billettholderAssignmentActions("", pulje, billettholdere, false)
+		@billettholderAssignmentActions("", pulje, billettholdere, false, "/admin/api/puljefordeling/assign")
 	}
 }
 
-templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder, showGM bool) {
+templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder, showGM bool, playerAddURL string) {
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
 	<style>
 		.billettholder-search {
@@ -653,7 +653,7 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 			}
 			<button
 				class="btn btn--secondary"
-				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_first_choice'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('%s'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId, playerAddURL) }
 			>
 				Legg til som førsteval
 			</button>
@@ -693,7 +693,7 @@ templ puljeSection(eventId string, pulje models.PuljeRow, interests []InterestWi
 			<span class="missing-dm-badge">Mangler spilleder</span>
 		}
 		<h2 style="margin-bottom:1rem;">Finn billettholder!</h2>
-		@billettholderAssignmentActions(eventId, puljeId, billettholdere, true)
+		@billettholderAssignmentActions(eventId, puljeId, billettholdere, true, "/admin/approval/api/event-players/post/add_first_choice")
 		<h2 style="margin-bottom:1rem;">Kven er tildelt?</h2>
 		@playersInPulje(eventId, puljeId, assignees)
 		<h2 style="margin-bottom:1rem;">Kven er interessert?</h2>

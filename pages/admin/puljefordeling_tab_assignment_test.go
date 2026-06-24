@@ -1,6 +1,7 @@
 package admin
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -143,6 +144,75 @@ func TestAddFirstChoiceThenEmulate_PinsAddedPlayer(t *testing.T) {
 		if ap.Name == "Kari Nordmann" && !ap.Manual {
 			t.Errorf("added player should be marked as a manual placement")
 		}
+	}
+}
+
+func postAssignSignals(t *testing.T, router http.Handler, bhID int, eventID, pulje string) *httptest.ResponseRecorder {
+	t.Helper()
+	body := fmt.Sprintf(`{"assignmentBillettholderId":%d,"assignmentEventId":%q,"assignmentPuljeId":%q}`, bhID, eventID, pulje)
+	req := httptest.NewRequest(http.MethodPost, "/api/puljefordeling/assign", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+	return rec
+}
+
+func TestPuljefordelingAssignRoute_PinsWithoutCreatingInterest(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_assign_route")
+	router := chi.NewRouter()
+	puljefordelingRoute(router, db, &live.Manager{}, logger)
+
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
+
+	rec := postAssignSignals(t, router, 1, "evA", "FredagKveld")
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("want 204, got %d (%s)", rec.Code, rec.Body.String())
+	}
+
+	var seats, interests int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM relation_events_players WHERE event_id='evA' AND billettholder_id=1 AND source='manual'`).Scan(&seats); err != nil {
+		t.Fatalf("count seats: %v", err)
+	}
+	if seats != 1 {
+		t.Fatalf("want 1 manual seat, got %d", seats)
+	}
+	if err := db.QueryRow(`SELECT COUNT(*) FROM interests WHERE event_id='evA' AND billettholder_id=1`).Scan(&interests); err != nil {
+		t.Fatalf("count interests: %v", err)
+	}
+	if interests != 0 {
+		t.Fatalf("manual pin must not create an interest, found %d", interests)
+	}
+}
+
+func TestPuljefordelingAssignRoute_RejectsWhenPublished(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_assign_published")
+	router := chi.NewRouter()
+	puljefordelingRoute(router, db, &live.Manager{}, logger)
+
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
+
+	rec := postAssignSignals(t, router, 1, "evA", "FredagKveld")
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("assigning into a published pulje should be 409, got %d", rec.Code)
+	}
+	var seats int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM relation_events_players WHERE event_id='evA' AND billettholder_id=1`).Scan(&seats); err != nil {
+		t.Fatalf("count seats: %v", err)
+	}
+	if seats != 0 {
+		t.Fatalf("no seat should be created for a published pulje, found %d", seats)
 	}
 }
 

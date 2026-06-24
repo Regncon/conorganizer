@@ -17,6 +17,7 @@ import (
 	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
+	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
 // puljefordelingRoute wires the per-pulje tabbed puljefordeling view. The page
@@ -69,6 +70,57 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 				return PuljefordelingTabContent(db, logger, puljeID)
 			},
 		})
+	})
+
+	// Add a manual pin (+). Force-pins the chosen billettholder into the event
+	// without touching their interests; removing the pin reverts them to emulation.
+	router.Post("/api/puljefordeling/assign", func(w http.ResponseWriter, r *http.Request) {
+		type Store struct {
+			BillettholderID int    `json:"assignmentBillettholderId"`
+			EventID         string `json:"assignmentEventId"`
+			PuljeID         string `json:"assignmentPuljeId"`
+		}
+		store := &Store{}
+		if err := datastar.ReadSignals(r, store); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		puljeID, ok := models.ParsePulje(store.PuljeID)
+		if !ok {
+			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+			return
+		}
+		if store.EventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+		if store.BillettholderID <= 0 {
+			http.Error(w, "Invalid billettholder ID", http.StatusBadRequest)
+			return
+		}
+
+		status, err := getPuljeStatus(db, puljeID)
+		if err != nil {
+			logger.Error(err.Error(), "pulje_id", puljeID)
+			http.Error(w, "Failed to read pulje status", http.StatusInternalServerError)
+			return
+		}
+		if puljeIsCompleted(status) {
+			http.Error(w, "Pulje is published; changes are not allowed", http.StatusConflict)
+			return
+		}
+
+		if err := puljefordeling.AddManualSeat(db, puljeID, store.EventID, store.BillettholderID); err != nil {
+			logger.Error(err.Error(), "pulje_id", puljeID, "event_id", store.EventID, "billettholder_id", store.BillettholderID)
+			http.Error(w, "Failed to add manual seat", http.StatusInternalServerError)
+			return
+		}
+
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast manual seat add: %w", err).Error(), "pulje_id", puljeID, "event_id", store.EventID)
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	})
 
 	// Remove a manual pin (×). Manual-only: solver/GM rows are untouched. The
