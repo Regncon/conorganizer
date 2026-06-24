@@ -183,8 +183,8 @@ templ roomEventCard(event models.RoomEventPuljeSummary, eventImageDir *string) {
 templ roomPuljeContainer(room models.RoomByPulje, pulje models.Pulje, eventImageDir *string) {
 	<div
 		class="room"
-		data-on:dragover={ fmt.Sprintf("evt.preventDefault(); $dragOverRoom = %d", room.ID) }
-		data-on:drop={ fmt.Sprintf("evt.preventDefault(); $dragOverRoom = 0; $draggedEventId && @post('/admin/rooms/api/assignment/%s/' + $draggedEventId + '/%d')", string(pulje), room.ID) }
+		data-on:dragover__prevent={ fmt.Sprintf("$dragOverRoom = %d", room.ID) }
+		data-on:drop__prevent={ fmt.Sprintf("$dragOverRoom = 0; $draggedEventId && @post('/admin/rooms/api/assignment/%s/' + $draggedEventId + '/%d')", string(pulje), room.ID) }
 		data-class:is-drag-over={ fmt.Sprintf("$dragOverRoom === %d", room.ID) }
 		{ errorfeedback.Attrs("room-assignment", "Klarte ikkje å tildele rommet. Prøv igjen.")... }
 		style={ templ.KV("background-color: var(--bg-surface)", room.IsDisabled),

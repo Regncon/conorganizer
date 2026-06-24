@@ -110,7 +110,7 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 		t.Fatal("expected a room drop target")
 	}
 	wantDrop := "@post('/admin/rooms/api/assignment/FredagKveld/' + $draggedEventId + '/1')"
-	if got := roomDropTarget.AttrOr("data-on:drop", ""); !strings.Contains(got, wantDrop) {
+	if got := roomDropTarget.AttrOr("data-on:drop__prevent", ""); !strings.Contains(got, wantDrop) {
 		t.Fatalf("room drop handler mismatch\nexpected to contain: %s\nactual:              %s", wantDrop, got)
 	}
 	if got := doc.Find(`.room-event[draggable="true"]`).AttrOr("data-on:dragstart", ""); got != "$draggedEventId = 'assigned-room-event'" {
