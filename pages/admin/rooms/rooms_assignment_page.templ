@@ -3,6 +3,7 @@ package rooms
 import (
 	"database/sql"
 	"fmt"
+	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
@@ -166,8 +167,9 @@ templ roomEventCard(event models.RoomEventPuljeSummary, eventImageDir *string) {
 		href={ "/admin/approval/edit/" + event.EventID }
 		class="room-event"
 		draggable="true"
-		data-dnd-kind="room-event"
-		data-dnd-id={ event.EventID }
+		data-on:dragstart={ fmt.Sprintf("$draggedEventId = '%s'", event.EventID) }
+		data-on:dragend="$draggedEventId = ''; $dragOverRoom = 0"
+		data-class:is-dragging={ fmt.Sprintf("$draggedEventId === '%s'", event.EventID) }
 	>
 		<img
 			src={ imageBannerUrl }
@@ -181,8 +183,10 @@ templ roomEventCard(event models.RoomEventPuljeSummary, eventImageDir *string) {
 templ roomPuljeContainer(room models.RoomByPulje, pulje models.Pulje, eventImageDir *string) {
 	<div
 		class="room"
-		data-dnd-accept="room-event"
-		data-dnd-drop-url-template={ fmt.Sprintf("/admin/rooms/api/assignment/%s/{id}/%d", string(pulje), room.ID) }
+		data-on:dragover={ fmt.Sprintf("evt.preventDefault(); $dragOverRoom = %d", room.ID) }
+		data-on:drop={ fmt.Sprintf("evt.preventDefault(); $dragOverRoom = 0; $draggedEventId && @post('/admin/rooms/api/assignment/%s/' + $draggedEventId + '/%d')", string(pulje), room.ID) }
+		data-class:is-drag-over={ fmt.Sprintf("$dragOverRoom === %d", room.ID) }
+		{ errorfeedback.Attrs("room-assignment", "Klarte ikkje å tildele rommet. Prøv igjen.")... }
 		style={ templ.KV("background-color: var(--bg-surface)", room.IsDisabled),
         templ.KV("border-color: var(--color-error)", room.IsDisabled && len(room.AssignedEventsID)>0) }
 	>
@@ -394,13 +398,19 @@ templ RoomsAssignmentPage(db *sql.DB, logger *slog.Logger, pulje models.Pulje, e
             opacity: 0.5;
         }
 	</style>
-	<script type="module" src="/static/js/admin_drag_drop.js"></script>
 	@assignEventModal(db, logger, pulje, eventImageDir)
 	@RoomsAssignmentPageContent(db, logger, pulje, eventImageDir)
 }
 
 templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
-	<section id="room-assignment" class="rooms-section" data-init={ live.DatastarInit(fmt.Sprintf("/admin/rooms/api/assignment/%s", pulje)) }>
+	<section
+		id="room-assignment"
+		class="rooms-section"
+		data-init={ live.DatastarInit(fmt.Sprintf("/admin/rooms/api/assignment/%s", pulje)) }
+		data-signals:dragged-event-id="''"
+		data-signals:drag-over-room="0"
+	>
+		@errorfeedback.RenderMessage("room-assignment")
 		{{ events := getEventInPulje(db, logger, pulje, true) }}
 		if len(events) > 0 {
 			<h2>{ len(events) } Eventer i pulje uten tildelt rom</h2>
@@ -411,8 +421,8 @@ templ RoomsAssignmentPageContent(db *sql.DB, logger *slog.Logger, pulje models.P
 						href={ "/admin/approval/edit/" + event.EventID }
 						class="btn btn--outline"
 						draggable="true"
-						data-dnd-kind="room-event"
-						data-dnd-id={ event.EventID }
+						data-on:dragstart={ fmt.Sprintf("$draggedEventId = '%s'", event.EventID) }
+						data-on:dragend="$draggedEventId = ''; $dragOverRoom = 0"
 					>{ event.Title } ({ event.MaxPlayers })</a>
 				}
 			</div>

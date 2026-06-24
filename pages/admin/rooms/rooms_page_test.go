@@ -103,18 +103,21 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 		}
 	}
 
-	roomDropTarget := doc.Find(`.room[data-dnd-accept="room-event"]`)
+	// Drag-and-drop is wired with Datastar: drop targets @post via the
+	// $draggedEventId signal set on dragstart — no custom fetch or headers.
+	roomDropTarget := doc.Find(".room")
 	if roomDropTarget.Length() == 0 {
-		t.Fatal("expected room to be an event drop target")
+		t.Fatal("expected a room drop target")
 	}
-	if got := roomDropTarget.AttrOr("data-dnd-drop-url-template", ""); got != "/admin/rooms/api/assignment/FredagKveld/{id}/1" {
-		t.Fatalf("room drop url template mismatch\nexpected: %s\nactual:   %s", "/admin/rooms/api/assignment/FredagKveld/{id}/1", got)
+	wantDrop := "@post('/admin/rooms/api/assignment/FredagKveld/' + $draggedEventId + '/1')"
+	if got := roomDropTarget.AttrOr("data-on:drop", ""); !strings.Contains(got, wantDrop) {
+		t.Fatalf("room drop handler mismatch\nexpected to contain: %s\nactual:              %s", wantDrop, got)
 	}
-	if doc.Find(`.room-event[draggable="true"][data-dnd-kind="room-event"][data-dnd-id="assigned-room-event"]`).Length() == 0 {
-		t.Fatal("expected assigned room event card to be draggable")
+	if got := doc.Find(`.room-event[draggable="true"]`).AttrOr("data-on:dragstart", ""); got != "$draggedEventId = 'assigned-room-event'" {
+		t.Fatalf("assigned room event card should set the dragged signal on dragstart\nactual: %s", got)
 	}
-	if doc.Find(`.event-list a[draggable="true"][data-dnd-kind="room-event"][data-dnd-id="missing-room-event"]`).Length() == 0 {
-		t.Fatal("expected missing-room event link to be draggable")
+	if got := doc.Find(`.event-list a[draggable="true"]`).AttrOr("data-on:dragstart", ""); got != "$draggedEventId = 'missing-room-event'" {
+		t.Fatalf("missing-room event link should set the dragged signal on dragstart\nactual: %s", got)
 	}
 }
 
