@@ -114,6 +114,30 @@ func TestPuljefordelingTabContent_ShowsRunningUnsatisfiedCount(t *testing.T) {
 	}
 }
 
+func TestPuljefordelingTabContent_WarnsWhenEventHasNoDm(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et arrangement i en pulje uten tildelt spilleder.",
+		When:  "Når puljefordeling-fanen rendres.",
+		Then:  "Så skal arrangementet markeres som at det mangler spilleder.",
+	})
+
+	// Given: an event in the pulje with no GM assigned.
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_missing_dm")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
+
+	// When
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+	text := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
+
+	// Then
+	if !strings.Contains(text, "Mangler spilleder") {
+		t.Fatalf("event without a DM should be flagged 'Mangler spilleder'\nactual text: %s", text)
+	}
+}
+
 func TestPuljeStatusToggles_ReflectLockedAndCompletedState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en pulje som er publisert (Completed).",

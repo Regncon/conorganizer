@@ -302,6 +302,13 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             color: var(--color-text-soft);
             font-style: italic;
         }
+        .pulje-gm-missing {
+            color: var(--color-text-warning, #e0a030);
+            font-style: italic;
+        }
+        .pulje-event.missing-dm {
+            border-color: var(--color-text-warning, #e0a030);
+        }
         .pulje-badge {
             align-self: flex-start;
             padding: 0 var(--spacing-2x);
@@ -495,13 +502,15 @@ templ puljeStatusToggles(pulje models.PuljeRow) {
 }
 
 templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent) {
-	<div class="pulje-event">
+	<div class={ "pulje-event", templ.KV("missing-dm", ev.GMName == "") }>
 		<div class="pulje-event-top">
 			<h3>{ ev.Title }</h3>
 			<span class="pulje-cap">{ fmt.Sprintf("%d / %d", len(ev.AssignedPlayers), ev.Capacity) }</span>
 		</div>
 		if ev.GMName != "" {
 			<p class="pulje-gm">Spilleder: { ev.GMName }</p>
+		} else {
+			<p class="pulje-gm-missing">Mangler spilleder</p>
 		}
 		if ev.Undersubscribed {
 			<span class="pulje-badge">Få deltakere</span>
