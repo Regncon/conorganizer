@@ -40,8 +40,13 @@ func TestEmulateSeatings_ManualPinSeatsPlayerWithoutInterest(t *testing.T) {
 		t.Fatalf("manual pin should seat Kari in evA, got %v", playerNames(evA.AssignedPlayers))
 	}
 	for _, ap := range evA.AssignedPlayers {
-		if ap.Name == "Kari Nordmann" && !ap.Manual {
-			t.Errorf("Kari was added manually and should be marked Manual")
+		if ap.Name == "Kari Nordmann" {
+			if !ap.Manual {
+				t.Errorf("Kari was added manually and should be marked Manual")
+			}
+			if ap.BillettholderID != 1 {
+				t.Errorf("assigned player should carry the billettholder id for removal: want 1, got %d", ap.BillettholderID)
+			}
 		}
 	}
 }

@@ -18,11 +18,12 @@ import (
 // show how much they wanted this game, whether they carry the DM bump, and
 // whether they were bumped off a stronger preference to make room for others.
 type AssignedPlayer struct {
-	Name   string
-	IsDM   bool                 // runs at least one game in the weekend (DM bump)
-	Level  models.InterestLevel // their interest in the game they got
-	Moved  bool                 // relocated off a higher-scoring event by the solver to make room for others
-	Manual bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
+	BillettholderID int // participant id, for manual-seat removal from the UI
+	Name            string
+	IsDM            bool                 // runs at least one game in the weekend (DM bump)
+	Level           models.InterestLevel // their interest in the game they got
+	Moved           bool                 // relocated off a higher-scoring event by the solver to make room for others
+	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
 }
 
 // Seat sources recorded on relation_events_players. Manual seats are admin pins
@@ -211,7 +212,7 @@ func assignedPlayers(
 			out = append(out, AssignedPlayer{Name: id})
 			continue
 		}
-		ap := AssignedPlayer{Name: names[bh], IsDM: dmSet[bh], Moved: moved[id], Manual: manual[id] == eventID}
+		ap := AssignedPlayer{BillettholderID: bh, Name: names[bh], IsDM: dmSet[bh], Moved: moved[id], Manual: manual[id] == eventID}
 		if byPulje, ok := prefs[bh]; ok {
 			got := byPulje[puljeID][eventID]
 			ap.Level = models.InterestLevelFromScore(int(got))

@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
@@ -50,8 +52,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		})
 	})
 
-	// SSE endpoint: streams just the tab content for the viewed pulje, refreshing
-	// whenever events/interests change (BucketEvents), mirroring the rooms api.
+	// SSE endpoint: streams just the tab content for the viewed pulje. The
+	// distribution is driven by interests and manual pins, so it refreshes on both
+	// BucketEvents and BucketInterests (the add endpoints broadcast Interests).
 	router.Get("/api/puljefordeling/{pulje}", func(w http.ResponseWriter, r *http.Request) {
 		puljeQuery := chi.URLParam(r, "pulje")
 		puljeID, ok := models.ParsePulje(puljeQuery)
@@ -61,11 +64,44 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		}
 
 		liveManager.Stream(w, r, live.Page{
-			Buckets: []live.Bucket{live.BucketEvents},
+			Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests},
 			Render: func(ctx context.Context, r *http.Request) templ.Component {
 				return PuljefordelingTabContent(db, logger, puljeID)
 			},
 		})
+	})
+
+	// Remove a manual pin (×). Manual-only: solver/GM rows are untouched. The
+	// player's interest is kept, so the solver may re-seat them by simulation.
+	router.Delete("/api/puljefordeling/{pulje}/{event}/{billettholderId}", func(w http.ResponseWriter, r *http.Request) {
+		puljeID, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
+		if !ok {
+			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+			return
+		}
+		eventID := chi.URLParam(r, "event")
+		if eventID == "" {
+			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			return
+		}
+		billettholderID, err := strconv.Atoi(chi.URLParam(r, "billettholderId"))
+		if err != nil {
+			http.Error(w, "Invalid billettholder ID", http.StatusBadRequest)
+			return
+		}
+
+		if err := puljefordeling.RemoveManualSeat(db, puljeID, eventID, billettholderID); err != nil {
+			logger.Error(err.Error(), "pulje_id", puljeID, "event_id", eventID, "billettholder_id", billettholderID)
+			http.Error(w, "Failed to remove manual seat", http.StatusInternalServerError)
+			return
+		}
+
+		// Best-effort live refresh; a failed broadcast must not fail the request.
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast manual seat removal: %w", err).Error(), "pulje_id", puljeID, "event_id", eventID)
+		}
+
+		w.WriteHeader(http.StatusNoContent)
 	})
 }
 
@@ -287,6 +323,36 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-players li.moved {
             border-left: 3px solid #e05050;
         }
+        .pulje-players li.manual {
+            border-left: 3px solid var(--color-primary);
+        }
+        .pulje-remove {
+            margin-left: auto;
+            flex: 0 0 auto;
+            border: none;
+            background: transparent;
+            color: var(--color-text-soft);
+            cursor: pointer;
+            line-height: 1;
+            padding: 0 var(--spacing-1x);
+        }
+        .pulje-remove:hover {
+            color: var(--color-text-error, #e05050);
+        }
+        .pulje-add {
+            align-self: flex-start;
+            margin-top: var(--spacing-1x);
+            border: 1px solid var(--bg-item-border);
+            border-radius: var(--border-radius-1x);
+            background: transparent;
+            color: var(--color-text-soft);
+            cursor: pointer;
+            padding: var(--spacing-1x) var(--spacing-2x);
+        }
+        .pulje-add:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
         .pulje-emoji {
             flex: 0 0 auto;
             width: 1.4em;
@@ -321,6 +387,10 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		class="rooms-section"
 		data-init={ live.DatastarInit(fmt.Sprintf("/admin/api/puljefordeling/%s", pulje)) }
 		data-signals:pulje-status={ fmt.Sprintf("'%s'", string(row.Status)) }
+		data-signals:assignment-event-id="''"
+		data-signals:assignment-pulje-id="''"
+		data-signals:assignment-billettholder-id="0"
+		data-signals:clear-input="0"
 	>
 		<div class="pulje-tab-header">
 			<div>
@@ -356,7 +426,7 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		} else {
 			<div class="pulje-event-grid">
 				for _, ev := range result.Events {
-					@puljeEventBox(ev)
+					@puljeEventBox(pulje, ev)
 				}
 			</div>
 			if len(result.Unassigned) > 0 {
@@ -365,8 +435,24 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 					<p>{ strings.Join(result.Unassigned, ", ") }</p>
 				</div>
 			}
+			@puljeAssignDialog(db, logger, pulje)
 		}
 	</section>
+}
+
+// puljeAssignDialog is the single shared picker dialog for the page. The + button
+// on each event box sets $assignmentEventId before opening it, so the picker adds
+// the chosen billettholder to that event (reusing the approval add endpoints).
+templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+	<dialog id="puljefordeling-assign-dialog" closedBy="any">
+		<h3>Legg til deltaker</h3>
+		@formsubmission.PuljeAssignmentSearch(db, logger, pulje)
+		<button
+			class="btn btn--outline"
+			type="button"
+			data-on:click="document.getElementById('puljefordeling-assign-dialog').close()"
+		>Lukk</button>
+	</dialog>
 }
 
 templ puljeStatusToggles(pulje models.PuljeRow) {
@@ -406,7 +492,7 @@ templ puljeStatusToggles(pulje models.PuljeRow) {
 	</div>
 }
 
-templ puljeEventBox(ev puljefordeling.EmulatedEvent) {
+templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent) {
 	<div class="pulje-event">
 		<div class="pulje-event-top">
 			<h3>{ ev.Title }</h3>
@@ -421,14 +507,27 @@ templ puljeEventBox(ev puljefordeling.EmulatedEvent) {
 		if len(ev.AssignedPlayers) > 0 {
 			<ul class="pulje-players">
 				for _, pl := range ev.AssignedPlayers {
-					<li class={ templ.KV("moved", pl.Moved) }>
+					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) }>
 						<span class="pulje-emoji">{ pl.Level.Emoji() }</span>
 						<span class={ templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
+						if pl.Manual {
+							<button
+								type="button"
+								class="pulje-remove"
+								title="Fjern manuell plassering"
+								data-on:click={ fmt.Sprintf("@delete('/admin/api/puljefordeling/%s/%s/%d')", string(pulje), ev.EventID, pl.BillettholderID) }
+							>×</button>
+						}
 					</li>
 				}
 			</ul>
 		} else {
 			<p class="pulje-empty">Ingen deltakere</p>
 		}
+		<button
+			type="button"
+			class="pulje-add"
+			data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; document.getElementById('puljefordeling-assign-dialog').showModal()", ev.EventID, string(pulje)) }
+		>+ Legg til deltaker</button>
 	</div>
 }
