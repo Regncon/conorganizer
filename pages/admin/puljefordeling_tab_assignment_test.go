@@ -70,23 +70,34 @@ func TestPuljefordelingTabContent_RendersAddPickerAndManualRemove(t *testing.T) 
 		t.Fatalf("render html: %v", err)
 	}
 
-	wants := []string{
-		// The shared picker dialog and custom search element are present.
-		"puljefordeling-assign-dialog",
-		"admin-billettholder-search",
-		// The × on Kari's manual tile deletes her manual seat.
-		"/admin/api/puljefordeling/FredagKveld/evA/1",
-	}
-	for _, want := range wants {
-		if !strings.Contains(html, want) {
-			t.Errorf("rendered tab should contain %q", want)
-		}
+	// The × on Kari's manual tile deletes her manual seat.
+	if !strings.Contains(html, "/admin/api/puljefordeling/FredagKveld/evA/1") {
+		t.Errorf("manual tile should contain the remove URL")
 	}
 
 	// The + button opens the dialog scoped to this event (attribute decoded).
 	addClick := doc.Find(".pulje-add").AttrOr("data-on:click", "")
 	if !strings.Contains(addClick, "$assignmentEventId = 'evA'") {
 		t.Errorf("+ button should set assignmentEventId to the event; got %q", addClick)
+	}
+}
+
+// The picker is a modal dialog. If it renders inside the SSE-updated section
+// (#puljefordeling-tab), every add re-renders the section and orphans the open
+// modal's backdrop, locking the page. It must live in the stable outer wrapper.
+func TestPuljefordelingIndex_DialogRendersOutsideLiveRegion(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_dialog_placement")
+
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+
+	doc := templtest.Render(t, puljefordelingIndex(db, logger, fredag))
+
+	if got := doc.Find("#puljefordeling-assign-dialog").Length(); got != 1 {
+		t.Fatalf("expected exactly one assign dialog, got %d", got)
+	}
+	if got := doc.Find("#puljefordeling-tab #puljefordeling-assign-dialog").Length(); got != 0 {
+		t.Errorf("assign dialog must NOT be inside the live #puljefordeling-tab section (orphans the modal backdrop on SSE re-render)")
 	}
 }
 

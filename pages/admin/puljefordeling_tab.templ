@@ -147,7 +147,13 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje)
 		{Name: "Admin", Url: "/admin/"},
 		{Name: "Puljefordeling", Url: ""},
 	})
-	<div class="page-content-container flex flex-col">
+	<div
+		class="page-content-container flex flex-col"
+		data-signals:assignment-event-id="''"
+		data-signals:assignment-pulje-id="''"
+		data-signals:assignment-billettholder-id="0"
+		data-signals:clear-input="0"
+	>
 		<style>
             .tabs {
                 display: flex;
@@ -199,6 +205,7 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje)
 			}
 		</div>
 		@PuljefordelingTabContent(db, logger, current)
+		@puljeAssignDialog(db, logger, current)
 	</div>
 }
 
@@ -387,10 +394,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		class="rooms-section"
 		data-init={ live.DatastarInit(fmt.Sprintf("/admin/api/puljefordeling/%s", pulje)) }
 		data-signals:pulje-status={ fmt.Sprintf("'%s'", string(row.Status)) }
-		data-signals:assignment-event-id="''"
-		data-signals:assignment-pulje-id="''"
-		data-signals:assignment-billettholder-id="0"
-		data-signals:clear-input="0"
 	>
 		<div class="pulje-tab-header">
 			<div>
@@ -435,7 +438,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 					<p>{ strings.Join(result.Unassigned, ", ") }</p>
 				</div>
 			}
-			@puljeAssignDialog(db, logger, pulje)
 		}
 	</section>
 }
