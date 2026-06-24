@@ -105,23 +105,36 @@ tasks:
               --build.bin "tmp/bin/main" \
               --build.delay "1500" \
               --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
-              --build.include_ext "go,js,css,html,svg,webp,ico,png,jpg,jpeg,avif" \
+              --build.include_ext "go" \
               --build.include_file ".env" \
               --build.poll "true" \
               --build.poll_interval "500" \
               --build.stop_on_error "false" \
-              --proxy.enabled "true" \
-              --proxy.app_port "8080" \
-              --proxy.proxy_port "7331" \
-              --proxy.app_start_timeout "10000" \
+              --proxy.enabled "false" \
+              --misc.clean_on_exit true
+
+    start:reload:
+        cmds:
+            - |
+              go tool air \
+              --build.cmd "curl -fsS http://localhost:8080/hotreload >/dev/null || true" \
+              --build.bin "true" \
+              --build.delay "200" \
+              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
+              --build.include_dir "$STATIC_DIR" \
+              --build.include_ext "js,css,html,svg,webp,ico,png,jpg,jpeg,avif" \
+              --build.poll "true" \
+              --build.poll_interval "500" \
+              --build.stop_on_error "false" \
+              --proxy.enabled "false" \
               --misc.clean_on_exit true
 
     start:
         deps:
             - start:templ
+            - start:reload
             - start:server
 
-    # Similar to above task, but recolors log levels
     start:logcolors:
         cmds:
             - |
