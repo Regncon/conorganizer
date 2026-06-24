@@ -146,6 +146,39 @@ func TestAddFirstChoiceThenEmulate_PinsAddedPlayer(t *testing.T) {
 	}
 }
 
+func TestPuljefordelingRemoveManualSeatRoute_RejectsWhenPublished(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_remove_published")
+	router := chi.NewRouter()
+	puljefordelingRoute(router, db, &live.Manager{}, logger)
+
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES ('evA',?,1,'Player','manual')`, string(fredag))
+
+	req := httptest.NewRequest(http.MethodDelete, "/api/puljefordeling/FredagKveld/evA/1", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusConflict {
+		t.Fatalf("removing from a published pulje should be rejected with 409, got %d", rec.Code)
+	}
+	var n int
+	if err := db.QueryRow(
+		`SELECT COUNT(*) FROM relation_events_players WHERE event_id='evA' AND billettholder_id=1 AND source='manual'`,
+	).Scan(&n); err != nil {
+		t.Fatalf("count manual seats: %v", err)
+	}
+	if n != 1 {
+		t.Fatalf("manual seat must survive a rejected remove, found %d", n)
+	}
+}
+
 func TestPuljefordelingRemoveManualSeatRoute_RejectsInvalidPulje(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_remove_route_invalid")
 	router := chi.NewRouter()

@@ -90,6 +90,18 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 			return
 		}
 
+		// A published pulje is frozen: no assignment changes until it is unpublished.
+		status, err := getPuljeStatus(db, puljeID)
+		if err != nil {
+			logger.Error(err.Error(), "pulje_id", puljeID)
+			http.Error(w, "Failed to read pulje status", http.StatusInternalServerError)
+			return
+		}
+		if puljeIsCompleted(status) {
+			http.Error(w, "Pulje is published; changes are not allowed", http.StatusConflict)
+			return
+		}
+
 		if err := puljefordeling.RemoveManualSeat(db, puljeID, eventID, billettholderID); err != nil {
 			logger.Error(err.Error(), "pulje_id", puljeID, "event_id", eventID, "billettholder_id", billettholderID)
 			http.Error(w, "Failed to remove manual seat", http.StatusInternalServerError)
@@ -435,7 +447,7 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		} else {
 			<div class="pulje-event-grid">
 				for _, ev := range result.Events {
-					@puljeEventBox(pulje, ev)
+					@puljeEventBox(pulje, ev, puljeIsCompleted(row.Status))
 				}
 			</div>
 			if len(result.Unassigned) > 0 {
@@ -500,7 +512,7 @@ templ puljeStatusToggles(pulje models.PuljeRow) {
 	</div>
 }
 
-templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent) {
+templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, published bool) {
 	<div class={ "pulje-event", templ.KV("missing-dm", ev.GMName == "") }>
 		<div class="pulje-event-top">
 			<h3>{ ev.Title }</h3>
@@ -520,7 +532,7 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent) {
 					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) }>
 						<span class="pulje-emoji">{ pl.Level.Emoji() }</span>
 						<span class={ templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
-						if pl.Manual {
+						if pl.Manual && !published {
 							<button
 								type="button"
 								class="pulje-remove"
@@ -534,10 +546,12 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent) {
 		} else {
 			<p class="pulje-empty">Ingen deltakere</p>
 		}
-		<button
-			type="button"
-			class="pulje-add"
-			data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; document.getElementById('puljefordeling-assign-dialog').showModal()", ev.EventID, string(pulje)) }
-		>+ Legg til deltaker</button>
+		if !published {
+			<button
+				type="button"
+				class="pulje-add"
+				data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; document.getElementById('puljefordeling-assign-dialog').showModal()", ev.EventID, string(pulje)) }
+			>+ Legg til deltaker</button>
+		}
 	</div>
 }

@@ -138,6 +138,33 @@ func TestPuljefordelingTabContent_WarnsWhenEventHasNoDm(t *testing.T) {
 	}
 }
 
+func TestPuljefordelingTabContent_PublishedHidesAssignmentControls(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en publisert (Completed) pulje med en manuell plassering.",
+		When:  "Når puljefordeling-fanen rendres.",
+		Then:  "Så skal verken «legg til» eller «fjern»-kontrollene vises.",
+	})
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_published_readonly")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES ('evA',?,1,'Player','manual')`, string(models.PuljeFredagKveld))
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+
+	if n := doc.Find(".pulje-add").Length(); n != 0 {
+		t.Errorf("published pulje must not show the add button, found %d", n)
+	}
+	if n := doc.Find(".pulje-remove").Length(); n != 0 {
+		t.Errorf("published pulje must not show remove controls, found %d", n)
+	}
+}
+
 func TestPuljeStatusToggles_ReflectLockedAndCompletedState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en pulje som er publisert (Completed).",
