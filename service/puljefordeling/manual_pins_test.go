@@ -96,6 +96,46 @@ func TestAddManualSeat_CreatesPinWithoutTouchingInterest(t *testing.T) {
 	}
 }
 
+func TestAddManualSeat_MoveClearsPreviousEventSeat(t *testing.T) {
+	db, _ := testutil.CreateTestDBAndLogger(t, "add_manual_seat_move")
+
+	const fredag = models.PuljeFredagKveld
+	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedEvent(t, db, "evA", "Alpha", 4, fredag)
+	seedEvent(t, db, "evB", "Bravo", 4, fredag)
+	seedParticipant(t, db, 1, "Kari", "Nordmann")
+
+	// Pin into A, then move to B. The participant must end up in exactly one event.
+	if err := AddManualSeat(db, fredag, "evA", 1); err != nil {
+		t.Fatalf("AddManualSeat A: %v", err)
+	}
+	if err := AddManualSeat(db, fredag, "evB", 1); err != nil {
+		t.Fatalf("AddManualSeat B: %v", err)
+	}
+
+	var count int
+	if err := db.QueryRow(
+		`SELECT COUNT(*) FROM relation_events_players WHERE pulje_id=? AND billettholder_id=1 AND role='Player'`,
+		string(fredag),
+	).Scan(&count); err != nil {
+		t.Fatalf("count seats: %v", err)
+	}
+	if count != 1 {
+		t.Fatalf("moving a pin must leave exactly one seat, got %d", count)
+	}
+
+	var eventID string
+	if err := db.QueryRow(
+		`SELECT event_id FROM relation_events_players WHERE pulje_id=? AND billettholder_id=1`,
+		string(fredag),
+	).Scan(&eventID); err != nil {
+		t.Fatalf("read seat: %v", err)
+	}
+	if eventID != "evB" {
+		t.Errorf("after move the single seat should be in evB, got %q", eventID)
+	}
+}
+
 func TestRemoveManualSeat_DeletesManualPlayerSeat(t *testing.T) {
 	db, _ := testutil.CreateTestDBAndLogger(t, "remove_manual_seat")
 

@@ -11,20 +11,32 @@ import (
 // writing a player seat tagged source='manual'. It deliberately does NOT touch
 // the participant's interests: the pin forces and locks the placement on its own
 // (the solver honours manual seats), and removing the pin reverts the player to
-// pure emulation based on their real interests. If a seat already exists it is
-// reclaimed as a manual player seat.
+// pure emulation based on their real interests. A participant holds at most one
+// player seat per pulje, so moving them between events leaves a single pin.
 func AddManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholderID int) error {
-	const query = `
-		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
-		VALUES (?, ?, ?, ?, ?)
-		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
-			role = EXCLUDED.role,
-			source = EXCLUDED.source
-	`
-	if _, err := db.Exec(query, eventID, string(pulje), billettholderID, models.EventPlayerRolePlayer, SourceManual); err != nil {
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin add manual seat tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	// Clear any prior player seat in this pulje first, so a move leaves a single
+	// pin — and once that pin is removed the player reverts to wherever the solver
+	// wants them.
+	if _, err := tx.Exec(
+		`DELETE FROM relation_events_players WHERE billettholder_id = ? AND pulje_id = ? AND role = ?`,
+		billettholderID, string(pulje), models.EventPlayerRolePlayer,
+	); err != nil {
+		return fmt.Errorf("clear prior seat (pulje=%s bh=%d): %w", pulje, billettholderID, err)
+	}
+	if _, err := tx.Exec(
+		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		 VALUES (?, ?, ?, ?, ?)`,
+		eventID, string(pulje), billettholderID, models.EventPlayerRolePlayer, SourceManual,
+	); err != nil {
 		return fmt.Errorf("add manual seat (pulje=%s event=%s bh=%d): %w", pulje, eventID, billettholderID, err)
 	}
-	return nil
+	return tx.Commit()
 }
 
 // RemoveManualSeat deletes an admin-pinned player seat (source='manual',
