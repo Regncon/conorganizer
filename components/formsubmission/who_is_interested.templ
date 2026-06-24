@@ -664,11 +664,34 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 
 templ puljeSection(eventId string, pulje models.PuljeRow, interests []InterestWithHolder, assignees []InterestWithHolder, showGmForm bool, billettholdere []Billettholder) {
 	{{ puljeId := pulje.ID }}
+	{{
+		hasGM := false
+		for _, a := range assignees {
+			if a.PuljeId == string(puljeId) && a.IsGamemaster {
+				hasGM = true
+				break
+			}
+		}
+	}}
 	<article
 		class="form-card"
 		data-style:display={ fmt.Sprintf("(!$isInPulje%s || !$isPublished%s) && 'none' || ''", puljeId, puljeId) }
 	>
+		<style>
+			.missing-dm-badge {
+				align-self: flex-start;
+				display: inline-block;
+				padding: 0 var(--spacing-2x);
+				border-radius: var(--border-radius-1x);
+				background-color: var(--bg-surface);
+				color: var(--color-text-error, #e05050);
+				font-size: var(--text-small, 0.85rem);
+			}
+		</style>
 		<h2 style="margin-bottom:1rem;">{ pulje.Name } <span>({ pulje.TimeRange() })</span></h2>
+		if !hasGM {
+			<span class="missing-dm-badge">Mangler spilleder</span>
+		}
 		<h2 style="margin-bottom:1rem;">Finn billettholder!</h2>
 		@billettholderAssignmentActions(eventId, puljeId, billettholdere, true)
 		<h2 style="margin-bottom:1rem;">Kven er tildelt?</h2>
