@@ -599,11 +599,11 @@ templ PuljeAssignmentSearch(db *sql.DB, logger *slog.Logger, pulje models.Pulje)
 	if err != nil {
 		<p style="color: var(--color-error);">Kunne ikke hente billettholdere</p>
 	} else {
-		@billettholderAssignmentActions("", pulje, billettholdere)
+		@billettholderAssignmentActions("", pulje, billettholdere, false)
 	}
 }
 
-templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
+templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder, showGM bool) {
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
 	<style>
 		.billettholder-search {
@@ -643,12 +643,14 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 			input-tippy="Søk etter billettholder"
 		></admin-billettholder-search>
 		<div class="billettholder-search-buttons">
-			<button
-				class="btn btn--secondary"
-				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_gm'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
-			>
-				Legg til som { models.EventPlayerRoleGM.Label() }
-			</button>
+			if showGM {
+				<button
+					class="btn btn--secondary"
+					data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_gm'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+				>
+					Legg til som { models.EventPlayerRoleGM.Label() }
+				</button>
+			}
 			<button
 				class="btn btn--secondary"
 				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_first_choice'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
@@ -668,7 +670,7 @@ templ puljeSection(eventId string, pulje models.PuljeRow, interests []InterestWi
 	>
 		<h2 style="margin-bottom:1rem;">{ pulje.Name } <span>({ pulje.TimeRange() })</span></h2>
 		<h2 style="margin-bottom:1rem;">Finn billettholder!</h2>
-		@billettholderAssignmentActions(eventId, puljeId, billettholdere)
+		@billettholderAssignmentActions(eventId, puljeId, billettholdere, true)
 		<h2 style="margin-bottom:1rem;">Kven er tildelt?</h2>
 		@playersInPulje(eventId, puljeId, assignees)
 		<h2 style="margin-bottom:1rem;">Kven er interessert?</h2>
