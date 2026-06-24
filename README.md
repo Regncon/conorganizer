@@ -117,7 +117,7 @@ templ generate && go build -buildvcs=false -o tmp/main .
 ```
 
 - **Tool not found**: Ensure `$HOME/go/bin` is in your PATH
-- **Port in use**: Check if another service is using port 7331 or 8080
+- **Port in use**: Check if another service is using port 8080
 - **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
 - **Build errors**: Run `go mod tidy` to fix dependencies
 
@@ -218,7 +218,7 @@ go install github.com/a-h/templ/cmd/templ@latest
 ### Access the Application:
 
 ```
-http://localhost:7331
+http://localhost:8080
 ```
 
 ## Migrations with goose
