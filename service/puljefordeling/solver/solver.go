@@ -69,8 +69,8 @@ const minViablePlayers = 3
 //   - misses:    number of prior puljer the player wanted a top choice and
 //     missed (drives the scarcity bonus)
 type State struct {
-	satisfied map[string]bool
-	seated    map[string]bool
+	satisfied map[string]struct{}
+	seated    map[string]struct{}
 	misses    map[string]int
 	year      int
 	slotIndex int
@@ -78,11 +78,11 @@ type State struct {
 	// dmSlots[playerID] is the set of slot IDs in which playerID is DMing
 	// an event. Players in this set are excluded from being assigned during
 	// those slots.
-	dmSlots map[string]map[string]bool
+	dmSlots map[string]map[string]struct{}
 
 	// isDM[playerID] is true if playerID DMs at least one event anywhere
 	// in the weekend. Such players receive a fixed bump on every edge.
-	isDM map[string]bool
+	isDM map[string]struct{}
 }
 
 // NewState returns a fresh State for the start of a weekend.
@@ -93,23 +93,23 @@ type State struct {
 // weekend provides the full slot schedule so the solver can recognise which
 // players DM events in which slots and apply the DM bump across the weekend.
 func NewState(year int, weekend model.Weekend) *State {
-	dmSlots := make(map[string]map[string]bool)
-	isDM := make(map[string]bool)
+	dmSlots := make(map[string]map[string]struct{})
+	isDM := make(map[string]struct{})
 	for _, sl := range weekend.Slots {
 		for _, ev := range sl.Events {
 			if ev.DMID == "" {
 				continue
 			}
-			isDM[ev.DMID] = true
+			isDM[ev.DMID] = struct{}{}
 			if dmSlots[ev.DMID] == nil {
-				dmSlots[ev.DMID] = make(map[string]bool)
+				dmSlots[ev.DMID] = make(map[string]struct{})
 			}
-			dmSlots[ev.DMID][sl.ID] = true
+			dmSlots[ev.DMID][sl.ID] = struct{}{}
 		}
 	}
 	return &State{
-		satisfied: make(map[string]bool),
-		seated:    make(map[string]bool),
+		satisfied: make(map[string]struct{}),
+		seated:    make(map[string]struct{}),
 		misses:    make(map[string]int),
 		year:      year,
 		dmSlots:   dmSlots,
@@ -119,7 +119,8 @@ func NewState(year int, weekend model.Weekend) *State {
 
 // IsSatisfied reports whether playerID has received a score-5 assignment.
 func (s *State) IsSatisfied(playerID string) bool {
-	return s.satisfied[playerID]
+	_, ok := s.satisfied[playerID]
+	return ok
 }
 
 // SatisfiedCount returns the number of satisfied players.
@@ -129,7 +130,8 @@ func (s *State) SatisfiedCount() int {
 
 // IsDM reports whether playerID runs at least one event in the weekend.
 func (s *State) IsDM(playerID string) bool {
-	return s.isDM[playerID]
+	_, ok := s.isDM[playerID]
+	return ok
 }
 
 // SolveSlot assigns players to events for one slot, updates the fairness
@@ -207,9 +209,9 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player) model.SlotRes
 		for _, pid := range playerIDs {
 			score := playerByID[pid].Prefs[slot.ID][evID]
 			result.TotalScore += int(score)
-			s.seated[pid] = true
-			if score == model.MaxScore && !s.satisfied[pid] {
-				s.satisfied[pid] = true
+			s.seated[pid] = struct{}{}
+			if _, ok := s.satisfied[pid]; score == model.MaxScore && !ok {
+				s.satisfied[pid] = struct{}{}
 				result.NewlySatisfied = append(result.NewlySatisfied, pid)
 			}
 			assigned[pid] = true
@@ -231,7 +233,7 @@ func (s *State) SolveSlot(slot model.Slot, players []model.Player) model.SlotRes
 	// future slots. It is backward-looking on the locked result, so it cannot
 	// be gamed by how a player declares future interests.
 	for _, p := range interested {
-		if s.satisfied[p.ID] {
+		if _, ok := s.satisfied[p.ID]; ok {
 			continue
 		}
 		if wantedTopChoice(p, slot.ID) {
@@ -310,11 +312,14 @@ func (s *State) runMCMF(
 			if !ok {
 				continue
 			}
+			_, satisfied := s.satisfied[p.ID]
+			_, seated := s.seated[p.ID]
+			_, isDM := s.isDM[p.ID]
 			w := adjustScore(
 				score,
-				s.satisfied[p.ID],
-				!s.seated[p.ID],
-				s.isDM[p.ID],
+				satisfied,
+				!seated,
+				isDM,
 				s.misses[p.ID],
 			)
 			// Cost is negated (we minimise cost = maximise weight). The
