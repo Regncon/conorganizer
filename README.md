@@ -21,18 +21,15 @@
 9. [Update go dependencies](#update-dependencies)
 10. [Additional Resources](#additional-resources)
 
-## Description
+## Why
 
-This is a spike exploring Go, Datastar and Templ using the Northstar template.
-
-For more details, visit:
-
-- [Templ Documentation](https://templ.guide)
-- [Data-Star Documentation](https://data-star.dev/)
+The main purpose of this project is to help the Regncon festival achieve it's goals of having all the players get to play at leas one game that they are very interested in during the festival.
 
 ## Quick Start
 
 Choose your preferred method to run the project:
+### Mac/Linux Setup 
+Just install go.
 
 ### Docker Setup (Recommended for Windows)
 
@@ -49,7 +46,14 @@ docker compose up --build
 
 ### Direct Installation
 
-Follow the [Linux/Mac Setup Guide](#linuxmac-setup-guide) below.
+
+## Access the Application:
+
+```bash
+go tool task start
+```
+
+Then open your browser and navigate to: [http://localhost:8080](http://localhost:8080)
 
 ## Database Issues: events.db Troubleshooting
 
@@ -120,106 +124,6 @@ templ generate && go build -buildvcs=false -o tmp/main .
 - **Port in use**: Check if another service is using port 8080
 - **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
 - **Build errors**: Run `go mod tidy` to fix dependencies
-
-## Linux/Mac Setup Guide
-
-> [!NOTE]
-> Windows users should use [Docker Setup](#docker-setup-recommended-for-windows) for consistency.
-
-### Prerequisites
-
-#### 1. Required Tools
-
-| Tool                                      | Description          | Installation Command                               |
-| ----------------------------------------- | -------------------- | -------------------------------------------------- |
-| [Go](https://go.dev/doc/install)          | Programming language | Follow installation guide                          |
-| [Templ](https://templ.guide)              | Template engine      | `go install github.com/a-h/templ/cmd/templ@latest` |
-| [Air](https://github.com/cosmtrek/air)    | Live reload tool     | `go install github.com/air-verse/air@latest`       |
-| [Task](https://taskfile.dev/installation) | Task runner          | Follow installation guide                          |
-
-#### 2. Shell Configuration
-
-<details>
-<summary>Bash Setup (Linux/macOS)</summary>
-
-```bash
-# Add to ~/.bashrc (Linux) or ~/.bash_profile (macOS)
-echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.bashrc  # or ~/.bash_profile for macOS
-
-# Apply changes
-source ~/.bashrc  # or source ~/.bash_profile for macOS
-```
-
-</details>
-
-<details>
-<summary>Zsh Setup</summary>
-
-```bash
-# Add Go binaries to PATH
-echo 'export PATH=$PATH:$HOME/go/bin' >> ~/.zshrc
-
-# Apply changes
-source ~/.zshrc
-```
-
-</details>
-
-### Update templ
-
-```bash
-go install github.com/a-h/templ/cmd/templ@latest
-```
-
-### Verification and Startup
-
-1. **Verify Tool Installation**:
-
-    Check Go installation:
-
-    ```bash
-    go version
-    ```
-
-    Check Templ installation:
-
-    ```bash
-    templ version
-    ```
-
-    Check Air installation:
-
-    ```bash
-    air -v
-    ```
-
-    Check Task installation:
-
-    ```bash
-    go tool task --version
-    ```
-
-> [!TIP]
-> Each command should return a version number. If any command fails:
->
-> 1. Ensure the tool is installed correctly
-> 2. Verify your PATH includes Go binaries
-> 3. Try reopening your terminal
-
-2. **Start Development Server**:
-    ```bash
-    go tool task start
-    ```
-
-> [!NOTE]
-> This will start the server with hot-reload enabled.
-> Any code changes will automatically trigger a rebuild.
-
-### Access the Application:
-
-```
-http://localhost:8080
-```
 
 ## Migrations with goose
 
@@ -352,7 +256,7 @@ git diff go.mod go.sum
 Verify tool versions used by the repo:
 
 ```bash
-go tool templ version
+go tool templ --version
 go tool task --version
 go tool air -v
 ```
