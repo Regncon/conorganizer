@@ -594,6 +594,15 @@ templ playersInPulje(eventId string, puljeId models.Pulje, interests []InterestW
 	@interestInPulje(eventId, puljeId, interests, true)
 }
 
+templ PuljeAssignmentSearch(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+	{{ billettholdere, err := getBillettholdere(db, logger) }}
+	if err != nil {
+		<p style="color: var(--color-error);">Kunne ikke hente billettholdere</p>
+	} else {
+		@billettholderAssignmentActions("", pulje, billettholdere)
+	}
+}
+
 templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
 	<style>
