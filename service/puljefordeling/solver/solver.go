@@ -157,33 +157,39 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 	}
 
 	// Players DMing in this slot are unavailable as players.
-	dmingHere := make(map[string]bool)
+	dmingHere := make(map[string]struct{})
 	for _, ev := range slot.Events {
 		if ev.DMID != "" {
-			dmingHere[ev.DMID] = true
+			dmingHere[ev.DMID] = struct{}{}
 		}
 	}
 
 	// Validate pins: keep only those whose event is in this slot and whose player
 	// is not DMing here.
-	eventInSlot := make(map[string]bool, len(slot.Events))
+	eventInSlot := make(map[string]struct{}, len(slot.Events))
 	for _, ev := range slot.Events {
-		eventInSlot[ev.ID] = true
+		eventInSlot[ev.ID] = struct{}{}
 	}
 	pinnedByEvent := make(map[string][]string)
-	pinned := make(map[string]bool)
+	pinned := make(map[string]struct{})
 	for pid, evID := range fixed {
-		if !eventInSlot[evID] || dmingHere[pid] {
+		if _, ok := eventInSlot[evID]; !ok {
+			continue
+		}
+		if _, ok := dmingHere[pid]; ok {
 			continue
 		}
 		pinnedByEvent[evID] = append(pinnedByEvent[evID], pid)
-		pinned[pid] = true
+		pinned[pid] = struct{}{}
 	}
 
 	// Free pool: interested players who are neither DMing here nor pinned.
 	interested := make([]model.Player, 0, len(players))
 	for _, p := range players {
-		if dmingHere[p.ID] || pinned[p.ID] {
+		if _, ok := dmingHere[p.ID]; ok {
+			continue
+		}
+		if _, ok := pinned[p.ID]; ok {
 			continue
 		}
 		if len(p.Prefs[slot.ID]) > 0 {
@@ -211,7 +217,7 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 
 	// Solve the free pool over the reduced-capacity events.
 	assignments := make(map[string][]string)
-	var moved map[string]bool
+	var moved map[string]struct{}
 	if len(interested) > 0 {
 		rng := rand.New(rand.NewPCG(uint64(seed), 0)) //nolint:gosec
 		rng.Shuffle(len(interested), func(i, j int) {
@@ -239,7 +245,7 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 	// Players bumped off a higher-scoring event by a residual augmentation and
 	// still holding a seat.
 	for pid := range moved {
-		if assigned[pid] {
+		if _, ok := assigned[pid]; ok {
 			result.MovedPlayers = append(result.MovedPlayers, pid)
 		}
 	}
@@ -258,8 +264,8 @@ func (s *State) applyResult(
 	interested []model.Player,
 	playerByID map[string]model.Player,
 	assignments map[string][]string,
-) map[string]bool {
-	assigned := make(map[string]bool)
+) map[string]struct{} {
+	assigned := make(map[string]struct{})
 	for evID, playerIDs := range assignments {
 		for _, pid := range playerIDs {
 			score := playerByID[pid].Prefs[slotID][evID]
@@ -269,7 +275,7 @@ func (s *State) applyResult(
 				s.satisfied[pid] = true
 				result.NewlySatisfied = append(result.NewlySatisfied, pid)
 			}
-			assigned[pid] = true
+			assigned[pid] = struct{}{}
 		}
 	}
 
@@ -286,7 +292,7 @@ func (s *State) applyResult(
 
 	// Unassigned: interested (free-pool) players who got no seat.
 	for _, p := range interested {
-		if !assigned[p.ID] {
+		if _, ok := assigned[p.ID]; !ok {
 			result.Unassigned = append(result.Unassigned, p.ID)
 		}
 	}
@@ -323,7 +329,7 @@ func (s *State) runMCMF(
 	slotID string,
 	events []model.Event,
 	players []model.Player,
-) (map[string][]string, map[string]bool) {
+) (map[string][]string, map[string]struct{}) {
 	assignments := make(map[string][]string)
 	if len(events) == 0 {
 		return assignments, nil
@@ -376,14 +382,14 @@ func (s *State) runMCMF(
 	// A reduced forward edge ran player→event (forward at fe, its reverse at
 	// fe^1 runs event→player, so its .to is the player node). Flow pushed back
 	// along it means that player was bumped off the event.
-	moved := make(map[string]bool)
+	moved := make(map[string]struct{})
 	for _, fe := range reduced {
 		playerNode := g.edges[fe^1].to
 		eventNode := g.edges[fe].to
 		if playerNode < 1 || playerNode > P || eventNode < P+1 || eventNode > P+E {
 			continue
 		}
-		moved[players[playerNode-1].ID] = true
+		moved[players[playerNode-1].ID] = struct{}{}
 	}
 
 	for i, p := range players {
@@ -462,16 +468,16 @@ func (s *State) ApplyActual(slot model.Slot, players []model.Player, assignments
 		Seed:        seed,
 	}
 
-	dmingHere := make(map[string]bool)
+	dmingHere := make(map[string]struct{})
 	for _, ev := range slot.Events {
 		if ev.DMID != "" {
-			dmingHere[ev.DMID] = true
+			dmingHere[ev.DMID] = struct{}{}
 		}
 	}
 
 	interested := make([]model.Player, 0, len(players))
 	for _, p := range players {
-		if dmingHere[p.ID] {
+		if _, ok := dmingHere[p.ID]; ok {
 			continue
 		}
 		if len(p.Prefs[slot.ID]) > 0 {
