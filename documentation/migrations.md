@@ -63,7 +63,13 @@ sudo systemctl stop INSERT_SERVICE_NAME
 Back up the current database if needed:
 
 ```bash
-sqlite3 PATH_TO_DB ".backup 'PATH_TO_BACKUP/events.db.bak'"
+sudo sqlite3 PATH_TO_DB ".backup 'PATH_TO_BACKUP/events.db.bak'"
+```
+
+Upload the new database to the server.
+
+```bash
+scp /path/to/local/events.db user@server:/path/to/uploaded/events.db
 ```
 
 Move the uploaded database into place:

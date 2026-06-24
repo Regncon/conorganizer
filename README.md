@@ -58,7 +58,7 @@ go test ./...
 
 See [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-support/) for detailed IDE support information.
 
-Neovim-specific setup lives in [documentation/neovim-setup.md](documentation/neovim-setup.md).
+Neovim BTW specific setup lives in [documentation/neovim-setup.md](documentation/neovim-setup.md).
 
 ## Troubleshooting
 
