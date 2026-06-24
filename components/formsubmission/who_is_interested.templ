@@ -9,19 +9,21 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/models"
+	puljefordelingservice "github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/service/puljer"
 	"strings"
 )
 
 type InterestWithHolder struct {
-	BillettholderId      int
-	EventId              string
-	PuljeId              string
-	InterestLevel        models.InterestLevel
-	FirstChoice          bool
-	HasOtherEventInPulje bool
-	HasBeenGamemaster    bool
-	IsGamemaster         bool
+	BillettholderId            int
+	EventId                    string
+	PuljeId                    string
+	InterestLevel              models.InterestLevel
+	HasCurrentPuljeFirstChoice bool
+	HasOtherPuljeFirstChoice   bool
+	HasOtherEventInPulje       bool
+	HasBeenGamemaster          bool
+	IsGamemaster               bool
 
 	FirstName  string
 	LastName   string
@@ -30,31 +32,6 @@ type InterestWithHolder struct {
 }
 
 type AssignmentWithHolder = InterestWithHolder
-
-var queryFirstChoice = `
-                EXISTS (
-                    SELECT
-                        1
-                    FROM
-                        interests i2
-                    WHERE
-                        i2.billettholder_id = i.billettholder_id
-                        AND i2.pulje_id <> ''
-                        AND i2.event_id <> i.event_id -- must be a different event
-                        AND i2.interest_level = '` + string(models.InterestLevelHigh) + `'
-                        AND EXISTS (
-                            SELECT
-                                1
-                            FROM
-                                relation_events_players ep
-                            WHERE
-                                ep.billettholder_id = i2.billettholder_id
-                                AND ep.event_id = i2.event_id
-                                AND ep.pulje_id = i2.pulje_id
-                                AND ep.role = '` + string(models.EventPlayerRolePlayer) + `'
-                        )
-                ) AS first_choice
-`
 
 type interestSourceAlias string
 
@@ -105,7 +82,6 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 i.event_id,
                 i.pulje_id,
                 i.interest_level,
-                ` + queryFirstChoice + `,
                 ` + queryHasOtherAssignedEventInPulje(interestRowAlias) + `,
                 ` + queryHasBeenGamemaster(interestRowAlias) + `,
                 COALESCE(ep.role = '` + string(models.EventPlayerRoleGM) + `', 0) AS is_gamemaster,
@@ -169,7 +145,6 @@ func GetInterestsForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&interest.EventId,
 			&interest.PuljeId,
 			&interest.InterestLevel,
-			&interest.FirstChoice,
 			&interest.HasOtherEventInPulje,
 			&interest.HasBeenGamemaster,
 			&interest.IsGamemaster,
@@ -197,7 +172,6 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
                 ep.pulje_id,
                 -- this is because we can insert ppl from search without interest as gm
                 COALESCE(i.interest_level, '` + string(models.InterestLevelNone) + `') AS interest_level,
-                ` + queryFirstChoice + `,
                 ` + queryHasOtherAssignedEventInPulje(assignmentRowAlias) + `,
                 ` + queryHasBeenGamemaster(assignmentRowAlias) + `,
                 COALESCE(ep.role = '` + string(models.EventPlayerRoleGM) + `', 0) AS is_gamemaster,
@@ -231,7 +205,6 @@ func GetAssigneesForEvent(eventId string, db *sql.DB, logger *slog.Logger) ([]In
 			&assignment.EventId,
 			&assignment.PuljeId,
 			&assignment.InterestLevel,
-			&assignment.FirstChoice,
 			&assignment.HasOtherEventInPulje,
 			&assignment.HasBeenGamemaster,
 			&assignment.IsGamemaster,
@@ -258,8 +231,10 @@ type Billettholder struct {
 }
 
 type ButtonInfo struct {
-	Label  string
-	Action string
+	Label    string
+	Action   string
+	Disabled bool
+	Title    string
 }
 
 func actionButtonClass(label string) string {
@@ -289,6 +264,42 @@ func gmButtonAction(isAssigned bool, isGamemaster bool, assignAction string, rem
 	return ButtonInfo{Label: "Bytt til " + models.EventPlayerRoleGM.Label(), Action: assignAction}
 }
 
+func applyFirstChoiceStatusesToRows(rows []InterestWithHolder, statuses map[puljefordelingservice.FirstChoiceKey]puljefordelingservice.FirstChoiceStatus) {
+	for index := range rows {
+		key := puljefordelingservice.FirstChoiceKey{
+			BillettholderID: rows[index].BillettholderId,
+			EventID:         rows[index].EventId,
+			PuljeID:         rows[index].PuljeId,
+		}
+		status := statuses[key]
+		rows[index].HasCurrentPuljeFirstChoice = status.HasCurrentPuljeFirstChoice
+		rows[index].HasOtherPuljeFirstChoice = status.HasOtherPuljeFirstChoice
+	}
+}
+
+func firstChoiceStatusText(row InterestWithHolder) string {
+	if row.HasOtherPuljeFirstChoice {
+		return "Fått førsteval frå før"
+	}
+	if row.HasCurrentPuljeFirstChoice {
+		return "Fått førsteval"
+	}
+	return ""
+}
+
+func firstChoiceButtonAction(row InterestWithHolder, setAction string, removeAction string) ButtonInfo {
+	if row.HasCurrentPuljeFirstChoice {
+		return ButtonInfo{Label: "Fjern førsteval", Action: removeAction}
+	}
+	if row.IsGamemaster {
+		return ButtonInfo{Label: "Set førsteval", Disabled: true, Title: "GM kan ikkje ha førsteval for dette arrangementet"}
+	}
+	if row.HasOtherPuljeFirstChoice {
+		return ButtonInfo{Label: "Set førsteval", Disabled: true, Title: "Har allereie fått førsteval"}
+	}
+	return ButtonInfo{Label: "Set førsteval", Action: setAction}
+}
+
 func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error) {
 	var query = `
             Select id, first_name, last_name From billettholdere
@@ -316,45 +327,6 @@ func getBillettholdere(db *sql.DB, logger *slog.Logger) ([]Billettholder, error)
 		return nil, fmt.Errorf("iterate billettholder rows: %w", rowErr)
 	}
 	return billettholdere, nil
-}
-
-func AddPlayersFirstChoice(bid int, eId string, Pid string, db *sql.DB, logger *slog.Logger) error {
-	tx, txErr := db.Begin()
-	if txErr != nil {
-		logger.Error(fmt.Errorf("failed to begin transaction for first choice: %w", txErr).Error())
-		return fmt.Errorf("begin first choice transaction: %w", txErr)
-	}
-	defer tx.Rollback()
-
-	upsertInterestQuery := `
-		INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level)
-		VALUES (?, ?, ?, '` + string(models.InterestLevelHigh) + `')
-		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
-			interest_level = EXCLUDED.interest_level,
-			updated_at = ` + models.DBDateTimeNowSQL + `
-	`
-	if _, execErr := tx.Exec(upsertInterestQuery, bid, eId, Pid); execErr != nil {
-		logger.Error(fmt.Errorf("failed to upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
-		return fmt.Errorf("upsert interest for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr)
-	}
-
-	upsertPlayerQuery := `
-		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role)
-		VALUES (?, ?, ?, '` + string(models.EventPlayerRolePlayer) + `')
-		ON CONFLICT(billettholder_id, event_id, pulje_id) DO UPDATE SET
-			role = EXCLUDED.role,
-			inserted_at = ` + models.DBDateTimeNowSQL + `
-	`
-	if _, execErr := tx.Exec(upsertPlayerQuery, eId, Pid, bid); execErr != nil {
-		logger.Error(fmt.Errorf("failed to upsert player status for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr).Error())
-		return fmt.Errorf("upsert player status for first choice (billettholder_id=%d, event_id=%s, pulje_id=%s): %w", bid, eId, Pid, execErr)
-	}
-
-	if commitErr := tx.Commit(); commitErr != nil {
-		logger.Error(fmt.Errorf("failed to commit first choice transaction: %w", commitErr).Error())
-		return fmt.Errorf("commit first choice transaction: %w", commitErr)
-	}
-	return nil
 }
 
 func UpdatePlayerStatus(eventId string,
@@ -520,7 +492,14 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/event-players/update_status')", eventId, puljeId, interest.BillettholderId)
 				playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerAction, removePlayerAction)
 				gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmAction, removeGmAction)
+				setFirstChoiceAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentFirstChoice = true; @put('/admin/approval/api/event-players/first-choice')", eventId, puljeId, interest.BillettholderId)
+				removeFirstChoiceAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentFirstChoice = false; @put('/admin/approval/api/event-players/first-choice')", eventId, puljeId, interest.BillettholderId)
+				firstChoiceAction := firstChoiceButtonAction(interest, setFirstChoiceAction, removeFirstChoiceAction)
 				buttonsInfo := []ButtonInfo{playerAction, gmAction}
+				if isAssigned {
+					buttonsInfo = append(buttonsInfo, firstChoiceAction)
+				}
+				firstChoiceText := firstChoiceStatusText(interest)
 			}}
 			<section
 				class="item-card interest-section"
@@ -540,8 +519,8 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 							@icons.Icon(icons.Shield, icons.Size16)
 						</span>
 					}
-					if interest.FirstChoice {
-						<p class="first-choice">Fått førsteval</p>
+					if firstChoiceText != "" {
+						<p class="first-choice">{ firstChoiceText }</p>
 					}
 					if interest.IsGamemaster {
 						<p class="is-gamemaster">
@@ -579,6 +558,8 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 							<button
 								class={ actionButtonClass(buttonInfo.Label) }
 								data-on:click={ buttonInfo.Action }
+								disabled?={ buttonInfo.Disabled }
+								title={ buttonInfo.Title }
 							>
 								{ buttonInfo.Label }
 							</button>
@@ -642,9 +623,9 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 			</button>
 			<button
 				class="btn btn--secondary"
-				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_first_choice'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; $assignmentIsPlayer = true; $assignmentIsGm = false; @put('/admin/approval/api/event-players/update_status'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
 			>
-				Legg til som førsteval
+				Legg til som { models.EventPlayerRolePlayer.Label() }
 			</button>
 		</div>
 		<script src="/static/web_components/admin_billettholder_search.js"></script>
@@ -681,12 +662,22 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 	</style>
 	{{ interests, interestsErr := GetInterestsForEvent(eventId, db, logger) }}
 	{{ assignees, assigneesErr := GetAssigneesForEvent(eventId, db, logger) }}
+	{{ firstChoiceStatuses, firstChoiceStatusesErr := puljefordelingservice.GetFirstChoiceStatusesForEvent(db, eventId) }}
+	{{
+		if firstChoiceStatusesErr == nil {
+			applyFirstChoiceStatusesToRows(interests, firstChoiceStatuses)
+			applyFirstChoiceStatusesToRows(assignees, firstChoiceStatuses)
+		}
+	}}
 	{{ billettholdere, billettholdereErr := getBillettholdere(db, logger) }}
 	{{ puljer, puljerErr := puljerService.GetAllPuljer(db) }}
 	{{
 		loadErr := interestsErr
 		if assigneesErr != nil {
 			loadErr = assigneesErr
+		}
+		if firstChoiceStatusesErr != nil {
+			loadErr = firstChoiceStatusesErr
 		}
 		if billettholdereErr != nil {
 			loadErr = billettholdereErr
@@ -697,7 +688,7 @@ templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {
 	}}
 	<div
 		class="who-is-interested"
-		data-signals={ dataSignals(map[string]any{"assignmentEventId": eventId, "assignmentBillettholderId": 0, "assignmentPuljeId": "", "assignmentIsPlayer": false, "assignmentIsGm": false, "clearInput": 0}) }
+		data-signals={ dataSignals(map[string]any{"assignmentEventId": eventId, "assignmentBillettholderId": 0, "assignmentPuljeId": "", "assignmentIsPlayer": false, "assignmentIsGm": false, "assignmentFirstChoice": false, "clearInput": 0}) }
 	>
 		<article class="form-card">
 			if loadErr != nil {

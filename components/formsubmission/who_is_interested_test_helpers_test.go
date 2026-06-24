@@ -8,12 +8,6 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-type firstChoiceCase struct {
-	id   int
-	want bool
-	name string
-}
-
 type billettholderFixture struct {
 	id        int
 	firstName string
@@ -250,17 +244,6 @@ func expectAbsent(t *testing.T, got map[int]InterestWithHolder, id int, message 
 	t.Helper()
 	if hasInterest(got, id) {
 		t.Fatal(message)
-	}
-}
-
-func expectFirstChoice(t *testing.T, got map[int]InterestWithHolder, tc firstChoiceCase) {
-	t.Helper()
-	interest, ok := got[tc.id]
-	if !ok {
-		t.Fatalf("%s: missing billettholder id %d", tc.name, tc.id)
-	}
-	if interest.FirstChoice != tc.want {
-		t.Errorf("%s should be first choice = %v", tc.name, tc.want)
 	}
 }
 
