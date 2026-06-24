@@ -2,24 +2,23 @@
 
 ## Table of Contents
 
-1. [Description](#description)
+1. [Why](#why)
 2. [Quick Start](#quick-start)
+    - [Mac/Linux Setup](#maclinux-setup)
     - [Docker Setup](#docker-setup-recommended-for-windows)
     - [Direct Installation](#direct-installation)
-3. [Database Issues: events.db Troubleshooting](#database-issues-eventsdb-troubleshooting)
-4. [IDE Setup](#ide-setup)
+3. [Access the Application](#access-the-application)
+4. [Database Issues: events.db Troubleshooting](#database-issues-eventsdb-troubleshooting)
+5. [IDE Setup](#ide-setup)
     - [NeoVim Configuration](#neovim-configuration)
-5. [Troubleshooting](#troubleshooting)
-6. [Linux/Mac Setup Guide](#linuxmac-setup-guide)
-    - [Prerequisites](#prerequisites)
-    - [Verification and Startup](#verification-and-startup)
-7. [Migrations](#migrations-with-goose)
+    - [Troubleshooting](#troubleshooting)
+6. [Migrations with goose](#migrations-with-goose)
     - [Running Goose manually](#running-goose-manually)
-    - [Pushing migrations to prod](#pushing-migrations-to-prod-and-services)
-    - [Step by step](#step-by-step-to-update-db)
-8. [Agent Skills Path Compatibility](#agent-skills-path-compatibility)
-9. [Update go dependencies](#update-dependencies)
-10. [Additional Resources](#additional-resources)
+    - [Pushing migrations to prod and services](#pushing-migrations-to-prod-and-services)
+    - [Step By Step To Update DB](#step-by-step-to-update-db)
+7. [Agent Skills Path Compatibility](#agent-skills-path-compatibility)
+8. [Update Dependencies](#update-dependencies)
+9. [Additional Resources](#additional-resources)
 
 ## Why
 
