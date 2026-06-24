@@ -91,13 +91,13 @@ func (h *devReloadHub) broadcast() {
 
 func devReloadOnNewServerScript(bootID string) string {
 	return fmt.Sprintf(`(() => {
-	const key = "conorganizer:dev-reload:%s";
-	if (sessionStorage.getItem(key) === "reloaded") {
-		return;
+	const key = "conorganizer:dev-reload:boot-id";
+	const previousBootID = sessionStorage.getItem(key);
+	sessionStorage.setItem(key, "%s");
+	if (previousBootID && previousBootID !== "%s") {
+		window.location.reload();
 	}
-	sessionStorage.setItem(key, "reloaded");
-	window.location.reload();
-})()`, bootID)
+})()`, bootID, bootID)
 }
 
 func logDevReloadError(logger *slog.Logger, err error) {
