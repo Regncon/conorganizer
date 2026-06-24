@@ -3,11 +3,14 @@ package admin
 import (
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
+	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 	"github.com/go-chi/chi/v5"
@@ -84,6 +87,51 @@ func TestPuljefordelingTabContent_RendersAddPickerAndManualRemove(t *testing.T) 
 	addClick := doc.Find(".pulje-add").AttrOr("data-on:click", "")
 	if !strings.Contains(addClick, "$assignmentEventId = 'evA'") {
 		t.Errorf("+ button should set assignmentEventId to the event; got %q", addClick)
+	}
+}
+
+func TestAddFirstChoiceThenEmulate_PinsAddedPlayer(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_add_then_pin")
+
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
+
+	// Add Kari through the real picker add path (the + button's endpoint).
+	if err := formsubmission.AddPlayersFirstChoice(1, "evA", string(fredag), db, logger); err != nil {
+		t.Fatalf("AddPlayersFirstChoice: %v", err)
+	}
+
+	// A subsequent emulation must pin her into evA, marked as a manual placement.
+	em, err := puljefordeling.EmulateSeatings(db)
+	if err != nil {
+		t.Fatalf("EmulateSeatings: %v", err)
+	}
+	var evA puljefordeling.EmulatedEvent
+	for _, p := range em.Puljer {
+		if p.PuljeID == fredag {
+			for _, e := range p.Events {
+				if e.EventID == "evA" {
+					evA = e
+				}
+			}
+		}
+	}
+	names := make([]string, len(evA.AssignedPlayers))
+	for i, ap := range evA.AssignedPlayers {
+		names[i] = ap.Name
+	}
+	if !slices.Contains(names, "Kari Nordmann") {
+		t.Fatalf("added player should be pinned into evA, got %v", names)
+	}
+	for _, ap := range evA.AssignedPlayers {
+		if ap.Name == "Kari Nordmann" && !ap.Manual {
+			t.Errorf("added player should be marked as a manual placement")
+		}
 	}
 }
 
