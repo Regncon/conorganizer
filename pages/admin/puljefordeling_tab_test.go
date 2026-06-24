@@ -204,6 +204,32 @@ func TestPuljefordelingTabContent_PublishedTilesNotDraggable(t *testing.T) {
 	}
 }
 
+func TestPuljefordelingTabContent_PinEmojiForManualWithoutInterest(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en manuelt plassert deltaker uten egen interesse for arrangementet.",
+		When:  "Når fanen rendres.",
+		Then:  "Så skal flisen vise nåle-emoji i stedet for et interessenivå.",
+	})
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_pin_emoji")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
+	// Manual pin, NO interest for evA.
+	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES ('evA',?,1,'Player','manual')`, string(models.PuljeFredagKveld))
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+	text := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
+
+	if !strings.Contains(text, "📌") {
+		t.Fatalf("manual pin without interest should show the pin emoji\nactual text: %s", text)
+	}
+}
+
 func TestPuljeStatusToggles_ReflectLockedAndCompletedState(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en pulje som er publisert (Completed).",
