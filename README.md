@@ -20,12 +20,10 @@ docker compose up --build
 
 Then open your browser and navigate to: [http://localhost:8080](http://localhost:8080)
 
-## Database Issues: events.db Troubleshooting
+## Get the Latest Database Backup and Images
 
 > [!NOTE]
-> To get the latest database backup and all images from production, run:
-> The database download requires `DB_SSH_USER` in your `.env` file or shell environment.
-> The database task creates a temporary SQLite backup snapshot on the server; it does not copy the live WAL-mode database file directly.
+> To get the latest database backup and all images from production the database download requires `DB_SSH_USER` in your `.env` file or shell environment.
 
 ```bash
 go tool task download
@@ -39,7 +37,6 @@ go tool task start
 
 Then open your browser and navigate to: [http://localhost:8080](http://localhost:8080)
 
-
 ## Run tests
 
 The fist time you run tests you need to create a new schema.sql
@@ -51,7 +48,7 @@ go tool task test
 > [!TIP]
 > Format the `schema.sql` using the Prettier plugin in your IDE to make it look nice.
 
-After that, you can run tests normally with:
+After that, you can choose run the tests with go tool task or directly with go test:
 
 ```bash
 go test ./...
@@ -74,7 +71,6 @@ go tool templ build
 ```
 
 - **Port in use**: Check if another service is using port 8080
-- **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
 - **Build errors**: Run `go mod tidy` to fix dependencies
 
 ## Migrations
