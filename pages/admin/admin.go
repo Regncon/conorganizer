@@ -472,6 +472,14 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 
+						if r.Header.Get("Conorganizer-Dnd") == "true" {
+							w.Header().Set("Content-Type", "text/html; charset=utf-8")
+							if err := rooms.RoomsAssignmentPageContent(db, logger, puljeID, eventImageDir).Render(r.Context(), w); err != nil {
+								logger.Error(fmt.Errorf("failed to render rooms assignment after drag/drop: %w", err).Error(), "pulje_id", puljeID)
+							}
+							return
+						}
+
 						// Close modal on success
 						sse := datastar.NewSSE(w, r)
 						_ = sse.ExecuteScript(`document.getElementById('assignment-dialog').close()`)
