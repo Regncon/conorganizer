@@ -117,7 +117,7 @@ templ generate && go build -buildvcs=false -o tmp/main .
 ```
 
 - **Tool not found**: Ensure `$HOME/go/bin` is in your PATH
-- **Port in use**: Check if another service is using port 7331 or 8080
+- **Port in use**: Check if another service is using port 8080
 - **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
 - **Build errors**: Run `go mod tidy` to fix dependencies
 
@@ -218,7 +218,7 @@ go install github.com/a-h/templ/cmd/templ@latest
 ### Access the Application:
 
 ```
-http://localhost:7331
+http://localhost:8080
 ```
 
 ## Migrations with goose
@@ -259,86 +259,58 @@ goose up
 
 ### Step By Step To Update DB
 
-#### 1. Find The Correct Service Name
-
 ```bash
 systemctl list-units --type=service | grep -i conorganizer
 systemctl list-unit-files | grep -i conorganizer
 ```
 
-#### 2. Inspect The Service
-
-Set the service name:
-
-```bash
-SERVICE=conorganizer-{service-name}.service
-```
-
 Check the service command and find the mounted database path:
 
 ```bash
-systemctl show "$SERVICE" -p ExecStart --value | fold -s -w 120
+systemctl show INSERT_SERVICE_NAME -p ExecStart --value | fold -s -w 120
 ```
 
 Look for the host path that contains `events.db` or maps the database folder into the app.
 
-Example:
-
-```text
-/mnt/HC_Volume_103911252/environments/1337-merge/database:/app/database
-```
-
-In that case the database path is:
-
 ```bash
-/mnt/HC_Volume_103911252/environments/1337-merge/database/events.db
+
+ls -lh /mnt/HC_Volume_103911252/environments
 ```
 
-#### 3. Replace The Database
-
-Set the paths:
-
-```bash
-DB_PATH="{mounted path to db}/events.db"
-UPLOADED_DB="/home/{account-name}/events.db"
-```
+Example: /mnt/HC_Volume_103911252/environments/1337-merge/database/events.db
 
 Stop the service:
 
 ```bash
-sudo systemctl stop "$SERVICE"
+sudo systemctl stop INSERT_SERVICE_NAME 
 ```
 
-Back up the current database:
+Back up the current database if needed:
 
 ```bash
-sudo cp -a "$DB_PATH" "$DB_PATH.bak.$(date +%Y%m%d-%H%M%S)"
+sqlite3 PAHT_TO_DB ".backup 'PATH_TO_BACKUP/events.db.bak'"
 ```
 
 Move the uploaded database into place:
 
 ```bash
-sudo mv "$UPLOADED_DB" "$DB_PATH"
-```
-
-Fix ownership and permissions:
-
-```bash
-sudo chown deploy:deploy "$DB_PATH"
-sudo chmod 644 "$DB_PATH"
+mv /path/to/uploaded/events.db /nmnt/HC_Volume_103911252/environments/1337-merge/database/events.db
+cd /nmnt/HC_Volume_103911252/environments/1337-merge/database
+sudo chown deploy:deploy events.db
+sudo chmod 644 events.db
 ```
 
 Start the service again:
 
 ```bash
-sudo systemctl start "$SERVICE"
-sudo systemctl status "$SERVICE"
+sudo systemctl start INSERT_SERVICE_NAME
+sudo systemctl status INSERT_SERVICE_NAME
 ```
 
-Check logs:
+If you want you can check logs at:
 
 ```bash
-journalctl -u "$SERVICE" -n 100 --no-pager
+journalctl -u INSERT_SERVICE_NAME -n 100 --no-pager
 ```
 
 <!--
