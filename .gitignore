@@ -7,6 +7,9 @@ database/*
 
 documentation/testing/*.pdf
 
+# Local-only brainstorming/spec scratch (superpowers)
+docs/superpowers/
+
 local-event-images/*
 backup-service/regncon
 *_templ.go

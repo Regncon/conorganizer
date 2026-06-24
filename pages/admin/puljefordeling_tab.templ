@@ -1,0 +1,434 @@
+package admin
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"strings"
+
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/puljefordeling"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
+)
+
+// puljefordelingRoute wires the per-pulje tabbed puljefordeling view. The page
+// mirrors the bordfordeling (rooms assignment) layout: a tab strip per pulje and
+// a connected panel that live-updates over SSE. It is a read-only what-if view of
+// the emulated distribution — nothing is written to assignment tables here.
+func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
+	logger = logger.With("component", "admin_puljefordeling_tab")
+
+	router.Route("/puljefordeling", func(puljefordelingRouter chi.Router) {
+		// Bare path: send the admin to the first pulje's tab.
+		puljefordelingRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, fmt.Sprintf("/admin/puljefordeling/%s", models.PuljeFredagKveld), http.StatusSeeOther)
+		})
+
+		puljefordelingRouter.Get("/{pulje}", func(w http.ResponseWriter, r *http.Request) {
+			userInfo := userctx.GetUserRequestInfo(r.Context())
+
+			puljeQuery := chi.URLParam(r, "pulje")
+			puljeID, ok := models.ParsePulje(puljeQuery)
+			if !ok {
+				http.Redirect(w, r, fmt.Sprintf("/admin/puljefordeling/%s", models.PuljeFredagKveld), http.StatusSeeOther)
+				return
+			}
+
+			if err := layouts.Base(
+				"Puljefordeling",
+				userInfo,
+				puljefordelingIndex(db, logger, puljeID),
+			).Render(r.Context(), w); err != nil {
+				logger.Error(fmt.Errorf("failed to render puljefordeling page: %w", err).Error(), "user_id", userInfo.Id)
+			}
+		})
+	})
+
+	// SSE endpoint: streams just the tab content for the viewed pulje, refreshing
+	// whenever events/interests change (BucketEvents), mirroring the rooms api.
+	router.Get("/api/puljefordeling/{pulje}", func(w http.ResponseWriter, r *http.Request) {
+		puljeQuery := chi.URLParam(r, "pulje")
+		puljeID, ok := models.ParsePulje(puljeQuery)
+		if !ok {
+			http.Error(w, "Expected a valid pulje ID, got: "+puljeQuery, http.StatusBadRequest)
+			return
+		}
+
+		liveManager.Stream(w, r, live.Page{
+			Buckets: []live.Bucket{live.BucketEvents},
+			Render: func(ctx context.Context, r *http.Request) templ.Component {
+				return PuljefordelingTabContent(db, logger, puljeID)
+			},
+		})
+	})
+}
+
+// findEmulatedPulje returns the emulated distribution for a single pulje.
+func findEmulatedPulje(em puljefordeling.Emulation, pulje models.Pulje) (puljefordeling.EmulatedPulje, bool) {
+	for _, p := range em.Puljer {
+		if p.PuljeID == pulje {
+			return p, true
+		}
+	}
+	return puljefordeling.EmulatedPulje{}, false
+}
+
+// findPuljeRow returns the stored row (name + status) for a single pulje.
+func findPuljeRow(puljer []models.PuljeRow, pulje models.Pulje) (models.PuljeRow, bool) {
+	for _, p := range puljer {
+		if p.ID == pulje {
+			return p, true
+		}
+	}
+	return models.PuljeRow{}, false
+}
+
+// unsatisfiedAfter returns how many interested participants still have no
+// first-choice (top-choice) seat once the given pulje has been solved. The
+// emulation processes puljer chronologically, so this is PlayerCount minus the
+// running total of NewlySatisfied up to and including pulje. The bool is false
+// when pulje is not part of the emulation.
+func unsatisfiedAfter(em puljefordeling.Emulation, pulje models.Pulje) (int, bool) {
+	cumulative := 0
+	for _, p := range em.Puljer {
+		cumulative += p.NewlySatisfied
+		if p.PuljeID == pulje {
+			return em.PlayerCount - cumulative, true
+		}
+	}
+	return 0, false
+}
+
+templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Admin", Url: "/admin/"},
+		{Name: "Puljefordeling", Url: ""},
+	})
+	<div class="page-content-container flex flex-col">
+		<style>
+            .tabs {
+                display: flex;
+                overflow-x: auto;
+                margin-top: var(--responsive-page-section-spacing);
+                margin-bottom: -2px;
+                z-index: 2;
+            }
+
+            .tabs a {
+                white-space: nowrap;
+                text-decoration: none;
+                padding: 0.75rem 1rem;
+                border: 2px solid transparent;
+                border-radius: var(--border-radius-2x) var(--border-radius-2x) 0 0;
+                color: var(--color-primary-text);
+                font-weight: 500;
+            }
+
+            .tabs a:hover {
+                color: var(--color-primary-hover);
+            }
+
+            .tabs a.active {
+                background: var(--bg-surface);
+                border-color: var(--color-primary);
+                border-bottom: none;
+                color: var(--color-primary);
+            }
+
+            .rooms-section {
+                display: flex;
+                flex-direction: column;
+                gap: var(--responsive-page-section-spacing);
+                border: 2px solid var(--color-primary);
+                border-radius: 0 0 var(--border-radius-2x) var(--border-radius-2x);
+                padding: var(--responsive-pane-padding);
+                background-color: var(--bg-surface);
+            }
+        </style>
+		<h1 class="page-heading" style="text-align: center;">Puljefordeling</h1>
+		<div class="tabs">
+			for _, pulje := range models.AllPuljer() {
+				<a
+					role="button"
+					href={ "/admin/puljefordeling/" + pulje }
+					class={ templ.KV("active", current == pulje) }
+				>{ pulje }</a>
+			}
+		</div>
+		@PuljefordelingTabContent(db, logger, current)
+	</div>
+}
+
+templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+	{{
+		puljer, puljerErr := getPuljer(db)
+		if puljerErr != nil {
+			logger.Error(fmt.Errorf("failed to load puljer: %w", puljerErr).Error())
+		}
+		row, hasRow := findPuljeRow(puljer, pulje)
+
+		em, emErr := puljefordeling.EmulateSeatings(db)
+		if emErr != nil {
+			logger.Error(fmt.Errorf("emulation failed: %w", emErr).Error())
+		}
+		result, hasResult := findEmulatedPulje(em, pulje)
+		unsatisfied, hasUnsatisfied := unsatisfiedAfter(em, pulje)
+	}}
+	<style>
+        .pulje-tab-header {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: var(--spacing-4x);
+            flex-wrap: wrap;
+            border-bottom: 2px solid var(--bg-item-border);
+            padding-bottom: var(--spacing-2x);
+        }
+        .pulje-tab-stats {
+            display: flex;
+            gap: var(--spacing-4x);
+            flex-wrap: wrap;
+            color: var(--color-text-soft);
+        }
+        .pulje-tab-warn {
+            color: var(--color-text-warning, #e0a030);
+        }
+        .pulje-status-controls {
+            display: flex;
+            gap: var(--spacing-4x);
+            flex-wrap: wrap;
+        }
+        .pulje-status-control {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2x);
+            color: var(--color-text-soft);
+            cursor: pointer;
+        }
+        .pulje-legend {
+            color: var(--color-text-soft);
+            font-size: var(--text-small, 0.85rem);
+        }
+        .pulje-legend .pulje-dm {
+            color: turquoise;
+        }
+        .pulje-legend .pulje-moved {
+            border-left: 3px solid #e05050;
+            padding-left: var(--spacing-1x);
+        }
+        .pulje-event-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--responsive-page-section-spacing);
+        }
+        .pulje-event {
+            display: flex;
+            flex-flow: column nowrap;
+            gap: var(--spacing-1x);
+            padding: var(--spacing-2x);
+            border: 1px solid var(--bg-item-border);
+            border-radius: var(--border-radius-1x);
+            background-color: var(--bg-item);
+            transition: border-color 300ms ease-in-out;
+        }
+        .pulje-event:hover {
+            border-color: var(--bg-item-border-hover);
+        }
+        .pulje-event-top {
+            display: flex;
+            align-items: baseline;
+            justify-content: space-between;
+            gap: var(--spacing-2x);
+        }
+        .pulje-event-top h3 {
+            color: var(--color-text-strong);
+            font-size: var(--text-body);
+        }
+        .pulje-cap {
+            color: var(--color-text-soft);
+            white-space: nowrap;
+        }
+        .pulje-gm {
+            color: var(--color-text-soft);
+            font-style: italic;
+        }
+        .pulje-badge {
+            align-self: flex-start;
+            padding: 0 var(--spacing-2x);
+            border-radius: var(--border-radius-1x);
+            background-color: var(--bg-surface);
+            color: var(--color-text-warning, #e0a030);
+            font-size: var(--text-small, 0.85rem);
+        }
+        .pulje-players {
+            margin: var(--spacing-1x) 0 0;
+            padding: 0;
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-1x);
+            color: var(--color-text-soft);
+        }
+        .pulje-players li {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-2x);
+            padding: var(--spacing-1x);
+            border: 1px solid var(--bg-item-border);
+            border-radius: var(--border-radius-1x);
+        }
+        .pulje-players li.moved {
+            border-left: 3px solid #e05050;
+        }
+        .pulje-emoji {
+            flex: 0 0 auto;
+            width: 1.4em;
+            text-align: center;
+        }
+        .pulje-dm {
+            color: turquoise;
+        }
+        .pulje-empty {
+            color: var(--color-text-soft-50);
+            font-style: italic;
+        }
+        .pulje-unassigned {
+            color: var(--color-text-soft);
+        }
+        .pulje-error {
+            color: var(--color-text-error, #e05050);
+        }
+        @media screen and (width > 1200px) {
+            .pulje-event-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media screen and (width > 1800px) {
+            .pulje-event-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+	<section
+		id="puljefordeling-tab"
+		class="rooms-section"
+		data-init={ live.DatastarInit(fmt.Sprintf("/admin/api/puljefordeling/%s", pulje)) }
+		data-signals:pulje-status={ fmt.Sprintf("'%s'", string(row.Status)) }
+	>
+		<div class="pulje-tab-header">
+			<div>
+				if hasRow {
+					<h2>{ row.Name }</h2>
+				} else {
+					<h2>{ string(pulje) }</h2>
+				}
+				if hasResult {
+					<div class="pulje-tab-stats">
+						<span>{ fmt.Sprintf("%d fikk førstevalg", result.NewlySatisfied) }</span>
+						if hasUnsatisfied {
+							<span>{ fmt.Sprintf("%d uten førstevalg så langt", unsatisfied) }</span>
+						}
+						<span>{ fmt.Sprintf("%d interessepoeng", result.TotalScore) }</span>
+						if len(result.Unassigned) > 0 {
+							<span class="pulje-tab-warn">{ fmt.Sprintf("%d uten plass", len(result.Unassigned)) }</span>
+						}
+					</div>
+				}
+			</div>
+			if hasRow {
+				@puljeStatusToggles(row)
+			}
+		</div>
+		<p class="pulje-legend">
+			🔥 Veldig interessert · 👍 Middels · 🤷 Litt · <span class="pulje-dm">Turkis</span> = spilleder et annet sted · <span class="pulje-moved">Rød strek</span> = flyttet ned for å gi plass til andre
+		</p>
+		if emErr != nil {
+			<p class="pulje-error">Kunne ikke beregne fordeling: { emErr.Error() }</p>
+		} else if !hasResult {
+			<p class="pulje-empty">Ingen fordeling å vise for denne puljen ennå.</p>
+		} else {
+			<div class="pulje-event-grid">
+				for _, ev := range result.Events {
+					@puljeEventBox(ev)
+				}
+			</div>
+			if len(result.Unassigned) > 0 {
+				<div class="pulje-unassigned">
+					<h4>{ fmt.Sprintf("Uten plass (%d)", len(result.Unassigned)) }</h4>
+					<p>{ strings.Join(result.Unassigned, ", ") }</p>
+				</div>
+			}
+		}
+	</section>
+}
+
+templ puljeStatusToggles(pulje models.PuljeRow) {
+	<div class="pulje-status-controls">
+		<label class="pulje-status-control">
+			<input
+				if puljeIsLocked(pulje.Status) {
+					checked
+				}
+				data-on:click={ puljeStatusUpdateAction(
+					pulje,
+					fmt.Sprintf("Vil du endre lukking for %s?", pulje.Name),
+					models.PuljeStatusLocked,
+					models.PuljeStatusOpen,
+				) }
+				type="checkbox"
+				class="checkbox input"
+			/>
+			<span>Puljefordeling lukket</span>
+		</label>
+		<label class="pulje-status-control">
+			<input
+				if puljeIsCompleted(pulje.Status) {
+					checked
+				}
+				data-on:click={ puljeStatusUpdateAction(
+					pulje,
+					fmt.Sprintf("Vil du endre publisering av puljefordeling for %s?", pulje.Name),
+					models.PuljeStatusCompleted,
+					models.PuljeStatusLocked,
+				) }
+				type="checkbox"
+				class="checkbox input"
+			/>
+			<span>Puljefordeling publisert</span>
+		</label>
+	</div>
+}
+
+templ puljeEventBox(ev puljefordeling.EmulatedEvent) {
+	<div class="pulje-event">
+		<div class="pulje-event-top">
+			<h3>{ ev.Title }</h3>
+			<span class="pulje-cap">{ fmt.Sprintf("%d / %d", len(ev.AssignedPlayers), ev.Capacity) }</span>
+		</div>
+		if ev.GMName != "" {
+			<p class="pulje-gm">Spilleder: { ev.GMName }</p>
+		}
+		if ev.Undersubscribed {
+			<span class="pulje-badge">Få deltakere</span>
+		}
+		if len(ev.AssignedPlayers) > 0 {
+			<ul class="pulje-players">
+				for _, pl := range ev.AssignedPlayers {
+					<li class={ templ.KV("moved", pl.Moved) }>
+						<span class="pulje-emoji">{ pl.Level.Emoji() }</span>
+						<span class={ templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
+					</li>
+				}
+			</ul>
+		} else {
+			<p class="pulje-empty">Ingen deltakere</p>
+		}
+	</div>
+}
