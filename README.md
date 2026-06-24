@@ -10,12 +10,12 @@
 3. [Access the Application](#access-the-application)
 4. [Database Issues: events.db Troubleshooting](#database-issues-eventsdb-troubleshooting)
 5. [IDE Setup](#ide-setup)
-    - [NeoVim Configuration](#neovim-configuration)
+    - [Neovim Configuration](#neovim-configuration)
     - [Troubleshooting](#troubleshooting)
-6. [Migrations with goose](#migrations-with-goose)
+6. [Migrations with Goose](#migrations-with-goose)
     - [Running Goose manually](#running-goose-manually)
-    - [Pushing migrations to prod and services](#pushing-migrations-to-prod-and-services)
-    - [Step By Step To Update DB](#step-by-step-to-update-db)
+    - [Pushing migrations to production](#pushing-migrations-to-production)
+    - [Step-by-step database update](#step-by-step-database-update)
 7. [Agent Skills Path Compatibility](#agent-skills-path-compatibility)
 8. [Update Dependencies](#update-dependencies)
 9. [Additional Resources](#additional-resources)
@@ -57,7 +57,7 @@ Then open your browser and navigate to: [http://localhost:8080](http://localhost
 ## Database Issues: events.db Troubleshooting
 
 > [!NOTE]
-> To get the latest backup of the database and all the images from prod run:
+> To get the latest database backup and all images from production, run:
 > The database download requires `DB_SSH_USER` in your `.env` file or shell environment.
 > The database task creates a temporary SQLite backup snapshot on the server; it does not copy the live WAL-mode database file directly.
 
@@ -80,7 +80,7 @@ sqlite3 database/events.db ".schema --indent" > schema.sql
 
 See [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-support/) for detailed IDE support information.
 
-### NeoVim Configuration
+### Neovim Configuration
 
 #### Templ Support
 
@@ -89,7 +89,7 @@ See [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-suppo
 
 #### SQL Support with Dadbod
 
-Add these plugins to your NeoVim configuration:
+Add these plugins to your Neovim configuration:
 
 ```lua
 {
@@ -113,54 +113,53 @@ Helpful Dadbod tutorials:
 
 Common issues and solutions:
 
-- **Manual generate templ**: If you encounter issues with Templ, run:
+- **Manual templ generation**: If you encounter issues with Templ, run:
 
 ```bash
-templ generate && go build -buildvcs=false -o tmp/main .
+go tool templ build
 ```
 
-- **Tool not found**: Ensure `$HOME/go/bin` is in your PATH
 - **Port in use**: Check if another service is using port 8080
 - **Database errors**: See [Database Issues](#database-issues-eventsdb-troubleshooting)
 - **Build errors**: Run `go mod tidy` to fix dependencies
 
-## Migrations with goose
+## Migrations with Goose
 
 > [!NOTE]
-> Goose will try to read some basic variables from `.env`, make sure that this file is updated with the most recent version from discord before running any commands.
+> Goose reads variables from `.env`. Make sure this file is updated with the most recent version from Discord before running any commands.
 
-We're using [Goose](https://pressly.github.io/goose/) in our migration process for its simplicity and reliability. While Goose is available as a go dependency for programmatically migrating databases, we're mostly using its CLI tool for manual updates.
+We're using [Goose](https://pressly.github.io/goose/) in our migration process for its simplicity and reliability. While Goose is available as a Go dependency for programmatic database migrations, we're mostly using its CLI tool for manual updates.
 
 ### Running Goose manually
 
 > [!WARNING]
 > Before running Goose, run `go tool task download` to fetch the newest version of the database!
-> You can install Goose CLI tool from [here](https://pressly.github.io/goose/installation/), afterwards you should have `goose` globally available in your terminal.
+> Install the Goose CLI tool from the [official installation guide](https://pressly.github.io/goose/installation/). Afterward, `goose` should be globally available in your terminal.
 > Migrations are manual only. Do not add automatic migrations to application startup, health checks, readiness checks, or systemd startup.
 
-To create a new migration file you can run the following command, read [here](https://pressly.github.io/goose/documentation/annotations/) for more annotation examples.
+To create a new migration file, run this command. See the [Goose annotations guide](https://pressly.github.io/goose/documentation/annotations/) for more annotation examples.
 
 ```console
 goose create <briefly describe changes> sql
 ```
 
-After you've added your migration files you can use the keywords `up` or `down` to handle the migrations
+After adding migration files, use `up` or `down` to run migrations.
 
 ```console
 goose up
 ```
 
-### Pushing migrations to prod and services
+### Pushing migrations to production
 
 > [!CAUTION]
-> Make sure that you can do all of the following steps before you start. These actions require goose, account on server.
+> Make sure that you can do all of the following steps before you start. These actions require Goose and server access.
 
-1. Run goose on local db (preferably a copy)
-2. make a backup on server
-3. upload to server.
 5. profit
+1. Run Goose on the local database (preferably a copy).
+2. Make a backup on the server.
+3. Upload the database to the server.
 
-### Step By Step To Update DB
+### Step-by-step database update
 
 ```bash
 systemctl list-units --type=service | grep -i conorganizer
@@ -191,14 +190,14 @@ sudo systemctl stop INSERT_SERVICE_NAME
 Back up the current database if needed:
 
 ```bash
-sqlite3 PAHT_TO_DB ".backup 'PATH_TO_BACKUP/events.db.bak'"
+sqlite3 PATH_TO_DB ".backup 'PATH_TO_BACKUP/events.db.bak'"
 ```
 
 Move the uploaded database into place:
 
 ```bash
-mv /path/to/uploaded/events.db /nmnt/HC_Volume_103911252/environments/1337-merge/database/events.db
-cd /nmnt/HC_Volume_103911252/environments/1337-merge/database
+mv /path/to/uploaded/events.db /mnt/HC_Volume_103911252/environments/1337-merge/database/events.db
+cd /mnt/HC_Volume_103911252/environments/1337-merge/database
 sudo chown deploy:deploy events.db
 sudo chmod 644 events.db
 ```
@@ -217,7 +216,7 @@ journalctl -u INSERT_SERVICE_NAME -n 100 --no-pager
 ```
 
 <!--
-!!!Dont run this unless you know all caveats, this can affect prod negatively!!!
+!!!Do not run this unless you know all caveats; this can affect production negatively!!!
 docker compose -f compose-restore.yaml down && docker image rm regncon-migration
 docker compose -f compose-restore.yaml up
 -->
