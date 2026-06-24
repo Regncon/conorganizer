@@ -280,8 +280,8 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-legend .legend-strek {
             padding-left: var(--spacing-1x);
         }
-        .pulje-legend .legend-dm {
-            border-left: 3px solid var(--color-accent-blue);
+        .pulje-legend .legend-dm-name {
+            color: turquoise;
         }
         .pulje-legend .legend-moved {
             border-left: 3px solid var(--color-accent-red);
@@ -356,14 +356,14 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             border: 1px solid var(--bg-item-border);
             border-radius: var(--border-radius-1x);
         }
-        .pulje-players li.dm {
-            border-left: 3px solid var(--color-accent-blue);
-        }
         .pulje-players li.moved {
             border-left: 3px solid var(--color-accent-red);
         }
         .pulje-players li.manual {
             border-left: 3px solid var(--color-accent-yellow);
+        }
+        .pulje-dm {
+            color: turquoise;
         }
         .pulje-remove {
             margin-left: auto;
@@ -451,7 +451,7 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		<div class="pulje-legend">
 			<p>🔥 Veldig interessert · 👍 Middels · 🤷 Litt</p>
 			<p>
-				<span class="legend-strek legend-dm">Blå strek</span> = Spilleder · <span class="legend-strek legend-moved">Rød strek</span> = flyttet for å gi plass · <span class="legend-strek legend-manual">Gul strek</span> = manuell
+				<span class="legend-dm-name">Turkis navn</span> = Spilleder · <span class="legend-strek legend-moved">Rød strek</span> = flyttet for å gi plass · <span class="legend-strek legend-manual">Gul strek</span> = manuell
 			</p>
 		</div>
 		if emErr != nil {
@@ -543,9 +543,9 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 		if len(ev.AssignedPlayers) > 0 {
 			<ul class="pulje-players">
 				for _, pl := range ev.AssignedPlayers {
-					<li class={ templ.KV("dm", pl.IsDM), templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) }>
+					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) }>
 						<span class="pulje-emoji">{ pl.Level.Emoji() }</span>
-						<span>{ pl.Name }</span>
+						<span class={ templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
 						if pl.Manual && !published {
 							<button
 								type="button"
