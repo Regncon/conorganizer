@@ -12,24 +12,10 @@ Just install Go.
 
 ### Docker Setup (Recommended for Windows)
 
-1. **Start the application using Docker Compose**
+Start the application using Docker Compose
 
 ```bash
 docker compose up --build
-```
-
-2. Once the containers are up and running, head over to [Access the Application](#access-the-application) to view the app in your browser.
-
-> [!NOTE]
-> Docker is a platform that allows you to run applications in containers. It handles all dependencies and environment configuration automatically, making it ideal for Windows users.
-
-### Direct Installation
-
-
-## Access the Application:
-
-```bash
-go tool task start
 ```
 
 Then open your browser and navigate to: [http://localhost:8080](http://localhost:8080)
@@ -45,16 +31,31 @@ Then open your browser and navigate to: [http://localhost:8080](http://localhost
 go tool task download
 ```
 
-Production SQLite operational notes are in [documentation/sqlite-production.md](documentation/sqlite-production.md).
-
-To get the latest schema of the database, run:
+## Run Locally
 
 ```bash
-sqlite3 database/events.db ".schema --indent" > schema.sql
+go tool task start
+```
+
+Then open your browser and navigate to: [http://localhost:8080](http://localhost:8080)
+
+
+## Run tests
+
+The fist time you run tests you need to create a new schema.sql
+
+```bash
+go tool task test
 ```
 
 > [!TIP]
 > Format the `schema.sql` using the Prettier plugin in your IDE to make it look nice.
+
+After that, you can run tests normally with:
+
+```bash
+go test ./...
+```
 
 ## IDE Setup
 
@@ -62,7 +63,7 @@ See [Templ Guide: Developer Tools](https://templ.guide/developer-tools/ide-suppo
 
 Neovim-specific setup lives in [documentation/neovim-setup.md](documentation/neovim-setup.md).
 
-### Troubleshooting
+## Troubleshooting
 
 Common issues and solutions:
 
@@ -78,24 +79,7 @@ go tool templ build
 
 ## Migrations
 
-Migration notes and the production database update runbook live in [documentation/migrations.md](documentation/migrations.md).
-
-Migrations are manual only. Do not add automatic migrations to application startup, health checks, readiness checks, or systemd startup.
-
-## Agent Skills Path Compatibility
-
-Some agents do not discover skills directly from `.agents/skills`.
-
-If that happens, link each skill into that agent's own skills folder (create the folder first if needed).
-
-If you need a true symlink instead (may require admin/dev mode):
-
-```powershell
-$agentSkillsFolder = ".codex\skills"  # replace with your agent's skills folder
-New-Item -ItemType Directory -Force -Path $agentSkillsFolder | Out-Null
-New-Item -ItemType SymbolicLink -Path "$agentSkillsFolder" -Target ".agents\skills"
-```
-
+[documentation/migrations.md](documentation/migrations.md)
 
 ## Update Dependencies
 
@@ -133,6 +117,20 @@ go install github.com/a-h/templ/cmd/templ@v0.3.1020
 ```
 
 and update the version to match `go.mod`.
+
+## Agent Skills Path Compatibility
+
+Some agents do not discover skills directly from `.agents/skills`.
+
+If that happens, link each skill into that agent's own skills folder (create the folder first if needed).
+
+If you need a true symlink instead (may require admin/dev mode):
+
+```powershell
+$agentSkillsFolder = ".codex\skills"  # replace with your agent's skills folder
+New-Item -ItemType Directory -Force -Path $agentSkillsFolder | Out-Null
+New-Item -ItemType SymbolicLink -Path "$agentSkillsFolder" -Target ".agents\skills"
+```
 
 ## Additional Resources
 
