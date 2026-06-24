@@ -157,6 +157,40 @@ func postAssignSignals(t *testing.T, router http.Handler, bhID int, eventID, pul
 	return rec
 }
 
+func TestPuljefordelingCommitRoute_PersistsSolverPicks(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_commit_route")
+	router := chi.NewRouter()
+	puljefordelingRoute(router, db, &live.Manager{}, logger)
+
+	const fredag = models.PuljeFredagKveld
+	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
+	testutil.MustExec(t, db, `INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level) VALUES (1,'evA',?,?)`,
+		string(fredag), string(models.InterestLevelHigh))
+
+	req := httptest.NewRequest(http.MethodPost, "/api/puljefordeling/FredagKveld/commit", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("want 204, got %d (%s)", rec.Code, rec.Body.String())
+	}
+
+	var source string
+	if err := db.QueryRow(
+		`SELECT source FROM relation_events_players WHERE event_id='evA' AND billettholder_id=1 AND role='Player'`,
+	).Scan(&source); err != nil {
+		t.Fatalf("expected a committed seat after commit: %v", err)
+	}
+	if source != "solver" {
+		t.Errorf("committed solver pick should be source='solver', got %q", source)
+	}
+}
+
 func TestPuljefordelingAssignRoute_PinsWithoutCreatingInterest(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_assign_route")
 	router := chi.NewRouter()

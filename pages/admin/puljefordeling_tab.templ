@@ -72,6 +72,25 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		})
 	})
 
+	// Commit (+publish-independent). Persists the current distribution so it shows
+	// in other views; solver picks become source='solver', manual pins stay manual.
+	router.Post("/api/puljefordeling/{pulje}/commit", func(w http.ResponseWriter, r *http.Request) {
+		puljeID, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
+		if !ok {
+			http.Error(w, "Invalid pulje ID", http.StatusBadRequest)
+			return
+		}
+		if err := puljefordeling.CommitDistribution(db, puljeID); err != nil {
+			logger.Error(err.Error(), "pulje_id", puljeID)
+			http.Error(w, "Failed to commit distribution", http.StatusInternalServerError)
+			return
+		}
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketRooms); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast commit: %w", err).Error(), "pulje_id", puljeID)
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	// Add a manual pin (+). Force-pins the chosen billettholder into the event
 	// without touching their interests; removing the pin reverts them to emulation.
 	router.Post("/api/puljefordeling/assign", func(w http.ResponseWriter, r *http.Request) {
@@ -309,6 +328,12 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
         .pulje-tab-warn {
             color: var(--color-text-warning, #e0a030);
         }
+        .pulje-tab-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: var(--spacing-2x);
+        }
         .pulje-status-controls {
             display: flex;
             gap: var(--spacing-4x);
@@ -508,9 +533,16 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 					</div>
 				}
 			</div>
-			if hasRow {
-				@puljeStatusToggles(row)
-			}
+			<div class="pulje-tab-actions">
+				if hasRow {
+					@puljeStatusToggles(row)
+				}
+				<button
+					type="button"
+					class="btn btn--outline pulje-commit"
+					data-on:click={ fmt.Sprintf("if (confirm('Lagre denne fordelingen? Den blir tilgjengelig i andre visninger.')) { @post('/admin/api/puljefordeling/%s/commit') }", string(pulje)) }
+				>Lagre fordeling</button>
+			</div>
 		</div>
 		<div class="pulje-legend">
 			<p>🔥 Veldig interessert · 👍 Middels · 🤷 Litt · 📌 Ikke interessert, manuelt plassert</p>
