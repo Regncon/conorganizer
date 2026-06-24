@@ -268,15 +268,26 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             cursor: pointer;
         }
         .pulje-legend {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-1x);
             color: var(--color-text-soft);
             font-size: var(--text-small, 0.85rem);
         }
-        .pulje-legend .pulje-dm {
-            color: turquoise;
+        .pulje-legend p {
+            margin: 0;
         }
-        .pulje-legend .pulje-moved {
-            border-left: 3px solid #e05050;
+        .pulje-legend .legend-strek {
             padding-left: var(--spacing-1x);
+        }
+        .pulje-legend .legend-dm {
+            border-left: 3px solid var(--color-accent-blue);
+        }
+        .pulje-legend .legend-moved {
+            border-left: 3px solid var(--color-accent-red);
+        }
+        .pulje-legend .legend-manual {
+            border-left: 3px solid var(--color-accent-yellow);
         }
         .pulje-event-grid {
             display: grid;
@@ -345,11 +356,14 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             border: 1px solid var(--bg-item-border);
             border-radius: var(--border-radius-1x);
         }
+        .pulje-players li.dm {
+            border-left: 3px solid var(--color-accent-blue);
+        }
         .pulje-players li.moved {
-            border-left: 3px solid #e05050;
+            border-left: 3px solid var(--color-accent-red);
         }
         .pulje-players li.manual {
-            border-left: 3px solid var(--color-primary);
+            border-left: 3px solid var(--color-accent-yellow);
         }
         .pulje-remove {
             margin-left: auto;
@@ -382,9 +396,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             flex: 0 0 auto;
             width: 1.4em;
             text-align: center;
-        }
-        .pulje-dm {
-            color: turquoise;
         }
         .pulje-empty {
             color: var(--color-text-soft-50);
@@ -437,9 +448,12 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 				@puljeStatusToggles(row)
 			}
 		</div>
-		<p class="pulje-legend">
-			🔥 Veldig interessert · 👍 Middels · 🤷 Litt · <span class="pulje-dm">Turkis</span> = spilleder et annet sted · <span class="pulje-moved">Rød strek</span> = flyttet ned for å gi plass til andre
-		</p>
+		<div class="pulje-legend">
+			<p>🔥 Veldig interessert · 👍 Middels · 🤷 Litt</p>
+			<p>
+				<span class="legend-strek legend-dm">Blå strek</span> = Spilleder · <span class="legend-strek legend-moved">Rød strek</span> = flyttet for å gi plass · <span class="legend-strek legend-manual">Gul strek</span> = manuell
+			</p>
+		</div>
 		if emErr != nil {
 			<p class="pulje-error">Kunne ikke beregne fordeling: { emErr.Error() }</p>
 		} else if !hasResult {
@@ -529,9 +543,9 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 		if len(ev.AssignedPlayers) > 0 {
 			<ul class="pulje-players">
 				for _, pl := range ev.AssignedPlayers {
-					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) }>
+					<li class={ templ.KV("dm", pl.IsDM), templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) }>
 						<span class="pulje-emoji">{ pl.Level.Emoji() }</span>
-						<span class={ templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
+						<span>{ pl.Name }</span>
 						if pl.Manual && !published {
 							<button
 								type="button"
