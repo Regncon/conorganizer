@@ -10,9 +10,12 @@ import (
 	"strings"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/event_components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
+	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -24,7 +27,7 @@ import (
 // mirrors the bordfordeling (rooms assignment) layout: a tab strip per pulje and
 // a connected panel that live-updates over SSE. It is a read-only what-if view of
 // the emulated distribution — nothing is written to assignment tables here.
-func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
+func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger, eventImageDir *string) {
 	logger = logger.With("component", "admin_puljefordeling_tab")
 
 	router.Route("/puljefordeling", func(puljefordelingRouter chi.Router) {
@@ -46,7 +49,7 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 			if err := layouts.Base(
 				"Puljefordeling",
 				userInfo,
-				puljefordelingIndex(db, logger, puljeID),
+				puljefordelingIndex(db, logger, puljeID, eventImageDir),
 			).Render(r.Context(), w); err != nil {
 				logger.Error(fmt.Errorf("failed to render puljefordeling page: %w", err).Error(), "user_id", userInfo.Id)
 			}
@@ -67,7 +70,7 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		liveManager.Stream(w, r, live.Page{
 			Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests},
 			Render: func(ctx context.Context, r *http.Request) templ.Component {
-				return PuljefordelingTabContent(db, logger, puljeID)
+				return PuljefordelingTabContent(db, logger, puljeID, eventImageDir)
 			},
 		})
 	})
@@ -224,7 +227,7 @@ func unsatisfiedAfter(em puljefordeling.Emulation, pulje models.Pulje) (int, boo
 	return 0, false
 }
 
-templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje) {
+templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje, eventImageDir *string) {
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Admin", Url: "/admin/"},
@@ -289,12 +292,12 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje)
 				>{ pulje }</a>
 			}
 		</div>
-		@PuljefordelingTabContent(db, logger, current)
+		@PuljefordelingTabContent(db, logger, current, eventImageDir)
 		@puljeAssignDialog(db, logger, current)
 	</div>
 }
 
-templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
 	{{
 		puljer, puljerErr := getPuljer(db)
 		if puljerErr != nil {
@@ -374,6 +377,8 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             gap: var(--responsive-page-section-spacing);
         }
         .pulje-event {
+            position: relative;
+            overflow: hidden;
             display: flex;
             flex-flow: column nowrap;
             gap: var(--spacing-1x);
@@ -383,12 +388,52 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             background-color: var(--bg-item);
             transition: border-color 300ms ease-in-out;
         }
+        /* Faded banner art behind each game, mirroring the rooms cards. */
+        .pulje-event-bg {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        /* Full-box gradient so the tags and player list stay legible over the
+           image — these boxes carry far more text than the small room cards. */
+        .pulje-event::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: linear-gradient(
+                to bottom,
+                rgba(53, 57, 74, 0.82) 0%,
+                rgba(53, 57, 74, 0.9) 45%,
+                rgba(53, 57, 74, 0.97) 100%
+            );
+        }
+        .pulje-event > *:not(.pulje-event-bg) {
+            position: relative;
+            z-index: 2;
+        }
         .pulje-event:hover {
             border-color: var(--bg-item-border-hover);
         }
         .pulje-event.is-drag-over {
             border-color: var(--color-primary);
             background-color: var(--bg-surface);
+        }
+        /* Event property tags (game type, age, runtime, beginner/english). */
+        .pulje-tags {
+            display: flex;
+            flex-flow: row wrap;
+            gap: var(--spacing-1x) var(--spacing-3x);
+            color: var(--color-text-soft);
+            font-size: var(--text-small, 0.85rem);
+        }
+        .pulje-tags > div {
+            background-color: rgba(20, 22, 30, 0.45);
+            padding: 0 var(--spacing-2x);
+            border-radius: var(--border-radius-1x);
         }
         .pulje-players li[draggable="true"] {
             cursor: grab;
@@ -444,6 +489,8 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
             padding: var(--spacing-1x);
             border: 1px solid var(--bg-item-border);
             border-radius: var(--border-radius-1x);
+            background-color: rgba(20, 22, 30, 0.4);
+            backdrop-filter: blur(2px);
         }
         .pulje-players li.moved {
             border-left: 3px solid var(--color-accent-red);
@@ -545,7 +592,7 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			</div>
 		</div>
 		<div class="pulje-legend">
-			<p>🔥 Veldig interessert · 👍 Middels · 🤷 Litt · 📌 Ikke interessert, manuelt plassert</p>
+			<p>🤩 Veldig interessert · 🙂 Middels · 🤨 Litt · 📌 Ikke interessert, manuelt plassert</p>
 			<p><span class="legend-dm-name">Turkis navn</span> = Spilleder</p>
 			<p>
 				<span class="legend-strek legend-moved">Rød strek</span> = flyttet for å gi plass · <span class="legend-strek legend-manual">Gul strek</span> = manuell
@@ -558,7 +605,7 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		} else {
 			<div class="pulje-event-grid">
 				for _, ev := range result.Events {
-					@puljeEventBox(pulje, ev, puljeIsCompleted(row.Status))
+					@puljeEventBox(pulje, ev, puljeIsCompleted(row.Status), eventImageDir)
 				}
 			</div>
 			if len(result.Unassigned) > 0 {
@@ -623,7 +670,7 @@ templ puljeStatusToggles(pulje models.PuljeRow) {
 	</div>
 }
 
-templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, published bool) {
+templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, published bool, eventImageDir *string) {
 	{{
 		// A non-published event box is a drop target: dropping a dragged player
 		// pins them here via the assign endpoint (mirrors the rooms drag-and-drop).
@@ -633,12 +680,15 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 			dropAttrs["data-on:drop__prevent"] = fmt.Sprintf("$dragOverEvent = ''; $draggedBillettholderId && (($assignmentBillettholderId = $draggedBillettholderId), ($assignmentEventId = '%s'), ($assignmentPuljeId = '%s'), @post('/admin/api/puljefordeling/assign'))", ev.EventID, string(pulje))
 			dropAttrs["data-class:is-drag-over"] = fmt.Sprintf("$dragOverEvent === '%s'", ev.EventID)
 		}
+		imageBannerUrl := eventimage.GetEventImageUrl(ev.EventID, "banner", eventImageDir)
 	}}
 	<div class={ "pulje-event", templ.KV("missing-dm", ev.GMName == "") } { dropAttrs... }>
+		<img class="pulje-event-bg" src={ imageBannerUrl } alt="" aria-hidden="true"/>
 		<div class="pulje-event-top">
 			<h3>{ ev.Title }</h3>
 			<span class="pulje-cap">{ fmt.Sprintf("%d / %d", len(ev.AssignedPlayers), ev.Capacity) }</span>
 		</div>
+		@puljeEventTags(ev)
 		if ev.GMName != "" {
 			<p class="pulje-gm">Spilleder: { ev.GMName }</p>
 		} else {
@@ -688,6 +738,42 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 				class="pulje-add"
 				data-on:click={ fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; document.getElementById('puljefordeling-assign-dialog').showModal()", ev.EventID, string(pulje)) }
 			>+ Legg til deltaker</button>
+		}
+	</div>
+}
+
+// puljeEventTags renders the event's property badges (game type, age group,
+// runtime, beginner/English) using the same SVG icons as the event detail page,
+// so an admin can read a game's nature at a glance without leaving the view.
+templ puljeEventTags(ev puljefordeling.EmulatedEvent) {
+	<div class="pulje-tags">
+		switch ev.EventType {
+			case models.EventTypeRoleplay:
+				@event_components.Event_property(ev.EventType.Label(), icons.EventRoleplay)
+			case models.EventTypeBoardGame:
+				@event_components.Event_property(ev.EventType.Label(), icons.EventBoardgame)
+			case models.EventTypeCardGame:
+				@event_components.Event_property(ev.EventType.Label(), icons.EventCardgame)
+			case models.EventTypeOther:
+				@event_components.Event_property(ev.EventType.Label(), icons.EventOtherGames)
+		}
+		if ev.AgeGroup == models.AgeGroupAdultsOnly {
+			@event_components.Event_property(ev.AgeGroup.BadgeLabel(), icons.EventAdultOnly)
+		}
+		if ev.AgeGroup == models.AgeGroupChildFriendly {
+			@event_components.Event_property(ev.AgeGroup.BadgeLabel(), icons.EventChildFriendly)
+		}
+		if ev.Runtime == models.RunTimeLongRunning {
+			@event_components.Event_property(ev.Runtime.BadgeLabel(), icons.TimeOver6Hours)
+		}
+		if ev.Runtime == models.RunTimeShortRunning {
+			@event_components.Event_property(ev.Runtime.BadgeLabel(), icons.TimeUnder3Hours)
+		}
+		if ev.BeginnerFriendly {
+			@event_components.Event_property("Nybegynnervennlig", icons.EventBeginnerFriendly)
+		}
+		if ev.CanBeRunInEnglish {
+			@event_components.Event_property("Can be run in English", icons.EventEnglish)
 		}
 	</div>
 }

@@ -20,7 +20,7 @@ import (
 func TestPuljefordelingRemoveManualSeatRoute_DeletesPin(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_remove_route")
 	router := chi.NewRouter()
-	puljefordelingRoute(router, db, &live.Manager{}, logger)
+	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
@@ -65,7 +65,7 @@ func TestPuljefordelingTabContent_RendersAddPickerAndManualRemove(t *testing.T) 
 	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
 		VALUES ('evA',?,1,'Player','manual')`, string(fredag))
 
-	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, fredag))
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, fredag, nil))
 	html, err := doc.Html()
 	if err != nil {
 		t.Fatalf("render html: %v", err)
@@ -92,7 +92,7 @@ func TestPuljefordelingIndex_DialogRendersOutsideLiveRegion(t *testing.T) {
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
 
-	doc := templtest.Render(t, puljefordelingIndex(db, logger, fredag))
+	doc := templtest.Render(t, puljefordelingIndex(db, logger, fredag, nil))
 
 	if got := doc.Find("#puljefordeling-assign-dialog").Length(); got != 1 {
 		t.Fatalf("expected exactly one assign dialog, got %d", got)
@@ -160,7 +160,7 @@ func postAssignSignals(t *testing.T, router http.Handler, bhID int, eventID, pul
 func TestPuljefordelingCommitRoute_PersistsSolverPicks(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_commit_route")
 	router := chi.NewRouter()
-	puljefordelingRoute(router, db, &live.Manager{}, logger)
+	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
@@ -194,7 +194,7 @@ func TestPuljefordelingCommitRoute_PersistsSolverPicks(t *testing.T) {
 func TestPuljefordelingAssignRoute_PinsWithoutCreatingInterest(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_assign_route")
 	router := chi.NewRouter()
-	puljefordelingRoute(router, db, &live.Manager{}, logger)
+	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
@@ -227,7 +227,7 @@ func TestPuljefordelingAssignRoute_PinsWithoutCreatingInterest(t *testing.T) {
 func TestPuljefordelingAssignRoute_RejectsWhenPublished(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_assign_published")
 	router := chi.NewRouter()
-	puljefordelingRoute(router, db, &live.Manager{}, logger)
+	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
@@ -253,7 +253,7 @@ func TestPuljefordelingAssignRoute_RejectsWhenPublished(t *testing.T) {
 func TestPuljefordelingRemoveManualSeatRoute_RejectsWhenPublished(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_remove_published")
 	router := chi.NewRouter()
-	puljefordelingRoute(router, db, &live.Manager{}, logger)
+	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
 
 	const fredag = models.PuljeFredagKveld
 	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
@@ -286,7 +286,7 @@ func TestPuljefordelingRemoveManualSeatRoute_RejectsWhenPublished(t *testing.T) 
 func TestPuljefordelingRemoveManualSeatRoute_RejectsInvalidPulje(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_remove_route_invalid")
 	router := chi.NewRouter()
-	puljefordelingRoute(router, db, &live.Manager{}, logger)
+	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/puljefordeling/NotAPulje/evA/1", nil)
 	rec := httptest.NewRecorder()
