@@ -48,7 +48,7 @@ type SlotResult struct {
 	UndersubscribedEvents []string            // eventIDs assigned fewer players than MinPlayers — flagged for organiser review (not cancelled)
 	Unassigned            []string            // playerIDs with interest but no seat
 	NewlySatisfied        []string            // playerIDs satisfied for the first time this slot
-	MovedPlayers          []string            // playerIDs relocated off a higher-scoring event by a residual-edge augmentation
+	MovedPlayers          []string            // playerIDs bumped down to a strictly lower-interest event to make room (lateral, equal-interest swaps are excluded)
 	TotalScore            int                 // sum of actual (unadjusted) scores for all assignments
 	Seed                  int64               // seed used for tie-breaking shuffle this slot
 }

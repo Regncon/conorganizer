@@ -22,7 +22,7 @@ type AssignedPlayer struct {
 	Name            string
 	IsDM            bool                 // runs at least one game in the weekend (DM bump)
 	Level           models.InterestLevel // their interest in the game they got
-	Moved           bool                 // relocated off a higher-scoring event by the solver to make room for others
+	Moved           bool                 // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
 	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
 }
 
