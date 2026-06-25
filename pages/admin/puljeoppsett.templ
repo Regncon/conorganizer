@@ -1,0 +1,185 @@
+package admin
+
+import (
+	"database/sql"
+	"fmt"
+	"log/slog"
+
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/live"
+)
+
+templ scheduleBoardIndex(db *sql.DB, logger *slog.Logger) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Admin", Url: "/admin/"},
+		{Name: "Puljeoppsett", Url: ""},
+	})
+	<div class="page-content-container flex flex-col">
+		@scheduleBoardStyles()
+		@ScheduleBoardContent(db, logger)
+	</div>
+}
+
+templ ScheduleBoardContent(db *sql.DB, logger *slog.Logger) {
+	{{ board, err := buildScheduleBoard(db, logger) }}
+	<section
+		id="puljeoppsett-board"
+		class="rooms-section"
+		data-init={ live.DatastarInit("/admin/api/puljeoppsett") }
+		data-signals:dragged-event-id="''"
+		data-signals:drag-over-pulje="''"
+	>
+		if err != nil {
+			<p style="color: var(--color-error);">Klarte ikkje å byggje brettet: { err.Error() }</p>
+		} else {
+			if board.CollisionCount > 0 {
+				<p class="board-collision-summary">
+					⚠ { fmt.Sprintf("%d spelleiar-kollisjon(ar)", board.CollisionCount) }
+				</p>
+			}
+			<div class="board-columns">
+				@poolColumn(board.Pool)
+				for _, col := range board.Columns {
+					@slotColumn(col)
+				}
+			</div>
+		}
+	</section>
+}
+
+templ poolColumn(games []BoardGame) {
+	<div class="board-col board-col--pool">
+		<header class="board-col-head">
+			<h3>I ingen pulje</h3>
+			<p class="board-stats">{ fmt.Sprintf("%d spel", len(games)) }</p>
+		</header>
+		<div class="board-col-body">
+			for _, g := range games {
+				@gameCard(g, "", false)
+			}
+		</div>
+	</div>
+}
+
+templ slotColumn(col SlotColumn) {
+	<div
+		class="board-col"
+		data-on:dragover__prevent={ fmt.Sprintf("$draggedEventId && ($dragOverPulje = '%s')", string(col.Pulje.ID)) }
+		data-on:drop__prevent={ fmt.Sprintf("$dragOverPulje = ''; $draggedEventId && @put('/admin/api/puljeoppsett/' + $draggedEventId + '/%s/add')", string(col.Pulje.ID)) }
+		data-class:is-drag-over={ fmt.Sprintf("$dragOverPulje === '%s'", string(col.Pulje.ID)) }
+	>
+		<header class="board-col-head">
+			<h3>{ col.Pulje.Name } <span>({ col.Pulje.TimeRange() })</span></h3>
+			<p class="board-stats">
+				{ fmt.Sprintf("%d spel · %d 18+ · %d nyb.", col.Stats.Games, col.Stats.Adults, col.Stats.Beginner) }
+			</p>
+		</header>
+		if len(col.Collisions) > 0 {
+			<div class="board-collision">
+				for _, c := range col.Collisions {
+					<p>⚠ Spelleiar-kollisjon — { c.HostName } har { fmt.Sprintf("%d", c.Count) } spel i denne puljen</p>
+				}
+			</div>
+		}
+		<div class="board-col-body">
+			for _, g := range col.Games {
+				@gameCard(g, string(col.Pulje.ID), inCollision(col, g))
+			}
+		</div>
+	</div>
+}
+
+templ gameCard(g BoardGame, puljeID string, colliding bool) {
+	<div
+		class={ "board-card", templ.KV("is-colliding", colliding) }
+		draggable="true"
+		data-on:dragstart={ fmt.Sprintf("$draggedEventId = '%s'", g.EventID) }
+		data-on:dragend="$draggedEventId = ''; $dragOverPulje = ''"
+	>
+		<a class="board-card-title" href={ templ.SafeURL("/admin/approval/edit/" + g.EventID) }>{ g.Title }</a>
+		<span class="board-card-status">{ string(g.Status) }</span>
+		if puljeID != "" {
+			<button
+				type="button"
+				class="board-card-remove"
+				data-on:click={ fmt.Sprintf("@delete('/admin/api/puljeoppsett/%s/%s')", g.EventID, puljeID) }
+			>×</button>
+		}
+	</div>
+}
+
+func inCollision(col SlotColumn, g BoardGame) bool {
+	for _, c := range col.Collisions {
+		if c.HostName == g.HostName {
+			return true
+		}
+	}
+	return false
+}
+
+templ scheduleBoardStyles() {
+	<style>
+		.board-columns {
+			display: flex;
+			gap: var(--spacing-2x);
+			overflow-x: auto;
+			padding: var(--spacing-2x) 0;
+			align-items: flex-start;
+		}
+		.board-col {
+			flex: 0 0 16rem;
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-1x);
+			padding: var(--spacing-2x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-1x);
+			background-color: var(--bg-item);
+			transition: border-color 300ms ease-in-out;
+		}
+		.board-col.is-drag-over {
+			border-color: var(--color-primary);
+			background-color: var(--bg-item-hover);
+		}
+		.board-col--pool { background-color: var(--bg-surface); }
+		.board-col-body {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-1x);
+		}
+		.board-stats { font-size: var(--text-body-small); color: var(--color-disabled); }
+		.board-collision, .board-collision-summary {
+			color: var(--color-error);
+			font-weight: bold;
+			border: 2px solid var(--color-error);
+			border-radius: var(--border-radius-1x);
+			padding: var(--spacing-1x);
+		}
+		.board-card {
+			position: relative;
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+			padding: var(--spacing-1x);
+			border: 2px solid var(--bg-item-border);
+			border-radius: var(--border-radius-2x);
+			background-color: var(--bg-item);
+			cursor: grab;
+		}
+		.board-card.is-colliding { border-color: var(--color-error); }
+		.board-card-title { font-weight: bold; text-decoration: none; color: var(--color-primary-text); }
+		.board-card-status { font-size: var(--text-body-small); color: var(--color-disabled); }
+		.board-card-remove {
+			position: absolute;
+			top: 2px;
+			right: 2px;
+			background: none;
+			border: none;
+			color: var(--color-error);
+			cursor: pointer;
+			font-size: 1.1rem;
+			line-height: 1;
+		}
+	</style>
+}
