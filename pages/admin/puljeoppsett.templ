@@ -1,12 +1,19 @@
 package admin
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log/slog"
+	"net/http"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/formsubmission"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
 )
 
 templ scheduleBoardIndex(db *sql.DB, logger *slog.Logger) {
@@ -116,6 +123,62 @@ func inCollision(col SlotColumn, g BoardGame) bool {
 		}
 	}
 	return false
+}
+
+// puljeoppsettRoute wires the game→slot board: a drag-and-drop view that toggles
+// relation_event_puljer.is_in_pulje. Membership changes broadcast on BucketEvents
+// so every connected admin's board live-updates.
+func puljeoppsettRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
+	logger = logger.With("component", "admin_puljeoppsett")
+
+	router.Get("/puljeoppsett/", func(w http.ResponseWriter, r *http.Request) {
+		userInfo := userctx.GetUserRequestInfo(r.Context())
+		if err := layouts.Base("Puljeoppsett", userInfo, scheduleBoardIndex(db, logger)).
+			Render(r.Context(), w); err != nil {
+			logger.Error(fmt.Errorf("render puljeoppsett page: %w", err).Error())
+		}
+	})
+
+	router.Get("/api/puljeoppsett", func(w http.ResponseWriter, r *http.Request) {
+		liveManager.Stream(w, r, live.Page{
+			Buckets: []live.Bucket{live.BucketEvents},
+			Render: func(ctx context.Context, r *http.Request) templ.Component {
+				return ScheduleBoardContent(db, logger)
+			},
+		})
+	})
+
+	router.Put("/api/puljeoppsett/{event}/{pulje}/add", func(w http.ResponseWriter, r *http.Request) {
+		setMembership(w, r, db, liveManager, logger, true)
+	})
+
+	router.Delete("/api/puljeoppsett/{event}/{pulje}", func(w http.ResponseWriter, r *http.Request) {
+		setMembership(w, r, db, liveManager, logger, false)
+	})
+}
+
+func setMembership(w http.ResponseWriter, r *http.Request, db *sql.DB, liveManager *live.Manager, logger *slog.Logger, inPulje bool) {
+	eventID := chi.URLParam(r, "event")
+	if eventID == "" {
+		http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+		return
+	}
+	puljeID, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
+	if !ok {
+		http.Error(w, "Ugyldig pulje-ID", http.StatusBadRequest)
+		return
+	}
+	if err := formsubmission.SetEventInPulje(r.Context(), db, logger, eventID, string(puljeID), inPulje); err != nil {
+		logger.Error(fmt.Errorf("set membership event %s pulje %s: %w", eventID, puljeID, err).Error())
+		http.Error(w, "Klarte ikkje å oppdatere puljen", http.StatusInternalServerError)
+		return
+	}
+	// Live broadcast is best-effort: the write is already committed, so a failed
+	// refresh must not fail the request. Log and return success.
+	if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+		logger.Warn(fmt.Errorf("broadcast membership update for event %s pulje %s: %w", eventID, puljeID, err).Error())
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 templ scheduleBoardStyles() {
