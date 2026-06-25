@@ -13,13 +13,16 @@ import (
 
 // BoardGame is one game card on the puljeoppsett board.
 type BoardGame struct {
-	EventID  string
-	Title    string
-	Status   models.EventStatus
-	AgeGroup models.AgeGroup
-	Beginner bool
-	OwnerKey string // "user:<id>" or "email:<lowercased>" — DM identity
-	HostName string
+	EventID   string
+	Title     string
+	Status    models.EventStatus
+	AgeGroup  models.AgeGroup
+	Beginner  bool
+	EventType models.EventType
+	Runtime   models.Runtime
+	English   bool
+	OwnerKey  string // "user:<id>" or "email:<lowercased>" — DM identity
+	HostName  string
 }
 
 // SlotStats are the per-column counters shown in the header.
@@ -68,6 +71,7 @@ func buildScheduleBoard(db *sql.DB, logger *slog.Logger) (ScheduleBoard, error) 
 
 	const query = `
 		SELECT e.id, e.title, e.status, e.age_group, e.beginner_friendly,
+		       e.event_type, e.event_runtime, e.can_be_run_in_english,
 		       e.user_id, e.email, e.host_name, ep.pulje_id
 		FROM events e
 		LEFT JOIN relation_event_puljer ep
@@ -87,17 +91,20 @@ func buildScheduleBoard(db *sql.DB, logger *slog.Logger) (ScheduleBoard, error) 
 
 	for rows.Next() {
 		var (
-			g       BoardGame
-			userID  sql.NullInt64
-			email   string
-			puljeID sql.NullString
-			beginI  int
+			g        BoardGame
+			userID   sql.NullInt64
+			email    string
+			puljeID  sql.NullString
+			beginI   int
+			englishI int
 		)
 		if err := rows.Scan(&g.EventID, &g.Title, &g.Status, &g.AgeGroup, &beginI,
+			&g.EventType, &g.Runtime, &englishI,
 			&userID, &email, &g.HostName, &puljeID); err != nil {
 			return ScheduleBoard{}, fmt.Errorf("scan board game: %w", err)
 		}
 		g.Beginner = beginI == 1
+		g.English = englishI == 1
 		g.OwnerKey = ownerKey(userID, email)
 
 		poolByID[g.EventID] = g

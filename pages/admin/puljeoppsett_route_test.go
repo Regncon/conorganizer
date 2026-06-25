@@ -25,7 +25,7 @@ func TestPuljeoppsettRoute_AddAndRemoveMembership(t *testing.T) {
 	insertBoardEvent(t, db, "e1", "Spel", "Godkjent", "Default", 0, 0, "ola@x.no", "Ola")
 
 	router := chi.NewRouter()
-	puljeoppsettRoute(router, db, &live.Manager{}, logger)
+	puljeoppsettRoute(router, db, &live.Manager{}, logger, nil)
 
 	addRec := httptest.NewRecorder()
 	router.ServeHTTP(addRec, authedRequest(http.MethodPut,
@@ -55,7 +55,7 @@ func TestPuljeoppsettRoute_AddAndRemoveMembership(t *testing.T) {
 func TestPuljeoppsettRoute_RejectsBadPulje(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljeoppsett_route_bad")
 	router := chi.NewRouter()
-	puljeoppsettRoute(router, db, &live.Manager{}, logger)
+	puljeoppsettRoute(router, db, &live.Manager{}, logger, nil)
 
 	rec := httptest.NewRecorder()
 	router.ServeHTTP(rec, authedRequest(http.MethodPut, "/api/puljeoppsett/e1/NotAPulje/add"))

@@ -95,6 +95,33 @@ func TestBuildScheduleBoard_PoolStatsAndCollisions(t *testing.T) {
 	}
 }
 
+func TestBuildScheduleBoard_CarriesEventTypeRuntimeEnglish(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "build_board_card_attrs")
+
+	testutil.MustExec(t, db,
+		`INSERT INTO events (id, title, intro, description, status, age_group, beginner_friendly,
+		 event_type, event_runtime, can_be_run_in_english, user_id, host_name, email, phone_number, max_players)
+		 VALUES ('g1', 'Drager', '', '', 'Godkjent', 'AdultsOnly', 0, 'Roleplay', 'LongRunning', 1, NULL, 'Ola', 'ola@x.no', '', 4)`)
+
+	board, err := buildScheduleBoard(db, logger)
+	if err != nil {
+		t.Fatalf("buildScheduleBoard: %v", err)
+	}
+	if len(board.Pool) != 1 {
+		t.Fatalf("pool = %+v, want one game", board.Pool)
+	}
+	g := board.Pool[0]
+	if g.EventType != models.EventTypeRoleplay {
+		t.Errorf("EventType = %q, want Roleplay", g.EventType)
+	}
+	if g.Runtime != models.RunTimeLongRunning {
+		t.Errorf("Runtime = %q, want LongRunning", g.Runtime)
+	}
+	if !g.English {
+		t.Errorf("English = false, want true")
+	}
+}
+
 func TestBuildScheduleBoard_SameOwnerDifferentPuljerNoCollision(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "build_board_no_collision")
 	testutil.MustExec(t, db, `INSERT INTO puljer (id, name, status, start_at, end_at) VALUES (?,?,?,?,?)`,

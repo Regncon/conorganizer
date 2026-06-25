@@ -29,7 +29,7 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 		adminLayoutRoute(adminRouter, db, logger)
 		puljefordelingStatusRoute(adminRouter, db, liveManager, logger)
 		puljefordelingRoute(adminRouter, db, liveManager, baseLogger)
-		puljeoppsettRoute(adminRouter, db, liveManager, baseLogger)
+		puljeoppsettRoute(adminRouter, db, liveManager, baseLogger, eventImageDir)
 		programPublishingRoute(adminRouter, db, liveManager, logger)
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
 			liveManager.Stream(w, r, live.Page{
