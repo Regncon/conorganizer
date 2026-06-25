@@ -10,6 +10,15 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
+// WithUserToken returns a context carrying token as the active user identity and
+// clears any prior session error, so downstream authctx getters read token. It is
+// the supported way for other packages (e.g. emulatectx) to replace the request
+// identity after AuthMiddleware has run.
+func WithUserToken(ctx context.Context, token *descope.Token) context.Context {
+	ctx = context.WithValue(ctx, ctxSessionError, nil)
+	return context.WithValue(ctx, ctxUserToken, token)
+}
+
 func GetUserTokenFromContext(ctx context.Context) (*descope.Token, error) {
 	if errVal := ctx.Value(ctxSessionError); errVal != nil {
 		return nil, fmt.Errorf("authentication error: %v", errVal)
