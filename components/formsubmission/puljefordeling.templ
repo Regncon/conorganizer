@@ -123,7 +123,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, liveManager *live.Ma
 				return
 			}
 
-			if err := updateEventPuljeMembershipWithAudit(r.Context(), db, logger, eventID, puljeId, isInPulje); err != nil {
+			if err := SetEventInPulje(r.Context(), db, logger, eventID, puljeId, isInPulje); err != nil {
 				logger.Error(fmt.Errorf("failed to upsert relation_event_puljer for event %s and pulje %s: %w", eventID, puljeId, err).Error())
 				http.Error(w, "Klarte ikkje å oppdatere arrangementet i puljen", http.StatusInternalServerError)
 				return
