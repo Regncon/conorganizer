@@ -79,7 +79,10 @@ func updateEventPuljePublishedWithAudit(ctx context.Context, db *sql.DB, logger 
 	return nil
 }
 
-func updateEventPuljeMembershipWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, isInPulje bool) error {
+// SetEventInPulje upserts whether an event belongs to a pulje (is_in_pulje),
+// resets is_published, and stamps updated_by_id. Shared by the per-event form
+// and the puljeoppsett board. Idempotent.
+func SetEventInPulje(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, isInPulje bool) error {
 	updatedByID, err := currentUserDBID(ctx, db, logger)
 	if err != nil {
 		return err

@@ -1,0 +1,347 @@
+package admin
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"log/slog"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/formsubmission"
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/eventimage"
+	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
+)
+
+templ scheduleBoardIndex(db *sql.DB, logger *slog.Logger, eventImageDir *string) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Hjem", Url: "/"},
+		{Name: "Admin", Url: "/admin/"},
+		{Name: "Puljeoppsett", Url: ""},
+	})
+	<div class="page-content-container flex flex-col">
+		@scheduleBoardStyles()
+		@ScheduleBoardContent(db, logger, eventImageDir)
+	</div>
+}
+
+templ ScheduleBoardContent(db *sql.DB, logger *slog.Logger, eventImageDir *string) {
+	{{ board, err := buildScheduleBoard(db, logger) }}
+	<section
+		id="puljeoppsett-board"
+		class="rooms-section"
+		data-init={ live.DatastarInit("/admin/api/puljeoppsett") }
+		data-signals:dragged-event-id="''"
+		data-signals:drag-over-pulje="''"
+	>
+		if err != nil {
+			<p style="color: var(--color-error);">Klarte ikkje å byggje brettet: { err.Error() }</p>
+		} else {
+			if board.CollisionCount > 0 {
+				<p class="board-collision-summary">
+					⚠ { fmt.Sprintf("%d spelleiar-kollisjon(ar)", board.CollisionCount) }
+				</p>
+			}
+			<div class="board-columns">
+				@poolColumn(board.Pool, eventImageDir)
+				for _, col := range board.Columns {
+					@slotColumn(col, eventImageDir)
+				}
+			</div>
+		}
+	</section>
+}
+
+templ poolColumn(games []BoardGame, eventImageDir *string) {
+	<div class="board-col board-col--pool">
+		<header class="board-col-head">
+			<h3>I ingen pulje</h3>
+			<p class="board-stats">{ fmt.Sprintf("%d spel", len(games)) }</p>
+		</header>
+		<div class="board-col-body">
+			for _, g := range games {
+				@gameCard(g, "", false, eventImageDir)
+			}
+		</div>
+	</div>
+}
+
+templ slotColumn(col SlotColumn, eventImageDir *string) {
+	<div
+		class="board-col"
+		data-on:dragover__prevent={ fmt.Sprintf("$draggedEventId && ($dragOverPulje = '%s')", string(col.Pulje.ID)) }
+		data-on:drop__prevent={ fmt.Sprintf("$dragOverPulje = ''; $draggedEventId && @put('/admin/api/puljeoppsett/' + $draggedEventId + '/%s/add')", string(col.Pulje.ID)) }
+		data-class:is-drag-over={ fmt.Sprintf("$dragOverPulje === '%s'", string(col.Pulje.ID)) }
+	>
+		<header class="board-col-head">
+			<h3>{ col.Pulje.Name } <span>({ col.Pulje.TimeRange() })</span></h3>
+			<p class="board-stats">
+				{ fmt.Sprintf("%d spel · %d 18+ · %d nyb.", col.Stats.Games, col.Stats.Adults, col.Stats.Beginner) }
+			</p>
+		</header>
+		if len(col.Collisions) > 0 {
+			<div class="board-collision">
+				for _, c := range col.Collisions {
+					<p>⚠ Spelleiar-kollisjon — { c.HostName } har { fmt.Sprintf("%d", c.Count) } spel i denne puljen</p>
+				}
+			</div>
+		}
+		<div class="board-col-body">
+			for _, g := range col.Games {
+				@gameCard(g, string(col.Pulje.ID), inCollision(col, g), eventImageDir)
+			}
+		</div>
+	</div>
+}
+
+templ gameCard(g BoardGame, puljeID string, colliding bool, eventImageDir *string) {
+	{{ imageBannerUrl := eventimage.GetEventImageUrl(g.EventID, "banner", eventImageDir) }}
+	<div
+		class={ "board-card", templ.KV("is-colliding", colliding) }
+		draggable="true"
+		data-on:dragstart={ fmt.Sprintf("$draggedEventId = '%s'", g.EventID) }
+		data-on:dragend="$draggedEventId = ''; $dragOverPulje = ''"
+	>
+		<img class="board-card-banner" src={ imageBannerUrl } alt={ g.Title }/>
+		<a class="board-card-title" href={ templ.SafeURL("/admin/approval/edit/" + g.EventID) }>{ g.Title }</a>
+		<span class="board-card-status">{ string(g.Status) }</span>
+		@gameCardBadges(g)
+		if puljeID != "" {
+			<button
+				type="button"
+				class="board-card-remove"
+				data-on:click={ fmt.Sprintf("@delete('/admin/api/puljeoppsett/%s/%s')", g.EventID, puljeID) }
+			>×</button>
+		}
+	</div>
+}
+
+templ gameCardBadges(g BoardGame) {
+	<div class="board-card-badges">
+		switch g.EventType {
+			case models.EventTypeRoleplay:
+				<div class="event-card-tagicon-container" data-tippy-content={ g.EventType.Label() }>
+					@icons.Icon(icons.EventRoleplay, icons.Size20)
+				</div>
+			case models.EventTypeBoardGame:
+				<div class="event-card-tagicon-container" data-tippy-content={ g.EventType.Label() }>
+					@icons.Icon(icons.EventBoardgame, icons.Size20)
+				</div>
+			case models.EventTypeCardGame:
+				<div class="event-card-tagicon-container" data-tippy-content={ g.EventType.Label() }>
+					@icons.Icon(icons.EventCardgame, icons.Size20)
+				</div>
+			case models.EventTypeOther:
+				<div class="event-card-tagicon-container" data-tippy-content={ g.EventType.Label() }>
+					@icons.Icon(icons.EventOtherGames, icons.Size20)
+				</div>
+		}
+		if g.AgeGroup == models.AgeGroupAdultsOnly {
+			<div class="event-card-tagicon-container" data-tippy-content={ g.AgeGroup.BadgeLabel() }>
+				@icons.Icon(icons.EventAdultOnly, icons.Size20)
+			</div>
+		} else if g.AgeGroup == models.AgeGroupChildFriendly {
+			<div class="event-card-tagicon-container" data-tippy-content={ g.AgeGroup.BadgeLabel() }>
+				@icons.Icon(icons.EventChildFriendly, icons.Size20)
+			</div>
+		}
+		if g.Runtime == models.RunTimeLongRunning {
+			<div class="event-card-tagicon-container" data-tippy-content={ g.Runtime.BadgeLabel() }>
+				@icons.Icon(icons.TimeOver6Hours, icons.Size20)
+			</div>
+		} else if g.Runtime == models.RunTimeShortRunning {
+			<div class="event-card-tagicon-container" data-tippy-content={ g.Runtime.BadgeLabel() }>
+				@icons.Icon(icons.TimeUnder3Hours, icons.Size20)
+			</div>
+		}
+		if g.Beginner {
+			<div class="event-card-tagicon-container" data-tippy-content="Nybegynnervennlig">
+				@icons.Icon(icons.EventBeginnerFriendly, icons.Size20)
+			</div>
+		}
+		if g.English {
+			<div class="event-card-tagicon-container" data-tippy-content="Can be run in English">
+				@icons.Icon(icons.EventEnglish, icons.Size20)
+			</div>
+		}
+	</div>
+}
+
+func inCollision(col SlotColumn, g BoardGame) bool {
+	for _, c := range col.Collisions {
+		if c.HostName == g.HostName {
+			return true
+		}
+	}
+	return false
+}
+
+// puljeoppsettRoute wires the game→slot board: a drag-and-drop view that toggles
+// relation_event_puljer.is_in_pulje. Membership changes broadcast on BucketEvents
+// so every connected admin's board live-updates.
+func puljeoppsettRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger, eventImageDir *string) {
+	logger = logger.With("component", "admin_puljeoppsett")
+
+	router.Get("/puljeoppsett/", func(w http.ResponseWriter, r *http.Request) {
+		userInfo := userctx.GetUserRequestInfo(r.Context())
+		if err := layouts.Base("Puljeoppsett", userInfo, scheduleBoardIndex(db, logger, eventImageDir)).
+			Render(r.Context(), w); err != nil {
+			logger.Error(fmt.Errorf("render puljeoppsett page: %w", err).Error())
+		}
+	})
+
+	router.Get("/api/puljeoppsett", func(w http.ResponseWriter, r *http.Request) {
+		liveManager.Stream(w, r, live.Page{
+			Buckets: []live.Bucket{live.BucketEvents},
+			Render: func(ctx context.Context, r *http.Request) templ.Component {
+				return ScheduleBoardContent(db, logger, eventImageDir)
+			},
+		})
+	})
+
+	router.Put("/api/puljeoppsett/{event}/{pulje}/add", func(w http.ResponseWriter, r *http.Request) {
+		setMembership(w, r, db, liveManager, logger, true)
+	})
+
+	router.Delete("/api/puljeoppsett/{event}/{pulje}", func(w http.ResponseWriter, r *http.Request) {
+		setMembership(w, r, db, liveManager, logger, false)
+	})
+}
+
+func setMembership(w http.ResponseWriter, r *http.Request, db *sql.DB, liveManager *live.Manager, logger *slog.Logger, inPulje bool) {
+	eventID := chi.URLParam(r, "event")
+	if eventID == "" {
+		http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
+		return
+	}
+	puljeID, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
+	if !ok {
+		http.Error(w, "Ugyldig pulje-ID", http.StatusBadRequest)
+		return
+	}
+	if err := formsubmission.SetEventInPulje(r.Context(), db, logger, eventID, string(puljeID), inPulje); err != nil {
+		logger.Error(fmt.Errorf("set membership event %s pulje %s: %w", eventID, puljeID, err).Error())
+		http.Error(w, "Klarte ikkje å oppdatere puljen", http.StatusInternalServerError)
+		return
+	}
+	// Live broadcast is best-effort: the write is already committed, so a failed
+	// refresh must not fail the request. Log and return success.
+	if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+		logger.Warn(fmt.Errorf("broadcast membership update for event %s pulje %s: %w", eventID, puljeID, err).Error())
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+templ scheduleBoardStyles() {
+	<style>
+		.board-columns {
+			display: flex;
+			gap: var(--spacing-2x);
+			overflow-x: auto;
+			padding: var(--spacing-2x) 0;
+			align-items: flex-start;
+		}
+		.board-col {
+			flex: 0 0 16rem;
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-1x);
+			padding: var(--spacing-2x);
+			border: 1px solid var(--bg-item-border);
+			border-radius: var(--border-radius-1x);
+			background-color: var(--bg-item);
+			transition: border-color 300ms ease-in-out;
+		}
+		.board-col.is-drag-over {
+			border-color: var(--color-primary);
+			background-color: var(--bg-item-hover);
+		}
+		.board-col--pool { background-color: var(--bg-surface); }
+		.board-col-body {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-1x);
+		}
+		.board-stats { font-size: var(--text-body-small); color: var(--color-disabled); }
+		.board-collision, .board-collision-summary {
+			color: var(--color-error);
+			font-weight: bold;
+			border: 2px solid var(--color-error);
+			border-radius: var(--border-radius-1x);
+			padding: var(--spacing-1x);
+		}
+		.board-card {
+			position: relative;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
+			gap: 2px;
+			min-height: 4.5rem;
+			padding: var(--spacing-1x);
+			border: 2px solid var(--bg-item-border);
+			border-radius: var(--border-radius-2x);
+			background-color: var(--bg-item);
+			cursor: grab;
+			transition: border-color 300ms ease-in-out;
+		}
+		.board-card-banner {
+			position: absolute;
+			inset: 0;
+			z-index: 0;
+			width: 100%;
+			height: 100%;
+			object-fit: cover;
+		}
+		.board-card::before {
+			content: "";
+			position: absolute;
+			inset: 0;
+			z-index: 1;
+			background: linear-gradient(
+				to right,
+				rgba(53, 57, 74, 0.5) 0%,
+				rgba(53, 57, 74, 0.8) 20%,
+				rgba(53, 57, 74, 1) 50%
+			);
+		}
+		.board-card.is-colliding { border-color: var(--color-error); }
+		.board-card-title {
+			z-index: 3;
+			font-weight: bold;
+			text-decoration: none;
+			color: #fff;
+		}
+		.board-card-status {
+			z-index: 3;
+			font-size: var(--text-body-small);
+			color: rgba(255, 255, 255, 0.75);
+		}
+		.board-card-badges {
+			z-index: 3;
+			display: flex;
+			flex-flow: row wrap;
+			justify-content: flex-end;
+			align-items: center;
+			gap: var(--spacing-1x);
+			margin-top: auto;
+			color: #fff;
+		}
+		.board-card-remove {
+			position: absolute;
+			top: 2px;
+			right: 2px;
+			z-index: 4;
+			background: none;
+			border: none;
+			color: #fff;
+			cursor: pointer;
+			font-size: 1.1rem;
+			line-height: 1;
+		}
+	</style>
+}
