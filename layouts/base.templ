@@ -2,6 +2,7 @@ package layouts
 
 import (
 	"github.com/Regncon/conorganizer/components/header"
+	"github.com/Regncon/conorganizer/service/emulatectx"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
@@ -40,10 +41,25 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, children templ.Com
 			</script>
 		</head>
 		<body>
+			@emulationBanner(userInfo)
 			<main>
 				@header.Menu(userInfo)
 				@children
 			</main>
 		</body>
 	</html>
+}
+
+// emulationBanner is a sticky read-only notice shown only when an admin is
+// emulating a player. Its "Avslutt" link points at an /admin route, which the
+// emulate middleware treats as an auto-exit back to the admin's own view.
+templ emulationBanner(userInfo requestctx.UserRequestInfo) {
+	if emulatectx.IsEmulating(ctx) {
+		<div
+			style="position:sticky; top:0; z-index:1000; display:flex; align-items:center; justify-content:center; gap:1rem; padding:0.5rem 1rem; background:var(--color-primary-strong, #b8860b); color:#fff; font-weight:600;"
+		>
+			<span>👁 Du ser siden som spiller: { userInfo.Email } (skrivebeskyttet)</span>
+			<a href="/admin" class="btn btn--ghost" style="color:#fff; text-decoration:underline;">Avslutt</a>
+		</div>
+	}
 }

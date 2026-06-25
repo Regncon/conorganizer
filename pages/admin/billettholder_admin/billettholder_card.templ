@@ -336,5 +336,10 @@ templ billettholderCard(billettholder models.Billettholder, searchTerm string, i
 		>
 			Legg til epost
 		</button>
+		<form method="post" action={ templ.SafeURL(fmt.Sprintf("/admin/emulate/%d/", billettholder.ID)) } style="margin:0;">
+			<button class="btn btn--ghost" type="submit" title="Se nettsiden slik denne spilleren ser den (skrivebeskyttet)">
+				👁 Se som spiller
+			</button>
+		</form>
 	</div>
 }

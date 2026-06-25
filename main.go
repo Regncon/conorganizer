@@ -14,6 +14,7 @@ import (
 	"github.com/Regncon/conorganizer/service"
 	"github.com/Regncon/conorganizer/service/applog"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/emulatectx"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -108,7 +109,10 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 
 		var appRouter chi.Router = router
 		if fullMode {
-			appRouter = router.With(authctx.AuthMiddleware(baseLogger))
+			appRouter = router.With(
+				authctx.AuthMiddleware(baseLogger),
+				emulatectx.EmulateMiddleware(db, baseLogger),
+			)
 		}
 
 		if fullMode {

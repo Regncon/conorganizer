@@ -19,6 +19,8 @@ func SetupBillettholderAdminRoute(router chi.Router, liveManager *live.Manager, 
 
 	indexRoute(router, db, logger)
 
+	EmulatePlayerRoute(router, db, logger)
+
 	router.Route("/admin/billettholder/api/", func(billettholderAdminRouter chi.Router) {
 		billettholderAdminRouter.With(authctx.RequireAdmin(baseLogger)).Get("/", func(w http.ResponseWriter, r *http.Request) {
 			liveManager.Stream(w, r, live.Page{
