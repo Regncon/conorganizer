@@ -71,7 +71,7 @@ func TestPuljefordelingTabContent_RendersPuljeEventsAndStatusToggles(t *testing.
 	seedTabEventWithInterest(t, db, "drager-og-fangehull", "Drager og Fangehull", models.PuljeFredagKveld)
 
 	// When
-	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
 	actualText := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
 
 	// Then
@@ -97,7 +97,7 @@ func TestPuljefordelingTabContent_ShowsRunningUnsatisfiedCount(t *testing.T) {
 
 	// When / Then: earlier pulje — participant not yet satisfied.
 	fredag := strings.Join(
-		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld)), "#puljefordeling-tab"),
+		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil)), "#puljefordeling-tab"),
 		" ",
 	)
 	if !strings.Contains(fredag, "1 uten førstevalg så langt") {
@@ -106,7 +106,7 @@ func TestPuljefordelingTabContent_ShowsRunningUnsatisfiedCount(t *testing.T) {
 
 	// When / Then: later pulje — participant gets their first choice.
 	lordag := strings.Join(
-		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeLordagKveld)), "#puljefordeling-tab"),
+		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeLordagKveld, nil)), "#puljefordeling-tab"),
 		" ",
 	)
 	if !strings.Contains(lordag, "0 uten førstevalg så langt") {
@@ -129,7 +129,7 @@ func TestPuljefordelingTabContent_WarnsWhenEventHasNoDm(t *testing.T) {
 	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
 
 	// When
-	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
 	text := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
 
 	// Then
@@ -155,7 +155,7 @@ func TestPuljefordelingTabContent_PublishedHidesAssignmentControls(t *testing.T)
 	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
 		VALUES ('evA',?,1,'Player','manual')`, string(models.PuljeFredagKveld))
 
-	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
 
 	if n := doc.Find(".pulje-add").Length(); n != 0 {
 		t.Errorf("published pulje must not show the add button, found %d", n)
@@ -176,7 +176,7 @@ func TestPuljefordelingTabContent_PlayerTilesDragToEventBoxes(t *testing.T) {
 	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
 	seedTabEventWithInterest(t, db, "evA", "Alpha", models.PuljeFredagKveld)
 
-	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
 
 	tile := doc.Find(".pulje-players li[draggable='true']")
 	if tile.Length() == 0 {
@@ -197,7 +197,7 @@ func TestPuljefordelingTabContent_PublishedTilesNotDraggable(t *testing.T) {
 	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
 	seedTabEventWithInterest(t, db, "evA", "Alpha", models.PuljeFredagKveld)
 
-	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
 
 	if n := doc.Find(".pulje-players li[draggable='true']").Length(); n != 0 {
 		t.Errorf("published pulje must not allow dragging, found %d draggable tiles", n)
@@ -222,7 +222,7 @@ func TestPuljefordelingTabContent_PinEmojiForManualWithoutInterest(t *testing.T)
 	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
 		VALUES ('evA',?,1,'Player','manual')`, string(models.PuljeFredagKveld))
 
-	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
 	text := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
 
 	if !strings.Contains(text, "📌") {
