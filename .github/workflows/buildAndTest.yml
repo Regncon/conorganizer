@@ -7,7 +7,16 @@ on:
 
     pull_request:
         branches: ["**"]
-        types: [opened, reopened, synchronize, ready_for_review]
+        types: [opened, reopened, synchronize, ready_for_review, closed]
+
+# Serialize runs per ref so rapid pushes to a PR (or main) never race on the
+# same binary/service during deploy. cancel-in-progress is intentionally false:
+# a running deploy is never interrupted mid mv/restart (which could leave the
+# service on a missing binary). GitHub keeps only the newest pending run, so the
+# latest commit always deploys last.
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: false
 
 permissions:
     contents: read
@@ -16,6 +25,8 @@ permissions:
 
 jobs:
     build:
+        # Nothing to build when a PR is merely closed (cleanup-preview handles that).
+        if: github.event.action != 'closed'
         runs-on: ubuntu-latest
 
         steps:
@@ -45,6 +56,15 @@ jobs:
 
     deploy:
         needs: build
+        # Deploy main on push; deploy a preview only for same-repo, non-draft,
+        # not-closed PRs. Forks have no secrets, and drafts get no preview until
+        # marked ready (which fires ready_for_review).
+        if: >
+            github.event_name == 'push' ||
+            (github.event_name == 'pull_request' &&
+             github.event.action != 'closed' &&
+             github.event.pull_request.draft == false &&
+             github.event.pull_request.head.repo.full_name == github.repository)
         runs-on: ubuntu-latest
         environment:
             name: Production
@@ -203,3 +223,67 @@ jobs:
                         body: updatedBody
                         })
                       }
+
+    cleanup-preview:
+        # Tear down a preview environment when its PR closes (merged or not).
+        # Same-repo only; forks never created a preview.
+        if: >
+            github.event_name == 'pull_request' &&
+            github.event.action == 'closed' &&
+            github.event.pull_request.head.repo.full_name == github.repository
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Compute instance info
+              id: instance
+              run: |
+                  set -euo pipefail
+                  BRANCH="${{ github.ref_name }}"
+
+                  SAFE_NAME=$(echo "$BRANCH" | tr '/_' '-' | tr '[:upper:]' '[:lower:]')
+
+                  if [ "$SAFE_NAME" = "main" ]; then
+                    echo "Refusing to clean up SAFE_NAME=main" >&2
+                    exit 1
+                  fi
+
+                  echo "safe_name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
+
+            - name: Checkout repo (for cleanup script)
+              uses: actions/checkout@v4
+
+            - name: Check that HETZNER_SSH_KEY is set
+              run: |
+                  if [ -z "${{ secrets.HETZNER_SSH_KEY }}" ]; then
+                    echo "HETZNER_SSH_KEY is empty or not available in this context" >&2
+                    exit 1
+                  fi
+                  echo "HETZNER_SSH_KEY is set (value is masked in logs)."
+
+            - name: Upload cleanup script to Hetzner
+              uses: appleboy/scp-action@v0.1.7
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USER }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  port: 22
+                  source: "deploy/cleanup.sh"
+                  target: "/opt/conorganizer/${{ steps.instance.outputs.safe_name }}"
+                  strip_components: 1
+
+            - name: Run cleanup script on Hetzner
+              uses: appleboy/ssh-action@v1.2.0
+              with:
+                  host: ${{ secrets.HETZNER_HOST }}
+                  username: ${{ secrets.HETZNER_USER }}
+                  key: ${{ secrets.HETZNER_SSH_KEY }}
+                  port: 22
+                  script_stop: true
+                  script: |
+                      set -euo pipefail
+                      SAFE_NAME="${{ steps.instance.outputs.safe_name }}"
+                      APP_DIR="/opt/conorganizer/$SAFE_NAME"
+
+                      echo "Cleaning up preview SAFE_NAME=$SAFE_NAME"
+                      sudo chmod +x "$APP_DIR/cleanup.sh"
+                      sudo "$APP_DIR/cleanup.sh" "$SAFE_NAME"
