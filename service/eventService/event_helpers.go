@@ -28,8 +28,7 @@ func MdToHTML(md []byte) []byte {
 }
 
 func SanitizeMdToHTML(md []byte) []byte {
-	convertedmarkdown := MdToHTML(md)
-	return bluemonday.UGCPolicy().SanitizeBytes(convertedmarkdown)
+	return bluemonday.UGCPolicy().SanitizeBytes(MdToHTML(md))
 }
 
 func GetEventById(eventID string, db *sql.DB) (*models.Event, error) {
