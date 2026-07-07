@@ -7,6 +7,7 @@ import (
 	"github.com/gomarkdown/markdown"
 	"github.com/gomarkdown/markdown/html"
 	"github.com/gomarkdown/markdown/parser"
+	"github.com/microcosm-cc/bluemonday"
 
 	"github.com/Regncon/conorganizer/models"
 	puljerService "github.com/Regncon/conorganizer/service/puljer"
@@ -24,6 +25,11 @@ func MdToHTML(md []byte) []byte {
 	renderer := html.NewRenderer(opts)
 
 	return markdown.Render(doc, renderer)
+}
+
+func SanitizeMdToHTML(md []byte) []byte {
+	convertedmarkdown := MdToHTML(md)
+	return bluemonday.UGCPolicy().SanitizeBytes(convertedmarkdown)
 }
 
 func GetEventById(eventID string, db *sql.DB) (*models.Event, error) {

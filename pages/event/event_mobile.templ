@@ -408,8 +408,7 @@ templ Event_mobile(
 			</section>
 			<div class="description">
 				<p>
-					@templ.Raw(string(eventservice.MdToHTML([]byte(event.Description))))
-
+					@templ.Raw(string(eventservice.SanitizeMdToHTML([]byte(event.Description))))
 				</p>
 			</div>
 		</div>
