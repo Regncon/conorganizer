@@ -137,7 +137,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				border-radius: var(--border-radius-1x);
 				z-index: var(--nav-drop-down-z-index);
 				width: max-content;
-				max-width: 260px;
+				max-width: 264px;
 			}
 
 			.dropdown-panel a {
@@ -341,14 +341,16 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                             }
 							</summary>
 							<div class="dropdown-panel">
-								<a href="/auth/logout">Logg ut</a>
+								<a href="/temp">Bytt aktiv billettholder</a>
 								<a href="/profile">Min Profil</a>
 								<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
-								if UserInfo.IsAdmin {
+                                if UserInfo.IsAdmin {
 									<hr/>
 									<a href="/admin/billettholder/">Billettholderoversikt</a>
-									<a href="/admin/approval/">Arrangement til godkjenning</a>
+									<a href="/admin/approval/">Godkjenn arrangementer</a>
+                                    <hr/>
 								}
+                                <a href="/auth/logout">Logg ut</a>
 							</div>
 						</details>
 					</div>
