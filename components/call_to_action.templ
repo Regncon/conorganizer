@@ -35,10 +35,16 @@ templ CallToAction() {
 
         @container main (width > 800px) {
 			.call-to-action {
-				grid-template-columns: 2fr minmax(230px, 1fr);
+				grid-template-columns: 2fr minmax(380px, 1fr);
 			}
+
+            .call-to-action-content {
+                max-width: 100%;
+            }
+
 			.call-to-action-avatar {
 				display: block;
+                padding: var(--spacing-5x) var(--spacing-10x);
 			}
 		}
 
@@ -55,6 +61,9 @@ templ CallToAction() {
 			.call-to-action-content {
 				padding: var(--spacing-10x) 80px;
 			}
+            .call-to-action-avatar {
+                padding: var(--spacing-10x) 80px;
+            }
 		}
 	</style>
 	<div class="call-to-action">
