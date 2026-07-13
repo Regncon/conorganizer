@@ -49,6 +49,7 @@
     --item-flat-active: hsl(230deg 40% 86% / 20%);
 
     --bg-backdrop: #11111B;
+    --bg-indent: #15161E;
 
     /* text & font */
     --text-body: 16px;
