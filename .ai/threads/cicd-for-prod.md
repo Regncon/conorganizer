@@ -393,3 +393,43 @@ Ready for the next item: GitHub Actions.
 Time: 2026-07-14 19:16:08
 --- Next Prompt ---
 
+We have verified that the new services work. Let's move on to github actions. 
+
+
+Time: 2026-07-14 20:42:24
+--- Codex Run ---
+
+Codex output:
+For this GitHub Actions step, I’m going to split fixed `main`/`demo` deployments away from preview autogeneration. That also requires a small deploy script change so fixed environments promote binaries and restart existing config-as-code services without expecting generated Caddy/systemd files.
+The deploy script now distinguishes fixed environments (`main`, `demo`) from generated previews. Next I’m updating the workflow so pushes to `main` deploy both fixed services, while PRs keep the generated preview path.
+The workflow now has a separate `deploy-fixed` job for push-to-main deployments, and the existing generated deploy job is PR-preview only. I’m validating shell/YAML structure and reviewing the diff.
+`bash -n` and whitespace checks passed; `actionlint` is not installed here. I’m using the available YAML parser as a basic workflow syntax check and then I’ll report exactly what changed.
+Updated GitHub Actions for the fixed main/demo deploy flow.
+
+Changed:
+- Added `deploy-fixed` job in [.github/workflows/buildAndTest.yml](/home/cinmay/Documents/conorganizer/.github/workflows/buildAndTest.yml:57).
+  - Runs only on push to `main`.
+  - Deploys the same artifact to `main` and `demo`.
+  - Uploads only `conorganizer.new` and `deploy.sh`.
+  - Does not generate Caddy/systemd files for fixed environments.
+
+- Changed the existing `deploy` job to PR previews only.
+  - Main/demo are now excluded from CI-generated service/Caddy config.
+
+- Updated [deploy.sh](/home/cinmay/Documents/conorganizer/deploy/deploy.sh:16).
+  - `main` and `demo` are treated as fixed config-as-code environments.
+  - They skip preview data cloning.
+  - They skip generated systemd/Caddy install.
+  - They still promote the binary and restart `conorganizer-main.service` / `conorganizer-demo.service`.
+
+Verification:
+- `bash -n deploy/deploy.sh` passed.
+- `git diff --check` passed for workflow and deploy script.
+- Ruby YAML parse passed for `buildAndTest.yml`.
+- `actionlint` is not installed locally, so I could not run GitHub-specific workflow linting.
+
+Next item is `Change port hash`.
+
+Time: 2026-07-14 20:42:24
+--- Next Prompt ---
+
