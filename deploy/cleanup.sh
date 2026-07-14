@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Tear down a preview environment created by deploy.sh. Invoked as root (via
-# sudo) from the cleanup-preview CI job when a PR closes. Idempotent: every
-# removal tolerates an already-absent target, so a double-close or a
-# close-after-failed-deploy does not error.
+# Tear down a preview environment created by deploy.sh. Dry-run cleanup can run
+# unprivileged from CI; real teardown must run as root. Idempotent: every removal
+# tolerates an already-absent target, so a double-close or a close-after-failed
+# deploy does not error.
 #
 # SAFETY — DRY RUN BY DEFAULT:
 # DRY_RUN defaults to "true", so this script only LOGS what it would remove.
