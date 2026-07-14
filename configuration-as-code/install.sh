@@ -1,13 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-cd "$(dirname "$0")/stow"
+readonly repository_directory="$(cd "$(dirname "$0")" && pwd)"
+readonly stow_directory="${repository_directory}/stow"
 
-for package in scripts conorganizer caddy grafana prometheus; do
-    if [[ -d "$package" ]]; then
-        sudo stow --target=/ "$package"
+packages=(
+    scripts
+    caddy
+    grafana
+    loki
+    prometheus
+    promtail
+    systemd
+)
+
+for package in "${packages[@]}"; do
+    package_directory="${stow_directory}/${package}"
+
+    if [[ -d "$package_directory" ]]; then
+        sudo stow \
+            --dir="$stow_directory" \
+            --target=/ \
+            --restow \
+            "$package"
     else
-        echo "Skipping missing stow package: $package"
+        echo "Skipping missing Stow package: $package"
     fi
 done
 
