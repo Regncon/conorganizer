@@ -481,3 +481,29 @@ Verification:
 Time: 2026-07-14 21:07:05
 --- Next Prompt ---
 
+Very well. Let's move on to the next step:  Stop hashing preview ports, and use PR-derived naming instead. Let's keep the original 123-merge formatting.
+
+Time: 2026-07-14 21:15:56
+--- Codex Run ---
+
+Codex output:
+I’ll update the preview deploy computation only: keep the `123-merge` naming, derive it explicitly from the PR number, and set the preview port to `20000 + PR_NUMBER` instead of hashing.
+The preview deploy now derives `482-merge` from the PR number directly and uses port `20482` for PR 482. I’m checking the workflow and searching for leftover hash-based preview logic.
+Updated preview port/name generation in [.github/workflows/buildAndTest.yml](/home/cinmay/Documents/conorganizer/.github/workflows/buildAndTest.yml:160).
+
+Changed:
+- Preview `SAFE_NAME` is now explicitly `PR_NUMBER-merge`, so PR 482 stays `482-merge`.
+- Preview port is now `20000 + PR_NUMBER`, so PR 482 uses `20482`.
+- Removed the `cksum` hash logic.
+- Deployment URL echo now uses the computed host output directly.
+
+Verification:
+- `git diff --check` passed.
+- Workflow YAML parse passed.
+- Confirmed no hash/`cksum` logic remains in the preview deploy path.
+
+There is still `github.ref_name` usage in the cleanup job. That matches the next item: cleanup bug fix.
+
+Time: 2026-07-14 21:15:56
+--- Next Prompt ---
+
