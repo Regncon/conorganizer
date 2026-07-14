@@ -47,7 +47,6 @@ templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 		if programPublished {
 			@components.ProgramScrollnav(db)
 		}
-		<!-- Hello world! -->
 		@components.CallToAction()
 		@eventList(db, isAdmin, eventImageDir, programPublished)
 	}

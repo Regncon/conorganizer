@@ -433,3 +433,51 @@ Next item is `Change port hash`.
 Time: 2026-07-14 20:42:24
 --- Next Prompt ---
 
+We have verified that the new script works. Can we run the deployment to main and demo in parallel? Let's discuss this before moving on.
+
+Time: 2026-07-14 21:05:14
+--- Codex Run ---
+
+Codex output:
+Yes, I think parallel main/demo deploy is reasonable now.
+
+Why it is safe enough:
+- They deploy to separate app dirs: `/opt/conorganizer/main` and `/opt/conorganizer/demo`.
+- They promote separate binaries: `conorganizer-main` and `conorganizer-demo`.
+- They restart separate services.
+- Fixed deploys now skip generated Caddy/systemd installation, so they no longer race on `/etc/caddy/sites-enabled` or generated unit files.
+- They do not touch DB/image data.
+
+Remaining shared operations:
+- Both call `systemctl daemon-reload`.
+- Both call `systemctl enable ...`.
+- Both SSH/SCP into the same server at the same time.
+
+Those are acceptable. `systemctl` should serialize through systemd, and the rest is separate paths. If we want to be extra tidy, we could later make `deploy.sh` skip `daemon-reload` for fixed environments, but I would not block parallel deploy on that.
+
+The workflow change is small: remove `max-parallel: 1` from the `deploy-fixed` matrix. Keep `fail-fast: false`, so a demo failure does not cancel main or vice versa.
+
+Recommendation: run main and demo in parallel.
+
+Time: 2026-07-14 21:05:14
+--- Next Prompt ---
+
+Go ahead and make it parallel.
+
+Time: 2026-07-14 21:07:05
+--- Codex Run ---
+
+Codex output:
+I’ll remove the fixed-deploy matrix serialization and keep `fail-fast: false`, so main and demo can run at the same time without one canceling the other.
+The matrix is now parallel. I’m running the same lightweight workflow checks as before.
+Made fixed deploys parallel by removing `max-parallel: 1` from the `deploy-fixed` matrix in [.github/workflows/buildAndTest.yml](/home/cinmay/Documents/conorganizer/.github/workflows/buildAndTest.yml:67).
+
+Verification:
+- `git diff --check` passed.
+- Workflow YAML parse passed.
+
+`fail-fast: false` remains, so main and demo deploy independently even when running in parallel.
+
+Time: 2026-07-14 21:07:05
+--- Next Prompt ---
+
