@@ -8,7 +8,7 @@ Group=www-data
 WorkingDirectory=/opt/conorganizer/main
 
 EnvironmentFile=/etc/conorganizer/env
-Environment=PORT=18856
+Environment=PORT=19080
 
 ExecStart=/opt/conorganizer/main/conorganizer-main \
   -dbp /mnt/HC_Volume_103911252/environments/main/database/events.db \

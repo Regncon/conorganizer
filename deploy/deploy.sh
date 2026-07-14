@@ -13,6 +13,11 @@ if [[ -z "$SAFE_NAME" ]]; then
   exit 1
 fi
 
+FIXED_ENVIRONMENT="false"
+if [[ "$SAFE_NAME" == "main" || "$SAFE_NAME" == "demo" ]]; then
+  FIXED_ENVIRONMENT="true"
+fi
+
 APP_DIR="$SCRIPT_DIR"
 
 BIN_NAME="conorganizer-${SAFE_NAME}"
@@ -47,17 +52,19 @@ if [[ ! -f "$NEW_BIN_SRC" ]]; then
   exit 1
 fi
 
-if [[ ! -f "$SERVICE_SRC" ]]; then
-  echo "[deploy] ERROR: service file not found at $SERVICE_SRC" >&2
-  exit 1
+if [[ "$FIXED_ENVIRONMENT" == "false" ]]; then
+  if [[ ! -f "$SERVICE_SRC" ]]; then
+    echo "[deploy] ERROR: service file not found at $SERVICE_SRC" >&2
+    exit 1
+  fi
+
+  if [[ ! -f "$CADDY_SITE_SRC" ]]; then
+    echo "[deploy] ERROR: Caddy site file not found at $CADDY_SITE_SRC" >&2
+    exit 1
+  fi
 fi
 
-if [[ ! -f "$CADDY_SITE_SRC" ]]; then
-  echo "[deploy] ERROR: Caddy site file not found at $CADDY_SITE_SRC" >&2
-  exit 1
-fi
-
-if [[ "$SAFE_NAME" != "main" ]]; then
+if [[ "$FIXED_ENVIRONMENT" == "false" ]]; then
   if [[ ! -d "$MAIN_DATA_DIR" ]]; then
     echo "[deploy] ERROR: main data dir $MAIN_DATA_DIR does not exist; cannot clone data." >&2
     exit 1
@@ -100,7 +107,7 @@ if [[ "$SAFE_NAME" != "main" ]]; then
 
   chown -R "$SERVICE_USER:$SERVICE_GROUP" "$BRANCH_DATA_DIR"
 else
-  echo "[deploy] SAFE_NAME=main, not cloning data directories."
+  echo "[deploy] SAFE_NAME=$SAFE_NAME is fixed config-as-code environment, not cloning data directories."
 fi
 
 echo "--- Prepare app directory ---"
@@ -109,21 +116,25 @@ echo "[deploy] Ensuring app directory exists: $APP_DIR"
 mkdir -p "$APP_DIR"
 chown -R "$SERVICE_USER:$SERVICE_GROUP" "$APP_DIR"
 
-echo "--- Install / update systemd unit ---"
+if [[ "$FIXED_ENVIRONMENT" == "false" ]]; then
+  echo "--- Install / update systemd unit ---"
 
-echo "[deploy] Installing systemd unit: $SERVICE_UNIT"
-mv "$SERVICE_SRC" "$SERVICE_UNIT"
-chmod 644 "$SERVICE_UNIT"
+  echo "[deploy] Installing systemd unit: $SERVICE_UNIT"
+  mv "$SERVICE_SRC" "$SERVICE_UNIT"
+  chmod 644 "$SERVICE_UNIT"
 
-echo "--- Install / update Caddy site ---"
+  echo "--- Install / update Caddy site ---"
 
-echo "[deploy] Installing Caddy site: $CADDY_SITE_DEST"
-mkdir -p /etc/caddy/sites-enabled
-mv "$CADDY_SITE_SRC" "$CADDY_SITE_DEST"
-chmod 644 "$CADDY_SITE_DEST"
+  echo "[deploy] Installing Caddy site: $CADDY_SITE_DEST"
+  mkdir -p /etc/caddy/sites-enabled
+  mv "$CADDY_SITE_SRC" "$CADDY_SITE_DEST"
+  chmod 644 "$CADDY_SITE_DEST"
 
-echo "[deploy] Reloading Caddy"
-systemctl reload caddy
+  echo "[deploy] Reloading Caddy"
+  systemctl reload caddy
+else
+  echo "[deploy] Fixed environment uses checked-in systemd and Caddy config; skipping generated config install."
+fi
 
 echo "--- Promote new binary ---"
 
