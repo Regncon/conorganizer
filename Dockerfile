@@ -44,7 +44,5 @@ RUN go tool templ version && \
     go tool air -v && \
     go tool task --version
 
-# Expose ports used by the application:
-# - 8080: Application's main HTTP server
-# - 7331: Air live reload proxy
-EXPOSE 8080 7331
+# Expose the application's main HTTP server.
+EXPOSE 8080

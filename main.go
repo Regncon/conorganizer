@@ -88,6 +88,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		)
 
 		mountHealthRoutes(router, readiness, baseLogger)
+		mountDevReloadRoutes(router, baseLogger)
 
 		var imgErr error
 		if eventImageDir != nil && *eventImageDir != "" {
