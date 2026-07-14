@@ -4,9 +4,30 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/gomarkdown/markdown"
+	"github.com/gomarkdown/markdown/html"
+	"github.com/gomarkdown/markdown/parser"
+	"github.com/microcosm-cc/bluemonday"
+
 	"github.com/Regncon/conorganizer/models"
 	puljerService "github.com/Regncon/conorganizer/service/puljer"
 )
+
+func MdToHTML(md []byte) []byte {
+	extensions := parser.CommonExtensions | parser.AutoHeadingIDs | parser.NoEmptyLineBeforeBlock
+	p := parser.NewWithExtensions(extensions)
+	doc := p.Parse(md)
+
+	htmlFlags := html.CommonFlags | html.HrefTargetBlank
+	opts := html.RendererOptions{Flags: htmlFlags}
+	renderer := html.NewRenderer(opts)
+
+	return markdown.Render(doc, renderer)
+}
+
+func SanitizeMdToHTML(md []byte) []byte {
+	return bluemonday.UGCPolicy().SanitizeBytes(MdToHTML(md))
+}
 
 func GetEventById(eventID string, db *sql.DB) (*models.Event, error) {
 	query := `
@@ -71,6 +92,7 @@ func GetEventById(eventID string, db *sql.DB) (*models.Event, error) {
 		}
 		return nil, fmt.Errorf("failed to scan event row for event %q: %w", eventID, err)
 	}
+
 	return &event, nil
 }
 
