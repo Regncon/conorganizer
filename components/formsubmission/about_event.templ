@@ -3,14 +3,12 @@ package formsubmission
 import (
 	"database/sql"
 	"fmt"
-	"html"
 	"log/slog"
 	"net/http"
 
 	"github.com/Regncon/conorganizer/components/errorfeedback"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
-	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
@@ -159,15 +157,7 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 			return
 		}
 
-		ctx := r.Context()
-		isAdmin := authctx.GetAdminFromUserToken(ctx)
-		normalizedInput := normalizeTextareaSubmission(store.Input)
-		escapedInput := normalizedInput
-		if isAdmin == false {
-			escapedInput = html.EscapeString(normalizedInput)
-		}
-
-		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "description = ?", escapedInput); err != nil {
+		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "description = ?", store.Input); err != nil {
 			http.Error(w, "Klarte ikkje å oppdatere skildringa for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}

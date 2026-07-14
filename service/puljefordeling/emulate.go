@@ -22,7 +22,7 @@ type AssignedPlayer struct {
 	Name            string
 	IsDM            bool                 // runs at least one game in the weekend (DM bump)
 	Level           models.InterestLevel // their interest in the game they got
-	Moved           bool                 // relocated off a higher-scoring event by the solver to make room for others
+	Moved           bool                 // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
 	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
 }
 
@@ -33,14 +33,21 @@ const (
 	SourceSolver = "solver"
 )
 
-// EmulatedEvent is the proposed seating for a single event within a pulje.
+// EmulatedEvent is the proposed seating for a single event within a pulje. The
+// metadata fields (type/age/runtime/flags) drive the tag row in the UI and carry
+// no weight in the distribution itself.
 type EmulatedEvent struct {
-	EventID         string
-	Title           string
-	Capacity        int
-	GMName          string           // empty if the event has no GM assigned
-	AssignedPlayers []AssignedPlayer // sorted by name
-	Undersubscribed bool             // fewer than the solver's viable-player threshold
+	EventID           string
+	Title             string
+	Capacity          int
+	GMName            string           // empty if the event has no GM assigned
+	AssignedPlayers   []AssignedPlayer // sorted by name
+	Undersubscribed   bool             // fewer than the solver's viable-player threshold
+	EventType         models.EventType
+	AgeGroup          models.AgeGroup
+	Runtime           models.Runtime
+	BeginnerFriendly  bool
+	CanBeRunInEnglish bool
 }
 
 // EmulatedPulje is the proposed seating for one pulje (time slot).
@@ -62,8 +69,13 @@ type Emulation struct {
 }
 
 type eligibleEvent struct {
-	title    string
-	capacity int
+	title             string
+	capacity          int
+	eventType         models.EventType
+	ageGroup          models.AgeGroup
+	runtime           models.Runtime
+	beginnerFriendly  bool
+	canBeRunInEnglish bool
 }
 
 // EmulateSeatings builds the solver model from the database, runs the
@@ -137,7 +149,7 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	for i, slot := range weekend.Slots {
 		pulje := puljer[i]
 		res := state.SolveSlotFixed(slot, players, pins[pulje.ID])
-		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, prefs, dmSet, pins[pulje.ID]))
+		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, prefs, dmSet, pins[pulje.ID], events[pulje.ID]))
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
 
@@ -154,6 +166,7 @@ func shapePulje(
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
 	manual map[string]string,
+	meta map[string]eligibleEvent,
 ) EmulatedPulje {
 	under := make(map[string]bool, len(res.UndersubscribedEvents))
 	for _, eid := range res.UndersubscribedEvents {
@@ -180,6 +193,13 @@ func shapePulje(
 			Capacity:        ev.Capacity,
 			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet, moved, manual),
 			Undersubscribed: under[ev.ID],
+		}
+		if m, ok := meta[ev.ID]; ok {
+			emEv.EventType = m.eventType
+			emEv.AgeGroup = m.ageGroup
+			emEv.Runtime = m.runtime
+			emEv.BeginnerFriendly = m.beginnerFriendly
+			emEv.CanBeRunInEnglish = m.canBeRunInEnglish
 		}
 		if gmID, ok := gms[eventPuljeKey(ev.ID, pulje.ID)]; ok {
 			emEv.GMName = names[gmID]
@@ -250,7 +270,9 @@ func loadPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 
 func loadEligibleEvents(db *sql.DB) (map[models.Pulje]map[string]eligibleEvent, error) {
 	const query = `
-		SELECT ep.pulje_id, e.id, e.title, e.max_players
+		SELECT ep.pulje_id, e.id, e.title, e.max_players,
+		       e.event_type, e.age_group, e.event_runtime,
+		       e.beginner_friendly, e.can_be_run_in_english
 		FROM relation_event_puljer ep
 		JOIN events e ON e.id = ep.event_id
 		WHERE ep.is_in_pulje = 1
@@ -266,13 +288,20 @@ func loadEligibleEvents(db *sql.DB) (map[models.Pulje]map[string]eligibleEvent, 
 		var pulje models.Pulje
 		var eventID, title string
 		var maxPlayers int
-		if err := rows.Scan(&pulje, &eventID, &title, &maxPlayers); err != nil {
+		var ev eligibleEvent
+		if err := rows.Scan(
+			&pulje, &eventID, &title, &maxPlayers,
+			&ev.eventType, &ev.ageGroup, &ev.runtime,
+			&ev.beginnerFriendly, &ev.canBeRunInEnglish,
+		); err != nil {
 			return nil, fmt.Errorf("scan event row: %w", err)
 		}
+		ev.title = title
+		ev.capacity = maxPlayers
 		if out[pulje] == nil {
 			out[pulje] = make(map[string]eligibleEvent)
 		}
-		out[pulje][eventID] = eligibleEvent{title: title, capacity: maxPlayers}
+		out[pulje][eventID] = ev
 	}
 	return out, rows.Err()
 }

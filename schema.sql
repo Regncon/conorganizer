@@ -25,7 +25,7 @@ CREATE TABLE goose_db_version(
   is_applied INTEGER NOT NULL,
   tstamp TEXT DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 ) STRICT;
-CREATE TABLE "billettholdere"(
+CREATE TABLE IF NOT EXISTS "billettholdere"(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   first_name TEXT NOT NULL,
   last_name TEXT NOT NULL,
@@ -70,14 +70,14 @@ CREATE TABLE relation_events_players(
   pulje_id TEXT NOT NULL,
   billettholder_id INTEGER NOT NULL,
   role TEXT NOT NULL DEFAULT 'Player' CHECK(role IN('Player', 'GM')),
-  source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual','solver')),
   inserted_at TEXT DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  source TEXT NOT NULL DEFAULT 'manual' CHECK(source IN('manual','solver')),
   PRIMARY KEY(billettholder_id, event_id, pulje_id),
   FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
   FOREIGN KEY(event_id) REFERENCES events(id),
   FOREIGN KEY(pulje_id) REFERENCES puljer(id)
 ) STRICT;
-CREATE TABLE "interests"(
+CREATE TABLE IF NOT EXISTS "interests"(
   billettholder_id INTEGER NOT NULL,
   event_id TEXT NOT NULL,
   pulje_id TEXT NOT NULL,
@@ -94,7 +94,7 @@ CREATE TABLE "interests"(
   FOREIGN KEY(pulje_id) REFERENCES puljer(id),
   FOREIGN KEY(interest_level) REFERENCES interest_levels(interest_level) ON UPDATE CASCADE
 ) STRICT;
-CREATE TABLE "rooms"(
+CREATE TABLE IF NOT EXISTS "rooms"(
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   room_number TEXT NOT NULL DEFAULT '',
   name TEXT NOT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE "rooms"(
   notes TEXT NOT NULL DEFAULT '',
   is_disabled INTEGER NOT NULL DEFAULT 0 CHECK(is_disabled IN(0, 1))
 ) STRICT;
-CREATE TABLE "events"(
+CREATE TABLE IF NOT EXISTS "events"(
   id TEXT PRIMARY KEY NOT NULL DEFAULT(lower(hex(randomblob(8)))),
   title TEXT NOT NULL,
   intro TEXT NOT NULL,
@@ -218,7 +218,7 @@ CREATE TABLE program_publishing_state(
   id INTEGER NOT NULL PRIMARY KEY CHECK(id = 1),
   is_published INTEGER NOT NULL DEFAULT 0 CHECK(is_published IN(0, 1))
 ) STRICT;
-CREATE TABLE "puljer"(
+CREATE TABLE IF NOT EXISTS "puljer"(
   id TEXT NOT NULL PRIMARY KEY,
   name TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'Open' CHECK(status IN('Open', 'Locked', 'Completed')),

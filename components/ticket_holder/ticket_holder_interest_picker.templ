@@ -113,7 +113,7 @@ templ TicketHolderInterestPicker(
 			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelHigh) }
 			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelHigh, eventId) }
 		>
-			<span class="emoji">🤩</span> { models.InterestLevelHigh.Label() }
+			<span class="emoji">{ models.InterestLevelHigh.Emoji() }</span> { models.InterestLevelHigh.Label() }
 		</div>
 		<div
 			role="button"
@@ -123,7 +123,7 @@ templ TicketHolderInterestPicker(
 			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelMedium) }
 			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelMedium, eventId) }
 		>
-			<span class="emoji">🙂</span> { models.InterestLevelMedium.Label() }
+			<span class="emoji">{ models.InterestLevelMedium.Emoji() }</span> { models.InterestLevelMedium.Label() }
 		</div>
 		<div
 			role="button"
@@ -133,7 +133,7 @@ templ TicketHolderInterestPicker(
 			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelLow) }
 			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelLow, eventId) }
 		>
-			<span class="emoji">🤨</span> { models.InterestLevelLow.Label() }
+			<span class="emoji">{ models.InterestLevelLow.Emoji() }</span> { models.InterestLevelLow.Label() }
 		</div>
 		<div
 			role="button"

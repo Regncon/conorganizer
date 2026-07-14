@@ -45,8 +45,8 @@ func TestRootPageContent_RendersSubmitEventCallToAction(t *testing.T) {
 		"Send inn arrangement",
 	}
 	expectedHref := "/profile"
-	expectedImageSrc := "/static/awesome-dragon-generated.png"
-	expectedImageAlt := "Sent inn arrangement"
+	expectedImageSrc := "/static/calltoactiondragon1.webp"
+	expectedImageAlt := "Send inn arrangement"
 
 	db := createRootPageTestDB(t)
 	setProgramPublishing(t, db, false)

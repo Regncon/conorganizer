@@ -155,7 +155,7 @@ func TestEmulateSeatings(t *testing.T) {
 	if slices.Contains(playerNames(evA.AssignedPlayers), "Game Master") {
 		t.Errorf("GM should not be seated as a player, got %v", playerNames(evA.AssignedPlayers))
 	}
-	// Everyone seated in evA wanted it highly → 🔥 level surfaced.
+	// Everyone seated in evA wanted it highly → 🤩 level surfaced.
 	for _, ap := range evA.AssignedPlayers {
 		if ap.Level != models.InterestLevelHigh {
 			t.Errorf("evA seat %q: want level High, got %q", ap.Name, ap.Level)
