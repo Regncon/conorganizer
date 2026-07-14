@@ -535,3 +535,34 @@ Verification:
 Time: 2026-07-14 21:23:13
 --- Next Prompt ---
 
+We obtained this issue:
+
+> Run if [ -z "" ]; then
+> HETZNER_SSH_KEY is empty or not available in this context
+> Error: Process completed with exit code 1.
+
+The hetzner ssh key is only available in the production environment in our github actions. 
+
+Time: 2026-07-14 21:32:20
+--- Codex Run ---
+
+Codex output:
+That failure is from `cleanup-preview`: unlike the deploy jobs, it does not declare the `Production` environment, so environment-scoped secrets are empty. I’ll add the same environment declaration to cleanup.
+The cleanup job now requests the `Production` environment, which should make `HETZNER_SSH_KEY` available there. I’m checking the YAML structure now.
+The first patch landed on the build job instead of cleanup because there are several `runs-on` blocks. I’m correcting that: build should stay environment-free, cleanup should use `Production`.
+The environment declaration is now on `cleanup-preview`. I’m rechecking the exact job sections and YAML parse.
+Fixed the missing environment on `cleanup-preview`.
+
+Root cause: `HETZNER_SSH_KEY` is environment-scoped to `Production`, but `cleanup-preview` did not declare that environment.
+
+Changed:
+- Added `environment: Production` to `cleanup-preview` in [.github/workflows/buildAndTest.yml](/home/cinmay/Documents/conorganizer/.github/workflows/buildAndTest.yml:310).
+- Confirmed the build job remains environment-free.
+
+Verification:
+- `git diff --check` passed.
+- Workflow YAML parse passed.
+
+Time: 2026-07-14 21:32:20
+--- Next Prompt ---
+
