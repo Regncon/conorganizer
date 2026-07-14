@@ -25,8 +25,8 @@ if [[ -z "$SAFE_NAME" ]]; then
   exit 1
 fi
 
-if [[ "$SAFE_NAME" == "main" ]]; then
-  echo "[cleanup] ERROR: refusing to clean up SAFE_NAME=main (production)." >&2
+if [[ "$SAFE_NAME" == "main" || "$SAFE_NAME" == "demo" ]]; then
+  echo "[cleanup] ERROR: refusing to clean up fixed environment SAFE_NAME=$SAFE_NAME." >&2
   exit 1
 fi
 

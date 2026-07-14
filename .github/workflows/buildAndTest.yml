@@ -314,14 +314,9 @@ jobs:
               id: instance
               run: |
                   set -euo pipefail
-                  BRANCH="${{ github.ref_name }}"
+                  PR_NUMBER="${{ github.event.pull_request.number }}"
 
-                  SAFE_NAME=$(echo "$BRANCH" | tr '/_' '-' | tr '[:upper:]' '[:lower:]')
-
-                  if [ "$SAFE_NAME" = "main" ]; then
-                    echo "Refusing to clean up SAFE_NAME=main" >&2
-                    exit 1
-                  fi
+                  SAFE_NAME="${PR_NUMBER}-merge"
 
                   echo "safe_name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
 

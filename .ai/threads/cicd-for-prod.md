@@ -507,3 +507,31 @@ There is still `github.ref_name` usage in the cleanup job. That matches the next
 Time: 2026-07-14 21:15:56
 --- Next Prompt ---
 
+Alright. Let's work through the cleanup bug fix.
+
+Time: 2026-07-14 21:23:13
+--- Codex Run ---
+
+Codex output:
+I’ll make cleanup derive the preview name from the PR number, matching the new deploy naming. I’ll also extend the cleanup script safeguard so `demo` is protected alongside `main`.
+The cleanup job now computes `482-merge` from the PR number instead of relying on `github.ref_name`, so merged PR close events should no longer resolve to `main`. I’m running the workflow and shell checks now.
+Fixed the cleanup bug.
+
+Changed:
+- Cleanup now derives the preview target from the PR number:
+  - PR 482 -> `482-merge`
+  - no more `github.ref_name`, so merged PR close events should not resolve to `main`
+- [cleanup.sh](/home/cinmay/Documents/conorganizer/deploy/cleanup.sh:28) now refuses both `main` and `demo`.
+
+Kept:
+- `DRY_RUN=true` remains unchanged.
+- The fixed-environment safeguard still exits with an error if called manually with `main` or `demo`.
+
+Verification:
+- `bash -n deploy/cleanup.sh` passed.
+- `git diff --check` passed.
+- Workflow YAML parse passed.
+
+Time: 2026-07-14 21:23:13
+--- Next Prompt ---
+
