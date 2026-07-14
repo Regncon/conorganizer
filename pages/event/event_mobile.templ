@@ -7,6 +7,7 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
+    "github.com/Regncon/conorganizer/service/eventService"
 )
 
 templ Event_mobile(
@@ -407,7 +408,7 @@ templ Event_mobile(
 			</section>
 			<div class="description">
 				<p>
-					@templ.Raw(event.Description)
+					@templ.Raw(string(eventservice.SanitizeMdToHTML([]byte(event.Description))))
 				</p>
 			</div>
 		</div>

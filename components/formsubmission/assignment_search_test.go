@@ -1,6 +1,7 @@
 package formsubmission
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
@@ -25,5 +26,15 @@ func TestPuljeAssignmentSearch_RendersPickerAndButtons(t *testing.T) {
 	}
 	if doc.Find("button:contains('Legg til som førsteval')").Length() == 0 {
 		t.Errorf("expected the 'add as first choice' button")
+	}
+
+	// The puljefordeling picker only adds players. The DM is the game's owner,
+	// not a participant you pick here, so it must not offer an "add as GM" action.
+	html, err := doc.Html()
+	if err != nil {
+		t.Fatalf("render html: %v", err)
+	}
+	if strings.Contains(html, "add_gm") {
+		t.Errorf("puljefordeling picker must not offer an 'add as GM' action")
 	}
 }
