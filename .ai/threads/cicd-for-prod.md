@@ -566,3 +566,103 @@ Verification:
 Time: 2026-07-14 21:32:20
 --- Next Prompt ---
 
+Now we get:
+
+  APP_DIR="/opt/conorganizer/$SAFE_NAME"
+  
+  echo "Cleaning up preview SAFE_NAME=$SAFE_NAME"
+  sudo chmod +x "$APP_DIR/cleanup.sh"
+  sudo "$APP_DIR/cleanup.sh" "$SAFE_NAME"
+  
+    protocol: tcp
+    timeout: 30s
+    command_timeout: 10m
+    proxy_port: 22
+    proxy_protocol: tcp
+    proxy_timeout: 30s
+Run echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+  echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+  shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+  env:
+    GITHUB_ACTION_PATH: /home/runner/work/_actions/appleboy/ssh-action/v1.2.0
+Run entrypoint.sh
+  entrypoint.sh
+  shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+  env:
+    GITHUB_ACTION_PATH: /home/runner/work/_actions/appleboy/ssh-action/v1.2.0
+    INPUT_HOST: ***
+    INPUT_PORT: 22
+    INPUT_PROTOCOL: tcp
+    INPUT_USERNAME: ***
+    INPUT_PASSWORD: 
+    INPUT_PASSPHRASE: 
+    INPUT_KEY: ***
+  
+    INPUT_KEY_PATH: 
+    INPUT_FINGERPRINT: 
+    INPUT_PROXY_HOST: 
+    INPUT_PROXY_PORT: 22
+    INPUT_PROXY_USERNAME: 
+    INPUT_PROXY_PASSWORD: 
+    INPUT_PROXY_PASSPHRASE: 
+    INPUT_PROXY_KEY: 
+    INPUT_PROXY_KEY_PATH: 
+    INPUT_PROXY_FINGERPRINT: 
+    INPUT_TIMEOUT: 30s
+    INPUT_PROXY_TIMEOUT: 30s
+    INPUT_COMMAND_TIMEOUT: 10m
+    INPUT_SCRIPT: set -euo pipefail
+  SAFE_NAME="487-merge"
+  APP_DIR="/opt/conorganizer/$SAFE_NAME"
+  
+  echo "Cleaning up preview SAFE_NAME=$SAFE_NAME"
+  sudo chmod +x "$APP_DIR/cleanup.sh"
+  sudo "$APP_DIR/cleanup.sh" "$SAFE_NAME"
+  
+    INPUT_SCRIPT_FILE: 
+    INPUT_SCRIPT_STOP: true
+    INPUT_ENVS: 
+    INPUT_ENVS_FORMAT: 
+    INPUT_DEBUG: 
+    INPUT_ALL_ENVS: 
+    INPUT_REQUEST_PTY: 
+    INPUT_USE_INSECURE_CIPHER: 
+    INPUT_CIPHER: 
+    INPUT_PROXY_USE_INSECURE_CIPHER: 
+    INPUT_PROXY_CIPHER: 
+    INPUT_SYNC: 
+Will download drone-ssh-1.8.0-linux-amd64 from https://github.com/appleboy/drone-ssh/releases/download/v1.8.0
+======= CLI Version =======
+Drone SSH version 1.8.0
+===========================
+Cleaning up preview SAFE_NAME=487-merge
+sudo: I'm sorry ***. I'm afraid I can't do that
+2026/07/14 19:36:32 Process exited with status 1
+Error: Process completed with exit code 1.
+
+Time: 2026-07-14 21:45:34
+--- Codex Run ---
+
+Codex output:
+Ghe cleanup job is still in dry-run mode, so it should not need sudo at all. The failure is happening before the dry-run script can log anything, likely on the `sudo chmod` or `sudo cleanup.sh` call. I’ll change the workflow to run the cleanup script as an unprivileged dry run for now.
+The workflow now invokes `DRY_RUN=true bash cleanup.sh` without sudo, and the cleanup script header reflects that dry runs are unprivileged. I’m running checks now.
+The patch introduced tabs into the YAML block. I’m fixing that indentation now.
+The YAML indentation is corrected; I’m rerunning the checks that failed.
+Fixed the cleanup dry-run sudo issue.
+
+Root cause: cleanup is still dry-run, but the workflow was using `sudo chmod` and `sudo cleanup.sh` before the script could run. The server user is not allowed to sudo that path yet.
+
+Changed:
+- Cleanup workflow now runs:
+  `DRY_RUN=true bash "$APP_DIR/cleanup.sh" "$SAFE_NAME"`
+- No sudo required for dry-run cleanup.
+- Updated the cleanup script header to clarify that dry-run cleanup can run unprivileged, while real teardown will need root/sudo later.
+
+Verification:
+- `git diff --check` passed.
+- Workflow YAML parse passed.
+- `bash -n deploy/cleanup.sh` passed.
+
+Time: 2026-07-14 21:45:34
+--- Next Prompt ---
+

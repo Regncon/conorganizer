@@ -358,5 +358,4 @@ jobs:
                       APP_DIR="/opt/conorganizer/$SAFE_NAME"
 
                       echo "Cleaning up preview SAFE_NAME=$SAFE_NAME"
-                      sudo chmod +x "$APP_DIR/cleanup.sh"
-                      sudo "$APP_DIR/cleanup.sh" "$SAFE_NAME"
+                      DRY_RUN=true bash "$APP_DIR/cleanup.sh" "$SAFE_NAME"
