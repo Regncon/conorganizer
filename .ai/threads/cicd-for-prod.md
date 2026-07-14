@@ -481,3 +481,57 @@ Verification:
 Time: 2026-07-14 21:07:05
 --- Next Prompt ---
 
+Very well. Let's move on to the next step:  Stop hashing preview ports, and use PR-derived naming instead. Let's keep the original 123-merge formatting.
+
+Time: 2026-07-14 21:15:56
+--- Codex Run ---
+
+Codex output:
+I’ll update the preview deploy computation only: keep the `123-merge` naming, derive it explicitly from the PR number, and set the preview port to `20000 + PR_NUMBER` instead of hashing.
+The preview deploy now derives `482-merge` from the PR number directly and uses port `20482` for PR 482. I’m checking the workflow and searching for leftover hash-based preview logic.
+Updated preview port/name generation in [.github/workflows/buildAndTest.yml](/home/cinmay/Documents/conorganizer/.github/workflows/buildAndTest.yml:160).
+
+Changed:
+- Preview `SAFE_NAME` is now explicitly `PR_NUMBER-merge`, so PR 482 stays `482-merge`.
+- Preview port is now `20000 + PR_NUMBER`, so PR 482 uses `20482`.
+- Removed the `cksum` hash logic.
+- Deployment URL echo now uses the computed host output directly.
+
+Verification:
+- `git diff --check` passed.
+- Workflow YAML parse passed.
+- Confirmed no hash/`cksum` logic remains in the preview deploy path.
+
+There is still `github.ref_name` usage in the cleanup job. That matches the next item: cleanup bug fix.
+
+Time: 2026-07-14 21:15:56
+--- Next Prompt ---
+
+Alright. Let's work through the cleanup bug fix.
+
+Time: 2026-07-14 21:23:13
+--- Codex Run ---
+
+Codex output:
+I’ll make cleanup derive the preview name from the PR number, matching the new deploy naming. I’ll also extend the cleanup script safeguard so `demo` is protected alongside `main`.
+The cleanup job now computes `482-merge` from the PR number instead of relying on `github.ref_name`, so merged PR close events should no longer resolve to `main`. I’m running the workflow and shell checks now.
+Fixed the cleanup bug.
+
+Changed:
+- Cleanup now derives the preview target from the PR number:
+  - PR 482 -> `482-merge`
+  - no more `github.ref_name`, so merged PR close events should not resolve to `main`
+- [cleanup.sh](/home/cinmay/Documents/conorganizer/deploy/cleanup.sh:28) now refuses both `main` and `demo`.
+
+Kept:
+- `DRY_RUN=true` remains unchanged.
+- The fixed-environment safeguard still exits with an error if called manually with `main` or `demo`.
+
+Verification:
+- `bash -n deploy/cleanup.sh` passed.
+- `git diff --check` passed.
+- Workflow YAML parse passed.
+
+Time: 2026-07-14 21:23:13
+--- Next Prompt ---
+

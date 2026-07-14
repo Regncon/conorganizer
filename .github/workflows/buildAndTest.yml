@@ -156,21 +156,17 @@ jobs:
         environment:
             name: Production
 
-        env:
-            BRANCH_NAME: ${{ github.ref_name }}
-
         steps:
             - name: Compute instance info
               id: instance
               run: |
                   set -euo pipefail
-                  BRANCH="${BRANCH_NAME}"
+                  PR_NUMBER="${{ github.event.pull_request.number }}"
 
-                  SAFE_NAME=$(echo "$BRANCH" | tr '/_' '-' | tr '[:upper:]' '[:lower:]')
+                  SAFE_NAME="${PR_NUMBER}-merge"
 
-                  BASE_PORT=18000
-                  HASH=$(printf '%s' "$SAFE_NAME" | cksum | awk '{print $1}')
-                  PORT=$((BASE_PORT + HASH % 1000))
+                  BASE_PORT=20000
+                  PORT=$((BASE_PORT + PR_NUMBER))
 
                   HOST="${SAFE_NAME}.lekeplassen.regncon.no"
 
@@ -256,14 +252,7 @@ jobs:
 
             - name: Echo deployment URL
               run: |
-                  BRANCH="${{ github.ref_name }}"
-                  SAFE_NAME=$(echo "$BRANCH" | tr '/_' '-' | tr '[:upper:]' '[:lower:]')
-
-                  if [ "$SAFE_NAME" = "main" ]; then
-                    HOST="main.lekeplassen.regncon.no"
-                  else
-                    HOST="${SAFE_NAME}.lekeplassen.regncon.no"
-                  fi
+                  HOST="${{ steps.instance.outputs.host }}"
 
                   echo ""
                   echo "=========================================="
@@ -325,14 +314,9 @@ jobs:
               id: instance
               run: |
                   set -euo pipefail
-                  BRANCH="${{ github.ref_name }}"
+                  PR_NUMBER="${{ github.event.pull_request.number }}"
 
-                  SAFE_NAME=$(echo "$BRANCH" | tr '/_' '-' | tr '[:upper:]' '[:lower:]')
-
-                  if [ "$SAFE_NAME" = "main" ]; then
-                    echo "Refusing to clean up SAFE_NAME=main" >&2
-                    exit 1
-                  fi
+                  SAFE_NAME="${PR_NUMBER}-merge"
 
                   echo "safe_name=$SAFE_NAME" >> "$GITHUB_OUTPUT"
 
