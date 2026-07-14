@@ -359,3 +359,37 @@ I only touched the Caddyfile. The existing `schema.sql` modification and `.ai/th
 Time: 2026-07-14 19:02:26
 --- Next Prompt ---
 
+Very well. We have verified that Caddy works.
+
+Next point on the list, let's update the systemd files for main and demo in the configuration as code directory. 
+
+Time: 2026-07-14 19:16:08
+--- Codex Run ---
+
+Codex output:
+I’ll update only the checked-in fixed service units now: main gets the new fixed port, and demo gets its own service unit with separate app/data/image paths.
+The systemd verifier is available locally, so after the edit I’ll run it against the main and demo units.
+The main unit now uses `19080`, and I added a matching demo unit on `19081`. I’m running unit verification and diff checks now.
+`systemd-analyze verify` could not complete in this sandbox; it failed before reporting unit syntax due local socket permission restrictions. The file-level diff check passed, and I’m doing one more static check for the expected ports and paths.
+The static path/port check matches the intended main/demo split. I’m trying `systemd-analyze verify` once more with generator/man checks disabled to see if that avoids the sandbox-specific failure.
+`systemd-analyze` still fails before unit parsing because of the local sandbox socket permissions. The remaining verification available here is static: diff check, path/port assertions, and file inspection.
+Updated the systemd configuration-as-code files.
+
+Changed:
+- [conorganizer-main.service](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/systemd/etc/systemd/system/conorganizer-main.service:11) now uses `PORT=19080`.
+- Added [conorganizer-demo.service](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/systemd/etc/systemd/system/conorganizer-demo.service:1), using:
+  - `PORT=19081`
+  - `/opt/conorganizer/demo/conorganizer-demo`
+  - `/mnt/HC_Volume_103911252/environments/demo/database/events.db`
+  - `/mnt/HC_Volume_103911252/environments/demo/event-images`
+
+Verification:
+- `git diff --check` passed for both unit files.
+- Static path/port check confirmed main and demo point at the intended directories and ports.
+- I attempted `systemd-analyze verify`, but it fails in this local sandbox before parsing the units due socket permission restrictions. That should be run on the server after stowing/reloading systemd.
+
+Ready for the next item: GitHub Actions.
+
+Time: 2026-07-14 19:16:08
+--- Next Prompt ---
+
