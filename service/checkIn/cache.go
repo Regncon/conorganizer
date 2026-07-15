@@ -93,7 +93,7 @@ func filterTickets(tickets []CheckInTicket, searchTerm string) []CheckInTicket {
 
 func fetchTicketsFromCheckIn() ([]CheckInTicket, error) {
 	query := `{
-		eventTickets(customer_id: 13446, id: 109715, onlyCompleted: true) {
+		eventTickets(customer_id: 13446, id: 221572, onlyCompleted: true) {
 			id
 			category
 			category_id
