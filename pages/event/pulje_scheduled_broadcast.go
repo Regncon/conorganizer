@@ -28,27 +28,12 @@ type puljeScheduledBroadcast struct {
 }
 
 func setupPuljeScheduledBroadcasts(ctx context.Context, js jetstream.JetStream, liveManager *live.Manager, db *sql.DB, logger *slog.Logger) error {
-	stream, err := js.CreateOrUpdateStream(ctx, jetstream.StreamConfig{
-		Name:              puljeScheduledBroadcastStream,
-		Description:       "Scheduled event page updates for pulje warning thresholds",
-		Subjects:          []string{puljeScheduledBroadcastScheduleSubject, puljeScheduledBroadcastTargetSubject},
-		AllowMsgSchedules: true,
-		Retention:         jetstream.LimitsPolicy,
-		MaxAge:            400 * 24 * time.Hour,
-		MaxBytes:          1024 * 1024,
-		Duplicates:        400 * 24 * time.Hour,
-	})
+	stream, err := js.CreateOrUpdateStream(ctx, puljeScheduledBroadcastStreamConfig())
 	if err != nil {
 		return fmt.Errorf("create pulje schedule stream: %w", err)
 	}
 
-	consumer, err := stream.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
-		Name:          puljeScheduledBroadcastConsumer,
-		Durable:       puljeScheduledBroadcastConsumer,
-		Description:   "Broadcasts event page updates when pulje warning thresholds are reached",
-		FilterSubject: puljeScheduledBroadcastTargetSubject,
-		AckPolicy:     jetstream.AckExplicitPolicy,
-	})
+	consumer, err := stream.CreateOrUpdateConsumer(ctx, puljeScheduledBroadcastConsumerConfig())
 	if err != nil {
 		return fmt.Errorf("create pulje schedule consumer: %w", err)
 	}
@@ -99,6 +84,31 @@ func setupPuljeScheduledBroadcasts(ctx context.Context, js jetstream.JetStream, 
 	}
 
 	return nil
+}
+
+func puljeScheduledBroadcastStreamConfig() jetstream.StreamConfig {
+	return jetstream.StreamConfig{
+		Name:              puljeScheduledBroadcastStream,
+		Description:       "Scheduled event page updates for pulje warning thresholds",
+		Subjects:          []string{puljeScheduledBroadcastScheduleSubject, puljeScheduledBroadcastTargetSubject},
+		AllowMsgSchedules: true,
+		Retention:         jetstream.LimitsPolicy,
+		Storage:           jetstream.MemoryStorage,
+		MaxAge:            400 * 24 * time.Hour,
+		MaxBytes:          1024 * 1024,
+		Duplicates:        400 * 24 * time.Hour,
+	}
+}
+
+func puljeScheduledBroadcastConsumerConfig() jetstream.ConsumerConfig {
+	return jetstream.ConsumerConfig{
+		Name:          puljeScheduledBroadcastConsumer,
+		Durable:       puljeScheduledBroadcastConsumer,
+		Description:   "Broadcasts event page updates when pulje warning thresholds are reached",
+		FilterSubject: puljeScheduledBroadcastTargetSubject,
+		AckPolicy:     jetstream.AckExplicitPolicy,
+		MemoryStorage: true,
+	}
 }
 
 func buildPuljeScheduledBroadcasts(puljer []models.PuljeRow, now time.Time) []puljeScheduledBroadcast {

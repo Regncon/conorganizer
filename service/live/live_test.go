@@ -86,11 +86,11 @@ func TestManager_EnsureConnection_WhenCookieExistsAndKeyMissing_RecreatesLiveKey
 	assertLiveKeyExists(t, manager, expectedBucket, expectedConnectionID)
 }
 
-func TestManager_BucketConfig_UsesTwentySixHourTTLForEveryLiveBucket(t *testing.T) {
+func TestManager_BucketConfig_UsesMemoryStorageAndTwentySixHourTTLForEveryLiveBucket(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given the live manager bucket configuration.",
 		When:  "When each bucket config is built.",
-		Then:  "Then every live bucket uses the configured 26 hour TTL.",
+		Then:  "Then every live bucket uses memory storage and the configured 26 hour TTL.",
 	})
 
 	// Given
@@ -102,6 +102,12 @@ func TestManager_BucketConfig_UsesTwentySixHourTTLForEveryLiveBucket(t *testing.
 		config := manager.bucketConfig(bucket)
 		if config.TTL != expectedTTL {
 			t.Fatalf("TTL mismatch for bucket %s\nexpected: %s\nactual:   %s", bucket, expectedTTL, config.TTL)
+		}
+		if config.Storage != jetstream.MemoryStorage {
+			t.Fatalf("storage mismatch for bucket %s\nexpected: %s\nactual:   %s", bucket, jetstream.MemoryStorage, config.Storage)
+		}
+		if config.Compression {
+			t.Fatalf("expected compression to be disabled for memory-backed bucket %s", bucket)
 		}
 	}
 }

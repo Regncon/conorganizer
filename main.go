@@ -33,6 +33,7 @@ func main() {
 
 	dsn := flag.String("dbp", "database/events.db", "absolute path to database file")
 	eventImageDir := flag.String("image-path", "local-event-images", "directory to store event images")
+	natsStoreDir := flag.String("nats-store-dir", "data/nats", "directory for embedded NATS JetStream runtime data")
 	flag.Parse()
 
 	db, dbErr := service.InitDB(*dsn)
@@ -60,21 +61,21 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx, baseLogger, getPort(), eventImageDir, db); err != nil {
+	if err := run(ctx, baseLogger, getPort(), eventImageDir, *natsStoreDir, db); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB) error {
+func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, natsStoreDir string, db *sql.DB) error {
 	g, ctx := errgroup.WithContext(ctx)
-	g.Go(startServer(ctx, logger, port, eventImageDir, db))
+	g.Go(startServer(ctx, logger, port, eventImageDir, natsStoreDir, db))
 	if err := g.Wait(); err != nil {
 		return fmt.Errorf("error running server: %w", err)
 	}
 	return nil
 }
-func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB) func() error {
+func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, natsStoreDir string, db *sql.DB) func() error {
 	return func() error {
 		baseLogger := logger
 		logger = logger.With("component", "http_server")
@@ -113,7 +114,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		}
 
 		if fullMode {
-			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir)
+			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir, natsStoreDir)
 			if err != nil {
 				logger.Error(fmt.Errorf("error setting up routes; falling back to degraded mode: %w", err).Error())
 				readiness.MarkDegraded(notReadyApplicationReason, err)

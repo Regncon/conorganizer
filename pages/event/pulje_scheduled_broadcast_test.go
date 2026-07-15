@@ -7,7 +7,28 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil/bdd"
+	"github.com/nats-io/nats.go/jetstream"
 )
+
+func TestPuljeScheduledBroadcastJetStreamConfig_UsesMemoryStorage(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the pulje scheduled broadcast JetStream configuration.",
+		When:  "When the stream and consumer configs are built.",
+		Then:  "Then both the scheduled stream and durable consumer keep state in memory.",
+	})
+
+	// When
+	streamConfig := puljeScheduledBroadcastStreamConfig()
+	consumerConfig := puljeScheduledBroadcastConsumerConfig()
+
+	// Then
+	if streamConfig.Storage != jetstream.MemoryStorage {
+		t.Fatalf("stream storage mismatch\nexpected: %s\nactual:   %s", jetstream.MemoryStorage, streamConfig.Storage)
+	}
+	if !consumerConfig.MemoryStorage {
+		t.Fatalf("expected consumer memory storage to be enabled")
+	}
+}
 
 func TestBuildPuljeScheduledBroadcasts_SchedulesWarningAndUrgentThresholdsButNotLockTime(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
