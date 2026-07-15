@@ -6,13 +6,15 @@ After=network.target
 User=deploy
 Group=www-data
 WorkingDirectory=/opt/conorganizer/main
+RuntimeDirectory=conorganizer-main
 
 EnvironmentFile=/etc/conorganizer/env
 Environment=PORT=19080
 
 ExecStart=/opt/conorganizer/main/conorganizer-main \
   -dbp /mnt/HC_Volume_103911252/environments/main/database/events.db \
-  -image-path /mnt/HC_Volume_103911252/environments/main/event-images
+  -image-path /mnt/HC_Volume_103911252/environments/main/event-images \
+  -nats-store-dir /run/conorganizer-main/nats
 
 Restart=always
 RestartSec=5

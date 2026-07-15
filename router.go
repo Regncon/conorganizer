@@ -25,7 +25,11 @@ import (
 	natsserver "github.com/nats-io/nats-server/v2/server"
 )
 
-func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB, eventImageDir *string) (cleanup func() error, err error) {
+func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db *sql.DB, eventImageDir *string, natsStoreDir string) (cleanup func() error, err error) {
+	if natsStoreDir == "" {
+		return nil, fmt.Errorf("nats store directory is empty")
+	}
+
 	natsPort, err := toolbelt.FreePort()
 	if err != nil {
 		return nil, fmt.Errorf("error getting free port: %w", err)
@@ -34,6 +38,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	ns, err := embeddednats.New(ctx, embeddednats.WithNATSServerOptions(&natsserver.Options{
 		JetStream: true,
 		Port:      natsPort,
+		StoreDir:  natsStoreDir,
 	}))
 
 	if err != nil {
