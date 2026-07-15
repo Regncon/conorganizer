@@ -10,11 +10,26 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 func TestUpdateDescription_WhenEventUpdateFails_LogsContext(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an event description update without a current user.",
+		When:  "When the handler cannot write the audited event update.",
+		Then:  "Then it returns an internal server error and logs request context.",
+	})
+
+	// Given
+	expectedStatus := http.StatusInternalServerError
+	expectedLogFragments := []string{
+		`"component":"event_form"`,
+		`get current user id for event audit`,
+		`"event_id":"event-123"`,
+		`"request_id":"request-123"`,
+	}
 	db := testutil.CreateTestDB(t, "update_description_logs")
 	var logs bytes.Buffer
 	logger := slog.New(slog.NewJSONHandler(&logs, nil))
@@ -27,19 +42,16 @@ func TestUpdateDescription_WhenEventUpdateFails_LogsContext(t *testing.T) {
 	request = request.WithContext(context.WithValue(request.Context(), middleware.RequestIDKey, "request-123"))
 	recorder := httptest.NewRecorder()
 
+	// When
 	router.ServeHTTP(recorder, request)
 
-	if recorder.Code != http.StatusInternalServerError {
-		t.Fatalf("HTTP status mismatch\nexpected: %d\nactual:   %d", http.StatusInternalServerError, recorder.Code)
+	// Then
+	if recorder.Code != expectedStatus {
+		t.Fatalf("HTTP status mismatch\nexpected: %d\nactual:   %d", expectedStatus, recorder.Code)
 	}
 
 	logText := logs.String()
-	for _, expected := range []string{
-		`"component":"event_form"`,
-		`get current user id for event audit`,
-		`"event_id":"event-123"`,
-		`"request_id":"request-123"`,
-	} {
+	for _, expected := range expectedLogFragments {
 		if !strings.Contains(logText, expected) {
 			t.Fatalf("expected log to contain %q\nactual log: %s", expected, logText)
 		}

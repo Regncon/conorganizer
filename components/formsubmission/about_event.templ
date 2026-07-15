@@ -12,6 +12,7 @@ import (
 	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
 
@@ -140,6 +141,7 @@ func UpdateSystem(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager,
 	})
 }
 func UpdateDescription(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger) {
+	logger = logger.With("component", "event_form")
 	eventRouter.Put("/", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			Input string `json:"description"`
@@ -158,10 +160,12 @@ func UpdateDescription(eventRouter chi.Router, db *sql.DB, liveManager *live.Man
 		}
 
 		if err := updateEventFieldWithAudit(r.Context(), db, logger, eventID, "description = ?", store.Input); err != nil {
+			logger.Error(err.Error(), "event_id", eventID, "request_id", middleware.GetReqID(r.Context()))
 			http.Error(w, "Klarte ikkje å oppdatere skildringa for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast description update: %w", err).Error(), "event_id", eventID, "request_id", middleware.GetReqID(r.Context()))
 			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}

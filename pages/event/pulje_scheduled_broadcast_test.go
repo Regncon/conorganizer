@@ -17,15 +17,19 @@ func TestPuljeScheduledBroadcastJetStreamConfig_UsesMemoryStorage(t *testing.T) 
 		Then:  "Then both the scheduled stream and durable consumer keep state in memory.",
 	})
 
+	// Given
+	expectedStreamStorage := jetstream.MemoryStorage
+	expectedConsumerMemoryStorage := true
+
 	// When
 	streamConfig := puljeScheduledBroadcastStreamConfig()
 	consumerConfig := puljeScheduledBroadcastConsumerConfig()
 
 	// Then
-	if streamConfig.Storage != jetstream.MemoryStorage {
-		t.Fatalf("stream storage mismatch\nexpected: %s\nactual:   %s", jetstream.MemoryStorage, streamConfig.Storage)
+	if streamConfig.Storage != expectedStreamStorage {
+		t.Fatalf("stream storage mismatch\nexpected: %s\nactual:   %s", expectedStreamStorage, streamConfig.Storage)
 	}
-	if !consumerConfig.MemoryStorage {
+	if consumerConfig.MemoryStorage != expectedConsumerMemoryStorage {
 		t.Fatalf("expected consumer memory storage to be enabled")
 	}
 }

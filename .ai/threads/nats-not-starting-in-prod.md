@@ -406,3 +406,88 @@ Note: `/readyz` was not changed in this pass. This fixes the suspected shared NA
 Time: 2026-07-15 21:50:35
 --- Next Prompt ---
 
+The tests fail. Also, make sure you follow the existing test structure and BDD style in the codebase.
+
+
+## Go test structure
+When writing or cleaning up Go tests, prefer behavior-focused tests that read from intent to verification.
+
+- Add short BDD metadata at the top of each test when it improves readability. Prefer
+  `bdd.Behavior(t, bdd.BDD{Given: "...", When: "...", Then: "..."})`
+  for tests that should appear in the automated behavior report. Existing BDD-style
+  comments are still supported while older tests are migrated:
+  - Given some initial context,
+  - When an event occurs,
+  - Then ensure the expected outcome.
+- Split each test into three visible sections:
+  - `// Given`
+  - `// When`
+  - `// Then`
+- Start the `// Given` section with the expected output or expected result. This makes the test's purpose clear before setup details.
+- Keep test names specific to one behavior. Prefer splitting creation, duplicate/idempotency, validation, and error cases into separate tests.
+- Move noisy setup SQL and repeated assertions into local test helpers when that makes the test read like behavior.
+
+Example shape:
+
+```go
+func TestService_EventProducesExpectedResult(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an existing domain object.",
+		When:  "When the service reconciles related data.",
+		Then:  "Then the expected durable relation is stored.",
+	})
+
+	// Given
+	expectedResult := models.SomeResult{ID: 123}
+	db := createTestDB(t)
+	insertRequiredFixture(t, db, expectedResult.ID)
+
+	// When
+	err := ServiceFunction(expectedResult.ID, db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected service call to succeed: %v", err)
+	}
+	assertExpectedResult(t, db, expectedResult)
+}
+```
+
+Time: 2026-07-15 22:02:41
+--- Codex Run ---
+
+Codex output:
+I’ll clean up the tests to match the repo’s Given/When/Then shape first, then rerun the focused packages and the full suite so we can distinguish my changes from any unrelated failures.
+I’m checking the current failure state before editing so I don’t paper over a separate test issue.
+The focused NATS packages still pass. The full suite is currently failing in `components/formsubmission/about_event_test.go`, and that file now appears to be part of the working tree state rather than the untracked file I saw earlier, so I’m going to inspect that failure and fix the test or implementation without touching the unrelated `.ai` note or `schema.sql` changes.
+I’m also cleaning the two storage tests I added so each has explicit Given, When, Then sections and expected values at the top of Given.
+The failing test is tracked now. Since making it pass likely means touching structured logging in a handler, I’m loading the repo’s logging skill before changing that code.
+The logging guidance confirms this route handler is the boundary that should log the final failure with stable fields. I’ll inspect the handler and generated templ output now, then make the smallest consistent fix.
+The handler returns a 500 without logging the failed audit/update path, which matches the failing test. I’m checking the helper error shape so the boundary log doesn’t duplicate context unnecessarily.
+The error returned by `currentUserDBID` already wraps the useful audit context, so the handler can log `err.Error()` with request and event IDs. I’m keeping this fix scoped to the failing `UpdateDescription` route and its generated templ output.
+I’m about to edit the templ source, the checked-in generated Go output, and the affected tests. The generated file is being patched alongside the `.templ` source so the tree stays compilable without relying on a local templ generation step.
+The BDD sections are now explicit in the new tests, and the description handler logs the audited update failure with component, event ID, and request ID. I’m formatting and then running the impacted packages.
+Formatting is done. I’m running the affected packages now: the form submission package for the failing test, plus the live/event packages for the NATS changes.
+The previously failing form submission test now passes, and the NATS-focused packages still pass. I’m running `go test ./...` again for the full suite.
+The full Go suite now passes. I’m doing a final diff check and status scan so I can separate the files I changed from the unrelated files already modified in your tree.
+One detail from the final scan: the generated `about_event_templ.go` is already in sync with the templ source in the current tree, so it has no outstanding diff. The actual tracked diffs are the templ source and tests, plus your pre-existing `.ai` and `schema.sql` edits.
+Everything is green now with the writable Go cache. I’m collecting line references for the changed code and tests for a concise close-out.
+The line references are clear and `git diff --check` is clean. I’m wrapping up with the test result and noting the unrelated files that remain modified.
+Fixed.
+
+I updated the new tests to follow the repo’s BDD/Given/When/Then structure:
+- [pulje_scheduled_broadcast_test.go](/home/cinmay/Documents/conorganizer/pages/event/pulje_scheduled_broadcast_test.go:13)
+- [live_test.go](/home/cinmay/Documents/conorganizer/service/live/live_test.go:89)
+
+I also fixed the full-suite failure by making `UpdateDescription` log the failed audited update with `component`, `event_id`, and `request_id`: [about_event.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/about_event.templ:143). The corresponding test now uses BDD metadata and visible Given/When/Then sections: [about_event_test.go](/home/cinmay/Documents/conorganizer/components/formsubmission/about_event_test.go:18).
+
+Verification:
+- `GOCACHE=/tmp/conorganizer-go-build-cache go test ./components/formsubmission ./service/live ./pages/event` passes.
+- `GOCACHE=/tmp/conorganizer-go-build-cache go test ./...` passes.
+- `git diff --check` passes.
+
+I left the existing `.ai/threads/nats-not-starting-in-prod.md` and `schema.sql` changes untouched.
+
+Time: 2026-07-15 22:02:41
+--- Next Prompt ---
+

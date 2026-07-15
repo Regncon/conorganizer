@@ -95,18 +95,26 @@ func TestManager_BucketConfig_UsesMemoryStorageAndTwentySixHourTTLForEveryLiveBu
 
 	// Given
 	expectedTTL := DefaultTTL
+	expectedStorage := jetstream.MemoryStorage
+	expectedCompression := false
 	manager := &Manager{ttl: expectedTTL}
 
-	// When / Then
+	// When
+	configsByBucket := make(map[Bucket]jetstream.KeyValueConfig, len(allBuckets))
 	for _, bucket := range allBuckets {
-		config := manager.bucketConfig(bucket)
+		configsByBucket[bucket] = manager.bucketConfig(bucket)
+	}
+
+	// Then
+	for _, bucket := range allBuckets {
+		config := configsByBucket[bucket]
 		if config.TTL != expectedTTL {
 			t.Fatalf("TTL mismatch for bucket %s\nexpected: %s\nactual:   %s", bucket, expectedTTL, config.TTL)
 		}
-		if config.Storage != jetstream.MemoryStorage {
-			t.Fatalf("storage mismatch for bucket %s\nexpected: %s\nactual:   %s", bucket, jetstream.MemoryStorage, config.Storage)
+		if config.Storage != expectedStorage {
+			t.Fatalf("storage mismatch for bucket %s\nexpected: %s\nactual:   %s", bucket, expectedStorage, config.Storage)
 		}
-		if config.Compression {
+		if config.Compression != expectedCompression {
 			t.Fatalf("expected compression to be disabled for memory-backed bucket %s", bucket)
 		}
 	}
