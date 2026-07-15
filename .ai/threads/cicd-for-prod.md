@@ -566,103 +566,446 @@ Verification:
 Time: 2026-07-14 21:32:20
 --- Next Prompt ---
 
-Now we get:
+Very well. Let's go to the next step: creating the download script, including anonymizing. I want two separate commands:
+1. Downloading main, for example something like "go tool task download-main". 
+2. Downloading demo, for example something like "go tool task download-demo".
+See if you can come up with some better suggestions for command names.
 
-  APP_DIR="/opt/conorganizer/$SAFE_NAME"
-  
-  echo "Cleaning up preview SAFE_NAME=$SAFE_NAME"
-  sudo chmod +x "$APP_DIR/cleanup.sh"
-  sudo "$APP_DIR/cleanup.sh" "$SAFE_NAME"
-  
-    protocol: tcp
-    timeout: 30s
-    command_timeout: 10m
-    proxy_port: 22
-    proxy_protocol: tcp
-    proxy_timeout: 30s
-Run echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
-  echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
-  shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-  env:
-    GITHUB_ACTION_PATH: /home/runner/work/_actions/appleboy/ssh-action/v1.2.0
-Run entrypoint.sh
-  entrypoint.sh
-  shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-  env:
-    GITHUB_ACTION_PATH: /home/runner/work/_actions/appleboy/ssh-action/v1.2.0
-    INPUT_HOST: ***
-    INPUT_PORT: 22
-    INPUT_PROTOCOL: tcp
-    INPUT_USERNAME: ***
-    INPUT_PASSWORD: 
-    INPUT_PASSPHRASE: 
-    INPUT_KEY: ***
-  
-    INPUT_KEY_PATH: 
-    INPUT_FINGERPRINT: 
-    INPUT_PROXY_HOST: 
-    INPUT_PROXY_PORT: 22
-    INPUT_PROXY_USERNAME: 
-    INPUT_PROXY_PASSWORD: 
-    INPUT_PROXY_PASSPHRASE: 
-    INPUT_PROXY_KEY: 
-    INPUT_PROXY_KEY_PATH: 
-    INPUT_PROXY_FINGERPRINT: 
-    INPUT_TIMEOUT: 30s
-    INPUT_PROXY_TIMEOUT: 30s
-    INPUT_COMMAND_TIMEOUT: 10m
-    INPUT_SCRIPT: set -euo pipefail
-  SAFE_NAME="487-merge"
-  APP_DIR="/opt/conorganizer/$SAFE_NAME"
-  
-  echo "Cleaning up preview SAFE_NAME=$SAFE_NAME"
-  sudo chmod +x "$APP_DIR/cleanup.sh"
-  sudo "$APP_DIR/cleanup.sh" "$SAFE_NAME"
-  
-    INPUT_SCRIPT_FILE: 
-    INPUT_SCRIPT_STOP: true
-    INPUT_ENVS: 
-    INPUT_ENVS_FORMAT: 
-    INPUT_DEBUG: 
-    INPUT_ALL_ENVS: 
-    INPUT_REQUEST_PTY: 
-    INPUT_USE_INSECURE_CIPHER: 
-    INPUT_CIPHER: 
-    INPUT_PROXY_USE_INSECURE_CIPHER: 
-    INPUT_PROXY_CIPHER: 
-    INPUT_SYNC: 
-Will download drone-ssh-1.8.0-linux-amd64 from https://github.com/appleboy/drone-ssh/releases/download/v1.8.0
-======= CLI Version =======
-Drone SSH version 1.8.0
-===========================
-Cleaning up preview SAFE_NAME=487-merge
-sudo: I'm sorry ***. I'm afraid I can't do that
-2026/07/14 19:36:32 Process exited with status 1
-Error: Process completed with exit code 1.
+For the switching command, I don't want to have to specify which environment I wish to change to, simply "go tool task envswitch" toggles between the demo and main environments.
 
-Time: 2026-07-14 21:45:34
+Let's also talk about what the download script should look like on the server. I like the idea of a single SSH command to get the database and streaming the tar payload as an output of the script. If the script turns out to be complex, we should consider writing it in go, especially considering there's SQL commands etcetc.
+
+Let's have a discussion about this, please ask any clarifying questions or suggestions.
+
+
+
+Time: 2026-07-15 09:00:17
 --- Codex Run ---
 
 Codex output:
-Ghe cleanup job is still in dry-run mode, so it should not need sudo at all. The failure is happening before the dry-run script can log anything, likely on the `sudo chmod` or `sudo cleanup.sh` call. I’ll change the workflow to run the cleanup script as an unprivileged dry run for now.
-The workflow now invokes `DRY_RUN=true bash cleanup.sh` without sudo, and the cleanup script header reflects that dry runs are unprivileged. I’m running checks now.
-The patch introduced tabs into the YAML block. I’m fixing that indentation now.
-The YAML indentation is corrected; I’m rerunning the checks that failed.
-Fixed the cleanup dry-run sudo issue.
+I’m going to keep this as design discussion only. No files touched for this step until we settle the command shape and where the anonymization/streaming logic should live.
+For command names, I’d stay consistent with the existing Taskfile style and use namespaces:
 
-Root cause: cleanup is still dry-run, but the workflow was using `sudo chmod` and `sudo cleanup.sh` before the script could run. The server user is not allowed to sudo that path yet.
+```bash
+go tool task download:main
+go tool task download:demo
+go tool task envswitch
+```
+
+I’d also add aliases if you like the flatter style:
+
+```bash
+go tool task download-main
+go tool task download-demo
+```
+
+But I’d make the canonical names `download:main` and `download:demo`.
+
+**Suggested Shape**
+Local cached DBs:
+
+```text
+database/events.main.db
+database/events.demo.db
+database/events.db          # active working DB
+database/.active-env        # "main" or "demo"
+```
+
+I would avoid symlinking `database/events.db`. SQLite WAL/SHM files make symlinks easy to get subtly wrong. Safer switching:
+
+1. Read `database/.active-env`.
+2. Copy current `database/events.db` back to its cache file.
+3. Remove stale `database/events.db-wal` and `database/events.db-shm`.
+4. Copy the other cache file into `database/events.db`.
+5. Update `.active-env`.
+
+`envswitch` should refuse if the target cached DB does not exist yet, with a message like “run `go tool task download:demo` first”.
+
+**Server Script**
+I’d make a server-installed script, probably:
+
+```text
+configuration-as-code/stow/scripts/usr/local/bin/conorganizer-export-db
+```
+
+It should do one thing well: stream a tar payload containing an exported SQLite DB.
+
+Example interface:
+
+```bash
+conorganizer-export-db main
+conorganizer-export-db demo
+```
+
+Behavior:
+- Validate env is only `main` or `demo`.
+- Create a temp dir.
+- Run `sqlite3 "$live_db" ".backup '$tmp/events.db'"`.
+- For `main`, anonymize the temp copy only.
+- For `demo`, skip anonymization.
+- Run `PRAGMA quick_check`.
+- Write logs to stderr only.
+- Stream tar on stdout.
+
+That lets the local script do:
+
+```bash
+ssh "$remote" "conorganizer-export-db main" | tar -x -C database ...
+```
+
+I’d use Bash for this first. The complexity is mostly shell orchestration plus static SQL. Go becomes worth it if we later need richer packaging, structured manifests, checksum enforcement, or more complicated transformations.
+
+**Anonymization**
+I’d embed or reference SQL that preserves admin emails automatically:
+
+```sql
+INSERT INTO _email_anonymize_keep (email_key)
+SELECT lower(trim(email))
+FROM users
+WHERE is_admin = 1;
+```
+
+Then use the existing anonymization pattern for all other user/event/billettholder emails. I’d keep this as a separate export-anonymization SQL block, not reuse the Goose migration directly, because this is not a migration and should not touch `goose_db_version`.
+
+**Images**
+For images, I’d keep them separate from the DB export script:
+
+```bash
+ssh "$remote" "tar -C /mnt/.../environments/main/event-images -cf - ." \
+  | tar -C local-event-images -xf -
+```
+
+No prune. For a full `download:main`, the local script can use SSH ControlMaster so DB and image download share one authentication session.
+
+**Clarifying Questions**
+1. Should `download:main` / `download:demo` switch the active DB after downloading, or only refresh the cached copy? My recommendation: only refresh cache; switching stays explicit via `envswitch`.
+
+2. On first `envswitch`, if `database/.active-env` does not exist, should we default to switching from `demo` to `main`, or infer from available cached DBs?
+
+3. When preserving admin data, do we preserve only admin emails, or also billettholder names linked to admin users?
+
+4. Should we add `DB_SSH_HOST` to `.env`/README instead of keeping `46.62.159.49` hardcoded in Taskfile/scripts?
+
+Time: 2026-07-15 09:00:17
+--- Next Prompt ---
+
+Answering your questions:
+1. Downloading should not switch the active DB after downloading, and should only refresh the cached copy.
+
+2. I can't see a good way that we can know what environment is currently running, let's fall back to specifying the environment you want to switch to.
+
+3. Yes, we should preserve both emails and billetholder information for the admin users.
+
+4. No, we won't be changing the IP address anytime soon, let's just keep it as is.  
+
+When switching environments, we should do a backup so that we flatten the sqlite database into one file, rather than deleting `database/events.db-wal` and `database/events.db-shm`.
+
+I don't want go tool task download to download everything. I want the user to have to specify the environment they want to download. 
+
+Let's continue our discussion. 
+
+Time: 2026-07-15 09:15:45
+--- Codex Run ---
+
+Cohttps://prod.liveshare.vsengsaas.visualstudio.com/join?686364348B69045D092A50CECE0B9DDD559Bdex output:
+Updated design based on your answers:
+
+**Command Names**
+I’d use these as canonical Task commands:
+
+```bash
+go tool task download:main
+go tool task download:demo
+go tool task envswitch:main
+go tool task envswitch:demo
+```
+
+And I’d make plain `go tool task download` print a short usage message and exit, so it never downloads everything by accident.
+
+I’d also keep subtasks:
+
+```bash
+go tool task download:main:db
+go tool task download:main:images
+go tool task download:demo:db
+go tool task download:demo:images
+```
+
+Implementation detail: `download:main` should call one local script once, not Task deps, so it can reuse one SSH ControlMaster session for DB + images.
+
+**Switching**
+Since we can’t always know the active environment, `envswitch` should be explicit.
+
+Switch behavior:
+- `envswitch:main` activates `database/events.main.db`.
+- `envswitch:demo` activates `database/events.demo.db`.
+- Before replacing `database/events.db`, it runs SQLite `.backup` from the current active DB to flatten WAL/SHM into one file.
+- If `database/.active-env` exists, it backs up into that cache file.
+- If `.active-env` is missing, it backs up to something like `database/backups/events.unknown-<timestamp>.db`.
+
+Important nuance: after flattening with `.backup`, we should still remove stale `database/events.db-wal` and `database/events.db-shm` before installing the new active DB. The difference is we are not throwing away WAL data; we capture it first.
+
+**Server-Side Script**
+I’d use Bash first, not Go.
+
+Suggested files:
+
+```text
+configuration-as-code/stow/scripts/usr/local/bin/conorganizer-export-db
+configuration-as-code/stow/scripts/usr/local/share/conorganizer/anonymize-export.sql
+```
+
+Server command:
+
+```bash
+conorganizer-export-db main
+conorganizer-export-db demo
+```
+
+It should:
+- validate `main|demo`
+- create SQLite `.backup` from the live DB into temp
+- anonymize temp DB only for `main`
+- preserve admin user emails
+- preserve billettholder names/emails linked to admin users
+- run `PRAGMA quick_check`
+- stream a tar payload on stdout
+- write logs only to stderr
+
+The local script extracts that tar into a temp dir, verifies it, then moves it to `database/events.main.db` or `database/events.demo.db`.
+
+**One Suggestion**
+When anonymizing, I’d also consider anonymizing `users.external_id` for non-admin users while preserving it for admins. It is not directly visible PII like email, but it is auth identity data. Worth including unless you know tests/dev login depend on non-admin external IDs.
+
+Time: 2026-07-15 09:15:45
+--- Next Prompt ---
+
+We can't use the `.active-env` file at all. There's no way the .active-env file can know what environment is currently active. We have to query the database to find out. We need to discuss this further. 
+
+We can't anonymize the users.external_id for non-admin users. That will break the system.
+
+Time: 2026-07-15 09:26:02
+--- Codex Run ---
+
+Codex output:
+Good catch. I’ll check whether the app/migration code tolerates an extra local metadata table before suggesting a DB marker approach. If extra tables are risky, we need a different way to infer active environment.
+Agreed on `users.external_id`: we should not anonymize it.
+
+For active environment detection, I agree a sidecar `.active-env` file is not authoritative. The active DB has to identify itself.
+
+The cleanest way is to stamp the downloaded local DBs with a local metadata table inside the database:
+
+```sql
+CREATE TABLE IF NOT EXISTS _conorganizer_local_environment (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  name TEXT NOT NULL CHECK (name IN ('main', 'demo')),
+  downloaded_at TEXT NOT NULL
+) STRICT;
+```
+
+Then after downloading:
+
+```sql
+INSERT INTO _conorganizer_local_environment (id, name, downloaded_at)
+VALUES (1, 'main', strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+ON CONFLICT(id) DO UPDATE SET
+  name = excluded.name,
+  downloaded_at = excluded.downloaded_at;
+```
+
+`envswitch:main` / `envswitch:demo` can then query `database/events.db` directly:
+
+```sql
+SELECT name FROM _conorganizer_local_environment WHERE id = 1;
+```
+
+That tells us what the active DB claims to be. I checked the startup code: the app verifies required tables exist, but does not reject extra tables, so this should be safe locally.
+
+**Revised Switching Flow**
+For `go tool task envswitch:demo`:
+
+1. Verify `database/events.demo.db` exists.
+2. Query `database/events.db` for `_conorganizer_local_environment.name`.
+3. If active env is known, flatten current active DB back into its cache using SQLite `.backup`.
+4. If active env is unknown, flatten current active DB into `database/backups/events.unknown-<timestamp>.db`.
+5. Flatten `database/events.demo.db` into `database/events.db` using SQLite `.backup`.
+6. Remove stale `database/events.db-wal` / `database/events.db-shm` only after the backup has captured their data.
+7. Verify active DB marker now says `demo`.
+
+So we still remove stale WAL/SHM, but only after using `.backup` to preserve their contents.
+
+**One Caution**
+Switching should probably refuse if the local app is running. Replacing `database/events.db` while the app has it open is unsafe. We can either:
+- print a clear warning and require the user to stop it, or
+- have `envswitch:*` call the existing `kill` task first.
+
+I’d prefer refusing/warning over auto-killing unless you want the command to be forceful.
+
+Time: 2026-07-15 09:26:02
+--- Next Prompt ---
+
+Perhaps we're going about this the wrong way. Perhaps we don't even need the switch command. I believe we can specify the database when we start the webapp in main.go. So is it possible for us to simply do "go tool task start" to start main, and "go tool task start:demo" to start the demo db? Then the events.db can remain the main, and events-demo.db can be the demo database. That should not conflict with temporary files etc.
+
+If we're thinking out of the box, are there any other solutions to consider?
+
+Time: 2026-07-15 09:34:22
+--- Codex Run ---
+
+Codex output:
+That direction is likely cleaner. I’ll quickly confirm the startup flags and current Task start path so the options line up with the actual app entrypoint.
+The app already has the right flags: `-dbp` for DB path and `-image-path` for images. I’m checking Air’s option names so the proposed `start:demo` task uses the right mechanism instead of guessing how to pass args through hot reload.
+Yes, this is cleaner. I think we should drop `envswitch` entirely.
+
+`main.go` already supports this:
+
+- `-dbp`, default `database/events.db`
+- `-image-path`, default `local-event-images`
+
+So the simpler model is:
+
+```text
+database/events.db       # main
+database/events-demo.db  # demo
+local-event-images/      # shared images
+```
+
+Then:
+
+```bash
+go tool task start        # main DB
+go tool task start:demo   # demo DB
+```
+
+No switching. No marker table. No active-env problem. No DB copying back and forth.
+
+**Recommended Task Commands**
+Downloads:
+
+```bash
+go tool task download:main
+go tool task download:demo
+```
+
+Optional subtasks:
+
+```bash
+go tool task download:main:db
+go tool task download:main:images
+go tool task download:demo:db
+go tool task download:demo:images
+```
+
+Startup:
+
+```bash
+go tool task start
+go tool task start:main   # optional alias
+go tool task start:demo
+```
+
+I checked Air: it supports `--build.args_bin`, so `start:demo` can run the same hot-reload setup but pass:
+
+```bash
+-dbp database/events-demo.db -image-path local-event-images
+```
+
+**Download Behavior**
+`download:main`:
+- remote SQLite backup from main
+- anonymize temp copy on server
+- stream DB tar
+- install locally as `database/events.db`
+
+`download:demo`:
+- remote SQLite backup from demo
+- no anonymization
+- stream DB tar
+- install locally as `database/events-demo.db`
+
+Before overwriting either local DB, I’d still make a local backup using SQLite `.backup`, so any existing WAL content is flattened safely:
+
+```text
+database/backups/events.main.<timestamp>.db
+database/backups/events.demo.<timestamp>.db
+```
+
+Then replace the target DB and remove only that target’s stale WAL/SHM files.
+
+**Other Options**
+One alternative is to make `main.go` read `CONORGANIZER_DB_PATH` and `CONORGANIZER_IMAGE_PATH` env vars, then Task can switch via env instead of flags. But flags already exist and are explicit, so I would not add new config unless needed.
+
+Another option is `start:both`, running main and demo locally on different ports. Useful later, but unnecessary for this workflow.
+
+**Clarifying Questions**
+1. Should `download:main` overwrite `database/events.db` directly, with a backup first? I think yes.
+
+2. Should `download:demo` overwrite `database/events-demo.db` directly, with a backup first? I think yes.
+
+3. Should the download script refuse to overwrite a DB if the local app appears to be running? I’d prefer that over replacing a DB currently opened by SQLite.
+
+Time: 2026-07-15 09:34:22
+--- Next Prompt ---
+
+Answering your questions:
+1. + 2. No, we don't need to make backups of the local database when downloading a new one from the server.
+
+3. No, just overwrite the files, regardless of whether the service is running or not. Can sqlite restore to a running database? Or should we just simply delete the local database before restoring the backup?
+
+If you don't have any more questions, then go ahead and start the implementation.
+
+Time: 2026-07-15 09:49:08
+--- Codex Run ---
+
+Codex output:
+I’ll implement the simpler model: main stays `database/events.db`, demo uses `database/events-demo.db`, and `start:demo` passes `-dbp database/events-demo.db`. Downloads will overwrite the target DB directly after extracting and verifying the streamed backup.
+I’ll add one local download helper, one server export script, and one export-only anonymization SQL file. Then I’ll wire Taskfile tasks to those scripts and keep `download` as a usage-only command.
+I’ll wire `start:demo` through Air using `--build.args_bin`, then replace the old generic download task with explicit main/demo tasks. I’ll also update the README/Makefile so they don’t point people at the old “download everything” command.
+The scripts and Taskfile are in place. I’m updating the lightweight docs/Makefile entry points so the old generic download command does not imply it fetches production by default.
+I’ll set executable bits on the new scripts, then run shell syntax checks and Taskfile parsing before doing any heavier validation.
+The script files are executable now. I noticed the diff stat is also showing pre-existing `.ai` and `schema.sql` changes; I’ll keep ignoring those and validate only the files touched for this step.
+Two checks found actionable issues: Taskfile indentation picked up tabs, and the SQL check against an empty in-memory DB is not meaningful because it needs the app schema. I’m fixing Taskfile whitespace first, then I’ll validate the SQL against a schema-loaded temp DB.
+The Taskfile tabs came from the patch indentation. I’m doing a mechanical whitespace cleanup on Taskfile only, then I’ll rerun Task parsing.
+Taskfile whitespace is normalized. I’m checking parse and the changed sections again.
+I’m going to repair the Taskfile indentation first, then I’ll re-run the shell/YAML checks and sanity-check the anonymization SQL against a local database copy if one exists. After that I’ll summarize the concrete behavior, including the SQLite overwrite caveat.
+The generated Taskfile section landed with a couple of nested keys, so the YAML parser is failing before we can validate anything else. I’m correcting that structure now and keeping the task names exactly aligned with the agreed command shape.
+The YAML shape is fixed at the task level. I’m also going to tighten the download helper’s temporary directory cleanup so one database download failure does not leave a custom trap replacing the normal SSH cleanup path.
+I found the helper had the intended single SSH ControlMaster flow, but the database temp cleanup was too localized. I’m making cleanup central so failed tar/sqlite checks still clean both the SSH control directory and any partial database export directory.
+Next I’m validating the edited scripts and task declarations. If a local `database/events.db` is present, I’ll run the anonymization SQL only on a temporary copy, not on the working database.
+`go tool task --list` exits because this Taskfile has no described tasks, not because the file is invalid. I’ll use `--list-all` for validation and check the anonymization SQL against the actual local schema now.
+The Taskfile now parses and the anonymization SQL completed on a copied local DB with `PRAGMA quick_check` returning `ok`. I’m checking the final diff and file modes next, then I’ll decide whether the new scripts need any small tightening before I call this step done.
+The new server-side export script lives under the stow-managed `configuration-as-code/stow/scripts` tree, alongside the existing backup scripts, so it will be installed with that package. I’m doing a dry run of the new task entrypoints now rather than starting Air or opening SSH.
+The dry-run confirms `start:demo` injects `-dbp database/events-demo.db` and the download subtasks dispatch to the new helper. One validation command hit zsh’s reserved `$status` variable, so I’m re-running that with a neutral variable name.
+`go tool task download` prints the intended usage and exits nonzero, but Task wraps the task’s `exit 1` as process code `201`. That is acceptable for a usage guard, and I’m recording it as “nonzero” rather than expecting a literal `1`.
+The scoped whitespace check passed for tracked edits, and the only untracked files are the three expected script/SQL files. I’m doing one last direct trailing-whitespace scan that includes those untracked files, then I’ll wrap this step.
+One small hardening point before final: since the anonymization file is executed by the `sqlite3` CLI, I’m adding CLI bail behavior and making email matching trim consistently. That reduces the chance of a half-successful anonymization silently continuing after an SQL error.
+I added `.bail on`; I’m also making the update-side email lookup use the same trimmed key as the map, so whitespace variants do not slip through incorrectly.
+That hardening is in place. I’m re-running the same validation set once more after the SQL change.
+Validation is still clean: the scripts parse, Taskfile lists all expected entries, and the anonymization SQL runs against a copied local database with `quick_check` returning `ok`. I’m checking the final changed file set and then I’ll hand this step back for your review.
+The implementation is ready, but I noticed the README only documented the new download commands. I’m checking whether the local run section should also mention `start:demo` so the new workflow is discoverable.
+I’m adding one line to the local run docs for `start:demo`; it matches the behavior we just wired into the Taskfile and keeps the README from implying there is only one local database mode.
+The README now shows both local start modes. I’m doing the final quick validation pass after that documentation tweak.
+All scoped checks pass. I’m capturing the final status now so I can distinguish these changes from the pre-existing local modifications when I summarize.
+Implemented the download/start workflow changes.
 
 Changed:
-- Cleanup workflow now runs:
-  `DRY_RUN=true bash "$APP_DIR/cleanup.sh" "$SAFE_NAME"`
-- No sudo required for dry-run cleanup.
-- Updated the cleanup script header to clarify that dry-run cleanup can run unprivileged, while real teardown will need root/sudo later.
+- [Taskfile.yml](/home/cinmay/Documents/conorganizer/Taskfile.yml:100): `go tool task start` uses `database/events.db`; added `go tool task start:demo` using `database/events-demo.db`.
+- [Taskfile.yml](/home/cinmay/Documents/conorganizer/Taskfile.yml:186): added `download:main`, `download:demo`, plus `:db` and `:images` subtasks. Plain `download` now prints usage and exits.
+- [scripts/download-environment](/home/cinmay/Documents/conorganizer/scripts/download-environment:1): local downloader using one SSH ControlMaster session, so password prompting should happen once per run.
+- [conorganizer-export-db](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/scripts/usr/local/bin/conorganizer-export-db:1): server-side export script that streams a tar payload with `events.db`.
+- [anonymize-export.sql](/home/cinmay/Documents/conorganizer/configuration-as-code/stow/scripts/usr/local/share/conorganizer/anonymize-export.sql:1): anonymizes main exports, preserves admin emails and admin-linked billettholder data, and does not touch `users.external_id`.
+- [README.md](/home/cinmay/Documents/conorganizer/README.md:23) and [Makefile](/home/cinmay/Documents/conorganizer/Makefile:31): updated command docs/aliases.
 
-Verification:
-- `git diff --check` passed.
-- Workflow YAML parse passed.
-- `bash -n deploy/cleanup.sh` passed.
+On SQLite restore: restoring into a database currently opened by the local app is not something I’d rely on. The script avoids `.restore` into the live target. It downloads to a temp DB, verifies it, then deletes `events.db`, `events.db-wal`, and `events.db-shm`, and moves the verified DB into place. If the app is running, restart it afterward so it uses the new file cleanly.
 
-Time: 2026-07-14 21:45:34
+Verified:
+- Bash syntax for both scripts.
+- `go tool task --list-all` includes the new tasks.
+- `start:demo` dry-run passes `-dbp database/events-demo.db`.
+- Anonymization SQL ran against a temporary copy of local `database/events.db`; `PRAGMA quick_check` returned `ok`.
+- Scoped `git diff --check` passed.
+
+I did not run the actual remote download, since that would open SSH to production.
+
+Time: 2026-07-15 09:49:08
 --- Next Prompt ---
 
