@@ -7,7 +7,7 @@ User=deploy
 Group=www-data
 WorkingDirectory=/opt/conorganizer/demo
 
-EnvironmentFile=/etc/conorganizer/env
+EnvironmentFile=/etc/conorganizer/demo-env
 Environment=PORT=19081
 
 ExecStart=/opt/conorganizer/demo/conorganizer-demo \
