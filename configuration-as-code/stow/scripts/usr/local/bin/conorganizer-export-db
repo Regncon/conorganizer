@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly data_root="/mnt/HC_Volume_103911252/environments"
+readonly anonymize_sql="/usr/local/share/conorganizer/anonymize-export.sql"
+
+environment="${1:-}"
+
+log() {
+    printf 'conorganizer-export-db: %s\n' "$*" >&2
+}
+
+die() {
+    log "ERROR: $*"
+    exit 1
+}
+
+case "$environment" in
+    main | demo) ;;
+    *)
+        die "usage: conorganizer-export-db main|demo"
+        ;;
+esac
+
+command -v sqlite3 >/dev/null 2>&1 || die "sqlite3 is required"
+command -v tar >/dev/null 2>&1 || die "tar is required"
+
+db_path="${data_root}/${environment}/database/events.db"
+
+if [[ ! -f "$db_path" ]]; then
+    die "database does not exist: $db_path"
+fi
+
+tmp_dir="$(mktemp -d)"
+cleanup() {
+    rm -rf "$tmp_dir"
+}
+trap cleanup EXIT
+
+tmp_db="${tmp_dir}/events.db"
+
+log "creating SQLite backup for ${environment}"
+sqlite3 "$db_path" ".backup '${tmp_db}'"
+
+if [[ "$environment" == "main" ]]; then
+    if [[ ! -f "$anonymize_sql" ]]; then
+        die "anonymization SQL does not exist: $anonymize_sql"
+    fi
+
+    log "anonymizing main export"
+    sqlite3 "$tmp_db" < "$anonymize_sql"
+fi
+
+quick_check_result="$(sqlite3 "$tmp_db" "PRAGMA quick_check;")"
+if [[ "$quick_check_result" != "ok" ]]; then
+    log "$quick_check_result"
+    die "exported database failed quick_check"
+fi
+
+log "streaming ${environment} database export"
+tar -C "$tmp_dir" -cf - events.db

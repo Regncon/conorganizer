@@ -23,16 +23,18 @@ Then open your browser and navigate to: [http://localhost:8080](http://localhost
 ## Get the Latest Database Backup and Images
 
 > [!NOTE]
-> To get the latest database backup and all images from production the database download requires `DB_SSH_USER` in your `.env` file or shell environment.
+> Downloads require `DB_SSH_USER` in your `.env` file or shell environment.
 
 ```bash
-go tool task download
+go tool task download:main
+go tool task download:demo
 ```
 
 ## Run Locally
 
 ```bash
 go tool task start
+go tool task start:demo
 ```
 
 Then open your browser and navigate to: [http://localhost:8080](http://localhost:8080)

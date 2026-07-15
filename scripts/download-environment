@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly remote_host="46.62.159.49"
+readonly remote_data_root="/mnt/HC_Volume_103911252/environments"
+readonly local_image_dir="local-event-images"
+readonly server_export_command="conorganizer-export-db"
+
+environment="${1:-}"
+target="${2:-all}"
+
+usage() {
+    cat >&2 <<'USAGE'
+Usage: scripts/download-environment main|demo [all|db|images]
+USAGE
+}
+
+log() {
+    printf 'download-environment: %s\n' "$*" >&2
+}
+
+die() {
+    log "ERROR: $*"
+    exit 1
+}
+
+case "$environment" in
+    main | demo) ;;
+    *)
+        usage
+        exit 1
+        ;;
+esac
+
+case "$target" in
+    all | db | images) ;;
+    *)
+        usage
+        exit 1
+        ;;
+esac
+
+: "${DB_SSH_USER:?Set DB_SSH_USER in .env or shell environment}"
+
+command -v ssh >/dev/null 2>&1 || die "ssh is required"
+command -v sqlite3 >/dev/null 2>&1 || die "sqlite3 is required"
+command -v tar >/dev/null 2>&1 || die "tar is required"
+
+remote="${DB_SSH_USER}@${remote_host}"
+control_dir="$(mktemp -d "${TMPDIR:-/tmp}/conorganizer-ssh.XXXXXX")"
+control_path="${control_dir}/control"
+tmp_dirs=("$control_dir")
+
+cleanup() {
+    ssh -o ControlPath="$control_path" -O exit "$remote" >/dev/null 2>&1 || true
+    rm -rf "${tmp_dirs[@]}"
+}
+trap cleanup EXIT
+
+ssh_master() {
+    ssh \
+        -fN \
+        -o ControlMaster=yes \
+        -o ControlPath="$control_path" \
+        -o ControlPersist=60 \
+        "$remote"
+}
+
+ssh_remote() {
+    ssh -o ControlPath="$control_path" "$remote" "$@"
+}
+
+local_db_path() {
+    case "$environment" in
+        main)
+            printf '%s\n' "database/events.db"
+            ;;
+        demo)
+            printf '%s\n' "database/events-demo.db"
+            ;;
+    esac
+}
+
+download_db() {
+    local db_target tmp_dir tmp_db quick_check_result
+
+    db_target="$(local_db_path)"
+    tmp_dir="$(mktemp -d "${TMPDIR:-/tmp}/conorganizer-db.XXXXXX")"
+    tmp_dirs+=("$tmp_dir")
+
+    log "downloading ${environment} database to ${db_target}"
+    ssh_remote "$server_export_command" "$environment" | tar -C "$tmp_dir" -xf -
+
+    tmp_db="${tmp_dir}/events.db"
+    if [[ ! -f "$tmp_db" ]]; then
+        die "server export did not contain events.db"
+    fi
+
+    quick_check_result="$(sqlite3 "$tmp_db" "PRAGMA quick_check;")"
+    if [[ "$quick_check_result" != "ok" ]]; then
+        log "$quick_check_result"
+        die "downloaded database failed quick_check"
+    fi
+
+    mkdir -p "$(dirname "$db_target")"
+    rm -f "$db_target" "${db_target}-wal" "${db_target}-shm"
+    mv "$tmp_db" "$db_target"
+
+    log "database downloaded: ${db_target}"
+    rm -rf "$tmp_dir"
+}
+
+download_images() {
+    local remote_image_dir
+
+    remote_image_dir="${remote_data_root}/${environment}/event-images"
+
+    log "downloading ${environment} images to ${local_image_dir}"
+    mkdir -p "$local_image_dir"
+
+    ssh_remote "if [ ! -d '${remote_image_dir}' ]; then echo 'missing image directory: ${remote_image_dir}' >&2; exit 1; fi; tar -C '${remote_image_dir}' -cf - ." \
+        | tar -C "$local_image_dir" -xf -
+
+    log "images downloaded: ${local_image_dir}"
+}
+
+ssh_master
+
+case "$target" in
+    all)
+        download_db
+        download_images
+        ;;
+    db)
+        download_db
+        ;;
+    images)
+        download_images
+        ;;
+esac
