@@ -17,7 +17,7 @@ type CheckInTicket struct {
 	IsOver18  bool
 }
 
-const TicketTypeMiddag = 193284
+const TicketTypeMiddag = 251934
 
 func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {
 
