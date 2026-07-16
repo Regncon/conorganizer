@@ -491,3 +491,103 @@ I left the existing `.ai/threads/nats-not-starting-in-prod.md` and `schema.sql` 
 Time: 2026-07-15 22:02:41
 --- Next Prompt ---
 
+
+
+Now that is done. Let's move on to the next small fix. 
+
+When the program is no yet published the text `Før å kunne melde interesse må du først hente billetten din.` appears on the interest selector. 
+This is confusing for users. A more clear message should be displayed to the user can express interest once the program is published.
+
+
+Let's discuss the best way to implement this change. Please ask any clarifying questions you have or suggestions. 
+
+
+
+Time: 2026-07-16 14:42:52
+--- Codex Run ---
+
+Codex output:
+I’ll look up where that message is rendered and what state drives it, then I’ll suggest the smallest wording/logic change with any tradeoffs.
+I’m searching for the exact Norwegian copy and nearby selector logic so the discussion is tied to the actual branch that users hit.
+The copy is in `pages/event/event_interest_panel.templ`, and it appears in the branch where interest selection is unavailable. I’m reading that component and its tests to see whether we should change only text or split the unavailable states.
+The current component uses `hasTickets` first, so an unpublished program plus no fetched ticket falls into the ticket-fetch message even though the primary blocker is publication. That explains the confusing copy.
+There are already render tests for both unavailable states. I’m reading those now because the cleanest implementation will probably be a small branch-order/copy change plus adjusted tests.
+The implementation question is whether `interestAvailable == false` should always win over `hasTickets == false`. Based on the reported confusion, I think it should: publication/unavailability is the global blocker, ticket fetch is only the blocker after interest selection is open.
+I’d treat this as an availability-state problem, not just a text replacement.
+
+Right now the panel only knows two things: `hasTickets` and `interestAvailable`. If `interestAvailable == false` and `hasTickets == false`, it shows the ticket message, even though the real blocker may be “program not published yet.” That makes the UI imply the user can fix the problem by fetching a ticket, which is misleading.
+
+Best small fix: pass the program-published state into the interest panel and let that message win before the ticket CTA.
+
+Suggested behavior:
+
+1. Program not published:
+   `Interessevalget åpner når programmet er publisert.`
+
+2. Program published, user has no ticket:
+   `For å kunne melde interesse må du først hente billetten din.`
+   
+   Also fixes the current typo: `Før` -> `For`.
+
+3. Program published, user has ticket, but interest still unavailable for this event:
+   Keep the current unavailable message, or tighten it slightly:
+   `Interessevalget er ikke åpnet for dette arrangementet ennå.`
+
+One UX question before implementing: when the program is not published and the user has no ticket, should we still show the `Hent billett` button as a secondary action? My suggestion is yes if fetching the ticket early is useful, but the primary message should clearly say interest opens when the program is published.
+
+Time: 2026-07-16 14:42:52
+--- Next Prompt ---
+
+That looks good. To answer your question. No, the button should not be shown when the program is not published. That only confuses the user and getting the tickets early is not a priority.
+
+Go ahead and implement the changes you suggested. 
+
+
+
+Time: 2026-07-16 14:51:25
+--- Codex Run ---
+
+Codex output:
+I’ll make the panel distinguish “program unpublished” from “no ticket,” then update the focused tests in the existing BDD style before running the relevant Go tests.
+The current branch has unrelated modified files from earlier work, so I’m going to keep this change limited to the event interest panel and its direct call sites/tests.
+I found the cause in the component shape: when the user has no ticket, that branch currently runs before the UI can explain that the program is unpublished. I’m going to add the published state to the panel input and make the unpublished message take precedence, with no ticket button in that state.
+There is also a print-friendly call site for `Event_mobile`; I’ll update that with the same explicit state so the generated code stays consistent.
+I’m about to edit the templ sources and tests. The behavior will be: unpublished program always shows the publication message and no CTA; the ticket CTA only appears once the program is published but the user has no ticket.
+The source change is in place. I’m updating the focused panel tests now, including a regression test for “program unpublished + no ticket” to make sure the ticket button stays hidden.
+The tests now cover the unpublished/no-ticket case directly, and the old no-ticket CTA test is scoped to the published-program state. I’m regenerating templ output next, then I’ll run the relevant package tests.
+Templ generation completed cleanly. I’m formatting the Go test file now, then I’ll run `go test` for the event package first.
+Formatting is done. I’m running the focused event package tests now, since this change only touches event rendering behavior and generated page code.
+The first test run hit the sandboxed Go build cache under the home directory, not a code failure. I’ll rerun with `GOCACHE` pointed at `/tmp`, which is writable in this environment.
+The focused tests found one existing expectation that the ticket link appears when the program is unpublished. That is the behavior we’re intentionally changing, so I’m updating that expectation to match the new product decision.
+I’ll keep the adjacent “event not published in pulje” test unchanged, because once the program is published the ticket CTA should still appear. Only the program-unpublished case changes.
+The page-level test now asserts the actual publication message and confirms the ticket link is absent. I’m formatting that file and rerunning the event package tests.
+The event package passes. Since the signature change also touched a print-friendly call site through generated templ code, I’m running the broader `pages/...` tests to catch any compile fallout.
+The broader page tests are clean. I’m going to run the full test suite with the writable Go cache as a final check, then I’ll review the diff for unrelated changes before summarizing.
+The full test suite passes. I’m checking the final diff/status now so I can separate this change from the unrelated files already modified in the worktree.
+The templ-generated Go files are present locally but not tracked by git in this repo; the source `.templ` files are the tracked changes. I’m doing a whitespace check on the files touched by this fix only, since the worktree already has unrelated modified notes/files.
+The whitespace check for this fix’s files is clean. I have enough verification now; I’ll do one quick line-reference pass for the summary.
+Implemented.
+
+The interest panel now takes `programPublished` explicitly and prioritizes the unpublished-program message before ticket state: [event_interest_panel.templ](/home/cinmay/Documents/conorganizer/pages/event/event_interest_panel.templ:11). When unpublished, it shows:
+
+`Interessevalget åpner når programmet er publisert.`
+
+and does not render the `Hent billett` button. The ticket message now only appears once the program is published, and I fixed `Før` -> `For`.
+
+I also passed `programPublished` through the event page/mobile component call chain: [event_page.templ](/home/cinmay/Documents/conorganizer/pages/event/event_page.templ:114), [event_mobile.templ](/home/cinmay/Documents/conorganizer/pages/event/event_mobile.templ:18), plus preview and print-friendly call sites.
+
+Tests updated in the existing BDD style:
+- Added panel coverage for unpublished program + no ticket: [event_interest_test.go](/home/cinmay/Documents/conorganizer/pages/event/event_interest_test.go:327)
+- Updated page-level behavior to assert no ticket link when program publishing is off: [event_visibility_test.go](/home/cinmay/Documents/conorganizer/pages/event/event_visibility_test.go:377)
+
+Verification:
+- `go tool templ generate -path pages -log-level error`
+- `GOCACHE=/tmp/conorganizer-go-build-cache go test ./pages/event`
+- `GOCACHE=/tmp/conorganizer-go-build-cache go test ./pages/...`
+- `GOCACHE=/tmp/conorganizer-go-build-cache go test ./...`
+
+All passed. I left the unrelated existing modified files in the worktree untouched.
+
+Time: 2026-07-16 14:51:25
+--- Next Prompt ---
+

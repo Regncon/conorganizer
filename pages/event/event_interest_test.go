@@ -35,7 +35,7 @@ func TestEventInterestPanel_WhenScheduledWarningHasFired_RendersWarningState(t *
 	}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeFredagKveld), true))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeFredagKveld), true, true))
 	helper := doc.Find(".event-interest-helper")
 	actualHelperVisible := helper.Length() > 0
 	actualMessage := strings.Join(strings.Fields(helper.Text()), " ")
@@ -78,7 +78,7 @@ func TestEventInterestPanel_WhenCurrentTimeIsBeforeWarningThreshold_RendersNoWar
 	}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeFredagKveld), true))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeFredagKveld), true, true))
 	actualHelperVisible := doc.Find(".event-interest-helper").Length() > 0
 
 	// Then
@@ -116,7 +116,7 @@ func TestEventInterestPanel_WhenScheduledUrgentWarningHasFired_RendersUrgentWarn
 	}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeLordagMorgen), true))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeLordagMorgen), true, true))
 	helper := doc.Find(".event-interest-helper")
 	actualHelperVisible := helper.Length() > 0
 	actualMessage := strings.Join(strings.Fields(helper.Text()), " ")
@@ -161,7 +161,7 @@ func TestEventInterestPanel_WhenDifferentPuljeHasCompletedStatus_RendersNoStatus
 	}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeLordagMorgen), true))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeLordagMorgen), true, true))
 	actualHelperVisible := doc.Find(".event-interest-helper").Length() > 0
 
 	// Then
@@ -199,7 +199,7 @@ func TestEventInterestPanel_WhenSelectedPuljeIsCompleted_RendersCompletedStatus(
 	}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeFredagKveld), true))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, string(models.PuljeFredagKveld), true, true))
 	helper := doc.Find(".event-interest-helper")
 	actualHelperVisible := helper.Length() > 0
 	actualMessage := strings.Join(strings.Fields(helper.Text()), " ")
@@ -238,7 +238,7 @@ func TestEventInterestPanel_WhenPuljeQueryIsMissing_RendersNoStatus(t *testing.T
 	}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer, "", true))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, "", true, true))
 	actualHelperVisible := doc.Find(".event-interest-helper").Length() > 0
 
 	// Then
@@ -268,7 +268,7 @@ func TestEventInterestPanel_WhenPuljeQueryIsInvalid_RendersNoStatus(t *testing.T
 	}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer, "fredag_kveld", true))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, "fredag_kveld", true, true))
 	actualHelperVisible := doc.Find(".event-interest-helper").Length() > 0
 
 	// Then
@@ -291,7 +291,7 @@ func TestEventInterestPanel_WhenInterestIsUnavailableForTicketHolder_RendersUnav
 	puljer := []models.PuljeRow{}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(true, puljer, "", false))
+	doc := templtest.Render(t, EventInterestPanel(true, puljer, "", true, false))
 	actualMessages := templtest.CollectTexts(doc, ".event-interest-unavailable-message")
 	actualInterestButtonVisible := doc.Find(".event-interest-open-button").Length() > 0
 
@@ -304,11 +304,11 @@ func TestEventInterestPanel_WhenInterestIsUnavailableForTicketHolder_RendersUnav
 	}
 }
 
-func TestEventInterestPanel_WhenInterestIsUnavailableAndUserHasNoTicket_RendersTicketCTA(t *testing.T) {
+func TestEventInterestPanel_WhenProgramIsPublishedAndUserHasNoTicket_RendersTicketCTA(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at interessevalg ikke er åpnet for arrangementet og brukeren ikke har billett.",
+		Given: "Gitt at programmet er publisert og brukeren ikke har billett.",
 		When:  "Når interessepanelet rendres.",
-		Then:  "Så skal brukeren fortsatt se lenken for å hente billett.",
+		Then:  "Så skal brukeren se lenken for å hente billett.",
 	})
 
 	// Given
@@ -317,9 +317,34 @@ func TestEventInterestPanel_WhenInterestIsUnavailableAndUserHasNoTicket_RendersT
 	puljer := []models.PuljeRow{}
 
 	// When
-	doc := templtest.Render(t, EventInterestPanel(false, puljer, "", false))
+	doc := templtest.Render(t, EventInterestPanel(false, puljer, "", true, false))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then
+	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
+}
+
+func TestEventInterestPanel_WhenProgramIsUnpublishedAndUserHasNoTicket_RendersProgramMessageWithoutTicketCTA(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at programmet ikke er publisert og brukeren ikke har billett.",
+		When:  "Når interessepanelet rendres.",
+		Then:  "Så skal panelet forklare at interessevalget åpner ved publisering uten billettlenke.",
+	})
+
+	// Given
+	expectedMessages := []string{"Interessevalget åpner når programmet er publisert."}
+	expectedHrefs := []string{}
+
+	puljer := []models.PuljeRow{}
+
+	// When
+	doc := templtest.Render(t, EventInterestPanel(false, puljer, "", false, false))
+	actualMessages := templtest.CollectTexts(doc, ".event-interest-unavailable-message")
+	actualHrefs := templtest.CollectUniqueHrefs(doc)
+
+	// Then
+	if !slices.Equal(expectedMessages, actualMessages) {
+		t.Fatalf("unpublished program message mismatch\nexpected: %v\nactual:   %v", expectedMessages, actualMessages)
+	}
 	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
 }
