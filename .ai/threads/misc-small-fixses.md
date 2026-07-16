@@ -689,3 +689,157 @@ Worktree note: `.ai/threads/misc-small-fixses.md` and the earlier untracked `htt
 Time: 2026-07-16 15:24:09
 --- Next Prompt ---
 
+Is it possible to do it more elegantly by using the http headers to control caching instead of appending a query string? 
+Let's discuss this before we move on to implementation. Please ask any clarifying questions you may have and give any suggestions you may have.
+
+Time: 2026-07-16 16:04:48
+--- Codex Run ---
+
+Codex output:
+Yes, it is possible, and it may be more elegant depending on what behavior we want.
+
+The clean header-based approach would be to keep the image URL stable and make `/event-images/*` respond with something like:
+
+```http
+Cache-Control: no-cache
+```
+
+Important detail: `no-cache` does **not** mean “do not cache”. It means the browser may store the image, but it must revalidate with the server before using it. Since Go’s `http.FileServer`/`ServeFile` can use file modification time for conditional requests, unchanged images can still get cheap `304 Not Modified` responses, while changed files should be refetched.
+
+I would avoid:
+
+```http
+Cache-Control: no-store
+```
+
+because that disables useful browser caching completely.
+
+I’d also avoid only using a short `max-age`, because then the image can still be stale until the TTL expires.
+
+My recommendation:
+
+1. Prefer header-based caching for `/event-images/*`.
+2. Set `Cache-Control: no-cache` or `max-age=0, must-revalidate`.
+3. Remove the query-string versioning from `GetEventImageUrl`.
+4. Keep the live broadcast on image upload, because it is still needed to refresh open pages after the image changes.
+5. Add a small test around the `/event-images/*` handler if the route is easy to isolate.
+
+Clarifying question: do we want this policy only for uploaded event images, or should other served static assets also get explicit cache headers? My suggestion is event images only, because hashed/static app assets can usually have different caching rules.
+
+Time: 2026-07-16 16:04:48
+--- Next Prompt ---
+
+I'm not sold on th `Cache-Control: no-cache` or `max-age=0, must-revalidate` idea. 
+Can't we add the last change time of the image to the http headers and let the browser handle it?
+
+Don't generate the code yet, let's discuss this first.
+
+Time: 2026-07-16 16:09:45
+--- Codex Run ---
+
+Codex output:
+We can add `Last-Modified`, but by itself it does not solve the problem reliably.
+
+There are two separate HTTP caching concepts:
+
+1. **Validator**: `Last-Modified` or `ETag`
+   This tells the browser/server how to check whether a cached file is still valid.
+
+2. **Freshness policy**: `Cache-Control`
+   This tells the browser whether it is allowed to reuse the cached file without asking the server.
+
+The key issue: the browser cannot know the server-side image changed unless it makes a request. A `Last-Modified` header only helps after the browser asks again. If the browser considers the cached image fresh, or if the DOM patch keeps the exact same `img src`, it may not request the image at all.
+
+So:
+
+```http
+Last-Modified: Thu, 16 Jul 2026 12:00:00 GMT
+```
+
+is useful, but it does not invalidate an already cached image with the same URL.
+
+That is why the usual choices are:
+
+- **Versioned URL**: `/event-images/abc_card.webp?v=123`
+  Browser sees a new URL when the file changes. Very reliable, keeps good caching, common for mutable assets.
+
+- **Stable URL + revalidation headers**:
+  Use `Last-Modified`/`ETag` together with `Cache-Control: no-cache` or similar. Browser keeps the URL stable but must ask the server before reuse.
+
+- **Stable URL + only `Last-Modified`**:
+  Cleaner-looking, but not enough for immediate update guarantees.
+
+I agree with your instinct that “let the browser handle it” sounds nicer. But technically the browser needs either a changed URL or an instruction to revalidate. `Last-Modified` is only half of that mechanism.
+
+My current recommendation is still the versioned URL for public event images. It is deterministic, simple, and avoids forcing every image load through a validation request. If the visible `?v=` is what feels inelegant, the more “pure” version would be changing the actual filename on upload, but that is a bigger storage/lifecycle change.
+
+Time: 2026-07-16 16:09:45
+--- Next Prompt ---
+
+One peace of context is that there will be a lot of frequent refreshes of the page. We should be careful about adding something that increases the time of the page load.
+
+
+Time: 2026-07-16 16:18:22
+--- Codex Run ---
+
+Codex output:
+That context pushes me more toward versioned URLs, not away from them.
+
+With frequent page refreshes, a stable URL plus `no-cache`/`max-age=0` means the browser may revalidate every event image on every refresh. Even with `304 Not Modified`, that is still one HTTP round trip per image. On an event list with many card/banner images, that can add visible load cost.
+
+With the query-string version:
+
+```text
+/event-images/abc_card.webp?v=1700000000000000000
+```
+
+the browser can reuse the cached image without asking the server, as long as the version is unchanged. When the image changes, the HTML contains a new URL, so only that changed image is fetched.
+
+One nuance: our current implementation already did `os.Stat` to check whether the image exists. Using `ModTime()` from that same stat result does not add another filesystem lookup. So the server-side page render cost is basically the same as before.
+
+The most performant version would probably be:
+
+1. Keep the versioned image URL.
+2. Add cache headers for `/event-images/*` like:
+
+```http
+Cache-Control: public, max-age=31536000, immutable
+```
+
+That tells the browser: “this exact image URL will not change.” Since the URL changes when the file changes, that becomes safe and fast.
+
+So my revised recommendation:
+
+- Do **not** use stable URLs with forced revalidation for these event images.
+- Keep versioned URLs.
+- Optionally add strong cache headers for event images to make frequent refreshes cheaper.
+- Keep the live broadcast so open pages rerender and receive the new versioned URL.
+
+This is a common pattern for performance-sensitive pages: fingerprint/version the asset URL, then cache that exact URL aggressively.
+
+Time: 2026-07-16 16:18:22
+--- Next Prompt ---
+
+Ok so does that mean we should keep current code as is?
+
+Time: 2026-07-16 16:21:15
+--- Codex Run ---
+
+Codex output:
+Yes, I’d keep the current approach.
+
+More precisely: keep the **versioned URL + broadcast** behavior. That is the right shape for this problem because it updates changed images reliably without making every refresh revalidate every image.
+
+The only optional refinement I’d consider is adding explicit long-lived cache headers for `/event-images/*` later:
+
+```http
+Cache-Control: public, max-age=31536000, immutable
+```
+
+That would make the current approach even more intentional: each versioned image URL can be cached aggressively, and a changed image gets a new URL.
+
+But for this small fix, the code we have now is reasonable. I would not switch to stable URLs with only `Last-Modified`.
+
+Time: 2026-07-16 16:21:15
+--- Next Prompt ---
+
