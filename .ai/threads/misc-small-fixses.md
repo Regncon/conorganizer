@@ -376,3 +376,199 @@ Note: `.ai/threads/misc-small-fixses.md` was already untracked and I left it unt
 Time: 2026-07-16 13:48:52
 --- Next Prompt ---
 
+
+Now that is done, let's move on to the next small fix.
+
+When a page is not found 404 or the user is not authenticated 401 it shows up in the logs with log level `warn`. 
+This creates a lot of noise in the logs as we are trying to treat warnings as errors. 
+Is there a way to recduce the log level to info? Perhaps add a comment in the code to explain that a 404 is a part of normal operation and there fore we do not want to treat it as a warning?
+
+Let's have a discussion about this. Please ask any clarifying questions you may have and give any suggestions you may have.
+
+
+Time: 2026-07-16 14:57:47
+--- Codex Run ---
+
+Codex output:
+I’ll use the repo’s logging skill for this discussion, then trace where 401/404 warnings are emitted so we can talk about the right level and scope from the actual code.
+I’ve loaded the logging skill. Its baseline points directly at the HTTP request middleware, so I’m reading that and the logger setup before making any recommendation about levels.
+The current request middleware has the broad mapping `4xx => WARN`, which explains both 401 and 404. I’m checking auth and not-found handling now to see whether there are separate warning logs or only this single request completion log.
+I found two relevant sources of noise:
+
+- [http_logging_middleware.go](/home/cinmay/Documents/conorganizer/http_logging_middleware.go:23) maps every `4xx` to `WARN`, so `401` and `404` request completion logs become warnings.
+- [service/userctx/userctx.go](/home/cinmay/Documents/conorganizer/service/userctx/userctx.go:30) also logs `User is not logged in` at `WARN` before returning `401`, so unauthenticated requests may produce an extra warning beyond the request-completion log.
+
+My recommendation:
+
+1. Change request completion level mapping:
+   - `5xx` -> `ERROR`
+   - `401` and `404` -> `INFO`
+   - other `4xx` -> `WARN`
+   - `<400` -> `INFO`
+
+2. Add a short code comment near the mapping:
+   - 401 and 404 are normal web traffic: logged-out users, stale links, crawlers, browser requests for missing assets/maps, etc.
+   - They should remain visible, but not pollute warning/error views.
+
+3. Demote or remove the `User is not logged in` warning.
+   - I’d probably remove it or make it `Debug`, because the request middleware already logs the `401` with method/path/status/request_id.
+   - If we change it to `Info`, we still get two logs per unauthenticated request.
+
+4. Leave other `4xx` as `WARN` for now.
+   - `400`, `403`, `409`, `429` can still indicate bad clients, broken UI calls, permissions problems, or rate limiting.
+   - We can demote more later when we have concrete noisy examples.
+
+Clarifying questions before implementation:
+
+1. Should `403 Forbidden` also be `INFO`, or do you want to keep that as `WARN` for now? I’d keep it `WARN` initially.
+
+2. For invalid/expired auth cookies in `AuthMiddleware`, should those stay `WARN`, or should only actual Descope/client errors warn? I’d leave this alone in the first pass unless you’re seeing that specific message often.
+
+3. Do you want the unauthenticated user log removed entirely, or changed to `Debug`? My preference is `Debug`, because it preserves traceability when `LOG_LEVEL=DEBUG` without adding normal production noise.
+
+Time: 2026-07-16 14:57:47
+--- Next Prompt ---
+
+
+1. Let's move 403 to info as well.
+2. Let's demote the `User is not logged in` log to debug.
+3. Yes,  let's change the unauthenticated user log to debug. 
+
+But, where is the http middleware located? Is that something we are able to change? Is it configurable?
+
+Show me the files you need to change and the lines of code that need to be changed.
+
+
+Time: 2026-07-16 15:04:00
+--- Codex Run ---
+
+Codex output:
+I’ll show this from the current source so the line numbers match the workspace. The HTTP logging middleware is local app code, not chi’s built-in logger, so we can change it directly.
+The middleware is wired in `main.go:87`, but the level mapping itself lives in our own `http_logging_middleware.go`. It is not currently configurable beyond global `LOG_LEVEL`; the status-code mapping is hard-coded.
+The HTTP middleware is local code, so yes, we can change it directly.
+
+It is wired here:
+
+[main.go](/home/cinmay/Documents/conorganizer/main.go:87)
+
+```go
+RequestLoggingMiddleware(baseLogger.With("component", "http")),
+```
+
+The actual status-code-to-log-level mapping is here:
+
+[http_logging_middleware.go](/home/cinmay/Documents/conorganizer/http_logging_middleware.go:24)
+
+Current code:
+
+```go
+logLevel := slog.LevelInfo
+if statusCode >= http.StatusInternalServerError {
+	logLevel = slog.LevelError
+} else if statusCode >= http.StatusBadRequest {
+	logLevel = slog.LevelWarn
+}
+```
+
+I would change that block to something like:
+
+```go
+logLevel := requestLogLevel(statusCode)
+```
+
+Then add a helper in the same file:
+
+```go
+func requestLogLevel(statusCode int) slog.Level {
+	if statusCode >= http.StatusInternalServerError {
+		return slog.LevelError
+	}
+
+	// 401, 403, and 404 are normal web control-flow outcomes:
+	// logged-out users, forbidden pages, stale links, and crawlers.
+	// Keep them visible without treating them as operational warnings.
+	if statusCode == http.StatusUnauthorized ||
+		statusCode == http.StatusForbidden ||
+		statusCode == http.StatusNotFound {
+		return slog.LevelInfo
+	}
+
+	if statusCode >= http.StatusBadRequest {
+		return slog.LevelWarn
+	}
+
+	return slog.LevelInfo
+}
+```
+
+The unauthenticated user log is here:
+
+[service/userctx/userctx.go](/home/cinmay/Documents/conorganizer/service/userctx/userctx.go:30)
+
+Current code:
+
+```go
+logger.Warn("User is not logged in", "request_id", requestID, "path", r.URL.Path)
+```
+
+Change to:
+
+```go
+logger.Debug("User is not logged in", "request_id", requestID, "path", r.URL.Path)
+```
+
+I’d also add/update tests for `requestLogLevel`, likely in a new or existing `http_logging_middleware_test.go`, covering:
+
+- `200 -> INFO`
+- `401 -> INFO`
+- `403 -> INFO`
+- `404 -> INFO`
+- `400 -> WARN`
+- `500 -> ERROR`
+
+No config exists today for this mapping. We could make it configurable, but I would not for this fix; a clear helper plus tests is simpler and more maintainable.
+
+Time: 2026-07-16 15:04:00
+--- Next Prompt ---
+
+Go ahead and make the changes you suggested. No need to add configurability for now.
+
+Time: 2026-07-16 15:09:12
+--- Codex Run ---
+
+Codex output:
+I’ll make the scoped logging change now: add a tested request-level mapping helper for 401/403/404, and demote the unauthenticated user middleware log to debug.
+I’m checking whether there are existing tests for the HTTP logging middleware and user middleware so the new coverage fits the current style.
+There are no existing request logging middleware tests, so I’m adding a small `package main` test file focused only on the level mapping. The only dirty file right now is the thread note under `.ai`, and I’ll leave it alone.
+I’m adding the red coverage first: expected normal-control-flow statuses 401/403/404 at info, other client errors at warn, and server errors at error.
+The test file is added. I’m now extracting the log-level mapping into a helper with the comment explaining why 401/403/404 are info-level.
+The request middleware now has the explicit mapping. I’m demoting the unauthenticated user middleware log from warn to debug next.
+The code changes are in place. I’m formatting and running targeted tests for the root package and `service/userctx` first.
+The focused tests pass. I’m running the full suite now because the request middleware is in the main package and affects cross-cutting behavior.
+The full suite passes. I’m reviewing the final diff and status now, then I’ll summarize the exact changes.
+The source diff is as expected; the new test file is untracked until committed, so it does not appear in plain `git diff --stat`. I’m checking that test file content once before closing.
+Implemented.
+
+Changed [http_logging_middleware.go](/home/cinmay/Documents/conorganizer/http_logging_middleware.go:24):
+- Extracted `requestLogLevel`.
+- `401`, `403`, and `404` now log at `INFO`.
+- Other `4xx` still log at `WARN`.
+- `5xx` still log at `ERROR`.
+- Added a comment explaining that these statuses are normal web control flow.
+
+Changed [service/userctx/userctx.go](/home/cinmay/Documents/conorganizer/service/userctx/userctx.go:30):
+- Demoted `User is not logged in` from `Warn` to `Debug`.
+
+Added [http_logging_middleware_test.go](/home/cinmay/Documents/conorganizer/http_logging_middleware_test.go:11):
+- Covers `401/403/404 -> INFO`
+- Covers `400 -> WARN`
+- Covers `500 -> ERROR`
+
+Verification:
+`GOCACHE=/tmp/conorganizer-go-build go test ./...` passes.
+
+Note: `.ai/threads/misc-small-fixses.md` is modified by the thread log; I did not edit it as part of the source change.
+
+Time: 2026-07-16 15:09:12
+--- Next Prompt ---
+

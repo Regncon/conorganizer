@@ -21,12 +21,7 @@ func RequestLoggingMiddleware(logger *slog.Logger) func(http.Handler) http.Handl
 				statusCode = http.StatusOK
 			}
 
-			logLevel := slog.LevelInfo
-			if statusCode >= http.StatusInternalServerError {
-				logLevel = slog.LevelError
-			} else if statusCode >= http.StatusBadRequest {
-				logLevel = slog.LevelWarn
-			}
+			logLevel := requestLogLevel(statusCode)
 
 			attributes := []slog.Attr{
 				slog.String("method", r.Method),
@@ -43,4 +38,25 @@ func RequestLoggingMiddleware(logger *slog.Logger) func(http.Handler) http.Handl
 			logger.LogAttrs(r.Context(), logLevel, "http request completed", attributes...)
 		})
 	}
+}
+
+func requestLogLevel(statusCode int) slog.Level {
+	if statusCode >= http.StatusInternalServerError {
+		return slog.LevelError
+	}
+
+	// These statuses are normal web control flow: logged-out users,
+	// forbidden pages, stale links, missing assets, and crawlers. Keep
+	// them visible without treating them as operational warnings.
+	if statusCode == http.StatusUnauthorized ||
+		statusCode == http.StatusForbidden ||
+		statusCode == http.StatusNotFound {
+		return slog.LevelInfo
+	}
+
+	if statusCode >= http.StatusBadRequest {
+		return slog.LevelWarn
+	}
+
+	return slog.LevelInfo
 }
