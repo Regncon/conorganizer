@@ -572,3 +572,120 @@ Note: `.ai/threads/misc-small-fixses.md` is modified by the thread log; I did no
 Time: 2026-07-16 15:09:12
 --- Next Prompt ---
 
+Next small fix. We will only do this one if it is a simple fix.
+
+Would it be a simple fix to invalidate the browser cache when an image changes? When an image is updated on the server the url stays the same, so the browser keeps showing the old image until refresh or cache clear.
+
+Let's discuss the this before we move on to implementation. Please ask any clarifying questions you may have and give any suggestions you may have.
+
+
+
+Time: 2026-07-16 15:14:47
+--- Codex Run ---
+
+Codex output:
+I’ll trace how event images are served and referenced before judging whether this is simple. The key question is whether we can add a cache-busting query/version at render time without changing upload/storage behavior.
+The image URLs already go through one helper, `service/eventimage.GetEventImageUrl`, and uploads write the same filenames (`<event>_card.webp`, `<event>_banner.webp`). I’m reading that helper and upload path now; if the helper can append a file-mod-time query param, this is likely a small fix.
+Yes, this looks like a simple fix if the target is event card/banner images served from `/event-images/...`.
+
+Current central helper is [service/eventimage/event_imaeg_helpers.go](/home/cinmay/Documents/conorganizer/service/eventimage/event_imaeg_helpers.go:9):
+
+```go
+func GetEventImageUrl(eventID, kind string, eventImageDir *string) string {
+	...
+	if _, err := os.Stat(imagePath); err == nil {
+		return "/event-images/" + filename
+	}
+	...
+}
+```
+
+Almost all displayed event images already go through this helper. A simple cache-busting change would be:
+
+```go
+if info, err := os.Stat(imagePath); err == nil {
+	return fmt.Sprintf("/event-images/%s?v=%d", filename, info.ModTime().UnixNano())
+}
+```
+
+That keeps the real file path the same, but the browser sees a new URL when the file changes:
+
+```text
+/event-images/abc_card.webp?v=1790000000000000000
+```
+
+The server route can still serve it normally because query strings do not change the file path:
+
+[main.go](/home/cinmay/Documents/conorganizer/main.go:152)
+
+```go
+router.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
+```
+
+My recommendation:
+
+- Use file modification time as the version.
+- Do not use `time.Now()` on every render, because that defeats useful browser caching completely.
+- Do not rename uploaded files yet; that is a bigger storage/lifecycle change.
+- Add a focused test for `GetEventImageUrl`:
+  - missing image -> placeholder URL
+  - existing image -> `/event-images/<filename>?v=<modtime>`
+
+Clarifying questions:
+
+1. Is the issue mainly with public event card/banner images, or also the source-image preview on the upload/crop page?
+
+2. Is it enough that the new image appears after the page re-renders/reloads, or do you expect already-open pages elsewhere to update immediately when an image is uploaded? The first is simple; the second needs live broadcast/patch behavior too.
+
+Time: 2026-07-16 15:14:47
+--- Next Prompt ---
+1. It's mainly with public event card/banner images.
+2. There should already be a broadcast when an event image is updated. If it's not there we have to add it.
+
+Go ahead and make the changes you suggested so that we can see what the code looks like. We will simply git discard the changes if we don't like them.
+
+
+Time: 2026-07-16 15:24:09
+--- Codex Run ---
+
+Codex output:
+I’ll implement the URL versioning in the central event image helper first, then check the upload route for an events-bucket broadcast. If the broadcast is missing, I’ll wire it in with the existing live manager.
+I’m reading the route setup around image upload to see how far `liveManager` currently reaches, and I’ll add tests around the helper before editing it.
+There is no events-bucket broadcast in the cropped-image upload path right now. I’m going to add modtime query strings in the central image helper and wire `liveManager` into the cropped upload handler so public image changes trigger the existing event live updates.
+The helper tests are added. I’m changing `GetEventImageUrl` to use the file modification time as the query-string version.
+The URL helper now versions existing images. I’m wiring the cropped-image upload route to broadcast `BucketEvents` after a successful card/banner write.
+The upload handler now broadcasts after public cropped image writes. I’m updating the route setup to pass the existing `liveManager`.
+Route setup is updated. I’m regenerating templ output for the signature/import change, then I’ll run focused tests.
+Templ generation completed. I’m formatting the touched Go files and checking for stale call sites.
+I’ve made the cache-busting change in the image URL helper and wired the cropped image upload to broadcast event updates. I’m going to run the focused and full test suites now, then I’ll summarize exactly what changed and any caveats.
+The tracked code diff is small: URL versioning in the event image helper, one new broadcast in the cropped image upload handler, and the route signature update. I also see the existing thread log file and the previous untracked logging test still present, so I’ll keep those separate from this image fix.
+Focused tests pass for the touched packages. I’m running the full suite now to catch any exact URL assertions or route wiring issues outside the direct change set.
+Full `go test ./...` passes. I’m doing one final status/diff pass so the close-out can separate this fix from the earlier logging/test artifacts already in the worktree.
+One small implementation detail is worth tightening: the cropped image handler currently defers closing the file, which means the live broadcast can be sent before the descriptor is closed. I’m going to close the written image explicitly before touching the event and broadcasting, so the versioned URL is based on a fully written file.
+That adjustment keeps the broadcast after the image write has been completed and closed. I’m regenerating the templ output and rerunning the same tests.
+The templ regeneration exposed a formatting issue in the edited block. I’m correcting that before rerunning tests.
+The issue is only indentation/bracing in the Go block inside the `.templ` file. I’m replacing that block cleanly rather than trying to rely on formatter recovery.
+The handler block is corrected. I’m regenerating and formatting now, then the tests get rerun from a clean generated state.
+The final diff is back to the intended shape. I’m rerunning focused tests first, then the full suite.
+Focused tests pass after the file-close adjustment. Running the full suite one more time now.
+Full tests pass. I’m collecting the final changed-file list now.
+Implemented the image cache-busting fix.
+
+Real event image URLs now include the file modification time as a version query, e.g. `/event-images/event_card.webp?v=...`, while placeholders stay unchanged in [event_imaeg_helpers.go](/home/cinmay/Documents/conorganizer/service/eventimage/event_imaeg_helpers.go:17).
+
+I also added the missing live broadcast after cropped card/banner uploads in [event_img_upload.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/event_img_upload/event_img_upload.templ:104). The handler now closes the written image before touching the event and broadcasting `live.BucketEvents`, so clients should rerender with the new versioned image URL. The route wiring was updated in [profile.go](/home/cinmay/Documents/conorganizer/pages/profile/profile.go:186).
+
+Added BDD-style coverage for the URL helper in [event_image_helpers_test.go](/home/cinmay/Documents/conorganizer/service/eventimage/event_image_helpers_test.go:12).
+
+Verification passed:
+
+```sh
+go tool templ generate
+GOCACHE=/tmp/conorganizer-go-build go test ./...
+```
+
+Worktree note: `.ai/threads/misc-small-fixses.md` and the earlier untracked `http_logging_middleware_test.go` are still present separately from this image fix.
+
+Time: 2026-07-16 15:24:09
+--- Next Prompt ---
+
