@@ -8,9 +8,14 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db *sql.DB, logger *slog.Logger) error {
+type TicketConversionResult struct {
+	CreatedBillettholders int
+}
+
+func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db *sql.DB, logger *slog.Logger) (TicketConversionResult, error) {
 	logger = logger.With("component", "checkin_convert")
 	logger.Debug("Converting ticket to billettholder", "ticket_id", ticketId)
+	var result TicketConversionResult
 
 	var ticket *CheckInTicket
 	for _, t := range tickets {
@@ -21,10 +26,10 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 	}
 
 	if ticket == nil {
-		return fmt.Errorf("ticket %d not found", ticketId)
+		return result, fmt.Errorf("ticket %d not found", ticketId)
 	}
 	if ticket.TypeId == TicketTypeMiddag {
-		return fmt.Errorf("cannot convert 'Middag' ticket to billettholder")
+		return result, fmt.Errorf("cannot convert 'Middag' ticket to billettholder")
 	}
 
 	billettholder := models.Billettholder{
@@ -37,26 +42,14 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 		IsOver18:     ticket.IsOver18,
 	}
 
-	var exists bool
-	billettholderExistsErr := db.QueryRow(`
-        SELECT EXISTS(
-            SELECT 1 FROM billettholdere
-            WHERE first_name = ? AND last_name = ? AND ticket_id = ?
-        )
-    `, billettholder.FirstName, billettholder.LastName, billettholder.TicketID).Scan(&exists)
-
-	if billettholderExistsErr != nil {
-		return fmt.Errorf("failed to check if billettholder exists for ticket %d: %w", ticketId, billettholderExistsErr)
-	}
-
 	var billettholderID int64
 	selectErr := db.QueryRow(`
 		SELECT id FROM billettholdere
-		WHERE first_name = ? AND last_name = ? AND ticket_id = ?
-	`, billettholder.FirstName, billettholder.LastName, billettholder.TicketID).Scan(&billettholderID)
+		WHERE ticket_id = ?
+	`, billettholder.TicketID).Scan(&billettholderID)
 
 	if selectErr == sql.ErrNoRows {
-		result, err := db.Exec(`
+		insertResult, err := db.Exec(`
 			INSERT INTO billettholdere (
 				first_name, last_name, ticket_type_id, ticket_type,
 				ticket_id, is_over_18, order_id
@@ -66,14 +59,15 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			billettholder.OrderID,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to insert billettholder for ticket %d: %w", ticketId, err)
+			return result, fmt.Errorf("failed to insert billettholder for ticket %d: %w", ticketId, err)
 		}
-		billettholderID, err = result.LastInsertId()
+		billettholderID, err = insertResult.LastInsertId()
 		if err != nil {
-			return fmt.Errorf("failed to fetch last insert ID for ticket %d: %w", ticketId, err)
+			return result, fmt.Errorf("failed to fetch last insert ID for ticket %d: %w", ticketId, err)
 		}
+		result.CreatedBillettholders = 1
 	} else if selectErr != nil {
-		return fmt.Errorf("failed to select billettholder for ticket %d: %w", ticketId, selectErr)
+		return result, fmt.Errorf("failed to select billettholder for ticket %d: %w", ticketId, selectErr)
 	}
 
 	emails := []models.BillettholderEmail{
@@ -104,7 +98,7 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			)
 		`, email.BillettholderID, email.Email).Scan(&exists)
 		if checkErr != nil {
-			return fmt.Errorf("failed to check existing email for billettholder %d: %w", email.BillettholderID, checkErr)
+			return result, fmt.Errorf("failed to check existing email for billettholder %d: %w", email.BillettholderID, checkErr)
 		}
 		if exists {
 			logger.Debug("Email already exists, skipping", "billettholder_id", email.BillettholderID)
@@ -117,10 +111,10 @@ func converTicketIdToNewBillettholder(ticketId int, tickets []CheckInTicket, db 
 			) VALUES (?, ?, ?)
 		`, email.BillettholderID, email.Email, email.Kind)
 		if err != nil {
-			return fmt.Errorf("failed to insert billettholder email for billettholder %d: %w", email.BillettholderID, err)
+			return result, fmt.Errorf("failed to insert billettholder email for billettholder %d: %w", email.BillettholderID, err)
 		}
 	}
 
-	logger.Debug("Successfully inserted billettholder", "ticket_id", ticketId, "billettholder_id", billettholderID)
-	return nil
+	logger.Debug("Successfully converted ticket to billettholder", "ticket_id", ticketId, "billettholder_id", billettholderID)
+	return result, nil
 }

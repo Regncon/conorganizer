@@ -19,6 +19,7 @@ func TestAssociateTicketsWithBillettholder_WhenSomeMatchingTicketsAreNew_Convert
 
 	// Given
 	expectedBillettholderCount := 3
+	expectedCreatedBillettholders := 2
 	expectedTargetEmailCount := 3
 	expectedTicketIDs := []int{101, 102, 103}
 	targetEmail := "test@regncon.com"
@@ -43,11 +44,14 @@ func TestAssociateTicketsWithBillettholder_WhenSomeMatchingTicketsAreNew_Convert
 	insertManualBillettholderEmail(t, db, 5000, targetEmail)
 
 	// When
-	err := AssociateTicketsWithBillettholder(tickets, targetEmail, db, logger)
+	actualResult, err := AssociateTicketsWithBillettholder(tickets, targetEmail, db, logger)
 
 	// Then
 	if err != nil {
 		t.Fatalf("expected ticket association to succeed: %v", err)
+	}
+	if actualResult.CreatedBillettholders != expectedCreatedBillettholders {
+		t.Fatalf("created billettholder count mismatch\nexpected: %d\nactual:   %d", expectedCreatedBillettholders, actualResult.CreatedBillettholders)
 	}
 	actualBillettholderCount := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM billettholdere`)
 	if actualBillettholderCount != expectedBillettholderCount {
@@ -66,6 +70,37 @@ func TestAssociateTicketsWithBillettholder_WhenSomeMatchingTicketsAreNew_Convert
 	actualTicketIDs := queryBillettholderTicketIDs(t, db)
 	if !slices.Equal(expectedTicketIDs, actualTicketIDs) {
 		t.Fatalf("billettholder ticket IDs mismatch\nexpected: %v\nactual:   %v", expectedTicketIDs, actualTicketIDs)
+	}
+}
+
+func TestAssociateTicketsWithBillettholder_WhenNoTicketsMatch_ReturnsNoCreatedBillettholders(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given CheckIn tickets registered to other emails.",
+		When:  "When the target email is associated with billettholdere.",
+		Then:  "Then no billettholdere are inserted and the operation is neutral.",
+	})
+
+	// Given
+	expectedCreatedBillettholders := 0
+	targetEmail := "test@regncon.com"
+	tickets := []CheckInTicket{
+		{ID: 101, OrderID: 1, TypeId: 9000, Type: "Festivalpass", FirstName: "Other", LastName: "Person", Email: "other@regncon.com", IsOver18: true},
+	}
+	db, logger := createCheckInTestDB(t)
+
+	// When
+	actualResult, err := AssociateTicketsWithBillettholder(tickets, targetEmail, db, logger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected neutral ticket association to succeed: %v", err)
+	}
+	if actualResult.CreatedBillettholders != expectedCreatedBillettholders {
+		t.Fatalf("created billettholder count mismatch\nexpected: %d\nactual:   %d", expectedCreatedBillettholders, actualResult.CreatedBillettholders)
+	}
+	actualBillettholderCount := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM billettholdere`)
+	if actualBillettholderCount != 0 {
+		t.Fatalf("expected no billettholdere to be inserted, got %d", actualBillettholderCount)
 	}
 }
 

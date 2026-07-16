@@ -15,6 +15,7 @@ func TestAssociateUserWithBillettholder_WhenEmailsMatchCaseInsensitively_Creates
 	})
 
 	// Given
+	expectedCreatedAssociations := 2
 	expectedAssociations := []models.BillettholderUsers{
 		{BillettholderID: 8888, UserID: 1},
 		{BillettholderID: 9999, UserID: 1},
@@ -31,13 +32,47 @@ func TestAssociateUserWithBillettholder_WhenEmailsMatchCaseInsensitively_Creates
 	insertManualBillettholderEmail(t, db, 7777, "other@regncon.no")
 
 	// When
-	err := AssociateUserWithBillettholder("test-user", db, logger)
+	actualCreatedAssociations, err := AssociateUserWithBillettholder("test-user", db, logger)
 
 	// Then
 	if err != nil {
 		t.Fatalf("expected user association to succeed: %v", err)
 	}
+	if actualCreatedAssociations != expectedCreatedAssociations {
+		t.Fatalf("created user association count mismatch\nexpected: %d\nactual:   %d", expectedCreatedAssociations, actualCreatedAssociations)
+	}
 	assertBillettholderUserAssociations(t, db, expectedAssociations)
+}
+
+func TestAssociateUserWithBillettholder_WhenAssociationsAlreadyExist_ReturnsNoCreatedAssociations(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a user that is already associated with every matching billettholder.",
+		When:  "When the user is associated with billettholdere again.",
+		Then:  "Then no new user-to-billettholder associations are reported.",
+	})
+
+	// Given
+	expectedCreatedAssociations := 0
+	existingAssociation := models.BillettholderUsers{BillettholderID: 9999, UserID: 1}
+	matchingEmail := "test@regncon.no"
+
+	db, logger := createCheckInTestDB(t)
+	insertUser(t, db, existingAssociation.UserID, "test-user", matchingEmail)
+	insertBillettholder(t, db, existingAssociation.BillettholderID)
+	insertManualBillettholderEmail(t, db, existingAssociation.BillettholderID, matchingEmail)
+	insertBillettholderUserAssociation(t, db, existingAssociation)
+
+	// When
+	actualCreatedAssociations, err := AssociateUserWithBillettholder("test-user", db, logger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected repeated user association to succeed: %v", err)
+	}
+	if actualCreatedAssociations != expectedCreatedAssociations {
+		t.Fatalf("created user association count mismatch\nexpected: %d\nactual:   %d", expectedCreatedAssociations, actualCreatedAssociations)
+	}
+	assertOnlyBillettholderUserAssociation(t, db, existingAssociation)
 }
 
 func TestAssociateUsersWithBillettholderEmail_CreatesAssociationForMatchingUserEmail(t *testing.T) {
