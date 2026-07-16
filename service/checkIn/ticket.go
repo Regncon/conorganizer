@@ -17,7 +17,7 @@ type CheckInTicket struct {
 	IsOver18  bool
 }
 
-const TicketTypeMiddag = 193284
+const TicketTypeMiddag = 251934
 
 func GetTicketsFromCheckIn(logger *slog.Logger, searchTerm string) ([]CheckInTicket, error) {
 
@@ -30,7 +30,7 @@ func ConvertTicketToBillettholder(ticketId int, db *sql.DB, logger *slog.Logger)
 		return fmt.Errorf("failed to fetch tickets from check-in: %w", err)
 	}
 
-	if err := converTicketIdToNewBillettholder(ticketId, tickets, db, logger); err != nil {
+	if _, err := converTicketIdToNewBillettholder(ticketId, tickets, db, logger); err != nil {
 		return fmt.Errorf("failed to convert ticket %d to billettholder: %w", ticketId, err)
 	}
 	return nil

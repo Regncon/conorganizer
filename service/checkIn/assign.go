@@ -15,6 +15,10 @@ type uniquePair struct {
 	Ticket   CheckInTicket
 }
 
+type TicketAssociationResult struct {
+	CreatedBillettholders int
+}
+
 // AssociateTicketsWithEmail takes a list of tickets and matches with email supplied, returns matches
 func AssociateTicketsWithEmail(tickets []CheckInTicket, email string) ([]CheckInTicket, error) {
 	var result []CheckInTicket
@@ -37,13 +41,15 @@ func AssociateTicketsWithEmail(tickets []CheckInTicket, email string) ([]CheckIn
 
 // AssociateTicketsWithBillettholder is responsible for finding tickets registered on an email and
 // inserting new unique tickets into billettholder
-func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db *sql.DB, logger *slog.Logger) error {
+func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db *sql.DB, logger *slog.Logger) (TicketAssociationResult, error) {
+	var result TicketAssociationResult
+
 	// Filtrer tickets til de som er registrert på user email
 	associatedTickets, err := AssociateTicketsWithEmail(tickets, email)
 	if err != nil {
 		// No associated tickets found, quitting early
 		// fmt.Printf("Found no tickets associated with %s, quitting early\n", email)
-		return nil
+		return result, nil
 	}
 	// fmt.Printf("Found %d/%d tickets associated with %s\n", len(associatedTickets), len(tickets), email)
 
@@ -52,22 +58,25 @@ func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db
 	// get existing billetterholdere registered to user email
 	var billettholdereIDs []models.Billettholder
 	rows, err := db.Query(`
-        SELECT DISTINCT b.ticket_id
-        FROM relation_billettholder_emails e
-        JOIN billettholdere b ON b.id = e.billettholder_id
-        WHERE e.email = ? COLLATE NOCASE;
-    `, email)
+		SELECT DISTINCT b.ticket_id
+		FROM relation_billettholder_emails e
+		JOIN billettholdere b ON b.id = e.billettholder_id
+		WHERE e.email = ? COLLATE NOCASE;
+	`, email)
 	if err != nil {
-		return fmt.Errorf("unable to query billettholder for email %q: %w", email, err)
+		return result, fmt.Errorf("unable to query billettholder for email %q: %w", email, err)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var result models.Billettholder
-		err := rows.Scan(&result.TicketID)
+		var existingBillettholder models.Billettholder
+		err := rows.Scan(&existingBillettholder.TicketID)
 		if err != nil {
-			return fmt.Errorf("unable to scan billettholder for email %q: %w", email, err)
+			return result, fmt.Errorf("unable to scan billettholder for email %q: %w", email, err)
 		}
-		billettholdereIDs = append(billettholdereIDs, result)
+		billettholdereIDs = append(billettholdereIDs, existingBillettholder)
+	}
+	if err := rows.Err(); err != nil {
+		return result, fmt.Errorf("unable to iterate billettholder rows for email %q: %w", email, err)
 	}
 	// fmt.Printf("Found %d existing billettholdere with email: %s\n", len(billettholdereIDs), email)
 
@@ -97,43 +106,46 @@ func AssociateTicketsWithBillettholder(tickets []CheckInTicket, email string, db
 	// No new unique tickets, quitting early
 	if len(uniqueNewTickets) == 0 {
 		// fmt.Println("Found no new unique tickets to add, quitting early")
-		return nil
+		return result, nil
 	}
 
 	// Enter new array into billettholdere ... newTicket needs to be unique?
 	for _, ticket := range uniqueNewTickets {
-		err = converTicketIdToNewBillettholder(ticket.ID, uniqueNewTickets, db, logger)
+		conversionResult, err := converTicketIdToNewBillettholder(ticket.ID, tickets, db, logger)
 		if err != nil {
-			return fmt.Errorf("unable to convert ticket %d to billettholder for email %q: %w", ticket.ID, email, err)
+			return result, fmt.Errorf("unable to convert ticket %d to billettholder for email %q: %w", ticket.ID, email, err)
 		}
+		result.CreatedBillettholders += conversionResult.CreatedBillettholders
 	}
 
 	// fmt.Printf("Added %d new billettholdere from %d tickets\n", len(uniqueNewTickets), len(tickets))
-	return nil
+	return result, nil
 }
 
 // AssociateUserWithBillettholder uses userID string from users table to match billettholders
 // and combine ids to billettholder_users for later lookup
-func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logger) error {
+func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logger) (int, error) {
 	logger = logger.With("component", "checkin_assign")
 	logger.Debug("Associating user with billettholder", "user_id", userID)
 
 	// Get user
 	var user models.User
 	err := db.QueryRow(`
-        SELECT id, email FROM users WHERE external_id = ?;
-    `, userID).Scan(&user.ID, &user.Email)
+		SELECT id, email FROM users WHERE external_id = ?;
+	`, userID).Scan(&user.ID, &user.Email)
 	if err != nil {
-		return fmt.Errorf("failed to get user %q: %w", userID, err)
+		return 0, fmt.Errorf("failed to get user %q: %w", userID, err)
 	}
 
 	// Get associated billettholdere
 	var billettholdere []models.BillettholderEmail
 	rows, err := db.Query(`
-        SELECT id, billettholder_id, email, kind, created_at, updated_at, created_by_id, updated_by_id FROM relation_billettholder_emails WHERE email = ? COLLATE NOCASE
-    `, user.Email)
+		SELECT id, billettholder_id, email, kind, created_at, updated_at, created_by_id, updated_by_id
+		FROM relation_billettholder_emails
+		WHERE email = ? COLLATE NOCASE
+	`, user.Email)
 	if err != nil {
-		return fmt.Errorf("unable to query relation_billettholder_emails for email %q: %w", user.Email, err)
+		return 0, fmt.Errorf("unable to query relation_billettholder_emails for email %q: %w", user.Email, err)
 	}
 	defer rows.Close()
 
@@ -141,13 +153,16 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
 		var result models.BillettholderEmail
 		err := rows.Scan(&result.ID, &result.BillettholderID, &result.Email, &result.Kind, &result.CreatedAt, &result.UpdatedAt, &result.CreatedByID, &result.UpdatedByID)
 		if err != nil {
-			return fmt.Errorf("unable to scan relation_billettholder_emails for email %q: %w", user.Email, err)
+			return 0, fmt.Errorf("unable to scan relation_billettholder_emails for email %q: %w", user.Email, err)
 		}
 		billettholdere = append(billettholdere, result)
 	}
+	if err := rows.Err(); err != nil {
+		return 0, fmt.Errorf("unable to iterate relation_billettholder_emails for email %q: %w", user.Email, err)
+	}
 
 	if len(billettholdere) < 1 {
-		return nil
+		return 0, nil
 	}
 
 	// Insert into billettholder_users the new data
@@ -161,17 +176,22 @@ func AssociateUserWithBillettholder(userID string, db *sql.DB, logger *slog.Logg
         ) VALUES %s
     `, strings.Join(lines, ", "))
 
-	_, err = db.Exec(baseQuery)
+	insertResult, err := db.Exec(baseQuery)
 	if err != nil {
 		fmt.Printf("UserID: %s has id: %d \n", userID, user.ID)
 		for _, billet := range billettholdere {
 			fmt.Printf("Billettholdere: %+v \n", billet)
 		}
 
-		return fmt.Errorf("unable to insert into relation_billettholdere_users: %v", err)
+		return 0, fmt.Errorf("unable to insert into relation_billettholdere_users: %v", err)
 	}
 
-	return nil
+	rowsAffected, err := insertResult.RowsAffected()
+	if err != nil {
+		return 0, fmt.Errorf("unable to read created billettholder user association count: %w", err)
+	}
+
+	return int(rowsAffected), nil
 }
 
 // AssociateUsersWithBillettholderEmail links an existing billettholder to all users
