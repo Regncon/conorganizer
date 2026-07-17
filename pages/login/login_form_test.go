@@ -7,6 +7,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
@@ -20,7 +21,7 @@ func TestLoginForm_RendersDescopeWidgetAndPostLoginRedirect(t *testing.T) {
 
 	// Given
 	expectedWidgetAttributes := map[string]string{
-		"project-id": "P2ufzqahlYUHDIprVXtkuCx8MH5C",
+		"project-id": authctx.DescopeProjectID,
 		"flow-id":    "sign-up-or-in-passwords-social",
 		"theme":      "dark",
 	}

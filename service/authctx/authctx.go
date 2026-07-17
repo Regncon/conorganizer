@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -13,6 +12,9 @@ import (
 	"github.com/descope/go-sdk/descope/client"
 	"github.com/go-chi/chi/v5/middleware"
 )
+
+// DescopeProjectID is public Descope client/backend auth configuration.
+const DescopeProjectID = "P2ufzqahlYUHDIprVXtkuCx8MH5C"
 
 const (
 	SessionCookieName = "session_token"
@@ -34,11 +36,10 @@ type SessionValidator interface {
 	RefreshSessionWithToken(ctx context.Context, refreshToken string) (bool, *descope.Token, error)
 }
 
-func NewSessionValidatorFromEnv() (SessionValidator, error) {
-	projectID := os.Getenv("DESCOPE_PROJECT_ID")
-	descopeClient, err := client.NewWithConfig(&client.Config{ProjectID: projectID})
+func NewSessionValidator() (SessionValidator, error) {
+	descopeClient, err := client.NewWithConfig(&client.Config{ProjectID: DescopeProjectID})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Descope client for project %q: %w", projectID, err)
+		return nil, fmt.Errorf("failed to create Descope client for project %q: %w", DescopeProjectID, err)
 	}
 	return descopeClient.Auth, nil
 }
@@ -108,7 +109,7 @@ func AuthMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requestID := middleware.GetReqID(r.Context())
-			sessionValidator, descopeClientError := NewSessionValidatorFromEnv()
+			sessionValidator, descopeClientError := NewSessionValidator()
 			if descopeClientError != nil {
 				logger.Error(descopeClientError.Error(), "request_id", requestID)
 				ctx := context.WithValue(r.Context(), ctxSessionError, descopeClientError)
