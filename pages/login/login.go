@@ -18,7 +18,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-var newSessionValidator = authctx.NewSessionValidatorFromEnv
+var newSessionValidator = authctx.NewSessionValidator
 
 type sessionRequest struct {
 	SessionJWT string `json:"sessionJwt"`
