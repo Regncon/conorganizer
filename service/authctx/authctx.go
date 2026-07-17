@@ -13,7 +13,6 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-// DescopeProjectID is public Descope client/backend auth configuration.
 const DescopeProjectID = "P2ufzqahlYUHDIprVXtkuCx8MH5C"
 
 const (
