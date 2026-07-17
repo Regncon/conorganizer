@@ -3,14 +3,16 @@ package admin
 import (
 	"database/sql"
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"log/slog"
 )
 
-templ adminPage(db *sql.DB) {
+templ adminPage(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	<div id="admin-container">
-		@components.Breadcrumbs([]components.BreadcrumbPath{
+		@components.Breadcrumbs(userInfo, []components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
 			{Name: "Admin", Url: ""},
-		})
+		}, db, logger)
 		<style>
 			.admin-grid {
 				display: flex;

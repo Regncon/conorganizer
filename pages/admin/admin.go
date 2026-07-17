@@ -17,6 +17,7 @@ import (
 	"github.com/Regncon/conorganizer/pages/admin/rooms"
 	"github.com/Regncon/conorganizer/service/live"
 	roomService "github.com/Regncon/conorganizer/service/rooms"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -26,15 +27,18 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 	baseLogger := logger
 	logger = logger.With("component", "admin")
 
+
 	router.Route("/admin", func(adminRouter chi.Router) {
 		adminLayoutRoute(adminRouter, db, logger)
 		puljefordelingStatusRoute(adminRouter, db, liveManager, logger)
 		programPublishingRoute(adminRouter, db, liveManager, logger)
 		adminRouter.Get("/api/", func(w http.ResponseWriter, r *http.Request) {
+            var ctx = r.Context()
+            userInfo := userctx.GetUserRequestInfo(ctx)
 			liveManager.Stream(w, r, live.Page{
 				Buckets: []live.Bucket{live.BucketEvents},
 				Render: func(ctx context.Context, r *http.Request) templ.Component {
-					return adminPage(db)
+					return adminPage(userInfo, db, logger)
 				},
 			})
 		})

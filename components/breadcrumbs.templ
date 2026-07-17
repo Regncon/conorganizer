@@ -1,13 +1,20 @@
 package components
 
-import "github.com/Regncon/conorganizer/components/icons"
+import (
+    "github.com/Regncon/conorganizer/service/requestctx"
+    "github.com/Regncon/conorganizer/components/icons"
+	"database/sql"
+	"log/slog"
+	"github.com/Regncon/conorganizer/components/ticket_holder"
+	"fmt"
+)
 
 type BreadcrumbPath struct {
 	Name string
 	Url  string
 }
 
-templ Breadcrumbs(paths []BreadcrumbPath) {
+templ Breadcrumbs(userInfo requestctx.UserRequestInfo, paths []BreadcrumbPath, db *sql.DB, logger *slog.Logger) {
 	<style>
 		.breadcrumb-container {
 			border-bottom: 1px solid var(--bg-item);
@@ -58,7 +65,7 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			flex-shrink: 0;
 		}
 
-		/* 
+		/*
 		  For mobile sizes, sticky breadcrumb to the top of page and
 			display a back-button as the only navigation option.
 		 */
@@ -82,7 +89,7 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 				width: 32px;
 			}
 		}
-		
+
 		@container main (width > 600px) {
 			.breadcrumb-mobile-return {
 				display: none;
@@ -110,9 +117,99 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 					}
 				}
 			</div>
+            <button class="breadcrumbs-hamburger-menu btn--ghost btn"
+            data-on:click="document.getElementById('breadcrumb-modal').showModal()">
+                @icons.Icon(icons.Menu, icons.Size20)
+            </button>
 			<div class="breadcrumbs-extra-content">
 				{ children... }
 			</div>
+		</div>
+	</div>
+
+    <dialog id="breadcrumb-modal">
+        <button class="modal-close-button" commandfor="breadcrumb-modal" command="close">
+			@icons.Icon(icons.Close, icons.Size24)
+		</button>
+        <div class="breadcrumb-modal-content">
+            <div data-on:click="document.getElementById('breadcrumb-modal-billettholder').showModal()">
+                Bytt aktiv billettholder
+                <span>(aa)</span>
+            </div>
+            <a href="/profile">Min Profil</a>
+            <a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
+            if userInfo.IsAdmin {
+                <hr/>
+                <a href="/admin/billettholder/">Billettholderoversikt</a>
+                <a href="/admin/approval/">Godkjenn arrangementer</a>
+                <hr/>
+            }
+            <a href="/auth/logout">Logg ut</a>
+        </div>
+    </dialog>
+
+    <dialog id="breadcrumb-modal-billettholder">
+    <div class="breadcrumb-modal-billettholder-header">
+        <p>Bytt aktiv billettholder</p>
+        <button class="modal-close-button" commandfor="breadcrumb-modal-billettholder" command="close">
+            @icons.Icon(icons.Close, icons.Size24)
+        </button>
+    </div>
+    <div class="breadcrumb-modal-billettholder-content">
+        <p>
+            Ved å bytte aktiv bruker vil interessevalgene
+            til den valgte brukeren vises på programoversikten
+            og de vil være standardvalget på Min Side og i
+            interessevelgeren på et arrangement.
+        </p>
+        @billettholderSwitcher(userInfo, db, logger)
+        <p>Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
+    </div>
+
+    </dialog>
+
+
+}
+
+templ billettholderSwitcher(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+    {{
+        associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
+    }}
+
+    <div class="billettholder-switcher">
+        for _, billettholder := range associatedBillettholdere {
+            @billettholderSwitcherButton(billettholder)
+        }
+    </div>
+
+}
+
+templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolder) {
+    {{
+        initials := ticketholder.GetInitials(currentBillettHolder.Name)
+        shortName := ticketholder.GetFirstNameAndLastInitial(currentBillettHolder.Name)
+        currentBillettHolderJSON, _ := templ.JSONString(currentBillettHolder)
+    }}
+	<style>
+		.ticket-holder-picker {
+            padding-inline: var(--border-outline-width);
+			.card-clickable {
+                place-content: start;
+                height: 3.125rem;
+                width: 9.1rem;
+            }
+		}
+	</style>
+	<div class="ticket-holder-picker">
+		<div
+			role="button"
+			data-attr:tabindex={ fmt.Sprintf(`$billettHolderId == %d ? '-1' : '0'`, currentBillettHolder.Id) }
+			class="card-clickable card-clickable-item"
+			data-current-billett-holder={ currentBillettHolderJSON }
+			data-class:selected={ fmt.Sprintf("$billettHolderId == %d", currentBillettHolder.Id) }
+			data-on:click={ fmt.Sprintf("$billettHolderId = %d; window.conorganizer.billettholderSelection.set(JSON.parse(evt.currentTarget.dataset.currentBillettHolder));", currentBillettHolder.Id) }
+		>
+			@ticketholder.NameInitials(shortName, initials, currentBillettHolder.Color)
 		</div>
 	</div>
 }

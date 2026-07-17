@@ -126,30 +126,6 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 					white-space: nowrap;
 				}
 			}
-
-			.dropdown-panel {
-				position: absolute;
-				right: 0;
-				bottom: 52px;
-				background-color: var(--bg-item);
-				border: 1px solid var(--bg-item-border);
-				box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
-				border-radius: var(--border-radius-1x);
-				z-index: var(--nav-drop-down-z-index);
-				width: max-content;
-				max-width: 264px;
-			}
-
-			.dropdown-panel a {
-				display: block;
-				color: var(--color-primary-text);
-				padding: 0.5rem 1rem;
-				text-decoration: none;
-			}
-
-			.dropdown-panel a:hover {
-				background-color: hsla(0, 0%, 100%, 0.1);
-			}
 		}
 
 		#main-menu-logo {
@@ -165,6 +141,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 		}
 
 		#main-menu-usermenu {
+            display: none;
 			.hamburger-other {
 				display: none;
 			}
@@ -289,11 +266,37 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 					white-space: nowrap;
 				}
 
-				.dropdown-panel {
-					bottom: unset;
-					top: 61px;
-					max-width: 320px;
-				}
+                .dropdown-panel {
+                    display: block;
+                    position: absolute;
+                    top: 61px;
+                    right: 0;
+                    bottom: unset;
+                    background-color: var(--bg-item);
+                    border: 1px solid var(--bg-item-border);
+                    box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
+                    border-radius: var(--border-radius-1x);
+                    z-index: var(--nav-drop-down-z-index);
+                    width: max-content;
+                    max-width: 320px;
+			}
+
+                .dropdown-panel a {
+                    display: block;
+                    color: var(--color-primary-text);
+                    padding: 0.5rem 1rem;
+                    text-decoration: none;
+                }
+
+                .dropdown-panel a.external-link {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--spacing-1x);
+                }
+
+                .dropdown-panel a:hover {
+                    background-color: hsla(0, 0%, 100%, 0.1);
+                }
 			}
 		}
 
@@ -351,6 +354,10 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                                     <hr/>
 								}
                                 <a href="/auth/logout">Logg ut</a>
+							</div>
+                            <div class="dropdown-panel-billettholder">
+                                <a href="/temp">Degselv</a>
+								<a href="/temp">Bjørnson Temporary</a>
 							</div>
 						</details>
 					</div>
