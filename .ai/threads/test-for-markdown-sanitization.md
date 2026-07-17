@@ -136,3 +136,33 @@ The existing CSS already targets `.description p`, including first/last paragrap
 Time: 2026-07-17 17:28:04
 --- Next Prompt ---
 
+Ok, go ahead and make the change to the template.
+
+Time: 2026-07-17 17:39:09
+--- Codex Run ---
+
+Codex output:
+I’ll remove only the invalid outer paragraph from the event template, then regenerate/check the compiled templ output if this repo expects generated files to stay in sync.
+The repo has generated `*_templ.go` files and a `Taskfile` target for templ generation, so after the template edit I’ll regenerate the affected output rather than leave source and generated code out of sync.
+The markup change is done. I’m regenerating only `pages/event` now, then I’ll run the focused package tests and the full suite again.
+Templ generation completed cleanly. I’m running the affected tests first, including `pages/event` because the generated component changed.
+The focused tests pass. Interestingly, templ generation did not leave a tracked diff in `event_mobile_templ.go`, so I’m checking the generated file to confirm it already reflects the source change.
+`event_mobile_templ.go` is not tracked by git in this checkout, so there is no generated-file diff to commit. I’m checking the generated content anyway, then I’ll run the full suite.
+The generated output now renders the raw sanitized HTML directly under `.description`, and generated files are ignored by design. I’m running the full suite one more time.
+All tests pass after the template change. I’m doing one final status/diff check so the close-out is precise.
+Updated [event_mobile.templ](/home/cinmay/Documents/conorganizer/pages/event/event_mobile.templ:410) to render the sanitized markdown HTML directly inside `.description`, removing the invalid outer `<p>` wrapper.
+
+I also ran templ generation for `pages/event`; generated `*_templ.go` files are ignored in this repo, but the generated output reflects the change.
+
+Verification passed:
+
+```sh
+GOCACHE=/tmp/conorganizer-go-build go test ./service/eventService ./pages/event
+GOCACHE=/tmp/conorganizer-go-build go test ./...
+```
+
+Note: `git status` also shows `.ai/threads/test-for-markdown-sanitization.md` modified; I didn’t touch that as part of the code change.
+
+Time: 2026-07-17 17:39:09
+--- Next Prompt ---
+
