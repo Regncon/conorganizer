@@ -48,55 +48,54 @@ templ Page(message string) {
 			text-align: center;
 			padding-top: var(--responsive-top-of-page-spacing);
 			padding-bottom: var(--responsive-page-section-spacing);
-		}
 
-		.not-found-content {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			gap: var(--spacing-5x);
-			max-width: 640px;
-			width: 100%;
-		}
+			.not-found-content {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: var(--spacing-5x);
+				max-width: 640px;
+				width: 100%;
+			}
 
-		.not-found-code {
-			margin: 0;
-			color: var(--color-primary);
-			font-family: var(--font-monospace);
-			text-transform: uppercase;
-		}
+			.not-found-code {
+				margin: 0;
+				color: var(--color-primary);
+				font-family: var(--font-monospace);
+				text-transform: uppercase;
+			}
 
-		.not-found-message {
-			margin: 0;
-			color: var(--color-text-soft);
-			line-height: 1.6;
-			max-width: 36rem;
-		}
+			.not-found-message {
+				margin: 0;
+				color: var(--color-text-soft);
+				line-height: 1.6;
+				max-width: 36rem;
+			}
 
-		.not-found-figure {
-			margin: 0;
-			display: grid;
-			justify-items: center;
-			gap: var(--spacing-2x);
-		}
+			.not-found-figure {
+				margin: 0;
+				display: grid;
+				justify-items: center;
+				gap: var(--spacing-2x);
 
-		.not-found-figure img {
-			display: block;
-			width: 100%;
-			max-width: 460px;
-			height: auto;
-			border-radius: var(--border-radius-2x);
-		}
+				img {
+					display: block;
+					width: 100%;
+					height: auto;
+					border-radius: var(--border-radius-2x);
+				}
 
-		.not-found-credit {
-			margin: 0;
-			color: var(--color-text-soft-50);
-			font-size: var(--text-body-small);
-			line-height: 1.5;
-		}
+				.not-found-credit {
+					margin: 0;
+					color: var(--color-text-soft-50);
+					font-size: var(--text-body-small);
+					line-height: 1.5;
 
-		.not-found-credit a {
-			color: var(--color-text-soft);
+					a {
+						color: var(--color-text-soft);
+					}
+				}
+			}
 		}
 	</style>
 	<div class="page-content-container not-found-page">
