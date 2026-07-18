@@ -63,8 +63,6 @@ templ Page(message string) {
 			margin: 0;
 			color: var(--color-primary);
 			font-family: var(--font-monospace);
-			font-size: 0.875rem;
-			font-weight: 700;
 			text-transform: uppercase;
 		}
 
@@ -103,8 +101,8 @@ templ Page(message string) {
 	</style>
 	<div class="page-content-container not-found-page">
 		<section class="not-found-content" aria-labelledby="not-found-heading">
-			<p class="not-found-code">404 Not Found</p>
-			<h1 id="not-found-heading">{ pageTitle }</h1>
+			<h1 class="not-found-code">404 Not Found</h1>
+			<h2 id="not-found-heading">{ pageTitle }</h2>
 			<p class="not-found-message">{ message }</p>
 			<a class="btn btn--primary" href="/">Til forsiden</a>
 			<figure class="not-found-figure">
