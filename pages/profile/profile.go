@@ -183,7 +183,7 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 						eventimgupload.EventImageFormSubmission(uploadRouter, db, eventImageDir, logger)
 					})
 					newApiIdRouter.Route("/upload-cropped", func(uploadCroppedRouter chi.Router) {
-						eventimgupload.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, logger)
+						eventimgupload.EventImageCroppedSubmission(uploadCroppedRouter, db, eventImageDir, liveManager, logger)
 					})
 					newApiIdRouter.Route("/submit", func(newApiIdRouter chi.Router) {
 						formsubmission.SubmitFormRoute(newApiIdRouter, db, liveManager, logger)

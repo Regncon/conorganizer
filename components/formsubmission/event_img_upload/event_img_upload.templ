@@ -18,6 +18,7 @@ import (
 	"github.com/Regncon/conorganizer/components/toast"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/eventService"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -100,7 +101,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 	})
 }
 
-func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, liveManager *live.Manager, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Received cropped image upload request")
 		eventID := chi.URLParam(r, "id")
@@ -131,16 +132,26 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 			http.Error(w, "Klarte ikkje å lagre biletet", http.StatusInternalServerError)
 			return
 		}
-		defer out.Close()
 		_, err = io.Copy(out, file)
 		if err != nil {
+			_ = out.Close()
 			logger.Error(fmt.Errorf("failed to save cropped image file %q: %w", imagePath, err).Error())
+			http.Error(w, "Klarte ikkje å lagre biletet", http.StatusInternalServerError)
+			return
+		}
+		if err := out.Close(); err != nil {
+			logger.Error(fmt.Errorf("failed to close cropped image file %q: %w", imagePath, err).Error())
 			http.Error(w, "Klarte ikkje å lagre biletet", http.StatusInternalServerError)
 			return
 		}
 		if err := formsubmission.TouchEventUpdatedAt(r.Context(), db, logger, eventID); err != nil {
 			logger.Error(fmt.Errorf("failed to touch event after cropped image upload for event %s: %w", eventID, err).Error())
 			http.Error(w, "Klarte ikkje å oppdatere revisjonsspor for arrangementsbiletet", http.StatusInternalServerError)
+			return
+		}
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast event image update for event %s: %w", eventID, err).Error())
+			http.Error(w, "Klarte ikkje å oppdatere arrangementsbiletet live", http.StatusInternalServerError)
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
