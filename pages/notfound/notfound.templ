@@ -12,12 +12,6 @@ import (
 
 const pageTitle = "Siden finnes ikke"
 
-func Handler(logger *slog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		Render(w, r, logger, "")
-	}
-}
-
 func RenderEvent(w http.ResponseWriter, r *http.Request, logger *slog.Logger) {
 	Render(w, r, logger, "Vi fant ikke arrangementet du leter etter. Lenken kan være feil, eller arrangementet finnes ikke lenger.")
 }

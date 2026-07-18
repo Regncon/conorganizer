@@ -177,3 +177,22 @@ I did not run tests, per your request. The pre-existing `.ai/threads/nice-404-pa
 Time: 2026-07-18 13:23:57
 --- Next Prompt ---
 
+The Handler function is redundant as it's only has one line of code and is only used in one place. Remove it. 
+
+Time: 2026-07-18 16:32:33
+--- Codex Run ---
+
+Codex output:
+I’ll remove `notfound.Handler` and call `notfound.Render` directly from the `router.NotFound` closure in `main.go`.
+I found the only use in `main.go`. I’m replacing it with a small local `http.HandlerFunc` and deleting the wrapper from the templ file.
+The wrapper is gone. I’m regenerating templ output and doing a compile-only check.
+The compile-only build passed again, with the same non-fatal sandbox module-cache warning. I’m confirming there are no remaining `Handler` references.
+Removed `notfound.Handler`.
+
+`main.go` now registers the 404 handler inline with `http.HandlerFunc`, calling `notfound.Render(...)` directly. `pages/notfound/notfound.templ` now only exposes `Render` and `RenderEvent`.
+
+Verification: `go tool templ generate -path pages/notfound -log-level error` and compile-only `go build` passed. The build still prints the sandbox’s non-fatal read-only Go module cache warning. I did not run tests.
+
+Time: 2026-07-18 16:32:33
+--- Next Prompt ---
+
