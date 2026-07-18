@@ -8,6 +8,7 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/toast"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/pages/notfound"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
@@ -33,7 +34,7 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 		}
 
 		if selectErr != nil && statusCode == http.StatusNotFound {
-			http.Error(w, selectErr.Error(), http.StatusNotFound)
+			notfound.RenderEvent(w, r, logger)
 			return
 		}
 
