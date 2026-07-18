@@ -17,6 +17,7 @@ when adding names check domeneordbok.md instead of translating to english
   - `color-mix()`
   - container query units like `cqw`, `cqh`, `cqi`, `cqb`
   - Use Range Syntax: Use modern comparison operators like @container (width > 500px)
+  - place-content, place-items, place-self instead of align and justify
 - Do not use `&` in nesting unless a pseudo-class is targeting the parent.
 - Keep selectors shallow and readable.
 - Avoid Sass-style CSS that does not work natively in browsers.
