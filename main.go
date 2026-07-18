@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Regncon/conorganizer/pages/notfound"
 	"github.com/Regncon/conorganizer/service"
 	"github.com/Regncon/conorganizer/service/applog"
 	"github.com/Regncon/conorganizer/service/authctx"
@@ -119,12 +120,15 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 				logger.Error(fmt.Errorf("error setting up routes; falling back to degraded mode: %w", err).Error())
 				readiness.MarkDegraded(notReadyApplicationReason, err)
 				mountDegradedRoutes(router)
-			} else if cleanup != nil {
-				defer func() {
-					if err := cleanup(); err != nil {
-						logger.Error(fmt.Errorf("failed to clean up routes: %w", err).Error())
-					}
-				}()
+			} else {
+				router.NotFound(authctx.AuthMiddleware(baseLogger)(notfound.Handler(baseLogger)).ServeHTTP)
+				if cleanup != nil {
+					defer func() {
+						if err := cleanup(); err != nil {
+							logger.Error(fmt.Errorf("failed to clean up routes: %w", err).Error())
+						}
+					}()
+				}
 			}
 		} else {
 			// Show a single degraded page without exposing operational details.

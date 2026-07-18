@@ -1,0 +1,129 @@
+package notfound
+
+import (
+	"fmt"
+	"log/slog"
+	"net/http"
+
+	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5/middleware"
+)
+
+const pageTitle = "Siden finnes ikke"
+const defaultMessage = "Vi fant ikke siden du leter etter. Lenken kan være feil, eller siden kan ha flyttet."
+const eventNotFoundMessage = "Vi fant ikke arrangementet du leter etter. Lenken kan være feil, eller arrangementet finnes ikke lenger."
+
+func Handler(logger *slog.Logger) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		Render(w, r, logger, "")
+	}
+}
+
+func RenderEvent(w http.ResponseWriter, r *http.Request, logger *slog.Logger) {
+	Render(w, r, logger, eventNotFoundMessage)
+}
+
+func Render(w http.ResponseWriter, r *http.Request, logger *slog.Logger, message string) {
+	w.WriteHeader(http.StatusNotFound)
+	userInfo := userctx.GetUserRequestInfo(r.Context())
+	if err := layouts.Base(pageTitle, userInfo, Page(message)).Render(r.Context(), w); err != nil {
+		if logger == nil {
+			logger = slog.Default()
+		}
+		logger.Error(
+			fmt.Errorf("failed to render 404 page: %w", err).Error(),
+			"request_id", middleware.GetReqID(r.Context()),
+			"path", r.URL.Path,
+		)
+	}
+}
+
+templ Page(message string) {
+	{{ if message == "" {
+		message = defaultMessage
+	} }}
+	<style>
+		.not-found-page {
+			min-height: calc(100dvh - var(--nav-height));
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			text-align: center;
+			padding-top: var(--responsive-top-of-page-spacing);
+			padding-bottom: var(--responsive-page-section-spacing);
+		}
+
+		.not-found-content {
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			gap: var(--spacing-5x);
+			max-width: 640px;
+			width: 100%;
+		}
+
+		.not-found-code {
+			margin: 0;
+			color: var(--color-primary);
+			font-family: var(--font-monospace);
+			font-size: 0.875rem;
+			font-weight: 700;
+			text-transform: uppercase;
+		}
+
+		.not-found-message {
+			margin: 0;
+			color: var(--color-text-soft);
+			line-height: 1.6;
+			max-width: 36rem;
+		}
+
+		.not-found-figure {
+			margin: 0;
+			display: grid;
+			justify-items: center;
+			gap: var(--spacing-2x);
+		}
+
+		.not-found-figure img {
+			display: block;
+			width: 100%;
+			max-width: 460px;
+			height: auto;
+			border-radius: var(--border-radius-2x);
+		}
+
+		.not-found-credit {
+			margin: 0;
+			color: var(--color-text-soft-50);
+			font-size: var(--text-body-small);
+			line-height: 1.5;
+		}
+
+		.not-found-credit a {
+			color: var(--color-text-soft);
+		}
+	</style>
+	<div class="page-content-container not-found-page">
+		<section class="not-found-content" aria-labelledby="not-found-heading">
+			<p class="not-found-code">404 Not Found</p>
+			<h1 id="not-found-heading">{ pageTitle }</h1>
+			<figure class="not-found-figure">
+				<img
+					src="/static/404.webp"
+					alt="HTTP Cats 404 Not Found"
+					width="750"
+					height="600"
+					loading="eager"
+				/>
+				<figcaption class="not-found-credit">
+					Image from <a href="https://http.cat/status/404">HTTP Cats</a>.
+					Original images by <a href="https://girliemac.com/">Tomomi Imura</a>.
+				</figcaption>
+			</figure>
+			<p class="not-found-message">{ message }</p>
+			<a class="btn btn--primary" href="/">Til forsiden</a>
+		</section>
+	</div>
+}
