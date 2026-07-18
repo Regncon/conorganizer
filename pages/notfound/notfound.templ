@@ -11,8 +11,6 @@ import (
 )
 
 const pageTitle = "Siden finnes ikke"
-const defaultMessage = "Vi fant ikke siden du leter etter. Lenken kan være feil, eller siden kan ha flyttet."
-const eventNotFoundMessage = "Vi fant ikke arrangementet du leter etter. Lenken kan være feil, eller arrangementet finnes ikke lenger."
 
 func Handler(logger *slog.Logger) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -21,7 +19,7 @@ func Handler(logger *slog.Logger) http.HandlerFunc {
 }
 
 func RenderEvent(w http.ResponseWriter, r *http.Request, logger *slog.Logger) {
-	Render(w, r, logger, eventNotFoundMessage)
+	Render(w, r, logger, "Vi fant ikke arrangementet du leter etter. Lenken kan være feil, eller arrangementet finnes ikke lenger.")
 }
 
 func Render(w http.ResponseWriter, r *http.Request, logger *slog.Logger, message string) {
@@ -39,10 +37,14 @@ func Render(w http.ResponseWriter, r *http.Request, logger *slog.Logger, message
 	}
 }
 
+const defaultMessage = "Vi fant ikke siden du leter etter. Lenken kan være feil, eller siden kan ha flyttet."
+
 templ Page(message string) {
-	{{ if message == "" {
-		message = defaultMessage
-	} }}
+	{{
+		if message == "" {
+			message = defaultMessage
+		}
+	}}
 	<style>
 		.not-found-page {
 			min-height: calc(100dvh - var(--nav-height));
@@ -109,6 +111,8 @@ templ Page(message string) {
 		<section class="not-found-content" aria-labelledby="not-found-heading">
 			<p class="not-found-code">404 Not Found</p>
 			<h1 id="not-found-heading">{ pageTitle }</h1>
+			<p class="not-found-message">{ message }</p>
+			<a class="btn btn--primary" href="/">Til forsiden</a>
 			<figure class="not-found-figure">
 				<img
 					src="/static/404.webp"
@@ -122,8 +126,6 @@ templ Page(message string) {
 					Original images by <a href="https://girliemac.com/">Tomomi Imura</a>.
 				</figcaption>
 			</figure>
-			<p class="not-found-message">{ message }</p>
-			<a class="btn btn--primary" href="/">Til forsiden</a>
 		</section>
 	</div>
 }
