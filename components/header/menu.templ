@@ -84,6 +84,13 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 
 			.logo-link {
 				display: none;
+				border-radius: var(--border-radius-1x);
+			}
+
+			.logo-link:focus-visible {
+				outline: none;
+				background-color: var(--btn-ghost-hover-bg);
+				box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
 			}
 
 			details {
@@ -250,7 +257,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 		<nav class="main-menu page-content-container wide-content">
 			<section id="main-menu-logo">
 				<a href="/" class="logo-link">
-					<img src="/static/RegnconLogo.svg" alt="logo"/>
+					<img src="/static/RegnconLogo.svg" alt="Regncon framside"/>
 				</a>
 			</section>
 			<section id="main-menu-navbuttons">
