@@ -90,7 +90,18 @@
     border: 1px solid var(--bg-item-border);
     box-sizing: border-box;
     text-decoration: none;
+    outline: 0;
     position: relative;
+    transition: border-color 120ms ease-in-out;
+}
+
+.event-card-container:hover,
+.event-card-container:focus-visible {
+    border-color: var(--color-primary);
+}
+
+.event-card-container:focus-visible {
+    outline: 3px solid var(--color-primary-focus-visible);
 }
 
 .event-card-status-tag {

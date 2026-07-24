@@ -170,3 +170,34 @@ The unrelated `.ai/threads/keyboard-navigation.md` change is still untouched.
 Time: 2026-07-24 19:12:04
 --- Next Prompt ---
 
+Next, the event card's in the even list is also missing a visible focus state.
+Here is the file:
+pages/root/event_list.templ
+components/event_card.templ
+
+Time: 2026-07-24 19:17:43
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the event list and card component together so the focus state lands on the actual keyboard-focusable element, not just a wrapper around it.
+The card component itself is a single anchor, so the focus state should go on `.event-card-container`. I’m checking where its existing visual styling lives before adding the focus rule.
+The event card styles live in `static/css/card.css`, not inside the two templates. I’m going to put the focus treatment there so every rendered `EventCard` gets the same behavior wherever the component is used.
+The local card patterns use border-color changes and outlines for keyboard focus. I’m going to follow that pattern for the event-card anchor, with hover and `:focus-visible` sharing the border highlight and keyboard focus adding the stronger ring.
+I’ll make this in `static/css/card.css`, since that is where `.event-card-container` is defined. The two templates you pointed at already render the correct anchor structure.
+The card focus CSS is patched. Since this is CSS-only, there is no generated templ output to refresh, but I’m running the relevant component/root package tests to make sure the rendered card structure still compiles and tests pass.
+The relevant Go tests passed. I’m checking the final diff and line numbers for the CSS change.
+Added the visible focus state in [static/css/card.css](/home/cinmay/Documents/conorganizer/static/css/card.css:81), where `.event-card-container` is styled.
+
+The event card anchor now gets a primary border on hover/focus and a `3px` focus outline on `:focus-visible`, so tabbing through the event list clearly shows which card is selected.
+
+Verification passed:
+
+```sh
+GOCACHE=/tmp/conorganizer-go-cache go test ./components ./pages/root
+```
+
+I left the unrelated `.ai/threads/keyboard-navigation.md` change untouched.
+
+Time: 2026-07-24 19:17:43
+--- Next Prompt ---
+
