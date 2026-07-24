@@ -225,3 +225,40 @@ GOCACHE=/tmp/conorganizer-go-cache go test ./components ./pages/root
 Time: 2026-07-24 19:22:06
 --- Next Prompt ---
 
+
+Next, let's add a visible focus state to the help link in the interest component.
+
+pages/event/event_interest_panel.templ
+
+						<a
+							class="inline-link"
+							href="https://www.regncon.no/vanlege-sporsmal/"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							<span class="link-text">Hvordan fungerer interessevalget?</span>
+							@icons.Icon(icons.ExternalLink, icons.Size16)
+						</a>
+
+Time: 2026-07-24 19:51:19
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the interest panel and any existing `.inline-link` styling first. If `.inline-link` is shared, I’ll choose between a local fix and a shared link focus rule based on how broadly it’s used.
+There is already a global `a.inline-link` style in `static/css/index.css`. Since the interest link uses that shared class, the clean fix is probably to add a shared `:focus-visible` style there, then keep the panel’s local layout-only rules as-is.
+I’ll add the focus rule to the shared inline-link CSS rather than only this one panel, because the class itself currently defines hover/active but not keyboard focus.
+The shared inline-link focus state is patched. I’m running the event page tests that cover this panel’s rendered link.
+The event package tests passed. I’m checking the final CSS diff and worktree state now.
+Added a visible focus state for shared inline links in [static/css/index.css](/home/cinmay/Documents/conorganizer/static/css/index.css:277).
+
+The help link now changes to the strong text color on keyboard focus and gets a subtle secondary outline with offset, matching the softer gray focus direction.
+
+Verification passed:
+
+```sh
+GOCACHE=/tmp/conorganizer-go-cache go test ./pages/event
+```
+
+Time: 2026-07-24 19:51:19
+--- Next Prompt ---
+

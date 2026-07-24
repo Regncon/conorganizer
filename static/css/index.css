@@ -279,8 +279,15 @@ a.inline-link {
 }
 
 a.inline-link:hover,
-a.inline-link:active {
+a.inline-link:active,
+a.inline-link:focus-visible {
     color: var(--color-text-strong);
+}
+
+a.inline-link:focus-visible {
+    outline: 2px solid var(--color-secondary-focus-visible);
+    outline-offset: 2px;
+    border-radius: var(--border-radius-1x);
 }
 
 .inline-icon {
