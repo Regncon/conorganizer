@@ -843,3 +843,48 @@ But for this small fix, the code we have now is reasonable. I would not switch t
 Time: 2026-07-16 16:21:15
 --- Next Prompt ---
 
+
+Let's discuss the use of `ETag` headers for the event images. 
+Give me the pros and cons of using `ETag` headers for the event images.
+
+Time: 2026-07-18 18:07:03
+--- Codex Run ---
+
+Codex output:
+`ETag` can help, but it is not a replacement for the versioned URL approach.
+
+An `ETag` is a cache validator. It lets the browser ask:
+
+```http
+If-None-Match: "abc123"
+```
+
+and the server can answer:
+
+```http
+304 Not Modified
+```
+
+instead of sending the image again.
+
+**Pros**
+- Saves bandwidth when images are unchanged.
+- More precise than `Last-Modified`, especially if files can change quickly.
+- Allows stable image URLs if paired with revalidation behavior.
+- Good for public assets where many users request the same image.
+- Can avoid sending full card/banner images repeatedly during frequent refreshes.
+
+**Cons**
+- It does not make the browser ask the server. It only helps *after* a request happens.
+- If the browser considers the cached image fresh, the `ETag` is not checked.
+- To guarantee freshness with stable URLs, we would still need `Cache-Control: no-cache` or similar, which means one validation request per image per refresh.
+- Strong ETags based on content hashes require reading/hash work unless we store/precompute them.
+- Cheap ETags based on file size + modtime are usually fine, but not perfectly content-accurate.
+- Go’s standard `http.FileServer` handles `Last-Modified`, but we would likely need to add ETag handling ourselves.
+- With our current versioned URLs, ETags become mostly redundant because unchanged image URLs can be cached directly.
+
+My recommendation: do **not** add ETags as the main fix. For these public event images, the versioned URL is better for frequent page refreshes because unchanged images can be reused without any HTTP request at all. ETags are more useful if we intentionally choose stable image URLs and accept per-image revalidation.
+
+Time: 2026-07-18 18:07:03
+--- Next Prompt ---
+
