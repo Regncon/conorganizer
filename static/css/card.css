@@ -97,11 +97,11 @@
 
 .event-card-container:hover,
 .event-card-container:focus-visible {
-    border-color: var(--color-primary);
+    border-color: var(--color-secondary);
 }
 
 .event-card-container:focus-visible {
-    outline: 3px solid var(--color-primary-focus-visible);
+    outline: 3px solid var(--color-secondary-focus-visible);
 }
 
 .event-card-status-tag {

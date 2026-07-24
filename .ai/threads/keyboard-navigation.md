@@ -201,3 +201,27 @@ I left the unrelated `.ai/threads/keyboard-navigation.md` change untouched.
 Time: 2026-07-24 19:17:43
 --- Next Prompt ---
 
+The color is a little too strong.
+Let's try the same gray color as the buttons had instead of the primary color for the event card focus and hover states.
+
+Time: 2026-07-24 19:22:06
+--- Codex Run ---
+
+Codex output:
+I’ll tone that down by swapping the event-card border and focus outline from the primary accent to the secondary/gray focus colors used by the button system.
+The color swap is applied. I’m rerunning the relevant tests, even though this is CSS-only, to keep the same verification path.
+Tests passed. I’m checking the final diff so I can confirm the exact CSS variables now in use.
+Updated [static/css/card.css](/home/cinmay/Documents/conorganizer/static/css/card.css:98) to use the gray/secondary colors:
+
+- Hover/focus border: `var(--color-secondary)`
+- Focus outline: `var(--color-secondary-focus-visible)`
+
+Verification passed:
+
+```sh
+GOCACHE=/tmp/conorganizer-go-cache go test ./components ./pages/root
+```
+
+Time: 2026-07-24 19:22:06
+--- Next Prompt ---
+
