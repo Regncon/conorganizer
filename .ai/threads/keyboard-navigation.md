@@ -87,3 +87,32 @@ Note: there is an unrelated untracked `.ai/threads/keyboard-navigation.md` in th
 Time: 2026-07-24 13:45:09
 --- Next Prompt ---
 
+One small detail. The logo is round, perhaps we should make the focus ring round as well? 
+Is there a clean way to implement this in CSS without making it hacky? 
+Have a look at the logo svg too: static/RegnconLogo.svg
+
+Let's keep the discussion going before implementing any code.
+
+Time: 2026-07-24 13:50:18
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the SVG before making a recommendation, because whether the ring should be circular depends on the actual viewBox/artwork shape and how much transparent padding the asset has.
+Yes, there’s a clean way: change the logo link’s radius from the shared `4px` token to a circular radius.
+
+The key detail is that the focus ring is currently a `box-shadow`, not an `outline`. `box-shadow` respects `border-radius`, so this is not hacky:
+
+```css
+.logo-link {
+    display: none;
+    border-radius: 50%;
+}
+```
+
+The SVG itself has `viewBox="0 0 428.88 373.2"`, so the asset is not mathematically square, and the artwork is an irregular round-ish mark rather than a perfect circle. Since the rendered `img` is forced to `3rem` by `3rem`, the link box is effectively square, and `border-radius: 50%` will make the focus background/ring circular.
+
+I would not try to make the ring trace the exact SVG silhouette. That would mean masks, clipping, or pseudo-elements tied to the artwork shape, and that is too fragile for a focus indicator. A circular ring around the square logo hit area is the clean accessibility/UI choice.
+
+Time: 2026-07-24 13:50:18
+--- Next Prompt ---
+Ok, let's try that first. 
