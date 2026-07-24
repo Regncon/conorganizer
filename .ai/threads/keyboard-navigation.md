@@ -144,4 +144,29 @@ Both passed. Note: `.ai/threads/keyboard-navigation.md` is modified in the workt
 
 Time: 2026-07-24 14:00:59
 --- Next Prompt ---
+Next, when the user presses "Tab" to the hamburger menu, then presses "Enter" to open it, the menu opens, but when the user presses "Tab" again, nothing indicates what is focused.
+Pressing enter on the selected item does work, but the user has no idea what is selected.
+
+Time: 2026-07-24 19:12:04
+--- Codex Run ---
+
+Codex output:
+This looks like the dropdown links only have a hover state, so keyboard focus lands on them without a visible state. I’ll add a focused dropdown-item treatment that reuses the existing header colors and does not change layout.
+The focus style is in place for dropdown links. I’m regenerating the header template and rerunning the header package tests with the writable Go cache.
+Verification passed. I’m checking the final diff so I can summarize only the relevant change.
+Added a visible keyboard focus state for dropdown links in [components/header/menu.templ](/home/cinmay/Documents/conorganizer/components/header/menu.templ:98).
+
+Now dropdown items get the same background as hover plus an inset focus ring when reached with `Tab`, so the selected item is visible without shifting layout.
+
+Verification passed:
+
+```sh
+go tool templ generate -path components/header -log-level error
+GOCACHE=/tmp/conorganizer-go-cache go test ./components/header
+```
+
+The unrelated `.ai/threads/keyboard-navigation.md` change is still untouched.
+
+Time: 2026-07-24 19:12:04
+--- Next Prompt ---
 
