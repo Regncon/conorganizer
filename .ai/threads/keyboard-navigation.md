@@ -115,4 +115,33 @@ I would not try to make the ring trace the exact SVG silhouette. That would mean
 
 Time: 2026-07-24 13:50:18
 --- Next Prompt ---
-Ok, let's try that first. 
+
+Nice. I changed the border-radius to 50% in the CSS for the logo link and it looks great. 
+Next, let's do some cleaning before we move. Remove any unused CSS classes and styles from the header template.
+
+Time: 2026-07-24 14:00:59
+--- Codex Run ---
+
+Codex output:
+I’ll treat your `border-radius: 50%` change as user-owned and preserve it. I’m going to scan the header template plus the header button subtemplate so we only remove selectors that truly have no matching markup.
+The obvious stale block is the old `.beta-toggle` CSS; there is no matching header markup. I also found an `a.disabled` rule that has no header match, and a duplicate `.main-menu-buttons` rule in `menu.templ` that is already owned by `main_menu_buttons.templ`.
+I’m going to remove the dead beta-toggle block, the unmatched disabled-anchor rule, the duplicate `main-menu-buttons` rule from this template, and the redundant `display: none` on `.logo-link` since the parent logo section already controls mobile visibility.
+The cleanup is applied. I’m regenerating the header templates and running the header package tests to catch any templ or render regressions.
+`templ generate` succeeded. The first `go test` hit the sandbox because Go tried to use the default read-only build cache, so I’m rerunning it with `GOCACHE` pointed at `/tmp`.
+The targeted test passes with a writable Go cache. I’m checking the final diff and status now, including whether generation touched any tracked files.
+Cleaned [components/header/menu.templ](/home/cinmay/Documents/conorganizer/components/header/menu.templ:9).
+
+Removed the unused old `.beta-toggle` styles, the unmatched `a.disabled` rule, the duplicate `.main-menu-buttons` rule, and the redundant `display: none` on `.logo-link` since `#main-menu-logo` already controls that visibility. Kept your circular `border-radius: 50%`.
+
+Verification:
+
+```sh
+go tool templ generate -path components/header -log-level error
+GOCACHE=/tmp/conorganizer-go-cache go test ./components/header
+```
+
+Both passed. Note: `.ai/threads/keyboard-navigation.md` is modified in the worktree and unrelated to my changes, so I left it alone.
+
+Time: 2026-07-24 14:00:59
+--- Next Prompt ---
+
