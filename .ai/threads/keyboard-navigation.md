@@ -261,4 +261,52 @@ GOCACHE=/tmp/conorganizer-go-cache go test ./pages/event
 
 Time: 2026-07-24 19:51:19
 --- Next Prompt ---
+Have a look trough the app and see if there are any other places where keyboard focus is not visible.
+
+
+Time: 2026-07-25 14:02:33
+--- Codex Run ---
+
+Codex output:
+I’ll do this as a focused audit first, then fix the obvious misses that follow existing CSS patterns. I’m going to look for interactive elements with hover/active styling but no `:focus-visible`, and for places that explicitly remove outlines without replacing them.
+I’ll start broad with static searches. The highest-signal cases are selectors like `:hover` without a matching `:focus-visible`, and clickable anchors/buttons that are styled as cards or rows.
+The first pass shows several likely misses: event-bar/profile-event-bar styles in shared card CSS, summary text in pulje interests, admin tab links, and some admin drag/action controls. I’m going to inspect those before patching so I don’t add focus styles to non-focusable drag-only elements.
+The strongest shared gaps are in card-shaped links: `.event-bar-container` and `.profile-event-bar` have hover states but no keyboard equivalent. There are also local misses in admin tabs and pulje interest summaries.
+A few hover-only selectors are not keyboard-focus issues because they are plain containers or drag targets. I’m narrowing to focusable controls: anchors, buttons, and summaries.
+There are enough one-off controls that a small global fallback makes sense: any normal link, button, summary, role-button, or form control should get a visible focus outline unless a component overrides it with its own stronger style. Then I’ll add targeted polish to shared card rows and the pulje interests summary where the component already has a hover treatment.
+I’m starting with the global fallback in `static/css/index.css`; it uses low-specificity `:where(...)`, so existing `.btn`, `.input`, card, and header focus styles can still override it cleanly.
+Next I’m adding component-level focus styles for shared event row links, since those are used in profile, admin approval, and pulje-interest views.
+I’m also updating the collapsible pulje-interests summary: it had hover and active styling but no keyboard-focused equivalent, so the focused summary text should now be visibly highlighted.
+While scanning, I also noticed a different class of issue: a few admin room cards are clickable `<div>` elements, so they are not keyboard-focusable at all. That is adjacent to focus visibility but larger than a CSS-only fix, so I’m separating it from this pass unless it blocks the visible-focus audit.
+I’ll do one more targeted search for click handlers on non-button elements. If they are intended controls, they need keyboard focus before a focus style can help.
+The room edit cards are clickable `<div>`s, not tabbable controls. I’m going to leave that as a separate finding for now because converting those to buttons affects markup semantics and styles beyond focus visibility; the current CSS pass will still cover real focusable controls.
+For the clickable room cards, a native `<button>` is not valid because the card contains block content like headings and paragraphs. Fixing that properly would mean adding `role="button"`, `tabindex="0"`, and keyboard activation behavior, so I’ll report it separately instead of slipping in a partial fix.
+I’ve made the main patches. I’m doing a second scan now to distinguish remaining hover-only selectors that are covered by the global fallback from non-focusable decorative/drag-only cases.
+I found an important cascade detail: `static/css/index.css` has a universal `outline: none` reset later in the file. I’m moving the global fallback after that reset so it actually applies while still staying easy for component styles to override.
+The cascade is corrected. I’m regenerating the modified templ component and then I’ll run targeted package tests covering the touched component plus the shared card consumers.
+Templ generation succeeded. I’m running focused Go tests now; CSS-only changes do not get much test coverage, but these packages exercise the rendered components around the changed styles.
+The targeted tests passed. I’m checking the final diff and line references, then I’ll summarize both the fixes and the remaining non-CSS issue I found.
+One unrelated `.ai/threads/keyboard-navigation.md` change is still present in the worktree; I did not touch it. I’m marking the audit pass complete now.
+I did a static pass through the templates and CSS for hover-only controls, `outline: none`, and custom clickable components.
+
+I patched three broader gaps:
+
+- [static/css/index.css](/home/cinmay/Documents/conorganizer/static/css/index.css:413): added a low-specificity global `:focus-visible` fallback for links, buttons, summaries, role-buttons, and form controls. This catches plain/admin links and icon-only buttons that do not have custom focus styling.
+- [static/css/card.css](/home/cinmay/Documents/conorganizer/static/css/card.css:226): added focus styles for `event-bar-container`.
+- [static/css/card.css](/home/cinmay/Documents/conorganizer/static/css/card.css:281): added focus styles for `profile-event-bar`.
+- [components/event_components/programpulje_interests.templ](/home/cinmay/Documents/conorganizer/components/event_components/programpulje_interests.templ:45): added keyboard focus styling for the pulje-interests `<summary>` control.
+
+One remaining issue I found but did not change: [rooms_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/rooms/rooms_page.templ:147) has room cards implemented as clickable `<div>`s. They are not keyboard-focusable at all, so this needs a semantic/keyboard activation fix, not just CSS.
+
+Verification passed:
+
+```sh
+go tool templ generate -path components/event_components -log-level error
+GOCACHE=/tmp/conorganizer-go-cache go test ./components/event_components ./components/profile ./pages/admin/approval ./pages/admin/rooms ./pages/admin/billettholder_admin ./pages/event ./pages/root
+```
+
+Unrelated `.ai/threads/keyboard-navigation.md` is still modified and untouched by me.
+
+Time: 2026-07-25 14:02:33
+--- Next Prompt ---
 

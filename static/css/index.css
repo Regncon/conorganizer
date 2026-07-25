@@ -410,6 +410,11 @@ input {
     outline: none;
 }
 
+:where(a[href], button, summary, [role="button"], input:not([type="hidden"]), select, textarea):focus-visible {
+    outline: 2px solid var(--color-secondary-focus-visible);
+    outline-offset: 2px;
+}
+
 .flex {
     display: flex;
 }

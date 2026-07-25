@@ -223,6 +223,11 @@
     border-color: var(--color-primary);
 }
 
+.event-bar-container:focus-visible {
+    border-color: var(--color-secondary);
+    outline: 3px solid var(--color-secondary-focus-visible);
+}
+
 .event-bar-title {
     white-space: nowrap;
     overflow: clip;
@@ -273,6 +278,12 @@
     }
 }
 
-.profile-event-bar:hover {
+.profile-event-bar:hover,
+.profile-event-bar:focus-visible {
     filter: brightness(110%);
+}
+
+.profile-event-bar:focus-visible {
+    outline: 3px solid var(--color-secondary-focus-visible);
+    outline-offset: 2px;
 }
