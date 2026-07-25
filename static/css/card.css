@@ -90,7 +90,18 @@
     border: 1px solid var(--bg-item-border);
     box-sizing: border-box;
     text-decoration: none;
+    outline: 0;
     position: relative;
+    transition: border-color 120ms ease-in-out;
+}
+
+.event-card-container:hover,
+.event-card-container:focus-visible {
+    border-color: var(--color-secondary);
+}
+
+.event-card-container:focus-visible {
+    outline: 3px solid var(--color-secondary-focus-visible);
 }
 
 .event-card-status-tag {
@@ -212,6 +223,11 @@
     border-color: var(--color-primary);
 }
 
+.event-bar-container:focus-visible {
+    border-color: var(--color-secondary);
+    outline: 3px solid var(--color-secondary-focus-visible);
+}
+
 .event-bar-title {
     white-space: nowrap;
     overflow: clip;
@@ -262,6 +278,12 @@
     }
 }
 
-.profile-event-bar:hover {
+.profile-event-bar:hover,
+.profile-event-bar:focus-visible {
     filter: brightness(110%);
+}
+
+.profile-event-bar:focus-visible {
+    outline: 3px solid var(--color-secondary-focus-visible);
+    outline-offset: 2px;
 }
