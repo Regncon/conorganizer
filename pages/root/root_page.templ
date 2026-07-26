@@ -36,6 +36,29 @@ templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	{{
 		programPublished, err := getProgramPublished(db)
 	}}
+	<style>
+		#root-page-wrapper {
+			--program-scrollnav-mobile-top-offset: 51px;
+			--program-scrollnav-sticky-top: var(--program-scrollnav-mobile-top-offset);
+			--program-scrollnav-margin-block-start: 0px;
+			--program-scrollnav-block-size: calc(var(--btn-height) + (var(--spacing-2x) * 2));
+			--program-scroll-target-gap: 0px;
+			--program-scroll-target-offset: calc(
+				var(--program-scrollnav-sticky-top) +
+				var(--program-scrollnav-margin-block-start) +
+				var(--program-scrollnav-block-size) +
+				var(--program-scroll-target-gap)
+			);
+			--program-pulje-section-spacing: var(--spacing-8x);
+		}
+
+		@container main (width > 600px) {
+			#root-page-wrapper {
+				--program-scrollnav-sticky-top: var(--nav-height);
+				--program-scrollnav-margin-block-start: var(--spacing-3x);
+			}
+		}
+	</style>
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
 	})
