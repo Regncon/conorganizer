@@ -91,6 +91,9 @@ templ Breadcrumbs(userInfo requestctx.UserRequestInfo, paths []BreadcrumbPath, d
 		}
 
 		@container main (width > 600px) {
+            .breadcrumb-container {
+                display: none;
+            }
 			.breadcrumb-mobile-return {
 				display: none;
 			}
@@ -132,7 +135,7 @@ templ Breadcrumbs(userInfo requestctx.UserRequestInfo, paths []BreadcrumbPath, d
 			@icons.Icon(icons.Close, icons.Size24)
 		</button>
         <div class="breadcrumb-modal-content">
-            <div data-on:click="document.getElementById('breadcrumb-modal-billettholder').showModal()">
+            <div data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
                 Bytt aktiv billettholder
                 <span>(aa)</span>
             </div>
@@ -148,10 +151,10 @@ templ Breadcrumbs(userInfo requestctx.UserRequestInfo, paths []BreadcrumbPath, d
         </div>
     </dialog>
 
-    <dialog id="breadcrumb-modal-billettholder">
+    <dialog id="modal-billettholderswitcher">
     <div class="breadcrumb-modal-billettholder-header">
         <p>Bytt aktiv billettholder</p>
-        <button class="modal-close-button" commandfor="breadcrumb-modal-billettholder" command="close">
+        <button class="modal-close-button" commandfor="modal-billettholderswitcher" command="close">
             @icons.Icon(icons.Close, icons.Size24)
         </button>
     </div>
@@ -162,16 +165,14 @@ templ Breadcrumbs(userInfo requestctx.UserRequestInfo, paths []BreadcrumbPath, d
             og de vil være standardvalget på Min Side og i
             interessevelgeren på et arrangement.
         </p>
-        @billettholderSwitcher(userInfo, db, logger)
+        @BillettholderSwitcher(userInfo, db, logger)
         <p>Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
     </div>
 
     </dialog>
-
-
 }
 
-templ billettholderSwitcher(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+templ BillettholderSwitcher(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
     {{
         associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
     }}

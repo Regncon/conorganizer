@@ -8,11 +8,11 @@ import (
 	"github.com/Regncon/conorganizer/components/ticket_holder"
 )
 
-templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
     {{
         logger := logger.With("component", "Menu")
-        associatedBillettholdere, _ := ticketholder.GetTicketHolders(UserInfo, db)
-        currentBillettholder := ticketholder.GetYourBillettHolderInfo(UserInfo, associatedBillettholdere)
+        associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
+        currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
      }}
 	<style>
 		.beta-toggle {
@@ -317,10 +317,10 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				</a>
 			</section>
 			<section id="main-menu-navbuttons">
-				@MainMenuButtons(UserInfo)
+				@MainMenuButtons(userInfo)
 			</section>
 			<section id="main-menu-usermenu">
-				if UserInfo.IsLoggedIn {
+				if userInfo.IsLoggedIn {
 					<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end;">
 						<details
 							id="main-menu-user-details"
@@ -334,7 +334,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 							</div>
                             if currentBillettholder.Id != 0 {
                                 <div class="hamburger-other">
-                                    @clickableBillettholderMenu(UserInfo, db, logger)
+                                    @clickableBillettholderMenu(userInfo, db, logger)
                                 </div>
                             }
                             if currentBillettholder.Id == 0 {
@@ -344,10 +344,13 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                             }
 							</summary>
 							<div class="dropdown-panel">
-								<a href="/temp">Bytt aktiv billettholder</a>
+                                <a href="#" data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
+                                    Bytt aktiv billettholder
+                                    <span>(aa)</span>
+                                </a>
 								<a href="/profile">Min Profil</a>
 								<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
-                                if UserInfo.IsAdmin {
+                                if userInfo.IsAdmin {
 									<hr/>
 									<a href="/admin/billettholder/">Billettholderoversikt</a>
 									<a href="/admin/approval/">Godkjenn arrangementer</a>
@@ -355,14 +358,10 @@ templ Menu(UserInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 								}
                                 <a href="/auth/logout">Logg ut</a>
 							</div>
-                            <div class="dropdown-panel-billettholder">
-                                <a href="/temp">Degselv</a>
-								<a href="/temp">Bjørnson Temporary</a>
-							</div>
 						</details>
 					</div>
 				}
-				if !UserInfo.IsLoggedIn {
+				if !userInfo.IsLoggedIn {
 					<a href="/auth" class="btn btn--primary btn-login">
 						Logg inn
 					</a>
