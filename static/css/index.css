@@ -94,6 +94,8 @@
 
     /* nav */
     --nav-height: 4rem;
+    --nav-event-height: 58px;
+    --nav-breadcrumb-height: 51px;
 
     /* z-index */
     --nav-z-index: 50;
@@ -101,6 +103,7 @@
 
     /* responsively size some gap variables so this doesn't have to be redefined */
     --responsive-top-of-page-spacing: var(--spacing-4x);
+    --responsive-scroll-margin-top-event: calc(var(--nav-event-height) + var(--nav-breadcrumb-height));
     --responsive-pane-column-spacing: var(--spacing-4x);
     --responsive-page-section-spacing: var(--spacing-8x);
     --responsive-pane-padding: var(--spacing-4x);
@@ -114,6 +117,7 @@
         --responsive-page-section-spacing: var(--spacing-8x);
         --responsive-pane-padding: var(--spacing-5x);
         --responsive-h2-margin: var(--spacing-5x);
+        --responsive-scroll-margin-top-event: calc(var(--nav-height) + var(--nav-event-height));
     }
 }
 
@@ -148,10 +152,6 @@ html {
     font-family: var(--font-sans-serif);
     color: var(--color-primary-text);
     scroll-behavior: smooth;
-    /*
-    //todo: fix nav then add scroll-margin based on css variable
-    */
-    scroll-margin: 64px;
 
     @media (prefers-reduced-motion: reduce) {
         scroll-behavior: auto;
@@ -279,8 +279,15 @@ a.inline-link {
 }
 
 a.inline-link:hover,
-a.inline-link:active {
+a.inline-link:active,
+a.inline-link:focus-visible {
     color: var(--color-text-strong);
+}
+
+a.inline-link:focus-visible {
+    outline: 2px solid var(--color-secondary-focus-visible);
+    outline-offset: 2px;
+    border-radius: var(--border-radius-1x);
 }
 
 .inline-icon {
@@ -401,6 +408,11 @@ input {
 *::after {
     box-sizing: inherit;
     outline: none;
+}
+
+:where(a[href], button, summary, [role="button"], input:not([type="hidden"]), select, textarea):focus-visible {
+    outline: 2px solid var(--color-secondary-focus-visible);
+    outline-offset: 2px;
 }
 
 .flex {

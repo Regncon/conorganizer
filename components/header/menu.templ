@@ -7,54 +7,6 @@ import (
 
 templ Menu(UserInfo requestctx.UserRequestInfo) {
 	<style>
-		.beta-toggle {
-			display: flex;
-			align-items: center;
-			gap: 0.5rem;
-			margin: 0.6rem 1rem 0.6rem 0.6rem;
-			font-family: var(--font-monospace);
-		}
-
-		.beta-toggle-label {
-			color: var(--color-secondary);
-			font-size: 1rem;
-			user-select: none;
-			display: none;
-		}
-
-		.beta-toggle input[type="checkbox"] {
-			display: none;
-		}
-
-		.beta-toggle .slider {
-			width: 40px;
-			height: 22px;
-			background: #757575;
-			border-radius: 22px;
-			position: relative;
-			transition: background 0.2s;
-		}
-
-		.beta-toggle .slider::after {
-			content: "";
-			position: absolute;
-			height: 18px;
-			width: 18px;
-			left: 2px;
-			top: 2px;
-			background: #fff;
-			border-radius: 50%;
-			transition: transform 0.2s;
-		}
-
-		.beta-toggle input:checked + .slider {
-			background: #4fd1c5;
-		}
-
-		.beta-toggle input:checked + .slider::after {
-			transform: translateX(18px);
-		}
-
 		.main-menu-header {
 			width: 100%;
 			background-color: var(--bg-surface);
@@ -74,16 +26,14 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 			gap: var(--spacing-4x);
 			font-family: var(--font-sans-serif);
 
-			a.disabled {
-				pointer-events: none;
-				color: #999;
-				cursor: not-allowed;
-				text-decoration: none;
-				opacity: 0.6;
+			.logo-link {
+				border-radius: 50%;
 			}
 
-			.logo-link {
-				display: none;
+			.logo-link:focus-visible {
+				outline: none;
+				background-color: var(--btn-ghost-hover-bg);
+				box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
 			}
 
 			details {
@@ -145,8 +95,14 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 				gap: var(--spacing-1x);
 			}
 
-			.dropdown-panel a:hover {
+			.dropdown-panel a:hover,
+			.dropdown-panel a:focus-visible {
 				background-color: hsla(0, 0%, 100%, 0.1);
+			}
+
+			.dropdown-panel a:focus-visible {
+				outline: none;
+				box-shadow: inset 0 0 0 2px var(--btn-ghost-focus-shadow);
 			}
 		}
 
@@ -155,10 +111,6 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 		}
 
 		#main-menu-navbuttons {
-			display: contents;
-		}
-
-		.main-menu-buttons {
 			display: contents;
 		}
 
@@ -250,7 +202,7 @@ templ Menu(UserInfo requestctx.UserRequestInfo) {
 		<nav class="main-menu page-content-container wide-content">
 			<section id="main-menu-logo">
 				<a href="/" class="logo-link">
-					<img src="/static/RegnconLogo.svg" alt="logo"/>
+					<img src="/static/RegnconLogo.svg" alt="Regncon framside"/>
 				</a>
 			</section>
 			<section id="main-menu-navbuttons">

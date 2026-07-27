@@ -186,7 +186,7 @@ func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, liveManager *live.Mana
 	})
 }
 
-func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventPulje, error) {
+func getEventPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventPulje, error) {
 	query := `
             SELECT
                 event_id,
@@ -256,7 +256,7 @@ func getRoomsPuljeByFloor(db *sql.DB, pulje models.Pulje) []FloorGroupPulje {
 
 templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 	{{
-		eventPulje, err := getEvenPulje(eventId, pulje.ID, db)
+		eventPulje, err := getEventPulje(eventId, pulje.ID, db)
 		membershipErrorKey := fmt.Sprintf("puljeMembership%s", pulje.ID)
 		publishedErrorKey := fmt.Sprintf("puljePublished%s", pulje.ID)
 		roomErrorKey := fmt.Sprintf("puljeRoom%s", pulje.ID)
