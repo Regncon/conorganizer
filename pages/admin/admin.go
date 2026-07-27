@@ -49,7 +49,8 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 					liveManager.Stream(w, r, live.Page{
 						Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests, live.BucketBillettholders},
 						Render: func(ctx context.Context, r *http.Request) templ.Component {
-							return approval.ApprovalPage(db, baseLogger)
+                            userInfo := userctx.GetUserRequestInfo(r.Context())
+							return approval.ApprovalPage(userInfo, db, baseLogger)
 						},
 					})
 				})

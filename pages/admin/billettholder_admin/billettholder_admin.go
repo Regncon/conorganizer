@@ -9,6 +9,7 @@ import (
 	addbillettholder "github.com/Regncon/conorganizer/pages/admin/billettholder_admin/add"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/live"
+	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
 )
@@ -24,7 +25,8 @@ func SetupBillettholderAdminRoute(router chi.Router, liveManager *live.Manager, 
 			liveManager.Stream(w, r, live.Page{
 				Buckets: []live.Bucket{live.BucketBillettholders, live.BucketInterests},
 				Render: func(ctx context.Context, r *http.Request) templ.Component {
-					return BillettholderAdminPage(db, logger)
+                    userInfo := userctx.GetUserRequestInfo(ctx)
+					return BillettholderAdminPage(userInfo, db, logger)
 				},
 			})
 		})
@@ -40,7 +42,8 @@ func SetupBillettholderAdminRoute(router chi.Router, liveManager *live.Manager, 
 			liveManager.Stream(w, r, live.Page{
 				Buckets: []live.Bucket{live.BucketBillettholders},
 				Render: func(ctx context.Context, r *http.Request) templ.Component {
-					return addbillettholder.AddBillettholderAdminPage(db, logger)
+                    userInfo := userctx.GetUserRequestInfo(ctx)
+					return addbillettholder.AddBillettholderAdminPage(userInfo, db, logger)
 				},
 			})
 		})

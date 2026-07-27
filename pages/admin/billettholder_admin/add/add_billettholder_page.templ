@@ -12,6 +12,7 @@ import (
 	"github.com/Regncon/conorganizer/service/checkIn"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/go-chi/chi/v5"
+	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
 var searchTerm = ""
@@ -69,7 +70,7 @@ func isBillettholder(ticketID int, bilettholdere []models.Billettholder) bool {
 	/>
 */
 
-templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
+templ AddBillettholderAdminPage(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	{{ tickets, ticketsErr := checkIn.GetTicketsFromCheckIn(logger, searchTerm) }}
 	if ticketsErr != nil {
 		{{ logger.Error(ticketsErr.Error(), "search_term", searchTerm) }}
@@ -79,12 +80,12 @@ templ AddBillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 		{{ logger.Error(billettholdereErr.Error()) }}
 	}
 	<div id="add-billettholder-admin-container">
-		@components.Breadcrumbs([]components.BreadcrumbPath{
+		@components.Breadcrumbs(userInfo,[]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
 			{Name: "Admin", Url: "/admin/"},
 			{Name: "Billettholdere", Url: "/admin/billettholder/"},
 			{Name: "billetter", Url: ""},
-		})
+		}, db, logger)
 		<article style="display:flex; flex-direction:column; gap:1rem; padding: 1rem;">
 			<h1 class="page-heading">Billetter</h1>
 			<p class="page-heading-help-text">Her kan du legge til en ny billettholder</p>

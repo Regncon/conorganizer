@@ -6,9 +6,12 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
+
+var userInfo = requestctx.UserRequestInfo{}
 
 func TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav(t *testing.T) {
 	// Gitt at publisering av program er skrudd av,
@@ -24,7 +27,7 @@ func TestRootPageContent_WhenProgramPublishingIsOff_HidesScrollnav(t *testing.T)
 	insertRootPagePulje(t, db)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(userInfo, db, false, nil, nil))
 	actualScrollnavVisible := templtest.HasSelector(doc, ".program-scrollnav-container")
 
 	// Then
@@ -51,7 +54,7 @@ func TestRootPageContent_WhenProgramPublishingIsOff_OnlyShowsAnnouncedEvents(t *
 	insertRootPageEvent(t, db, "alpha-announced", "Alpha Announced", models.EventStatusAnnounced)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(userInfo, db, false, nil, nil))
 	actualTitles := templtest.CollectTexts(doc, ".event-card-title")
 
 	// Then
@@ -74,7 +77,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_ShowsScrollnav(t *testing.T) 
 	insertRootPagePulje(t, db)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(userInfo, db, false, nil, nil))
 	actualScrollnavVisible := templtest.HasSelector(doc, ".program-scrollnav-container")
 
 	// Then
@@ -110,7 +113,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_OnlyShowsAnnouncedPublishedPu
 	insertRootPageEventPulje(t, db, "published-submitted", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(userInfo, db, false, nil, nil))
 	actualTitles := templtest.CollectTexts(doc, ".event-card-title")
 
 	// Then
@@ -143,7 +146,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_RendersPuljeSectionsInTimeOrd
 	insertRootPageEventPulje(t, db, "fredag-event", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(userInfo, db, false, nil, nil))
 	actualPuljeHeadings := templtest.CollectTexts(doc, ".pulje-heading")
 
 	// Then
@@ -172,7 +175,7 @@ func TestRootPageContent_WhenProgramPublishingIsOn_SortsEventsAlphabeticallyWith
 	insertRootPageEventPulje(t, db, "alpha-event", models.PuljeFredagKveld, true)
 
 	// When
-	doc := templtest.Render(t, rootPageContent(db, false, nil))
+	doc := templtest.Render(t, rootPageContent(userInfo, db, false, nil, nil))
 	actualTitles := templtest.CollectTexts(doc, ".event-card-title")
 
 	// Then

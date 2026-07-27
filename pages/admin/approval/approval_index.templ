@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
+	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
 func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
@@ -21,15 +22,15 @@ func ApprovalLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger) {
 			userInfo,
             db,
             logger,
-			approvalIndex(db, logger),
+			approvalIndex(userInfo, db, logger),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render approval page: %w", err).Error(), "user_id", userInfo.Id)
 		}
 	})
 }
 
-templ approvalIndex(db *sql.DB, logger *slog.Logger) {
+templ approvalIndex(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	<div id="approval-container" data-init={ live.DatastarInit("/admin/approval/api/") }>
-		@ApprovalPageContent(db, logger)
+		@ApprovalPageContent(userInfo,db, logger)
 	</div>
 }

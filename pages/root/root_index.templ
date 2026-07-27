@@ -9,6 +9,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
+	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
 func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
@@ -20,15 +21,15 @@ func rootLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventIm
 			userInfo,
             db,
             logger,
-			rootIndex(db, userInfo.IsAdmin, eventImageDir),
+			rootIndex(userInfo, db, userInfo.IsAdmin, eventImageDir, logger),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render root page: %w", err).Error(), "user_id", userInfo.Id)
 		}
 	})
 }
 
-templ rootIndex(db *sql.DB, isAdmin bool, eventImageDir *string) {
+templ rootIndex(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin bool, eventImageDir *string, logger *slog.Logger) {
 	<div id="root-page-wrapper" data-init={ live.DatastarInit("/root/api") }>
-		@rootPageContent(db, isAdmin, eventImageDir)
+		@rootPageContent(userInfo, db, isAdmin, eventImageDir, logger)
 	</div>
 }

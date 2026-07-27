@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"log/slog"
 )
 
 func getProgramPublished(db *sql.DB) (bool, error) {
@@ -26,19 +28,19 @@ func getProgramPublished(db *sql.DB) (bool, error) {
 	return isPublished == 1, nil
 }
 
-templ rootPage(db *sql.DB, isAdmin bool, eventImageDir *string) {
+templ rootPage(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin bool, eventImageDir *string, logger *slog.Logger) {
 	<div id="root-page-wrapper">
-		@rootPageContent(db, isAdmin, eventImageDir)
+		@rootPageContent(userInfo, db, isAdmin, eventImageDir, logger)
 	</div>
 }
 
-templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
+templ rootPageContent(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin bool, eventImageDir *string, logger *slog.Logger) {
 	{{
 		programPublished, err := getProgramPublished(db)
 	}}
-	@components.Breadcrumbs([]components.BreadcrumbPath{
+	@components.Breadcrumbs(userInfo, []components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
-	})
+	}, db, logger)
 	if err != nil {
 		<div class="page-content-container">
 			<p>Error fetching program publishing state: { err.Error() }</p>
