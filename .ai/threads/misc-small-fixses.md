@@ -888,3 +888,61 @@ My recommendation: do **not** add ETags as the main fix. For these public event 
 Time: 2026-07-18 18:07:03
 --- Next Prompt ---
 
+
+Let's try the ETag approach and see how it works. Remove the query string code. 
+
+Time: 2026-07-27 16:34:20
+--- Codex Run ---
+
+Codex output:
+I’ll switch the event image cache-busting from URL versioning to HTTP validation. First I’m checking the current route/helper state so the change stays scoped and doesn’t disturb the earlier broadcast work.
+The current committed state only has the thread log dirty, so I’m treating the query-string code as the baseline to replace. I’ll put the ETag logic behind the event image handler rather than scattering it through templates.
+I’m going to implement this as: stable event image URLs from `GetEventImageUrl`, plus an event-image file server wrapper that sets a weak ETag from file modtime and size before delegating to Go’s file server. That keeps the route behavior simple and lets the standard file serving path handle the conditional response.
+The helper now returns stable event image URLs again. Next I’m adding the ETag wrapper and updating the tests around the new behavior.
+The route wrapper is in place. I’m now wiring `/event-images/*` through it and revising the helper test away from versioned URLs.
+`/event-images/*` now goes through the ETag-aware file server. I’m updating and adding tests so we can see both the stable URL and conditional request behavior.
+The helper test now reflects stable URLs. I’m adding handler-level tests for the ETag header and `If-None-Match` returning `304 Not Modified`.
+The ETag tests are in place. I’m formatting and running the focused tests now; if Go’s standard file server does not honor the pre-set ETag the way we expect, this will show it immediately.
+The tracked diff looks scoped; the new handler test files are untracked so they do not show in the stat yet. I’m running the eventimage package tests next.
+The event image tests pass, including `If-None-Match` producing `304 Not Modified`. I’m running the full suite to catch import/routing fallout.
+The ETag package itself passes, but the full build exposed an existing mismatch in the image-upload route: `profile.go` passes `liveManager`, while the current generated/source handler signature does not accept it. I’m checking whether the source `.templ` needs to be regenerated or restored to the broadcast-aware signature before continuing.
+The `.templ` source already has the broadcast-aware signature; only the generated Go file is stale. I’m regenerating templ output now, which should resolve the full build failure without changing that source behavior.
+Templ output has been regenerated. I’m formatting the generated file and rerunning the full suite.
+The generated signature now matches the source and route call. I’m rerunning all tests from this consistent state.
+The full suite passes. I’m doing a final diff/status pass now; I may add one route-level assertion if there is already a convenient public asset route test.
+There is already a public asset route test, so I’m adding one lightweight assertion there to prove the mounted `/event-images/*` route actually emits an ETag, not just the standalone handler.
+The helper function has slightly different text than expected, so I’m reading that small section and applying the assertion against the actual shape.
+I found the actual helper wording. I’m adding the ETag assertion now.
+The route-level ETag assertion is added. I’m formatting and rerunning the full suite once more.
+The route-level test is in the tracked diff now. I’m running the full suite again.
+All tests pass. I’m collecting final file references and status so I can give you a precise summary.
+Implemented the ETag approach and removed the query string versioning.
+
+Event image URLs are stable again in [event_imaeg_helpers.go](/home/cinmay/Documents/conorganizer/service/eventimage/event_imaeg_helpers.go:17), returning `/event-images/<file>.webp`.
+
+`/event-images/*` now goes through an ETag-aware file server in [event_image_file_server.go](/home/cinmay/Documents/conorganizer/service/eventimage/event_image_file_server.go:9). It sets a weak ETag from file modtime + size, then delegates to Go’s file server, which handles `If-None-Match` and returns `304 Not Modified`.
+
+The route is wired in [main.go](/home/cinmay/Documents/conorganizer/main.go:155). I added tests for the ETag header, `304 Not Modified`, stable image URLs, and route-level ETag presence.
+
+Verification passed:
+
+```sh
+GOCACHE=/tmp/conorganizer-go-build go test ./...
+```
+
+Important caveat: this does **not** add `Cache-Control`. So the browser will benefit from ETags when it revalidates, but ETags alone still do not force revalidation if the browser decides the cached image is fresh. This is the right shape for testing the ETag idea without also changing cache policy.
+
+text
+2026-07-27T14:33:33.242327Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/health_test.go:
+func assertHeaderValue(t *testing.T, recorder *httptest.ResponseRecorder, header string, expected string) {
+	t.Helper()
+
+	actual := recorder.Header().Get(header)
+	if actual != expected {
+		t.Fatalf("expected %s header %q, got %q", header, expected, actual)
+	}
+}
+
+Time: 2026-07-27 16:34:20
+--- Next Prompt ---
+

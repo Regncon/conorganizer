@@ -160,6 +160,7 @@ func TestPublicAssetRoutesBypassAppMiddleware(t *testing.T) {
 	assertHeaderValue(t, staticRecorder, "X-App-Middleware", "")
 	assertHeaderValue(t, eventImageRecorder, "X-App-Middleware", "")
 	assertHeaderValue(t, protectedRecorder, "X-App-Middleware", "seen")
+	assertHeaderPresent(t, eventImageRecorder, "ETag")
 }
 
 func openMemoryDB(t *testing.T) *sql.DB {
@@ -210,5 +211,13 @@ func assertHeaderValue(t *testing.T, recorder *httptest.ResponseRecorder, header
 	actual := recorder.Header().Get(header)
 	if actual != expected {
 		t.Fatalf("HTTP header %s mismatch\nexpected: %q\nactual:   %q", header, expected, actual)
+	}
+}
+
+func assertHeaderPresent(t *testing.T, recorder *httptest.ResponseRecorder, header string) {
+	t.Helper()
+
+	if recorder.Header().Get(header) == "" {
+		t.Fatalf("expected HTTP header %s to be present", header)
 	}
 }
