@@ -61,6 +61,40 @@ templ Breadcrumbs(userInfo requestctx.UserRequestInfo, paths []BreadcrumbPath, d
 			}
 		}
 
+        /* this is only shown on phone. Therefore static size 100dynamic*/
+        #breadcrumb-modal[open] {
+            height: 100dvh;
+            width: 100dvw;
+            border: none;
+            max-height: 100dvh;
+            max-width: 100dvw;
+            display: grid;
+            grid-template-rows: 50px 1fr;
+            button {
+                max-height: 42px;
+                max-width: 42px;
+                margin-left: auto;
+            }
+            .breadcrumb-modal-content {
+                display: flex;
+                flex-direction: column;
+                max-height: 312px;
+                max-width: 360px;
+                div {
+                    height: 52px;
+                    line-height: 52px;
+                }
+                a {
+                    height: 52px;
+                    line-height: 52px;
+                }
+                hr {
+                    flex-shrink: 0;
+                }
+
+            }
+        }
+
 		.breadcrumbs-extra-content {
 			flex-shrink: 0;
 		}
@@ -131,7 +165,7 @@ templ Breadcrumbs(userInfo requestctx.UserRequestInfo, paths []BreadcrumbPath, d
 	</div>
 
     <dialog id="breadcrumb-modal">
-        <button class="modal-close-button" commandfor="breadcrumb-modal" command="close">
+        <button class="modal-close-button btn" commandfor="breadcrumb-modal" command="close">
 			@icons.Icon(icons.Close, icons.Size24)
 		</button>
         <div class="breadcrumb-modal-content">
