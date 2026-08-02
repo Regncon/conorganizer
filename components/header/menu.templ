@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
+	"fmt"
 )
 
 templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
@@ -369,4 +370,135 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			</section>
 		</nav>
 	</header>
+}
+
+templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+
+
+    <style>
+
+        /* this is only shown on phone. Therefore static size 100dynamic*/
+        #modal-hamburger-phone[open] {
+            height: 100dvh;
+            width: 100dvw;
+            border: none;
+            max-height: 100dvh;
+            max-width: 100dvw;
+            display: grid;
+            grid-template-rows: 50px 1fr;
+            button {
+                max-height: 42px;
+                max-width: 42px;
+                margin-left: auto;
+            }
+            .hamburger-modal-content {
+                display: flex;
+                flex-direction: column;
+                max-height: 312px;
+                max-width: 360px;
+                div {
+                    height: 52px;
+                    line-height: 52px;
+                }
+                a {
+                    height: 52px;
+                    line-height: 52px;
+                }
+                hr {
+                    flex-shrink: 0;
+                }
+
+            }
+        }
+
+    </style>
+
+    <button class="breadcrumbs-hamburger-menu btn--ghost btn"
+        data-on:click="document.getElementById('modal-hamburger-phone').showModal()">
+            @icons.Icon(icons.Menu, icons.Size20)
+    </button>
+
+    <dialog id="modal-hamburger-phone">
+        <button class="modal-close-button btn" commandfor="modal-hamburger-phone" command="close">
+			@icons.Icon(icons.Close, icons.Size24)
+		</button>
+        <div class="hamburger-modal-content">
+            <div data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
+                Bytt aktiv billettholder
+                <span>(aa)</span>
+            </div>
+            <a href="/profile">Min Profil</a>
+            <a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
+            if userInfo.IsAdmin {
+                <hr/>
+                <a href="/admin/billettholder/">Billettholderoversikt</a>
+                <a href="/admin/approval/">Godkjenn arrangementer</a>
+                <hr/>
+            }
+            <a href="/auth/logout">Logg ut</a>
+        </div>
+    </dialog>
+
+    <dialog id="modal-billettholderswitcher">
+    <div class="modal-billettholder-header">
+        <p>Bytt aktiv billettholder</p>
+        <button class="modal-close-button" commandfor="modal-billettholderswitcher" command="close">
+            @icons.Icon(icons.Close, icons.Size24)
+        </button>
+    </div>
+    <div class="hamburger-modal-billettholder-content">
+        <p>
+            Ved å bytte aktiv bruker vil interessevalgene
+            til den valgte brukeren vises på programoversikten
+            og de vil være standardvalget på Min Side og i
+            interessevelgeren på et arrangement.
+        </p>
+        @BillettholderSwitcher(userInfo, db, logger)
+        <p>Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
+    </div>
+
+    </dialog>
+}
+
+templ BillettholderSwitcher(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+    {{
+        associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
+    }}
+
+    <div class="billettholder-switcher">
+        for _, billettholder := range associatedBillettholdere {
+            @billettholderSwitcherButton(billettholder)
+        }
+    </div>
+
+}
+
+templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolder) {
+    {{
+        initials := ticketholder.GetInitials(currentBillettHolder.Name)
+        shortName := ticketholder.GetFirstNameAndLastInitial(currentBillettHolder.Name)
+        currentBillettHolderJSON, _ := templ.JSONString(currentBillettHolder)
+    }}
+	<style>
+		.ticket-holder-picker {
+            padding-inline: var(--border-outline-width);
+			.card-clickable {
+                place-content: start;
+                height: 3.125rem;
+                width: 9.1rem;
+            }
+		}
+	</style>
+	<div class="ticket-holder-picker">
+		<div
+			role="button"
+			data-attr:tabindex={ fmt.Sprintf(`$billettHolderId == %d ? '-1' : '0'`, currentBillettHolder.Id) }
+			class="card-clickable card-clickable-item"
+			data-current-billett-holder={ currentBillettHolderJSON }
+			data-class:selected={ fmt.Sprintf("$billettHolderId == %d", currentBillettHolder.Id) }
+			data-on:click={ fmt.Sprintf("$billettHolderId = %d; window.conorganizer.billettholderSelection.set(JSON.parse(evt.currentTarget.dataset.currentBillettHolder));", currentBillettHolder.Id) }
+		>
+			@ticketholder.NameInitials(shortName, initials, currentBillettHolder.Color)
+		</div>
+	</div>
 }
