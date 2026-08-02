@@ -50,6 +50,14 @@ func getPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 	return puljer, nil
 }
 
+func getPuljeStatus(db *sql.DB, pulje models.Pulje) (models.PuljeStatus, error) {
+	var status models.PuljeStatus
+	if err := db.QueryRow(`SELECT status FROM puljer WHERE id = ?`, pulje).Scan(&status); err != nil {
+		return "", fmt.Errorf("get pulje %s status: %w", pulje, err)
+	}
+	return status, nil
+}
+
 func isValidPuljeStatus(status models.PuljeStatus) bool {
 	switch status {
 	case models.PuljeStatusOpen, models.PuljeStatusLocked, models.PuljeStatusCompleted:

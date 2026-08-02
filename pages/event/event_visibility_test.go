@@ -378,12 +378,13 @@ func TestEventPageContent_WhenProgramPublishingIsOff_DoesNotRenderInterestDialog
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at programmet ikke er publisert, men arrangementet er publisert i en pulje.",
 		When:  "Når arrangementssiden vises.",
-		Then:  "Så skal dialogen ikke rendres og brukeren fortsatt se lenken for å hente billett.",
+		Then:  "Så skal dialogen ikke rendres og brukeren se publiseringsmeldingen uten billettlenke.",
 	})
 
 	// Given
 	expectedDialogVisible := false
-	expectedHrefs := []string{"/", "/profile/tickets"}
+	expectedMessages := []string{"Interessevalget åpner når programmet er publisert."}
+	expectedHrefs := []string{"/"}
 
 	db := createEventVisibilityTestDB(t)
 	logger := testutil.NewSlogAdapter(&testutil.StubLogger{})
@@ -396,11 +397,15 @@ func TestEventPageContent_WhenProgramPublishingIsOff_DoesNotRenderInterestDialog
 	// When
 	doc := templtest.Render(t, event_page_content("program-off-event", false, logger, db, nil, request))
 	actualDialogVisible := templtest.HasSelector(doc, ".interest-dialog")
+	actualMessages := templtest.CollectTexts(doc, ".event-interest-unavailable-message")
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then
 	if actualDialogVisible != expectedDialogVisible {
 		t.Fatalf("interest dialog visibility mismatch\nexpected: %v\nactual:   %v", expectedDialogVisible, actualDialogVisible)
+	}
+	if !slices.Equal(expectedMessages, actualMessages) {
+		t.Fatalf("unpublished program message mismatch\nexpected: %v\nactual:   %v", expectedMessages, actualMessages)
 	}
 	templtest.AssertSameHrefs(t, expectedHrefs, actualHrefs)
 }

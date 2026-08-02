@@ -8,7 +8,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 )
 
-templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, selectedPuljeQuery string, interestAvailable bool) {
+templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, selectedPuljeQuery string, programPublished bool, interestAvailable bool) {
 	{{ helperState, hasHelperState := ticketholder.BuildQueryPuljeInterestState(puljerForEvent, selectedPuljeQuery, time.Now()) }}
 	<style>
     .event-interest-picker-container {
@@ -104,7 +104,11 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, sele
 </style>
 	<div class="event-interest-picker-container">
 		<div class="card event-interest-picker">
-			if hasTickets {
+			if !programPublished {
+				<p class="event-interest-unavailable-message color-strong">
+					Interessevalget åpner når programmet er publisert.
+				</p>
+			} else if hasTickets {
 				if interestAvailable {
 					<div>
 						Tenker du dette arrangementet ser spennende ut?
@@ -144,7 +148,7 @@ templ EventInterestPanel(hasTickets bool, puljerForEvent []models.PuljeRow, sele
 				}
 			} else {
 				<p class="color-strong">
-					Før å kunne melde interesse må du først hente billetten din.
+					For å kunne melde interesse må du først hente billetten din.
 				</p>
 				<a
 					href="/profile/tickets"

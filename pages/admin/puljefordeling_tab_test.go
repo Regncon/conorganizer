@@ -71,7 +71,7 @@ func TestPuljefordelingTabContent_RendersPuljeEventsAndStatusToggles(t *testing.
 	seedTabEventWithInterest(t, db, "drager-og-fangehull", "Drager og Fangehull", models.PuljeFredagKveld)
 
 	// When
-	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld))
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
 	actualText := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
 
 	// Then
@@ -97,7 +97,7 @@ func TestPuljefordelingTabContent_ShowsRunningUnsatisfiedCount(t *testing.T) {
 
 	// When / Then: earlier pulje — participant not yet satisfied.
 	fredag := strings.Join(
-		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld)), "#puljefordeling-tab"),
+		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil)), "#puljefordeling-tab"),
 		" ",
 	)
 	if !strings.Contains(fredag, "1 uten førstevalg så langt") {
@@ -106,11 +106,127 @@ func TestPuljefordelingTabContent_ShowsRunningUnsatisfiedCount(t *testing.T) {
 
 	// When / Then: later pulje — participant gets their first choice.
 	lordag := strings.Join(
-		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeLordagKveld)), "#puljefordeling-tab"),
+		templtest.CollectTexts(templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeLordagKveld, nil)), "#puljefordeling-tab"),
 		" ",
 	)
 	if !strings.Contains(lordag, "0 uten førstevalg så langt") {
 		t.Fatalf("expected Lørdag tab to report 0 still without first choice\nactual text: %s", lordag)
+	}
+}
+
+func TestPuljefordelingTabContent_WarnsWhenEventHasNoDm(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt et arrangement i en pulje uten tildelt spilleder.",
+		When:  "Når puljefordeling-fanen rendres.",
+		Then:  "Så skal arrangementet markeres som at det mangler spilleder.",
+	})
+
+	// Given: an event in the pulje with no GM assigned.
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_missing_dm")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
+
+	// When
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+	text := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
+
+	// Then
+	if !strings.Contains(text, "Mangler spilleder") {
+		t.Fatalf("event without a DM should be flagged 'Mangler spilleder'\nactual text: %s", text)
+	}
+}
+
+func TestPuljefordelingTabContent_PublishedHidesAssignmentControls(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en publisert (Completed) pulje med en manuell plassering.",
+		When:  "Når puljefordeling-fanen rendres.",
+		Then:  "Så skal verken «legg til» eller «fjern»-kontrollene vises.",
+	})
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_published_readonly")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES ('evA',?,1,'Player','manual')`, string(models.PuljeFredagKveld))
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+
+	if n := doc.Find(".pulje-add").Length(); n != 0 {
+		t.Errorf("published pulje must not show the add button, found %d", n)
+	}
+	if n := doc.Find(".pulje-remove").Length(); n != 0 {
+		t.Errorf("published pulje must not show remove controls, found %d", n)
+	}
+}
+
+func TestPuljefordelingTabContent_PlayerTilesDragToEventBoxes(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en pulje med et seatet arrangement.",
+		When:  "Når fanen rendres.",
+		Then:  "Så skal spillerflisene kunne dras og arrangementsboksene være slippmål.",
+	})
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_dragdrop")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	seedTabEventWithInterest(t, db, "evA", "Alpha", models.PuljeFredagKveld)
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+
+	tile := doc.Find(".pulje-players li[draggable='true']")
+	if tile.Length() == 0 {
+		t.Fatal("expected a draggable player tile")
+	}
+	if got := tile.AttrOr("data-on:dragstart", ""); !strings.Contains(got, "$draggedBillettholderId = 1") {
+		t.Errorf("tile dragstart should set the dragged billettholder id; got %q", got)
+	}
+
+	drop := doc.Find(".pulje-event").AttrOr("data-on:drop__prevent", "")
+	if !strings.Contains(drop, "/admin/api/puljefordeling/assign") {
+		t.Errorf("event box should be a drop target posting to the assign endpoint; got %q", drop)
+	}
+}
+
+func TestPuljefordelingTabContent_PublishedTilesNotDraggable(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_dragdrop_published")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusCompleted, "2026-01-01 18:00")
+	seedTabEventWithInterest(t, db, "evA", "Alpha", models.PuljeFredagKveld)
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+
+	if n := doc.Find(".pulje-players li[draggable='true']").Length(); n != 0 {
+		t.Errorf("published pulje must not allow dragging, found %d draggable tiles", n)
+	}
+}
+
+func TestPuljefordelingTabContent_PinEmojiForManualWithoutInterest(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en manuelt plassert deltaker uten egen interesse for arrangementet.",
+		When:  "Når fanen rendres.",
+		Then:  "Så skal flisen vise nåle-emoji i stedet for et interessenivå.",
+	})
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_pin_emoji")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
+		VALUES ('evA','Alpha','','','','','',4)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
+		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
+	// Manual pin, NO interest for evA.
+	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES ('evA',?,1,'Player','manual')`, string(models.PuljeFredagKveld))
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+	text := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
+
+	if !strings.Contains(text, "📌") {
+		t.Fatalf("manual pin without interest should show the pin emoji\nactual text: %s", text)
 	}
 }
 

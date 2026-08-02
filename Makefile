@@ -2,7 +2,7 @@ TASK := go tool task
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build generate start dev run debug test download kill \
+.PHONY: help build generate start dev run debug test download download-main download-demo kill \
         lint fmt vet tidy check clean
 
 help: ## Show this help
@@ -31,8 +31,14 @@ debug: ## Build then launch the delve debugger
 test: ## Refresh schema.sql and run all tests
 	$(TASK) test
 
-download: ## Download local copies of prod DB + event images
+download: ## Show download task usage
 	$(TASK) download
+
+download-main: ## Download anonymized main DB + event images
+	$(TASK) download:main
+
+download-demo: ## Download demo DB + event images
+	$(TASK) download:demo
 
 kill: ## Kill stray main/templ/air/task processes
 	$(TASK) kill

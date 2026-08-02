@@ -458,6 +458,32 @@ func TestSolveSlot_ReverseEdgeBumpMarksMoved(t *testing.T) {
 	}
 }
 
+func TestSolveSlot_LateralBumpAtEqualLevelNotMoved(t *testing.T) {
+	// Same bump mechanics as above, but "a" wants X and Y equally (both top
+	// choice, score 5). The solver still bumps "a" off X to seat "b", but "a"
+	// lands on an equally-wanted seat — High → High is a lateral move, not a
+	// downgrade, so "a" must NOT be flagged moved (the red "flyttet ned" stripe
+	// is reserved for players pushed to a strictly lower-interest seat).
+	sl1 := slot("s1", event("X", 1), event("Y", 1))
+	sl2 := slot("s2", model.Event{ID: "Z", Name: "Z", Capacity: 4, DMID: "a"})
+
+	a := model.Player{ID: "a", Name: "a", Prefs: map[string]map[string]model.Score{"s1": {"X": 5, "Y": 5}}}
+	b := model.Player{ID: "b", Name: "b", Prefs: map[string]map[string]model.Score{"s1": {"X": 5}}}
+
+	st := NewState(2026, weekendOf(sl1, sl2))
+	result := st.SolveSlot(sl1, []model.Player{a, b})
+
+	if !slices.Contains(assigned(result, "X"), "b") {
+		t.Errorf("b should win the X seat, got %v", assigned(result, "X"))
+	}
+	if !slices.Contains(assigned(result, "Y"), "a") {
+		t.Errorf("a should land on its equally-wanted Y seat, got %v", assigned(result, "Y"))
+	}
+	if slices.Contains(result.MovedPlayers, "a") {
+		t.Errorf("a was moved between two equally-wanted seats (High→High) and must NOT be flagged moved, got %v", result.MovedPlayers)
+	}
+}
+
 func TestSolveSlot_NoBumpLeavesMovedEmpty(t *testing.T) {
 	// Two players, two disjoint top choices: each is seated directly, no reverse
 	// edge is ever used, so nobody is marked moved.

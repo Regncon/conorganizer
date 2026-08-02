@@ -599,11 +599,11 @@ templ PuljeAssignmentSearch(db *sql.DB, logger *slog.Logger, pulje models.Pulje)
 	if err != nil {
 		<p style="color: var(--color-error);">Kunne ikke hente billettholdere</p>
 	} else {
-		@billettholderAssignmentActions("", pulje, billettholdere)
+		@billettholderAssignmentActions("", pulje, billettholdere, false, "/admin/api/puljefordeling/assign")
 	}
 }
 
-templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder) {
+templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, billettholdere []Billettholder, showGM bool, playerAddURL string) {
 	{{ billettholdereJson, _ := json.Marshal(billettholdere) }}
 	<style>
 		.billettholder-search {
@@ -643,15 +643,17 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 			input-tippy="Søk etter billettholder"
 		></admin-billettholder-search>
 		<div class="billettholder-search-buttons">
+			if showGM {
+				<button
+					class="btn btn--secondary"
+					data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_gm'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+				>
+					Legg til som { models.EventPlayerRoleGM.Label() }
+				</button>
+			}
 			<button
 				class="btn btn--secondary"
-				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_gm'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
-			>
-				Legg til som { models.EventPlayerRoleGM.Label() }
-			</button>
-			<button
-				class="btn btn--secondary"
-				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_first_choice'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+				data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('%s'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId, playerAddURL) }
 			>
 				Legg til som førsteval
 			</button>
@@ -662,13 +664,36 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 
 templ puljeSection(eventId string, pulje models.PuljeRow, interests []InterestWithHolder, assignees []InterestWithHolder, showGmForm bool, billettholdere []Billettholder) {
 	{{ puljeId := pulje.ID }}
+	{{
+		hasGM := false
+		for _, a := range assignees {
+			if a.PuljeId == string(puljeId) && a.IsGamemaster {
+				hasGM = true
+				break
+			}
+		}
+	}}
 	<article
 		class="form-card"
 		data-style:display={ fmt.Sprintf("(!$isInPulje%s || !$isPublished%s) && 'none' || ''", puljeId, puljeId) }
 	>
+		<style>
+			.missing-dm-badge {
+				align-self: flex-start;
+				display: inline-block;
+				padding: 0 var(--spacing-2x);
+				border-radius: var(--border-radius-1x);
+				background-color: var(--bg-surface);
+				color: var(--color-text-error, #e05050);
+				font-size: var(--text-small, 0.85rem);
+			}
+		</style>
 		<h2 style="margin-bottom:1rem;">{ pulje.Name } <span>({ pulje.TimeRange() })</span></h2>
+		if !hasGM {
+			<span class="missing-dm-badge">Mangler spilleder</span>
+		}
 		<h2 style="margin-bottom:1rem;">Finn billettholder!</h2>
-		@billettholderAssignmentActions(eventId, puljeId, billettholdere)
+		@billettholderAssignmentActions(eventId, puljeId, billettholdere, true, "/admin/approval/api/event-players/post/add_first_choice")
 		<h2 style="margin-bottom:1rem;">Kven er tildelt?</h2>
 		@playersInPulje(eventId, puljeId, assignees)
 		<h2 style="margin-bottom:1rem;">Kven er interessert?</h2>

@@ -42,7 +42,8 @@ templ ProgramPuljeInterests(interests []Interest) {
       list-style: none;
       transition: var(--btn-transition);
     }
-    .pulje-interests-summary:hover .pulje-interests-summary-text {
+    .pulje-interests-summary:hover .pulje-interests-summary-text,
+    .pulje-interests-summary:focus-visible .pulje-interests-summary-text {
         background-color: var(--btn-ghost-hover-bg);
         color: var(--btn-ghost-active-text);
     }
@@ -60,6 +61,12 @@ templ ProgramPuljeInterests(interests []Interest) {
       padding-right: var(--spacing-1x);
       border-radius: var(--border-radius-1x);
       transition: var(--btn-transition);
+    }
+    .pulje-interests-summary:focus-visible {
+      outline: none;
+    }
+    .pulje-interests-summary:focus-visible .pulje-interests-summary-text {
+      box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
     }
     .pulje-interests-collapse[open] .inline-icon {
       transform: rotate(180deg);
@@ -105,7 +112,7 @@ templ ProgramPuljeInterests(interests []Interest) {
 			I denne puljen har du arrangementer du er interessert i.
 			Du kan utvide denne seksjonen for å se disse arrangementene.
 		</p>
-		<details class="pulje-interests-collapse">
+		<details class="pulje-interests-collapse" data-preserve-attr="open">
 			<summary class="pulje-interests-summary">
 				<span class="pulje-interests-summary-text">
 					Vis interesser ({ len(interests) })

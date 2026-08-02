@@ -8,6 +8,7 @@ import (
 
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/pages/notfound"
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/live"
@@ -32,7 +33,7 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 			return
 		}
 		if event == nil {
-			http.Error(w, "404 Event not found", http.StatusNotFound)
+			notfound.RenderEvent(w, r, logger)
 			return
 		}
 		var ctx = r.Context()

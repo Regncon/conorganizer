@@ -244,7 +244,7 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 	// Update fairness/totals/misses/unassigned; returns the seated set.
 	assigned := s.applyResult(&result, slot.ID, interested, playerByID, assignments)
 
-	// Players bumped off a higher-scoring event by a residual augmentation and
+	// Players bumped down to a strictly lower-interest event (see runMCMF) and
 	// still holding a seat.
 	for pid := range moved {
 		if _, ok := assigned[pid]; ok {
@@ -386,17 +386,25 @@ func (s *State) runMCMF(
 
 	// A reduced forward edge ran player→event (forward at fe, its reverse at
 	// fe^1 runs event→player, so its .to is the player node). Flow pushed back
-	// along it means that player was bumped off the event.
-	moved := make(map[string]struct{})
+	// along it means that player was bumped off the event. Record the player's
+	// (true, unadjusted) score for the seat they lost — the best one if a chain
+	// of augmentations bumped them off more than one — so we can later tell a
+	// downgrade apart from a lateral move between equally-wanted seats.
+	movedFromScore := make(map[string]model.Score)
 	for _, fe := range reduced {
 		playerNode := g.edges[fe^1].to
 		eventNode := g.edges[fe].to
 		if playerNode < 1 || playerNode > P || eventNode < P+1 || eventNode > P+E {
 			continue
 		}
-		moved[players[playerNode-1].ID] = struct{}{}
+		p := players[playerNode-1]
+		fromScore := p.Prefs[slotID][events[eventNode-P-1].ID]
+		if fromScore > movedFromScore[p.ID] {
+			movedFromScore[p.ID] = fromScore
+		}
 	}
 
+	finalScore := make(map[string]model.Score, len(players))
 	for i, p := range players {
 		for _, eid := range g.adj[i+1] {
 			e := g.edges[eid]
@@ -405,6 +413,18 @@ func (s *State) runMCMF(
 			}
 			evID := events[e.to-P-1].ID
 			assignments[evID] = append(assignments[evID], p.ID)
+			finalScore[p.ID] = p.Prefs[slotID][evID]
+		}
+	}
+
+	// "Moved" is reserved for a genuine downgrade: the player ended up on a
+	// strictly lower-interest seat than the one they were bumped off. A swap
+	// between two equally-wanted events (e.g. High → High) is a lateral move and
+	// is not flagged.
+	moved := make(map[string]struct{})
+	for pid, fromScore := range movedFromScore {
+		if toScore, ok := finalScore[pid]; ok && fromScore > toScore {
+			moved[pid] = struct{}{}
 		}
 	}
 
