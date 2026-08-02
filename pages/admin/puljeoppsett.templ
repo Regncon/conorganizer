@@ -174,7 +174,7 @@ templ gameCardBadges(g BoardGame) {
 
 func inCollision(col SlotColumn, g BoardGame) bool {
 	for _, c := range col.Collisions {
-		if c.HostName == g.HostName {
+		if c.OwnerKey == g.OwnerKey {
 			return true
 		}
 	}

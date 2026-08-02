@@ -34,7 +34,8 @@ type SlotStats struct {
 
 // DMCollision is one owner who runs >=2 games in the same pulje.
 type DMCollision struct {
-	HostName string
+	OwnerKey string // matches BoardGame.OwnerKey — the stable identity to match cards against
+	HostName string // human-readable label for the warning banner
 	Count    int
 }
 
@@ -158,7 +159,7 @@ func computeCollisions(games []BoardGame) []DMCollision {
 	var out []DMCollision
 	for _, key := range order {
 		if counts[key] >= 2 {
-			out = append(out, DMCollision{HostName: host[key], Count: counts[key]})
+			out = append(out, DMCollision{OwnerKey: key, HostName: host[key], Count: counts[key]})
 		}
 	}
 	return out

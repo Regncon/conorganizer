@@ -122,6 +122,82 @@ func TestBuildScheduleBoard_CarriesEventTypeRuntimeEnglish(t *testing.T) {
 	}
 }
 
+// TestBuildScheduleBoard_CollisionMatchesOwnerNotHostName guards against matching
+// collisions on the free-text host_name field: two different owners who happen to
+// type the same host_name must not be conflated, and each pulje's collisions must
+// be keyed by owner identity, not by that shared label.
+func TestBuildScheduleBoard_CollisionMatchesOwnerNotHostName(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "build_board_owner_not_hostname")
+	testutil.MustExec(t, db, `INSERT INTO puljer (id, name, status, start_at, end_at) VALUES (?,?,?,?,?)`,
+		string(models.PuljeFredagKveld), "Fredag", "Open", "2026-01-01 18:00", "2026-01-01 22:00")
+	testutil.MustExec(t, db, `INSERT INTO puljer (id, name, status, start_at, end_at) VALUES (?,?,?,?,?)`,
+		string(models.PuljeLordagKveld), "Lørdag", "Open", "2026-01-02 18:00", "2026-01-02 22:00")
+
+	// Pulje 1: owner A (user 11) is double-booked. Owner B has only one game here,
+	// but both A and B typed the exact same host_name "Ola Nordmann" — that must
+	// not make B count as part of the collision.
+	testutil.MustExec(t, db, `INSERT INTO users (id, external_id, email) VALUES (11, 'ext11', 'a@x.no')`)
+	insertBoardEvent(t, db, "g1", "Drager", "Godkjent", "Default", 0, 11, "a@x.no", "Ola Nordmann")
+	insertBoardEvent(t, db, "g2", "Demoner", "Godkjent", "Default", 0, 11, "a@x.no", "Ola Nordmann")
+	insertBoardEvent(t, db, "g3", "Trollmenn", "Godkjent", "Default", 0, 0, "b@x.no", "Ola Nordmann")
+	placeBoardInPulje(t, db, "g1", models.PuljeFredagKveld)
+	placeBoardInPulje(t, db, "g2", models.PuljeFredagKveld)
+	placeBoardInPulje(t, db, "g3", models.PuljeFredagKveld)
+
+	// Pulje 2: owner C (email-only identity) is double-booked separately.
+	insertBoardEvent(t, db, "g4", "Alver", "Godkjent", "Default", 0, 0, "c@x.no", "Cecilie")
+	insertBoardEvent(t, db, "g5", "Dverger", "Godkjent", "Default", 0, 0, "c@x.no", "Cecilie")
+	placeBoardInPulje(t, db, "g4", models.PuljeLordagKveld)
+	placeBoardInPulje(t, db, "g5", models.PuljeLordagKveld)
+
+	board, err := buildScheduleBoard(db, logger)
+	if err != nil {
+		t.Fatalf("buildScheduleBoard: %v", err)
+	}
+
+	fredag := board.Columns[0]
+	if len(fredag.Collisions) != 1 {
+		t.Fatalf("fredag collisions = %+v, want exactly one", fredag.Collisions)
+	}
+	if fredag.Collisions[0].OwnerKey != "user:11" || fredag.Collisions[0].Count != 2 {
+		t.Fatalf("fredag collision = %+v, want owner user:11 count 2", fredag.Collisions[0])
+	}
+
+	lordag := board.Columns[1]
+	if len(lordag.Collisions) != 1 || lordag.Collisions[0].OwnerKey != "email:c@x.no" || lordag.Collisions[0].Count != 2 {
+		t.Fatalf("lordag collisions = %+v, want owner email:c@x.no count 2", lordag.Collisions)
+	}
+
+	if board.CollisionCount != 2 {
+		t.Fatalf("CollisionCount = %d, want 2", board.CollisionCount)
+	}
+}
+
+// TestBuildScheduleBoard_EmailIdentityNormalisesCaseAndWhitespace pins ownerKey's
+// normalisation: the same email-identified owner spelled with different case and
+// surrounding whitespace across two games must collapse to one owner and be
+// detected as a collision.
+func TestBuildScheduleBoard_EmailIdentityNormalisesCaseAndWhitespace(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "build_board_email_normalise")
+	testutil.MustExec(t, db, `INSERT INTO puljer (id, name, status, start_at, end_at) VALUES (?,?,?,?,?)`,
+		string(models.PuljeFredagKveld), "Fredag", "Open", "2026-01-01 18:00", "2026-01-01 22:00")
+
+	insertBoardEvent(t, db, "g1", "Drager", "Godkjent", "Default", 0, 0, "  A@X.no ", "Anne")
+	insertBoardEvent(t, db, "g2", "Demoner", "Godkjent", "Default", 0, 0, "a@x.no", "Anne")
+	placeBoardInPulje(t, db, "g1", models.PuljeFredagKveld)
+	placeBoardInPulje(t, db, "g2", models.PuljeFredagKveld)
+
+	board, err := buildScheduleBoard(db, logger)
+	if err != nil {
+		t.Fatalf("buildScheduleBoard: %v", err)
+	}
+
+	fredag := board.Columns[0]
+	if len(fredag.Collisions) != 1 || fredag.Collisions[0].OwnerKey != "email:a@x.no" || fredag.Collisions[0].Count != 2 {
+		t.Fatalf("fredag collisions = %+v, want one owner email:a@x.no count 2", fredag.Collisions)
+	}
+}
+
 func TestBuildScheduleBoard_SameOwnerDifferentPuljerNoCollision(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "build_board_no_collision")
 	testutil.MustExec(t, db, `INSERT INTO puljer (id, name, status, start_at, end_at) VALUES (?,?,?,?,?)`,

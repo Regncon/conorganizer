@@ -47,6 +47,33 @@ func TestScheduleBoardContent_CardHasBannerAndBadges(t *testing.T) {
 	}
 }
 
+// TestScheduleBoardContent_IsCollidingMatchesOwnerNotHostName guards against the
+// card-highlighting bug where cards were matched on the free-text host_name field
+// instead of owner identity: a genuinely double-booked owner's two cards must both
+// carry .is-colliding, while a different owner's single card that merely shares the
+// same host_name string must not.
+func TestScheduleBoardContent_IsCollidingMatchesOwnerNotHostName(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "schedule_board_collision_owner_key")
+	testutil.MustExec(t, db, `INSERT INTO puljer (id, name, status, start_at, end_at) VALUES (?,?,?,?,?)`,
+		string(models.PuljeFredagKveld), "Fredag Kveld", "Open", "2026-01-01 18:00", "2026-01-01 22:00")
+
+	// Owner A (user 21) double-booked, host_name "Ola Nordmann".
+	testutil.MustExec(t, db, `INSERT INTO users (id, external_id, email) VALUES (21, 'ext21', 'a@x.no')`)
+	insertBoardEvent(t, db, "g1", "Drager", "Godkjent", "Default", 0, 21, "a@x.no", "Ola Nordmann")
+	insertBoardEvent(t, db, "g2", "Demoner", "Godkjent", "Default", 0, 21, "a@x.no", "Ola Nordmann")
+	// Owner B, single game, same free-text host_name — must not be flagged.
+	insertBoardEvent(t, db, "g3", "Trollmenn", "Godkjent", "Default", 0, 0, "b@x.no", "Ola Nordmann")
+	placeBoardInPulje(t, db, "g1", models.PuljeFredagKveld)
+	placeBoardInPulje(t, db, "g2", models.PuljeFredagKveld)
+	placeBoardInPulje(t, db, "g3", models.PuljeFredagKveld)
+
+	doc := templtest.Render(t, ScheduleBoardContent(db, logger, nil))
+
+	if got := doc.Find(".board-card.is-colliding").Length(); got != 2 {
+		t.Fatalf(".board-card.is-colliding count = %d, want 2 (owner A's two cards only)", got)
+	}
+}
+
 func TestScheduleBoardContent_ShowsDMCollisionWarning(t *testing.T) {
 	db, logger := testutil.CreateTestDBAndLogger(t, "schedule_board_collision")
 	testutil.MustExec(t, db, `INSERT INTO puljer (id, name, status, start_at, end_at) VALUES (?,?,?,?,?)`,
