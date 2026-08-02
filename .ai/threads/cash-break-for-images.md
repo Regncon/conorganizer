@@ -515,3 +515,81 @@ I did not start another server since you already have hot reload running on port
 Time: 2026-08-02 13:33:44
 --- Next Prompt ---
 
+Make sure the tests you wright follow our Go test structure guidelines. Have a loot at the other tests in the repo and make sure your tests are consistent with them.
+
+## Go test structure
+When writing or cleaning up Go tests, prefer behavior-focused tests that read from intent to verification.
+
+- Add short BDD metadata at the top of each test when it improves readability. Prefer
+  `bdd.Behavior(t, bdd.BDD{Given: "...", When: "...", Then: "..."})`
+  for tests that should appear in the automated behavior report. Existing BDD-style
+  comments are still supported while older tests are migrated:
+  - Given some initial context,
+  - When an event occurs,
+  - Then ensure the expected outcome.
+- Split each test into three visible sections:
+  - `// Given`
+  - `// When`
+  - `// Then`
+- Start the `// Given` section with the expected output or expected result. This makes the test's purpose clear before setup details.
+- Keep test names specific to one behavior. Prefer splitting creation, duplicate/idempotency, validation, and error cases into separate tests.
+- Move noisy setup SQL and repeated assertions into local test helpers when that makes the test read like behavior.
+
+Example shape:
+
+```go
+func TestService_EventProducesExpectedResult(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an existing domain object.",
+		When:  "When the service reconciles related data.",
+		Then:  "Then the expected durable relation is stored.",
+	})
+
+	// Given
+	expectedResult := models.SomeResult{ID: 123}
+	db := createTestDB(t)
+	insertRequiredFixture(t, db, expectedResult.ID)
+
+	// When
+	err := ServiceFunction(expectedResult.ID, db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected service call to succeed: %v", err)
+	}
+	assertExpectedResult(t, db, expectedResult)
+}
+```
+
+Time: 2026-08-02 14:20:01
+--- Codex Run ---
+
+Codex output:
+I’ll align the new event image tests with the repo’s BDD test shape: metadata where useful, explicit Given/When/Then sections, expected result first, and helper functions for repeated request assertions.
+The new tests are functional, but they do not yet match the repo’s preferred Given/When/Then shape. I’m rewriting just that test file to use BDD metadata, expected values first, and local helpers for repeated setup/assertion.
+The event image tests now follow the repo’s BDD-style structure. I’m formatting and rerunning the focused/full verification.
+The focused package passes after the rewrite. I’m rerunning the full suite and script checks once more so the final state is verified after the test cleanup.
+The final status output is unexpected: it only shows the test file and the thread note as modified, not the implementation files that were changed earlier. I’m checking the diff immediately so I don’t accidentally report stale work.
+The implementation files are present on disk but no longer show as a diff, which means the worktree baseline now already contains those implementation changes. I’m checking staged status too, then I’ll make sure the new test file is consistent and not carrying unrelated thread-file changes.
+Updated the new event image tests to match the repo’s Go test structure guidelines in [event_imaeg_helpers_test.go](/home/cinmay/Documents/conorganizer/service/eventimage/event_imaeg_helpers_test.go:13).
+
+They now use:
+
+- `bdd.Behavior(...)` metadata
+- explicit `// Given`, `// When`, `// Then` sections
+- expected values at the start of `// Given`
+- small local helpers for fixture creation, request execution, and assertions
+
+Verification passed again:
+
+```text
+GOCACHE=/tmp/conorganizer-gocache go test ./...
+bash -n scripts/download-environment
+git diff --check
+```
+
+Note: `.ai/threads/cash-break-for-images.md` is still modified in the worktree; I left it untouched.
+
+Time: 2026-08-02 14:20:01
+--- Next Prompt ---
+
