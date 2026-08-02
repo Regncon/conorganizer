@@ -98,7 +98,11 @@ func SetEventInPulje(ctx context.Context, db *sql.DB, logger *slog.Logger, event
 	INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published)
 	VALUES (?, ?, ?, 0)
 	ON CONFLICT(event_id, pulje_id) DO UPDATE SET
-		is_in_pulje = excluded.is_in_pulje, is_published = 0;
+		is_in_pulje = excluded.is_in_pulje,
+		is_published = CASE
+			WHEN is_in_pulje = excluded.is_in_pulje THEN is_published
+			ELSE 0
+		END;
 	`
 	if _, err := tx.ExecContext(ctx, upsert, eventID, puljeID, isInPulje); err != nil {
 		return fmt.Errorf("upsert relation_event_puljer for event %q and pulje %q: %w", eventID, puljeID, err)
