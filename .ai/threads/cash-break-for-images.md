@@ -683,3 +683,47 @@ Full `git diff --check` still reports trailing whitespace in `.ai/threads/cash-b
 Time: 2026-08-02 18:22:13
 --- Next Prompt ---
 
+Next bug, when I upload a new source image, the cropper does not show the new image. It still shows the old image. 
+
+Time: 2026-08-02 18:34:16
+--- Codex Run ---
+
+Codex output:
+This is the source-image stale-cache case we called out: after removing the query string, a replacement source image with the same extension still has the same URL. I’ll fix it with the same filename-stamp approach, but only at the URL/handler layer so source storage and cleanup stay unchanged.
+I’ll update two places: `getUploadedSourceImageURL` will return `/event-images/eventID_source_<stamp>.<ext>`, and the event image file server will rewrite that URL back to the stable source file on disk. Then I’ll add tests for both sides.
+The server-side URL rewrite now supports stamped source URLs. Next I’m changing source URL generation so the cropper receives a new filename-stamped URL after source replacement.
+The source URL now stamps from file mtime. I’m checking formatting around that helper before adding tests.
+The template formatter will normalize that indentation, but the structure is correct. I’m adding tests for the stamped source URL generation and the server rewrite for stamped source URLs.
+The upload component now has a BDD-style test for generating stamped source URLs. I’m adding the matching file-server behavior test.
+Tests are updated. I’m formatting/regenerating the template output and then running the focused packages.
+Formatting and generation are clean. I’m running the source-upload and event-image helper tests now.
+Focused tests pass. I’m running the full test suite and code-path whitespace checks now.
+Full tests pass and the touched code paths are whitespace-clean. I’m grabbing final line references for the source-image cache fix.
+Fixed the stale source image preview.
+
+The source image URL now gets the same mtime-based filename stamp as public images, for example:
+
+```text
+/event-images/event123_source_mh8x42.jpg
+```
+
+while the file on disk stays stable:
+
+```text
+event123_source.jpg
+```
+
+Changes are in [event_img_upload.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/event_img_upload/event_img_upload.templ:197). The event-image file server now rewrites stamped source URLs back to the stable source file: [event_imaeg_helpers.go](/home/cinmay/Documents/conorganizer/service/eventimage/event_imaeg_helpers.go:48).
+
+Added BDD-style tests for source URL stamping and stamped source serving: [event_img_upload_test.go](/home/cinmay/Documents/conorganizer/components/formsubmission/event_img_upload/event_img_upload_test.go:17), [event_imaeg_helpers_test.go](/home/cinmay/Documents/conorganizer/service/eventimage/event_imaeg_helpers_test.go:96).
+
+Verification passed:
+
+```text
+GOCACHE=/tmp/conorganizer-gocache go test ./...
+git diff --check -- components/formsubmission/event_img_upload service/eventimage pages/profile/profile.go scripts/download-environment
+```
+
+Time: 2026-08-02 18:34:16
+--- Next Prompt ---
+

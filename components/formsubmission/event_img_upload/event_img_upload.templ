@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/Regncon/conorganizer/components"
@@ -206,9 +207,20 @@ func getUploadedSourceImageURL(eventID string, eventImageDir *string) string {
 		if entry.IsDir() || !strings.HasPrefix(entry.Name(), prefix) {
 			continue
 		}
-		return "/event-images/" + entry.Name()
+		info, err := entry.Info()
+		if err != nil {
+			return "/event-images/" + entry.Name()
+		}
+		return stampedSourceImageURL(entry.Name(), info.ModTime().UnixMilli())
 	}
 	return ""
+}
+
+func stampedSourceImageURL(filename string, unixMilli int64) string {
+	stamp := strconv.FormatInt(unixMilli, 36)
+	ext := filepath.Ext(filename)
+	base := strings.TrimSuffix(filename, ext)
+	return fmt.Sprintf("/event-images/%s_%s%s", base, stamp, ext)
 }
 
 templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {

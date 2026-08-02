@@ -93,6 +93,26 @@ func TestFileServerStillServesDirectImageFiles(t *testing.T) {
 	assertHTTPStatusAndBody(t, recorder, expectedStatus, expectedBody)
 }
 
+func TestFileServerServesStampedSourceImageFromStableFile(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a stable source image file and a stamped source URL for that image.",
+		When:  "When the stamped source image URL is requested.",
+		Then:  "Then the stable source image file is served.",
+	})
+
+	// Given
+	expectedStatus := http.StatusOK
+	expectedBody := "source image"
+	eventImageDir := t.TempDir()
+	writeImageFixture(t, eventImageDir, "event123_source.jpg", expectedBody)
+
+	// When
+	recorder := performImageRequest(eventImageDir, "/event123_source_cachebust.jpg")
+
+	// Then
+	assertHTTPStatusAndBody(t, recorder, expectedStatus, expectedBody)
+}
+
 func writeImageFixture(t *testing.T, eventImageDir, filename, body string) string {
 	t.Helper()
 

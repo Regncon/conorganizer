@@ -3,12 +3,39 @@ package eventimgupload
 import (
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"slices"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
+
+func TestGetUploadedSourceImageURL_ReturnsStampedSourceURL(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a saved source image with a known modification time.",
+		When:  "When the uploaded source image URL is requested.",
+		Then:  "Then the returned source URL includes a short timestamp suffix.",
+	})
+
+	// Given
+	modTime := time.UnixMilli(1_779_123_456_789)
+	expectedStamp := strconv.FormatInt(modTime.UnixMilli(), 36)
+	expectedURL := "/event-images/event123_source_" + expectedStamp + ".jpg"
+	eventImageDir := t.TempDir()
+	writeSourceImageFixtureAt(t, eventImageDir, "event123_source.jpg", modTime)
+
+	// When
+	actualURL := getUploadedSourceImageURL("event123", &eventImageDir)
+
+	// Then
+	if actualURL != expectedURL {
+		t.Fatalf("expected source image URL %q, got %q", expectedURL, actualURL)
+	}
+}
 
 func TestBroadcastEventImageUpdate_BroadcastsEventBucket(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
@@ -66,5 +93,17 @@ func assertBroadcastBuckets(t *testing.T, expected, actual []live.Bucket) {
 
 	if !slices.Equal(actual, expected) {
 		t.Fatalf("expected broadcast buckets %v, got %v", expected, actual)
+	}
+}
+
+func writeSourceImageFixtureAt(t *testing.T, eventImageDir, filename string, modTime time.Time) {
+	t.Helper()
+
+	imagePath := filepath.Join(eventImageDir, filename)
+	if err := os.WriteFile(imagePath, []byte("source image"), 0o644); err != nil {
+		t.Fatalf("failed to create source image fixture %q: %v", imagePath, err)
+	}
+	if err := os.Chtimes(imagePath, modTime, modTime); err != nil {
+		t.Fatalf("failed to set source image fixture modtime for %q: %v", imagePath, err)
 	}
 }

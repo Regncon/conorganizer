@@ -36,13 +36,20 @@ func FileServer(eventImageDir string) http.Handler {
 			return
 		}
 
-		if stableName, ok := stablePublicImageName(name); ok {
+		if stableName, ok := stableEventImageName(name); ok {
 			r = r.Clone(r.Context())
 			r.URL.Path = "/" + stableName
 		}
 
 		fileServer.ServeHTTP(w, r)
 	})
+}
+
+func stableEventImageName(name string) (string, bool) {
+	if stableName, ok := stablePublicImageName(name); ok {
+		return stableName, true
+	}
+	return stableSourceImageName(name)
 }
 
 func stablePublicImageName(name string) (string, bool) {
@@ -59,4 +66,15 @@ func stablePublicImageName(name string) (string, bool) {
 	}
 
 	return "", false
+}
+
+func stableSourceImageName(name string) (string, bool) {
+	ext := filepath.Ext(name)
+	base := strings.TrimSuffix(name, ext)
+	eventID, stamp, ok := strings.Cut(base, "_source_")
+	if !ok || eventID == "" || stamp == "" {
+		return "", false
+	}
+
+	return eventID + "_source" + ext, true
 }
