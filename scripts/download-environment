@@ -111,15 +111,19 @@ download_db() {
 }
 
 download_images() {
-    local remote_image_dir
+    local remote_image_dir tmp_image_dir
 
     remote_image_dir="${remote_data_root}/${environment}/event-images"
+    tmp_image_dir="$(mktemp -d "${TMPDIR:-/tmp}/conorganizer-images.XXXXXX")"
+    tmp_dirs+=("$tmp_image_dir")
 
     log "downloading ${environment} images to ${local_image_dir}"
-    mkdir -p "$local_image_dir"
 
     ssh_remote "if [ ! -d '${remote_image_dir}' ]; then echo 'missing image directory: ${remote_image_dir}' >&2; exit 1; fi; tar -C '${remote_image_dir}' -cf - ." \
-        | tar -C "$local_image_dir" -xf -
+        | tar -C "$tmp_image_dir" -xf -
+
+    rm -rf "$local_image_dir"
+    mv "$tmp_image_dir" "$local_image_dir"
 
     log "images downloaded: ${local_image_dir}"
 }

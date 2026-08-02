@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
@@ -89,7 +88,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 
 		if r.Header.Get("Datastar-Request") == "true" {
 			sse := datastar.NewSSE(w, r)
-			sourceImageURL := cacheBustedImageURL(getUploadedSourceImageURL(eventID, eventImageDir))
+			sourceImageURL := getUploadedSourceImageURL(eventID, eventImageDir)
 			if err := sse.MarshalAndPatchSignals(map[string]string{"sourceImageUrl": sourceImageURL}); err != nil {
 				logger.Error("Failed to patch source image URL after upload", "error", err, "event_id", eventID)
 			}
@@ -192,17 +191,6 @@ func getUploadedSourceImageURL(eventID string, eventImageDir *string) string {
 		return "/event-images/" + entry.Name()
 	}
 	return ""
-}
-
-func cacheBustedImageURL(imageURL string) string {
-	if imageURL == "" {
-		return ""
-	}
-	separator := "?"
-	if strings.Contains(imageURL, "?") {
-		separator = "&"
-	}
-	return fmt.Sprintf("%s%sv=%d", imageURL, separator, time.Now().UnixNano())
 }
 
 templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
