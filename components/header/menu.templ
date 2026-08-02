@@ -386,6 +386,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
             max-width: 100dvw;
             display: grid;
             grid-template-rows: 50px 1fr;
+            background-color: var(--bg-base);
             button {
                 max-height: 42px;
                 max-width: 42px;
@@ -399,10 +400,16 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                 div {
                     height: 52px;
                     line-height: 52px;
+                    display: block;
+                    color: var(--color-primary-text);
+                    text-decoration: none;
                 }
                 a {
                     height: 52px;
                     line-height: 52px;
+                    display: block;
+                    color: var(--color-primary-text);
+                    text-decoration: none;
                 }
                 hr {
                     flex-shrink: 0;
@@ -427,7 +434,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                 Bytt aktiv billettholder
                 <span>(aa)</span>
             </div>
-            <a href="/profile">Min Profil</a>
+            <a href="/profile" class="dropdown-panel">Min Profil</a>
             <a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
             if userInfo.IsAdmin {
                 <hr/>
