@@ -593,3 +593,93 @@ Note: `.ai/threads/cash-break-for-images.md` is still modified in the worktree; 
 Time: 2026-08-02 14:20:01
 --- Next Prompt ---
 
+Investigate why no signal is being sent when the cropper image is saved.
+Let me know what you find and how we can fix it. Don't edit any code yet, just investigate and report back.
+
+Time: 2026-08-02 14:51:45
+--- Codex Run ---
+
+Codex output:
+I’ll trace the cropped-save path end to end: the cropper web component, the `/upload-cropped` handler, and any Datastar listeners/signals around that page. I’ll only inspect and report.
+The trace shows the cropper save path is not a Datastar request at all: the web component uses raw `fetch`, and the server responds with a redirect rather than `PatchSignals`. I’m checking whether any page-level listener translates the cropper’s `uploadsuccess` event into a Datastar signal.
+There is also a possible wording ambiguity: “signal” could mean a Datastar signal patch, or it could mean the broader live-update event flow triggered by event updates. I’m checking `TouchEventUpdatedAt` and the live-update path to make sure the cropped save actually reaches that mechanism.
+The cropped handler does touch `events.updated_at`, but I do not see any live-manager broadcast call in that route. That means it updates the database timestamp but does not notify live pages either. I’m opening the route setup to confirm the upload route currently does not receive `liveManager`.
+Confirmed: the upload routes are mounted without `liveManager`, while the other profile edit routes take `liveManager` and broadcast after successful changes. I’m checking the page live wrappers to identify which bucket a crop save should notify.
+I found two separate “signal” gaps in the cropped-image save path.
+
+**What Happens Today**
+The cropper save does **not** use Datastar. It does a plain browser `fetch` from `banner_cropper.js`: [banner_cropper.js](/home/cinmay/Documents/conorganizer/static/web_components/banner_cropper.js:198).
+
+The source image upload is different: it is submitted with Datastar `@post`, and the backend explicitly sends a signal patch for `sourceImageUrl`: [event_img_upload.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/event_img_upload/event_img_upload.templ:89).
+
+The cropped upload handler saves the file, touches `events.updated_at`, then redirects: [event_img_upload.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/event_img_upload/event_img_upload.templ:102). It does **not**:
+
+- check for `Datastar-Request`
+- send `MarshalAndPatchSignals`
+- broadcast through `liveManager`
+- return any useful response to the cropper
+
+Also, the upload routes are mounted without `liveManager`: [profile.go](/home/cinmay/Documents/conorganizer/pages/profile/profile.go:182). Other event-edit routes do receive `liveManager` and broadcast `live.BucketEvents` after successful updates: [about_event.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/about_event.templ:49).
+
+**Likely Root Cause**
+Saving a cropped image updates the file and DB timestamp, but nothing tells live Datastar pages to re-render. So our new cache-busted image URL can work only after a manual reload, because the live page never gets the event-bucket broadcast.
+
+The cropper does dispatch a manual `toast` event and an `uploadsuccess` event: [banner_cropper.js](/home/cinmay/Documents/conorganizer/static/web_components/banner_cropper.js:209). But nothing listens for `uploadsuccess`, and that is not a Datastar signal patch.
+
+**Recommended Fix**
+For the public image update flow, I’d fix this by wiring `liveManager` into `EventImageCroppedSubmission` and broadcasting after the cropped image is saved:
+
+```go
+if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
+    logger.Error(...)
+    http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
+    return
+}
+```
+
+That matches the existing pattern used by other event-edit routes and should cause root/event/profile live sections to re-render with the new stamped image URL.
+
+I’d also consider changing the cropped upload success response from redirect to `204 No Content`, because the cropper’s `fetch` ignores the redirected HTML anyway. That avoids an unnecessary page fetch after every crop save.
+
+Time: 2026-08-02 14:51:45
+--- Next Prompt ---
+
+Ok, let's implement the fix. 
+
+Time: 2026-08-02 18:22:13
+--- Codex Run ---
+
+Codex output:
+I’ll wire the cropped-image save into the existing live-update path: pass `liveManager` into the cropped upload route, broadcast `live.BucketEvents` after a successful save, and return a lightweight success response for the cropper fetch. Then I’ll add focused tests in the same BDD style.
+Because the fix will add one new structured log around failed live broadcasts, I’m loading the repo’s logging guidance before editing that route.
+The logging skill points to the repo baseline files as required context, so I’m reading those before I add the broadcast failure log.
+I have the logging baseline. I’ll keep the new log at the HTTP handling boundary with `event_id` and `image_kind`, and avoid adding lower-level duplicate logs.
+I’m editing the upload component now: adding a tiny local broadcaster interface, broadcasting `live.BucketEvents` after a cropped save, and replacing the fetch-followed redirect with `204 No Content`.
+The handler patch is in place. I’m updating the route wiring to pass `liveManager` into the cropped upload handler.
+I’m adding focused tests for the small broadcast helper so the bucket choice and error propagation are pinned down without needing to drive the whole authenticated upload route.
+The broadcast behavior has focused tests. I’m formatting the template, regenerating the templ Go output, and then I’ll run the touched package tests.
+Generation and formatting succeeded. I’m running the upload component tests and the profile package now, since the route wiring changed there.
+Targeted tests pass. I noticed the nil-live-manager helper error uses mixed-language internal wording, so I’m tightening that before full verification.
+The wording is cleaned up and templ output regenerated. I’m running the full suite and final checks now.
+Full Go tests pass. The only diff-check failure is trailing whitespace inside the `.ai/threads/...` note file, not in the code I changed; I’m rerunning whitespace checks against the touched code paths only.
+The generated file has no diff again, so the changed top-level Go in the `.templ` source is not emitted there. I’m checking the new test file content/status before finalizing.
+The implementation and tests are verified. I’m marking the plan complete; the only full `git diff --check` issue remains the unrelated `.ai` thread whitespace, while the touched code paths are clean.
+Implemented the cropped-image save fix.
+
+The cropped upload route now receives `liveManager`, broadcasts `live.BucketEvents` after a successful save, and returns `204 No Content` instead of making the cropper fetch follow a redirect: [event_img_upload.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/event_img_upload/event_img_upload.templ:108). The route wiring now passes `liveManager` from profile setup: [profile.go](/home/cinmay/Documents/conorganizer/pages/profile/profile.go:186).
+
+I added focused BDD-style tests for the broadcast helper, covering the `events` bucket and error propagation: [event_img_upload_test.go](/home/cinmay/Documents/conorganizer/components/formsubmission/event_img_upload/event_img_upload_test.go:13).
+
+Verification:
+
+```text
+GOCACHE=/tmp/conorganizer-gocache go test ./...
+bash -n scripts/download-environment
+git diff --check -- components/formsubmission/event_img_upload pages/profile/profile.go
+```
+
+Full `git diff --check` still reports trailing whitespace in `.ai/threads/cash-break-for-images.md`, which I left untouched because it is unrelated to this code change.
+
+Time: 2026-08-02 18:22:13
+--- Next Prompt ---
+
