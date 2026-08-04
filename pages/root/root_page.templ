@@ -41,20 +41,16 @@ templ rootPageContent(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin b
 	}}
 
     <style>
-
         .breadcrumb-and-hamburger {
             display: grid;
             grid-template-columns: 1fr 42px;
             align-items: center;
-            margin-bottom: var(--spacing-4x);
         }
-
     </style>
     <div class="breadcrumb-and-hamburger">
 	@components.Breadcrumbs(userInfo, []components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
 	}, db, logger)
-    /* TODO: hamburger menu hide when on pc not implemented */
     @header.HamburgerPhone(userInfo, db, logger)
     </div>
 	if err != nil {

@@ -418,9 +418,15 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
             }
         }
 
+        @container main (width > 600px) {
+            .hamburger-menu-button {
+                display: none;
+            }
+        }
+
     </style>
 
-    <button class="breadcrumbs-hamburger-menu btn--ghost btn"
+    <button class="hamburger-menu-button btn--ghost btn"
         data-on:click="document.getElementById('modal-hamburger-phone').showModal()">
             @icons.Icon(icons.Menu, icons.Size20)
     </button>
