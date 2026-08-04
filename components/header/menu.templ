@@ -143,11 +143,8 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 		#main-menu-usermenu {
             display: none;
-			.hamburger-other {
+			.hamburger-hasAccount {
 				display: none;
-			}
-			.hamburger-phone {
-				display: flex;
 			}
 		}
 
@@ -210,10 +207,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                     }
                 }
 
-				.hamburger-phone {
-					display: none;
-				}
-                .hamburger-other {
+                .hamburger-hasAccount {
                     display: block;
                 }
 			}
@@ -329,17 +323,14 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 							data-on:click__outside="document.getElementById('main-menu-user-details')?.removeAttribute('open')"
 						>
 							<summary>
-							<div class="btn--ghost menu-btn btn hamburger-phone">
-								@icons.Icon(icons.Menu, icons.Size20)
-								<span class="menu-btn-text">Meny</span>
-							</div>
+                            /*TODO: make clickable menu shown when you have an account*/
                             if currentBillettholder.Id != 0 {
-                                <div class="hamburger-other">
+                                <div class="hamburger-hasAccount">
                                     @clickableBillettholderMenu(userInfo, db, logger)
                                 </div>
                             }
                             if currentBillettholder.Id == 0 {
-                                <div class="hamburger-other">
+                                <div class="hamburger-hasAccount">
                                     @icons.Icon(icons.Menu, icons.Size20)
                                 </div>
                             }
@@ -379,42 +370,95 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 
         /* this is only shown on phone. Therefore static size 100dynamic*/
         #modal-hamburger-phone[open] {
-            height: 100dvh;
-            width: 100dvw;
+            min-height: 100dvh;
+            min-width: 100dvw;
             border: none;
-            max-height: 100dvh;
-            max-width: 100dvw;
             display: grid;
             grid-template-rows: 50px 1fr;
             background-color: var(--bg-base);
+            padding: 0;
             button {
-                max-height: 42px;
                 max-width: 42px;
                 margin-left: auto;
+                align-self: center;
             }
             .hamburger-modal-content {
-                display: flex;
-                flex-direction: column;
-                max-height: 312px;
-                max-width: 360px;
+                display: grid;
+                grid-auto-rows: 52px;
                 div {
-                    height: 52px;
-                    line-height: 52px;
-                    display: block;
+                    display: flex;
                     color: var(--color-primary-text);
-                    text-decoration: none;
+                    padding-left: 20px;
+                    padding-right:17px;
+                    place-items: center start;
+                    place-content: space-between;
                 }
                 a {
-                    height: 52px;
-                    line-height: 52px;
-                    display: block;
+                    display: flex;
                     color: var(--color-primary-text);
                     text-decoration: none;
-                }
-                hr {
-                    flex-shrink: 0;
+                    padding-left: 20px;
+                    padding-right:17px;
+                    place-items: center start;
                 }
 
+                .border-bottom {
+                    border-bottom: 1px solid var(--bg-item);
+                }
+            }
+        }
+
+        #modal-billettholderswitcher[open] {
+            max-width: 344px;
+            top: 70px;
+            left: 8px;
+            border-radius: var(--spacing-2x);
+            border: none;
+            background-color: var(--bg-surface);
+            padding: var(--spacing-5x);
+            gap: var(--spacing-5x);
+            display: grid;
+            grid-template-rows:24px 1fr;
+
+            .modal-billettholder-header {
+                max-width: 304px;
+                max-height: 24px;
+                display: grid;
+                grid-template-columns: 1fr 24px;
+                p {
+                    font-size: var(--text-body);
+                    line-height: 100%;
+                    font-weight: 700;
+                    align-self: center;
+                }
+                button {
+                    height: 24px;
+                    width: 24px;
+                }
+
+
+                .modal-close-button-billettholderswitcher {
+                    display: flex;
+                }
+            }
+            .hamburger-modal-billettholder-content {
+                display: grid;
+                gap: var(--spacing-5x);
+                p:not(.name-initials p) {
+                    font-size: var(--text-heading-4);
+                    font-weight: 400;
+                    line-height: 100%;
+                    color: var(--color-text-soft);
+                }
+                .billettholder-switcher {
+                    display: grid;
+                    gap: var(--spacing-2x);
+                    grid-auto-rows: 1fr;
+                    min-width: 304px;
+                    .ticket-holder-picker {
+                        min-width: 304px;
+                    }
+                }
             }
         }
 
@@ -422,13 +466,14 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
             .hamburger-menu-button {
                 display: none;
             }
+
         }
 
     </style>
 
     <button class="hamburger-menu-button btn--ghost btn"
         data-on:click="document.getElementById('modal-hamburger-phone').showModal()">
-            @icons.Icon(icons.Menu, icons.Size20)
+            @icons.Icon(icons.Menu, icons.Size24)
     </button>
 
     <dialog id="modal-hamburger-phone">
@@ -440,22 +485,23 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                 Bytt aktiv billettholder
                 <span>(aa)</span>
             </div>
+
             <a href="/profile" class="dropdown-panel">Min Profil</a>
-            <a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
+            <a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" class="border-bottom">Vanlege Spørsmål</a>
+
             if userInfo.IsAdmin {
-                <hr/>
                 <a href="/admin/billettholder/">Billettholderoversikt</a>
-                <a href="/admin/approval/">Godkjenn arrangementer</a>
-                <hr/>
+                <a href="/admin/approval/" class="border-bottom">Godkjenn arrangementer</a>
             }
             <a href="/auth/logout">Logg ut</a>
+
         </div>
     </dialog>
 
     <dialog id="modal-billettholderswitcher">
     <div class="modal-billettholder-header">
         <p>Bytt aktiv billettholder</p>
-        <button class="modal-close-button" commandfor="modal-billettholderswitcher" command="close">
+        <button class="modal-close-button-billettholderswitcher btn" commandfor="modal-billettholderswitcher" command="close">
             @icons.Icon(icons.Close, icons.Size24)
         </button>
     </div>
@@ -489,7 +535,6 @@ templ BillettholderSwitcher(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolder) {
     {{
         initials := ticketholder.GetInitials(currentBillettHolder.Name)
-        shortName := ticketholder.GetFirstNameAndLastInitial(currentBillettHolder.Name)
         currentBillettHolderJSON, _ := templ.JSONString(currentBillettHolder)
     }}
 	<style>
@@ -498,7 +543,15 @@ templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolde
 			.card-clickable {
                 place-content: start;
                 height: 3.125rem;
-                width: 9.1rem;
+                width: 304px;
+            }
+
+            .name-initials {
+                p {
+                    font-size: var(--text-body);
+                    font-weight: 400;
+                    color: var(--color-text-soft);
+                }
             }
 		}
 	</style>
@@ -511,7 +564,7 @@ templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolde
 			data-class:selected={ fmt.Sprintf("$billettHolderId == %d", currentBillettHolder.Id) }
 			data-on:click={ fmt.Sprintf("$billettHolderId = %d; window.conorganizer.billettholderSelection.set(JSON.parse(evt.currentTarget.dataset.currentBillettHolder));", currentBillettHolder.Id) }
 		>
-			@ticketholder.NameInitials(shortName, initials, currentBillettHolder.Color)
+			@ticketholder.NameInitials(currentBillettHolder.Name, initials, currentBillettHolder.Color)
 		</div>
 	</div>
 }
