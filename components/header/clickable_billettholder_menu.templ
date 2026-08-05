@@ -14,13 +14,13 @@ templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB
 		associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
 		currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
 		initials := ticketholder.GetInitials(currentBillettholder.Name)
-        // name, ticketType := getNameAndTicketType(db, currentBillettholder.Id, logger)
+        name, ticketType := getNameAndTicketType(db, currentBillettholder.Id, logger)
 	}}
 
     <div class="clickable-billettholder-menu-wrapper">
         <div class="clickable-billettholder-menu-name">
-            <p>Hansen Hårfagre</p>
-            <p>fredagsbillett</p>
+            <p>{name}</p>
+            <p>{ticketType}</p>
         </div>
         @ticketholder.Initials(initials, currentBillettholder.Color)
     </div>
