@@ -410,8 +410,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 
         #modal-billettholderswitcher[open] {
             max-width: 344px;
-            top: 70px;
-            left: 8px;
+            margin-top: 70px;
             border-radius: var(--spacing-2x);
             border: none;
             background-color: var(--bg-surface);
@@ -436,7 +435,6 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                     width: 24px;
                 }
 
-
                 .modal-close-button-billettholderswitcher {
                     display: flex;
                 }
@@ -444,6 +442,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
             .hamburger-modal-billettholder-content {
                 display: grid;
                 gap: var(--spacing-5x);
+
                 p:not(.name-initials p) {
                     font-size: var(--text-heading-4);
                     font-weight: 400;
@@ -455,9 +454,6 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                     gap: var(--spacing-2x);
                     grid-auto-rows: 1fr;
                     min-width: 304px;
-                    .ticket-holder-picker {
-                        min-width: 304px;
-                    }
                 }
             }
         }
@@ -465,6 +461,24 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
         @container main (width > 600px) {
             .hamburger-menu-button {
                 display: none;
+            }
+
+            #modal-billettholderswitcher[open] {
+                max-width: 420px;
+                margin-top: auto;
+
+                .modal-billettholder-header {
+                    max-width: 380px;
+                }
+                .hamburger-modal-billettholder-content {
+                    p:not(.name-initials p) {
+
+                    }
+
+                    .billettholder-switcher {
+
+                    }
+                }
             }
 
         }
@@ -543,7 +557,7 @@ templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolde
 			.card-clickable {
                 place-content: start;
                 height: 3.125rem;
-                width: 304px;
+                min-width: 304px;
             }
 
             .name-initials {
@@ -554,6 +568,14 @@ templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolde
                 }
             }
 		}
+
+
+        @container main (width > 600px) {
+            .ticket-holder-picker {
+			.card-clickable {
+                min-width: 380px;
+            }
+        }
 	</style>
 	<div class="ticket-holder-picker">
 		<div
