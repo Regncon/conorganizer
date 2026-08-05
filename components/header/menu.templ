@@ -14,6 +14,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
         logger := logger.With("component", "Menu")
         associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
         currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
+        initials := ticketholder.GetInitials(currentBillettholder.Name)
      }}
 	<style>
 		.beta-toggle {
@@ -274,7 +275,19 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                     z-index: var(--nav-drop-down-z-index);
                     width: max-content;
                     max-width: 320px;
-			}
+
+                    .clickable-billettholder-menu-pc {
+                            display: grid;
+                            grid-template-columns: 1fr 24px;
+                            grid-gap: 52px;
+                        }
+
+                        .name-initials-little {
+                            max-width: 24px;
+                            max-height: 24px;
+                        }
+                    }
+			    }
 
                 .dropdown-panel a {
                     display: block;
@@ -336,9 +349,11 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                             }
 							</summary>
 							<div class="dropdown-panel">
-                                <a href="#" data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
+                                <a href="#" data-on:click="document.getElementById('modal-billettholderswitcher').showModal()" class="clickable-billettholder-menu-pc">
                                     Bytt aktiv billettholder
-                                    <span>(aa)</span>
+                                    <div class="name-initials-little">
+                                        @ticketholder.Initials(initials, currentBillettholder.Color)
+                                    </div>
                                 </a>
 								<a href="/profile">Min Profil</a>
 								<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank">Vanlege Spørsmål</a>
@@ -365,6 +380,11 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 
+    {{
+        associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
+		currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
+        initials := ticketholder.GetInitials(currentBillettholder.Name)
+    }}
 
     <style>
 
@@ -385,20 +405,24 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
             .hamburger-modal-content {
                 display: grid;
                 grid-auto-rows: 52px;
-                div {
+                div:not(.name-initials-little) {
                     display: flex;
                     color: var(--color-primary-text);
                     padding-left: 20px;
-                    padding-right:17px;
                     place-items: center start;
-                    place-content: space-between;
+
+                    .name-initials-little {
+                        display: flex;
+                        margin-left: auto;
+                        max-width: 42px;
+                        align-self: center;
+                    }
                 }
                 a {
                     display: flex;
                     color: var(--color-primary-text);
                     text-decoration: none;
                     padding-left: 20px;
-                    padding-right:17px;
                     place-items: center start;
                 }
 
@@ -497,7 +521,9 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
         <div class="hamburger-modal-content">
             <div data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
                 Bytt aktiv billettholder
-                <span>(aa)</span>
+                <div class="name-initials-little btn">
+                    @ticketholder.Initials(initials, currentBillettholder.Color)
+                </div>
             </div>
 
             <a href="/profile" class="dropdown-panel">Min Profil</a>
