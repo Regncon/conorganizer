@@ -1,6 +1,7 @@
 package eventimgupload
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"io"
@@ -8,8 +9,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/errorfeedback"
@@ -18,10 +19,15 @@ import (
 	"github.com/Regncon/conorganizer/components/toast"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/eventService"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
+
+type eventImageBroadcaster interface {
+	Broadcast(context.Context, ...live.Bucket) error
+}
 
 func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -89,7 +95,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 
 		if r.Header.Get("Datastar-Request") == "true" {
 			sse := datastar.NewSSE(w, r)
-			sourceImageURL := cacheBustedImageURL(getUploadedSourceImageURL(eventID, eventImageDir))
+			sourceImageURL := getUploadedSourceImageURL(eventID, eventImageDir)
 			if err := sse.MarshalAndPatchSignals(map[string]string{"sourceImageUrl": sourceImageURL}); err != nil {
 				logger.Error("Failed to patch source image URL after upload", "error", err, "event_id", eventID)
 			}
@@ -100,7 +106,7 @@ func EventImageFormSubmission(newEventRouter chi.Router, db *sql.DB, eventImageD
 	})
 }
 
-func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventImageDir *string, liveManager eventImageBroadcaster, logger *slog.Logger) {
 	newEventRouter.Post("/", func(w http.ResponseWriter, r *http.Request) {
 		logger.Info("Received cropped image upload request")
 		eventID := chi.URLParam(r, "id")
@@ -144,8 +150,20 @@ func EventImageCroppedSubmission(newEventRouter chi.Router, db *sql.DB, eventIma
 			return
 		}
 		logger.Info("Image uploaded successfully", "path", imagePath)
-		http.Redirect(w, r, fmt.Sprintf("/profile/new/%s/image/", eventID), http.StatusSeeOther)
+		if err := broadcastEventImageUpdate(r.Context(), liveManager); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast cropped event image update: %w", err).Error(), "event_id", eventID, "image_kind", imageKind)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
 	})
+}
+
+func broadcastEventImageUpdate(ctx context.Context, liveManager eventImageBroadcaster) error {
+	if liveManager == nil {
+		return fmt.Errorf("live manager is missing")
+	}
+	return liveManager.Broadcast(ctx, live.BucketEvents)
 }
 
 func sourceImageFilename(eventID string, originalFilename string) string {
@@ -189,20 +207,20 @@ func getUploadedSourceImageURL(eventID string, eventImageDir *string) string {
 		if entry.IsDir() || !strings.HasPrefix(entry.Name(), prefix) {
 			continue
 		}
-		return "/event-images/" + entry.Name()
+		info, err := entry.Info()
+		if err != nil {
+			return "/event-images/" + entry.Name()
+		}
+		return stampedSourceImageURL(entry.Name(), info.ModTime().UnixMilli())
 	}
 	return ""
 }
 
-func cacheBustedImageURL(imageURL string) string {
-	if imageURL == "" {
-		return ""
-	}
-	separator := "?"
-	if strings.Contains(imageURL, "?") {
-		separator = "&"
-	}
-	return fmt.Sprintf("%s%sv=%d", imageURL, separator, time.Now().UnixNano())
+func stampedSourceImageURL(filename string, unixMilli int64) string {
+	stamp := strconv.FormatInt(unixMilli, 36)
+	ext := filepath.Ext(filename)
+	base := strings.TrimSuffix(filename, ext)
+	return fmt.Sprintf("/event-images/%s_%s%s", base, stamp, ext)
 }
 
 templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {

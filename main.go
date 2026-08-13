@@ -15,6 +15,7 @@ import (
 	"github.com/Regncon/conorganizer/service"
 	"github.com/Regncon/conorganizer/service/applog"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -155,7 +156,7 @@ func mountPublicAssetRoutes(router chi.Router, eventImageDir *string, logger *sl
 	router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
 
 	if eventImageDir != nil && *eventImageDir != "" {
-		router.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
+		router.Handle("/event-images/*", http.StripPrefix("/event-images/", eventimage.FileServer(*eventImageDir)))
 	}
 }
 
