@@ -422,12 +422,10 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 			room.AssignedEventsID = append(
 				room.AssignedEventsID,
 				models.RoomEventPuljeSummary{
-					EventPuljeID: fmt.Sprintf(
-						"%s:%s",
-						row.EventID.String,
-						row.PuljeID,
-					),
-					EventID:    row.EventID.String,
+					Key: models.EventPuljeKey{
+						EventID: row.EventID.String,
+						PuljeID: row.PuljeID,
+					},
 					Title:      row.EventTitle.String,
 					MaxPlayers: int(row.EventMaxPlayers.Int32),
 				},
@@ -444,12 +442,12 @@ func GetAllRoomStatusesByPulje(db *sql.DB, pulje models.Pulje) (models.RoomStatu
 	return result, nil
 }
 
-// SetRelationEventPuljeRoom assigns a room to an event in `relation_event_puljer`
-func AssignRoomToRelationEventPuljer(db *sql.DB, roomID int64, relationEventPuljeID string) (models.EventPulje, error) {
+// AssignRoomToEventPulje assigns a room to an event-in-pulje relation.
+func AssignRoomToEventPulje(db *sql.DB, roomID int64, key models.EventPuljeKey) (models.EventPulje, error) {
 	query := `
 		UPDATE relation_event_puljer
 		SET room_id = ?
-		WHERE event_id = ?
+		WHERE event_id = ? AND pulje_id = ?
 		RETURNING
 			event_id,
 			pulje_id,
@@ -459,7 +457,7 @@ func AssignRoomToRelationEventPuljer(db *sql.DB, roomID int64, relationEventPulj
 	`
 
 	var result models.EventPulje
-	err := db.QueryRow(query, roomID, relationEventPuljeID).Scan(
+	err := db.QueryRow(query, roomID, key.EventID, key.PuljeID).Scan(
 		&result.EventID,
 		&result.PuljeID,
 		&result.IsInPulje,
@@ -470,8 +468,9 @@ func AssignRoomToRelationEventPuljer(db *sql.DB, roomID int64, relationEventPulj
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return models.EventPulje{}, fmt.Errorf(
-				"no relation_event_puljer found for event_id=%s",
-				relationEventPuljeID,
+				"no relation_event_puljer found for event_id=%s pulje_id=%s",
+				key.EventID,
+				key.PuljeID,
 			)
 		}
 		return models.EventPulje{}, fmt.Errorf(

@@ -77,6 +77,12 @@ func (pulje PuljeRow) TimeRange() string {
 	return fmt.Sprintf("%s - %s", pulje.StartAt.Format("15:04"), pulje.EndAt.Format("15:04"))
 }
 
+// EventPuljeKey identifies the event-in-pulje relation stored by relation_event_puljer.
+type EventPuljeKey struct {
+	EventID string
+	PuljeID Pulje
+}
+
 type EventPulje struct {
 	EventID     string        `json:"event_id"`
 	PuljeID     Pulje         `json:"pulje_id"`

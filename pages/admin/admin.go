@@ -448,14 +448,11 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							return
 						}
 
-						// Assign room
-						query := `
-                            UPDATE relation_event_puljer
-                            SET room_id = ?
-                            WHERE event_id = ? AND pulje_id = ?
-                        `
-
-						_, err = db.Exec(query, roomID, eventQuery, puljeID)
+						key := models.EventPuljeKey{
+							EventID: eventQuery,
+							PuljeID: puljeID,
+						}
+						_, err = roomService.AssignRoomToEventPulje(db, roomID, key)
 						if err != nil {
 							http.Error(w, fmt.Sprintf("Unable to assign room: %v", err.Error()), http.StatusBadRequest)
 							return

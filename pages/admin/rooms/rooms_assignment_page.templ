@@ -82,7 +82,7 @@ func getEventInPulje(db *sql.DB, logger *slog.Logger, pulje models.Pulje, isMiss
 			&event.Title,
 			&event.MaxPlayers,
 			&event.EventID,
-			&event.EventPuljeID,
+			&event.PuljeID,
 			&event.RoomID,
 		)
 		if err != nil {
@@ -161,15 +161,15 @@ templ assignEventModal(db *sql.DB, logger *slog.Logger, pulje models.Pulje, even
 }
 
 templ roomEventCard(event models.RoomEventPuljeSummary, eventImageDir *string) {
-	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
+	{{ imageBannerUrl := eventimage.GetEventImageUrl(event.Key.EventID, "banner", eventImageDir) }}
 	<a
 		role="button"
-		href={ "/admin/approval/edit/" + event.EventID }
+		href={ "/admin/approval/edit/" + event.Key.EventID }
 		class="room-event"
 		draggable="true"
-		data-on:dragstart={ fmt.Sprintf("$draggedEventId = '%s'", event.EventID) }
+		data-on:dragstart={ fmt.Sprintf("$draggedEventId = '%s'", event.Key.EventID) }
 		data-on:dragend="$draggedEventId = ''; $dragOverRoom = 0"
-		data-class:is-dragging={ fmt.Sprintf("$draggedEventId === '%s'", event.EventID) }
+		data-class:is-dragging={ fmt.Sprintf("$draggedEventId === '%s'", event.Key.EventID) }
 	>
 		<img
 			src={ imageBannerUrl }

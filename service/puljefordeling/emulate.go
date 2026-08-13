@@ -94,7 +94,7 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	if err != nil {
 		return Emulation{}, err
 	}
-	gms, err := loadGMs(db) // [eventPuljeKey] -> billettholderID
+	gms, err := loadGMs(db) // [EventPuljeKey] -> billettholderID
 	if err != nil {
 		return Emulation{}, err
 	}
@@ -118,7 +118,7 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 		for _, eid := range sortedEventIDs(events[p.ID]) {
 			e := events[p.ID][eid]
 			ev := smodel.Event{ID: eid, Name: e.title, Capacity: e.capacity}
-			if gmID, ok := gms[eventPuljeKey(eid, p.ID)]; ok {
+			if gmID, ok := gms[models.EventPuljeKey{EventID: eid, PuljeID: p.ID}]; ok {
 				ev.DMID = strconv.Itoa(gmID)
 			}
 			slot.Events = append(slot.Events, ev)
@@ -161,7 +161,7 @@ func shapePulje(
 	pulje models.PuljeRow,
 	slot smodel.Slot,
 	res smodel.SlotResult,
-	gms map[string]int,
+	gms map[models.EventPuljeKey]int,
 	names map[int]string,
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
@@ -201,7 +201,7 @@ func shapePulje(
 			emEv.BeginnerFriendly = m.beginnerFriendly
 			emEv.CanBeRunInEnglish = m.canBeRunInEnglish
 		}
-		if gmID, ok := gms[eventPuljeKey(ev.ID, pulje.ID)]; ok {
+		if gmID, ok := gms[models.EventPuljeKey{EventID: ev.ID, PuljeID: pulje.ID}]; ok {
 			emEv.GMName = names[gmID]
 		}
 		out.Events = append(out.Events, emEv)
@@ -338,7 +338,7 @@ func loadManualPins(db *sql.DB) (map[models.Pulje]map[string]string, error) {
 	return out, rows.Err()
 }
 
-func loadGMs(db *sql.DB) (map[string]int, error) {
+func loadGMs(db *sql.DB) (map[models.EventPuljeKey]int, error) {
 	const query = `
 		SELECT event_id, pulje_id, billettholder_id
 		FROM relation_events_players
@@ -350,7 +350,7 @@ func loadGMs(db *sql.DB) (map[string]int, error) {
 	}
 	defer rows.Close()
 
-	out := make(map[string]int)
+	out := make(map[models.EventPuljeKey]int)
 	for rows.Next() {
 		var eventID string
 		var pulje models.Pulje
@@ -358,7 +358,7 @@ func loadGMs(db *sql.DB) (map[string]int, error) {
 		if err := rows.Scan(&eventID, &pulje, &bhID); err != nil {
 			return nil, fmt.Errorf("scan GM row: %w", err)
 		}
-		out[eventPuljeKey(eventID, pulje)] = bhID
+		out[models.EventPuljeKey{EventID: eventID, PuljeID: pulje}] = bhID
 	}
 	return out, rows.Err()
 }
@@ -433,10 +433,6 @@ func loadPrefs(
 }
 
 // --- helpers -----------------------------------------------------------------
-
-func eventPuljeKey(eventID string, pulje models.Pulje) string {
-	return eventID + "\x00" + string(pulje)
-}
 
 func playerIDsToNames(ids []string, names map[int]string) []string {
 	if len(ids) == 0 {

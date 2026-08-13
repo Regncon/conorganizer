@@ -27,23 +27,21 @@ type RoomInput struct {
 
 /*
 RoomEventPuljeSummary is the summary of an event in `relation_event_puljer` and used in `RoomByPulje` struct
-  - `EventPuljeID` is the ID of the unique event in a pulje
-  - `EventID`      is the ID of the pulje the unique event is in
-  - `Title`        is the title of the event
+  - `Key` is the unique event-in-pulje identity
+  - `Title` is the title of the event
 */
 type RoomEventPuljeSummary struct {
-	EventPuljeID string
-	EventID      string
-	Title        string
-	MaxPlayers   int
-	RoomID       int64
+	Key        EventPuljeKey
+	Title      string
+	MaxPlayers int
+	RoomID     int64
 }
 type RoomEventPuljeSummaryJson struct {
-	EventPuljeID string        `json:"pulje_id"`
-	EventID      string        `json:"event_id"`
-	Title        string        `json:"title"`
-	MaxPlayers   int           `json:"max_players"`
-	RoomID       sql.NullInt64 `json:"room_id"`
+	PuljeID    Pulje         `json:"pulje_id"`
+	EventID    string        `json:"event_id"`
+	Title      string        `json:"title"`
+	MaxPlayers int           `json:"max_players"`
+	RoomID     sql.NullInt64 `json:"room_id"`
 }
 
 // RoomByPulje is a snapshot of room delegation for a specific pulje, this is mainly used for figuring
