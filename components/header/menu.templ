@@ -1,21 +1,21 @@
 package header
 
 import (
-	"github.com/Regncon/conorganizer/service/requestctx"
 	"database/sql"
-	"log/slog"
+	"fmt"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
-	"fmt"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"log/slog"
 )
 
 templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
-    {{
-        logger := logger.With("component", "Menu")
-        associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
-        currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
-        initials := ticketholder.GetInitials(currentBillettholder.Name)
-     }}
+	{{
+	logger := logger.With("component", "Menu")
+	associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
+	currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
+	initials := ticketholder.GetInitials(currentBillettholder.Name)
+	}}
 	<style>
 		.main-menu-header {
 			width: 100%;
@@ -90,30 +90,37 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				z-index: var(--nav-drop-down-z-index);
 				width: max-content;
 				max-width: 260px;
+
+                button {
+                    height: fit-content;
+                    font-weight: inherit;
+                    font-family: inherit;
+                    font-size: inherit;
+                    padding-block: 0;
+                }
+                a, button {
+                    display: block;
+                    color: var(--color-primary-text);
+                    padding: 0.5rem 1rem;
+                    text-decoration: none;
+			    }
+
+                a.external-link {
+                    display: flex;
+                    align-items: center;
+                    gap: var(--spacing-1x);
+                }
+
+                a:hover, a:focus-visible, button:hover, button:focus-visible {
+                    background-color: hsla(0, 0%, 100%, 0.1);
+                }
+                a:focus-visible {
+                    outline: none;
+                    box-shadow: inset 0 0 0 2px var(--btn-ghost-focus-shadow);
+                }
 			}
 
-			.dropdown-panel a {
-				display: block;
-				color: var(--color-primary-text);
-				padding: 0.5rem 1rem;
-				text-decoration: none;
-			}
 
-			.dropdown-panel a.external-link {
-				display: flex;
-				align-items: center;
-				gap: var(--spacing-1x);
-			}
-
-			.dropdown-panel a:hover,
-			.dropdown-panel a:focus-visible {
-				background-color: hsla(0, 0%, 100%, 0.1);
-			}
-
-			.dropdown-panel a:focus-visible {
-				outline: none;
-				box-shadow: inset 0 0 0 2px var(--btn-ghost-focus-shadow);
-			}
 		}
 
 		#main-menu-logo {
@@ -300,8 +307,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 		}
 	</style>
-
-
 	<header class="main-menu-header no-print">
 		<nav class="main-menu page-content-container wide-content">
 			<section id="main-menu-logo">
@@ -321,25 +326,28 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 							data-on:click__outside="document.getElementById('main-menu-user-details')?.removeAttribute('open')"
 						>
 							<summary>
-                                /*TODO: make clickable menu shown when you have an account*/
-                                if currentBillettholder.Id != 0 {
-                                    <div class="hamburger-have-billettholder">
-                                        @clickableBillettholderMenu(userInfo, db, logger)
-                                    </div>
-                                }
-                                if currentBillettholder.Id == 0 {
-                                    <div>
-                                        @icons.Icon(icons.Menu, icons.Size20)
-                                    </div>
-                                }
+								/*TODO: make clickable menu shown when you have an account*/
+								if currentBillettholder.Id != 0 {
+									<div class="hamburger-have-billettholder">
+										@clickableBillettholderMenu(userInfo, db, logger)
+									</div>
+								}
+								if currentBillettholder.Id == 0 {
+									<div>
+										@icons.Icon(icons.Menu, icons.Size20)
+									</div>
+								}
 							</summary>
 							<div class="dropdown-panel">
-                                <a href="#" data-on:click="document.getElementById('modal-billettholderswitcher').showModal()" class="clickable-billettholder-menu-pc">
-                                    Bytt aktiv billettholder
-                                    <div class="name-initials-little">
-                                        @ticketholder.Initials(initials, currentBillettholder.Color)
-                                    </div>
-                                </a>
+								<button
+									class="clickable-billettholder-menu-pc btn"
+									data-on:click="document.getElementById('modal-billettholderswitcher').showModal()"
+								>
+									Bytt aktiv billettholder
+									<div class="name-initials-little">
+										@ticketholder.Initials(initials, currentBillettholder.Color)
+									</div>
+								</button>
 								<a href="/profile">Min Profil</a>
 								<a
 									href="https://www.regncon.no/vanlege-sporsmal/"
@@ -354,12 +362,12 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 									<hr/>
 									<a href="/admin/billettholder/">Billettholderoversikt</a>
 									<a href="/admin/approval/">Godkjenn arrangementer</a>
-                                    <hr/>
+									<hr/>
 								}
-                                <a href="/auth/logout">Logg ut</a>
+								<a href="/auth/logout">Logg ut</a>
 							</div>
 						</details>
-                        @HamburgerPhone(userInfo, db, logger)
+						@HamburgerPhone(userInfo, db, logger)
 					</div>
 				}
 				if !userInfo.IsLoggedIn {
@@ -373,15 +381,12 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 }
 
 templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
-
-    {{
-        associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
-		currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
-        initials := ticketholder.GetInitials(currentBillettholder.Name)
-    }}
-
-
-    <style>
+	{{
+	associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
+	currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
+	initials := ticketholder.GetInitials(currentBillettholder.Name)
+	}}
+	<style>
         .main-menu-button {
             font-family: inherit;
         }
@@ -499,76 +504,69 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
         }
 
     </style>
-
-    <button class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
-        data-signals="{toggleHamburgerModal: false}"
-        data-on:click="$toggleHamburgerModal = !$toggleHamburgerModal; $toggleHamburgerModal ? document.getElementById('modal-hamburger-phone').show() : document.getElementById('modal-hamburger-phone').close()">
-            @icons.Icon(icons.Menu, icons.Size20)
-            <span class="menu-button-text">
-                Meny
-            </span>
-    </button>
-
-    <dialog id="modal-hamburger-phone">
-        <div class="hamburger-modal-content">
-            <div class="" data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
-                Bytt aktiv billettholder
-                <div class="btn">
-                    @ticketholder.Initials(initials, currentBillettholder.Color)
-                </div>
-            </div>
-
-            <a href="/profile" class="dropdown-panel">Min Profil</a>
-            <a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" class="border-bottom">Vanlege Spørsmål</a>
-
-            if userInfo.IsAdmin {
-                <a href="/admin/billettholder/">Billettholderoversikt</a>
-                <a href="/admin/approval/" class="border-bottom">Godkjenn arrangementer</a>
-            }
-            <a href="/auth/logout">Logg ut</a>
-
-        </div>
-    </dialog>
-
-    <dialog id="modal-billettholderswitcher">
-    <div class="modal-billettholder-header">
-        <p>Bytt aktiv billettholder</p>
-        <button class="modal-close-button-billettholderswitcher btn" commandfor="modal-billettholderswitcher" command="close">
-            @icons.Icon(icons.Close, icons.Size20)
-        </button>
-    </div>
-    <div class="hamburger-modal-billettholder-content">
-        <p>
-            Ved å bytte aktiv bruker vil interessevalgene
-            til den valgte brukeren vises på programoversikten
-            og de vil være standardvalget på Min Side og i
-            interessevelgeren på et arrangement.
-        </p>
-        @BillettholderSwitcher(userInfo, db, logger)
-        <p>Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
-    </div>
-
-    </dialog>
+	<button
+		class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
+		data-signals="{toggleHamburgerModal: false}"
+		data-on:click="$toggleHamburgerModal = !$toggleHamburgerModal; $toggleHamburgerModal ? document.getElementById('modal-hamburger-phone').show() : document.getElementById('modal-hamburger-phone').close()"
+	>
+		@icons.Icon(icons.Menu, icons.Size20)
+		<span class="menu-button-text">
+			Meny
+		</span>
+	</button>
+	<dialog id="modal-hamburger-phone">
+		<div class="hamburger-modal-content">
+			<div class="" data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
+				Bytt aktiv billettholder
+				<div class="btn">
+					@ticketholder.Initials(initials, currentBillettholder.Color)
+				</div>
+			</div>
+			<a href="/profile" class="dropdown-panel">Min Profil</a>
+			<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" class="border-bottom">Vanlege Spørsmål</a>
+			if userInfo.IsAdmin {
+				<a href="/admin/billettholder/">Billettholderoversikt</a>
+				<a href="/admin/approval/" class="border-bottom">Godkjenn arrangementer</a>
+			}
+			<a href="/auth/logout">Logg ut</a>
+		</div>
+	</dialog>
+	<dialog id="modal-billettholderswitcher">
+		<div class="modal-billettholder-header">
+			<p>Bytt aktiv billettholder</p>
+			<button class="modal-close-button-billettholderswitcher btn" commandfor="modal-billettholderswitcher" command="close">
+				@icons.Icon(icons.Close, icons.Size20)
+			</button>
+		</div>
+		<div class="hamburger-modal-billettholder-content">
+			<p>
+				Ved å bytte aktiv bruker vil interessevalgene
+				til den valgte brukeren vises på programoversikten
+				og de vil være standardvalget på Min Side og i
+				interessevelgeren på et arrangement.
+			</p>
+			@BillettholderSwitcher(userInfo, db, logger)
+			<p>Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
+		</div>
+	</dialog>
 }
 
 templ BillettholderSwitcher(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
-    {{
-        associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
-    }}
-
-    <div class="billettholder-switcher">
-        for _, billettholder := range associatedBillettholdere {
-            @billettholderSwitcherButton(billettholder)
-        }
-    </div>
-
+	{{
+	associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
+	}}
+	<div class="billettholder-switcher">
+		for _, billettholder := range associatedBillettholdere {
+			@billettholderSwitcherButton(billettholder)
+		}
+	</div>
 }
 
 templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolder) {
-    {{
-        initials := ticketholder.GetInitials(currentBillettHolder.Name)
-        currentBillettHolderJSON, _ := templ.JSONString(currentBillettHolder)
-    }}
+	{{
+	initials := ticketholder.GetInitials(currentBillettHolder.Name)
+	currentBillettHolderJSON, _ := templ.JSONString(currentBillettHolder)
+	}}
 	<style>
 		.ticket-holder-picker {
             padding-inline: var(--border-outline-width);
