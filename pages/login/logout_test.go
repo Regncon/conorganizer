@@ -21,6 +21,7 @@ func TestLogout_ClearsSessionAndRefreshCookies(t *testing.T) {
 	})
 
 	// Given
+    db := testutil.CreateTestDB(t, "test_logout")
 	expectedStatusCode := http.StatusOK
 	expectedExpiredCookieNames := []string{
 		authctx.SessionCookieName,
@@ -31,7 +32,7 @@ func TestLogout_ClearsSessionAndRefreshCookies(t *testing.T) {
 	expectedCookiePath := "/"
 
 	router := chi.NewRouter()
-	if err := SetupAuthRoute(router, nil, discardLogger()); err != nil {
+	if err := SetupAuthRoute(router, db, discardLogger()); err != nil {
 		t.Fatalf("setup auth route: %v", err)
 	}
 	request := httptest.NewRequest(http.MethodGet, "/auth/logout", nil)
