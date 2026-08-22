@@ -1,11 +1,12 @@
 module github.com/Regncon/conorganizer
 
-go 1.26
+go 1.26.0
+
 ignore ./tmp
 
 require (
-	github.com/go-chi/chi/v5 v5.3.1
-	golang.org/x/sync v0.21.0
+	github.com/go-chi/chi/v5 v5.3.2
+	golang.org/x/sync v0.22.0
 )
 
 require (
@@ -13,17 +14,17 @@ require (
 	github.com/a-h/templ v0.3.1020
 	github.com/benbjohnson/hashfs v0.2.2
 	github.com/delaneyj/toolbelt v0.9.1
-	github.com/descope/go-sdk v1.26.0
-	github.com/gomarkdown/markdown v0.0.0-20260614204949-e08cff860f76
+	github.com/descope/go-sdk v1.30.0
+	github.com/gomarkdown/markdown v0.0.0-20260818103853-6d1f24fc3a11
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/sessions v1.4.0
 	github.com/joho/godotenv v1.5.1
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/nats-io/nats-server/v2 v2.14.3
-	github.com/nats-io/nats.go v1.52.0
+	github.com/nats-io/nats-server/v2 v2.14.5
+	github.com/nats-io/nats.go v1.53.1
 	github.com/sahilm/fuzzy v0.1.3
 	github.com/starfederation/datastar-go v1.2.2
-	modernc.org/sqlite v1.53.0
+	modernc.org/sqlite v1.57.0
 )
 
 require (
@@ -119,7 +120,7 @@ require (
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-getter v1.8.4 // indirect
 	github.com/hashicorp/go-version v1.8.0 // indirect
-	github.com/klauspost/compress v1.19.0 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
@@ -130,7 +131,7 @@ require (
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/lucasb-eyer/go-colorful v1.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.22 // indirect
+	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-runewidth v0.0.20 // indirect
 	github.com/minio/highwayhash v1.0.4 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
@@ -145,7 +146,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/puzpuzpuz/xsync/v4 v4.4.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
@@ -155,8 +155,8 @@ require (
 	github.com/spf13/cast v1.9.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.6.0 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
+	github.com/stretchr/objx v0.5.3 // indirect
+	github.com/stretchr/testify v1.12.0 // indirect
 	github.com/tdewolff/parse/v2 v2.8.3 // indirect
 	github.com/u-root/u-root v0.15.1-0.20251208185023-2f8c7e763cf8 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
@@ -174,16 +174,16 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.40.0 // indirect
 	go.opentelemetry.io/otel/trace v1.40.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.53.0 // indirect
-	golang.org/x/exp v0.0.0-20260611194520-c48552f49976 // indirect
-	golang.org/x/mod v0.37.0 // indirect
-	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/crypto v0.55.0 // indirect
+	golang.org/x/exp v0.0.0-20260820142414-ca536658362e // indirect
+	golang.org/x/mod v0.39.0 // indirect
+	golang.org/x/net v0.58.0 // indirect
 	golang.org/x/oauth2 v0.33.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/term v0.44.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/term v0.45.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	golang.org/x/tools v0.47.0 // indirect
+	golang.org/x/tools v0.49.0 // indirect
 	google.golang.org/api v0.256.0 // indirect
 	google.golang.org/genproto v0.0.0-20250922171735-9219d122eba9 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251111163417-95abcf5c77ba // indirect
@@ -191,9 +191,9 @@ require (
 	google.golang.org/grpc v1.77.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	modernc.org/libc v1.74.0 // indirect
+	modernc.org/libc v1.75.4 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
-	modernc.org/memory v1.11.0 // indirect
+	modernc.org/memory v1.12.1 // indirect
 	mvdan.cc/sh/moreinterp v0.0.0-20260120230322-19def062a997 // indirect
 	mvdan.cc/sh/v3 v3.12.1-0.20260124232039-e74afc18e65b // indirect
 )
