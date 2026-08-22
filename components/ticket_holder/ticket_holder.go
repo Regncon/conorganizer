@@ -233,18 +233,19 @@ func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.PuljeRow, error)
 }
 
 func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders []BillettHolder) BillettHolder {
+    if (len(ticketHolders) == 0) {
+        return BillettHolder{
+            Email: "unknown@example.com",
+			Name:  "Unknown Ticket Holder",
+			Color: ColorFromName("Unknown Ticket Holder"),
+        }
+    }
 	idx := slices.IndexFunc(ticketHolders, func(th BillettHolder) bool {
 		return th.Email == userInfo.Email
 	})
-
 	if idx == -1 {
-		return BillettHolder{
-			Email: "unknown@example.com",
-			Name:  "Unknown Ticket Holder",
-			Color: ColorFromName("Unknown Ticket Holder"),
-		}
+		return ticketHolders[0];
 	}
-
 	return ticketHolders[idx]
 }
 
