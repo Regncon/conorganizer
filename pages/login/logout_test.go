@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
@@ -21,7 +22,7 @@ func TestLogout_ClearsSessionAndRefreshCookies(t *testing.T) {
 	})
 
 	// Given
-    db := testutil.CreateTestDB(t, "test_logout")
+	db := testutil.CreateTestDB(t, "test_logout")
 	expectedStatusCode := http.StatusOK
 	expectedExpiredCookieNames := []string{
 		authctx.SessionCookieName,
