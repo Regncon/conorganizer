@@ -41,6 +41,7 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 			event.Title,
 			userInfo,
             db,
+            logger,
 			eventIndex(event.ID, isAdmin, userInfo, logger, db, eventImageDir, r),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render event page: %w", err).Error(), "event_id", event.ID, "user_id", userInfo.Id)

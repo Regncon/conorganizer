@@ -80,10 +80,10 @@ templ event_page_content(eventId string, isAdmin bool, logger *slog.Logger, db *
 		<p>Error fetching event navigation: { previousNextErr.Error() }</p>
 		return
 	}
-	@components.Breadcrumbs(userInfo,[]components.BreadcrumbPath{
+	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: event.Title, Url: ""},
-	}, db, logger) {
+	}) {
 		if previousNextData.PreviousUrl != "" || previousNextData.NextUrl != "" {
 			@components.BreadcrumbNavButtons(previousNextData)
 		}

@@ -26,6 +26,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				"Innlogging til Regncon 2025!",
 				userctx.GetUserRequestInfo(ctx),
                 db,
+                logger,
 				loginForm(),
 			).Render(ctx, w); err != nil {
 				logger.Error(fmt.Errorf("failed to render login page: %w", err).Error())
@@ -56,6 +57,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 					"Is logged in test",
 					userctx.GetUserRequestInfo(ctx),
                     db,
+                    logger,
 					testComp,
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render auth test page: %w", err).Error())
@@ -117,6 +119,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 			if err := layouts.Base("Logging you out",
 				userctx.GetUserRequestInfo(ctx),
                 db,
+                logger,
 				redirect.Redirect(redirectUrl),
 			).Render(ctx, w); err != nil {
 				logger.Error(fmt.Errorf("failed to render logout page: %w", err).Error())

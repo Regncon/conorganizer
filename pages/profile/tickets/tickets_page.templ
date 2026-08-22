@@ -14,12 +14,11 @@ import (
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
-	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
-templ profileTicketsPage(userInfo requestctx.UserRequestInfo, userId string, db *sql.DB, logger *slog.Logger) {
+templ profileTicketsPage(userId string, db *sql.DB, logger *slog.Logger) {
 	<div id="profile-tickets-page-wrapper">
-		@profileTicketsPageContent(userInfo, userId, db, logger)
+		@profileTicketsPageContent(userId, db, logger)
 	</div>
 }
 
@@ -85,12 +84,12 @@ func getTicketsRouter(
 	})
 }
 
-templ profileTicketsPageContent(userInfo requestctx.UserRequestInfo, userId string, db *sql.DB, logger *slog.Logger) {
-	@components.Breadcrumbs(userInfo, []components.BreadcrumbPath{
+templ profileTicketsPageContent(userId string, db *sql.DB, logger *slog.Logger) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: "/profile"},
 		{Name: "Billetter", Url: ""},
-	}, db, logger)
+	})
 	<style>
         .btn {
             width: 8.125rem;

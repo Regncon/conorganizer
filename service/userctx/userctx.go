@@ -29,7 +29,7 @@ func UserMiddleware(logger *slog.Logger, db *sql.DB) func(http.Handler) http.Han
 			if !userInfo.IsLoggedIn {
 				logger.Warn("User is not logged in", "request_id", requestID, "path", r.URL.Path)
 				w.WriteHeader(http.StatusUnauthorized)
-				if err := layouts.Base("Unauthorized", requestctx.UserRequestInfo{}, db, Unauthorized()).Render(r.Context(), w); err != nil {
+				if err := layouts.Base("Unauthorized", requestctx.UserRequestInfo{}, db, logger, Unauthorized()).Render(r.Context(), w); err != nil {
 					logger.Error(fmt.Errorf("failed to render unauthorized page: %w", err).Error(), "request_id", requestID)
 				}
 				return

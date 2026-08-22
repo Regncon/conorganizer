@@ -30,17 +30,17 @@ func getProgramPublished(db *sql.DB) (bool, error) {
 
 templ rootPage(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin bool, eventImageDir *string, logger *slog.Logger) {
 	<div id="root-page-wrapper">
-		@rootPageContent(userInfo, db, isAdmin, eventImageDir, logger)
+		@rootPageContent(db, isAdmin, eventImageDir)
 	</div>
 }
 
-templ rootPageContent(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin bool, eventImageDir *string, logger *slog.Logger) {
+templ rootPageContent(db *sql.DB, isAdmin bool, eventImageDir *string) {
 	{{
 		programPublished, err := getProgramPublished(db)
 	}}
-	@components.Breadcrumbs(userInfo, []components.BreadcrumbPath{
+	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
-	}, db, logger)
+	})
 	if err != nil {
 		<div class="page-content-container">
 			<p>Error fetching program publishing state: { err.Error() }</p>

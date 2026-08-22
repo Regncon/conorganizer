@@ -10,7 +10,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"log/slog"
 	"net/http"
-	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
 func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
@@ -23,7 +22,8 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 			"Rom oversikt",
 			userInfo,
             db,
-			roomsIndex(db, logger, RoomsPageContent(db, logger), "/"),
+            logger,
+			roomsIndex(RoomsPageContent(db, logger), "/"),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
 		}
@@ -46,7 +46,8 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 				"Rom oversikt",
 				userInfo,
                 db,
-				roomsIndex(db, logger, RoomsByPuljePageContent(db, logger, models.Pulje(pulje), eventImageDir), pulje),
+                logger,
+				roomsIndex(RoomsByPuljePageContent(db, logger, models.Pulje(pulje), eventImageDir), pulje),
 			).Render(ctx, w); err != nil {
 				logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
 			}
@@ -54,12 +55,12 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 	})
 }
 
-templ roomsIndex(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, children templ.Component, puljeQuery models.Pulje) {
-	@components.Breadcrumbs(userInfo, []components.BreadcrumbPath{
+templ roomsIndex(children templ.Component, puljeQuery models.Pulje) {
+	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Admin", Url: "/admin/"},
 		{Name: "Oversikt over rom", Url: ""},
-	}, db, logger)
+	})
 	<div class="page-content-container flex flex-col">
 		<style>
             .tabs {

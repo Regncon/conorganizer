@@ -12,7 +12,6 @@ import (
 	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"log/slog"
-	"github.com/Regncon/conorganizer/service/userctx"
 )
 
 templ NewEventFormPage(eventId string, userId string, ctx context.Context, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
@@ -27,7 +26,6 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 		eventData, eventErr := eventservice.GetEventById(eventId, db)
 		isRemovedPreviousNext := components.PreviousNext{IsRemoved: true}
 		puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db)
-        userInfo := userctx.GetUserRequestInfo(ctx)
 	}}
 	if eventErr != nil {
 		{{ logger.Error(eventErr.Error(), "event_id", eventId) }}
@@ -49,11 +47,11 @@ templ NewEventFormPageContent(eventId string, userId string, ctx context.Context
 		<h1>Arrangementet er allerede godkjent eller publisert</h1>
 		<h2>Ta kontakt med RegnCon styret på Dicord eller via epost om du ønsker å gjøre endringer på arrangementet.</h2>
 	} else {
-		@components.Breadcrumbs(userInfo,[]components.BreadcrumbPath{
+		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
 			{Name: "Min Side", Url: "/profile"},
 			{Name: "Nytt arrangement", Url: ""},
-			}, db, logger)
+			})
 			<div style="display: flex;">
 				<form
 					class="formsubmission-wrapper page-content-container"

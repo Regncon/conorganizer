@@ -21,7 +21,6 @@ import (
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
-	"github.com/Regncon/conorganizer/service/requestctx"
 )
 
 func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
@@ -38,6 +37,7 @@ func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logge
 			"Last opp blide",
 			userInfo,
             db,
+            logger,
 			page(eventId, db, eventImageDir, logger, showUploadToast),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render event image page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
@@ -207,7 +207,7 @@ func cacheBustedImageURL(imageURL string) string {
 	return fmt.Sprintf("%s%sv=%d", imageURL, separator, time.Now().UnixNano())
 }
 
-templ page(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
+templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
 	<style>
 		.img-upload-form-content {
 			display: flex;
@@ -298,12 +298,12 @@ templ page(userInfo requestctx.UserRequestInfo, eventId string, db *sql.DB, even
 			});
 		</script>
 	}
-	@components.Breadcrumbs(userInfo, []components.BreadcrumbPath{
+	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Mine arrangementer", Url: "/profile/"},
 		{Name: "Nytt arrangement", Url: "/profile/new/" + eventId + "/"},
 		{Name: "Last opp bilde", Url: ""},
-	}, db, logger)
+	})
 	<article class="page-content-container">
 		<h1 class="page-heading">Last opp bilde</h1>
 		<div

@@ -2,12 +2,10 @@ package header
 
 import (
 	"database/sql"
-    "log/sLog"
-
 	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 	"github.com/Regncon/conorganizer/service/requestctx"
-	"log/slog"
 	"fmt"
+	"log/slog"
 )
 
 templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {

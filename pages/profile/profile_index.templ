@@ -20,10 +20,10 @@ templ ProfileMainColumn(user requestctx.UserRequestInfo, events []models.EventCa
 }
 
 templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardModel, tickets []profilecomponent.TicketHolder, selectedBillettholderID int, validBillettholderIDs []int, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
-	@components.Breadcrumbs(user, []components.BreadcrumbPath{
+	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Min Side", Url: ""},
-	}, db, logger)
+	})
 	<section
 		class="page-content-container profile-container"
 		data-profile-selected-billettholder-id={ fmt.Sprintf("%d", selectedBillettholderID) }

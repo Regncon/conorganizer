@@ -27,6 +27,7 @@ func PrintFriendlyRoute(router chi.Router, db *sql.DB, eventImageDir *string, lo
 			"Regncon program uttriftsvennlig",
 			userInfo,
             db,
+            logger,
 			printFriendlyPage(db, eventImageDir, logger),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render print-friendly page: %w", err).Error(), "user_id", userInfo.Id)
