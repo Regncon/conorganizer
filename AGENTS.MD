@@ -17,6 +17,7 @@ when adding names check domeneordbok.md instead of translating to english
   - `color-mix()`
   - container query units like `cqw`, `cqh`, `cqi`, `cqb`
   - Use Range Syntax: Use modern comparison operators like @container (width > 500px)
+  - place-content, place-items, place-self instead of align and justify
 - Do not use `&` in nesting unless a pseudo-class is targeting the parent.
 - Keep selectors shallow and readable.
 - Avoid Sass-style CSS that does not work natively in browsers.
@@ -27,7 +28,10 @@ when adding names check domeneordbok.md instead of translating to english
 ## Go test structure
 When writing or cleaning up Go tests, prefer behavior-focused tests that read from intent to verification.
 
-- Add a short BDD-style comment at the top of each test when it improves readability:
+- Add short BDD metadata at the top of each test when it improves readability. Prefer
+  `bdd.Behavior(t, bdd.BDD{Given: "...", When: "...", Then: "..."})`
+  for tests that should appear in the automated behavior report. Existing BDD-style
+  comments are still supported while older tests are migrated:
   - Given some initial context,
   - When an event occurs,
   - Then ensure the expected outcome.
@@ -43,9 +47,11 @@ Example shape:
 
 ```go
 func TestService_EventProducesExpectedResult(t *testing.T) {
-	// Given an existing domain object,
-	// when the service reconciles related data,
-	// then the expected durable relation is stored.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an existing domain object.",
+		When:  "When the service reconciles related data.",
+		Then:  "Then the expected durable relation is stored.",
+	})
 
 	// Given
 	expectedResult := models.SomeResult{ID: 123}

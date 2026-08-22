@@ -13,18 +13,18 @@ import (
 )
 
 type EventFormStruct struct {
-	Title             string  `json:"title"`
-	Intro             string  `json:"intro"`
-	Description       string  `json:"description"`
-	System            *string `json:"system,omitempty"`
-	HostName          string  `json:"host_name"`
-	Email             string  `json:"email"`
-	PhoneNumber       string  `json:"phone_number"`
-	MaxPlayers        int     `json:"max_players"`
+	Title             string          `json:"title"`
+	Intro             string          `json:"intro"`
+	Description       string          `json:"description"`
+	System            *string         `json:"system,omitempty"`
+	HostName          string          `json:"host_name"`
+	Email             string          `json:"email"`
+	PhoneNumber       string          `json:"phone_number"`
+	MaxPlayers        int             `json:"max_players"`
 	AgeGroup          models.AgeGroup `json:"age_group"`
 	EventRuntime      models.Runtime  `json:"event_runtime"`
-	BeginnerFriendly  bool    `json:"beginner_friendly"`
-	CanBeRunInEnglish bool    `json:"can_be_run_in_english"`
+	BeginnerFriendly  bool            `json:"beginner_friendly"`
+	CanBeRunInEnglish bool            `json:"can_be_run_in_english"`
 }
 
 type ValidationResultStruct struct {
@@ -83,7 +83,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			}
 			if err := datastar.ReadSignals(r, eventForm); err != nil {
 				logger.Debug(fmt.Errorf("ReadSignals failed for inline validation: %w", err).Error())
-				http.Error(w, err.Error(), http.StatusBadRequest)
+				http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 				return
 			}
 			logger.Debug("ReadSignals completed for inline validation")
@@ -101,7 +101,7 @@ func SetupExampleInlineValidation(db *sql.DB, eventFormRouter chi.Router, logger
 			}
 			if readSignalsError := datastar.ReadSignals(r, eventForm); readSignalsError != nil {
 				logger.Error(fmt.Errorf("error reading signals: %w", readSignalsError).Error())
-				http.Error(w, readSignalsError.Error(), http.StatusBadRequest)
+				http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 				return
 			}
 			eventFormValidationResult := checkEventFromValidity(eventForm)
@@ -263,18 +263,18 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 	>
 		<div class="text-2xl font-bold">Meld på nytt arrangement</div>
 		<div>
-			@inputValidationComponent("Tittel på spillmodul / arrangement", "text", "title", eventFormValidationResult.IsTitleValid, "Tittel må være minst 3 tegn lang")
-			@inputValidationComponent("Kort introduksjon", "text", "intro", eventFormValidationResult.IsIntroValid, "Introduksjon må være minst 3 tegn lang")
-			@inputValidationComponent("Beskrivelse", "text", "description", eventFormValidationResult.IsDescriptionValid, "Beskrivelse må være minst 3 tegn lang")
-			@inputValidationComponent("System", "text", "system", eventFormValidationResult.IsSystemValid, "System må være minst 3 tegn lang")
-			@inputValidationComponent("Navn på arrangør", "text", "host_name", eventFormValidationResult.IsHostNameValid, "Navn på arrangør må være minst 3 tegn lang")
-			@inputValidationComponent("E-postadresse", "text", "email", eventFormValidationResult.IsEmailValid, "E-postadressen må være gyldig")
-			@inputValidationComponent("Telefonnummer", "text", "phone_number", eventFormValidationResult.IsPhoneNumberValid, "Telefonnummeret må være minst 8 siffer")
-			@inputValidationComponent("Aldersgruppe", "text", "age_group", eventFormValidationResult.IsAgeGroupValid, "Velg en gyldig aldersgruppe")
-			@inputValidationComponent("Varighet", "text", "event_runtime", eventFormValidationResult.IsEventRuntimeValid, "Velg en gyldig varighet")
-			@inputValidationComponent("Maks antall spillere", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Maks antall spillere må være mellom 1 og 18")
-			@checkboxValidationComponent("Nybegynnervennlig", "beginner_friendly", true, "", false)
-			@checkboxValidationComponent("Kan kjøres på engelsk", "can_be_run_in_english", true, "", false)
+			@inputValidationComponent("Tittel på spelmodul / arrangement", "text", "title", eventFormValidationResult.IsTitleValid, "Tittel må vere minst 3 teikn lang")
+			@inputValidationComponent("Kort introduksjon", "text", "intro", eventFormValidationResult.IsIntroValid, "Introduksjon må vere minst 3 teikn lang")
+			@inputValidationComponent("Skildring", "text", "description", eventFormValidationResult.IsDescriptionValid, "Skildring må vere minst 3 teikn lang")
+			@inputValidationComponent("System", "text", "system", eventFormValidationResult.IsSystemValid, "System må vere minst 3 teikn langt")
+			@inputValidationComponent("Namn på arrangør", "text", "host_name", eventFormValidationResult.IsHostNameValid, "Namn på arrangør må vere minst 3 teikn langt")
+			@inputValidationComponent("E-postadresse", "text", "email", eventFormValidationResult.IsEmailValid, "E-postadressa må vere gyldig")
+			@inputValidationComponent("Telefonnummer", "text", "phone_number", eventFormValidationResult.IsPhoneNumberValid, "Telefonnummeret må vere minst 8 siffer")
+			@inputValidationComponent("Aldersgruppe", "text", "age_group", eventFormValidationResult.IsAgeGroupValid, "Vel ei gyldig aldersgruppe")
+			@inputValidationComponent("Varigheit", "text", "event_runtime", eventFormValidationResult.IsEventRuntimeValid, "Vel ei gyldig varigheit")
+			@inputValidationComponent("Maks tal på spelarar", "number", "max_players", eventFormValidationResult.IsMaxPlayersValid, "Maks tal på spelarar må vere mellom 1 og 18")
+			@checkboxValidationComponent("Nybegynnarvennleg", "beginner_friendly", true, "", false)
+			@checkboxValidationComponent("Kan haldast på engelsk", "can_be_run_in_english", true, "", false)
 		</div>
 		<button
 			class="btn btn-success"
@@ -292,13 +292,13 @@ templ inlineValidationFormEventComponent(eventForm *EventFormStruct, eventFormVa
 
 templ inlineValidationThankYou() {
 	<div id="inline_validation" class="alert alert-success">
-		Takk for påmeldingen!
+		Takk for påmeldinga!
 	</div>
 }
 
 templ inlineValidationFailedSaving(err error) {
 	<div id="inline_validation" class="alert alert-error">
-		Kunne ikke lagre arrangementet. Vennligst prøv igjen. Feil: { fmt.Sprintf("%v", err) }
+		Klarte ikkje å lagre arrangementet. Prøv igjen. Feil: { fmt.Sprintf("%v", err) }
 	</div>
 }
 
@@ -507,15 +507,15 @@ templ formSubmissionPage() {
         }
     </style>
 	{{
-	emptyStr := ""
-	initialForm := &EventFormStruct{
-		System:       &emptyStr,
-		AgeGroup:     models.AgeGroupDefault,
-		EventRuntime: models.RunTimeNormal,
-	}
+		emptyStr := ""
+		initialForm := &EventFormStruct{
+			System:       &emptyStr,
+			AgeGroup:     models.AgeGroupDefault,
+			EventRuntime: models.RunTimeNormal,
+		}
 	}}
 	<div>
-		<h1>Melde på nytt arrangement</h1>
+		<h1>Meld på nytt arrangement</h1>
 		@inlineValidationFormEventComponent(initialForm, ValidationResultStruct{})
 	</div>
 }
@@ -578,7 +578,7 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 	if insertError != nil {
 		saveErr := fmt.Errorf("error saving event form submission: %w", insertError)
 		logger.Error(saveErr.Error())
-		http.Error(w, fmt.Sprintf("Error updating event: %v", insertError), http.StatusBadRequest)
+		http.Error(w, fmt.Sprintf("Klarte ikkje å oppdatere arrangementet: %v", insertError), http.StatusBadRequest)
 		return 0, saveErr
 	}
 
@@ -586,13 +586,13 @@ func saveNewFormEvent(db *sql.DB, logger *slog.Logger, eventForm *EventFormStruc
 	if rowsAffectedErr != nil {
 		rowsAffectedErrWrapped := fmt.Errorf("error getting rows affected for new event submission: %w", rowsAffectedErr)
 		logger.Error(rowsAffectedErrWrapped.Error())
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		http.Error(w, "Intern serverfeil", http.StatusInternalServerError)
 		return 0, rowsAffectedErrWrapped
 	}
 
 	if rowsAffected == 0 {
 		logger.Error("Event not found or no changes made")
-		http.Error(w, "Event not found or no changes made", http.StatusNotFound)
+		http.Error(w, "Fann ikkje arrangementet, eller ingen endringar vart gjorde", http.StatusNotFound)
 		return 0, nil
 	}
 	logger.Info("Event saved successfully")

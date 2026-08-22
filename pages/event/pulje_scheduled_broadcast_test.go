@@ -6,12 +6,40 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
+func TestPuljeScheduledBroadcastJetStreamConfig_UsesMemoryStorage(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the pulje scheduled broadcast JetStream configuration.",
+		When:  "When the stream and consumer configs are built.",
+		Then:  "Then both the scheduled stream and durable consumer keep state in memory.",
+	})
+
+	// Given
+	expectedStreamStorage := jetstream.MemoryStorage
+	expectedConsumerMemoryStorage := true
+
+	// When
+	streamConfig := puljeScheduledBroadcastStreamConfig()
+	consumerConfig := puljeScheduledBroadcastConsumerConfig()
+
+	// Then
+	if streamConfig.Storage != expectedStreamStorage {
+		t.Fatalf("stream storage mismatch\nexpected: %s\nactual:   %s", expectedStreamStorage, streamConfig.Storage)
+	}
+	if consumerConfig.MemoryStorage != expectedConsumerMemoryStorage {
+		t.Fatalf("expected consumer memory storage to be enabled")
+	}
+}
+
 func TestBuildPuljeScheduledBroadcasts_SchedulesWarningAndUrgentThresholdsButNotLockTime(t *testing.T) {
-	// Gitt at en pulje starter senere enn varslingsvinduene,
-	// når planlagte puljeoppdateringer bygges,
-	// så skal bare varsel og hastevarsel planlegges.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en pulje starter senere enn varslingsvinduene.",
+		When:  "Når planlagte puljeoppdateringer bygges.",
+		Then:  "Så skal bare varsel og hastevarsel planlegges.",
+	})
 
 	// Given
 	expectedBroadcasts := []expectedPuljeScheduledBroadcast{
@@ -39,9 +67,11 @@ func TestBuildPuljeScheduledBroadcasts_SchedulesWarningAndUrgentThresholdsButNot
 }
 
 func TestBuildPuljeScheduledBroadcasts_WhenWarningIsPast_OnlySchedulesFutureUrgentThreshold(t *testing.T) {
-	// Gitt at varselgrensen allerede har passert,
-	// når planlagte puljeoppdateringer bygges,
-	// så skal bare fremtidige terskler planlegges.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at varselgrensen allerede har passert.",
+		When:  "Når planlagte puljeoppdateringer bygges.",
+		Then:  "Så skal bare fremtidige terskler planlegges.",
+	})
 
 	// Given
 	expectedBroadcasts := []expectedPuljeScheduledBroadcast{

@@ -61,9 +61,22 @@ templ adminPage(db *sql.DB) {
 					) {
 						<a role="button" href="/admin/billettholder/" class="btn btn--outline">Gå til billettholdere</a>
 					}
-					<section class="admin-panel-card">
-						@puljefordeling(db)
-					</section>
+					@adminCard(
+						"Puljefordeling",
+						"Se hvordan deltakere fordeles på arrangementer i hver pulje, og lås eller publiser fordelingen.",
+						"/static/call-to-action-avatar.webp",
+						"Pulje distribution",
+					) {
+						<a role="button" href="/admin/puljefordeling/" class="btn btn--outline">Gå til puljefordeling</a>
+					}
+					@adminCard(
+						"Puljeoppsett",
+						"Dra spel inn i puljane og sjå kor mange spel, 18+ og nybegynnarvennlege kvar pulje har. Åtvarar om ein spelleiar har to spel i same pulje.",
+						"/static/call-to-action-avatar.webp",
+						"Schedule games into puljer",
+					) {
+						<a role="button" href="/admin/puljeoppsett/" class="btn btn--outline">Gå til puljeoppsett</a>
+					}
                     @adminCard(
 						"Administrer rom",
 						"Her kan du ligge til, modifisere og få en oversikt over tilgjengelige rom",

@@ -3,50 +3,59 @@ package testutil
 import (
 	"database/sql"
 	"log/slog"
-	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 
 	"github.com/Regncon/conorganizer/service"
-	"github.com/google/uuid"
 )
 
-func CreateTemporaryDBAndLogger(name string, t *testing.T) (*sql.DB, *slog.Logger, error) {
+func CreateTestDB(t testing.TB, name string) *sql.DB {
 	t.Helper()
 
-	projectRoot := getProjectRoot(t)
-
-	uniqueName := name + "_" + t.Name() + "_" + uuid.New().String() + ".db"
-
-	databaseTestsDir := filepath.Join(projectRoot, "database", "tests")
-	if err := os.MkdirAll(databaseTestsDir, 0o755); err != nil {
-		t.Fatalf("failed to create test db directory: %v", err)
-	}
-
-	testDBPath := filepath.Join(databaseTestsDir, uniqueName)
-
-	db, err := service.InitTestDBFrom(testDBPath)
+	db, err := initTestDB(t, name)
 	if err != nil {
 		t.Fatalf("failed to create test database: %v", err)
 	}
 
-	sl := &StubLogger{}
-	slogger := NewSlogAdapter(sl)
+	t.Cleanup(func() {
+		if err := db.Close(); err != nil {
+			t.Fatalf("failed to close test database: %v", err)
+		}
+	})
 
-	return db, slogger, nil
+	return db
 }
 
-func getProjectRoot(t *testing.T) string {
+func CreateTestDBAndLogger(t testing.TB, name string) (*sql.DB, *slog.Logger) {
 	t.Helper()
 
-	_, thisFilePath, _, ok := runtime.Caller(0)
-	if !ok {
-		t.Fatalf("unable to get caller info")
+	return CreateTestDB(t, name), NewTestLogger()
+}
+
+func initTestDB(t testing.TB, name string) (*sql.DB, error) {
+	t.Helper()
+
+	return service.InitTestDBFrom(filepath.Join(t.TempDir(), name+".db"))
+}
+
+func NewTestLogger() *slog.Logger {
+	return NewSlogAdapter(&StubLogger{})
+}
+
+func MustExec(t testing.TB, db *sql.DB, query string, args ...any) {
+	t.Helper()
+
+	if _, err := db.Exec(query, args...); err != nil {
+		t.Fatalf("failed to execute query: %v\nquery: %s", err, query)
 	}
+}
 
-	testutilDir := filepath.Dir(thisFilePath)
-	projectRoot := filepath.Dir(testutilDir)
+func QueryInt(t testing.TB, db *sql.DB, query string, args ...any) int {
+	t.Helper()
 
-	return projectRoot
+	var value int
+	if err := db.QueryRow(query, args...).Scan(&value); err != nil {
+		t.Fatalf("failed to query integer value: %v\nquery: %s", err, query)
+	}
+	return value
 }

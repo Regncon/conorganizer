@@ -13,7 +13,8 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 	<style>
 		.breadcrumb-container {
 			border-bottom: 1px solid var(--bg-item);
-			min-height: 50px;
+			min-height: var(--nav-breadcrumb-height);
+			height: var(--nav-breadcrumb-height);
 		}
 
 		.breadcrumb-content-justify {
@@ -22,13 +23,12 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			justify-content: space-between;
 			gap: var(--spacing-4x);
 			width: 100%;
-			min-height: 50px;
+			min-height: var(--nav-breadcrumb-height);
 		}
 
 		.breadcrumbs {
 			display: flex;
 			gap: var(--spacing-2x);
-			padding: var(--spacing-5x) 0;
 			width: 100%;
 			overflow: hidden;
 
@@ -68,7 +68,6 @@ templ Breadcrumbs(paths []BreadcrumbPath) {
 			.breadcrumbs {
 				align-items: center;
 				gap: var(--spacing-1x);
-				padding: 0;
 			}
 			.breadcrumb-container {
 				position: sticky;

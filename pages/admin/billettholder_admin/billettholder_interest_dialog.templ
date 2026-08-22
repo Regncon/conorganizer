@@ -176,7 +176,10 @@ templ billettholderInterestDialog(
 		id={ dialogID }
 		class="billettholder-interest-dialog"
 		aria-labelledby={ dialogID + "-title" }
-		data-signals:billettholder-interest-active-pulje={ fmt.Sprintf("'%s'", billettholderFirstPuljeID(sections)) }
+		data-preserve-attr="open"
+		data-signals__ifmissing:billettholder-interest-active-pulje={ fmt.Sprintf("'%s'", billettholderFirstPuljeID(sections)) }
+		data-effect={ fmt.Sprintf("if ($billettholderInterestOpenDialogId == '%s' && !el.open) { el.showModal(); } if ($billettholderInterestOpenDialogId != '%s' && el.open) { el.close(); }", dialogID, dialogID) }
+		data-on:close={ fmt.Sprintf("if ($billettholderInterestOpenDialogId == '%s') { $billettholderInterestOpenDialogId = ''; }", dialogID) }
 	>
 		<div class="billettholder-interest-dialog-shell">
 			<header class="billettholder-interest-dialog-header">

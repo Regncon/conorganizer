@@ -79,7 +79,10 @@ func updateEventPuljePublishedWithAudit(ctx context.Context, db *sql.DB, logger 
 	return nil
 }
 
-func updateEventPuljeMembershipWithAudit(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, isInPulje bool) error {
+// SetEventInPulje upserts whether an event belongs to a pulje (is_in_pulje),
+// resets is_published, and stamps updated_by_id. Shared by the per-event form
+// and the puljeoppsett board. Idempotent.
+func SetEventInPulje(ctx context.Context, db *sql.DB, logger *slog.Logger, eventID string, puljeID string, isInPulje bool) error {
 	updatedByID, err := currentUserDBID(ctx, db, logger)
 	if err != nil {
 		return err
@@ -95,7 +98,11 @@ func updateEventPuljeMembershipWithAudit(ctx context.Context, db *sql.DB, logger
 	INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje, is_published)
 	VALUES (?, ?, ?, 0)
 	ON CONFLICT(event_id, pulje_id) DO UPDATE SET
-		is_in_pulje = excluded.is_in_pulje, is_published = 0;
+		is_in_pulje = excluded.is_in_pulje,
+		is_published = CASE
+			WHEN is_in_pulje = excluded.is_in_pulje THEN is_published
+			ELSE 0
+		END;
 	`
 	if _, err := tx.ExecContext(ctx, upsert, eventID, puljeID, isInPulje); err != nil {
 		return fmt.Errorf("upsert relation_event_puljer for event %q and pulje %q: %w", eventID, puljeID, err)
@@ -169,7 +176,7 @@ func currentUserDBID(ctx context.Context, db *sql.DB, logger *slog.Logger) (int6
 	return updatedByID, nil
 }
 
-templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
+templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql.DB) {
 	<style>
 			/* Chrome drops native validation bubbles during smooth-scroll to invalid fields. */
 			html:has(.formsubmission-wrapper) {
@@ -244,6 +251,102 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
                             object-fit: cover;
                         }
                     }
+
+                    .image-upload {
+                        container-type: inline-size;
+                        gap: 0.5rem;
+
+                        @container (width <= 24rem) {
+                            .image-upload__panel {
+                                padding: var(--spacing-3x);
+                            }
+
+                            .image-upload__button {
+                                justify-self: stretch;
+                            }
+                        }
+                    }
+
+                    .image-upload > p {
+                        margin: 0;
+                    }
+
+                    .image-upload__panel {
+                        display: grid;
+                        gap: var(--spacing-2x);
+                        min-block-size: 9.375rem;
+                        padding: var(--spacing-3x);
+                        align-content: space-between;
+                        border: 1px solid var(--bg-item-border);
+                        border-radius: var(--border-radius-2x);
+                        background: var(--bg-item);
+                        height: 102px;
+                        width: 488px;
+                    }
+
+                    .image-upload__panel--has-image {
+                        min-block-size: clamp(8.75rem, 36cqw, 13rem);
+                        align-content: end;
+                        overflow: hidden;
+                        background:
+                            linear-gradient(
+                                hsl(from var(--bg-backdrop) h s l / 10%),
+                                hsl(from var(--bg-backdrop) h s l / 45%)
+                            ),
+                            var(--image-upload-background-image);
+                        background-position: center;
+                        background-size: cover;
+                        height: 100%;
+
+                        .image-upload__content {
+                            display: none;
+                        }
+
+                        .image-upload__button {
+                            background-color: color-mix(in srgb, var(--bg-item) 82%, transparent);
+                            backdrop-filter: blur(0.25rem);
+                        }
+                    }
+
+                    .image-upload__content {
+                        display: grid;
+                        grid-template-columns: 2.5rem minmax(0, 1fr);
+                        grid-template-rows: 74px;
+                        gap: var(--spacing-2x);
+                        align-items: start;
+                        place-items: center;
+                    }
+
+                    .image-upload__text {
+                        min-inline-size: 0;
+                        margin: 0;
+                        max-inline-size: 34rem;
+                        color: var(--color-text-soft);
+                        font-size: var(--text-body-small);
+                        line-height: 1.35;
+                    }
+
+                    .image-upload__icon,
+                    .image-upload__button-icon {
+                        display: inline-grid;
+                        place-items: center;
+                        flex: 0 0 auto;
+                    }
+
+                    .image-upload__icon {
+                        inline-size: 2.5rem;
+                        block-size: 2.5rem;
+                    }
+
+                    .image-upload__button-icon {
+                        inline-size: 1.25rem;
+                        block-size: 1.25rem;
+                    }
+
+                    .image-upload__button {
+                        justify-self: end;
+                        gap: var(--spacing-1x);
+                    }
                 }
 
                 .puljefordeling-section {
@@ -283,7 +386,7 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
                 }
             }
 
-            @container formsubmission-css-container (width > 800px) {
+            @container formsubmission-css-container (width > 920px) {
                 .form-card:is(:not(.submit-section)) {
                     display: block;
 
@@ -402,6 +505,7 @@ templ FormBody(event *models.Event, isAdmin bool, db *sql.DB) {
 	)
 	@aboutEvent(
 		event.ID,
+		eventImageDir,
 		event.Title,
 		event.Intro,
 		event.EventType,

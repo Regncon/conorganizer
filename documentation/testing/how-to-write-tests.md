@@ -13,8 +13,8 @@ Målet er å skrive tester som:
 ## Grunnprinsipper
 
 - Skriv alle tester på bokmål.
-- Skriv testene som avkrysningspunkter.
-- Skriv testene i `Gitt / Når / Så`-form.
+- Skriv testene som avkrysningspunkter med kort tittel.
+- Skriv `Gitt / Når / Så` på tre egne linjer.
 - Test oppførsel, ikke implementasjon.
 - Test fra brukerens perspektiv.
 - Inkluder både normal oppførsel, edge cases, feilhåndtering og kosmetiske forhold.
@@ -25,6 +25,7 @@ Målet er å skrive tester som:
 
 En god test beskriver:
 
+- en kort tittel som gjør sjekkpunktet lett å skanne
 - hvilken rolle som tester
 - hvilken situasjon eller forutsetning som gjelder
 - hvilken handling som skjer
@@ -32,7 +33,10 @@ En god test beskriver:
 
 Eksempel:
 
-- [ ] `Gitt at brukeren er innlogget og har tilgang til Min Side, når brukeren åpner siden, så skal egne arrangementer, billetter og program vises uten at innhold overlapper eller fremstår uferdig.`
+- [ ] **Min Side viser en helhetlig oversikt**<br>
+  **Gitt** at brukeren er innlogget og har tilgang til Min Side.<br>
+  **Når** brukeren åpner siden.<br>
+  **Så** skal egne arrangementer, billetter og program vises uten at innhold overlapper eller fremstår uferdig.
 
 ## Hva vi mener med å teste oppførsel
 
@@ -50,13 +54,13 @@ Vi tester ikke interne tekniske detaljer i den manuelle sjekklisten.
 
 Unngå formuleringer som:
 
-- `Gitt at SSE-strømmen er aktiv, når patchen kommer, så skal DOM oppdateres.`
-- `Gitt at databasen kaster en exception, når handleren returnerer 500, så skal ...`
+- `SSE-strømmen oppdaterer DOM direkte.`
+- `Handleren returnerer 500 når databasen kaster en exception.`
 
 Foretrekk formuleringer som:
 
-- `Gitt at data på siden endres mens brukeren står på siden, når siden oppdateres, så skal oppdatert innhold vises uten at brukeren havner i en ødelagt eller uforståelig tilstand.`
-- `Gitt at lagring feiler, når brukeren forsøker å sende inn skjemaet, så skal brukeren få tydelig beskjed om at innsendingen ikke ble fullført.`
+- `Oppdatert innhold vises uten ødelagt sidetilstand.`
+- `Mislykket lagring gir tydelig beskjed om at innsendingen ikke ble fullført.`
 
 ## Format for hver testfil
 
@@ -65,8 +69,8 @@ Hver testfil skal normalt inneholde:
 1. En kort tittel.
 2. En kort beskrivelse av hva siden eller flyten dekker.
 3. En tydelig angivelse av hvilken rolle som skal teste der det er relevant.
-4. En sjekkliste med avkrysningspunkter i `Gitt / Når / Så`-form.
-5. En seksjon kalt `Kan automatiseres` med korte beskrivelser av hvilke punkter som egner seg for automatisering, og hva slags automatisert test de egner seg for.
+4. En sjekkliste gruppert i korte `###`-seksjoner når filen har flere typer oppførsel.
+5. Avkrysningspunkter med kort tittel og tre egne `Gitt / Når / Så`-linjer.
 
 ## Roller
 
@@ -89,11 +93,19 @@ Hvert sjekkpunkt skal være:
 - observerbart
 - relevant for launch
 
+Bruk denne formen:
+
+- [ ] **Kort tittel på forventet oppførsel**<br>
+  **Gitt** at relevant forutsetning finnes.<br>
+  **Når** brukeren gjør handlingen eller siden vises.<br>
+  **Så** skal observerbart resultat være tydelig.
+
 Foretrekk:
 
 - ett tydelig fokus per punkt
 - konkrete forventninger
 - formuleringer som sier noe om utfallet
+- titler som beskriver resultatet, ikke bare forutsetningen
 
 Unngå:
 
@@ -103,11 +115,14 @@ Unngå:
 
 Bra:
 
-- [ ] `Gitt at forsiden inneholder arrangementer i flere puljer, når brukeren åpner forsiden, så skal hvert arrangement vises under riktig pulje og med lesbar informasjon om tidspunkt og innhold.`
+- [ ] **Arrangementer ligger under riktig pulje**<br>
+  **Gitt** at forsiden inneholder arrangementer i flere puljer.<br>
+  **Når** brukeren åpner forsiden.<br>
+  **Så** skal hvert arrangement vises under riktig pulje og med lesbar informasjon om tidspunkt og innhold.
 
 Mindre bra:
 
-- [ ] `Test at forsiden fungerer.`
+`Test at forsiden fungerer.`
 
 ## Feilhåndtering og edge cases
 
@@ -132,26 +147,20 @@ Kosmetiske forhold skal være med i sjekklistene, men de skal fortsatt beskrives
 
 Bra:
 
-- [ ] `Gitt at siden vises på mobil, når brukeren scroller og navigerer, så skal tekst, knapper, ikoner og kort være lesbare og ikke overlappe eller havne utenfor skjermen.`
+- [ ] **Mobilvisning er lesbar og navigerbar**<br>
+  **Gitt** at siden vises på mobil.<br>
+  **Når** brukeren scroller og navigerer.<br>
+  **Så** skal tekst, knapper, ikoner og kort være lesbare og ikke overlappe eller havne utenfor skjermen.
 
 Mindre bra:
 
-- [ ] `Se etter CSS-feil.`
+`Se etter CSS-feil.`
 
-## Kan automatiseres
+## Automatisering og rapport
 
-Hver fil skal avslutte med en seksjon kalt `Kan automatiseres`.
+Automatiseringskandidater skal ikke lagres som egne seksjoner i de manuelle testfilene. Slike lister blir raskt utdaterte.
 
-Denne seksjonen skal:
-
-- ikke bruke faste etiketter
-- beskrive kort hva som egner seg for automatisering
-- si noe om hvilken type automatisert test som passer
-
-Eksempler:
-
-- `Denne oppførselen egner seg godt for en ende-til-ende-test som verifiserer at riktig innhold vises for innlogget og ikke-innlogget bruker.`
-- `Denne oppførselen egner seg for en integrasjonstest som verifiserer at ugyldige data ikke lagres og at brukeren får en tydelig feiltilstand.`
+Når et manuelt punkt automatiseres, skal den automatiserte testen ha tydelig BDD-metadata øverst i testen. Bruk helst `bdd.Behavior(t, bdd.BDD{Given: "...", When: "...", Then: "..."})`; eldre BDD-kommentarer støttes fortsatt mens testene migreres. Kjør `task test:report` for å se hvilke automatiserte tester som finnes, hvilken BDD-metadata de har, og hvilke tester som mangler BDD-metadata.
 
 ## For utviklere
 
@@ -175,7 +184,6 @@ Når du skriver eller oppdaterer testfiler:
 - unngå å dikte opp funksjonalitet som ikke finnes i kodebasen
 - hold deg til ruter, roller og brukerflyter som faktisk finnes
 - sørg for at edge cases og feilhåndtering er med i hver relevant fil
-- legg til en kort seksjon om hva som kan automatiseres
 
 Hvis en flyt er deprecated eller ikke en del av launch, skal den ikke inn i launch-sjekklistene.
 
@@ -186,10 +194,10 @@ Før en ny eller oppdatert testfil anses som ferdig, skal den kunne bestå denne
 - Dekker filen den faktiske siden eller flyten som finnes i appen?
 - Er teksten skrevet på bokmål?
 - Er punktene skrevet som avkrysningspunkter?
-- Bruker punktene `Gitt / Når / Så`?
+- Har hvert punkt en kort tittel?
+- Bruker punktene tre egne `Gitt / Når / Så`-linjer?
 - Er punktene brukerorienterte og observerbare?
 - Inneholder filen edge cases og feilhåndtering?
 - Inneholder filen kosmetiske forhold der det er relevant?
 - Er det tydelig hvilken rolle som tester?
-- Har filen en seksjon for `Kan automatiseres`?
-
+- Er automatiserte punkter flyttet til automatiserte tester med BDD-metadata?

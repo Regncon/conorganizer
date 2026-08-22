@@ -2,6 +2,7 @@ package profilecomponent
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -29,18 +30,55 @@ type UserProgramPulje struct {
 	Interests []UserInterest
 }
 
+func getProgramPublished(db *sql.DB) (bool, error) {
+	const query = `
+		SELECT is_published
+		FROM program_publishing_state
+		WHERE id = 1
+	`
+
+	var isPublished int
+	if err := db.QueryRow(query).Scan(&isPublished); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, fmt.Errorf("query program publishing state: %w", err)
+	}
+
+	return isPublished == 1, nil
+}
+
 templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int, db *sql.DB, logger *slog.Logger, eventImageDir *string) {
-	{{ logger = logger.With("component", "profile_program") }}
-	{{ events, err := GetAllEventsForUser(userInfo, selectedBillettholderID, db, logger) }}
-	{{ interests, interestErr := getAllInterestsForUser(userInfo, selectedBillettholderID, db, logger) }}
-	{{ puljeRows, puljeErr := puljerService.GetAllPuljer(db) }}
 	{{
+		logger = logger.With("component", "profile_program")
+		events, err := GetAllEventsForUser(userInfo, selectedBillettholderID, db, logger)
+		interests, interestErr := getAllInterestsForUser(userInfo, selectedBillettholderID, db, logger)
+		puljeRows, puljeErr := puljerService.GetAllPuljer(db)
+		isPublished, publishErr := getProgramPublished(db)
+
+		var hasError bool = false
+		if err != nil {
+			logger.Error(err.Error(), "user_id", userInfo.Id)
+			hasError = true
+		}
+		if interestErr != nil {
+			logger.Error(interestErr.Error(), "user_id", userInfo.Id)
+			hasError = true
+		}
+		if puljeErr != nil {
+			logger.Error(puljeErr.Error(), "user_id", userInfo.Id)
+			hasError = true
+		}
+		if publishErr != nil {
+			logger.Error(publishErr.Error(), "user_id", userInfo.Id)
+			hasError = true
+		}
+
 		puljer := make([]UserProgramPulje, len(puljeRows))
 		for i, pulje := range puljeRows {
 			puljer[i].Pulje = pulje
 		}
-	}}
-	{{
+
 		for i := range puljer {
 
 			for _, event := range events {
@@ -82,40 +120,30 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 		<h2 class="surface-pane-title">
 			Mitt festivalprogram
 		</h2>
-		if err != nil || interestErr != nil || puljeErr != nil {
-			{{
-					if err != nil {
-						logger.Error(err.Error(), "user_id", userInfo.Id)
-					}
-					if interestErr != nil {
-						logger.Error(interestErr.Error(), "user_id", userInfo.Id)
-					}
-					if puljeErr != nil {
-						logger.Error(puljeErr.Error(), "user_id", userInfo.Id)
-					}
-			}}
+		if hasError {
 			<div style="padding: var(--spacing-4x); color: var(--color-error); background-color: var(--bg-error-light); border-radius: var(--border-radius-2x);">
 				<p>Vi klarte ikke å laste hele festivalprogrammet ditt akkurat nå.</p>
 				<p>Prøv igjen om litt.</p>
 			</div>
 		} else {
 			<section class="program-pulje-list">
-				for _, pulje := range puljer {
-					<div class="program-pulje-container">
-						<h3 class="program-pulje">
-							{ pulje.Pulje.Name }
-							<span class="program-pulje-time">({ pulje.Pulje.TimeRange() })</span>
-						</h3>
-						if len(pulje.Events) > 0 {
-							for _, event := range pulje.Events {
-								{{ imageCardUrl := eventimage.GetEventImageUrl(event.EventID, "card", eventImageDir) }}
-								{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
-								@event_components.ProgramPuljeEvent(event.EventID, imageCardUrl, imageBannerUrl, event.Title, event.Intro, event.EventType, event.IsGM)
+				if isPublished {
+					for _, pulje := range puljer {
+						<div class="program-pulje-container">
+							<h3 class="program-pulje">
+								{ pulje.Pulje.Name }
+								<span class="program-pulje-time">({ pulje.Pulje.TimeRange() })</span>
+							</h3>
+							if len(pulje.Events) > 0 {
+								for _, event := range pulje.Events {
+									{{ imageCardUrl := eventimage.GetEventImageUrl(event.EventID, "card", eventImageDir) }}
+									{{ imageBannerUrl := eventimage.GetEventImageUrl(event.EventID, "banner", eventImageDir) }}
+									@event_components.ProgramPuljeEvent(event.EventID, imageCardUrl, imageBannerUrl, event.Title, event.Intro, event.EventType, event.IsGM)
+								}
 							}
-						}
-						if len(pulje.Events) == 0 && len(pulje.Interests) > 0 {
-							{{ interestList := make([]event_components.Interest, len(pulje.Interests)) }}
-							{{
+							if len(pulje.Events) == 0 && len(pulje.Interests) > 0 {
+								{{ interestList := make([]event_components.Interest, len(pulje.Interests)) }}
+								{{
 									for i, interest := range pulje.Interests {
 										interestList[i] = event_components.Interest{
 											EventID:       interest.EventID,
@@ -123,12 +151,21 @@ templ MyProgram(userInfo requestctx.UserRequestInfo, selectedBillettholderID int
 											InterestLevel: interest.InterestLevel,
 										}
 									}
-							}}
-							@event_components.ProgramPuljeInterests(interestList)
-						}
-						if len(pulje.Events) == 0 && len(pulje.Interests) == 0 {
-							@event_components.ProgramPuljeNoEvents(pulje.Pulje.ID)
-						}
+								}}
+								@event_components.ProgramPuljeInterests(interestList)
+							}
+							if len(pulje.Events) == 0 && len(pulje.Interests) == 0 {
+								@event_components.ProgramPuljeNoEvents(pulje.Pulje.ID)
+							}
+						</div>
+					}
+				} else {
+					<div class="program-pulje-container">
+						<h3 class="program-pulje" style="text-align: center;">Programmet for Regncon er ikkje publisert enno</h3>
+						<p>
+							Vi arbeider framleis med planlegginga og vil leggje ut programmet så snart det er klart.
+							Følg med på nettsida for oppdateringar og nyheiter.
+						</p>
 					</div>
 				}
 			</section>

@@ -139,6 +139,20 @@ func BuildSelectedPuljeInterestState(puljer []models.PuljeRow, puljeID string, n
 	return PuljeInterestState{Availability: PuljeInterestOpen, CanEdit: true}
 }
 
+func BuildQueryPuljeInterestState(puljer []models.PuljeRow, puljeQuery string, now time.Time) (PuljeInterestState, bool) {
+	puljeID, ok := models.ParsePulje(puljeQuery)
+	if !ok {
+		return PuljeInterestState{}, false
+	}
+	for _, pulje := range puljer {
+		if pulje.ID == puljeID {
+			state := BuildPuljeInterestState(pulje, now)
+			return state, state.HasMessage()
+		}
+	}
+	return PuljeInterestState{}, false
+}
+
 func BuildMostUrgentPuljeInterestState(puljer []models.PuljeRow, now time.Time) (PuljeInterestState, bool) {
 	var selected PuljeInterestState
 	hasSelected := false

@@ -75,7 +75,10 @@ templ BillettholderAdminPage(db *sql.DB, logger *slog.Logger) {
 	if err != nil {
 		{{ logger.Error(err.Error()) }}
 	}
-	<div id="billettholder-admin-container">
+	<div
+		id="billettholder-admin-container"
+		data-signals__ifmissing:billettholder-interest-open-dialog-id="''"
+	>
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
 			{Name: "Admin", Url: "/admin/"},

@@ -22,23 +22,23 @@ func UpdateStatus(eventRouter chi.Router, db *sql.DB, liveManager *live.Manager,
 		store := &Store{}
 
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "id")
 		if eventID == "" {
-			http.Error(w, "Event ID is required", http.StatusBadRequest)
+			http.Error(w, "Arrangement-ID manglar", http.StatusBadRequest)
 			return
 		}
 
 		if err := updateEventStatusWithAudit(r.Context(), db, logger, eventID, store.Status); err != nil {
-			http.Error(w, "Failed to update the status for event in the database", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å oppdatere statusen for arrangementet i databasen", http.StatusInternalServerError)
 			return
 		}
 
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents); err != nil {
-			http.Error(w, "Failed to broadcast update", http.StatusInternalServerError)
+			http.Error(w, "Klarte ikkje å sende oppdatering", http.StatusInternalServerError)
 			return
 		}
 	})
@@ -61,18 +61,18 @@ templ statusCard(event *models.Event, isAdmin bool) {
 				if isAdmin {
 					<option value={ models.EventStatusDraft } selected>{ models.EventStatusDraft.Label() }</option>
 					<option value={ models.EventStatusSubmitted } selected>{ models.EventStatusSubmitted.Label() }</option>
-					<option value={ models.EventStatusApproved } selected>{ models.EventStatusApproved.Label() } ( Du er administrator )</option>
-					<option value={ models.EventStatusAnnounced } selected>{ models.EventStatusAnnounced.Label() } ( Du er administrator )</option>
+					<option value={ models.EventStatusApproved } selected>{ models.EventStatusApproved.Label() } (du er administrator)</option>
+					<option value={ models.EventStatusAnnounced } selected>{ models.EventStatusAnnounced.Label() } (du er administrator)</option>
 					<option value={ models.EventStatusArchived } selected>{ models.EventStatusArchived.Label() }</option>
 				} else {
 					if event.Status == models.EventStatusDraft || event.Status == models.EventStatusSubmitted || event.Status == models.EventStatusArchived {
 						<option value={ models.EventStatusDraft }>{ models.EventStatusDraft.Label() }</option>
 						<option value={ models.EventStatusArchived }>{ models.EventStatusArchived.Label() }</option>
-						<option value={ models.EventStatusSubmitted } disabled>{ models.EventStatusSubmitted.Label() } (Bruk knappen nederst i skjema) </option>
+						<option value={ models.EventStatusSubmitted } disabled>{ models.EventStatusSubmitted.Label() } (bruk knappen nedst i skjemaet)</option>
 					}
-					}
-				</select>
-				@errorfeedback.RenderMessage("status")
-			</section>
+				}
+			</select>
+			@errorfeedback.RenderMessage("status")
+		</section>
 	</article>
 }

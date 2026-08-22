@@ -26,12 +26,17 @@ templ ticketHolder(name string, ticket string, email string) {
 // Combine multiple ticket holders for profile page
 templ MyTickets(tickets []TicketHolder) {
 	<div class="surface-pane">
-		<h2 class="surface-pane-title">billettar</h2>
+		<h2 class="surface-pane-title">Billettar</h2>
 		<div class="flex flex-col" style="gap: var(--spacing-4x);">
-			for _, ticket := range tickets {
-				@ticketHolder(ticket.Name, ticket.Ticket, ticket.Email)
+			if len(tickets) == 0 {
+				<p>Ingen billetter er knyttet til profilen din ennå.</p>
+				<a href="/profile/tickets" class="btn btn--outline" style="width: fit-content; margin-left: auto;">Hent billetter</a>
+			} else {
+				for _, ticket := range tickets {
+					@ticketHolder(ticket.Name, ticket.Ticket, ticket.Email)
+				}
+				<a href="/profile/tickets" class="btn btn--outline" style="width: fit-content; margin-left: auto;">Mine billetter</a>
 			}
-			<a href="/profile/tickets" class="btn btn--outline" style="width: fit-content; margin-left: auto;">Mine billettar</a>
 		</div>
 	</div>
 }

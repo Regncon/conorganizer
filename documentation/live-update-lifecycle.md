@@ -55,6 +55,7 @@ The live update KV data is runtime-only state. NATS does not need to persist the
 9. The endpoint starts NATS watchers for the connection key in each subscribed bucket.
 10. When a watched key changes, the endpoint re-renders the full fragment from durable state and patches it through Datastar.
 11. When the browser disconnects, the request context is cancelled and the watcher stops.
+12. If a NATS watcher closes while the browser request is still active, the endpoint closes the SSE stream so Datastar can reconnect and establish a fresh watcher.
 
 Important ordering rule: create or save the Gorilla session before `datastar.NewSSE(w, r)`. `NewSSE` flushes response headers, so a handler that creates the session after that point may fail to send `Set-Cookie` reliably.
 

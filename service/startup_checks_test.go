@@ -5,12 +5,16 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestCheckWritableDirectorySucceedsAndDoesNotLeaveTempFile(t *testing.T) {
-	// Given a writable image directory,
-	// when the startup check probes it,
-	// then the check succeeds and removes its temporary file.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a writable image directory.",
+		When:  "When the startup check probes it.",
+		Then:  "Then the check succeeds and removes its temporary file.",
+	})
 
 	// Given
 	expectedTempFilePrefix := ".conorganizer-write-check-"
@@ -27,9 +31,11 @@ func TestCheckWritableDirectorySucceedsAndDoesNotLeaveTempFile(t *testing.T) {
 }
 
 func TestCheckWritableDirectoryFailsForMissingDirectory(t *testing.T) {
-	// Given the image directory does not exist,
-	// when the startup check probes it,
-	// then the check fails with a missing directory error.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the image directory does not exist.",
+		When:  "When the startup check probes it.",
+		Then:  "Then the check fails with a missing directory error.",
+	})
 
 	// Given
 	expectedErrorText := "does not exist"
@@ -44,9 +50,11 @@ func TestCheckWritableDirectoryFailsForMissingDirectory(t *testing.T) {
 }
 
 func TestCheckWritableDirectoryFailsForFilePath(t *testing.T) {
-	// Given the configured image path points to a file,
-	// when the startup check probes it,
-	// then the check fails before attempting a write probe.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the configured image path points to a file.",
+		When:  "When the startup check probes it.",
+		Then:  "Then the check fails before attempting a write probe.",
+	})
 
 	// Given
 	expectedErrorText := "is not a directory"

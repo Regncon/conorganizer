@@ -10,7 +10,13 @@ tasks:
     # The `build:` tasks below are used together for "production" builds of your project
     build:templ:
         cmds:
-            - go tool templ generate
+            - |
+              set -eu
+              for dir in components pages layouts service; do
+                if [ -d "$dir" ]; then
+                  go tool templ generate -path "$dir" -log-level error
+                fi
+              done
 
     build:
         cmds:
@@ -29,30 +35,108 @@ tasks:
     # The `start:` tasks below are used together for "dev" builds, and will hot-reload your entire project when there are code changes
     start:templ:
         cmds:
-            - go tool templ generate --watch --proxybind="0.0.0.0"
-              --proxy="http://localhost:8080" --open-browser=false -v
+            - |
+              set -eu
+              mkdir -p tmp/templ-watch
+              lock_dir="tmp/templ-watch/generating.lock"
+              rmdir "$lock_dir" 2>/dev/null || true
+
+              hash_templates() {
+                find "$1" -type f -name '*.templ' -exec sha256sum {} + 2>/dev/null \
+                  | sort \
+                  | sha256sum \
+                  | cut -d ' ' -f 1
+              }
+
+              generate_dirs() {
+                if [ "$#" -eq 0 ]; then
+                  return
+                fi
+
+                while ! mkdir "$lock_dir" 2>/dev/null; do
+                  sleep 0.1
+                done
+
+                for dir in "$@"; do
+                  if [ ! -d "$dir" ]; then
+                    continue
+                  fi
+
+                  echo "templ: generating $dir"
+                  if ! go tool templ generate -path "$dir" -log-level error; then
+                    echo "templ: generation failed for $dir" >&2
+                  fi
+                  hash_templates "$dir" > "tmp/templ-watch/$dir.sha256"
+                done
+
+                rmdir "$lock_dir"
+              }
+
+              generate_dirs components pages layouts service
+
+              while true; do
+                changed_dirs=""
+                for dir in components pages layouts service; do
+                  if [ ! -d "$dir" ]; then
+                    continue
+                  fi
+
+                  state="tmp/templ-watch/$dir.sha256"
+                  current_hash="$(hash_templates "$dir")"
+                  previous_hash="$(cat "$state" 2>/dev/null || true)"
+
+                  if [ "$current_hash" != "$previous_hash" ]; then
+                    changed_dirs="$changed_dirs $dir"
+                  fi
+                done
+
+                if [ -n "$changed_dirs" ]; then
+                  generate_dirs $changed_dirs
+                fi
+
+                sleep 0.5
+              done
 
     start:server:
+        vars:
+            APP_DB_PATH: '{{.APP_DB_PATH | default "database/events.db"}}'
+            APP_IMAGE_PATH: '{{.APP_IMAGE_PATH | default "local-event-images"}}'
         cmds:
             - |
+              set -eu
+              app_db_path="{{.APP_DB_PATH}}"
+              app_image_path="{{.APP_IMAGE_PATH}}"
+              build_cmd='set -eu; while [ -d tmp/templ-watch/generating.lock ]; do sleep 0.1; done; mkdir -p tmp/bin; out="tmp/bin/main.$$"; go build -buildvcs=false -tags dev -o "$out" .; mv "$out" tmp/bin/main'
+
               go tool air \
-              --build.cmd "go build -tags dev -o tmp/bin/main" \
+              --build.cmd "$build_cmd" \
               --build.bin "tmp/bin/main" \
-              --build.delay "20" \
+              --build.args_bin "-dbp $app_db_path -image-path $app_image_path" \
+              --build.delay "1500" \
+              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
               --build.include_ext "go" \
+              --build.include_file ".env" \
+              --build.poll "true" \
+              --build.poll_interval "500" \
               --build.stop_on_error "false" \
+              --proxy.enabled "false" \
               --misc.clean_on_exit true
 
     start:reload:
         cmds:
             - |
               go tool air \
-              --build.cmd "go tool templ generate --notify-proxy" \
+              --build.cmd "curl -fsS http://localhost:8080/hotreload >/dev/null || true" \
               --build.bin "true" \
-              --build.delay "100" \
-              --build.exclude_dir "" \
+              --build.delay "200" \
+              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
               --build.include_dir "$STATIC_DIR" \
-              --build.include_ext "js,css,env"
+              --build.include_ext "js,css,html,svg,webp,ico,png,jpg,jpeg,avif" \
+              --build.poll "true" \
+              --build.poll_interval "500" \
+              --build.stop_on_error "false" \
+              --proxy.enabled "false" \
+              --misc.clean_on_exit true
 
     start:
         deps:
@@ -60,7 +144,14 @@ tasks:
             - start:reload
             - start:server
 
-    # Similar to above task, but recolors log levels
+    start:demo:
+        deps:
+            - start:templ
+            - start:reload
+            - task: start:server
+              vars:
+                  APP_DB_PATH: database/events-demo.db
+
     start:logcolors:
         cmds:
             - |
@@ -87,32 +178,43 @@ tasks:
             - sqlite3 database/events.db ".schema --indent --nosys" > schema.sql
             - go test ./...
 
-    # Download local copies of production assets
-    download:
-        deps:
-            - download:db
-            - download:images
+    # Run tests and print the BDD behavior report used in CI logs
+    test:report:
+        cmds:
+            - go run ./cmd/testreport
 
-    download:db:
-        # Download a local copy of the production database
-        # Requires DB_SSH_USER in .env or shell environment
+    # Download local copies of remote assets
+    download:
         cmds:
             - |
-              set -eu
-              : "${DB_SSH_USER:?Set DB_SSH_USER in .env}"
-              mkdir -p database
-              scp -P 22 "${DB_SSH_USER}@46.62.159.49:/mnt/HC_Volume_103911252/backups/sqlite/events-latest.db" "database/events.db.download"
-              mv "database/events.db.download" "database/events.db"
+              echo "Specify an environment:"
+              echo "  go tool task download:main"
+              echo "  go tool task download:demo"
+              exit 1
 
-    # Download local copies of production event images
-    download:images:
+    download:main:
         cmds:
-            # Create local-event-images directory if it doesn't exist
-            - mkdir -p ./local-event-images
-            ## Download all event images from https://program.regncon.no/event-images/ and save them to ./local-event-images
-            - wget -r -np -nH -N -R html,tmp --cut-dirs=1 -P
-              ./local-event-images
-              https://main.lekeplassen.regncon.no/event-images/
+            - ./scripts/download-environment main all
+
+    download:main:db:
+        cmds:
+            - ./scripts/download-environment main db
+
+    download:main:images:
+        cmds:
+            - ./scripts/download-environment main images
+
+    download:demo:
+        cmds:
+            - ./scripts/download-environment demo all
+
+    download:demo:db:
+        cmds:
+            - ./scripts/download-environment demo db
+
+    download:demo:images:
+        cmds:
+            - ./scripts/download-environment demo images
 
     # Kill all running air, templ and taks processes
     kill:

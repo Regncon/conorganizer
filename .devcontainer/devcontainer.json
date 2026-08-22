@@ -9,17 +9,12 @@
     "workspaceFolder": "/home/devuser/app",
     "workspaceMount": "source=${localWorkspaceFolder},target=/home/devuser/app,type=bind,consistency=cached",
     "forwardPorts": [
-        7331,
         8080
     ],
     "portsAttributes": {
-        "7331": {
-            "label": "Air proxy",
-            "onAutoForward": "openBrowser"
-        },
         "8080": {
             "label": "app server",
-            "onAutoForward": "silent"
+            "onAutoForward": "openBrowser"
         }
     },
     "remoteUser": "devuser",

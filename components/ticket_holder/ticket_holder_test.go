@@ -6,12 +6,15 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestBuildPuljeInterestState_WhenPuljeIsLocked_ReturnsLockedStateAndDisablesEditing(t *testing.T) {
-	// Gitt at en pulje er låst,
-	// når interessetilstanden bygges,
-	// så skal billettholderen se låst status og ikke kunne redigere interessen.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en pulje er låst.",
+		When:  "Når interessetilstanden bygges.",
+		Then:  "Så skal billettholderen se låst status og ikke kunne redigere interessen.",
+	})
 
 	// Given
 	expectedAvailability := PuljeInterestLocked
@@ -43,9 +46,11 @@ func TestBuildPuljeInterestState_WhenPuljeIsLocked_ReturnsLockedStateAndDisables
 }
 
 func TestBuildPuljeInterestState_WhenOpenPuljeIsBeforeWarningWindow_ReturnsOpenStateWithoutWarning(t *testing.T) {
-	// Gitt at en åpen pulje ikke nærmer seg låsing,
-	// når interessetilstanden bygges,
-	// så skal billettholderen ikke se noen låseadvarsel.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en åpen pulje ikke nærmer seg låsing.",
+		When:  "Når interessetilstanden bygges.",
+		Then:  "Så skal billettholderen ikke se noen låseadvarsel.",
+	})
 
 	// Given
 	expectedAvailability := PuljeInterestOpen
@@ -77,9 +82,11 @@ func TestBuildPuljeInterestState_WhenOpenPuljeIsBeforeWarningWindow_ReturnsOpenS
 }
 
 func TestBuildPuljeInterestState_WhenOpenPuljeIsInWarningWindow_ReturnsWarningWithLockTime(t *testing.T) {
-	// Gitt at en åpen pulje nærmer seg låsing,
-	// når interessetilstanden bygges,
-	// så skal billettholderen se en advarsel med tidspunktet puljen låses.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en åpen pulje nærmer seg låsing.",
+		When:  "Når interessetilstanden bygges.",
+		Then:  "Så skal billettholderen se en advarsel med tidspunktet puljen låses.",
+	})
 
 	// Given
 	expectedAvailability := PuljeInterestWarning
@@ -107,9 +114,11 @@ func TestBuildPuljeInterestState_WhenOpenPuljeIsInWarningWindow_ReturnsWarningWi
 }
 
 func TestBuildPuljeInterestState_WhenOpenPuljeIsInUrgentWarningWindow_ReturnsUrgentWarningWithLockTime(t *testing.T) {
-	// Gitt at en åpen pulje er svært nær låsing,
-	// når interessetilstanden bygges,
-	// så skal billettholderen se en tydelig hasteadvarsel.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at en åpen pulje er svært nær låsing.",
+		When:  "Når interessetilstanden bygges.",
+		Then:  "Så skal billettholderen se en tydelig hasteadvarsel.",
+	})
 
 	// Given
 	expectedAvailability := PuljeInterestUrgentWarning
@@ -137,9 +146,11 @@ func TestBuildPuljeInterestState_WhenOpenPuljeIsInUrgentWarningWindow_ReturnsUrg
 }
 
 func TestBuildMostUrgentPuljeInterestState_WhenWarningAndLockedPuljerExist_ReturnsWarningState(t *testing.T) {
-	// Gitt at noen puljer er låst og en åpen pulje snart låses,
-	// når den viktigste meldingen velges,
-	// så skal tidsadvarselen vises i stedet for låst status.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at noen puljer er låst og en åpen pulje snart låses.",
+		When:  "Når den viktigste meldingen velges.",
+		Then:  "Så skal tidsadvarselen vises i stedet for låst status.",
+	})
 
 	// Given
 	expectedHasState := true

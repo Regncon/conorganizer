@@ -572,3 +572,289 @@ Note: the repo is under a parent `go.work` that does not include this module, so
 Time: 2026-06-08 08:56:29
 --- Next Prompt ---
 
+
+There seems to be a but. The datastar stream only lives for 10 seconds after page load, then live reload stops working. 
+
+
+Let's discuss the issue before changing the code. Pleas ask any clarifying questions or share any thoughts or suggestions you have.
+
+
+
+Time: 2026-06-17 16:05:36
+--- Codex Run ---
+
+Codex output:
+I’ll inspect the local server and live-stream setup to ground the discussion, but I won’t change anything. The symptom sounds like an idle SSE timeout, so I’m looking specifically for write/read timeouts, middleware, and whether the stream sends heartbeats while no data changes.
+I found no explicit HTTP `WriteTimeout` in `main.go`, so the 10-second cutoff is probably not from `http.Server` itself. The live stream currently sends an initial patch and then stays completely idle until a NATS update arrives; if anything in front of the app has a 10-second idle timeout, that would explain this symptom.
+I’m checking the Datastar Go package API locally to see whether it already exposes a heartbeat/keepalive option, since that would be the least invasive fix if idle timeout is the cause.
+Datastar’s Go package sets SSE headers and flushes writes, but I don’t see a built-in keepalive option in the local v1.2.1 API. That pushes us toward adding our own lightweight heartbeat in the live service if the timeout theory holds.
+There are two separate things to verify: whether the HTTP connection is being closed at 10 seconds, and whether Datastar reconnects after that. The fix is different if the stream is closing cleanly but not reconnecting versus staying open but no longer receiving NATS updates.
+My first suspicion is an idle SSE timeout.
+
+Right now `live.Stream` sends the initial Datastar patch, then sends nothing until a NATS update arrives. If the browser, proxy, dev server, or some middleware closes idle streaming responses after 10 seconds, the stream will silently die unless Datastar reconnects correctly.
+
+A few things I’d verify before changing code:
+
+1. Does the Network tab show `/.../api` closing at exactly ~10 seconds?
+   Check status, duration, and whether a new request is started afterward.
+
+2. Does live reload work if you trigger a content change within the first 10 seconds, then stop working only after the stream has been idle?
+   If yes, this strongly points to missing heartbeat/keepalive.
+
+3. Is this local direct-to-Go on `:8080`, or through a proxy/container/tunnel?
+   A 10-second idle cutoff sounds more like proxy/dev tooling than Go’s default `http.Server`; I did not see explicit `WriteTimeout`/`IdleTimeout` in `main.go`.
+
+4. Do server logs show the live request context ending at 10 seconds?
+   If not, the browser side may be abandoning/replacing the stream instead.
+
+My likely fix would be to add a heartbeat tick inside `live.Stream`, probably every 5 seconds. It should send a harmless SSE event so the connection is never idle. Datastar Go does not appear to expose a dedicated keepalive option, so we’d likely send a small ignored custom SSE event through `sse.Send(...)`.
+
+I would not change TTLs or NATS behavior for this. A 10-second failure is almost certainly connection lifetime/idle behavior, not the 26h KV TTL.
+
+Time: 2026-06-17 16:05:36
+--- Next Prompt ---
+It used to work just fine without the heartbeat. We will not be implementing a heartbeat.
+
+On http://localhost:7331/ the stream stops at exactly 10 seconds. 
+In production, the stream stays open, but not all saves trigger a reload. For example when I check and uncheck the `beginnerFriendly` checkbox, it triggers an update about 25% of the time.
+
+I suspect these are two different issues. The fist one may have something to do with the hot reload dev server. Look at Taskfile.yml and .air-dev.toml
+
+I have no idea about the second issue. There are no errors or warnings in the server logs. 
+
+Let's continue the discussion. 
+
+Time: 2026-06-17 16:24:26
+--- Codex Run ---
+
+Codex output:
+G’ll inspect the dev server setup first, then trace the beginner-friendly save path and broadcast path. I’ll keep this to diagnosis and discussion, not edits.
+Yes, these sound like two different issues.
+
+For the local 10-second stream cutoff, `localhost:7331` is the Air proxy, not the app server directly. The suspicious line is in `Taskfile.yml`:
+
+```yaml
+--proxy.app_start_timeout "10000"
+```
+
+That exact `10000ms` matching the failure time is too close to ignore. The Go `http.Server` itself does not appear to set a `WriteTimeout`, and Datastar’s Go SSE helper just sets normal SSE headers and flushes. First thing I would verify is whether `http://localhost:8080/` keeps the stream open longer than 10 seconds. If `8080` works and `7331` fails, this is almost certainly Air proxy behavior/config, not the live update lifecycle.
+
+For production, I agree it’s probably unrelated. The `beginnerFriendly` handler does this:
+
+```go
+updateEventFieldWithAudit(r.Context(), ...)
+liveManager.Broadcast(r.Context(), live.BucketEvents)
+```
+
+That means the broadcast depends on the mutation request still being alive. If Datastar cancels/replaces the checkbox `PUT` request, or the browser closes the request after the DB write completes, the DB update can succeed while the broadcast gets canceled or only partially runs. That would match “value saves, but reload only happens sometimes”, especially with checkbox toggles.
+
+I would not add heartbeat for either issue.
+
+The production fix I’d consider is: after a successful durable DB mutation, run the broadcast with a short independent context, for example `context.WithTimeout(context.WithoutCancel(r.Context()), 5*time.Second)`. That keeps request-scoped values available but prevents browser-side request cancellation from killing the live update broadcast. With only ~200 users, this is straightforward and bounded.
+
+Before changing code, I’d want to verify:
+
+1. On production, when `beginnerFriendly` fails to reload, does the value still persist after a manual refresh?
+2. Does it fail mostly when toggling quickly, or also with a slow single click and waiting?
+3. Locally, does the stream stay open on `http://localhost:8080/` while failing on `http://localhost:7331/`?
+4. In the browser Network tab for a failed production toggle, is the `PUT` request successful, canceled, or pending?
+5. Do other fields using `@put` have the same partial reload behavior, or is it mostly checkboxes?
+
+My current hypothesis: local is Air proxy timeout/config; production is request-context cancellation or insufficient observability around broadcast failures.
+
+Time: 2026-06-17 16:24:26
+--- Next Prompt ---
+
+The first issue is indeed the `--proxy.app_start_timeout "10000"`
+
+Let's ignore that for now.
+
+1. Yes, the value persists after a manual refresh.
+2. No, it fails even with a slow single click and waiting.
+4. The `PUT` request is successful and not canceled.
+5. Yes, I believe it happens with all live fields, not just checkboxes.
+
+Let's continue the discussion with this new information.
+
+
+Time: 2026-06-17 16:45:44
+--- Codex Run ---
+
+Codex output:
+I’ll trace the broadcast and stream paths with the new facts in mind. Since the mutation request succeeds and the DB value persists, the failure point is probably between `Broadcast` updating NATS and the existing SSE stream receiving or applying that update.
+The new details weaken the request-cancellation theory. If the `PUT` is cleanly successful and the value persists, I’m looking harder at the NATS KV watch mechanics: whether the broadcast writes the key, whether the watcher reliably receives same-key updates, and whether the stream’s patch is actually sent after the update.
+One structural thing stands out: the live stream sends a full patch, and the patched fragment may include the same wrapper that owns `data-init`. If the stream replaces the element that opened the stream, Datastar may re-initialize that subtree and open a second stream, which can make behavior look random even when the backend broadcast succeeds. I’m checking whether the rendered live fragments include the `data-init` wrapper or only the inner live content.
+For the new-event form, the first page render has `#formsubmission-container` with `data-init`, but the SSE renderer returns `NewEventFormPage`, not the wrapper. That avoids replacing the `data-init` node for this page, so the re-init-loop theory is less likely for the specific form save issue.
+The evidence now points away from the HTTP mutation layer and toward the live service itself. One possible problem is that our tests use a fake KV watcher, so they prove our intended behavior but not necessarily NATS JetStream’s real watcher behavior with our exact `Watch(..., UpdatesOnly())` and `Keys()` pattern.
+I also found one test gap that matters: the service tests are currently fake-based. They test that our fake watcher receives updates, but they do not exercise an embedded NATS server with real KV buckets, real `Keys`, and real `Watch` semantics. That is exactly where this bug could live.
+NATS’ own tests show `UpdatesOnly()` should receive later `Put`s, so I don’t think `UpdatesOnly` is inherently wrong. But we still need an integration test around our manager because our production pattern combines `Keys()` plus many `Put`s plus long-lived per-key watchers.
+I don’t see a bucket TTL or persistence explanation for this. A 26h TTL would not explain intermittent misses shortly after load, and the value being a timestamp string also should not suppress updates because KV revisions advance on every `Put`.
+Another angle is client-side application of patches. The server can successfully broadcast and send an SSE event, but Datastar can still ignore the patch if the returned fragment’s root id does not match a current DOM target. For the new-event form, the ids appear to match, so I would verify this with the browser’s SSE event payload and console warnings rather than assume.
+The current stream order is probably the highest-value thing to fix or at least test: it sends the initial Datastar patch before it touches the KV key and before it starts the NATS watcher. If a save happens during that startup window, the DB update succeeds, the broadcast can run, and the stream will miss it because `UpdatesOnly()` does not replay old updates.
+Agreed, this changes the likely cause.
+
+The request-cancellation theory is now much weaker because the `PUT` succeeds, persists, and is not canceled. The failure is probably after the mutation handler: either the broadcast does not reach the stream, or the stream receives it but the Datastar patch is not applied.
+
+The biggest issue I see in our current code is stream startup ordering:
+
+```go
+ensureSession
+NewSSE
+send initial patch
+touch KV key
+start NATS watchers
+wait for updates
+```
+
+That means the stream is visibly open before it is actually subscribed. If a save happens during that startup window, the DB update succeeds and the broadcast may run, but the stream can miss it because `Watch(..., UpdatesOnly())` does not replay updates from before the watcher existed. That would produce exactly the kind of symptom you describe: no server error, successful save, manual refresh shows the value, but no live reload.
+
+This may not explain every missed save if it also happens long after the page has been idle, but it is a real lifecycle bug either way.
+
+I would treat the next step as TDD/debugging, not guessing:
+
+1. Add a failing test for “a broadcast during initial stream startup is not lost.”
+2. Add an embedded-NATS integration test around our actual KV pattern, not just the fake KV.
+3. Adjust stream ordering so the KV key and watcher are ready before sending the initial SSE patch.
+4. Add temporary structured logs around broadcast and stream update receipt: bucket, key count, connection id, patch success/failure.
+
+The more robust stream order should probably be:
+
+```text
+ensure Gorilla session
+touch/create KV key
+start watcher from the touch revision or immediately after touch
+create Datastar SSE
+send initial full patch
+patch again whenever watcher receives an update
+```
+
+We should also still consider broadcasting with a short context that is independent of the mutation request, but based on your new facts, I would not make that the primary fix. The primary suspect is “stream open” not meaning “watcher ready.”
+
+Time: 2026-06-17 16:45:44
+--- Next Prompt ---
+
+There is a good reason the stream sends the initial patch before starting the watcher. We have had cases where something fails before the initial patch and the stream never starts .
+
+The failure I our can happen long after the page has been idle.
+
+It has the feeling of a race condition, since it's very random. You can have ten saves in a row that trigger reloads, then one save that doesn't, then only one success every six saves, etc.
+
+After a restart of the service it can work perfectly, but this may also be random. 
+
+
+Let's continue the discussion with this new information.
+
+Time: 2026-06-17 17:24:15
+--- Codex Run ---
+
+Codex output:
+That new detail rules out the startup-window explanation as the main cause. A long-idle stream that stays open but sometimes stops reacting points more toward a dead watcher, proxy buffering, or client-side patch application than the mutation handler itself.
+Datastar’s Go helper does flush every SSE event, but it does not add proxy-specific buffering headers such as `X-Accel-Buffering: no`. If production has nginx or another buffering reverse proxy in front, small SSE patches can appear randomly delayed or coalesced even though the app flushed them.
+Production appears to use Caddy. That makes nginx-style buffering less likely, but still worth ruling out because the Datastar helper only controls the app response. The more code-local suspect is that our NATS watcher goroutine can exit silently while the HTTP SSE request remains open.
+The NATS `KeyWatcher` interface explicitly has a `Context()` for watch errors, but our wrapper interface only includes `Put`, `Keys`, and `Watch`. We currently ignore that watcher context entirely, so a watcher failure can become invisible to the stream loop.
+That is a strong match for the symptom: the browser still has an open SSE request, but the server-side NATS watcher behind that request may already be gone. Since the main loop only listens for `ctx.Done()` or forwarded updates, it can sit there forever with no way to know it is no longer subscribed.
+Correction from the source: in the `jetstream` API version we are using, `KeyWatcher` exposes `Updates()` and `Stop()`, but not an error-returning context. That makes the current silent-exit behavior even more important: closed updates channel is our only signal that the watcher is gone.
+One more client-side angle: the mutation request and the SSE patch happen concurrently. The server broadcasts before the `PUT` response returns, so the current page can be morphed while Datastar is still finishing the event handler for the element that initiated the save. That should work, but it is worth separating “broadcast not delivered” from “patch delivered but not visibly applied.”
+That rules out the startup race as the main explanation. I agree we should keep the initial patch before watcher setup if that has saved you from blank/dead streams before.
+
+With the new facts, my strongest suspicion is now this:
+
+```go
+func forwardWatcherUpdates(ctx context.Context, watcher jetstream.KeyWatcher, updates chan<- struct{}) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case entry, ok := <-watcher.Updates():
+			if !ok {
+				return
+			}
+			...
+		}
+	}
+}
+```
+
+If the NATS watcher’s `Updates()` channel closes, the goroutine exits silently. The main `Stream` loop does not know. The HTTP SSE request can remain open forever, but it is no longer subscribed to NATS updates.
+
+That matches several symptoms:
+
+- The browser stream still appears open.
+- The save succeeds and persists.
+- No server error is logged.
+- Reloads become random or stop for a while.
+- Restarting the service can make things work again because all watchers are rebuilt.
+
+I would not implement heartbeat. The cleaner fix is: if a watcher dies while the request context is still alive, close the SSE stream deliberately and let Datastar reconnect via the existing retry config. That preserves the current initial-patch-first behavior.
+
+The next TDD target should be:
+
+```text
+Given a live stream with an open watcher,
+when the watcher update channel closes while the HTTP request is still active,
+then the stream exits so Datastar can reconnect.
+```
+
+Then a second test:
+
+```text
+Given a live stream with a working watcher,
+when a broadcast updates the bucket,
+then the stream sends a new patch.
+```
+
+I would also add short-lived diagnostic logging around three points:
+
+- `Broadcast`: bucket, number of keys, duration, success/failure.
+- `Stream`: watcher started per bucket.
+- `Stream`: watcher update received, patch sent, watcher channel closed.
+
+One browser-side check would settle the direction quickly: on a failed save, inspect the live SSE request. If no new `datastar-patch-elements` event arrives, the issue is watcher/broadcast/proxy. If the event arrives but the UI does not change, the issue is Datastar patch application or DOM targeting.
+
+Time: 2026-06-17 17:24:15
+--- Next Prompt ---
+
+Ok, implement that and let's see if it fixes the issue.
+
+Time: 2026-06-17 17:32:26
+--- Codex Run ---
+
+Codex output:
+I’ll implement the watcher-failure path without changing the initial-patch-first ordering. I’m going to add a focused test first, then wire the stream loop so a dead watcher closes the SSE request and lets Datastar reconnect.
+I’m using the `conorganizer-logging` guidance for the new stream lifecycle log, keeping it as a state-transition warning rather than logging every update.
+I’m going to keep update events coalesced, but watcher closure will use a separate non-dropping channel. A closed watcher is not a normal update; it is a stream health failure, so the handler should close instead of waiting forever.
+The fake watcher can now simulate an unexpected NATS watcher close without panicking during cleanup. Next I’m adding the regression test that currently should fail against the old stream loop.
+The regression test is in place: it starts a stream, closes the underlying watcher, and expects the stream handler to return without requiring the HTTP request context to be canceled.
+I’ll run the live package tests now to confirm the new test catches the current dead-watcher behavior before changing the implementation.
+The first test run hit the sandbox because Go wanted to use the default cache under the home directory. I’ll rerun with `GOCACHE` in `/tmp`, which is writable here.
+The new test fails for the expected reason: a closed watcher does not make the stream exit. I’m updating the stream loop now so watcher closure is treated as a reconnect-worthy stream failure.
+I’m preserving the existing “send initial patch before watcher setup” behavior. The only behavior change is after setup: if a watcher closes unexpectedly, the stream logs one warning and returns so the client retry can establish a fresh watcher.
+The stream loop now has a separate watcher-closed signal path. I’ll format the touched Go files and rerun the targeted tests.
+Formatting is done. I’ll run the live package tests with the writable Go cache.
+The focused live tests pass now. Since this touches shared stream behavior, I’m going to run the full Go test suite as well, still using the writable cache.
+The full Go suite passes. I’m doing a quick diff review now to make sure the change stayed narrowly scoped and the log message is sane.
+The code diff is scoped to the live service and its tests. I’m also adding one short lifecycle note to the existing documentation so the expected reconnect behavior is recorded.
+The documentation now mentions the reconnect-on-watcher-close behavior. I’ll do one final status/diff check; the Go tests already passed after the code change.
+The final diff matches the intended fix. There is also an existing modified `.ai/threads/nats-refactor.md` in the worktree that I did not touch.
+Implemented.
+
+The live stream now treats an unexpectedly closed NATS watcher as a stream failure: it logs one warning and returns from the SSE handler, allowing Datastar’s existing retry config to reconnect and create a fresh watcher. I did not change the initial-patch-first ordering and did not add heartbeat behavior.
+
+Changed:
+- [service/live/live.go](/home/cinmay/Documents/conorganizer/service/live/live.go): surfaces watcher closure to the stream loop and closes the SSE stream for reconnect.
+- [service/live/live_test.go](/home/cinmay/Documents/conorganizer/service/live/live_test.go): adds a regression test for watcher closure.
+- [service/live/live_test_helpers_test.go](/home/cinmay/Documents/conorganizer/service/live/live_test_helpers_test.go): lets the fake watcher close safely in tests.
+- [documentation/live-update-lifecycle.md](/home/cinmay/Documents/conorganizer/documentation/live-update-lifecycle.md): documents reconnect-on-watcher-close behavior.
+
+Validation passed:
+
+```sh
+GOCACHE=/tmp/conorganizer-go-cache go test ./service/live
+GOCACHE=/tmp/conorganizer-go-cache go test ./...
+```
+
+Note: `.ai/threads/nats-refactor.md` is also modified in the worktree, but I did not touch it.
+
+Time: 2026-06-17 17:32:26
+--- Next Prompt ---
+

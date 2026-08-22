@@ -15,7 +15,14 @@ const (
 )
 
 func (status EventStatus) Label() string {
-	return string(status)
+	switch status {
+	case EventStatusApproved:
+		return "Godkjend"
+	case EventStatusArchived:
+		return "Forkasta"
+	default:
+		return string(status)
+	}
 }
 
 type EventType string
@@ -30,13 +37,13 @@ const (
 func (eventType EventType) Label() string {
 	switch eventType {
 	case EventTypeRoleplay:
-		return "Rollespill"
+		return "Rollespel"
 	case EventTypeBoardGame:
-		return "Brettspill"
+		return "Brettspel"
 	case EventTypeCardGame:
-		return "Kortspill"
+		return "Kortspel"
 	case EventTypeOther:
-		return "Annet"
+		return "Anna"
 	default:
 		return string(eventType)
 	}
@@ -53,11 +60,11 @@ const (
 func (ageGroup AgeGroup) Label() string {
 	switch ageGroup {
 	case AgeGroupDefault:
-		return "Standard"
+		return "Standard (>12)"
 	case AgeGroupChildFriendly:
-		return "Barn (under 12 år)"
+		return "Barn (<13)"
 	case AgeGroupAdultsOnly:
-		return "Voksne (18+ år)"
+		return "Vaksne (18+)"
 	default:
 		return string(ageGroup)
 	}
@@ -66,9 +73,9 @@ func (ageGroup AgeGroup) Label() string {
 func (ageGroup AgeGroup) BadgeLabel() string {
 	switch ageGroup {
 	case AgeGroupChildFriendly:
-		return "Barnevennlig"
+		return "Barnevennleg"
 	case AgeGroupAdultsOnly:
-		return "Egnet for voksne"
+		return "Eigna for vaksne"
 	default:
 		return ""
 	}
@@ -94,11 +101,11 @@ const (
 func (runtime Runtime) Label() string {
 	switch runtime {
 	case RunTimeNormal:
-		return "Vanlig pulje"
+		return "Vanleg pulje"
 	case RunTimeShortRunning:
-		return "Kortere (2-3 timer)"
+		return "Kortare (2-3 timar)"
 	case RunTimeLongRunning:
-		return "Lengre (6+ timer)"
+		return "Lengre (6+ timar)"
 	default:
 		return string(runtime)
 	}
@@ -107,9 +114,9 @@ func (runtime Runtime) Label() string {
 func (runtime Runtime) BadgeLabel() string {
 	switch runtime {
 	case RunTimeShortRunning:
-		return "Varer under 3 timer"
+		return "Varer under 3 timar"
 	case RunTimeLongRunning:
-		return "Varer over 6 timer"
+		return "Varer over 6 timar"
 	default:
 		return ""
 	}

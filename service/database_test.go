@@ -8,12 +8,16 @@ import (
 	"testing"
 
 	_ "modernc.org/sqlite"
+
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestInitDBAppliesProductionSQLiteSettings(t *testing.T) {
-	// Given a database with the required production schema,
-	// when the application opens it,
-	// then SQLite is configured with the required production settings.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a database with the required production schema.",
+		When:  "When the application opens it.",
+		Then:  "Then SQLite is configured with the required production settings.",
+	})
 
 	// Given
 	expectedForeignKeys := 1
@@ -43,9 +47,11 @@ func TestInitDBAppliesProductionSQLiteSettings(t *testing.T) {
 }
 
 func TestInitDBSupportsRelativeDatabasePath(t *testing.T) {
-	// Given a relative database path with the required schema,
-	// when the application opens it,
-	// then SQLite is configured the same way as for absolute paths.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a relative database path with the required schema.",
+		When:  "When the application opens it.",
+		Then:  "Then SQLite is configured the same way as for absolute paths.",
+	})
 
 	// Given
 	expectedJournalMode := "wal"
@@ -71,9 +77,11 @@ func TestInitDBSupportsRelativeDatabasePath(t *testing.T) {
 }
 
 func TestInitDBFailsWhenRequiredTableMissing(t *testing.T) {
-	// Given a database missing a required core table,
-	// when the application opens it,
-	// then initialization fails without modifying the schema.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a database missing a required core table.",
+		When:  "When the application opens it.",
+		Then:  "Then initialization fails without modifying the schema.",
+	})
 
 	// Given
 	expectedErrorText := `required SQLite table "events" is missing`
@@ -99,9 +107,11 @@ func TestInitDBFailsWhenRequiredTableMissing(t *testing.T) {
 }
 
 func TestInitDBFailsWhenDatabaseFileMissing(t *testing.T) {
-	// Given the configured database file does not exist,
-	// when the application opens it,
-	// then initialization fails instead of creating an empty database.
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given the configured database file does not exist.",
+		When:  "When the application opens it.",
+		Then:  "Then initialization fails instead of creating an empty database.",
+	})
 
 	// Given
 	expectedErrorText := "database file does not exist"

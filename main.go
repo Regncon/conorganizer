@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Regncon/conorganizer/pages/notfound"
 	"github.com/Regncon/conorganizer/service"
 	"github.com/Regncon/conorganizer/service/applog"
 	"github.com/Regncon/conorganizer/service/authctx"
@@ -33,6 +34,7 @@ func main() {
 
 	dsn := flag.String("dbp", "database/events.db", "absolute path to database file")
 	eventImageDir := flag.String("image-path", "local-event-images", "directory to store event images")
+	natsStoreDir := flag.String("nats-store-dir", "data/nats", "directory for embedded NATS JetStream runtime data")
 	flag.Parse()
 
 	db, dbErr := service.InitDB(*dsn)
@@ -60,21 +62,21 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	if err := run(ctx, baseLogger, getPort(), eventImageDir, db); err != nil {
+	if err := run(ctx, baseLogger, getPort(), eventImageDir, *natsStoreDir, db); err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB) error {
+func run(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, natsStoreDir string, db *sql.DB) error {
 	g, ctx := errgroup.WithContext(ctx)
-	g.Go(startServer(ctx, logger, port, eventImageDir, db))
+	g.Go(startServer(ctx, logger, port, eventImageDir, natsStoreDir, db))
 	if err := g.Wait(); err != nil {
 		return fmt.Errorf("error running server: %w", err)
 	}
 	return nil
 }
-func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, db *sql.DB) func() error {
+func startServer(ctx context.Context, logger *slog.Logger, port string, eventImageDir *string, natsStoreDir string, db *sql.DB) func() error {
 	return func() error {
 		baseLogger := logger
 		logger = logger.With("component", "http_server")
@@ -88,6 +90,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		)
 
 		mountHealthRoutes(router, readiness, baseLogger)
+		mountDevReloadRoutes(router, baseLogger)
 
 		var imgErr error
 		if eventImageDir != nil && *eventImageDir != "" {
@@ -104,28 +107,30 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 			readiness.MarkDegraded(notReadyImageReason, degradedErr)
 		}
 
+		mountPublicAssetRoutes(router, eventImageDir, baseLogger)
+
 		var appRouter chi.Router = router
 		if fullMode {
 			appRouter = router.With(authctx.AuthMiddleware(baseLogger))
 		}
 
-		if eventImageDir != nil && *eventImageDir != "" {
-			appRouter.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
-		}
-		appRouter.Handle("/static/*", http.StripPrefix("/static/", static(baseLogger)))
-
 		if fullMode {
-			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir)
+			cleanup, err := setupRoutes(ctx, baseLogger, appRouter, db, eventImageDir, natsStoreDir)
 			if err != nil {
 				logger.Error(fmt.Errorf("error setting up routes; falling back to degraded mode: %w", err).Error())
 				readiness.MarkDegraded(notReadyApplicationReason, err)
 				mountDegradedRoutes(router)
-			} else if cleanup != nil {
-				defer func() {
-					if err := cleanup(); err != nil {
-						logger.Error(fmt.Errorf("failed to clean up routes: %w", err).Error())
-					}
-				}()
+			} else {
+				router.NotFound(authctx.AuthMiddleware(baseLogger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					notfound.Render(w, r, baseLogger, "")
+				})).ServeHTTP)
+				if cleanup != nil {
+					defer func() {
+						if err := cleanup(); err != nil {
+							logger.Error(fmt.Errorf("failed to clean up routes: %w", err).Error())
+						}
+					}()
+				}
 			}
 		} else {
 			// Show a single degraded page without exposing operational details.
@@ -143,6 +148,14 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 		}()
 
 		return srv.ListenAndServe()
+	}
+}
+
+func mountPublicAssetRoutes(router chi.Router, eventImageDir *string, logger *slog.Logger) {
+	router.Handle("/static/*", http.StripPrefix("/static/", static(logger)))
+
+	if eventImageDir != nil && *eventImageDir != "" {
+		router.Handle("/event-images/*", http.StripPrefix("/event-images/", http.FileServer(http.Dir(*eventImageDir))))
 	}
 }
 

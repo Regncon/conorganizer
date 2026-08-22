@@ -50,6 +50,7 @@
     --item-flat-active: hsl(230deg 40% 86% / 20%);
 
     --bg-backdrop: #11111B;
+    --bg-indent: #15161E;
 
     /* text & font */
     --text-body: 16px;
@@ -81,7 +82,7 @@
     --border-radius-2x: 8px;
 
     /* shadow */
-    --shadow-dialog: 0 19px 38px hsl(0deg  0% 0% / 30%), 0 15px 12px hsl(0deg  0% 0% / 22%);
+    --shadow-dialog: 0 19px 38px hsl(0deg 0% 0% / 30%), 0 15px 12px hsl(0deg 0% 0% / 22%);
 
     /* content width */
     --page-content-max-width: 1440px;
@@ -93,7 +94,9 @@
     --mobile-max-width: 600px;
 
     /* nav */
-    --nav-height: 4.6875rem;
+    --nav-height: 4rem;
+    --nav-event-height: 58px;
+    --nav-breadcrumb-height: 51px;
 
     /* z-index */
     --nav-z-index: 50;
@@ -101,6 +104,7 @@
 
     /* responsively size some gap variables so this doesn't have to be redefined */
     --responsive-top-of-page-spacing: var(--spacing-4x);
+    --responsive-scroll-margin-top-event: calc(var(--nav-event-height) + var(--nav-breadcrumb-height));
     --responsive-pane-column-spacing: var(--spacing-4x);
     --responsive-page-section-spacing: var(--spacing-8x);
     --responsive-pane-padding: var(--spacing-4x);
@@ -114,6 +118,7 @@
         --responsive-page-section-spacing: var(--spacing-8x);
         --responsive-pane-padding: var(--spacing-5x);
         --responsive-h2-margin: var(--spacing-5x);
+        --responsive-scroll-margin-top-event: calc(var(--nav-height) + var(--nav-event-height));
     }
 }
 @media screen and (width > 1200px) {
@@ -147,10 +152,6 @@ html {
     font-family: var(--font-sans-serif);
     color: var(--color-primary-text);
     scroll-behavior: smooth;
-    /*
-    //todo: fix nav then add scroll-margin based on css variable
-    */
-    scroll-margin: 64px;
 
     @media (prefers-reduced-motion: reduce) {
         scroll-behavior: auto;
@@ -278,8 +279,15 @@ a.inline-link {
 }
 
 a.inline-link:hover,
-a.inline-link:active {
+a.inline-link:active,
+a.inline-link:focus-visible {
     color: var(--color-text-strong);
+}
+
+a.inline-link:focus-visible {
+    outline: 2px solid var(--color-secondary-focus-visible);
+    outline-offset: 2px;
+    border-radius: var(--border-radius-1x);
 }
 
 .inline-icon {
@@ -305,6 +313,11 @@ a.inline-link:active {
 .icon-size-32 {
     width: 32px;
     height: 32px;
+}
+
+.icon-size-40 {
+    width: 40px;
+    height: 40px;
 }
 
 hr {
@@ -345,7 +358,8 @@ hr {
     box-shadow: 0 0 0 0.25rem hsl(from var(--color-primary-hover) h s l / 25%);
 }
 
-.input:user-invalid, .input:user-invalid:focus-visible {
+.input:user-invalid,
+.input:user-invalid:focus-visible {
     border-color: #DC3545;
     box-shadow: 0 0 0 0.25rem hsl(from var(--color-error) h s l /25%);
 }
@@ -396,6 +410,11 @@ input {
     outline: none;
 }
 
+:where(a[href], button, summary, [role="button"], input:not([type="hidden"]), select, textarea):focus-visible {
+    outline: 2px solid var(--color-secondary-focus-visible);
+    outline-offset: 2px;
+}
+
 .flex {
     display: flex;
 }
@@ -420,7 +439,6 @@ input {
 }
 
 .card {
-    width: var(--mobile-responsive-min-width);
     background: var(--bg-surface);
     border-radius: var(--border-radius-1x);
     box-shadow: 0 0 10px hsl(0deg 0% 0% / 10%);
@@ -590,6 +608,7 @@ input {
 }
 
 @media print {
+
     .no-print,
     .no-print * {
         display: none !important;

@@ -7,11 +7,10 @@ services:
     # tty required by air when using compose
     tty: true
     ports:
-      - 7331:7331
       - 8080:8080
     volumes:
       - type: bind
         source: ./
         target: /home/devuser/app
         read_only: false
-    command: air -c .air-dev.toml
+    command: go tool task start
