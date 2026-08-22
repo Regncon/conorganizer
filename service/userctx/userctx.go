@@ -39,14 +39,14 @@ func UserMiddleware(logger *slog.Logger, db *sql.DB) func(http.Handler) http.Han
 	}
 }
 
-func AdminForbiddenHandler(logger *slog.Logger) http.HandlerFunc {
+func AdminForbiddenHandler(db *sql.DB, logger *slog.Logger) http.HandlerFunc {
 	logger = logger.With("component", "user")
 	return func(w http.ResponseWriter, r *http.Request) {
 		requestID := middleware.GetReqID(r.Context())
 		userInfo := GetUserRequestInfo(r.Context())
 
 		w.WriteHeader(http.StatusForbidden)
-		if err := layouts.Base("Ingen tilgang", userInfo, authctx.Forbidden()).Render(r.Context(), w); err != nil {
+		if err := layouts.Base("Ingen tilgang", userInfo, db, logger, authctx.Forbidden()).Render(r.Context(), w); err != nil {
 			logger.Error(fmt.Errorf("failed to render forbidden page: %w", err).Error(), "request_id", requestID)
 		}
 	}

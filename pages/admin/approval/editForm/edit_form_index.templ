@@ -29,7 +29,7 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 			return
 		}
 		if eventData == nil {
-			notfound.RenderEvent(w, r, logger)
+			notfound.RenderEvent(w, r, db, logger)
 			return
 		}
 

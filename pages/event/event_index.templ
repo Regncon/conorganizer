@@ -33,7 +33,7 @@ func eventLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 			return
 		}
 		if event == nil {
-			notfound.RenderEvent(w, r, logger)
+			notfound.RenderEvent(w, r, db, logger)
 			return
 		}
 		var ctx = r.Context()

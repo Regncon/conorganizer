@@ -34,7 +34,7 @@ func NewEventLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 		}
 
 		if selectErr != nil && statusCode == http.StatusNotFound {
-			notfound.RenderEvent(w, r, logger)
+			notfound.RenderEvent(w, r, db, logger)
 			return
 		}
 

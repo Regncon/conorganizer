@@ -23,7 +23,7 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 			userInfo,
             db,
             logger,
-			roomsIndex(db, logger, RoomsPage(db, logger), "/"),
+			roomsIndex(RoomsPage(db, logger), "/"),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
 		}
@@ -51,7 +51,7 @@ func RoomsLayoutRoute(router chi.Router, db *sql.DB, logger *slog.Logger, eventI
 					userInfo,
                     db,
                     logger,
-					roomsIndex(db, logger, RoomsAssignmentPage(db, logger, models.Pulje(puljeID), eventImageDir), puljeID),
+					roomsIndex(RoomsAssignmentPage(db, logger, models.Pulje(puljeID), eventImageDir), puljeID),
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render rooms page: %w", err).Error(), "user_id", userInfo.Id)
 				}

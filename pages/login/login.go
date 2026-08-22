@@ -37,6 +37,8 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				if err := layouts.Base(
 					"Velkomen tilbake til Regncon 2026!",
 					userctx.GetUserRequestInfo(ctx),
+                    db,
+                    logger,
 					alreadyLogedIn(),
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render already loged in page: %w", err).Error())

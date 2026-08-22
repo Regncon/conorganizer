@@ -16,16 +16,11 @@ func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
 	})
 
 	// Given
-    db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
-	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
-	}
-	defer db.Close()
 	expectedHrefs := []string{"/", "/auth"}
 	userInfo := requestctx.UserRequestInfo{}
 
 	// When
-	doc := templtest.Render(t, Menu(userInfo, db, nil))
+	doc := templtest.Render(t, Menu(userInfo, nil, nil))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then
@@ -40,11 +35,6 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	})
 
 	// Given
-    db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
-	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
-	}
-	defer db.Close()
 	expectedHrefs := []string{
 		"/",
 		"/profile",
@@ -57,7 +47,7 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	}
 
 	// When
-	doc := templtest.Render(t, Menu(userInfo, db, nil))
+	doc := templtest.Render(t, Menu(userInfo, nil, nil))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 	actualExternalLinkIconVisible := doc.Find(`a[href="https://www.regncon.no/vanlege-sporsmal/"] .inline-icon`).Length() > 0
 
@@ -76,11 +66,6 @@ func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	})
 
 	// Given
-    db, _, err := testutil.CreateTemporaryDBAndLogger("test_room_services", t)
-	if err != nil {
-		t.Fatalf("failed to create test database and logger: %v", err)
-	}
-	defer db.Close()
 	expectedHrefs := []string{
 		"/",
 		"/profile",
@@ -96,7 +81,7 @@ func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	}
 
 	// When
-	doc := templtest.Render(t, Menu(userInfo, db, nil))
+	doc := templtest.Render(t, Menu(userInfo, nil, nil))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 	actualExternalLinkIconVisible := doc.Find(`a[href="https://www.regncon.no/vanlege-sporsmal/"] .inline-icon`).Length() > 0
 

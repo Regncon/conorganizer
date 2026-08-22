@@ -350,7 +350,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 									<span>Vanlege Spørsmål</span>
 									@icons.Icon(icons.ExternalLink, icons.Size16)
 								</a>
-								if UserInfo.IsAdmin {
+								if userInfo.IsAdmin {
 									<hr/>
 									<a href="/admin/billettholder/">Billettholderoversikt</a>
 									<a href="/admin/approval/">Godkjenn arrangementer</a>
