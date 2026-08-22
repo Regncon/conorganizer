@@ -236,7 +236,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 					}
 				}
 
-				.menu-btn-container {
+				.menu-btn-container:not(:has(.hamburger-have-billettholder)) {
 					display: flex;
 					align-items: center;
 					justify-content: center;
@@ -337,12 +337,12 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 							<summary>
                                 /*TODO: make clickable menu shown when you have an account*/
                                 if currentBillettholder.Id != 0 {
-                                    <div class="hamburger-hasAccount">
+                                    <div class="hamburger-have-billettholder">
                                         @clickableBillettholderMenu(userInfo, db, logger)
                                     </div>
                                 }
                                 if currentBillettholder.Id == 0 {
-                                    <div class="hamburger-hasAccount">
+                                    <div>
                                         @icons.Icon(icons.Menu, icons.Size20)
                                     </div>
                                 }
