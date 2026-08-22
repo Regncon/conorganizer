@@ -340,9 +340,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                                     <div class="hamburger-hasAccount">
                                         @clickableBillettholderMenu(userInfo, db, logger)
                                     </div>
-                                    <div class="isPhone">
-
-                                    </div>
                                 }
                                 if currentBillettholder.Id == 0 {
                                     <div class="hamburger-hasAccount">
@@ -389,21 +386,23 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
         initials := ticketholder.GetInitials(currentBillettholder.Name)
     }}
 
-    <style>
 
+    <style>
         .main-menu-button {
             font-family: inherit;
         }
-
         /* this is only shown on phone. Therefore static size 100dynamic*/
         #modal-hamburger-phone[open] {
-            min-height: 100dvh;
+            margin: 0;
+            min-height: calc(100dvh - var(--nav-height));
             min-width: 100dvw;
             border: none;
             display: grid;
             grid-template-rows: 50px 1fr;
             background-color: var(--bg-base);
             padding: 0;
+            position: fixed;
+            top: 0;
             button {
                 max-width: 42px;
                 margin-left: auto;
@@ -517,7 +516,8 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
     </style>
 
     <button class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
-        data-on:click="document.getElementById('modal-hamburger-phone').showModal()">
+        data-signals="{toggleHamburgerModal: false}"
+        data-on:click="$toggleHamburgerModal = !$toggleHamburgerModal; $toggleHamburgerModal ? document.getElementById('modal-hamburger-phone').show() : document.getElementById('modal-hamburger-phone').close()">
             @icons.Icon(icons.Menu, icons.Size20)
             <span class="menu-button-text">
                 Meny
@@ -525,9 +525,6 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
     </button>
 
     <dialog id="modal-hamburger-phone">
-        <button class="modal-close-button btn" commandfor="modal-hamburger-phone" command="close">
-			@icons.Icon(icons.Close, icons.Size20)
-		</button>
         <div class="hamburger-modal-content">
             <div data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
                 Bytt aktiv billettholder
