@@ -409,26 +409,21 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                 align-self: center;
             }
             .hamburger-modal-content {
+                padding-top: 50px;
                 display: grid;
                 grid-auto-rows: 52px;
-                div:not(.name-initials-little) {
+                div {
                     display: flex;
                     color: var(--color-primary-text);
-                    padding-left: 20px;
+                    padding-left: var(--spacing-5x);
                     place-items: center start;
-
-                    .name-initials-little {
-                        display: flex;
-                        margin-left: auto;
-                        max-width: 42px;
-                        align-self: center;
-                    }
+                    place-content: space-between;
                 }
                 a {
                     display: flex;
                     color: var(--color-primary-text);
                     text-decoration: none;
-                    padding-left: 20px;
+                    padding-left: var(--spacing-5x);
                     place-items: center start;
                 }
 
@@ -459,10 +454,6 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                     line-height: 100%;
                     font-weight: 700;
                     align-self: center;
-                }
-                button {
-                    height: 20px;
-                    width: 20px;
                 }
 
                 .modal-close-button-billettholderswitcher {
@@ -526,9 +517,9 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 
     <dialog id="modal-hamburger-phone">
         <div class="hamburger-modal-content">
-            <div data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
+            <div class="" data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
                 Bytt aktiv billettholder
-                <div class="name-initials-little btn">
+                <div class="btn">
                     @ticketholder.Initials(initials, currentBillettholder.Color)
                 </div>
             </div>
@@ -549,7 +540,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
     <div class="modal-billettholder-header">
         <p>Bytt aktiv billettholder</p>
         <button class="modal-close-button-billettholderswitcher btn" commandfor="modal-billettholderswitcher" command="close">
-            @icons.Icon(icons.Close, icons.Size24)
+            @icons.Icon(icons.Close, icons.Size20)
         </button>
     </div>
     <div class="hamburger-modal-billettholder-content">
