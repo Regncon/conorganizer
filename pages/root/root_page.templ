@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/Regncon/conorganizer/components"
-    "github.com/Regncon/conorganizer/components/header"
 	"github.com/Regncon/conorganizer/service/requestctx"
 	"log/slog"
 )
@@ -39,20 +38,9 @@ templ rootPageContent(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin b
 	{{
 		programPublished, err := getProgramPublished(db)
 	}}
-
-    <style>
-        .breadcrumb-and-hamburger {
-            display: grid;
-            grid-template-columns: 1fr 42px;
-            align-items: center;
-        }
-    </style>
-    <div class="breadcrumb-and-hamburger">
 	@components.Breadcrumbs(userInfo, []components.BreadcrumbPath{
 		{Name: "Hjem", Url: ""},
 	}, db, logger)
-    @header.HamburgerPhone(userInfo, db, logger)
-    </div>
 	if err != nil {
 		<div class="page-content-container">
 			<p>Error fetching program publishing state: { err.Error() }</p>

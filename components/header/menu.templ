@@ -143,10 +143,9 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 		}
 
 		#main-menu-usermenu {
-            display: none;
-			.hamburger-hasAccount {
-				display: none;
-			}
+            #main-menu-user-details {
+                display: none;
+            }
 		}
 
 		@container main (width > 600px) {
@@ -170,6 +169,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				width: 100%;
 
                 #main-menu-user-details {
+                    display: block;
                     padding: var(--spacing-2x);
 
                     &[open], &:hover {
@@ -207,9 +207,8 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                         }
                     }
                 }
-
-                .hamburger-hasAccount {
-                    display: block;
+                .hamburger-phone {
+                    display: none;
                 }
 			}
 
@@ -336,17 +335,20 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 							data-on:click__outside="document.getElementById('main-menu-user-details')?.removeAttribute('open')"
 						>
 							<summary>
-                            /*TODO: make clickable menu shown when you have an account*/
-                            if currentBillettholder.Id != 0 {
-                                <div class="hamburger-hasAccount">
-                                    @clickableBillettholderMenu(userInfo, db, logger)
-                                </div>
-                            }
-                            if currentBillettholder.Id == 0 {
-                                <div class="hamburger-hasAccount">
-                                    @icons.Icon(icons.Menu, icons.Size20)
-                                </div>
-                            }
+                                /*TODO: make clickable menu shown when you have an account*/
+                                if currentBillettholder.Id != 0 {
+                                    <div class="hamburger-hasAccount">
+                                        @clickableBillettholderMenu(userInfo, db, logger)
+                                    </div>
+                                    <div class="isPhone">
+
+                                    </div>
+                                }
+                                if currentBillettholder.Id == 0 {
+                                    <div class="hamburger-hasAccount">
+                                        @icons.Icon(icons.Menu, icons.Size20)
+                                    </div>
+                                }
 							</summary>
 							<div class="dropdown-panel">
                                 <a href="#" data-on:click="document.getElementById('modal-billettholderswitcher').showModal()" class="clickable-billettholder-menu-pc">
@@ -366,6 +368,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                                 <a href="/auth/logout">Logg ut</a>
 							</div>
 						</details>
+                        @HamburgerPhone(userInfo, db, logger)
 					</div>
 				}
 				if !userInfo.IsLoggedIn {
@@ -387,6 +390,10 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
     }}
 
     <style>
+
+        .main-menu-button {
+            font-family: inherit;
+        }
 
         /* this is only shown on phone. Therefore static size 100dynamic*/
         #modal-hamburger-phone[open] {
@@ -445,7 +452,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 
             .modal-billettholder-header {
                 max-width: 304px;
-                max-height: 24px;
+                max-height: 20px;
                 display: grid;
                 grid-template-columns: 1fr 24px;
                 p {
@@ -455,8 +462,8 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                     align-self: center;
                 }
                 button {
-                    height: 24px;
-                    width: 24px;
+                    height: 20px;
+                    width: 20px;
                 }
 
                 .modal-close-button-billettholderswitcher {
@@ -509,14 +516,17 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 
     </style>
 
-    <button class="hamburger-menu-button btn--ghost btn"
+    <button class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
         data-on:click="document.getElementById('modal-hamburger-phone').showModal()">
-            @icons.Icon(icons.Menu, icons.Size24)
+            @icons.Icon(icons.Menu, icons.Size20)
+            <span class="menu-button-text">
+                Meny
+            </span>
     </button>
 
     <dialog id="modal-hamburger-phone">
         <button class="modal-close-button btn" commandfor="modal-hamburger-phone" command="close">
-			@icons.Icon(icons.Close, icons.Size24)
+			@icons.Icon(icons.Close, icons.Size20)
 		</button>
         <div class="hamburger-modal-content">
             <div data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
