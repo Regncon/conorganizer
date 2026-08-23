@@ -330,7 +330,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 						<details
 							id="main-menu-user-details"
 							class="menu-btn-container"
-							data-on:click__outside="document.getElementById('main-menu-user-details')?.removeAttribute('open')"
+							data-on:click__outside="el.removeAttribute('open')"
 						>
 							<summary>
 								/*TODO: make clickable menu shown when you have an account*/
@@ -618,7 +618,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 	</dialog>
 	<dialog
 		id="modal-billettholder-switcher"
-		data-on:click="if (evt.target === el) el.close()"
+		data-on:click__stop="if (evt.target === el) el.close()"
 	>
 		<div class="modal-billettholder-header">
 			<p>Bytt aktiv billettholder</p>
