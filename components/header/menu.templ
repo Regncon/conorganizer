@@ -341,7 +341,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 							<div class="dropdown-panel">
 								<button
 									class="clickable-billettholder-menu-pc btn"
-									data-on:click="document.getElementById('modal-billettholderswitcher').showModal()"
+									data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
 								>
 									Bytt aktiv billettholder
 									<div class="name-initials-little">
@@ -402,11 +402,6 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
             padding: 0;
             position: fixed;
             top: 0;
-            button {
-                max-width: 42px;
-                margin-left: auto;
-                align-self: center;
-            }
             .hamburger-modal-content {
                 padding-top: 50px;
                 display: grid;
@@ -418,7 +413,18 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                     place-items: center start;
                     place-content: space-between;
                 }
-                a {
+
+                button {
+                    height: fit-content;
+                    font-weight: inherit;
+                    font-family: inherit;
+                    font-size: inherit;
+                    padding-block: 0;
+                    place-content: space-between;
+                    height: 52px;
+                }
+
+                a, button {
                     display: flex;
                     color: var(--color-primary-text);
                     text-decoration: none;
@@ -426,13 +432,20 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                     place-items: center start;
                 }
 
+                a:hover, a:focus-visible, button:hover, button:focus-visible {
+                    background-color: hsla(0, 0%, 100%, 0.1);
+                }
+                a:focus-visible {
+                    outline: none;
+                    box-shadow: inset 0 0 0 2px var(--btn-ghost-focus-shadow);
+                }
                 .border-bottom {
                     border-bottom: 1px solid var(--bg-item);
                 }
             }
         }
 
-        #modal-billettholderswitcher[open] {
+        #modal-billettholder-switcher[open] {
             max-width: 344px;
             margin-top: 70px;
             border-radius: var(--spacing-2x);
@@ -483,7 +496,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
                 display: none;
             }
 
-            #modal-billettholderswitcher[open] {
+            #modal-billettholder-switcher[open] {
                 max-width: 420px;
                 margin-top: auto;
 
@@ -516,13 +529,13 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 	</button>
 	<dialog id="modal-hamburger-phone">
 		<div class="hamburger-modal-content">
-			<div class="" data-on:click="document.getElementById('modal-billettholderswitcher').showModal()">
+			<button class="btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
 				Bytt aktiv billettholder
 				<div class="btn">
 					@ticketholder.Initials(initials, currentBillettholder.Color)
 				</div>
-			</div>
-			<a href="/profile" class="dropdown-panel">Min Profil</a>
+			</button>
+			<a href="/profile">Min Profil</a>
 			<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" class="border-bottom">Vanlege Spørsmål</a>
 			if userInfo.IsAdmin {
 				<a href="/admin/billettholder/">Billettholderoversikt</a>
@@ -531,10 +544,10 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 			<a href="/auth/logout">Logg ut</a>
 		</div>
 	</dialog>
-	<dialog id="modal-billettholderswitcher">
+	<dialog id="modal-billettholder-switcher">
 		<div class="modal-billettholder-header">
 			<p>Bytt aktiv billettholder</p>
-			<button class="modal-close-button-billettholderswitcher btn" commandfor="modal-billettholderswitcher" command="close">
+			<button class="modal-close-button-billettholderswitcher btn" commandfor="modal-billettholder-switcher" command="close">
 				@icons.Icon(icons.Close, icons.Size20)
 			</button>
 		</div>
