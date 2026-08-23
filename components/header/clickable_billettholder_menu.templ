@@ -9,10 +9,10 @@ templ clickableBillettholderMenu(currentBillettholder ticketholder.BillettHolder
 
 	<div class="clickable-billettholder-menu-wrapper">
 		<div class="clickable-billettholder-menu-name">
-			<p data-current-billettholder-name>{ currentBillettholder.Name }</p>
-			<p data-current-billettholder-ticket-type>{ currentBillettholder.TicketType }</p>
+			<p class="js-current-billettholder-name">{ currentBillettholder.Name }</p>
+			<p class="js-current-billettholder-ticket-type">{ currentBillettholder.TicketType }</p>
 		</div>
-		<div data-current-billettholder-avatar>
+		<div class="js-current-billettholder-avatar">
 			@ticketholder.Initials(initials, currentBillettholder.Color)
 		</div>
 	</div>

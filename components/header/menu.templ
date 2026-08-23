@@ -353,7 +353,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 									data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
 								>
 									Bytt aktiv billettholder
-									<div class="name-initials-little" data-current-billettholder-avatar>
+									<div class="name-initials-little js-current-billettholder-avatar">
 										@ticketholder.Initials(initials, currentBillettholder.Color)
 									</div>
 								</button>
@@ -410,13 +410,13 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 					const ticketType = selectedBillettholder.TicketType ?? "";
 					const color = selectedBillettholder.Color || selection.colorFromName(name);
 
-					menu.querySelectorAll("[data-current-billettholder-name]").forEach((element) => {
+					menu.querySelectorAll(".js-current-billettholder-name").forEach((element) => {
 						element.textContent = name;
 					});
-					menu.querySelectorAll("[data-current-billettholder-ticket-type]").forEach((element) => {
+					menu.querySelectorAll(".js-current-billettholder-ticket-type").forEach((element) => {
 						element.textContent = ticketType;
 					});
-					menu.querySelectorAll("[data-current-billettholder-avatar] .initials").forEach((element) => {
+					menu.querySelectorAll(".js-current-billettholder-avatar .initials").forEach((element) => {
 						if (!(element instanceof HTMLElement)) {
 							return;
 						}
@@ -605,7 +605,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 		<div class="hamburger-modal-content">
 			<button class="btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
 				Bytt aktiv billettholder
-				<div class="btn" data-current-billettholder-avatar>
+				<div class="btn js-current-billettholder-avatar">
 					@ticketholder.Initials(initials, currentBillettholder.Color)
 				</div>
 			</button>
