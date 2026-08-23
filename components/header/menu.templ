@@ -390,7 +390,12 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
         .main-menu-button {
             font-family: inherit;
         }
-        /* this is only shown on phone. Therefore static size 100dynamic*/
+
+        .no-scroll {
+            overflow: hidden;
+            scrollbar-width: none;
+        }
+
         #modal-hamburger-phone[open] {
             margin: 0;
             min-height: calc(100dvh - var(--nav-height));
@@ -520,7 +525,12 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 	<button
 		class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
 		data-signals="{toggleHamburgerModal: false}"
-		data-on:click="$toggleHamburgerModal = !$toggleHamburgerModal; $toggleHamburgerModal ? document.getElementById('modal-hamburger-phone').show() : document.getElementById('modal-hamburger-phone').close()"
+		data-on:click="
+            $toggleHamburgerModal = !$toggleHamburgerModal;
+            $toggleHamburgerModal ? document.getElementById('modal-hamburger-phone').show()
+            : document.getElementById('modal-hamburger-phone').close();
+            document.body.classList.toggle('no-scroll', $toggleHamburgerModal);
+        "
 	>
 		@icons.Icon(icons.Menu, icons.Size20)
 		<span class="menu-button-text">
