@@ -214,11 +214,12 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			}
 
 			.main-menu {
-				display: grid;
-				grid-template-areas: "logo navbuttons usermenu";
-				grid-template-columns: 50px 1fr 50px;
-				place-content: center;
-				place-items: center;
+                --dynamic-gap-main-menu: clamp(
+                    var(--spacing-2x),
+                    calc(-40px + 8cqi),
+                    var(--spacing-4x)
+                );
+                gap: var(--dynamic-gap-main-menu);
 				.logo-link {
 					display: flex;
 					place-items: center;

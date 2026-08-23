@@ -23,25 +23,30 @@ templ MainMenuButtons(UserInfo requestctx.UserRequestInfo) {
       }
     }
 
-    @container main (width > 600px) {
-      .main-menu-buttons {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: var(--spacing-4x);
-      }
-      .main-menu-button {
-        flex-direction: row;
-        font-size: var(--btn-font-size);
-        height: var(--btn-height);
-        padding: 0 var(--btn-padding-x);
-        gap: var(--spacing-2x);
-        .inline-icon {
-          width: 24px;
-          height: 24px;
+    @container main (width >= 600px) {
+        .main-menu-buttons {
+            --dynamic-gap-nav-buttons: clamp(
+                0px,
+                calc(-108.4444px + 17.7778cqi),
+                var(--spacing-4x)
+            );
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: var(--dynamic-gap-nav-buttons);
         }
-      }
+        .main-menu-button {
+            flex-direction: row;
+            font-size: var(--btn-font-size);
+            height: var(--btn-height);
+            padding: 0 var(--btn-padding-x);
+            gap: var(--spacing-2x);
+            .inline-icon {
+            width: 24px;
+            height: 24px;
+            }
+        }
     }
   </style>
 	<section class="main-menu-buttons">
@@ -51,14 +56,14 @@ templ MainMenuButtons(UserInfo requestctx.UserRequestInfo) {
 				Hjem
 			</span>
 		</a>
-        if (UserInfo.IsLoggedIn) {
-        <a role="button" href="/profile" class="main-menu-button btn btn--ghost btn-with-icon">
-            @icons.Icon(icons.User, icons.Size20)
-            <span class="menu-button-text">
-            Min Side
-            </span>
-        </a>
-        }
+		if (UserInfo.IsLoggedIn) {
+			<a role="button" href="/profile" class="main-menu-button btn btn--ghost btn-with-icon">
+				@icons.Icon(icons.User, icons.Size20)
+				<span class="menu-button-text">
+					Min Side
+				</span>
+			</a>
+		}
 		if (UserInfo.IsLoggedIn && UserInfo.IsAdmin) {
 			<a role="button" href="/admin" class="main-menu-button btn btn--ghost btn-with-icon">
 				@icons.Icon(icons.Shield, icons.Size20)
