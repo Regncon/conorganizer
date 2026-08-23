@@ -616,7 +616,10 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 			<a href="/auth/logout">Logg ut</a>
 		</div>
 	</dialog>
-	<dialog id="modal-billettholder-switcher">
+	<dialog
+		id="modal-billettholder-switcher"
+		data-on:click="if (evt.target === el) el.close()"
+	>
 		<div class="modal-billettholder-header">
 			<p>Bytt aktiv billettholder</p>
 			<button class="modal-close-button-billettholderswitcher btn" commandfor="modal-billettholder-switcher" command="close">
