@@ -1,70 +1,19 @@
 package header
 
-import (
-	"database/sql"
-	ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
-	"github.com/Regncon/conorganizer/service/requestctx"
-	"fmt"
-	"log/slog"
-)
+import ticketholder "github.com/Regncon/conorganizer/components/ticket_holder"
 
-templ clickableBillettholderMenu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+templ clickableBillettholderMenu(currentBillettholder ticketholder.BillettHolder) {
 	{{
-		associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
-		currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
 		initials := ticketholder.GetInitials(currentBillettholder.Name)
-        name, ticketType := getNameAndTicketType(db, currentBillettholder.Id, logger)
 	}}
 
-    <div class="clickable-billettholder-menu-wrapper">
-        <div class="clickable-billettholder-menu-name">
-            <p>{name}</p>
-            <p>{ticketType}</p>
-        </div>
-        @ticketholder.Initials(initials, currentBillettholder.Color)
-    </div>
-	<script>
-		(() => {
-			const container = document.currentScript?.previousElementSibling;
-			const selection = window.conorganizer?.billettholderSelection;
-			if (!(container instanceof HTMLElement) || !selection) {
-				return;
-			}
-
-			const associatedBillettholdere = {{associatedBillettholdere}}
-			const fallbackBillettholder = {{currentBillettholder}}
-
-			const updateSelectedBillettholder = (billettholder) => {
-				const selectedBillettholder = billettholder?.Id ? billettholder : selection.get() ?? fallbackBillettholder;
-				if (!selectedBillettholder?.Id) {
-					return;
-				}
-
-				const currentBillettholder = selection.findAssociated(associatedBillettholdere, selectedBillettholder.Id) ?? selectedBillettholder;
-				const initialsElement = container.querySelector(".initials");
-				if (!(initialsElement instanceof HTMLElement)) {
-					return;
-				}
-
-				const name = currentBillettholder.Name ?? "";
-				const color = currentBillettholder.Color || selection.colorFromName(name);
-				initialsElement.textContent = selection.getInitials(name);
-				initialsElement.style.backgroundColor = selection.style.backgroundColor(color);
-				initialsElement.style.border = selection.style.border(color);
-			};
-
-			updateSelectedBillettholder(selection.initialize(associatedBillettholdere, fallbackBillettholder));
-			selection.onChange(updateSelectedBillettholder);
-		})();
-	</script>
-}
-
-func getNameAndTicketType(db *sql.DB, billettholderId int, logger *slog.Logger) (string, string) {
-	var firstName, lastName, ticketType string
-	err := db.QueryRow("SELECT first_name, last_name, ticket_type FROM billettholdere WHERE id = ?", billettholderId).Scan(&firstName, &lastName, &ticketType)
-	if err != nil {
-		logger.Error(fmt.Errorf("Failed to fetch billettholder info: %w", err).Error())
-		return "", ""
-	}
-	return firstName + " " + lastName, ticketType
+	<div class="clickable-billettholder-menu-wrapper">
+		<div class="clickable-billettholder-menu-name">
+			<p data-current-billettholder-name>{ currentBillettholder.Name }</p>
+			<p data-current-billettholder-ticket-type>{ currentBillettholder.TicketType }</p>
+		</div>
+		<div data-current-billettholder-avatar>
+			@ticketholder.Initials(initials, currentBillettholder.Color)
+		</div>
+	</div>
 }

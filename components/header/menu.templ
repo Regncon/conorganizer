@@ -11,10 +11,11 @@ import (
 
 templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	{{
-	logger := logger.With("component", "Menu")
 	associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
 	currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
 	initials := ticketholder.GetInitials(currentBillettholder.Name)
+	associatedBillettholdereJSON, _ := templ.JSONString(associatedBillettholdere)
+	currentBillettholderJSON, _ := templ.JSONString(currentBillettholder)
 	}}
 	<style>
 		.main-menu-header {
@@ -308,7 +309,12 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 		}
 	</style>
-	<header class="main-menu-header no-print">
+	<header
+		class="main-menu-header no-print"
+		data-signals:billett-holder-id=""
+		data-on:menu-billettholder-change="$billettHolderId = evt.detail.id"
+		data-init={ fmt.Sprintf("const selectedBillettholder = window.conorganizer.billettholderSelection.initialize(%s, %s); $billettHolderId = selectedBillettholder?.Id ?? '';", associatedBillettholdereJSON, currentBillettholderJSON) }
+	>
 		<nav class="main-menu page-content-container wide-content">
 			<section id="main-menu-logo">
 				<a href="/" class="logo-link">
@@ -330,7 +336,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 								/*TODO: make clickable menu shown when you have an account*/
 								if currentBillettholder.Id != 0 {
 									<div class="hamburger-have-billettholder">
-										@clickableBillettholderMenu(userInfo, db, logger)
+										@clickableBillettholderMenu(currentBillettholder)
 									</div>
 								}
 								if currentBillettholder.Id == 0 {
@@ -345,7 +351,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 									data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
 								>
 									Bytt aktiv billettholder
-									<div class="name-initials-little">
+									<div class="name-initials-little" data-current-billettholder-avatar>
 										@ticketholder.Initials(initials, currentBillettholder.Color)
 									</div>
 								</button>
@@ -368,7 +374,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 								<a href="/auth/logout">Logg ut</a>
 							</div>
 						</details>
-						@HamburgerPhone(userInfo, db, logger)
+						@HamburgerPhone(userInfo, associatedBillettholdere, currentBillettholder)
 					</div>
 				}
 				if !userInfo.IsLoggedIn {
@@ -378,13 +384,68 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				}
 			</section>
 		</nav>
+		<script>
+			(() => {
+				const menu = document.currentScript?.closest(".main-menu-header");
+				const selection = window.conorganizer?.billettholderSelection;
+				if (!(menu instanceof HTMLElement) || !selection) {
+					return;
+				}
+
+				const associatedBillettholdere = {{associatedBillettholdere}};
+				const fallbackBillettholder = {{currentBillettholder}};
+
+				const updateSelectedBillettholder = (billettholder) => {
+					const selectedBillettholder = selection.findAssociated(
+						associatedBillettholdere,
+						billettholder?.Id,
+					) ?? fallbackBillettholder;
+					if (!selectedBillettholder?.Id) {
+						return;
+					}
+
+					const name = selectedBillettholder.Name ?? "";
+					const ticketType = selectedBillettholder.TicketType ?? "";
+					const color = selectedBillettholder.Color || selection.colorFromName(name);
+
+					menu.querySelectorAll("[data-current-billettholder-name]").forEach((element) => {
+						element.textContent = name;
+					});
+					menu.querySelectorAll("[data-current-billettholder-ticket-type]").forEach((element) => {
+						element.textContent = ticketType;
+					});
+					menu.querySelectorAll("[data-current-billettholder-avatar] .initials").forEach((element) => {
+						if (!(element instanceof HTMLElement)) {
+							return;
+						}
+						element.textContent = selection.getInitials(name);
+						element.style.backgroundColor = selection.style.backgroundColor(color);
+						element.style.border = selection.style.border(color);
+					});
+					menu.querySelectorAll(".billettholder-switcher [data-current-billett-holder]").forEach((element) => {
+						if (!(element instanceof HTMLElement)) {
+							return;
+						}
+						const option = JSON.parse(element.dataset.currentBillettHolder ?? "{}");
+						const isSelected = Number(option.Id) === Number(selectedBillettholder.Id);
+						element.classList.toggle("selected", isSelected);
+						element.tabIndex = isSelected ? -1 : 0;
+					});
+
+					menu.dispatchEvent(new CustomEvent("menu-billettholder-change", {
+						detail: { id: selectedBillettholder.Id },
+					}));
+				};
+
+				updateSelectedBillettholder(selection.get());
+				selection.onChange(updateSelectedBillettholder);
+			})();
+		</script>
 	</header>
 }
 
-templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholdere []ticketholder.BillettHolder, currentBillettholder ticketholder.BillettHolder) {
 	{{
-	associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
-	currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
 	initials := ticketholder.GetInitials(currentBillettholder.Name)
 	}}
 	<style>
@@ -542,7 +603,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 		<div class="hamburger-modal-content">
 			<button class="btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
 				Bytt aktiv billettholder
-				<div class="btn">
+				<div class="btn" data-current-billettholder-avatar>
 					@ticketholder.Initials(initials, currentBillettholder.Color)
 				</div>
 			</button>
@@ -569,16 +630,13 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *sl
 				og de vil være standardvalget på Min Side og i
 				interessevelgeren på et arrangement.
 			</p>
-			@BillettholderSwitcher(userInfo, db, logger)
+			@BillettholderSwitcher(associatedBillettholdere)
 			<p>Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
 		</div>
 	</dialog>
 }
 
-templ BillettholderSwitcher(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
-	{{
-	associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
-	}}
+templ BillettholderSwitcher(associatedBillettholdere []ticketholder.BillettHolder) {
 	<div class="billettholder-switcher">
 		for _, billettholder := range associatedBillettholdere {
 			@billettholderSwitcherButton(billettholder)
@@ -620,11 +678,10 @@ templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolde
 	<div class="ticket-holder-picker">
 		<div
 			role="button"
-			data-attr:tabindex={ fmt.Sprintf(`$billettHolderId == %d ? '-1' : '0'`, currentBillettHolder.Id) }
+			tabindex="0"
 			class="card-clickable card-clickable-item"
 			data-current-billett-holder={ currentBillettHolderJSON }
-			data-class:selected={ fmt.Sprintf("$billettHolderId == %d", currentBillettHolder.Id) }
-			data-on:click={ fmt.Sprintf("$billettHolderId = %d; window.conorganizer.billettholderSelection.set(JSON.parse(evt.currentTarget.dataset.currentBillettHolder));", currentBillettHolder.Id) }
+			data-on:click="window.conorganizer.billettholderSelection.set(JSON.parse(evt.currentTarget.dataset.currentBillettHolder))"
 		>
 			@ticketholder.NameInitials(currentBillettHolder.Name, initials, currentBillettHolder.Color)
 		</div>

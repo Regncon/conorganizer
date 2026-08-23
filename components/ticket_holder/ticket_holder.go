@@ -14,10 +14,11 @@ import (
 )
 
 type BillettHolder struct {
-	Email string
-	Name  string
-	Id    int
-	Color BillettholderColor
+	Email      string
+	Name       string
+	TicketType string
+	Id         int
+	Color      BillettholderColor
 }
 
 type PuljeInterestAvailability string
@@ -191,7 +192,8 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
         [be].email,
         [be].billettholder_id,
         [bh].first_name,
-        [bh].last_name
+		[bh].last_name,
+		[bh].ticket_type
     FROM
         relation_billettholder_emails [be]
         LEFT JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
@@ -212,20 +214,21 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
 	}
 	defer rows.Close()
 
-	var email, firstName, lastName string
+	var email, firstName, lastName, ticketType string
 	var associatedTicketholders []BillettHolder
 
 	for rows.Next() {
 		var billettHolderId int
 
-		if ticketHolderScanErr := rows.Scan(&email, &billettHolderId, &firstName, &lastName); ticketHolderScanErr != nil {
+		if ticketHolderScanErr := rows.Scan(&email, &billettHolderId, &firstName, &lastName, &ticketType); ticketHolderScanErr != nil {
 			return nil, fmt.Errorf("failed to scan ticket holder row: %w", ticketHolderScanErr)
 		}
 		associatedTicketholders = append(associatedTicketholders, BillettHolder{
-			Email: email,
-			Name:  fmt.Sprintf("%s %s", firstName, lastName),
-			Id:    billettHolderId,
-			Color: ColorFromName(fmt.Sprintf("%s %s", firstName, lastName)),
+			Email:      email,
+			Name:       fmt.Sprintf("%s %s", firstName, lastName),
+			TicketType: ticketType,
+			Id:         billettHolderId,
+			Color:      ColorFromName(fmt.Sprintf("%s %s", firstName, lastName)),
 		})
 
 	}
@@ -247,13 +250,13 @@ func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.PuljeRow, error)
 }
 
 func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders []BillettHolder) BillettHolder {
-    if (len(ticketHolders) == 0) {
-        return BillettHolder{
-            Email: "unknown@example.com",
+	if (len(ticketHolders) == 0) {
+		return BillettHolder{
+			Email: "unknown@example.com",
 			Name:  "Unknown Ticket Holder",
 			Color: ColorFromName("Unknown Ticket Holder"),
-        }
-    }
+		}
+	}
 	idx := slices.IndexFunc(ticketHolders, func(th BillettHolder) bool {
 		return th.Email == userInfo.Email
 	})

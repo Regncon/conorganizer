@@ -8,6 +8,7 @@
      * @property {number} Id
      * @property {string} Name
      * @property {string} Email
+     * @property {string} [TicketType]
      * @property {string} [Color]
      */
     /**
@@ -178,7 +179,7 @@
                 return null
             }
 
-            const billettholder = /** @type {{Id?: unknown, Name?: unknown, Email?: unknown, Color?: unknown}} */ (value)
+            const billettholder = /** @type {{Id?: unknown, Name?: unknown, Email?: unknown, TicketType?: unknown, Color?: unknown}} */ (value)
             const id = Number(billettholder.Id ?? 0)
             if (!Number.isInteger(id) || id <= 0) {
                 return null
@@ -188,6 +189,7 @@
                 Id: id,
                 Name: typeof billettholder.Name === "string" ? billettholder.Name : "",
                 Email: typeof billettholder.Email === "string" ? billettholder.Email : "",
+                TicketType: typeof billettholder.TicketType === "string" ? billettholder.TicketType : "",
             }
 
             const color = typeof billettholder.Color === "string" ? billettholder.Color.trim() : ""
