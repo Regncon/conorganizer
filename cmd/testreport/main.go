@@ -27,17 +27,25 @@ type packageInfo struct {
 }
 
 type testEvent struct {
-	Action  string  `json:"Action"`
-	Package string  `json:"Package"`
-	Test    string  `json:"Test"`
-	Elapsed float64 `json:"Elapsed"`
-	Output  string  `json:"Output"`
+	Action      string  `json:"Action"`
+	Package     string  `json:"Package"`
+	ImportPath  string  `json:"ImportPath"`
+	FailedBuild string  `json:"FailedBuild"`
+	Test        string  `json:"Test"`
+	Elapsed     float64 `json:"Elapsed"`
+	Output      string  `json:"Output"`
 }
 
 type testResult struct {
 	Name    string
 	Status  string
 	Elapsed float64
+}
+
+type testFailure struct {
+	Package string
+	Test    string
+	Output  string
 }
 
 func main() {
@@ -53,8 +61,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	results, testErr := runTests()
-	printReport(results, comments)
+	results, failures, testErr := runTests()
+	printReport(results, comments, failures...)
 
 	if testErr != nil {
 		fmt.Fprintf(os.Stderr, "go test failed: %v\n", testErr)
@@ -282,49 +290,99 @@ func looksLikeBDDComment(text string) bool {
 	return hasGiven && hasWhen && hasThen
 }
 
-func runTests() (map[string][]testResult, error) {
+func runTests() (map[string][]testResult, []testFailure, error) {
 	cmd := exec.Command("go", "test", "-json", "./...")
 	output, err := cmd.Output()
 	if exitErr, ok := err.(*exec.ExitError); ok {
 		output = append(output, exitErr.Stderr...)
 	}
 
+	results, failures, parseErr := parseTestOutput(output)
+	if parseErr != nil {
+		return results, failures, parseErr
+	}
+
+	return results, failures, err
+}
+
+func parseTestOutput(output []byte) (map[string][]testResult, []testFailure, error) {
 	results := make(map[string][]testResult)
+	failures := []testFailure{}
+	buildOutput := make(map[string]string)
+	testOutput := make(map[string]string)
+	packageOutput := make(map[string]string)
+	packageHasTestFailure := make(map[string]bool)
+
 	scanner := bufio.NewScanner(bytes.NewReader(output))
 	for scanner.Scan() {
 		var event testEvent
-		if unmarshalErr := json.Unmarshal(scanner.Bytes(), &event); unmarshalErr != nil {
+		if err := json.Unmarshal(scanner.Bytes(), &event); err != nil {
 			continue
 		}
-		if event.Test == "" || strings.Contains(event.Test, "/") {
-			continue
+
+		switch event.Action {
+		case "build-output":
+			buildOutput[event.ImportPath] += event.Output
+		case "build-fail":
+			failures = append(failures, testFailure{
+				Package: event.ImportPath,
+				Output:  buildOutput[event.ImportPath],
+			})
+		case "output":
+			if event.Test != "" {
+				testOutput[testKey(event.Package, event.Test)] += event.Output
+			} else if event.Package != "" {
+				packageOutput[event.Package] += event.Output
+			}
+		case "pass", "fail", "skip":
+			if event.Test == "" {
+				if event.Action == "fail" && event.Package != "" && event.FailedBuild == "" && !packageHasTestFailure[event.Package] {
+					failures = append(failures, testFailure{
+						Package: event.Package,
+						Output:  packageOutput[event.Package],
+					})
+				}
+				continue
+			}
+			if event.Action == "fail" {
+				packageHasTestFailure[event.Package] = true
+				failures = append(failures, testFailure{
+					Package: event.Package,
+					Test:    event.Test,
+					Output:  testOutput[testKey(event.Package, event.Test)],
+				})
+			}
+			if strings.Contains(event.Test, "/") {
+				continue
+			}
+			results[event.Package] = append(results[event.Package], testResult{
+				Name:    event.Test,
+				Status:  event.Action,
+				Elapsed: event.Elapsed,
+			})
 		}
-		if event.Action != "pass" && event.Action != "fail" && event.Action != "skip" {
-			continue
-		}
-		results[event.Package] = append(results[event.Package], testResult{
-			Name:    event.Test,
-			Status:  event.Action,
-			Elapsed: event.Elapsed,
-		})
 	}
-	if scanErr := scanner.Err(); scanErr != nil {
-		return results, scanErr
+	if err := scanner.Err(); err != nil {
+		return results, failures, err
 	}
 
-	return results, err
+	return results, failures, nil
 }
 
-func printReport(results map[string][]testResult, comments map[string]string) {
-	writeReport(os.Stdout, results, comments)
+func printReport(results map[string][]testResult, comments map[string]string, failures ...testFailure) {
+	writeReport(os.Stdout, results, comments, failures...)
 }
 
-func writeReport(writer io.Writer, results map[string][]testResult, comments map[string]string) {
+func writeReport(writer io.Writer, results map[string][]testResult, comments map[string]string, failures ...testFailure) {
 	packages := make([]string, 0, len(results))
 	totalTests := 0
 	failedTests := 0
 	skippedTests := 0
 	missingBDDMetadata := 0
+	failedPackages := make(map[string]struct{})
+	for _, failure := range failures {
+		failedPackages[failure.Package] = struct{}{}
+	}
 
 	for packagePath, packageResults := range results {
 		if len(packageResults) == 0 {
@@ -353,7 +411,8 @@ func writeReport(writer io.Writer, results map[string][]testResult, comments map
 	fmt.Fprintln(writer, "## Summary")
 	fmt.Fprintf(writer, "- Packages with tests: %d\n", len(packages))
 	fmt.Fprintf(writer, "- Tests run: %d\n", totalTests)
-	fmt.Fprintf(writer, "- Failed: %d\n", failedTests)
+	fmt.Fprintf(writer, "- Failed tests: %d\n", failedTests)
+	fmt.Fprintf(writer, "- Failed packages: %d\n", len(failedPackages))
 	fmt.Fprintf(writer, "- Skipped: %d\n", skippedTests)
 	fmt.Fprintf(writer, "- Tests missing BDD metadata: %d\n", missingBDDMetadata)
 	fmt.Fprintln(writer)
@@ -382,6 +441,32 @@ func writeReport(writer io.Writer, results map[string][]testResult, comments map
 			}
 			fmt.Fprintln(writer)
 		}
+	}
+
+	if len(failures) == 0 {
+		return
+	}
+
+	sortedFailures := append([]testFailure(nil), failures...)
+	sort.Slice(sortedFailures, func(i, j int) bool {
+		if sortedFailures[i].Package == sortedFailures[j].Package {
+			return sortedFailures[i].Test < sortedFailures[j].Test
+		}
+		return sortedFailures[i].Package < sortedFailures[j].Package
+	})
+
+	fmt.Fprintln(writer, "## Failures")
+	fmt.Fprintln(writer)
+	for _, failure := range sortedFailures {
+		if failure.Test == "" {
+			fmt.Fprintf(writer, "### %s\n\n", failure.Package)
+		} else {
+			fmt.Fprintf(writer, "### %s / %s\n\n", failure.Package, failure.Test)
+		}
+		fmt.Fprintln(writer, "```text")
+		fmt.Fprintln(writer, strings.TrimSpace(failure.Output))
+		fmt.Fprintln(writer, "```")
+		fmt.Fprintln(writer)
 	}
 }
 
