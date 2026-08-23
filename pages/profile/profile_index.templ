@@ -61,6 +61,22 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 			const url = new URL(window.location.href);
 			const currentIDRaw = url.searchParams.get("b_id");
 			const currentID = Number(currentIDRaw ?? 0);
+			const selection = window.conorganizer.billettholderSelection;
+
+			const replaceWithSelectedBillettholder = (billettholder) => {
+				const selectedID = Number(billettholder?.Id ?? 0);
+				if (!Number.isInteger(selectedID) || selectedID <= 0 || !validIDSet.has(selectedID)) {
+					return;
+				}
+
+				const selectedURL = new URL(window.location.href);
+				if (selectedURL.searchParams.get("b_id") === String(selectedID)) {
+					return;
+				}
+
+				selectedURL.searchParams.set("b_id", String(selectedID));
+				window.location.replace(selectedURL);
+			};
 
 			const replaceWithServerSelection = () => {
 				if (!currentIDRaw) {
@@ -78,7 +94,9 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 				}
 			};
 
-			const selected = window.conorganizer.billettholderSelection.get();
+			selection.onChange(replaceWithSelectedBillettholder);
+
+			const selected = selection.get();
 			if (!selected) {
 				if (currentIDRaw && (!Number.isInteger(currentID) || !validIDSet.has(currentID))) {
 					replaceWithServerSelection();
@@ -88,17 +106,12 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 
 			const selectedID = Number(selected?.Id ?? 0);
 			if (!Number.isInteger(selectedID) || selectedID <= 0 || !validIDSet.has(selectedID)) {
-				window.conorganizer.billettholderSelection.clear();
+				selection.clear();
 				replaceWithServerSelection();
 				return;
 			}
 
-			if (currentIDRaw === String(selectedID)) {
-				return;
-			}
-
-			url.searchParams.set("b_id", String(selectedID));
-			window.location.replace(url);
+			replaceWithSelectedBillettholder(selected);
 		})();
 	</script>
 	<style>
