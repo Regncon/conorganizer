@@ -348,15 +348,17 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 								}
 							</summary>
 							<div class="dropdown-panel">
-								<button
-									class="clickable-billettholder-menu-pc btn"
-									data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
-								>
-									Bytt aktiv billettholder
-									<div class="name-initials-little js-current-billettholder-avatar">
-										@ticketholder.Initials(initials, currentBillettholder.Color)
-									</div>
-								</button>
+                                if currentBillettholder.Id != 0 {
+                                    <button
+                                        class="clickable-billettholder-menu-pc btn"
+                                        data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
+                                    >
+                                        Bytt aktiv billettholder
+                                        <div class="name-initials-little js-current-billettholder-avatar">
+                                            @ticketholder.Initials(initials, currentBillettholder.Color)
+                                        </div>
+                                    </button>
+                                }
 								<a href="/profile">Min Profil</a>
 								<a
 									href="https://www.regncon.no/vanlege-sporsmal/"
@@ -527,7 +529,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 
             .modal-billettholder-header {
                 max-width: 304px;
-                max-height: 20px;
+                max-height: 24px;
                 display: grid;
                 grid-template-columns: 1fr 24px;
                 p {
@@ -539,6 +541,8 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 
                 .modal-close-button-billettholderswitcher {
                     display: flex;
+                    height: 24px;
+                    width: 24px;
                 }
             }
             .hamburger-modal-billettholder-content {
@@ -572,15 +576,6 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
                 .modal-billettholder-header {
                     max-width: 380px;
                 }
-                .hamburger-modal-billettholder-content {
-                    p:not(.name-initials p) {
-
-                    }
-
-                    .billettholder-switcher {
-
-                    }
-                }
             }
 
         }
@@ -596,7 +591,13 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
             document.body.classList.toggle('no-scroll', $toggleHamburgerModal);
         "
 	>
-		@icons.Icon(icons.Menu, icons.Size20)
+        if currentBillettholder.Id != 0 {
+            <div class="btn js-current-billettholder-avatar">
+				@ticketholder.Initials(initials, currentBillettholder.Color)
+			</div>
+        } else {
+            @icons.Icon(icons.Menu, icons.Size20)
+        }
 		<span class="menu-button-text">
 			Meny
 		</span>
