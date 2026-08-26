@@ -348,7 +348,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 								}
 							</summary>
 							<div class="dropdown-panel">
-                                if currentBillettholder.Id != 0 {
+                                if len(associatedBillettholdere) > 1 {
                                     <button
                                         class="clickable-billettholder-menu-pc btn"
                                         data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
@@ -604,12 +604,15 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 	</button>
 	<dialog id="modal-hamburger-phone">
 		<div class="hamburger-modal-content">
-			<button class="btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
-				Bytt aktiv billettholder
-				<div class="btn js-current-billettholder-avatar">
-					@ticketholder.Initials(initials, currentBillettholder.Color)
-				</div>
-			</button>
+            if len(associatedBillettholdere) > 1 {
+                <button class="btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
+                    Bytt aktiv billettholder
+                    <div class="btn js-current-billettholder-avatar">
+                        @ticketholder.Initials(initials, currentBillettholder.Color)
+                    </div>
+                </button>
+            }
+
 			<a href="/profile">Min Profil</a>
 			<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" class="border-bottom">Vanlege Spørsmål</a>
 			if userInfo.IsAdmin {
