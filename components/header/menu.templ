@@ -62,6 +62,19 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 					white-space: nowrap;
 				}
 			}
+
+            .main-menu-button {
+                display: flex;
+                flex-direction: column;
+                font-size: var(--text-heading-4);
+                height: 48px;
+                padding: 0 var(--spacing-4x);
+                gap: var(--spacing-1x);
+
+                .menu-button-text {
+                    white-space: nowrap;
+                }
+            }
 		}
 
 		#main-menu-logo {
@@ -466,6 +479,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
             padding: 0;
             position: fixed;
             top: 0;
+
             .hamburger-modal-content {
                 padding-top: 50px;
                 display: grid;
