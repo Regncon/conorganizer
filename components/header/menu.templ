@@ -176,8 +176,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                         border: 1px solid var(--bg-item-border);
                         box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
                         border-radius: var(--border-radius-1x);
-                        width: max-content;
-                        max-width: 276px;
+                        width: 276px;
 
                         button {
                             height: fit-content;
@@ -187,6 +186,10 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                             display: flex;
                             color: var(--color-primary-text);
                             padding: 0.5rem 1rem;
+                            place-content: space-between;
+                            place-items: center;
+                            width: stretch;
+                            width: -webkit-fill-available;
                         }
 
                         .name-initials-little {
