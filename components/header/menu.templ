@@ -68,14 +68,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			display: none;
 		}
 
-		#main-menu-nav-buttons {
-			display: contents;
-		}
-
-		.main-menu-buttons {
-			display: contents;
-		}
-
 		#main-menu-user-menu {
             #main-menu-user-details {
                 display: none;
@@ -87,11 +79,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				grid-area: logo;
 				display: flex;
 				justify-content: flex-start;
-				width: 100%;
-			}
-
-			#main-menu-nav-buttons {
-				display: initial;
 				width: 100%;
 			}
 
