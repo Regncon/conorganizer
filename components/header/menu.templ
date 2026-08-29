@@ -28,6 +28,11 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			z-index: var(--nav-z-index);
 		}
 
+        .clickable-billettholder-menu-pc, .billettholder-switcher-btn {
+            border-radius: unset;
+            outline-offset: -2px;
+        }
+
 		.main-menu {
 			display: flex;
 			flex-direction: row;
@@ -164,11 +169,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                         border-radius: var(--border-radius-1x);
                         width: max-content;
                         max-width: 276px;
-
-                        .clickable-billettholder-menu-pc {
-                            border-radius: unset;
-                            outline-offset: -2px;
-                        }
 
                         button {
                             height: fit-content;
@@ -612,7 +612,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 	<dialog id="modal-hamburger-phone">
 		<div class="hamburger-modal-content">
 			if len(associatedBillettholdere) > 1 {
-				<button class="btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
+				<button class="btn billettholder-switcher-btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
 					Bytt aktiv billettholder
 					<div class="btn js-current-billettholder-avatar">
 						@ticketholder.Initials(initials, currentBillettholder.Color)
