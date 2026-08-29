@@ -100,7 +100,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 		@container main (width > 600px) {
 			#main-menu-logo {
-				grid-area: logo;
 				display: flex;
 				justify-content: flex-start;
 				width: 100%;
@@ -233,6 +232,8 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 			.main-menu {
                 gap: var(--spacing-4x);
+                display: grid;
+                place-items: center;
 
                 .logo-link {
                     display: flex;
@@ -273,12 +274,13 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 
 		@container main (width > 800px) {
 			.main-menu {
-				grid-template-columns: 120px 1fr 120px;
+                grid-template-columns: 48px 1fr auto;
 			}
 		}
 
 		@container main (width < 900px) {
 			.main-menu {
+                grid-template-columns: 48px 1fr 58px;
                 #main-menu-user-menu {
                     #main-menu-user-details {
                         .clickable-billettholder-menu-name {
