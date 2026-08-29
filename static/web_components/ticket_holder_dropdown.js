@@ -12,6 +12,7 @@ if (!customElements.get("billettholder-dropdown")) {
      *     },
      *     billettholderSelection: {
      *       get: () => {Id:number, Name:string, Email:string, Color?:string} | null,
+     *       onChange: (callback: (billettholder: {Id:number, Name:string, Email:string, Color?:string} | null) => void) => () => void,
      *       set: (billettholder: {Id:number, Name:string, Email:string, Color?:string}) => unknown,
      *       style: {
      *         backgroundColor: (color: string) => string,
@@ -64,6 +65,8 @@ if (!customElements.get("billettholder-dropdown")) {
         #arrowIconTemplateEle = null
         /** @type {AbortController | null} */
         #listenersAbortController = null
+        /** @type {(() => void) | null} */
+        #unsubscribeSelection = null
 
         static get observedAttributes() {
             return [DATA_BILLETTHOLDERE_ATTR]
@@ -101,9 +104,15 @@ if (!customElements.get("billettholder-dropdown")) {
 
         connectedCallback() {
             this.syncFromAttribute()
+            this.#unsubscribeSelection?.()
+            this.#unsubscribeSelection = typedWindow.conorganizer.billettholderSelection.onChange(() => {
+                this.hydrateSelectionFromSharedStorage()
+            })
         }
 
         disconnectedCallback() {
+            this.#unsubscribeSelection?.()
+            this.#unsubscribeSelection = null
             this.teardownInteractiveElements()
         }
 
