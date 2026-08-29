@@ -33,6 +33,12 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
             outline-offset: -2px;
         }
 
+        .external-link {
+            display: flex;
+            place-items: center;
+            place-content: space-between;
+        }
+
 		.main-menu {
 			display: flex;
 			flex-direction: row;
@@ -161,8 +167,11 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                     }
 
                     .dropdown-panel {
+                        display: block;
                         position: absolute;
+                        top: 61px;
                         right: 0;
+                        bottom: unset;
                         background-color: var(--bg-item);
                         border: 1px solid var(--bg-item-border);
                         box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
@@ -180,17 +189,19 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                             padding: 0.5rem 1rem;
                         }
 
+                        .name-initials-little {
+                            max-width: 24px;
+                            max-height: 24px;
+                        }
+
                         a {
-                            display: block;
                             color: var(--color-primary-text);
                             padding: 0.5rem 1rem;
                             text-decoration: none;
-                        }
 
-                        a.external-link {
-                            display: flex;
-                            align-items: center;
-                            gap: var(--spacing-1x);
+                            &:not(.external-link) {
+                                display: block;
+                            }
                         }
 
                         a:is(:hover, :focus-visible), button:is(:hover, :focus-visible) {
@@ -254,49 +265,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				.btn-login {
 					white-space: nowrap;
 				}
-
-                .dropdown-panel {
-                    display: block;
-                    position: absolute;
-                    top: 61px;
-                    right: 0;
-                    bottom: unset;
-                    background-color: var(--bg-item);
-                    border: 1px solid var(--bg-item-border);
-                    box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
-                    border-radius: var(--border-radius-1x);
-                    z-index: var(--nav-drop-down-z-index);
-                    width: max-content;
-                    max-width: 320px;
-
-                    .clickable-billettholder-menu-pc {
-                            display: grid;
-                            grid-template-columns: 1fr 24px;
-                            grid-gap: 52px;
-                    }
-
-                    .name-initials-little {
-                            max-width: 24px;
-                            max-height: 24px;
-                    }
-                }
-
-                a {
-                    display: block;
-                    color: var(--color-primary-text);
-                    padding: 0.5rem 1rem;
-                    text-decoration: none;
-                }
-
-                a.external-link {
-                    display: flex;
-                    align-items: center;
-                    gap: var(--spacing-1x);
-                }
-
-                a:hover {
-                    background-color: hsla(0, 0%, 100%, 0.1);
-                }
 			}
 		}
 
@@ -373,7 +341,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 									class="external-link"
 								>
 									<span>Vanlege Spørsmål</span>
-									@icons.Icon(icons.ExternalLink, icons.Size16)
+									@icons.Icon(icons.ExternalLink, icons.Size24)
 								</a>
 								if userInfo.IsAdmin {
 									<hr/>
@@ -506,7 +474,8 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
                     display: flex;
                     color: var(--color-primary-text);
                     text-decoration: none;
-                    padding-left: var(--spacing-5x);
+                    padding-inline-start: var(--spacing-5x);
+                    padding-inline-end: var(--spacing-4x);
                     place-items: center start;
                 }
 
@@ -546,7 +515,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
                     align-self: center;
                 }
 
-                .modal-close-button-billettholderswitcher {
+                .modal-close-button-billettholder-switcher {
                     display: flex;
                     height: 24px;
                     width: 24px;
@@ -614,13 +583,16 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 			if len(associatedBillettholdere) > 1 {
 				<button class="btn billettholder-switcher-btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
 					Bytt aktiv billettholder
-					<div class="btn js-current-billettholder-avatar">
+					<div class="js-current-billettholder-avatar">
 						@ticketholder.Initials(initials, currentBillettholder.Color)
 					</div>
 				</button>
 			}
 			<a href="/profile">Min Profil</a>
-			<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" class="border-bottom">Vanlege Spørsmål</a>
+			<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" class="border-bottom external-link">
+				Vanlege Spørsmål
+				@icons.Icon(icons.ExternalLink, icons.Size24)
+			</a>
 			if userInfo.IsAdmin {
 				<a href="/admin/billettholder/">Billettholderoversikt</a>
 				<a href="/admin/approval/" class="border-bottom">Godkjenn arrangementer</a>
@@ -634,7 +606,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 	>
 		<div class="modal-billettholder-header">
 			<p>Bytt aktiv billettholder</p>
-			<button class="modal-close-button-billettholderswitcher btn" commandfor="modal-billettholder-switcher" command="close">
+			<button class="modal-close-button-billettholder-switcher btn" commandfor="modal-billettholder-switcher" command="close">
 				@icons.Icon(icons.Close, icons.Size20)
 			</button>
 		</div>
