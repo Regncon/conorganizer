@@ -128,7 +128,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			display: none;
 		}
 
-		#main-menu-navbuttons {
+		#main-menu-nav-buttons {
 			display: contents;
 		}
 
@@ -136,7 +136,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			display: contents;
 		}
 
-		#main-menu-usermenu {
+		#main-menu-user-menu {
             #main-menu-user-details {
                 display: none;
             }
@@ -150,14 +150,12 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				width: 100%;
 			}
 
-			#main-menu-navbuttons {
+			#main-menu-nav-buttons {
 				display: initial;
-				grid-area: navbuttons;
 				width: 100%;
 			}
 
-			#main-menu-usermenu {
-				grid-area: usermenu;
+			#main-menu-user-menu {
 				display: flex;
 				justify-content: flex-end;
 				width: 100%;
@@ -323,10 +321,10 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 					<img src="/static/RegnconLogo.svg" alt="Regncon framside"/>
 				</a>
 			</section>
-			<section id="main-menu-navbuttons">
+			<section id="main-menu-nav-buttons">
 				@MainMenuButtons(userInfo)
 			</section>
-			<section id="main-menu-usermenu">
+			<section id="main-menu-user-menu">
 				if userInfo.IsLoggedIn {
 					<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end;">
 						<details
@@ -657,30 +655,35 @@ templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolde
 	currentBillettHolderJSON, _ := templ.JSONString(currentBillettHolder)
 	}}
 	<style>
-		.ticket-holder-picker {
-            padding-inline: var(--border-outline-width);
-			.card-clickable {
-                place-content: start;
-                height: 3.125rem;
-                min-width: 304px;
-            }
+		.billettholder-switcher {
+			.ticket-holder-picker {
+				padding-inline: var(--border-outline-width);
 
-            .name-initials {
-                p {
-                    font-size: var(--text-body);
-                    font-weight: 400;
-                    color: var(--color-text-soft);
-                }
-            }
+				.card-clickable {
+					place-content: start;
+					height: 3.125rem;
+					min-width: 304px;
+				}
+
+				.name-initials {
+					p {
+						font-size: var(--text-body);
+						font-weight: 400;
+						color: var(--color-text-soft);
+					}
+				}
+			}
 		}
 
-
-        @container main (width > 600px) {
-            .ticket-holder-picker {
-			.card-clickable {
-                min-width: 380px;
-            }
-        }
+		@container main (width > 600px) {
+			.billettholder-switcher {
+				.ticket-holder-picker {
+					.card-clickable {
+						width: 100%;
+					}
+				}
+			}
+		}
 	</style>
 	<div class="ticket-holder-picker">
 		<div
