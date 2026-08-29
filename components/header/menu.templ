@@ -234,6 +234,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                 gap: var(--spacing-4x);
                 display: grid;
                 place-items: center;
+                grid-template-columns: 1fr auto 1fr;
 
                 .logo-link {
                     display: flex;
@@ -272,15 +273,8 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			}
 		}
 
-		@container main (width > 800px) {
-			.main-menu {
-                grid-template-columns: 48px 1fr auto;
-			}
-		}
-
 		@container main (width < 900px) {
 			.main-menu {
-                grid-template-columns: 48px 1fr 58px;
                 #main-menu-user-menu {
                     #main-menu-user-details {
                         .clickable-billettholder-menu-name {
