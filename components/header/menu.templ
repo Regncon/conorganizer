@@ -215,21 +215,17 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			}
 
 			.main-menu {
-                --dynamic-gap-main-menu: clamp(
-                    var(--spacing-2x),
-                    calc(-40px + 8cqi),
-                    var(--spacing-4x)
-                );
-                gap: var(--dynamic-gap-main-menu);
-				.logo-link {
-					display: flex;
-					place-items: center;
+                gap: var(--spacing-4x);
 
-					img {
-						width: 3rem;
-						height: 3rem;
-					}
-				}
+                .logo-link {
+                    display: flex;
+                    place-items: center;
+
+                    img {
+                        width: 3rem;
+                        height: 3rem;
+                    }
+                }
 
 				.menu-btn-container:not(:has(.hamburger-have-billettholder)) {
 					display: flex;
@@ -281,7 +277,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                             max-height: 24px;
                         }
                     }
-			    }
+			}
 
                 .dropdown-panel a {
                     display: block;
@@ -306,7 +302,18 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			.main-menu {
 				grid-template-columns: 120px 1fr 120px;
 			}
+		}
 
+		@container main (width < 900px) {
+			.main-menu {
+                #main-menu-user-menu {
+                    #main-menu-user-details {
+                        .clickable-billettholder-menu-name {
+                            display: none;
+                        }
+                    }
+                }
+			}
 		}
 	</style>
 	<header

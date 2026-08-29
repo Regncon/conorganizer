@@ -25,16 +25,11 @@ templ MainMenuButtons(UserInfo requestctx.UserRequestInfo) {
 
     @container main (width >= 600px) {
         .main-menu-buttons {
-            --dynamic-gap-nav-buttons: clamp(
-                0px,
-                calc(-108.4444px + 17.7778cqi),
-                var(--spacing-4x)
-            );
             width: 100%;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: var(--dynamic-gap-nav-buttons);
+            gap: var(--spacing-4x);
         }
         .main-menu-button {
             flex-direction: row;
