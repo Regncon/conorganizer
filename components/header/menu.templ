@@ -112,9 +112,10 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                     gap: var(--spacing-1x);
                 }
 
-                a:hover, a:focus-visible, button:hover, button:focus-visible {
+                a:is(:hover, :focus-visible), button:is(:hover, :focus-visible) {
                     background-color: hsla(0, 0%, 100%, 0.1);
                 }
+
                 a:focus-visible {
                     outline: none;
                     box-shadow: inset 0 0 0 2px var(--btn-ghost-focus-shadow);
@@ -277,26 +278,26 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                             max-height: 24px;
                         }
                     }
-			}
 
-                .dropdown-panel a {
-                    display: block;
-                    color: var(--color-primary-text);
-                    padding: 0.5rem 1rem;
-                    text-decoration: none;
-                }
+                    a {
+                        display: block;
+                        color: var(--color-primary-text);
+                        padding: 0.5rem 1rem;
+                        text-decoration: none;
+                    }
 
-                .dropdown-panel a.external-link {
-                    display: flex;
-                    align-items: center;
-                    gap: var(--spacing-1x);
-                }
+                    a.external-link {
+                        display: flex;
+                        align-items: center;
+                        gap: var(--spacing-1x);
+                    }
 
-                .dropdown-panel a:hover {
-                    background-color: hsla(0, 0%, 100%, 0.1);
-                }
+                    a:hover {
+                        background-color: hsla(0, 0%, 100%, 0.1);
+                    }
 			}
 		}
+}
 
 		@container main (width > 800px) {
 			.main-menu {
