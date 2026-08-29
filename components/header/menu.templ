@@ -335,7 +335,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 							data-on:click__outside="el.removeAttribute('open')"
 						>
 							<summary>
-								/*TODO: make clickable menu shown when you have an account*/
 								if currentBillettholder.Id != 0 {
 									<div class="hamburger-have-billettholder">
 										@clickableBillettholderMenu(currentBillettholder)
@@ -348,17 +347,17 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 								}
 							</summary>
 							<div class="dropdown-panel">
-                                if len(associatedBillettholdere) > 1 {
-                                    <button
-                                        class="clickable-billettholder-menu-pc btn"
-                                        data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
-                                    >
-                                        Bytt aktiv billettholder
-                                        <div class="name-initials-little js-current-billettholder-avatar">
-                                            @ticketholder.Initials(initials, currentBillettholder.Color)
-                                        </div>
-                                    </button>
-                                }
+								if len(associatedBillettholdere) > 1 {
+									<button
+										class="clickable-billettholder-menu-pc btn"
+										data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
+									>
+										Bytt aktiv billettholder
+										<div class="name-initials-little js-current-billettholder-avatar">
+											@ticketholder.Initials(initials, currentBillettholder.Color)
+										</div>
+									</button>
+								}
 								<a href="/profile">Min Profil</a>
 								<a
 									href="https://www.regncon.no/vanlege-sporsmal/"
@@ -591,28 +590,27 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
             document.body.classList.toggle('no-scroll', $toggleHamburgerModal);
         "
 	>
-        if currentBillettholder.Id != 0 {
-            <div class="btn js-current-billettholder-avatar">
+		if currentBillettholder.Id != 0 {
+			<div class="btn js-current-billettholder-avatar">
 				@ticketholder.Initials(initials, currentBillettholder.Color)
 			</div>
-        } else {
-            @icons.Icon(icons.Menu, icons.Size20)
-        }
+		} else {
+			@icons.Icon(icons.Menu, icons.Size20)
+		}
 		<span class="menu-button-text">
 			Meny
 		</span>
 	</button>
 	<dialog id="modal-hamburger-phone">
 		<div class="hamburger-modal-content">
-            if len(associatedBillettholdere) > 1 {
-                <button class="btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
-                    Bytt aktiv billettholder
-                    <div class="btn js-current-billettholder-avatar">
-                        @ticketholder.Initials(initials, currentBillettholder.Color)
-                    </div>
-                </button>
-            }
-
+			if len(associatedBillettholdere) > 1 {
+				<button class="btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
+					Bytt aktiv billettholder
+					<div class="btn js-current-billettholder-avatar">
+						@ticketholder.Initials(initials, currentBillettholder.Color)
+					</div>
+				</button>
+			}
 			<a href="/profile">Min Profil</a>
 			<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" class="border-bottom">Vanlege Spørsmål</a>
 			if userInfo.IsAdmin {
