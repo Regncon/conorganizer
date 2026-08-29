@@ -19,10 +19,10 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
                 display: none;
             }
             .ticket-holder-picker-buttons {
-                display: flex;
-                flex-wrap: wrap;
                 column-gap:calc(var(--border-outline-width) - var(--spacing-2x));
                 row-gap: var(--spacing-2x);
+                display: grid;
+                grid-template-columns: repeat(3, auto);
             }
 		}
 	</style>
