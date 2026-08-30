@@ -109,17 +109,28 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                     place-self: center end;
                     padding: var(--spacing-2x);
 
-                    &[open], &:hover {
-                        background-color: var(--color-text-soft-20);
-                        border-radius: var(--border-radius-1x);
-                    }
+					&[open],
+					&:hover {
+						background-color: var(--color-text-soft-20);
+						border-radius: var(--border-radius-1x);
+					}
 
-                    summary {
-                        cursor: pointer;
-                        list-style: none;
-                        /* hide the default disclosure triangle in some browsers */
-                        color: var(--color-secondary);
-                        text-decoration: none;
+					&:has(> summary:focus-visible) {
+						border-radius: var(--border-radius-1x);
+						box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
+					}
+
+					summary {
+						cursor: pointer;
+						list-style: none;
+						/* hide the default disclosure triangle in some browsers */
+						color: var(--color-secondary);
+						text-decoration: none;
+
+						&:focus-visible {
+							outline: none;
+						}
+
 						.clickable-billettholder-menu-wrapper {
 							display: flex;
 							place-items: center;
