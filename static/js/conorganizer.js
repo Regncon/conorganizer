@@ -159,7 +159,6 @@
             "var(--color-accent-cyan)",
         ])
         const ACCENT_COLOR_SET = new Set(ACCENT_COLORS)
-
         /**
          * Internal: accepts only color tokens produced by this helper.
          * @param {string} color
@@ -282,6 +281,9 @@
             }
 
             const associatedBillettholder = associatedBillettholdere.find((billettholder) => {
+                if (!billettholder || typeof billettholder !== "object") {
+                    return false
+                }
                 const candidate = /** @type {{Id?: unknown}} */ (billettholder)
                 return Number(candidate.Id ?? 0) === Number(billettholderId)
             })

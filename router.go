@@ -8,11 +8,12 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/Regncon/conorganizer/components/header"
 	"github.com/Regncon/conorganizer/pages/admin"
 	billettholderadmin "github.com/Regncon/conorganizer/pages/admin/billettholder_admin"
 	"github.com/Regncon/conorganizer/pages/event"
 	"github.com/Regncon/conorganizer/pages/login"
-	"github.com/Regncon/conorganizer/pages/print-friendly"
+	printfriendly "github.com/Regncon/conorganizer/pages/print-friendly"
 	profilepage "github.com/Regncon/conorganizer/pages/profile"
 	"github.com/Regncon/conorganizer/pages/root"
 	"github.com/Regncon/conorganizer/service/authctx"
@@ -62,6 +63,7 @@ func setupRoutes(ctx context.Context, logger *slog.Logger, router chi.Router, db
 	}
 
 	isLoggedInRouter := router.With(userctx.UserMiddleware(logger, db))
+	header.SetupMenuRoute(isLoggedInRouter, liveManager, userctx.GetUserRequestInfo, db, logger)
 	routerAdmin := isLoggedInRouter.With(
 		authctx.RequireAdmin(logger, authctx.WithForbiddenHandler(userctx.AdminForbiddenHandler(db, logger))),
 	)

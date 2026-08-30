@@ -1,22 +1,20 @@
 package header
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
+	"net/http"
+
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/ticket_holder"
+	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/requestctx"
-	"log/slog"
+	"github.com/go-chi/chi/v5"
 )
 
 templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
-	{{
-	associatedBillettholdere, _ := ticketholder.GetTicketHolders(userInfo, db)
-	currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
-	initials := ticketholder.GetInitials(currentBillettholder.Name)
-	associatedBillettholdereJSON, _ := templ.JSONString(associatedBillettholdere)
-	currentBillettholderJSON, _ := templ.JSONString(currentBillettholder)
-	}}
 	<style>
 		.main-menu-header {
 			width: 100%;
@@ -293,7 +291,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 		class="main-menu-header no-print"
 		data-signals:billett-holder-id=""
 		data-on:menu-billettholder-change="$billettHolderId = evt.detail.id"
-		data-init={ fmt.Sprintf("const selectedBillettholder = window.conorganizer.billettholderSelection.initialize(%s, %s); $billettHolderId = selectedBillettholder?.Id ?? '';", associatedBillettholdereJSON, currentBillettholderJSON) }
 	>
 		<nav class="main-menu page-content-container wide-content">
 			<section id="main-menu-logo">
@@ -306,123 +303,131 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			</section>
 			<section id="main-menu-user-menu">
 				if userInfo.IsLoggedIn {
-					<div style="display: flex; align-items: center; gap: 0.5rem; place-self: center end;">
-						<details
-							id="main-menu-user-details"
-							class="menu-btn-container"
-							data-on:click__outside="el.removeAttribute('open')"
-						>
-							<summary>
-								if currentBillettholder.Id != 0 {
-									<div class="hamburger-have-billettholder">
-										@clickableBillettholderMenu(currentBillettholder)
-									</div>
-								}
-								if currentBillettholder.Id == 0 {
-									<div>
-										@icons.Icon(icons.Menu, icons.Size20)
-									</div>
-								}
-							</summary>
-							<div class="dropdown-panel">
-								if len(associatedBillettholdere) > 1 {
-									<button
-										class="clickable-billettholder-menu-pc btn"
-										data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
-									>
-										Bytt aktiv billettholder
-										<div class="name-initials-little js-current-billettholder-avatar">
-											@ticketholder.Initials(initials, currentBillettholder.Color)
-										</div>
-									</button>
-								}
-								<a href="/profile">Min Profil</a>
-								<a
-									href="https://www.regncon.no/vanlege-sporsmal/"
-									target="_blank"
-									rel="noopener noreferrer"
-									class="external-link"
-								>
-									<span>Vanlege Spørsmål</span>
-									@icons.Icon(icons.ExternalLink, icons.Size24)
-								</a>
-								if userInfo.IsAdmin {
-									<hr/>
-									<a href="/admin/billettholder/">Billettholderoversikt</a>
-									<a href="/admin/approval/">Godkjenn arrangementer</a>
-									<hr/>
-								}
-								<a href="/auth/logout">Logg ut</a>
-							</div>
-						</details>
-						<div class="dropdown-panel-menu-items-top">
-							if len(associatedBillettholdere) > 1 {
-								<button
-									class="clickable-billettholder-menu-pc btn"
-									data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
-								>
-									Bytt aktiv billettholder
-									<div class="name-initials-little js-current-billettholder-avatar">
-										@ticketholder.Initials(initials, currentBillettholder.Color)
-									</div>
-								</button>
+					@MenuBillettholderLive(userInfo, db, logger)
+				}
+				if !userInfo.IsLoggedIn {
+					<a href="/auth" class="btn btn--primary btn-login">
+						Logg inn
+					</a>
+				}
+			</section>
+		</nav>
+		if userInfo.IsLoggedIn {
+			<script>
+				(() => {
+					const menu = document.currentScript?.closest(".main-menu-header")
+					const selection = window.conorganizer?.billettholderSelection
+					if (!(menu instanceof HTMLElement) || !selection) {
+						return
+					}
+
+					const updateSelectedBillettholder = (selectedBillettholder) => {
+						const selectedId = selectedBillettholder?.Id ?? ""
+						const name = selectedBillettholder?.Name ?? ""
+						const ticketType = selectedBillettholder?.TicketType ?? ""
+						const color = selectedBillettholder?.Color ?? selection.colorFromName(name)
+
+						menu.querySelectorAll(".js-current-billettholder-name").forEach((element) => {
+							element.textContent = name
+						})
+						menu.querySelectorAll(".js-current-billettholder-ticket-type").forEach((element) => {
+							element.textContent = ticketType
+						})
+						menu.querySelectorAll(".js-current-billettholder-avatar .initials").forEach((element) => {
+							if (!(element instanceof HTMLElement)) {
+								return
 							}
-							<a href="/profile">Min Profil</a>
-							<a
-								href="https://www.regncon.no/vanlege-sporsmal/"
-								target="_blank"
-								rel="noopener noreferrer"
-								class="external-link"
-							>
-								<span>Vanlege Spørsmål</span>
-								@icons.Icon(icons.ExternalLink, icons.Size24)
-							</a>
-						</div>
-						if userInfo.IsAdmin {
-							<div class="dropdown-panel-menu-items-center">
-								<a href="/admin/billettholder/">Billettholderoversikt</a>
-								<a href="/admin/approval/">Godkjenn arrangementer</a>
-							</div>
-						}
-						<div class="dropdown-panel-menu-items-bottom">
-							<a href="/auth/logout">Logg ut</a>
-						</div>
-					const color = selectedBillettholder.Color || selection.colorFromName(name);
+							element.textContent = selection.getInitials(name)
+							element.style.backgroundColor = selection.style.backgroundColor(color)
+							element.style.border = selection.style.border(color)
+						})
 
-					menu.querySelectorAll(".js-current-billettholder-name").forEach((element) => {
-						element.textContent = name;
-					});
-					menu.querySelectorAll(".js-current-billettholder-ticket-type").forEach((element) => {
-						element.textContent = ticketType;
-					});
-					menu.querySelectorAll(".js-current-billettholder-avatar .initials").forEach((element) => {
-						if (!(element instanceof HTMLElement)) {
-							return;
-						}
-						element.textContent = selection.getInitials(name);
-						element.style.backgroundColor = selection.style.backgroundColor(color);
-						element.style.border = selection.style.border(color);
-					});
-					menu.querySelectorAll(".billettholder-switcher [data-current-billett-holder]").forEach((element) => {
-						if (!(element instanceof HTMLElement)) {
-							return;
-						}
-						const option = JSON.parse(element.dataset.currentBillettHolder ?? "{}");
-						const isSelected = Number(option.Id) === Number(selectedBillettholder.Id);
-						element.classList.toggle("selected", isSelected);
-						element.tabIndex = isSelected ? -1 : 0;
-					});
+						menu.dispatchEvent(new CustomEvent("menu-billettholder-change", {
+							detail: { id: selectedId },
+						}))
+					}
 
-					menu.dispatchEvent(new CustomEvent("menu-billettholder-change", {
-						detail: { id: selectedBillettholder.Id },
-					}));
-				};
-
-				updateSelectedBillettholder(selection.get());
-				selection.onChange(updateSelectedBillettholder);
-			})();
-		</script>
+					selection.onChange(updateSelectedBillettholder)
+				})()
+			</script>
+		}
 	</header>
+}
+
+templ MenuBillettholderLive(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+	{{
+	logger = logger.With("component", "menu")
+	associatedBillettholdere, err := ticketholder.GetTicketHolders(userInfo, db)
+	if err != nil {
+		logger.Error("failed to get associated billettholdere", "user_id", userInfo.Id)
+		associatedBillettholdere = []ticketholder.BillettHolder{}
+	}
+	currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
+	initials := ticketholder.GetInitials(currentBillettholder.Name)
+	associatedBillettholdereJSON, _ := templ.JSONString(associatedBillettholdere)
+	currentBillettholderJSON, _ := templ.JSONString(currentBillettholder)
+	}}
+	<div
+		id="main-menu-billettholder-live"
+		style="display: flex; align-items: center; gap: 0.5rem; place-self: center end;"
+		data-init={ live.DatastarInit("/menu/api") }
+		data-effect={ fmt.Sprintf("window.conorganizer.billettholderSelection.initialize(%s, %s)", associatedBillettholdereJSON, currentBillettholderJSON) }
+	>
+		<details
+			id="main-menu-user-details"
+			class="menu-btn-container"
+			data-preserve-attr="open"
+			data-on:click__outside="el.removeAttribute('open')"
+		>
+			<summary>
+				if currentBillettholder.Id != 0 {
+					<div class="hamburger-have-billettholder">
+						@clickableBillettholderMenu(currentBillettholder)
+					</div>
+				}
+				if currentBillettholder.Id == 0 {
+					<div>
+						@icons.Icon(icons.Menu, icons.Size20)
+					</div>
+				}
+			</summary>
+			<div class="dropdown-panel">
+				<div class="dropdown-panel-menu-items-top">
+					if len(associatedBillettholdere) > 1 {
+						<button
+							class="clickable-billettholder-menu-pc btn"
+							data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
+						>
+							Bytt aktiv billettholder
+							<div class="name-initials-little js-current-billettholder-avatar" data-ignore-morph>
+								@ticketholder.Initials(initials, currentBillettholder.Color)
+							</div>
+						</button>
+					}
+					<a href="/profile">Min Profil</a>
+					<a
+						href="https://www.regncon.no/vanlege-sporsmal/"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="external-link"
+					>
+						<span>Vanlege Spørsmål</span>
+						@icons.Icon(icons.ExternalLink, icons.Size24)
+					</a>
+				</div>
+				if userInfo.IsAdmin {
+					<div class="dropdown-panel-menu-items-center">
+						<a href="/admin/billettholder/">Billettholderoversikt</a>
+						<a href="/admin/approval/">Godkjenn arrangementer</a>
+					</div>
+				}
+				<div class="dropdown-panel-menu-items-bottom">
+					<a href="/auth/logout">Logg ut</a>
+				</div>
+			</div>
+		</details>
+		@HamburgerPhone(userInfo, associatedBillettholdere, currentBillettholder)
+	</div>
 }
 
 templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholdere []ticketholder.BillettHolder, currentBillettholder ticketholder.BillettHolder) {
@@ -479,6 +484,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
                     a:hover, a:focus-visible, button:hover, button:focus-visible {
                         background-color: hsla(0, 0%, 100%, 0.1);
                     }
+
                     a:focus-visible {
                         outline: none;
                         box-shadow: inset 0 0 0 2px var(--btn-ghost-focus-shadow);
@@ -563,7 +569,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
         "
 	>
 		if currentBillettholder.Id != 0 {
-			<div class="btn js-current-billettholder-avatar">
+			<div class="btn js-current-billettholder-avatar" data-ignore-morph>
 				@ticketholder.Initials(initials, currentBillettholder.Color)
 			</div>
 		} else {
@@ -573,13 +579,13 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 			Meny
 		</span>
 	</button>
-	<dialog id="modal-hamburger-phone">
+	<dialog id="modal-hamburger-phone" data-preserve-attr="open">
 		<div class="hamburger-modal-content">
 			<div class="dropdown-panel-menu-items-top">
 				if len(associatedBillettholdere) > 1 {
 					<button class="btn billettholder-switcher-btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
 						Bytt aktiv billettholder
-						<div class="js-current-billettholder-avatar">
+						<div class="js-current-billettholder-avatar" data-ignore-morph>
 							@ticketholder.Initials(initials, currentBillettholder.Color)
 						</div>
 					</button>
@@ -603,6 +609,7 @@ templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholde
 	</dialog>
 	<dialog
 		id="modal-billettholder-switcher"
+		data-preserve-attr="open"
 		data-on:click__stop="if (evt.target === el) el.close()"
 	>
 		<div class="modal-billettholder-header">
@@ -670,13 +677,34 @@ templ billettholderSwitcherButton(currentBillettHolder ticketholder.BillettHolde
 	</style>
 	<div class="ticket-holder-picker">
 		<div
+			id={ fmt.Sprintf("menu-billettholder-option-%d", currentBillettHolder.Id) }
 			role="button"
-			tabindex="0"
+			data-attr:tabindex={ fmt.Sprintf(`$billettHolderId == %d ? '-1' : '0'`, currentBillettHolder.Id) }
 			class="card-clickable card-clickable-item"
+			data-preserve-attr="class tabindex"
 			data-current-billett-holder={ currentBillettHolderJSON }
-			data-on:click="window.conorganizer.billettholderSelection.set(JSON.parse(evt.currentTarget.dataset.currentBillettHolder))"
+			data-class:selected={ fmt.Sprintf("$billettHolderId == %d", currentBillettHolder.Id) }
+			data-on:click={ fmt.Sprintf("$billettHolderId = %d; window.conorganizer.billettholderSelection.set(JSON.parse(evt.currentTarget.dataset.currentBillettHolder))", currentBillettHolder.Id) }
 		>
 			@ticketholder.NameInitials(currentBillettHolder.Name, initials, currentBillettHolder.Color)
 		</div>
 	</div>
+}
+
+func SetupMenuRoute(
+	router chi.Router,
+	liveManager *live.Manager,
+	getUserRequestInfo func(context.Context) requestctx.UserRequestInfo,
+	db *sql.DB,
+	logger *slog.Logger,
+) {
+	router.Get("/menu/api", func(w http.ResponseWriter, r *http.Request) {
+		liveManager.Stream(w, r, live.Page{
+			Buckets: []live.Bucket{live.BucketBillettholders},
+			Render: func(ctx context.Context, r *http.Request) templ.Component {
+				userInfo := getUserRequestInfo(ctx)
+				return MenuBillettholderLive(userInfo, db, logger)
+			},
+		})
+	})
 }
