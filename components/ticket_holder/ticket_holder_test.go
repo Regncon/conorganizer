@@ -42,19 +42,19 @@ func TestNewBillettholderOptions_WhenUserHasMatchingBillettholder_SelectsItAsDef
 	}
 }
 
-func TestNewBillettholderOptions_WhenNoEmailMatches_UsesFirstBillettholderAsDefault(t *testing.T) {
+func TestNewBillettholderOptions_WhenNoEmailMatches_UsesLowestBillettholderIDAsDefault(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at ingen tilknyttet billettholder matcher brukerens e-post.",
 		When:  "Når billettholdervalgene bygges.",
-		Then:  "Så skal den første tilknyttede billettholderen brukes som standard.",
+		Then:  "Så skal billettholderen med lavest ID brukes som en stabil standard.",
 	})
 
 	// Given
 	expectedDefaultID := 1
 	userInfo := requestctx.UserRequestInfo{Email: "user@example.com"}
 	associated := []BillettHolder{
-		{Id: expectedDefaultID, Email: "first@example.com"},
 		{Id: 2, Email: "second@example.com"},
+		{Id: expectedDefaultID, Email: "first@example.com"},
 	}
 
 	// When

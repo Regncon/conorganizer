@@ -1,6 +1,7 @@
 package ticketholder
 
 import (
+	"cmp"
 	"database/sql"
 	"fmt"
 	"slices"
@@ -44,7 +45,9 @@ func NewBillettholderOptions(userInfo requestctx.UserRequestInfo, associated []B
 		return billettholder.Email == userInfo.Email
 	})
 	if index == -1 {
-		options.Default = associated[0]
+		options.Default = slices.MinFunc(associated, func(a, b BillettHolder) int {
+			return cmp.Compare(a.Id, b.Id)
+		})
 		return options
 	}
 
