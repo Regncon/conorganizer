@@ -28,9 +28,9 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	</style>
 	{{
 		associatedTicketHolders, err := GetTicketHolders(userInfo, db)
-		yourBillettHolder := GetYourBillettHolderInfo(userInfo, associatedTicketHolders)
-		associatedTicketHoldersJSON, _ := templ.JSONString(associatedTicketHolders)
-		yourBillettHolderJSON, _ := templ.JSONString(yourBillettHolder)
+		billettholderOptions := NewBillettholderOptions(userInfo, associatedTicketHolders)
+		associatedTicketHoldersJSON, _ := templ.JSONString(billettholderOptions.Associated)
+		defaultBillettholderJSON, _ := templ.JSONString(billettholderOptions.Default)
 	}}
 	if err != nil {
 		{{ logger.Error(err.Error(), "user_id", userInfo.Id) }}
@@ -44,25 +44,25 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		data-signals__ifmissing:billett-holder-id=""
 		data-on:billettholder-selected="$billettHolderId = evt.detail"
 		data-effect={ fmt.Sprintf("if ($billettHolderId) { @put('/event/api/%s/interest/selected-interest') }", eventId) }
-		data-init={ fmt.Sprintf("const init = window.conorganizer.billettholderSelection.initialize(%s, %s); $billettHolderId = init?.Id ?? '';", associatedTicketHoldersJSON, yourBillettHolderJSON) }
+		data-init={ fmt.Sprintf("const init = window.conorganizer.billettholderSelection.initialize(%s, %s); $billettHolderId = init?.Id ?? '';", associatedTicketHoldersJSON, defaultBillettholderJSON) }
 	>
 		if err != nil {
 			<div class="ticket-holder-error">
 				<p>Feil ved henting av billettholdere: { err.Error() }</p>
 			</div>
 		}
-		if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
+		if billettholderOptions.CanSwitchBillettholder() && len(billettholderOptions.Associated) < 4 {
 			<p class="label">Velg billettholder</p>
 			<div class="ticket-holder-picker-buttons">
-				for _, billettHolder := range associatedTicketHolders {
+				for _, billettHolder := range billettholderOptions.Associated {
 					@TicketHolderButton(billettHolder)
 				}
 			</div>
 		}
-		if (len(associatedTicketHolders) > 3) {
+		if len(billettholderOptions.Associated) > 3 {
 			<p class="label">Velg billettholder</p>
 			<div class="ticket-holder-picker-dropdown">
-				@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
+				@TicketHolderDropDown(eventId, userInfo, billettholderOptions.Associated)
 			</div>
 		}
 	</div>

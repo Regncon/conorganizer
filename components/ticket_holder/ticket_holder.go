@@ -21,6 +21,45 @@ type BillettHolder struct {
 	Color      BillettholderColor
 }
 
+type BillettholderOptions struct {
+	Default    BillettHolder
+	Associated []BillettHolder
+}
+
+func NewBillettholderOptions(userInfo requestctx.UserRequestInfo, associated []BillettHolder) BillettholderOptions {
+	options := BillettholderOptions{
+		Associated: associated,
+	}
+
+	if len(associated) == 0 {
+		options.Default = BillettHolder{
+			Email: "unknown@example.com",
+			Name:  "Unknown Ticket Holder",
+			Color: ColorFromName("Unknown Ticket Holder"),
+		}
+		return options
+	}
+
+	index := slices.IndexFunc(associated, func(billettholder BillettHolder) bool {
+		return billettholder.Email == userInfo.Email
+	})
+	if index == -1 {
+		options.Default = associated[0]
+		return options
+	}
+
+	options.Default = associated[index]
+	return options
+}
+
+func (options BillettholderOptions) HasBillettholder() bool {
+	return options.Default.Id != 0
+}
+
+func (options BillettholderOptions) CanSwitchBillettholder() bool {
+	return len(options.Associated) > 1
+}
+
 type PuljeInterestAvailability string
 
 const (
@@ -247,23 +286,6 @@ func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.PuljeRow, error)
 	}
 
 	return puljer, nil
-}
-
-func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders []BillettHolder) BillettHolder {
-	if (len(ticketHolders) == 0) {
-		return BillettHolder{
-			Email: "unknown@example.com",
-			Name:  "Unknown Ticket Holder",
-			Color: ColorFromName("Unknown Ticket Holder"),
-		}
-	}
-	idx := slices.IndexFunc(ticketHolders, func(th BillettHolder) bool {
-		return th.Email == userInfo.Email
-	})
-	if idx == -1 {
-		return ticketHolders[0];
-	}
-	return ticketHolders[idx]
 }
 
 func GetInitials(s string) string {

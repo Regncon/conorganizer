@@ -219,18 +219,18 @@ templ MenuBillettholderLive(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 		logger.Error("failed to get associated billettholdere", "user_id", userInfo.Id)
 		associatedBillettholdere = []ticketholder.BillettHolder{}
 	}
-	currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
-	associatedBillettholdereJSON, _ := templ.JSONString(associatedBillettholdere)
-	currentBillettholderJSON, _ := templ.JSONString(currentBillettholder)
+	billettholderOptions := ticketholder.NewBillettholderOptions(userInfo, associatedBillettholdere)
+	associatedBillettholdereJSON, _ := templ.JSONString(billettholderOptions.Associated)
+	defaultBillettholderJSON, _ := templ.JSONString(billettholderOptions.Default)
 	}}
 	<div
 		id="main-menu-billettholder-live"
 		data-init={ live.DatastarInit("/menu/api") }
-		data-effect={ fmt.Sprintf("window.conorganizer.billettholderSelection.initialize(%s, %s)", associatedBillettholdereJSON, currentBillettholderJSON) }
+		data-effect={ fmt.Sprintf("window.conorganizer.billettholderSelection.initialize(%s, %s)", associatedBillettholdereJSON, defaultBillettholderJSON) }
 	>
-		@desktopBillettholderMenu(userInfo, associatedBillettholdere, currentBillettholder)
-		@phoneMenu(userInfo, associatedBillettholdere, currentBillettholder)
-		@billettholderSwitcherDialog(associatedBillettholdere)
+		@desktopBillettholderMenu(userInfo, billettholderOptions)
+		@phoneMenu(userInfo, billettholderOptions)
+		@billettholderSwitcherDialog(billettholderOptions.Associated)
 	</div>
 }
 
@@ -398,9 +398,9 @@ templ desktopBillettholderMenuStyles() {
 	</style>
 }
 
-templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, associatedBillettholdere []ticketholder.BillettHolder, currentBillettholder ticketholder.BillettHolder) {
+templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions) {
 	{{
-	initials := ticketholder.GetInitials(currentBillettholder.Name)
+	initials := ticketholder.GetInitials(billettholderOptions.Default.Name)
 	}}
 	<details
 		id="main-menu-user-details"
@@ -409,12 +409,12 @@ templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, associatedBi
 		data-on:click__outside="el.removeAttribute('open')"
 	>
 		<summary>
-			if currentBillettholder.Id != 0 {
+			if billettholderOptions.HasBillettholder() {
 				<div class="hamburger-have-billettholder">
-					@clickableBillettholderMenu(currentBillettholder)
+					@clickableBillettholderMenu(billettholderOptions.Default)
 				</div>
 			}
-			if currentBillettholder.Id == 0 {
+			if !billettholderOptions.HasBillettholder() {
 				<div>
 					@icons.Icon(icons.Menu, icons.Size20)
 				</div>
@@ -422,14 +422,14 @@ templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, associatedBi
 		</summary>
 		<div class="dropdown-panel">
 			<div class="dropdown-panel-menu-items-top">
-				if len(associatedBillettholdere) > 1 {
+				if billettholderOptions.CanSwitchBillettholder() {
 					<button
 						class="clickable-billettholder-menu-pc btn"
 						data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
 					>
 						Bytt aktiv billettholder
 						<div class="name-initials-little js-current-billettholder-avatar" data-ignore-morph>
-							@ticketholder.Initials(initials, currentBillettholder.Color)
+							@ticketholder.Initials(initials, billettholderOptions.Default.Color)
 						</div>
 					</button>
 				}
@@ -457,9 +457,9 @@ templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, associatedBi
 	</details>
 }
 
-templ phoneMenu(userInfo requestctx.UserRequestInfo, associatedBillettholdere []ticketholder.BillettHolder, currentBillettholder ticketholder.BillettHolder) {
-	@phoneMenuButton(currentBillettholder)
-	@phoneMenuDialog(userInfo, associatedBillettholdere, currentBillettholder)
+templ phoneMenu(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions) {
+	@phoneMenuButton(billettholderOptions)
+	@phoneMenuDialog(userInfo, billettholderOptions)
 }
 
 templ phoneMenuButtonStyles() {
@@ -474,9 +474,9 @@ templ phoneMenuButtonStyles() {
 	</style>
 }
 
-templ phoneMenuButton(currentBillettholder ticketholder.BillettHolder) {
+templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions) {
 	{{
-	initials := ticketholder.GetInitials(currentBillettholder.Name)
+	initials := ticketholder.GetInitials(billettholderOptions.Default.Name)
 	}}
 	<button
 		class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
@@ -488,9 +488,9 @@ templ phoneMenuButton(currentBillettholder ticketholder.BillettHolder) {
             document.body.classList.toggle('no-scroll', $toggleHamburgerModal);
         "
 	>
-		if currentBillettholder.Id != 0 {
+		if billettholderOptions.HasBillettholder() {
 			<div class="btn js-current-billettholder-avatar" data-ignore-morph>
-				@ticketholder.Initials(initials, currentBillettholder.Color)
+				@ticketholder.Initials(initials, billettholderOptions.Default.Color)
 			</div>
 		} else {
 			@icons.Icon(icons.Menu, icons.Size20)
@@ -570,18 +570,18 @@ templ phoneMenuDialogStyles() {
 	</style>
 }
 
-templ phoneMenuDialog(userInfo requestctx.UserRequestInfo, associatedBillettholdere []ticketholder.BillettHolder, currentBillettholder ticketholder.BillettHolder) {
+templ phoneMenuDialog(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions) {
 	{{
-	initials := ticketholder.GetInitials(currentBillettholder.Name)
+	initials := ticketholder.GetInitials(billettholderOptions.Default.Name)
 	}}
 	<dialog id="modal-hamburger-phone" data-preserve-attr="open">
 		<div class="hamburger-modal-content">
 			<div class="dropdown-panel-menu-items-top">
-				if len(associatedBillettholdere) > 1 {
+				if billettholderOptions.CanSwitchBillettholder() {
 					<button class="btn billettholder-switcher-btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
 						Bytt aktiv billettholder
 						<div class="js-current-billettholder-avatar" data-ignore-morph>
-							@ticketholder.Initials(initials, currentBillettholder.Color)
+							@ticketholder.Initials(initials, billettholderOptions.Default.Color)
 						</div>
 					</button>
 				}
