@@ -14,7 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+templ menuStyles() {
 	<style>
 		.main-menu-header {
 			width: 100%;
@@ -24,28 +24,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			bottom: 0;
 			border-top: 1px solid var(--bg-item-border);
 			z-index: var(--nav-z-index);
-
-			.clickable-billettholder-menu-pc, .billettholder-switcher-btn {
-				border-radius: unset;
-				outline-offset: -2px;
-			}
-
-			.external-link {
-				display: flex;
-				place-items: center;
-				place-content: space-between;
-			}
-
-			.dropdown-panel-menu-items-bottom, .dropdown-panel-menu-items-center {
-				border-block-start: 1px solid var(--color-text-soft-50);
-			}
-
-			#main-menu-billettholder-live {
-				display: flex;
-				place-items: center;
-				gap: 0.5rem;
-				place-self: center end;
-			}
 		}
 
 		.main-menu {
@@ -85,12 +63,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			display: none;
 		}
 
-		#main-menu-user-menu {
-            #main-menu-user-details {
-                display: none;
-            }
-		}
-
 		@container main (width > 600px) {
 			#main-menu-logo {
 				display: flex;
@@ -102,125 +74,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				display: flex;
 				place-content: end;
 				width: 100%;
-
-                #main-menu-user-details {
-                    position: relative;
-                    display: block;
-                    place-self: center end;
-                    padding: var(--spacing-2x);
-
-					&[open],
-					&:hover {
-						background-color: var(--color-text-soft-20);
-						border-radius: var(--border-radius-1x);
-					}
-
-					&:has(> summary:focus-visible) {
-						border-radius: var(--border-radius-1x);
-						box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
-					}
-
-					summary {
-						cursor: pointer;
-						list-style: none;
-						/* hide the default disclosure triangle in some browsers */
-						color: var(--color-secondary);
-						text-decoration: none;
-
-						&:focus-visible {
-							outline: none;
-						}
-
-						.clickable-billettholder-menu-wrapper {
-							display: flex;
-							place-items: center;
-							gap: var(--spacing-3x);
-
-                            .clickable-billettholder-menu-name {
-                                max-width: 180px;
-                                p {
-                                    margin: 0;
-                                }
-                                p:first-child {
-                                    font-weight: 700;
-                                    overflow: clip;
-                                    white-space: nowrap;
-                                }
-                                p:last-child {
-                                    font-size: 12px;
-                                    color: var(--color-text-soft-50);
-                                    text-align: end;
-                                    overflow: clip;
-                                    white-space: nowrap;
-                                }
-
-                            }
-
-                            .initials {
-                                width: 40px;
-                                height: 40px;
-                            }
-                        }
-                    }
-
-                    summary::-webkit-details-marker {
-                        display: none;
-                        /* hide default marker in Chrome/Safari */
-                    }
-
-					.dropdown-panel {
-						position: absolute;
-						top: 61px;
-						right: 0;
-						background-color: var(--bg-item);
-                        border: 1px solid var(--bg-item-border);
-                        box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
-                        border-radius: var(--border-radius-1x);
-                        width: 276px;
-
-                        button {
-                            height: fit-content;
-                            font-weight: inherit;
-                            font-family: inherit;
-                            font-size: inherit;
-                            display: flex;
-                            color: var(--color-primary-text);
-                            padding: 0.5rem 1rem;
-                            place-content: space-between;
-                            place-items: center;
-                            width: stretch;
-                            width: -webkit-fill-available;
-                        }
-
-                        .name-initials-little {
-                            max-width: 24px;
-                            max-height: 24px;
-                        }
-
-                        a {
-                            color: var(--color-primary-text);
-                            padding: 0.5rem 1rem;
-                            text-decoration: none;
-
-                            &:not(.external-link) {
-                                display: block;
-                            }
-                        }
-
-                        a:is(:hover, :focus-visible), button:is(:hover, :focus-visible) {
-                            background-color: hsla(0, 0%, 100%, 0.1);
-                        }
-
-                        a:focus-visible {
-                            outline: none;
-                            box-shadow: inset 0 0 0 2px var(--btn-ghost-focus-shadow);
-                        }
-                    }
-                }
-
-                .hamburger-phone {
-                    display: none;
-                }
 			}
 
 			.main-menu-header {
@@ -246,33 +99,414 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
                     }
                 }
 
-				.menu-btn-container:not(:has(.hamburger-have-billettholder)) {
-					display: flex;
-					place-items: center;
-					place-content: center;
-					height: 42px;
-					width: 42px;
-					.inline-icon {
-						width: 24px;
-						height: 24px;
-					}
-				}
-
 				.btn-login {
 					white-space: nowrap;
 				}
 			}
 		}
 
+	</style>
+}
+
+templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+	@menuStyles()
+	@menuBillettholderLiveStyles()
+	@desktopBillettholderMenuStyles()
+	@phoneMenuButtonStyles()
+	@phoneMenuDialogStyles()
+	@billettholderSwitcherDialogStyles()
+	@billettholderSwitcherStyles()
+	<header
+		class="main-menu-header no-print"
+		data-signals:billett-holder-id=""
+		data-on:menu-billettholder-change="$billettHolderId = evt.detail.id"
+	>
+		<nav class="main-menu page-content-container wide-content">
+			<section id="main-menu-logo">
+				<a href="/" class="logo-link">
+					<img src="/static/RegnconLogo.svg" alt="Regncon framside"/>
+				</a>
+			</section>
+			<section id="main-menu-nav-buttons">
+				@MainMenuButtons(userInfo)
+			</section>
+			<section id="main-menu-user-menu">
+				if userInfo.IsLoggedIn {
+					@MenuBillettholderLive(userInfo, db, logger)
+				}
+				if !userInfo.IsLoggedIn {
+					<a href="/auth" class="btn btn--primary btn-login">
+						Logg inn
+					</a>
+				}
+			</section>
+		</nav>
+		if userInfo.IsLoggedIn {
+			@menuBillettholderSyncScript()
+		}
+	</header>
+}
+
+templ menuBillettholderSyncScript() {
+	<script>
+		(() => {
+			const menu = document.currentScript?.closest(".main-menu-header")
+			const selection = window.conorganizer?.billettholderSelection
+			if (!(menu instanceof HTMLElement) || !selection) {
+				return
+			}
+
+			const updateSelectedBillettholder = (selectedBillettholder) => {
+				const selectedId = selectedBillettholder?.Id ?? ""
+				const name = selectedBillettholder?.Name ?? ""
+				const ticketType = selectedBillettholder?.TicketType ?? ""
+				const color = selectedBillettholder?.Color ?? selection.colorFromName(name)
+
+				menu.querySelectorAll(".js-current-billettholder-name").forEach((element) => {
+					element.textContent = name
+				})
+				menu.querySelectorAll(".js-current-billettholder-ticket-type").forEach((element) => {
+					element.textContent = ticketType
+				})
+				menu.querySelectorAll(".js-current-billettholder-avatar .initials").forEach((element) => {
+					if (!(element instanceof HTMLElement)) {
+						return
+					}
+					element.textContent = selection.getInitials(name)
+					element.style.backgroundColor = selection.style.backgroundColor(color)
+					element.style.border = selection.style.border(color)
+				})
+
+				menu.dispatchEvent(new CustomEvent("menu-billettholder-change", {
+					detail: { id: selectedId },
+				}))
+			}
+
+			selection.onChange(updateSelectedBillettholder)
+		})()
+	</script>
+}
+
+templ menuBillettholderLiveStyles() {
+	<style>
+		.main-menu-header {
+			.external-link {
+				display: flex;
+				place-items: center;
+				place-content: space-between;
+			}
+
+			.dropdown-panel-menu-items-bottom,
+			.dropdown-panel-menu-items-center {
+				border-block-start: 1px solid var(--color-text-soft-50);
+			}
+
+			#main-menu-billettholder-live {
+				display: flex;
+				place-items: center;
+				gap: 0.5rem;
+				place-self: center end;
+			}
+		}
+	</style>
+}
+
+templ MenuBillettholderLive(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+	{{
+	logger = logger.With("component", "menu")
+	associatedBillettholdere, err := ticketholder.GetTicketHolders(userInfo, db)
+	if err != nil {
+		logger.Error("failed to get associated billettholdere", "user_id", userInfo.Id)
+		associatedBillettholdere = []ticketholder.BillettHolder{}
+	}
+	currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
+	associatedBillettholdereJSON, _ := templ.JSONString(associatedBillettholdere)
+	currentBillettholderJSON, _ := templ.JSONString(currentBillettholder)
+	}}
+	<div
+		id="main-menu-billettholder-live"
+		data-init={ live.DatastarInit("/menu/api") }
+		data-effect={ fmt.Sprintf("window.conorganizer.billettholderSelection.initialize(%s, %s)", associatedBillettholdereJSON, currentBillettholderJSON) }
+	>
+		@desktopBillettholderMenu(userInfo, associatedBillettholdere, currentBillettholder)
+		@phoneMenu(userInfo, associatedBillettholdere, currentBillettholder)
+		@billettholderSwitcherDialog(associatedBillettholdere)
+	</div>
+}
+
+templ desktopBillettholderMenuStyles() {
+	<style>
+		.main-menu-header {
+			.clickable-billettholder-menu-pc {
+				border-radius: unset;
+				outline-offset: -2px;
+			}
+		}
+
+		#main-menu-user-menu {
+			#main-menu-user-details {
+				display: none;
+			}
+		}
+
+		@container main (width > 600px) {
+			#main-menu-user-menu {
+				#main-menu-user-details {
+					position: relative;
+					display: block;
+					place-self: center end;
+					padding: var(--spacing-2x);
+
+					&[open],
+					&:hover {
+						background-color: var(--color-text-soft-20);
+						border-radius: var(--border-radius-1x);
+					}
+
+					&:has(> summary:focus-visible) {
+						border-radius: var(--border-radius-1x);
+						box-shadow: 0 0 0 3px var(--btn-ghost-focus-shadow);
+					}
+
+					summary {
+						cursor: pointer;
+						list-style: none;
+						color: var(--color-secondary);
+						text-decoration: none;
+
+						&:focus-visible {
+							outline: none;
+						}
+
+						.clickable-billettholder-menu-wrapper {
+							display: flex;
+							place-items: center;
+							gap: var(--spacing-3x);
+
+							.clickable-billettholder-menu-name {
+								max-width: 180px;
+
+								p {
+									margin: 0;
+								}
+
+								p:first-child {
+									font-weight: 700;
+									overflow: clip;
+									white-space: nowrap;
+								}
+
+								p:last-child {
+									font-size: 12px;
+									color: var(--color-text-soft-50);
+									text-align: end;
+									overflow: clip;
+									white-space: nowrap;
+								}
+							}
+
+							.initials {
+								width: 40px;
+								height: 40px;
+							}
+						}
+					}
+
+					summary::-webkit-details-marker {
+						display: none;
+					}
+
+					.dropdown-panel {
+						position: absolute;
+						top: 61px;
+						right: 0;
+						background-color: var(--bg-item);
+						border: 1px solid var(--bg-item-border);
+						box-shadow: 0 8px 16px hsla(0, 0%, 0%, 0.2);
+						border-radius: var(--border-radius-1x);
+						width: 276px;
+
+						button {
+							height: fit-content;
+							font-weight: inherit;
+							font-family: inherit;
+							font-size: inherit;
+							display: flex;
+							color: var(--color-primary-text);
+							padding: 0.5rem 1rem;
+							place-content: space-between;
+							place-items: center;
+							width: stretch;
+							width: -webkit-fill-available;
+						}
+
+						.name-initials-little {
+							max-width: 24px;
+							max-height: 24px;
+						}
+
+						a {
+							color: var(--color-primary-text);
+							padding: 0.5rem 1rem;
+							text-decoration: none;
+
+							&:not(.external-link) {
+								display: block;
+							}
+						}
+
+						a:is(:hover, :focus-visible),
+						button:is(:hover, :focus-visible) {
+							background-color: hsla(0, 0%, 100%, 0.1);
+						}
+
+						a:focus-visible {
+							outline: none;
+							box-shadow: inset 0 0 0 2px var(--btn-ghost-focus-shadow);
+						}
+					}
+				}
+			}
+
+			.main-menu {
+				.menu-btn-container:not(:has(.hamburger-have-billettholder)) {
+					display: flex;
+					place-items: center;
+					place-content: center;
+					height: 42px;
+					width: 42px;
+
+					.inline-icon {
+						width: 24px;
+						height: 24px;
+					}
+				}
+			}
+		}
+
 		@container main (width < 900px) {
 			.main-menu {
-                #main-menu-user-menu {
-                    #main-menu-user-details {
-                        .clickable-billettholder-menu-name {
-                            display: none;
-                        }
-                    }
-                }
+				#main-menu-user-menu {
+					#main-menu-user-details {
+						.clickable-billettholder-menu-name {
+							display: none;
+						}
+					}
+				}
+			}
+		}
+	</style>
+}
+
+templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, associatedBillettholdere []ticketholder.BillettHolder, currentBillettholder ticketholder.BillettHolder) {
+	{{
+	initials := ticketholder.GetInitials(currentBillettholder.Name)
+	}}
+	<details
+		id="main-menu-user-details"
+		class="menu-btn-container"
+		data-preserve-attr="open"
+		data-on:click__outside="el.removeAttribute('open')"
+	>
+		<summary>
+			if currentBillettholder.Id != 0 {
+				<div class="hamburger-have-billettholder">
+					@clickableBillettholderMenu(currentBillettholder)
+				</div>
+			}
+			if currentBillettholder.Id == 0 {
+				<div>
+					@icons.Icon(icons.Menu, icons.Size20)
+				</div>
+			}
+		</summary>
+		<div class="dropdown-panel">
+			<div class="dropdown-panel-menu-items-top">
+				if len(associatedBillettholdere) > 1 {
+					<button
+						class="clickable-billettholder-menu-pc btn"
+						data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
+					>
+						Bytt aktiv billettholder
+						<div class="name-initials-little js-current-billettholder-avatar" data-ignore-morph>
+							@ticketholder.Initials(initials, currentBillettholder.Color)
+						</div>
+					</button>
+				}
+				<a href="/profile">Min Profil</a>
+				<a
+					href="https://www.regncon.no/vanlege-sporsmal/"
+					target="_blank"
+					rel="noopener noreferrer"
+					class="external-link"
+				>
+					<span>Vanlege Spørsmål</span>
+					@icons.Icon(icons.ExternalLink, icons.Size24)
+				</a>
+			</div>
+			if userInfo.IsAdmin {
+				<div class="dropdown-panel-menu-items-center">
+					<a href="/admin/billettholder/">Billettholderoversikt</a>
+					<a href="/admin/approval/">Godkjenn arrangementer</a>
+				</div>
+			}
+			<div class="dropdown-panel-menu-items-bottom">
+				<a href="/auth/logout">Logg ut</a>
+			</div>
+		</div>
+	</details>
+}
+
+templ phoneMenu(userInfo requestctx.UserRequestInfo, associatedBillettholdere []ticketholder.BillettHolder, currentBillettholder ticketholder.BillettHolder) {
+	@phoneMenuButton(currentBillettholder)
+	@phoneMenuDialog(userInfo, associatedBillettholdere, currentBillettholder)
+}
+
+templ phoneMenuButtonStyles() {
+	<style>
+		@container main (width > 600px) {
+			#main-menu-user-menu {
+				.hamburger-phone {
+					display: none;
+				}
+			}
+		}
+	</style>
+}
+
+templ phoneMenuButton(currentBillettholder ticketholder.BillettHolder) {
+	{{
+	initials := ticketholder.GetInitials(currentBillettholder.Name)
+	}}
+	<button
+		class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
+		data-signals="{toggleHamburgerModal: false}"
+		data-on:click="
+            $toggleHamburgerModal = !$toggleHamburgerModal;
+            $toggleHamburgerModal ? document.getElementById('modal-hamburger-phone').show()
+            : document.getElementById('modal-hamburger-phone').close();
+            document.body.classList.toggle('no-scroll', $toggleHamburgerModal);
+        "
+	>
+		if currentBillettholder.Id != 0 {
+			<div class="btn js-current-billettholder-avatar" data-ignore-morph>
+				@ticketholder.Initials(initials, currentBillettholder.Color)
+			</div>
+		} else {
+			@icons.Icon(icons.Menu, icons.Size20)
+		}
+		<span class="menu-button-text">
+			Meny
+		</span>
+	</button>
+}
+
+templ phoneMenuDialogStyles() {
+	<style>
+		.main-menu-header {
+			.billettholder-switcher-btn {
+				border-radius: unset;
+				outline-offset: -2px;
 			}
 		}
 
@@ -308,7 +542,8 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 						place-content: space-between;
 					}
 
-					a, button {
+					a,
+					button {
 						height: 52px;
 						display: flex;
 						color: var(--color-primary-text);
@@ -318,7 +553,10 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 						place-items: center start;
 					}
 
-					a:hover, a:focus-visible, button:hover, button:focus-visible {
+					a:hover,
+					a:focus-visible,
+					button:hover,
+					button:focus-visible {
 						background-color: hsla(0, 0%, 100%, 0.1);
 					}
 
@@ -329,7 +567,45 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				}
 			}
 		}
+	</style>
+}
 
+templ phoneMenuDialog(userInfo requestctx.UserRequestInfo, associatedBillettholdere []ticketholder.BillettHolder, currentBillettholder ticketholder.BillettHolder) {
+	{{
+	initials := ticketholder.GetInitials(currentBillettholder.Name)
+	}}
+	<dialog id="modal-hamburger-phone" data-preserve-attr="open">
+		<div class="hamburger-modal-content">
+			<div class="dropdown-panel-menu-items-top">
+				if len(associatedBillettholdere) > 1 {
+					<button class="btn billettholder-switcher-btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
+						Bytt aktiv billettholder
+						<div class="js-current-billettholder-avatar" data-ignore-morph>
+							@ticketholder.Initials(initials, currentBillettholder.Color)
+						</div>
+					</button>
+				}
+				<a href="/profile">Min Profil</a>
+				<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" class="border-bottom external-link">
+					Vanlege Spørsmål
+					@icons.Icon(icons.ExternalLink, icons.Size24)
+				</a>
+			</div>
+			if userInfo.IsAdmin {
+				<div class="dropdown-panel-menu-items-center">
+					<a href="/admin/billettholder/">Billettholderoversikt</a>
+					<a href="/admin/approval/" class="border-bottom">Godkjenn arrangementer</a>
+				</div>
+			}
+			<div class="dropdown-panel-menu-items-bottom">
+				<a href="/auth/logout">Logg ut</a>
+			</div>
+		</div>
+	</dialog>
+}
+
+templ billettholderSwitcherDialogStyles() {
+	<style>
 		#modal-billettholder-switcher[open] {
 			max-width: 344px;
 			margin-top: 70px;
@@ -342,6 +618,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			grid-template-rows: 24px 1fr;
 
 			.modal-billettholder-header {
+				grid-area: 1 / 1;
 				max-width: 304px;
 				max-height: 24px;
 				display: grid;
@@ -353,15 +630,18 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 					font-weight: 700;
 					place-self: center auto;
 				}
+			}
 
-				.modal-close-button-billettholder-switcher {
-					display: flex;
-					height: 24px;
-					width: 24px;
-				}
+			.modal-close-button-billettholder-switcher {
+				grid-area: 1 / 1;
+				display: flex;
+				height: 24px;
+				width: 24px;
+				place-self: center end;
 			}
 
 			.hamburger-modal-billettholder-content {
+				grid-area: 2 / 1;
 				display: grid;
 				gap: var(--spacing-5x);
 
@@ -371,7 +651,51 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 					line-height: 100%;
 					color: var(--color-text-soft);
 				}
+			}
+		}
 
+		@container main (width > 600px) {
+			#modal-billettholder-switcher[open] {
+				max-width: 420px;
+				margin-top: auto;
+
+				.modal-billettholder-header {
+					max-width: 380px;
+				}
+			}
+		}
+	</style>
+}
+
+templ billettholderSwitcherDialog(associatedBillettholdere []ticketholder.BillettHolder) {
+	<dialog
+		id="modal-billettholder-switcher"
+		data-preserve-attr="open"
+		data-on:click__stop="if (evt.target === el) el.close()"
+	>
+		<div class="modal-billettholder-header">
+			<p>Bytt aktiv billettholder</p>
+		</div>
+		<div class="hamburger-modal-billettholder-content">
+			<p>
+				Ved å bytte aktiv bruker vil interessevalgene
+				til den valgte brukeren vises på programoversikten
+				og de vil være standardvalget på Min Side og i
+				interessevelgeren på et arrangement.
+			</p>
+			@BillettholderSwitcher(associatedBillettholdere)
+			<p>Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
+		</div>
+		<button class="modal-close-button-billettholder-switcher btn" commandfor="modal-billettholder-switcher" command="close">
+			@icons.Icon(icons.Close, icons.Size20)
+		</button>
+	</dialog>
+}
+
+templ billettholderSwitcherStyles() {
+	<style>
+		#modal-billettholder-switcher[open] {
+			.hamburger-modal-billettholder-content {
 				.billettholder-switcher {
 					display: grid;
 					gap: var(--spacing-2x);
@@ -402,15 +726,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 		}
 
 		@container main (width > 600px) {
-			#modal-billettholder-switcher[open] {
-				max-width: 420px;
-				margin-top: auto;
-
-				.modal-billettholder-header {
-					max-width: 380px;
-				}
-			}
-
 			.main-menu-header {
 				.billettholder-switcher {
 					.ticket-holder-picker {
@@ -422,223 +737,6 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			}
 		}
 	</style>
-	<header
-		class="main-menu-header no-print"
-		data-signals:billett-holder-id=""
-		data-on:menu-billettholder-change="$billettHolderId = evt.detail.id"
-	>
-		<nav class="main-menu page-content-container wide-content">
-			<section id="main-menu-logo">
-				<a href="/" class="logo-link">
-					<img src="/static/RegnconLogo.svg" alt="Regncon framside"/>
-				</a>
-			</section>
-			<section id="main-menu-nav-buttons">
-				@MainMenuButtons(userInfo)
-			</section>
-			<section id="main-menu-user-menu">
-				if userInfo.IsLoggedIn {
-					@MenuBillettholderLive(userInfo, db, logger)
-				}
-				if !userInfo.IsLoggedIn {
-					<a href="/auth" class="btn btn--primary btn-login">
-						Logg inn
-					</a>
-				}
-			</section>
-		</nav>
-		if userInfo.IsLoggedIn {
-			<script>
-				(() => {
-					const menu = document.currentScript?.closest(".main-menu-header")
-					const selection = window.conorganizer?.billettholderSelection
-					if (!(menu instanceof HTMLElement) || !selection) {
-						return
-					}
-
-					const updateSelectedBillettholder = (selectedBillettholder) => {
-						const selectedId = selectedBillettholder?.Id ?? ""
-						const name = selectedBillettholder?.Name ?? ""
-						const ticketType = selectedBillettholder?.TicketType ?? ""
-						const color = selectedBillettholder?.Color ?? selection.colorFromName(name)
-
-						menu.querySelectorAll(".js-current-billettholder-name").forEach((element) => {
-							element.textContent = name
-						})
-						menu.querySelectorAll(".js-current-billettholder-ticket-type").forEach((element) => {
-							element.textContent = ticketType
-						})
-						menu.querySelectorAll(".js-current-billettholder-avatar .initials").forEach((element) => {
-							if (!(element instanceof HTMLElement)) {
-								return
-							}
-							element.textContent = selection.getInitials(name)
-							element.style.backgroundColor = selection.style.backgroundColor(color)
-							element.style.border = selection.style.border(color)
-						})
-
-						menu.dispatchEvent(new CustomEvent("menu-billettholder-change", {
-							detail: { id: selectedId },
-						}))
-					}
-
-					selection.onChange(updateSelectedBillettholder)
-				})()
-			</script>
-		}
-	</header>
-}
-
-templ MenuBillettholderLive(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
-	{{
-	logger = logger.With("component", "menu")
-	associatedBillettholdere, err := ticketholder.GetTicketHolders(userInfo, db)
-	if err != nil {
-		logger.Error("failed to get associated billettholdere", "user_id", userInfo.Id)
-		associatedBillettholdere = []ticketholder.BillettHolder{}
-	}
-	currentBillettholder := ticketholder.GetYourBillettHolderInfo(userInfo, associatedBillettholdere)
-	initials := ticketholder.GetInitials(currentBillettholder.Name)
-	associatedBillettholdereJSON, _ := templ.JSONString(associatedBillettholdere)
-	currentBillettholderJSON, _ := templ.JSONString(currentBillettholder)
-	}}
-	<div
-		id="main-menu-billettholder-live"
-		data-init={ live.DatastarInit("/menu/api") }
-		data-effect={ fmt.Sprintf("window.conorganizer.billettholderSelection.initialize(%s, %s)", associatedBillettholdereJSON, currentBillettholderJSON) }
-	>
-		<details
-			id="main-menu-user-details"
-			class="menu-btn-container"
-			data-preserve-attr="open"
-			data-on:click__outside="el.removeAttribute('open')"
-		>
-			<summary>
-				if currentBillettholder.Id != 0 {
-					<div class="hamburger-have-billettholder">
-						@clickableBillettholderMenu(currentBillettholder)
-					</div>
-				}
-				if currentBillettholder.Id == 0 {
-					<div>
-						@icons.Icon(icons.Menu, icons.Size20)
-					</div>
-				}
-			</summary>
-			<div class="dropdown-panel">
-				<div class="dropdown-panel-menu-items-top">
-					if len(associatedBillettholdere) > 1 {
-						<button
-							class="clickable-billettholder-menu-pc btn"
-							data-on:click="document.getElementById('modal-billettholder-switcher').showModal()"
-						>
-							Bytt aktiv billettholder
-							<div class="name-initials-little js-current-billettholder-avatar" data-ignore-morph>
-								@ticketholder.Initials(initials, currentBillettholder.Color)
-							</div>
-						</button>
-					}
-					<a href="/profile">Min Profil</a>
-					<a
-						href="https://www.regncon.no/vanlege-sporsmal/"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="external-link"
-					>
-						<span>Vanlege Spørsmål</span>
-						@icons.Icon(icons.ExternalLink, icons.Size24)
-					</a>
-				</div>
-				if userInfo.IsAdmin {
-					<div class="dropdown-panel-menu-items-center">
-						<a href="/admin/billettholder/">Billettholderoversikt</a>
-						<a href="/admin/approval/">Godkjenn arrangementer</a>
-					</div>
-				}
-				<div class="dropdown-panel-menu-items-bottom">
-					<a href="/auth/logout">Logg ut</a>
-				</div>
-			</div>
-		</details>
-		@HamburgerPhone(userInfo, associatedBillettholdere, currentBillettholder)
-	</div>
-}
-
-templ HamburgerPhone(userInfo requestctx.UserRequestInfo, associatedBillettholdere []ticketholder.BillettHolder, currentBillettholder ticketholder.BillettHolder) {
-	{{
-	initials := ticketholder.GetInitials(currentBillettholder.Name)
-	}}
-	<button
-		class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
-		data-signals="{toggleHamburgerModal: false}"
-		data-on:click="
-            $toggleHamburgerModal = !$toggleHamburgerModal;
-            $toggleHamburgerModal ? document.getElementById('modal-hamburger-phone').show()
-            : document.getElementById('modal-hamburger-phone').close();
-            document.body.classList.toggle('no-scroll', $toggleHamburgerModal);
-        "
-	>
-		if currentBillettholder.Id != 0 {
-			<div class="btn js-current-billettholder-avatar" data-ignore-morph>
-				@ticketholder.Initials(initials, currentBillettholder.Color)
-			</div>
-		} else {
-			@icons.Icon(icons.Menu, icons.Size20)
-		}
-		<span class="menu-button-text">
-			Meny
-		</span>
-	</button>
-	<dialog id="modal-hamburger-phone" data-preserve-attr="open">
-		<div class="hamburger-modal-content">
-			<div class="dropdown-panel-menu-items-top">
-				if len(associatedBillettholdere) > 1 {
-					<button class="btn billettholder-switcher-btn" data-on:click="document.getElementById('modal-billettholder-switcher').showModal()">
-						Bytt aktiv billettholder
-						<div class="js-current-billettholder-avatar" data-ignore-morph>
-							@ticketholder.Initials(initials, currentBillettholder.Color)
-						</div>
-					</button>
-				}
-				<a href="/profile">Min Profil</a>
-				<a href="https://www.regncon.no/vanlege-sporsmal/" target="_blank" class="border-bottom external-link">
-					Vanlege Spørsmål
-					@icons.Icon(icons.ExternalLink, icons.Size24)
-				</a>
-			</div>
-			if userInfo.IsAdmin {
-				<div class="dropdown-panel-menu-items-center">
-					<a href="/admin/billettholder/">Billettholderoversikt</a>
-					<a href="/admin/approval/" class="border-bottom">Godkjenn arrangementer</a>
-				</div>
-			}
-			<div class="dropdown-panel-menu-items-bottom">
-				<a href="/auth/logout">Logg ut</a>
-			</div>
-		</div>
-	</dialog>
-	<dialog
-		id="modal-billettholder-switcher"
-		data-preserve-attr="open"
-		data-on:click__stop="if (evt.target === el) el.close()"
-	>
-		<div class="modal-billettholder-header">
-			<p>Bytt aktiv billettholder</p>
-			<button class="modal-close-button-billettholder-switcher btn" commandfor="modal-billettholder-switcher" command="close">
-				@icons.Icon(icons.Close, icons.Size20)
-			</button>
-		</div>
-		<div class="hamburger-modal-billettholder-content">
-			<p>
-				Ved å bytte aktiv bruker vil interessevalgene
-				til den valgte brukeren vises på programoversikten
-				og de vil være standardvalget på Min Side og i
-				interessevelgeren på et arrangement.
-			</p>
-			@BillettholderSwitcher(associatedBillettholdere)
-			<p>Valgene dine lagres automatisk. Du kan lukke denne modalen når du er ferdig.</p>
-		</div>
-	</dialog>
 }
 
 templ BillettholderSwitcher(associatedBillettholdere []ticketholder.BillettHolder) {
