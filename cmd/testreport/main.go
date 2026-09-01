@@ -366,7 +366,25 @@ func parseTestOutput(output []byte) (map[string][]testResult, []testFailure, err
 		return results, failures, err
 	}
 
-	return results, failures, nil
+	return results, removeAncestorTestFailures(failures), nil
+}
+
+func removeAncestorTestFailures(failures []testFailure) []testFailure {
+	leafFailures := make([]testFailure, 0, len(failures))
+	for _, failure := range failures {
+		isAncestor := false
+		for _, candidate := range failures {
+			if candidate.Package == failure.Package && strings.HasPrefix(candidate.Test, failure.Test+"/") {
+				isAncestor = true
+				break
+			}
+		}
+		if !isAncestor {
+			leafFailures = append(leafFailures, failure)
+		}
+	}
+
+	return leafFailures
 }
 
 func printReport(results map[string][]testResult, comments map[string]string, failures ...testFailure) {
