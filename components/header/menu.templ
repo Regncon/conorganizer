@@ -132,8 +132,10 @@ templ menuStyles() {
 
 templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	@menuStyles()
+	@mainMenuButtonsStyles()
 	@menuBillettholderLiveStyles()
 	@desktopBillettholderMenuStyles()
+	@clickableBillettholderMenuStyles()
 	@phoneMenuButtonStyles()
 	@phoneMenuDialogStyles()
 	@billettholderSwitcherDialogStyles()
@@ -150,7 +152,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 				</a>
 			</section>
 			<section id="main-menu-nav-buttons">
-				@MainMenuButtons(userInfo)
+				@mainMenuButtons(userInfo)
 			</section>
 			<section id="main-menu-user-menu">
 				if userInfo.IsLoggedIn {
@@ -167,6 +169,72 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 			@menuBillettholderSyncScript()
 		}
 	</header>
+}
+
+templ mainMenuButtonsStyles() {
+	<style>
+		#main-menu-nav-buttons {
+			display: contents;
+
+			.main-menu-buttons {
+				display: contents;
+			}
+		}
+
+		@container main (width > 600px) {
+			#main-menu-nav-buttons {
+				display: block;
+
+				.main-menu-buttons {
+					width: 100%;
+					display: flex;
+					gap: var(--spacing-4x);
+					place-items: center;
+
+					.main-menu-button {
+						display: flex;
+						flex-direction: row;
+						font-size: var(--btn-font-size);
+						height: var(--btn-height);
+						padding: 0 var(--btn-padding-x);
+						gap: var(--spacing-2x);
+
+						.inline-icon {
+							width: 24px;
+							height: 24px;
+						}
+					}
+				}
+			}
+		}
+	</style>
+}
+
+templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
+	<section class="main-menu-buttons">
+		<a role="button" href="/" class="main-menu-button btn btn--ghost btn-with-icon">
+			@icons.Icon(icons.Home, icons.Size20)
+			<span class="menu-button-text">
+				Hjem
+			</span>
+		</a>
+		if userInfo.IsLoggedIn {
+			<a role="button" href="/profile" class="main-menu-button btn btn--ghost btn-with-icon">
+				@icons.Icon(icons.User, icons.Size20)
+				<span class="menu-button-text">
+					Min Side
+				</span>
+			</a>
+		}
+		if userInfo.IsLoggedIn && userInfo.IsAdmin {
+			<a role="button" href="/admin" class="main-menu-button btn btn--ghost btn-with-icon">
+				@icons.Icon(icons.Shield, icons.Size20)
+				<span class="menu-button-text">
+					Admin
+				</span>
+			</a>
+		}
+	</section>
 }
 
 templ menuBillettholderSyncScript() {
@@ -307,39 +375,6 @@ templ desktopBillettholderMenuStyles() {
 						&:focus-visible {
 							outline: none;
 						}
-
-						.clickable-billettholder-menu-wrapper {
-							display: flex;
-							place-items: center;
-							gap: var(--spacing-3x);
-
-							.clickable-billettholder-menu-name {
-								max-width: 180px;
-
-								p {
-									margin: 0;
-								}
-
-								p:first-child {
-									font-weight: 700;
-									overflow: clip;
-									white-space: nowrap;
-								}
-
-								p:last-child {
-									font-size: 12px;
-									color: var(--color-text-soft-50);
-									text-align: end;
-									overflow: clip;
-									white-space: nowrap;
-								}
-							}
-
-							.initials {
-								width: 40px;
-								height: 40px;
-							}
-						}
 					}
 
 					summary::-webkit-details-marker {
@@ -414,17 +449,6 @@ templ desktopBillettholderMenuStyles() {
 			}
 		}
 
-		@container main (width < 900px) {
-			.main-menu {
-				#main-menu-user-menu {
-					#main-menu-user-details {
-						.clickable-billettholder-menu-name {
-							display: none;
-						}
-					}
-				}
-			}
-		}
 	</style>
 }
 
@@ -485,6 +509,76 @@ templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, billettholde
 			</div>
 		</div>
 	</details>
+}
+
+templ clickableBillettholderMenuStyles() {
+	<style>
+		#main-menu-user-menu {
+			#main-menu-user-details {
+				summary {
+					.clickable-billettholder-menu-wrapper {
+						display: flex;
+						place-items: center;
+						gap: var(--spacing-3x);
+
+						.clickable-billettholder-menu-name {
+							max-width: 180px;
+
+							p {
+								margin: 0;
+							}
+
+							p:first-child {
+								font-weight: 700;
+								overflow: clip;
+								white-space: nowrap;
+							}
+
+							p:last-child {
+								font-size: 12px;
+								color: var(--color-text-soft-50);
+								text-align: end;
+								overflow: clip;
+								white-space: nowrap;
+							}
+						}
+
+						.initials {
+							width: 40px;
+							height: 40px;
+						}
+					}
+				}
+			}
+		}
+
+		@container main (width < 900px) {
+			.main-menu {
+				#main-menu-user-menu {
+					#main-menu-user-details {
+						.clickable-billettholder-menu-name {
+							display: none;
+						}
+					}
+				}
+			}
+		}
+	</style>
+}
+
+templ clickableBillettholderMenu(currentBillettholder ticketholder.BillettHolder) {
+	{{
+		initials := ticketholder.GetInitials(currentBillettholder.Name)
+	}}
+	<div class="clickable-billettholder-menu-wrapper" data-ignore-morph>
+		<div class="clickable-billettholder-menu-name">
+			<p class="js-current-billettholder-name">{ currentBillettholder.Name }</p>
+			<p class="js-current-billettholder-ticket-type">{ currentBillettholder.TicketType }</p>
+		</div>
+		<div class="js-current-billettholder-avatar">
+			@ticketholder.Initials(initials, currentBillettholder.Color)
+		</div>
+	</div>
 }
 
 templ phoneMenu(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions) {
