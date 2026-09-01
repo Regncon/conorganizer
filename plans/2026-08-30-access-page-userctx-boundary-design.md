@@ -1,16 +1,23 @@
 # Access Pages and User Context Boundary Design
 
-**Date:** 2026-08-30  
+**Date:** 2026-08-30
+**Revised:** 2026-09-01
 **Status:** Approved
+
+## Scope
+
+This design moves complete 401 and 403 responses out of service packages, simplifies the access middleware contracts, and removes the menu route's temporary user-info callback.
+
+The change intentionally keeps the current `layouts.Base(title, userInfo, db, logger, children)` signature and full server-side menu rendering.
 
 ## Problem
 
-`service/userctx` currently has two responsibilities:
+`service/userctx` currently does two unrelated jobs:
 
-1. It derives `requestctx.UserRequestInfo` from authentication data stored in the request context.
+1. It derives `requestctx.UserRequestInfo` and gates authenticated routes.
 2. It renders complete 401 and 403 HTML responses through `layouts.Base`.
 
-The second responsibility makes `userctx` import `layouts`. Because `layouts.Base` renders `components/header`, importing `userctx` from the menu creates this cycle:
+Because `layouts.Base` renders `components/header`, directly importing `userctx` from the header currently creates this cycle:
 
 ```text
 header
@@ -22,87 +29,108 @@ layouts
 header
 ```
 
-`SetupMenuRoute` currently avoids the cycle by receiving `GetUserRequestInfo` as a function parameter. That injection is a temporary package-boundary workaround rather than a dependency the menu genuinely needs to abstract.
+`SetupMenuRoute` avoids the cycle by receiving `GetUserRequestInfo` as a function argument. That callback is not a genuine configurable dependency; it exists only to work around package ownership.
+
+The access presentation is also spread across `service/userctx` and `service/authctx`. Both pages duplicate the same styles, while `authctx.RequireAdmin` uses a functional-option configuration even though production has one call site and always supplies the HTML forbidden handler.
 
 ## Decision
 
-Move the complete 401 and 403 response rendering into a new `pages/access` package. Keep authentication and user-context interpretation in `service/userctx` and `service/authctx`.
+Create one focused `pages/access` package:
 
-Keep `requestctx.UserRequestInfo` in `service/requestctx` in this migration. Moving the type to `userctx` would touch many unrelated pages, components, and tests and is explicitly outside this design.
+```text
+pages/access/
+├── access.go
+├── access.templ
+└── access_test.go
+```
 
-Once `userctx` no longer imports `layouts`, restore direct use of `userctx.GetUserRequestInfo` inside `SetupMenuRoute` at the bottom of `components/header/menu.templ`.
+- `access.templ` keeps the shared styles and both small components together: `Unauthorized` and `Forbidden`.
+- `access.go` owns the complete HTTP 401 and 403 handlers.
+- `access_test.go` covers status codes, copy, and links for both responses.
 
-## Package Responsibilities
+Keep the access decisions in the service packages:
 
-### `service/userctx`
+- `userctx.UserMiddleware` decides whether an authenticated route may continue and delegates the complete 401 response to a required `http.HandlerFunc`.
+- `authctx.RequireAdmin` decides whether an administrator route may continue and delegates the complete 403 response to a required `http.HandlerFunc`.
 
-`userctx` owns:
-
-- deriving `requestctx.UserRequestInfo` from the authenticated request context;
-- deciding whether a request may continue through `UserMiddleware`;
-- user-ID lookup helpers.
-
-`userctx` does not own:
-
-- Templ access-denied components;
-- `layouts.Base` rendering;
-- database or layout dependencies for the unauthenticated middleware response;
-- the full 403 response.
-
-The middleware receives the response behavior through this interface:
+Use direct required arguments rather than optional configuration:
 
 ```go
 func UserMiddleware(
 	logger *slog.Logger,
 	unauthorizedHandler http.HandlerFunc,
 ) func(http.Handler) http.Handler
+
+func RequireAdmin(
+	logger *slog.Logger,
+	forbiddenHandler http.HandlerFunc,
+) func(http.Handler) http.Handler
 ```
 
-When `GetUserRequestInfo` reports an unauthenticated user, the middleware logs the existing request information, invokes `unauthorizedHandler`, and does not call the protected handler.
+Delete `requireAdminConfig`, `RequireAdminOption`, `WithForbiddenHandler`, and the unused default plain-text forbidden response. The application has one production `RequireAdmin` call and always provides its response handler.
+
+## Package Responsibilities
+
+### `service/userctx`
+
+Owns:
+
+- deriving `requestctx.UserRequestInfo` from authentication context;
+- allowing or rejecting authenticated routes;
+- user-ID lookup helpers.
+
+Does not own:
+
+- Templ access pages;
+- layout rendering;
+- database access for rendering the header;
+- the complete 403 response.
+
+The middleware keeps the current request logging, calls the unauthorized handler when the user is logged out, and never writes a second response itself.
 
 ### `service/authctx`
 
-`authctx` continues to own session interpretation and administrator-role checks. `RequireAdmin` and `WithForbiddenHandler` remain unchanged.
+Owns:
 
-The `Forbidden` Templ component moves out of `authctx`, because presentation is not authentication-context logic.
+- reading authentication claims;
+- checking the administrator role;
+- allowing or rejecting administrator routes.
+
+It does not own the forbidden page or choose a default presentation.
 
 ### `pages/access`
 
-The new package owns complete 401 and 403 responses:
+Owns:
 
-```text
-pages/access/
-├── access.go
-├── access.templ
-├── unauthorized.templ
-├── forbidden.templ
-├── access_test.go
-├── unauthorized_test.go
-└── forbidden_test.go
-```
+- the shared access-denied presentation;
+- the 401 page content and complete response;
+- the 403 page content and complete response;
+- render-failure logging for those responses.
 
-- `access.go` exposes `UnauthorizedHandler` and `ForbiddenHandler`.
-- `access.templ` contains shared access-denied presentation styles.
-- `unauthorized.templ` contains the HTTP 401 page content.
-- `forbidden.templ` contains the HTTP 403 page content.
-- The tests cover status codes, response content, links, and the moved components.
-
-The public handler interfaces are:
+The handlers retain the database argument required by the current layout:
 
 ```go
 func UnauthorizedHandler(db *sql.DB, logger *slog.Logger) http.HandlerFunc
 func ForbiddenHandler(db *sql.DB, logger *slog.Logger) http.HandlerFunc
 ```
 
-`UnauthorizedHandler` renders `layouts.Base` with an empty `requestctx.UserRequestInfo`, preserving the existing logged-out header behavior.
+## Accepted Layout Dependency
 
-`ForbiddenHandler` obtains the authenticated request information with `userctx.GetUserRequestInfo(r.Context())` and passes it to `layouts.Base`, preserving the existing logged-in header behavior.
+The header renders authoritative billettholder data in the first server response. `layouts.Base` therefore receives the database and logger used by `header.Menu`, and complete page handlers pass those dependencies through to the layout.
 
-Both handlers set the HTTP status before rendering and include the request ID and path if rendering fails.
+This explicit dependency is retained deliberately:
+
+- SQLite access is inexpensive for the expected event traffic.
+- The first response contains the complete avatar, ticket type, and switcher without a loading state.
+- `/menu/api` remains responsible for live updates after the initial render.
+- Request context and package globals are not used to hide infrastructure dependencies.
+- A one-off renderer would replace the dependency rather than remove it and would be inconsistent with the rest of the application.
+
+If page rendering is redesigned later, it should be an application-wide change covering data loading, view models, layout rendering, statuses, and render-error handling consistently. That broader redesign is outside this plan.
 
 ## Router Wiring
 
-`router.go` composes the middleware and presentation handlers:
+`router.go` remains the composition boundary:
 
 ```go
 isLoggedInRouter := router.With(
@@ -112,60 +140,11 @@ isLoggedInRouter := router.With(
 header.SetupMenuRoute(isLoggedInRouter, liveManager, db, logger)
 
 routerAdmin := isLoggedInRouter.With(
-	authctx.RequireAdmin(
-		logger,
-		authctx.WithForbiddenHandler(access.ForbiddenHandler(db, logger)),
-	),
+	authctx.RequireAdmin(logger, access.ForbiddenHandler(db, logger)),
 )
 ```
 
-This keeps dependency composition at the application boundary instead of placing page rendering inside a service package.
-
-## Request Flows
-
-### HTTP 401
-
-```text
-Request
-↓
-AuthMiddleware populates authentication context
-↓
-UserMiddleware calls GetUserRequestInfo
-↓
-User is not logged in
-↓
-pages/access.UnauthorizedHandler
-↓
-HTTP 401 + layouts.Base + Unauthorized component
-```
-
-### HTTP 403
-
-```text
-Authenticated request to an administrator route
-↓
-RequireAdmin checks the role
-↓
-User is not an administrator
-↓
-pages/access.ForbiddenHandler
-↓
-HTTP 403 + layouts.Base + Forbidden component
-```
-
-### Live Menu Route
-
-```text
-/menu/api
-↓
-SetupMenuRoute
-↓
-userctx.GetUserRequestInfo(ctx)
-↓
-MenuBillettholderLive
-```
-
-The final `SetupMenuRoute` signature is:
+Once `userctx` no longer imports `layouts`, `components/header` can directly use `userctx.GetUserRequestInfo`:
 
 ```go
 func SetupMenuRoute(
@@ -176,50 +155,109 @@ func SetupMenuRoute(
 )
 ```
 
-The temporary `getUserRequestInfo func(context.Context) requestctx.UserRequestInfo` parameter is removed.
+The injected `getUserRequestInfo func(context.Context) requestctx.UserRequestInfo` parameter is removed.
+
+## Request Flows
+
+### HTTP 401
+
+```text
+request
+↓
+userctx.UserMiddleware checks request context
+↓
+pages/access.UnauthorizedHandler
+↓
+HTTP 401 + layouts.Base + Unauthorized
+```
+
+### HTTP 403
+
+```text
+authenticated administrator route request
+↓
+authctx.RequireAdmin checks role
+↓
+pages/access.ForbiddenHandler
+↓
+HTTP 403 + layouts.Base + Forbidden
+```
+
+### Live menu route
+
+```text
+/menu/api
+↓
+header.SetupMenuRoute
+↓
+userctx.GetUserRequestInfo(ctx)
+↓
+MenuBillettholderLive
+```
 
 ## Final Dependency Direction
 
 ```text
 pages/access
-↓
+├── layouts
+└── service/userctx
+
 layouts
-↓
+└── components/header
+
 components/header
-↓
+└── service/userctx
+
 service/userctx
-↓
-service/authctx
+└── service/authctx
 ```
 
-There is no dependency from `userctx` back to `layouts`, so importing `userctx` from the menu is safe.
+There is no path from `service/userctx` back to `layouts`, so the header can depend directly on `userctx` without a cycle.
 
 ## Behavior Preserved
 
-- Unauthenticated protected requests return HTTP 401.
-- Non-administrator requests to administrator routes return HTTP 403.
-- The existing Norwegian access-denied text and links remain unchanged.
-- 401 renders the logged-out header.
-- 403 renders using the current request's user information.
-- Existing request logging remains, with access-page render failures owned by the `access` component.
-- The menu live stream still watches `live.BucketBillettholders` and renders `MenuBillettholderLive`.
+- Logged-out requests to protected routes return HTTP 401.
+- Non-administrators requesting administrator routes return HTTP 403.
+- Existing Norwegian text and links remain unchanged.
+- The 401 response renders a logged-out header.
+- The 403 response renders using the current request's user information.
+- Access-page render failures retain structured request ID and path logging.
+- The menu stream still watches `live.BucketBillettholders`.
+
+## Removed Code
+
+- `service/userctx/unauthenticated.templ`
+- `service/userctx/unauthenticated_test.go`
+- `service/authctx/forbidden.templ`
+- `service/authctx/forbidden_test.go`
+- `userctx.AdminForbiddenHandler`
+- `authctx.requireAdminConfig`
+- `authctx.RequireAdminOption`
+- `authctx.WithForbiddenHandler`
+- the default plain-text forbidden handler
+- the redundant `if !userInfo.IsLoggedIn` branch
+- the no-op `r.WithContext(ctx)` call
+- the `SetupMenuRoute` user-info callback parameter
 
 ## Constraints
 
-- Do not move `requestctx.UserRequestInfo` in this migration.
-- Do not change the billettholder persistence or live-bucket behavior.
+- Keep `requestctx.UserRequestInfo` in `service/requestctx`.
+- Keep `layouts.Base` and `header.Menu` database/logger parameters to preserve complete first-response rendering.
+- Keep all access-page text, links, titles, and status codes unchanged.
+- Do not change billettholder persistence, Datastar signals, or live-bucket behavior.
+- Follow `domeneordbok.md`; this change introduces no new domain terms.
 - Do not manually edit generated `*_templ.go` files.
-- Codex does not run Templ generation; the user performs the project's normal generation workflow.
-- Codex does not run tests; the user performs test verification.
-- Do not create commits unless the user explicitly asks for them later.
+- Templ generation and tests remain user-owned.
+- Keep this implementation as one commit.
 
 ## Acceptance Criteria
 
-- `service/userctx` no longer imports `layouts`.
-- `service/userctx` no longer contains access-denied Templ components or a forbidden page handler.
-- `pages/access` owns the 401 and 403 components and complete response handlers.
-- `UserMiddleware` receives and invokes an `http.HandlerFunc` for unauthenticated requests.
-- `router.go` wires both access handlers into the existing middleware chain.
-- `components/header/menu.templ` directly calls `userctx.GetUserRequestInfo` in `SetupMenuRoute`.
-- `SetupMenuRoute` no longer receives a user-info function parameter.
-- The import cycle is removed without moving `UserRequestInfo` out of `requestctx`.
+- `pages/access` contains exactly one Go source, one Templ source, and one test source.
+- `service/userctx` no longer imports `layouts` or owns presentation components.
+- `service/authctx` no longer owns the forbidden component or optional forbidden-handler configuration.
+- Both middleware functions receive required response handlers directly.
+- `router.go` composes both handlers.
+- `components/header/menu.templ` directly calls `userctx.GetUserRequestInfo`.
+- `SetupMenuRoute` has four parameters and no user-info callback.
+- 401/403 behavior and menu live behavior remain unchanged.
+- The code compiles without an import cycle after user-owned generation.
