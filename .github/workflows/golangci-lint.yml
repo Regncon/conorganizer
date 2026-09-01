@@ -6,10 +6,10 @@ on:
     pull_request:
         types: [opened, reopened, synchronize, ready_for_review]
         paths:
-            - '**.go'
-            - '**.mod'
-            - '**.sum'
-            - '**.templ'
+            - "**.go"
+            - "**.mod"
+            - "**.sum"
+            - "**.templ"
 
 permissions:
     contents: read
@@ -28,4 +28,4 @@ jobs:
             - name: golangci-lint
               uses: golangci/golangci-lint-action@v9
               with:
-                  version: v2.9.0
+                  version: v2.13.2
