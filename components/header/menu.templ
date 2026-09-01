@@ -56,7 +56,29 @@ templ menuStyles() {
                 .menu-button-text {
                     white-space: nowrap;
                 }
-            }
+			}
+		}
+
+		@container main (width <= 600px) {
+			.main-menu {
+				gap: 0;
+
+				.main-menu-button {
+					flex: 1 1 0;
+					inline-size: 100%;
+					min-inline-size: 0;
+					padding-inline: var(--spacing-2x);
+				}
+
+				#main-menu-user-menu {
+					flex: 1 1 0;
+					min-inline-size: 0;
+
+					.btn-login {
+						inline-size: 100%;
+					}
+				}
+			}
 		}
 
 		#main-menu-logo {
@@ -206,6 +228,14 @@ templ menuBillettholderLiveStyles() {
 				place-items: center;
 				gap: 0.5rem;
 				place-self: center end;
+			}
+		}
+
+		@container main (width <= 600px) {
+			.main-menu-header {
+				#main-menu-billettholder-live {
+					inline-size: 100%;
+				}
 			}
 		}
 	</style>
@@ -607,13 +637,16 @@ templ phoneMenuDialog(userInfo requestctx.UserRequestInfo, billettholderOptions 
 templ billettholderSwitcherDialogStyles() {
 	<style>
 		#modal-billettholder-switcher[open] {
-			max-width: 344px;
+			--billettholder-switcher-spacing: var(--spacing-3x);
+
+			inline-size: 344px;
+			max-inline-size: calc(100% - var(--spacing-4x));
 			margin-top: 70px;
 			border-radius: var(--spacing-2x);
 			border: none;
 			background-color: var(--bg-surface);
-			padding: var(--spacing-5x);
-			gap: var(--spacing-5x);
+			padding: var(--billettholder-switcher-spacing);
+			gap: var(--billettholder-switcher-spacing);
 			display: grid;
 			grid-template-rows: 24px 1fr;
 
@@ -643,7 +676,7 @@ templ billettholderSwitcherDialogStyles() {
 			.hamburger-modal-billettholder-content {
 				grid-area: 2 / 1;
 				display: grid;
-				gap: var(--spacing-5x);
+				gap: var(--billettholder-switcher-spacing);
 
 				p:not(.name-initials p) {
 					font-size: var(--text-heading-4);
@@ -656,11 +689,13 @@ templ billettholderSwitcherDialogStyles() {
 
 		@container main (width > 600px) {
 			#modal-billettholder-switcher[open] {
-				max-width: 420px;
+				--billettholder-switcher-spacing: var(--spacing-5x);
+
+				inline-size: 420px;
 				margin-top: auto;
 
 				.modal-billettholder-header {
-					max-width: 380px;
+					max-inline-size: 380px;
 				}
 			}
 		}
@@ -700,7 +735,6 @@ templ billettholderSwitcherStyles() {
 					display: grid;
 					gap: var(--spacing-2x);
 					grid-auto-rows: 1fr;
-					min-width: 304px;
 				}
 			}
 		}
@@ -710,8 +744,9 @@ templ billettholderSwitcherStyles() {
 				.ticket-holder-picker {
 					.card-clickable {
 						place-content: start;
+						inline-size: 100%;
 						height: 3.125rem;
-						min-width: 304px;
+						min-inline-size: 0;
 					}
 
 					.name-initials {
@@ -719,18 +754,6 @@ templ billettholderSwitcherStyles() {
 							font-size: var(--text-body);
 							font-weight: 400;
 							color: var(--color-text-soft);
-						}
-					}
-				}
-			}
-		}
-
-		@container main (width > 600px) {
-			.main-menu-header {
-				.billettholder-switcher {
-					.ticket-holder-picker {
-						.card-clickable {
-							width: 100%;
 						}
 					}
 				}
