@@ -1,13 +1,8 @@
 module github.com/Regncon/conorganizer
 
-go 1.26.0
+go 1.27.0
 
 ignore ./tmp
-
-require (
-	github.com/go-chi/chi/v5 v5.3.2
-	golang.org/x/sync v0.22.0
-)
 
 require (
 	github.com/PuerkitoBio/goquery v1.12.0
@@ -15,6 +10,7 @@ require (
 	github.com/benbjohnson/hashfs v0.2.2
 	github.com/delaneyj/toolbelt v0.9.1
 	github.com/descope/go-sdk v1.30.0
+	github.com/go-chi/chi/v5 v5.3.2
 	github.com/gomarkdown/markdown v0.0.0-20260818103853-6d1f24fc3a11
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/sessions v1.4.0
@@ -24,6 +20,7 @@ require (
 	github.com/nats-io/nats.go v1.53.1
 	github.com/sahilm/fuzzy v0.1.3
 	github.com/starfederation/datastar-go v1.2.2
+	golang.org/x/sync v0.22.0
 	modernc.org/sqlite v1.57.0
 )
 
