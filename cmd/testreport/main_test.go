@@ -192,6 +192,47 @@ func TestParseTestOutput_CapturesFailedTestDiagnostics(t *testing.T) {
 	}
 }
 
+func TestParseTestOutput_ReportsOnlyLeafFailureForFailedSubtest(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given Go test JSON containing a failed subtest and its failed parent.",
+		When:  "When the test output is parsed.",
+		Then:  "Then only the leaf subtest failure and its diagnostics are reported.",
+	})
+
+	// Given
+	expectedPackage := "example/package"
+	expectedTest := "TestExample/rejects_invalid_input"
+	expectedOutput := "expected validation error"
+	rawOutput := strings.Join([]string{
+		`{"Action":"run","Package":"example/package","Test":"TestExample"}`,
+		`{"Action":"run","Package":"example/package","Test":"TestExample/rejects_invalid_input"}`,
+		`{"Action":"output","Package":"example/package","Test":"TestExample/rejects_invalid_input","Output":"    example_test.go:12: expected validation error\n"}`,
+		`{"Action":"fail","Package":"example/package","Test":"TestExample/rejects_invalid_input","Elapsed":0.01}`,
+		`{"Action":"fail","Package":"example/package","Test":"TestExample","Elapsed":0.01}`,
+		`{"Action":"fail","Package":"example/package","Elapsed":0.01}`,
+	}, "\n")
+
+	// When
+	_, failures, err := parseTestOutput([]byte(rawOutput))
+
+	// Then
+	if err != nil {
+		t.Fatalf("parse test output: %v", err)
+	}
+	if len(failures) != 1 {
+		t.Fatalf("expected one leaf test failure, got %d: %#v", len(failures), failures)
+	}
+	if failures[0].Package != expectedPackage {
+		t.Fatalf("package mismatch\nexpected: %q\nactual:   %q", expectedPackage, failures[0].Package)
+	}
+	if failures[0].Test != expectedTest {
+		t.Fatalf("test mismatch\nexpected: %q\nactual:   %q", expectedTest, failures[0].Test)
+	}
+	if !strings.Contains(failures[0].Output, expectedOutput) {
+		t.Fatalf("expected subtest output to contain %q\nactual: %q", expectedOutput, failures[0].Output)
+	}
+}
+
 func TestParseTestOutput_CapturesPackageFailureWithoutFailedTest(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Given Go test JSON containing a package-level failure outside a test function.",
