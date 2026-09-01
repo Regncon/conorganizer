@@ -25,7 +25,6 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 	baseLogger := logger
 	logger = logger.With("component", "admin")
 
-
 	router.Route("/admin", func(adminRouter chi.Router) {
 		adminLayoutRoute(adminRouter, db, logger)
 		puljefordelingStatusRoute(adminRouter, db, liveManager, logger)

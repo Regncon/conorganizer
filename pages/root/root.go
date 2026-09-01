@@ -30,7 +30,7 @@ func SetupRootRoute(router chi.Router, logger *slog.Logger, liveManager *live.Ma
 					Buckets: []live.Bucket{live.BucketEvents},
 					Render: func(ctx context.Context, r *http.Request) templ.Component {
 						isAdmin := authctx.GetAdminFromUserToken(ctx)
-                        userInfo := userctx.GetUserRequestInfo(ctx)
+						userInfo := userctx.GetUserRequestInfo(ctx)
 						return rootPage(userInfo, db, isAdmin, eventImageDir, logger)
 					},
 				})
