@@ -1,6 +1,10 @@
 package header
 
 import (
+	"bytes"
+	"encoding/json"
+	"log/slog"
+	"strings"
 	"testing"
 
 	"github.com/Regncon/conorganizer/service/requestctx"
@@ -8,6 +12,44 @@ import (
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
+
+func TestMenuBillettholderLive_LogsTicketHolderQueryError(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a logged-in user and an unavailable database.",
+		When:  "When the live menu loads the user's associated billettholdere.",
+		Then:  "Then the structured log includes the underlying database error.",
+	})
+
+	// Given
+	expectedError := "sql: database is closed"
+	db := testutil.CreateTestDB(t, "menu_ticket_holder_query_error")
+	if err := db.Close(); err != nil {
+		t.Fatalf("close test database: %v", err)
+	}
+	var logOutput bytes.Buffer
+	logger := slog.New(slog.NewJSONHandler(&logOutput, nil))
+	userInfo := requestctx.UserRequestInfo{
+		IsLoggedIn: true,
+		Id:         "user-id",
+		Email:      "user@example.com",
+	}
+
+	// When
+	templtest.Render(t, MenuBillettholderLive(userInfo, db, logger))
+
+	// Then
+	var logEntry map[string]any
+	if err := json.Unmarshal(logOutput.Bytes(), &logEntry); err != nil {
+		t.Fatalf("decode structured log %q: %v", logOutput.String(), err)
+	}
+	actualError, ok := logEntry["error"].(string)
+	if !ok {
+		t.Fatalf("expected structured log to contain a string error field: %s", logOutput.String())
+	}
+	if !strings.Contains(actualError, expectedError) {
+		t.Fatalf("expected error to contain %q\nactual: %q", expectedError, actualError)
+	}
+}
 
 func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{

@@ -216,7 +216,7 @@ templ MenuBillettholderLive(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 	logger = logger.With("component", "menu")
 	associatedBillettholdere, err := ticketholder.GetTicketHolders(userInfo, db)
 	if err != nil {
-		logger.Error("failed to get associated billettholdere", "user_id", userInfo.Id)
+		logger.Error("failed to get associated billettholdere", "error", err, "user_id", userInfo.Id)
 		associatedBillettholdere = []ticketholder.BillettHolder{}
 	}
 	billettholderOptions := ticketholder.NewBillettholderOptions(userInfo, associatedBillettholdere)
