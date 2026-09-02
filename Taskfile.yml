@@ -49,6 +49,9 @@ tasks:
               }
 
               generate_dirs() {
+                generation_mode="$1"
+                shift
+
                 if [ "$#" -eq 0 ]; then
                   return
                 fi
@@ -63,7 +66,11 @@ tasks:
                   fi
 
                   echo "templ: generating $dir"
-                  if ! go tool templ generate -path "$dir" -log-level error; then
+                  if [ "$generation_mode" = "lazy" ]; then
+                    if ! go tool templ generate -path "$dir" -lazy -log-level error; then
+                      echo "templ: generation failed for $dir" >&2
+                    fi
+                  elif ! go tool templ generate -path "$dir" -log-level error; then
                     echo "templ: generation failed for $dir" >&2
                   fi
                   hash_templates "$dir" > "tmp/templ-watch/$dir.sha256"
@@ -72,7 +79,7 @@ tasks:
                 rmdir "$lock_dir"
               }
 
-              generate_dirs components pages layouts service
+              generate_dirs full components pages layouts service
 
               while true; do
                 changed_dirs=""
@@ -91,7 +98,7 @@ tasks:
                 done
 
                 if [ -n "$changed_dirs" ]; then
-                  generate_dirs $changed_dirs
+                  generate_dirs lazy $changed_dirs
                 fi
 
                 sleep 0.5
@@ -106,14 +113,16 @@ tasks:
               set -eu
               app_db_path="{{.APP_DB_PATH}}"
               app_image_path="{{.APP_IMAGE_PATH}}"
-              build_cmd='set -eu; while [ -d tmp/templ-watch/generating.lock ]; do sleep 0.1; done; mkdir -p tmp/bin; out="tmp/bin/main.$$"; go build -buildvcs=false -tags dev -o "$out" .; mv "$out" tmp/bin/main'
+              export HOT_RELOAD_BINARY_DIR="${HOT_RELOAD_BINARY_DIR:-tmp/bin}"
+              binary_path="$HOT_RELOAD_BINARY_DIR/main"
+              build_cmd='set -eu; while [ -d tmp/templ-watch/generating.lock ]; do sleep 0.1; done; mkdir -p "$HOT_RELOAD_BINARY_DIR"; out="$HOT_RELOAD_BINARY_DIR/main.$$"; go build -buildvcs=false -tags dev -ldflags="-s -w" -o "$out" .; mv "$out" "$HOT_RELOAD_BINARY_DIR/main"'
 
               go tool air \
               --build.cmd "$build_cmd" \
-              --build.bin "tmp/bin/main" \
+              --build.entrypoint "$binary_path" \
               --build.args_bin "-dbp $app_db_path -image-path $app_image_path" \
-              --build.delay "1500" \
-              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
+              --build.delay "200" \
+              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,data,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
               --build.include_ext "go" \
               --build.include_file ".env" \
               --build.poll "true" \
@@ -127,9 +136,9 @@ tasks:
             - |
               go tool air \
               --build.cmd "curl -fsS http://localhost:8080/hotreload >/dev/null || true" \
-              --build.bin "true" \
+              --build.entrypoint "/bin/true" \
               --build.delay "200" \
-              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
+              --build.exclude_dir ".git,.jj,tmp,vendor,testdata,database,data,hetzner,local-event-images,configuration-as-code,deploy,documentation,migrations,plans,testutil,.gocache" \
               --build.include_dir "$STATIC_DIR" \
               --build.include_ext "js,css,html,svg,webp,ico,png,jpg,jpeg,avif" \
               --build.poll "true" \
