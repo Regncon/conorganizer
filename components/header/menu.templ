@@ -639,13 +639,9 @@ templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions) {
 	{{ initials := ticketholder.GetInitials(billettholderOptions.Default.Name) }}
 	<button
 		class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
-		data-signals="{toggleHamburgerModal: false}"
-		data-on:click="
-            $toggleHamburgerModal = !$toggleHamburgerModal;
-            $toggleHamburgerModal ? document.getElementById('modal-hamburger-phone').show()
-            : document.getElementById('modal-hamburger-phone').close();
-            document.body.classList.toggle('no-scroll', $toggleHamburgerModal);
-        "
+		aria-haspopup="dialog"
+		aria-controls="modal-hamburger-phone"
+		data-on:click="$_phoneMenuOpen = !$_phoneMenuOpen"
 	>
 		if billettholderOptions.HasBillettholder() {
 			<div class="btn js-current-billettholder-avatar" data-ignore-morph>
