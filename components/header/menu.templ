@@ -586,8 +586,6 @@ templ clickableBillettholderMenuStyles() {
 
 templ clickableBillettholderMenu(currentBillettholder ticketholder.BillettHolder) {
 	{{ initials := ticketholder.GetInitials(currentBillettholder.Name) }}
-		initials := ticketholder.GetInitials(currentBillettholder.Name)
-	}}
 	<div class="clickable-billettholder-menu-wrapper" data-ignore-morph>
 		<div class="clickable-billettholder-menu-name">
 			<p class="js-current-billettholder-name">{ currentBillettholder.Name }</p>
@@ -600,7 +598,6 @@ templ clickableBillettholderMenu(currentBillettholder ticketholder.BillettHolder
 }
 
 templ phoneMenu(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions) {
-	@phoneMenuButton(billettholderOptions)
 	@phoneMenuDialog(userInfo, billettholderOptions)
 	@phoneMenuButton(billettholderOptions)
 }
@@ -640,8 +637,6 @@ templ phoneMenuButtonStyles() {
 
 templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions) {
 	{{ initials := ticketholder.GetInitials(billettholderOptions.Default.Name) }}
-	initials := ticketholder.GetInitials(billettholderOptions.Default.Name)
-	}}
 	<button
 		class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
 		data-signals="{toggleHamburgerModal: false}"
