@@ -31,6 +31,15 @@ type InterestWithHolder struct {
 
 type AssignmentWithHolder = InterestWithHolder
 
+// The approval page's placement endpoints. The age confirmation dialog re-posts
+// to whichever of them asked for confirmation, so the buttons and the server
+// name them from one place.
+const (
+	AddFirstChoiceURL     = "/admin/approval/api/event-players/post/add_first_choice"
+	AddGMURL              = "/admin/approval/api/event-players/post/add_gm"
+	UpdatePlayerStatusURL = "/admin/approval/api/event-players/update_status"
+)
+
 var queryFirstChoice = `
                 EXISTS (
                     SELECT
@@ -514,10 +523,10 @@ templ interestInPulje(eventId string, puljeId models.Pulje, interests []Interest
 	for _, interest := range interests {
 		if interest.PuljeId == string(puljeId) {
 			{{
-				assignPlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = true; $assignmentIsGm = false; @put('/admin/approval/api/event-players/update_status')", eventId, puljeId, interest.BillettholderId)
-				removePlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/event-players/update_status')", eventId, puljeId, interest.BillettholderId)
-				assignGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = true; @put('/admin/approval/api/event-players/update_status')", eventId, puljeId, interest.BillettholderId)
-				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('/admin/approval/api/event-players/update_status')", eventId, puljeId, interest.BillettholderId)
+				assignPlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = true; $assignmentIsGm = false; @put('" + UpdatePlayerStatusURL + "')", eventId, puljeId, interest.BillettholderId)
+				removePlayerAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('" + UpdatePlayerStatusURL + "')", eventId, puljeId, interest.BillettholderId)
+				assignGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = true; @put('" + UpdatePlayerStatusURL + "')", eventId, puljeId, interest.BillettholderId)
+				removeGmAction := fmt.Sprintf("$assignmentEventId = '%s'; $assignmentPuljeId = '%s'; $assignmentBillettholderId = %d; $assignmentIsPlayer = false; $assignmentIsGm = false; @put('" + UpdatePlayerStatusURL + "')", eventId, puljeId, interest.BillettholderId)
 				playerAction := playerButtonAction(isAssigned, interest.IsGamemaster, assignPlayerAction, removePlayerAction)
 				gmAction := gmButtonAction(isAssigned, interest.IsGamemaster, assignGmAction, removeGmAction)
 				buttonsInfo := []ButtonInfo{playerAction, gmAction}
@@ -646,7 +655,7 @@ templ billettholderAssignmentActions(eventId string, puljeId models.Pulje, bille
 			if showGM {
 				<button
 					class="btn btn--secondary"
-					data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('/admin/approval/api/event-players/post/add_gm'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
+					data-on:click={ fmt.Sprintf("$assignmentPuljeId = '%s'; @post('" + AddGMURL + "'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", puljeId) }
 				>
 					Legg til som { models.EventPlayerRoleGM.Label() }
 				</button>
@@ -693,12 +702,83 @@ templ puljeSection(eventId string, pulje models.PuljeRow, interests []InterestWi
 			<span class="missing-dm-badge">Mangler spilleder</span>
 		}
 		<h2 style="margin-bottom:1rem;">Finn billettholder!</h2>
-		@billettholderAssignmentActions(eventId, puljeId, billettholdere, true, "/admin/approval/api/event-players/post/add_first_choice")
+		@billettholderAssignmentActions(eventId, puljeId, billettholdere, true, AddFirstChoiceURL)
 		<h2 style="margin-bottom:1rem;">Kven er tildelt?</h2>
 		@playersInPulje(eventId, puljeId, assignees)
 		<h2 style="margin-bottom:1rem;">Kven er interessert?</h2>
 		@interestInPulje(eventId, puljeId, interests, false)
 	</article>
+}
+
+// approvalAgeConfirmAction re-posts the placement the server held back, this
+// time with the confirmation flag set. One dialog serves every placement button
+// on the page, so the endpoint and method travel back with the warning. The flag
+// is page-global and travels with every request, so it is reset on the very
+// next statement: datastar serialises the signal payload synchronously inside
+// the action call, and clearing it later (in a .finally()) would leave every
+// placement fired while the re-post is in flight silently pre-confirmed. The
+// picker id is reset to 0 afterwards, as the picker buttons themselves do, so a
+// later click with an empty search box cannot re-add the confirmed person.
+// datastar compiles expressions with a plain Function(), so `await` is a
+// SyntaxError and must not be used here.
+func approvalAgeConfirmAction() string {
+	return "$assignmentBillettholderId = $ageWarningBillettholderId; " +
+		"$assignmentEventId = $ageWarningEventId; " +
+		"$assignmentPuljeId = $ageWarningPuljeId; " +
+		"$assignmentIsPlayer = $ageWarningIsPlayer; " +
+		"$assignmentIsGm = $ageWarningIsGm; " +
+		"$assignmentAgeConfirmed = true; " +
+		"($ageWarningMethod === 'PUT' ? @put($ageWarningUrl) : @post($ageWarningUrl)); " +
+		"$assignmentAgeConfirmed = false; " +
+		"$assignmentBillettholderId = 0; " +
+		"$ageWarningText = ''; " +
+		"document.getElementById('approval-age-dialog').close()"
+}
+
+// ApprovalAgeWarningDialog is the confirmation the server asks for before an
+// admin places a participant under 18 in an 18+ game. The check has to be
+// server-side — the billettholder picker only ever sends an id, never the age —
+// so the dialog is opened by the $ageWarningText signal the placement endpoints
+// patch back instead of writing the seat.
+//
+// It must be rendered OUTSIDE the live-updated #edit-form-container: an SSE
+// re-render morphs that subtree and strips the `open` attribute showModal()
+// added without firing `close`, which would leave the warning signal set and
+// the dialog unable to reopen. It therefore carries its own signal defaults.
+templ ApprovalAgeWarningDialog() {
+	<dialog
+		id="approval-age-dialog"
+		closedBy="any"
+		data-signals={ dataSignals(map[string]any{
+			// Empty until a placement endpoint refuses to seat someone under 18
+			// in an 18+ game and patches them back; the dialog then reads them
+			// and re-posts the placement.
+			"assignmentAgeConfirmed":    false,
+			"ageWarningText":            "",
+			"ageWarningBillettholderId": 0,
+			"ageWarningEventId":         "",
+			"ageWarningPuljeId":         "",
+			"ageWarningIsPlayer":        false,
+			"ageWarningIsGm":            false,
+			"ageWarningMethod":          "",
+			"ageWarningUrl":             "",
+		}) }
+		data-effect="$ageWarningText && document.getElementById('approval-age-dialog').showModal()"
+		data-on:close="$ageWarningText = ''"
+	>
+		<h3>Aldersgrense</h3>
+		<p data-text="$ageWarningText"></p>
+		<button
+			class="btn btn--outline"
+			type="button"
+			data-on:click="$ageWarningText = ''; document.getElementById('approval-age-dialog').close()"
+		>Avbryt</button>
+		<button
+			class="btn"
+			type="button"
+			data-on:click={ approvalAgeConfirmAction() }
+		>Plasser likevel</button>
+	</dialog>
 }
 
 templ WhoIsInterested(eventId string, db *sql.DB, logger *slog.Logger) {

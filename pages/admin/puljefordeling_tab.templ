@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -101,6 +102,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 			BillettholderID int    `json:"assignmentBillettholderId"`
 			EventID         string `json:"assignmentEventId"`
 			PuljeID         string `json:"assignmentPuljeId"`
+			// Set only by the age warning dialog, when the admin has seen the
+			// warning and still wants the placement.
+			AgeConfirmed bool `json:"assignmentAgeConfirmed"`
 		}
 		store := &Store{}
 		if err := datastar.ReadSignals(r, store); err != nil {
@@ -129,6 +133,32 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		}
 		if puljeIsCompleted(status) {
 			http.Error(w, "Pulje is published; changes are not allowed", http.StatusConflict)
+			return
+		}
+
+		// Seating a participant under 18 in an 18+ game is allowed, but only as a
+		// deliberate override: the first attempt writes nothing and answers with
+		// the signals that open the confirmation dialog.
+		warning, err := adultsOnlyWarning(db, store.BillettholderID, store.EventID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				http.Error(w, "Billettholder or event not found", http.StatusNotFound)
+				return
+			}
+			logger.Error(err.Error(), "event_id", store.EventID, "billettholder_id", store.BillettholderID)
+			http.Error(w, "Failed to read age restriction", http.StatusInternalServerError)
+			return
+		}
+		if warning != "" && !store.AgeConfirmed {
+			sse := datastar.NewSSE(w, r)
+			if err := sse.MarshalAndPatchSignals(map[string]any{
+				"ageWarningText":            warning,
+				"ageWarningBillettholderId": store.BillettholderID,
+				"ageWarningEventId":         store.EventID,
+				"ageWarningPuljeId":         string(puljeID),
+			}); err != nil {
+				logger.Error(fmt.Errorf("failed to patch age warning signals: %w", err).Error(), "event_id", store.EventID, "billettholder_id", store.BillettholderID)
+			}
 			return
 		}
 
@@ -241,6 +271,11 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		data-signals:clear-input="0"
 		data-signals:dragged-billettholder-id="0"
 		data-signals:drag-over-event="''"
+		data-signals:assignment-age-confirmed="false"
+		data-signals:age-warning-text="''"
+		data-signals:age-warning-billettholder-id="0"
+		data-signals:age-warning-event-id="''"
+		data-signals:age-warning-pulje-id="''"
 	>
 		<style>
             .tabs {
@@ -294,6 +329,7 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		</div>
 		@PuljefordelingTabContent(db, logger, current, eventImageDir)
 		@puljeAssignDialog(db, logger, current)
+		@puljeAgeWarningDialog()
 	</div>
 }
 
@@ -633,6 +669,50 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
 	</dialog>
 }
 
+// puljeAgeConfirmAction re-posts the pending placement with the age confirmation
+// flag set. The flag is page-global and travels with every request, so it is
+// reset on the very next statement: datastar serialises the signal payload
+// synchronously inside the action call, and clearing it later (in a .finally())
+// would leave every placement fired while the re-post is in flight silently
+// pre-confirmed. datastar compiles expressions with a plain Function(), so
+// `await` is a SyntaxError and must not be used here.
+func puljeAgeConfirmAction() string {
+	return "$assignmentBillettholderId = $ageWarningBillettholderId; " +
+		"$assignmentEventId = $ageWarningEventId; " +
+		"$assignmentPuljeId = $ageWarningPuljeId; " +
+		"$assignmentAgeConfirmed = true; " +
+		"@post('/admin/api/puljefordeling/assign'); " +
+		"$assignmentAgeConfirmed = false; " +
+		"$ageWarningText = ''; " +
+		"document.getElementById('puljefordeling-age-dialog').close()"
+}
+
+// puljeAgeWarningDialog is the confirmation the server asks for before an admin
+// pins a participant under 18 into an 18+ game. The check is server-side (the
+// picker only knows the billettholder id), so this dialog is opened by the
+// $ageWarningText signal the assign endpoint patches back.
+templ puljeAgeWarningDialog() {
+	<dialog
+		id="puljefordeling-age-dialog"
+		closedBy="any"
+		data-effect="$ageWarningText && document.getElementById('puljefordeling-age-dialog').showModal()"
+		data-on:close="$ageWarningText = ''"
+	>
+		<h3>Aldersgrense</h3>
+		<p data-text="$ageWarningText"></p>
+		<button
+			class="btn btn--outline"
+			type="button"
+			data-on:click="$ageWarningText = ''; document.getElementById('puljefordeling-age-dialog').close()"
+		>Avbryt</button>
+		<button
+			class="btn"
+			type="button"
+			data-on:click={ puljeAgeConfirmAction() }
+		>Plasser likevel</button>
+	</dialog>
+}
+
 templ puljeStatusToggles(pulje models.PuljeRow) {
 	<div class="pulje-status-controls">
 		<label class="pulje-status-control">
@@ -690,7 +770,12 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 		</div>
 		@puljeEventTags(ev)
 		if ev.GMName != "" {
-			<p class="pulje-gm">Spilleder: { ev.GMName }</p>
+			<p class="pulje-gm">
+				Spilleder: { ev.GMName }
+				if ev.AgeGroup == models.AgeGroupAdultsOnly && !ev.GMIsOver18 {
+					<span class="pulje-badge pulje-badge--error">Under 18</span>
+				}
+			</p>
 		} else {
 			<span class="pulje-badge pulje-badge--error">Mangler spilleder</span>
 		}
@@ -718,6 +803,9 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) } { tileAttrs... }>
 						<span class="pulje-emoji">{ emoji }</span>
 						<span class={ templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
+						if ev.AgeGroup == models.AgeGroupAdultsOnly && !pl.IsOver18 {
+							<span class="pulje-badge pulje-badge--error">Under 18</span>
+						}
 						if pl.Manual && !published {
 							<button
 								type="button"
