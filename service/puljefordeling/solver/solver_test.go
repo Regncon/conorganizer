@@ -611,3 +611,137 @@ func TestApplyActual_SeedsFairnessFromRealSeats(t *testing.T) {
 		t.Errorf("bob (missed + unsatisfied) should win slot 2 over satisfied alice, got %v", assigned(r2, "A"))
 	}
 }
+
+// --- AdultsOnly: minors are never seated automatically -----------------------
+
+// adultsOnly marks an event as 18+ (participants not over 18 are never seated
+// there by the solver).
+func adultsOnlyEvent(ev model.Event) model.Event {
+	ev.AdultsOnly = true
+	return ev
+}
+
+// over18 marks a player as an adult.
+func over18(p model.Player) model.Player {
+	p.IsOver18 = true
+	return p
+}
+
+func TestSolveSlot_MinorNotSeatedInAdultsOnlyEvent(t *testing.T) {
+	// The minor rates the 18+ game as a top choice and there is plenty of room,
+	// but the solver must never place them there — they end up unassigned.
+	sl := slot("s1", adultsOnlyEvent(event("A", 5)))
+	players := []model.Player{
+		player("kid", prefs("s1", map[string]model.Score{"A": 5})),
+	}
+
+	result := NewState(2026, weekendOf(sl)).SolveSlot(sl, players)
+
+	if slices.Contains(assigned(result, "A"), "kid") {
+		t.Errorf("minor must not be seated in an AdultsOnly event, got %v", assigned(result, "A"))
+	}
+	if !slices.Contains(result.Unassigned, "kid") {
+		t.Errorf("minor with no eligible seat should be unassigned, got %v", result.Unassigned)
+	}
+}
+
+func TestSolveSlot_MinorFallsBackToEligibleEvent(t *testing.T) {
+	// The 18+ game is the minor's top choice, but only the open game is seatable.
+	sl := slot("s1", adultsOnlyEvent(event("A", 5)), event("B", 5))
+	players := []model.Player{
+		player("kid", prefs("s1", map[string]model.Score{"A": 5, "B": 3})),
+	}
+
+	result := NewState(2026, weekendOf(sl)).SolveSlot(sl, players)
+
+	if slices.Contains(assigned(result, "A"), "kid") {
+		t.Errorf("minor must not be seated in an AdultsOnly event, got %v", assigned(result, "A"))
+	}
+	if !slices.Contains(assigned(result, "B"), "kid") {
+		t.Errorf("minor should get their eligible fallback seat, got %v", assigned(result, "B"))
+	}
+}
+
+func TestSolveSlot_AdultIsSeatedInAdultsOnlyEvent(t *testing.T) {
+	// Same setup as the minor case, but the player is over 18.
+	sl := slot("s1", adultsOnlyEvent(event("A", 5)))
+	players := []model.Player{
+		over18(player("grown", prefs("s1", map[string]model.Score{"A": 5}))),
+	}
+
+	result := NewState(2026, weekendOf(sl)).SolveSlot(sl, players)
+
+	if !slices.Contains(assigned(result, "A"), "grown") {
+		t.Errorf("adult should be seated in the AdultsOnly event, got %v", assigned(result, "A"))
+	}
+}
+
+func TestSolveSlotFixed_PinnedMinorInAdultsOnlyEventIsHonored(t *testing.T) {
+	// A pin is the admin's deliberate override: it survives the age rule.
+	sl := slot("s1", adultsOnlyEvent(event("A", 5)))
+	players := []model.Player{
+		player("kid", prefs("s1", map[string]model.Score{"A": 5})),
+	}
+
+	result := NewState(2026, weekendOf(sl)).SolveSlotFixed(sl, players, map[string]string{"kid": "A"})
+
+	if !slices.Contains(assigned(result, "A"), "kid") {
+		t.Errorf("pinned minor must stay seated in the AdultsOnly event, got %v", assigned(result, "A"))
+	}
+	if slices.Contains(result.Unassigned, "kid") {
+		t.Errorf("pinned minor must not be reported unassigned, got %v", result.Unassigned)
+	}
+}
+
+func TestSolveSlot_MinorUnaffectedWhenEventIsNotAdultsOnly(t *testing.T) {
+	// Regression guard: the age rule only bites on AdultsOnly events.
+	sl := slot("s1", event("A", 5))
+	players := []model.Player{
+		player("kid", prefs("s1", map[string]model.Score{"A": 5})),
+	}
+
+	result := NewState(2026, weekendOf(sl)).SolveSlot(sl, players)
+
+	if !slices.Contains(assigned(result, "A"), "kid") {
+		t.Errorf("minor should be seated in an ordinary event, got %v", assigned(result, "A"))
+	}
+}
+
+func TestSolveSlot_IneligibleTopChoiceIsNotAMiss(t *testing.T) {
+	// A minor's top choice in an 18+ game was never a seatable choice, so it must
+	// not earn the scarcity bonus that a genuinely missed top choice earns.
+	//
+	// The kid "misses" 18+ games in two puljer; the rival genuinely misses once
+	// (a full game). If ineligible top choices counted, the kid would carry two
+	// misses against the rival's one and win the single seat in the last pulje.
+	sl1 := slot("s1", adultsOnlyEvent(event("X", 5)), event("F", 0))
+	sl2 := slot("s2", adultsOnlyEvent(event("Y", 5)))
+	sl3 := slot("s3", event("A", 1))
+
+	kid := model.Player{ID: "kid", Name: "kid", Prefs: map[string]map[string]model.Score{
+		"s1": {"X": 5}, "s2": {"Y": 5}, "s3": {"A": 5},
+	}}
+	rival := model.Player{ID: "rival", Name: "rival", Prefs: map[string]map[string]model.Score{
+		"s1": {"F": 5}, "s3": {"A": 5},
+	}}
+	players := []model.Player{kid, rival}
+
+	st := NewState(2026, weekendOf(sl1, sl2, sl3))
+	st.SolveSlot(sl1, players)
+	st.SolveSlot(sl2, players)
+
+	if got := st.misses["kid"]; got != 0 {
+		t.Errorf("an ineligible top choice must not count as a miss, got %d", got)
+	}
+	if got := st.misses["rival"]; got != 1 {
+		t.Fatalf("rival's full-game top choice should count as one miss, got %d", got)
+	}
+
+	result := st.SolveSlot(sl3, players)
+	if !slices.Contains(assigned(result, "A"), "rival") {
+		t.Errorf("the genuinely missed rival should outrank the kid for the last seat, got %v", assigned(result, "A"))
+	}
+	if slices.Contains(assigned(result, "A"), "kid") {
+		t.Errorf("the kid must not win the seat on misses earned from 18+ games, got %v", assigned(result, "A"))
+	}
+}
