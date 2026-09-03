@@ -51,11 +51,11 @@ templ menuStyles() {
 				font-family: inherit;
 				height: 48px;
 				padding: 0 var(--spacing-4x);
-                gap: var(--spacing-1x);
+				gap: var(--spacing-1x);
 
-                .menu-button-text {
-                    white-space: nowrap;
-                }
+				.menu-button-text {
+					white-space: nowrap;
+				}
 			}
 		}
 
@@ -109,17 +109,17 @@ templ menuStyles() {
 			.main-menu {
 				display: grid;
 				place-items: center;
-                grid-template-columns: 1fr auto 1fr;
+				grid-template-columns: 1fr auto 1fr;
 
-                .logo-link {
-                    display: flex;
-                    place-items: center;
+				.logo-link {
+					display: flex;
+					place-items: center;
 
-                    img {
-                        width: 3rem;
-                        height: 3rem;
-                    }
-                }
+					img {
+						width: 3rem;
+						height: 3rem;
+					}
+				}
 
 				.btn-login {
 					white-space: nowrap;
@@ -214,14 +214,14 @@ templ mainMenuButtonsStyles() {
 
 templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
 	<section class="main-menu-buttons">
-		<a role="button" href="/" class="main-menu-button btn btn--ghost btn-with-icon">
+		<a href="/" class="main-menu-button btn btn--ghost btn-with-icon">
 			@icons.Icon(icons.Home, icons.Size20)
 			<span class="menu-button-text">
 				Hjem
 			</span>
 		</a>
 		if userInfo.IsLoggedIn {
-			<a role="button" href="/profile" class="main-menu-button btn btn--ghost btn-with-icon">
+			<a href="/profile" class="main-menu-button btn btn--ghost btn-with-icon">
 				@icons.Icon(icons.User, icons.Size20)
 				<span class="menu-button-text">
 					Min Side
@@ -229,7 +229,7 @@ templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
 			</a>
 		}
 		if userInfo.IsLoggedIn && userInfo.IsAdmin {
-			<a role="button" href="/admin" class="main-menu-button btn btn--ghost btn-with-icon">
+			<a href="/admin" class="main-menu-button btn btn--ghost btn-with-icon">
 				@icons.Icon(icons.Shield, icons.Size20)
 				<span class="menu-button-text">
 					Admin
@@ -473,16 +473,14 @@ templ desktopBillettholderMenuStyles() {
 }
 
 templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions) {
-	{{
-	initials := ticketholder.GetInitials(billettholderOptions.Default.Name)
-	}}
+	{{ initials := ticketholder.GetInitials(billettholderOptions.Default.Name) }}
 	<details
 		id="main-menu-user-details"
 		class="menu-btn-container"
 		data-preserve-attr="open"
 		data-on:click__outside="el.removeAttribute('open')"
 	>
-		<summary>
+		<summary aria-label="Åpne brukermeny">
 			if billettholderOptions.HasBillettholder() {
 				<div class="hamburger-have-billettholder">
 					@clickableBillettholderMenu(billettholderOptions.Default)
@@ -587,7 +585,7 @@ templ clickableBillettholderMenuStyles() {
 }
 
 templ clickableBillettholderMenu(currentBillettholder ticketholder.BillettHolder) {
-	{{
+	{{ initials := ticketholder.GetInitials(currentBillettholder.Name) }}
 		initials := ticketholder.GetInitials(currentBillettholder.Name)
 	}}
 	<div class="clickable-billettholder-menu-wrapper" data-ignore-morph>
@@ -641,7 +639,7 @@ templ phoneMenuButtonStyles() {
 }
 
 templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions) {
-	{{
+	{{ initials := ticketholder.GetInitials(billettholderOptions.Default.Name) }}
 	initials := ticketholder.GetInitials(billettholderOptions.Default.Name)
 	}}
 	<button
@@ -735,7 +733,7 @@ templ phoneMenuDialogStyles() {
 }
 
 templ phoneMenuDialog(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions) {
-	{{
+	{{ initials := ticketholder.GetInitials(billettholderOptions.Default.Name) }}
 	<dialog
 		id="modal-hamburger-phone"
 		aria-label="Meny"
