@@ -1,6 +1,7 @@
 package ticketholder
 
 import (
+	"cmp"
 	"database/sql"
 	"fmt"
 	"slices"
@@ -14,10 +15,52 @@ import (
 )
 
 type BillettHolder struct {
-	Email string
-	Name  string
-	Id    int
-	Color string
+	Email      string
+	Name       string
+	TicketType string
+	Id         int
+	Color      BillettholderColor
+}
+
+type BillettholderOptions struct {
+	Default    BillettHolder
+	Associated []BillettHolder
+}
+
+func NewBillettholderOptions(userInfo requestctx.UserRequestInfo, associated []BillettHolder) BillettholderOptions {
+	options := BillettholderOptions{
+		Associated: associated,
+	}
+
+	if len(associated) == 0 {
+		options.Default = BillettHolder{
+			Email: "unknown@example.com",
+			Name:  "Unknown Ticket Holder",
+			Color: ColorFromName("Unknown Ticket Holder"),
+		}
+		return options
+	}
+
+	index := slices.IndexFunc(associated, func(billettholder BillettHolder) bool {
+		return billettholder.Email == userInfo.Email
+	})
+	if index == -1 {
+		options.Default = slices.MinFunc(associated, func(a, b BillettHolder) int {
+			return cmp.Compare(a.Id, b.Id)
+		})
+		return options
+	}
+
+	options.Default = associated[index]
+	return options
+}
+
+func (options BillettholderOptions) HasBillettholder() bool {
+	return options.Default.Id != 0
+}
+
+func (options BillettholderOptions) CanSwitchBillettholder() bool {
+	return len(options.Associated) > 1
 }
 
 type PuljeInterestAvailability string
@@ -191,7 +234,8 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
         [be].email,
         [be].billettholder_id,
         [bh].first_name,
-        [bh].last_name
+		[bh].last_name,
+		[bh].ticket_type
     FROM
         relation_billettholder_emails [be]
         LEFT JOIN billettholdere [bh] ON [be].billettholder_id = [bh].id
@@ -208,24 +252,25 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
 `
 	rows, ticketHolderQueryErr := db.Query(query, models.BillettholderEmailKindTicket, userInfo.Email)
 	if ticketHolderQueryErr != nil {
-		return nil, fmt.Errorf("failed to query ticket holders for email %q: %w", userInfo.Email, ticketHolderQueryErr)
+		return nil, fmt.Errorf("failed to query ticket holders: %w", ticketHolderQueryErr)
 	}
 	defer rows.Close()
 
-	var email, firstName, lastName string
+	var email, firstName, lastName, ticketType string
 	var associatedTicketholders []BillettHolder
 
 	for rows.Next() {
 		var billettHolderId int
 
-		if ticketHolderScanErr := rows.Scan(&email, &billettHolderId, &firstName, &lastName); ticketHolderScanErr != nil {
+		if ticketHolderScanErr := rows.Scan(&email, &billettHolderId, &firstName, &lastName, &ticketType); ticketHolderScanErr != nil {
 			return nil, fmt.Errorf("failed to scan ticket holder row: %w", ticketHolderScanErr)
 		}
 		associatedTicketholders = append(associatedTicketholders, BillettHolder{
-			Email: email,
-			Name:  fmt.Sprintf("%s %s", firstName, lastName),
-			Id:    billettHolderId,
-			Color: ColorForName(fmt.Sprintf("%s %s", firstName, lastName)),
+			Email:      email,
+			Name:       fmt.Sprintf("%s %s", firstName, lastName),
+			TicketType: ticketType,
+			Id:         billettHolderId,
+			Color:      ColorFromName(fmt.Sprintf("%s %s", firstName, lastName)),
 		})
 
 	}
@@ -244,21 +289,6 @@ func GetPuljerFromEventId(eventId string, db *sql.DB) ([]models.PuljeRow, error)
 	}
 
 	return puljer, nil
-}
-
-func GetYourBillettHolderInfo(userInfo requestctx.UserRequestInfo, ticketHolders []BillettHolder) BillettHolder {
-	idx := slices.IndexFunc(ticketHolders, func(th BillettHolder) bool {
-		return th.Email == userInfo.Email
-	})
-
-	if idx == -1 {
-		return BillettHolder{
-			Email: "unknown@example.com",
-			Name:  "Unknown Ticket Holder",
-		}
-	}
-
-	return ticketHolders[idx]
 }
 
 func GetInitials(s string) string {

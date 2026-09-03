@@ -29,7 +29,7 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 			return
 		}
 		if eventData == nil {
-			notfound.RenderEvent(w, r, logger)
+			notfound.RenderEvent(w, r, db, logger)
 			return
 		}
 
@@ -44,6 +44,8 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 		if err := layouts.Base(
 			title,
 			userInfo,
+            db,
+            logger,
 			editFormIndex(eventId, ctx, db, eventImageDir, logger),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render approval edit form page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)

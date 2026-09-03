@@ -1,11 +1,14 @@
 package layouts
 
 import (
+	"database/sql"
+
 	"github.com/Regncon/conorganizer/components/header"
 	"github.com/Regncon/conorganizer/service/requestctx"
+	"log/slog"
 )
 
-templ Base(title string, userInfo requestctx.UserRequestInfo, children templ.Component) {
+templ Base(title string, userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger, children templ.Component) {
 	<!DOCTYPE html>
 	<html lang="en" data-theme="dark">
 		<head>
@@ -18,13 +21,13 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, children templ.Com
 			<link rel="icon" type="image/x-icon" href="/static/favicon.ico"/>
 			<script type="module" src="/static/datastar.js"></script>
 			<script type="module" src="/static/js/error_feedback.js"></script>
+			<script src="/static/js/conorganizer.js"></script>
 			<link rel="stylesheet" href="https://unpkg.com/tippy.js@5/dist/backdrop.css"/>
 			<link rel="stylesheet" href="https://unpkg.com/tippy.js@5/animations/scale-subtle.css"/>
 			<link href="/static/css/index.css" rel="stylesheet" type="text/css"/>
 			<link href="/static/css/layout.css" rel="stylesheet" type="text/css"/>
 			<link href="/static/css/card.css" rel="stylesheet" type="text/css"/>
 			<link href="/static/css/buttons.css" rel="stylesheet" type="text/css"/>
-			<script src="/static/web_components/shared_styles.js"></script>
 			<script src="https://unpkg.com/popper.js@1"></script>
 			<script src="https://unpkg.com/tippy.js@5"></script>
 			<script>
@@ -44,7 +47,7 @@ templ Base(title string, userInfo requestctx.UserRequestInfo, children templ.Com
 				<div data-init={ devReloadInit() }></div>
 			}
 			<main>
-				@header.Menu(userInfo)
+				@header.Menu(userInfo, db, logger)
 				@children
 			</main>
 		</body>

@@ -8,18 +8,19 @@ import (
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5/middleware"
+	"database/sql"
 )
 
 const pageTitle = "Siden finnes ikke"
 
-func RenderEvent(w http.ResponseWriter, r *http.Request, logger *slog.Logger) {
-	Render(w, r, logger, "Vi fant ikke arrangementet du leter etter. Lenken kan være feil, eller arrangementet finnes ikke lenger.")
+func RenderEvent(w http.ResponseWriter, r *http.Request, db *sql.DB, logger *slog.Logger) {
+	Render(w, r, db, logger, "Vi fant ikke arrangementet du leter etter. Lenken kan være feil, eller arrangementet finnes ikke lenger.")
 }
 
-func Render(w http.ResponseWriter, r *http.Request, logger *slog.Logger, message string) {
+func Render(w http.ResponseWriter, r *http.Request, db *sql.DB, logger *slog.Logger, message string) {
 	w.WriteHeader(http.StatusNotFound)
 	userInfo := userctx.GetUserRequestInfo(r.Context())
-	if err := layouts.Base(pageTitle, userInfo, Page(message)).Render(r.Context(), w); err != nil {
+	if err := layouts.Base(pageTitle, userInfo, db, logger, Page(message)).Render(r.Context(), w); err != nil {
 		if logger == nil {
 			logger = slog.Default()
 		}

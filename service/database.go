@@ -136,9 +136,17 @@ func sqliteDSN(databaseFileName string, config SQLiteConfig) string {
 	values.Add("_pragma", fmt.Sprintf("synchronous(%s)", config.Synchronous))
 
 	if filepath.IsAbs(databaseFileName) {
+		uriPath := filepath.ToSlash(databaseFileName)
+
+		// A Windows drive path must start with "/" inside a file URI.
+		if filepath.VolumeName(databaseFileName) != "" &&
+			!strings.HasPrefix(uriPath, "/") {
+			uriPath = "/" + uriPath
+		}
+
 		uri := url.URL{
 			Scheme:   "file",
-			Path:     databaseFileName,
+			Path:     uriPath,
 			RawQuery: values.Encode(),
 		}
 		return uri.String()

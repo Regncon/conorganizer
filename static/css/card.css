@@ -11,8 +11,7 @@
     cursor: pointer;
     outline: 0;
 
-    &[disabled] {
-        pointer-events: none;
+    &[disabled]:not(.selected) {
         background-color: unset;
         cursor: not-allowed;
         color: var(--color-text-soft-50);
@@ -24,10 +23,10 @@
 
     &.selected {
         cursor: unset;
-        pointer-events: none;
         border-color: var(--color-primary);
         color: var(--color-primary);
     }
+
 }
 
 .card-clickable-surface {
@@ -47,7 +46,7 @@
         border-color: var(--bg-surface-border-hover);
     }
 
-    &[disabled] {
+    &[disabled]:not(.selected) {
         background-color: var(--bg-surface);
         border-color: var(--bg-surface-border);
     }
@@ -69,7 +68,7 @@
         border-color: var(--bg-item-border-hover);
     }
 
-    &[disabled] {
+    &[disabled]:not(.selected) {
         background-color: unset;
         border-color: var(--bg-item-border);
     }

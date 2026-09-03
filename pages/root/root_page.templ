@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/service/requestctx"
+	"log/slog"
 )
 
 func getProgramPublished(db *sql.DB) (bool, error) {
@@ -26,7 +28,7 @@ func getProgramPublished(db *sql.DB) (bool, error) {
 	return isPublished == 1, nil
 }
 
-templ rootPage(db *sql.DB, isAdmin bool, eventImageDir *string) {
+templ rootPage(userInfo requestctx.UserRequestInfo, db *sql.DB, isAdmin bool, eventImageDir *string, logger *slog.Logger) {
 	<div id="root-page-wrapper">
 		@rootPageContent(db, isAdmin, eventImageDir)
 	</div>

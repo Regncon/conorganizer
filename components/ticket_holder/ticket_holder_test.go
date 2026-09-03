@@ -6,8 +6,93 @@ import (
 	"time"
 
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
+
+func TestNewBillettholderOptions_WhenUserHasMatchingBillettholder_SelectsItAsDefault(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren har flere tilknyttede billettholdere og én matcher brukerens e-post.",
+		When:  "Når billettholdervalgene bygges.",
+		Then:  "Så skal den matchende billettholderen være standard og brukeren skal kunne bytte.",
+	})
+
+	// Given
+	expectedDefaultID := 2
+	expectedHasBillettholder := true
+	expectedCanSwitchBillettholder := true
+	userInfo := requestctx.UserRequestInfo{Email: "user@example.com"}
+	associated := []BillettHolder{
+		{Id: 1, Email: "other@example.com"},
+		{Id: expectedDefaultID, Email: userInfo.Email},
+	}
+
+	// When
+	actualOptions := NewBillettholderOptions(userInfo, associated)
+
+	// Then
+	if actualOptions.Default.Id != expectedDefaultID {
+		t.Fatalf("default billettholder ID mismatch\nexpected: %d\nactual:   %d", expectedDefaultID, actualOptions.Default.Id)
+	}
+	if actualOptions.HasBillettholder() != expectedHasBillettholder {
+		t.Fatalf("has billettholder mismatch\nexpected: %v\nactual:   %v", expectedHasBillettholder, actualOptions.HasBillettholder())
+	}
+	if actualOptions.CanSwitchBillettholder() != expectedCanSwitchBillettholder {
+		t.Fatalf("can switch billettholder mismatch\nexpected: %v\nactual:   %v", expectedCanSwitchBillettholder, actualOptions.CanSwitchBillettholder())
+	}
+}
+
+func TestNewBillettholderOptions_WhenNoEmailMatches_UsesLowestBillettholderIDAsDefault(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at ingen tilknyttet billettholder matcher brukerens e-post.",
+		When:  "Når billettholdervalgene bygges.",
+		Then:  "Så skal billettholderen med lavest ID brukes som en stabil standard.",
+	})
+
+	// Given
+	expectedDefaultID := 1
+	userInfo := requestctx.UserRequestInfo{Email: "user@example.com"}
+	associated := []BillettHolder{
+		{Id: 2, Email: "second@example.com"},
+		{Id: expectedDefaultID, Email: "first@example.com"},
+	}
+
+	// When
+	actualOptions := NewBillettholderOptions(userInfo, associated)
+
+	// Then
+	if actualOptions.Default.Id != expectedDefaultID {
+		t.Fatalf("default billettholder ID mismatch\nexpected: %d\nactual:   %d", expectedDefaultID, actualOptions.Default.Id)
+	}
+}
+
+func TestNewBillettholderOptions_WhenNoBillettholdereExist_ReturnsUnavailableOptions(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at brukeren ikke har noen tilknyttede billettholdere.",
+		When:  "Når billettholdervalgene bygges.",
+		Then:  "Så skal ingen billettholder være tilgjengelig og bytting være deaktivert.",
+	})
+
+	// Given
+	expectedDefaultID := 0
+	expectedHasBillettholder := false
+	expectedCanSwitchBillettholder := false
+	userInfo := requestctx.UserRequestInfo{Email: "user@example.com"}
+
+	// When
+	actualOptions := NewBillettholderOptions(userInfo, nil)
+
+	// Then
+	if actualOptions.Default.Id != expectedDefaultID {
+		t.Fatalf("default billettholder ID mismatch\nexpected: %d\nactual:   %d", expectedDefaultID, actualOptions.Default.Id)
+	}
+	if actualOptions.HasBillettholder() != expectedHasBillettholder {
+		t.Fatalf("has billettholder mismatch\nexpected: %v\nactual:   %v", expectedHasBillettholder, actualOptions.HasBillettholder())
+	}
+	if actualOptions.CanSwitchBillettholder() != expectedCanSwitchBillettholder {
+		t.Fatalf("can switch billettholder mismatch\nexpected: %v\nactual:   %v", expectedCanSwitchBillettholder, actualOptions.CanSwitchBillettholder())
+	}
+}
 
 func TestBuildPuljeInterestState_WhenPuljeIsLocked_ReturnsLockedStateAndDisablesEditing(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{

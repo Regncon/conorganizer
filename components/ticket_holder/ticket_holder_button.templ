@@ -10,9 +10,10 @@ const (
 )
 
 // Takes a `selected` parameter to highlight the selected ticket holder
-templ TicketHolderButton(currentBillettHolder BillettHolder, eventId string) {
+templ TicketHolderButton(currentBillettHolder BillettHolder) {
 	{{ initials := GetInitials(currentBillettHolder.Name) }}
 	{{ shortName := GetFirstNameAndLastInitial(currentBillettHolder.Name) }}
+	{{ currentBillettHolderJSON, _ := templ.JSONString(currentBillettHolder) }}
 	<style>
 		.ticket-holder-picker {
             padding-inline: var(--border-outline-width);
@@ -20,6 +21,8 @@ templ TicketHolderButton(currentBillettHolder BillettHolder, eventId string) {
                 place-content: start;
                 height: 3.125rem;
                 width: 9.1rem;
+                width: stretch;
+                width: -webkit-fill-available;
             }
 		}
 	</style>
@@ -28,11 +31,11 @@ templ TicketHolderButton(currentBillettHolder BillettHolder, eventId string) {
 			role="button"
 			data-attr:tabindex={ fmt.Sprintf(`$billettHolderId == %d ? '-1' : '0'`, currentBillettHolder.Id) }
 			class="card-clickable card-clickable-item"
-			data-current-billett-holder={ fmt.Sprintf("{\"Id\": %d, \"Name\": \"%s\", \"Email\": \"%s\"}", currentBillettHolder.Id, currentBillettHolder.Name, currentBillettHolder.Email) }
+			data-current-billett-holder={ currentBillettHolderJSON }
 			data-class:selected={ fmt.Sprintf("$billettHolderId == %d", currentBillettHolder.Id) }
-			data-on:click={ fmt.Sprintf("$billettHolderId = %d; window.setSelectedBillettholderInLocalStorage(JSON.parse(evt.currentTarget.dataset.currentBillettHolder)); @put('/event/api/%s/interest/selected-interest')", currentBillettHolder.Id, eventId) }
+			data-on:click={ fmt.Sprintf("$billettHolderId = %d; window.conorganizer.billettholderSelection.set(JSON.parse(evt.currentTarget.dataset.currentBillettHolder))", currentBillettHolder.Id) }
 		>
-			@NameInitials(shortName, initials)
+			@NameInitials(shortName, initials, currentBillettHolder.Color)
 		</div>
 	</div>
 }

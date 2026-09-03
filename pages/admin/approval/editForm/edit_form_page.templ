@@ -39,6 +39,7 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		<p>Event not found</p>
 		return
 	}
+
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Admin", Url: "/admin/"},

@@ -17,7 +17,7 @@ import (
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
 	"github.com/Regncon/conorganizer/service/live"
-	"github.com/Regncon/conorganizer/service/puljefordeling"
+    "github.com/Regncon/conorganizer/service/puljefordeling"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
 	datastar "github.com/starfederation/datastar-go/datastar"
@@ -49,6 +49,8 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 			if err := layouts.Base(
 				"Puljefordeling",
 				userInfo,
+                db,
+                logger,
 				puljefordelingIndex(db, logger, puljeID, eventImageDir),
 			).Render(r.Context(), w); err != nil {
 				logger.Error(fmt.Errorf("failed to render puljefordeling page: %w", err).Error(), "user_id", userInfo.Id)

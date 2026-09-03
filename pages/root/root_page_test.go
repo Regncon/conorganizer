@@ -5,9 +5,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
+
+var userInfo = requestctx.UserRequestInfo{}
 
 func TestRootPageContent_RendersHomeBreadcrumb(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
