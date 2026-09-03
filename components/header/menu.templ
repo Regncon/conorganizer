@@ -311,25 +311,43 @@ templ menuBillettholderLiveStyles() {
 
 templ MenuBillettholderLive(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
 	{{
-	logger = logger.With("component", "menu")
-	associatedBillettholdere, err := ticketholder.GetTicketHolders(userInfo, db)
-	if err != nil {
-		logger.Error("failed to get associated billettholdere", "error", err, "user_id", userInfo.Id)
-		associatedBillettholdere = []ticketholder.BillettHolder{}
-	}
-	billettholderOptions := ticketholder.NewBillettholderOptions(userInfo, associatedBillettholdere)
-	associatedBillettholdereJSON, _ := templ.JSONString(billettholderOptions.Associated)
-	defaultBillettholderJSON, _ := templ.JSONString(billettholderOptions.Default)
+		logger = logger.With("component", "menu")
+		associatedBillettholdere, err := ticketholder.GetTicketHolders(userInfo, db)
+		if err != nil {
+			logger.Error(err.Error(), "user_id", userInfo.Id)
+			associatedBillettholdere = []ticketholder.BillettHolder{}
+		}
+		billettholderOptions := ticketholder.NewBillettholderOptions(userInfo, associatedBillettholdere)
 	}}
 	<div
 		id="main-menu-billettholder-live"
 		data-init={ live.DatastarInit("/menu/api") }
-		data-effect={ fmt.Sprintf("window.conorganizer.billettholderSelection.initialize(%s, %s)", associatedBillettholdereJSON, defaultBillettholderJSON) }
+		if err == nil {
+			data-effect={ menuBillettholderSelectionEffect(billettholderOptions) }
+		}
 	>
 		@desktopBillettholderMenu(userInfo, billettholderOptions)
 		@phoneMenu(userInfo, billettholderOptions)
 		@billettholderSwitcherDialog(billettholderOptions.Associated)
 	</div>
+}
+
+func menuBillettholderSelectionEffect(billettholderOptions ticketholder.BillettholderOptions) (string, error) {
+	associatedBillettholdereJSON, err := templ.JSONString(billettholderOptions.Associated)
+	if err != nil {
+		return "", fmt.Errorf("serialize associated billettholdere: %w", err)
+	}
+
+	defaultBillettholderJSON, err := templ.JSONString(billettholderOptions.Default)
+	if err != nil {
+		return "", fmt.Errorf("serialize default billettholder: %w", err)
+	}
+
+	return fmt.Sprintf(
+		"window.conorganizer.billettholderSelection.initialize(%s, %s)",
+		associatedBillettholdereJSON,
+		defaultBillettholderJSON,
+	), nil
 }
 
 templ desktopBillettholderMenuStyles() {
