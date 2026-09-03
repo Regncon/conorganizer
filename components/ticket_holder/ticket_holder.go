@@ -252,7 +252,7 @@ func GetTicketHolders(userInfo requestctx.UserRequestInfo, db *sql.DB) ([]Billet
 `
 	rows, ticketHolderQueryErr := db.Query(query, models.BillettholderEmailKindTicket, userInfo.Email)
 	if ticketHolderQueryErr != nil {
-		return nil, fmt.Errorf("failed to query ticket holders for email %q: %w", userInfo.Email, ticketHolderQueryErr)
+		return nil, fmt.Errorf("failed to query ticket holders: %w", ticketHolderQueryErr)
 	}
 	defer rows.Close()
 
