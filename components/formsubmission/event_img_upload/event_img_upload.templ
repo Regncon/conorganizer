@@ -14,6 +14,7 @@ import (
 	"github.com/Regncon/conorganizer/components"
 	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/components/toast"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/userctx"
@@ -225,6 +226,20 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		{{ logger.Warn("Event not found for event image page", "event_id", eventId) }}
 		<p>Fann ikkje arrangementet</p>
 		return
+	}
+	<script src="/static/web_components/banner_cropper.js"></script>
+	@toast.Render("Lagra", icons.ProgressComplete)
+	if showUploadToast {
+		<script>
+			window.addEventListener("DOMContentLoaded", () => {
+				document.dispatchEvent(new CustomEvent("toast", {
+					detail: { message: "Lagra" },
+				}));
+				const url = new URL(window.location.href);
+				url.searchParams.delete("uploaded");
+				window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+			});
+		</script>
 	}
 	<style>
         .page-content-container {
