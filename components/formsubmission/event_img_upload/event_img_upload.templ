@@ -238,16 +238,51 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 				const url = new URL(window.location.href);
 				url.searchParams.delete("uploaded");
 				window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+
+
 			});
+		</script>
+	}
+	<script>
 
             const updateSignalsWithFileInfo = (size, name) => {
                 // Implementation for updating signals with file info
-            };
-            const removeFileAndResetSignals = (size, name) => {
-                // Implementation for removing file and resetting signals
-            }
-		</script>
-	}
+                };
+                const removeFileAndResetSignals = (size, name) => {
+                    // Implementation for removing file and resetting signals
+                }
+
+                const initPopulateFileInfo = (relativePath) => {
+                    fetch(relativePath).then(res => {
+                        if (res.ok) {
+                            res.blob().then(blob => {
+                                const sizeInBytes = blob.size;
+                                const sizeInKB = (sizeInBytes / 1024)
+                                const sizeInMB = (sizeInBytes / (1024 * 1024))
+                                let size;
+
+                                if (sizeInMB < 0.5) {
+                                    size = `(${sizeInKB.toFixed(2)}kb)`;
+                                } else {
+                                    size = `(${sizeInMB.toFixed(2)}mb)`;
+                                }
+                                let name = relativePath.split("/").pop();
+                                name = name + "ASDASDASDASDASDASDASDASD"
+                                document.dispatchEvent(
+                                    new CustomEvent("init-file-info", {
+                                        detail: {
+                                            size,
+                                            name
+                                        },
+                                        bubbles: true,
+                                        composed: true,
+                                    }),
+                                );
+                            })
+                        }
+                    }).catch(error => console.error("Could not read local file size:", error))
+                }
+    </script>
 	<style>
         .page-content-container {
             max-width: 1020px;
@@ -291,7 +326,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 
                     .file-name {
                         display: inline-block;
-                        width: 26ch;
+                        max-width: 26ch;
                         overflow: clip;
                         white-space: nowrap;
                     }
@@ -372,7 +407,9 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	})
 	<article
 		class="page-content-container"
-		data-signals="{_fileName: 'Filnavn-som-er-litteg...langt.png', _fileSize: '(2mb)'}"
+		data-signals__ifmissing="{_fileName: 'Filnavn-som-er-litteg...langt.png', _fileSize: '(0mb)'}"
+		data-init={ fmt.Sprintf("initPopulateFileInfo('/event-images/%s_source.png')", eventId) }
+		data-on:init-file-info__document="$_fileSize = evt.detail.size; $_fileName = evt.detail.name"
 	>
 		<a
 			href="javascript:window.history.back();"
