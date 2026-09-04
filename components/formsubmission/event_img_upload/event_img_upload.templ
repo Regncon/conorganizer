@@ -206,11 +206,10 @@ func cacheBustedImageURL(imageURL string) string {
 templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
 	{{
 		event, eventErr := eventservice.GetEventById(eventId, db)
-		var title, intro string
+		var title string
 		imageUrl := getUploadedSourceImageURL(eventId, eventImageDir)
 		if eventErr == nil && event != nil {
 			title = event.Title
-			intro = event.Intro
 		}
 
 		if title == "" {
@@ -382,6 +381,5 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 				</form>
 			</div>
 		</div>
-		{ title } { intro }
 	</article>
 }
