@@ -207,14 +207,18 @@ func cacheBustedImageURL(imageURL string) string {
 templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
 	{{
 		event, eventErr := eventservice.GetEventById(eventId, db)
-		var title string
+		var title, currentBreadcrumb string
 		imageUrl := getUploadedSourceImageURL(eventId, eventImageDir)
 		if eventErr == nil && event != nil {
 			title = event.Title
+			currentBreadcrumb = "Last opp bilete"
 		}
 
 		if title == "" {
 			title = "Mangler navn"
+		}
+		if imageUrl != "" {
+			currentBreadcrumb = "Rediger bilete"
 		}
 	}}
 	if eventErr != nil {
@@ -339,62 +343,66 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		{Name: "Heim", Url: "/"},
 		{Name: "Mine arrangement", Url: "/profile/"},
 		{Name: title, Url: "/profile/new/" + eventId + "/"},
-		{Name: "Last opp bilete", Url: ""},
+		{Name: currentBreadcrumb, Url: ""},
 	})
-	<article class="page-content-container">
-		<a
-			href="javascript:window.history.back();"
-			class="btn btn--outline back-button"
-		>
-			Tilbake
-		</a>
-		<h1>Last opp bilete</h1>
-		<div
-			class="img-upload-form-content"
-			data-signals={ formsubmission.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
-		>
-			<div class="surface-pane info-text-content">
-				<div>
-					<p class="image-upload-info-label">
-						Ver venleg og ikkje bruk AI/KI-genererte bilete
-					</p>
-					<p>
-						Sidan AI/KI-genererte bilete er eit betent tema, ønskjer vi i RegnCon ikkje
-						at arrangørar skal bruke slike bilete som hovudbilete for arrangementet sitt.
-					</p>
-					<p>
-						Om du er i tvil om bruk av bilete, anbefaler vi å finne bilete som er ope
-						tilgjengelege for bruk, eller bilete som elles blir brukte til å demonstrere
-						og promotere spelet/systemet du skal bruke på arrangementet.
-					</p>
+	if imageUrl == "" {
+		<article class="page-content-container">
+			<a
+				href="javascript:window.history.back();"
+				class="btn btn--outline back-button"
+			>
+				Tilbake
+			</a>
+			<h1>Last opp bilete</h1>
+			<div
+				class="img-upload-form-content"
+				data-signals={ formsubmission.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
+			>
+				<div class="surface-pane info-text-content">
+					<div>
+						<p class="image-upload-info-label">
+							Ver venleg og ikkje bruk AI/KI-genererte bilete
+						</p>
+						<p>
+							Sidan AI/KI-genererte bilete er eit betent tema, ønskjer vi i RegnCon ikkje
+							at arrangørar skal bruke slike bilete som hovudbilete for arrangementet sitt.
+						</p>
+						<p>
+							Om du er i tvil om bruk av bilete, anbefaler vi å finne bilete som er ope
+							tilgjengelege for bruk, eller bilete som elles blir brukte til å demonstrere
+							og promotere spelet/systemet du skal bruke på arrangementet.
+						</p>
+					</div>
+				</div>
+				<div class="surface-pane image-upload-content">
+					<h4>Last opp bilete</h4>
+					<form
+						enctype="multipart/form-data"
+						data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/upload', {contentType: 'form'})", eventId) }
+						data-signals="{test1: 1, test2: 3, _replace: false}"
+						class="item-card image-upload-card"
+					>
+						<input
+							data-on:drop="$test2 = 5; el.files = evt.dataTransfer.files; el.closest('form').requestSubmit();"
+							data-on:dragend="console.log('End',{evt}); $test2 = 3;"
+							data-class:is-drag-over="$test2 === 4 ? true : false"
+							data-on:change=" el.closest('form').requestSubmit();"
+							data-effect="$_replace === true && window.location.replace(window.location.href)"
+							data-on:datastar-fetch="evt.detail.type === 'finished' ? $_replace = true : null"
+							type="file"
+							name="image"
+							accept="image/*"
+							required
+						/>
+						<div class="image-upload-icon-wrapper" data-class:spin="$test2 === 5">
+							@icons.Icon(icons.FileUpload, icons.Size20)
+						</div>
+						<p>Klikk her eller dra et bilde inn for å laste det opp.</p>
+						<p>Støttede formater: PNG, JPG, ...</p>
+						<p>(Opp til YYmb)</p>
+					</form>
 				</div>
 			</div>
-			<div class="surface-pane image-upload-content">
-				<h4>Last opp bilete</h4>
-				<form
-					enctype="multipart/form-data"
-					data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/upload', {contentType: 'form'})", eventId) }
-					data-signals="{test1: 1, test2: 3}"
-					class="item-card image-upload-card"
-				>
-					<input
-						data-on:drop="$test2 = 5; el.files = evt.dataTransfer.files; el.closest('form').requestSubmit(); "
-						data-on:dragend="console.log('End',{evt}); $test2 = 3;"
-						data-class:is-drag-over="$test2 === 4 ? true : false"
-						data-on:change=" el.closest('form').requestSubmit();"
-						type="file"
-						name="image"
-						accept="image/*"
-						required
-					/>
-					<div class="image-upload-icon-wrapper" data-class:spin="$test2 === 5">
-						@icons.Icon(icons.FileUpload, icons.Size20)
-					</div>
-					<p>Klikk her eller dra et bilde inn for å laste det opp.</p>
-					<p>Støttede formater: PNG, JPG, ...</p>
-					<p>(Opp til YYmb)</p>
-				</form>
-			</div>
-		</div>
-	</article>
+		</article>
+	}
 }
