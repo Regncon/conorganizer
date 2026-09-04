@@ -239,13 +239,29 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                 align-items: flex-start;
             }
 
-            .image-upload-container {
+            .info-text-content {
                 display: flex;
                 flex-direction: column;
                 gap: var(--spacing-5x);
 
                 .image-upload-info-label {
                     font-weight: 700;
+                }
+            }
+
+            .image-upload-content {
+                display: flex;
+                flex-direction: column;
+                gap: var(--spacing-5x);
+
+                .image-upload-card {
+                    height: 500px;
+                }
+
+                .item-card {
+                    padding: 0;
+                    border-radius: var(--border-radius-1x);
+                    border: 1px solid var(--bg-item-border)
                 }
             }
 
@@ -285,7 +301,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					Tilbake
 				</a>
 			</div>
-			<div class="surface-pane image-upload-container">
+			<div class="surface-pane info-text-content">
 				<div>
 					<p class="image-upload-info-label">
 						Ver venleg og ikkje bruk AI/KI-genererte bilete
@@ -301,8 +317,9 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					</p>
 				</div>
 			</div>
-			<div class="surface-pane">
+			<div class="surface-pane image-upload-content">
 				<h4>Last opp bilete</h4>
+				<div class="item-card image-upload-card"></div>
 			</div>
 		</div>
 		{ title } { intro }
