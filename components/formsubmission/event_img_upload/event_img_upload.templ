@@ -289,6 +289,10 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                     padding-inline: var(--spacing-5x);
                     padding-block: var(--spacing-4x);
 
+                    .text-soft {
+                        color: var(--color-text-soft-50)
+                    }
+
                     .remove-file {
                         place-self: center end;
                     }
@@ -425,7 +429,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					<h4>Last opp bilete</h4>
 					<div class="item-card file-info">
 						<p>
-							<span data-text="$_fileName"></span> <span data-text="$_fileSize"></span>
+							<span data-text="$_fileName"></span> <span class="text-soft" data-text="$_fileSize"></span>
 						</p>
 						<button class="btn btn--outline remove-file">Slett bilete</button>
 					</div>
