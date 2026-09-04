@@ -354,9 +354,23 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			</div>
 			<div class="surface-pane image-upload-content">
 				<h4>Last opp bilete</h4>
-				<form class="item-card image-upload-card">
-					<input type="file" name="image" accept=".jpg, .jpeg, .png, .webp .gif" required/>
-					<div class="image-upload-icon-wrapper">
+				<form
+					enctype="multipart/form-data"
+					data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/upload', {contentType: 'form'})", eventId) }
+					data-signals="{test1: 1, test2: 3}"
+					class="item-card image-upload-card"
+				>
+					<input
+						data-on:drop="$test2 = 5; el.files = evt.dataTransfer.files; el.closest('form').requestSubmit(); "
+						data-on:dragend="console.log('End',{evt}); $test2 = 3;"
+						data-class:is-drag-over="$test2 === 4 ? true : false"
+						data-on:change=" el.closest('form').requestSubmit();"
+						type="file"
+						name="image"
+						accept="image/*"
+						required
+					/>
+					<div class="image-upload-icon-wrapper" data-class:spin="$test2 === 5">
 						@icons.Icon(icons.FileUpload, icons.Size20)
 					</div>
 					<p>Klikk her eller dra et bilde inn for å laste det opp.</p>
