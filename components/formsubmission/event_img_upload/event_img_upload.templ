@@ -244,10 +244,6 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		</script>
 	}
 	<script>
-
-            const updateSignalsWithFileInfo = (size, name) => {
-                // Implementation for updating signals with file info
-                };
                 const removeFileAndResetSignals = (size, name) => {
                     // Implementation for removing file and resetting signals
                 }
@@ -259,20 +255,20 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                                 const sizeInBytes = blob.size;
                                 const sizeInKB = (sizeInBytes / 1024)
                                 const sizeInMB = (sizeInBytes / (1024 * 1024))
-                                let size;
+                                let fileSize;
 
                                 if (sizeInMB < 0.5) {
-                                    size = `(${sizeInKB.toFixed(2)}kb)`;
+                                    fileSize = `(${sizeInKB.toFixed(2)}kb)`;
                                 } else {
-                                    size = `(${sizeInMB.toFixed(2)}mb)`;
+                                    fileSize = `(${sizeInMB.toFixed(2)}mb)`;
                                 }
-                                let name = relativePath.split("/").pop();
-                                name = name + "ASDASDASDASDASDASDASDASD"
+                                const fileName = shortenFilename(relativePath.split("/").pop());
+
                                 document.dispatchEvent(
                                     new CustomEvent("init-file-info", {
                                         detail: {
-                                            size,
-                                            name
+                                            fileSize,
+                                            fileName
                                         },
                                         bubbles: true,
                                         composed: true,
@@ -282,6 +278,34 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                         }
                     }).catch(error => console.error("Could not read local file size:", error))
                 }
+
+                function shortenFilename(filename, maxLength = 27) {
+                    // 1. Extract the extension and the base name
+                    const lastDot = filename.lastIndexOf('.');
+                    if (lastDot === -1) return filename; // No extension found
+
+                    const ext = filename.substring(lastDot); // e.g., ".png"
+                    const baseName = filename.substring(0, lastDot);
+
+                    // If the whole filename already fits, return it as-is
+                    if (filename.length <= maxLength) return filename;
+
+                    // 2. Define your fixed end piece (5 chars before extension + extension)
+                    const endCharsCount = 5;
+                    const endPart = baseName.slice(-endCharsCount) + ext; // e.g., "langt.png"
+                    const ellipsis = "...";
+
+                    // 3. Calculate how much space is left for the start of the name
+                    const availableForStart = maxLength - ellipsis.length - endPart.length;
+
+                    // If the constraints don't physically fit, fallback to standard truncation
+                    if (availableForStart <= 0) return filename.substring(0, maxLength - ext.length) + ext;
+
+                    const startPart = baseName.substring(0, availableForStart);
+
+                    return startPart + ellipsis + endPart;
+                }
+
     </script>
 	<style>
         .page-content-container {
@@ -409,7 +433,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		class="page-content-container"
 		data-signals__ifmissing="{_fileName: 'Filnavn-som-er-litteg...langt.png', _fileSize: '(0mb)'}"
 		data-init={ fmt.Sprintf("initPopulateFileInfo('/event-images/%s_source.png')", eventId) }
-		data-on:init-file-info__document="$_fileSize = evt.detail.size; $_fileName = evt.detail.name"
+		data-on:init-file-info__document="$_fileSize = evt.detail.fileSize; $_fileName = evt.detail.fileName"
 	>
 		<a
 			href="javascript:window.history.back();"
