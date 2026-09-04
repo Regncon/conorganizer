@@ -253,10 +253,93 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                     }
 
                     .image-upload {
+                        --image-upload-background-image: var(--image-upload-background-image-banner);
+
                         container-type: inline-size;
                         gap: 0.5rem;
 
-                        @container (width <= 24rem) {
+                        .image-upload__icon,
+                        .image-upload__button-icon {
+                            display: inline-grid;
+                            place-items: center;
+                            flex: 0 0 auto;
+                        }
+
+                        .image-upload__panel {
+                            display: grid;
+                            grid-template-rows: 100px auto;
+                            gap: var(--spacing-5x);
+                            block-size: 100%;
+                            padding: var(--spacing-4x);
+                            align-content: space-between;
+                            border: 1px solid var(--bg-item-border);
+                            border-radius: var(--border-radius-2x);
+                            background: var(--bg-item);
+
+                            .image-upload__content {
+                                display: flex;
+                                height: auto;
+                                max-height: 102px;
+                                gap: var(--spacing-2x);
+                                place-items: center;
+                                place-content: center;
+
+                                .image-upload__icon {
+                                    inline-size: 2.5rem;
+                                    block-size: 2.5rem;
+                                }
+
+
+                                .image-upload__text {
+                                    min-inline-size: 0;
+                                    margin: 0;
+                                    max-inline-size: 34rem;
+                                    color: var(--color-text-soft);
+                                    font-size: var(--text-body-small);
+                                    line-height: 1.35;
+                                }
+                            }
+
+
+
+
+                            .image-upload__button {
+                                justify-self: end;
+                                gap: var(--spacing-1x);
+
+                                .image-upload__button-icon {
+                                    inline-size: 1.25rem;
+                                    block-size: 1.25rem;
+                                }
+                            }
+                        }
+
+                        .image-upload__panel--has-image {
+
+                            align-content: end;
+                            overflow: hidden;
+                            background:
+                                linear-gradient(
+                                    hsl(from var(--bg-backdrop) h s l / 10%),
+                                    hsl(from var(--bg-backdrop) h s l / 45%)
+                                ),
+                                var(--image-upload-background-image);
+                            background-position: center;
+                            background-size: cover;
+                            height: 100%;
+
+                            .image-upload__content {
+                                display: none;
+                            }
+
+                            .image-upload__button {
+                                background-color: color-mix(in srgb, var(--bg-item) 82%, transparent);
+                                backdrop-filter: blur(0.25rem);
+                            }
+                        }
+
+
+                        @container (width <= 384px) {
                             .image-upload__panel {
                                 padding: var(--spacing-3x);
                             }
@@ -264,90 +347,16 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                             .image-upload__button {
                                 justify-self: stretch;
                             }
+
+                        }
+                        @container (width <= 410px) {
+                            .image-upload__panel--has-image {
+                                --image-upload-background-image: var(--image-upload-background-image-card);
+                            }
                         }
                     }
 
-                    .image-upload > p {
-                        margin: 0;
-                    }
 
-                    .image-upload__panel {
-                        display: grid;
-                        grid-template-rows: 100px auto;
-                        gap: var(--spacing-5x);
-                        block-size: 100%;
-                        padding: var(--spacing-4x);
-                        align-content: space-between;
-                        border: 1px solid var(--bg-item-border);
-                        border-radius: var(--border-radius-2x);
-                        background: var(--bg-item);
-                        height: 102px;
-                        width: 488px;
-                    }
-
-                    .image-upload__panel--has-image {
-
-                        align-content: end;
-                        overflow: hidden;
-                        background:
-                            linear-gradient(
-                                hsl(from var(--bg-backdrop) h s l / 10%),
-                                hsl(from var(--bg-backdrop) h s l / 45%)
-                            ),
-                            var(--image-upload-background-image);
-                        background-position: center;
-                        background-size: cover;
-                        height: 100%;
-
-                        .image-upload__content {
-                            display: none;
-                        }
-
-                        .image-upload__button {
-                            background-color: color-mix(in srgb, var(--bg-item) 82%, transparent);
-                            backdrop-filter: blur(0.25rem);
-                        }
-                    }
-
-                    .image-upload__content {
-                        display: flex;
-                        height: auto;
-                        max-height: 102px;
-                        gap: var(--spacing-2x);
-                        place-items: center;
-                        place-content: center;
-                    }
-
-                    .image-upload__text {
-                        min-inline-size: 0;
-                        margin: 0;
-                        max-inline-size: 34rem;
-                        color: var(--color-text-soft);
-                        font-size: var(--text-body-small);
-                        line-height: 1.35;
-                    }
-
-                    .image-upload__icon,
-                    .image-upload__button-icon {
-                        display: inline-grid;
-                        place-items: center;
-                        flex: 0 0 auto;
-                    }
-
-                    .image-upload__icon {
-                        inline-size: 2.5rem;
-                        block-size: 2.5rem;
-                    }
-
-                    .image-upload__button-icon {
-                        inline-size: 1.25rem;
-                        block-size: 1.25rem;
-                    }
-
-                    .image-upload__button {
-                        justify-self: end;
-                        gap: var(--spacing-1x);
-                    }
                 }
 
                 .puljefordeling-section {
