@@ -289,6 +289,12 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                     padding-inline: var(--spacing-5x);
                     padding-block: var(--spacing-4x);
 
+                    .file-name {
+                        display: inline-block;
+                        width: 26ch;
+                        overflow: clip;
+                        white-space: nowrap;
+                    }
                     .text-soft {
                         color: var(--color-text-soft-50)
                     }
@@ -366,7 +372,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	})
 	<article
 		class="page-content-container"
-		data-signals="{_fileSize: 'asdasdg', _fileName: 'asdfdg'}"
+		data-signals="{_fileName: 'Filnavn-som-er-litteg...langt.png', _fileSize: '(2mb)'}"
 	>
 		<a
 			href="javascript:window.history.back();"
@@ -429,7 +435,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					<h4>Last opp bilete</h4>
 					<div class="item-card file-info">
 						<p>
-							<span data-text="$_fileName"></span> <span class="text-soft" data-text="$_fileSize"></span>
+							<span class="file-name" data-text="$_fileName"></span> <span class="text-soft" data-text="$_fileSize"></span>
 						</p>
 						<button class="btn btn--outline remove-file">Slett bilete</button>
 					</div>
