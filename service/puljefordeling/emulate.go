@@ -18,20 +18,36 @@ import (
 // show how much they wanted this game, whether they carry the DM bump, and
 // whether they were bumped off a stronger preference to make room for others.
 type AssignedPlayer struct {
-	Name  string
-	IsDM  bool                 // runs at least one game in the weekend (DM bump)
-	Level models.InterestLevel // their interest in the game they got
-	Moved bool                 // relocated off a higher-scoring event by the solver to make room for others
+	BillettholderID int // participant id, for manual-seat removal from the UI
+	Name            string
+	IsDM            bool                 // runs at least one game in the weekend (DM bump)
+	Level           models.InterestLevel // their interest in the game they got
+	Moved           bool                 // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
+	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
 }
 
-// EmulatedEvent is the proposed seating for a single event within a pulje.
+// Seat sources recorded on relation_events_players. Manual seats are admin pins
+// the solver must honour; solver seats are produced by a committed distribution.
+const (
+	SourceManual = "manual"
+	SourceSolver = "solver"
+)
+
+// EmulatedEvent is the proposed seating for a single event within a pulje. The
+// metadata fields (type/age/runtime/flags) drive the tag row in the UI and carry
+// no weight in the distribution itself.
 type EmulatedEvent struct {
-	EventID         string
-	Title           string
-	Capacity        int
-	GMName          string           // empty if the event has no GM assigned
-	AssignedPlayers []AssignedPlayer // sorted by name
-	Undersubscribed bool             // fewer than the solver's viable-player threshold
+	EventID           string
+	Title             string
+	Capacity          int
+	GMName            string           // empty if the event has no GM assigned
+	AssignedPlayers   []AssignedPlayer // sorted by name
+	Undersubscribed   bool             // fewer than the solver's viable-player threshold
+	EventType         models.EventType
+	AgeGroup          models.AgeGroup
+	Runtime           models.Runtime
+	BeginnerFriendly  bool
+	CanBeRunInEnglish bool
 }
 
 // EmulatedPulje is the proposed seating for one pulje (time slot).
@@ -53,8 +69,13 @@ type Emulation struct {
 }
 
 type eligibleEvent struct {
-	title    string
-	capacity int
+	title             string
+	capacity          int
+	eventType         models.EventType
+	ageGroup          models.AgeGroup
+	runtime           models.Runtime
+	beginnerFriendly  bool
+	canBeRunInEnglish bool
 }
 
 // EmulateSeatings builds the solver model from the database, runs the
@@ -82,6 +103,10 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 		return Emulation{}, err
 	}
 	prefs, err := loadPrefs(db, events) // billettholderID -> pulje -> eventID -> score
+	if err != nil {
+		return Emulation{}, err
+	}
+	pins, err := loadManualPins(db) // pulje -> playerID -> eventID (admin manual seats)
 	if err != nil {
 		return Emulation{}, err
 	}
@@ -123,8 +148,8 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	emulation := Emulation{Year: year, PlayerCount: len(players)}
 	for i, slot := range weekend.Slots {
 		pulje := puljer[i]
-		res := state.SolveSlot(slot, players)
-		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, prefs, dmSet))
+		res := state.SolveSlotFixed(slot, players, pins[pulje.ID])
+		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, prefs, dmSet, pins[pulje.ID], events[pulje.ID]))
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
 
@@ -140,6 +165,8 @@ func shapePulje(
 	names map[int]string,
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
+	manual map[string]string,
+	meta map[string]eligibleEvent,
 ) EmulatedPulje {
 	under := make(map[string]bool, len(res.UndersubscribedEvents))
 	for _, eid := range res.UndersubscribedEvents {
@@ -164,8 +191,15 @@ func shapePulje(
 			EventID:         ev.ID,
 			Title:           ev.Name,
 			Capacity:        ev.Capacity,
-			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet, moved),
+			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet, moved, manual),
 			Undersubscribed: under[ev.ID],
+		}
+		if m, ok := meta[ev.ID]; ok {
+			emEv.EventType = m.eventType
+			emEv.AgeGroup = m.ageGroup
+			emEv.Runtime = m.runtime
+			emEv.BeginnerFriendly = m.beginnerFriendly
+			emEv.CanBeRunInEnglish = m.canBeRunInEnglish
 		}
 		if gmID, ok := gms[eventPuljeKey(ev.ID, pulje.ID)]; ok {
 			emEv.GMName = names[gmID]
@@ -186,6 +220,7 @@ func assignedPlayers(
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
 	moved map[string]bool,
+	manual map[string]string,
 ) []AssignedPlayer {
 	if len(ids) == 0 {
 		return nil
@@ -197,7 +232,7 @@ func assignedPlayers(
 			out = append(out, AssignedPlayer{Name: id})
 			continue
 		}
-		ap := AssignedPlayer{Name: names[bh], IsDM: dmSet[bh], Moved: moved[id]}
+		ap := AssignedPlayer{BillettholderID: bh, Name: names[bh], IsDM: dmSet[bh], Moved: moved[id], Manual: manual[id] == eventID}
 		if byPulje, ok := prefs[bh]; ok {
 			got := byPulje[puljeID][eventID]
 			ap.Level = models.InterestLevelFromScore(int(got))
@@ -235,7 +270,9 @@ func loadPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 
 func loadEligibleEvents(db *sql.DB) (map[models.Pulje]map[string]eligibleEvent, error) {
 	const query = `
-		SELECT ep.pulje_id, e.id, e.title, e.max_players
+		SELECT ep.pulje_id, e.id, e.title, e.max_players,
+		       e.event_type, e.age_group, e.event_runtime,
+		       e.beginner_friendly, e.can_be_run_in_english
 		FROM relation_event_puljer ep
 		JOIN events e ON e.id = ep.event_id
 		WHERE ep.is_in_pulje = 1
@@ -251,13 +288,52 @@ func loadEligibleEvents(db *sql.DB) (map[models.Pulje]map[string]eligibleEvent, 
 		var pulje models.Pulje
 		var eventID, title string
 		var maxPlayers int
-		if err := rows.Scan(&pulje, &eventID, &title, &maxPlayers); err != nil {
+		var ev eligibleEvent
+		if err := rows.Scan(
+			&pulje, &eventID, &title, &maxPlayers,
+			&ev.eventType, &ev.ageGroup, &ev.runtime,
+			&ev.beginnerFriendly, &ev.canBeRunInEnglish,
+		); err != nil {
 			return nil, fmt.Errorf("scan event row: %w", err)
 		}
+		ev.title = title
+		ev.capacity = maxPlayers
 		if out[pulje] == nil {
 			out[pulje] = make(map[string]eligibleEvent)
 		}
-		out[pulje][eventID] = eligibleEvent{title: title, capacity: maxPlayers}
+		out[pulje][eventID] = ev
+	}
+	return out, rows.Err()
+}
+
+// loadManualPins returns the admin-pinned player seats keyed by pulje, then by
+// solver player ID (the billettholder ID as a string) → event ID. These are
+// fed to the solver as fixed placements so a manually-added player is reserved
+// into their event regardless of expressed interest.
+func loadManualPins(db *sql.DB) (map[models.Pulje]map[string]string, error) {
+	const query = `
+		SELECT pulje_id, event_id, billettholder_id
+		FROM relation_events_players
+		WHERE source = ? AND role = ?
+	`
+	rows, err := db.Query(query, SourceManual, models.EventPlayerRolePlayer)
+	if err != nil {
+		return nil, fmt.Errorf("query manual pins: %w", err)
+	}
+	defer rows.Close()
+
+	out := make(map[models.Pulje]map[string]string)
+	for rows.Next() {
+		var pulje models.Pulje
+		var eventID string
+		var bhID int
+		if err := rows.Scan(&pulje, &eventID, &bhID); err != nil {
+			return nil, fmt.Errorf("scan manual pin row: %w", err)
+		}
+		if out[pulje] == nil {
+			out[pulje] = make(map[string]string)
+		}
+		out[pulje][strconv.Itoa(bhID)] = eventID
 	}
 	return out, rows.Err()
 }

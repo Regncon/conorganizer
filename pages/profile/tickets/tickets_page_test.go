@@ -56,6 +56,63 @@ func TestProfileTicketsPageContent_WhenUserHasNoTicketHolders_RendersEmptyStateA
 	}
 }
 
+func TestBuildFetchTicketsFeedback_WhenOneTicketIsAssociated_ReturnsSingularSuccessMessage(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at én ny billettholder ble knyttet til brukeren.",
+		When:  "Når hentebilletter-feedback bygges.",
+		Then:  "Så skal brukeren få en kort entallsmelding.",
+	})
+
+	// Given
+	expected := fetchTicketsFeedback{SuccessMessage: "1 billett hentet!"}
+
+	// When
+	actual := buildFetchTicketsFeedback(1)
+
+	// Then
+	if actual != expected {
+		t.Fatalf("feedback mismatch\nexpected: %+v\nactual:   %+v", expected, actual)
+	}
+}
+
+func TestBuildFetchTicketsFeedback_WhenMultipleTicketsAreAssociated_ReturnsPluralSuccessMessage(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at flere nye billettholdere ble knyttet til brukeren.",
+		When:  "Når hentebilletter-feedback bygges.",
+		Then:  "Så skal brukeren få en kort flertallsmelding.",
+	})
+
+	// Given
+	expected := fetchTicketsFeedback{SuccessMessage: "3 billetter hentet!"}
+
+	// When
+	actual := buildFetchTicketsFeedback(3)
+
+	// Then
+	if actual != expected {
+		t.Fatalf("feedback mismatch\nexpected: %+v\nactual:   %+v", expected, actual)
+	}
+}
+
+func TestBuildFetchTicketsFeedback_WhenNoTicketsAreAssociated_ReturnsNeutralInfoMessage(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt at ingen nye billettholdere ble knyttet til brukeren.",
+		When:  "Når hentebilletter-feedback bygges.",
+		Then:  "Så skal brukeren få en nøytral melding.",
+	})
+
+	// Given
+	expected := fetchTicketsFeedback{InfoMessage: "Ingen nye billetter funnet."}
+
+	// When
+	actual := buildFetchTicketsFeedback(0)
+
+	// Then
+	if actual != expected {
+		t.Fatalf("feedback mismatch\nexpected: %+v\nactual:   %+v", expected, actual)
+	}
+}
+
 func TestBillettholderCard_RendersEmailKindsAndOnlyAllowsManualDelete(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt at en billettinnehaver har billett-, tilknyttet og manuell e-post.",

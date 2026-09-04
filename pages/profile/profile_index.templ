@@ -8,6 +8,7 @@ import (
 	"github.com/Regncon/conorganizer/components"
 	profilecomponent "github.com/Regncon/conorganizer/components/profile"
 	"github.com/Regncon/conorganizer/models"
+	"github.com/Regncon/conorganizer/service/authctx"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/requestctx"
 )
@@ -141,7 +142,7 @@ templ ProfilePage(user requestctx.UserRequestInfo, events []models.EventCardMode
 templ DescopeProfilePage() {
 	<script src="https://static.descope.com/npm/@descope/user-profile-widget@0.11.7/dist/index.js"></script>
 	<descope-user-profile-widget
-		project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
+		project-id={ authctx.DescopeProjectID }
 		widget-id="user-profile-widget-regncon"
 		theme="dark"
 	></descope-user-profile-widget>

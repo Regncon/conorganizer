@@ -7,6 +7,7 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/eventimage"
+    "github.com/Regncon/conorganizer/service/eventService"
 )
 
 templ Event_mobile(
@@ -14,6 +15,7 @@ templ Event_mobile(
 	previousNextData components.PreviousNext,
 	puljerForEvent []models.PuljeRow,
 	selectedPuljeQuery string,
+	programPublished bool,
 	hasTickets bool,
 	showInterestControls bool,
 	eventImageDir *string) {
@@ -344,7 +346,7 @@ templ Event_mobile(
 			</header>
 		</div>
 		<div class="event-information">
-			@EventInterestPanel(hasTickets, puljerForEvent, selectedPuljeQuery, showInterestControls)
+			@EventInterestPanel(hasTickets, puljerForEvent, selectedPuljeQuery, programPublished, showInterestControls)
 			<section class="surface-pane event-details-pane">
 				<h2 class="surface-pane-title">Detaljer om arrangementet</h2>
 				<div class="event-details">
@@ -406,9 +408,7 @@ templ Event_mobile(
 				</div>
 			</section>
 			<div class="description">
-				<p>
-					@templ.Raw(event.Description)
-				</p>
+				@templ.Raw(string(eventservice.SanitizeMdToHTML([]byte(event.Description))))
 			</div>
 		</div>
 		if previousNextData.IsRemoved == false && (previousNextData.PreviousUrl != "" || previousNextData.NextUrl != "") {

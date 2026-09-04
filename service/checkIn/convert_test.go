@@ -65,11 +65,14 @@ func TestConvertTicketIdToNewBillettholder_CreatesBillettholderAndEmails(t *test
 	db, logger := createCheckInTestDB(t)
 
 	// When
-	err := converTicketIdToNewBillettholder(ticketID, tickets, db, logger)
+	actualResult, err := converTicketIdToNewBillettholder(ticketID, tickets, db, logger)
 
 	// Then
 	if err != nil {
 		t.Fatalf("expected ticket conversion to succeed: %v", err)
+	}
+	if actualResult.CreatedBillettholders != 1 {
+		t.Fatalf("created billettholder count mismatch\nexpected: 1\nactual:   %d", actualResult.CreatedBillettholders)
 	}
 	actualBillettholder := queryBillettholderByTicketID(t, db, ticketID)
 	assertBillettholderMatches(t, expectedBillettholder, actualBillettholder)
@@ -100,7 +103,7 @@ func TestConvertTicketIdToNewBillettholder_WhenTicketIsDinner_ReturnsError(t *te
 	}
 
 	// When
-	err := converTicketIdToNewBillettholder(ticketID, tickets, nil, testutil.NewTestLogger())
+	_, err := converTicketIdToNewBillettholder(ticketID, tickets, nil, testutil.NewTestLogger())
 
 	// Then
 	if err == nil {
@@ -169,14 +172,62 @@ func TestConvertTicketIdToNewBillettholder_WhenAssociatedEmailsRepeat_InsertsEac
 	db, logger := createCheckInTestDB(t)
 
 	// When
-	err := converTicketIdToNewBillettholder(ticketID, tickets, db, logger)
+	actualResult, err := converTicketIdToNewBillettholder(ticketID, tickets, db, logger)
 
 	// Then
 	if err != nil {
 		t.Fatalf("expected ticket conversion to succeed: %v", err)
 	}
+	if actualResult.CreatedBillettholders != 1 {
+		t.Fatalf("created billettholder count mismatch\nexpected: 1\nactual:   %d", actualResult.CreatedBillettholders)
+	}
 	actualBillettholder := queryBillettholderByTicketID(t, db, ticketID)
 	assertBillettholderEmails(t, db, actualBillettholder.ID, expectedEmails)
+}
+
+func TestConvertTicketIdToNewBillettholder_WhenTicketAlreadyExists_ReturnsNoCreatedBillettholders(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a CheckIn ticket that is already stored as a billettholder.",
+		When:  "When the ticket is converted again.",
+		Then:  "Then no new billettholder is reported.",
+	})
+
+	// Given
+	const ticketID = 42
+	tickets := []CheckInTicket{
+		{
+			ID:        ticketID,
+			OrderID:   1,
+			TypeId:    1,
+			Type:      "Adult",
+			FirstName: "John",
+			LastName:  "Doe",
+			Email:     "ticket_email@test.test",
+			IsOver18:  true,
+		},
+	}
+	db, logger := createCheckInTestDB(t)
+	insertCheckInBillettholder(t, db, models.Billettholder{
+		ID:           5000,
+		FirstName:    "John",
+		LastName:     "Doe",
+		TicketTypeId: 1,
+		TicketType:   "Adult",
+		OrderID:      1,
+		TicketID:     ticketID,
+		IsOver18:     true,
+	})
+
+	// When
+	actualResult, err := converTicketIdToNewBillettholder(ticketID, tickets, db, logger)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected repeated ticket conversion to succeed: %v", err)
+	}
+	if actualResult.CreatedBillettholders != 0 {
+		t.Fatalf("created billettholder count mismatch\nexpected: 0\nactual:   %d", actualResult.CreatedBillettholders)
+	}
 }
 
 func assertBillettholderMatches(t testing.TB, expected models.Billettholder, actual models.Billettholder) {

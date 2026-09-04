@@ -458,6 +458,32 @@ func TestSolveSlot_ReverseEdgeBumpMarksMoved(t *testing.T) {
 	}
 }
 
+func TestSolveSlot_LateralBumpAtEqualLevelNotMoved(t *testing.T) {
+	// Same bump mechanics as above, but "a" wants X and Y equally (both top
+	// choice, score 5). The solver still bumps "a" off X to seat "b", but "a"
+	// lands on an equally-wanted seat — High → High is a lateral move, not a
+	// downgrade, so "a" must NOT be flagged moved (the red "flyttet ned" stripe
+	// is reserved for players pushed to a strictly lower-interest seat).
+	sl1 := slot("s1", event("X", 1), event("Y", 1))
+	sl2 := slot("s2", model.Event{ID: "Z", Name: "Z", Capacity: 4, DMID: "a"})
+
+	a := model.Player{ID: "a", Name: "a", Prefs: map[string]map[string]model.Score{"s1": {"X": 5, "Y": 5}}}
+	b := model.Player{ID: "b", Name: "b", Prefs: map[string]map[string]model.Score{"s1": {"X": 5}}}
+
+	st := NewState(2026, weekendOf(sl1, sl2))
+	result := st.SolveSlot(sl1, []model.Player{a, b})
+
+	if !slices.Contains(assigned(result, "X"), "b") {
+		t.Errorf("b should win the X seat, got %v", assigned(result, "X"))
+	}
+	if !slices.Contains(assigned(result, "Y"), "a") {
+		t.Errorf("a should land on its equally-wanted Y seat, got %v", assigned(result, "Y"))
+	}
+	if slices.Contains(result.MovedPlayers, "a") {
+		t.Errorf("a was moved between two equally-wanted seats (High→High) and must NOT be flagged moved, got %v", result.MovedPlayers)
+	}
+}
+
 func TestSolveSlot_NoBumpLeavesMovedEmpty(t *testing.T) {
 	// Two players, two disjoint top choices: each is seated directly, no reverse
 	// edge is ever used, so nobody is marked moved.
@@ -489,5 +515,99 @@ func TestSolveSlot_DMPriorityBeatsRegularPlayer(t *testing.T) {
 
 	if !slices.Contains(assigned(result, "A"), "dm") {
 		t.Errorf("DM should beat regular player for the seat, got %v", assigned(result, "A"))
+	}
+}
+
+func TestSolveSlotFixed_PinnedSeatHonoredWithoutPreference(t *testing.T) {
+	// "kid" has NO preference for A, but is manually pinned there. The pin must be
+	// honored, and the seat must reduce A's effective capacity.
+	sl := slot("s1", event("A", 2))
+	players := []model.Player{
+		player("alice", prefs("s1", map[string]model.Score{"A": 5})),
+		player("bob", prefs("s1", map[string]model.Score{"A": 5})),
+		// "kid" intentionally absent from players: a manual placement with no interest.
+	}
+
+	result := NewState(2026, weekendOf(sl)).SolveSlotFixed(sl, players, map[string]string{"kid": "A"})
+
+	if !slices.Contains(assigned(result, "A"), "kid") {
+		t.Errorf("pinned kid must be seated in A, got %v", assigned(result, "A"))
+	}
+	if len(assigned(result, "A")) != 2 {
+		t.Errorf("A cap 2: pin takes one seat, solver fills one more, want 2 total, got %d", len(assigned(result, "A")))
+	}
+	// Exactly one of alice/bob got the remaining seat; the other is unassigned.
+	if len(result.Unassigned) != 1 {
+		t.Errorf("want 1 unassigned (only 1 free seat after the pin), got %v", result.Unassigned)
+	}
+}
+
+func TestSolveSlotFixed_PinnedSeatCountsAsSeated(t *testing.T) {
+	// A pinned player who got their top choice is satisfied; one with no/low
+	// interest is seated but not satisfied.
+	sl := slot("s1", event("A", 4))
+	players := []model.Player{
+		player("top", prefs("s1", map[string]model.Score{"A": 5})),
+	}
+
+	st := NewState(2026, weekendOf(sl))
+	result := st.SolveSlotFixed(sl, players, map[string]string{"top": "A", "nopref": "A"})
+
+	if !st.IsSatisfied("top") {
+		t.Error("pinned player whose pinned event is their top choice should be satisfied")
+	}
+	if st.IsSatisfied("nopref") {
+		t.Error("pinned player with no top-choice preference must not be satisfied")
+	}
+	if !slices.Contains(result.NewlySatisfied, "top") {
+		t.Errorf("top should be newly satisfied, got %v", result.NewlySatisfied)
+	}
+}
+
+func TestSolveSlot_NilFixedRegression(t *testing.T) {
+	// The 2-arg SolveSlot must behave exactly as before (delegates with nil).
+	sl := slot("s1", event("A", 1))
+	players := []model.Player{
+		player("low", prefs("s1", map[string]model.Score{"A": 3})),
+		player("high", prefs("s1", map[string]model.Score{"A": 5})),
+	}
+	result := NewState(2026, weekendOf(sl)).SolveSlot(sl, players)
+	if !slices.Contains(assigned(result, "A"), "high") {
+		t.Error("high scorer should still win with nil fixed")
+	}
+}
+
+func TestApplyActual_SeedsFairnessFromRealSeats(t *testing.T) {
+	// Replay slot 1 where alice actually got her top choice (A) and bob actually
+	// missed his top choice. Then in slot 2 (same single seat) bob — now carrying a
+	// miss and never satisfied — should beat the already-satisfied alice.
+	sl1 := slot("s1", event("A", 1))
+	sl2 := slot("s2", event("A", 1))
+
+	alice := model.Player{ID: "alice", Name: "alice", Prefs: map[string]map[string]model.Score{
+		"s1": {"A": 5}, "s2": {"A": 5},
+	}}
+	bob := model.Player{ID: "bob", Name: "bob", Prefs: map[string]map[string]model.Score{
+		"s1": {"A": 5}, "s2": {"A": 5},
+	}}
+
+	st := NewState(2026, weekendOf(sl1, sl2))
+
+	// Replay the actual slot-1 result: alice seated in A, bob unseated.
+	r1 := st.ApplyActual(sl1, []model.Player{alice, bob}, map[string][]string{"A": {"alice"}})
+	if !slices.Contains(r1.Assignments["A"], "alice") {
+		t.Fatalf("ApplyActual should echo the actual assignment, got %v", r1.Assignments["A"])
+	}
+	if !st.IsSatisfied("alice") {
+		t.Error("alice got her top choice in the replayed slot → satisfied")
+	}
+	if st.IsSatisfied("bob") {
+		t.Error("bob was not seated → not satisfied")
+	}
+
+	// Now solve slot 2: bob (unsatisfied + a miss) should win over satisfied alice.
+	r2 := st.SolveSlot(sl2, []model.Player{alice, bob})
+	if !slices.Contains(assigned(r2, "A"), "bob") {
+		t.Errorf("bob (missed + unsatisfied) should win slot 2 over satisfied alice, got %v", assigned(r2, "A"))
 	}
 }

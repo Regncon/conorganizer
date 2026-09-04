@@ -27,7 +27,7 @@ func UserMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			}
 
 			if !userInfo.IsLoggedIn {
-				logger.Warn("User is not logged in", "request_id", requestID, "path", r.URL.Path)
+				logger.Debug("User is not logged in", "request_id", requestID, "path", r.URL.Path)
 				w.WriteHeader(http.StatusUnauthorized)
 				if err := layouts.Base("Logg inn", requestctx.UserRequestInfo{}, Unauthenticated()).Render(r.Context(), w); err != nil {
 					logger.Error(fmt.Errorf("failed to render unauthenticated page: %w", err).Error(), "request_id", requestID)

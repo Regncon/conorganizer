@@ -377,7 +377,7 @@ func (m *Manager) bucketConfig(bucket Bucket) jetstream.KeyValueConfig {
 	return jetstream.KeyValueConfig{
 		Bucket:      string(bucket),
 		Description: fmt.Sprintf("Conorganizer live update bucket: %s", bucket),
-		Compression: true,
+		Storage:     jetstream.MemoryStorage,
 		TTL:         ttl,
 		MaxBytes:    maxBytes,
 	}

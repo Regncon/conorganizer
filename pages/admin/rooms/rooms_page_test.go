@@ -102,6 +102,23 @@ func TestRoomsAssignmentPageContent_RendersMissingRoomEventsAndAssignedRooms(t *
 			t.Fatalf("expected room assignment text to contain %q\nactual text: %s", expectedTextPart, actualText)
 		}
 	}
+
+	// Drag-and-drop is wired with Datastar: drop targets @post via the
+	// $draggedEventId signal set on dragstart — no custom fetch or headers.
+	roomDropTarget := doc.Find(".room")
+	if roomDropTarget.Length() == 0 {
+		t.Fatal("expected a room drop target")
+	}
+	wantDrop := "@post('/admin/rooms/api/assignment/FredagKveld/' + $draggedEventId + '/1')"
+	if got := roomDropTarget.AttrOr("data-on:drop__prevent", ""); !strings.Contains(got, wantDrop) {
+		t.Fatalf("room drop handler mismatch\nexpected to contain: %s\nactual:              %s", wantDrop, got)
+	}
+	if got := doc.Find(`.room-event[draggable="true"]`).AttrOr("data-on:dragstart", ""); got != "$draggedEventId = 'assigned-room-event'" {
+		t.Fatalf("assigned room event card should set the dragged signal on dragstart\nactual: %s", got)
+	}
+	if got := doc.Find(`.event-list a[draggable="true"]`).AttrOr("data-on:dragstart", ""); got != "$draggedEventId = 'missing-room-event'" {
+		t.Fatalf("missing-room event link should set the dragged signal on dragstart\nactual: %s", got)
+	}
 }
 
 func TestCalculatePopulation_CountsPlayersAndGMs(t *testing.T) {

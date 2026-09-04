@@ -1,10 +1,13 @@
 package formsubmission
 
 import (
+	"strings"
 	"testing"
 
+	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
+	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
 const (
@@ -149,4 +152,48 @@ func TestGetInterestsForEvent_FirstChoiceRules(t *testing.T) {
 			expectFirstChoice(t, actualE4Interests, tc)
 		}
 	})
+}
+
+func TestPuljeSection_FlagsMissingDm(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en pulje der arrangementet ikke har en tildelt spilleder.",
+		When:  "Når puljeseksjonen på godkjenningssiden rendres.",
+		Then:  "Så skal den vise 'Mangler spilleder'.",
+	})
+
+	pulje := models.PuljeRow{ID: models.PuljeFredagKveld, Name: "Fredag Kveld"}
+	assignees := []InterestWithHolder{
+		{BillettholderId: 1, EventId: "evA", PuljeId: string(models.PuljeFredagKveld), IsGamemaster: false, FirstName: "Kari", LastName: "Nordmann"},
+	}
+
+	doc := templtest.Render(t, puljeSection("evA", pulje, nil, assignees, true, nil))
+	html, err := doc.Html()
+	if err != nil {
+		t.Fatalf("render html: %v", err)
+	}
+	if !strings.Contains(html, "Mangler spilleder") {
+		t.Fatalf("pulje without a DM should show 'Mangler spilleder'")
+	}
+}
+
+func TestPuljeSection_NoMissingDmFlagWhenGmAssigned(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en pulje der arrangementet har en tildelt spilleder.",
+		When:  "Når puljeseksjonen på godkjenningssiden rendres.",
+		Then:  "Så skal den ikke vise 'Mangler spilleder'.",
+	})
+
+	pulje := models.PuljeRow{ID: models.PuljeFredagKveld, Name: "Fredag Kveld"}
+	assignees := []InterestWithHolder{
+		{BillettholderId: 9, EventId: "evA", PuljeId: string(models.PuljeFredagKveld), IsGamemaster: true, FirstName: "Game", LastName: "Master"},
+	}
+
+	doc := templtest.Render(t, puljeSection("evA", pulje, nil, assignees, true, nil))
+	html, err := doc.Html()
+	if err != nil {
+		t.Fatalf("render html: %v", err)
+	}
+	if strings.Contains(html, "Mangler spilleder") {
+		t.Fatalf("pulje with a GM should not show 'Mangler spilleder'")
+	}
 }

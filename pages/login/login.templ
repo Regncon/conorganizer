@@ -1,5 +1,7 @@
 package login
 
+import "github.com/Regncon/conorganizer/service/authctx"
+
 templ alreadyLogedIn() {
 	<style>
     .already-logedin-wrapper {
@@ -70,17 +72,17 @@ templ loginForm() {
     </style>
 	<div class="descope-login-wrapper">
 		<descope-wc
-			project-id="P2ufzqahlYUHDIprVXtkuCx8MH5C"
+			project-id={ authctx.DescopeProjectID }
 			flow-id="sign-up-or-in-passwords-social"
 			theme="dark"
 		></descope-wc>
 	</div>
 	<script>
-            const DESCOPE_PROJECT_ID = 'P2ufzqahlYUHDIprVXtkuCx8MH5C';
-            const descopeSdk = window.Descope
-                ? Descope({ projectId: DESCOPE_PROJECT_ID, persistTokens: true, autoRefresh: true })
-                : null;
             const wcElement = document.getElementsByTagName('descope-wc')[0];
+            const descopeProjectID = wcElement?.getAttribute('project-id') ?? '';
+            const descopeSdk = window.Descope
+                ? Descope({ projectId: descopeProjectID, persistTokens: true, autoRefresh: true })
+                : null;
 
             function normalizeToken(token) {
                 if (typeof token !== 'string') {

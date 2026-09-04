@@ -123,7 +123,7 @@ func UpdateEventInPulje(eventRouter chi.Router, db *sql.DB, liveManager *live.Ma
 				return
 			}
 
-			if err := updateEventPuljeMembershipWithAudit(r.Context(), db, logger, eventID, puljeId, isInPulje); err != nil {
+			if err := SetEventInPulje(r.Context(), db, logger, eventID, puljeId, isInPulje); err != nil {
 				logger.Error(fmt.Errorf("failed to upsert relation_event_puljer for event %s and pulje %s: %w", eventID, puljeId, err).Error())
 				http.Error(w, "Klarte ikkje å oppdatere arrangementet i puljen", http.StatusInternalServerError)
 				return
@@ -186,7 +186,7 @@ func UpdateRoomInPulje(roomRouter chi.Router, db *sql.DB, liveManager *live.Mana
 	})
 }
 
-func getEvenPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventPulje, error) {
+func getEventPulje(eventId string, pulje models.Pulje, db *sql.DB) (models.EventPulje, error) {
 	query := `
             SELECT
                 event_id,
@@ -256,7 +256,7 @@ func getRoomsPuljeByFloor(db *sql.DB, pulje models.Pulje) []FloorGroupPulje {
 
 templ puljeRow(eventId string, pulje models.PuljeRow, db *sql.DB) {
 	{{
-		eventPulje, err := getEvenPulje(eventId, pulje.ID, db)
+		eventPulje, err := getEventPulje(eventId, pulje.ID, db)
 		membershipErrorKey := fmt.Sprintf("puljeMembership%s", pulje.ID)
 		publishedErrorKey := fmt.Sprintf("puljePublished%s", pulje.ID)
 		roomErrorKey := fmt.Sprintf("puljeRoom%s", pulje.ID)

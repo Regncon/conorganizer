@@ -66,15 +66,20 @@ func InterestLevelFromScore(score int) InterestLevel {
 }
 
 // Emoji returns a short glyph for an interest level, used to show at a glance
-// how much a seated participant wanted the game they got.
+// how much a seated participant wanted the game they got. These are the single
+// source of truth for the interest glyphs and match the buttons in the interest
+// picker (TicketHolderInterestPicker), so the two views never drift apart.
+// InterestLevelNone deliberately returns "" — the puljefordeling box uses the
+// empty string as the signal to substitute a 📌 pin for a manual seat that has
+// no real interest behind it.
 func (level InterestLevel) Emoji() string {
 	switch level {
 	case InterestLevelHigh:
-		return "🔥"
+		return "🤩"
 	case InterestLevelMedium:
-		return "👍"
+		return "🙂"
 	case InterestLevelLow:
-		return "🤷"
+		return "🤨"
 	default:
 		return ""
 	}

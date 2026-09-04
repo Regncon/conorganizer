@@ -8,6 +8,8 @@ import (
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/toast"
 	"github.com/Regncon/conorganizer/layouts"
+	"github.com/Regncon/conorganizer/pages/notfound"
+	"github.com/Regncon/conorganizer/service/eventService"
 	"github.com/Regncon/conorganizer/service/live"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/go-chi/chi/v5"
@@ -20,7 +22,18 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		eventId := chi.URLParam(r, "id")
 
-		eventTitle := getEventTitle(db, eventId)
+		eventData, eventErr := eventservice.GetEventById(eventId, db)
+		if eventErr != nil {
+			logger.Error(eventErr.Error(), "event_id", eventId)
+			http.Error(w, eventErr.Error(), http.StatusInternalServerError)
+			return
+		}
+		if eventData == nil {
+			notfound.RenderEvent(w, r, logger)
+			return
+		}
+
+		eventTitle := eventData.Title
 		title := "Rediger arrangement"
 		if eventTitle != "" {
 			title = eventTitle
@@ -47,16 +60,4 @@ templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, eventImageD
 	>
 		@EditEventFormPageContent(ctx, eventId, db, eventImageDir, logger)
 	</div>
-}
-
-func getEventTitle(db *sql.DB, eventId string) string {
-	var title string
-
-	err := db.QueryRow("SELECT title FROM events WHERE id = ?", eventId).Scan(&title)
-
-	if err != nil {
-		return ""
-	}
-
-	return title
 }
