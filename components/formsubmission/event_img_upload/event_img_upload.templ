@@ -213,6 +213,10 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			title = event.Title
 			intro = event.Intro
 		}
+
+		if title == "" {
+			title = "Mangler navn"
+		}
 	}}
 	if eventErr != nil {
 		{{ logger.Error(fmt.Errorf("failed to load event image page for event %s: %w", eventId, eventErr).Error()) }}
@@ -317,7 +321,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Heim", Url: "/"},
 		{Name: "Mine arrangement", Url: "/profile/"},
-		{Name: "Nytt arrangement", Url: "/profile/new/" + eventId + "/"},
+		{Name: title, Url: "/profile/new/" + eventId + "/"},
 		{Name: "Last opp bilete", Url: ""},
 	})
 	<article class="page-content-container">
