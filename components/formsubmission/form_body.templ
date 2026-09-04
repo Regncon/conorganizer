@@ -267,7 +267,11 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
 
                         .image-upload__panel {
                             display: grid;
-                            grid-template-rows: 100px auto;
+
+                            &:not(.image-upload__panel--has-image) {
+                                grid-template-rows: 100px auto;
+                            }
+
                             gap: var(--spacing-5x);
                             block-size: 100%;
                             padding: var(--spacing-4x);
@@ -275,6 +279,7 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                             border: 1px solid var(--bg-item-border);
                             border-radius: var(--border-radius-2x);
                             background: var(--bg-item);
+
 
                             .image-upload__content {
                                 display: flex;
@@ -299,9 +304,6 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                                     line-height: 1.35;
                                 }
                             }
-
-
-
 
                             .image-upload__button {
                                 justify-self: end;
@@ -355,8 +357,6 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                             }
                         }
                     }
-
-
                 }
 
                 .puljefordeling-section {
