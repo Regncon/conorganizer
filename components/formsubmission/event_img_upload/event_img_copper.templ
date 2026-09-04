@@ -71,18 +71,49 @@ templ cropperPage(eventId string, db *sql.DB, eventImageDir *string, logger *slo
 			});
 		</script>
 	}
+	<style>
+     .page-content-container {
+            max-width: 1020px;
+        }
+
+        .back-button {
+            font-size: unset;
+            margin-block-start: var(--spacing-10x);
+        }
+
+        h1 {
+            margin-block: var(--spacing-5x) var(--spacing-10x);
+        }
+    </style>
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Heim", Url: "/"},
 		{Name: "Mine arrangement", Url: "/profile/"},
 		{Name: title, Url: "/profile/new/" + eventId + "/"},
 		{Name: "Rediger bilete", Url: ""},
 	})
-	<banner-cropper
-		event-id={ eventId }
-		width="600"
-		height="350"
-		image-kind="card"
-		data-attr:image-url="$sourceImageUrl"
-	></banner-cropper>
-	{ intro } { imageUrl }
+	<article class="page-content-container">
+		<a
+			href="javascript:window.history.back();"
+			class="btn btn--outline back-button"
+		>
+			Tilbake
+		</a>
+		<h1>Last opp bilete</h1>
+		<div class="img-cropper-content"></div>
+		<banner-cropper
+			event-id={ eventId }
+			width="600"
+			height="350"
+			image-kind="card"
+			data-attr:image-url="$sourceImageUrl"
+		></banner-cropper>
+		<banner-cropper
+			event-id={ eventId }
+			width="1360"
+			height="400"
+			image-kind="banner"
+			data-attr:image-url="$sourceImageUrl"
+		></banner-cropper>
+		{ intro } { imageUrl }
+	</article>
 }
