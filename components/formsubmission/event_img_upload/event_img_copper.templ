@@ -1,0 +1,88 @@
+package eventimgupload
+
+import (
+	"database/sql"
+	"fmt"
+	"github.com/Regncon/conorganizer/components"
+	"github.com/Regncon/conorganizer/components/icons"
+	"github.com/Regncon/conorganizer/components/toast"
+	"github.com/Regncon/conorganizer/layouts"
+	eventservice "github.com/Regncon/conorganizer/service/eventService"
+	"github.com/Regncon/conorganizer/service/userctx"
+	"github.com/go-chi/chi/v5"
+	"log/slog"
+	"net/http"
+)
+
+func EventImageCropperRoute(router chi.Router, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
+	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
+		eventId := chi.URLParam(r, "id")
+		if eventId == "" {
+			http.Error(w, "Arrangement-ID manglar. Fekk: "+eventId, http.StatusBadRequest)
+			return
+		}
+		var ctx = r.Context()
+		userInfo := userctx.GetUserRequestInfo(ctx)
+		showUploadToast := r.URL.Query().Get("uploaded") == "source"
+		if err := layouts.Base(
+			"Rediger bilete",
+			userInfo,
+			cropperPage(eventId, db, eventImageDir, logger, showUploadToast),
+		).Render(ctx, w); err != nil {
+			logger.Error(fmt.Errorf("failed to render event image page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
+		}
+	})
+}
+
+templ cropperPage(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
+	{{
+		event, eventErr := eventservice.GetEventById(eventId, db)
+		var title, intro string
+		imageUrl := getUploadedSourceImageURL(eventId, eventImageDir)
+		if eventErr == nil && event != nil {
+			title = event.Title
+			intro = event.Intro
+		}
+		if title == "" {
+			title = "Mangler navn"
+		}
+	}}
+	if eventErr != nil {
+		{{ logger.Error(fmt.Errorf("failed to load event image page for event %s: %w", eventId, eventErr).Error()) }}
+		<p>Klarte ikkje å hente arrangement: { eventErr.Error() }</p>
+		return
+	}
+	if event == nil {
+		{{ logger.Warn("Event not found for event image page", "event_id", eventId) }}
+		<p>Fann ikkje arrangementet</p>
+		return
+	}
+	<script src="/static/web_components/banner_cropper.js"></script>
+	@toast.Render("Lagra", icons.ProgressComplete)
+	if showUploadToast {
+		<script>
+			window.addEventListener("DOMContentLoaded", () => {
+				document.dispatchEvent(new CustomEvent("toast", {
+					detail: { message: "Lagra" },
+				}));
+				const url = new URL(window.location.href);
+				url.searchParams.delete("uploaded");
+				window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+			});
+		</script>
+	}
+	@components.Breadcrumbs([]components.BreadcrumbPath{
+		{Name: "Heim", Url: "/"},
+		{Name: "Mine arrangement", Url: "/profile/"},
+		{Name: title, Url: "/profile/new/" + eventId + "/"},
+		{Name: "Rediger bilete", Url: ""},
+	})
+	<banner-cropper
+		event-id={ eventId }
+		width="600"
+		height="350"
+		image-kind="card"
+		data-attr:image-url="$sourceImageUrl"
+	></banner-cropper>
+	{ intro } { imageUrl }
+}

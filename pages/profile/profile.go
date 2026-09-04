@@ -200,6 +200,10 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 
 				newIdRoute.Route("/image", func(imageRouter chi.Router) {
 					eventimgupload.EventImageRoute(imageRouter, db, eventImageDir, logger)
+
+					imageRouter.Route("/cropper", func(r chi.Router) {
+						eventimgupload.EventImageCropperRoute(r, db, eventImageDir, logger)
+					})
 				})
 			})
 		})
