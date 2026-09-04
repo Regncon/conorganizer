@@ -31,6 +31,15 @@ templ NewEventFormPageContent(eventId string, eventImageDir *string, userId stri
 		<p>Error fetching events: { eventErr.Error() }</p>
 		return
 	}
+	{{
+	var title string
+	if eventData != nil {
+		title = eventData.Title
+	}
+	if title == "" {
+		title = "Mangler navn"
+	}
+	}}
 	if puljerErr != nil {
 		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
 		<p>Error fetching event puljer: { puljerErr.Error() }</p>
@@ -49,7 +58,7 @@ templ NewEventFormPageContent(eventId string, eventImageDir *string, userId stri
 		@components.Breadcrumbs([]components.BreadcrumbPath{
 			{Name: "Hjem", Url: "/"},
 			{Name: "Min Side", Url: "/profile"},
-			{Name: "Nytt arrangement", Url: ""},
+			{Name: title, Url: ""},
 		})
 		@formsubmission.EventFormPageLayout("Nytt arrangement", false) {
 			<form
