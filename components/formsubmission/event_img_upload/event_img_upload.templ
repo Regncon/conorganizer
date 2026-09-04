@@ -239,6 +239,13 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 				url.searchParams.delete("uploaded");
 				window.history.replaceState(null, "", url.pathname + url.search + url.hash);
 			});
+
+            const updateSignalsWithFileInfo = (size, name) => {
+                // Implementation for updating signals with file info
+            };
+            const removeFileAndResetSignals = (size, name) => {
+                // Implementation for removing file and resetting signals
+            }
 		</script>
 	}
 	<style>
@@ -341,7 +348,10 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		{Name: title, Url: "/profile/new/" + eventId + "/"},
 		{Name: "Legg til bilete", Url: ""},
 	})
-	<article class="page-content-container">
+	<article
+		class="page-content-container"
+		data-signals="{_fileSize: '0mb', _fileName: ''}"
+	>
 		<a
 			href="javascript:window.history.back();"
 			class="btn btn--outline back-button"
@@ -400,20 +410,24 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 				</div>
 			</div>
 		} else {
-			<banner-cropper
-				event-id={ eventId }
-				width="600"
-				height="350"
-				image-kind="card"
-				data-attr:image-url="$sourceImageUrl"
-			></banner-cropper>
-			<banner-cropper
-				event-id={ eventId }
-				width="1360"
-				height="400"
-				image-kind="banner"
-				data-attr:image-url="$sourceImageUrl"
-			></banner-cropper>
+			<div class="surface-pane">
+				<banner-cropper
+					event-id={ eventId }
+					width="600"
+					height="350"
+					image-kind="card"
+					data-attr:image-url="$sourceImageUrl"
+				></banner-cropper>
+			</div>
+			<div class="surface-pane">
+				<banner-cropper
+					event-id={ eventId }
+					width="1360"
+					height="400"
+					image-kind="banner"
+					data-attr:image-url="$sourceImageUrl"
+				></banner-cropper>
+			</div>
 		}
 	</article>
 }
