@@ -286,9 +286,11 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                     display: grid;
                     grid-template-columns: 1fr 1fr;
                     place-items: center start;
+                    padding-inline: var(--spacing-5x);
+                    padding-block: var(--spacing-4x);
 
                     .remove-file {
-                        place-self: end;
+                        place-self: center end;
                     }
                 }
 
@@ -335,7 +337,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                     }
                 }
 
-                .item-card {
+                .item-card:is(:not(.file-info)) {
                     padding: 0;
                     border-radius: var(--border-radius-1x);
                     border: 1px solid var(--bg-item-border)
