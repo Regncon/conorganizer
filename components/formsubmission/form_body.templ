@@ -275,7 +275,7 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                             gap: var(--spacing-5x);
                             block-size: 100%;
                             padding: var(--spacing-4x);
-                            align-content: space-between;
+                            place-content: space-between;
                             border: 1px solid var(--bg-item-border);
                             border-radius: var(--border-radius-2x);
                             background: var(--bg-item);
@@ -317,8 +317,10 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                         }
 
                         .image-upload__panel--has-image {
-
-                            align-content: end;
+                            grid-template-rows: 162px auto;
+                            gap: 0;
+                            place-content: end;
+                            place-items: end;
                             overflow: hidden;
                             background:
                                 linear-gradient(
