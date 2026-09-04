@@ -205,62 +205,6 @@ func cacheBustedImageURL(imageURL string) string {
 }
 
 templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
-	<style>
-		.img-upload-form-content {
-			display: flex;
-			flex-direction: column;
-			gap: var(--responsive-pane-column-spacing);
-		}
-		.back-button-container {
-			display: flex;
-			align-items: flex-start;
-		}
-		.image-upload-container {
-			display: flex;
-			flex-direction: column;
-			gap: var(--spacing-5x);
-		}
-
-		.image-upload-info-label {
-			font-weight: 700;
-		}
-		.image-upload-file-form {
-			display: grid;
-			grid-template-columns: minmax(0, 1fr) auto;
-			place-items: center end;
-			gap: var(--spacing-2x);
-            margin-inline-start: auto;
-		}
-		.image-upload-file-form .feedback-error {
-			grid-column: 1 / -1;
-			justify-self: end;
-		}
-		.event-image-thumbnail-display {
-			max-width: 600px;
-			margin: auto;
-		}
-		.event-image-banner-display {
-			position: relative;
-			border-radius: var(--border-radius-2x);
-		}
-		.event-image-title-preview {
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			text-align: center;
-			gap: var(--spacing-4x);
-			padding: var(--spacing-4x);
-			background-color: var(--bg-base);
-			border-bottom-right-radius: var(--border-radius-2x);
-			border-bottom-left-radius: var(--border-radius-2x);
-		}
-		.event-image-title-preview.banner-image {
-			position: relative;
-			margin: -56px 80px 0; /* negative margin here should be updated, probably won't be 100% accurate */
-			border-radius: var(--border-radius-2x);
-			z-index: 2;
-		}
-	</style>
 	{{
 		event, eventErr := eventservice.GetEventById(eventId, db)
 		var title, intro string
@@ -280,6 +224,33 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		<p>Fann ikkje arrangementet</p>
 		return
 	}
+	<style>
+        .page-content-container {
+            max-width: 1020px;
+        }
+
+        .img-upload-form-content {
+            display: flex;
+            flex-direction: column;
+            gap: var(--responsive-pane-column-spacing);
+
+            .back-button-container {
+                display: flex;
+                align-items: flex-start;
+            }
+
+            .image-upload-container {
+                display: flex;
+                flex-direction: column;
+                gap: var(--spacing-5x);
+
+                .image-upload-info-label {
+                    font-weight: 700;
+                }
+            }
+
+        }
+    </style>
 	<script src="/static/web_components/banner_cropper.js"></script>
 	@toast.Render("Lagra", icons.ProgressComplete)
 	if showUploadToast {
@@ -329,6 +300,9 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						og promotere spelet/systemet du skal bruke på arrangementet.
 					</p>
 				</div>
+			</div>
+			<div class="surface-pane">
+				<h4>Last opp bilete</h4>
 			</div>
 		</div>
 		{ title } { intro }
