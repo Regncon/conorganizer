@@ -273,9 +273,10 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
 
                     .image-upload__panel {
                         display: grid;
-                        gap: var(--spacing-2x);
-                        min-block-size: 9.375rem;
-                        padding: var(--spacing-3x);
+                        grid-template-rows: 100px auto;
+                        gap: var(--spacing-5x);
+                        block-size: 100%;
+                        padding: var(--spacing-4x);
                         align-content: space-between;
                         border: 1px solid var(--bg-item-border);
                         border-radius: var(--border-radius-2x);
@@ -285,7 +286,7 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                     }
 
                     .image-upload__panel--has-image {
-                        min-block-size: clamp(8.75rem, 36cqw, 13rem);
+
                         align-content: end;
                         overflow: hidden;
                         background:
@@ -309,12 +310,12 @@ templ FormBody(event *models.Event, eventImageDir *string, isAdmin bool, db *sql
                     }
 
                     .image-upload__content {
-                        display: grid;
-                        grid-template-columns: 2.5rem minmax(0, 1fr);
-                        grid-template-rows: 74px;
+                        display: flex;
+                        height: auto;
+                        max-height: 102px;
                         gap: var(--spacing-2x);
-                        align-items: start;
                         place-items: center;
+                        place-content: center;
                     }
 
                     .image-upload__text {
