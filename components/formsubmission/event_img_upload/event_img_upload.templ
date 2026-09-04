@@ -33,7 +33,7 @@ func EventImageRoute(router chi.Router, db *sql.DB, eventImageDir *string, logge
 		userInfo := userctx.GetUserRequestInfo(ctx)
 		showUploadToast := r.URL.Query().Get("uploaded") == "source"
 		if err := layouts.Base(
-			"Last opp bilete",
+			"Legg til bilete",
 			userInfo,
 			page(eventId, db, eventImageDir, logger, showUploadToast),
 		).Render(ctx, w); err != nil {
@@ -207,18 +207,14 @@ func cacheBustedImageURL(imageURL string) string {
 templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger, showUploadToast bool) {
 	{{
 		event, eventErr := eventservice.GetEventById(eventId, db)
-		var title, currentBreadcrumb string
+		var title string
 		imageUrl := getUploadedSourceImageURL(eventId, eventImageDir)
 		if eventErr == nil && event != nil {
 			title = event.Title
-			currentBreadcrumb = "Last opp bilete"
 		}
 
 		if title == "" {
 			title = "Mangler navn"
-		}
-		if imageUrl != "" {
-			currentBreadcrumb = "Rediger bilete"
 		}
 	}}
 	if eventErr != nil {
@@ -343,17 +339,17 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		{Name: "Heim", Url: "/"},
 		{Name: "Mine arrangement", Url: "/profile/"},
 		{Name: title, Url: "/profile/new/" + eventId + "/"},
-		{Name: currentBreadcrumb, Url: ""},
+		{Name: "Legg til bilete", Url: ""},
 	})
-	if imageUrl == "" {
-		<article class="page-content-container">
-			<a
-				href="javascript:window.history.back();"
-				class="btn btn--outline back-button"
-			>
-				Tilbake
-			</a>
-			<h1>Last opp bilete</h1>
+	<article class="page-content-container">
+		<a
+			href="javascript:window.history.back();"
+			class="btn btn--outline back-button"
+		>
+			Tilbake
+		</a>
+		<h1>Legg til bilete</h1>
+		if imageUrl == "" {
 			<div
 				class="img-upload-form-content"
 				data-signals={ formsubmission.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
@@ -403,6 +399,21 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					</form>
 				</div>
 			</div>
-		</article>
-	}
+		} else {
+			<banner-cropper
+				event-id={ eventId }
+				width="600"
+				height="350"
+				image-kind="card"
+				data-attr:image-url="$sourceImageUrl"
+			></banner-cropper>
+			<banner-cropper
+				event-id={ eventId }
+				width="1360"
+				height="400"
+				image-kind="banner"
+				data-attr:image-url="$sourceImageUrl"
+			></banner-cropper>
+		}
+	</article>
 }
