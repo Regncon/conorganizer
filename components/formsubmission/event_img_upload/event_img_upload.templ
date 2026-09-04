@@ -264,12 +264,20 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                     place-items: center;
                     place-content: center;
                     height: 208px;
+                    position: relative;
 
                     p+p {
                         margin-block-start: var(--spacing-3x)
                     }
                     p:last-child {
                         margin:0;
+                    }
+
+                    input[type="file"] {
+                        height: 100%;
+                        width: 100%;
+                        position: absolute;
+                        opacity: 0;
                     }
 
                     .image-upload-icon-wrapper {
@@ -342,14 +350,15 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			</div>
 			<div class="surface-pane image-upload-content">
 				<h4>Last opp bilete</h4>
-				<div class="item-card image-upload-card">
+				<form class="item-card image-upload-card">
+					<input type="file" name="image" accept=".jpg, .jpeg, .png, .webp .gif" required/>
 					<div class="image-upload-icon-wrapper">
 						@icons.Icon(icons.FileUpload, icons.Size20)
 					</div>
 					<p>Klikk her eller dra et bilde inn for å laste det opp.</p>
 					<p>Støttede formater: PNG, JPG, ...</p>
 					<p>(Opp til YYmb)</p>
-				</div>
+				</form>
 			</div>
 		</div>
 		{ title } { intro }
