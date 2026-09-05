@@ -249,56 +249,67 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                 }
 
                 const initPopulateFileInfo = (relativePath) => {
+                    const uploadElement = document.querySelector('input[type="file"]')
+                    const uploadedImage = uploadElement.files[0]
+
+                    if (uploadedImage?.size && uploadedImage?.name) {
+                        calcSizeAndDispatchEvent(uploadedImage.size, uploadedImage.name)
+                        return;
+                    }
+
                     fetch(relativePath).then(res => {
                         if (res.ok) {
                             res.blob().then(blob => {
-                                const sizeInBytes = blob.size;
-                                const sizeInKB = (sizeInBytes / 1024)
-                                const sizeInMB = (sizeInBytes / (1024 * 1024))
-                                let fileSize;
-
-                                if (sizeInMB < 0.5) {
-                                    fileSize = `(${sizeInKB.toFixed(2)}kb)`;
-                                } else {
-                                    fileSize = `(${sizeInMB.toFixed(2)}mb)`;
-                                }
-                                const fileName = shortenFilename(relativePath.split("/").pop());
-
-                                document.dispatchEvent(
-                                    new CustomEvent("init-file-info", {
-                                        detail: {
-                                            fileSize,
-                                            fileName
-                                        },
-                                        bubbles: true,
-                                        composed: true,
-                                    }),
-                                );
+                                calcSizeAndDispatchEvent(blob.size, relativePath, true)
                             })
                         }
                     }).catch(error => console.error("Could not read local file size:", error))
+
+                }
+
+                function calcSizeAndDispatchEvent(size, name = "", relative = false) {
+                    const sizeInBytes = size;
+                    const sizeInKB = (sizeInBytes / 1024)
+                    const sizeInMB = (sizeInBytes / (1024 * 1024))
+                    let fileSize;
+
+                    if (sizeInMB < 0.5) {
+                        fileSize = `(${sizeInKB.toFixed(2)}kb)`;
+                    } else {
+                        fileSize = `(${sizeInMB.toFixed(2)}mb)`;
+                    }
+
+                    if (relative) name = name.split("/").pop()
+
+                    const fileName = shortenFilename(name);
+
+                    document.dispatchEvent(
+                        new CustomEvent("init-file-info", {
+                            detail: {
+                                fileSize,
+                                fileName
+                            },
+                            bubbles: true,
+                            composed: true,
+                        }),
+                    );
                 }
 
                 function shortenFilename(filename, maxLength = 27) {
-                    // 1. Extract the extension and the base name
                     const lastDot = filename.lastIndexOf('.');
-                    if (lastDot === -1) return filename; // No extension found
+                    if (lastDot === -1) return filename;
 
-                    const ext = filename.substring(lastDot); // e.g., ".png"
+                    const ext = filename.substring(lastDot);
                     const baseName = filename.substring(0, lastDot);
 
-                    // If the whole filename already fits, return it as-is
                     if (filename.length <= maxLength) return filename;
 
-                    // 2. Define your fixed end piece (5 chars before extension + extension)
                     const endCharsCount = 5;
-                    const endPart = baseName.slice(-endCharsCount) + ext; // e.g., "langt.png"
+                    const endPart = baseName.slice(-endCharsCount) + ext;
                     const ellipsis = "...";
 
-                    // 3. Calculate how much space is left for the start of the name
                     const availableForStart = maxLength - ellipsis.length - endPart.length;
 
-                    // If the constraints don't physically fit, fallback to standard truncation
                     if (availableForStart <= 0) return filename.substring(0, maxLength - ext.length) + ext;
 
                     const startPart = baseName.substring(0, availableForStart);
@@ -431,8 +442,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 	})
 	<article
 		class="page-content-container"
-		data-signals__ifmissing="{_fileName: 'Filnavn-som-er-litteg...langt.png', _fileSize: '(0mb)'}"
-		data-init={ fmt.Sprintf("initPopulateFileInfo('/event-images/%s_source.png')", eventId) }
+		data-signals__ifmissing={ fmt.Sprintf("{_fileName: 'Ingen fil lastet opp', _fileSize: '(0mb)', _showUploadForm: %t}", imageUrl == "") }
 		data-on:init-file-info__document="$_fileSize = evt.detail.fileSize; $_fileName = evt.detail.fileName"
 	>
 		<a
@@ -442,6 +452,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			Tilbake
 		</a>
 		<h1>Legg til bilete</h1>
+		<pre data-json-signals></pre>
 		<div
 			class="img-upload-form-content"
 			data-signals={ formsubmission.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
@@ -462,64 +473,71 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					</p>
 				</div>
 			</div>
-			if imageUrl == "" {
-				<div class="surface-pane image-upload-content">
-					<h4>Last opp bilete</h4>
-					<form
-						enctype="multipart/form-data"
-						data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/upload', {contentType: 'form'})", eventId) }
-						data-signals="{test1: 1, test2: 3, _replace: false}"
-						class="item-card image-upload-card"
-					>
-						<input
-							data-on:drop="$test2 = 5; el.files = evt.dataTransfer.files; el.closest('form').requestSubmit();"
-							data-on:dragend="console.log('End',{evt}); $test2 = 3;"
-							data-class:is-drag-over="$test2 === 4 ? true : false"
-							data-on:change=" el.closest('form').requestSubmit();"
-							data-effect="$_replace === true && window.location.replace(window.location.href)"
-							data-on:datastar-fetch="evt.detail.type === 'finished' ? $_replace = true : null"
-							type="file"
-							name="image"
-							accept="image/*"
-							required
-						/>
-						<div class="image-upload-icon-wrapper" data-class:spin="$test2 === 5">
-							@icons.Icon(icons.FileUpload, icons.Size20)
-						</div>
-						<p>Klikk her eller dra et bilde inn for å laste det opp.</p>
-						<p>Støttede formater: PNG, JPG, ...</p>
-						<p>(Opp til YYmb)</p>
-					</form>
-				</div>
-			} else {
-				<div class="surface-pane image-upload-content">
-					<h4>Last opp bilete</h4>
-					<div class="item-card file-info">
-						<p>
-							<span class="file-name" data-text="$_fileName"></span> <span class="text-soft" data-text="$_fileSize"></span>
-						</p>
-						<button class="btn btn--outline remove-file">Slett bilete</button>
+			<div
+				data-show="$_showUploadForm"
+				class="surface-pane image-upload-content"
+			>
+				<h4>Last opp bilete</h4>
+				<form
+					enctype="multipart/form-data"
+					data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/upload', {contentType: 'form'})", eventId) }
+					data-signals="{test1: 1, test2: 3, _replace: false}"
+					class="item-card image-upload-card"
+				>
+					<!-- data-effect="$_replace === true && window.location.replace(window.location.href)"  -->
+					<input
+						data-on:drop="$test2 = 5; el.files = evt.dataTransfer.files; el.closest('form').requestSubmit(); $_showUploadForm = false"
+						data-on:dragend="console.log('End',{evt}); $test2 = 3;"
+						data-class:is-drag-over="$test2 === 4 ? true : false"
+						data-on:change=" el.closest('form').requestSubmit();"
+						data-effect="$_replace === true"
+						data-on:datastar-fetch="evt.detail.type === 'finished' ? $_replace = true : null"
+						type="file"
+						name="image"
+						accept="image/*"
+						required
+					/>
+					<div class="image-upload-icon-wrapper" data-class:spin="$test2 === 5">
+						@icons.Icon(icons.FileUpload, icons.Size20)
 					</div>
+					<p>Klikk her eller dra et bilde inn for å laste det opp.</p>
+					<p>Støttede formater: PNG, JPG, ...</p>
+					<p>(Opp til YYmb)</p>
+				</form>
+			</div>
+			<div
+				data-show="!$_showUploadForm"
+				class="surface-pane image-upload-content"
+			>
+				<h4>Last opp bilete</h4>
+				<div
+					data-effect={ fmt.Sprintf("$_showUploadForm === false && initPopulateFileInfo('/event-images/%s_source.png')", eventId) }
+					class="item-card file-info"
+				>
+					<p>
+						<span class="file-name" data-text="$_fileName"></span> <span class="text-soft" data-text="$_fileSize"></span>
+					</p>
+					<button class="btn btn--outline remove-file">Slett bilete</button>
 				</div>
-				<div class="surface-pane">
-					<banner-cropper
-						event-id={ eventId }
-						width="600"
-						height="350"
-						image-kind="card"
-						data-attr:image-url="$sourceImageUrl"
-					></banner-cropper>
-				</div>
-				<div class="surface-pane">
-					<banner-cropper
-						event-id={ eventId }
-						width="1360"
-						height="400"
-						image-kind="banner"
-						data-attr:image-url="$sourceImageUrl"
-					></banner-cropper>
-				</div>
-			}
+			</div>
+			<div class="surface-pane" data-show="!$_showUploadForm">
+				<banner-cropper
+					event-id={ eventId }
+					width="600"
+					height="350"
+					image-kind="card"
+					data-attr:image-url="$sourceImageUrl"
+				></banner-cropper>
+			</div>
+			<div class="surface-pane" data-show="!$_showUploadForm">
+				<banner-cropper
+					event-id={ eventId }
+					width="1360"
+					height="400"
+					image-kind="banner"
+					data-attr:image-url="$sourceImageUrl"
+				></banner-cropper>
+			</div>
 		</div>
 	</article>
 }
