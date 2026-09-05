@@ -33,114 +33,139 @@ class BannerCropper extends HTMLElement {
 
         root.innerHTML = `
         <style>
-            input[type="range"] {
-                --range-thumb-border: #FFC483;
-                --range-thumb-size: 20px;
-                --range-thumb-background: var(--color-primary);
+            .banner-cropper {
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+                background: var(--color-bg-secondary);
 
-                --range-track-size: 12px;
-                --range-track-border: var(--bg-item-border);
-                --range-track-border-size: 1px;
-                --range-track-background: var(--bg-item);
 
-                --range-progress: 0%;
-                --range-progress-background: var(--color-primary-focus-visible);
-                /* firefox makes color a bit darker */
-                --range-progress-background-chromium: #997759;
-                --range-progress-border: var(--bg-item-hover);
+                .banner-cropper-status-error {
+                    display: block;
+                    }
 
-                --range-focus-ring: var(--bg-item-border-hover);
+                    .banner-cropper-camera-icon {
+                        display: none;
+                    }
 
-                appearance: none;
-                -webkit-appearance: none;
-                inline-size: 100%;
-                margin-block: 10px;
-                background: transparent;
-                cursor: pointer;
+                    .banner-cropper-canvas {
+                        cursor: move;
+                    }
+                .banner-cropper-controls {
+                    display: flex;
+                    gap: 1rem;
+                    place-items: center;
 
-                &:focus {
-                    outline: none;
-                }
+                     input[type="range"] {
+                        --range-thumb-border: #FFC483;
+                        --range-thumb-size: 20px;
+                        --range-thumb-background: var(--color-primary);
 
-                /* Chrome, Edge and Safari: complete track */
-                &::-webkit-slider-runnable-track {
-                    block-size: var(--range-track-size);
-                    background: linear-gradient(
-                        to right,
-                        var(--range-progress-background-chromium) 0 var(--range-progress),
-                        var(--range-track-background) var(--range-progress) 100%
-                    );
-                    border: 0;
-                    border-radius: 100vw;
-                    outline: 1px solid var(--range-track-border);
-                    outline-offset: -1px;
-                }
+                        --range-track-size: 12px;
+                        --range-track-border: var(--bg-item-border);
+                        --range-track-border-size: 1px;
+                        --range-track-background: var(--bg-item);
 
-                /* Chrome, Edge and Safari: thumb */
-                &::-webkit-slider-thumb {
-                    appearance: none;
-                    -webkit-appearance: none;
-                    inline-size: var(--range-thumb-size);
-                    block-size: var(--range-thumb-size);
-                    margin-top: calc(
-                        (var(--range-track-size) - var(--range-thumb-size)) / 2
-                    );
-                    background: var(--range-thumb-background);
-                    border: 1px solid var(--range-thumb-border);
-                    border-radius: 50%;
-                    cursor: grab;
-                    /* take thumb above outline */
-                    position: relative;
-                }
+                        --range-progress: 0%;
+                        --range-progress-background: var(--color-primary-focus-visible);
+                        /* firefox makes color a bit darker */
+                        --range-progress-background-chromium: #997759;
+                        --range-progress-border: var(--bg-item-hover);
 
-                &:active::-webkit-slider-thumb {
-                    cursor: grabbing;
-                }
+                        --range-focus-ring: var(--bg-item-border-hover);
 
-                &:focus-visible::-webkit-slider-runnable-track {
-                    box-shadow: 0 0 0 2px var(--range-focus-ring);
-                }
+                        appearance: none;
+                        -webkit-appearance: none;
+                        inline-size: 100%;
+                        margin-block: 10px;
+                        background: transparent;
+                        cursor: pointer;
 
-                /* Firefox: right-side track */
-                &::-moz-range-track {
-                    block-size: var(--range-track-size);
-                    box-sizing: border-box;
-                    background: var(--range-track-background);
-                    border: 1px solid var(--range-track-border);
-                    border-radius: 100vw;
-                }
+                        &:focus {
+                            outline: none;
+                        }
 
-                /* Firefox: left-side progress */
-                &::-moz-range-progress {
-                    block-size: var(--range-track-size);
-                    background: var(--range-progress-background);
-                    outline: 1px var(--bg-item-hover) solid;
-                    outline-offset: -1px;
-                    border-radius: 100vw;
-                }
+                        /* Chrome, Edge and Safari: complete track */
+                        &::-webkit-slider-runnable-track {
+                            block-size: var(--range-track-size);
+                            background: linear-gradient(
+                                to right,
+                                var(--range-progress-background-chromium) 0 var(--range-progress),
+                                var(--range-track-background) var(--range-progress) 100%
+                            );
+                            border: 0;
+                            border-radius: 100vw;
+                            outline: 1px solid var(--range-track-border);
+                            outline-offset: -1px;
+                        }
 
-                /* Firefox: thumb */
-                &::-moz-range-thumb {
-                    inline-size: var(--range-thumb-size);
-                    block-size: var(--range-thumb-size);
-                    box-sizing: border-box;
-                    background: var(--range-thumb-background);
-                    border: 1px solid var(--range-thumb-border);
-                    border-radius: 50%;
-                    cursor: grab;
-                }
+                        /* Chrome, Edge and Safari: thumb */
+                        &::-webkit-slider-thumb {
+                            appearance: none;
+                            -webkit-appearance: none;
+                            inline-size: var(--range-thumb-size);
+                            block-size: var(--range-thumb-size);
+                            margin-top: calc(
+                                (var(--range-track-size) - var(--range-thumb-size)) / 2
+                            );
+                            background: var(--range-thumb-background);
+                            border: 1px solid var(--range-thumb-border);
+                            border-radius: 50%;
+                            cursor: grab;
+                            /* take thumb above outline */
+                            position: relative;
+                        }
 
-                &:active::-moz-range-thumb {
-                    cursor: grabbing;
-                }
+                        &:active::-webkit-slider-thumb {
+                            cursor: grabbing;
+                        }
 
-                &:focus-visible::-moz-range-track {
-                    box-shadow: 0 0 0 2px var(--range-focus-ring);
+                        &:focus-visible::-webkit-slider-runnable-track {
+                            box-shadow: 0 0 0 2px var(--range-focus-ring);
+                        }
+
+                        /* Firefox: right-side track */
+                        &::-moz-range-track {
+                            block-size: var(--range-track-size);
+                            box-sizing: border-box;
+                            background: var(--range-track-background);
+                            border: 1px solid var(--range-track-border);
+                            border-radius: 100vw;
+                        }
+
+                        /* Firefox: left-side progress */
+                        &::-moz-range-progress {
+                            block-size: var(--range-track-size);
+                            background: var(--range-progress-background);
+                            outline: 1px var(--bg-item-hover) solid;
+                            outline-offset: -1px;
+                            border-radius: 100vw;
+                        }
+
+                        /* Firefox: thumb */
+                        &::-moz-range-thumb {
+                            inline-size: var(--range-thumb-size);
+                            block-size: var(--range-thumb-size);
+                            box-sizing: border-box;
+                            background: var(--range-thumb-background);
+                            border: 1px solid var(--range-thumb-border);
+                            border-radius: 50%;
+                            cursor: grab;
+                        }
+
+                        &:active::-moz-range-thumb {
+                            cursor: grabbing;
+                        }
+
+                        &:focus-visible::-moz-range-track {
+                            box-shadow: 0 0 0 2px var(--range-focus-ring);
+                        }
+                    }
                 }
             }
         </style>
-        <div style="display:flex; flex-direction: column; gap:1rem; background: var(--color-bg-secondary);">
-            <div style="display:flex; gap:1rem; align-items:center;">
+        <div class="banner-cropper">
+            <div class="banner-cropper-controls">
                 <div>
                     <label for="zoom">Zoom:</label>
                     <input id="zoom" class="slider" type="range" min="1" max="3" step="0.01" value="1" disabled>
@@ -152,13 +177,13 @@ class BannerCropper extends HTMLElement {
                     >Lagre</button>
                 <span id="statusInline" aria-live="polite"></span>
             </div>
-            <span id="statusError" aria-live="polite" style="display:block;"></span>
-            <span id="cameraIcon" style="display:none">
+            <span id="statusError" class="banner-cropper-status-error" aria-live="polite"></span>
+            <span id="cameraIcon" class="banner-cropper-camera-icon">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="200" height="200">
                     <path fill="currentColor" d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM4 4h3.2l1.6-2h6.4l1.6 2H20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v12h16V6h-3.2l-1.6 2H8.8L7.2 6H4Z"/>
                     </svg>
                 </span>
-            <canvas id="canvas" style="cursor:move" aria-label="Banner canvas"></canvas>
+            <canvas id="canvas" class="banner-cropper-canvas" aria-label="Banner canvas"></canvas>
         </div>
         `
 
