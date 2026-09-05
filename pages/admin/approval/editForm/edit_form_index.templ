@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/toast"
 	"github.com/Regncon/conorganizer/layouts"
@@ -60,4 +61,7 @@ templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, eventImageD
 	>
 		@EditEventFormPageContent(ctx, eventId, db, eventImageDir, logger)
 	</div>
+	// Outside #edit-form-container on purpose: the live stream morphs that
+	// subtree, and a morph would strip the dialog's `open` state mid-warning.
+	@formsubmission.ApprovalAgeWarningDialog()
 }
