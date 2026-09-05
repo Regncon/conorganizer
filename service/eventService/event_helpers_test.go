@@ -4,8 +4,72 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
+
+func TestGetEventById_LoadsOpenRegistration(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an event configured for open registration.",
+		When:  "When the event is loaded by ID.",
+		Then:  "Then its open-registration configuration is returned.",
+	})
+
+	// Given
+	expectedOpenRegistration := true
+	db := testutil.CreateTestDB(t, "get_open_registration_event")
+	testutil.MustExec(t, db, `
+		INSERT INTO events(
+			id, title, intro, description, host_name, email, phone_number,
+			max_players, is_open_registration
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, "open-event", "Blood in the Clock Tower", "Intro", "Description", "Host", "host@example.com", "12345678", 8, expectedOpenRegistration)
+
+	// When
+	event, err := GetEventById("open-event", db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected event lookup to succeed: %v", err)
+	}
+	if event == nil {
+		t.Fatal("expected event to be returned")
+	}
+	if event.IsOpenRegistration != expectedOpenRegistration {
+		t.Fatalf("open-registration mismatch\nexpected: %t\nactual:   %t", expectedOpenRegistration, event.IsOpenRegistration)
+	}
+}
+
+func TestGetEventById_OpenRegistrationDefaultsToFalse(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given an event without explicit open-registration configuration.",
+		When:  "When the event is loaded by ID.",
+		Then:  "Then open registration is disabled by default.",
+	})
+
+	// Given
+	expectedOpenRegistration := false
+	db := testutil.CreateTestDB(t, "get_regular_event")
+	testutil.MustExec(t, db, `
+		INSERT INTO events(
+			id, title, intro, description, host_name, email, phone_number, max_players
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+	`, "regular-event", "Call of Cthulhu", "Intro", "Description", "Host", "host@example.com", "12345678", 5)
+
+	// When
+	event, err := GetEventById("regular-event", db)
+
+	// Then
+	if err != nil {
+		t.Fatalf("expected event lookup to succeed: %v", err)
+	}
+	if event == nil {
+		t.Fatal("expected event to be returned")
+	}
+	if event.IsOpenRegistration != expectedOpenRegistration {
+		t.Fatalf("open-registration mismatch\nexpected: %t\nactual:   %t", expectedOpenRegistration, event.IsOpenRegistration)
+	}
+}
 
 func TestSanitizeMdToHTML_RendersSafeMarkdownAndRawHTML(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{

@@ -567,3 +567,38 @@ Shall I implement step 1 with that scope?
 Time: 2026-09-05 13:17:20
 --- Next Prompt ---
 
+Let's start the implementation phase. 
+Have a look at the current schema for the evnts table and see if there is already something we can use or perhaps it already exists with a different name. If not, we will need to add a new column for `is_open_registration`.
+
+Time: 2026-09-05 13:24:47
+--- Codex Run ---
+
+Codex output:
+I’ll implement this as the first narrow foundation step. I’ll verify there is no equivalent event field, then add `is_open_registration` with a safe default, expose it through `models.Event` and `GetEventById`, and add focused tests. I won’t wire the admin form or registration behavior yet.
+The schema check is complete: there is no existing column or differently named field that represents open registration. Runtime (`event_runtime`) and publication flags cover different concerns, so reusing either would conflate behavior. I’m adding the dedicated boolean now.
+The code change is in place. The first test run hit the sandbox’s read-only default Go build cache, not a code failure; I’m rerunning with an isolated cache under `/tmp`.
+The focused Go tests pass. I’m also validating the Goose migration independently; the installed Goose version uses a different CLI argument order than the project documentation example, so I’m correcting that invocation before calling the migration verified.
+The migration now passes both directions on an isolated pre-change database: existing rows receive `0`, the column is `NOT NULL`, and rollback removes it cleanly. The full Go test suite also passes. I’m doing the final diff review now and will then hand this step back for discussion before we wire the admin control.
+No existing field represented open registration, so I added `is_open_registration`.
+
+Changes:
+
+- Added a non-null boolean-like column defaulting to `false` in [initialize.sql](/home/cinmay/Documents/conorganizer/initialize.sql:61) and [schema.sql](/home/cinmay/Documents/conorganizer/schema.sql:120).
+- Added the Goose migration [20260905133000_add_open_registration_to_events.sql](/home/cinmay/Documents/conorganizer/migrations/20260905133000_add_open_registration_to_events.sql).
+- Added `IsOpenRegistration` to [event-model.go](/home/cinmay/Documents/conorganizer/models/event-model.go:148).
+- Updated `GetEventById` to load it.
+- Added tests for enabled and default-disabled events.
+
+Verification:
+
+- Migration `up` and `down` both pass against an isolated pre-change database.
+- `go test ./...` passes.
+
+For the next small step, I recommend adding the `registration` attendee source to the schema and Go model, without wiring registration behavior yet. Shall I proceed with that?
+
+text
+2026-09-05T11:22:34.347816Z ERROR codex_core::tools::router: error=exec_command failed for `/usr/bin/zsh -lc 'mkdir -p /tmp/conorganizer-go-cache /tmp/conorganizer-go-mod-cache && GOCACHE=/tmp/conorganizer-go-cache GOMODCACHE=/tmp/conorganizer-go-mod-cache go test ./service/eventService ./service'`: ProcessFailed { message: "Network access to \"proxy.golang.org\" was blocked: domain is not on the allowlist for the current sandbox mode." }
+
+Time: 2026-09-05 13:24:47
+--- Next Prompt ---
+

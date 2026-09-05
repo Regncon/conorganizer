@@ -117,6 +117,7 @@ CREATE TABLE "events"(
   email TEXT NOT NULL,
   phone_number TEXT NOT NULL,
   max_players INTEGER NOT NULL,
+  is_open_registration INTEGER NOT NULL DEFAULT 0 CHECK(is_open_registration IN(0, 1)),
   beginner_friendly INTEGER NOT NULL DEFAULT 0 CHECK(beginner_friendly IN(0, 1)),
   can_be_run_in_english INTEGER NOT NULL DEFAULT 0 CHECK(can_be_run_in_english IN(0, 1)),
   notes TEXT DEFAULT '',
