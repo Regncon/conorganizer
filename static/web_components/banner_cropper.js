@@ -38,7 +38,7 @@ class BannerCropper extends HTMLElement {
             .banner-cropper-wrapper {
                 display: flex;
                 flex-direction: column;
-                gap: 1rem;
+                gap: var(--spacing-4x);
                 inline-size: min-content;
 
                 .banner-cropper-image-slider {
