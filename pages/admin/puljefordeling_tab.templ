@@ -94,8 +94,8 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	// Add a manual pin (+). Force-pins the chosen billettholder into the event
-	// without touching their interests; removing the pin reverts them to emulation.
+	// Add a manual pin (+). Force-pins the chosen billettholder into the event,
+	// removes the matching interest, and preserves independent registrations.
 	router.Post("/api/puljefordeling/assign", func(w http.ResponseWriter, r *http.Request) {
 		type Store struct {
 			BillettholderID int    `json:"assignmentBillettholderId"`
@@ -145,8 +145,8 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	// Remove a manual pin (×). Manual-only: solver/GM rows are untouched. The
-	// player's interest is kept, so the solver may re-seat them by simulation.
+	// Remove a manual pin (×). Manual-only: solver, registration, and GM rows are
+	// untouched. A removed interest is not restored.
 	router.Delete("/api/puljefordeling/{pulje}/{event}/{billettholderId}", func(w http.ResponseWriter, r *http.Request) {
 		puljeID, ok := models.ParsePulje(chi.URLParam(r, "pulje"))
 		if !ok {

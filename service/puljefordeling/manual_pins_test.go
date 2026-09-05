@@ -7,6 +7,7 @@ import (
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 func TestEmulateSeatings_ManualPinSeatsPlayerWithoutInterest(t *testing.T) {
@@ -66,33 +67,116 @@ func manualSeatCount(t *testing.T, db interface {
 	return n
 }
 
-func TestAddManualSeat_CreatesPinWithoutTouchingInterest(t *testing.T) {
+func interestCount(t *testing.T, db interface {
+	QueryRow(string, ...any) *sql.Row
+}, eventID string, pulje models.Pulje, bhID int) int {
+	t.Helper()
+	var n int
+	if err := db.QueryRow(
+		`SELECT COUNT(*) FROM interests
+		 WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ?`,
+		eventID, string(pulje), bhID,
+	).Scan(&n); err != nil {
+		t.Fatalf("count interests: %v", err)
+	}
+	return n
+}
+
+func TestAddManualSeat_CreatesPinAndRemovesOnlyMatchingInterest(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en billetthelder med interesser i to arrangementer i samme pulje.",
+		When:  "Når en administrator tildeler ett av arrangementene manuelt.",
+		Then:  "Så skal tildelingen lagres og bare den samsvarende interessen fjernes.",
+	})
+
+	// Given
+	expectedManualSeats := 1
+	expectedMatchingInterests := 0
+	expectedOtherInterests := 1
 	db, _ := testutil.CreateTestDBAndLogger(t, "add_manual_seat")
 
 	const fredag = models.PuljeFredagKveld
 	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
 	seedEvent(t, db, "evA", "Alpha", 4, fredag)
+	seedEvent(t, db, "evB", "Bravo", 4, fredag)
 	seedParticipant(t, db, 1, "Kari", "Nordmann")
+	seedInterest(t, db, 1, "evA", fredag, models.InterestLevelHigh)
+	seedInterest(t, db, 1, "evB", fredag, models.InterestLevelMedium)
 
+	// When
 	if err := AddManualSeat(db, fredag, "evA", 1); err != nil {
 		t.Fatalf("AddManualSeat: %v", err)
 	}
+	actualManualSeats := manualSeatCount(t, db, "evA", fredag, 1)
+	actualMatchingInterests := interestCount(t, db, "evA", fredag, 1)
+	actualOtherInterests := interestCount(t, db, "evB", fredag, 1)
 
-	// A manual player pin is created.
-	if got := manualSeatCount(t, db, "evA", fredag, 1); got != 1 {
-		t.Fatalf("want 1 manual seat, got %d", got)
+	// Then
+	if actualManualSeats != expectedManualSeats {
+		t.Fatalf("manual seat count mismatch\nexpected: %d\nactual:   %d", expectedManualSeats, actualManualSeats)
+	}
+	if actualMatchingInterests != expectedMatchingInterests {
+		t.Fatalf("matching interest count mismatch\nexpected: %d\nactual:   %d", expectedMatchingInterests, actualMatchingInterests)
+	}
+	if actualOtherInterests != expectedOtherInterests {
+		t.Fatalf("other interest count mismatch\nexpected: %d\nactual:   %d", expectedOtherInterests, actualOtherInterests)
+	}
+}
+
+func TestAddManualSeat_MovePreservesOpenRegistration(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en billetthelder med en åpen påmelding og en ordinær manuell tildeling i samme pulje.",
+		When:  "Når administratoren flytter den ordinære tildelingen til et annet arrangement.",
+		Then:  "Så skal påmeldingen beholdes ved siden av den nye manuelle tildelingen.",
+	})
+
+	// Given
+	expectedTotalPlayerSeats := 2
+	expectedOldManualSeats := 0
+	expectedNewManualSeats := 1
+	expectedRegistrations := 1
+	db, _ := testutil.CreateTestDBAndLogger(t, "move_manual_seat_preserves_registration")
+	const fredag = models.PuljeFredagKveld
+	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedEvent(t, db, "evA", "Alpha", 4, fredag)
+	seedEvent(t, db, "evB", "Bravo", 4, fredag)
+	seedEvent(t, db, "evOpen", "Open", 100, fredag)
+	seedParticipant(t, db, 1, "Kari", "Nordmann")
+	testutil.MustExec(t, db, `
+		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES ('evOpen', ?, 1, ?, ?)
+	`, fredag, models.EventPlayerRolePlayer, models.EventPlayerSourceRegistration)
+	if err := AddManualSeat(db, fredag, "evA", 1); err != nil {
+		t.Fatalf("AddManualSeat evA: %v", err)
 	}
 
-	// Crucially, no interest is fabricated: unpinning later must revert the player
-	// to pure emulation based on their real interests.
-	var interests int
-	if err := db.QueryRow(
-		`SELECT COUNT(*) FROM interests WHERE event_id='evA' AND billettholder_id=1`,
-	).Scan(&interests); err != nil {
-		t.Fatalf("count interests: %v", err)
+	// When
+	if err := AddManualSeat(db, fredag, "evB", 1); err != nil {
+		t.Fatalf("AddManualSeat evB: %v", err)
 	}
-	if interests != 0 {
-		t.Fatalf("manual pin must not create an interest, found %d", interests)
+	actualTotalPlayerSeats := testutil.QueryInt(t, db, `
+		SELECT COUNT(*) FROM relation_events_players
+		WHERE pulje_id = ? AND billettholder_id = 1 AND role = ?
+	`, fredag, models.EventPlayerRolePlayer)
+	actualOldManualSeats := manualSeatCount(t, db, "evA", fredag, 1)
+	actualNewManualSeats := manualSeatCount(t, db, "evB", fredag, 1)
+	actualRegistrations := testutil.QueryInt(t, db, `
+		SELECT COUNT(*) FROM relation_events_players
+		WHERE event_id = 'evOpen' AND pulje_id = ? AND billettholder_id = 1 AND source = ?
+	`, fredag, models.EventPlayerSourceRegistration)
+
+	// Then
+	if actualTotalPlayerSeats != expectedTotalPlayerSeats {
+		t.Fatalf("total player seat count mismatch\nexpected: %d\nactual:   %d", expectedTotalPlayerSeats, actualTotalPlayerSeats)
+	}
+	if actualOldManualSeats != expectedOldManualSeats {
+		t.Fatalf("old manual seat count mismatch\nexpected: %d\nactual:   %d", expectedOldManualSeats, actualOldManualSeats)
+	}
+	if actualNewManualSeats != expectedNewManualSeats {
+		t.Fatalf("new manual seat count mismatch\nexpected: %d\nactual:   %d", expectedNewManualSeats, actualNewManualSeats)
+	}
+	if actualRegistrations != expectedRegistrations {
+		t.Fatalf("registration count mismatch\nexpected: %d\nactual:   %d", expectedRegistrations, actualRegistrations)
 	}
 }
 

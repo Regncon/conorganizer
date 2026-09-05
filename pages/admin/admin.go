@@ -122,7 +122,6 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							false,
 							true,
 							db,
-							baseLogger,
 						)
 						if updatePlayerStatusErr != nil {
 							logger.Error(fmt.Errorf("failed to add player as GM: %w", updatePlayerStatusErr).Error())
@@ -164,9 +163,13 @@ func SetupAdminRoute(router chi.Router, logger *slog.Logger, liveManager *live.M
 							store.IsPlayer,
 							store.IsGm,
 							db,
-							baseLogger,
 						)
 						if updatePlayerStatusErr != nil {
+							logger.Error(updatePlayerStatusErr.Error(),
+								"event_id", store.EventId,
+								"pulje_id", store.PuljeId,
+								"billettholder_id", store.BillettholderId,
+							)
 							http.Error(w, updatePlayerStatusErr.Error(), http.StatusInternalServerError)
 							return
 						}

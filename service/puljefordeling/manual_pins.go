@@ -8,11 +8,10 @@ import (
 )
 
 // AddManualSeat force-pins a participant into an event for the given pulje by
-// writing a player seat tagged source='manual'. It deliberately does NOT touch
-// the participant's interests: the pin forces and locks the placement on its own
-// (the solver honours manual seats), and removing the pin reverts the player to
-// pure emulation based on their real interests. A participant holds at most one
-// player seat per pulje, so moving them between events leaves a single pin.
+// writing a player seat tagged source='manual'. It removes the interest for the
+// assigned event and pulje, while preserving other interests and open-registration
+// seats. A participant holds at most one non-registration player seat per pulje,
+// so moving them between ordinary events leaves a single pin.
 func AddManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholderID int) error {
 	tx, err := db.Begin()
 	if err != nil {
@@ -20,12 +19,16 @@ func AddManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholder
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// Clear any prior player seat in this pulje first, so a move leaves a single
-	// pin — and once that pin is removed the player reverts to wherever the solver
-	// wants them.
+	// Clear any prior ordinary player seat in this pulje first, so a move leaves a
+	// single pin. Open-registration seats are independent and must survive.
 	if _, err := tx.Exec(
-		`DELETE FROM relation_events_players WHERE billettholder_id = ? AND pulje_id = ? AND role = ?`,
-		billettholderID, string(pulje), models.EventPlayerRolePlayer,
+		`DELETE FROM relation_events_players
+		 WHERE billettholder_id = ? AND pulje_id = ? AND role = ? AND source IN (?, ?)`,
+		billettholderID,
+		string(pulje),
+		models.EventPlayerRolePlayer,
+		models.EventPlayerSourceManual,
+		models.EventPlayerSourceSolver,
 	); err != nil {
 		return fmt.Errorf("clear prior seat (pulje=%s bh=%d): %w", pulje, billettholderID, err)
 	}
@@ -36,14 +39,19 @@ func AddManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholder
 	); err != nil {
 		return fmt.Errorf("add manual seat (pulje=%s event=%s bh=%d): %w", pulje, eventID, billettholderID, err)
 	}
+	if _, err := tx.Exec(
+		`DELETE FROM interests WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ?`,
+		eventID, string(pulje), billettholderID,
+	); err != nil {
+		return fmt.Errorf("remove interest for manual seat (pulje=%s event=%s bh=%d): %w", pulje, eventID, billettholderID, err)
+	}
 	return tx.Commit()
 }
 
 // RemoveManualSeat deletes an admin-pinned player seat (source='manual',
 // role='Player') for the given pulje/event/participant. It only removes manual
-// player pins — solver seats and GM rows are left untouched. Removing the pin
-// does not touch the player's interest, so a later emulation may still seat them
-// in the same event by simulation (now as a non-manual placement).
+// player pins — solver, registration, and GM rows are left untouched. The
+// interest removed by the original manual assignment is not restored.
 func RemoveManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholderID int) error {
 	const query = `
 		DELETE FROM relation_events_players

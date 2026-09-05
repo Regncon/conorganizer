@@ -363,7 +363,6 @@ func UpdatePlayerStatus(eventId string,
 	isPlayer bool,
 	isGM bool,
 	db *sql.DB,
-	logger *slog.Logger,
 ) error {
 	if isPlayer && isGM {
 		return fmt.Errorf("player assignment cannot be both %s and %s", models.EventPlayerRolePlayer, models.EventPlayerRoleGM)
@@ -376,7 +375,6 @@ func UpdatePlayerStatus(eventId string,
 		`
 		_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId)
 		if updatePlayerStatusErr != nil {
-			logger.Error(fmt.Errorf("failed to remove player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, updatePlayerStatusErr).Error())
 			return fmt.Errorf("remove player status (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, updatePlayerStatusErr)
 		}
 		return nil
@@ -387,6 +385,12 @@ func UpdatePlayerStatus(eventId string,
 		role = models.EventPlayerRoleGM
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin player status update (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
 	query := `
 		INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role)
 		VALUES (?, ?, ?, '` + string(role) + `')
@@ -394,9 +398,8 @@ func UpdatePlayerStatus(eventId string,
 			role = EXCLUDED.role,
 			inserted_at = ` + models.DBDateTimeNowSQL + `
 	`
-	_, updatePlayerStatusErr := db.Exec(query, eventId, puljeId, billettholderId)
+	_, updatePlayerStatusErr := tx.Exec(query, eventId, puljeId, billettholderId)
 	if updatePlayerStatusErr != nil {
-		logger.Error(fmt.Errorf("failed to update player status in the database (event_id=%s, pulje_id=%s, billettholder_id=%d, isPlayer=%t, isGM=%t): %w", eventId, puljeId, billettholderId, isPlayer, isGM, updatePlayerStatusErr).Error())
 		return fmt.Errorf(
 			"update player status (event_id=%s, pulje_id=%s, billettholder_id=%d, isPlayer=%t, isGM=%t): %w",
 			eventId,
@@ -406,6 +409,19 @@ func UpdatePlayerStatus(eventId string,
 			isGM,
 			updatePlayerStatusErr,
 		)
+	}
+
+	if isPlayer {
+		if _, err := tx.Exec(`
+			DELETE FROM interests
+			WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ?
+		`, eventId, puljeId, billettholderId); err != nil {
+			return fmt.Errorf("remove interest after manual player assignment (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, err)
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit player status update (event_id=%s, pulje_id=%s, billettholder_id=%d): %w", eventId, puljeId, billettholderId, err)
 	}
 	return nil
 }

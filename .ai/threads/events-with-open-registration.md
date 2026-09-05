@@ -835,3 +835,42 @@ Do you agree that the next step should correct ordinary manual-player assignment
 Time: 2026-09-05 15:57:50
 --- Next Prompt ---
 
+Yes, let's not combine any of the assignment workflows. 
+Please continue. 
+
+Time: 2026-09-05 16:12:34
+--- Codex Run ---
+
+Codex output:
+I’ll update the two ordinary manual-player paths independently:
+
+- Approval-page player assignment will delete only the matching interest.
+- Puljefordeling manual assignment will delete the matching interest and, when moving an ordinary seat, preserve any `registration` seats in the same pulje.
+- GM assignment and “Legg til som førsteval” remain unchanged.
+
+I’m continuing with the interview and structured-logging guidance while keeping this change narrowly scoped.
+The third workflow is committed, so I’m making this as a separate change. I’ll preserve the existing “one ordinary seat per pulje” behavior in Puljefordeling, but define “ordinary” as `manual` or `solver`; `registration` seats will no longer be swept away.
+The focused tests pass. I removed a tentative GM-interest test because we have not agreed on that behavior; this change should document only the manual-player decisions we have actually made. I’m doing the full regression pass now.
+The manual-player paths are now intentionally separate, and the changes are validated. I’m doing one final diff review so I can hand this slice back cleanly and frame the next decision without bundling in more behavior.
+The final review confirms the intended boundary: both ordinary manual-player paths remove only the matching interest, registrations survive Puljefordeling moves, and the GM/“first choice” workflows remain unchanged. I’m recording this as its own small commit; no database migration is involved.
+The manual-assignment slice is complete:
+
+- Both ordinary admin assignment paths now remove only the interest for that exact event and pulje.
+- Other interests remain untouched.
+- Puljefordeling moves preserve independent open-registration assignments.
+- GM assignment and “Legg til som førsteval” remain unchanged.
+- Added BDD coverage for interest removal and registration preservation.
+- `go test ./...` passes.
+- No Goose migration is needed.
+
+The relevant changes are in [who_is_interested.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/who_is_interested.templ), [manual_pins.go](/home/cinmay/Documents/conorganizer/service/puljefordeling/manual_pins.go), and their tests.
+
+I couldn’t create the commit because this environment currently exposes `.git` as read-only; the working-tree changes remain uncommitted.
+
+Next interview question: If an underage billettholder already has an interest in an event that is subsequently marked 18+, should they still be allowed to clear that existing interest?
+
+My recommendation is **yes**: reject new non-empty interest levels, but permit clearing stale interest because that only removes them from consideration.
+
+Time: 2026-09-05 16:12:34
+--- Next Prompt ---
+
