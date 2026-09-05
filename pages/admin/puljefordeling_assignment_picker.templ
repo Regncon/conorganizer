@@ -1,0 +1,80 @@
+package admin
+
+import (
+	"database/sql"
+	"encoding/json"
+	"fmt"
+	"log/slog"
+
+	"github.com/Regncon/conorganizer/models"
+)
+
+type puljeAssignmentCandidate struct {
+	Id        int
+	FirstName string
+	LastName  string
+}
+
+func loadPuljeAssignmentCandidates(db *sql.DB) ([]puljeAssignmentCandidate, error) {
+	rows, err := db.Query(`SELECT id, first_name, last_name FROM billettholdere ORDER BY first_name, last_name`)
+	if err != nil {
+		return nil, fmt.Errorf("query puljefordeling assignment candidates: %w", err)
+	}
+	defer rows.Close()
+
+	candidates := make([]puljeAssignmentCandidate, 0)
+	for rows.Next() {
+		var candidate puljeAssignmentCandidate
+		if err := rows.Scan(&candidate.Id, &candidate.FirstName, &candidate.LastName); err != nil {
+			return nil, fmt.Errorf("scan puljefordeling assignment candidate: %w", err)
+		}
+		candidates = append(candidates, candidate)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate puljefordeling assignment candidates: %w", err)
+	}
+	return candidates, nil
+}
+
+func puljeAssignmentAction(url string) string {
+	return fmt.Sprintf("@post('%s'); evt.currentTarget.closest('.billettholder-search')?.querySelector('admin-billettholder-search')?.clearSearch(); $assignmentBillettholderId = 0; $clearInput = $clearInput + 1", url)
+}
+
+templ puljeAssignmentSearch(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+	{{ candidates, err := loadPuljeAssignmentCandidates(db) }}
+	if err != nil {
+		{{ logger.Error(err.Error(), "pulje_id", pulje) }}
+		<p class="pulje-error">Kunne ikke hente billettholdere</p>
+	} else {
+		{{ candidatesJSON, _ := json.Marshal(candidates) }}
+		<div class="billettholder-search">
+			<admin-billettholder-search
+				data-billettholdere={ string(candidatesJSON) }
+				data-attr:clear-input="$clearInput"
+				data-on:billettholder-select="$assignmentBillettholderId = evt.detail.id"
+				input-tippy="Søk etter billettholder"
+			></admin-billettholder-search>
+			<div class="billettholder-search-buttons">
+				<button
+					type="button"
+					class="btn btn--secondary"
+					data-attr:disabled="$assignmentBillettholderId <= 0"
+					data-on:click={ puljeAssignmentAction("/admin/api/puljefordeling/assign/gm") }
+				>Legg til som spilleder</button>
+				<button
+					type="button"
+					class="btn btn--secondary"
+					data-attr:disabled="$assignmentBillettholderId <= 0"
+					data-on:click={ puljeAssignmentAction("/admin/api/puljefordeling/assign") }
+				>Legg til som spiller</button>
+				<button
+					type="button"
+					class="btn btn--secondary"
+					data-attr:disabled="$assignmentBillettholderId <= 0"
+					data-on:click={ puljeAssignmentAction("/admin/api/puljefordeling/assign/first-choice") }
+				>Legg til som førstevalg</button>
+			</div>
+			<script src="/static/web_components/admin_billettholder_search.js"></script>
+		</div>
+	}
+}

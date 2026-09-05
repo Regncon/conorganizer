@@ -874,3 +874,73 @@ My recommendation is **yes**: reject new non-empty interest levels, but permit c
 Time: 2026-09-05 16:12:34
 --- Next Prompt ---
 
+Changed of plans. We are going to entirely remove the `WhoIsInterested` from the form and keep the administration of interests in the puljefordeling admin page. There is a new design for the puljefordeling page and we will add any missing functionality from the `WhoIsInterested` page to the new puljefordeling page. 
+
+Let's start with updating the puljefordeling page.
+
+Ill update the styling later in another branch and pr. For now let's focus on the functionality of assigning players to events.
+
+Here is the functionality that we need to implement on the puljefordeling page:
+Assign Gm
+Assign Player
+Assing Player as First Choice
+Remove Gm, player or first choice.
+I do not believe we need to be able to assign a player as registered? As the manual assignment of a player is equivalent to the player registering themselves? 
+
+Once the functionality is in place we can delete the `WhoIsInterested` page and any related code.
+
+Only ask questions if you are unsure about the functionality. Otherwise please implement the functionality as described above.
+
+
+Time: 2026-09-05 16:49:04
+--- Codex Run ---
+
+Codex output:
+I’ll treat this as a functionality-only Puljefordeling slice and leave `WhoIsInterested` in place until the replacement is complete. I’m also keeping manual assignment and self-registration as distinct database sources: they have similar visible outcomes, but registration still matters for self-service deregistration and provenance.
+
+I’m using the repository’s logging guidance because this will add or change admin handlers and audit-relevant actions. First I’ll map the current Puljefordeling interaction, services, and tests, then implement the four assignment/removal operations there.
+The current page already has a solid base, but its picker is misleading: the only button says “Legg til som førsteval” while it actually performs a plain manual-player assignment. The Puljefordeling data also reduces the GM to a name, so it cannot currently render a targeted remove action.
+
+I’m going to correct this by making assignment type explicit in the shared dialog, preserving the distinct operations in the service layer, and carrying assignment identity/source through the Puljefordeling read model so the correct row can be removed.
+The three workflows now have separate domain operations and separate admin actions. “First choice” is represented by the existing semantics—manual player seat plus a matching `Veldig interessert` row—so removing a first choice removes both, while removing a plain player or GM does not manufacture or restore interests.
+
+I’ve added behavior tests around those distinctions. Next I’m regenerating the templ output and running focused tests; any template or route integration issue should surface there.
+The full suite passes. One domain edge surfaced during review: the first-choice removal endpoint should only delete the high-interest row when it actually removed a matching manual first-choice seat. I’m tightening that guard so a malformed or stale admin request cannot erase an ordinary `Veldig interessert` choice.
+The replacement functionality is now green across the full test suite. Since the Puljefordeling page now owns all four operations, I’m proceeding with the second part of your change: removing `WhoIsInterested` from the event form and deleting only the handlers, components, and tests that no longer have callers.
+`WhoIsInterested` and its private approval APIs are now removed, and the event edit form no longer renders that section. The focused packages pass after regeneration. I’m running the final repository-wide checks now, including a dead-reference scan and the logging conventions for the new Puljefordeling handlers.
+Implemented the Puljefordeling assignment workflow and removed `WhoIsInterested`.
+
+Functionality now available:
+
+- Assign GM
+- Assign player
+- Assign player as first choice
+- Remove GM, player, or first choice
+- First-choice removal deletes both the manual seat and matching high interest
+- Plain player assignments remove only the matching interest
+- Open-registration assignments remain independent and preserved
+- Completed puljer remain read-only
+- No “assign as registered” action was added; manual assignment has the same attendance outcome while retaining `source='manual'`
+
+The picker and routes are in [puljefordeling_tab.templ](/home/cinmay/Documents/conorganizer/pages/admin/puljefordeling_tab.templ:91), [puljefordeling_assignment_picker.templ](/home/cinmay/Documents/conorganizer/pages/admin/puljefordeling_assignment_picker.templ:43), and [manual_pins.go](/home/cinmay/Documents/conorganizer/service/puljefordeling/manual_pins.go:71).
+
+`WhoIsInterested`, its tests, and its private approval API routes were deleted. The event edit form now ends after the form and preview in [edit_form_page.templ](/home/cinmay/Documents/conorganizer/pages/admin/approval/editForm/edit_form_page.templ:49).
+
+The logging guidance resulted in service errors being wrapped and returned, then logged once at the admin HTTP boundary with event, pulje, and billettholder IDs.
+
+Validation: `go test ./...` passes. No migration or Goose command is needed. Changes remain uncommitted because `.git` is read-only in this environment.
+
+text
+2026-09-05T14:38:35.386916Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/service/puljefordeling/emulate.go:
+type AssignedPlayer struct {
+	BillettholderID int // participant id, for manual-seat removal from the UI
+	Name            string
+	IsDM            bool                 // runs at least one game in the weekend (DM bump)
+	Level           models.InterestLevel // their interest in the game they got
+	Moved           bool                 // bumped down to a strictly lower-interest event by the solver to make room for others (equal-interest swaps don't count)
+	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
+}
+
+Time: 2026-09-05 16:49:04
+--- Next Prompt ---
+

@@ -20,8 +20,8 @@ templ EditEventFormPage(ctx context.Context, eventId string, db *sql.DB, eventIm
 
 templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logger) {
 	{{
-	isAdmin := authctx.GetAdminFromUserToken(ctx)
-	puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db)
+		isAdmin := authctx.GetAdminFromUserToken(ctx)
+		puljerForEvent, puljerErr := eventservice.GetPujerForEvent(eventId, db)
 	}}
 	if puljerErr != nil {
 		{{ logger.Error(puljerErr.Error(), "event_id", eventId) }}
@@ -55,7 +55,4 @@ templ EditEventFormPageContent(ctx context.Context, eventId string, db *sql.DB, 
 		</form>
 		@event.EventFormPreview(eventData, puljerForEvent, eventImageDir)
 	}
-	<div class="page-content-container wide-content">
-		@formsubmission.WhoIsInterested(eventId, db, logger)
-	</div>
 }

@@ -24,6 +24,7 @@ type AssignedPlayer struct {
 	Level           models.InterestLevel // their interest in the game they got
 	Moved           bool                 // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
 	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
+	FirstChoice     bool                 // manually pinned with a matching high-interest row
 }
 
 // EmulatedEvent is the proposed seating for a single event within a pulje. The
@@ -33,6 +34,7 @@ type EmulatedEvent struct {
 	EventID           string
 	Title             string
 	Capacity          int
+	GMBillettholderID int              // zero if the event has no GM assigned
 	GMName            string           // empty if the event has no GM assigned
 	AssignedPlayers   []AssignedPlayer // sorted by name
 	Undersubscribed   bool             // fewer than the solver's viable-player threshold
@@ -195,6 +197,7 @@ func shapePulje(
 			emEv.CanBeRunInEnglish = m.canBeRunInEnglish
 		}
 		if gmID, ok := gms[eventPuljeKey(ev.ID, pulje.ID)]; ok {
+			emEv.GMBillettholderID = gmID
 			emEv.GMName = names[gmID]
 		}
 		out.Events = append(out.Events, emEv)
@@ -230,6 +233,7 @@ func assignedPlayers(
 			got := byPulje[puljeID][eventID]
 			ap.Level = models.InterestLevelFromScore(int(got))
 		}
+		ap.FirstChoice = ap.Manual && ap.Level == models.InterestLevelHigh
 		out = append(out, ap)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })
