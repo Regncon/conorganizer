@@ -3,7 +3,7 @@ const UPLOAD_ERROR_MESSAGE = "Klarte ikkje å lagre endringa. Prøv igjen. Konta
 // ---- component --------------------------------------------------------------
 class BannerCropper extends HTMLElement {
     static get observedAttributes() {
-        return ["width", "height", "image-url", "event-id", "image-kind"]
+        return ["width", "height", "preview-width", "preview-height", "image-url", "event-id", "image-kind"]
     }
 
     constructor() {
@@ -25,6 +25,8 @@ class BannerCropper extends HTMLElement {
         this.dragStartY = 0
         this.startDrawX = 0
         this.startDrawY = 0
+        this.dragScaleX = 1
+        this.dragScaleY = 1
 
         // Shadow DOM
         const root = this.attachShadow({ mode: "open" })
@@ -41,7 +43,7 @@ class BannerCropper extends HTMLElement {
 
                 .banner-cropper-image-slider {
                     display: grid;
-                    width: min-content;
+                    inline-size: var(--banner-cropper-preview-width);
                 }
 
                 .banner-cropper-status-error {
@@ -53,6 +55,8 @@ class BannerCropper extends HTMLElement {
                 }
 
                 .banner-cropper-canvas {
+                    inline-size: 100%;
+                    block-size: var(--banner-cropper-preview-height);
                     cursor: move;
                 }
 
@@ -239,6 +243,10 @@ class BannerCropper extends HTMLElement {
             this.setCanvasSize(w, h)
         }
 
+        if (name === "preview-width" || name === "preview-height") {
+            this._applyPreviewSize()
+        }
+
         if (name === "image-kind") {
             const k = this._normalizedKind()
             if (!["card", "banner"].includes(k)) {
@@ -270,12 +278,16 @@ class BannerCropper extends HTMLElement {
         this.dragStartY = e.clientY
         this.startDrawX = this.drawX
         this.startDrawY = this.drawY
+
+        const canvasBounds = this.canvas.getBoundingClientRect()
+        this.dragScaleX = canvasBounds.width > 0 ? this.canvas.width / canvasBounds.width : 1
+        this.dragScaleY = canvasBounds.height > 0 ? this.canvas.height / canvasBounds.height : 1
     }
 
     onPointerMove(e) {
         if (!this.isDragging) return
-        const dx = e.clientX - this.dragStartX
-        const dy = e.clientY - this.dragStartY
+        const dx = (e.clientX - this.dragStartX) * this.dragScaleX
+        const dy = (e.clientY - this.dragStartY) * this.dragScaleY
         this.drawX = this.startDrawX + dx
         this.drawY = this.startDrawY + dy
         this.redraw()
@@ -402,8 +414,17 @@ class BannerCropper extends HTMLElement {
         this.bannerHeight = h
         this.canvas.width = w
         this.canvas.height = h
+        this._applyPreviewSize()
         if (this.imageLoaded) this.setInitialView()
         this.redraw()
+    }
+
+    _applyPreviewSize() {
+        const previewWidth = Number(this.getAttribute("preview-width")) || this.bannerWidth
+        const previewHeight = Number(this.getAttribute("preview-height")) || this.bannerHeight
+
+        this.style.setProperty("--banner-cropper-preview-width", `${ previewWidth }px`)
+        this.style.setProperty("--banner-cropper-preview-height", `${ previewHeight }px`)
     }
 
     _loadImage(url) {

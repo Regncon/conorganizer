@@ -529,6 +529,8 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					event-id={ eventId }
 					width="600"
 					height="350"
+					preview-width="540"
+					preview-height="190"
 					image-kind="card"
 					data-attr:image-url="$sourceImageUrl"
 				></banner-cropper>
@@ -538,6 +540,8 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					event-id={ eventId }
 					width="1360"
 					height="400"
+					preview-width="980"
+					preview-height="218"
 					image-kind="banner"
 					data-attr:image-url="$sourceImageUrl"
 				></banner-cropper>
