@@ -52,6 +52,7 @@ class BannerCropper extends HTMLElement {
                 .banner-cropper-button-error-info {
                     display: grid;
                     grid-template-columns: 1fr auto;
+                    place-items: center start;
 
                     button {
                         place-self: end;
