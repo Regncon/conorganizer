@@ -1025,4 +1025,35 @@ Validation: all 323 automated tests pass, with zero failures.
 
 Time: 2026-09-05 18:21:28
 --- Next Prompt ---
+Please continue.
+
+Time: 2026-09-05 18:40:15
+--- Codex Run ---
+
+Codex output:
+I’m continuing with an end-to-end solver audit now. The remaining risk is not the UI—it is ensuring confirmed manual/registration seats are preserved, consume capacity where applicable, and exclude that billettholder from ordinary selection without losing multiple open registrations in the same pulje. I’ll add regression coverage only where the current tests leave a real gap.
+I’m continuing with the solver boundary audit. The key issue I found is that self-registrations are preserved in the database but are not currently treated as fixed assignments by the solver, so I’m tracing the smallest fix that excludes a registered holder from ordinary selection in that pulje without taking over the separate capacity work.
+The data model confirms we do not need ticket-type logic here. I’m keeping the assignment picker broad, as requested. For registrations, I’ll separate two concerns: they must be shown as confirmed seats and must remove that holder from the ordinary solver pool for the same pulje; I will not change `max_players` or define open-event capacity behavior.
+The implementation now represents registrations separately from one-per-pulje manual pins. That preserves the explicit “multiple open registrations in one pulje” rule, shows those attendees in Puljefordeling, and prevents commit from rewriting their source to `solver`. I’m at the verification stage now, including a regression test that Friday registration does not affect Saturday selection.
+Verification passes: all 328 tests are green, including the new same-pulje exclusion, multi-registration, cross-pulje eligibility, source-preservation, and admin-preview cases. The existing manual-pin test also confirms that manually assigned players already consume an event seat during solver allocation; I have left registration capacity behavior untouched for the other developer.
+Implemented the Puljefordeling integration for registrations:
+
+- Registrations appear as confirmed attendees with ✅.
+- Registered holders are excluded from ordinary solver selection only in that pulje.
+- Multiple registrations in one pulje are preserved.
+- Registration in one pulje does not prevent selection in later puljer.
+- Committing preserves the `registration` source.
+- Manual assignments already reserve capacity correctly.
+- Registration capacity and `max_players` remain unchanged.
+
+Key changes: [emulate.go](/home/cinmay/Documents/conorganizer/service/puljefordeling/emulate.go:80), [commit.go](/home/cinmay/Documents/conorganizer/service/puljefordeling/commit.go:58), and [puljefordeling_tab.templ](/home/cinmay/Documents/conorganizer/pages/admin/puljefordeling_tab.templ:643).
+
+All 328 tests pass. Documentation and manual tests were updated.
+
+I could not create the commit because `.git` is read-only in this environment; all changes remain in the working tree, and the unrelated `.ai` modification was untouched.
+
+One question before the next solver-related step: should an open registration count as “already seated” for the solver’s small fairness bonus in later puljer? It would not prevent later selection, but could slightly lower priority compared with someone who has received no event at all.
+
+Time: 2026-09-05 18:40:15
+--- Next Prompt ---
 

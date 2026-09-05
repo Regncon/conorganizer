@@ -49,6 +49,11 @@ Denne sjekklisten dekker `/admin/puljefordeling/{pulje}`, der admin kan se inter
 
 ### Avgrensning og robusthet
 
+- [ ] **Påmeldte vises uten ordinær solverplass**<br>
+  **Gitt** at en billettholder er direkte påmeldt og fortsatt har en ordinær interesse i samme pulje.<br>
+  **Når** admin åpner og lagrer puljefordelingen.<br>
+  **Så** skal billettholderen vises som påmeldt på riktig arrangement, ikke få en ordinær solverplass i puljen, og beholde påmeldingskilden etter lagring.
+
 - [ ] **Påmeldinger beholdes uavhengig av manuelle tildelinger**<br>
   **Gitt** at billettholderen har en direkte påmelding og admin endrer en manuell tildeling i samme pulje.<br>
   **Når** admin lagrer endringen.<br>

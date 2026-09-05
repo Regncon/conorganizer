@@ -36,6 +36,8 @@ Registering, opting out, or being manually assigned removes only the interest fo
 
 A confirmed manual or registration player assignment in a pulje blocks changes to ordinary interests in that pulje. It does not block registration for another open-registration event. A GM assignment blocks all registration and interest changes in that pulje.
 
+Puljefordeling shows registration assignments as confirmed attendees and excludes those billettholdere from ordinary solver placement in the same pulje. A registration in one pulje does not affect solver eligibility in another pulje. Registration rows keep their `registration` source when an admin commits the distribution.
+
 ## Profile visibility
 
 Assignments are shown only after the program is published. Once published:

@@ -57,8 +57,8 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 	`
 	for _, ev := range target.Events {
 		for _, pl := range ev.AssignedPlayers {
-			if pl.Manual {
-				continue // already persisted as source='manual'
+			if pl.Manual || pl.Registration {
+				continue // confirmed seat is already persisted with its original source
 			}
 			if _, err := tx.Exec(upsert, ev.EventID, string(pulje), pl.BillettholderID, models.EventPlayerRolePlayer, models.EventPlayerSourceSolver); err != nil {
 				return fmt.Errorf("commit solver seat (event=%s bh=%d): %w", ev.EventID, pl.BillettholderID, err)

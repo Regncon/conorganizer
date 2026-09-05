@@ -641,7 +641,7 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 			</div>
 		</div>
 		<div class="pulje-legend">
-			<p>🤩 Veldig interessert · 🙂 Middels · 🤨 Litt · 📌 Ikke interessert, manuelt plassert</p>
+			<p>🤩 Veldig interessert · 🙂 Middels · 🤨 Litt · ✅ Påmeldt · 📌 Ikke interessert, manuelt plassert</p>
 			<p><span class="legend-dm-name">Turkis navn</span> = Spilleder</p>
 			<p>
 				<span class="legend-strek legend-moved">Rød strek</span> = flyttet NED for å gi plass · <span class="legend-strek legend-manual">Gul strek</span> = manuell
@@ -769,11 +769,13 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 						// A manual pin without any real interest shows a pin rather than a
 						// fabricated interest level; a genuine interest keeps its emoji.
 						emoji := pl.Level.Emoji()
-						if emoji == "" && pl.Manual {
+						if pl.Registration {
+							emoji = "✅"
+						} else if emoji == "" && pl.Manual {
 							emoji = "📌"
 						}
 					}}
-					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual) } { tileAttrs... }>
+					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual), templ.KV("registration", pl.Registration) } { tileAttrs... }>
 						<span class="pulje-emoji">{ emoji }</span>
 						<span class={ templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
 						if pl.Manual && !published {

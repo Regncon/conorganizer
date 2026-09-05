@@ -24,6 +24,7 @@ type AssignedPlayer struct {
 	Level           models.InterestLevel // their interest in the game they got
 	Moved           bool                 // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
 	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
+	Registration    bool                 // confirmed through open registration (source='registration'), not placed by the solver
 	FirstChoice     bool                 // manually pinned with a matching high-interest row
 }
 
@@ -105,6 +106,10 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	if err != nil {
 		return Emulation{}, err
 	}
+	registrations, err := loadRegistrationSeats(db) // pulje -> eventID -> playerID set
+	if err != nil {
+		return Emulation{}, err
+	}
 
 	// Build the solver's Weekend in chronological pulje order.
 	weekend := smodel.Weekend{Slots: make([]smodel.Slot, 0, len(puljer))}
@@ -143,8 +148,11 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	emulation := Emulation{Year: year, PlayerCount: len(players)}
 	for i, slot := range weekend.Slots {
 		pulje := puljer[i]
-		res := state.SolveSlotFixed(slot, players, pins[pulje.ID])
-		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, prefs, dmSet, pins[pulje.ID], events[pulje.ID]))
+		puljeRegistrations := registrations[pulje.ID]
+		eligiblePlayers := playersWithoutRegistrations(players, puljeRegistrations, pins[pulje.ID])
+		res := state.SolveSlotFixed(slot, eligiblePlayers, pins[pulje.ID])
+		addRegistrationAssignments(&res, puljeRegistrations)
+		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, prefs, dmSet, pins[pulje.ID], puljeRegistrations, events[pulje.ID]))
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
 
@@ -161,6 +169,7 @@ func shapePulje(
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
 	manual map[string]string,
+	registrations map[string]map[string]struct{},
 	meta map[string]eligibleEvent,
 ) EmulatedPulje {
 	under := make(map[string]bool, len(res.UndersubscribedEvents))
@@ -186,7 +195,7 @@ func shapePulje(
 			EventID:         ev.ID,
 			Title:           ev.Name,
 			Capacity:        ev.Capacity,
-			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet, moved, manual),
+			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet, moved, manual, registrations),
 			Undersubscribed: under[ev.ID],
 		}
 		if m, ok := meta[ev.ID]; ok {
@@ -217,6 +226,7 @@ func assignedPlayers(
 	dmSet map[int]bool,
 	moved map[string]bool,
 	manual map[string]string,
+	registrations map[string]map[string]struct{},
 ) []AssignedPlayer {
 	if len(ids) == 0 {
 		return nil
@@ -228,7 +238,15 @@ func assignedPlayers(
 			out = append(out, AssignedPlayer{Name: id})
 			continue
 		}
-		ap := AssignedPlayer{BillettholderID: bh, Name: names[bh], IsDM: dmSet[bh], Moved: moved[id], Manual: manual[id] == eventID}
+		_, registered := registrations[eventID][id]
+		ap := AssignedPlayer{
+			BillettholderID: bh,
+			Name:            names[bh],
+			IsDM:            dmSet[bh],
+			Moved:           moved[id],
+			Manual:          manual[id] == eventID,
+			Registration:    registered,
+		}
 		if byPulje, ok := prefs[bh]; ok {
 			got := byPulje[puljeID][eventID]
 			ap.Level = models.InterestLevelFromScore(int(got))
@@ -335,6 +353,41 @@ func loadManualPins(db *sql.DB) (map[models.Pulje]map[string]string, error) {
 	return out, rows.Err()
 }
 
+// loadRegistrationSeats returns confirmed self-registration seats keyed by
+// pulje, event, and solver player ID. The extra event dimension preserves the
+// supported case where one participant registers for several events in the
+// same pulje.
+func loadRegistrationSeats(db *sql.DB) (map[models.Pulje]map[string]map[string]struct{}, error) {
+	const query = `
+		SELECT pulje_id, event_id, billettholder_id
+		FROM relation_events_players
+		WHERE source = ? AND role = ?
+	`
+	rows, err := db.Query(query, models.EventPlayerSourceRegistration, models.EventPlayerRolePlayer)
+	if err != nil {
+		return nil, fmt.Errorf("query registration seats: %w", err)
+	}
+	defer rows.Close()
+
+	out := make(map[models.Pulje]map[string]map[string]struct{})
+	for rows.Next() {
+		var pulje models.Pulje
+		var eventID string
+		var bhID int
+		if err := rows.Scan(&pulje, &eventID, &bhID); err != nil {
+			return nil, fmt.Errorf("scan registration seat row: %w", err)
+		}
+		if out[pulje] == nil {
+			out[pulje] = make(map[string]map[string]struct{})
+		}
+		if out[pulje][eventID] == nil {
+			out[pulje][eventID] = make(map[string]struct{})
+		}
+		out[pulje][eventID][strconv.Itoa(bhID)] = struct{}{}
+	}
+	return out, rows.Err()
+}
+
 func loadGMs(db *sql.DB) (map[string]int, error) {
 	const query = `
 		SELECT event_id, pulje_id, billettholder_id
@@ -430,6 +483,57 @@ func loadPrefs(
 }
 
 // --- helpers -----------------------------------------------------------------
+
+// playersWithoutRegistrations removes participants who hold a confirmed
+// registration in the current pulje unless they also have a manual pin, which
+// already keeps them out of the free pool. They remain eligible in every other
+// pulje, and their registration assignments are added to the preview separately
+// so multiple registrations in one pulje can be represented.
+func playersWithoutRegistrations(
+	players []smodel.Player,
+	registrations map[string]map[string]struct{},
+	manualPins map[string]string,
+) []smodel.Player {
+	if len(registrations) == 0 {
+		return players
+	}
+
+	registered := make(map[string]struct{})
+	for _, playerIDs := range registrations {
+		for playerID := range playerIDs {
+			registered[playerID] = struct{}{}
+		}
+	}
+
+	eligible := make([]smodel.Player, 0, len(players))
+	for _, player := range players {
+		if _, found := registered[player.ID]; found {
+			// A manual pin already excludes the player from the free pool and
+			// still needs their preferences to update the solver's fairness state.
+			if _, manuallyPinned := manualPins[player.ID]; !manuallyPinned {
+				continue
+			}
+		}
+		eligible = append(eligible, player)
+	}
+	return eligible
+}
+
+// addRegistrationAssignments merges already-persisted registration seats into
+// the read-only solver preview. Registration capacity remains outside this
+// feature; this merge exists to show confirmed attendees and to keep commit
+// from treating them as solver-generated seats.
+func addRegistrationAssignments(
+	result *smodel.SlotResult,
+	registrations map[string]map[string]struct{},
+) {
+	for eventID, playerIDs := range registrations {
+		for playerID := range playerIDs {
+			result.Assignments[eventID] = append(result.Assignments[eventID], playerID)
+		}
+		sort.Strings(result.Assignments[eventID])
+	}
+}
 
 func eventPuljeKey(eventID string, pulje models.Pulje) string {
 	return eventID + "\x00" + string(pulje)
