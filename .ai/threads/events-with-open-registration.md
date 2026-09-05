@@ -984,5 +984,45 @@ text
 Time: 2026-09-05 17:11:30
 --- Next Prompt ---
 
+Why do you need the ticket type? The reason it's not in the database is that we haven't seen the need for anything more than the ticket type name. 
+We don not own the ticket data. That comes from the Chicken.no ticketing system. The ticket type id is a foreign key and the name is subject to change outside of our control. 
 
+Time: 2026-09-05 18:14:55
+--- Codex Run ---
+
+Codex output:
+I don’t need the ticket type for registration itself. I only considered it because of the requirement that a billettholder may register only in a pulje they are attending. I incorrectly inferred that pulje attendance might be determined from festival/day-pass ticket types.
+
+We should not depend on an externally controlled ID or parse a mutable ticket name.
+
+Interview question: what existing fact tells us that a billettholder is “attending” a particular pulje? Or does that requirement simply mean that they own a valid festival ticket and the event is published in that pulje?
+
+Time: 2026-09-05 18:14:55
+--- Next Prompt ---
+
+We handle that with a combination of manual check in at the gate using the Chicken.no ticketing system. We have not experienced any issues with people trying to register for events they are not attending. So we will not implement any additional checks for this. We don't need that extra complexity.
+
+Please continue.
+
+Time: 2026-09-05 18:21:28
+--- Codex Run ---
+
+Codex output:
+Understood—no ticket-type or pulje-attendance checks. I’ll document that as an explicit non-goal and continue with the remaining integration work: verify the registration interaction refreshes its state correctly, add the feature’s user stories/manual acceptance checks, and run the complete suite again.
+The live-update path is sound: registration broadcasts both event and interest changes; the event page and profile subscribe to those buckets, so `Meld deg på/av`, warnings, and profile assignments refresh without a manual reload. I’m now recording the agreed behavior and the few interaction cases that still deserve browser-level manual checks.
+Documentation and acceptance coverage are now added, including the explicit decision not to infer pulje attendance from ticket data. The automated suite still passes. The optional `task test:report` convenience command is unavailable in this environment because the `task` binary is not installed, so I’m running its underlying report command directly and checking the new documentation links instead.
+One wording gap showed up in the acceptance audit: the selector currently explains the consequence only after a place exists. The original requirement calls for explaining it before `Meld deg på` as well. I’m adding a static, open-registration notice that says the place is immediate, ordinary solver selection in that pulje stops, and other open registrations remain allowed.
+Continued and completed the acceptance/documentation slice:
+
+- Added the pre-registration warning explaining solver consequences and allowing other open registrations.
+- Improved the post-registration warning wording and event links.
+- Documented user stories, rules, source behavior, visibility rules, and the ticket-data non-goal in [open-registration.md](/home/cinmay/Documents/conorganizer/documentation/open-registration.md:1).
+- Added manual checklists for [open registration](/home/cinmay/Documents/conorganizer/documentation/testing/open-registration.md:1) and [Puljefordeling](/home/cinmay/Documents/conorganizer/documentation/testing/admin-puljefordeling.md:1).
+- Removed obsolete assignment checks from the admin-approval documentation.
+- Verified the live-update path for event pages and profiles.
+
+Validation: all 323 automated tests pass, with zero failures.
+
+Time: 2026-09-05 18:21:28
+--- Next Prompt ---
 

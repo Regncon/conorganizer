@@ -20,6 +20,7 @@ func TestTicketHolderInterestPicker_WhenEventHasOpenRegistration_ReplacesHighInt
 	expectedHighInterestButtons := 0
 	expectedDeregistrationButtons := 1
 	expectedEndpoint := "/event/api/open-event/registration"
+	expectedWarningText := "ikkje vurdert for andre arrangement"
 
 	// When
 	doc := templtest.Render(t, TicketHolderInterestPicker("open-event", true))
@@ -28,6 +29,8 @@ func TestTicketHolderInterestPicker_WhenEventHasOpenRegistration_ReplacesHighInt
 	actualDeregistrationButtons := doc.Find(".interest-deregister").Length()
 	actualRegistrationAction := doc.Find(".interest-register").AttrOr("data-on:click", "")
 	actualDeregistrationAction := doc.Find(".interest-deregister").AttrOr("data-on:click", "")
+	actualWarningText := strings.Join(templtest.CollectTexts(doc, ".interest-registration-warning"), " ")
+	actualWarningVisibility := doc.Find(".interest-registration-warning").AttrOr("data-show", "")
 
 	// Then
 	if actualRegistrationButtons != expectedRegistrationButtons {
@@ -44,6 +47,12 @@ func TestTicketHolderInterestPicker_WhenEventHasOpenRegistration_ReplacesHighInt
 	}
 	if !strings.Contains(actualDeregistrationAction, expectedEndpoint) || !strings.Contains(actualDeregistrationAction, "$isRegistered = false") {
 		t.Fatalf("deregistration action mismatch: %q", actualDeregistrationAction)
+	}
+	if !strings.Contains(actualWarningText, expectedWarningText) {
+		t.Fatalf("expected registration warning to contain %q\nactual: %s", expectedWarningText, actualWarningText)
+	}
+	if actualWarningVisibility != "!$isAssignedToEvent" {
+		t.Fatalf("registration warning visibility mismatch: %q", actualWarningVisibility)
 	}
 }
 

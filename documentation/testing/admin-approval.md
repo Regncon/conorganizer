@@ -1,6 +1,6 @@
 # Godkjenning av arrangementer
 
-Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, altså oversikten over arrangementer til godkjenning og adminredigering av enkeltarrangementer med interesse- og tildelingsarbeid.
+Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, altså oversikten over arrangementer til godkjenning og adminredigering av enkeltarrangementer.
 
 ## Roller
 
@@ -18,7 +18,7 @@ Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, alts�
 - [ ] **Riktig arrangement åpnes i redigeringsflyten**<br>
   **Gitt** at en admin åpner et arrangement fra godkjenningslisten.<br>
   **Når** redigeringssiden lastes.<br>
-  **Så** skal riktig arrangement vises i skjema, forhåndsvisning og tilhørende interesse-/tildelingsvisning.
+  **Så** skal riktig arrangement vises i skjema og forhåndsvisning.
 
 - [ ] **Skjema og forhåndsvisning oppdateres sammen**<br>
   **Gitt** at admin redigerer felt i arrangementskjemaet fra godkjenningsflyten.<br>
@@ -35,28 +35,6 @@ Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, alts�
   **Når** admin forsøker å åpne det i redigeringsflyten.<br>
   **Så** skal admin møte en forståelig feiltilstand og ikke en halvferdig redigeringsvisning.
 
-### Tildeling
-
-- [ ] **Spillertildeling lagres på riktig arrangement**<br>
-  **Gitt** at admin legger til en deltaker som spiller via godkjenningsflyten.<br>
-  **Når** handlingen lykkes.<br>
-  **Så** skal tildelingen vises riktig og ikke havne på feil arrangement eller feil pulje.
-
-- [ ] **GM-tildeling vises som GM**<br>
-  **Gitt** at admin legger til en deltaker som GM via godkjenningsflyten.<br>
-  **Når** handlingen lykkes.<br>
-  **Så** skal GM-rollen vises riktig og ikke forveksles med vanlig spiller.
-
-- [ ] **Rolleendring oppdateres konsistent**<br>
-  **Gitt** at admin endrer status for en allerede tildelt person mellom spiller, GM og fjernet.<br>
-  **Når** handlingen utføres.<br>
-  **Så** skal resultatet oppdateres tydelig og konsistent.
-
-- [ ] **Tildelingsfeil er tydelig**<br>
-  **Gitt** at en tildelingshandling feiler.<br>
-  **Når** admin forsøker å oppdatere spiller- eller GM-status.<br>
-  **Så** skal feilen være tydelig nok til at admin forstår at endringen ikke ble fullført.
-
 ### Stabilitet og layout
 
 - [ ] **Flere adminhandlinger holder data stabilt**<br>
@@ -69,7 +47,7 @@ Denne sjekklisten dekker `/admin/approval` og `/admin/approval/edit/{id}`, alts�
   **Når** skjema, forhåndsvisning og interesseoversikt vises samtidig.<br>
   **Så** skal siden fortsatt være lesbar og arbeidsbar.
 
-- [ ] **Refresh viser korrekt data og tildelingsstatus**<br>
+- [ ] **Refresh viser korrekt arrangementsdata**<br>
   **Gitt** at admin refresher siden midt i redigeringsarbeidet.<br>
   **Når** siden lastes inn igjen.<br>
-  **Så** skal korrekt arrangementsdata og korrekt tildelingsstatus vises.
+  **Så** skal korrekt arrangementsdata vises.

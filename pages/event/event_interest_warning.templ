@@ -22,7 +22,7 @@ templ selectedInterestWarning(state selectedInterestState, puljeID string) {
 			</section>
 		} else if len(state.PlayerAssignments) > 0 {
 			<section class="interest-participation-warning" role="status">
-				<p>Denne billettheldaren er allereie påmeldt eller tildelt arrangement i pulja. Vanlege interesser kan ikkje endrast før påmeldinga er fjerna.</p>
+				<p>Denne billettheldaren er allereie påmeldt eller tildelt arrangement i pulja og blir ikkje vurdert for andre arrangement gjennom den ordinære fordelinga. Vanlege interesser kan ikkje endrast før påmeldinga er fjerna.</p>
 				<ul>
 					for _, assignment := range state.PlayerAssignments {
 						<li>

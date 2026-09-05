@@ -48,6 +48,21 @@ templ TicketHolderInterestPicker(
 				}
 			}
 
+			.interest-registration-warning {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-2x);
+				padding: var(--spacing-3x);
+				border: 1px solid var(--color-warning);
+				border-radius: var(--border-radius-1x);
+				color: var(--color-text-soft);
+				background: color-mix(in srgb, var(--color-warning) 10%, var(--bg-surface));
+
+				p {
+					margin: 0;
+				}
+			}
+
 			&.is-disabled {
 				.card-clickable {
 					cursor: not-allowed;
@@ -116,6 +131,12 @@ templ TicketHolderInterestPicker(
 				Se profilen din
 			</a>
 		</div>
+		if isOpenRegistration {
+			<section class="interest-registration-warning" role="status" data-show="!$isAssignedToEvent">
+				<p><strong>«Meld deg på» gir ein stadfesta plass i denne pulja.</strong></p>
+				<p>Billettheldaren blir då ikkje vurdert for andre arrangement gjennom den ordinære fordelinga i pulja, men kan framleis melde seg på andre arrangement med open påmelding.</p>
+			</section>
+		}
 		<div id="interest-participation-warning"></div>
 		<div
 			role="button"

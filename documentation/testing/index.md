@@ -10,7 +10,9 @@ Denne mappen inneholder launch-sjekklistene for manuell testing av Conorganizer.
 - [ ] [Billetter på Min Side](./profile-tickets.md)
 - [ ] [Arrangementsskjema](./event-form.md)
 - [ ] [Arrangementsdetaljer](./event-details.md)
+- [ ] [Åpen påmelding](./open-registration.md)
 - [ ] [Admin](./admin.md)
+- [ ] [Puljefordeling i admin](./admin-puljefordeling.md)
 - [ ] [Godkjenning av arrangementer](./admin-approval.md)
 - [ ] [Billettholdere i admin](./admin-billettholders.md)
 - [ ] [Legg til billettholder i admin](./admin-add-billettholder.md)
@@ -35,7 +37,9 @@ Launch-sjekklistene dekker disse aktive sidene og flytene:
 - `/profile/tickets` dekkes av [Billetter på Min Side](./profile-tickets.md).
 - `/profile/new/{id}` og tilhørende skjema- og bildeopplastingsflyt dekkes av [Arrangementsskjema](./event-form.md).
 - `/event/{id}` og interesseflyten under `/event/api/{id}` dekkes av [Arrangementsdetaljer](./event-details.md).
+- Åpen påmelding på `/event/{id}` og tilhørende profilvisning dekkes av [Åpen påmelding](./open-registration.md).
 - `/admin` dekkes av [Admin](./admin.md).
+- `/admin/puljefordeling/{pulje}` dekkes av [Puljefordeling i admin](./admin-puljefordeling.md).
 - `/admin/approval` og `/admin/approval/edit/{id}` dekkes av [Godkjenning av arrangementer](./admin-approval.md).
 - `/admin/billettholder` dekkes av [Billettholdere i admin](./admin-billettholders.md).
 - `/admin/billettholder/add` dekkes av [Legg til billettholder i admin](./admin-add-billettholder.md).
