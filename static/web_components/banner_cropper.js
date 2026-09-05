@@ -77,6 +77,7 @@ class BannerCropper extends HTMLElement {
                     appearance: none;
                     -webkit-appearance: none;
                     inline-size: 100%;
+                    block-size: var(--range-track-size);
                     margin-block: 10px;
                     background: transparent;
                     cursor: pointer;
@@ -115,6 +116,7 @@ class BannerCropper extends HTMLElement {
                         cursor: grab;
                         /* take thumb above outline */
                         position: relative;
+                        translate: calc(var(--range-progress) - 50%) 0;
                     }
 
                     &:active::-webkit-slider-thumb {
@@ -131,7 +133,8 @@ class BannerCropper extends HTMLElement {
                         box-sizing: border-box;
                         background: var(--range-track-background);
                         border: 1px solid var(--range-track-border);
-                        border-radius: 100vw;
+                        border-bottom-right-radius: var(--border-radius-2x);
+                        border-bottom-left-radius: var(--border-radius-2x);
                     }
 
                     /* Firefox: left-side progress */
@@ -140,7 +143,8 @@ class BannerCropper extends HTMLElement {
                         background: var(--range-progress-background);
                         outline: 1px var(--bg-item-hover) solid;
                         outline-offset: -1px;
-                        border-radius: 100vw;
+                        border-bottom-right-radius: var(--border-radius-2x);
+                        border-bottom-left-radius: var(--border-radius-2x);
                     }
 
                     /* Firefox: thumb */
@@ -152,6 +156,7 @@ class BannerCropper extends HTMLElement {
                         border: 1px solid var(--range-thumb-border);
                         border-radius: 50%;
                         cursor: grab;
+                        translate: calc(var(--range-progress) - 50%) 0;
                     }
 
                     &:active::-moz-range-thumb {
