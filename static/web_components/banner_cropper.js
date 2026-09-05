@@ -33,13 +33,13 @@ class BannerCropper extends HTMLElement {
 
         root.innerHTML = `
         <style>
-            .banner-cropper {
+            .banner-cropper-wrapper {
                 display: flex;
                 flex-direction: column;
                 gap: 1rem;
-                background: var(--color-bg-secondary);
+                inline-size: min-content;
 
-                .banner-cropper-wrapper {
+                .banner-cropper-image-slider {
                     display: grid;
                     width: min-content;
                 }
@@ -170,8 +170,8 @@ class BannerCropper extends HTMLElement {
                 }
             }
         </style>
-        <div class="banner-cropper">
-            <div class="banner-cropper-wrapper">
+        <div class="banner-cropper-wrapper">
+            <div class="banner-cropper-image-slider">
                 <canvas id="canvas" class="banner-cropper-canvas" aria-label="Banner canvas"></canvas>
                 <input id="zoom" class="slider" type="range" min="1" max="3" step="0.01" value="1" disabled>
             </div>
