@@ -602,3 +602,105 @@ text
 Time: 2026-09-05 13:24:47
 --- Next Prompt ---
 
+First. Do I need to run goose up on the main and demo databases? If so, whats the command to do that?
+
+Time: 2026-09-05 13:30:10
+--- Codex Run ---
+
+Codex output:
+I’ll check the repository’s migration configuration and database paths so I can give you the exact commands without exposing anything from your `.env`.
+Yes. Both local databases currently lack the new column, and the application now queries it.
+
+Back them up first:
+
+```bash
+sqlite3 database/events.db \
+  ".backup 'database/events.db.before-open-registration.bak'"
+
+sqlite3 database/events-demo.db \
+  ".backup 'database/events-demo.db.before-open-registration.bak'"
+```
+
+Then migrate both:
+
+```bash
+goose -env /dev/null -dir migrations \
+  sqlite3 database/events.db up
+
+goose -env /dev/null -dir migrations \
+  sqlite3 database/events-demo.db up
+```
+
+Verify:
+
+```bash
+sqlite3 database/events.db \
+  "SELECT name FROM pragma_table_info('events') WHERE name = 'is_open_registration';"
+
+sqlite3 database/events-demo.db \
+  "SELECT name FROM pragma_table_info('events') WHERE name = 'is_open_registration';"
+```
+
+Both should print `is_open_registration`. The `-env /dev/null` prevents settings in `.env` from overriding the explicitly supplied database path.
+
+Time: 2026-09-05 13:30:10
+--- Next Prompt ---
+
+
+Done: 
+
+```bash
+➜  conorganizer git:(311-arrangement-som-bare-kan-påmeldes) ✗ goose -env /dev/null -dir migrations \
+  sqlite3 database/events.db up
+
+2026/09/05 13:30:35 OK   20260905133000_add_open_registration_to_events.sql (27.73ms)
+2026/09/05 13:30:35 goose: successfully migrated database to version: 20260905133000
+➜  conorganizer git:(311-arrangement-som-bare-kan-påmeldes) ✗ goose -env /dev/null -dir migrations \
+  sqlite3 database/events-demo.db up
+
+2026/09/05 13:30:44 OK   20260905133000_add_open_registration_to_events.sql (31.82ms)
+2026/09/05 13:30:44 goose: successfully migrated database to version: 20260905133000
+➜  conorganizer git:(311-arrangement-som-bare-kan-påmeldes) ✗
+```
+
+Please continue. 
+
+Time: 2026-09-05 13:35:32
+--- Codex Run ---
+
+Codex output:
+Great—the event column is now present in both working databases.
+
+I’m continuing with the next approved foundation step: add `registration` as a first-class attendee source, move the source constants into the shared model, and verify that existing manual and solver rows survive the migration. This still won’t change user-facing behavior.
+The shared source model compiles and the focused schema tests pass. I’m now exercising the migration against a temporary copy of the real main database to verify that table reconstruction preserves every existing attendee row and rolls back safely.
+The distinct `registration` source foundation is implemented.
+
+Changes include:
+
+- `EventPlayerSource` with `manual`, `solver`, and `registration` constants in [billettholder.go](/home/cinmay/Documents/conorganizer/models/billettholder.go:95).
+- Updated canonical schemas.
+- Added migration [20260905134500_add_registration_player_source.sql](/home/cinmay/Documents/conorganizer/migrations/20260905134500_add_registration_player_source.sql).
+- Updated the solver code to use the shared source constants.
+- Added tests accepting `registration` and rejecting unknown sources.
+- Rollback preserves registration attendees by converting their source to `manual`.
+
+The migration preserved all seven existing demo attendee rows through both `up` and `down`. The full test suite passes.
+
+Please migrate both databases again:
+
+```bash
+goose -env /dev/null -dir migrations sqlite3 database/events.db up
+goose -env /dev/null -dir migrations sqlite3 database/events-demo.db up
+```
+
+Next implementation question:
+
+Where should admins configure open registration?
+
+My recommendation is an admin-only checkbox in the event’s “Andre detaljer” section, near `Maks tal på spelarar`, with explanatory text that the player limit is ignored while open registration is enabled.
+
+Does that match the UX team’s intended placement?
+
+Time: 2026-09-05 13:35:32
+--- Next Prompt ---
+

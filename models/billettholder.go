@@ -65,6 +65,7 @@ CREATE TABLE relation_events_players (
 	    pulje_id TEXT NOT NULL,
 	    billettholder_id INTEGER NOT NULL,
 	    role TEXT NOT NULL DEFAULT 'Player' CHECK (role IN ('Player', 'GM')),
+	    source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'solver', 'registration')),
 	    -- inserted_at uses the DBDateTimeNowSQL default expression.
 	    inserted_at TEXT,
 	    PRIMARY KEY (billettholder_id, event_id, pulje_id),
@@ -91,10 +92,19 @@ func (role EventPlayerRole) Label() string {
 	}
 }
 
+type EventPlayerSource string
+
+const (
+	EventPlayerSourceManual       EventPlayerSource = "manual"
+	EventPlayerSourceSolver       EventPlayerSource = "solver"
+	EventPlayerSourceRegistration EventPlayerSource = "registration"
+)
+
 type EventPlayer struct {
-	EventID         string          `json:"event_id"`
-	PuljeID         string          `json:"pulje_id"`
-	BillettholderID int             `json:"billettholder_id"`
-	Role            EventPlayerRole `json:"role"`
-	InsertedAt      DBDateTime      `json:"inserted_at"`
+	EventID         string            `json:"event_id"`
+	PuljeID         string            `json:"pulje_id"`
+	BillettholderID int               `json:"billettholder_id"`
+	Role            EventPlayerRole   `json:"role"`
+	Source          EventPlayerSource `json:"source"`
+	InsertedAt      DBDateTime        `json:"inserted_at"`
 }

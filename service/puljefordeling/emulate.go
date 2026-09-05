@@ -26,13 +26,6 @@ type AssignedPlayer struct {
 	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
 }
 
-// Seat sources recorded on relation_events_players. Manual seats are admin pins
-// the solver must honour; solver seats are produced by a committed distribution.
-const (
-	SourceManual = "manual"
-	SourceSolver = "solver"
-)
-
 // EmulatedEvent is the proposed seating for a single event within a pulje. The
 // metadata fields (type/age/runtime/flags) drive the tag row in the UI and carry
 // no weight in the distribution itself.
@@ -316,7 +309,7 @@ func loadManualPins(db *sql.DB) (map[models.Pulje]map[string]string, error) {
 		FROM relation_events_players
 		WHERE source = ? AND role = ?
 	`
-	rows, err := db.Query(query, SourceManual, models.EventPlayerRolePlayer)
+	rows, err := db.Query(query, models.EventPlayerSourceManual, models.EventPlayerRolePlayer)
 	if err != nil {
 		return nil, fmt.Errorf("query manual pins: %w", err)
 	}

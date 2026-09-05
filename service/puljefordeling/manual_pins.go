@@ -32,7 +32,7 @@ func AddManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholder
 	if _, err := tx.Exec(
 		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
 		 VALUES (?, ?, ?, ?, ?)`,
-		eventID, string(pulje), billettholderID, models.EventPlayerRolePlayer, SourceManual,
+		eventID, string(pulje), billettholderID, models.EventPlayerRolePlayer, models.EventPlayerSourceManual,
 	); err != nil {
 		return fmt.Errorf("add manual seat (pulje=%s event=%s bh=%d): %w", pulje, eventID, billettholderID, err)
 	}
@@ -50,7 +50,7 @@ func RemoveManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billetthol
 		WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ?
 		  AND source = ? AND role = ?
 	`
-	if _, err := db.Exec(query, eventID, string(pulje), billettholderID, SourceManual, models.EventPlayerRolePlayer); err != nil {
+	if _, err := db.Exec(query, eventID, string(pulje), billettholderID, models.EventPlayerSourceManual, models.EventPlayerRolePlayer); err != nil {
 		return fmt.Errorf("remove manual seat (pulje=%s event=%s bh=%d): %w", pulje, eventID, billettholderID, err)
 	}
 	return nil

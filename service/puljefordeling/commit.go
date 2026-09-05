@@ -11,8 +11,8 @@ import (
 // relation_events_players so it becomes the actual seating shown in other views
 // (and, once the pulje is published, to participants).
 //
-// Solver-placed players are written as source='solver'; manually pinned players
-// are already persisted as source='manual' and are left untouched. Any previous
+// Solver-placed players are written as source='solver'; confirmed seats from
+// other sources are already persisted and are left untouched. Any previous
 // solver-committed seats for the pulje are cleared first, so re-committing always
 // reflects the latest distribution. GM rows are not touched.
 func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
@@ -40,10 +40,10 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	// Clear the previous solver-committed seats; manual pins and GM rows stay.
+	// Clear the previous solver-committed seats; confirmed seats and GM rows stay.
 	if _, err := tx.Exec(
 		`DELETE FROM relation_events_players WHERE pulje_id = ? AND source = ? AND role = ?`,
-		string(pulje), SourceSolver, models.EventPlayerRolePlayer,
+		string(pulje), models.EventPlayerSourceSolver, models.EventPlayerRolePlayer,
 	); err != nil {
 		return fmt.Errorf("clear solver seats for %s: %w", pulje, err)
 	}
@@ -60,7 +60,7 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 			if pl.Manual {
 				continue // already persisted as source='manual'
 			}
-			if _, err := tx.Exec(upsert, ev.EventID, string(pulje), pl.BillettholderID, models.EventPlayerRolePlayer, SourceSolver); err != nil {
+			if _, err := tx.Exec(upsert, ev.EventID, string(pulje), pl.BillettholderID, models.EventPlayerRolePlayer, models.EventPlayerSourceSolver); err != nil {
 				return fmt.Errorf("commit solver seat (event=%s bh=%d): %w", ev.EventID, pl.BillettholderID, err)
 			}
 		}
