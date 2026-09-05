@@ -46,13 +46,18 @@ class BannerCropper extends HTMLElement {
                     inline-size: var(--banner-cropper-preview-width);
                 }
 
+                .banner-cropper-button-error-info {
+                    display: grid;
+                    grid-template-columns: 1fr auto;
+
+                    button {
+                        place-self: end;
+                    }
+                }
+
                 .banner-cropper-status-error {
                     display: block;
                     }
-
-                .banner-cropper-camera-icon {
-                    display: none;
-                }
 
                 .banner-cropper-canvas {
                     inline-size: 100%;
@@ -180,26 +185,21 @@ class BannerCropper extends HTMLElement {
                 <input id="zoom" class="slider" type="range" min="1" max="3" step="0.01" value="1" disabled>
             </div>
 
-            <button
-                id="exportButton"
-                class="btn btn--outline"
-                type="button"
-            >Lagre</button>
-            <span id="statusInline" aria-live="polite"></span>
-            <span id="statusError" class="banner-cropper-status-error" aria-live="polite"></span>
-            <span id="cameraIcon" class="banner-cropper-camera-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="200" height="200">
-                    <path fill="currentColor" d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6ZM4 4h3.2l1.6-2h6.4l1.6 2H20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Zm0 2v12h16V6h-3.2l-1.6 2H8.8L7.2 6H4Z"/>
-                </svg>
-            </span>
-
+            <div class="banner-cropper-button-error-info">
+                <span id="statusInline" aria-live="polite"></span>
+                <span id="statusError" class="banner-cropper-status-error" aria-live="polite"></span>
+                 <button
+                    id="exportButton"
+                    class="btn btn--outline"
+                    type="button"
+                >Lagre</button>
+            </div>
         </div>
         `
 
         // Elements
         this.canvas = root.getElementById("canvas")
         this.ctx = this.canvas.getContext("2d")
-        this.cameraIcon = root.getElementById("cameraIcon")
         this.zoom = root.getElementById("zoom")
         this.exportButton = root.getElementById("exportButton")
         this.statusInlineEl = root.getElementById("statusInline")
@@ -315,7 +315,6 @@ class BannerCropper extends HTMLElement {
 
         const kind = this._normalizedKind()
         this.exportButton.disabled = true
-        this._status("Klargjer bilete...")
 
         const quality = 0.9
         const blob = await this._canvasToWebpBlob(quality)
@@ -338,7 +337,6 @@ class BannerCropper extends HTMLElement {
         const ev = new CustomEvent("beforeupload", { detail, cancelable: true })
         if (!this.dispatchEvent(ev)) {
             // The page will handle the upload
-            this._status("Opplastinga blir handtert av sida.")
             this.exportButton.disabled = false
             return
         }
@@ -404,7 +402,6 @@ class BannerCropper extends HTMLElement {
         if (url) {
             this._loadImage(url)
         } else {
-            this.cameraIcon.style.display = "block"
             this.zoom.disabled = true
         }
     }
@@ -428,7 +425,6 @@ class BannerCropper extends HTMLElement {
     }
 
     _loadImage(url) {
-        this.cameraIcon.style.display = "none"
         this.imageLoaded = false
         this.image.onload = () => {
             this.imageLoaded = true
@@ -436,7 +432,6 @@ class BannerCropper extends HTMLElement {
         }
         this.image.onerror = () => {
             this.imageLoaded = false
-            this.cameraIcon.style.display = "block"
             this.zoom.disabled = true
             this.redraw()
         }
@@ -446,7 +441,6 @@ class BannerCropper extends HTMLElement {
     _clearImage() {
         this.imageLoaded = false
         this.image.removeAttribute("src")
-        this.cameraIcon.style.display = "block"
         this.zoom.disabled = true
         this.redraw()
     }
@@ -482,18 +476,28 @@ class BannerCropper extends HTMLElement {
     _status(msg, isError = false) {
         const text = msg || ""
         if (isError) {
-            if (this.statusInlineEl) this.statusInlineEl.textContent = ""
+            if (this.statusInlineEl) {
+                this.statusInlineEl.textContent = ""
+                this.statusInlineEl.style.display = "none"
+            }
             if (this.statusErrorEl) {
+                this.statusErrorEl.style.display = "block"
                 this.statusErrorEl.textContent = text
                 this.statusErrorEl.style.color = "var(--color-error)"
             }
             return
         }
 
-        if (this.statusErrorEl) this.statusErrorEl.textContent = ""
+        if (this.statusErrorEl) {
+            this.statusErrorEl.textContent = ""
+            this.statusErrorEl.style.display = "none"
+
+
+        }
         if (this.statusInlineEl) {
             this.statusInlineEl.textContent = text
             this.statusInlineEl.style.color = "inherit"
+            this.statusInlineEl.style.display = "inline"
         }
     }
 
