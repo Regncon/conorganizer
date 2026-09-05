@@ -1,29 +1,14 @@
 package ticketholder
 
 import (
-	"database/sql"
 	"fmt"
-	"log/slog"
-	"net/http"
 
 	"github.com/Regncon/conorganizer/models"
 )
 
-type BillettholderInterest struct {
-	BillettholderId int                  `json:"billettHolderId"`
-	PuljeId         string               `json:"puljeId"`
-	InterestLevel   models.InterestLevel `json:"interestLevel"`
-}
-
-type interestPickerSignals struct {
-	Interesser []BillettholderInterest `json:"interesser"`
-}
-
 templ TicketHolderInterestPicker(
 	eventId string,
-	db *sql.DB,
-	r *http.Request,
-	logger *slog.Logger) {
+	isOpenRegistration bool) {
 	<style>
 		.interest-buttons {
 			display: flex;
@@ -40,6 +25,27 @@ templ TicketHolderInterestPicker(
                 place-content: start;
                 place-items: center;
                 width: 100%;
+			}
+
+			.card-clickable.is-disabled {
+				cursor: not-allowed;
+				opacity: 0.65;
+			}
+
+			.interest-participation-warning {
+				display: flex;
+				flex-direction: column;
+				gap: var(--spacing-2x);
+				padding: var(--spacing-3x);
+				border: 1px solid var(--color-warning);
+				border-radius: var(--border-radius-1x);
+				color: var(--color-text-soft);
+				background: color-mix(in srgb, var(--color-warning) 10%, var(--bg-surface));
+
+				p,
+				ul {
+					margin: 0;
+				}
 			}
 
 			&.is-disabled {
@@ -82,6 +88,11 @@ templ TicketHolderInterestPicker(
 		data-class:is-disabled="!$puljeCanEdit"
 		data-signals:current-interest-level-choice={ fmt.Sprintf("'%s'", pendingChoice) }
 		data-signals:selected-interest-level={ fmt.Sprintf("'%s'", models.InterestLevelNone) }
+		data-signals:is-assigned-to-event="false"
+		data-signals:ordinary-interests-disabled="false"
+		data-signals:registration-disabled="false"
+		data-signals:deregistration-disabled="false"
+		data-signals:is-registered="false"
 	>
 		<strong
 			class="ticket-holder-error"
@@ -105,23 +116,52 @@ templ TicketHolderInterestPicker(
 				Se profilen din
 			</a>
 		</div>
+		<div id="interest-participation-warning"></div>
 		<div
 			role="button"
-			class="card-clickable card-clickable-item"
-			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelHigh, models.InterestLevelHigh) }
-			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
-			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelHigh) }
-			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelHigh, eventId) }
+			class="card-clickable card-clickable-item interest-deregister"
+			data-show="$isAssignedToEvent"
+			data-class:is-disabled="!$puljeCanEdit || $deregistrationDisabled"
+			data-attr:aria-disabled="!$puljeCanEdit || $deregistrationDisabled ? 'true' : 'false'"
+			data-attr:tabindex="!$puljeCanEdit || $deregistrationDisabled ? '-1' : '0'"
+			data-on:click={ fmt.Sprintf("if ($puljeCanEdit && !$deregistrationDisabled) { $isRegistered = false; @put('/event/api/%s/registration') }", eventId) }
 		>
-			<span class="emoji">{ models.InterestLevelHigh.Emoji() }</span> { models.InterestLevelHigh.Label() }
+			<span class="emoji">↩️</span> Meld deg av
 		</div>
+		if isOpenRegistration {
+			<div
+				role="button"
+				class="card-clickable card-clickable-item interest-register"
+				data-show="!$isAssignedToEvent"
+				data-class:is-disabled="!$puljeCanEdit || $registrationDisabled"
+				data-attr:aria-disabled="!$puljeCanEdit || $registrationDisabled ? 'true' : 'false'"
+				data-attr:tabindex="!$puljeCanEdit || $registrationDisabled ? '-1' : '0'"
+				data-on:click={ fmt.Sprintf("if ($puljeCanEdit && !$registrationDisabled) { $isRegistered = true; @put('/event/api/%s/registration') }", eventId) }
+			>
+				<span class="emoji">🎟️</span> Meld deg på
+			</div>
+		} else {
+			<div
+				role="button"
+				class="card-clickable card-clickable-item interest-high"
+				data-show="!$isAssignedToEvent"
+				data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelHigh, models.InterestLevelHigh) }
+				data-class:is-disabled="!$puljeCanEdit || $ordinaryInterestsDisabled"
+				data-attr:aria-disabled="!$puljeCanEdit || $ordinaryInterestsDisabled ? 'true' : 'false'"
+				data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit || $ordinaryInterestsDisabled ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelHigh) }
+				data-on:click={ fmt.Sprintf("if ($puljeCanEdit && !$ordinaryInterestsDisabled) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelHigh, eventId) }
+			>
+				<span class="emoji">{ models.InterestLevelHigh.Emoji() }</span> { models.InterestLevelHigh.Label() }
+			</div>
+		}
 		<div
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelMedium, models.InterestLevelMedium) }
-			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
-			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelMedium) }
-			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelMedium, eventId) }
+			data-class:is-disabled="!$puljeCanEdit || $ordinaryInterestsDisabled"
+			data-attr:aria-disabled="!$puljeCanEdit || $ordinaryInterestsDisabled ? 'true' : 'false'"
+			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit || $ordinaryInterestsDisabled ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelMedium) }
+			data-on:click={ fmt.Sprintf("if ($puljeCanEdit && !$ordinaryInterestsDisabled) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelMedium, eventId) }
 		>
 			<span class="emoji">{ models.InterestLevelMedium.Emoji() }</span> { models.InterestLevelMedium.Label() }
 		</div>
@@ -129,9 +169,10 @@ templ TicketHolderInterestPicker(
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelLow, models.InterestLevelLow) }
-			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
-			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelLow) }
-			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelLow, eventId) }
+			data-class:is-disabled="!$puljeCanEdit || $ordinaryInterestsDisabled"
+			data-attr:aria-disabled="!$puljeCanEdit || $ordinaryInterestsDisabled ? 'true' : 'false'"
+			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit || $ordinaryInterestsDisabled ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelLow) }
+			data-on:click={ fmt.Sprintf("if ($puljeCanEdit && !$ordinaryInterestsDisabled) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelLow, eventId) }
 		>
 			<span class="emoji">{ models.InterestLevelLow.Emoji() }</span> { models.InterestLevelLow.Label() }
 		</div>
@@ -139,9 +180,10 @@ templ TicketHolderInterestPicker(
 			role="button"
 			class="card-clickable card-clickable-item"
 			data-class:selected={ fmt.Sprintf("$currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s': $currentInterestLevelChoice === '%s'", pendingChoice, models.InterestLevelNone, models.InterestLevelNone) }
-			data-attr:aria-disabled="!$puljeCanEdit ? 'true' : 'false'"
-			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelNone) }
-			data-on:click={ fmt.Sprintf("if ($puljeCanEdit) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelNone, eventId) }
+			data-class:is-disabled="!$puljeCanEdit || $ordinaryInterestsDisabled"
+			data-attr:aria-disabled="!$puljeCanEdit || $ordinaryInterestsDisabled ? 'true' : 'false'"
+			data-attr:tabindex={ fmt.Sprintf("!$puljeCanEdit || $ordinaryInterestsDisabled ? '-1' : $currentInterestLevelChoice === '%s' ? $selectedInterestLevel === '%s' ? '-1' : '0' : '0'", pendingChoice, models.InterestLevelNone) }
+			data-on:click={ fmt.Sprintf("if ($puljeCanEdit && !$ordinaryInterestsDisabled) { $currentInterestLevelChoice = '%s'; @put('/event/api/%s/interest/update/interest') }", models.InterestLevelNone, eventId) }
 		>
 			<span class="emoji">😑</span> { models.InterestLevelNone.Label() }
 		</div>

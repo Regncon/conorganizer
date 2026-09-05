@@ -15,6 +15,7 @@ import (
 templ EventInterests(userInfo requestctx.UserRequestInfo,
 	eventId string,
 	puljeId string,
+	isOpenRegistration bool,
 	db *sql.DB,
 	r *http.Request,
 	logger *slog.Logger) {
@@ -140,8 +141,12 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 				@ticketholder.TicketHolderPicker(userInfo, eventId, db, logger)
 				@ticketholder.TicketHolderPuljePicker(eventId, puljeId, db, logger)
 				<div>
-					<p class="label">Velg interesse</p>
-					@ticketholder.TicketHolderInterestPicker(eventId, db, r, logger)
+					if isOpenRegistration {
+						<p class="label">Vel interesse eller påmelding</p>
+					} else {
+						<p class="label">Velg interesse</p>
+					}
+					@ticketholder.TicketHolderInterestPicker(eventId, isOpenRegistration)
 				</div>
 			</div>
 			<div class="dialog-footer">

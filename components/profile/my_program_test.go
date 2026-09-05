@@ -7,16 +7,16 @@ import (
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
-func TestGetAllEventsForUser_WhenPlayerAssignmentIsInOpenPulje_ReturnsInterestsInstead(t *testing.T) {
+func TestGetAllEventsForUser_WhenManualPlayerAssignmentIsInOpenPulje_ReturnsAssignmentImmediately(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given a player assignment in an open pulje.",
+		Given: "Given a manual player assignment in an open pulje.",
 		When:  "When the profile program data is loaded.",
-		Then:  "Then the player result is hidden and the user's interests are returned.",
+		Then:  "Then the manual assignment is returned immediately and interests in the pulje are hidden.",
 	})
 
 	// Given
-	expectedEventTitles := []string{}
-	expectedInterestNames := []string{"Open Wish Event"}
+	expectedEventTitles := []string{"Open Assigned Event"}
+	expectedInterestNames := []string{}
 
 	db, logger := createProfileProgramTestDB(t)
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
@@ -41,23 +41,23 @@ func TestGetAllEventsForUser_WhenPlayerAssignmentIsInOpenPulje_ReturnsInterestsI
 	assertProfileProgramInterestNames(t, expectedInterestNames, interests)
 }
 
-func TestGetAllEventsForUser_WhenPlayerAssignmentIsInLockedPulje_ReturnsInterestsInstead(t *testing.T) {
+func TestGetAllEventsForUser_WhenRegistrationIsInLockedPulje_ReturnsRegistrationImmediately(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Given a player assignment in a locked pulje.",
+		Given: "Given a registration assignment in a locked pulje.",
 		When:  "When the profile program data is loaded.",
-		Then:  "Then the player result is hidden and the user's interests are returned.",
+		Then:  "Then the registration is returned immediately and interests in the pulje are hidden.",
 	})
 
 	// Given
-	expectedEventTitles := []string{}
-	expectedInterestNames := []string{"Locked Wish Event"}
+	expectedEventTitles := []string{"Locked Assigned Event"}
+	expectedInterestNames := []string{}
 
 	db, logger := createProfileProgramTestDB(t)
 	userInfo, billettholderID := seedProfileProgramUser(t, db)
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusLocked)
 	insertProfileProgramPublishedEvent(t, db, "locked-assigned-event", "Locked Assigned Event")
 	insertProfileProgramPublishedEvent(t, db, "locked-wish-event", "Locked Wish Event")
-	insertProfileProgramPlayer(t, db, "locked-assigned-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramPlayerWithSource(t, db, "locked-assigned-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, models.EventPlayerSourceRegistration)
 	insertProfileProgramInterest(t, db, "locked-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When
@@ -91,7 +91,7 @@ func TestGetAllEventsForUser_WhenPlayerAssignmentIsInCompletedPulje_ReturnsPlaye
 	insertProfileProgramPulje(t, db, models.PuljeFredagKveld, models.PuljeStatusCompleted)
 	insertProfileProgramPublishedEvent(t, db, "completed-assigned-event", "Completed Assigned Event")
 	insertProfileProgramPublishedEvent(t, db, "completed-wish-event", "Completed Wish Event")
-	insertProfileProgramPlayer(t, db, "completed-assigned-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer)
+	insertProfileProgramPlayerWithSource(t, db, "completed-assigned-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, models.EventPlayerSourceSolver)
 	insertProfileProgramInterest(t, db, "completed-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
 
 	// When
@@ -107,6 +107,43 @@ func TestGetAllEventsForUser_WhenPlayerAssignmentIsInCompletedPulje_ReturnsPlaye
 	}
 	assertProfileProgramEventTitles(t, expectedEventTitles, events)
 	assertProfileProgramInterestNames(t, expectedInterestNames, interests)
+}
+
+func TestGetAllEventsForUser_WhenSolverAssignmentIsNotCompleted_HidesResultAndKeepsInterests(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Given a solver assignment and an interest in a pulje that is not completed.",
+		When:  "When the profile program data is loaded.",
+		Then:  "Then the solver result remains hidden and the interest is returned.",
+	})
+
+	for _, puljeStatus := range []models.PuljeStatus{models.PuljeStatusOpen, models.PuljeStatusLocked} {
+		t.Run(string(puljeStatus), func(t *testing.T) {
+			// Given
+			expectedEventTitles := []string{}
+			expectedInterestNames := []string{"Visible Wish Event"}
+			db, logger := createProfileProgramTestDB(t)
+			userInfo, billettholderID := seedProfileProgramUser(t, db)
+			insertProfileProgramPulje(t, db, models.PuljeFredagKveld, puljeStatus)
+			insertProfileProgramPublishedEvent(t, db, "hidden-solver-event", "Hidden Solver Event")
+			insertProfileProgramPublishedEvent(t, db, "visible-wish-event", "Visible Wish Event")
+			insertProfileProgramPlayerWithSource(t, db, "hidden-solver-event", models.PuljeFredagKveld, billettholderID, models.EventPlayerRolePlayer, models.EventPlayerSourceSolver)
+			insertProfileProgramInterest(t, db, "visible-wish-event", models.PuljeFredagKveld, billettholderID, models.InterestLevelHigh)
+
+			// When
+			events, eventsErr := GetAllEventsForUser(userInfo, billettholderID, db, logger)
+			interests, interestsErr := getAllInterestsForUser(userInfo, billettholderID, db, logger)
+
+			// Then
+			if eventsErr != nil {
+				t.Fatalf("expected event query to succeed: %v", eventsErr)
+			}
+			if interestsErr != nil {
+				t.Fatalf("expected interest query to succeed: %v", interestsErr)
+			}
+			assertProfileProgramEventTitles(t, expectedEventTitles, events)
+			assertProfileProgramInterestNames(t, expectedInterestNames, interests)
+		})
+	}
 }
 
 func TestGetAllEventsForUser_WhenGMEventIsInOpenPulje_ReturnsGMEvent(t *testing.T) {

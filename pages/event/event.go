@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -19,6 +20,34 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 	datastar "github.com/starfederation/datastar-go/datastar"
 )
+
+var (
+	errInterestAdultsOnly              = errors.New("event is adults only")
+	errInterestAssignedInPulje         = errors.New("billettholder is assigned in pulje")
+	errInterestGamemasterInPulje       = errors.New("billettholder is a gamemaster in pulje")
+	errInterestHighForOpenRegistration = errors.New("high interest is unavailable for open registration event")
+)
+
+type interestAssignmentLink struct {
+	EventID string
+	Title   string
+}
+
+type interestParticipationState struct {
+	IsAssignedToEvent     bool
+	PlayerAssignments     []interestAssignmentLink
+	GamemasterAssignments []interestAssignmentLink
+	IsUnderageForEvent    bool
+}
+
+func (state interestParticipationState) ordinaryInterestsDisabled() bool {
+	return state.IsUnderageForEvent || len(state.PlayerAssignments) > 0 || len(state.GamemasterAssignments) > 0
+}
+
+type selectedInterestState struct {
+	InterestLevel models.InterestLevel
+	interestParticipationState
+}
 
 func patchInterestErrorSignal(sse *datastar.ServerSentEventGenerator, errorMessage string) error {
 	signalJSON, err := json.Marshal(map[string]string{
@@ -37,6 +66,18 @@ func interestErrorMessageFromError(err error) string {
 	if err == nil {
 		return ""
 	}
+	if errors.Is(err, errInterestAdultsOnly) {
+		return "Arrangementet har 18-årsgrense. Denne billettheldaren kan ikkje melde interesse."
+	}
+	if errors.Is(err, errInterestAssignedInPulje) {
+		return "Denne billettheldaren er allereie tildelt eit arrangement i pulja. Fjern påmeldinga før du endrar vanlege interesser."
+	}
+	if errors.Is(err, errInterestGamemasterInPulje) {
+		return "Denne billettheldaren er spilleder i pulja og kan ikkje endre påmeldingar eller interesser."
+	}
+	if errors.Is(err, errInterestHighForOpenRegistration) {
+		return "Bruk «Meld deg på» for direkte påmelding, eller vel eit lågare interessenivå."
+	}
 	if strings.Contains(err.Error(), "does not have access") {
 		return "Du har ikkje tilgang til å endre interessa til denne billettheldaren. Kontakt styret."
 	}
@@ -53,6 +94,19 @@ func interestErrorMessageFromError(err error) string {
 		return "Interessevalget er ikke åpnet ennå."
 	}
 	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
+}
+
+func isExpectedInterestError(err error) bool {
+	return errors.Is(err, errInterestAdultsOnly) ||
+		errors.Is(err, errInterestAssignedInPulje) ||
+		errors.Is(err, errInterestGamemasterInPulje) ||
+		errors.Is(err, errInterestHighForOpenRegistration) ||
+		strings.Contains(err.Error(), "does not have access") ||
+		strings.Contains(err.Error(), "is not active and published for event") ||
+		strings.Contains(err.Error(), "is locked for event") ||
+		strings.Contains(err.Error(), "is completed for event") ||
+		strings.Contains(err.Error(), "program is not published") ||
+		strings.Contains(err.Error(), "is required")
 }
 
 func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
@@ -98,22 +152,43 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 					}
 					signals := &Signals{}
 					if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
-						logger.Error(fmt.Errorf("failed to read event interest signals: %w", readSignalErr).Error())
+						logger.Info("Rejected selected interest request: invalid signals", "error", readSignalErr.Error())
 						http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 						return
 					}
 
-					interest, err := getSelectedInterest(eventId, signals.BillettHolderId, signals.PuljeId, db)
+					state, err := getSelectedInterestState(eventId, signals.BillettHolderId, signals.PuljeId, db)
 					if err != nil {
-						logger.Error(fmt.Errorf("failed to get selected interest: %w", err).Error())
+						logger.Error("Failed to get selected interest",
+							"error", err,
+							"event_id", eventId,
+							"pulje_id", signals.PuljeId,
+							"billettholder_id", signals.BillettHolderId,
+						)
 						http.Error(w, err.Error(), http.StatusInternalServerError)
 						return
 					}
 
 					sse := datastar.NewSSE(w, r)
-					signalJSON := fmt.Appendf(nil, `{"selectedInterestLevel": %q, "currentInterestLevelChoice": "Pending choice"}`, interest)
+					signalJSON, err := json.Marshal(map[string]any{
+						"selectedInterestLevel":      state.InterestLevel,
+						"currentInterestLevelChoice": "Pending choice",
+						"isAssignedToEvent":          state.IsAssignedToEvent,
+						"ordinaryInterestsDisabled":  state.ordinaryInterestsDisabled(),
+						"registrationDisabled":       state.IsUnderageForEvent || len(state.GamemasterAssignments) > 0,
+						"deregistrationDisabled":     len(state.GamemasterAssignments) > 0,
+					})
+					if err != nil {
+						logger.Error("Failed to marshal selected interest signals", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+						http.Error(w, "Failed to prepare selected interest", http.StatusInternalServerError)
+						return
+					}
 					if err := sse.PatchSignals(signalJSON); err != nil {
-						logger.Error(fmt.Errorf("failed to patch selected interest signal: %w", err).Error(), "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "selectedInterestLevel", interest)
+						logger.Error("Failed to patch selected interest signal", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "selected_interest_level", state.InterestLevel)
+						return
+					}
+					if err := sse.PatchElementTempl(selectedInterestWarning(state, signals.PuljeId)); err != nil {
+						logger.Error("Failed to patch selected interest warning", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 					}
 
 				})
@@ -129,7 +204,7 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 						signals := &Put{}
 
 						if readSignalErr := datastar.ReadSignals(r, signals); readSignalErr != nil {
-							logger.Error(fmt.Errorf("failed to read event interest signals: %w", readSignalErr).Error())
+							logger.Info("Rejected interest update: invalid signals", "error", readSignalErr.Error())
 							http.Error(w, readSignalErr.Error(), http.StatusBadRequest)
 							return
 						}
@@ -139,21 +214,21 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 
 						eventId := chi.URLParam(r, "idx")
 						if eventId == "" {
-							logger.Error("Rejected interest update: missing event id", "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							logger.Info("Rejected interest update: missing event id", "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 							if err := patchInterestErrorSignal(sse, "Mangler arrangement."); err != nil {
 								logger.Error(err.Error(), "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 							}
 							return
 						}
 						if signals.BillettHolderId <= 0 {
-							logger.Error("Rejected interest update: missing billettholder id", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+							logger.Info("Rejected interest update: missing billettholder id", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 							if err := patchInterestErrorSignal(sse, "Vel billetthelder f\u00f8r du melder interesse."); err != nil {
 								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 							}
 							return
 						}
 						if signals.PuljeId == "" {
-							logger.Error("Rejected interest update: missing pulje id", "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
+							logger.Info("Rejected interest update: missing pulje id", "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
 							if err := patchInterestErrorSignal(sse, "Vel pulje f\u00f8r du melder interesse."); err != nil {
 								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
 							}
@@ -161,13 +236,17 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 						}
 
 						if err := updateInterest(userInfo.Id, signals.BillettHolderId, eventId, signals.CurrentInterestLevelChoice, signals.PuljeId, db); err != nil {
-							logger.Error(
-								err.Error(),
+							logArgs := []any{
 								"event_id", eventId,
 								"user_id", userInfo.Id,
 								"pulje_id", signals.PuljeId,
 								"billettholder_id", signals.BillettHolderId,
-							)
+							}
+							if isExpectedInterestError(err) {
+								logger.Info("Interest update rejected", append(logArgs, "reason", err.Error())...)
+							} else {
+								logger.Error(err.Error(), logArgs...)
+							}
 							if patchErr := patchInterestErrorSignal(sse, interestErrorMessageFromError(err)); patchErr != nil {
 								logger.Error(patchErr.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 							}
@@ -221,6 +300,94 @@ func getSelectedInterest(eventId string, billettholderId int, puljeId string, db
 	return interestLevel, nil
 }
 
+func getSelectedInterestState(eventID string, billettholderID int, puljeID string, db *sql.DB) (selectedInterestState, error) {
+	interestLevel, err := getSelectedInterest(eventID, billettholderID, puljeID, db)
+	if err != nil {
+		return selectedInterestState{}, err
+	}
+
+	participation, err := getInterestParticipationState(eventID, billettholderID, puljeID, db)
+	if err != nil {
+		return selectedInterestState{}, err
+	}
+
+	return selectedInterestState{
+		InterestLevel:              interestLevel,
+		interestParticipationState: participation,
+	}, nil
+}
+
+func getInterestParticipationState(eventID string, billettholderID int, puljeID string, db *sql.DB) (interestParticipationState, error) {
+	state := interestParticipationState{}
+	if eventID == "" || billettholderID <= 0 || puljeID == "" {
+		return state, nil
+	}
+
+	var (
+		ageGroup models.AgeGroup
+		isOver18 int
+	)
+	if err := db.QueryRow(`
+		SELECT e.age_group, b.is_over_18
+		FROM events e
+		JOIN billettholdere b ON b.id = ?
+		WHERE e.id = ?
+	`, billettholderID, eventID).Scan(&ageGroup, &isOver18); err != nil {
+		return state, fmt.Errorf("read interest age eligibility: %w", err)
+	}
+	state.IsUnderageForEvent = ageGroup == models.AgeGroupAdultsOnly && isOver18 == 0
+
+	rows, err := db.Query(`
+		SELECT assigned.event_id, e.title, assigned.role
+		FROM relation_events_players assigned
+		JOIN events e ON e.id = assigned.event_id
+		WHERE assigned.billettholder_id = ?
+			AND assigned.pulje_id = ?
+			AND (
+				assigned.role = ?
+				OR (
+					assigned.role = ?
+					AND assigned.source IN (?, ?)
+				)
+			)
+		ORDER BY e.title, assigned.event_id
+	`,
+		billettholderID,
+		puljeID,
+		models.EventPlayerRoleGM,
+		models.EventPlayerRolePlayer,
+		models.EventPlayerSourceManual,
+		models.EventPlayerSourceRegistration,
+	)
+	if err != nil {
+		return state, fmt.Errorf("read interest assignments: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			assignment interestAssignmentLink
+			role       models.EventPlayerRole
+		)
+		if err := rows.Scan(&assignment.EventID, &assignment.Title, &role); err != nil {
+			return state, fmt.Errorf("scan interest assignment: %w", err)
+		}
+		if role == models.EventPlayerRoleGM {
+			state.GamemasterAssignments = append(state.GamemasterAssignments, assignment)
+			continue
+		}
+		state.PlayerAssignments = append(state.PlayerAssignments, assignment)
+		if assignment.EventID == eventID {
+			state.IsAssignedToEvent = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return state, fmt.Errorf("iterate interest assignments: %w", err)
+	}
+
+	return state, nil
+}
+
 func updateInterest(
 	userId string,
 	billettholderId int,
@@ -252,7 +419,7 @@ func updateInterest(
 	}
 
 	puljeQuery := `
-		SELECT p.status
+		SELECT p.status, e.is_open_registration
 		FROM relation_event_puljer ep
 		JOIN puljer p ON p.id = ep.pulje_id
 		JOIN events e ON e.id = ep.event_id
@@ -262,8 +429,11 @@ func updateInterest(
 			AND ep.is_published = 1
 			AND e.status = $3
 	`
-	var puljeStatus models.PuljeStatus
-	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId, models.EventStatusAnnounced).Scan(&puljeStatus)
+	var (
+		puljeStatus        models.PuljeStatus
+		isOpenRegistration bool
+	)
+	puljerErr := db.QueryRow(puljeQuery, eventID, puljeId, models.EventStatusAnnounced).Scan(&puljeStatus, &isOpenRegistration)
 	if puljerErr != nil {
 		if puljerErr == sql.ErrNoRows {
 			return fmt.Errorf("pulje %s is not active and published for event %s", puljeId, eventID)
@@ -291,6 +461,23 @@ func updateInterest(
 	}
 	if !userHasAccess {
 		return fmt.Errorf("user %s does not have access to this billettholder interest", userId)
+	}
+
+	participation, err := getInterestParticipationState(eventID, billettholderId, puljeId, db)
+	if err != nil {
+		return fmt.Errorf("check interest participation state: %w", err)
+	}
+	if len(participation.GamemasterAssignments) > 0 {
+		return errInterestGamemasterInPulje
+	}
+	if participation.IsUnderageForEvent {
+		return errInterestAdultsOnly
+	}
+	if len(participation.PlayerAssignments) > 0 {
+		return errInterestAssignedInPulje
+	}
+	if isOpenRegistration && currentInterestLevelChoice == models.InterestLevelHigh {
+		return errInterestHighForOpenRegistration
 	}
 
 	if currentInterestLevelChoice == models.InterestLevelNone {
