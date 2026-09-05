@@ -44,13 +44,14 @@ class BannerCropper extends HTMLElement {
                     display: block;
                     }
 
-                    .banner-cropper-camera-icon {
-                        display: none;
-                    }
+                .banner-cropper-camera-icon {
+                    display: none;
+                }
 
-                    .banner-cropper-canvas {
-                        cursor: move;
-                    }
+                .banner-cropper-canvas {
+                    cursor: move;
+                }
+
                 .banner-cropper-controls {
                     display: flex;
                     gap: 1rem;
