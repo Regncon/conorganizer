@@ -411,14 +411,6 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                         rotate: 0deg;
                         transition: rotate 5s ease-in-out
                     }
-
-                    .spin {
-                        rotate: 360deg;
-
-                        svg {
-                            color: black;
-                        }
-                    }
                 }
 
                 .item-card:is(:not(.file-info)) {
@@ -480,14 +472,15 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 				<form
 					enctype="multipart/form-data"
 					data-on:submit={ fmt.Sprintf("@post('/profile/api/new/%s/upload', {contentType: 'form'})", eventId) }
-					data-signals="{test1: 1, test2: 3, _replace: false}"
+					data-signals="{_add_drag_over: false, _replace: false}"
 					class="item-card image-upload-card"
+					data-class:is-drag-over="$_add_drag_over"
 				>
 					<!-- data-effect="$_replace === true && window.location.replace(window.location.href)"  -->
 					<input
-						data-on:drop="$test2 = 5; el.files = evt.dataTransfer.files; el.closest('form').requestSubmit(); $_showUploadForm = false"
-						data-on:dragend="console.log('End',{evt}); $test2 = 3;"
-						data-class:is-drag-over="$test2 === 4 ? true : false"
+						data-on:drop="$_add_drag_over = false; el.files = evt.dataTransfer.files; el.closest('form').requestSubmit(); $_showUploadForm = false"
+						data-on:dragleave="$_add_drag_over = false"
+						data-on:dragover="$_add_drag_over = true"
 						data-on:change=" el.closest('form').requestSubmit();"
 						data-effect="$_replace === true"
 						data-on:datastar-fetch="evt.detail.type === 'finished' ? $_replace = true : null"
@@ -496,7 +489,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						accept="image/*"
 						required
 					/>
-					<div class="image-upload-icon-wrapper" data-class:spin="$test2 === 5">
+					<div class="image-upload-icon-wrapper">
 						@icons.Icon(icons.FileUpload, icons.Size20)
 					</div>
 					<p>Klikk her eller dra et bilde inn for å laste det opp.</p>
