@@ -3,7 +3,7 @@ const UPLOAD_ERROR_MESSAGE = "Klarte ikkje å lagre endringa. Prøv igjen. Konta
 // ---- component --------------------------------------------------------------
 class BannerCropper extends HTMLElement {
     static get observedAttributes() {
-        return ["width", "height", "preview-width", "preview-height", "image-url", "event-id", "image-kind"]
+        return ["width", "height", "preview-width", "preview-height", "image-url", "event-id", "image-kind", "label"]
     }
 
     constructor() {
@@ -41,6 +41,9 @@ class BannerCropper extends HTMLElement {
                 gap: var(--spacing-4x);
                 inline-size: min-content;
 
+                .banner-cropper-header-label {
+                    color: var(--color-text-soft);
+                }
                 .banner-cropper-image-slider {
                     display: grid;
                     inline-size: var(--banner-cropper-preview-width);
@@ -175,11 +178,11 @@ class BannerCropper extends HTMLElement {
                     &:focus-visible::-moz-range-track {
                         box-shadow: 0 0 0 2px var(--range-focus-ring);
                     }
-
                 }
             }
         </style>
         <div class="banner-cropper-wrapper">
+            <h4 class="banner-cropper-header-label">Plassholder tekst</h4>
             <div class="banner-cropper-image-slider">
                 <canvas id="canvas" class="banner-cropper-canvas" aria-label="Banner canvas"></canvas>
                 <input id="zoom" class="slider" type="range" min="1" max="3" step="0.01" value="1" disabled>
@@ -202,6 +205,7 @@ class BannerCropper extends HTMLElement {
         this.ctx = this.canvas.getContext("2d")
         this.zoom = root.getElementById("zoom")
         this.exportButton = root.getElementById("exportButton")
+        this.headerLabelEl = root.querySelector(".banner-cropper-header-label")
         this.statusInlineEl = root.getElementById("statusInline")
         this.statusErrorEl = root.getElementById("statusError")
 
@@ -245,6 +249,10 @@ class BannerCropper extends HTMLElement {
 
         if (name === "preview-width" || name === "preview-height") {
             this._applyPreviewSize()
+        }
+
+        if (name === "label" && this.headerLabelEl) {
+            this.headerLabelEl.textContent = newValue
         }
 
         if (name === "image-kind") {

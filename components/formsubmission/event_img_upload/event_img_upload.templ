@@ -520,7 +520,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					preview-width="980"
 					preview-height="218"
 					image-kind="banner"
-					data-attr:image-url="$sourceImageUrl"
+					label="Bannerbilder på arrangementsiden"
 				></banner-cropper>
 			</div>
 			<div class="surface-pane banner-cropper" data-show="!$_showUploadForm">
@@ -531,7 +531,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					preview-width="540"
 					preview-height="190"
 					image-kind="card"
-					data-attr:image-url="$sourceImageUrl"
+					label="Thumbnail på arrangementsiden"
 				></banner-cropper>
 			</div>
 		</div>
