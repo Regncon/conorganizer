@@ -524,7 +524,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					<button class="btn btn--outline remove-file">Slett bilete</button>
 				</div>
 			</div>
-			<div class="surface-pane" data-show="!$_showUploadForm">
+			<div class="surface-pane banner-cropper" data-show="!$_showUploadForm">
 				<banner-cropper
 					event-id={ eventId }
 					width="600"
@@ -533,7 +533,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					data-attr:image-url="$sourceImageUrl"
 				></banner-cropper>
 			</div>
-			<div class="surface-pane" data-show="!$_showUploadForm">
+			<div class="surface-pane banner-cropper" data-show="!$_showUploadForm">
 				<banner-cropper
 					event-id={ eventId }
 					width="1360"
