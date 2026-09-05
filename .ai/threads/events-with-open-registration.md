@@ -761,3 +761,77 @@ Next question: should `max_players` remain as a room-planning estimate while the
 Time: 2026-09-05 15:39:01
 --- Next Prompt ---
 
+Let's not change any of the existing behavior for `max_players`. There is another developer working on the solver and they will handle the capacity for open registration events. We may also simply put a number in the `max_players` field that is higher than the number of attendees capacity for the festival. The solver will then handle the capacity for open registration events.
+
+Please continue. 
+
+Time: 2026-09-05 15:47:10
+--- Codex Run ---
+
+Codex output:
+Understood: I’ll leave `max_players` and the solver untouched. I’m continuing with the feature interview workflow, but I’ll first trace the existing interest and attendee write paths so the next step reuses today’s rules instead of creating a parallel permission model.
+Understood. `max_players` and solver behavior remain unchanged.
+
+For the next small slice, I recommend implementing the registration domain/API before changing the selector:
+
+- One idempotent `PUT` endpoint with the desired registered state.
+- Registration allowed only for open-registration events.
+- Deregistration removes self-registration or manual player assignments, but never GM or solver assignments.
+- Registration and deregistration delete only the exact event/pulje interest, in the same transaction.
+- Enforce program published, occurrence published, pulje `Open`, ticket ownership, 18+, and not GM.
+- Support multiple open registrations within the same pulje.
+- Add automated tests before wiring up `Meld deg på`/`Meld deg av`.
+
+Should I implement this domain/API slice next? My recommendation is yes.
+
+Time: 2026-09-05 15:47:10
+--- Next Prompt ---
+
+Yes. But let's have a look at the existing code for adding a gm or a player to an event. 
+Perhaps this is a good time to use Martin Fowler's rule of three? 
+You could implement the registration domain/API. Then we will look at the code and decide if we should refactor the code for adding a gm, manual player and self-registration into a single function.
+
+Time: 2026-09-05 15:57:50
+--- Codex Run ---
+
+Codex output:
+Yes—that is a good use of the rule of three. I’ll first map the two existing assignment implementations (GM and manual player), then add self-registration independently. Once we have three concrete workflows, we can compare their real similarities and decide whether extracting one shared assignment function genuinely simplifies them. I’ll also apply the repository logging guidance to the new HTTP boundary.
+The existing implementations confirm the rule-of-three opportunity, but they are not yet equivalent:
+
+- Approval-page GM/player assignment performs a direct upsert and relies on the database’s default `manual` source.
+- Puljefordeling’s manual pin is transactional, first removes another player seat in the pulje, and deliberately preserves interests.
+- Both behaviors conflict in places with the decisions we have now made for registration.
+
+I’ll keep those paths unchanged for this slice. Self-registration will establish the desired transactional behavior explicitly; then we can compare all three with tests in front of us.
+I’m implementing the third workflow as an independent desired-state transaction now. The intentional boundary is: registration code will not call or alter the existing admin assignment functions; it will only share the existing database model and constants.
+The registration transaction is implemented and its focused tests pass. Before the full test run, I found one boundary detail worth correcting: the public event routes can exist without a logged-in user context, so an anonymous registration request should be treated as denied access rather than an internal server error.
+The full suite passes. The three implementations now give us enough evidence for the refactoring decision; I’m checking the remaining “add as first choice” admin action as well, because it may be a fourth policy rather than ordinary manual assignment.
+Implemented the self-registration domain/API slice.
+
+The transaction in [registration.go](/home/cinmay/Documents/conorganizer/pages/event/registration.go:37):
+
+- Creates an attendee with `role=Player` and `source=registration`.
+- Deletes only the matching event/pulje interest.
+- Supports multiple registrations in one pulje.
+- Allows deregistration from self-registration and manual assignments, including ordinary events.
+- Preserves GM and solver assignments.
+- Enforces publishing, pulje status, ownership, 18+, and GM restrictions.
+- Uses `PUT /event/api/{event}/registration`.
+- Logs only unexpected failures; business-rule rejections return appropriate HTTP errors.
+
+The executable user stories in [registration_test.go](/home/cinmay/Documents/conorganizer/pages/event/registration_test.go:26) cover these rules. Full `go test ./...` passes.
+
+On refactoring: I recommend not combining all assignment workflows into one high-level function yet. They currently have materially different policies:
+
+- Approval assignment changes roles in place.
+- Puljefordeling manual assignment removes other player seats in the pulje.
+- “Legg til som førsteval” deliberately creates a high interest.
+- Self-registration permits multiple seats and removes its exact interest.
+
+A unified function would require several behavioral switches. We may later extract a small database-level helper if the common shape becomes clearer.
+
+Do you agree that the next step should correct ordinary manual-player assignment behavior while treating “Legg til som førsteval” as a separate workflow? My recommendation is yes.
+
+Time: 2026-09-05 15:57:50
+--- Next Prompt ---
+

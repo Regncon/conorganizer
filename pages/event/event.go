@@ -56,6 +56,7 @@ func interestErrorMessageFromError(err error) string {
 }
 
 func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *live.Manager, db *sql.DB, logger *slog.Logger, eventImageDir *string) error {
+	baseLogger := logger
 	logger = logger.With("component", "event")
 	nc, err := ns.Client()
 	if err != nil {
@@ -192,6 +193,10 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 					})
 
 				})
+			})
+
+			eventIdRouter.Route("/registration", func(registrationRouter chi.Router) {
+				setupRegistrationRoute(registrationRouter, db, liveManager, baseLogger)
 			})
 		})
 	})
