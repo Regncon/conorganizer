@@ -26,6 +26,7 @@ type AssignedPlayer struct {
 	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
 	Registration    bool                 // confirmed through open registration (source='registration'), not placed by the solver
 	FirstChoice     bool                 // manually pinned with a matching high-interest row
+	IsOver18        bool                 // participant is over 18; a seated minor in an AdultsOnly game is always an admin pin
 }
 
 // EmulatedEvent is the proposed seating for a single event within a pulje. The
@@ -37,6 +38,7 @@ type EmulatedEvent struct {
 	Capacity          int
 	GMBillettholderID int              // zero if the event has no GM assigned
 	GMName            string           // empty if the event has no GM assigned
+	GMIsOver18        bool             // the GM's age flag, so an under-18 GM of an 18+ game can be marked
 	AssignedPlayers   []AssignedPlayer // sorted by name
 	Undersubscribed   bool             // fewer than the solver's viable-player threshold
 	EventType         models.EventType
@@ -94,7 +96,7 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	if err != nil {
 		return Emulation{}, err
 	}
-	names, err := loadParticipantNames(db) // billettholderID -> display name
+	names, over18, err := loadParticipants(db) // billettholderID -> display name / adult flag
 	if err != nil {
 		return Emulation{}, err
 	}
@@ -117,7 +119,14 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 		slot := smodel.Slot{ID: string(p.ID), Name: p.Name}
 		for _, eid := range sortedEventIDs(events[p.ID]) {
 			e := events[p.ID][eid]
-			ev := smodel.Event{ID: eid, Name: e.title, Capacity: e.capacity}
+			ev := smodel.Event{
+				ID:       eid,
+				Name:     e.title,
+				Capacity: e.capacity,
+				// 18+ games are closed to minors in the free pool; only an
+				// admin pin can put one there.
+				AdultsOnly: e.ageGroup == models.AgeGroupAdultsOnly,
+			}
 			if gmID, ok := gms[eventPuljeKey(eid, p.ID)]; ok {
 				ev.DMID = strconv.Itoa(gmID)
 			}
@@ -130,9 +139,10 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	players := make([]smodel.Player, 0, len(prefs))
 	for _, bhID := range sortedIntKeys(prefs) {
 		players = append(players, smodel.Player{
-			ID:    strconv.Itoa(bhID),
-			Name:  names[bhID],
-			Prefs: prefs[bhID],
+			ID:       strconv.Itoa(bhID),
+			Name:     names[bhID],
+			Prefs:    prefs[bhID],
+			IsOver18: over18[bhID],
 		})
 	}
 
@@ -152,7 +162,7 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 		eligiblePlayers := playersWithoutRegistrations(players, puljeRegistrations, pins[pulje.ID])
 		res := state.SolveSlotFixed(slot, eligiblePlayers, pins[pulje.ID])
 		addRegistrationAssignments(&res, puljeRegistrations)
-		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, prefs, dmSet, pins[pulje.ID], puljeRegistrations, events[pulje.ID]))
+		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, over18, prefs, dmSet, pins[pulje.ID], puljeRegistrations, events[pulje.ID]))
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
 
@@ -166,6 +176,7 @@ func shapePulje(
 	res smodel.SlotResult,
 	gms map[string]int,
 	names map[int]string,
+	over18 map[int]bool,
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
 	manual map[string]string,
@@ -195,7 +206,7 @@ func shapePulje(
 			EventID:         ev.ID,
 			Title:           ev.Name,
 			Capacity:        ev.Capacity,
-			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, prefs, dmSet, moved, manual, registrations),
+			AssignedPlayers: assignedPlayers(res.Assignments[ev.ID], ev.ID, string(pulje.ID), names, over18, prefs, dmSet, moved, manual, registrations),
 			Undersubscribed: under[ev.ID],
 		}
 		if m, ok := meta[ev.ID]; ok {
@@ -208,6 +219,7 @@ func shapePulje(
 		if gmID, ok := gms[eventPuljeKey(ev.ID, pulje.ID)]; ok {
 			emEv.GMBillettholderID = gmID
 			emEv.GMName = names[gmID]
+			emEv.GMIsOver18 = over18[gmID]
 		}
 		out.Events = append(out.Events, emEv)
 	}
@@ -216,12 +228,14 @@ func shapePulje(
 }
 
 // assignedPlayers turns solver player IDs into display rows: name, DM flag, the
-// interest level the player had for the game they were seated in, and whether
-// the solver relocated them off a higher-scoring event (the moved set).
+// interest level the player had for the game they were seated in, whether the
+// solver relocated them off a higher-scoring event (the moved set), and whether
+// they are over 18 (so the UI can flag a pinned minor in an 18+ game).
 func assignedPlayers(
 	ids []string,
 	eventID, puljeID string,
 	names map[int]string,
+	over18 map[int]bool,
 	prefs map[int]map[string]map[string]smodel.Score,
 	dmSet map[int]bool,
 	moved map[string]bool,
@@ -246,6 +260,7 @@ func assignedPlayers(
 			Moved:           moved[id],
 			Manual:          manual[id] == eventID,
 			Registration:    registered,
+			IsOver18:        over18[bh],
 		}
 		if byPulje, ok := prefs[bh]; ok {
 			got := byPulje[puljeID][eventID]
@@ -413,24 +428,33 @@ func loadGMs(db *sql.DB) (map[string]int, error) {
 	return out, rows.Err()
 }
 
-func loadParticipantNames(db *sql.DB) (map[int]string, error) {
-	const query = `SELECT id, first_name, last_name FROM billettholdere`
+// loadParticipants returns the display name and the over-18 flag for every
+// billettholder. The age flag gates AdultsOnly events in the solver, so it is
+// read in the same pass as the names.
+func loadParticipants(db *sql.DB) (map[int]string, map[int]bool, error) {
+	const query = `SELECT id, first_name, last_name, is_over_18 FROM billettholdere`
 	rows, err := db.Query(query)
 	if err != nil {
-		return nil, fmt.Errorf("query participants: %w", err)
+		return nil, nil, fmt.Errorf("query participants: %w", err)
 	}
 	defer rows.Close()
 
-	out := make(map[int]string)
+	names := make(map[int]string)
+	over18 := make(map[int]bool)
 	for rows.Next() {
 		var id int
 		var first, last string
-		if err := rows.Scan(&id, &first, &last); err != nil {
-			return nil, fmt.Errorf("scan participant row: %w", err)
+		var isOver18 bool
+		if err := rows.Scan(&id, &first, &last, &isOver18); err != nil {
+			return nil, nil, fmt.Errorf("scan participant row: %w", err)
 		}
-		out[id] = first + " " + last
+		names[id] = first + " " + last
+		over18[id] = isOver18
 	}
-	return out, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, nil, err
+	}
+	return names, over18, nil
 }
 
 // loadPrefs builds billettholderID -> puljeID -> eventID -> score, keeping only

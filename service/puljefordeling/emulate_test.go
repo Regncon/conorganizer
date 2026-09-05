@@ -198,3 +198,119 @@ func TestEmulateSeatings(t *testing.T) {
 		t.Errorf("satisfied total: want 2, got %d", em.SatisfiedTotal)
 	}
 }
+
+// markEventAdultsOnly turns an already-seeded event into an 18+ game.
+func markEventAdultsOnly(t *testing.T, db *sql.DB, eventID string) {
+	t.Helper()
+	_, err := db.Exec(`UPDATE events SET age_group = ? WHERE id = ?`, string(models.AgeGroupAdultsOnly), eventID)
+	if err != nil {
+		t.Fatalf("mark event %s adults only: %v", eventID, err)
+	}
+}
+
+// markParticipantOver18 flags an already-seeded participant as an adult.
+func markParticipantOver18(t *testing.T, db *sql.DB, bhID int) {
+	t.Helper()
+	if _, err := db.Exec(`UPDATE billettholdere SET is_over_18 = 1 WHERE id = ?`, bhID); err != nil {
+		t.Fatalf("mark participant %d over 18: %v", bhID, err)
+	}
+}
+
+// seedManualSeat records an admin pin (source='manual') for a participant.
+func seedManualSeat(t *testing.T, db *sql.DB, eventID string, pulje models.Pulje, bhID int) {
+	t.Helper()
+	_, err := db.Exec(
+		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		 VALUES (?, ?, ?, ?, ?)`,
+		eventID, string(pulje), bhID, string(models.EventPlayerRolePlayer), models.EventPlayerSourceManual,
+	)
+	if err != nil {
+		t.Fatalf("seed manual seat bh=%d ev=%s: %v", bhID, eventID, err)
+	}
+}
+
+func findAssigned(aps []AssignedPlayer, bhID int) (AssignedPlayer, bool) {
+	for _, ap := range aps {
+		if ap.BillettholderID == bhID {
+			return ap, true
+		}
+	}
+	return AssignedPlayer{}, false
+}
+
+func TestEmulateSeatings_MinorNotSeatedInAdultsOnlyEvent(t *testing.T) {
+	db, _ := testutil.CreateTestDBAndLogger(t, "test_emulate_adults_only")
+
+	const fredag = models.PuljeFredagKveld
+	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+
+	// Room for both, but the game is 18+.
+	seedEvent(t, db, "ev18", "Attende", 2, fredag)
+	markEventAdultsOnly(t, db, "ev18")
+
+	seedParticipant(t, db, 1, "Vaksen", "Voksdal")
+	markParticipantOver18(t, db, 1)
+	seedParticipant(t, db, 2, "Ungdom", "Ungsdal")
+
+	seedInterest(t, db, 1, "ev18", fredag, models.InterestLevelHigh)
+	seedInterest(t, db, 2, "ev18", fredag, models.InterestLevelHigh)
+
+	em, err := EmulateSeatings(db)
+	if err != nil {
+		t.Fatalf("EmulateSeatings: %v", err)
+	}
+	if len(em.Puljer) != 1 {
+		t.Fatalf("want 1 pulje, got %d", len(em.Puljer))
+	}
+	ev, ok := findEvent(em.Puljer[0], "ev18")
+	if !ok {
+		t.Fatal("ev18 missing from emulation")
+	}
+
+	if got := playerNames(ev.AssignedPlayers); !slices.Equal(got, []string{"Vaksen Voksdal"}) {
+		t.Errorf("only the adult should be seated in an AdultsOnly event, got %v", got)
+	}
+	if !slices.Contains(em.Puljer[0].Unassigned, "Ungdom Ungsdal") {
+		t.Errorf("the minor should be unassigned, got %v", em.Puljer[0].Unassigned)
+	}
+	adult, ok := findAssigned(ev.AssignedPlayers, 1)
+	if !ok {
+		t.Fatal("the adult is missing from the assigned players")
+	}
+	if !adult.IsOver18 {
+		t.Error("the seated adult should carry IsOver18")
+	}
+}
+
+func TestEmulateSeatings_ManualPinOfMinorIntoAdultsOnlyEventIsKept(t *testing.T) {
+	db, _ := testutil.CreateTestDBAndLogger(t, "test_emulate_adults_only_pin")
+
+	const fredag = models.PuljeFredagKveld
+	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+
+	seedEvent(t, db, "ev18", "Attende", 4, fredag)
+	markEventAdultsOnly(t, db, "ev18")
+
+	seedParticipant(t, db, 2, "Ungdom", "Ungsdal")
+	// The admin pinned the minor deliberately; the solver must honour it.
+	seedManualSeat(t, db, "ev18", fredag, 2)
+
+	em, err := EmulateSeatings(db)
+	if err != nil {
+		t.Fatalf("EmulateSeatings: %v", err)
+	}
+	ev, ok := findEvent(em.Puljer[0], "ev18")
+	if !ok {
+		t.Fatal("ev18 missing from emulation")
+	}
+	kid, ok := findAssigned(ev.AssignedPlayers, 2)
+	if !ok {
+		t.Fatalf("pinned minor should still be seated, got %v", playerNames(ev.AssignedPlayers))
+	}
+	if !kid.Manual {
+		t.Error("the pinned minor should be flagged Manual")
+	}
+	if kid.IsOver18 {
+		t.Error("the pinned minor should not be flagged IsOver18")
+	}
+}

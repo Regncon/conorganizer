@@ -2,6 +2,7 @@ package admin
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -16,6 +17,7 @@ type puljeAssignmentTarget struct {
 	BillettholderID int
 	EventID         string
 	PuljeID         models.Pulje
+	AgeConfirmed    bool
 }
 
 func readPuljeAssignmentTarget(r *http.Request) (puljeAssignmentTarget, error) {
@@ -23,6 +25,7 @@ func readPuljeAssignmentTarget(r *http.Request) (puljeAssignmentTarget, error) {
 		BillettholderID int    `json:"assignmentBillettholderId"`
 		EventID         string `json:"assignmentEventId"`
 		PuljeID         string `json:"assignmentPuljeId"`
+		AgeConfirmed    bool   `json:"assignmentAgeConfirmed"`
 	}
 	if err := datastar.ReadSignals(r, &signals); err != nil {
 		return puljeAssignmentTarget{}, fmt.Errorf("read assignment signals: %w", err)
@@ -41,6 +44,7 @@ func readPuljeAssignmentTarget(r *http.Request) (puljeAssignmentTarget, error) {
 		BillettholderID: signals.BillettholderID,
 		EventID:         signals.EventID,
 		PuljeID:         puljeID,
+		AgeConfirmed:    signals.AgeConfirmed,
 	}, nil
 }
 
@@ -75,6 +79,50 @@ func puljeAllowsAdminAssignmentChanges(w http.ResponseWriter, db *sql.DB, logger
 	if puljeIsCompleted(status) {
 		http.Error(w, "Pulje is published; changes are not allowed", http.StatusConflict)
 		return false
+	}
+	return true
+}
+
+// puljeAssignmentNeedsAgeConfirmation checks whether an admin is placing a
+// participant under 18 in an 18+ event. Admins may override the restriction,
+// but only after the confirmation dialog re-posts the assignment with the
+// confirmation flag set.
+func puljeAssignmentNeedsAgeConfirmation(
+	w http.ResponseWriter,
+	r *http.Request,
+	db *sql.DB,
+	logger *slog.Logger,
+	target puljeAssignmentTarget,
+	retryURL string,
+) bool {
+	warning, err := adultsOnlyWarning(db, target.BillettholderID, target.EventID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			http.Error(w, "Billettholder or event not found", http.StatusNotFound)
+			return true
+		}
+		logger.Error(err.Error(), "pulje_id", target.PuljeID, "event_id", target.EventID, "billettholder_id", target.BillettholderID)
+		http.Error(w, "Failed to read age restriction", http.StatusInternalServerError)
+		return true
+	}
+	if warning == "" || target.AgeConfirmed {
+		return false
+	}
+
+	sse := datastar.NewSSE(w, r)
+	if err := sse.MarshalAndPatchSignals(map[string]any{
+		"ageWarningText":            warning,
+		"ageWarningBillettholderId": target.BillettholderID,
+		"ageWarningEventId":         target.EventID,
+		"ageWarningPuljeId":         string(target.PuljeID),
+		"ageWarningUrl":             retryURL,
+	}); err != nil {
+		logger.Error(
+			fmt.Errorf("failed to patch age warning signals: %w", err).Error(),
+			"pulje_id", target.PuljeID,
+			"event_id", target.EventID,
+			"billettholder_id", target.BillettholderID,
+		)
 	}
 	return true
 }

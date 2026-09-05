@@ -102,6 +102,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		if !puljeAllowsAdminAssignmentChanges(w, db, logger, target.PuljeID) {
 			return
 		}
+		if puljeAssignmentNeedsAgeConfirmation(w, r, db, logger, target, "/admin/api/puljefordeling/assign") {
+			return
+		}
 
 		if err := puljefordeling.AddManualSeat(db, target.PuljeID, target.EventID, target.BillettholderID); err != nil {
 			logger.Error(err.Error(), "pulje_id", target.PuljeID, "event_id", target.EventID, "billettholder_id", target.BillettholderID)
@@ -127,6 +130,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		if !puljeAllowsAdminAssignmentChanges(w, db, logger, target.PuljeID) {
 			return
 		}
+		if puljeAssignmentNeedsAgeConfirmation(w, r, db, logger, target, "/admin/api/puljefordeling/assign/gm") {
+			return
+		}
 
 		if err := puljefordeling.AddManualGM(db, target.PuljeID, target.EventID, target.BillettholderID); err != nil {
 			logger.Error(err.Error(), "pulje_id", target.PuljeID, "event_id", target.EventID, "billettholder_id", target.BillettholderID)
@@ -149,6 +155,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 			return
 		}
 		if !puljeAllowsAdminAssignmentChanges(w, db, logger, target.PuljeID) {
+			return
+		}
+		if puljeAssignmentNeedsAgeConfirmation(w, r, db, logger, target, "/admin/api/puljefordeling/assign/first-choice") {
 			return
 		}
 
@@ -290,6 +299,12 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		data-signals:clear-input="0"
 		data-signals:dragged-billettholder-id="0"
 		data-signals:drag-over-event="''"
+		data-signals:assignment-age-confirmed="false"
+		data-signals:age-warning-text="''"
+		data-signals:age-warning-billettholder-id="0"
+		data-signals:age-warning-event-id="''"
+		data-signals:age-warning-pulje-id="''"
+		data-signals:age-warning-url="''"
 	>
 		<style>
             .tabs {
@@ -343,6 +358,7 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		</div>
 		@PuljefordelingTabContent(db, logger, current, eventImageDir)
 		@puljeAssignDialog(db, logger, current)
+		@puljeAgeWarningDialog()
 	</div>
 }
 
@@ -681,6 +697,53 @@ templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
 	</dialog>
 }
 
+// puljeAgeConfirmAction re-posts the pending placement with the age confirmation
+// flag set. The flag is page-global and travels with every request, so it is
+// reset on the very next statement: datastar serialises the signal payload
+// synchronously inside the action call, and clearing it later (in a .finally())
+// would leave every placement fired while the re-post is in flight silently
+// pre-confirmed. datastar compiles expressions with a plain Function(), so
+// `await` is a SyntaxError and must not be used here.
+func puljeAgeConfirmAction() string {
+	return "$assignmentBillettholderId = $ageWarningBillettholderId; " +
+		"$assignmentEventId = $ageWarningEventId; " +
+		"$assignmentPuljeId = $ageWarningPuljeId; " +
+		"$assignmentAgeConfirmed = true; " +
+		"@post($ageWarningUrl); " +
+		"$assignmentAgeConfirmed = false; " +
+		"$assignmentBillettholderId = 0; " +
+		"$ageWarningBillettholderId = 0; " +
+		"$ageWarningUrl = ''; " +
+		"$ageWarningText = ''; " +
+		"document.getElementById('puljefordeling-age-dialog').close()"
+}
+
+// puljeAgeWarningDialog is the confirmation the server asks for before an admin
+// pins a participant under 18 into an 18+ game. The check is server-side (the
+// picker only knows the billettholder id), so this dialog is opened by the
+// $ageWarningText signal the assign endpoint patches back.
+templ puljeAgeWarningDialog() {
+	<dialog
+		id="puljefordeling-age-dialog"
+		closedBy="any"
+		data-effect="$ageWarningText && document.getElementById('puljefordeling-age-dialog').showModal()"
+		data-on:close="$ageWarningText = ''"
+	>
+		<h3>Aldersgrense</h3>
+		<p data-text="$ageWarningText"></p>
+		<button
+			class="btn btn--outline"
+			type="button"
+			data-on:click="$ageWarningText = ''; document.getElementById('puljefordeling-age-dialog').close()"
+		>Avbryt</button>
+		<button
+			class="btn"
+			type="button"
+			data-on:click={ puljeAgeConfirmAction() }
+		>Plasser likevel</button>
+	</dialog>
+}
+
 templ puljeStatusToggles(pulje models.PuljeRow) {
 	<div class="pulje-status-controls">
 		<label class="pulje-status-control">
@@ -748,6 +811,9 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 						data-on:click={ fmt.Sprintf("@delete('/admin/api/puljefordeling/%s/%s/%d/gm')", string(pulje), ev.EventID, ev.GMBillettholderID) }
 					>×</button>
 				}
+				if ev.AgeGroup == models.AgeGroupAdultsOnly && !ev.GMIsOver18 {
+					<span class="pulje-badge pulje-badge--error">Under 18</span>
+				}
 			</p>
 		} else {
 			<span class="pulje-badge pulje-badge--error">Mangler spilleder</span>
@@ -778,6 +844,9 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 					<li class={ templ.KV("moved", pl.Moved), templ.KV("manual", pl.Manual), templ.KV("registration", pl.Registration) } { tileAttrs... }>
 						<span class="pulje-emoji">{ emoji }</span>
 						<span class={ templ.KV("pulje-dm", pl.IsDM) }>{ pl.Name }</span>
+						if ev.AgeGroup == models.AgeGroupAdultsOnly && !pl.IsOver18 {
+							<span class="pulje-badge pulje-badge--error">Under 18</span>
+						}
 						if pl.Manual && !published {
 							if pl.FirstChoice {
 								<button

@@ -1057,3 +1057,154 @@ One question before the next solver-related step: should an open registration co
 Time: 2026-09-05 18:40:15
 --- Next Prompt ---
 
+Let's not change the solver. That's a separate concern and Ill communicate with the other developer about that.
+What is left to do now? 
+Let's discuss whats is left before we update any code.
+
+Time: 2026-09-05 18:48:35
+--- Codex Run ---
+
+Codex output:
+I’ll keep this discussion read-only. I’m going to compare the implemented paths against the agreed stories, check for leftover `WhoIsInterested` code, and separate genuine feature gaps from manual verification and work intentionally owned by the solver/age-override branches.
+Agreed: no further changes to solver logic, fairness, or capacity. The existing Puljefordeling integration only removes already-registered players from the eligible pool for that specific pulje and displays their confirmed assignments.
+
+The feature is largely complete:
+
+| Area | Status |
+| --- | --- |
+| Schema and registration source | Complete |
+| Admin open-registration setting | Complete |
+| `Meld deg på` / `Meld deg av` | Complete |
+| Warnings and assignment links | Complete |
+| Pulje and publication restrictions | Complete |
+| 18+ restriction | Complete, pending integration with the incoming override PR |
+| Profile visibility rules | Complete |
+| Puljefordeling assignment controls | Complete |
+| Registration display in Puljefordeling | Complete |
+| `WhoIsInterested` removal | Complete; no related code remains |
+| Automated tests and documentation | Complete |
+| Solver capacity/fairness | Explicitly owned by the other developer |
+
+One concrete registration-domain edge case remains:
+
+- If Puljefordeling has previously persisted a `solver` assignment, and the holder subsequently self-registers in that pulje, [registration.go](/home/cinmay/Documents/conorganizer/pages/event/registration.go:145) uses `ON CONFLICT DO NOTHING`.
+- An exact solver assignment can therefore prevent the row from becoming a `registration`.
+- A solver assignment for another event can remain alongside the new registration until an admin saves the distribution again.
+- This could expose two assignments if the pulje becomes `Completed` without another save.
+
+My proposed fix is narrowly scoped to the registration transaction:
+
+1. When registering, delete existing `source='solver'`, `role='Player'` assignments for that holder in that pulje.
+2. Preserve manual assignments, GM assignments, and all existing registrations.
+3. Insert the requested registration normally.
+4. Add regression tests for an existing solver seat on both the same and another event.
+
+That is data consistency around self-registration, not a change to the solver algorithm.
+
+After that, the remaining work would be:
+
+- Rebase and verify the incoming admin age-override PR.
+- Rebase and verify the other developer’s capacity changes. The current admin text already claims unlimited capacity, so that copy should be checked against their final behavior.
+- Run the documented browser/manual acceptance checklist, especially live updates, multiple registrations, profile visibility, and locking a pulje.
+- Clean up or rename the current `wip` commit before the PR.
+
+Do you agree that clearing stale solver assignments during self-registration should be our next small implementation step?
+
+Time: 2026-09-05 18:48:35
+--- Next Prompt ---
+
+Let's discuss the stale solver assignment issue. Assigning players by the solver only happens after the puljefordeling is locked and the billettholder can not change their registration. Does that affect the stale solver assignment issue?
+
+Time: 2026-09-05 18:54:42
+--- Codex Run ---
+
+Codex output:
+Yes. Under that workflow, the stale solver-assignment issue cannot occur:
+
+- Self-registration requires the pulje to be `Open`.
+- Solver assignments are persisted only after the pulje becomes `Locked`.
+- Registration and deregistration are rejected while `Locked` or `Completed`.
+
+Therefore, a billettholder cannot self-register while a persisted solver assignment exists.
+
+The edge case would only reappear if an admin:
+
+1. Saves solver assignments while the pulje is still `Open`, or
+2. Locks and runs the solver, then reopens the pulje for user changes.
+
+If those are unsupported operational workflows, I recommend we do nothing. Clearing solver assignments during registration would then be defensive complexity for a state that should never occur.
+
+One clarification: can a pulje ever be reopened after solver assignments have been saved, or should that be considered unsupported?
+
+Time: 2026-09-05 18:54:42
+--- Next Prompt ---
+
+No, a pulje will never be reopened after the solver has been run and the pulje is locked. 
+
+I have now merged the main branch with the new 18+ functionality. There are some merge conflicts that you need to resolve before we can continue.
+
+```Bash
+conorganizer git:(311-arrangement-som-bare-kan-påmeldes) ✗ git merge origin/main
+CONFLICT (modify/delete): components/formsubmission/who_is_interested.templ deleted in HEAD and modified in origin/main.  Version origin/main of components/formsubmission/who_is_interested.templ left in tree.
+Auto-merging pages/admin/admin.go
+CONFLICT (content): Merge conflict in pages/admin/admin.go
+Auto-merging pages/admin/puljefordeling_tab.templ
+CONFLICT (content): Merge conflict in pages/admin/puljefordeling_tab.templ
+Auto-merging pages/admin/puljefordeling_tab_assignment_test.go
+CONFLICT (content): Merge conflict in pages/admin/puljefordeling_tab_assignment_test.go
+Auto-merging pages/admin/puljefordeling_tab_test.go
+Auto-merging service/puljefordeling/emulate.go
+CONFLICT (content): Merge conflict in service/puljefordeling/emulate.go
+Automatic merge failed; fix conflicts and then commit the result.
+```
+
+Time: 2026-09-05 19:05:11
+--- Codex Run ---
+
+Codex output:
+That workflow removes the stale-assignment concern, so I’ll leave registration persistence unchanged. I’ll now resolve the merge by preserving our removal of `WhoIsInterested`, integrating main’s 18+ behavior into Puljefordeling, and then run generation plus the full test suite. I’m using the repository’s logging guidance as well because the conflicting admin handlers include structured logging.
+The conflicts reflect two independent changes touching the same surfaces: our expanded Puljefordeling assignment workflows and main’s under-18 warnings/override. I’m treating main’s `WhoIsInterested` version as a source of behavior to migrate, not as a page to resurrect, since deleting that page was an explicit product decision.
+I’ve traced the conflict to one real integration point: `main` added the 18+ confirmation only to the ordinary-player endpoint, while this branch introduced GM and first-choice assignment endpoints. I’m applying the same confirmation gate to all three, so none of the newer Puljefordeling actions accidentally bypasses the merged age safeguard.
+The admin package now compiles and its merged age tests pass. The first service test run exposed a separate merge integration error: `main` added a test using `SourceManual`, while this branch had moved assignment-source constants elsewhere. I’m locating the canonical constant rather than reintroducing a duplicate.
+The conflict resolution is functionally coherent now: the removed `WhoIsInterested` workflow stays removed, Puljefordeling owns the 18+ override dialog, and both registration metadata and age metadata survive together in the emulated assignment view. Targeted admin and distribution tests are green; I’m moving on to the full repository test suite and merge-state cleanup.
+Everything passes, but the environment prevents writing `.git/index.lock`, so I cannot perform the final `git add` that tells Git the conflicts are resolved. I’m doing one last index/worktree audit now and will give you the exact staging command without including your unrelated `.ai` change.
+The conflicts are resolved in the working tree.
+
+Key decisions:
+
+- Kept `WhoIsInterested` and its obsolete approval routes deleted.
+- Integrated the new 18+ confirmation into Puljefordeling for player, GM, and first-choice assignments.
+- Preserved registration and age metadata together.
+- Left the stale solver-assignment case unchanged.
+- Preserved `main`’s solver changes without expanding them.
+- Left your `.ai` file untouched.
+
+Validation passed:
+
+- `go test ./...`: all packages pass.
+- Test report: 352 passed, 0 failed.
+- No conflict markers or whitespace errors remain.
+
+The sandbox cannot write `.git/index.lock`, so please mark the resolutions as staged:
+
+```bash
+git add -- \
+  components/formsubmission/who_is_interested.templ \
+  components/formsubmission/who_is_interested_age_dialog_test.go \
+  pages/admin/approval/editForm/edit_form_index.templ \
+  pages/admin/approval/editForm/edit_form_index_test.go \
+  pages/admin/approval_event_players.go \
+  pages/admin/approval_event_players_test.go \
+  pages/admin/puljefordeling_assignments.go \
+  pages/admin/puljefordeling_tab.templ \
+  pages/admin/puljefordeling_tab_assignment_test.go \
+  service/puljefordeling/emulate_test.go
+
+git status
+```
+
+That command deliberately excludes `.ai/threads/events-with-open-registration.md`.
+
+Time: 2026-09-05 19:05:11
+--- Next Prompt ---
+
