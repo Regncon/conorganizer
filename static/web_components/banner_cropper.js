@@ -35,10 +35,10 @@ class BannerCropper extends HTMLElement {
         <style>
             input[type="range"] {
                 --range-thumb-border: #FFC483;
-                --range-thumb-size: 14px;
+                --range-thumb-size: 20px;
                 --range-thumb-background: var(--color-primary);
 
-                --range-track-size: 8px;
+                --range-track-size: 12px;
                 --range-track-border: var(--bg-item-border);
                 --range-track-border-size: 1px;
                 --range-track-background: var(--bg-item);
