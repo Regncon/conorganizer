@@ -527,22 +527,22 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 			<div class="surface-pane banner-cropper" data-show="!$_showUploadForm">
 				<banner-cropper
 					event-id={ eventId }
-					width="600"
-					height="350"
-					preview-width="540"
-					preview-height="190"
-					image-kind="card"
+					width="1360"
+					height="400"
+					preview-width="980"
+					preview-height="218"
+					image-kind="banner"
 					data-attr:image-url="$sourceImageUrl"
 				></banner-cropper>
 			</div>
 			<div class="surface-pane banner-cropper" data-show="!$_showUploadForm">
 				<banner-cropper
 					event-id={ eventId }
-					width="1360"
-					height="400"
-					preview-width="980"
-					preview-height="218"
-					image-kind="banner"
+					width="600"
+					height="350"
+					preview-width="540"
+					preview-height="190"
+					image-kind="card"
 					data-attr:image-url="$sourceImageUrl"
 				></banner-cropper>
 			</div>
