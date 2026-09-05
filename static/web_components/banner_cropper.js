@@ -1,35 +1,35 @@
-const STYLE_URLS = window.conorganizerSharedStyles.getStyleUrls();
-const UPLOAD_ERROR_MESSAGE = 'Klarte ikkje å lagre endringa. Prøv igjen. Kontakt styret dersom problemet held fram.';
+const STYLE_URLS = window.conorganizerSharedStyles.getStyleUrls()
+const UPLOAD_ERROR_MESSAGE = "Klarte ikkje å lagre endringa. Prøv igjen. Kontakt styret dersom problemet held fram."
 // ---- component --------------------------------------------------------------
 class BannerCropper extends HTMLElement {
     static get observedAttributes() {
-        return ['width', 'height', 'image-url', 'event-id', 'image-kind'];
+        return ["width", "height", "image-url", "event-id", "image-kind"]
     }
 
     constructor() {
-        super();
+        super()
 
         // Defaults (don’t read attributes here)
-        this.bannerWidth = 430;
-        this.bannerHeight = 180;
+        this.bannerWidth = 430
+        this.bannerHeight = 180
 
         // State
-        this.image = new Image();
-        this.imageLoaded = false;
-        this.scale = 1;
-        this.minScale = 1;
-        this.drawX = 0;
-        this.drawY = 0;
-        this.isDragging = false;
-        this.dragStartX = 0;
-        this.dragStartY = 0;
-        this.startDrawX = 0;
-        this.startDrawY = 0;
+        this.image = new Image()
+        this.imageLoaded = false
+        this.scale = 1
+        this.minScale = 1
+        this.drawX = 0
+        this.drawY = 0
+        this.isDragging = false
+        this.dragStartX = 0
+        this.dragStartY = 0
+        this.startDrawX = 0
+        this.startDrawY = 0
 
         // Shadow DOM
-        const root = this.attachShadow({ mode: "open" });
+        const root = this.attachShadow({ mode: "open" })
 
-        window.conorganizerSharedStyles.applyStyleUrlsToShadowRoot(root, STYLE_URLS);
+        window.conorganizerSharedStyles.applyStyleUrlsToShadowRoot(root, STYLE_URLS)
 
         root.innerHTML = `
         <style>
@@ -160,304 +160,312 @@ class BannerCropper extends HTMLElement {
                 </span>
             <canvas id="canvas" style="cursor:move" aria-label="Banner canvas"></canvas>
         </div>
-        `;
+        `
 
         // Elements
-        this.canvas = root.getElementById('canvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.cameraIcon = root.getElementById('cameraIcon');
-        this.zoom = root.getElementById('zoom');
-        this.exportButton = root.getElementById('exportButton');
-        this.statusInlineEl = root.getElementById('statusInline');
-        this.statusErrorEl = root.getElementById('statusError');
+        this.canvas = root.getElementById("canvas")
+        this.ctx = this.canvas.getContext("2d")
+        this.cameraIcon = root.getElementById("cameraIcon")
+        this.zoom = root.getElementById("zoom")
+        this.exportButton = root.getElementById("exportButton")
+        this.statusInlineEl = root.getElementById("statusInline")
+        this.statusErrorEl = root.getElementById("statusError")
 
         // Bind handlers once
-        this.handleZoomInput = this.handleZoomInput.bind(this);
-        this.onPointerDown = this.onPointerDown.bind(this);
-        this.onPointerMove = this.onPointerMove.bind(this);
-        this.onPointerUp = this.onPointerUp.bind(this);
-        this.handleExport = this.handleExport.bind(this);
+        this.handleZoomInput = this.handleZoomInput.bind(this)
+        this.onPointerDown = this.onPointerDown.bind(this)
+        this.onPointerMove = this.onPointerMove.bind(this)
+        this.onPointerUp = this.onPointerUp.bind(this)
+        this.handleExport = this.handleExport.bind(this)
     }
 
     connectedCallback() {
-        this._applyInitialAttributes();
+        this._applyInitialAttributes()
 
         // Listeners
-        this.zoom.addEventListener('input', this.handleZoomInput);
-        this.canvas.addEventListener('pointerdown', this.onPointerDown);
-        window.addEventListener('pointermove', this.onPointerMove);
-        window.addEventListener('pointerup', this.onPointerUp);
-        this.exportButton.addEventListener('click', this.handleExport);
+        this.zoom.addEventListener("input", this.handleZoomInput)
+        this.canvas.addEventListener("pointerdown", this.onPointerDown)
+        window.addEventListener("pointermove", this.onPointerMove)
+        window.addEventListener("pointerup", this.onPointerUp)
+        this.exportButton.addEventListener("click", this.handleExport)
 
-        this.redraw();
+        this.redraw()
     }
 
     disconnectedCallback() {
-        this.zoom.removeEventListener('input', this.handleZoomInput);
-        this.canvas.removeEventListener('pointerdown', this.onPointerDown);
-        window.removeEventListener('pointermove', this.onPointerMove);
-        window.removeEventListener('pointerup', this.onPointerUp);
-        this.exportButton.removeEventListener('click', this.handleExport);
+        this.zoom.removeEventListener("input", this.handleZoomInput)
+        this.canvas.removeEventListener("pointerdown", this.onPointerDown)
+        window.removeEventListener("pointermove", this.onPointerMove)
+        window.removeEventListener("pointerup", this.onPointerUp)
+        this.exportButton.removeEventListener("click", this.handleExport)
     }
 
     attributeChangedCallback(name, oldValue, newValue) {
-        if (oldValue === newValue) return;
+        if (oldValue === newValue) return
 
-        if (name === 'width' || name === 'height') {
-            const w = Number(this.getAttribute('width')) || this.bannerWidth;
-            const h = Number(this.getAttribute('height')) || this.bannerHeight;
-            this.setCanvasSize(w, h);
+        if (name === "width" || name === "height") {
+            const w = Number(this.getAttribute("width")) || this.bannerWidth
+            const h = Number(this.getAttribute("height")) || this.bannerHeight
+            this.setCanvasSize(w, h)
         }
 
-        if (name === 'image-kind') {
-            const k = this._normalizedKind();
-            if (!['card', 'banner'].includes(k)) {
-                console.warn('Invalid image-kind; expected "card" or "banner". Falling back to "banner".');
+        if (name === "image-kind") {
+            const k = this._normalizedKind()
+            if (!["card", "banner"].includes(k)) {
+                console.warn('Invalid image-kind; expected "card" or "banner". Falling back to "banner".')
             }
         }
 
-        if (name === 'image-url' && this.isConnected) {
+        if (name === "image-url" && this.isConnected) {
             if (newValue) {
-                this._loadImage(newValue);
+                this._loadImage(newValue)
             } else {
-                this._clearImage();
+                this._clearImage()
             }
         }
     }
 
     // --- UI handlers ---
     handleZoomInput(e) {
-        const newScale = parseFloat(e.target.value);
-        this.setScale(newScale);
+        const newScale = parseFloat(e.target.value)
+        this.setScale(newScale)
         this.#updateCssForZoom()
     }
 
     onPointerDown(e) {
-        if (!this.imageLoaded) return;
-        this.isDragging = true;
-        this.canvas.setPointerCapture?.(e.pointerId);
-        this.dragStartX = e.clientX;
-        this.dragStartY = e.clientY;
-        this.startDrawX = this.drawX;
-        this.startDrawY = this.drawY;
+        if (!this.imageLoaded) return
+        this.isDragging = true
+        this.canvas.setPointerCapture?.(e.pointerId)
+        this.dragStartX = e.clientX
+        this.dragStartY = e.clientY
+        this.startDrawX = this.drawX
+        this.startDrawY = this.drawY
     }
 
     onPointerMove(e) {
-        if (!this.isDragging) return;
-        const dx = e.clientX - this.dragStartX;
-        const dy = e.clientY - this.dragStartY;
-        this.drawX = this.startDrawX + dx;
-        this.drawY = this.startDrawY + dy;
-        this.redraw();
+        if (!this.isDragging) return
+        const dx = e.clientX - this.dragStartX
+        const dy = e.clientY - this.dragStartY
+        this.drawX = this.startDrawX + dx
+        this.drawY = this.startDrawY + dy
+        this.redraw()
     }
 
     onPointerUp(e) {
-        this.isDragging = false;
-        try { this.canvas.releasePointerCapture?.(e.pointerId); } catch { }
+        this.isDragging = false
+        try {
+            this.canvas.releasePointerCapture?.(e.pointerId)
+        } catch { }
     }
 
     async handleExport() {
         if (!this.imageLoaded) {
-            this._status('Ikkje noko bilete å lagre.', true);
-            return;
+            this._status("Ikkje noko bilete å lagre.", true)
+            return
         }
 
-        const eventId = this.getAttribute('event-id');
+        const eventId = this.getAttribute("event-id")
         if (!eventId) {
-            this._status('Manglar event-id.', true);
-            console.error('BannerCropper: missing event-id attribute.');
-            return;
+            this._status("Manglar event-id.", true)
+            console.error("BannerCropper: missing event-id attribute.")
+            return
         }
 
-        const kind = this._normalizedKind();
-        this.exportButton.disabled = true;
-        this._status('Klargjer bilete...');
+        const kind = this._normalizedKind()
+        this.exportButton.disabled = true
+        this._status("Klargjer bilete...")
 
-        const quality = 0.9;
-        const blob = await this._canvasToWebpBlob(quality);
+        const quality = 0.9
+        const blob = await this._canvasToWebpBlob(quality)
         if (!blob) {
-            this._status('Nettlesaren kunne ikkje lage WebP-bilete.', true);
-            this.exportButton.disabled = false;
-            return;
+            this._status("Nettlesaren kunne ikkje lage WebP-bilete.", true)
+            this.exportButton.disabled = false
+            return
         }
 
         // Prepare form data
-        const filename = `${eventId}-${kind}.webp`;
-        const form = new FormData();
-        form.append('image', blob, filename);
-        form.append('kind', kind);
+        const filename = `${ eventId }-${ kind }.webp`
+        const form = new FormData()
+        form.append("image", blob, filename)
+        form.append("kind", kind)
 
         // Give the app a chance to modify or handle upload
-        const method = 'POST';
-        const url = `/profile/api/new/${encodeURIComponent(eventId)}/upload-cropped`;
-        const detail = { url, method, formData: form, filename, contentType: 'image/webp' };
-        const ev = new CustomEvent('beforeupload', { detail, cancelable: true });
+        const method = "POST"
+        const url = `/profile/api/new/${ encodeURIComponent(eventId) }/upload-cropped`
+        const detail = { url, method, formData: form, filename, contentType: "image/webp" }
+        const ev = new CustomEvent("beforeupload", { detail, cancelable: true })
         if (!this.dispatchEvent(ev)) {
             // The page will handle the upload
-            this._status('Opplastinga blir handtert av sida.');
-            this.exportButton.disabled = false;
-            return;
+            this._status("Opplastinga blir handtert av sida.")
+            this.exportButton.disabled = false
+            return
         }
 
         // Do the upload
         try {
-            this._status('Lastar opp...');
-            console.log('Uploading to', detail.url, 'with method', detail.method);
+            this._status("Lastar opp...")
+            console.log("Uploading to", detail.url, "with method", detail.method)
             const res = await fetch(detail.url, {
                 method: detail.method,
                 credentials: "same-origin",
                 body: detail.formData,
-            });
-            console.log('Upload response', res);
+            })
+            console.log("Upload response", res)
             if (!res.ok) {
-                const text = await res.text().catch(() => '');
-                throw new Error(`HTTP ${res.status} ${res.statusText}${text ? `: ${text}` : ''}`);
+                const text = await res.text().catch(() => "")
+                throw new Error(`HTTP ${ res.status } ${ res.statusText }${ text ? `: ${ text }` : "" }`)
             }
-            this._status('Lasta opp');
-            this.dispatchEvent(new CustomEvent('toast', {
-                bubbles: true,
-                composed: true,
-                detail: { message: 'Lagret' },
-            }));
-            this.dispatchEvent(new CustomEvent('uploadsuccess', {
-                bubbles: true,
-                composed: true,
-                detail: { url: detail.url, filename, kind },
-            }));
+            this._status("Lasta opp")
+            this.dispatchEvent(
+                new CustomEvent("toast", {
+                    bubbles: true,
+                    composed: true,
+                    detail: { message: "Lagret" },
+                }),
+            )
+            this.dispatchEvent(
+                new CustomEvent("uploadsuccess", {
+                    bubbles: true,
+                    composed: true,
+                    detail: { url: detail.url, filename, kind },
+                }),
+            )
         } catch (err) {
-            console.error('Upload failed:', err);
-            this._status(UPLOAD_ERROR_MESSAGE, true);
-            this.dispatchEvent(new CustomEvent('uploaderror', {
-                bubbles: true,
-                composed: true,
-                detail: { error: String(err), kind },
-            }));
+            console.error("Upload failed:", err)
+            this._status(UPLOAD_ERROR_MESSAGE, true)
+            this.dispatchEvent(
+                new CustomEvent("uploaderror", {
+                    bubbles: true,
+                    composed: true,
+                    detail: { error: String(err), kind },
+                }),
+            )
         } finally {
-            console.log('Upload complete');
-            this.exportButton.disabled = false;
+            console.log("Upload complete")
+            this.exportButton.disabled = false
         }
     }
 
     // --- Helpers ---
     _applyInitialAttributes() {
-        if (this.hasAttribute('width')) {
-            const w = Number(this.getAttribute('width'));
-            if (!Number.isNaN(w) && w > 0) this.bannerWidth = w;
+        if (this.hasAttribute("width")) {
+            const w = Number(this.getAttribute("width"))
+            if (!Number.isNaN(w) && w > 0) this.bannerWidth = w
         }
-        if (this.hasAttribute('height')) {
-            const h = Number(this.getAttribute('height'));
-            if (!Number.isNaN(h) && h > 0) this.bannerHeight = h;
+        if (this.hasAttribute("height")) {
+            const h = Number(this.getAttribute("height"))
+            if (!Number.isNaN(h) && h > 0) this.bannerHeight = h
         }
-        this.setCanvasSize(this.bannerWidth, this.bannerHeight);
+        this.setCanvasSize(this.bannerWidth, this.bannerHeight)
 
-        const url = this.getAttribute('image-url');
+        const url = this.getAttribute("image-url")
         if (url) {
-            this._loadImage(url);
+            this._loadImage(url)
         } else {
-            this.cameraIcon.style.display = 'block';
-            this.zoom.disabled = true;
+            this.cameraIcon.style.display = "block"
+            this.zoom.disabled = true
         }
     }
 
     setCanvasSize(w, h) {
-        this.bannerWidth = w;
-        this.bannerHeight = h;
-        this.canvas.width = w;
-        this.canvas.height = h;
-        if (this.imageLoaded) this.setInitialView();
-        this.redraw();
+        this.bannerWidth = w
+        this.bannerHeight = h
+        this.canvas.width = w
+        this.canvas.height = h
+        if (this.imageLoaded) this.setInitialView()
+        this.redraw()
     }
 
     _loadImage(url) {
-        this.cameraIcon.style.display = 'none';
-        this.imageLoaded = false;
+        this.cameraIcon.style.display = "none"
+        this.imageLoaded = false
         this.image.onload = () => {
-            this.imageLoaded = true;
-            this.setInitialView();
-        };
+            this.imageLoaded = true
+            this.setInitialView()
+        }
         this.image.onerror = () => {
-            this.imageLoaded = false;
-            this.cameraIcon.style.display = 'block';
-            this.zoom.disabled = true;
-            this.redraw();
-        };
-        this.image.src = url;
+            this.imageLoaded = false
+            this.cameraIcon.style.display = "block"
+            this.zoom.disabled = true
+            this.redraw()
+        }
+        this.image.src = url
     }
 
     _clearImage() {
-        this.imageLoaded = false;
-        this.image.removeAttribute('src');
-        this.cameraIcon.style.display = 'block';
-        this.zoom.disabled = true;
-        this.redraw();
+        this.imageLoaded = false
+        this.image.removeAttribute("src")
+        this.cameraIcon.style.display = "block"
+        this.zoom.disabled = true
+        this.redraw()
     }
 
     async _canvasToWebpBlob(quality) {
-        const canvas = this.canvas;
+        const canvas = this.canvas
         if (canvas.toBlob) {
             return new Promise((resolve) => {
-                canvas.toBlob(resolve, 'image/webp', quality);
-            });
+                canvas.toBlob(resolve, "image/webp", quality)
+            })
         }
         try {
-            const dataUrl = canvas.toDataURL('image/webp', quality);
-            const res = await fetch(dataUrl);
-            return await res.blob();
+            const dataUrl = canvas.toDataURL("image/webp", quality)
+            const res = await fetch(dataUrl)
+            return await res.blob()
         } catch {
-            return null;
+            return null
         }
     }
 
     _normalizedKind() {
-        console.log('kind', this.getAttribute('image-kind'));
-        const k = (this.getAttribute('image-kind') || 'banner').toLowerCase();
-        return k === 'card' ? 'card' : 'banner';
+        console.log("kind", this.getAttribute("image-kind"))
+        const k = (this.getAttribute("image-kind") || "banner").toLowerCase()
+        return k === "card" ? "card" : "banner"
     }
 
     _computeUploadUrl(eventId, kind) {
-        const attr = this.getAttribute('upload-url');
-        if (attr && attr.trim()) return attr;
-        return `/profile/api/new/${encodeURIComponent(eventId)}/upload-cropped`;
+        const attr = this.getAttribute("upload-url")
+        if (attr && attr.trim()) return attr
+        return `/profile/api/new/${ encodeURIComponent(eventId) }/upload-cropped`
     }
 
     _status(msg, isError = false) {
-        const text = msg || '';
+        const text = msg || ""
         if (isError) {
-            if (this.statusInlineEl) this.statusInlineEl.textContent = '';
+            if (this.statusInlineEl) this.statusInlineEl.textContent = ""
             if (this.statusErrorEl) {
-                this.statusErrorEl.textContent = text;
-                this.statusErrorEl.style.color = 'var(--color-error)';
+                this.statusErrorEl.textContent = text
+                this.statusErrorEl.style.color = "var(--color-error)"
             }
-            return;
+            return
         }
 
-        if (this.statusErrorEl) this.statusErrorEl.textContent = '';
+        if (this.statusErrorEl) this.statusErrorEl.textContent = ""
         if (this.statusInlineEl) {
-            this.statusInlineEl.textContent = text;
-            this.statusInlineEl.style.color = 'inherit';
+            this.statusInlineEl.textContent = text
+            this.statusInlineEl.style.color = "inherit"
         }
     }
 
     setInitialView() {
-        const coverScaleX = this.canvas.width / this.image.width;
-        const coverScaleY = this.canvas.height / this.image.height;
-        this.minScale = Math.max(coverScaleX, coverScaleY);
-        this.scale = this.minScale;
+        const coverScaleX = this.canvas.width / this.image.width
+        const coverScaleY = this.canvas.height / this.image.height
+        this.minScale = Math.max(coverScaleX, coverScaleY)
+        this.scale = this.minScale
 
-        this.drawX = (this.canvas.width - this.image.width * this.scale) / 2;
-        this.drawY = (this.canvas.height - this.image.height * this.scale) / 2;
+        this.drawX = (this.canvas.width - this.image.width * this.scale) / 2
+        this.drawY = (this.canvas.height - this.image.height * this.scale) / 2
 
-        this.zoom.min = this.minScale.toFixed(3);
-        this.zoom.max = (this.minScale * 3).toFixed(3);
-        this.zoom.step = (this.minScale / 100).toFixed(4);
-        this.zoom.value = this.scale.toFixed(3);
-        this.zoom.disabled = false;
+        this.zoom.min = this.minScale.toFixed(3)
+        this.zoom.max = (this.minScale * 3).toFixed(3)
+        this.zoom.step = (this.minScale / 100).toFixed(4)
+        this.zoom.value = this.scale.toFixed(3)
+        this.zoom.disabled = false
         this.#updateCssForZoom()
 
-        this.ctx.imageSmoothingEnabled = true;
-        this.ctx.imageSmoothingQuality = 'high';
+        this.ctx.imageSmoothingEnabled = true
+        this.ctx.imageSmoothingQuality = "high"
 
-        this.redraw();
+        this.redraw()
     }
 
     #updateCssForZoom() {
@@ -473,40 +481,40 @@ class BannerCropper extends HTMLElement {
     }
 
     setScale(newScale) {
-        if (!this.imageLoaded) return;
-        const oldScale = this.scale;
-        const cx = this.canvas.width / 2;
-        const cy = this.canvas.height / 2;
-        const imgXAtCenter = (cx - this.drawX) / oldScale;
-        const imgYAtCenter = (cy - this.drawY) / oldScale;
+        if (!this.imageLoaded) return
+        const oldScale = this.scale
+        const cx = this.canvas.width / 2
+        const cy = this.canvas.height / 2
+        const imgXAtCenter = (cx - this.drawX) / oldScale
+        const imgYAtCenter = (cy - this.drawY) / oldScale
 
-        this.scale = Math.max(this.minScale, newScale);
-        this.drawX = cx - imgXAtCenter * this.scale;
-        this.drawY = cy - imgYAtCenter * this.scale;
-        this.redraw();
+        this.scale = Math.max(this.minScale, newScale)
+        this.drawX = cx - imgXAtCenter * this.scale
+        this.drawY = cy - imgYAtCenter * this.scale
+        this.redraw()
     }
 
     clampPosition() {
-        const maxX = 0;
-        const maxY = 0;
-        const minX = this.canvas.width - this.image.width * this.scale;
-        const minY = this.canvas.height - this.image.height * this.scale;
-        this.drawX = Math.min(maxX, Math.max(minX, this.drawX));
-        this.drawY = Math.min(maxY, Math.max(minY, this.drawY));
+        const maxX = 0
+        const maxY = 0
+        const minX = this.canvas.width - this.image.width * this.scale
+        const minY = this.canvas.height - this.image.height * this.scale
+        this.drawX = Math.min(maxX, Math.max(minX, this.drawX))
+        this.drawY = Math.min(maxY, Math.max(minY, this.drawY))
     }
 
     redraw() {
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        if (!this.imageLoaded) return;
-        this.clampPosition();
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        if (!this.imageLoaded) return
+        this.clampPosition()
         this.ctx.drawImage(
             this.image,
             this.drawX,
             this.drawY,
             this.image.width * this.scale,
-            this.image.height * this.scale
-        );
+            this.image.height * this.scale,
+        )
     }
 }
 
-customElements.define('banner-cropper', BannerCropper);
+customElements.define("banner-cropper", BannerCropper)
