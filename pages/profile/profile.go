@@ -175,6 +175,9 @@ func SetupProfileRoute(router chi.Router, liveManager *live.Manager, db *sql.DB,
 					newApiIdRouter.Route("/max-players", func(putMaxPlayersRouter chi.Router) {
 						formsubmission.UpdateMaxPlayers(putMaxPlayersRouter, db, liveManager, logger)
 					})
+					newApiIdRouter.Route("/open-registration", func(putOpenRegistrationRouter chi.Router) {
+						formsubmission.UpdateOpenRegistration(putOpenRegistrationRouter, db, liveManager, logger)
+					})
 					newApiIdRouter.Route("/notes", func(putNotesRouter chi.Router) {
 						formsubmission.UpdateNotes(putNotesRouter, db, liveManager, logger)
 					})

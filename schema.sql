@@ -65,18 +65,6 @@ CREATE TABLE relation_event_puljer(
   FOREIGN KEY(pulje_id) REFERENCES puljer(id) ON UPDATE CASCADE,
   FOREIGN KEY(room_id) REFERENCES rooms(id) ON DELETE SET NULL
 ) STRICT;
-CREATE TABLE relation_events_players(
-  event_id TEXT NOT NULL,
-  pulje_id TEXT NOT NULL,
-  billettholder_id INTEGER NOT NULL,
-  role TEXT NOT NULL DEFAULT 'Player' CHECK(role IN('Player', 'GM')),
-  source TEXT NOT NULL DEFAULT 'manual' CHECK(source IN('manual', 'solver', 'registration')),
-  inserted_at TEXT DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
-  PRIMARY KEY(billettholder_id, event_id, pulje_id),
-  FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
-  FOREIGN KEY(event_id) REFERENCES events(id),
-  FOREIGN KEY(pulje_id) REFERENCES puljer(id)
-) STRICT;
 CREATE TABLE "interests"(
   billettholder_id INTEGER NOT NULL,
   event_id TEXT NOT NULL,
@@ -117,7 +105,6 @@ CREATE TABLE "events"(
   email TEXT NOT NULL,
   phone_number TEXT NOT NULL,
   max_players INTEGER NOT NULL,
-  is_open_registration INTEGER NOT NULL DEFAULT 0 CHECK(is_open_registration IN(0, 1)),
   beginner_friendly INTEGER NOT NULL DEFAULT 0 CHECK(beginner_friendly IN(0, 1)),
   can_be_run_in_english INTEGER NOT NULL DEFAULT 0 CHECK(can_be_run_in_english IN(0, 1)),
   notes TEXT DEFAULT '',
@@ -129,6 +116,8 @@ CREATE TABLE "events"(
   status_changed_by_id INTEGER,
   status_changed_at TEXT,
   status_changed_action TEXT,
+  is_open_registration INTEGER NOT NULL DEFAULT 0
+  CHECK(is_open_registration IN(0, 1)),
   FOREIGN KEY(created_by_id) REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY(updated_by_id) REFERENCES users(id) ON DELETE SET NULL,
   FOREIGN KEY(status_changed_by_id) REFERENCES users(id) ON DELETE SET NULL,
@@ -267,3 +256,15 @@ WHERE
     e.status = 'Annonsert'
     AND ep.is_in_pulje = 1
 /* v_events_by_pulje_active(id,title,intro,description,system,event_type,age_group,event_runtime,host_name,user_id,email,phone_number,max_players,beginner_friendly,can_be_run_in_english,notes,status,created_at,is_published,pulje_id,room_id,room_number,room_name,room_floor,room_max_concurrent_games,room_notes,room_is_disabled,pulje_name,pulje_start_at,pulje_end_at) */;
+CREATE TABLE "relation_events_players"(
+  event_id TEXT NOT NULL,
+  pulje_id TEXT NOT NULL,
+  billettholder_id INTEGER NOT NULL,
+  role TEXT NOT NULL DEFAULT 'Player' CHECK(role IN('Player', 'GM')),
+  source TEXT NOT NULL DEFAULT 'manual' CHECK(source IN('manual', 'solver', 'registration')),
+  inserted_at TEXT DEFAULT(strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+  PRIMARY KEY(billettholder_id, event_id, pulje_id),
+  FOREIGN KEY(billettholder_id) REFERENCES billettholdere(id),
+  FOREIGN KEY(event_id) REFERENCES events(id),
+  FOREIGN KEY(pulje_id) REFERENCES puljer(id)
+) STRICT;

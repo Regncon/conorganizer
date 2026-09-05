@@ -704,3 +704,60 @@ Does that match the UX team’s intended placement?
 Time: 2026-09-05 13:35:32
 --- Next Prompt ---
 
+Goose is done:
+```Bash
+conorganizer git:(311-arrangement-som-bare-kan-påmeldes) ✗ goose -env /dev/null -dir migrations sqlite3 database/events.db up
+goose -env /dev/null -dir migrations sqlite3 database/events-demo.db up
+
+2026/09/05 15:24:25 OK   20260905134500_add_registration_player_source.sql (24.17ms)
+2026/09/05 15:24:25 goose: successfully migrated database to version: 20260905134500
+2026/09/05 15:24:25 OK   20260905134500_add_registration_player_source.sql (22.95ms)
+2026/09/05 15:24:25 goose: successfully migrated database to version: 20260905134500
+
+```
+
+The placement seems good. I'm considering if we should make it visible to the admins only. 
+In the end the admins or the editor will go through the event and make sure that the event is set up correctly.
+So it does not matter if the user can see it or not. But on the other hand it creates noise for the user if they see it and it is not relevant to them.
+Let's make it visible to the admins only even though this adds code and complexity. The alternative is to place it in the `Puljefordeling` section since this is only visible to the admins and the editor anyway. 
+
+Time: 2026-09-05 15:31:25
+--- Codex Run ---
+
+Codex output:
+I’ll compare the actual visibility and component boundaries of “Andre detaljer” and “Puljefordeling” before recommending the placement. The deciding factor is whether “editor” means any event owner/editor or only the admin approval workflow.
+I recommend placing it in `Puljefordeling`. Open registration directly affects selection and capacity, and that section is already restricted, avoiding extra conditional-rendering complexity in `Andre detaljer`.
+
+One important detail: the code currently renders `Puljefordeling` only when `isAdmin` is true. There is no separate editor role in this form.
+
+When you say “editor,” do you mean an editor who already has admin access, or should a non-admin event editor also be allowed to configure open registration? My recommendation is admin-only for now.
+
+Time: 2026-09-05 15:31:25
+--- Next Prompt ---
+
+The editor in chief is always an admin. 
+
+
+Time: 2026-09-05 15:39:01
+--- Codex Run ---
+
+Codex output:
+Great—then `Puljefordeling` gives us exactly the intended audience with no new authorization branch. I’ll implement the admin-only event flag there now, following the interview workflow we’ve been using, then verify persistence and access control before we discuss the next step.
+The visibility question is resolved: editors-in-chief inherit admin access, so no role-model change is needed. This step will add one admin route and its handler; I’m also applying the repository’s structured-logging guidance because that handler will report failed updates.
+The implementation will keep the control at the top of `Puljefordeling`, before the per-pulje rows. I’m also enforcing admin access on the write endpoint—not merely hiding the checkbox—so a regular event owner cannot toggle it with a crafted request.
+The control and protected write path are now in place. I’m checking the generated templates and focused tests next; I’ll pay particular attention to whether the existing form markup keeps the control checked after an SSE refresh.
+All automated tests pass. One design edge surfaced while implementing: `max_players` is still mandatory and appears in several views, even though open-registration events are conceptually unlimited. I’m tracing its current uses so the next interview question distinguishes solver capacity from useful room-planning/display data.
+Implemented the admin-only open-registration setting in `Puljefordeling`.
+
+- Checkbox and explanation added in [puljefordeling.templ](/home/cinmay/Documents/conorganizer/components/formsubmission/puljefordeling.templ:406).
+- Changes persist with audit metadata and broadcast live updates.
+- Write endpoint is protected by admin middleware, not merely hidden.
+- Tests cover admin visibility, persistence, and non-admin rejection in [open_registration_test.go](/home/cinmay/Documents/conorganizer/components/formsubmission/open_registration_test.go:18).
+- Full `go test ./...` passes.
+- No additional Goose migration is required.
+
+Next question: should `max_players` remain as a room-planning estimate while the solver ignores it for open-registration events? My recommendation is yes—it preserves useful room-capacity information without limiting registration.
+
+Time: 2026-09-05 15:39:01
+--- Next Prompt ---
+
