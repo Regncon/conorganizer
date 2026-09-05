@@ -382,6 +382,10 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                     height: 208px;
                     position: relative;
 
+                    &.is-drag-over {
+                        background-color: var(--bg-item-hover)
+                    }
+
                     p+p {
                         margin-block-start: var(--spacing-3x)
                     }
@@ -424,17 +428,9 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                 }
             }
 
-
             .banner-cropper {
                 inline-size: min-content;
                 block-size: max-content;
-            }
-
-
-
-            .is-drag-over {
-                color: black;
-                border-color:yellow;
             }
         }
     </style>
