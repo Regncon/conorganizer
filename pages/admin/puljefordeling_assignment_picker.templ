@@ -67,12 +67,6 @@ templ puljeAssignmentSearch(db *sql.DB, logger *slog.Logger, pulje models.Pulje)
 					data-attr:disabled="$assignmentBillettholderId <= 0"
 					data-on:click={ puljeAssignmentAction("/admin/api/puljefordeling/assign") }
 				>Legg til som spiller</button>
-				<button
-					type="button"
-					class="btn btn--secondary"
-					data-attr:disabled="$assignmentBillettholderId <= 0"
-					data-on:click={ puljeAssignmentAction("/admin/api/puljefordeling/assign/first-choice") }
-				>Legg til som førstevalg</button>
 			</div>
 			<script src="/static/web_components/admin_billettholder_search.js"></script>
 		</div>

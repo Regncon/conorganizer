@@ -25,17 +25,17 @@ type registrationTestFixture struct {
 	puljeID         models.Pulje
 }
 
-func TestSetRegistration_WhenEligible_CreatesRegistrationAndRemovesOnlyMatchingInterest(t *testing.T) {
+func TestSetRegistration_WhenEligible_CreatesRegistrationWithoutChangingInterests(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en kvalifisert billetthelder med interesser i to arrangementer i samme pulje.",
 		When:  "Når billetthelderen melder seg på ett arrangement to ganger.",
-		Then:  "Så skal én påmelding lagres og bare interessen for det arrangementet fjernes.",
+		Then:  "Så skal én påmelding lagres uten at interessene endres.",
 	})
 
 	// Given
 	expectedSeatCount := 1
 	expectedSource := models.EventPlayerSourceRegistration
-	expectedMatchingInterests := 0
+	expectedMatchingInterests := 1
 	expectedOtherInterests := 1
 	db := createEventInterestTestDB(t)
 	fixture := seedRegistrationTestFixture(t, db)
@@ -113,16 +113,55 @@ func TestSetRegistration_WhenRegisteringForMultipleEventsInPulje_KeepsEveryRegis
 	}
 }
 
-func TestSetRegistration_WhenDeregisteringManualAssignment_RemovesSeatAndMatchingInterest(t *testing.T) {
+func TestSetRegistration_WhenRegisteringThenDeregistering_PreservesInterest(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en interessert deltaker og et arrangement med åpen påmelding.",
+		When:  "Når deltakeren melder seg på og senere melder seg av.",
+		Then:  "Så skal påmeldingen fjernes, mens den opprinnelige interessen beholdes.",
+	})
+
+	// Given
+	db := createEventInterestTestDB(t)
+	fixture := seedRegistrationTestFixture(t, db)
+	change := registrationChange{
+		UserExternalID:  fixture.userExternalID,
+		BillettholderID: fixture.billettholderID,
+		EventID:         fixture.eventID,
+		PuljeID:         fixture.puljeID,
+		IsRegistered:    true,
+	}
+
+	// When
+	if err := setRegistration(context.Background(), db, change); err != nil {
+		t.Fatalf("register: %v", err)
+	}
+	change.IsRegistered = false
+	if err := setRegistration(context.Background(), db, change); err != nil {
+		t.Fatalf("deregister: %v", err)
+	}
+
+	// Then
+	if got := registrationSeatCount(t, db, fixture.eventID, fixture.puljeID, fixture.billettholderID); got != 0 {
+		t.Fatalf("registration should be removed, found %d seats", got)
+	}
+	if got := registrationInterestCount(t, db, fixture.eventID, fixture.puljeID, fixture.billettholderID); got != 1 {
+		t.Fatalf("interest should remain after registration and deregistration, found %d", got)
+	}
+	if got := registrationInterestLevel(t, db, fixture.eventID, fixture.puljeID, fixture.billettholderID); got != models.InterestLevelHigh {
+		t.Fatalf("registration changed the interest level\nexpected: %q\nactual:   %q", models.InterestLevelHigh, got)
+	}
+}
+
+func TestSetRegistration_WhenDeregisteringManualAssignment_PreservesInterests(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en manuell spillertildeling til et vanlig arrangement.",
 		When:  "Når billetthelderen melder seg av.",
-		Then:  "Så skal tildelingen og den samsvarende interessen fjernes uten å røre andre interesser.",
+		Then:  "Så skal tildelingen fjernes uten at interessene endres.",
 	})
 
 	// Given
 	expectedSeatCount := 0
-	expectedMatchingInterests := 0
+	expectedMatchingInterests := 1
 	expectedOtherInterests := 1
 	db := createEventInterestTestDB(t)
 	fixture := seedRegistrationTestFixture(t, db)
@@ -479,4 +518,17 @@ func registrationInterestCount(t *testing.T, db *sql.DB, eventID string, puljeID
 		FROM interests
 		WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ?
 	`, eventID, puljeID, billettholderID)
+}
+
+func registrationInterestLevel(t *testing.T, db *sql.DB, eventID string, puljeID models.Pulje, billettholderID int) models.InterestLevel {
+	t.Helper()
+	var level models.InterestLevel
+	if err := db.QueryRow(`
+		SELECT interest_level
+		FROM interests
+		WHERE event_id = ? AND pulje_id = ? AND billettholder_id = ?
+	`, eventID, puljeID, billettholderID).Scan(&level); err != nil {
+		t.Fatalf("read interest level: %v", err)
+	}
+	return level
 }

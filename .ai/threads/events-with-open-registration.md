@@ -1347,4 +1347,86 @@ Changes: [puljefordeling_assignment_interests.templ](/home/cinmay/Documents/cono
 Time: 2026-09-06 14:32:49
 --- Next Prompt ---
 
+It looks like the interest it deleted when a billettholder is removed from an event after being assigned.
+Let's discuss if this is the correct behavior. I'm starting to think that we should ever delete the interest, even when the billettholder removes them self from the event. 
+
+Time: 2026-09-06 14:41:44
+--- Codex Run ---
+
+Codex output:
+That observation is correct for at least one path: a retained high interest makes the placement look like a “first choice,” and the existing first-choice removal action deletes both the seat and its matching high interest. I’ll map every current interest-deletion path first, then we can decide whether “assignments and interests are independent records” should become the consistent rule. No code changes yet.
+You found a real inconsistency.
+
+Currently:
+
+- A quick assignment with `Veldig interessert` is treated as a first-choice assignment. Removing it deletes the high interest.
+- Quick assignments with `Interessert` or `Litt interessert` keep their interest when removed.
+- `Meld deg av` always deletes the matching interest.
+- The ordinary admin search deletes an existing interest when assigning someone.
+- Choosing `Ikke interessert` explicitly also deletes the interest.
+
+My recommendation is to separate the concepts cleanly:
+
+- An interest describes what someone wants.
+- An assignment describes where they currently have a place.
+- Creating or removing an assignment should never automatically alter an existing interest.
+- An interest should only disappear when someone explicitly chooses `Ikke interessert`, or an admin explicitly removes it.
+
+This also simplifies the model: every manual assignment can retain its real interest, while “Legg til som førstevalg” remains useful for creating a high interest when none exists.
+
+There is one important consequence: after someone clicks `Meld deg av`, their saved interest makes them eligible for solver selection again. They could therefore be assigned to the same event later.
+
+So the key interview question is:
+
+Does `Meld deg av` mean:
+
+1. “Cancel my guaranteed place, but keep my interest and let the solver consider me,” or
+2. “I no longer want to attend this event at all”?
+
+If we choose the never-delete policy, I recommend meaning 1. Someone who wants out completely would then also select `Ikke interessert`. The same principle would apply when an admin removes a manual assignment: the person returns to the solver with their saved preference.
+
+Time: 2026-09-06 14:41:44
+--- Next Prompt ---
+
+Let's separate the two concepts. The admin does not need to be able to remove the interest. Let's remove all the automatic interest deletion code. And let's also remove the admin button to set someones first choice. This way we simply do not mess with the interests at all.
+Example: If billettholder A is `Intresert` in `Blood in the clock tower`, then goes for `Meld deg på` and later `Meld deg av`, they will still be `Intresert` in `Blood in the clock tower`. 
+
+Time: 2026-09-06 15:07:13
+--- Codex Run ---
+
+Codex output:
+Agreed. I’ll make assignment changes completely interest-neutral: registration, deregistration, manual assignment, movement, and removal will only affect seats. The explicit user action `Ikke interessert` will remain, because that is the user intentionally changing the interest itself.
+
+I’ll also remove the admin first-choice add/remove workflow and make every manual player use the ordinary removal action. I’m applying the repository’s logging guidance while removing those admin handlers, then I’ll update the user stories, manual checks, and automated tests.
+I found the separation point cleanly: the ordinary admin assignment and self-registration paths each delete the matching interest today, while the interest-list assignment already preserves it. I’m removing those deletes and the standalone “first choice” route/UI; high interest will still naturally count as a first choice when that person is assigned.
+The code now has one assignment model in the admin UI: GM or player. “First choice” remains a meaning derived from a person’s existing `Veldig interessert` choice—it is no longer something an admin can manufacture or remove. I’m aligning the acceptance tests and docs with that distinction now.
+Focused tests pass for the solver-facing service, event registration, and Puljefordeling routes. The key regression cases now prove that interests survive manual assignment/removal and the full `Meld deg på` → `Meld deg av` cycle. I’m doing the repository-wide consistency check next.
+Implemented the separation between interests and assignments.
+
+- Registration, deregistration, manual assignment, movement, and removal now preserve all interests and their levels.
+- `Meld deg på` → `Meld deg av` restores the participant to their previous interest state.
+- Removed the admin “Legg til som førstevalg” button, routes, service functions, and special removal action.
+- First choice is now derived solely from an existing `Veldig interessert` interest.
+- The explicit `Ikke interessert` action remains the only interest-deletion path.
+- Updated automated tests, user stories, and manual test checklists.
+
+Key changes: [manual_pins.go](/home/cinmay/Documents/conorganizer/service/puljefordeling/manual_pins.go:15), [registration.go](/home/cinmay/Documents/conorganizer/pages/event/registration.go:146), [puljefordeling_assignment_picker.templ](/home/cinmay/Documents/conorganizer/pages/admin/puljefordeling_assignment_picker.templ:57), and [open-registration.md](/home/cinmay/Documents/conorganizer/documentation/open-registration.md:33).
+
+Validation passed:
+
+- `go test ./...`
+- `go vet ./...`
+- Templ formatting and generation
+- Diff whitespace checks
+
+I also followed the project’s structured-logging guidance while removing the obsolete first-choice handlers and their associated logs.
+
+text
+2026-09-06T12:58:42.212156Z ERROR codex_core::tools::router: error=apply_patch verification failed: Failed to find expected lines in /home/cinmay/Documents/conorganizer/service/puljefordeling/emulate.go:
+	FirstChoice     bool                 // manually pinned with a matching high-interest row
+	Registration    bool                 // self-registration; independent from the ordinary solver seat
+
+Time: 2026-09-06 15:07:13
+--- Next Prompt ---
+
 

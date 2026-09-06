@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"slices"
 	"strings"
 	"testing"
 
@@ -33,6 +32,8 @@ func TestPuljefordelingRemoveManualSeatRoute_DeletesPin(t *testing.T) {
 		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
 	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
 		VALUES ('evA',?,1,'Player','manual')`, string(fredag))
+	testutil.MustExec(t, db, `INSERT INTO interests (billettholder_id, event_id, pulje_id, interest_level)
+		VALUES (1,'evA',?,?)`, fredag, models.InterestLevelMedium)
 
 	req := httptest.NewRequest(http.MethodDelete, "/api/puljefordeling/FredagKveld/evA/1", nil)
 	rec := httptest.NewRecorder()
@@ -50,6 +51,9 @@ func TestPuljefordelingRemoveManualSeatRoute_DeletesPin(t *testing.T) {
 	}
 	if n != 0 {
 		t.Fatalf("manual seat should be deleted, still found %d", n)
+	}
+	if got := testutil.QueryInt(t, db, `SELECT COUNT(*) FROM interests WHERE event_id='evA' AND pulje_id=? AND billettholder_id=1`, fredag); got != 1 {
+		t.Fatalf("manual removal must preserve the interest, found %d", got)
 	}
 }
 
@@ -125,19 +129,18 @@ func TestPuljefordelingLiveContent_UpdatesTabAndStableDialogContents(t *testing.
 	}
 }
 
-func TestPuljefordelingIndex_AssignmentPickerOffersAllManualAssignmentTypes(t *testing.T) {
+func TestPuljefordelingIndex_AssignmentPickerOffersGMAndPlayerActions(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en åpen puljefordeling med en billettholder.",
 		When:  "Når administratoren åpner siden med tildelingsdialogen.",
-		Then:  "Så skal dialogen tilby spilleder, spiller og førstevalg som separate handlinger.",
+		Then:  "Så skal dialogen tilby spilleder og spiller uten å kunne endre interesser.",
 	})
 
 	// Given
-	expectedLabels := []string{"Legg til som spilleder", "Legg til som spiller", "Legg til som førstevalg"}
+	expectedLabels := []string{"Legg til som spilleder", "Legg til som spiller"}
 	expectedActions := []string{
 		"/admin/api/puljefordeling/assign/gm",
 		"/admin/api/puljefordeling/assign",
-		"/admin/api/puljefordeling/assign/first-choice",
 	}
 	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_assignment_picker_actions")
 	const fredag = models.PuljeFredagKveld
@@ -391,60 +394,6 @@ func TestPuljefordelingGMRoute_AssignsAndRendersRemovableGM(t *testing.T) {
 	}
 }
 
-func TestPuljefordelingFirstChoiceRoute_AssignsAndRendersDistinctRemoval(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt en billettholder og et arrangement i en åpen pulje.",
-		When:  "Når administratoren tildeler arrangementet som førstevalg.",
-		Then:  "Så skal førstevalget lagres og vises med sin egen fjernhandling.",
-	})
-
-	// Given
-	expectedAssignments := 1
-	expectedInterestLevel := models.InterestLevelHigh
-	expectedRemovePath := "/admin/api/puljefordeling/FredagKveld/evA/1/first-choice"
-	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_assign_first_choice_route")
-	router := chi.NewRouter()
-	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
-	const fredag = models.PuljeFredagKveld
-	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
-	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, fredag)
-	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
-		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
-
-	// When
-	rec := postAssignmentSignals(t, router, "/api/puljefordeling/assign/first-choice", 1, "evA", string(fredag))
-	actualAssignments := testutil.QueryInt(t, db, `
-		SELECT COUNT(*) FROM relation_events_players
-		WHERE event_id = 'evA' AND pulje_id = ? AND billettholder_id = 1
-		  AND role = ? AND source = ?
-	`, fredag, models.EventPlayerRolePlayer, models.EventPlayerSourceManual)
-	var actualInterestLevel models.InterestLevel
-	if err := db.QueryRow(`
-		SELECT interest_level FROM interests
-		WHERE event_id = 'evA' AND pulje_id = ? AND billettholder_id = 1
-	`, fredag).Scan(&actualInterestLevel); err != nil {
-		t.Fatalf("read first-choice interest: %v", err)
-	}
-	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, fredag, nil))
-	removeAction := doc.Find(".pulje-remove-first-choice").AttrOr("data-on:click", "")
-
-	// Then
-	if rec.Code != http.StatusNoContent {
-		t.Fatalf("expected 204 No Content, got %d (%s)", rec.Code, rec.Body.String())
-	}
-	if actualAssignments != expectedAssignments {
-		t.Fatalf("first-choice assignment count mismatch\nexpected: %d\nactual:   %d", expectedAssignments, actualAssignments)
-	}
-	if actualInterestLevel != expectedInterestLevel {
-		t.Fatalf("interest level mismatch\nexpected: %q\nactual:   %q", expectedInterestLevel, actualInterestLevel)
-	}
-	if !strings.Contains(removeAction, expectedRemovePath) {
-		t.Fatalf("first-choice remove action mismatch\nexpected action to contain: %q\nactual: %q", expectedRemovePath, removeAction)
-	}
-}
-
 func TestPuljefordelingRemoveGMRoute_DeletesManualGM(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en manuelt tildelt spilleder i en åpen pulje.",
@@ -484,100 +433,6 @@ func TestPuljefordelingRemoveGMRoute_DeletesManualGM(t *testing.T) {
 	}
 	if actualAssignments != expectedAssignments {
 		t.Fatalf("GM assignment count mismatch\nexpected: %d\nactual:   %d", expectedAssignments, actualAssignments)
-	}
-}
-
-func TestPuljefordelingRemoveFirstChoiceRoute_DeletesSeatAndInterest(t *testing.T) {
-	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt et administrativt tildelt førstevalg i en åpen pulje.",
-		When:  "Når administratoren bruker førstevalgets fjernhandling.",
-		Then:  "Så skal både spillerplassen og den samsvarende interessen fjernes.",
-	})
-
-	// Given
-	expectedAssignments := 0
-	expectedInterests := 0
-	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_remove_first_choice_route")
-	router := chi.NewRouter()
-	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
-	const fredag = models.PuljeFredagKveld
-	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
-	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, fredag)
-	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
-		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
-	if err := puljefordeling.AddFirstChoiceSeat(db, fredag, "evA", 1); err != nil {
-		t.Fatalf("seed first-choice assignment: %v", err)
-	}
-
-	// When
-	req := httptest.NewRequest(http.MethodDelete, "/api/puljefordeling/FredagKveld/evA/1/first-choice", nil)
-	rec := httptest.NewRecorder()
-	router.ServeHTTP(rec, req)
-	actualAssignments := testutil.QueryInt(t, db, `
-		SELECT COUNT(*) FROM relation_events_players
-		WHERE event_id = 'evA' AND pulje_id = ? AND billettholder_id = 1
-	`, fredag)
-	actualInterests := testutil.QueryInt(t, db, `
-		SELECT COUNT(*) FROM interests
-		WHERE event_id = 'evA' AND pulje_id = ? AND billettholder_id = 1
-	`, fredag)
-
-	// Then
-	if rec.Code != http.StatusNoContent {
-		t.Fatalf("expected 204 No Content, got %d (%s)", rec.Code, rec.Body.String())
-	}
-	if actualAssignments != expectedAssignments {
-		t.Fatalf("first-choice assignment count mismatch\nexpected: %d\nactual:   %d", expectedAssignments, actualAssignments)
-	}
-	if actualInterests != expectedInterests {
-		t.Fatalf("first-choice interest count mismatch\nexpected: %d\nactual:   %d", expectedInterests, actualInterests)
-	}
-}
-
-func TestAddFirstChoiceThenEmulate_PinsAddedPlayer(t *testing.T) {
-	db, _ := testutil.CreateTestDBAndLogger(t, "puljefordeling_add_then_pin")
-
-	const fredag = models.PuljeFredagKveld
-	seedTabPulje(t, db, fredag, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
-	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players)
-		VALUES ('evA','Alpha','','','','','',4)`)
-	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(fredag))
-	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id)
-		VALUES (1,'Kari','Nordmann',0,'',0,1)`)
-
-	// Add Kari through the real picker add path (the + button's endpoint).
-	if err := puljefordeling.AddFirstChoiceSeat(db, fredag, "evA", 1); err != nil {
-		t.Fatalf("AddFirstChoiceSeat: %v", err)
-	}
-
-	// A subsequent emulation must pin her into evA, marked as a manual placement.
-	em, err := puljefordeling.EmulateSeatings(db)
-	if err != nil {
-		t.Fatalf("EmulateSeatings: %v", err)
-	}
-	var evA puljefordeling.EmulatedEvent
-	for _, p := range em.Puljer {
-		if p.PuljeID == fredag {
-			for _, e := range p.Events {
-				if e.EventID == "evA" {
-					evA = e
-				}
-			}
-		}
-	}
-	names := make([]string, len(evA.AssignedPlayers))
-	for i, ap := range evA.AssignedPlayers {
-		names[i] = ap.Name
-	}
-	if !slices.Contains(names, "Kari Nordmann") {
-		t.Fatalf("added player should be pinned into evA, got %v", names)
-	}
-	for _, ap := range evA.AssignedPlayers {
-		if ap.Name == "Kari Nordmann" && !ap.Manual {
-			t.Errorf("added player should be marked as a manual placement")
-		}
 	}
 }
 
@@ -811,15 +666,14 @@ func TestPuljefordelingAssignRoute_MinorInAdultsOnlyAsksForConfirmation(t *testi
 }
 
 // All Puljefordeling placement actions share the age warning. In particular,
-// the newer GM and first-choice endpoints must re-post to their own route when
-// the admin confirms instead of falling back to an ordinary player placement.
+// the GM and interest-list endpoints must re-post to their own route when the
+// admin confirms instead of falling back to an ordinary player placement.
 func TestPuljefordelingRoleAssignmentRoutes_MinorInAdultsOnlyAskForCorrectConfirmation(t *testing.T) {
 	tests := []struct {
 		name string
 		path string
 	}{
 		{name: "GM", path: "/api/puljefordeling/assign/gm"},
-		{name: "first choice", path: "/api/puljefordeling/assign/first-choice"},
 		{name: "interest", path: "/api/puljefordeling/assign/interest"},
 	}
 
@@ -846,35 +700,22 @@ func TestPuljefordelingRoleAssignmentRoutes_MinorInAdultsOnlyAskForCorrectConfir
 	}
 }
 
-func TestPuljefordelingRoleAssignmentRoutes_MinorInAdultsOnlyAssignWhenConfirmed(t *testing.T) {
-	tests := []struct {
-		name string
-		path string
-		role models.EventPlayerRole
-	}{
-		{name: "GM", path: "/api/puljefordeling/assign/gm", role: models.EventPlayerRoleGM},
-		{name: "first choice", path: "/api/puljefordeling/assign/first-choice", role: models.EventPlayerRolePlayer},
+func TestPuljefordelingGMRoute_MinorInAdultsOnlyAssignsWhenConfirmed(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_gm_minor_confirmed")
+	router := chi.NewRouter()
+	puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
+	seedAssignFixture(t, db, models.PuljeFredagKveld, models.AgeGroupAdultsOnly, false)
+
+	rec := postAssignmentSignalsConfirmed(t, router, "/api/puljefordeling/assign/gm", 1, "evA", "FredagKveld")
+	if rec.Code != http.StatusNoContent {
+		t.Fatalf("want 204 after confirming GM placement, got %d (%s)", rec.Code, rec.Body.String())
 	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_role_assignment_minor_confirmed")
-			router := chi.NewRouter()
-			puljefordelingRoute(router, db, &live.Manager{}, logger, nil)
-			seedAssignFixture(t, db, models.PuljeFredagKveld, models.AgeGroupAdultsOnly, false)
-
-			rec := postAssignmentSignalsConfirmed(t, router, tt.path, 1, "evA", "FredagKveld")
-			if rec.Code != http.StatusNoContent {
-				t.Fatalf("want 204 after confirming %s placement, got %d (%s)", tt.name, rec.Code, rec.Body.String())
-			}
-			actual := testutil.QueryInt(t, db, `
-				SELECT COUNT(*) FROM relation_events_players
-				WHERE event_id = 'evA' AND pulje_id = ? AND billettholder_id = 1 AND role = ? AND source = ?
-			`, models.PuljeFredagKveld, tt.role, models.EventPlayerSourceManual)
-			if actual != 1 {
-				t.Fatalf("confirmed %s placement should create one assignment, found %d", tt.name, actual)
-			}
-		})
+	actual := testutil.QueryInt(t, db, `
+		SELECT COUNT(*) FROM relation_events_players
+		WHERE event_id = 'evA' AND pulje_id = ? AND billettholder_id = 1 AND role = ? AND source = ?
+	`, models.PuljeFredagKveld, models.EventPlayerRoleGM, models.EventPlayerSourceManual)
+	if actual != 1 {
+		t.Fatalf("confirmed GM placement should create one assignment, found %d", actual)
 	}
 }
 

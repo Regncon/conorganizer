@@ -183,15 +183,6 @@ func setRegistration(ctx context.Context, db *sql.DB, change registrationChange)
 		}
 	}
 
-	if _, err := tx.ExecContext(ctx, `
-		DELETE FROM interests
-		WHERE event_id = ?
-			AND pulje_id = ?
-			AND billettholder_id = ?
-	`, change.EventID, change.PuljeID, change.BillettholderID); err != nil {
-		return fmt.Errorf("remove interest for registration change: %w", err)
-	}
-
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("commit registration change: %w", err)
 	}

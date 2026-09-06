@@ -24,7 +24,7 @@ import (
 // puljefordelingRoute wires the per-pulje tabbed puljefordeling view. The page
 // mirrors the bordfordeling (rooms assignment) layout: a tab strip per pulje and
 // a connected panel that live-updates over SSE. Admins can assign and remove
-// manual players, first choices, and GMs while the pulje is not completed.
+// manual players and GMs while the pulje is not completed.
 func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manager, logger *slog.Logger, eventImageDir *string) {
 	logger = logger.With("component", "admin_puljefordeling_tab")
 
@@ -92,8 +92,8 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	// Assign a manual player. This removes the matching interest and preserves
-	// independent registrations.
+	// Assign a manual player without changing interests or independent
+	// registrations.
 	router.Post("/api/puljefordeling/assign", func(w http.ResponseWriter, r *http.Request) {
 		target, err := readPuljeAssignmentTarget(r)
 		if err != nil {
@@ -121,9 +121,9 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	// Assign a manual player from the event's interest list. Unlike the general
-	// search action above, this preserves the matching interest so its level keeps
-	// contributing to scoring and a high interest can count as a first choice.
+	// Assign a manual player from the event's interest list. The matching interest
+	// remains, so its level keeps contributing to scoring and a high interest can
+	// count as a first choice.
 	router.Post("/api/puljefordeling/assign/interest", func(w http.ResponseWriter, r *http.Request) {
 		target, err := readPuljeAssignmentTarget(r)
 		if err != nil {
@@ -180,35 +180,8 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		w.WriteHeader(http.StatusNoContent)
 	})
 
-	// Assign a manual player and record the event as their first choice.
-	router.Post("/api/puljefordeling/assign/first-choice", func(w http.ResponseWriter, r *http.Request) {
-		target, err := readPuljeAssignmentTarget(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if !puljeAllowsAdminAssignmentChanges(w, db, logger, target.PuljeID) {
-			return
-		}
-		if puljeAssignmentNeedsAgeConfirmation(w, r, db, logger, target, "/admin/api/puljefordeling/assign/first-choice") {
-			return
-		}
-
-		if err := puljefordeling.AddFirstChoiceSeat(db, target.PuljeID, target.EventID, target.BillettholderID); err != nil {
-			logger.Error(err.Error(), "pulje_id", target.PuljeID, "event_id", target.EventID, "billettholder_id", target.BillettholderID)
-			http.Error(w, "Failed to assign first choice", http.StatusInternalServerError)
-			return
-		}
-		logger.Info("first choice assigned", "pulje_id", target.PuljeID, "event_id", target.EventID, "billettholder_id", target.BillettholderID)
-
-		if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketInterests); err != nil {
-			logger.Error(fmt.Errorf("failed to broadcast first-choice assignment: %w", err).Error(), "pulje_id", target.PuljeID, "event_id", target.EventID)
-		}
-		w.WriteHeader(http.StatusNoContent)
-	})
-
 	// Remove a manual pin (×). Manual-only: solver, registration, and GM rows are
-	// untouched. A removed interest is not restored.
+	// untouched. Interests remain unchanged.
 	router.Delete("/api/puljefordeling/{pulje}/{event}/{billettholderId}", func(w http.ResponseWriter, r *http.Request) {
 		target, err := readPuljeRemovalTarget(r)
 		if err != nil {
@@ -230,30 +203,6 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 			logger.Error(fmt.Errorf("failed to broadcast manual player removal: %w", err).Error(), "pulje_id", target.PuljeID, "event_id", target.EventID)
 		}
 
-		w.WriteHeader(http.StatusNoContent)
-	})
-
-	// Remove an admin-created first choice, including its high-interest row.
-	router.Delete("/api/puljefordeling/{pulje}/{event}/{billettholderId}/first-choice", func(w http.ResponseWriter, r *http.Request) {
-		target, err := readPuljeRemovalTarget(r)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if !puljeAllowsAdminAssignmentChanges(w, db, logger, target.PuljeID) {
-			return
-		}
-
-		if err := puljefordeling.RemoveFirstChoiceSeat(db, target.PuljeID, target.EventID, target.BillettholderID); err != nil {
-			logger.Error(err.Error(), "pulje_id", target.PuljeID, "event_id", target.EventID, "billettholder_id", target.BillettholderID)
-			http.Error(w, "Failed to remove first choice", http.StatusInternalServerError)
-			return
-		}
-		logger.Info("first choice removed", "pulje_id", target.PuljeID, "event_id", target.EventID, "billettholder_id", target.BillettholderID)
-
-		if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketInterests); err != nil {
-			logger.Error(fmt.Errorf("failed to broadcast first-choice removal: %w", err).Error(), "pulje_id", target.PuljeID, "event_id", target.EventID)
-		}
 		w.WriteHeader(http.StatusNoContent)
 	})
 
@@ -910,21 +859,12 @@ templ puljeEventBox(pulje models.Pulje, ev puljefordeling.EmulatedEvent, publish
 							<span class="pulje-badge pulje-badge--error">Under 18</span>
 						}
 						if pl.Manual && !published {
-							if pl.FirstChoice {
-								<button
-									type="button"
-									class="pulje-remove pulje-remove-first-choice"
-									title="Fjern førstevalg"
-									data-on:click={ fmt.Sprintf("@delete('/admin/api/puljefordeling/%s/%s/%d/first-choice')", string(pulje), ev.EventID, pl.BillettholderID) }
-								>×</button>
-							} else {
-								<button
-									type="button"
-									class="pulje-remove pulje-remove-player"
-									title="Fjern manuell spiller"
-									data-on:click={ fmt.Sprintf("@delete('/admin/api/puljefordeling/%s/%s/%d')", string(pulje), ev.EventID, pl.BillettholderID) }
-								>×</button>
-							}
+							<button
+								type="button"
+								class="pulje-remove pulje-remove-player"
+								title="Fjern manuell spiller"
+								data-on:click={ fmt.Sprintf("@delete('/admin/api/puljefordeling/%s/%s/%d')", string(pulje), ev.EventID, pl.BillettholderID) }
+							>×</button>
 						}
 					</li>
 				}

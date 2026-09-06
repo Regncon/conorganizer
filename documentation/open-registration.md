@@ -11,7 +11,7 @@ Open registration lets a billettholder take a confirmed player place in a specif
 - As a billettholder, I can opt out of my own registration or a manual player assignment while the program is published and the pulje is open.
 - As a billettholder with a confirmed assignment, I can see which linked events prevent me from changing ordinary interests in that pulje.
 - As an admin, I can mark an event as open registration so that billettholdere can register directly for it in an open pulje.
-- As an admin, I can manually assign or remove a GM, player, or first-choice player from Puljefordeling so that billettholdere can be confirmed for an event in an open pulje.
+- As an admin, I can manually assign or remove a GM or player from Puljefordeling so that billettholdere can be confirmed for an event in an open pulje without changing their interests.
 - As an admin, I can see and directly place the people interested in an event, with their ticket type and relevant assignment, age, and first-choice status, so that backup assignments are quick to make.
 - As an attendee, I can see confirmed registrations, manual assignments, and GM assignments on my profile without waiting for Puljefordeling to be completed.
 
@@ -34,9 +34,9 @@ Manual gate check-in remains the source of truth for whether somebody is physica
 
 Self-registration creates a player assignment with source `registration`. Admin player assignment uses source `manual`; the two workflows remain distinct even though both are confirmed assignments from the billettholder's perspective.
 
-Registering, opting out, or using the general admin assignment search removes only the interest for the same billettholder, event, and pulje. Other interests and assignments remain untouched.
+Registration, deregistration, admin assignment, movement, and removal never create, update, or delete interests. Only an explicit interest choice from the attendee changes an interest. For example, somebody who chooses `Interessert`, then `Meld deg på`, and later `Meld deg av` still has the original `Interessert` choice and—if they have no other confirmed assignment in the pulje—is eligible for ordinary solver placement again.
 
-Puljefordeling also has a separate backup-assignment list for people who have expressed interest in the selected event. Clicking an entry creates a manual player assignment but deliberately keeps the interest. A retained `Veldig interessert` counts as a first choice if the participant has not already received one in an earlier pulje; lower interest levels remain ordinary assignments. The list stays visible and marks people already assigned in the current pulje, people under 18, and people who received a first choice in an earlier pulje.
+Puljefordeling also has a separate backup-assignment list for people who have expressed interest in the selected event. Clicking an entry creates a manual player assignment and keeps the interest. An existing `Veldig interessert` counts as a first choice if the participant has not already received one in an earlier pulje; lower interest levels remain ordinary assignments. Admins cannot set or remove a first choice independently of the attendee's interest. The list stays visible and marks people already assigned in the current pulje, people under 18, and people who received a first choice in an earlier pulje.
 
 A confirmed manual or registration player assignment in a pulje blocks changes to ordinary interests in that pulje. It does not block registration for another open-registration event. A GM assignment blocks all registration and interest changes in that pulje.
 

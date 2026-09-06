@@ -82,16 +82,16 @@ func interestCount(t *testing.T, db interface {
 	return n
 }
 
-func TestAddManualSeat_CreatesPinAndRemovesOnlyMatchingInterest(t *testing.T) {
+func TestAddManualSeat_CreatesPinWithoutChangingInterests(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en billetthelder med interesser i to arrangementer i samme pulje.",
 		When:  "Når en administrator tildeler ett av arrangementene manuelt.",
-		Then:  "Så skal tildelingen lagres og bare den samsvarende interessen fjernes.",
+		Then:  "Så skal tildelingen lagres uten at interessene endres.",
 	})
 
 	// Given
 	expectedManualSeats := 1
-	expectedMatchingInterests := 0
+	expectedMatchingInterests := 1
 	expectedOtherInterests := 1
 	db, _ := testutil.CreateTestDBAndLogger(t, "add_manual_seat")
 
@@ -110,6 +110,13 @@ func TestAddManualSeat_CreatesPinAndRemovesOnlyMatchingInterest(t *testing.T) {
 	actualManualSeats := manualSeatCount(t, db, "evA", fredag, 1)
 	actualMatchingInterests := interestCount(t, db, "evA", fredag, 1)
 	actualOtherInterests := interestCount(t, db, "evB", fredag, 1)
+	var actualMatchingLevel models.InterestLevel
+	if err := db.QueryRow(`
+		SELECT interest_level FROM interests
+		WHERE event_id = 'evA' AND pulje_id = ? AND billettholder_id = 1
+	`, fredag).Scan(&actualMatchingLevel); err != nil {
+		t.Fatalf("read matching interest level: %v", err)
+	}
 
 	// Then
 	if actualManualSeats != expectedManualSeats {
@@ -117,6 +124,9 @@ func TestAddManualSeat_CreatesPinAndRemovesOnlyMatchingInterest(t *testing.T) {
 	}
 	if actualMatchingInterests != expectedMatchingInterests {
 		t.Fatalf("matching interest count mismatch\nexpected: %d\nactual:   %d", expectedMatchingInterests, actualMatchingInterests)
+	}
+	if actualMatchingLevel != models.InterestLevelHigh {
+		t.Fatalf("matching interest level changed\nexpected: %q\nactual:   %q", models.InterestLevelHigh, actualMatchingLevel)
 	}
 	if actualOtherInterests != expectedOtherInterests {
 		t.Fatalf("other interest count mismatch\nexpected: %d\nactual:   %d", expectedOtherInterests, actualOtherInterests)
@@ -227,6 +237,7 @@ func TestRemoveManualSeat_DeletesManualPlayerSeat(t *testing.T) {
 	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
 	seedEvent(t, db, "evA", "Alpha", 4, fredag)
 	seedParticipant(t, db, 1, "Kari", "Nordmann")
+	seedInterest(t, db, 1, "evA", fredag, models.InterestLevelMedium)
 	if _, err := db.Exec(
 		`INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
 		 VALUES (?, ?, ?, 'Player', 'manual')`,
@@ -241,6 +252,19 @@ func TestRemoveManualSeat_DeletesManualPlayerSeat(t *testing.T) {
 
 	if got := manualSeatCount(t, db, "evA", fredag, 1); got != 0 {
 		t.Fatalf("manual seat should be deleted, still found %d", got)
+	}
+	if got := interestCount(t, db, "evA", fredag, 1); got != 1 {
+		t.Fatalf("manual seat removal must preserve the interest, found %d", got)
+	}
+	var level models.InterestLevel
+	if err := db.QueryRow(`
+		SELECT interest_level FROM interests
+		WHERE event_id = 'evA' AND pulje_id = ? AND billettholder_id = 1
+	`, fredag).Scan(&level); err != nil {
+		t.Fatalf("read preserved interest level: %v", err)
+	}
+	if level != models.InterestLevelMedium {
+		t.Fatalf("manual seat removal changed the interest level\nexpected: %q\nactual:   %q", models.InterestLevelMedium, level)
 	}
 }
 

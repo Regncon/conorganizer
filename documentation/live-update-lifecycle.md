@@ -77,7 +77,7 @@ The bucket list should stay small. Pages may subscribe to multiple buckets when 
 | Bucket | Purpose | Typical broadcasters | Typical subscribers |
 | --- | --- | --- | --- |
 | `events` | Event, program, pulje, publishing, and event-form data. | Event form updates, event submission, approval changes, program publishing, pulje status updates, scheduled pulje threshold broadcasts. | Root page, event details, profile event list, profile event form, admin dashboard, admin approval, admin event edit. |
-| `interests` | Interest choices, first-choice data, player/GM assignment state, and views that show who is interested in an event. | User interest updates, admin approval player assignment updates, first-choice and GM changes. | Event details, admin approval, admin billettholder filters, profile views that show interest or assignment state. |
+| `interests` | Interest choices, first-choice data, player/GM assignment state, and views that show who is interested in an event. | User interest updates and admin player/GM assignment changes. | Event details, admin approval, admin billettholder filters, profile views that show interest or assignment state. |
 | `billettholders` | Ticket holder and billettholder data. | Add/remove billettholder emails, ticket conversion, ticket fetch/check-in flows, billettholder admin updates. | Profile tickets, profile overview where ticket holders are shown, admin billettholder overview, add billettholder page, possibly event details if ticket holder choices are displayed. |
 | `rooms` | Room data and room assignment choices. | Create, update, delete room; assign room to an event pulje. | Admin rooms, event form pages that show room assignment choices, admin event edit. |
 

@@ -1,6 +1,6 @@
 # Puljefordeling i admin
 
-Denne sjekklisten dekker `/admin/puljefordeling/{pulje}`, der admin kan se interesser og administrere manuelle GM-, spiller- og førstevalgtildelinger.
+Denne sjekklisten dekker `/admin/puljefordeling/{pulje}`, der admin kan se interesser og administrere manuelle GM- og spillertildelinger uten å endre interessene.
 
 ## Roller
 
@@ -18,17 +18,12 @@ Denne sjekklisten dekker `/admin/puljefordeling/{pulje}`, der admin kan se inter
 - [ ] **Spiller tildeles riktig arrangement og pulje**<br>
   **Gitt** at admin har valgt en pulje og et arrangement.<br>
   **Når** en billettholder tildeles som spiller.<br>
-  **Så** skal spillertildelingen vises på riktig arrangement, og interessen for samme arrangement og pulje skal ikke lenger vises som et vanlig interessevalg.
+  **Så** skal spillertildelingen vises på riktig arrangement uten at eksisterende interesser endres.
 
-- [ ] **Spiller kan tildeles som førstevalg**<br>
-  **Gitt** at admin har valgt en pulje, et arrangement og en billettholder.<br>
-  **Når** billettholderen tildeles som førstevalg.<br>
-  **Så** skal tildelingen markeres som førstevalg på riktig arrangement.
-
-- [ ] **Valgdialogen viser alle tre handlinger**<br>
+- [ ] **Valgdialogen viser de to tildelingshandlingene**<br>
   **Gitt** at admin åpner tildelingsdialogen for et arrangement.<br>
   **Når** en billettholder velges.<br>
-  **Så** skal handlingene for GM, spiller og førstevalg være tydelige og knyttet til valgt pulje.
+  **Så** skal handlingene for GM og spiller være tydelige og knyttet til valgt pulje, uten en handling for å sette førstevalg.
 
 ### Interesselisten
 
@@ -70,14 +65,9 @@ Denne sjekklisten dekker `/admin/puljefordeling/{pulje}`, der admin kan se inter
   **Så** skal bare den valgte GM-tildelingen forsvinne.
 
 - [ ] **Spiller kan fjernes**<br>
-  **Gitt** at et arrangement har en manuelt tildelt spiller.<br>
+  **Gitt** at et arrangement har en manuelt tildelt spiller med en eksisterende interesse.<br>
   **Når** admin fjerner spillertildelingen.<br>
-  **Så** skal bare den valgte spillertildelingen forsvinne.
-
-- [ ] **Førstevalg kan fjernes**<br>
-  **Gitt** at et arrangement har en manuelt tildelt førstevalgspiller.<br>
-  **Når** admin fjerner førstevalget.<br>
-  **Så** skal både den manuelle plassen og førstevalgmarkeringen for dette arrangementet og denne puljen fjernes.
+  **Så** skal bare den valgte spillertildelingen forsvinne, mens interessen beholdes.
 
 ### Avgrensning og robusthet
 
@@ -96,7 +86,12 @@ Denne sjekklisten dekker `/admin/puljefordeling/{pulje}`, der admin kan se inter
   **Når** admin tildeler eller fjerner en rolle i én pulje.<br>
   **Så** skal tildelinger og interesser i andre puljer forbli uendret.
 
+- [ ] **Tildelingshandlinger endrer aldri interesser**<br>
+  **Gitt** at billettholderen har interesser på arrangementet som tildeles og på andre arrangementer.<br>
+  **Når** admin tildeler, flytter eller fjerner en spiller eller GM.<br>
+  **Så** skal alle interessene og nivåene deres være uendret.
+
 - [ ] **Refresh viser lagret tildelingstilstand**<br>
   **Gitt** at admin har utført flere tildelingshandlinger.<br>
   **Når** siden lastes på nytt.<br>
-  **Så** skal GM-, spiller- og førstevalgstatus samsvare med de lagrede tildelingene.
+  **Så** skal GM- og spillerstatus samsvare med de lagrede tildelingene, mens førstevalg fortsatt utledes fra lagrede interesser.

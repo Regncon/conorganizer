@@ -25,7 +25,6 @@ type AssignedPlayer struct {
 	Moved           bool                 // bumped down to a strictly lower-interest event by the solver to make room (equal-interest swaps don't count)
 	Manual          bool                 // manually pinned into this event by an admin (source='manual'), not placed by the solver
 	Registration    bool                 // confirmed through open registration (source='registration'), not placed by the solver
-	FirstChoice     bool                 // manually pinned with a matching high-interest row
 	IsOver18        bool                 // participant is over 18; a seated minor in an AdultsOnly game is always an admin pin
 }
 
@@ -266,7 +265,6 @@ func assignedPlayers(
 			got := byPulje[puljeID][eventID]
 			ap.Level = models.InterestLevelFromScore(int(got))
 		}
-		ap.FirstChoice = ap.Manual && ap.Level == models.InterestLevelHigh
 		out = append(out, ap)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })

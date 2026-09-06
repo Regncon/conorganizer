@@ -34,14 +34,14 @@ Denne sjekklisten dekker åpen påmelding fra `/event/{id}`, tilhørende visning
   **Så** skal valget endres til `Meld deg av`, og arrangementet skal vises på profilen uten manuell oppdatering av siden.
 
 - [ ] **Avmelding fjerner bare den valgte plassen**<br>
-  **Gitt** at billettholderen er påmeldt et arrangement og har andre interesser eller påmeldinger.<br>
+  **Gitt** at billettholderen er interessert i et arrangement, melder seg på og har andre interesser eller påmeldinger.<br>
   **Når** billettholderen velger `Meld deg av`.<br>
-  **Så** skal bare plassen og eventuell interesse for dette arrangementet i denne puljen fjernes.
+  **Så** skal bare plassen fjernes; interessen for samme arrangement og alle andre interesser eller påmeldinger skal beholdes.
 
 - [ ] **Manuell spillertildeling kan meldes av**<br>
   **Gitt** at admin har tildelt billettholderen som spiller på et vanlig arrangement.<br>
   **Når** billettholderen åpner arrangementet mens programmet er publisert og puljen er åpen.<br>
-  **Så** skal `Meld deg av` vises og kunne fjerne den manuelle tildelingen.
+  **Så** skal `Meld deg av` vises og kunne fjerne den manuelle tildelingen uten å endre interessen.
 
 - [ ] **Flere åpne arrangementer kan velges i samme pulje**<br>
   **Gitt** at minst to arrangementer i samme pulje har åpen påmelding.<br>
