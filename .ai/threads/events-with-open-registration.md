@@ -1323,3 +1323,28 @@ No migration is required. The existing `.ai/threads/events-with-open-registratio
 Time: 2026-09-06 13:17:18
 --- Next Prompt ---
 
+Let's have the dialog close when the admin clicks on an interest in the list. 
+Also, let's add a hover tooltip to the icons that explains what they mean. There should be a tiny library already in the project that we can use for this.
+
+Time: 2026-09-06 14:32:49
+--- Codex Run ---
+
+Codex output:
+I’ll make the quick-assignment click close the picker immediately, while preserving the existing age-confirmation flow. The icons already carry tooltip text, so I’m checking how the project initializes its tooltip library—especially after live DOM patches—and will wire them into that established mechanism rather than adding another dependency.
+The project uses Tippy through `data-tippy-content`. I found one live-update gap: it was only initialized once on page load, while this dialog’s icon set can change after an assignment. I’m extending that existing initialization to pick up newly patched icons and updated tooltip text, then adding the close behavior and regression checks.
+The close interaction and icon tooltips are now in place. Tippy remains the only tooltip dependency; its initializer now observes live DOM changes, so an assigned icon added after a broadcast gets the same hover behavior as icons present on first load. Focused tests pass.
+Implemented.
+
+- Clicking an interest now posts the assignment and closes the dialog.
+- All three status icons use the existing Tippy.js tooltips.
+- Tooltip initialization now handles live DOM updates, including newly added assigned icons.
+- Updated the manual test checklist.
+
+Changes: [puljefordeling_assignment_interests.templ](/home/cinmay/Documents/conorganizer/pages/admin/puljefordeling_assignment_interests.templ:182) and [base.templ](/home/cinmay/Documents/conorganizer/layouts/base.templ:34).
+
+`go test ./...` and `go vet ./...` pass.
+
+Time: 2026-09-06 14:32:49
+--- Next Prompt ---
+
+

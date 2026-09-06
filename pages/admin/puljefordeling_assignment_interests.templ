@@ -180,7 +180,7 @@ func puljeAssignmentInterestCount(interests puljeAssignmentEventInterests) int {
 }
 
 func puljeInterestAssignmentAction(billettholderID int) string {
-	return fmt.Sprintf("$assignmentBillettholderId = %d; @post('/admin/api/puljefordeling/assign/interest'); $assignmentBillettholderId = 0", billettholderID)
+	return fmt.Sprintf("$assignmentBillettholderId = %d; @post('/admin/api/puljefordeling/assign/interest'); document.getElementById('puljefordeling-assign-dialog').close(); $assignmentBillettholderId = 0", billettholderID)
 }
 
 templ puljeAssignmentInterestCandidateRow(candidate puljeAssignmentInterestCandidate) {

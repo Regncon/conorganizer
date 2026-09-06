@@ -230,11 +230,26 @@ func TestPuljefordelingAssignmentInterests_RendersTwoLineRowsAndStatusIcons(t *t
 	if !kari.HasClass("is-assigned") || kari.Find(".pulje-assignment-interest-icon.is-assigned").Length() != 1 {
 		t.Errorf("Kari should have the subdued assigned indicator")
 	}
-	if kari.Find(".pulje-assignment-interest-icon.is-under-18").Length() != 1 {
+	assignedIcon := kari.Find(".pulje-assignment-interest-icon.is-assigned")
+	if got := assignedIcon.AttrOr("data-tippy-content", ""); got != "Allerede tildelt et arrangement i denne puljen" {
+		t.Errorf("assigned tooltip mismatch: %q", got)
+	}
+	under18Icon := kari.Find(".pulje-assignment-interest-icon.is-under-18")
+	if under18Icon.Length() != 1 {
 		t.Errorf("Kari should have the under-18 indicator")
+	}
+	if got := under18Icon.AttrOr("data-tippy-content", ""); got != "Under 18 år" {
+		t.Errorf("under-18 tooltip mismatch: %q", got)
 	}
 	if action := kari.AttrOr("data-on:click", ""); !strings.Contains(action, "$assignmentBillettholderId = 1") || !strings.Contains(action, "/admin/api/puljefordeling/assign/interest") {
 		t.Errorf("click should immediately assign Kari from her interest, got %q", action)
+	} else {
+		post := strings.Index(action, "@post(")
+		closeDialog := strings.Index(action, "puljefordeling-assign-dialog').close()")
+		reset := strings.Index(action, "$assignmentBillettholderId = 0")
+		if post < 0 || closeDialog < post || reset < closeDialog {
+			t.Errorf("click should post, close the dialog, then reset the selected id; got %q", action)
+		}
 	}
 
 	ola := rows.FilterFunction(func(_ int, row *goquery.Selection) bool {
@@ -250,8 +265,12 @@ func TestPuljefordelingAssignmentInterests_RendersTwoLineRowsAndStatusIcons(t *t
 	ada := rows.FilterFunction(func(_ int, row *goquery.Selection) bool {
 		return strings.Contains(row.Text(), "Ada Første")
 	})
-	if ada.Find(".pulje-assignment-interest-icon.has-first-choice").Length() != 1 {
+	firstChoiceIcon := ada.Find(".pulje-assignment-interest-icon.has-first-choice")
+	if firstChoiceIcon.Length() != 1 {
 		t.Errorf("Ada should have the previous-first-choice indicator")
+	}
+	if got := firstChoiceIcon.AttrOr("data-tippy-content", ""); got != "Har fått førstevalget sitt i en tidligere pulje" {
+		t.Errorf("previous-first-choice tooltip mismatch: %q", got)
 	}
 	if ada.HasClass("is-assigned") {
 		t.Errorf("an assignment in a previous pulje should not mark Ada assigned in the current pulje")

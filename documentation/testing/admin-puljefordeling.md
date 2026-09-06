@@ -50,7 +50,7 @@ Denne sjekklisten dekker `/admin/puljefordeling/{pulje}`, der admin kan se inter
 - [ ] **Klikk på en interesse plasserer spilleren direkte**<br>
   **Gitt** at en deltaker har en interesse for valgt arrangement.<br>
   **Når** admin klikker på interessen.<br>
-  **Så** skal deltakeren plasseres som manuell spiller, interessen skal bli stående i listen, og tildelingsikonet skal oppdateres uten at dialogen lukkes.
+  **Så** skal deltakeren plasseres som manuell spiller og dialogen lukkes. Når dialogen åpnes igjen, skal interessen fortsatt stå i listen med oppdatert tildelingsikon.
 
 - [ ] **Beholdt veldig interesse teller som førstevalg**<br>
   **Gitt** at deltakeren er veldig interessert og ikke har fått førstevalget sitt i en tidligere pulje.<br>
