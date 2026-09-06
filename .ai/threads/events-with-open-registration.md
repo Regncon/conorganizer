@@ -1256,3 +1256,70 @@ All tests pass with `go test ./...`, and the `.ai` file remains untouched.
 Time: 2026-09-06 11:12:00
 --- Next Prompt ---
 
+
+Let's add a list of interests to the add player dialog in the puljefordeling page. This will help us with feature parity with the old WhoIsInterested page where we could see who is interested in the event. If we add it to the list of interests in the add player dialog, we can easily click on the interest to add the player manually. The interests should have an icon to indicate if the billettholder is already assigned to an event, if they are under 18 and if they have already gotten a first choice in a previous pulje.
+
+Interview me about this feature if necessary before implementing it.
+
+Time: 2026-09-06 12:57:11
+--- Codex Run ---
+
+Codex output:
+I’ll first compare the old `WhoIsInterested` data and actions with the current Puljefordeling picker. The main design points I’ll verify are how “already assigned” was scoped and how “got a first choice” was determined; I’ll only stop for questions if the existing behavior doesn’t answer those cleanly.
+The old page answers two of the semantics cleanly: it treated “assigned” as another player/GM assignment in the same pulje, and “has received a first choice” as an assigned high-interest event. I’m checking whether its click behavior and chronological scope match the new wording before I settle the interaction.
+One interaction detail needs deciding:
+
+When an admin clicks an interest in the list, should that:
+
+1. Immediately assign the person as an ordinary manual player, or
+2. Select the person, then let the admin choose the existing actions: player, first choice, or GM?
+
+I recommend option 2. It avoids accidentally treating a high interest as an ordinary assignment when the admin intended to record it as a first choice. The three icons will mean:
+
+- Assigned: already assigned to another event in the current pulje.
+- Under 18: based on the person’s age status, regardless of the selected event’s age limit.
+- First choice: received a high-interest player assignment in an earlier pulje, ordered by the puljes’ start time.
+
+Time: 2026-09-06 12:57:11
+--- Next Prompt ---
+
+Let's not mix the two functions. The top part of the dialog can remain unchanged, if the admin wants to assign a player manually, first choice or GM, they can use the top part of the dialog. The bottom part of the dialog will be a list of interests, this is out backup assignment method. It needs to be quick and easy to use, so when the admin clicks on an interest in the list, it will immediately assign the player as a manual player, with the interest intact. That means that if the interest is very high and the billettholder has not yet had a first choice, the new assignment will count as their first choice. If the interest is not very high, it will be a normal assignment. Do not remove the interest from the list. Perhaps we can have the already assigned icon be a different color or a bit darker to indicate that the billettholder is already assigned to an event.
+Let's also have the list have two lines pr interest, the first line will be the name of the billettholder with the icons, and the second line will ticket type name. That will help the admin while assigning players manually.
+
+Time: 2026-09-06 13:17:18
+--- Codex Run ---
+
+Codex output:
+That separation is clear. I’ll keep the search/actions untouched and add a distinct quick-assignment list below it. Clicking an interest will use its own backend path that preserves the interest, so a retained “Veldig interessert” naturally counts as a first choice in the existing distribution logic. I’ll also make assigned entries visibly subdued rather than removing them.
+
+I’m using the repository’s logging guidance because this adds a new admin action and audit log.
+The domain split will be explicit: the existing manual-search path still removes the matching interest, while the interest-list path creates the same manual seat without deleting it. I’m also wiring the list into live refreshes so the assignment indicator changes after a click without closing or rebuilding the dialog interaction.
+The first compiled slice is working. The list is grouped by interest level, keeps each interest after assignment, and derives both status icons from the same emulated distribution the admin is looking at—so “already assigned” includes solver-preview placements, not only rows already saved in the database. Next I’m locking that behavior down with focused service, rendering, and age-confirmation tests.
+The focused checks hit a read-only Go build-cache entry in the environment, not a code failure. I’m rerunning them with an isolated cache under `/tmp`, then I’ll run the repository-wide suite and review the final diff for scope and logging consistency.
+The complete Go suite is green. The key semantics are now covered automatically: high-interest quick placements count as first choices only when appropriate, medium interests stay ordinary, stale list clicks cannot create a seat, age confirmation still applies, and the retained row refreshes with its assigned indicator. I’m doing the last documentation and diff review now.
+Implemented the interest-based backup assignment flow.
+
+- The dialog’s existing search and three assignment buttons are unchanged.
+- Interests appear below, grouped by level.
+- Each row shows name/status icons on the first line and Chicken.no ticket type on the second.
+- Clicking assigns immediately as a manual player while preserving the interest.
+- Retained high interests count as first choices when applicable.
+- Assigned, under-18, and previous-first-choice indicators update live.
+- Existing age confirmation also applies.
+- Stale interest clicks return `409` without creating a seat.
+
+Main changes: [puljefordeling_assignment_interests.templ](/home/cinmay/Documents/conorganizer/pages/admin/puljefordeling_assignment_interests.templ:13), [puljefordeling_tab.templ](/home/cinmay/Documents/conorganizer/pages/admin/puljefordeling_tab.templ:127), and [manual_pins.go](/home/cinmay/Documents/conorganizer/service/puljefordeling/manual_pins.go:60).
+
+Updated the [feature documentation](/home/cinmay/Documents/conorganizer/documentation/open-registration.md:15) and [manual test checklist](/home/cinmay/Documents/conorganizer/documentation/testing/admin-puljefordeling.md:33).
+
+Validation passed:
+
+- `go test ./...`
+- `go vet ./...`
+- `git diff --check`
+
+No migration is required. The existing `.ai/threads/events-with-open-registration.md` modification remains untouched.
+
+Time: 2026-09-06 13:17:18
+--- Next Prompt ---
+

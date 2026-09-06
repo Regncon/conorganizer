@@ -1,12 +1,96 @@
 package puljefordeling
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 )
+
+func TestAddManualSeatFromInterest_PreservesInterestAndItsFirstChoiceMeaning(t *testing.T) {
+	tests := []struct {
+		name                string
+		level               models.InterestLevel
+		expectedSatisfied   int
+		expectedFirstChoice bool
+	}{
+		{
+			name:                "very interested counts as first choice",
+			level:               models.InterestLevelHigh,
+			expectedSatisfied:   1,
+			expectedFirstChoice: true,
+		},
+		{
+			name:                "ordinary interest remains an ordinary assignment",
+			level:               models.InterestLevelMedium,
+			expectedSatisfied:   0,
+			expectedFirstChoice: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Given
+			db, _ := testutil.CreateTestDBAndLogger(t, "add_manual_seat_from_interest")
+			const fredag = models.PuljeFredagKveld
+			seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+			seedEvent(t, db, "evA", "Alpha", 4, fredag)
+			seedParticipant(t, db, 1, "Kari", "Nordmann")
+			seedInterest(t, db, 1, "evA", fredag, tt.level)
+
+			// When
+			err := AddManualSeatFromInterest(db, fredag, "evA", 1)
+			em, emulateErr := EmulateSeatings(db)
+
+			// Then
+			if err != nil {
+				t.Fatalf("expected interest-backed assignment to succeed: %v", err)
+			}
+			if emulateErr != nil {
+				t.Fatalf("emulate seating: %v", emulateErr)
+			}
+			if got := manualSeatCount(t, db, "evA", fredag, 1); got != 1 {
+				t.Fatalf("manual seat count mismatch\nexpected: 1\nactual:   %d", got)
+			}
+			if got := interestCount(t, db, "evA", fredag, 1); got != 1 {
+				t.Fatalf("the matching interest should remain\nexpected: 1\nactual:   %d", got)
+			}
+			if got := em.Puljer[0].NewlySatisfied; got != tt.expectedSatisfied {
+				t.Fatalf("newly satisfied count mismatch\nexpected: %d\nactual:   %d", tt.expectedSatisfied, got)
+			}
+
+			event, ok := findEvent(em.Puljer[0], "evA")
+			if !ok || len(event.AssignedPlayers) != 1 {
+				t.Fatalf("expected one assigned player in evA, got %#v", event.AssignedPlayers)
+			}
+			if got := event.AssignedPlayers[0].FirstChoice; got != tt.expectedFirstChoice {
+				t.Fatalf("first-choice marker mismatch\nexpected: %t\nactual:   %t", tt.expectedFirstChoice, got)
+			}
+		})
+	}
+}
+
+func TestAddManualSeatFromInterest_RejectsStaleInterest(t *testing.T) {
+	// Given
+	db, _ := testutil.CreateTestDBAndLogger(t, "add_manual_seat_from_missing_interest")
+	const fredag = models.PuljeFredagKveld
+	seedPulje(t, db, fredag, "Fredag Kveld", "2026-09-04T18:00:00Z")
+	seedEvent(t, db, "evA", "Alpha", 4, fredag)
+	seedParticipant(t, db, 1, "Kari", "Nordmann")
+
+	// When
+	err := AddManualSeatFromInterest(db, fredag, "evA", 1)
+
+	// Then
+	if !errors.Is(err, ErrInterestNotFound) {
+		t.Fatalf("expected ErrInterestNotFound, got %v", err)
+	}
+	if got := manualSeatCount(t, db, "evA", fredag, 1); got != 0 {
+		t.Fatalf("a stale interest must not create a seat, found %d", got)
+	}
+}
 
 func TestAddManualGM_AssignsGMWithoutChangingInterest(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{

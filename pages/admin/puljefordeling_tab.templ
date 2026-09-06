@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -67,7 +68,7 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		liveManager.Stream(w, r, live.Page{
 			Buckets: []live.Bucket{live.BucketEvents, live.BucketInterests},
 			Render: func(ctx context.Context, r *http.Request) templ.Component {
-				return PuljefordelingTabContent(db, logger, puljeID, eventImageDir)
+				return puljefordelingLiveContent(db, logger, puljeID, eventImageDir)
 			},
 		})
 	})
@@ -117,6 +118,38 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 			logger.Error(fmt.Errorf("failed to broadcast manual player assignment: %w", err).Error(), "pulje_id", target.PuljeID, "event_id", target.EventID)
 		}
 
+		w.WriteHeader(http.StatusNoContent)
+	})
+
+	// Assign a manual player from the event's interest list. Unlike the general
+	// search action above, this preserves the matching interest so its level keeps
+	// contributing to scoring and a high interest can count as a first choice.
+	router.Post("/api/puljefordeling/assign/interest", func(w http.ResponseWriter, r *http.Request) {
+		target, err := readPuljeAssignmentTarget(r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		if !puljeAllowsAdminAssignmentChanges(w, db, logger, target.PuljeID) {
+			return
+		}
+		if puljeAssignmentNeedsAgeConfirmation(w, r, db, logger, target, "/admin/api/puljefordeling/assign/interest") {
+			return
+		}
+
+		if err := puljefordeling.AddManualSeatFromInterest(db, target.PuljeID, target.EventID, target.BillettholderID); errors.Is(err, puljefordeling.ErrInterestNotFound) {
+			http.Error(w, "Interest no longer exists", http.StatusConflict)
+			return
+		} else if err != nil {
+			logger.Error(err.Error(), "pulje_id", target.PuljeID, "event_id", target.EventID, "billettholder_id", target.BillettholderID)
+			http.Error(w, "Failed to add interest-backed manual seat", http.StatusInternalServerError)
+			return
+		}
+		logger.Info("player assigned from interest", "pulje_id", target.PuljeID, "event_id", target.EventID, "billettholder_id", target.BillettholderID)
+
+		if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketInterests); err != nil {
+			logger.Error(fmt.Errorf("failed to broadcast interest-backed player assignment: %w", err).Error(), "pulje_id", target.PuljeID, "event_id", target.EventID)
+		}
 		w.WriteHeader(http.StatusNoContent)
 	})
 
@@ -286,6 +319,7 @@ func unsatisfiedAfter(em puljefordeling.Emulation, pulje models.Pulje) (int, boo
 }
 
 templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje, eventImageDir *string) {
+	{{ em, emErr := puljefordeling.EmulateSeatings(db) }}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
 		{Name: "Admin", Url: "/admin/"},
@@ -356,13 +390,34 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 				>{ pulje }</a>
 			}
 		</div>
-		@PuljefordelingTabContent(db, logger, current, eventImageDir)
-		@puljeAssignDialog(db, logger, current)
+		@puljefordelingTabContent(db, logger, current, eventImageDir, em, emErr)
+		@puljeAssignDialog(db, logger, current, em, emErr)
 		@puljeAgeWarningDialog()
 	</div>
 }
 
 templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
+	{{ em, emErr := puljefordeling.EmulateSeatings(db) }}
+	@puljefordelingTabContent(db, logger, pulje, eventImageDir, em, emErr)
+}
+
+// puljefordelingLiveContent updates both the distribution and the interest list
+// inside the stable assignment dialog. The dialog itself remains outside the
+// live region so an open modal keeps its backdrop and focus state.
+templ puljefordelingLiveContent(db *sql.DB, logger *slog.Logger, pulje models.Pulje, eventImageDir *string) {
+	{{ em, emErr := puljefordeling.EmulateSeatings(db) }}
+	@puljefordelingTabContent(db, logger, pulje, eventImageDir, em, emErr)
+	@puljeAssignmentInterests(db, logger, pulje, em, emErr)
+}
+
+templ puljefordelingTabContent(
+	db *sql.DB,
+	logger *slog.Logger,
+	pulje models.Pulje,
+	eventImageDir *string,
+	em puljefordeling.Emulation,
+	emErr error,
+) {
 	{{
 		puljer, puljerErr := getPuljer(db)
 		if puljerErr != nil {
@@ -370,7 +425,6 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 		}
 		row, hasRow := findPuljeRow(puljer, pulje)
 
-		em, emErr := puljefordeling.EmulateSeatings(db)
 		if emErr != nil {
 			logger.Error(fmt.Errorf("emulation failed: %w", emErr).Error())
 		}
@@ -685,10 +739,18 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 
 // puljeAssignDialog is the single shared picker dialog for the page. The + button
 // on each event box sets the event and pulje signals before opening it.
-templ puljeAssignDialog(db *sql.DB, logger *slog.Logger, pulje models.Pulje) {
+templ puljeAssignDialog(
+	db *sql.DB,
+	logger *slog.Logger,
+	pulje models.Pulje,
+	em puljefordeling.Emulation,
+	emErr error,
+) {
+	@puljeAssignmentInterestStyles()
 	<dialog id="puljefordeling-assign-dialog" closedBy="any">
 		<h3>Legg til deltaker</h3>
 		@puljeAssignmentSearch(db, logger, pulje)
+		@puljeAssignmentInterests(db, logger, pulje, em, emErr)
 		<button
 			class="btn btn--outline"
 			type="button"

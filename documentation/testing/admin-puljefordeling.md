@@ -30,6 +30,38 @@ Denne sjekklisten dekker `/admin/puljefordeling/{pulje}`, der admin kan se inter
   **Når** en billettholder velges.<br>
   **Så** skal handlingene for GM, spiller og førstevalg være tydelige og knyttet til valgt pulje.
 
+### Interesselisten
+
+- [ ] **Interesser vises for valgt arrangement**<br>
+  **Gitt** at flere har meldt interesse på ulike nivåer for arrangementet.<br>
+  **Når** admin åpner tildelingsdialogen.<br>
+  **Så** skal interessene vises under det vanlige søket, gruppert som veldig interessert, interessert og litt interessert.
+
+- [ ] **Navn og billettype vises på to linjer**<br>
+  **Gitt** at en interessert deltaker har en billettype fra Chicken.no.<br>
+  **Når** interessen vises i dialogen.<br>
+  **Så** skal navnet og statusikonene stå på første linje, og billettypen på den andre.
+
+- [ ] **Statusikoner gir riktig informasjon**<br>
+  **Gitt** interesserte som er under 18, allerede tildelt i denne puljen eller har fått førstevalget sitt i en tidligere pulje.<br>
+  **Når** interesselisten vises.<br>
+  **Så** skal hver relevant status ha et ikon med forklarende hjelpetekst, og allerede tildelte skal vises mørkere.
+
+- [ ] **Klikk på en interesse plasserer spilleren direkte**<br>
+  **Gitt** at en deltaker har en interesse for valgt arrangement.<br>
+  **Når** admin klikker på interessen.<br>
+  **Så** skal deltakeren plasseres som manuell spiller, interessen skal bli stående i listen, og tildelingsikonet skal oppdateres uten at dialogen lukkes.
+
+- [ ] **Beholdt veldig interesse teller som førstevalg**<br>
+  **Gitt** at deltakeren er veldig interessert og ikke har fått førstevalget sitt i en tidligere pulje.<br>
+  **Når** admin plasserer deltakeren fra interesselisten.<br>
+  **Så** skal plasseringen telle som deltakerens førstevalg.
+
+- [ ] **Aldersbekreftelse gjelder også interesselisten**<br>
+  **Gitt** at en deltaker under 18 er interessert i et 18+-arrangement.<br>
+  **Når** admin klikker på interessen.<br>
+  **Så** skal den eksisterende aldersadvarselen kreve bekreftelse før plasseringen lagres.
+
 ### Fjerning
 
 - [ ] **GM kan fjernes**<br>
