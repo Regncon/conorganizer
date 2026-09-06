@@ -62,38 +62,63 @@ func patchInterestErrorSignal(sse *datastar.ServerSentEventGenerator, errorMessa
 	return nil
 }
 
+// patchSelectedInterestState refreshes the client-side signals and warning that
+// describe the selected billettholder's interests and assignments. These values
+// cannot be restored by the event page's live HTML morph alone because the
+// selected billettholder lives in browser state.
+func patchSelectedInterestState(sse *datastar.ServerSentEventGenerator, state selectedInterestState, puljeID string) error {
+	signalJSON, err := json.Marshal(map[string]any{
+		"selectedInterestLevel":      state.InterestLevel,
+		"currentInterestLevelChoice": "Pending choice",
+		"isAssignedToEvent":          state.IsAssignedToEvent,
+		"ordinaryInterestsDisabled":  state.ordinaryInterestsDisabled(),
+		"registrationDisabled":       state.IsUnderageForEvent || len(state.GamemasterAssignments) > 0,
+		"deregistrationDisabled":     len(state.GamemasterAssignments) > 0,
+	})
+	if err != nil {
+		return fmt.Errorf("marshal selected interest signals: %w", err)
+	}
+	if err := sse.PatchSignals(signalJSON); err != nil {
+		return fmt.Errorf("patch selected interest signals: %w", err)
+	}
+	if err := sse.PatchElementTempl(selectedInterestWarning(state, puljeID)); err != nil {
+		return fmt.Errorf("patch selected interest warning: %w", err)
+	}
+	return nil
+}
+
 func interestErrorMessageFromError(err error) string {
 	if err == nil {
 		return ""
 	}
 	if errors.Is(err, errInterestAdultsOnly) {
-		return "Arrangementet har 18-årsgrense. Denne billettheldaren kan ikkje melde interesse."
+		return "Arrangementet har 18-årsgrense. Denne billettinnehaveren kan ikke melde interesse."
 	}
 	if errors.Is(err, errInterestAssignedInPulje) {
-		return "Denne billettheldaren er allereie tildelt eit arrangement i pulja. Fjern påmeldinga før du endrar vanlege interesser."
+		return "Denne billettinnehaveren er allerede tildelt et arrangement i puljen. Fjern påmeldingen før du endrer vanlige interesser."
 	}
 	if errors.Is(err, errInterestGamemasterInPulje) {
-		return "Denne billettheldaren er spilleder i pulja og kan ikkje endre påmeldingar eller interesser."
+		return "Denne billettinnehaveren er spilleder i puljen og kan ikke endre påmeldinger eller interesser."
 	}
 	if errors.Is(err, errInterestHighForOpenRegistration) {
-		return "Bruk «Meld deg på» for direkte påmelding, eller vel eit lågare interessenivå."
+		return "Bruk «Meld deg på» for direkte påmelding, eller velg et lavere interessenivå."
 	}
 	if strings.Contains(err.Error(), "does not have access") {
-		return "Du har ikkje tilgang til å endre interessa til denne billettheldaren. Kontakt styret."
+		return "Du har ikke tilgang til å endre interessen til denne billettinnehaveren. Kontakt styret."
 	}
 	if strings.Contains(err.Error(), "is not active and published for event") {
-		return "Denne pulja er ikkje tilgjengeleg for dette arrangementet."
+		return "Denne puljen er ikke tilgjengelig for dette arrangementet."
 	}
 	if strings.Contains(err.Error(), "is locked for event") {
-		return "Pulja er låst. Du kan ikkje melde eller endre interesse lenger medan vi fordeler spelarar."
+		return "Puljen er låst. Du kan ikke melde eller endre interesse lenger mens vi fordeler spillere."
 	}
 	if strings.Contains(err.Error(), "is completed for event") {
-		return "Puljefordelinga er klar. Gå til profilen din for å sjå kva du fekk."
+		return "Puljefordelingen er klar. Gå til profilen din for å se hva du fikk."
 	}
 	if strings.Contains(err.Error(), "program is not published") {
 		return "Interessevalget er ikke åpnet ennå."
 	}
-	return "Det oppstod ein feil då interessa skulle lagrast. Prøv igjen, eller kontakt styret dersom feilen held fram."
+	return "Det oppstod en feil da interessen skulle lagres. Prøv igjen, eller kontakt styret dersom feilen fortsetter."
 }
 
 func isExpectedInterestError(err error) bool {
@@ -170,25 +195,8 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 					}
 
 					sse := datastar.NewSSE(w, r)
-					signalJSON, err := json.Marshal(map[string]any{
-						"selectedInterestLevel":      state.InterestLevel,
-						"currentInterestLevelChoice": "Pending choice",
-						"isAssignedToEvent":          state.IsAssignedToEvent,
-						"ordinaryInterestsDisabled":  state.ordinaryInterestsDisabled(),
-						"registrationDisabled":       state.IsUnderageForEvent || len(state.GamemasterAssignments) > 0,
-						"deregistrationDisabled":     len(state.GamemasterAssignments) > 0,
-					})
-					if err != nil {
-						logger.Error("Failed to marshal selected interest signals", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-						http.Error(w, "Failed to prepare selected interest", http.StatusInternalServerError)
-						return
-					}
-					if err := sse.PatchSignals(signalJSON); err != nil {
-						logger.Error("Failed to patch selected interest signal", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "selected_interest_level", state.InterestLevel)
-						return
-					}
-					if err := sse.PatchElementTempl(selectedInterestWarning(state, signals.PuljeId)); err != nil {
-						logger.Error("Failed to patch selected interest warning", "error", err, "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
+					if err := patchSelectedInterestState(sse, state, signals.PuljeId); err != nil {
+						logger.Error(err.Error(), "event_id", eventId, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId, "selected_interest_level", state.InterestLevel)
 					}
 
 				})
@@ -222,14 +230,14 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 						}
 						if signals.BillettHolderId <= 0 {
 							logger.Info("Rejected interest update: missing billettholder id", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							if err := patchInterestErrorSignal(sse, "Vel billetthelder f\u00f8r du melder interesse."); err != nil {
+							if err := patchInterestErrorSignal(sse, "Velg billettinnehaver f\u00f8r du melder interesse."); err != nil {
 								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 							}
 							return
 						}
 						if signals.PuljeId == "" {
 							logger.Info("Rejected interest update: missing pulje id", "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
-							if err := patchInterestErrorSignal(sse, "Vel pulje f\u00f8r du melder interesse."); err != nil {
+							if err := patchInterestErrorSignal(sse, "Velg pulje f\u00f8r du melder interesse."); err != nil {
 								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "billettholder_id", signals.BillettHolderId)
 							}
 							return

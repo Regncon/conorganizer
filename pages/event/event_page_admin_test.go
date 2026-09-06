@@ -55,9 +55,9 @@ func TestInterestErrorMessageFromError_ReturnsFriendlyMessages(t *testing.T) {
 
 	// Given
 	expectedMessages := []string{
-		"Denne pulja er ikkje tilgjengeleg for dette arrangementet.",
-		"Pulja er låst. Du kan ikkje melde eller endre interesse lenger medan vi fordeler spelarar.",
-		"Puljefordelinga er klar. Gå til profilen din for å sjå kva du fekk.",
+		"Denne puljen er ikke tilgjengelig for dette arrangementet.",
+		"Puljen er låst. Du kan ikke melde eller endre interesse lenger mens vi fordeler spillere.",
+		"Puljefordelingen er klar. Gå til profilen din for å se hva du fikk.",
 		"Interessevalget er ikke åpnet ennå.",
 	}
 	errors := []error{

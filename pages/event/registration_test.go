@@ -306,11 +306,11 @@ func TestRegistrationRoute_WhenRequestIsEligible_RegistersBillettholder(t *testi
 	bdd.Behavior(t, bdd.BDD{
 		Given: "Gitt en innlogget bruker med en kvalifisert billetthelder.",
 		When:  "Når registreringsendepunktet mottar ønske om påmelding.",
-		Then:  "Så skal billetthelderen registreres og endepunktet svare uten innhold.",
+		Then:  "Så skal billetthelderen registreres og interessevelgeren oppdateres til avmelding.",
 	})
 
 	// Given
-	expectedStatusCode := http.StatusNoContent
+	expectedStatusCode := http.StatusOK
 	expectedSeatCount := 1
 	db, logger := testutil.CreateTestDBAndLogger(t, "registration_route")
 	seedEventInterestLookups(t, db)
@@ -337,6 +337,61 @@ func TestRegistrationRoute_WhenRequestIsEligible_RegistersBillettholder(t *testi
 	}
 	if actualSeatCount != expectedSeatCount {
 		t.Fatalf("seat count mismatch\nexpected: %d\nactual:   %d", expectedSeatCount, actualSeatCount)
+	}
+	responseBody := recorder.Body.String()
+	if !strings.Contains(responseBody, "datastar-patch-signals") {
+		t.Fatalf("expected a Datastar signal patch, got: %s", responseBody)
+	}
+	if !strings.Contains(responseBody, `"isAssignedToEvent":true`) {
+		t.Fatalf("expected registration response to show Meld deg av, got: %s", responseBody)
+	}
+	if !strings.Contains(responseBody, "interest-participation-warning") {
+		t.Fatalf("expected registration response to refresh the assignment warning, got: %s", responseBody)
+	}
+}
+
+func TestRegistrationRoute_WhenDeregistering_RefreshesPickerToRegistration(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt en innlogget bruker som er påmeldt et arrangement.",
+		When:  "Når registreringsendepunktet mottar ønske om avmelding.",
+		Then:  "Så skal påmeldingen fjernes og interessevelgeren oppdateres til påmelding.",
+	})
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "deregistration_route_live_state")
+	seedEventInterestLookups(t, db)
+	fixture := seedRegistrationTestFixture(t, db)
+	if err := setRegistration(context.Background(), db, registrationChange{
+		UserExternalID:  fixture.userExternalID,
+		BillettholderID: fixture.billettholderID,
+		EventID:         fixture.eventID,
+		PuljeID:         fixture.puljeID,
+		IsRegistered:    true,
+	}); err != nil {
+		t.Fatalf("seed registration: %v", err)
+	}
+
+	router := chi.NewRouter()
+	router.Route("/event/api/{idx}/registration", func(registrationRouter chi.Router) {
+		setupRegistrationRoute(registrationRouter, db, &live.Manager{}, logger)
+	})
+	request := httptest.NewRequest(
+		http.MethodPut,
+		"/event/api/"+fixture.eventID+"/registration",
+		strings.NewReader(`{"billettHolderId":901,"puljeId":"FredagKveld","isRegistered":false}`),
+	)
+	request = request.WithContext(authctx.WithUserToken(request.Context(), fixture.userExternalID, "registration-user@example.com"))
+	recorder := httptest.NewRecorder()
+
+	router.ServeHTTP(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d (%s)", recorder.Code, recorder.Body.String())
+	}
+	if actual := registrationSeatCount(t, db, fixture.eventID, fixture.puljeID, fixture.billettholderID); actual != 0 {
+		t.Fatalf("expected registration to be removed, found %d seats", actual)
+	}
+	if !strings.Contains(recorder.Body.String(), `"isAssignedToEvent":false`) {
+		t.Fatalf("expected deregistration response to show Meld deg på, got: %s", recorder.Body.String())
 	}
 }
 

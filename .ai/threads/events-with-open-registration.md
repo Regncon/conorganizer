@@ -1208,3 +1208,31 @@ That command deliberately excludes `.ai/threads/events-with-open-registration.md
 Time: 2026-09-05 19:05:11
 --- Next Prompt ---
 
+Ok, let's do some cleanup and refactoring. 
+First changed the text in the interest picker to from nynorsk to bokmål.
+
+There is an issue with live updates. It looks like the nats broadcast is working, but the `Meld deg på` / `Meld deg av` button is not updating when they are clicked. Investigate the issue and fix it.
+
+Time: 2026-09-06 10:58:56
+--- Codex Run ---
+
+Codex output:
+I’ll update the picker copy to Bokmål, then trace the registration request through its database write, broadcast buckets, and the SSE-rendered component. I’ll reproduce the stale button state with tests before changing the live-update wiring.
+The failure is in the client-state boundary, not NATS: the live stream re-renders the picker’s HTML, but button visibility is controlled by the existing Datastar signal `$isAssignedToEvent`. The registration endpoint changes the database and broadcasts, yet never patches that signal, so the morph correctly leaves the old client value alone. I’m making the successful registration response refresh the complete selected-ticket state (buttons, disabled interests, and warning links) from the database.
+I’m also applying the repository’s structured-logging conventions to the new post-registration refresh path, since it introduces a new failure log in an HTTP handler. After that I’ll run the full suite and inspect the final diff for accidental scope creep.
+The regression tests now cover both directions: registration patches `isAssignedToEvent=true` (showing “Meld deg av”), and deregistration patches it back to `false` (showing “Meld deg på”). The full Go suite passes. I’m checking the final copy changes and generated templates once more before handing it back.
+Implemented both cleanup items.
+
+- Converted interest-picker text and related validation messages from Nynorsk to Bokmål, including “Ikke interessert” in [interests-model.go](/home/cinmay/Documents/conorganizer/models/interests-model.go:16).
+- Fixed the stale registration button. The registration endpoint now returns an authoritative Datastar state patch after the database change, updating `$isAssignedToEvent`, disabled states, and assignment warnings. See [registration.go](/home/cinmay/Documents/conorganizer/pages/event/registration.go:246).
+- Centralized selected-interest state patching in [event.go](/home/cinmay/Documents/conorganizer/pages/event/event.go:65).
+
+Root cause: the NATS update re-rendered the HTML, but “Meld deg på/av” depends on a browser-side signal that the live morph intentionally preserved. The endpoint previously returned `204` without updating that signal.
+
+Added automated coverage for both registration and deregistration in [registration_test.go](/home/cinmay/Documents/conorganizer/pages/event/registration_test.go:305).
+
+Validation: full `go test ./...` passes, and `.ai/threads/events-with-open-registration.md` remains untouched.
+
+Time: 2026-09-06 10:58:56
+--- Next Prompt ---
+

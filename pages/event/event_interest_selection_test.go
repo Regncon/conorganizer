@@ -81,7 +81,7 @@ func TestSelectedInterestWarning_WhenPlayerHasMultipleAssignments_ListsLinkedEve
 		"/event/blood-clocktower?pulje=FredagKveld",
 		"/event/cosplay?pulje=FredagKveld",
 	}
-	expectedText := []string{"Blood in the Clocktower", "Cosplay Competition", "Vanlege interesser kan ikkje endrast"}
+	expectedText := []string{"Blood in the Clocktower", "Cosplay Competition", "Vanlige interesser kan ikke endres"}
 	state := selectedInterestState{
 		interestParticipationState: interestParticipationState{
 			PlayerAssignments: []interestAssignmentLink{

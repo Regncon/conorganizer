@@ -20,7 +20,7 @@ func TestTicketHolderInterestPicker_WhenEventHasOpenRegistration_ReplacesHighInt
 	expectedHighInterestButtons := 0
 	expectedDeregistrationButtons := 1
 	expectedEndpoint := "/event/api/open-event/registration"
-	expectedWarningText := "ikkje vurdert for andre arrangement"
+	expectedWarningText := "ikke vurdert for andre arrangement"
 
 	// When
 	doc := templtest.Render(t, TicketHolderInterestPicker("open-event", true))
@@ -53,6 +53,9 @@ func TestTicketHolderInterestPicker_WhenEventHasOpenRegistration_ReplacesHighInt
 	}
 	if actualWarningVisibility != "!$isAssignedToEvent" {
 		t.Fatalf("registration warning visibility mismatch: %q", actualWarningVisibility)
+	}
+	if !strings.Contains(strings.Join(templtest.CollectTexts(doc, ".interest-buttons"), " "), "Ikke interessert") {
+		t.Fatal("expected the no-interest option to use Bokmål")
 	}
 }
 

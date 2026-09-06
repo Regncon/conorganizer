@@ -209,14 +209,14 @@ func setupRegistrationRoute(router chi.Router, db *sql.DB, liveManager *live.Man
 		}
 		store := &signals{}
 		if err := datastar.ReadSignals(r, store); err != nil {
-			http.Error(w, "Klarte ikkje å lese skjemadata", http.StatusBadRequest)
+			http.Error(w, "Klarte ikke å lese skjemadata", http.StatusBadRequest)
 			return
 		}
 
 		eventID := chi.URLParam(r, "idx")
 		puljeID, validPulje := models.ParsePulje(store.PuljeID)
 		if eventID == "" || store.BillettholderID <= 0 || !validPulje {
-			http.Error(w, "Arrangement, pulje eller billettheldar manglar", http.StatusBadRequest)
+			http.Error(w, "Arrangement, pulje eller billettinnehaver mangler", http.StatusBadRequest)
 			return
 		}
 
@@ -243,6 +243,26 @@ func setupRegistrationRoute(router chi.Router, db *sql.DB, liveManager *live.Man
 			return
 		}
 
+		state, err := getSelectedInterestState(eventID, store.BillettholderID, string(puljeID), db)
+		if err != nil {
+			logger.Error(err.Error(),
+				"event_id", eventID,
+				"pulje_id", puljeID,
+				"billettholder_id", store.BillettholderID,
+				"request_id", middleware.GetReqID(r.Context()),
+			)
+		} else {
+			sse := datastar.NewSSE(w, r)
+			if err := patchSelectedInterestState(sse, state, string(puljeID)); err != nil {
+				logger.Error(err.Error(),
+					"event_id", eventID,
+					"pulje_id", puljeID,
+					"billettholder_id", store.BillettholderID,
+					"request_id", middleware.GetReqID(r.Context()),
+				)
+			}
+		}
+
 		if err := liveManager.Broadcast(r.Context(), live.BucketEvents, live.BucketInterests); err != nil {
 			logger.Error(fmt.Errorf("broadcast registration change: %w", err).Error(),
 				"event_id", eventID,
@@ -251,28 +271,26 @@ func setupRegistrationRoute(router chi.Router, db *sql.DB, liveManager *live.Man
 				"request_id", middleware.GetReqID(r.Context()),
 			)
 		}
-
-		w.WriteHeader(http.StatusNoContent)
 	})
 }
 
 func registrationErrorResponse(err error) (statusCode int, message string, expected bool) {
 	switch {
 	case errors.Is(err, errRegistrationAccessDenied):
-		return http.StatusForbidden, "Du har ikkje tilgang til denne billettheldaren.", true
+		return http.StatusForbidden, "Du har ikke tilgang til denne billettinnehaveren.", true
 	case errors.Is(err, errRegistrationAdultsOnly):
 		return http.StatusForbidden, "Arrangementet har 18-årsgrense.", true
 	case errors.Is(err, errRegistrationGamemaster):
-		return http.StatusConflict, "Du er spilleder i denne pulja og kan ikkje endre påmelding.", true
+		return http.StatusConflict, "Du er spilleder i denne puljen og kan ikke endre påmelding.", true
 	case errors.Is(err, errRegistrationProgramNotPublished):
-		return http.StatusConflict, "Programmet er ikkje publisert enno.", true
+		return http.StatusConflict, "Programmet er ikke publisert ennå.", true
 	case errors.Is(err, errRegistrationEventUnavailable):
-		return http.StatusConflict, "Arrangementet er ikkje tilgjengeleg i denne pulja.", true
+		return http.StatusConflict, "Arrangementet er ikke tilgjengelig i denne puljen.", true
 	case errors.Is(err, errRegistrationPuljeNotOpen):
-		return http.StatusConflict, "Pulja er ikkje open for endringar.", true
+		return http.StatusConflict, "Puljen er ikke åpen for endringer.", true
 	case errors.Is(err, errRegistrationEventNotOpen):
-		return http.StatusConflict, "Arrangementet er ikkje ope for påmelding.", true
+		return http.StatusConflict, "Arrangementet er ikke åpent for påmelding.", true
 	default:
-		return http.StatusInternalServerError, "Klarte ikkje å endre påmeldinga.", false
+		return http.StatusInternalServerError, "Klarte ikke å endre påmeldingen.", false
 	}
 }
