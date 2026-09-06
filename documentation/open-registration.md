@@ -10,7 +10,8 @@ Open registration lets a billettholder take a confirmed player place in a specif
 - As a billettholder, I can register for the same event in several puljer independently.
 - As a billettholder, I can opt out of my own registration or a manual player assignment while the program is published and the pulje is open.
 - As a billettholder with a confirmed assignment, I can see which linked events prevent me from changing ordinary interests in that pulje.
-- As an admin, I can mark an event as open registration and manually assign or remove a GM, player, or first-choice player from Puljefordeling.
+- As an admin, I can mark an event as open registration so that billettholdere can register directly for it in an open pulje.
+- As an admin, I can manually assign or remove a GM, player, or first-choice player from Puljefordeling so that billettholdere can be confirmed for an event in an open pulje.
 - As an attendee, I can see confirmed registrations, manual assignments, and GM assignments on my profile without waiting for Puljefordeling to be completed.
 
 ## Rules
