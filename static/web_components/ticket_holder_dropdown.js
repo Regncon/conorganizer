@@ -254,7 +254,7 @@ if (!customElements.get("billettholder-dropdown")) {
             const buttonEle = document.createElement("button")
             buttonEle.className = "select-button input no-marking"
             buttonEle.setAttribute("role", "combobox")
-            buttonEle.setAttribute("aria-label", "select button")
+            buttonEle.setAttribute("aria-label", "Velg deltaker")
             buttonEle.setAttribute("aria-haspopup", "listbox")
             buttonEle.setAttribute("aria-expanded", "false")
             buttonEle.type = "button"

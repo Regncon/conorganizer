@@ -20,7 +20,7 @@ func TestTicketHolderInterestPicker_WhenEventHasOpenRegistration_ReplacesHighInt
 	expectedHighInterestButtons := 0
 	expectedDeregistrationButtons := 1
 	expectedEndpoint := "/event/api/open-event/registration"
-	expectedWarningText := "ikke vurdert for andre arrangement"
+	expectedWarningText := "Du blir da ikke vurdert for andre arrangement"
 
 	// When
 	doc := templtest.Render(t, TicketHolderInterestPicker("open-event", true))

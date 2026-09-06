@@ -216,7 +216,7 @@ func setupRegistrationRoute(router chi.Router, db *sql.DB, liveManager *live.Man
 		eventID := chi.URLParam(r, "idx")
 		puljeID, validPulje := models.ParsePulje(store.PuljeID)
 		if eventID == "" || store.BillettholderID <= 0 || !validPulje {
-			http.Error(w, "Arrangement, pulje eller billettinnehaver mangler", http.StatusBadRequest)
+			http.Error(w, "Arrangement, pulje eller deltaker mangler", http.StatusBadRequest)
 			return
 		}
 
@@ -277,7 +277,7 @@ func setupRegistrationRoute(router chi.Router, db *sql.DB, liveManager *live.Man
 func registrationErrorResponse(err error) (statusCode int, message string, expected bool) {
 	switch {
 	case errors.Is(err, errRegistrationAccessDenied):
-		return http.StatusForbidden, "Du har ikke tilgang til denne billettinnehaveren.", true
+		return http.StatusForbidden, "Du har ikke tilgang til å endre påmeldingen for denne deltakeren.", true
 	case errors.Is(err, errRegistrationAdultsOnly):
 		return http.StatusForbidden, "Arrangementet har 18-årsgrense.", true
 	case errors.Is(err, errRegistrationGamemaster):

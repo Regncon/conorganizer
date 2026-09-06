@@ -27,15 +27,15 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 		}
 	</style>
 	{{
-	associatedTicketHolders, err := GetTicketHolders(userInfo, db)
-	yourBillettHolder := GetYourBillettHolderInfo(userInfo, associatedTicketHolders)
-	associatedTicketHoldersJSON, _ := templ.JSONString(associatedTicketHolders)
-	yourBillettHolderJSON, _ := templ.JSONString(yourBillettHolder)
+		associatedTicketHolders, err := GetTicketHolders(userInfo, db)
+		yourBillettHolder := GetYourBillettHolderInfo(userInfo, associatedTicketHolders)
+		associatedTicketHoldersJSON, _ := templ.JSONString(associatedTicketHolders)
+		yourBillettHolderJSON, _ := templ.JSONString(yourBillettHolder)
 	}}
 	if err != nil {
 		{{ logger.Error(err.Error(), "user_id", userInfo.Id) }}
 		<div class="ticket-holder-error">
-			<p>Feil ved henting av billettholdere: { err.Error() }</p>
+			<p>Kunne ikke hente deltakerne: { err.Error() }</p>
 		</div>
 		return
 	}
@@ -47,11 +47,11 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 	>
 		if err != nil {
 			<div class="ticket-holder-error">
-				<p>Feil ved henting av billettholdere: { err.Error() }</p>
+				<p>Kunne ikke hente deltakerne: { err.Error() }</p>
 			</div>
 		}
 		if (len(associatedTicketHolders) > 1 && len(associatedTicketHolders) < 4) {
-			<p class="label">Velg billettholder</p>
+			<p class="label">Hvem gjelder dette for?</p>
 			<div class="ticket-holder-picker-buttons">
 				for _, billettHolder := range associatedTicketHolders {
 					@TicketHolderButton(billettHolder, eventId)
@@ -59,7 +59,7 @@ templ TicketHolderPicker(userInfo requestctx.UserRequestInfo, eventId string, db
 			</div>
 		}
 		if (len(associatedTicketHolders) > 3) {
-			<p class="label">Velg billettholder</p>
+			<p class="label">Hvem gjelder dette for?</p>
 			<div class="ticket-holder-picker-dropdown">
 				@TicketHolderDropDown(eventId, userInfo, associatedTicketHolders)
 			</div>

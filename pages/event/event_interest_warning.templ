@@ -6,12 +6,12 @@ templ selectedInterestWarning(state selectedInterestState, puljeID string) {
 	<div id="interest-participation-warning">
 		if state.IsUnderageForEvent {
 			<section class="interest-participation-warning" role="status">
-				<p>Dette arrangementet har 18-årsgrense. Denne billettinnehaveren kan ikke melde interesse eller melde seg på.</p>
+				<p>Du kan ikke melde interesse eller melde deg på dette arrangementet fordi det har 18-årsgrense.</p>
 			</section>
 		}
 		if len(state.GamemasterAssignments) > 0 {
 			<section class="interest-participation-warning" role="status">
-				<p>Denne billettinnehaveren er spilleder i puljen og kan derfor ikke endre påmeldinger eller interesser.</p>
+				<p>Du er spilleder i denne puljen og kan derfor ikke endre påmeldinger eller interesser.</p>
 				<ul>
 					for _, assignment := range state.GamemasterAssignments {
 						<li>
@@ -22,7 +22,7 @@ templ selectedInterestWarning(state selectedInterestState, puljeID string) {
 			</section>
 		} else if len(state.PlayerAssignments) > 0 {
 			<section class="interest-participation-warning" role="status">
-				<p>Denne billettinnehaveren er allerede påmeldt eller tildelt et arrangement i puljen og blir ikke vurdert for andre arrangement gjennom den ordinære fordelingen. Vanlige interesser kan ikke endres før påmeldingen er fjernet.</p>
+				<p>Du er allerede påmeldt eller tildelt et arrangement i puljen og blir ikke vurdert for andre arrangement gjennom den ordinære fordelingen. Du kan ikke endre vanlige interesser før du melder deg av arrangementet.</p>
 				<ul>
 					for _, assignment := range state.PlayerAssignments {
 						<li>

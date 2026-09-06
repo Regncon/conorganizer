@@ -1235,4 +1235,24 @@ Validation: full `go test ./...` passes, and `.ai/threads/events-with-open-regis
 
 Time: 2026-09-06 10:58:56
 --- Next Prompt ---
+Let's make the language a little less formal. Change billettinnehaveren to du or deg etc. The domain word billettholder is mostly used internally, and the regular users don't know what that means. I know this goes against the domain driven design model and we are improving it bit by bit.
+
+Time: 2026-09-06 11:12:00
+--- Codex Run ---
+
+Codex output:
+Agreed—the domain term can stay in code and database concepts, while the interface speaks directly to the person using it. I’ll rewrite the interest and registration messages in second person and update the copy assertions without changing the underlying model names.
+Updated the user-facing language to be direct and informal:
+
+- “Billettinnehaveren …” is now “Du …”
+- “Velg billettholder” is now “Hvem gjelder dette for?”
+- Error messages use “denne deltakeren” where second person would be ambiguous.
+- Dropdown accessibility text now says “Velg deltaker”.
+
+Internal domain names, database fields, signals, and log attributes still use `billettholder`.
+
+All tests pass with `go test ./...`, and the `.ai` file remains untouched.
+
+Time: 2026-09-06 11:12:00
+--- Next Prompt ---
 

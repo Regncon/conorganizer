@@ -92,19 +92,19 @@ func interestErrorMessageFromError(err error) string {
 		return ""
 	}
 	if errors.Is(err, errInterestAdultsOnly) {
-		return "Arrangementet har 18-årsgrense. Denne billettinnehaveren kan ikke melde interesse."
+		return "Du kan ikke melde interesse for dette arrangementet fordi det har 18-årsgrense."
 	}
 	if errors.Is(err, errInterestAssignedInPulje) {
-		return "Denne billettinnehaveren er allerede tildelt et arrangement i puljen. Fjern påmeldingen før du endrer vanlige interesser."
+		return "Du er allerede tildelt et arrangement i puljen. Meld deg av før du endrer vanlige interesser."
 	}
 	if errors.Is(err, errInterestGamemasterInPulje) {
-		return "Denne billettinnehaveren er spilleder i puljen og kan ikke endre påmeldinger eller interesser."
+		return "Du er spilleder i denne puljen og kan ikke endre påmeldinger eller interesser."
 	}
 	if errors.Is(err, errInterestHighForOpenRegistration) {
 		return "Bruk «Meld deg på» for direkte påmelding, eller velg et lavere interessenivå."
 	}
 	if strings.Contains(err.Error(), "does not have access") {
-		return "Du har ikke tilgang til å endre interessen til denne billettinnehaveren. Kontakt styret."
+		return "Du har ikke tilgang til å endre interessene til denne deltakeren. Kontakt styret."
 	}
 	if strings.Contains(err.Error(), "is not active and published for event") {
 		return "Denne puljen er ikke tilgjengelig for dette arrangementet."
@@ -230,7 +230,7 @@ func SetupEventRoute(router chi.Router, ns *embeddednats.Server, liveManager *li
 						}
 						if signals.BillettHolderId <= 0 {
 							logger.Info("Rejected interest update: missing billettholder id", "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
-							if err := patchInterestErrorSignal(sse, "Velg billettinnehaver f\u00f8r du melder interesse."); err != nil {
+							if err := patchInterestErrorSignal(sse, "Velg hvem du vil melde interesse for."); err != nil {
 								logger.Error(err.Error(), "event_id", eventId, "user_id", userInfo.Id, "pulje_id", signals.PuljeId, "billettholder_id", signals.BillettHolderId)
 							}
 							return
