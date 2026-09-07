@@ -418,9 +418,24 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                     place-content: center;
                     height: 208px;
                     position: relative;
+                    text-align: center;
+                    outline: 2px dashed transparent;
+                    outline-offset: -8px;
+                    transition: background-color 0.2s, outline-color 0.2s, box-shadow 0.2s;
 
-                    &.is-drag-over {
-                        background-color: var(--bg-item-hover)
+                    &:is(.is-drag-over) {
+                        background-color: color-mix(in srgb, var(--color-primary) 12%, var(--bg-item));
+                        outline-color: var(--color-primary);
+                        box-shadow: inset 0 0 32px color-mix(in srgb, var(--color-primary) 10%, transparent);
+
+                        .image-upload-icon-wrapper {
+                            translate: 0 -4px;
+                            scale: 1.1;
+                        }
+                    }
+
+                    &:is([aria-busy="true"]) {
+                        cursor: progress;
                     }
 
                     p+p {
@@ -431,10 +446,17 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                     }
 
                     input[type="file"] {
-                        height: 100%;
-                        width: 100%;
+                        block-size: 100%;
+                        inline-size: 100%;
                         position: absolute;
+                        inset: 0;
+                        z-index: 1;
                         opacity: 0;
+                        cursor: pointer;
+
+                        &:disabled {
+                            pointer-events: none;
+                        }
                     }
 
                     .image-upload-icon-wrapper {
@@ -445,8 +467,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
                         display: grid;
                         place-content: center;
                         margin-block-end: var(--spacing-5x);
-                        rotate: 0deg;
-                        transition: rotate 5s ease-in-out
+                        transition: translate 0.2s, scale 0.2s;
                     }
 
                 }
@@ -547,7 +568,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 		<div
 			class="img-upload-form-content"
 			data-signals={ formsubmission.DataSignals(map[string]string{"sourceImageUrl": imageUrl}) }
-			data-on:cropper-image-loading="$_cropperImageLoading = true; $_cropperImageReady = false; $_cropperImageError = ''"
+			data-on:cropper-image-loading="$_cropperImageLoading = true; $_cropperImageReady = false; $_cropperImageError = ''; $_add_drag_over = false"
 			data-on:cropper-image-ready="$_cropperImageUrl = evt.detail.imageUrl; $_cropperImageLoading = false; $_cropperImageReady = true; $_cropperImageError = ''"
 			data-on:cropper-image-error="$_cropperImageLoading = false; $_cropperImageReady = false; $_cropperImageError = evt.detail.message"
 			data-init="$sourceImageUrl && initPopulateFileInfo(el, $sourceImageUrl)"
@@ -574,13 +595,17 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 				<h4>Last opp bilete</h4>
 				<form
 					enctype="multipart/form-data"
-					data-on:submit={ fmt.Sprintf("uploadImageWithProgress(evt, '/profile/api/new/%s/upload')", eventId) }
+					data-on:submit__prevent={ fmt.Sprintf("if (!$_uploading && !$_cropperImageLoading) uploadImageWithProgress(evt, '/profile/api/new/%s/upload')", eventId) }
 					data-on:image-upload-started="$_uploading = true; $_uploadProgress = 0; $_uploadError = ''; $_add_drag_over = false"
 					data-on:image-upload-progress="$_uploadProgress = evt.detail.progress"
 					data-on:image-upload-success="$_uploadProgress = 100; $_uploading = false; $_uploadError = ''; $sourceImageUrl = evt.detail.sourceImageUrl"
 					data-on:image-upload-error="$_uploading = false; $_uploadError = evt.detail.message"
 					class="item-card image-upload-card"
 					data-class:is-drag-over="$_add_drag_over"
+					data-attr:aria-busy="($_uploading || $_cropperImageLoading).toString()"
+					data-on:dragover__prevent="$_add_drag_over = !$_uploading && !$_cropperImageLoading && evt.dataTransfer.types.includes('Files'); evt.dataTransfer.dropEffect = $_add_drag_over ? 'copy' : 'none'"
+					data-on:dragleave="if (!el.contains(evt.relatedTarget)) $_add_drag_over = false"
+					data-on:drop__prevent="$_add_drag_over = false; if (!$_uploading && !$_cropperImageLoading && evt.dataTransfer.files.length) { el.elements.namedItem('image').files = evt.dataTransfer.files; el.requestSubmit() }"
 				>
 					<p
 						data-show="$_cropperImageLoading"
@@ -588,16 +613,14 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 						style="display: none;"
 					></p>
 					<input
-						data-on:drop__prevent="$_add_drag_over = false; el.files = evt.dataTransfer.files; el.closest('form').requestSubmit()"
-						data-on:dragleave="$_add_drag_over = false"
-						data-on:dragover__prevent="$_add_drag_over = true"
 						data-on:change="el.closest('form').requestSubmit()"
-						data-attr:disabled="$_uploading"
+						data-attr:disabled="$_uploading || $_cropperImageLoading"
 						data-show="!$_cropperImageLoading"
 						style="display: none;"
 						type="file"
 						name="image"
 						accept="image/*"
+						aria-label="Last opp bilde"
 						required
 					/>
 					<div
@@ -607,7 +630,7 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					>
 						@icons.Icon(icons.FileUpload, icons.Size20)
 					</div>
-					<p data-show="!$_uploading && !$_cropperImageLoading" style="display: none;">
+					<p data-show="!$_uploading && !$_cropperImageLoading" data-text="$_add_drag_over ? 'Slipp bildet her' : 'Klikk her eller dra et bilde inn for å laste det opp.'" style="display: none;">
 						Klikk her eller dra et bilde inn for å laste det opp.
 					</p>
 					<p data-show="!$_uploading && !$_cropperImageLoading" style="display: none;">
