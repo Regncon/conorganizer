@@ -36,6 +36,10 @@ class BannerCropper extends HTMLElement {
         root.innerHTML = `
         <style>
             .banner-cropper-wrapper {
+                --left-side-padding: calc((var(--spacing-2x) * 2));
+                --right-side-padding: calc((var(--spacing-4x) * 2));
+                --both-sides: calc(var(--left-side-padding) + var(--right-side-padding));
+
                 display: flex;
                 flex-direction: column;
                 gap: var(--spacing-4x);
@@ -44,9 +48,10 @@ class BannerCropper extends HTMLElement {
                 .banner-cropper-header-label {
                     color: var(--color-text-soft);
                 }
+
                 .banner-cropper-image-slider {
                     display: grid;
-                    inline-size: var(--banner-cropper-preview-width);
+                    inline-size: min(calc(100cqi - var(--both-sides)), var(--banner-cropper-preview-width));
                 }
 
                 .banner-cropper-button-error-info {
@@ -179,6 +184,12 @@ class BannerCropper extends HTMLElement {
                     &:focus-visible::-moz-range-track {
                         box-shadow: 0 0 0 2px var(--range-focus-ring);
                     }
+                }
+            }
+
+            @container main (width > 600px) {
+                .banner-cropper-wrapper {
+                    --both-sides: calc(var(--spacing-10x) * 2)
                 }
             }
         </style>
