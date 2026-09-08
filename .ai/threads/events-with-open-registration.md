@@ -1429,4 +1429,42 @@ text
 Time: 2026-09-06 15:07:13
 --- Next Prompt ---
 
+The hover still does not work. I suspect it's because the entire row is clickable? Investigate and let's discuss the best way to fix it before implementing a solution.
+
+Time: 2026-09-06 15:15:44
+--- Codex Run ---
+
+Codex output:
+I’ll trace this from both sides: first inspect how the clickable interest row and tooltip initialization interact, then reproduce the hover in the running UI if the local app is available. I’m using the browser-control skill because this is an interaction bug that static markup alone may not explain. I won’t change code yet; I’ll come back with the cause and the smallest viable fixes.
+The clickable row itself is unlikely to be the blocker: the tooltip target is a real child `<span>` with pointer area, and Tippy attaches directly to it. The stronger lead is the native modal boundary—the tooltip is appended outside the `<dialog>`, so the browser can place it behind the modal’s top layer even though Tippy considers it visible. There isn’t a browser session connected for live reproduction, so I’m validating that theory against the dialog structure and Tippy’s documented mounting behavior.
+The clickable row is not the primary problem. Hover events still reach the icon `<span>` inside a button; clicking only closes the dialog afterward.
+
+The likely cause is the modal boundary:
+
+- Tippy currently uses its default mount point, `document.body`, because [the initializer](/home/cinmay/Documents/conorganizer/layouts/base.templ:49) does not specify `appendTo`.
+- The interest list is inside a native modal `<dialog>` opened with `showModal()`.
+- Modal dialogs enter the browser’s top layer, while elements outside the dialog and its descendants become inert. The generated tooltip is therefore behind/outside the modal even though Tippy has opened it. [MDN documents this top-layer behavior](https://developer.mozilla.org/en-US/docs/Web/API/HTMLDialogElement/showModal), and [Tippy supports selecting a different mount element with `appendTo`](https://atomiks.github.io/tippyjs/v6/all-props/#appendto).
+
+I couldn’t confirm it visually because no browser session is currently connected, but the DOM structure and library behavior make this the high-confidence explanation. The MutationObserver already initializes dynamically patched icons correctly.
+
+My recommended KISS fix is to make the shared tooltip initializer modal-aware:
+
+```js
+const dialog = element.closest("dialog");
+
+tippy(element, {
+    animation: "scale-subtle",
+    content,
+    appendTo: () => dialog || document.body,
+});
+```
+
+This keeps the entire row clickable and fixes all tooltips used inside native dialogs, not just these three icons. The only secondary risk is clipping because this dialog scrolls with `overflow: auto`; I suggest implementing the mount fix first and checking that before changing layout or placement.
+
+Alternatives are native `title` tooltips or restructuring the row so the icons sit outside the button, but both are worse fits: the former discards the existing tooltip UI, while the latter complicates the quick-click assignment workflow.
+
+I recommend proceeding with the modal-aware `appendTo` change and a focused regression test.
+
+Time: 2026-09-06 15:15:44
+--- Next Prompt ---
 
