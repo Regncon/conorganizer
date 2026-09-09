@@ -146,6 +146,8 @@
 
     function createBillettholderSelection() {
         const SELECTED_BILLETTHOLDER_STORAGE_KEY = "selectedBillettHolder"
+        const SELECTED_BILLETTHOLDER_COOKIE_NAME = "selectedBillettholderId"
+        const SELECTION_COOKIE_MAX_AGE = 365 * 24 * 60 * 60
         const SELECTION_CHANGE_EVENT = "billettholder-selection-change"
         const ACCENT_COLORS = Object.freeze([
             "var(--color-accent-blue)",
@@ -214,6 +216,23 @@
         }
 
         /**
+         * Mirror the selection ID for the menu's initial server render.
+         * Cookie access must never interrupt localStorage selection updates.
+         * @param {number | null} billettholderId
+         * @returns {void}
+         */
+        function writeSelectionCookie(billettholderId) {
+            const value = billettholderId === null ? "" : String(billettholderId)
+            const maxAge = billettholderId === null ? 0 : SELECTION_COOKIE_MAX_AGE
+            const secure = window.location.protocol === "https:" ? "; Secure" : ""
+            try {
+                document.cookie = `${SELECTED_BILLETTHOLDER_COOKIE_NAME}=${value}; Path=/; Max-Age=${maxAge}; SameSite=Lax${secure}`
+            } catch {
+                // localStorage remains the selection source when cookies are unavailable.
+            }
+        }
+
+        /**
          * Public: read the current selected billettholder from localStorage.
          * @returns {StoredBillettholder | null}
          */
@@ -237,7 +256,7 @@
         }
 
         /**
-         * Public: store a selected billettholder and notify subscribers.
+         * Public: store a selected billettholder, mirror its ID, and notify subscribers.
          * @param {unknown} billettholder
          * @returns {StoredBillettholder | null}
          */
@@ -252,15 +271,17 @@
             } catch {
                 return null
             }
+            writeSelectionCookie(selectedBillettholder.Id)
             dispatchSelectionChange(selectedBillettholder)
             return selectedBillettholder
         }
 
         /**
-         * Public: remove the selected billettholder and notify subscribers.
+         * Public: remove the selection and its menu cookie, then notify subscribers.
          * @returns {void}
          */
         function clear() {
+            writeSelectionCookie(null)
             try {
                 localStorage.removeItem(SELECTED_BILLETTHOLDER_STORAGE_KEY)
             } catch {

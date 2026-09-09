@@ -15,6 +15,7 @@ import (
 	"github.com/Regncon/conorganizer/service"
 	"github.com/Regncon/conorganizer/service/applog"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/joho/godotenv"
@@ -87,6 +88,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 			middleware.RequestID,
 			RequestLoggingMiddleware(baseLogger.With("component", "http")),
 			middleware.Recoverer,
+			requestctx.BillettholderSelectionMiddleware,
 		)
 
 		mountHealthRoutes(router, readiness, baseLogger)

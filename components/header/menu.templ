@@ -134,6 +134,7 @@ templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger)
 	@menuStyles()
 	@mainMenuButtonsStyles()
 	@menuBillettholderLiveStyles()
+	@menuBillettholderIdentityStyles()
 	@desktopBillettholderMenuStyles()
 	@clickableBillettholderMenuStyles()
 	@phoneMenuButtonStyles()
@@ -269,12 +270,23 @@ templ menuBillettholderSyncScript() {
 					element.style.border = selection.style.border(color)
 				})
 
+				menu.querySelectorAll("[data-billettholder-identity]").forEach((element) => {
+					element.removeAttribute("data-billettholder-pending")
+					element.setAttribute("aria-busy", "false")
+				})
+				menu.querySelectorAll(".menu-billettholder-value").forEach((element) => {
+					element.removeAttribute("aria-hidden")
+				})
+
 				menu.dispatchEvent(new CustomEvent("menu-billettholder-change", {
 					detail: { id: selectedId },
 				}))
 			}
 
 			selection.onChange(updateSelectedBillettholder)
+			menu.addEventListener("menu-billettholder-initialized", (event) => {
+				updateSelectedBillettholder(event.detail)
+			})
 		})()
 	</script>
 }
@@ -320,6 +332,16 @@ templ MenuBillettholderLive(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 			associatedBillettholdere = []ticketholder.BillettHolder{}
 		}
 		billettholderOptions := ticketholder.NewBillettholderOptions(userInfo, associatedBillettholdere)
+		initialOptions := billettholderOptions
+		pending := billettholderOptions.HasBillettholder()
+		cookieID := requestctx.SelectedBillettholderID(ctx)
+		for _, billettholder := range associatedBillettholdere {
+			if billettholder.Id == cookieID {
+				initialOptions.Default = billettholder
+				pending = false
+				break
+			}
+		}
 	}}
 	<div
 		id="main-menu-billettholder-live"
@@ -328,8 +350,8 @@ templ MenuBillettholderLive(userInfo requestctx.UserRequestInfo, db *sql.DB, log
 			data-effect={ menuBillettholderSelectionEffect(billettholderOptions) }
 		}
 	>
-		@desktopBillettholderMenu(userInfo, billettholderOptions)
-		@phoneMenu(userInfo, billettholderOptions)
+		@desktopBillettholderMenu(userInfo, initialOptions, pending)
+		@phoneMenu(userInfo, initialOptions, pending)
 		@billettholderSwitcherDialog(billettholderOptions.Associated)
 	</div>
 }
@@ -346,7 +368,15 @@ func menuBillettholderSelectionEffect(billettholderOptions ticketholder.Billetth
 	}
 
 	return fmt.Sprintf(
-		"window.conorganizer.billettholderSelection.initialize(%s, %s)",
+		`(() => {
+			const associated = %s;
+			const fallback = %s;
+			const selection = window.conorganizer.billettholderSelection;
+			const selected = selection.initialize(associated, fallback)
+				?? selection.findAssociated(associated, selection.get()?.Id)
+				?? selection.findAssociated(associated, fallback.Id);
+			el.dispatchEvent(new CustomEvent('menu-billettholder-initialized', {bubbles: true, detail: selected}));
+		})()`,
 		associatedBillettholdereJSON,
 		defaultBillettholderJSON,
 	), nil
@@ -472,8 +502,7 @@ templ desktopBillettholderMenuStyles() {
 	</style>
 }
 
-templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions) {
-	{{ initials := ticketholder.GetInitials(billettholderOptions.Default.Name) }}
+templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions, pending bool) {
 	<details
 		id="main-menu-user-details"
 		class="menu-btn-container"
@@ -483,7 +512,7 @@ templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, billettholde
 		<summary aria-label="Åpne brukermeny">
 			if billettholderOptions.HasBillettholder() {
 				<div class="hamburger-have-billettholder">
-					@clickableBillettholderMenu(billettholderOptions.Default)
+					@clickableBillettholderMenu(billettholderOptions.Default, pending)
 				</div>
 			}
 			if !billettholderOptions.HasBillettholder() {
@@ -500,9 +529,7 @@ templ desktopBillettholderMenu(userInfo requestctx.UserRequestInfo, billettholde
 						data-on:click="$_billettholderSwitcherOpen = true"
 					>
 						Bytt aktiv billettholder
-						<div class="name-initials-little js-current-billettholder-avatar" data-ignore-morph>
-							@ticketholder.Initials(initials, billettholderOptions.Default.Color)
-						</div>
+						@menuBillettholderAvatar(billettholderOptions.Default, pending, "name-initials-little")
 					</button>
 				}
 				<a href="/profile">Min Profil</a>
@@ -540,7 +567,10 @@ templ clickableBillettholderMenuStyles() {
 						gap: var(--spacing-3x);
 
 						.clickable-billettholder-menu-name {
-							max-width: 180px;
+							position: relative;
+							inline-size: 180px;
+							min-inline-size: 0;
+							min-block-size: 40px;
 
 							p {
 								margin: 0;
@@ -584,22 +614,38 @@ templ clickableBillettholderMenuStyles() {
 	</style>
 }
 
-templ clickableBillettholderMenu(currentBillettholder ticketholder.BillettHolder) {
-	{{ initials := ticketholder.GetInitials(currentBillettholder.Name) }}
-	<div class="clickable-billettholder-menu-wrapper" data-ignore-morph>
+templ clickableBillettholderMenu(currentBillettholder ticketholder.BillettHolder, pending bool) {
+	<div
+		class="clickable-billettholder-menu-wrapper"
+		data-ignore-morph
+		data-billettholder-identity
+		aria-busy={ fmt.Sprint(pending) }
+		if pending {
+			data-billettholder-pending
+		}
+	>
 		<div class="clickable-billettholder-menu-name">
-			<p class="js-current-billettholder-name">{ currentBillettholder.Name }</p>
-			<p class="js-current-billettholder-ticket-type">{ currentBillettholder.TicketType }</p>
+			<div
+				class="menu-billettholder-value"
+				if pending {
+					aria-hidden="true"
+				}
+			>
+				<p class="js-current-billettholder-name">{ currentBillettholder.Name }</p>
+				<p class="js-current-billettholder-ticket-type">{ currentBillettholder.TicketType }</p>
+			</div>
+			<div class="menu-billettholder-skeleton-text" aria-hidden="true">
+				<span class="menu-billettholder-skeleton menu-billettholder-skeleton-name"></span>
+				<span class="menu-billettholder-skeleton menu-billettholder-skeleton-ticket"></span>
+			</div>
 		</div>
-		<div class="js-current-billettholder-avatar">
-			@ticketholder.Initials(initials, currentBillettholder.Color)
-		</div>
+		@menuBillettholderAvatar(currentBillettholder, pending, "")
 	</div>
 }
 
-templ phoneMenu(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions) {
-	@phoneMenuDialog(userInfo, billettholderOptions)
-	@phoneMenuButton(billettholderOptions)
+templ phoneMenu(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions, pending bool) {
+	@phoneMenuDialog(userInfo, billettholderOptions, pending)
+	@phoneMenuButton(billettholderOptions, pending)
 }
 
 templ phoneMenuDialogLifecycleScript() {
@@ -635,8 +681,7 @@ templ phoneMenuButtonStyles() {
 	</style>
 }
 
-templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions) {
-	{{ initials := ticketholder.GetInitials(billettholderOptions.Default.Name) }}
+templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions, pending bool) {
 	<button
 		class="main-menu-button btn btn--ghost btn-with-icon hamburger-phone"
 		aria-haspopup="dialog"
@@ -644,9 +689,7 @@ templ phoneMenuButton(billettholderOptions ticketholder.BillettholderOptions) {
 		data-on:click="$_phoneMenuOpen = !$_phoneMenuOpen"
 	>
 		if billettholderOptions.HasBillettholder() {
-			<div class="btn js-current-billettholder-avatar" data-ignore-morph>
-				@ticketholder.Initials(initials, billettholderOptions.Default.Color)
-			</div>
+			@menuBillettholderAvatar(billettholderOptions.Default, pending, "btn")
 		} else {
 			@icons.Icon(icons.Menu, icons.Size20)
 		}
@@ -723,8 +766,7 @@ templ phoneMenuDialogStyles() {
 	</style>
 }
 
-templ phoneMenuDialog(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions) {
-	{{ initials := ticketholder.GetInitials(billettholderOptions.Default.Name) }}
+templ phoneMenuDialog(userInfo requestctx.UserRequestInfo, billettholderOptions ticketholder.BillettholderOptions, pending bool) {
 	<dialog
 		id="modal-hamburger-phone"
 		aria-label="Meny"
@@ -740,9 +782,7 @@ templ phoneMenuDialog(userInfo requestctx.UserRequestInfo, billettholderOptions 
 						data-on:click="$_phoneMenuOpen = false; $_billettholderSwitcherOpen = true"
 					>
 						Bytt aktiv billettholder
-						<div class="js-current-billettholder-avatar" data-ignore-morph>
-							@ticketholder.Initials(initials, billettholderOptions.Default.Color)
-						</div>
+						@menuBillettholderAvatar(billettholderOptions.Default, pending, "")
 					</button>
 				}
 				<a href="/profile">Min Profil</a>
