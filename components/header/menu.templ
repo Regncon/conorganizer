@@ -374,6 +374,11 @@ templ menuBillettholderSkeletonStyles() {
 			}
 
 			.billettholder-pending {
+				.clickable-billettholder-menu-name {
+					inline-size: 180px;
+					min-block-size: 40px;
+				}
+
 				.menu-billettholder-value {
 					visibility: hidden;
 				}
@@ -622,9 +627,8 @@ templ clickableBillettholderMenuStyles() {
 
 						.clickable-billettholder-menu-name {
 							position: relative;
-							inline-size: 180px;
+							max-inline-size: 180px;
 							min-inline-size: 0;
-							min-block-size: 40px;
 
 							p {
 								margin: 0;
