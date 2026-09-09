@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -32,30 +31,13 @@ func BillettholderSelectionMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func ClearBillettholderSelectionCookie(w http.ResponseWriter, r *http.Request) {
+func ClearBillettholderSelectionCookie(w http.ResponseWriter) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     SelectedBillettholderCookieName,
 		Value:    "",
 		Path:     "/",
 		Expires:  time.Unix(0, 0),
 		MaxAge:   -1,
-		Secure:   requestIsSecure(r),
 		SameSite: http.SameSiteLaxMode,
 	})
-}
-
-// Match authctx's handling of TLS termination at the application's proxy.
-func requestIsSecure(r *http.Request) bool {
-	if r == nil {
-		return false
-	}
-	if r.TLS != nil {
-		return true
-	}
-	for proto := range strings.SplitSeq(r.Header.Get("X-Forwarded-Proto"), ",") {
-		if strings.EqualFold(strings.TrimSpace(proto), "https") {
-			return true
-		}
-	}
-	return strings.Contains(strings.ToLower(r.Header.Get("Forwarded")), "proto=https")
 }

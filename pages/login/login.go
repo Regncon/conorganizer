@@ -179,7 +179,7 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 
 		authRouter.Get("/logout", func(w http.ResponseWriter, r *http.Request) {
 			authctx.ClearAuthCookies(w, r)
-			requestctx.ClearBillettholderSelectionCookie(w, r)
+			requestctx.ClearBillettholderSelectionCookie(w)
 
 			redirectUrl := "/"
 			var ctx = r.Context()
