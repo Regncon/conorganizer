@@ -122,7 +122,7 @@ func startServer(ctx context.Context, logger *slog.Logger, port string, eventIma
 				mountDegradedRoutes(router)
 			} else {
 				router.NotFound(authctx.AuthMiddleware(baseLogger)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-					notfound.Render(w, r, baseLogger, "")
+					notfound.Render(w, r, db, baseLogger, "")
 				})).ServeHTTP)
 				if cleanup != nil {
 					defer func() {

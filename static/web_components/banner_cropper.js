@@ -1,4 +1,16 @@
-const STYLE_URLS = window.conorganizerSharedStyles.getStyleUrls();
+/** @typedef {Window & typeof globalThis & {
+ *   conorganizer: {
+ *     sharedStyles: {
+ *       getStyleUrls: (names?: string[]) => string[],
+ *       applyStyleUrlsToShadowRoot: (shadowRoot: ShadowRoot, styleUrls: string[]) => void,
+ *     },
+ *   },
+ * }} BannerCropperWindow
+ */
+
+/** @type {BannerCropperWindow} */
+const typedWindow = window
+const STYLE_URLS = typedWindow.conorganizer.sharedStyles.getStyleUrls();
 const UPLOAD_ERROR_MESSAGE = 'Klarte ikkje å lagre endringa. Prøv igjen. Kontakt styret dersom problemet held fram.';
 // ---- component --------------------------------------------------------------
 class BannerCropper extends HTMLElement {
@@ -29,7 +41,7 @@ class BannerCropper extends HTMLElement {
         // Shadow DOM
         const root = this.attachShadow({ mode: "open" });
 
-        window.conorganizerSharedStyles.applyStyleUrlsToShadowRoot(root, STYLE_URLS);
+        typedWindow.conorganizer.sharedStyles.applyStyleUrlsToShadowRoot(root, STYLE_URLS);
 
         root.innerHTML = `
             <div style="display:flex; flex-direction: column; gap:1rem; background: var(--color-bg-secondary);">

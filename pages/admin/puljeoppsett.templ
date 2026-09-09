@@ -189,7 +189,7 @@ func puljeoppsettRoute(router chi.Router, db *sql.DB, liveManager *live.Manager,
 
 	router.Get("/puljeoppsett/", func(w http.ResponseWriter, r *http.Request) {
 		userInfo := userctx.GetUserRequestInfo(r.Context())
-		if err := layouts.Base("Puljeoppsett", userInfo, scheduleBoardIndex(db, logger, eventImageDir)).
+		if err := layouts.Base("Puljeoppsett", userInfo, db, logger, scheduleBoardIndex(db, logger, eventImageDir)).
 			Render(r.Context(), w); err != nil {
 			logger.Error(fmt.Errorf("render puljeoppsett page: %w", err).Error())
 		}

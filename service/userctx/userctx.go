@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func UserMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
+func UserMiddleware(logger *slog.Logger, db *sql.DB) func(http.Handler) http.Handler {
 	logger = logger.With("component", "user")
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -29,7 +29,7 @@ func UserMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 			if !userInfo.IsLoggedIn {
 				logger.Debug("User is not logged in", "request_id", requestID, "path", r.URL.Path)
 				w.WriteHeader(http.StatusUnauthorized)
-				if err := layouts.Base("Logg inn", requestctx.UserRequestInfo{}, Unauthenticated()).Render(r.Context(), w); err != nil {
+				if err := layouts.Base("Logg inn", requestctx.UserRequestInfo{}, db, logger, Unauthenticated()).Render(r.Context(), w); err != nil {
 					logger.Error(fmt.Errorf("failed to render unauthenticated page: %w", err).Error(), "request_id", requestID)
 				}
 				return
@@ -39,14 +39,14 @@ func UserMiddleware(logger *slog.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-func AdminForbiddenHandler(logger *slog.Logger) http.HandlerFunc {
+func AdminForbiddenHandler(db *sql.DB, logger *slog.Logger) http.HandlerFunc {
 	logger = logger.With("component", "user")
 	return func(w http.ResponseWriter, r *http.Request) {
 		requestID := middleware.GetReqID(r.Context())
 		userInfo := GetUserRequestInfo(r.Context())
 
 		w.WriteHeader(http.StatusForbidden)
-		if err := layouts.Base("Ingen tilgang", userInfo, authctx.Forbidden()).Render(r.Context(), w); err != nil {
+		if err := layouts.Base("Ingen tilgang", userInfo, db, logger, authctx.Forbidden()).Render(r.Context(), w); err != nil {
 			logger.Error(fmt.Errorf("failed to render forbidden page: %w", err).Error(), "request_id", requestID)
 		}
 	}

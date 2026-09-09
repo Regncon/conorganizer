@@ -161,17 +161,9 @@ templ EventInterests(userInfo requestctx.UserRequestInfo,
 		</div>
 	</dialog>
 	<script>
-		let LSKey = {
-			SelectedBilletHolder: "selectedBillettHolder",
-		};
-        window.LSKey = LSKey;
-
-        const dialogElement = document.querySelector(`.interest-dialog`);
-
-		dialogElement.addEventListener("click", (ev) => {
-                const restoreScroll = ev.stopPropagation();
+		const dialogElement = document.querySelector(`.interest-dialog`);
+		dialogElement?.addEventListener("click", (ev) => {
+			ev.stopPropagation();
 		});
-
-
 	</script>
 }
