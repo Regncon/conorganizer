@@ -169,6 +169,15 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 		}
 
 		if err := puljefordeling.AddManualSeat(db, puljeID, store.EventID, store.BillettholderID); err != nil {
+			if errors.Is(err, puljefordeling.ErrGMInPulje) {
+				sse := datastar.NewSSE(w, r)
+				if err := sse.MarshalAndPatchSignals(map[string]any{
+					"gmWarningText": "Denne billettholderen er allerede GM i denne puljen og kan ikke legges til som spiller. Fjern GM-oppdraget først hvis personen skal spille i stedet.",
+				}); err != nil {
+					logger.Error(fmt.Errorf("failed to patch GM warning signals: %w", err).Error(), "pulje_id", puljeID, "event_id", store.EventID, "billettholder_id", store.BillettholderID)
+				}
+				return
+			}
 			logger.Error(err.Error(), "pulje_id", puljeID, "event_id", store.EventID, "billettholder_id", store.BillettholderID)
 			http.Error(w, "Failed to add manual seat", http.StatusInternalServerError)
 			return
@@ -278,6 +287,7 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		data-signals:dragged-billettholder-id="0"
 		data-signals:drag-over-event="''"
 		data-signals:assignment-age-confirmed="false"
+		data-signals:gm-warning-text="''"
 		data-signals:age-warning-text="''"
 		data-signals:age-warning-billettholder-id="0"
 		data-signals:age-warning-event-id="''"
@@ -336,6 +346,7 @@ templ puljefordelingIndex(db *sql.DB, logger *slog.Logger, current models.Pulje,
 		@PuljefordelingTabContent(db, logger, current, eventImageDir)
 		@puljeAssignDialog(db, logger, current)
 		@puljeAgeWarningDialog()
+		@puljeGMWarningDialog()
 	</div>
 }
 
@@ -871,4 +882,22 @@ templ puljeEventTags(ev puljefordeling.EmulatedEvent) {
 			@event_components.Event_property("Can be run in English", icons.EventEnglish)
 		}
 	</div>
+}
+
+templ puljeGMWarningDialog() {
+	<dialog
+		id="puljefordeling-gm-dialog"
+		closedBy="any"
+		aria-labelledby="puljefordeling-gm-warning-title"
+		data-effect="$gmWarningText && document.getElementById('puljefordeling-gm-dialog').showModal()"
+		data-on:close="$gmWarningText = ''"
+	>
+		<h2 id="puljefordeling-gm-warning-title">Billettholderen er allerede GM</h2>
+		<p data-text="$gmWarningText"></p>
+		<button
+			type="button"
+			class="secondary"
+			data-on:click="document.getElementById('puljefordeling-gm-dialog').close()"
+		>Lukk</button>
+	</dialog>
 }
