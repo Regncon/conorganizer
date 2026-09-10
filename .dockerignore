@@ -15,3 +15,22 @@ conorganizer
 
 # Scripts
 *.ps1
+
+# Version-control metadata
+.git/
+.jj/
+
+# Development caches and build output
+.gocache/
+tmp-gocache/
+.tmp-gocache/
+tmp/
+bin/
+node_modules/
+
+# Local runtime data
+database/
+data/
+local-event-images/
+.backups/
+graphify-out/

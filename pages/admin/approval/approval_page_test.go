@@ -11,52 +11,62 @@ import (
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
 
-func TestSplitEventsByStatusMap_ReturnsSubmittedAndApprovedOnly(t *testing.T) {
+func TestGroupEventsByStatus_ReturnsEventsForEveryStatus(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt arrangementer med kladd, innsendt, godkjent og annonsert status.",
+		Given: "Gitt arrangementer med alle statusene i systemet.",
 		When:  "Når godkjenningssiden grupperer arrangementer.",
-		Then:  "Så skal bare innsendte og godkjente arrangementer vises i sine seksjoner.",
+		Then:  "Så skal hvert arrangement grupperes etter status.",
 	})
 
 	// Given
-	expectedSubmittedIDs := []string{"submitted-event"}
-	expectedApprovedIDs := []string{"approved-event"}
 	events := []models.EventCardModel{
 		{Id: "draft-event", Status: models.EventStatusDraft},
 		{Id: "submitted-event", Status: models.EventStatusSubmitted},
 		{Id: "approved-event", Status: models.EventStatusApproved},
 		{Id: "announced-event", Status: models.EventStatusAnnounced},
+		{Id: "archived-event", Status: models.EventStatusArchived},
+	}
+	expectedIDsByStatus := map[models.EventStatus][]string{
+		models.EventStatusDraft:     {"draft-event"},
+		models.EventStatusSubmitted: {"submitted-event"},
+		models.EventStatusApproved:  {"approved-event"},
+		models.EventStatusAnnounced: {"announced-event"},
+		models.EventStatusArchived:  {"archived-event"},
 	}
 
 	// When
-	submitted, approved := splitEventsByStatusMap(events)
-	actualSubmittedIDs := approvalEventIDs(submitted)
-	actualApprovedIDs := approvalEventIDs(approved)
+	eventsByStatus := groupEventsByStatus(events)
 
 	// Then
-	if !slices.Equal(expectedSubmittedIDs, actualSubmittedIDs) {
-		t.Fatalf("submitted events mismatch\nexpected: %v\nactual:   %v", expectedSubmittedIDs, actualSubmittedIDs)
-	}
-	if !slices.Equal(expectedApprovedIDs, actualApprovedIDs) {
-		t.Fatalf("approved events mismatch\nexpected: %v\nactual:   %v", expectedApprovedIDs, actualApprovedIDs)
+	for status, expectedIDs := range expectedIDsByStatus {
+		actualIDs := approvalEventIDs(eventsByStatus[status])
+		if !slices.Equal(expectedIDs, actualIDs) {
+			t.Fatalf("%s events mismatch\nexpected: %v\nactual:   %v", status, expectedIDs, actualIDs)
+		}
 	}
 }
 
 func TestApprovalPageContent_RendersSectionsAndEditLinks(t *testing.T) {
 	bdd.Behavior(t, bdd.BDD{
-		Given: "Gitt at det finnes innsendte og godkjente arrangementer.",
+		Given: "Gitt at det finnes arrangementer med alle statusene i systemet.",
 		When:  "Når godkjenningssiden rendres.",
-		Then:  "Så skal hvert arrangement vises i riktig seksjon med lenke til adminredigering.",
+		Then:  "Så skal hvert arrangement vises i riktig seksjon og seksjonene skal ha forventet rekkefølge.",
 	})
 
 	// Given
 	expectedSectionTitles := []string{
-		"Arrangementer til Godkjenning",
-		"Godkjente Arrangementer",
+		"Innsendt",
+		"Godkjent",
+		"Annonsert",
+		"Kladd",
+		"Forkastet",
 	}
 	expectedHrefs := []string{
-		"/admin/approval/edit/approved-event",
 		"/admin/approval/edit/submitted-event",
+		"/admin/approval/edit/approved-event",
+		"/admin/approval/edit/announced-event",
+		"/admin/approval/edit/draft-event",
+		"/admin/approval/edit/archived-event",
 	}
 	db, logger := testutil.CreateTestDBAndLogger(t, "approval_page")
 	seedApprovalPageLookups(t, db)
@@ -64,6 +74,7 @@ func TestApprovalPageContent_RendersSectionsAndEditLinks(t *testing.T) {
 	insertApprovalPageEvent(t, db, "submitted-event", "Submitted Event", models.EventStatusSubmitted)
 	insertApprovalPageEvent(t, db, "approved-event", "Approved Event", models.EventStatusApproved)
 	insertApprovalPageEvent(t, db, "announced-event", "Announced Event", models.EventStatusAnnounced)
+	insertApprovalPageEvent(t, db, "archived-event", "Archived Event", models.EventStatusArchived)
 
 	// When
 	doc := templtest.Render(t, ApprovalPageContent(db, logger))
@@ -77,11 +88,6 @@ func TestApprovalPageContent_RendersSectionsAndEditLinks(t *testing.T) {
 	for _, expectedHref := range expectedHrefs {
 		if !slices.Contains(actualHrefs, expectedHref) {
 			t.Fatalf("expected approval edit href %q in %v", expectedHref, actualHrefs)
-		}
-	}
-	for _, unexpectedHref := range []string{"/admin/approval/edit/draft-event", "/admin/approval/edit/announced-event"} {
-		if slices.Contains(actualHrefs, unexpectedHref) {
-			t.Fatalf("did not expect approval edit href %q in %v", unexpectedHref, actualHrefs)
 		}
 	}
 }
@@ -102,6 +108,7 @@ func seedApprovalPageLookups(t *testing.T, db *sql.DB) {
 		models.EventStatusSubmitted,
 		models.EventStatusApproved,
 		models.EventStatusAnnounced,
+		models.EventStatusArchived,
 	} {
 		testutil.MustExec(t, db, `INSERT INTO event_statuses(status) VALUES (?) ON CONFLICT(status) DO NOTHING`, status)
 	}

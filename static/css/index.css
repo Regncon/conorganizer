@@ -2,6 +2,7 @@
     --color-text-strong: #f1f3f9;
     --color-text-soft: #ccd1e9;
     --color-text-soft-50: hsl(from var(--color-text-soft) h s l / 50%);
+    --color-text-soft-20: hsl(from var(--color-text-soft) h s l / 20%);
 
     --color-primary-text: var(--color-text-soft);
     --color-primary: #e7a965;
@@ -75,6 +76,8 @@
     --spacing-5x: 20px;
     --spacing-8x: 32px;
     --spacing-10x: 40px;
+    --spacing-11x: 50px;
+    --spacing-12x: 70px;
 
     /* border */
     --border-radius-1x: 4px;
@@ -120,7 +123,6 @@
         --responsive-scroll-margin-top-event: calc(var(--nav-height) + var(--nav-event-height));
     }
 }
-
 @media screen and (width > 1200px) {
     :root {
         --responsive-top-of-page-spacing: var(--spacing-10x);

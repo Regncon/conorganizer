@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/service/requestctx"
+	"github.com/Regncon/conorganizer/testutil"
 	"github.com/Regncon/conorganizer/testutil/bdd"
 	"github.com/Regncon/conorganizer/testutil/templtest"
 )
@@ -16,11 +17,12 @@ func TestMenu_AnonymousUserOnlyReceivesPublicNavigation(t *testing.T) {
 	})
 
 	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "test_room_services")
 	expectedHrefs := []string{"/", "/auth"}
 	userInfo := requestctx.UserRequestInfo{}
 
 	// When
-	doc := templtest.Render(t, Menu(userInfo))
+	doc := templtest.Render(t, Menu(userInfo, db, logger))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 
 	// Then
@@ -35,6 +37,7 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	})
 
 	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "test_room_services")
 	expectedHrefs := []string{
 		"/",
 		"/profile",
@@ -47,7 +50,7 @@ func TestMenu_LoggedInUserOnlyReceivesUserNavigation(t *testing.T) {
 	}
 
 	// When
-	doc := templtest.Render(t, Menu(userInfo))
+	doc := templtest.Render(t, Menu(userInfo, db, logger))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 	actualExternalLinkIconVisible := doc.Find(`a[href="https://www.regncon.no/vanlege-sporsmal/"] .inline-icon`).Length() > 0
 
@@ -66,6 +69,7 @@ func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	})
 
 	// Given
+	db, logger := testutil.CreateTestDBAndLogger(t, "test_room_services")
 	expectedHrefs := []string{
 		"/",
 		"/profile",
@@ -81,7 +85,7 @@ func TestMenu_AdminUserReceivesUserAndAdminNavigation(t *testing.T) {
 	}
 
 	// When
-	doc := templtest.Render(t, Menu(userInfo))
+	doc := templtest.Render(t, Menu(userInfo, db, logger))
 	actualHrefs := templtest.CollectUniqueHrefs(doc)
 	actualExternalLinkIconVisible := doc.Find(`a[href="https://www.regncon.no/vanlege-sporsmal/"] .inline-icon`).Length() > 0
 
