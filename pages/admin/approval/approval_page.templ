@@ -8,30 +8,28 @@ import (
 	"log/slog"
 )
 
-// TODO: This function does not handle Approved events that are Published
-func splitEventsByStatusMap(events []models.EventCardModel) (submitted, approved []models.EventCardModel) {
+var approvalPageStatusOrder = []models.EventStatus{
+	models.EventStatusSubmitted,
+	models.EventStatusApproved,
+	models.EventStatusAnnounced,
+	models.EventStatusDraft,
+	models.EventStatusArchived,
+}
+
+func groupEventsByStatus(events []models.EventCardModel) map[models.EventStatus][]models.EventCardModel {
+	eventsByStatus := make(map[models.EventStatus][]models.EventCardModel)
 	for _, ev := range events {
-		if ev.Status == models.EventStatusDraft {
-			continue
-		}
-		if ev.Status == models.EventStatusSubmitted {
-			submitted = append(submitted, ev)
-			continue
-		}
-		if ev.Status == models.EventStatusApproved {
-			approved = append(approved, ev)
-			continue
-		}
+		eventsByStatus[ev.Status] = append(eventsByStatus[ev.Status], ev)
 	}
 
-	return
+	return eventsByStatus
 }
 
 func getEvents(db *sql.DB, logger *slog.Logger) []models.EventCardModel {
 	var events []models.EventCardModel
 
-	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events WHERE status IN (?, ?) ORDER BY created_at DESC"
-	rows, eventsQueryErr := db.Query(eventsQuery, models.EventStatusSubmitted, models.EventStatusApproved)
+	eventsQuery := "SELECT id, title, intro, status, system, host_name,beginner_friendly, event_type, age_group, event_runtime, can_be_run_in_english FROM events ORDER BY created_at DESC"
+	rows, eventsQueryErr := db.Query(eventsQuery)
 	if eventsQueryErr != nil {
 		logger.Error(fmt.Errorf("failed to query approval events: %w", eventsQueryErr).Error())
 		return events
@@ -74,7 +72,7 @@ templ ApprovalPageContent(db *sql.DB, logger *slog.Logger) {
 	</style>
 	{{
 		events := getEvents(db, logger)
-		submittedEvents, approvedEvents := splitEventsByStatusMap(events)
+		eventsByStatus := groupEventsByStatus(events)
 	}}
 	@components.Breadcrumbs([]components.BreadcrumbPath{
 		{Name: "Hjem", Url: "/"},
@@ -87,25 +85,17 @@ templ ApprovalPageContent(db *sql.DB, logger *slog.Logger) {
 			Her kan du godkjenne arrangementer som er sendt inn av brukere.
 		</p>
 		<div class="event-approval-layout">
-			if len(submittedEvents) > 0 {
-				<section>
-					<h2 class="event-approval-section-header">Arrangementer til Godkjenning</h2>
-					<div class="event-approval-section-layout">
-						for _, e := range submittedEvents {
+			for _, status := range approvalPageStatusOrder {
+				if events := eventsByStatus[status]; len(events) > 0 {
+					<section>
+						<h2 class="event-approval-section-header">{ string(status) }</h2>
+						<div class="event-approval-section-layout">
+						for _, e := range events {
 							@eventBar(e)
 						}
-					</div>
-				</section>
-			}
-			if len(approvedEvents) > 0 {
-				<section>
-					<h2 class="event-approval-section-header">Godkjente Arrangementer</h2>
-					<div class="event-approval-section-layout">
-						for _, e := range approvedEvents {
-							@eventBar(e)
-						}
-					</div>
-				</section>
+						</div>
+					</section>
+				}
 			}
 		</div>
 	</div>

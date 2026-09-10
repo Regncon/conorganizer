@@ -249,3 +249,113 @@ func TestPuljeStatusToggles_ReflectLockedAndCompletedState(t *testing.T) {
 		t.Fatalf("expected both toggles checked for Completed pulje, got %d checked", checked.Length())
 	}
 }
+
+// seedPinnedParticipant pins one participant into an event with the given age
+// group. is_over_18 defaults to 0, so over18=false seeds a minor.
+func seedPinnedParticipant(t *testing.T, db *sql.DB, pulje models.Pulje, ageGroup models.AgeGroup, over18 bool) {
+	t.Helper()
+	seedTabPulje(t, db, pulje, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group)
+		VALUES ('evA','Voksenspel','','','','','',4,?)`, string(ageGroup))
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(pulje))
+	over18Value := 0
+	if over18 {
+		over18Value = 1
+	}
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id, is_over_18)
+		VALUES (1,'Kari','Nordmann',0,'',0,1,?)`, over18Value)
+	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES ('evA',?,1,'Player','manual')`, string(pulje))
+}
+
+func TestPuljefordelingTabContent_MinorPinnedInAdultsOnlyShowsBadge(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt ein deltakar under 18 som er manuelt plassert i eit 18+-arrangement.",
+		When:  "Når puljefordeling-fanen rendres.",
+		Then:  "Så skal flisa merkast med «Under 18».",
+	})
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_badge_minor")
+	seedPinnedParticipant(t, db, models.PuljeFredagKveld, models.AgeGroupAdultsOnly, false)
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+
+	if n := doc.Find(".pulje-players li .pulje-badge--error").Length(); n != 1 {
+		t.Fatalf("expected exactly one under-18 badge on the player tile, got %d", n)
+	}
+	text := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
+	if !strings.Contains(text, "Under 18") {
+		t.Fatalf("expected an 'Under 18' badge\nactual text: %s", text)
+	}
+}
+
+func TestPuljefordelingTabContent_AdultInAdultsOnlyHasNoBadge(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_badge_adult")
+	seedPinnedParticipant(t, db, models.PuljeFredagKveld, models.AgeGroupAdultsOnly, true)
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+	text := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
+
+	if strings.Contains(text, "Under 18") {
+		t.Fatalf("an adult must not be flagged as under 18\nactual text: %s", text)
+	}
+}
+
+func TestPuljefordelingTabContent_MinorInDefaultEventHasNoBadge(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_badge_default_event")
+	seedPinnedParticipant(t, db, models.PuljeFredagKveld, models.AgeGroupDefault, false)
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+	text := strings.Join(templtest.CollectTexts(doc, "#puljefordeling-tab"), " ")
+
+	if strings.Contains(text, "Under 18") {
+		t.Fatalf("a minor in an ordinary event must not be flagged\nactual text: %s", text)
+	}
+}
+
+// The add_gm endpoint asks for confirmation before making a minor the GM of an
+// 18+ game, so the board must keep showing that override once it is in place.
+func TestPuljefordelingTabContent_MinorGMInAdultsOnlyShowsBadge(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{
+		Given: "Gitt ein spelleiar under 18 på eit 18+-arrangement.",
+		When:  "Når puljefordeling-fanen rendres.",
+		Then:  "Så skal spelleiar-lina merkast med «Under 18».",
+	})
+
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_badge_minor_gm")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group)
+		VALUES ('evA','Voksenspel','','','','','',4,?)`, string(models.AgeGroupAdultsOnly))
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id, is_over_18)
+		VALUES (1,'Kari','Nordmann',0,'',0,1,0)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES ('evA',?,1,'GM','manual')`, string(models.PuljeFredagKveld))
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+
+	if n := doc.Find(".pulje-gm .pulje-badge--error").Length(); n != 1 {
+		t.Fatalf("expected exactly one under-18 badge on the GM line, got %d", n)
+	}
+	if got := strings.Join(templtest.CollectTexts(doc, ".pulje-gm"), " "); !strings.Contains(got, "Under 18") {
+		t.Fatalf("expected the GM line to say 'Under 18', got %q", got)
+	}
+}
+
+func TestPuljefordelingTabContent_AdultGMInAdultsOnlyHasNoBadge(t *testing.T) {
+	db, logger := testutil.CreateTestDBAndLogger(t, "puljefordeling_badge_adult_gm")
+	seedTabPulje(t, db, models.PuljeFredagKveld, "Fredag Kveld", models.PuljeStatusOpen, "2026-01-01 18:00")
+	testutil.MustExec(t, db, `INSERT INTO events (id, title, intro, description, host_name, email, phone_number, max_players, age_group)
+		VALUES ('evA','Voksenspel','','','','','',4,?)`, string(models.AgeGroupAdultsOnly))
+	testutil.MustExec(t, db, `INSERT INTO relation_event_puljer (event_id, pulje_id, is_in_pulje) VALUES ('evA',?,1)`, string(models.PuljeFredagKveld))
+	testutil.MustExec(t, db, `INSERT INTO billettholdere (id, first_name, last_name, ticket_type_id, ticket_type, order_id, ticket_id, is_over_18)
+		VALUES (1,'Kari','Nordmann',0,'',0,1,1)`)
+	testutil.MustExec(t, db, `INSERT INTO relation_events_players (event_id, pulje_id, billettholder_id, role, source)
+		VALUES ('evA',?,1,'GM','manual')`, string(models.PuljeFredagKveld))
+
+	doc := templtest.Render(t, PuljefordelingTabContent(db, logger, models.PuljeFredagKveld, nil))
+
+	if n := doc.Find(".pulje-gm .pulje-badge--error").Length(); n != 0 {
+		t.Fatalf("an adult GM must not get an under-18 badge, got %d", n)
+	}
+}

@@ -1,4 +1,4 @@
-FROM golang:1.26.3 AS my-dev-environment
+FROM golang:1.27.0 AS my-dev-environment
 
 # Enable CGO (required for some C-based Go libraries)
 ENV CGO_ENABLED=1
@@ -39,7 +39,21 @@ COPY --chown=devuser:devuser go.mod go.sum ./
 # Download Go module dependencies
 RUN go mod download
 
-# Warm project-pinned Go tools from go.mod.
+# Compile the project-pinned tools once while building the image.
+RUN GOBIN=/home/devuser/go/bin go install \
+    github.com/a-h/templ/cmd/templ \
+    github.com/air-verse/air \
+    github.com/go-task/task/v3/cmd/task
+
+# Keep the existing `go tool` commands, but resolve them directly instead of
+# rebuilding or validating the tools through Go's runtime build cache.
+USER root
+RUN tool_dir="$(go env GOTOOLDIR)" && \
+    install -m 0755 /home/devuser/go/bin/templ "$tool_dir/templ" && \
+    install -m 0755 /home/devuser/go/bin/air "$tool_dir/air" && \
+    install -m 0755 /home/devuser/go/bin/task "$tool_dir/task"
+
+USER devuser
 RUN go tool templ version && \
     go tool air -v && \
     go tool task --version

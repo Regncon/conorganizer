@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/Regncon/conorganizer/models"
 	"github.com/Regncon/conorganizer/service/live"
@@ -154,3 +155,48 @@ func puljefordelingStatusRoute(router chi.Router, db *sql.DB, liveManager *live.
 	})
 }
 
+// getBillettholderAge returns the participant's display name and whether they
+// are over 18. The assign endpoint needs both: the age decides whether a pin
+// into an 18+ game must be confirmed, the name goes into that confirmation.
+func getBillettholderAge(db *sql.DB, billettholderID int) (string, bool, error) {
+	var firstName, lastName string
+	var isOver18 bool
+	if err := db.QueryRow(
+		`SELECT first_name, last_name, is_over_18 FROM billettholdere WHERE id = ?`,
+		billettholderID,
+	).Scan(&firstName, &lastName, &isOver18); err != nil {
+		return "", false, fmt.Errorf("get billettholder %d: %w", billettholderID, err)
+	}
+	return strings.TrimSpace(firstName + " " + lastName), isOver18, nil
+}
+
+// getEventAgeGroup returns the event's title and age group, so the assign
+// endpoint can name the game in the age warning it sends back.
+func getEventAgeGroup(db *sql.DB, eventID string) (string, models.AgeGroup, error) {
+	var title string
+	var ageGroup models.AgeGroup
+	if err := db.QueryRow(`SELECT title, age_group FROM events WHERE id = ?`, eventID).Scan(&title, &ageGroup); err != nil {
+		return "", "", fmt.Errorf("get event %s: %w", eventID, err)
+	}
+	return title, ageGroup, nil
+}
+
+// adultsOnlyWarning returns the confirmation an admin must accept before placing
+// a participant under 18 in an 18+ game, or "" when the placement raises no age
+// conflict. The solver never makes such a placement; an admin may, but only
+// deliberately, so every endpoint that seats someone asks this first. Callers map
+// a wrapped sql.ErrNoRows to 404.
+func adultsOnlyWarning(db *sql.DB, billettholderID int, eventID string) (string, error) {
+	playerName, isOver18, err := getBillettholderAge(db, billettholderID)
+	if err != nil {
+		return "", err
+	}
+	eventTitle, ageGroup, err := getEventAgeGroup(db, eventID)
+	if err != nil {
+		return "", err
+	}
+	if isOver18 || ageGroup != models.AgeGroupAdultsOnly {
+		return "", nil
+	}
+	return fmt.Sprintf("%s er under 18 år, og «%s» er 18+. Vil du plassere likevel?", playerName, eventTitle), nil
+}

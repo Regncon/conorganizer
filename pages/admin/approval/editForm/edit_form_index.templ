@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/Regncon/conorganizer/components/formsubmission"
 	"github.com/Regncon/conorganizer/components/icons"
 	"github.com/Regncon/conorganizer/components/toast"
 	"github.com/Regncon/conorganizer/layouts"
@@ -29,7 +30,7 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 			return
 		}
 		if eventData == nil {
-			notfound.RenderEvent(w, r, logger)
+			notfound.RenderEvent(w, r, db, logger)
 			return
 		}
 
@@ -44,6 +45,8 @@ func EditFormLayoutRoute(router chi.Router, db *sql.DB, eventImageDir *string, l
 		if err := layouts.Base(
 			title,
 			userInfo,
+            db,
+            logger,
 			editFormIndex(eventId, ctx, db, eventImageDir, logger),
 		).Render(ctx, w); err != nil {
 			logger.Error(fmt.Errorf("failed to render approval edit form page: %w", err).Error(), "event_id", eventId, "user_id", userInfo.Id)
@@ -60,4 +63,7 @@ templ editFormIndex(eventId string, ctx context.Context, db *sql.DB, eventImageD
 	>
 		@EditEventFormPageContent(ctx, eventId, db, eventImageDir, logger)
 	</div>
+	// Outside #edit-form-container on purpose: the live stream morphs that
+	// subtree, and a morph would strip the dialog's `open` state mid-warning.
+	@formsubmission.ApprovalAgeWarningDialog()
 }

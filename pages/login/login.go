@@ -13,6 +13,7 @@ import (
 	"github.com/Regncon/conorganizer/components/redirect"
 	"github.com/Regncon/conorganizer/layouts"
 	"github.com/Regncon/conorganizer/service/authctx"
+	"github.com/Regncon/conorganizer/service/requestctx"
 	"github.com/Regncon/conorganizer/service/userctx"
 	"github.com/a-h/templ"
 	"github.com/go-chi/chi/v5"
@@ -37,6 +38,8 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				if err := layouts.Base(
 					"Velkomen tilbake til Regncon 2026!",
 					userctx.GetUserRequestInfo(ctx),
+					db,
+					logger,
 					alreadyLogedIn(),
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render already loged in page: %w", err).Error())
@@ -45,6 +48,8 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				if err := layouts.Base(
 					"Innlogging til Regncon 2026!",
 					userctx.GetUserRequestInfo(ctx),
+					db,
+					logger,
 					loginForm(),
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render login page: %w", err).Error())
@@ -140,6 +145,8 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 				if err := layouts.Base(
 					"Is logged in test",
 					userctx.GetUserRequestInfo(ctx),
+					db,
+					logger,
 					testComp,
 				).Render(ctx, w); err != nil {
 					logger.Error(fmt.Errorf("failed to render auth test page: %w", err).Error())
@@ -172,11 +179,14 @@ func SetupAuthRoute(router chi.Router, db *sql.DB, logger *slog.Logger) error {
 
 		authRouter.Get("/logout", func(w http.ResponseWriter, r *http.Request) {
 			authctx.ClearAuthCookies(w, r)
+			requestctx.ClearBillettholderSelectionCookie(w)
 
 			redirectUrl := "/"
 			var ctx = r.Context()
 			if err := layouts.Base("Logging you out",
-				userctx.GetUserRequestInfo(ctx),
+				requestctx.UserRequestInfo{},
+				db,
+				logger,
 				redirect.Redirect(redirectUrl),
 			).Render(ctx, w); err != nil {
 				logger.Error(fmt.Errorf("failed to render logout page: %w", err).Error())

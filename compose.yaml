@@ -4,8 +4,11 @@ services:
       context: .
       dockerfile: Dockerfile
     image: regncon-image
+    init: true
     # tty required by air when using compose
     tty: true
+    environment:
+      HOT_RELOAD_BINARY_DIR: /tmp/conorganizer
     ports:
       - 8080:8080
     volumes:

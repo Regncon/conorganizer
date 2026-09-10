@@ -169,7 +169,7 @@ func isOver18(born string) bool {
 		return false
 	}
 
-	regnConDate := time.Date(2025, 10, 10, 0, 0, 0, 0, time.UTC)
+	regnConDate := time.Date(2026, 10, 4, 0, 0, 0, 0, time.UTC)
 	eighteenth := birthDate.AddDate(18, 0, 0)
 	return !eighteenth.After(regnConDate)
 }
