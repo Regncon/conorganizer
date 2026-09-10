@@ -6,4 +6,5 @@ type UserRequestInfo struct {
 	Id         string
 	Email      string
 	IsAdmin    bool
+    CurrentPath string
 }

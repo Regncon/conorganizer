@@ -131,6 +131,8 @@ templ menuStyles() {
 }
 
 templ Menu(userInfo requestctx.UserRequestInfo, db *sql.DB, logger *slog.Logger) {
+
+    {{ }}
 	@menuStyles()
 	@mainMenuButtonsStyles()
 	@menuBillettholderLiveStyles()
@@ -214,14 +216,14 @@ templ mainMenuButtonsStyles() {
 
 templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
 	<section class="main-menu-buttons">
-		<a href="/" class="main-menu-button btn btn--ghost btn-with-icon">
+		<a href="/" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("active", userInfo.CurrentPath == "/") }>
 			@icons.Icon(icons.Home, icons.Size20)
 			<span class="menu-button-text">
 				Hjem
 			</span>
 		</a>
 		if userInfo.IsLoggedIn {
-			<a href="/profile" class="main-menu-button btn btn--ghost btn-with-icon">
+			<a href="/profile" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("active", userInfo.CurrentPath  == "/profile") }>
 				@icons.Icon(icons.User, icons.Size20)
 				<span class="menu-button-text">
 					Min Side
@@ -229,7 +231,7 @@ templ mainMenuButtons(userInfo requestctx.UserRequestInfo) {
 			</a>
 		}
 		if userInfo.IsLoggedIn && userInfo.IsAdmin {
-			<a href="/admin" class="main-menu-button btn btn--ghost btn-with-icon">
+			<a href="/admin" class={ "main-menu-button btn btn--ghost btn-with-icon", templ.KV("active", userInfo.CurrentPath == "/admin") }>
 				@icons.Icon(icons.Shield, icons.Size20)
 				<span class="menu-button-text">
 					Admin
