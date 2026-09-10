@@ -15,10 +15,10 @@ import (
 //
 // Declared priority, highest first (bumps break ties within a band):
 //
-//	1. unsatisfied + top choice (Veldig)   — the satisfaction goal
-//	2. satisfied   + top choice
-//	3. medium interest (Middels)           — satisfied or not, same band
-//	4. low interest    (Litt)              — satisfied or not, same band
+//  1. unsatisfied + top choice (Veldig)   — the satisfaction goal
+//  2. satisfied   + top choice
+//  3. medium interest (Middels)           — satisfied or not, same band
+//  4. low interest    (Litt)              — satisfied or not, same band
 //
 // The unsatisfied advantage exists ONLY on the top choice (the satisfaction
 // goal); Middels/Litt are valued the same whether or not the player is
@@ -97,14 +97,13 @@ func NewState(year int, weekend model.Weekend) *State {
 	isDM := make(map[string]struct{})
 	for _, sl := range weekend.Slots {
 		for _, ev := range sl.Events {
-			if ev.DMID == "" {
-				continue
+			for _, dmID := range ev.DMIDs {
+				isDM[dmID] = struct{}{}
+				if dmSlots[dmID] == nil {
+					dmSlots[dmID] = make(map[string]struct{})
+				}
+				dmSlots[dmID][sl.ID] = struct{}{}
 			}
-			isDM[ev.DMID] = struct{}{}
-			if dmSlots[ev.DMID] == nil {
-				dmSlots[ev.DMID] = make(map[string]struct{})
-			}
-			dmSlots[ev.DMID][sl.ID] = struct{}{}
 		}
 	}
 	return &State{
@@ -163,8 +162,8 @@ func (s *State) SolveSlotFixed(slot model.Slot, players []model.Player, fixed ma
 	// Players DMing in this slot are unavailable as players.
 	dmingHere := make(map[string]struct{})
 	for _, ev := range slot.Events {
-		if ev.DMID != "" {
-			dmingHere[ev.DMID] = struct{}{}
+		for _, dmID := range ev.DMIDs {
+			dmingHere[dmID] = struct{}{}
 		}
 	}
 
@@ -524,8 +523,8 @@ func (s *State) ApplyActual(slot model.Slot, players []model.Player, assignments
 
 	dmingHere := make(map[string]struct{})
 	for _, ev := range slot.Events {
-		if ev.DMID != "" {
-			dmingHere[ev.DMID] = struct{}{}
+		for _, dmID := range ev.DMIDs {
+			dmingHere[dmID] = struct{}{}
 		}
 	}
 
