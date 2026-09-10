@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/Regncon/conorganizer/service/puljefordeling/solver/model"
+	"github.com/Regncon/conorganizer/testutil/bdd"
 )
 
 // --- helpers ----------------------------------------------------------------
@@ -264,7 +265,7 @@ func TestSolveSlot_MissBoostsNextSlot(t *testing.T) {
 	// must let them beat a fresh, never-missed player for a top-choice seat.
 	sl1 := slot("s1", event("A", 1))
 	sl2 := slot("s2", event("B", 1))
-	sl3 := slot("s3", model.Event{ID: "Z", Name: "Z", Capacity: 4, DMID: "dm"})
+	sl3 := slot("s3", model.Event{ID: "Z", Name: "Z", Capacity: 4, DMIDs: []string{"dm"}})
 
 	dm := model.Player{ID: "dm", Name: "dm", Prefs: map[string]map[string]model.Score{
 		"s1": {"A": 5}, // DM bump → wins A in s1
@@ -410,7 +411,7 @@ func TestSolveSlot_TopScoreLoserGetsFallback(t *testing.T) {
 }
 
 func TestSolveSlot_DMExcludedFromOwnSlot(t *testing.T) {
-	dmEvent := model.Event{ID: "A", Name: "A", Capacity: 4, DMID: "alice"}
+	dmEvent := model.Event{ID: "A", Name: "A", Capacity: 4, DMIDs: []string{"alice"}}
 	sl := slot("s1", dmEvent, event("B", 4))
 	players := []model.Player{
 		player("alice", prefs("s1", map[string]model.Score{"A": 5, "B": 5})),
@@ -436,7 +437,7 @@ func TestSolveSlot_ReverseEdgeBumpMarksMoved(t *testing.T) {
 	// fallback to seat "b". "a" is therefore "moved"; "b" got its top wish
 	// directly and is not.
 	sl1 := slot("s1", event("X", 1), event("Y", 1))
-	sl2 := slot("s2", model.Event{ID: "Z", Name: "Z", Capacity: 4, DMID: "a"})
+	sl2 := slot("s2", model.Event{ID: "Z", Name: "Z", Capacity: 4, DMIDs: []string{"a"}})
 
 	a := model.Player{ID: "a", Name: "a", Prefs: map[string]map[string]model.Score{"s1": {"X": 5, "Y": 3}}}
 	b := model.Player{ID: "b", Name: "b", Prefs: map[string]map[string]model.Score{"s1": {"X": 5}}}
@@ -465,7 +466,7 @@ func TestSolveSlot_LateralBumpAtEqualLevelNotMoved(t *testing.T) {
 	// downgrade, so "a" must NOT be flagged moved (the red "flyttet ned" stripe
 	// is reserved for players pushed to a strictly lower-interest seat).
 	sl1 := slot("s1", event("X", 1), event("Y", 1))
-	sl2 := slot("s2", model.Event{ID: "Z", Name: "Z", Capacity: 4, DMID: "a"})
+	sl2 := slot("s2", model.Event{ID: "Z", Name: "Z", Capacity: 4, DMIDs: []string{"a"}})
 
 	a := model.Player{ID: "a", Name: "a", Prefs: map[string]map[string]model.Score{"s1": {"X": 5, "Y": 5}}}
 	b := model.Player{ID: "b", Name: "b", Prefs: map[string]map[string]model.Score{"s1": {"X": 5}}}
@@ -503,7 +504,7 @@ func TestSolveSlot_NoBumpLeavesMovedEmpty(t *testing.T) {
 func TestSolveSlot_DMPriorityBeatsRegularPlayer(t *testing.T) {
 	// dm runs a game elsewhere; both want the single A seat at the top level.
 	// The DM bump should win it.
-	dmElsewhere := model.Event{ID: "Z", Name: "Z", Capacity: 4, DMID: "dm"}
+	dmElsewhere := model.Event{ID: "Z", Name: "Z", Capacity: 4, DMIDs: []string{"dm"}}
 	sl1 := slot("s1", event("A", 1))
 	sl2 := slot("s2", dmElsewhere)
 
@@ -743,5 +744,26 @@ func TestSolveSlot_IneligibleTopChoiceIsNotAMiss(t *testing.T) {
 	}
 	if slices.Contains(assigned(result, "A"), "kid") {
 		t.Errorf("the kid must not win the seat on misses earned from 18+ games, got %v", assigned(result, "A"))
+	}
+}
+
+func TestApplyActual_AllGMsExcludedFromUnassigned(t *testing.T) {
+	bdd.Behavior(t, bdd.BDD{Given: "two GMs have interests during the pulje they run", When: "actual assignments are replayed", Then: "neither GM is counted as an unassigned player"})
+	// Given
+	expectedUnassigned := []string{"player"}
+	sl := slot("s1", model.Event{ID: "run", Capacity: 4, DMIDs: []string{"first", "second"}}, event("play", 4))
+	players := []model.Player{
+		player("first", prefs("s1", map[string]model.Score{"play": 5})),
+		player("second", prefs("s1", map[string]model.Score{"play": 5})),
+		player("player", prefs("s1", map[string]model.Score{"play": 5})),
+	}
+	state := NewState(2026, weekendOf(sl))
+
+	// When
+	result := state.ApplyActual(sl, players, nil)
+
+	// Then
+	if !slices.Equal(result.Unassigned, expectedUnassigned) {
+		t.Fatalf("unassigned: got %v, want %v; GMs were busy running the event", result.Unassigned, expectedUnassigned)
 	}
 }
