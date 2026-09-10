@@ -112,6 +112,10 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	if err != nil {
 		return Emulation{}, err
 	}
+	actual, err := loadCompletedAssignments(db)
+	if err != nil {
+		return Emulation{}, err
+	}
 
 	// Build the solver's Weekend in chronological pulje order.
 	weekend := smodel.Weekend{Slots: make([]smodel.Slot, 0, len(puljer))}
@@ -158,7 +162,12 @@ func EmulateSeatings(db *sql.DB) (Emulation, error) {
 	emulation := Emulation{Year: year, PlayerCount: len(players)}
 	for i, slot := range weekend.Slots {
 		pulje := puljer[i]
-		res := state.SolveSlotFixed(slot, players, pins[pulje.ID])
+		var res smodel.SlotResult
+		if pulje.Status == models.PuljeStatusCompleted {
+			res = state.ApplyActual(slot, players, actual[pulje.ID])
+		} else {
+			res = state.SolveSlotFixed(slot, players, pins[pulje.ID])
+		}
 		emulation.Puljer = append(emulation.Puljer, shapePulje(pulje, slot, res, gms, names, over18, prefs, dmSet, pins[pulje.ID], events[pulje.ID]))
 	}
 	emulation.SatisfiedTotal = state.SatisfiedCount()
@@ -287,6 +296,35 @@ func loadPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 		puljer = append(puljer, p)
 	}
 	return puljer, rows.Err()
+}
+
+func loadCompletedAssignments(db *sql.DB) (map[models.Pulje]map[string][]string, error) {
+	const query = `
+		SELECT ep.pulje_id, ep.event_id, ep.billettholder_id
+		FROM relation_events_players ep
+		JOIN puljer p ON p.id = ep.pulje_id
+		WHERE ep.role = ? AND p.status = ?
+	`
+	rows, err := db.Query(query, models.EventPlayerRolePlayer, models.PuljeStatusCompleted)
+	if err != nil {
+		return nil, fmt.Errorf("query completed assignments: %w", err)
+	}
+	defer rows.Close()
+
+	out := make(map[models.Pulje]map[string][]string)
+	for rows.Next() {
+		var pulje models.Pulje
+		var eventID string
+		var bhID int
+		if err := rows.Scan(&pulje, &eventID, &bhID); err != nil {
+			return nil, fmt.Errorf("scan completed assignment: %w", err)
+		}
+		if out[pulje] == nil {
+			out[pulje] = make(map[string][]string)
+		}
+		out[pulje][eventID] = append(out[pulje][eventID], strconv.Itoa(bhID))
+	}
+	return out, rows.Err()
 }
 
 func loadEligibleEvents(db *sql.DB) (map[models.Pulje]map[string]eligibleEvent, error) {
