@@ -2,10 +2,13 @@ package puljefordeling
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/Regncon/conorganizer/models"
 )
+
+var ErrGMInPulje = errors.New("billettholder is already GM in this pulje")
 
 // AddManualSeat force-pins a participant into an event for the given pulje by
 // writing a player seat tagged source='manual'. It deliberately does NOT touch
@@ -19,6 +22,17 @@ func AddManualSeat(db *sql.DB, pulje models.Pulje, eventID string, billettholder
 		return fmt.Errorf("begin add manual seat tx: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
+
+	var isGM bool
+	if err := tx.QueryRow(
+		`SELECT EXISTS(SELECT 1 FROM relation_events_players WHERE billettholder_id = ? AND pulje_id = ? AND role = ?)`,
+		billettholderID, string(pulje), models.EventPlayerRoleGM,
+	).Scan(&isGM); err != nil {
+		return fmt.Errorf("check GM assignment (pulje=%s bh=%d): %w", pulje, billettholderID, err)
+	}
+	if isGM {
+		return ErrGMInPulje
+	}
 
 	// Clear any prior player seat in this pulje first, so a move leaves a single
 	// pin — and once that pin is removed the player reverts to wherever the solver
