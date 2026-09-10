@@ -87,6 +87,10 @@ func puljefordelingRoute(router chi.Router, db *sql.DB, liveManager *live.Manage
 			return
 		}
 		if err := puljefordeling.CommitDistribution(db, puljeID); err != nil {
+			if errors.Is(err, puljefordeling.ErrPuljeCompleted) {
+				http.Error(w, "Pulje is published; changes are not allowed", http.StatusConflict)
+				return
+			}
 			logger.Error(err.Error(), "pulje_id", puljeID)
 			http.Error(w, "Failed to commit distribution", http.StatusInternalServerError)
 			return
@@ -625,6 +629,7 @@ templ PuljefordelingTabContent(db *sql.DB, logger *slog.Logger, pulje models.Pul
 				<button
 					type="button"
 					class="btn btn--outline pulje-commit"
+					disabled?={ puljeIsCompleted(row.Status) }
 					data-on:click={ fmt.Sprintf("if (confirm('Lagre denne fordelingen? Den blir tilgjengelig i andre visninger.')) { @post('/admin/api/puljefordeling/%s/commit') }", string(pulje)) }
 				>Lagre fordeling</button>
 			</div>
