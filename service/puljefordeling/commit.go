@@ -19,7 +19,13 @@ var ErrPuljeCompleted = errors.New("pulje is published; changes are not allowed"
 // solver-committed seats for the pulje are cleared first, so re-committing always
 // reflects the latest distribution. GM rows are not touched.
 func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
-	em, err := EmulateSeatings(db)
+	tx, err := db.Begin()
+	if err != nil {
+		return fmt.Errorf("begin commit tx: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	em, err := emulateSeatings(tx)
 	if err != nil {
 		return fmt.Errorf("emulate before commit: %w", err)
 	}
@@ -36,12 +42,6 @@ func CommitDistribution(db *sql.DB, pulje models.Pulje) error {
 	if !found {
 		return nil
 	}
-
-	tx, err := db.Begin()
-	if err != nil {
-		return fmt.Errorf("begin commit tx: %w", err)
-	}
-	defer func() { _ = tx.Rollback() }()
 
 	var status models.PuljeStatus
 	if err := tx.QueryRow(`SELECT status FROM puljer WHERE id = ?`, pulje).Scan(&status); err != nil {

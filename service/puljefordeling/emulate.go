@@ -81,10 +81,18 @@ type eligibleEvent struct {
 	canBeRunInEnglish bool
 }
 
+type emulationQuerier interface {
+	Query(query string, args ...any) (*sql.Rows, error)
+}
+
 // EmulateSeatings builds the solver model from the database, runs the
 // distribution for every pulje in chronological order, and returns the
 // proposed seating. It performs only reads.
 func EmulateSeatings(db *sql.DB) (Emulation, error) {
+	return emulateSeatings(db)
+}
+
+func emulateSeatings(db emulationQuerier) (Emulation, error) {
 	puljer, err := loadPuljer(db)
 	if err != nil {
 		return Emulation{}, err
@@ -284,7 +292,7 @@ func assignedPlayers(
 
 // --- data loading -----------------------------------------------------------
 
-func loadPuljer(db *sql.DB) ([]models.PuljeRow, error) {
+func loadPuljer(db emulationQuerier) ([]models.PuljeRow, error) {
 	const query = `
 		SELECT id, name, status, start_at, end_at
 		FROM puljer
@@ -307,7 +315,7 @@ func loadPuljer(db *sql.DB) ([]models.PuljeRow, error) {
 	return puljer, rows.Err()
 }
 
-func loadCompletedAssignments(db *sql.DB) (map[models.Pulje]map[string][]string, error) {
+func loadCompletedAssignments(db emulationQuerier) (map[models.Pulje]map[string][]string, error) {
 	const query = `
 		SELECT ep.pulje_id, ep.event_id, ep.billettholder_id
 		FROM relation_events_players ep
@@ -336,7 +344,7 @@ func loadCompletedAssignments(db *sql.DB) (map[models.Pulje]map[string][]string,
 	return out, rows.Err()
 }
 
-func loadEligibleEvents(db *sql.DB) (map[models.Pulje]map[string]eligibleEvent, error) {
+func loadEligibleEvents(db emulationQuerier) (map[models.Pulje]map[string]eligibleEvent, error) {
 	const query = `
 		SELECT ep.pulje_id, e.id, e.title, e.max_players,
 		       e.event_type, e.age_group, e.event_runtime,
@@ -378,7 +386,7 @@ func loadEligibleEvents(db *sql.DB) (map[models.Pulje]map[string]eligibleEvent, 
 // solver player ID (the billettholder ID as a string) → event ID. These are
 // fed to the solver as fixed placements so a manually-added player is reserved
 // into their event regardless of expressed interest.
-func loadManualPins(db *sql.DB) (map[models.Pulje]map[string]string, error) {
+func loadManualPins(db emulationQuerier) (map[models.Pulje]map[string]string, error) {
 	const query = `
 		SELECT pulje_id, event_id, billettholder_id
 		FROM relation_events_players
@@ -406,7 +414,7 @@ func loadManualPins(db *sql.DB) (map[models.Pulje]map[string]string, error) {
 	return out, rows.Err()
 }
 
-func loadGMs(db *sql.DB) (map[string][]int, error) {
+func loadGMs(db emulationQuerier) (map[string][]int, error) {
 	const query = `
 		SELECT event_id, pulje_id, billettholder_id
 		FROM relation_events_players
@@ -435,7 +443,7 @@ func loadGMs(db *sql.DB) (map[string][]int, error) {
 // loadParticipants returns the display name and the over-18 flag for every
 // billettholder. The age flag gates AdultsOnly events in the solver, so it is
 // read in the same pass as the names.
-func loadParticipants(db *sql.DB) (map[int]string, map[int]bool, error) {
+func loadParticipants(db emulationQuerier) (map[int]string, map[int]bool, error) {
 	const query = `SELECT id, first_name, last_name, is_over_18 FROM billettholdere`
 	rows, err := db.Query(query)
 	if err != nil {
@@ -465,7 +473,7 @@ func loadParticipants(db *sql.DB) (map[int]string, map[int]bool, error) {
 // interests in events that are actually placed in that pulje and only positive
 // scores (an edge in the assignment graph).
 func loadPrefs(
-	db *sql.DB,
+	db emulationQuerier,
 	events map[models.Pulje]map[string]eligibleEvent,
 ) (map[int]map[string]map[string]smodel.Score, error) {
 	const query = `SELECT billettholder_id, event_id, pulje_id, interest_level FROM interests`
