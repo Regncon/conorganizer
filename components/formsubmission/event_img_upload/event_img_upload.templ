@@ -525,9 +525,6 @@ templ page(eventId string, db *sql.DB, eventImageDir *string, logger *slog.Logge
 					<p data-show="!$_has_current_image && !$_uploading && !$_cropperImageLoading" style="display: none;">
 						Støttede formater: PNG, JPG, ...
 					</p>
-					<p data-show="!$_has_current_image && !$_uploading && !$_cropperImageLoading" style="display: none;">
-						(Opp til YYmb)
-					</p>
 					<div class="image-upload-progress-wrapper" data-show="$_uploading" style="display: none;">
 						<div class="image-upload-progress" role="progressbar" aria-label="Laster opp bilde" aria-valuemin="0" aria-valuemax="100" data-attr:aria-valuenow="$_uploadProgress">
 							<div class="progress-bar" data-style="{'--progress': $_uploadProgress}"></div>
